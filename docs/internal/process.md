@@ -1,59 +1,18 @@
-# APIHUB Development Process in GitHub
+# APIHUB development process
 
-This document outlines the development process for the **APIHUB** product in GitHub, covering:
-
-1. **Work items (issues)** and their lifecycle
-2. **Iterative development process:**
-3. **Release process:**
-
-**Table of content:**
-
-- [Generic notes](#generic-notes)
-  - [Project roles](#project-roles)
-  - [Branching model](#branching-model)
-- [Work Items (aka tickets, aka issues)](#work-items-aka-tickets-aka-issues)
-  - [Work items types](#work-items-types)
-    - [Epic](#epic)
-    - [User Story](#user-story)
-    - [Bug](#bug)
-    - [Task](#task)
-    - [Design task, Documentation task](#design-task-documentation-task)
-  - [Work items workflow](#work-items-workflow)
-    - [User Story workflow](#user-story-workflow)
-    - [Bug workflow](#bug-workflow)
-    - [PR review process and rules](#pr-review-process-and-rules)
-    - [Special cases](#special-cases)
-      - [Fast track](#fast-track)
-      - [Delivery to QA from develop/feature branch](#delivery-to-qa-from-developfeature-branch)
-      - [Release delay because of Critical+ issues](#release-delay-because-of-critical-issues)
-      - [My PR brokes AT](#my-pr-brokes-at)
-      - [Pull Request without issue](#pull-request-without-issue)
-- [Development process](#development-process)
-  - [Quarter Release](#quarter-release)
-  - [Sprint](#sprint)
-- [AUX](#aux)
-  - [Userful links](#userful-links)
+How the team plans, tracks, and delivers work on **APIHUB** in GitHub: roles, work items and their lifecycle, sprints,
+and quarters. For branches, commits, and pull request mechanics, see
+[the contributor workflow](../development/workflow.md). For the release itself, see
+[the release process](../development/release-process.md).
 
 ## Generic notes
 
-The APIHUB application's source code is distributed across **30+ repositories**:
-[View the full list](https://github.com/Netcracker?q=topic%3Aapihub&type=all&language=&sort=).
+All source code, deployment descriptors, and documentation live in one repository,
+[`Netcracker/qubership-apihub`](https://github.com/Netcracker/qubership-apihub). It is also the single place for
+GitHub issues.
 
-Each repository represents either:
-
-- A standalone sub-component (microservice, library)
-- A utility (autotests, workflow scripts, etc.)
-
-The **umbrella repository** is:
-[https://github.com/Netcracker/qubership-apihub](https://github.com/Netcracker/qubership-apihub).
-
-This repository serves as the **entry point** for all GitHub issues and contains:
-
-- Application-level deployment descriptors
-- Application-level documentation
-
-**Development tracking** is managed via the **GitHub Project**:
-[qubership-apihub](https://github.com/orgs/Netcracker/projects/9/views/2).
+Development tracking is managed in the GitHub Project
+[qubership-apihub](https://github.com/orgs/Netcracker/projects/9/views/2) (Project 9).
 
 ### Project roles
 
@@ -62,269 +21,235 @@ This repository serves as the **entry point** for all GitHub issues and contains
 - Dev Lead
 - Developer
 - QA
-- TA - Test automation
+- TA: test automation
 
 ### Branching model
 
-We follow the **Gitflow** approach.
+The team follows the **Gitflow** approach. Reference:
+[A Successful Git Branching Model](https://nvie.com/posts/a-successful-git-branching-model/).
 
-Reference: [A Successful Git Branching Model](https://nvie.com/posts/a-successful-git-branching-model/).
+In short:
 
-Long story short:
+- `develop` is the top-forward integration branch and the default branch.
+- `bugfix/X` and `feature/X` branch from `develop` and merge back after dev testing and review in the branch.
+- `develop` must be stable eventually. Stable means all end-to-end tests are green.
+- At the end of a sprint, `develop` is stable and the `release` branch is created from it.
+- Artifacts built from the `release` branch are release candidates (Docker tag `next`). They can be provided to any
+  customer who is ready to onboard release candidates.
+- If acceptance finds critical issues, the fix goes into the `release` branch.
+- After acceptance, `release` is merged into `develop` and `main`.
+- A new tag is set on `main`. The build from this tag is the release.
 
-- `develop` is the the top-forward integration branch. Default branch.
-- `bugfix/X` and `feature/X` branched from `develop` and merged after dev testing, review in the branch.
-- `develop` must be stable eventually
-- Stable means all AT are green
-- In the end of a sprint `develop` is stable, `release` branch created from `develop`
-- artifacts built from `release` branch are release candidates (docker tag: `next`). Can be provided for any customer
-  who ready to onboard release candidates
-- If any critical issues found during acceptance - bugfix taking place in `release` branch
-- After acceptance, `release` branch merged into `develop` and `main`
-- A new `tag` is set on `main` branch. Build from this tag is our release.
+## Work items
 
-## Work Items (aka tickets, aka issues)
-
-We have the following work items types:
+A work item is a GitHub issue, categorized by `type` and `labels`. There are four kinds:
 
 1. Epic
 2. User Story
 3. Bug
 4. Task
 
-All work items are GitHub issues, categorized by `type` and `labels`.
+- **Creation**: create the issue in `Netcracker/qubership-apihub`.
+- **Tracking**: add the issue to the `qubership-apihub` project.
 
-- **Creation**: Must be created in the umbrella repository (may be transferred later).
-- **Tracking**: Must be added to the `qubership-apihub` project.
-
-Please find description and creation of each work item type below
-
-### Work items types
+### Work item types
 
 #### Epic
 
-Epic is a huge umbrella work item describing some e2e functionality area.
+An Epic is a large umbrella work item that describes an end-to-end functionality area. It has child work items, the
+User Stories. The planning horizon of an Epic is a Quarter Release, a development period of three months.
 
-Epic has child work items - User Stories
+Definition of done: all child User Stories are complete. The Technical Manager reviews Epic statuses regularly, once
+per month.
 
-Epic planning horizon is a Quarter Release. Quarter Release - 3 months long development period
+Mandatory fields:
 
-Epic definition of done (DoD): completion of all child User Stories
+- Assignees: `alagishev`
+- Labels: `Epic`
+- Type: Feature
+- Projects: `qubership-apihub`
+  - Priority: choose an option
+  - Status: empty
+  - Sprint: empty
+- Milestone: the corresponding Quarter Release
+- Description: as detailed as you can make it
 
-Epics statuses reviewed by Technical Manager on regular basis (once per month)
-
-**Mandatory fields:**
-
-- **Assignees: alagishev:**
-- **Labels: Epic:**
-- **Type: Feature:**
-- **Projects: qubership-apihub:**
-  - **Priority: choose your option:**
-  - **Status: empty:**
-  - **Sprint: empty:**
-- **Milestone: choose corresponding Quarter Release:**
-- **Description: provide as much detailed description as you can:**
-
-**Examples**:
-
-- [Epic #3](https://github.com/Netcracker/qubership-apihub/issues/3)
-- [Epic #116](https://github.com/Netcracker/qubership-apihub/issues/116)
+Examples: [Epic #3](https://github.com/Netcracker/qubership-apihub/issues/3),
+[Epic #116](https://github.com/Netcracker/qubership-apihub/issues/116).
 
 #### User Story
 
-User Story is an e2e functionality which can be delivered and tested
+A User Story is end-to-end functionality that can be delivered and tested. It is assigned to a concrete developer and
+shown on the team demo after completion.
 
-User Story is assigned to concrete developer and shown on team demo after completion
+Definition of done: implemented, dev tested, demonstrated, merged to `develop`, QA tested, all bugs fixed, and
+included in a release.
 
-User Story definition of done: implemented, dev tested, demonstrated, merged to develop, QA tested, all bugs fixed,
-included in Release
+Mandatory fields:
 
-**Mandatory fields:**
+- Assignees: empty
+- Labels: `User Story`
+- Type: Feature
+- Projects: `qubership-apihub`
+  - Priority: choose an option
+  - Status: empty
+  - Sprint: empty (exception: the Dev Lead can create a User Story directly in the current sprint)
+  - Team: choose BE or FE
+- Relationships: the corresponding Epic
 
-- **Assignees: empty:**
-- **Labels: User Story:**
-- **Type: Feature:**
-- **Projects: qubership-apihub:**
-  - **Priority: Choose your option:**
-  - **Status: empty:**
-  - **Sprint: empty** (exception: **Dev Lead** can create User Story directly to current Sprint)
-  - **Team: choose BE or FE:**
-- **Relationships: choose corresponding Epic issue.**
-
-**Example**: [User Story #7](https://github.com/Netcracker/qubership-apihub/issues/7).
+Example: [User Story #7](https://github.com/Netcracker/qubership-apihub/issues/7).
 
 #### Bug
 
-Bug is a defect in our product which needs to be fixed
+A Bug is a defect in the product that needs a fix. Anyone can report one, but QA typically does.
 
-Bug can be reported by anyone but typically reported by QA team
+Definition of done: fixed, dev tested, merged to `develop`, QA tested, and included in a release.
 
-Bug definition of done: fixed, dev tested, merged to develop, QA tested, included in Release
+Mandatory fields:
 
-**Mandatory fields:**
-
-- **Assignees: empty:**
-- **Labels: empty:**
-- **Type: Bug:**
-- **Projects: qubership-apihub:**
-  - **Priority: Choose your option:**
-  - **Status: empty:**
-  - **Sprint: empty** (exception: **Dev Lead** can create a Bug directly to current Sprint; QA can create Bug directly
-    to current Sprint if the Bug found during testing of a feature from current Sprint)
-  - **Team: choose BE or FE:**
-  - **REF: fill it with E1234/I1234** (it is a number of internal ticketing system. E - external queue, I - internal
-    queue)
-
-**Example**: [Bug #30](https://github.com/Netcracker/qubership-apihub-backend/issues/30).
+- Assignees: empty
+- Labels: empty
+- Type: Bug
+- Projects: `qubership-apihub`
+  - Priority: choose an option
+  - Status: empty
+  - Sprint: empty (exceptions: the Dev Lead can create a Bug directly in the current sprint, and QA can do so when the
+    Bug is found while testing a feature of the current sprint)
+  - Team: choose BE or FE
+  - REF: `E1234` or `I1234`, the number in the internal ticketing system (`E` for the external queue, `I` for the
+    internal queue)
 
 #### Task
 
-Task is a some job which is not a new feature and not a bug. Technical tasks, one-time activities, configuration, etc
+A Task is a job that is neither a new feature nor a bug: technical tasks, one-time activities, configuration, and so
+on.
 
-Task definition of done: the task completed and accepted by **Dev Lead**/**TM**
+Definition of done: the task is complete and accepted by the Dev Lead or the TM.
 
-**Mandatory fields:**
+Mandatory fields:
 
-- **Assignees: empty/concrete person:**
-- **Labels: choose your option:**
-- **Type: Task:**
-- **Projects: qubership-apihub:**
-  - **Priority: Choose your option:**
-  - **Status: empty:**
-  - **Sprint: empty** (exception: **Dev Lead** can create Task directly to current Sprint; Developer can create Task for
-    himself directly to current Sprint)
-  - **Team: choose BE or FE:**
+- Assignees: empty or a concrete person
+- Labels: choose an option
+- Type: Task
+- Projects: `qubership-apihub`
+  - Priority: choose an option
+  - Status: empty
+  - Sprint: empty (exceptions: the Dev Lead can create a Task directly in the current sprint, and a developer can do so
+    for a Task assigned to themselves)
+  - Team: choose BE or FE
 
-**Example**: [Task #33](https://github.com/Netcracker/qubership-apihub/issues/33).
+Example: [Task #33](https://github.com/Netcracker/qubership-apihub/issues/33).
 
-#### Design task, Documentation task
+#### Design task and documentation task
 
-Used for tracking design changes (example: API specification changing), the rules is the same as for User Story (so,
-must be under Epic).
+These track design changes, such as a change of an API specification. The rules are the same as for a User Story, so
+they must sit under an Epic. The differences:
 
-The difference is:
+- Labels: `Design` or `documentation`
+- Type: Feature or Task
 
-- **Labels: Design/documentation:**
-- **Type: Feature/Task:**
+Example: [Design Task #28](https://github.com/Netcracker/qubership-apihub/issues/28).
 
-**Example**: [Design Task #28](https://github.com/Netcracker/qubership-apihub/issues/28).
-
-### Work items workflow
+### Work item workflow
 
 #### User Story workflow
 
-1. Issue created. **Hint:** It has **Status=`Empty`**, so on the project board it is placed it the very left column - it
-   makes it subject for review by Leads on regular Leads sync-up
-2. The issue is reviewed by **Dev Lead**, the Dev Lead **set Status=`Backlog`/`Ready for Dev`**, **set Sprint**. The
-   issue *could* be Transferred to concrete GitHub repository
-   1. Issues without Sprint but with not empty status - are in a Backlog
-3. When time is come, **Dev Lead assign** the issue to **Developer**
-4. **Developer** start working on the story and **set Status=`In Progress`**
-5. When **Developer** finish implementation and dev testing - he **creates Pull Request** (PR) to develop and **set
-   Status=`In Review`**
-   1. **PR must have a link to the issue in Development field:**
-   2. **PR must have empty Projects field:**
-   3. PR must have reviewers (team members)
-   4. PR must be assigned to **Dev Lead**
-   5. PR must have "green" CI workflow (no failed AT). If your PR breaks AT - see "Special cases" section.
-6. **Dev Lead** reviews PR. When review is done and all comments addressed - PR is accepted. **Dev Lead** updates
-   corresponding Issue and **set Status=`In Test`** and add **QA** to the Issue asignees
-7. **QA** validates the User Story and after succesfull testing **set Status=Done**
-   1. If any bugs are found during testing, **QA** creates new issues and set the User Story as a parent for them.
-      1. If all found bugs has **Priority <= Major**, the User Story is closed by **QA** by **set Status=`Done`**
-      2. If **Critical+** issues found, **QA** **set Status=In BugFix** and notify **Dev Lead**
-         1. **QA** does retest (go to step 7) of the User Story then all Critical+ issues are resolved
+1. The issue is created. It has an empty Status, so it sits in the leftmost column of the project board and is
+   reviewed by the leads at their regular sync-up.
+2. The Dev Lead reviews the issue, sets Status to `Backlog` or `Ready for Dev`, and sets the Sprint. Issues without a
+   Sprint but with a non-empty Status are in the backlog.
+3. When the time comes, the Dev Lead assigns the issue to a Developer.
+4. The Developer starts work and sets Status to `In Progress`.
+5. When implementation and dev testing are done, the Developer creates a pull request into `develop` and sets Status to
+   `In Review`. The pull request must:
+   1. link the issue in the Development field;
+   2. have an empty Projects field;
+   3. have reviewers from the team;
+   4. be assigned to the Dev Lead;
+   5. have a green CI run, with no failed end-to-end tests. If your pull request breaks tests, see
+      [Special cases](#special-cases).
+6. The Dev Lead reviews the pull request. When the review is done and every comment is addressed, the pull request is
+   accepted. The Dev Lead sets the issue Status to `In Test` and adds QA to the assignees.
+7. QA validates the User Story and, after successful testing, sets Status to `Done`.
+   1. If testing finds bugs, QA creates new issues and sets the User Story as their parent.
+      1. If every bug has Priority `Major` or lower, QA closes the User Story by setting Status to `Done`.
+      2. If a bug has Priority `Critical` or higher, QA sets Status to `In BugFix` and notifies the Dev Lead. QA
+         retests the User Story (back to step 7) after all of those bugs are resolved.
 
 #### Bug workflow
 
-Steps 1-6 are the same as for User Story
+Steps 1 to 6 are the same as for a User Story. In step 7, QA validates the fix and, after successful testing, sets
+Status to `Done`. If the fix is not accepted, QA sets Status to `In Progress` and notifies the Developer.
 
-Step 7: **QA** validates the Bug fixed and after succesfull testing **set Status=Done**
+#### Pull request review process and rules
 
-If the fix is not accepted - **QA** **set Status=In Progress** and notify **Developer**
+Still to be written. Until then, see the reviewer checklist in the
+[backend development guide](../../backend/portal-backend/docs/development_guide.md#reviewers-checklist) and
+[the contributor workflow](../development/workflow.md).
 
-#### PR review process and rules
+### Special cases
 
-*todo:*
+#### Fast track
 
-#### Special cases
+A work item can carry the label `fast track` for reasons such as a critical issue in production, a customer escalation,
+or an urgent request from sales. Process these items with the highest priority and include them in the nearest release
+if possible.
 
-##### Fast track
+#### Delivery to QA from develop or a feature branch
 
-Some issues can be marked with label `fast track` because of various reasons (critical issue on production, escalation
-from customer, urgent request from sales, etc). Such issues must be processed with the highest priority and included to
-the nearest release if possible.
+In most cases User Stories and Bugs reach QA from `develop`, after the pull request is accepted. This is the common
+process, and QA knows how to take a `develop` build.
 
-##### Delivery to QA from develop/feature branch
+For a complex, risky feature that involves several components, it can make sense to deliver it for testing from the
+feature branch. Use common sense to decide.
 
-In most cases User Stories and Bugfixes delivered to QA from develop branch. I.e. after accepting PR to develop.
+#### Release delay because of Critical+ issues
 
-It is a common process and QA knows how to take develop build.
+When the sprint is over but a User Story already merged to `develop` still has open Critical+ issues, the release can
+be delayed by one to three days.
 
-But in case of complex risky features which involves several sub-components - it makes sense to deliver it for testing
-from feature branches.
+#### My pull request breaks tests
 
-Criteria for definition of such cases - *common sense*.
+The end-to-end tests live in this repository (`tests/`), so one pull request carries the change and the test fix:
 
-##### Release delay because of Critical+ issues
+1. Fix the tests in the same pull request (preferred).
+2. If you need help, ask the test automation engineers to push the test changes to your branch.
 
-If it is time for release creation (Sprint timeline is over), but one or another User Story (already merged to develop)
-from the Sprint scope still has open Critical+ issue(s) - the release can be delayed for 1-2-3 days.
+Merge only when CI is green. Do not merge a code change now and a test fix later.
 
-##### My PR brokes AT
+#### Pull request without an issue
 
-If you PR brings changes which breaks auto tests (AT) either FE or BE, you have the following options:
-
-1. Fix AT by yourself (preferred option)
-2. Ask AT engineers to adopt tests to your changes
-
-AT adaptation must be implemented in a separate branch which will be merged to develop simultaniously with your PR.
-
-##### Pull Request without issue
-
-If PR is created without any corresponding issue (small technical improvements, cosmetic changes, etc) - it must be
-added into project.
+A pull request without a corresponding issue (a small technical improvement, a cosmetic change) must still be added to
+the project.
 
 ## Development process
 
-APIHUB product follows scrum development process.
+APIHUB follows the Scrum process. At a high level:
 
-High level flow is the following:
-
-1. Tactical planning horizon called **Quarter Release**. It is 3 months (12 weeks) period. Scope for it is subject for
-   planning with Product Owner. This scope is defined by business needs and strategic roadmap. Work items: Epics
-2. Operational development iteration called **Sprint**. Sprint is 2 weeks long. Work items: User Stories and Bugs
-3. Development team creates deliverable (**Release**) in the end of each Sprint
+1. The tactical planning horizon is the **Quarter Release**: three months (12 weeks). The scope is planned with the
+   Product Owner and defined by business needs and the strategic roadmap. Work items: Epics.
+2. The operational iteration is the **Sprint**: two weeks. Work items: User Stories and Bugs.
+3. The team creates a deliverable, a **Release**, at the end of each sprint.
 
 ### Quarter Release
 
-Before start of new Quarter Release (each 3 months) **Product Owner** prepares prioritized list of Epics.
-
-These Epics are reviewed with **TM** and **Dev Leads** in order to define technical and resource ability for
-implementation.
-
-Finalized list of Epics is a scope for development.
-
-**TM** and **Dev Leads** responsibility to make each Epic decomposition to User Stories
+Before each new Quarter Release, the Product Owner prepares a prioritized list of Epics. The TM and the Dev Leads
+review the Epics to decide whether the team has the technical ability and resources to implement them. The finalized
+list is the scope for development. The TM and the Dev Leads decompose each Epic into User Stories.
 
 ### Sprint
 
-Sprint is 2 weeks long development iteration
+A sprint is a two-week iteration. The TM pre-creates sprints in the project, and each sprint starts and ends
+automatically on its start and finish dates.
 
-Sprints are pre-created in project by **TM**
+- The TM and the Dev Leads define and agree on the sprint scope (the included issues) before the sprint starts.
+- Keeping the sprint board up to date is the TM's responsibility.
+- Implementing the sprint scope in time is the responsibility of the TM and the Dev Leads.
+- If the sprint is over and issues remain incomplete, the TM moves them manually to the next sprint or to no sprint
+  (the backlog).
+- The release is created right after the sprint completes.
 
-Sprint start and end happen automatically accroding to start/finish dates
+## Related pages
 
-- Sprint scope (included issues) need to be defined and agreed before Sprint start. It is **TM** and **Dev Leads**
-  responsibility
-- Keeping Sprint board be always up to date - **TM** responsibility
-- Implementation of Sprint scope in time - **TM** and **Dev Leads** responsibility
-- If Sprint is over but there are still not completed issues in it - they are manually moved to the next Sprint/no
-  Sprint (Backlog) by **TM**
-- Release is created right after Sprint completion
-
-## AUX
-
-### Userful Links
-
-- Frontend Development Guide
+- [Contributor workflow](../development/workflow.md)
+- [Release process](../development/release-process.md)
