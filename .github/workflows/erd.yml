@@ -9,6 +9,10 @@
       - 'backend/*/resources/migrations/**'
       - 'tools/ci/erd*'
       - '.github/workflows/erd.yml'
+  # Any branch can be dispatched, but only develop and main write to the store (the render job's
+  # STORE): another branch plans and renders, which tests its migrations and the generator, and
+  # pushes nothing, so a test run cannot replace a tag the site reads. This is not a security
+  # boundary, since a branch can change this file; the write access to the repository is.
   workflow_dispatch:
     inputs:
       force:
@@ -109,6 +113,8 @@ jobs:
     permissions:
       contents: read
       packages: write
+    env:
+      STORE: ${{ github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main' }}
     strategy:
       fail-fast: false
       matrix:
@@ -151,12 +157,24 @@ jobs:
       # After the render, so the packages: write credential is not on disk while the migrations
       # and SchemaSpy run.
       - name: log in to ghcr
+        if: env.STORE == 'true'
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: echo "$GH_TOKEN" | oras login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
 
+      - name: skip the store on this branch
+        if: env.STORE != 'true'
+        shell: bash
+        env:
+          BACKEND: ${{ matrix.backend }}
+          KEY: ${{ matrix.key }}
+        run: |
+          msg="rendered \`$BACKEND\` (\`mig-$KEY\`) on \`$GITHUB_REF\` and did not store it: only develop and main write to the store"
+          echo "$msg" | tee -a "$GITHUB_STEP_SUMMARY"
+
       - name: store the render
+        if: env.STORE == 'true'
         shell: bash
         env:
           BACKEND: ${{ matrix.backend }}
