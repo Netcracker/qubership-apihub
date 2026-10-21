@@ -14,8 +14,8 @@ This page ties together **what you edit in GitOps** versus **what the processes 
    via values/overlays).
 
 2. **Component source code** is the **authority on runtime behaviour**: which knobs are read from **`config.yaml`**,
-   which from **environment**, and exact variable names. The umbrella Markdown is a map; disagreeing forks should be
-   settled against code on `develop`.
+   which from **environment**, and exact variable names. This page is a map; where it disagrees with the code, the code
+   wins.
 
 3. **`deploy/docker-compose/` stacks** reproduce the **same split** for local rigs; they are **downstream helpers**, not
    replacements for Helm when you argue about cluster installs.
@@ -26,7 +26,7 @@ Annotated **YAML schemas** used by file-backed binaries live only where the load
 |-----------|--------------------------|-------------------|
 | API Registry | [`config.template.yaml`](../backend/portal-backend/config.template.yaml) (module `backend/portal-backend/`) | `APIHUB_CONFIG_FOLDER` → `config.yaml`; see backend service bootstrap. |
 | Kubernetes Agent | [`config.template.yaml`](../backend/agent/config.template.yaml) | Agent image (file-based like backend). |
-| **API Linter** | [`config.template.yaml`](https://github.com/Netcracker/qubership-api-linter-service/blob/develop/qubership-api-linter-service/config.template.yaml) | **`LINTER_CONFIG_FOLDER`** → `config.yaml`. Spectral rulesets stay **data** managed through the linter API/database, separate from this boot config. |
+| **API Linter** | [`config.template.yaml`](../backend/api-linter-service/config.template.yaml) | **`LINTER_CONFIG_FOLDER`** → `config.yaml`. Spectral rulesets stay **data** managed through the linter API/database, separate from this boot config. |
 | **Agents-backend** | [`config.template.yaml`](../backend/agents-backend/config.template.yaml) | **`AGENTS_BACKEND_CONFIG_FOLDER`** → `config.yaml`. |
 | Builders / UI | *(none)* | Env only (builder env / UI nginx wrapper). |
 

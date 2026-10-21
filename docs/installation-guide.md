@@ -55,7 +55,7 @@ Defaults in `values.yaml` and `docker-compose.yml` are enough for sandboxes. For
 | **qubership-apihub-backend** | **`config.yaml`** (path set by `APIHUB_CONFIG_FOLDER`, default `./`), same schema as [`config.template.yaml`](../backend/portal-backend/config.template.yaml) | `APIHUB_CONFIG_FOLDER`, `LOG_LEVEL`, `GOMEMLIMIT` |
 | **qubership-apihub-ui** | Env vars only | `APIHUB_BACKEND_ADDRESS`, `APIHUB_NC_SERVICE_ADDRESS`, `API_LINTER_SERVICE_ADDRESS`, `APIHUB_AGENTS_BACKEND_ADDRESS` |
 | **qubership-apihub-build-task-consumer** | Env vars only | `APIHUB_BACKEND_ADDRESS`, `APIHUB_API_KEY`, `LOG_LEVEL`, `FOLDER_STORE`, `OPERATIONS_BUILD_BATCH` |
-| **qubership-api-linter-service** | **`config.yaml`** (path set by `LINTER_CONFIG_FOLDER`), same schema as [`config.template.yaml`](https://github.com/Netcracker/qubership-api-linter-service/blob/develop/qubership-api-linter-service/config.template.yaml) | `LINTER_CONFIG_FOLDER`, `LOG_LEVEL`, `GOMEMLIMIT` |
+| **qubership-api-linter-service** | **`config.yaml`** (path set by `LINTER_CONFIG_FOLDER`), same schema as [`config.template.yaml`](../backend/api-linter-service/config.template.yaml) | `LINTER_CONFIG_FOLDER`, `LOG_LEVEL`, `GOMEMLIMIT` |
 | **qubership-apihub-agents-backend** | **`config.yaml`** (path set by `AGENTS_BACKEND_CONFIG_FOLDER`), same schema as [`config.template.yaml`](../backend/agents-backend/config.template.yaml) | `AGENTS_BACKEND_CONFIG_FOLDER`, `LOG_LEVEL`, `GOMEMLIMIT` |
 | **qubership-apihub-agent** *(K8s, optional)* | **`config.yaml`** (path set by `AGENT_CONFIG_FOLDER`), same schema as [`config.template.yaml`](../backend/agent/config.template.yaml) | `APIHUB_CONFIG_FOLDER` |
 
@@ -84,9 +84,14 @@ The UI and builder receive env vars injected directly by Deployment templates.
 ### Quick start — one command
 
 ```bash
+cd deploy/docker-compose/apihub-generic
+# The images in docker-compose.yml use the `dev` tag; switch to the released `latest` images
+sed -i 's/:dev$/:latest/' docker-compose.yml
 # Generates JWT key, random admin/token, substitutes placeholders, starts all containers
-./deploy/docker-compose/apihub-generic/generate_env_and_up_compose.sh
+sh generate_env_and_up_compose.sh
 ```
+
+Run the script from its own folder: it reads and rewrites the `*.env` and `*config.yaml` files of the current directory.
 
 ⚠️ This script **overwrites** template files in-place (`.env` files + every `*-config.yaml`). Stash or branch before
 running if you want reproducibility.
@@ -143,7 +148,8 @@ extensions:
 > **JWT key generation:**
 >
 > ```bash
-> ./deploy/docker-compose/apihub-generic/generate_jwt_pkey.sh
+> cd deploy/docker-compose/apihub-generic
+> ./generate_jwt_pkey.sh
 > # outputs base64 value to ./jwt_private_key
 > ```
 
@@ -593,7 +599,9 @@ for analytics.
 
 ```bash
 # One-liner: creates Kind cluster + installs APIHUB
-./deploy/helm-templates/local-k8s-quickstart/apihub-quickstart.sh
+# Run it from its own folder: the script changes into ./scripts
+cd deploy/helm-templates/local-k8s-quickstart
+./apihub-quickstart.sh
 # Portal at: https://qubership-apihub.localtest.me/login
 ```
 
