@@ -50,7 +50,43 @@ const ORDER = {
     'ai-assistants',
     'release-process',
   ],
-  'reference/api-changes': ['principles', 'schema-changes', 'openapi', 'graphql'],
+  'reference/api-changes': ['schema-changes', 'principles', 'openapi', 'graphql'],
+  // The order of the old wiki sidebar (the `order` column of the compatibility wiki map).
+  'reference/api-changes/openapi': [
+    'general-operation-parameters',
+    'headers',
+    'operation-parameters',
+    'parameters-schema',
+    'parameters-examples',
+    'request',
+    'request-body-schema',
+    'request-body-examples',
+    'response',
+    'response-body-schema',
+    'response-body-examples',
+    'response-headers-schema',
+    'oas-extensions',
+  ],
+  'reference/api-changes/graphql': [
+    'root-type-general',
+    'scalar-type-argument-of-root-type',
+    'input-type-argument-of-root-type',
+    'scalar-output-type-of-root-type',
+    'object-output-type-of-root-type',
+    'object-output-type-of-root-type-that-implements-interface',
+    'union-output-type-of-root-type',
+    'directives',
+    'interface-output-type-of-root-type',
+  ],
+};
+
+// Group labels for folders without a README, where the folder name does not read well.
+const LABELS = {
+  'reference/api-changes/openapi': 'OpenAPI',
+  'reference/api-changes/graphql': 'GraphQL',
+  'design/custom-openapi-extensions': 'Custom OpenAPI extensions',
+  'design/vscode-extension': 'VS Code extension',
+  'design/contract-types': 'Contract types',
 };
 
 const LINKS = [
@@ -65,7 +101,7 @@ const LINKS = [
   },
 ];
 
-const { sidebar, unlisted } = buildSidebar({ pages: collectPages(), sections: SECTIONS, links: LINKS, order: ORDER });
+const { sidebar, unlisted } = buildSidebar({ pages: collectPages(), sections: SECTIONS, links: LINKS, order: ORDER, labels: LABELS });
 if (unlisted.length) {
   console.warn(
     `docs-site: pages in no sidebar group (add them to SECTIONS): ${unlisted.map((s) => `/${s}/`).join(', ')}`,

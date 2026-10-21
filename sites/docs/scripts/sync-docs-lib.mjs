@@ -395,7 +395,7 @@ function byOrder(a, b) {
 // subfolders. Order: sidebar.order from the source's front matter, then the folder's list in
 // `order`, then by name. A subfolder is a collapsed group labeled with the title of its index page
 // (or its name) and is left out when it holds no page.
-function directoryItems(dir, pages, used, order) {
+function directoryItems(dir, pages, used, order, labels) {
   const prefix = dir === '' ? '' : `${dir}/`;
   const listed = order[dir] || [];
   const children = new Map();
@@ -436,10 +436,10 @@ function directoryItems(dir, pages, used, order) {
     }
     const sub = `${prefix}${child.name}`;
     const subIndex = pages.find((p) => p.slug === sub && p.isIndex !== false);
-    const subItems = directoryItems(sub, pages, used, order);
+    const subItems = directoryItems(sub, pages, used, order, labels);
     if (subItems.length === 0) continue;
     items.push({
-      label: subIndex?.hints?.label || subIndex?.title || humanize(child.name),
+      label: subIndex?.hints?.label || labels[sub] || subIndex?.title || humanize(child.name),
       collapsed: true,
       items: subItems,
     });
@@ -454,9 +454,11 @@ function directoryItems(dir, pages, used, order) {
 //   lists its pages first, then everything under its directory. A section with no page is left out.
 // links: [{ label, items: [{ label, link }] }] groups of external links, appended as they are.
 // order: { '<directory slug>': ['<child name>', ...] } explicit order inside a folder.
+// labels: { '<directory slug>': 'Label' } group labels for folders whose name does not read well. A label
+//   from the folder's front matter wins; the config label wins over the README title.
 //
 // Returns { sidebar, unlisted } where unlisted are the slugs of pages in no section.
-export function buildSidebar({ pages, sections, links = [], order = {} }) {
+export function buildSidebar({ pages, sections, links = [], order = {}, labels = {} }) {
   const bySlug = new Map(pages.map((page) => [page.slug, page]));
   const used = new Set();
   const sidebar = [];
@@ -470,7 +472,7 @@ export function buildSidebar({ pages, sections, links = [], order = {} }) {
       const starlightSlug = slug === '' ? 'index' : slug;
       items.push(label ? { label, slug: starlightSlug } : { slug: starlightSlug });
     }
-    if (section.directory !== undefined) items.push(...directoryItems(section.directory, pages, used, order));
+    if (section.directory !== undefined) items.push(...directoryItems(section.directory, pages, used, order, labels));
     if (items.length === 0) continue;
     sidebar.push({ label: section.label, collapsed: section.collapsed ?? false, items });
   }
