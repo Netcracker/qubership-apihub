@@ -43,7 +43,7 @@ The next free number is computed from every ID that appears in a title or in a b
 | General features | GF | `general/` | 12 | `DI-Portal-GF-011` |
 | Package version | PKGVER | `package-version/` | 24 | `DI-Portal-PKGVER-025` |
 | Package settings | PS | `package-settings/` | 7 | `DI-Portal-PS-008` |
-| Global settings | GS | `global-settings/` | 7 | `DI-Portal-GS-007` |
+| Global settings | GS | `global-settings/` | 7 | `DI-Portal-GS-009` |
 | Operation view | OPVIEW | `operation-view/` | 3 | `DI-Portal-OPVIEW-004` |
 | Comparison | COMP | `comparison/` | 3 | `DI-Portal-COMP-004` |
 | Dashboard version | DSHVER | `dashboard-version/` | 2 | `DI-Portal-DSHVER-003` |
@@ -53,14 +53,15 @@ The next free number is computed from every ID that appears in a title or in a b
 | Agent | - | `agent/` | 2 | `DI-Agent-003` |
 | Contract types | - | `contract-types/` | 3 | no IDs |
 
-`PKGVER-021` is reserved: the "AI Recommendations Tab" item has an ID but its page is not in the repository yet. Some
-items are referenced by ID before their page exists (for example `COMP-001`); the numbers still count as used.
+`PKGVER-021` is reserved: the "AI Recommendations Tab" item has an ID but its page is not in the repository yet.
+`GS-008` is reserved for the planned "Search Scope for GraphQL Operations" item, which has no page yet. Items can be
+referenced by ID before their page exists; the numbers still count as used.
 
 ## File naming
 
 Name a file `<id>-<slug>.md`, in lowercase ASCII with hyphens, for example
 `package-version/di-portal-pkgver-011-list-of-operations.md`. The slug is the item name. A page that is not a numbered
-design item keeps a plain slug, such as `general/search-scope-for-rest-api.md`.
+design item keeps a plain slug, such as `global-settings/ruleset-severity-downgrade.md`.
 
 ## Template for a new design item
 
@@ -117,7 +118,7 @@ Use `-` after `Related Design Items:` and `Related API:` when there is nothing t
 - Relevance of API-Processor Versions ([GF-009](./general/di-portal-gf-009-relevance-of-api-processor-versions.md))
 - Global Search v4 (newer revision of GF-010) ([GF-010](./general/di-portal-gf-010-global-search-v4.md))
 - Global Search ([GF-010](./general/di-portal-gf-010-global-search.md))
-- [Search Scope for REST API](./general/search-scope-for-rest-api.md)
+- Search Scope for REST API ([GS-007](./general/di-portal-gs-007-search-scope-for-rest-api.md))
 
 ### Package version
 
@@ -186,9 +187,9 @@ Use `-` after `Related Design Items:` and `Related API:` when there is nothing t
 
 ### Comparison
 
+- Semi-breaking severity of changes ([COMP-001](./comparison/di-portal-comp-001-semi-breaking-severity-of-changes.md))
 - Severity of Changes ([COMP-002](./comparison/di-portal-comp-002-severity-of-changes.md))
 - API Changes ([COMP-003](./comparison/di-portal-comp-003-api-changes.md))
-- [Semi-breaking severity of changes](./comparison/semi-breaking-severity-of-changes.md)
 
 ### Dashboard version
 

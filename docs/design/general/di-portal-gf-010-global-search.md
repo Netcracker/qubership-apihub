@@ -59,8 +59,8 @@ The functionality allows users to search for API operations, documents and packa
 Search by documents is performed on API Operations tab. The system searches operations in packages only (i.e. the system
 does not search operation from dashboards, because in face dashboards do not have their own operations). Search scope:
 
-- for REST operations - DI-Portal-GS-001: Search Scope for REST API
-- for GraphQL operations - (not impl) DI-Portal-GS-002: Search Scope for GraphQL Operations
+- for REST operations - [DI-Portal-GS-007: Search Scope for REST API](./di-portal-gs-007-search-scope-for-rest-api.md)
+- for GraphQL operations - (not impl) DI-Portal-GS-008: Search Scope for GraphQL Operations
 
 For the found API operation the system displays the following information:
 

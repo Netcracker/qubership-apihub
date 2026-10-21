@@ -1,6 +1,6 @@
-# Search Scope for REST API
+# DI-Portal-GS-007 Search Scope for REST API
 
-**Design Item ID**: DI-Portal-GS-001  
+**Design Item ID**: DI-Portal-GS-007  
 **Design Item Name**: Search Scope for REST Operations  
 **Related Design Items**: [Global Search](di-portal-gf-010-global-search.md)  
 **Related API**:  
