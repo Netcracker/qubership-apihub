@@ -7,4 +7,4 @@ services:
       APIHUB_NC_SERVICE_ADDRESS: "host.docker.internal:8091"
     ports:
       - "8081:8080"
-    restart: unless-stopped 
+    restart: unless-stopped

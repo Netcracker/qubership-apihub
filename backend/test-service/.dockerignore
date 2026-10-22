@@ -1,0 +1,14 @@
+# A deny-list: podman does not descend into an excluded directory, so `*` with re-includes
+# copied only top-level files. The runtime stage copies static/.
+.git*
+.github
+.qubership
+helm-template
+dist
+*.md
+*.cmd
+*.yml
+LICENSE
+Dockerfile
+.dockerignore
+.lycheeignore

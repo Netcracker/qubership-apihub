@@ -11,7 +11,7 @@
 
 $ErrorActionPreference = 'Stop'
 $RepoRoot = Resolve-Path (Join-Path $PSScriptRoot '..\..\..\..')
-$MigrationsDir = Join-Path $RepoRoot 'qubership-apihub-service\resources\migrations'
+$MigrationsDir = Join-Path $RepoRoot 'resources/migrations'
 
 # Keeps numbers inside 32-bit integers on both the bash and PowerShell side.
 $MaxPrefixDigits = 9

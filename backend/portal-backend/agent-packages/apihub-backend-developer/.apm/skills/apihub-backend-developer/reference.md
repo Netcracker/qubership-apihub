@@ -7,17 +7,17 @@ Read this file when you need backend-specific examples or doc-routing detail. Ke
 | Change type | Update |
 |-------------|--------|
 | New or changed REST contract | `docs/api/APIHUB_API.yaml` (+ Admin/Internal specs if applicable) |
-| New feature with design notes | `docs/feature_design/<area>/` (see `docs/README.md`) |
-| Operational / migration analysis | `docs/ops_migration_analysis_guide.md` |
-| Local dev setup change | `docs/local_development/` |
-| AI assistant behavior | `docs/feature_design/ai_assistant/` or `docs/static_resources_customization.md` |
+| New feature with design notes | `docs/design/<area>/` in the repository root (see `docs/design/README.md`) |
+| Operational / migration analysis | `docs/administration/operations-migration-analysis.md` (repository root `docs/`) |
+| Local dev setup change | `docs/development/local-run.md` (repository root `docs/`) |
+| AI assistant behavior | `docs/design/ai-assistant/` (repository root) or `docs/administration/static-resources-customization.md` (repository root `docs/`) |
 | Minor implementation detail | Relevant existing guide only — **not** root `README.md` |
 
 Full index: `docs/README.md`.
 
 ## Related repositories (Helm, E2E)
 
-See [`docs/agent/related-repositories.md`](../../../docs/agent/related-repositories.md). Agents cannot edit those repos unless they are in the workspace; **remind** the developer with links when:
+See `backend/README.md`, section "Follow-up in other modules". Agents cannot edit those repos unless they are in the workspace; **remind** the developer with links when:
 
 | Backend change | Likely follow-up |
 |----------------|------------------|
@@ -25,8 +25,6 @@ See [`docs/agent/related-repositories.md`](../../../docs/agent/related-repositor
 | New cron, probe, port, volume | Helm chart templates |
 | New/changed REST API | Postman collection repo + `docs/api/*.yaml` |
 | New auth or error contract | Postman assertions |
-
-Update placeholder Helm URL in `related-repositories.md` when your team's chart repo is known.
 
 ## Error codes (`exception/ErrorCodes.go`)
 
@@ -39,7 +37,7 @@ const ExampleNotFoundMsg = "Example with id = $id not found"
 
 Use existing patterns for parameter placeholders (`$id`, `$param`, etc.). Do not inline error code strings in controllers or services.
 
-## Service.go wiring
+## main.go wiring
 
 - Add `repository.New...` with other repository constructors (end of repository block).
 - Add `service.New...` with other services (end of service block).
@@ -51,7 +49,7 @@ Use existing patterns for parameter placeholders (`$id`, `$param`, etc.). Do not
 Naming: `{N}_{description}.up.sql` and `{N}_{description}.down.sql` where `N` is the next free integer.
 Provide the down file unless the migration is a data fix that cannot be reverted.
 
-Directory: `qubership-apihub-service/resources/migrations/`
+Directory: `resources/migrations/`
 
 Validate (from repository root):
 

@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/Netcracker/qubership-apihub-commons-go/api-spec-exposer/config"
+	"github.com/Netcracker/qubership-apihub/backend/commons-go/api-spec-exposer/config"
 	"github.com/gosimple/slug"
 	"gopkg.in/yaml.v3"
 )

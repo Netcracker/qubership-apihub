@@ -7,8 +7,10 @@ Node.js **>= 24** is required (`engines` in the repository root `package.json`).
 **Default setup for Portal UI work.** Vite serves the frontend with HMR and forwards `/api`, `/playground`, and `/ws/v1` to a real APIHUB instance.
 
 1. Set `proxyServer` in `packages/portal/vite.config.ts` to your APIHUB URL (default: `https://qubership-apihub.localtest.me`).
-2. From `packages/portal`: `npm run proxy`.
-3. Open the Vite URL from the terminal (typically `http://localhost:5173`, opens `/login`).
+2. From the workspace root, build the Portal once: `pnpm install`, then `pnpm exec nx build ui-portal`. The dev
+   server loads the other workspace packages, such as api-processor, from their `dist/` directories.
+3. From `packages/portal`: `pnpm proxy`.
+4. Open the Vite URL from the terminal (typically `http://localhost:5173`, opens `/login`).
 
 No local mock server is required for this workflow.
 
@@ -17,23 +19,25 @@ No local mock server is required for this workflow.
 Use when you develop or test **mock-only** API routes while the rest of the Portal talks to the real backend.
 
 1. Configure `proxyServer` as in proxy mode.
-2. `npm run dev:backend` (mock on `http://localhost:3003`; override port with `NODEJS_PORT`).
-3. `npm run proxy` in a second terminal.
+2. `pnpm dev:backend` (mock on `http://localhost:3003`; override port with `NODEJS_PORT`).
+3. `pnpm proxy` in a second terminal.
 4. For each prefix that should hit the mock, add a `server.proxy` entry with `target: devServer` **before** the catch-all `/api` rule. See [portal-mock-server.md](./portal-mock-server.md#vite-proxy-viteconfigts) for the Vite example and mock API reference.
 
 ## Full mock mode (not supported for Portal today)
 
-`npm run dev:portal`, or `dev:backend` + `dev:frontend` with all `/api` traffic pointed at the mock, **does not yield a working Portal** at the moment. Most product flows need a real APIHUB backend.
+`dev:backend` + `dev:frontend` with all `/api` traffic pointed at the mock **does not yield a working Portal** at the
+moment. Most product flows need a real APIHUB backend.
 
 ## Preview mode (production build + proxy)
 
 From `packages/portal`:
 
 ```bash
-npm run preview
+pnpm preview
 ```
 
-Builds the Portal and serves the production bundle via `vite preview` in proxy mode (same `proxyServer` as `npm run proxy`).
+Builds the Portal and serves the production bundle via `vite preview` in proxy mode (same `proxyServer` as
+`pnpm proxy`).
 
 ## Portal scripts
 
@@ -47,26 +51,32 @@ Builds the Portal and serves the production bundle via `vite preview` in proxy m
 
 ## Agent UI
 
-From the repository root:
+From `packages/agents`, start the mock backend and the frontend in two terminals:
 
 ```bash
-npm run dev:agents
+pnpm dev:backend
 ```
 
-Starts the Agent package mock backend and frontend (Lerna scope `@netcracker/qubership-apihub-ui-agents`).
+```bash
+pnpm dev:frontend
+```
 
 ## Building locally
 
-Add a GitHub PAT with `read:packages` to `.npmrc` (private `@netcracker` packages):
+No `.npmrc` and no GitHub PAT are needed any more. The image is built from output you have
+already built, not from packages fetched at image-build time, so nothing contacts a registry.
 
-```ini
-@netcracker:registry=https://npm.pkg.github.com/
-//npm.pkg.github.com/:_authToken=ghp_XYZ
-always-auth=true
-```
+Install once at the workspace root, build the two apps, then build the image from this
+directory:
 
 ```bash
-npm install
-npm run build
-podman build -f Dockerfile.local .
+pnpm install
+pnpm exec nx run-many -t build --projects=ui-portal,ui-agents
+cd frontend/ui && podman build -f Dockerfile.local .
 ```
+
+Unchanged upstream projects are cache restores rather than rebuilds, so the second and later
+builds are fast.
+
+`Dockerfile.local` takes this directory as its context; `Dockerfile` takes the workspace root
+and is what CI builds. They differ only in where the inputs come from.

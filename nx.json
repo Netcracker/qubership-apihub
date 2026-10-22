@@ -1,0 +1,312 @@
+{
+  "$schema": "./node_modules/nx/schemas/nx-schema.json",
+  "//cache": [
+    "No cacheDirectory: Nx 23 then keeps the cache in ~/.nx/<id>/, where <id> comes from the git",
+    "repository, so every worktree shares it. Setting cacheDirectory or NX_CACHE_DIRECTORY gives",
+    "each checkout its own cache."
+  ],
+  "plugins": [
+    "@nx-go/nx-go",
+    "@nx/maven",
+    "./tools/nx/go-lang-tag.js"
+  ],
+  "release": {
+    "//": [
+      "One release group per component, tagged <component>/{version} by the root releaseTag pattern.",
+      "Every group is fixed, also those with one project: a version plan names groups, and Nx rejects an",
+      "independent group named like its project. Projects outside every group (ui-tests, the root Maven",
+      "project) are not released.",
+      "The bumps come from the version plan that tools/release/version-plan.js writes before each run: the",
+      "highest R6 bump among the commits touching a component since its last tag. Nx gives each in-repo",
+      "dependent of a bumped component a patch bump. specifierSource conventional-commits is not used:",
+      "Nx would count a dependency's commits as the dependent's own (see the header of version-plan.js).",
+      "The current version is the last tag. The Go and Java groups have no manifest: their version actions",
+      "write nothing and start a component without a tag from 0.0.0.",
+      "preserveLocalDependencyProtocols keeps workspace:^, so pnpm writes the real range at publish time."
+    ],
+    "releaseTag": {
+      "pattern": "{releaseGroupName}/{version}"
+    },
+    "versionPlans": true,
+    "groups": {
+      "api-diff": {
+        "projects": ["api-diff"],
+        "projectsRelationship": "fixed"
+      },
+      "api-processor": {
+        "projects": ["api-processor"],
+        "projectsRelationship": "fixed"
+      },
+      "api-unifier": {
+        "projects": ["api-unifier"],
+        "projectsRelationship": "fixed"
+      },
+      "api-visitor": {
+        "projects": ["api-visitor"],
+        "projectsRelationship": "fixed"
+      },
+      "class-view": {
+        "projects": ["class-view"],
+        "projectsRelationship": "fixed"
+      },
+      "compatibility-suites": {
+        "projects": ["compatibility-suites"],
+        "projectsRelationship": "fixed"
+      },
+      "ddlapi": {
+        "projects": ["ddlapi"],
+        "projectsRelationship": "fixed"
+      },
+      "graphapi": {
+        "projects": ["graphapi"],
+        "projectsRelationship": "fixed"
+      },
+      "http-spec": {
+        "projects": ["http-spec"],
+        "projectsRelationship": "fixed"
+      },
+      "json-crawl": {
+        "projects": ["json-crawl"],
+        "projectsRelationship": "fixed"
+      },
+      "rest-playground": {
+        "projects": ["rest-playground"],
+        "projectsRelationship": "fixed"
+      },
+      "jest-chrome-in-docker-environment": {
+        "projects": ["jest-chrome-in-docker-environment"],
+        "projectsRelationship": "fixed"
+      },
+      "apispec-view": {
+        "projects": [
+          "apispec-view-root",
+          "apispec-view",
+          "apispec-view-diff-block",
+          "apispec-view-diff-elements-core",
+          "apispec-view-elements-core",
+          "apispec-view-json-schema-diff-viewer",
+          "apispec-view-json-schema-viewer",
+          "apispec-view-samples"
+        ],
+        "projectsRelationship": "fixed"
+      },
+      "api-doc-viewer": {
+        "projects": [
+          "api-doc-viewer-root",
+          "api-doc-viewer",
+          "api-doc-viewer-api-data-model",
+          "api-doc-viewer-api-state-model",
+          "api-doc-viewer-next-data-model",
+          "api-doc-viewer-samples"
+        ],
+        "projectsRelationship": "fixed"
+      },
+      "ui": { "projects": ["ui-root", "ui-portal", "ui-agents", "ui-shared"], "projectsRelationship": "fixed" },
+      "build-task-consumer": {
+        "projects": ["build-task-consumer"],
+        "projectsRelationship": "fixed"
+      },
+      "portal-backend": {
+        "projects": ["portal-backend"],
+        "projectsRelationship": "fixed",
+        "version": { "versionActions": "tools/release/version-actions/tag-only.js" }
+      },
+      "api-linter-service": {
+        "projects": ["api-linter-service"],
+        "projectsRelationship": "fixed",
+        "version": { "versionActions": "tools/release/version-actions/tag-only.js" }
+      },
+      "agents-backend": {
+        "projects": ["agents-backend"],
+        "projectsRelationship": "fixed",
+        "version": { "versionActions": "tools/release/version-actions/tag-only.js" }
+      },
+      "agent": {
+        "projects": ["agent"],
+        "projectsRelationship": "fixed",
+        "version": { "versionActions": "tools/release/version-actions/tag-only.js" }
+      },
+      "test-service": {
+        "projects": ["test-service"],
+        "projectsRelationship": "fixed",
+        "version": { "versionActions": "tools/release/version-actions/tag-only.js" }
+      },
+      "commons-go": {
+        "projects": ["commons-go"],
+        "projectsRelationship": "fixed",
+        "version": { "versionActions": "tools/release/version-actions/tag-only.js" }
+      },
+      "java-task-consumer": {
+        "projects": [
+          "java-task-consumer",
+          "com.netcracker.qubership.apihub:java-task-consumer",
+          "com.netcracker.qubership.apihub:jdiff-engine"
+        ],
+        "projectsRelationship": "fixed",
+        "version": { "versionActions": "tools/release/version-actions/tag-only.js" }
+      }
+    },
+    "conventionalCommits": {
+      "//": [
+        "Bumps per decision R6, every type listed. tools/release/version-plan.js reads this table, not Nx.",
+        "A ! after the type or a BREAKING CHANGE: footer gives major."
+      ],
+      "types": {
+        "feat": { "semverBump": "minor" },
+        "fix": { "semverBump": "patch" },
+        "perf": { "semverBump": "patch" },
+        "revert": { "semverBump": "patch" },
+        "refactor": { "semverBump": "patch" },
+        "build": { "semverBump": "patch" },
+        "chore": { "semverBump": "patch" },
+        "style": { "semverBump": "patch" },
+        "docs": { "semverBump": "none" },
+        "test": { "semverBump": "none" },
+        "ci": { "semverBump": "none" }
+      }
+    },
+    "version": {
+      "//adjustSemverBumpsForZeroMajorVersion": "R6 holds below 1.0.0 too: feat takes 0.1.0 to 0.2.0, not to 0.1.1.",
+      "adjustSemverBumpsForZeroMajorVersion": false,
+      "//preVersionCommand": [
+        "Refuses a real release outside main before anything is versioned, committed, tagged, or pushed.",
+        "A pre-push hook cannot do this: nx pushes with --no-verify. Dry runs (NX_DRY_RUN=true) pass."
+      ],
+      "preVersionCommand": "node tools/release/guard.js",
+      "specifierSource": "version-plans",
+      "currentVersionResolver": "git-tag",
+      "fallbackCurrentVersionResolver": "disk",
+      "preserveLocalDependencyProtocols": true,
+      "updateDependents": "auto"
+    },
+    "changelog": {
+      "//": [
+        "Nx writes no changelog and creates no GitHub Release: the release-artifacts job of ci.yml creates",
+        "them from tools/release/notes/ after the tags reach main."
+      ],
+      "workspaceChangelog": false,
+      "projectChangelogs": false
+    }
+  },
+  "namedInputs": {
+    "default": [
+      "{projectRoot}/**/*",
+      "sharedGlobals"
+    ],
+    "production": [
+      "default",
+      "!{projectRoot}/**/*.spec.ts",
+      "!{projectRoot}/**/*.spec.tsx",
+      "!{projectRoot}/**/*.test.ts",
+      "!{projectRoot}/**/*.test.tsx",
+      "!{projectRoot}/**/*.unit-test.ts",
+      "!{projectRoot}/**/*.unit-test.tsx",
+      "!{projectRoot}/**/test/**/*",
+      "!{projectRoot}/**/__tests__/**/*",
+      "!{projectRoot}/**/__image_snapshots__/**/*",
+      "!{projectRoot}/**/*.stories.ts",
+      "!{projectRoot}/**/*.stories.tsx",
+      "!{projectRoot}/.storybook/**/*"
+    ],
+    "//goToolchain": [
+      "backend/.go-version belongs to no project, so the Go targets list it as an input. It is not in",
+      "sharedGlobals, which would rebuild every JavaScript project on a Go version change."
+    ],
+    "goToolchain": [
+      "{workspaceRoot}/backend/.go-version"
+    ],
+    "sharedGlobals": [
+      "{workspaceRoot}/pnpm-lock.yaml",
+      "{workspaceRoot}/pnpm-workspace.yaml",
+      "{workspaceRoot}/.npmrc",
+      "{workspaceRoot}/nx.json"
+    ]
+  },
+  "targetDefaults": {
+    "@nx-go/nx-go:build": {
+      "//outputs": [
+        "nx-go declares dist/{projectRoot}*, which for agent also matches agents-backend's binary.",
+        "These name the one file the executor writes; .exe is the Windows name."
+      ],
+      "outputs": [
+        "{workspaceRoot}/dist/{projectRoot}",
+        "{workspaceRoot}/dist/{projectRoot}.exe"
+      ],
+      "inputs": [
+        "default",
+        "^default",
+        "goToolchain",
+        "{workspaceRoot}/go.work",
+        "{workspaceRoot}/go.work.sum"
+      ]
+    },
+    "@nx-go/nx-go:test": {
+      "inputs": [
+        "default",
+        "^default",
+        "goToolchain",
+        "{workspaceRoot}/go.work",
+        "{workspaceRoot}/go.work.sum"
+      ]
+    },
+    "build": {
+      "dependsOn": [
+        "^build"
+      ],
+      "inputs": [
+        "production",
+        "^production"
+      ],
+      "outputs": [
+        "{projectRoot}/dist"
+      ],
+      "cache": true
+    },
+    "test": {
+      "dependsOn": [
+        "^build"
+      ],
+      "inputs": [
+        "default",
+        "^production"
+      ],
+      "cache": true
+    },
+    "lint:check": {
+      "inputs": [
+        "default"
+      ],
+      "cache": true
+    },
+    "type-check": {
+      "dependsOn": [
+        "^build"
+      ],
+      "inputs": [
+        "default",
+        "^production"
+      ],
+      "cache": true
+    },
+    "build:showcase": {
+      "dependsOn": [
+        "build",
+        "^build"
+      ],
+      "cache": false
+    },
+    "screenshot-test": {
+      "dependsOn": [
+        "build",
+        "^build"
+      ],
+      "inputs": [
+        "default",
+        "^production"
+      ],
+      "cache": true
+    }
+  },
+  "defaultBase": "develop",
+  "analytics": false
+}

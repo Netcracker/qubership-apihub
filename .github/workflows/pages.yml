@@ -1,0 +1,351 @@
+'on':
+  # Dispatched by ci.yml after the Storybooks and by erd.yml after a render, because a GITHUB_TOKEN
+  # can start only this event. Dispatched at a ref other than the default branch, the site is
+  # assembled as an artifact but not deployed.
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: What asked for this deploy
+        required: false
+        default: manual
+      budget_mib:
+        description: >-
+          Size budget for the whole site in MiB. The Storybooks get what the other sections leave;
+          branches past it are left off, newest kept first
+        required: false
+        default: '900'
+  # Runs the default branch's copy of this file; tag deletions are ignored.
+  delete:
+  # Every run assembles from `git ls-remote --heads`, so the daily run catches a missed deletion.
+  schedule:
+    - cron: '17 3 * * *'
+
+name: 'Pages: Publish'
+
+# One queue for all branches, never cancelled: a deploy replaces the whole site. A newer pending run
+# replaces an older one, which is safe because every run assembles from the stores and the refs.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  # The site (D15): the navigation page, the landing, the docs site, and the ERDs of one ref (D16),
+  # and the Storybooks of every live branch. tools/ci/pages-site.js lays it out.
+  assemble:
+    if: github.event_name != 'delete' || github.event.ref_type == 'branch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      packages: read
+    outputs:
+      deployable: ${{ steps.ref.outputs.deployable }}
+    steps:
+      # No credentials on disk: the worktree builds below run the pnpm installs and builds of the
+      # site's ref. The repository is public, so the fetches and ls-remotes of this job need none.
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      # Only the default branch deploys and cleans the stores. Schedule events carry no repository
+      # object, so the default branch is looked up. The full ref is compared, so a tag that shares
+      # the default branch's name does not deploy. The real gate is the branch policy of the
+      # github-pages environment; this check keeps other refs from even trying.
+      - name: is this the default branch?
+        id: ref
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          default="$(gh api "repos/$GITHUB_REPOSITORY" --jq .default_branch)"
+          [ -n "$default" ] || { echo "::error::could not read the default branch"; exit 1; }
+          if [ "$GITHUB_REF" = "refs/heads/$default" ]; then deployable=true; else deployable=false; fi
+          echo "deployable=$deployable" >> "$GITHUB_OUTPUT"
+          echo "ref \`$GITHUB_REF\`, default \`$default\`: deploy=$deployable" | tee -a "$GITHUB_STEP_SUMMARY"
+
+      # D16: the site shows main once main has the sites (the first product release from the
+      # monorepo), develop before. The repository variable SITE_REF overrides the ref of the whole
+      # site, LANDING_REF that of the landing only (release-process.md, "Tips and tricks").
+      - name: resolve the refs
+        id: refs
+        shell: bash
+        env:
+          SITE_REF: ${{ vars.SITE_REF }}
+          LANDING_REF: ${{ vars.LANDING_REF }}
+        run: |
+          set -euo pipefail
+          # The commit of a branch, tag, or commit SHA on origin.
+          commit_of() { git fetch --no-tags --depth=1 --quiet origin "$1" && git rev-parse FETCH_HEAD; }
+
+          if [ -n "$SITE_REF" ]; then
+            site_ref="$SITE_REF"; site_sha="$(commit_of "$SITE_REF")"; why='the repository variable SITE_REF'
+          else
+            # Exit code 2 means "no such branch"; anything else is a failed read, not an answer.
+            rc=0; git ls-remote --exit-code --heads origin refs/heads/main > /dev/null || rc=$?
+            case "$rc" in
+              0) git fetch --no-tags --depth=1 --quiet origin +refs/heads/main:refs/remotes/origin/main ;;
+              2) ;;
+              *) echo "::error::could not list the main branch of origin (git ls-remote exited with $rc)"; exit 1 ;;
+            esac
+            if [ "$rc" = 0 ] && git cat-file -e origin/main:sites/landing/package.json 2> /dev/null; then
+              site_ref=main; why='main has sites/landing'
+            else
+              site_ref=develop; why='main has no sites/landing yet'
+            fi
+            site_sha="$(commit_of "$site_ref")"
+          fi
+
+          if [ -n "$LANDING_REF" ]; then
+            landing_ref="$LANDING_REF"; landing_sha="$(commit_of "$LANDING_REF")"
+          else
+            landing_ref="$site_ref"; landing_sha="$site_sha"
+          fi
+          git cat-file -e "$landing_sha:sites/landing/package.json" 2> /dev/null || {
+            echo "::error::$landing_ref ($landing_sha) has no sites/landing/package.json, so there is no landing to build"
+            exit 1
+          }
+          # The docs site arrives with step 10; until the ref has it, docs/ gets a placeholder page.
+          if git cat-file -e "$site_sha:sites/docs/package.json" 2> /dev/null; then docs=true; else docs=false; fi
+
+          {
+            echo "site_ref=$site_ref"
+            echo "site_sha=$site_sha"
+            echo "landing_ref=$landing_ref"
+            echo "landing_sha=$landing_sha"
+            echo "docs=$docs"
+          } >> "$GITHUB_OUTPUT"
+          {
+            echo "### Refs"
+            echo ""
+            echo "- site: \`$site_ref\` at \`$site_sha\` ($why)"
+            echo "- landing: \`$landing_ref\` at \`$landing_sha\`${LANDING_REF:+ (the repository variable LANDING_REF)}"
+            echo "- docs site at the ref: $docs"
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+
+      # A commit's build does not change, so the frequent Storybook dispatches reuse it. The docs
+      # build also depends on the ref name, which its GitHub links show. Bump the version in the key
+      # when the build recipe below changes.
+      - name: restore the landing build
+        id: landing-cache
+        uses: actions/cache@v6
+        with:
+          path: ${{ runner.temp }}/pages-dist/landing
+          key: pages-landing-v1-${{ steps.refs.outputs.landing_sha }}
+
+      - name: restore the docs build
+        id: docs-cache
+        if: steps.refs.outputs.docs == 'true'
+        uses: actions/cache@v6
+        with:
+          path: ${{ runner.temp }}/pages-dist/docs
+          key: pages-docs-v2-${{ steps.refs.outputs.site_ref }}-${{ steps.refs.outputs.site_sha }}
+
+      - name: what to build
+        id: need
+        shell: bash
+        env:
+          LANDING_HIT: ${{ steps.landing-cache.outputs.cache-hit }}
+          DOCS: ${{ steps.refs.outputs.docs }}
+          DOCS_HIT: ${{ steps.docs-cache.outputs.cache-hit }}
+        run: |
+          set -euo pipefail
+          landing=false; docs=false
+          [ "$LANDING_HIT" = true ] || landing=true
+          [ "$DOCS" != true ] || [ "$DOCS_HIT" = true ] || docs=true
+          if [ "$landing" = true ] || [ "$docs" = true ]; then any=true; else any=false; fi
+          printf 'landing=%s\ndocs=%s\nany=%s\n' "$landing" "$docs" "$any" | tee -a "$GITHUB_OUTPUT"
+
+      # The toolchain of setup-workspace without its full install: the sites need only their own
+      # dependencies. Nx loads the @nx/maven plugin for every command, so Java 21 and Maven are
+      # needed even here (Maven comes with the runner image).
+      - if: steps.need.outputs.any == 'true'
+        uses: pnpm/action-setup@v6.1.0
+        with:
+          run_install: false
+
+      - if: steps.need.outputs.any == 'true'
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      - if: steps.need.outputs.any == 'true'
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      # A worktree per commit: the landing may come from another ref than the docs (LANDING_REF).
+      - name: build the landing and the docs site
+        if: steps.need.outputs.any == 'true'
+        shell: bash
+        env:
+          SITE_SHA: ${{ steps.refs.outputs.site_sha }}
+          LANDING_SHA: ${{ steps.refs.outputs.landing_sha }}
+          NEED_LANDING: ${{ steps.need.outputs.landing }}
+          NEED_DOCS: ${{ steps.need.outputs.docs }}
+          # The docs site's links to GitHub files show the site's ref (sites/docs/README.md).
+          DOCS_GITHUB_REF: ${{ steps.refs.outputs.site_ref }}
+          # The analysis of a cold Maven cache exceeds the plugin's 120 s default.
+          NX_MAVEN_ANALYSIS_TIMEOUT: '400'
+          PUPPETEER_SKIP_DOWNLOAD: '1'
+          HUSKY: '0'
+        run: |
+          set -euo pipefail
+          worktree() { echo "$RUNNER_TEMP/src-$1"; }
+          build() { # <commit> <project,...>
+            local wt; wt="$(worktree "$1")"
+            git worktree add --detach "$wt" "$1"
+            (
+              cd "$wt"
+              pnpm install --frozen-lockfile --filter "./sites/**..."
+              pnpm exec nx run-many -t build -p "$2"
+            )
+          }
+          if [ "$LANDING_SHA" = "$SITE_SHA" ]; then
+            projects=""
+            [ "$NEED_LANDING" != true ] || projects="landing"
+            [ "$NEED_DOCS" != true ] || projects="${projects:+$projects,}docs-site"
+            build "$SITE_SHA" "$projects"
+          else
+            [ "$NEED_LANDING" != true ] || build "$LANDING_SHA" landing
+            [ "$NEED_DOCS" != true ] || build "$SITE_SHA" docs-site
+          fi
+          dist="$RUNNER_TEMP/pages-dist"
+          mkdir -p "$dist"
+          [ "$NEED_LANDING" != true ] || cp -R "$(worktree "$LANDING_SHA")/sites/landing/dist" "$dist/landing"
+          [ "$NEED_DOCS" != true ] || cp -R "$(worktree "$SITE_SHA")/sites/docs/dist" "$dist/docs"
+
+      # 1.3.3, not the current 1.3.4: setup-oras verifies against a release table baked into the
+      # action, and v2.0.1's ends at 1.3.3.
+      - uses: oras-project/setup-oras@v2.0.1
+        with:
+          version: 1.3.3
+
+      - name: log in to ghcr
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: echo "$GH_TOKEN" | oras login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+
+      - name: assemble the site
+        shell: bash
+        env:
+          OWNER: ${{ github.repository_owner }}
+          EVENT: ${{ github.event_name }}
+          REASON: ${{ inputs.reason }}
+          BUDGET_MIB: ${{ inputs.budget_mib || '900' }}
+          SITE_REF: ${{ steps.refs.outputs.site_ref }}
+          SITE_SHA: ${{ steps.refs.outputs.site_sha }}
+          LANDING_REF: ${{ steps.refs.outputs.landing_ref }}
+          LANDING_SHA: ${{ steps.refs.outputs.landing_sha }}
+          DOCS: ${{ steps.refs.outputs.docs }}
+        run: |
+          set -euo pipefail
+          echo "reason: $EVENT $REASON"
+          docs=()
+          [ "$DOCS" != true ] || docs=(--docs "$RUNNER_TEMP/pages-dist/docs")
+          node tools/ci/pages-site.js "$RUNNER_TEMP/site" \
+            --landing "$RUNNER_TEMP/pages-dist/landing" "${docs[@]}" \
+            --ref "$SITE_REF" --commit "$SITE_SHA" \
+            --landing-ref "$LANDING_REF" --landing-commit "$LANDING_SHA" \
+            --budget-mib "$BUDGET_MIB"
+
+      # The link check resolves root-relative links (/qubership-apihub/...) under this folder, whose
+      # one entry is the site. The base is the repository name, as in the sites' configs.
+      - name: prepare the link check
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/pages-link-root"
+          ln -sfn "$RUNNER_TEMP/site" "$RUNNER_TEMP/pages-link-root/qubership-apihub"
+
+      # Fails the run on a broken internal link, so a broken site is never uploaded. Offline: only
+      # links to files of the site are checked. These are relative links, root-relative links, and
+      # the site's own https://netcracker.github.io/qubership-apihub/ URLs, remapped to the same
+      # files. A folder link needs its index.html, as on Pages. Not read: the Storybook builds and
+      # the SchemaSpy renders (generated; the index pages that link them are read), and the docs
+      # site's 404 page, whose canonical URL names a /docs/404/ page that does not exist.
+      - name: check the internal links of the site
+        uses: lycheeverse/lychee-action@v2.9.0
+        with:
+          lycheeVersion: v0.24.2
+          workingDirectory: ${{ runner.temp }}
+          token: ''
+          fail: true
+          args: >-
+            --offline
+            --no-progress
+            --index-files index.html
+            --root-dir '${{ runner.temp }}/pages-link-root'
+            --remap '^https://netcracker\.github\.io/qubership-apihub/(.*)$ file://${{ runner.temp }}/pages-link-root/qubership-apihub/$1'
+            --exclude-path '^site/storybook/[^/]+/[^/]+/'
+            --exclude-path '^site/erd/[^/]+/'
+            --exclude-path '^site/docs/404\.html$'
+            site
+
+      - uses: actions/upload-pages-artifact@v5.0.0
+        with:
+          path: ${{ runner.temp }}/site
+
+  # Off until step 9 switches the Pages source of this repository to GitHub Actions: a deployment
+  # before the switch would replace the legacy site that Pages serves from main:/docs. The switch
+  # sets the repository variable PAGES_DEPLOY to `true`. Until then this workflow assembles the
+  # site and stops.
+  deploy:
+    needs: [assemble]
+    if: vars.PAGES_DEPLOY == 'true' && needs.assemble.outputs.deployable == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v5.0.1
+
+  # Only after a successful deploy, so the live site never points at removed content.
+  gc:
+    needs: [deploy]
+    if: needs.deploy.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      # The repository is public: gc's fetches of main and develop need no credentials.
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - uses: oras-project/setup-oras@v2.0.1
+        with:
+          version: 1.3.3
+
+      - name: log in to ghcr
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: echo "$GH_TOKEN" | oras login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+
+      - name: delete what no live branch needs
+        shell: bash
+        env:
+          OWNER: ${{ github.repository_owner }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node tools/ci/storybook-site.js gc
+
+      # Independent of the Storybook cleanup, so it runs when that step fails.
+      - name: delete stale ERD renders
+        if: ${{ !cancelled() }}
+        shell: bash
+        env:
+          OWNER: ${{ github.repository_owner }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node tools/ci/erd.js gc

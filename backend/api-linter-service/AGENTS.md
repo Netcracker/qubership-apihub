@@ -27,7 +27,7 @@ Applies to **bug fixes and new features**.
 
 - **Propagate errors** from repositories and services; map to HTTP at the controller boundary.
 - Use **`exception.CustomError`** for client-facing API errors (see **API errors** below). Use plain `error` for internal layers when the controller already translates failures.
-- **Fail fast** on fatal startup wiring (`log.Fatalf` / `panic` patterns already used in `service.go` for migration failure, missing Spectral binary, auth setup, etc.).
+- **Fail fast** on fatal startup wiring (`log.Fatalf` / `panic` patterns already used in `main.go` for migration failure, missing Spectral binary, auth setup, etc.).
 - **Log errors** at ERROR for unrecoverable failures; DEBUG for expected client errors passed through `RespondWithCustomError`.
 - Background workers (`DocTaskProcessor`, `VersionTaskProcessor`) must mark tasks failed in DB and log the cause — do not leave tasks stuck in an ambiguous state without logging.
 
@@ -49,37 +49,40 @@ Briefly state: **root cause**, **why the change fixes it**, and confirm you did 
 ## Cross-platform development (Windows + Linux)
 
 - Team uses **Linux** and **Windows (often with WSL)**.
-- Go module and runnable binary live under `qubership-api-linter-service/`; run `go test` / `go build` from that directory unless the task says otherwise.
+- Go module and runnable binary live at the component root; run `go test` / `go build` from there unless the task says otherwise.
 - Spectral/Vacuum bundled binaries exist under `resources/spectral/` and `resources/vacuum/` per OS — respect platform paths when touching executor code.
-- Prefer repo-relative paths like `qubership-api-linter-service/controller/...`.
+- Prefer repo-relative paths like `controller/...`.
 
-## Related repositories
+## Related modules
 
-| Repo | Relationship |
-|------|----------------|
-| **qubership-apihub-backend** | Runtime dependency — fetches packages, versions, documents, and auth via `client/apihub.go` using `technicalParameters.apihub.url` and `technicalParameters.apihub.accessToken` from `config.yaml`. REST contract changes there may require linter client or behaviour updates. |
-| **qubership-apihub-ui** | Consumes linter REST endpoints for validation summaries and scoring in the portal. |
-| **qubership-apihub-ci** | Shared super-linter workflows and generic agent packages (`agent-packages/`). |
+This service is a module of the **qubership-apihub** monorepo. The neighbors are in the same tree:
 
-When a change affects REST contracts or integration behaviour, **remind** the developer if follow-up is needed in backend or UI — this workspace may not contain those repos.
+| Module | Relationship |
+|--------|----------------|
+| `backend/portal-backend` | Runtime dependency — fetches packages, versions, documents, and auth via `client/apihub.go` using `technicalParameters.apihub.url` and `technicalParameters.apihub.accessToken` from `config.yaml`. REST contract changes there may require linter client or behaviour updates. The portal reaches this service through its `extensions` config. |
+| `frontend/ui` | Consumes linter REST endpoints for validation summaries and scoring in the portal SPA. |
+| `backend/commons-go` | Shared library (`api-spec-exposer`). Keep `go.mod` in step with the workspace (`go work sync`). |
+| `deploy/helm-templates/`, `deploy/docker-compose/` | Deployment of this service; update them and `docs/configuration-reference.md` when config or ports change. |
+
+When a change affects REST contracts or integration behaviour, update the neighbor in the same change.
 
 ## Repository layout
 
 | Area | Location |
 |------|----------|
-| Entry point / route registration | `qubership-api-linter-service/service.go` |
-| HTTP controllers | `qubership-api-linter-service/controller/` |
-| Business logic | `qubership-api-linter-service/service/` |
-| Data access | `qubership-api-linter-service/repository/` |
-| DB entities | `qubership-api-linter-service/entity/` |
-| API DTOs / enums (`Linter`, `ApiType`, …) | `qubership-api-linter-service/view/` |
-| API error codes | `qubership-api-linter-service/exception/errors.go` |
-| APIHUB HTTP client | `qubership-api-linter-service/client/apihub.go` |
-| Auth middleware | `qubership-api-linter-service/security/` |
-| SQL migrations | `qubership-api-linter-service/resources/migrations/` |
-| Default Spectral/Vacuum rules | `qubership-api-linter-service/resources/spectral/`, `.../vacuum/` |
+| Entry point / route registration | `main.go` |
+| HTTP controllers | `controller/` |
+| Business logic | `service/` |
+| Data access | `repository/` |
+| DB entities | `entity/` |
+| API DTOs / enums (`Linter`, `ApiType`, …) | `view/` |
+| API error codes | `exception/errors.go` |
+| APIHUB HTTP client | `client/apihub.go` |
+| Auth middleware | `security/` |
+| SQL migrations | `resources/migrations/` |
+| Default Spectral/Vacuum rules | `resources/spectral/`, `.../vacuum/` |
 | OpenAPI specs (this service) | `docs/api/linter_service_api.yaml`, `docs/api/admin_api.yaml` |
-| Architecture notes | `docs/arch_proposal/`, `docs/validation_sequence/` |
+| Architecture notes | `docs/arch_proposal/` |
 
 ## Domain model (read before changing lint flow)
 
@@ -123,19 +126,19 @@ Detailed rules apply via deployed `.cursor/rules/` and `.claude/rules/` (from AP
 - **Repeated strings** — extract to constants (especially error codes/messages).
 - **Comments** — only for non-obvious logic; do not map types to HTTP routes in comments.
 - **Entity → view converters** without dependencies: `Make{Name}View` in `entity/` next to the struct.
-- **Wiring in `service.go`** — follow existing order: repositories → services → background processors → controllers → routes. Use `log.Fatalf` for fatal init errors consistent with surrounding code.
+- **Wiring in `main.go`** — follow existing order: repositories → services → background processors → controllers → routes. Use `log.Fatalf` for fatal init errors consistent with surrounding code.
 - **API errors** — client-facing codes and messages as constants in `exception/errors.go`, returned via `exception.CustomError` with `Status`, `Code`, `Message`, optional `Params` (placeholders like `$id`, `$param`), and `Debug` for internal detail. Reuse existing codes (`EntityNotFound`, `LintNotSupported`, `InvalidParameterValue`, …) before inventing new ones.
 
 ## REST API and OpenAPI
 
 - Follow **API-first**: update `docs/api/linter_service_api.yaml` (and `admin_api.yaml` if admin endpoints change) when REST contract changes.
 - Prefer **v2** endpoints for new summary/detail behaviour; v1 paths marked deprecated in code — do not extend deprecated handlers unless fixing a bug.
-- Service exposes its own specs via api-spec-exposer from `technicalParameters.apiSpecDirectory`; if it is empty, the service uses `<technicalParameters.basePath>/api` (see `service.go` discovery block).
+- Service exposes its own specs via api-spec-exposer from `technicalParameters.apiSpecDirectory`; if it is empty, the service uses `<technicalParameters.basePath>/api` (see `main.go` discovery block).
 - Avoid breaking public API changes without explicit product approval.
 
 ## Database migrations
 
-- Files: `qubership-api-linter-service/resources/migrations/`.
+- Files: `resources/migrations/`.
 - Use the next unused numeric prefix; **no duplicate numbers**.
 - Provide paired `.up.sql` and `.down.sql` when rollback is required.
 - Migrations run at startup via `DBMigrationService` before the main server accepts traffic.
@@ -148,7 +151,7 @@ Detailed rules apply via deployed `.cursor/rules/` and `.claude/rules/` (from AP
 
 ## CI linters (super-linter / link checker)
 
-PRs run **super-linter** (see `.github/workflows/super-linter.yaml`) and **lychee** on Markdown. While writing:
+PRs run **super-linter** (see the root `.github/workflows/super-linter.yaml`) and **lychee** on Markdown. While writing:
 
 - **Go:** tabs in `*.go`; tabs inside raw string literals for nested indentation.
 - **Markdown:** prose lines ≤ **400** characters; one H1 per file.
@@ -163,24 +166,27 @@ Full checklist: `.cursor/rules/ci-super-linter.mdc` after `apm install`.
 
 ## Testing and verification
 
-- Run targeted tests: `go test ./...` from `qubership-api-linter-service/`.
+- Nx project `api-linter-service` (tag `lang:go`): `pnpm exec nx run api-linter-service:build` and
+  `pnpm exec nx run api-linter-service:test` from the repository root. Or `go build ./...` and `go test ./...` from
+  this directory (the module is in `go.work`; the image builds with `GOWORK=off`).
 - For lint executor changes, consider unit tests with fixture specs; integration tests may require Spectral binary and DB.
-- After REST changes, sanity-check OpenAPI parity with registered routes in `service.go`.
+- After REST changes, sanity-check OpenAPI parity with registered routes in `main.go`.
 
 ## Completion
 
 - After substantive changes, propose **one** concise conventional-commit message.
 - For an independent review, invoke `apihub-go-self-review` in a **new chat** or with a **different model**.
 
-## Project skills (Cursor / Claude)
+## Agent packages
 
-Generic skills and rules are provisioned by APM from the
-[CI store](https://github.com/Netcracker/qubership-apihub-ci/tree/main/agent-packages):
+One root `apm.yml` covers the repository; deploy with `apm install --target cursor,claude --legacy-skill-paths`
+from the root (never `apm compile`). This module has no local package; only store packages apply:
 
-```bash
-apm install --target cursor,claude --legacy-skill-paths
-```
+- `apihub-go-developer` (skill and rule): use for any Go change here.
+- `apihub-go-self-review` (skill): independent review of a finished diff, in a new chat.
+- `go-conventions` (rules): comments, constants and HTTP codes, error handling, API-first OpenAPI (`docs/api/`,
+  `controller/`), migrations (`resources/migrations/`), SQL performance (`repository/`).
+- `apihub-deployment-authoring` (skill, root): use when a change needs Helm, Compose, or config reference updates.
+- `github-ticket-implementation-planner`, `development-conventions`: planning from a ticket; always-on rules.
 
-Skills auto-discover from `.cursor/skills/` and `.claude/skills/` (`apihub-go-developer`, `apihub-go-self-review`, `github-ticket-implementation-planner`). See [README — AI agent configuration (APM)](README.md#ai-agent-configuration-apm).
-
-Repo-specific agent packages are **not** used here — only generic CI packages apply.
+The store globs (`**/*.go`) also match the other Go modules; the portal-backend rules do not apply here.

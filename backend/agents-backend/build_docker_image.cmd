@@ -1,1 +1,1 @@
-podman build ./ -t netcracker/qubership-apihub-agents-backend
+podman build -f "%~dp0Dockerfile" "%~dp0.." -t netcracker/qubership-apihub-agents-backend

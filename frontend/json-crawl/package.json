@@ -1,6 +1,15 @@
 {
   "name": "@netcracker/qubership-apihub-json-crawl",
   "version": "1.2.3",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Netcracker/qubership-apihub.git",
+    "directory": "frontend/json-crawl"
+  },
+  "bugs": {
+    "url": "https://github.com/Netcracker/qubership-apihub/issues"
+  },
+  "homepage": "https://github.com/Netcracker/qubership-apihub/tree/main/frontend/json-crawl#readme",
   "description": "Async and sync crawler for json object",
   "module": "./dist/index.es.js",
   "main": "./dist/index.cjs.js",
@@ -19,11 +28,8 @@
   "scripts": {
     "prebuild": "rimraf ./dist",
     "build": "vite build",
-    "development:link": "npm link",
-    "development:unlink": "npm unlink",
     "test": "jest --verbose",
-    "test:coverage": "jest --verbose --coverage",
-    "update-lock-file": "update-lock-file @netcracker"
+    "test:coverage": "jest --verbose --coverage"
   },
   "keywords": [
     "json",
@@ -35,7 +41,6 @@
   ],
   "license": "Apache-2.0",
   "devDependencies": {
-    "@netcracker/qubership-apihub-npm-gitflow": "3.1.1",
     "@types/jest": "30.0.0",
     "@types/node": "^24.0.0",
     "jest": "30.4.2",
@@ -71,5 +76,8 @@
       "<rootDir>/dist/"
     ],
     "collectCoverage": true
+  },
+  "nx": {
+    "name": "json-crawl"
   }
 }

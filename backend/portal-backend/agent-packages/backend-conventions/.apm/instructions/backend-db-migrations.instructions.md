@@ -1,11 +1,11 @@
 ---
 description: Backend SQL migration path and validation script
-applyTo: "**/resources/migrations/**"
+applyTo: "backend/portal-backend/**/resources/migrations/**"
 ---
 
 # Backend Database Migrations
 
-- Migrations live in `qubership-apihub-service/resources/migrations/`.
+- Migrations live in `resources/migrations/`.
 - Use the next unused numeric prefix (current highest is visible in that directory).
 - **Never** reuse or duplicate migration numbers.
 - Provide paired `.up.sql` and `.down.sql` files when rollback is required.

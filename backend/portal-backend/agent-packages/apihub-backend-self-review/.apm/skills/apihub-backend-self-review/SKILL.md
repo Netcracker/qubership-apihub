@@ -16,8 +16,8 @@ In addition to `apihub-go-self-review`:
 
 ### Go conventions (backend)
 
-- [ ] New repos/services/controllers appended at end of section in `Service.go`.
-- [ ] Fatal wiring failures use `log.Fatalf` in `Service.go` where appropriate.
+- [ ] New repos/services/controllers appended at end of section in `main.go`.
+- [ ] Fatal wiring failures use `log.Fatalf` in `main.go` where appropriate.
 - [ ] API error codes/messages use `exception/ErrorCodes.go` constants.
 
 ### API and OpenAPI

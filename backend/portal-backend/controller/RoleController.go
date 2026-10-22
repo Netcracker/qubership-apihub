@@ -1,0 +1,546 @@
+package controller
+
+import (
+	"encoding/json"
+	"io/ioutil"
+	"net/http"
+
+	"github.com/Netcracker/qubership-apihub/backend/portal-backend/exception"
+	"github.com/Netcracker/qubership-apihub/backend/portal-backend/responder"
+	"github.com/Netcracker/qubership-apihub/backend/portal-backend/secctx"
+	"github.com/Netcracker/qubership-apihub/backend/portal-backend/service"
+	"github.com/Netcracker/qubership-apihub/backend/portal-backend/utils"
+	"github.com/Netcracker/qubership-apihub/backend/portal-backend/view"
+)
+
+type RoleController interface {
+	GetPackageMembers(w http.ResponseWriter, r *http.Request)
+	DeletePackageMember(w http.ResponseWriter, r *http.Request)
+	AddPackageMembers(w http.ResponseWriter, r *http.Request)
+	UpdatePackageMembers(w http.ResponseWriter, r *http.Request)
+	CreateRole(w http.ResponseWriter, r *http.Request)
+	DeleteRole(w http.ResponseWriter, r *http.Request)
+	UpdateRole(w http.ResponseWriter, r *http.Request)
+	GetExistingRoles(w http.ResponseWriter, r *http.Request)
+	GetAvailablePackageRoles(w http.ResponseWriter, r *http.Request)
+	SetRoleOrder(w http.ResponseWriter, r *http.Request)
+	GetExistingPermissions(w http.ResponseWriter, r *http.Request)
+
+	GetAvailableUserPackagePromoteStatuses(w http.ResponseWriter, r *http.Request)
+	TestSetUserSystemRole(w http.ResponseWriter, r *http.Request)
+}
+
+func NewRoleController(roleService service.RoleService, responder responder.Responder) RoleController {
+	return &roleControllerImpl{
+		roleService: roleService,
+		responder:   responder,
+	}
+}
+
+type roleControllerImpl struct {
+	roleService service.RoleService
+	responder   responder.Responder
+}
+
+func (c roleControllerImpl) GetPackageMembers(w http.ResponseWriter, r *http.Request) {
+	packageId := getStringParam(r, "packageId")
+	ctx := secctx.MakeUserContext(r)
+	sufficientPrivileges, err := c.roleService.HasRequiredPermissions(ctx, packageId, view.UserAccessManagementPermission)
+	if err != nil {
+		c.responder.RespondWithError(w, r, "Failed to check user privileges", err)
+		return
+	}
+	if !sufficientPrivileges {
+		c.responder.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusForbidden,
+			Code:    exception.InsufficientPrivileges,
+			Message: exception.InsufficientPrivilegesMsg,
+		})
+		return
+	}
+	members, err := c.roleService.GetPackageMembers(ctx, packageId)
+	if err != nil {
+		c.responder.RespondWithError(w, r, "Failed to get package members", err)
+		return
+	}
+	c.responder.RespondWithJson(w, http.StatusOK, members)
+}
+
+func (c roleControllerImpl) DeletePackageMember(w http.ResponseWriter, r *http.Request) {
+	packageId := getStringParam(r, "packageId")
+	ctx := secctx.MakeUserContext(r)
+	sufficientPrivileges, err := c.roleService.HasRequiredPermissions(ctx, packageId, view.UserAccessManagementPermission)
+	if err != nil {
+		c.responder.RespondWithError(w, r, "Failed to check user privileges", err)
+		return
+	}
+	if !sufficientPrivileges {
+		c.responder.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusForbidden,
+			Code:    exception.InsufficientPrivileges,
+			Message: exception.InsufficientPrivilegesMsg,
+		})
+		return
+	}
+	userId, err := getUnescapedStringParam(r, "userId")
+	if err != nil {
+		c.responder.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidURLEscape,
+			Message: exception.InvalidURLEscapeMsg,
+			Params:  map[string]interface{}{"param": "userId"},
+			Debug:   err.Error(),
+		})
+		return
+	}
+
+	indirectMemberRole, err := c.roleService.DeletePackageMember(ctx, packageId, userId)
+	if err != nil {
+		c.responder.RespondWithError(w, r, "Failed to delete package member", err)
+		return
+	}
+	if indirectMemberRole == nil {
+		w.WriteHeader(http.StatusNoContent)
+	} else {
+		c.responder.RespondWithJson(w, http.StatusOK, indirectMemberRole)
+	}
+}
+
+func (c roleControllerImpl) AddPackageMembers(w http.ResponseWriter, r *http.Request) {
+	packageId := getStringParam(r, "packageId")
+	ctx := secctx.MakeUserContext(r)
+	sufficientPrivileges, err := c.roleService.HasRequiredPermissions(ctx, packageId, view.UserAccessManagementPermission)
+	if err != nil {
+		c.responder.RespondWithError(w, r, "Failed to check user privileges", err)
+		return
+	}
+	if !sufficientPrivileges {
+		c.responder.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusForbidden,
+			Code:    exception.InsufficientPrivileges,
+			Message: exception.InsufficientPrivilegesMsg,
+		})
+		return
+	}
+	defer r.Body.Close()
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		c.responder.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.BadRequestBody,
+			Message: exception.BadRequestBodyMsg,
+			Debug:   err.Error(),
+		})
+		return
+	}
+	var packageMembersReq view.PackageMembersAddReq
+	err = json.Unmarshal(body, &packageMembersReq)
+	if err != nil {
+		c.responder.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.BadRequestBody,
+			Message: exception.BadRequestBodyMsg,
+			Debug:   err.Error(),
+		})
+		return
+	}
+	validationErr := utils.ValidateObject(packageMembersReq)
+	if validationErr != nil {
+		if customError, ok := validationErr.(*exception.CustomError); ok {
+			c.responder.RespondWithCustomError(w, customError)
+			return
+		}
+	}
+
+	members, err := c.roleService.AddPackageMembers(ctx, packageId, packageMembersReq.Emails, packageMembersReq.RoleIds)
+	if err != nil {
+		c.responder.RespondWithError(w, r, "Failed to add package members", err)
+		return
+	}
+	c.responder.RespondWithJson(w, http.StatusCreated, members)
+}
+
+func (c roleControllerImpl) UpdatePackageMembers(w http.ResponseWriter, r *http.Request) {
+	packageId := getStringParam(r, "packageId")
+	ctx := secctx.MakeUserContext(r)
+	sufficientPrivileges, err := c.roleService.HasRequiredPermissions(ctx, packageId, view.UserAccessManagementPermission)
+	if err != nil {
+		c.responder.RespondWithError(w, r, "Failed to check user privileges", err)
+		return
+	}
+	if !sufficientPrivileges {
+		c.responder.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusForbidden,
+			Code:    exception.InsufficientPrivileges,
+			Message: exception.InsufficientPrivilegesMsg,
+		})
+		return
+	}
+	userId, err := getUnescapedStringParam(r, "userId")
+	if err != nil {
+		c.responder.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidURLEscape,
+			Message: exception.InvalidURLEscapeMsg,
+			Params:  map[string]interface{}{"param": "userId"},
+			Debug:   err.Error(),
+		})
+		return
+	}
+
+	defer r.Body.Close()
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		c.responder.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.BadRequestBody,
+			Message: exception.BadRequestBodyMsg,
+			Debug:   err.Error(),
+		})
+		return
+	}
+	var packageMemberUpdatePatch view.PackageMemberUpdatePatch
+	err = json.Unmarshal(body, &packageMemberUpdatePatch)
+	if err != nil {
+		c.responder.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.BadRequestBody,
+			Message: exception.BadRequestBodyMsg,
+			Debug:   err.Error(),
+		})
+		return
+	}
+	validationErr := utils.ValidateObject(packageMemberUpdatePatch)
+	if validationErr != nil {
+		if customError, ok := validationErr.(*exception.CustomError); ok {
+			c.responder.RespondWithCustomError(w, customError)
+			return
+		}
+	}
+
+	err = c.roleService.UpdatePackageMember(ctx, packageId, userId, packageMemberUpdatePatch.RoleId, packageMemberUpdatePatch.Action)
+	if err != nil {
+		c.responder.RespondWithError(w, r, "Failed to update package member", err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (c roleControllerImpl) CreateRole(w http.ResponseWriter, r *http.Request) {
+	ctx := secctx.MakeUserContext(r)
+	if !secctx.IsSysadm(ctx) {
+		c.responder.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusForbidden,
+			Code:    exception.InsufficientPrivileges,
+			Message: exception.InsufficientPrivilegesMsg,
+		})
+		return
+	}
+	defer r.Body.Close()
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		c.responder.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.BadRequestBody,
+			Message: exception.BadRequestBodyMsg,
+			Debug:   err.Error(),
+		})
+		return
+	}
+	var createRoleReq view.PackageRoleCreateReq
+	err = json.Unmarshal(body, &createRoleReq)
+	if err != nil {
+		c.responder.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.BadRequestBody,
+			Message: exception.BadRequestBodyMsg,
+			Debug:   err.Error(),
+		})
+		return
+	}
+	validationErr := utils.ValidateObject(createRoleReq)
+	if validationErr != nil {
+		if customError, ok := validationErr.(*exception.CustomError); ok {
+			c.responder.RespondWithCustomError(w, customError)
+			return
+		}
+	}
+
+	createdRole, err := c.roleService.CreateRole(ctx, createRoleReq.Role, createRoleReq.Permissions)
+	if err != nil {
+		c.responder.RespondWithError(w, r, "Failed to create new role", err)
+		return
+	}
+	c.responder.RespondWithJson(w, http.StatusCreated, createdRole)
+}
+
+func (c roleControllerImpl) DeleteRole(w http.ResponseWriter, r *http.Request) {
+	ctx := secctx.MakeUserContext(r)
+	if !secctx.IsSysadm(ctx) {
+		c.responder.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusForbidden,
+			Code:    exception.InsufficientPrivileges,
+			Message: exception.InsufficientPrivilegesMsg,
+		})
+		return
+	}
+	roleId := getStringParam(r, "roleId")
+	err := c.roleService.DeleteRole(ctx, roleId)
+	if err != nil {
+		c.responder.RespondWithError(w, r, "Failed to delete role", err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (c roleControllerImpl) UpdateRole(w http.ResponseWriter, r *http.Request) {
+	ctx := secctx.MakeUserContext(r)
+	if !secctx.IsSysadm(ctx) {
+		c.responder.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusForbidden,
+			Code:    exception.InsufficientPrivileges,
+			Message: exception.InsufficientPrivilegesMsg,
+		})
+		return
+	}
+	roleId := getStringParam(r, "roleId")
+	defer r.Body.Close()
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		c.responder.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.BadRequestBody,
+			Message: exception.BadRequestBodyMsg,
+			Debug:   err.Error(),
+		})
+		return
+	}
+	var updateRoleReq view.PackageRoleUpdateReq
+	err = json.Unmarshal(body, &updateRoleReq)
+	if err != nil {
+		c.responder.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.BadRequestBody,
+			Message: exception.BadRequestBodyMsg,
+			Debug:   err.Error(),
+		})
+		return
+	}
+	if updateRoleReq.Permissions != nil {
+		err = c.roleService.SetRolePermissions(ctx, roleId, *updateRoleReq.Permissions)
+		if err != nil {
+			c.responder.RespondWithError(w, r, "Failed to update role permissions", err)
+			return
+		}
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (c roleControllerImpl) GetExistingRoles(w http.ResponseWriter, r *http.Request) {
+	ctx := secctx.MakeUserContext(r)
+	sufficientPrivileges, err := c.roleService.HasRequiredPermissionsAcrossAllPackages(ctx, view.UserAccessManagementPermission)
+	if err != nil {
+		c.responder.RespondWithError(w, r, "Failed to check user privileges", err)
+		return
+	}
+	if !sufficientPrivileges {
+		c.responder.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusForbidden,
+			Code:    exception.InsufficientPrivileges,
+			Message: exception.InsufficientPrivilegesMsg,
+		})
+		return
+	}
+	roles, err := c.roleService.GetExistingRolesExcludingNone(ctx)
+	if err != nil {
+		c.responder.RespondWithError(w, r, "Failed to get existing roles", err)
+		return
+	}
+	c.responder.RespondWithJson(w, http.StatusOK, roles)
+}
+
+func (c roleControllerImpl) GetExistingPermissions(w http.ResponseWriter, r *http.Request) {
+	ctx := secctx.MakeUserContext(r)
+	sufficientPrivileges, err := c.roleService.HasRequiredPermissionsAcrossAllPackages(ctx, view.UserAccessManagementPermission)
+	if err != nil {
+		c.responder.RespondWithError(w, r, "Failed to check user privileges", err)
+		return
+	}
+	if !sufficientPrivileges {
+		c.responder.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusForbidden,
+			Code:    exception.InsufficientPrivileges,
+			Message: exception.InsufficientPrivilegesMsg,
+		})
+		return
+	}
+	permissions, err := c.roleService.GetExistingPermissions()
+	if err != nil {
+		c.responder.RespondWithError(w, r, "Failed to get permissions list", err)
+		return
+	}
+	c.responder.RespondWithJson(w, http.StatusOK, permissions)
+}
+
+func (c roleControllerImpl) GetAvailablePackageRoles(w http.ResponseWriter, r *http.Request) {
+	ctx := secctx.MakeUserContext(r)
+	packageId := getStringParam(r, "packageId")
+	sufficientPrivileges, err := c.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
+	if err != nil {
+		c.responder.RespondWithError(w, r, "Failed to check user privileges", err)
+		return
+	}
+	if !sufficientPrivileges {
+		c.responder.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusForbidden,
+			Code:    exception.InsufficientPrivileges,
+			Message: exception.InsufficientPrivilegesMsg,
+		})
+		return
+	}
+	availableRoles, err := c.roleService.GetAvailablePackageRoles(ctx, packageId, true)
+	if err != nil {
+		c.responder.RespondWithError(w, r, "Failed to get available package roles", err)
+		return
+	}
+	c.responder.RespondWithJson(w, http.StatusOK, availableRoles)
+}
+
+func (c roleControllerImpl) SetRoleOrder(w http.ResponseWriter, r *http.Request) {
+	ctx := secctx.MakeUserContext(r)
+	if !secctx.IsSysadm(ctx) {
+		c.responder.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusForbidden,
+			Code:    exception.InsufficientPrivileges,
+			Message: exception.InsufficientPrivilegesMsg,
+		})
+		return
+	}
+	defer r.Body.Close()
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		c.responder.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.BadRequestBody,
+			Message: exception.BadRequestBodyMsg,
+			Debug:   err.Error(),
+		})
+		return
+	}
+	var setRoleOrderReq view.PackageRoleOrderReq
+	err = json.Unmarshal(body, &setRoleOrderReq)
+	if err != nil {
+		c.responder.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.BadRequestBody,
+			Message: exception.BadRequestBodyMsg,
+			Debug:   err.Error(),
+		})
+		return
+	}
+	validationErr := utils.ValidateObject(setRoleOrderReq)
+	if validationErr != nil {
+		if customError, ok := validationErr.(*exception.CustomError); ok {
+			c.responder.RespondWithCustomError(w, customError)
+			return
+		}
+	}
+
+	err = c.roleService.SetRoleOrder(ctx, setRoleOrderReq.Roles)
+	if err != nil {
+		c.responder.RespondWithError(w, r, "Failed to update role permissions", err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (c roleControllerImpl) GetAvailableUserPackagePromoteStatuses(w http.ResponseWriter, r *http.Request) {
+	ctx := secctx.MakeUserContext(r)
+	userId, err := getUnescapedStringParam(r, "userId")
+	if err != nil {
+		c.responder.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidURLEscape,
+			Message: exception.InvalidURLEscapeMsg,
+			Params:  map[string]interface{}{"param": "userId"},
+			Debug:   err.Error(),
+		})
+		return
+	}
+
+	defer r.Body.Close()
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		c.responder.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.BadRequestBody,
+			Message: exception.BadRequestBodyMsg,
+			Debug:   err.Error(),
+		})
+		return
+	}
+	var packages view.PackagesReq
+	err = json.Unmarshal(body, &packages)
+	if err != nil {
+		c.responder.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.BadRequestBody,
+			Message: exception.BadRequestBodyMsg,
+			Debug:   err.Error(),
+		})
+		return
+	}
+
+	availablePackagePromoteStatuses, err := c.roleService.GetUserPackagePromoteStatuses(ctx, packages.Packages, userId)
+	if err != nil {
+		c.responder.RespondWithError(w, r, "Failed to get package promote statuses available for user", err)
+		return
+	}
+	c.responder.RespondWithJson(w, http.StatusOK, availablePackagePromoteStatuses)
+}
+
+func (c roleControllerImpl) TestSetUserSystemRole(w http.ResponseWriter, r *http.Request) {
+	ctx := secctx.MakeUserContext(r)
+	userId, err := getUnescapedStringParam(r, "userId")
+	if err != nil {
+		c.responder.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidURLEscape,
+			Message: exception.InvalidURLEscapeMsg,
+			Params:  map[string]interface{}{"param": "userId"},
+			Debug:   err.Error(),
+		})
+		return
+	}
+
+	defer r.Body.Close()
+	params, err := getParamsFromBody(r)
+	if err != nil {
+		c.responder.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.BadRequestBody,
+			Message: exception.BadRequestBodyMsg,
+			Debug:   err.Error(),
+		})
+		return
+	}
+
+	role, err := getBodyStringParam(params, "role")
+	if err != nil {
+		c.responder.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidParameter,
+			Message: exception.InvalidParameterMsg,
+			Params:  map[string]interface{}{"param": "role"},
+			Debug:   err.Error(),
+		})
+		return
+	}
+
+	err = c.roleService.SetUserSystemRole(ctx, userId, role)
+	if err != nil {
+		c.responder.RespondWithError(w, r, "Failed to set user system role", err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}

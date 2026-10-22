@@ -1,6 +1,15 @@
 {
   "name": "@netcracker/qubership-apihub-apispec-view-json-schema-viewer",
   "version": "0.0.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Netcracker/qubership-apihub.git",
+    "directory": "frontend/apispec-view/packages/json-schema-viewer"
+  },
+  "bugs": {
+    "url": "https://github.com/Netcracker/qubership-apihub/issues"
+  },
+  "homepage": "https://github.com/Netcracker/qubership-apihub/tree/main/frontend/apispec-view/packages/json-schema-viewer#readme",
   "private": true,
   "description": "A beautiful React component for viewing JSON Schema",
   "keywords": [],
@@ -28,5 +37,8 @@
     "lodash": "^4.17.21",
     "nanoid": "^3.1.32",
     "react": "^18.3.1"
+  },
+  "nx": {
+    "name": "apispec-view-json-schema-viewer"
   }
 }

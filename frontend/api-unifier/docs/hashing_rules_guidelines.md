@@ -79,7 +79,7 @@ When a hash getter is invoked, `createHashObject(value, rules)` runs
 (`createHashObjectCreatorHook`) decides for each visited key whether to
 include it:
 
-```
+```text
 no hashStrategy       → ignoreKey = true  → key excluded
 CURRENT_DATA_LEVEL    → ignoreKey = (dataLevel > 0)
 BEFORE_SECOND_DATA_LEVEL → ignoreKey = (dataLevel > 1)
@@ -109,7 +109,7 @@ current `dataLevel`.
 
 Example walk for a JSON Schema's own hash (`dataLevel` starts at 0):
 
-```
+```text
 schema (hashOwner, CURRENT_DATA_LEVEL — not relevant for own hash; dataLevel=0)
   /type          CURRENT_DATA_LEVEL   dataLevel=0 → included
   /format        CURRENT_DATA_LEVEL   dataLevel=0 → included

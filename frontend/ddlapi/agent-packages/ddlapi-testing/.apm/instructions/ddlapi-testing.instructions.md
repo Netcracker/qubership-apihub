@@ -1,6 +1,6 @@
 ---
 description: Test conventions for the ddlapi library.
-applyTo: "test/**"
+applyTo: "frontend/ddlapi/test/**"
 ---
 
 When writing or changing tests under `test/**` for the ddlapi library —

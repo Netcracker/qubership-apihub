@@ -1,10 +1,23 @@
 {
   "name": "@netcracker/qubership-apihub-api-state-model",
   "version": "0.0.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Netcracker/qubership-apihub.git",
+    "directory": "frontend/api-doc-viewer/packages/api-state-model"
+  },
+  "bugs": {
+    "url": "https://github.com/Netcracker/qubership-apihub/issues"
+  },
+  "homepage": "https://github.com/Netcracker/qubership-apihub/tree/main/frontend/api-doc-viewer/packages/api-state-model#readme",
   "license": "Apache-2.0",
   "private": true,
   "main": "src/index.ts",
   "dependencies": {
-    "@netcracker/qubership-apihub-api-data-model": "*"
+    "@netcracker/qubership-apihub-api-data-model": "workspace:*",
+    "@netcracker/qubership-apihub-graphapi": "workspace:^"
+  },
+  "nx": {
+    "name": "api-doc-viewer-api-state-model"
   }
 }

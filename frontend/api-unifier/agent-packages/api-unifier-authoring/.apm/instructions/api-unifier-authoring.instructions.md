@@ -1,6 +1,6 @@
 ---
 description: Conventions for extending the api-unifier normalization engine (rules, unify functions, validators).
-applyTo: "src/**/*.ts"
+applyTo: "frontend/api-unifier/src/**/*.ts"
 ---
 
 When editing the api-unifier engine under `src/` — adding or changing
