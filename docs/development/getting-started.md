@@ -15,7 +15,7 @@ and Maven too: on a fresh clone, Nx cannot build its project graph without them.
 | Git | any recent 2.x | the clone | `git --version` |
 | Node.js | 24 | every Nx command, all TypeScript modules | `node --version` |
 | pnpm | 12.4.2, the `packageManager` field of the root [`package.json`](../../package.json) | the install, every script | `pnpm --version` |
-| Go | 1.26.6, from [`backend/.go-version`](../../backend/.go-version) | the Go services and the Nx graph | `go version` |
+| Go | 1.27.2, from [`backend/.go-version`](../../backend/.go-version) | the Go services and the Nx graph | `go version` |
 | Java (JDK) | 21 | the Java worker and the Nx graph | `java -version` |
 | Maven | 3.9 or newer | the Java worker and the Nx graph | `mvn --version` |
 
@@ -23,7 +23,7 @@ Install pnpm with `npm install -g pnpm@12.4.2`, or with `corepack enable pnpm`, 
 `packageManager`. Any JDK 21 distribution works; CI uses Eclipse Temurin.
 
 Go 1.21 and newer can download the right toolchain: with the default `GOTOOLCHAIN=auto`, an older local Go switches to
-the version that `go.work` names. Installing 1.26.6 directly avoids the download on the first build.
+the version that `go.work` names. Installing 1.27.2 directly avoids the download on the first build.
 
 These tools are needed only for some tasks:
 

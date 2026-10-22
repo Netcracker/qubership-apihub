@@ -1,6 +1,6 @@
 module github.com/Netcracker/qubership-apihub/backend/agents-backend
 
-go 1.26.6
+go 1.27.2
 
 require (
 	github.com/Netcracker/qubership-apihub/backend/commons-go v0.0.1
