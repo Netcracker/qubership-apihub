@@ -67,6 +67,26 @@ test('a run that cannot publish must still build the images', () => {
   assert.deepEqual(r.problems, ['go-images=skipped, but the plan requires it'])
 })
 
+test('a Dependabot push may skip the Storybook jobs, but not the images or E2E', () => {
+  const dependabot = { ...outputs, dependabot: 'true', e2e_tier: 'full' }
+  const ok = verdict(
+    needsWith({ java: 'skipped', 'screenshot-tests': 'skipped', storybooks: 'skipped', 'storybook-pages': 'skipped' }, dependabot),
+    'push',
+    true,
+  )
+  assert.equal(ok.ok, true, ok.problems.join('; '))
+  assert.deepEqual(verdict(needsWith({ e2e: 'skipped', storybooks: 'skipped' }, dependabot), 'push', false).problems, [
+    'e2e=skipped, but the plan requires it',
+  ])
+})
+
+test('ci.yml: Dependabot runs publish, and only forks cannot', () => {
+  const step = ci.jobs.plan.steps.find((s) => s.id === 'can_publish')
+  assert.doesNotMatch(step.run, /value=false\n\s*elif/)
+  assert.match(step.run, /dependabot=true/)
+  assert.match(ci.jobs.storybooks.if, /needs\.plan\.outputs\.dependabot != 'true'/)
+})
+
 test('ci.yml: the image jobs push only when the run can publish', () => {
   for (const job of ['js-images', 'go-images', 'java-images']) {
     assert.equal(ci.jobs[job].with.push, "${{ needs.plan.outputs.can_publish == 'true' }}")

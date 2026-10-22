@@ -12,8 +12,9 @@
  *   storybook-pages              also skipped while the variable PAGES_DEPLOY is not `true`
  *   e2e, storybooks, storybook-pages
  *                                skipped when the plan says the run cannot publish (`can_publish` is
- *                                `false`: a pull request from a fork, or Dependabot), because the
- *                                token has no package write access there
+ *                                `false`: a pull request from a fork), because the token has no
+ *                                package write access there
+ *   storybooks, storybook-pages  also skipped on Dependabot runs (`dependabot` is `true`)
  *
  * The image jobs run on such a run too: they build without pushing, so a skip there is a failure.
  *
@@ -35,6 +36,7 @@
 function dueJobs(out, event, pagesDeploy) {
   // Only the exact string `false` excuses a skip; an empty output (plan failed) counts as publishing.
   const canPublish = out.can_publish !== 'false'
+  const storybooksDue = event !== 'pull_request' && canPublish && out.dependabot !== 'true'
   return {
     plan: true,
     js: true,
@@ -47,9 +49,9 @@ function dueJobs(out, event, pagesDeploy) {
     'go-images': out.image_projects !== '[]',
     'java-images': out.image_projects !== '[]',
     e2e: out.e2e_tier !== 'none' && canPublish,
-    storybooks: event !== 'pull_request' && canPublish,
+    storybooks: storybooksDue,
     // ci.yml dispatches pages.yml only while the repository variable PAGES_DEPLOY is `true`.
-    'storybook-pages': event !== 'pull_request' && canPublish && pagesDeploy,
+    'storybook-pages': storybooksDue && pagesDeploy,
   }
 }
 
