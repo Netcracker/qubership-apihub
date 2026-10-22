@@ -102,6 +102,7 @@ jobs:
       RUN_PLAYWRIGHT: ${{ inputs.suites == 'all' || inputs.suites == 'playwright' }}
     steps:
       - name: Check the inputs
+        id: inputs_check
         shell: bash
         env:
           SUITES: ${{ inputs.suites }}
@@ -115,6 +116,7 @@ jobs:
 
       # Before the install, so the lockfile check sees the suite that will run.
       - name: Take deploy/, the agent chart, and the suites from their refs
+        id: overlay
         shell: bash
         env:
           DEPLOY_REF: ${{ inputs.deploy_ref }}
@@ -131,6 +133,7 @@ jobs:
           cache-scope: e2e-kind
 
       - name: Install envsubst
+        id: envsubst
         run: |
           sudo apt-get update
           sudo apt-get install -y gettext-base
@@ -200,6 +203,7 @@ jobs:
       # `kind load` does not help `:latest`, whose pull policy is Always, and neither chart exposes
       # imagePullSecrets.
       - name: Give the Kind node a ghcr credential
+        id: kind_credential
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -214,6 +218,7 @@ jobs:
           echo "wrote a ghcr.io credential for $ACTOR"
 
       - name: Write the Kind configuration
+        id: kind_config
         shell: bash
         run: |
           set -euo pipefail
@@ -237,6 +242,7 @@ jobs:
 
       # v1.15.0 installs kind v0.33.0 and kubectl v1.37.0 unless told otherwise.
       - name: Create the Kind cluster
+        id: kind_cluster
         uses: helm/kind-action@v1.15.0
         with:
           cluster_name: apihub-e2e
@@ -248,6 +254,7 @@ jobs:
       # is patched in, so wait for the certificate. The admission jobs delete themselves on
       # completion (`ttlSecondsAfterFinished: 0`), so `kubectl wait job` can fail with `not found`.
       - name: Install the ingress controller
+        id: ingress
         shell: bash
         run: |
           set -euo pipefail
@@ -271,6 +278,7 @@ jobs:
       # Staged in RUNNER_TEMP: generate-local-tls.sh writes a CA key into the chart directory, and the
       # secrets file holds the credentials.
       - name: Stage the charts
+        id: charts
         shell: bash
         run: |
           set -euo pipefail
@@ -283,6 +291,7 @@ jobs:
       # must differ from the suite's sysadmin address, x_atui_sysadmin@qa.at: a collision failed 14
       # Playwright tests, because the backend creates this admin at startup with no name.
       - name: Take the stack's credentials
+        id: credentials
         shell: bash
         env:
           S_JWT_PRIVATE_KEY: ${{ secrets.JWT_PRIVATE_KEY }}
@@ -322,6 +331,7 @@ jobs:
           echo "credentials — JWT key: $origin_key, admin email: $(src "$S_ADMIN_EMAIL"), admin password: $(src "$S_ADMIN_PASSWORD"), access token: $(src "$S_ACCESS_TOKEN")"
 
       - name: Generate TLS and template the secrets
+        id: secrets
         shell: bash
         working-directory: ${{ runner.temp }}/helm/local-k8s-quickstart
         env:
@@ -345,6 +355,7 @@ jobs:
           }
 
       - name: Deploy PostgreSQL
+        id: postgres
         working-directory: ${{ runner.temp }}/helm/local-k8s-quickstart
         run: |
           helm upgrade --install postgres-db ./postgres-db \
@@ -354,10 +365,12 @@ jobs:
             --timeout 5m
 
       - name: Create the custom CA secret
+        id: custom_ca
         working-directory: ${{ runner.temp }}/helm/local-k8s-quickstart
         run: sh scripts/create-custom-ca-secrets.sh
 
       - name: Deploy APIHUB
+        id: apihub
         shell: bash
         working-directory: ${{ runner.temp }}/helm/local-k8s-quickstart
         run: |
@@ -375,6 +388,7 @@ jobs:
       # Pods resolve the ingress host to the controller, so the backend's external URLs work inside
       # the cluster. This restarts every deployment, so the rollout is awaited again.
       - name: Point the pods at the ingress
+        id: ingress_hosts
         shell: bash
         working-directory: ${{ runner.temp }}/helm/local-k8s-quickstart
         run: |
@@ -386,6 +400,7 @@ jobs:
 
       # Through the ingress with TLS, as both suites connect: the page, API-key auth, and agents-backend.
       - name: Wait for APIHUB to answer
+        id: answer
         shell: bash
         run: |
           set -euo pipefail
@@ -408,6 +423,7 @@ jobs:
 
       # --set-file keeps the token off the command line.
       - name: Deploy the APIHUB agent
+        id: agent
         if: inputs.agent
         shell: bash
         run: |
@@ -431,6 +447,7 @@ jobs:
           exit "$status"
 
       - name: Check the agent carries the access token
+        id: agent_token
         if: inputs.agent
         shell: bash
         run: |
@@ -447,6 +464,7 @@ jobs:
       # Reads the images back from the deployments: Helm ignores a values key the chart does not read,
       # and the release still succeeds with the chart's default image.
       - name: Check which images the stack runs
+        id: stack_images
         shell: bash
         run: |
           set -euo pipefail
@@ -466,6 +484,14 @@ jobs:
             echo
             echo "$images" | sed 's/^/- `/;s/$/`/'
           } >> "$GITHUB_STEP_SUMMARY"
+
+      # Only a setup step can fail before this point (the suites continue on error), and Helm then says
+      # no more than `context deadline exceeded`. This names each pod that is not ready, why, and the
+      # end of its log, in the job log and in the summary.
+      - name: Show the pods that did not start
+        if: failure()
+        shell: bash
+        run: bash tools/ci/k8s-pod-diagnostics.sh "$GITHUB_STEP_SUMMARY" "$NAMESPACE" postgres-db ingress-nginx
 
       - name: Run the postman collections
         id: newman
@@ -517,7 +543,9 @@ jobs:
 
       - name: Check the postman results
         id: newman_results
-        if: always() && env.RUN_POSTMAN == 'true'
+        # Not when the collections never ran: a stack that did not come up is reported as that, not as
+        # failed results. The verdict still fails, since it requires both steps to succeed.
+        if: always() && env.RUN_POSTMAN == 'true' && steps.newman.outcome != 'skipped'
         continue-on-error: true
         shell: bash
         run: |
@@ -617,6 +645,7 @@ jobs:
 
       # newman passes -x and always succeeds, so newman_results decides the verdict. A suite that was
       # not selected has the outcome `skipped`, which counts as passed only for that suite.
+      # The first line of the summary says what happened; `STEPS` names the setup step that failed.
       - name: Verdict
         if: always()
         shell: bash
@@ -629,30 +658,71 @@ jobs:
           TIER: ${{ inputs.tier }}
           SUITES: ${{ inputs.suites }}
           AGENT: ${{ inputs.agent }}
+          STEPS: ${{ toJSON(steps) }}
         run: |
           set -euo pipefail
           newman='${{ steps.newman.outcome }}'
           results='${{ steps.newman_results.outcome }}'
           play='${{ steps.playwright.outcome }}'
-          {
-            echo '### E2E on Kind'
-            echo
-            echo '| | |'
-            echo '|---|---|'
-            echo "| images | \`${{ steps.images.outputs.owner }}\`: \`$IMAGE_TAGS\`, other images \`$DEFAULT_TAG\` |"
-            echo "| refs | deploy \`${DEPLOY_REF:-this commit}\`, postman \`${POSTMAN_REF:-this commit}\`, playwright \`${PLAYWRIGHT_REF:-this commit}\` |"
-            echo "| tier, suites, agent | \`$TIER\`, \`$SUITES\`, \`$AGENT\` |"
-            echo "| postman collections | \`${{ steps.newman.outputs.collections }}\` |"
-            echo "| postman collections, run | \`$newman\` |"
-            echo "| postman collections, results | \`$results\` |"
-            echo "| playwright | \`$play\` |"
-          } >> "$GITHUB_STEP_SUMMARY"
+
+          # The setup steps in run order, by id. The suites and the report steps are not setup.
+          failed_step="$(node -e '
+            const steps = JSON.parse(process.env.STEPS)
+            const setup = {
+              inputs_check: "Check the inputs", overlay: "Take deploy/, the agent chart, and the suites from their refs",
+              envsubst: "Install envsubst", images: "Resolve the images", kind_credential: "Give the Kind node a ghcr credential",
+              kind_config: "Write the Kind configuration", kind_cluster: "Create the Kind cluster",
+              ingress: "Install the ingress controller", charts: "Stage the charts", credentials: "Take the stack\x27s credentials",
+              secrets: "Generate TLS and template the secrets", postgres: "Deploy PostgreSQL", custom_ca: "Create the custom CA secret",
+              apihub: "Deploy APIHUB", ingress_hosts: "Point the pods at the ingress", answer: "Wait for APIHUB to answer",
+              agent: "Deploy the APIHUB agent", agent_token: "Check the agent carries the access token",
+              stack_images: "Check which images the stack runs",
+            }
+            const id = Object.keys(setup).find((k) => steps[k] && steps[k].outcome === "failure")
+            process.stdout.write(id ? setup[id] : "")
+          ')"
+
           ok=1
           if [ "$RUN_POSTMAN" = 'true' ]; then
             [ "$newman" = 'success' ] && [ "$results" = 'success' ] || ok=0
           fi
           if [ "$RUN_PLAYWRIGHT" = 'true' ]; then
             [ "$play" = 'success' ] || ok=0
+          fi
+
+          word() { case "$1" in success) echo passed ;; failure) echo '**failed**' ;; *) echo 'not run' ;; esac; }
+          if [ -n "$failed_step" ]; then
+            headline="❌ **The stack did not come up**: the step \`$failed_step\` failed, so no suite ran. See *Pods that did not start* above, or the log of that step."
+            stack="**failed** at \`$failed_step\`"
+          elif [ "$ok" = 1 ]; then
+            headline='✅ **E2E passed.**'
+            stack='up'
+          else
+            headline='❌ **The stack came up, and a suite failed.** See the reports in the newman-reports and playwright-reports artifacts.'
+            stack='up'
+          fi
+          postman="$(word "$results")"
+          [ "$RUN_POSTMAN" = 'true' ] || postman='not selected'
+          [ "$RUN_POSTMAN" != 'true' ] || [ "$newman" != 'failure' ] || postman='**the run failed**'
+          playwright="$(word "$play")"
+          [ "$RUN_PLAYWRIGHT" = 'true' ] || playwright='not selected'
+          {
+            echo '### E2E on Kind'
+            echo
+            echo "$headline"
+            echo
+            echo '| | |'
+            echo '|---|---|'
+            echo "| stack | $stack |"
+            echo "| postman collections | $postman (\`${{ steps.newman.outputs.collections }}\`) |"
+            echo "| playwright | $playwright |"
+            echo "| images | \`${{ steps.images.outputs.owner }}\`: \`$IMAGE_TAGS\`, other images \`$DEFAULT_TAG\` |"
+            echo "| refs | deploy \`${DEPLOY_REF:-this commit}\`, postman \`${POSTMAN_REF:-this commit}\`, playwright \`${PLAYWRIGHT_REF:-this commit}\` |"
+            echo "| tier, suites, agent | \`$TIER\`, \`$SUITES\`, \`$AGENT\` |"
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ -n "$failed_step" ]; then
+            echo "::error::the stack did not come up: the step '$failed_step' failed"
+            exit 1
           fi
           [ "$ok" = 1 ] || {
             echo "::error::newman=$newman newman_results=$results playwright=$play"
