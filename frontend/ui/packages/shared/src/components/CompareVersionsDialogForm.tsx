@@ -38,7 +38,7 @@ import { disableAutocompleteSearch } from '../utils/mui'
 import { getSplittedVersionKey } from '../utils/versions'
 import { Swapper } from './Swapper'
 import { VersionErrorFormMessage } from './ErrorIndicators/VersionErrorFormMessage'
-import { VersionErrorIndicator } from './ErrorIndicators/VersionErrorIndicator'
+import { VersionFieldErrorIndicator } from './ErrorIndicators/VersionFieldErrorIndicator'
 import { VersionSelectorAutocomplete } from './Autocompletes/VersionSelectorAutocomplete'
 import { VersionOptionItem } from './VersionOptionItem'
 import { useVersionProblemDetails } from '../hooks/versions/useVersionProblemDetails'
@@ -120,11 +120,7 @@ export const CompareVersionsDialogForm: FC<CompareVersionsDialogFormProps> = mem
   const kind = isDashboard ? DASHBOARD_KIND : PACKAGE_KIND
   const originalVersionPackageKey = previousPackage?.key
   const changedVersionPackageKey = packageMode ? currentPackage?.key : previousPackage?.key
-  const {
-    isBlocking: isPreviousVersionBlocking,
-    formHelperText: previousVersionFormHelperText,
-    hasProblems: previousVersionHasProblems,
-  } = useVersionProblemDetails({
+  const previousVersionProblem = useVersionProblemDetails({
     packageKey: originalVersionPackageKey,
     versionKey: previousVersion?.key,
     hasErrors: previousVersion?.hasErrors,
@@ -133,11 +129,7 @@ export const CompareVersionsDialogForm: FC<CompareVersionsDialogFormProps> = mem
     kind: kind,
     surface: VERSION_PROBLEM_DIALOG_SURFACE.COMPARE_PREVIOUS_VERSION,
   })
-  const {
-    isBlocking: isCurrentVersionBlocking,
-    formHelperText: currentVersionFormHelperText,
-    hasProblems: currentVersionHasProblems,
-  } = useVersionProblemDetails({
+  const currentVersionProblem = useVersionProblemDetails({
     packageKey: changedVersionPackageKey,
     versionKey: currentVersion?.key,
     hasErrors: currentVersion?.hasErrors,
@@ -227,14 +219,8 @@ export const CompareVersionsDialogForm: FC<CompareVersionsDialogFormProps> = mem
                 filterOptions={disableAutocompleteSearch}
                 onInputChange={debounce(onOriginalPackageVersionInputChange, DEFAULT_DEBOUNCE)}
                 sx={{ gridArea: 'originalVersion' }}
-                inputIndicator={previousVersionHasProblems && previousVersion && (
-                  <VersionErrorIndicator
-                    versionKey={previousVersion.key}
-                    hasErrors={previousVersion.hasErrors}
-                    changelogHasErrors={previousVersion.changelogHasErrors}
-                    apiProcessorVersion={previousVersion.apiProcessorVersion}
-                    kind={kind}
-                  />
+                inputIndicator={previousVersionProblem.hasProblems && (
+                  <VersionFieldErrorIndicator problem={previousVersionProblem}/>
                 )}
                 value={value ? { ...value, key: value.latestRevision ? versionKey : value.key } : null}
                 loading={isOriginalPackageVersionsLoading}
@@ -249,7 +235,7 @@ export const CompareVersionsDialogForm: FC<CompareVersionsDialogFormProps> = mem
                     {...params}
                     required
                     label="Version"
-                    error={isPreviousVersionBlocking}
+                    error={previousVersionProblem.isBlocking}
                   />
                 )}
                 onChange={(_, value) => onChange(value)}
@@ -331,14 +317,8 @@ export const CompareVersionsDialogForm: FC<CompareVersionsDialogFormProps> = mem
                 filterOptions={disableAutocompleteSearch}
                 onInputChange={debounce(onChangedPackageVersionInputChange, DEFAULT_DEBOUNCE)}
                 sx={{ gridArea: 'changedVersion' }}
-                inputIndicator={currentVersionHasProblems && currentVersion && (
-                  <VersionErrorIndicator
-                    versionKey={currentVersion.key}
-                    hasErrors={currentVersion.hasErrors}
-                    changelogHasErrors={currentVersion.changelogHasErrors}
-                    apiProcessorVersion={currentVersion.apiProcessorVersion}
-                    kind={kind}
-                  />
+                inputIndicator={currentVersionProblem.hasProblems && (
+                  <VersionFieldErrorIndicator problem={currentVersionProblem}/>
                 )}
                 value={value ? { ...value, key: value.latestRevision ? versionKey : value.key } : null}
                 loading={isChangedPackageVersionsLoading}
@@ -353,7 +333,7 @@ export const CompareVersionsDialogForm: FC<CompareVersionsDialogFormProps> = mem
                     {...params}
                     required
                     label="Version"
-                    error={isCurrentVersionBlocking}
+                    error={currentVersionProblem.isBlocking}
                   />
                 )}
                 onChange={(_, value) => onChange(value)}
@@ -366,7 +346,7 @@ export const CompareVersionsDialogForm: FC<CompareVersionsDialogFormProps> = mem
       <Box sx={{ maxWidth: '692px', padding: '0 24px' }}>
         <VersionErrorFormMessage
           data-testid="CompareVersionsFormMessage"
-          message={currentVersionFormHelperText ?? previousVersionFormHelperText}
+          message={currentVersionProblem.formHelperText ?? previousVersionProblem.formHelperText}
         />
       </Box>
       <DialogActions>
@@ -375,7 +355,7 @@ export const CompareVersionsDialogForm: FC<CompareVersionsDialogFormProps> = mem
           variant="contained"
           type="submit"
           loading={isApiTypeFetching}
-          disabled={isPreviousVersionBlocking || isCurrentVersionBlocking}
+          disabled={previousVersionProblem.isBlocking || currentVersionProblem.isBlocking}
           data-testid="CompareButton"
         >
           Compare
