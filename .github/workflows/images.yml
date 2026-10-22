@@ -24,6 +24,14 @@ on:
           every build project.
         required: true
         type: string
+      push:
+        description: >-
+          Publish the images. `false` builds each image without pushing or tagging it, for a run whose
+          token cannot write to ghcr (a pull request from a fork, or Dependabot): the build still checks
+          the Dockerfile and its base images.
+        required: false
+        default: true
+        type: boolean
 
 jobs:
   images:
@@ -89,12 +97,6 @@ jobs:
           platforms: arm64
 
       - uses: docker/setup-buildx-action@v4
-
-      - uses: docker/login-action@v4
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
 
       # develop -> dev, release -> next, main -> latest, feature/x -> feature-x, a pull request ->
       # pull-N-merge (tools/ci/branch-tag.sh).
@@ -218,6 +220,17 @@ jobs:
           fi
           [ "$missing" = "0" ] || { echo "::error::build outputs missing — the docker build would fail on a COPY source"; exit 1; }
 
+      # The login comes after every step that runs dependency code on the runner (the Nx build and
+      # `pnpm deploy`), so a compromised package cannot read the ghcr write credentials; the RUN steps
+      # of the docker build do not see them either. The content check above reads the public images
+      # anonymously, and a build-only run needs no login at all.
+      - uses: docker/login-action@v4
+        if: inputs.push
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Build and push
         if: steps.exists.outputs.hit == 'false'
         uses: docker/build-push-action@v7
@@ -225,7 +238,7 @@ jobs:
           context: ${{ matrix.context }}
           file: ${{ matrix.dockerfile }}
           platforms: ${{ steps.platforms.outputs.value }}
-          push: true
+          push: ${{ inputs.push }}
           provenance: false
           # Only the content tag. Annotations belong to a manifest and every tag on it shares them,
           # so the next step gives each branch tag its own index with its own annotations.
@@ -240,6 +253,7 @@ jobs:
       # content in a new index per tag, which carries this ref's annotations. `index:` is required:
       # annotations apply to an index or a descriptor, never to a manifest.
       - name: Point the branch tag at this content
+        if: inputs.push
         shell: bash
         env:
           BASE: ${{ steps.tags.outputs.base }}

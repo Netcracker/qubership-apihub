@@ -10,10 +10,12 @@
  *   e2e                          skipped when the plan chose no E2E tier
  *   storybooks, storybook-pages  skipped on pull requests
  *   storybook-pages              also skipped while the variable PAGES_DEPLOY is not `true`
- *   js-images, go-images, java-images, e2e, storybooks, storybook-pages
+ *   e2e, storybooks, storybook-pages
  *                                skipped when the plan says the run cannot publish (`can_publish` is
  *                                `false`: a pull request from a fork, or Dependabot), because the
  *                                token has no package write access there
+ *
+ * The image jobs run on such a run too: they build without pushing, so a skip there is a failure.
  *
  * Everything else must succeed. A job that is missing from `needs`, or one this script does not know,
  * fails the verdict: adding a job to the workflow without deciding what its skip means is an error.
@@ -41,9 +43,9 @@ function dueJobs(out, event, pagesDeploy) {
     go: out.go_projects !== '[]',
     java: out.java_projects !== '[]',
     'screenshot-tests': out.screenshot_projects !== '[]',
-    'js-images': out.image_projects !== '[]' && canPublish,
-    'go-images': out.image_projects !== '[]' && canPublish,
-    'java-images': out.image_projects !== '[]' && canPublish,
+    'js-images': out.image_projects !== '[]',
+    'go-images': out.image_projects !== '[]',
+    'java-images': out.image_projects !== '[]',
     e2e: out.e2e_tier !== 'none' && canPublish,
     storybooks: event !== 'pull_request' && canPublish,
     // ci.yml dispatches pages.yml only while the repository variable PAGES_DEPLOY is `true`.
