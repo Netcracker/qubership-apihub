@@ -249,6 +249,24 @@
         "{workspaceRoot}/go.work.sum"
       ]
     },
+    "@nx-go/nx-go:lint": {
+      "//options": [
+        "The executor runs `go fmt ./...` by default, which rewrites files instead of checking them.",
+        "`linter` and `args` make it `go vet ./...`."
+      ],
+      "options": {
+        "linter": "go",
+        "args": ["vet"]
+      },
+      "cache": true,
+      "inputs": [
+        "default",
+        "^default",
+        "goToolchain",
+        "{workspaceRoot}/go.work",
+        "{workspaceRoot}/go.work.sum"
+      ]
+    },
     "build": {
       "dependsOn": [
         "^build"

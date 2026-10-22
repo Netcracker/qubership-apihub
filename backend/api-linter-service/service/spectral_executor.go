@@ -62,7 +62,8 @@ func (s *spectralExecutorImpl) LintLocalDoc(docPath string, rulesetPath string) 
 	args = append(args, resultPath)
 
 	limit := time.Minute * 10
-	ctx, _ := context.WithDeadline(context.Background(), time.Now().Add(limit))
+	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(limit))
+	defer cancel()
 
 	cmd := exec.CommandContext(ctx, s.spectralBinPath, args...)
 	var out bytes.Buffer

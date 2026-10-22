@@ -1748,10 +1748,10 @@ func buildApiChangesWorkbook(versionChanges *view.VersionChangesView, packageNam
 				cellsValues[fmt.Sprintf("E%d", rowIndex)] = previousVersionName
 				cellsValues[fmt.Sprintf("F%d", rowIndex)] = changelogView.Title
 				cellsValues[fmt.Sprintf("G%d", rowIndex)] = changelogView.AsyncAPIOperationMetadata.Action
-				cellsValues[fmt.Sprintf("H%d", rowIndex)] = changelogView.Channel
-				cellsValues[fmt.Sprintf("I%d", rowIndex)] = changelogView.Protocol
-				cellsValues[fmt.Sprintf("J%d", rowIndex)] = changelogView.AsyncOperationId
-				cellsValues[fmt.Sprintf("K%d", rowIndex)] = changelogView.MessageId
+				cellsValues[fmt.Sprintf("H%d", rowIndex)] = changelogView.AsyncAPIOperationMetadata.Channel
+				cellsValues[fmt.Sprintf("I%d", rowIndex)] = changelogView.AsyncAPIOperationMetadata.Protocol
+				cellsValues[fmt.Sprintf("J%d", rowIndex)] = changelogView.AsyncAPIOperationMetadata.AsyncOperationId
+				cellsValues[fmt.Sprintf("K%d", rowIndex)] = changelogView.AsyncAPIOperationMetadata.MessageId
 				cellsValues[fmt.Sprintf("L%d", rowIndex)] = changelogView.OperationComparisonChangesView.Action
 				cellsValues[fmt.Sprintf("M%d", rowIndex)] = commonOperationChange.Description
 				cellsValues[fmt.Sprintf("N%d", rowIndex)] = mapSeverity(commonOperationChange.Severity)
