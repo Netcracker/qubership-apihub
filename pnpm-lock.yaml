@@ -213,8 +213,8 @@ importers:
         version: 6.0.3
     devDependencies:
       '@asyncapi/parser':
-        specifier: 3.6.0
-        version: 3.6.0(encoding@0.1.13)
+        specifier: 3.6.6
+        version: 3.6.6(encoding@0.1.13)
       '@netcracker/qubership-apihub-compatibility-suites':
         specifier: workspace:^
         version: link:../compatibility-suites
@@ -435,8 +435,8 @@ importers:
         version: 2.9.0
     devDependencies:
       '@asyncapi/parser':
-        specifier: ^3.4.0
-        version: 3.6.0(encoding@0.1.13)
+        specifier: ^3.6.6
+        version: 3.6.6(encoding@0.1.13)
       '@clack/prompts':
         specifier: ^0.9.1
         version: 0.9.1
@@ -567,8 +567,8 @@ importers:
   frontend/api-doc-viewer/packages/next-data-model:
     dependencies:
       '@asyncapi/parser':
-        specifier: 3.6.0
-        version: 3.6.0(encoding@0.1.13)
+        specifier: 3.6.6
+        version: 3.6.6(encoding@0.1.13)
       '@netcracker/qubership-apihub-api-diff':
         specifier: workspace:^
         version: link:../../../api-diff
@@ -600,8 +600,8 @@ importers:
   frontend/api-processor:
     dependencies:
       '@asyncapi/parser':
-        specifier: ^3.6.0
-        version: 3.6.0(encoding@0.1.13)
+        specifier: ^3.6.6
+        version: 3.6.6(encoding@0.1.13)
       '@netcracker/qubership-apihub-api-diff':
         specifier: workspace:^
         version: link:../api-diff
@@ -756,8 +756,8 @@ importers:
         version: 3.0.0
     devDependencies:
       '@asyncapi/parser':
-        specifier: 3.6.0
-        version: 3.6.0(encoding@0.1.13)
+        specifier: 3.6.6
+        version: 3.6.6(encoding@0.1.13)
       '@jest/globals':
         specifier: 30.4.1
         version: 30.4.1(supports-color@9.4.0)
@@ -2659,7 +2659,7 @@ importers:
         version: 6.0.1(webpack-dev-server@5.2.2)(webpack@5.101.3)
       webpack-dev-server:
         specifier: 5.2.2
-        version: 5.2.2(supports-color@8.1.1)(webpack-cli@6.0.1)(webpack@5.101.3)
+        version: 5.2.2(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1)(webpack-cli@6.0.1)(webpack@5.101.3)
       xml-formatter:
         specifier: ^2.6.1
         version: 2.6.1
@@ -2667,8 +2667,8 @@ importers:
   frontend/ui:
     dependencies:
       '@asyncapi/parser':
-        specifier: 3.6.0
-        version: 3.6.0(encoding@0.1.13)
+        specifier: 3.6.6
+        version: 3.6.6(encoding@0.1.13)
       '@emotion/react':
         specifier: 11.10.6
         version: 11.10.6(@types/react@18.3.31)(react@18.3.1)(supports-color@5.5.0)
@@ -3194,8 +3194,8 @@ importers:
   frontend/ui/packages/portal:
     dependencies:
       '@asyncapi/parser':
-        specifier: 3.6.0
-        version: 3.6.0(encoding@0.1.13)
+        specifier: 3.6.6
+        version: 3.6.6(encoding@0.1.13)
       '@lit-labs/react':
         specifier: 1.1.1
         version: 1.1.1
@@ -4001,8 +4001,8 @@ packages:
     resolution: {integrity: sha512-Qt2T6RGtYacyV8OZU3IcyFbsp69s6qIcnWvQvn7/p9MKebPCpEswP5Ji4RhifG3DfeBX7e07Pjj5smkd+Tfp7Q==}
     engines: {node: '>=22.22.0'}
 
-  '@asyncapi/parser@3.6.0':
-    resolution: {integrity: sha512-6S0Yr8vI418a1IrpGsOYbfWVo9+aHvSqN2oSkiY0YJltS/C7oDOt9e0mo6hSld8bg+EeKrtgkVmpW4obh1JFvA==}
+  '@asyncapi/parser@3.6.6':
+    resolution: {integrity: sha512-DppE3OStajt6gHc+RsVf9VxRwW9WACagHnFvkOML5rZGwS9hXxtFYTxnsH3mHPRgHom0rClMs6DpbjNY65Y54A==}
 
   '@asyncapi/specs@3.2.1':
     resolution: {integrity: sha512-FO+EteK+Gk3zwumrBw6frpp9cJ4oQL5++hBBpfM81w16e9KaiA4sKrzvQsvVjifoZZHNvVEX4D2zoz9i8CLccQ==}
@@ -12753,10 +12753,6 @@ packages:
   available-typed-arrays@1.0.7:
     resolution: {integrity: sha512-wvUjBtSGN7+7SjNpq/9M2Tg350UZD3q62IFZLbRAR1bSMlCo1ZaeW+BJ+D090e4hIIZLBcTDWe4Mh4jvUDajzQ==}
     engines: {node: '>= 0.4'}
-
-  avsc@5.7.9:
-    resolution: {integrity: sha512-yOA4wFeI7ET3v32Di/sUybQ+ttP20JHSW3mxLuNGeO0uD6PPcvLrIQXSvy/rhJOWU5JrYh7U4OHplWMmtAtjMg==}
-    engines: {node: '>=0.11'}
 
   aws-sign2@0.7.0:
     resolution: {integrity: sha512-08kcGqnYf/YmjoRhfxyu+CLxBjUtHLXLXX/vUfx9l2LYzG3c1m61nrpyFUZI6zeS+Li/wWMMidD9KgrqtGq3mA==}
@@ -26037,7 +26033,7 @@ snapshots:
       is-docker: 4.0.0
       package-manager-detector: 1.9.0
 
-  '@asyncapi/parser@3.6.0(encoding@0.1.13)':
+  '@asyncapi/parser@3.6.6(encoding@0.1.13)':
     dependencies:
       '@asyncapi/specs': 6.11.1
       '@openapi-contrib/openapi-schema-to-json-schema': 3.2.0
@@ -26054,7 +26050,6 @@ snapshots:
       ajv: 8.20.0
       ajv-errors: 3.0.0(ajv@8.20.0)
       ajv-formats: 2.1.1(ajv@8.20.0)
-      avsc: 5.7.9
       js-yaml: 4.3.2
       jsonpath-plus: 10.4.0
       node-fetch: 2.6.7(encoding@0.1.13)
@@ -26355,7 +26350,7 @@ snapshots:
     dependencies:
       '@babel/compat-data': 7.29.7
       '@babel/helper-validator-option': 7.29.7
-      browserslist: 4.28.8
+      browserslist: 4.29.4
       lru-cache: 5.1.1
       semver: 6.3.1
 
@@ -31148,7 +31143,7 @@ snapshots:
 
   '@jest/pattern@30.5.0':
     dependencies:
-      '@types/node': 24.13.3
+      '@types/node': 24.0.0
       jest-regex-util: 30.5.0
 
   '@jest/reporters@30.4.1(supports-color@5.5.0)':
@@ -31495,7 +31490,7 @@ snapshots:
       '@jest/schemas': 30.5.0
       '@types/istanbul-lib-coverage': 2.0.6
       '@types/istanbul-reports': 3.0.4
-      '@types/node': 24.13.3
+      '@types/node': 24.0.0
       '@types/yargs': 17.0.35
       chalk: 4.1.2
 
@@ -37627,7 +37622,7 @@ snapshots:
 
   '@types/bonjour@3.5.13':
     dependencies:
-      '@types/node': 24.13.3
+      '@types/node': 24.0.0
 
   '@types/chai@5.2.3':
     dependencies:
@@ -37653,7 +37648,7 @@ snapshots:
   '@types/connect-history-api-fallback@1.5.4':
     dependencies:
       '@types/express-serve-static-core': 5.1.3
-      '@types/node': 24.13.3
+      '@types/node': 24.0.0
 
   '@types/connect@3.4.38':
     dependencies:
@@ -37846,7 +37841,7 @@ snapshots:
 
   '@types/express-serve-static-core@4.19.9':
     dependencies:
-      '@types/node': 24.13.3
+      '@types/node': 24.0.0
       '@types/qs': 6.15.1
       '@types/range-parser': 1.2.7
       '@types/send': 1.2.1
@@ -37934,7 +37929,7 @@ snapshots:
 
   '@types/http-proxy@1.17.17':
     dependencies:
-      '@types/node': 24.13.3
+      '@types/node': 24.0.0
 
   '@types/httpsnippet@1.23.4':
     dependencies:
@@ -38055,7 +38050,7 @@ snapshots:
 
   '@types/node-forge@1.3.14':
     dependencies:
-      '@types/node': 24.13.3
+      '@types/node': 24.0.0
 
   '@types/node@16.18.126': {}
 
@@ -38194,11 +38189,11 @@ snapshots:
   '@types/send@0.17.6':
     dependencies:
       '@types/mime': 1.3.5
-      '@types/node': 24.13.3
+      '@types/node': 24.0.0
 
   '@types/send@1.2.1':
     dependencies:
-      '@types/node': 24.13.3
+      '@types/node': 24.0.0
 
   '@types/serve-index@1.9.4':
     dependencies:
@@ -38207,7 +38202,7 @@ snapshots:
   '@types/serve-static@1.15.10':
     dependencies:
       '@types/http-errors': 2.0.5
-      '@types/node': 24.13.3
+      '@types/node': 24.0.0
       '@types/send': 0.17.6
 
   '@types/serve-static@2.2.0':
@@ -38217,13 +38212,13 @@ snapshots:
 
   '@types/set-cookie-parser@2.4.10':
     dependencies:
-      '@types/node': 24.13.3
+      '@types/node': 24.0.0
 
   '@types/slug@5.0.9': {}
 
   '@types/sockjs@0.3.36':
     dependencies:
-      '@types/node': 24.13.3
+      '@types/node': 24.0.0
 
   '@types/stack-utils@1.0.1': {}
 
@@ -38285,7 +38280,7 @@ snapshots:
 
   '@types/ws@8.18.1':
     dependencies:
-      '@types/node': 24.13.3
+      '@types/node': 24.0.0
 
   '@types/ws@8.5.3':
     dependencies:
@@ -39599,7 +39594,7 @@ snapshots:
       webpack: 5.101.3(clean-css@5.3.3)(cssnano@5.0.6(postcss@8.5.6))(csso@4.2.0)(esbuild@0.25.12)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.6)(uglify-js@3.19.3)(webpack-cli@6.0.1)
       webpack-cli: 6.0.1(webpack-dev-server@5.2.2)(webpack@5.101.3)
     optionalDependencies:
-      webpack-dev-server: 5.2.2(supports-color@8.1.1)(webpack-cli@6.0.1)(webpack@5.101.3)
+      webpack-dev-server: 5.2.2(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1)(webpack-cli@6.0.1)(webpack@5.101.3)
 
   '@webpack-cli/serve@3.0.1(webpack-cli@6.0.1)(webpack-dev-server@5.2.2)(webpack@5.106.2)':
     dependencies:
@@ -40389,8 +40384,6 @@ snapshots:
   available-typed-arrays@1.0.7:
     dependencies:
       possible-typed-array-names: 1.1.0
-
-  avsc@5.7.9: {}
 
   aws-sign2@0.7.0: {}
 
@@ -41401,8 +41394,8 @@ snapshots:
 
   caniuse-api@3.0.0:
     dependencies:
-      browserslist: 4.28.8
-      caniuse-lite: 1.0.30001810
+      browserslist: 4.29.4
+      caniuse-lite: 1.0.30001816
       lodash.memoize: 4.1.2
       lodash.uniq: 4.5.0
 
@@ -42590,7 +42583,7 @@ snapshots:
   css-tree@2.2.1:
     dependencies:
       mdn-data: 2.0.28
-      source-map-js: 1.2.1
+      source-map-js: 1.2.2
 
   css-tree@3.2.1:
     dependencies:
@@ -45978,8 +45971,6 @@ snapshots:
 
   fnv1a-64@0.1.2: {}
 
-  follow-redirects@1.16.0: {}
-
   follow-redirects@1.16.0(debug@4.3.4(supports-color@9.4.0)):
     optionalDependencies:
       debug: 4.3.4(supports-color@9.4.0)
@@ -45995,6 +45986,10 @@ snapshots:
   follow-redirects@1.16.0(debug@4.4.3(supports-color@7.2.0)):
     optionalDependencies:
       debug: 4.4.3(supports-color@7.2.0)
+
+  follow-redirects@1.16.0(debug@4.4.3(supports-color@8.1.1)):
+    optionalDependencies:
+      debug: 4.4.3(supports-color@8.1.1)
 
   follow-redirects@1.16.0(debug@4.4.3(supports-color@9.4.0)):
     optionalDependencies:
@@ -47257,10 +47252,10 @@ snapshots:
       - debug
       - supports-color
 
-  http-proxy-middleware@2.0.10(@types/express@4.17.25):
+  http-proxy-middleware@2.0.10(@types/express@4.17.25)(debug@4.4.3(supports-color@5.5.0)):
     dependencies:
       '@types/http-proxy': 1.17.17
-      http-proxy: 1.18.1
+      http-proxy: 1.18.1(debug@4.4.3(supports-color@5.5.0))
       is-glob: 4.0.3
       is-plain-obj: 3.0.0
       micromatch: 4.0.8
@@ -47269,10 +47264,10 @@ snapshots:
     transitivePeerDependencies:
       - debug
 
-  http-proxy-middleware@2.0.10(@types/express@4.17.25)(debug@4.4.3(supports-color@5.5.0)):
+  http-proxy-middleware@2.0.10(@types/express@4.17.25)(debug@4.4.3(supports-color@8.1.1)):
     dependencies:
       '@types/http-proxy': 1.17.17
-      http-proxy: 1.18.1(debug@4.4.3(supports-color@5.5.0))
+      http-proxy: 1.18.1(debug@4.4.3(supports-color@8.1.1))
       is-glob: 4.0.3
       is-plain-obj: 3.0.0
       micromatch: 4.0.8
@@ -47294,14 +47289,6 @@ snapshots:
       - debug
     optional: true
 
-  http-proxy@1.18.1:
-    dependencies:
-      eventemitter3: 4.0.7
-      follow-redirects: 1.16.0
-      requires-port: 1.0.0
-    transitivePeerDependencies:
-      - debug
-
   http-proxy@1.18.1(debug@4.4.3(supports-color@5.5.0)):
     dependencies:
       eventemitter3: 4.0.7
@@ -47314,6 +47301,14 @@ snapshots:
     dependencies:
       eventemitter3: 4.0.7
       follow-redirects: 1.16.0(debug@4.4.3(supports-color@6.1.0))
+      requires-port: 1.0.0
+    transitivePeerDependencies:
+      - debug
+
+  http-proxy@1.18.1(debug@4.4.3(supports-color@8.1.1)):
+    dependencies:
+      eventemitter3: 4.0.7
+      follow-redirects: 1.16.0(debug@4.4.3(supports-color@8.1.1))
       requires-port: 1.0.0
     transitivePeerDependencies:
       - debug
@@ -48988,7 +48983,7 @@ snapshots:
   jest-haste-map@30.4.1:
     dependencies:
       '@jest/types': 30.4.1
-      '@types/node': 24.13.3
+      '@types/node': 24.0.0
       anymatch: 3.1.3
       fb-watchman: 2.0.2
       graceful-fs: 4.2.11
@@ -49637,7 +49632,7 @@ snapshots:
   jest-util@30.5.1:
     dependencies:
       '@jest/types': 30.5.1
-      '@types/node': 24.13.3
+      '@types/node': 24.0.0
       chalk: 4.1.2
       ci-info: 4.4.0
       graceful-fs: 4.2.11
@@ -49685,7 +49680,7 @@ snapshots:
 
   jest-worker@27.5.1:
     dependencies:
-      '@types/node': 24.13.3
+      '@types/node': 24.0.0
       merge-stream: 2.0.0
       supports-color: 8.1.1
 
@@ -49698,7 +49693,7 @@ snapshots:
 
   jest-worker@30.4.1:
     dependencies:
-      '@types/node': 24.13.3
+      '@types/node': 24.0.0
       '@ungap/structured-clone': 1.4.0
       jest-util: 30.4.1
       merge-stream: 2.0.0
@@ -54182,7 +54177,7 @@ snapshots:
 
   postcss-colormin@5.3.1(postcss@8.3.5):
     dependencies:
-      browserslist: 4.28.8
+      browserslist: 4.29.4
       caniuse-api: 3.0.0
       colord: 2.10.0
       postcss: 8.3.5
@@ -54190,7 +54185,7 @@ snapshots:
 
   postcss-colormin@5.3.1(postcss@8.4.29):
     dependencies:
-      browserslist: 4.28.8
+      browserslist: 4.29.4
       caniuse-api: 3.0.0
       colord: 2.10.0
       postcss: 8.4.29
@@ -54199,7 +54194,7 @@ snapshots:
 
   postcss-colormin@5.3.1(postcss@8.5.28):
     dependencies:
-      browserslist: 4.28.8
+      browserslist: 4.29.4
       caniuse-api: 3.0.0
       colord: 2.10.0
       postcss: 8.5.28
@@ -54208,7 +54203,7 @@ snapshots:
 
   postcss-colormin@5.3.1(postcss@8.5.31):
     dependencies:
-      browserslist: 4.28.8
+      browserslist: 4.29.4
       caniuse-api: 3.0.0
       colord: 2.10.0
       postcss: 8.5.31
@@ -54217,7 +54212,7 @@ snapshots:
 
   postcss-colormin@5.3.1(postcss@8.5.6):
     dependencies:
-      browserslist: 4.28.8
+      browserslist: 4.29.4
       caniuse-api: 3.0.0
       colord: 2.10.0
       postcss: 8.5.6
@@ -54225,34 +54220,34 @@ snapshots:
 
   postcss-convert-values@5.1.3(postcss@8.3.5):
     dependencies:
-      browserslist: 4.28.8
+      browserslist: 4.29.4
       postcss: 8.3.5
       postcss-value-parser: 4.2.0
 
   postcss-convert-values@5.1.3(postcss@8.4.29):
     dependencies:
-      browserslist: 4.28.8
+      browserslist: 4.29.4
       postcss: 8.4.29
       postcss-value-parser: 4.2.0
     optional: true
 
   postcss-convert-values@5.1.3(postcss@8.5.28):
     dependencies:
-      browserslist: 4.28.8
+      browserslist: 4.29.4
       postcss: 8.5.28
       postcss-value-parser: 4.2.0
     optional: true
 
   postcss-convert-values@5.1.3(postcss@8.5.31):
     dependencies:
-      browserslist: 4.28.8
+      browserslist: 4.29.4
       postcss: 8.5.31
       postcss-value-parser: 4.2.0
     optional: true
 
   postcss-convert-values@5.1.3(postcss@8.5.6):
     dependencies:
-      browserslist: 4.28.8
+      browserslist: 4.29.4
       postcss: 8.5.6
       postcss-value-parser: 4.2.0
 
@@ -54490,7 +54485,7 @@ snapshots:
 
   postcss-merge-rules@5.1.4(postcss@8.3.5):
     dependencies:
-      browserslist: 4.28.8
+      browserslist: 4.29.4
       caniuse-api: 3.0.0
       cssnano-utils: 3.1.0(postcss@8.3.5)
       postcss: 8.3.5
@@ -54498,7 +54493,7 @@ snapshots:
 
   postcss-merge-rules@5.1.4(postcss@8.4.29):
     dependencies:
-      browserslist: 4.28.8
+      browserslist: 4.29.4
       caniuse-api: 3.0.0
       cssnano-utils: 3.1.0(postcss@8.4.29)
       postcss: 8.4.29
@@ -54507,7 +54502,7 @@ snapshots:
 
   postcss-merge-rules@5.1.4(postcss@8.5.28):
     dependencies:
-      browserslist: 4.28.8
+      browserslist: 4.29.4
       caniuse-api: 3.0.0
       cssnano-utils: 3.1.0(postcss@8.5.28)
       postcss: 8.5.28
@@ -54516,7 +54511,7 @@ snapshots:
 
   postcss-merge-rules@5.1.4(postcss@8.5.31):
     dependencies:
-      browserslist: 4.28.8
+      browserslist: 4.29.4
       caniuse-api: 3.0.0
       cssnano-utils: 3.1.0(postcss@8.5.31)
       postcss: 8.5.31
@@ -54525,7 +54520,7 @@ snapshots:
 
   postcss-merge-rules@5.1.4(postcss@8.5.6):
     dependencies:
-      browserslist: 4.28.8
+      browserslist: 4.29.4
       caniuse-api: 3.0.0
       cssnano-utils: 3.1.0(postcss@8.5.6)
       postcss: 8.5.6
@@ -54599,14 +54594,14 @@ snapshots:
 
   postcss-minify-params@5.1.4(postcss@8.3.5):
     dependencies:
-      browserslist: 4.28.8
+      browserslist: 4.29.4
       cssnano-utils: 3.1.0(postcss@8.3.5)
       postcss: 8.3.5
       postcss-value-parser: 4.2.0
 
   postcss-minify-params@5.1.4(postcss@8.4.29):
     dependencies:
-      browserslist: 4.28.8
+      browserslist: 4.29.4
       cssnano-utils: 3.1.0(postcss@8.4.29)
       postcss: 8.4.29
       postcss-value-parser: 4.2.0
@@ -54614,7 +54609,7 @@ snapshots:
 
   postcss-minify-params@5.1.4(postcss@8.5.28):
     dependencies:
-      browserslist: 4.28.8
+      browserslist: 4.29.4
       cssnano-utils: 3.1.0(postcss@8.5.28)
       postcss: 8.5.28
       postcss-value-parser: 4.2.0
@@ -54622,7 +54617,7 @@ snapshots:
 
   postcss-minify-params@5.1.4(postcss@8.5.31):
     dependencies:
-      browserslist: 4.28.8
+      browserslist: 4.29.4
       cssnano-utils: 3.1.0(postcss@8.5.31)
       postcss: 8.5.31
       postcss-value-parser: 4.2.0
@@ -54630,7 +54625,7 @@ snapshots:
 
   postcss-minify-params@5.1.4(postcss@8.5.6):
     dependencies:
-      browserslist: 4.28.8
+      browserslist: 4.29.4
       cssnano-utils: 3.1.0(postcss@8.5.6)
       postcss: 8.5.6
       postcss-value-parser: 4.2.0
@@ -54875,34 +54870,34 @@ snapshots:
 
   postcss-normalize-unicode@5.1.1(postcss@8.3.5):
     dependencies:
-      browserslist: 4.28.8
+      browserslist: 4.29.4
       postcss: 8.3.5
       postcss-value-parser: 4.2.0
 
   postcss-normalize-unicode@5.1.1(postcss@8.4.29):
     dependencies:
-      browserslist: 4.28.8
+      browserslist: 4.29.4
       postcss: 8.4.29
       postcss-value-parser: 4.2.0
     optional: true
 
   postcss-normalize-unicode@5.1.1(postcss@8.5.28):
     dependencies:
-      browserslist: 4.28.8
+      browserslist: 4.29.4
       postcss: 8.5.28
       postcss-value-parser: 4.2.0
     optional: true
 
   postcss-normalize-unicode@5.1.1(postcss@8.5.31):
     dependencies:
-      browserslist: 4.28.8
+      browserslist: 4.29.4
       postcss: 8.5.31
       postcss-value-parser: 4.2.0
     optional: true
 
   postcss-normalize-unicode@5.1.1(postcss@8.5.6):
     dependencies:
-      browserslist: 4.28.8
+      browserslist: 4.29.4
       postcss: 8.5.6
       postcss-value-parser: 4.2.0
 
@@ -55002,34 +54997,34 @@ snapshots:
 
   postcss-reduce-initial@5.1.2(postcss@8.3.5):
     dependencies:
-      browserslist: 4.28.8
+      browserslist: 4.29.4
       caniuse-api: 3.0.0
       postcss: 8.3.5
 
   postcss-reduce-initial@5.1.2(postcss@8.4.29):
     dependencies:
-      browserslist: 4.28.8
+      browserslist: 4.29.4
       caniuse-api: 3.0.0
       postcss: 8.4.29
     optional: true
 
   postcss-reduce-initial@5.1.2(postcss@8.5.28):
     dependencies:
-      browserslist: 4.28.8
+      browserslist: 4.29.4
       caniuse-api: 3.0.0
       postcss: 8.5.28
     optional: true
 
   postcss-reduce-initial@5.1.2(postcss@8.5.31):
     dependencies:
-      browserslist: 4.28.8
+      browserslist: 4.29.4
       caniuse-api: 3.0.0
       postcss: 8.5.31
     optional: true
 
   postcss-reduce-initial@5.1.2(postcss@8.5.6):
     dependencies:
-      browserslist: 4.28.8
+      browserslist: 4.29.4
       caniuse-api: 3.0.0
       postcss: 8.5.6
 
@@ -55171,9 +55166,9 @@ snapshots:
 
   postcss@8.5.28:
     dependencies:
-      nanoid: 3.3.18
+      nanoid: 3.3.20
       picocolors: 1.1.1
-      source-map-js: 1.2.1
+      source-map-js: 1.2.2
 
   postcss@8.5.31:
     dependencies:
@@ -58438,34 +58433,34 @@ snapshots:
 
   stylehacks@5.1.1(postcss@8.3.5):
     dependencies:
-      browserslist: 4.28.8
+      browserslist: 4.29.4
       postcss: 8.3.5
       postcss-selector-parser: 6.1.4
 
   stylehacks@5.1.1(postcss@8.4.29):
     dependencies:
-      browserslist: 4.28.8
+      browserslist: 4.29.4
       postcss: 8.4.29
       postcss-selector-parser: 6.1.4
     optional: true
 
   stylehacks@5.1.1(postcss@8.5.28):
     dependencies:
-      browserslist: 4.28.8
+      browserslist: 4.29.4
       postcss: 8.5.28
       postcss-selector-parser: 6.1.4
     optional: true
 
   stylehacks@5.1.1(postcss@8.5.31):
     dependencies:
-      browserslist: 4.28.8
+      browserslist: 4.29.4
       postcss: 8.5.31
       postcss-selector-parser: 6.1.4
     optional: true
 
   stylehacks@5.1.1(postcss@8.5.6):
     dependencies:
-      browserslist: 4.28.8
+      browserslist: 4.29.4
       postcss: 8.5.6
       postcss-selector-parser: 6.1.4
 
@@ -60672,7 +60667,7 @@ snapshots:
       webpack: 5.101.3(clean-css@5.3.3)(cssnano@5.0.6(postcss@8.5.6))(csso@4.2.0)(esbuild@0.25.12)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.6)(uglify-js@3.19.3)(webpack-cli@6.0.1)
       webpack-merge: 6.0.1
     optionalDependencies:
-      webpack-dev-server: 5.2.2(supports-color@8.1.1)(webpack-cli@6.0.1)(webpack@5.101.3)
+      webpack-dev-server: 5.2.2(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1)(webpack-cli@6.0.1)(webpack@5.101.3)
 
   webpack-cli@6.0.1(webpack-dev-server@5.2.2)(webpack@5.106.2):
     dependencies:
@@ -60871,6 +60866,45 @@ snapshots:
       - supports-color
       - utf-8-validate
 
+  webpack-dev-server@5.2.2(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1)(webpack-cli@6.0.1)(webpack@5.101.3):
+    dependencies:
+      '@types/bonjour': 3.5.13
+      '@types/connect-history-api-fallback': 1.5.4
+      '@types/express': 4.17.25
+      '@types/express-serve-static-core': 4.19.9
+      '@types/serve-index': 1.9.4
+      '@types/serve-static': 1.15.10
+      '@types/sockjs': 0.3.36
+      '@types/ws': 8.18.1
+      ansi-html-community: 0.0.8
+      bonjour-service: 1.4.4
+      chokidar: 3.6.0
+      colorette: 2.0.20
+      compression: 1.8.1(supports-color@8.1.1)
+      connect-history-api-fallback: 2.0.0
+      express: 4.22.2(supports-color@8.1.1)
+      graceful-fs: 4.2.11
+      http-proxy-middleware: 2.0.10(@types/express@4.17.25)(debug@4.4.3(supports-color@8.1.1))
+      ipaddr.js: 2.5.0
+      launch-editor: 2.14.1
+      open: 10.2.0
+      p-retry: 6.2.1
+      schema-utils: 4.3.3
+      selfsigned: 2.4.1
+      serve-index: 1.9.2(supports-color@8.1.1)
+      sockjs: 0.3.24
+      spdy: 4.0.2(supports-color@8.1.1)
+      webpack-dev-middleware: 7.4.6(webpack@5.101.3)
+      ws: 8.21.3
+    optionalDependencies:
+      webpack: 5.101.3(clean-css@5.3.3)(cssnano@5.0.6(postcss@8.5.6))(csso@4.2.0)(esbuild@0.25.12)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.6)(uglify-js@3.19.3)(webpack-cli@6.0.1)
+      webpack-cli: 6.0.1(webpack-dev-server@5.2.2)(webpack@5.101.3)
+    transitivePeerDependencies:
+      - bufferutil
+      - debug
+      - supports-color
+      - utf-8-validate
+
   webpack-dev-server@5.2.2(debug@4.4.3(supports-color@9.4.0))(supports-color@9.4.0)(webpack-cli@4.7.2)(webpack@5.76.0):
     dependencies:
       '@types/bonjour': 3.5.13
@@ -60990,45 +61024,6 @@ snapshots:
       - supports-color
       - utf-8-validate
     optional: true
-
-  webpack-dev-server@5.2.2(supports-color@8.1.1)(webpack-cli@6.0.1)(webpack@5.101.3):
-    dependencies:
-      '@types/bonjour': 3.5.13
-      '@types/connect-history-api-fallback': 1.5.4
-      '@types/express': 4.17.25
-      '@types/express-serve-static-core': 4.19.9
-      '@types/serve-index': 1.9.4
-      '@types/serve-static': 1.15.10
-      '@types/sockjs': 0.3.36
-      '@types/ws': 8.18.1
-      ansi-html-community: 0.0.8
-      bonjour-service: 1.4.4
-      chokidar: 3.6.0
-      colorette: 2.0.20
-      compression: 1.8.1(supports-color@8.1.1)
-      connect-history-api-fallback: 2.0.0
-      express: 4.22.2(supports-color@8.1.1)
-      graceful-fs: 4.2.11
-      http-proxy-middleware: 2.0.10(@types/express@4.17.25)
-      ipaddr.js: 2.5.0
-      launch-editor: 2.14.1
-      open: 10.2.0
-      p-retry: 6.2.1
-      schema-utils: 4.3.3
-      selfsigned: 2.4.1
-      serve-index: 1.9.2(supports-color@8.1.1)
-      sockjs: 0.3.24
-      spdy: 4.0.2(supports-color@8.1.1)
-      webpack-dev-middleware: 7.4.6(webpack@5.101.3)
-      ws: 8.21.3
-    optionalDependencies:
-      webpack: 5.101.3(clean-css@5.3.3)(cssnano@5.0.6(postcss@8.5.6))(csso@4.2.0)(esbuild@0.25.12)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.6)(uglify-js@3.19.3)(webpack-cli@6.0.1)
-      webpack-cli: 6.0.1(webpack-dev-server@5.2.2)(webpack@5.101.3)
-    transitivePeerDependencies:
-      - bufferutil
-      - debug
-      - supports-color
-      - utf-8-validate
 
   webpack-hot-middleware@2.26.1:
     dependencies:
@@ -61194,7 +61189,7 @@ snapshots:
       '@webassemblyjs/wasm-parser': 1.14.1
       acorn: 8.18.0
       acorn-import-phases: 1.0.4(acorn@8.18.0)
-      browserslist: 4.28.8
+      browserslist: 4.29.4
       chrome-trace-event: 1.0.4
       enhanced-resolve: 5.24.5
       es-module-lexer: 2.3.2
@@ -61237,7 +61232,7 @@ snapshots:
       '@webassemblyjs/wasm-parser': 1.14.1
       acorn: 8.18.0
       acorn-import-phases: 1.0.4(acorn@8.18.0)
-      browserslist: 4.28.8
+      browserslist: 4.29.4
       chrome-trace-event: 1.0.4
       enhanced-resolve: 5.24.5
       es-module-lexer: 2.3.2
@@ -61279,7 +61274,7 @@ snapshots:
       '@webassemblyjs/wasm-parser': 1.14.1
       acorn: 8.18.0
       acorn-import-phases: 1.0.4(acorn@8.18.0)
-      browserslist: 4.28.8
+      browserslist: 4.29.4
       chrome-trace-event: 1.0.4
       enhanced-resolve: 5.24.5
       es-module-lexer: 2.3.2
@@ -61320,7 +61315,7 @@ snapshots:
       '@webassemblyjs/wasm-parser': 1.14.1
       acorn: 8.18.0
       acorn-import-phases: 1.0.4(acorn@8.18.0)
-      browserslist: 4.28.8
+      browserslist: 4.29.4
       chrome-trace-event: 1.0.4
       enhanced-resolve: 5.24.5
       es-module-lexer: 2.3.2
@@ -61363,7 +61358,7 @@ snapshots:
       '@webassemblyjs/wasm-parser': 1.14.1
       acorn: 8.18.0
       acorn-import-phases: 1.0.4(acorn@8.18.0)
-      browserslist: 4.28.8
+      browserslist: 4.29.4
       chrome-trace-event: 1.0.4
       enhanced-resolve: 5.24.5
       es-module-lexer: 2.3.2
@@ -61403,7 +61398,7 @@ snapshots:
       '@webassemblyjs/wasm-parser': 1.14.1
       acorn: 8.18.0
       acorn-import-phases: 1.0.4(acorn@8.18.0)
-      browserslist: 4.28.8
+      browserslist: 4.29.4
       chrome-trace-event: 1.0.4
       enhanced-resolve: 5.24.5
       es-module-lexer: 2.3.2
