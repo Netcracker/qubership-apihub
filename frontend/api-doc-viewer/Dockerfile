@@ -1,4 +1,4 @@
-FROM nginx:1.25.2-alpine
+FROM nginx:1.31.0-alpine
 
 COPY packages/api-doc-viewer/dist       	/usr/share/nginx/html
 COPY packages/api-doc-viewer/index.html     /usr/share/nginx/html/index.html  

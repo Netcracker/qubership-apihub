@@ -3,7 +3,7 @@
 #
 #   docker build -f frontend/ui/Dockerfile .
 
-FROM docker.io/nginx:1.31.3-alpine3.24
+FROM docker.io/nginx:1.31.7-alpine3.24
 
 # No GIT_BRANCH or GIT_HASH build args: the content hash cannot see them, so a retagged image
 # reported the ref that built it first. The commit and branch are OCI annotations on each branch
