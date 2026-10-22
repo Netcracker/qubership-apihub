@@ -24,6 +24,14 @@ on:
           every build project.
         required: true
         type: string
+      push:
+        description: >-
+          Publish the images. `false` builds each image without pushing or tagging it, for a run whose
+          token cannot write to ghcr (a pull request from a fork, or Dependabot): the build still checks
+          the Dockerfile and its base images.
+        required: false
+        default: true
+        type: boolean
 
 jobs:
   images:
@@ -90,7 +98,10 @@ jobs:
 
       - uses: docker/setup-buildx-action@v4
 
+      # A build-only run has a read-only token and needs no login: the content check below reads
+      # public images anonymously.
       - uses: docker/login-action@v4
+        if: inputs.push
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -225,7 +236,7 @@ jobs:
           context: ${{ matrix.context }}
           file: ${{ matrix.dockerfile }}
           platforms: ${{ steps.platforms.outputs.value }}
-          push: true
+          push: ${{ inputs.push }}
           provenance: false
           # Only the content tag. Annotations belong to a manifest and every tag on it shares them,
           # so the next step gives each branch tag its own index with its own annotations.
@@ -240,6 +251,7 @@ jobs:
       # content in a new index per tag, which carries this ref's annotations. `index:` is required:
       # annotations apply to an index or a descriptor, never to a manifest.
       - name: Point the branch tag at this content
+        if: inputs.push
         shell: bash
         env:
           BASE: ${{ steps.tags.outputs.base }}

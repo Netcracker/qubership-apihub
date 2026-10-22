@@ -143,8 +143,9 @@ jobs:
           echo "release tags at HEAD: ${tags:-none}" | tr '\n' ' '
 
       # Can this run write to ghcr? A pull request from a fork and every Dependabot run get a read-only
-      # token and no secrets, so the image, E2E and Storybook jobs are skipped there, and
-      # tools/ci/ci-verdict.js accepts exactly those skips when this output is `false`.
+      # token and no secrets. The image jobs still build there but push nothing, and the E2E and
+      # Storybook jobs are skipped; tools/ci/ci-verdict.js accepts exactly those skips when this output
+      # is `false`.
       - name: Can this run publish
         id: can_publish
         shell: bash
@@ -470,17 +471,19 @@ jobs:
           retention-days: 14
 
   # Images publish floating tags that others pull, so each language's images wait for its tests.
-  # All three call images.yml. The names are the ones the product has always used (assumption A2);
-  # the registry owner is the repository owner, netcracker.
+  # All three call images.yml. A run that cannot publish builds the images without pushing them, so a
+  # base-image update from Dependabot is built before it is merged. The names are the ones the product
+  # has always used (assumption A2); the registry owner is the repository owner, netcracker.
   js-images:
     needs: [plan, js]
     # `js` never skips, so the implicit check that every need succeeded is enough.
-    if: needs.plan.outputs.image_projects != '[]' && needs.plan.outputs.can_publish == 'true'
+    if: needs.plan.outputs.image_projects != '[]'
     permissions:
       contents: read
       packages: write
     uses: ./.github/workflows/images.yml
     with:
+      push: ${{ needs.plan.outputs.can_publish == 'true' }}
       images: >-
         [{"project":"ui-portal","image":"qubership-apihub-ui","dockerfile":"frontend/ui/Dockerfile",
           "build_projects":"ui-portal,ui-agents","deploy":"","context":".","dockerignore":".dockerignore",
@@ -501,12 +504,12 @@ jobs:
       && needs.go-checks.result == 'success'
       && needs.go.result != 'failure' && needs.go.result != 'cancelled'
       && needs.plan.outputs.image_projects != '[]'
-      && needs.plan.outputs.can_publish == 'true'
     permissions:
       contents: read
       packages: write
     uses: ./.github/workflows/images.yml
     with:
+      push: ${{ needs.plan.outputs.can_publish == 'true' }}
       images: >-
         [{"project":"agent","image":"qubership-apihub-agent","dockerfile":"backend/agent/Dockerfile",
           "build_projects":"agent","deploy":"","context":"backend/agent","dockerignore":".dockerignore backend/agent/.dockerignore",
@@ -538,12 +541,12 @@ jobs:
       && needs.plan.result == 'success'
       && needs.java.result != 'failure' && needs.java.result != 'cancelled'
       && needs.plan.outputs.image_projects != '[]'
-      && needs.plan.outputs.can_publish == 'true'
     permissions:
       contents: read
       packages: write
     uses: ./.github/workflows/images.yml
     with:
+      push: ${{ needs.plan.outputs.can_publish == 'true' }}
       images: >-
         [{"project":"java-task-consumer","image":"qubership-apihub-java-task-consumer",
           "dockerfile":"backend/java-task-consumer/Dockerfile","build_projects":"java-task-consumer",
@@ -670,7 +673,7 @@ jobs:
   # job that had to run was skipped: tools/ci/ci-verdict.js derives from the plan which jobs those
   # are. A skip is accepted only where the plan says nothing is affected (go, java, screenshot-tests),
   # where E2E is not due (tier none), where the run is a pull request (storybooks), or where the run
-  # cannot publish (can_publish false: images, e2e, storybooks), or where PAGES_DEPLOY is not true
+  # cannot publish (can_publish false: e2e, storybooks), or where PAGES_DEPLOY is not true
   # (storybook-pages).
   ci-ok:
     needs:

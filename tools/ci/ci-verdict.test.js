@@ -42,8 +42,8 @@ test('a skip of a due job, a failure, and a cancellation fail the verdict', () =
   ])
 })
 
-test('a run that cannot publish may skip the image, E2E, and Storybook jobs', () => {
-  const skipped = ['js-images', 'go-images', 'java-images', 'e2e', 'storybooks', 'storybook-pages', 'java']
+test('a run that cannot publish may skip the E2E and Storybook jobs', () => {
+  const skipped = ['e2e', 'storybooks', 'storybook-pages', 'java']
   const r = verdict(
     needsWith(Object.fromEntries([...skipped, 'screenshot-tests'].map((j) => [j, 'skipped'])), {
       ...outputs,
@@ -53,6 +53,25 @@ test('a run that cannot publish may skip the image, E2E, and Storybook jobs', ()
     true,
   )
   assert.equal(r.ok, true, r.problems.join('; '))
+})
+
+test('a run that cannot publish must still build the images', () => {
+  const r = verdict(
+    needsWith({ 'go-images': 'skipped', e2e: 'skipped', storybooks: 'skipped', 'storybook-pages': 'skipped' }, {
+      ...outputs,
+      can_publish: 'false',
+    }),
+    'pull_request',
+    true,
+  )
+  assert.deepEqual(r.problems, ['go-images=skipped, but the plan requires it'])
+})
+
+test('ci.yml: the image jobs push only when the run can publish', () => {
+  for (const job of ['js-images', 'go-images', 'java-images']) {
+    assert.equal(ci.jobs[job].with.push, "${{ needs.plan.outputs.can_publish == 'true' }}")
+    assert.doesNotMatch(ci.jobs[job].if, /can_publish/)
+  }
 })
 
 test('a job missing from the needs fails the verdict, and an unknown job must succeed', () => {

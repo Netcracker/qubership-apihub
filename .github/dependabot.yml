@@ -47,6 +47,10 @@ updates:
     labels:
       - "dependencies"
       - "npm"
+    # Node stays on the 24 LTS line, as in setup-workspace and the build-task-consumer image.
+    ignore:
+      - dependency-name: "@types/node"
+        versions: [">= 25"]
     groups:
       npm:
         patterns:
@@ -96,6 +100,10 @@ updates:
           - "*"
 
   # Base images of every Dockerfile in the repository (Dockerfile and Dockerfile.local).
+  #
+  # `golang` is not updated here: backend/.go-version is the one Go version of the workspace, and the go.mod files,
+  # go.work, and the builder images follow it in one change (tools/ci/go-version-check.sh fails on any drift).
+  # `node` stays on the 24 LTS line, as in setup-workspace.
   - package-ecosystem: "docker"
     directories:
       - "/backend/agent"
@@ -115,6 +123,10 @@ updates:
     labels:
       - "dependencies"
       - "docker"
+    ignore:
+      - dependency-name: "golang"
+      - dependency-name: "node"
+        versions: [">= 25"]
     groups:
       docker:
         patterns:
