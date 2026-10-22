@@ -66,7 +66,8 @@ export const COMPARE_ENGINES_MAP: Partial<Record<SpecType, CompareEngine>> = {
   [SPEC_TYPE_DDL_API_1]: compareDdlApi(SPEC_TYPE_DDL_API_1),
 }
 
-// Wrapper function. Use it!
+// Compares two API documents and returns the merged document with classified changes.
+// This is the entry point. Specification-specific engines stay internal.
 export function apiDiff(before: unknown, after: unknown, options: CompareOptions = {}): CompareResult {
   const beforeSpec = resolveSpec(before)
   const afterSpec = resolveSpec(after)
