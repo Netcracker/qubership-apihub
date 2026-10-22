@@ -4,7 +4,7 @@
 #   pnpm deploy --filter=./frontend/build-task-consumer --prod .deploy/build-task-consumer
 #   docker build -f frontend/build-task-consumer/Dockerfile .
 
-FROM docker.io/node:24-alpine
+FROM docker.io/node:25-alpine
 
 # No GIT_BRANCH or GIT_HASH build args: the content hash cannot see them, so a retagged image
 # reported the ref that built it first. The commit and branch are OCI annotations on each branch

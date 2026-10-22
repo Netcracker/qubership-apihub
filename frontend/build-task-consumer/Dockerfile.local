@@ -32,7 +32,7 @@
 # reliable on Linux. Build this image in CI or WSL if that happens; `ui`'s local image needs
 # no deploy tree and is unaffected.
 
-FROM docker.io/node:24-alpine
+FROM docker.io/node:25-alpine
 
 # GIT_BRANCH / GIT_HASH are not declared here any more, to keep this file honest about being
 # the same image as Dockerfile with different input paths. See the note in that file: the

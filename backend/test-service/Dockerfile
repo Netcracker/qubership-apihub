@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # Note: this uses host platform for the build, and we ask go build to target the needed platform, so we do not spend time on qemu emulation when running "go build"
-FROM --platform=$BUILDPLATFORM docker.io/golang:1.26.6-alpine3.23 as builder
+FROM --platform=$BUILDPLATFORM docker.io/golang:1.27.2-alpine3.23 as builder
 ARG BUILDPLATFORM
 ARG TARGETOS
 ARG TARGETARCH
@@ -26,7 +26,7 @@ COPY . .
 # `go work sync` writes; CI checks that.
 RUN GOWORK=off GOSUMDB=off CGO_ENABLED=0 GOFLAGS=-mod=readonly go mod download && GOWORK=off GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -o qubership-apihub-test-service .
 
-FROM docker.io/alpine:3.22.1
+FROM docker.io/alpine:3.24.0
 
 ARG GIT_BRANCH=unknown
 ARG GIT_HASH=unknown
