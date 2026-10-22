@@ -106,7 +106,7 @@ jobs:
           case "$TIER" in full|smoke) ;; *) echo "::error::tier must be full or smoke, not '$TIER'"; exit 1 ;; esac
           case "$FOLDER" in apihub-generic|with-keycloak) ;; *) echo "::error::compose_folder must be apihub-generic or with-keycloak, not '$FOLDER'"; exit 1 ;; esac
 
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       # Before the install, so the lockfile check sees the suite that will run.
       - name: Take deploy/ and the suites from their refs

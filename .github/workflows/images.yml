@@ -60,7 +60,7 @@ jobs:
         # Everything that differs between images is a field on a leg.
         include: ${{ fromJSON(inputs.images) }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
