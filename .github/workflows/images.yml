@@ -27,7 +27,7 @@ on:
       push:
         description: >-
           Publish the images. `false` builds each image without pushing or tagging it, for a run whose
-          token cannot write to ghcr (a pull request from a fork, or Dependabot): the build still checks
+          token cannot write to ghcr (a pull request from a fork): the build still checks
           the Dockerfile and its base images.
         required: false
         default: true
