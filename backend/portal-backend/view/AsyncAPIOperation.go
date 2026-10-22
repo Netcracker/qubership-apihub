@@ -42,9 +42,11 @@ type AsyncAPIOperationComparisonChangelogView struct {
 	AsyncAPIOperationMetadata
 }
 
+// The metadata is a named field: embedded, its `action` (send or receive) and the change action of
+// OperationComparisonChangesView share one JSON key, and encoding/json drops both.
 type AsyncAPIOperationComparisonChangesView struct {
 	OperationComparisonChangesView
-	AsyncAPIOperationMetadata
+	AsyncAPIOperationMetadata AsyncAPIOperationMetadata `json:"metadata"`
 }
 
 type AsyncAPIOperationPairChangesView struct {

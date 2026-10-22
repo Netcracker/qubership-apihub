@@ -337,9 +337,10 @@ jobs:
             backend/**/go.sum
             go.work.sum
 
-      # build and test together, so test-only imports are resolved. The version and workspace checks
-      # are the `go-checks` job, which runs on every change.
-      - name: build and test what is affected
+      # build and test together, so test-only imports are resolved. `lint` is `go vet ./...` (the
+      # `@nx-go/nx-go:lint` target default in nx.json). The version and workspace checks are the
+      # `go-checks` job, which runs on every change.
+      - name: build, test, and vet what is affected
         shell: bash
         env:
           GO_PROJECTS: ${{ needs.plan.outputs.go_projects }}
@@ -348,7 +349,7 @@ jobs:
           set -o pipefail
           projects="$(node -e 'console.log(JSON.parse(process.argv[1]).join(","))' "$GO_PROJECTS")"
           echo "go projects: $projects"
-          pnpm exec nx run-many -t build test --projects="$projects" --verbose 2>&1 \
+          pnpm exec nx run-many -t build test lint --projects="$projects" --verbose 2>&1 \
             | tee "$RUNNER_TEMP/nx.log"
 
       # Checks the binaries, not the exit code: the build exits 0 on an empty project list and when
