@@ -103,7 +103,7 @@ Characters other than letters, digits, `_`, `.`, and `-` become `-`. To see the 
 bash tools/ci/branch-tag.sh refs/heads/feature/123-add-export
 ```
 
-`release` and `main` get images for `linux/amd64` and `linux/arm64`; every other ref gets `linux/amd64` only. Use a
+Every ref gets images for `linux/amd64` and `linux/arm64`, so the images of any branch run on Apple silicon. Use a
 `src-<hash>` tag when you need exact content: the branch tag moves with the next push.
 
 ## E2E tiers

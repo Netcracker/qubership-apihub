@@ -9,9 +9,9 @@ name: 'Images: Build'
 # Images go to ghcr.io/<repository owner>/<image>, under the names the product has always used
 # (qubership-apihub-backend, qubership-api-linter-service, and so on).
 #
-# Platforms (release design R3): linux/amd64 and linux/arm64 for `release` and `main`, linux/amd64
-# only for every other ref. A content hash that exists for amd64 only is rebuilt on those two
-# branches, so `:next` and `:latest` never point at a single-architecture image.
+# Platforms: linux/amd64 and linux/arm64 for every ref, so developers on Apple silicon can run the
+# images of any branch. A content hash that exists for amd64 only (built before every ref got arm64)
+# is rebuilt, so no branch tag points at a single-architecture image.
 
 on:
   workflow_call:
@@ -40,7 +40,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     # release-finish.yml leaves main and release at the same commit, and both CI runs build images for
-    # it. The content hash does not depend on the ref and both refs require amd64 and arm64, so the
+    # it. The content hash does not depend on the ref and every ref requires amd64 and arm64, so the
     # second leg finds the first one's src-<hash> and only retags, but only if it checks after the first
     # pushed. This group makes the legs of the same image at the same commit on those two refs wait for
     # each other; not cancelled, so both legs run. Every other ref gets a group of its own run.
@@ -69,37 +69,17 @@ jobs:
         with:
           cache-scope: images-${{ matrix.image }}
 
-      # Refs and names reach the scripts through env, never through `${{ }}` inside the script text:
-      # a branch name may contain quotes.
-      - name: Choose the platforms
-        id: platforms
-        shell: bash
-        env:
-          REF: ${{ github.ref }}
-        run: |
-          set -euo pipefail
-          case "$REF" in
-            refs/heads/release|refs/heads/main)
-              echo "value=linux/amd64,linux/arm64" >> "$GITHUB_OUTPUT"
-              echo "multi=true" >> "$GITHUB_OUTPUT"
-              ;;
-            *)
-              echo "value=linux/amd64" >> "$GITHUB_OUTPUT"
-              echo "multi=false" >> "$GITHUB_OUTPUT"
-              ;;
-          esac
-
       # Emulation for the arm64 stages that run commands. The Go stages cross-compile on the build
       # platform and the JavaScript images copy a prebuilt tree, so the cost is small.
       - uses: docker/setup-qemu-action@v4
-        if: steps.platforms.outputs.multi == 'true'
         with:
           platforms: arm64
 
       - uses: docker/setup-buildx-action@v4
 
       # develop -> dev, release -> next, main -> latest, feature/x -> feature-x, a pull request ->
-      # pull-N-merge (tools/ci/branch-tag.sh).
+      # pull-N-merge (tools/ci/branch-tag.sh). Refs and names reach the scripts through env, never
+      # through `${{ }}` inside the script text: a branch name may contain quotes.
       - name: Compute tags
         id: tags
         shell: bash
@@ -129,30 +109,26 @@ jobs:
           echo "### $IMAGE"                       >> "$GITHUB_STEP_SUMMARY"
           echo "- content tag: \`src-$src_hash\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- branch tag:  \`$branch_tag\`"   >> "$GITHUB_STEP_SUMMARY"
-          echo "- platforms:   \`${{ steps.platforms.outputs.value }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- platforms:   \`linux/amd64,linux/arm64\`" >> "$GITHUB_STEP_SUMMARY"
 
-      # A hit needs the platforms this ref publishes: content built on develop for amd64 only is a
-      # miss on release and main.
+      # A hit needs both platforms: content built for amd64 only, before every ref got arm64, is a miss.
       - name: Has this content already been built?
         id: exists
         shell: bash
         env:
           CONTENT_IMAGE: ${{ steps.tags.outputs.base }}:${{ steps.tags.outputs.src_tag }}
-          MULTI: ${{ steps.platforms.outputs.multi }}
         run: |
           set -euo pipefail
           hit=false
           if raw="$(docker buildx imagetools inspect --raw "$CONTENT_IMAGE" 2>/dev/null)"; then
-            if [ "$MULTI" != 'true' ]; then
-              hit=true
-            elif node -e '
+            if node -e '
               const m = JSON.parse(require("fs").readFileSync(0, "utf8"))
               const archs = (m.manifests || []).map((x) => x.platform && x.platform.architecture)
               process.exit(archs.includes("arm64") && archs.includes("amd64") ? 0 : 1)
             ' <<< "$raw"; then
               hit=true
             else
-              echo "- this content exists without arm64, so it is rebuilt for this ref" >> "$GITHUB_STEP_SUMMARY"
+              echo "- this content exists without arm64, so it is rebuilt" >> "$GITHUB_STEP_SUMMARY"
             fi
           fi
           echo "hit=$hit" >> "$GITHUB_OUTPUT"
@@ -237,7 +213,7 @@ jobs:
         with:
           context: ${{ matrix.context }}
           file: ${{ matrix.dockerfile }}
-          platforms: ${{ steps.platforms.outputs.value }}
+          platforms: linux/amd64,linux/arm64
           push: ${{ inputs.push }}
           provenance: false
           # Only the content tag. Annotations belong to a manifest and every tag on it shares them,
