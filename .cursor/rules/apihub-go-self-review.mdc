@@ -1,6 +1,6 @@
 ---
 description: Self-review Go backend changes against APIHub project standards.
-globs: "**/*.go"
+globs: **/*.go
 ---
 
 When the user asks for self-review, code review of a diff, or a post-implementation

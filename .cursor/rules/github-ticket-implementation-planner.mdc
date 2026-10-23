@@ -1,6 +1,6 @@
 ---
 description: Plan implementation from a GitHub issue with clarifying questions and approved plan posting.
-globs: "**"
+globs: **
 ---
 
 When planning implementation from a GitHub issue, ticket, or task description, apply the

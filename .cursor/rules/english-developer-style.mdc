@@ -1,6 +1,6 @@
 ---
 description: British-English-first style rules for developer-facing text of any length — docs, code comments and docstrings inside source files (.go, .js, .ts, .py, .java, .rs, .kt, .cs, ...), commits, PR descriptions, changelogs, UI strings, error and log messages, and English-side localisation files (.po, .properties, JSON i18n). Triggered by review/translate/verify/proofread, not only writing.
-globs: "**"
+globs: **
 ---
 
 ## Skill trigger: `english-developer-style`
