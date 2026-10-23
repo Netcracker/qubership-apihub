@@ -23,7 +23,7 @@ test('the run environment drops every token and runner secret but keeps the Open
   assert.equal(env.OPENCODE_DISABLE_AUTOUPDATE, '1')
 })
 
-test('the arguments name the agent, the model, the variant, and the files, with the message last', () => {
+test('the message comes first and the files last, so --file cannot swallow the message', () => {
   assert.deepEqual(
     runArgs({
       agent: 'pr-reviewer',
@@ -33,8 +33,8 @@ test('the arguments name the agent, the model, the variant, and the files, with 
       title: 'PR 1',
     }),
     [
-      'run', '--format', 'json', '--agent', 'pr-reviewer', '--model', 'openai/gpt-6-luna', '--variant', 'max',
-      '--title', 'PR 1', '--file', '/tmp/in.md', 'Review it.',
+      'run', 'Review it.', '--format', 'json', '--agent', 'pr-reviewer', '--model', 'openai/gpt-6-luna',
+      '--variant', 'max', '--title', 'PR 1', '--file', '/tmp/in.md',
     ],
   )
 })

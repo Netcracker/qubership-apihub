@@ -28,13 +28,15 @@ function runEnv(parentEnv) {
   return env
 }
 
-/** The argument list of `opencode run` for one agent call. */
+/**
+ * The argument list of `opencode run` for one agent call. The message comes first and `--file` last: `--file` takes
+ * several values, so a message after it would be read as one more file.
+ */
 function runArgs({ agent, model, message, files = [], title }) {
-  const args = ['run', '--format', 'json', '--agent', agent, '--model', model.id]
+  const args = ['run', message, '--format', 'json', '--agent', agent, '--model', model.id]
   if (model.variant) args.push('--variant', model.variant)
   if (title) args.push('--title', title)
   for (const f of files) args.push('--file', f)
-  args.push(message)
   return args
 }
 
