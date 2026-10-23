@@ -1,6 +1,6 @@
 ---
 description: Conventions for writing api-unifier tests across OpenAPI, AsyncAPI, JSON Schema, and GraphAPI.
-globs: "frontend/api-unifier/test/**/*.ts"
+globs: frontend/api-unifier/test/**/*.ts
 ---
 
 When writing or editing tests under `test/` — exercising `normalize` /
