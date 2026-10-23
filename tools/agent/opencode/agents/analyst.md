@@ -11,7 +11,9 @@ permission:
     "git log*": allow
     "git show*": allow
     "git grep*": allow
-    # Read-only Git can still write or run things: --output writes a file, and grep -O runs a program.
+    # Read-only Git can still write or run things: a redirection or --output writes a file, and grep -O runs a
+    # program.
+    "*>*": deny
     "* --output*": deny
     "git grep*-O*": deny
     "git grep*--open-files-in-pager*": deny
