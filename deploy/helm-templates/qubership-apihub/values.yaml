@@ -504,6 +504,18 @@ qubershipApiLinterService:
           rateLimitRPS: 10
           # Optional; OpenAI API rate limit burst; If not set, default value: 30; Example: 30
           rateLimitBurst: 30
+          # Optional; Maximum number of LLM requests in flight per service instance, shared by lint and deduplication requests of all AI workers; 0 means unbounded; If not set, default value: 0; Example: 15
+          maxConcurrentRequests: 0
+          # Optional; JSON object whose top-level keys are added to every LLM request body, for provider-specific parameters; If not set, default value: empty (nothing added); Example: '{"thinking":{"type":"disabled"}}'
+          extraBodyJSON: ''
+        deduplication:
+          # Optional; Criterion that decides whether two AI linter issues at the same path describe the same problem, appended to the built-in deduplication instructions; If not set, default value: the built-in criterion shown below; Example: Two issues describe the same problem if their messages report the same defect.
+          criteriaPrompt: |-
+            Two issues describe the same problem if their 'message' fields state the same underlying defect, even if the wording differs. Compare the problem statement only; ignore any suggested fix or action text.
+          # Optional; Estimated input tokens per deduplication request, including the system prompt. Larger groups of issues are split into several requests; Minimum: 4000; If not set, default value: 24000; Example: 48000
+          requestTokenBudget: 24000
+          # Optional; Maximum number of completion tokens for one deduplication request (max_completion_tokens); Minimum: 1000; If not set, default value: 12000; Example: 24000
+          maxCompletionTokens: 12000
 
     # Section with Olric configuration.
     olric:

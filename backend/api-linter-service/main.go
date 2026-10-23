@@ -40,7 +40,7 @@ func init() {
 func main() {
 	systemInfoService, err := service.NewSystemInfoService()
 	if err != nil {
-		panic(err)
+		log.Fatalf("Failed to load configuration: %v", err)
 	}
 	resp := responder.NewResponder(systemInfoService.ShowDebugInResponse())
 	if err := utils.ValidateTLSAtStartup(); err != nil {
@@ -141,6 +141,7 @@ func main() {
 	versionResultRepository := repository.NewVersionResultRepository(cp)
 	lintResultRepository := repository.NewLintResultRepository(cp)
 	scoringRepository := repository.NewScoringRepository(cp)
+	aiLintStatsRepository := repository.NewAiLintStatsRepository(cp)
 
 	linterConfigService := service.NewLinterConfigService(systemInfoService)
 	linterSelectorService := service.NewLinterSelectorService(ruleSetRepository, linterConfigService)
@@ -159,7 +160,7 @@ func main() {
 		log.Fatalf("Failed to create AiOas executor: %s", err.Error())
 	}
 
-	docTaskProcessor := service.NewDocTaskProcessor(docLintTaskRepository, ruleSetRepository, docResultRepository, lintResultRepository, apihubClient, spectralExecutor, aiOasExecutor, executorId, systemInfoService.GetSpectralLinterWorkers(), systemInfoService.GetAiLinterWorkers(), docTaskNotify)
+	docTaskProcessor := service.NewDocTaskProcessor(docLintTaskRepository, ruleSetRepository, docResultRepository, lintResultRepository, aiLintStatsRepository, apihubClient, spectralExecutor, aiOasExecutor, systemInfoService.GetOpenAIModel(), executorId, systemInfoService.GetSpectralLinterWorkers(), systemInfoService.GetAiLinterWorkers(), docTaskNotify)
 
 	validationService := service.NewValidationService(versionLintTaskRepository, versionResultRepository, lintResultRepository, ruleSetRepository, docLintTaskRepository, versionTaskProcessor, apihubClient, executorId, versionTaskNotify)
 	publishEventListener := service.NewPublishEventListener(olricProvider, validationService)
