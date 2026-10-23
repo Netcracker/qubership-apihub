@@ -85,18 +85,34 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      # The agent's own code and opencode config come from the ref of this workflow run (develop for a comment), so a
-      # pull request from a fork cannot change the tools that review it.
+      # The agent's own code, opencode config, skills, rules, and AGENTS.md files come from the ref of this workflow run.
+      # For `/agent review` that is develop, so a pull request from a fork cannot change the tools or the instructions
+      # that review it. For a `pull_request` event the ref is the pull request itself: only pull requests from this
+      # repository get there with secrets, and their authors can already run any workflow with them.
       - uses: actions/checkout@v6
         with:
           path: .agent-tools
+          sparse-checkout-cone-mode: false
           sparse-checkout: |
-            tools/agent
-            .github/labeler.yml
+            /tools/agent/
+            /.github/labeler.yml
+            /.claude/
+            AGENTS.md
           persist-credentials: false
 
-      - name: Keep the tools out of the reviewed tree
-        run: echo '.agent-tools/' >> .git/info/exclude
+      # opencode reads skills, rules, and AGENTS.md from the working tree; the trusted copies replace the pull
+      # request's. The diff the reviewer reads comes from Git and still shows what the pull request changes in them.
+      - name: Use the trusted agent instructions
+        run: |
+          set -euo pipefail
+          echo '.agent-tools/' >> .git/info/exclude
+          rm -rf .claude
+          cp -R .agent-tools/.claude .claude
+          find . \( -name AGENTS.md -o -name CLAUDE.md \) -not -path './.agent-tools/*' -not -path './.git/*' -delete
+          (cd .agent-tools && find . -name AGENTS.md -not -path './node_modules/*') | while read -r f; do
+            mkdir -p "$(dirname "$f")"
+            cp ".agent-tools/$f" "$f"
+          done
 
       - uses: actions/setup-node@v6
         with:

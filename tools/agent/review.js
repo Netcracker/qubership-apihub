@@ -30,6 +30,7 @@ const { extractJson, validate } = require('./lib/contract')
 const { commentableLines } = require('./lib/diff')
 const { computeFacts } = require('./lib/facts')
 const { runAgent } = require('./lib/opencode')
+const { untrusted } = require('./lib/prompt')
 
 const SEVERITY_ORDER = ['blocker', 'major', 'minor', 'nit']
 const SEVERITY_ICON = { blocker: '🛑', major: '🔴', minor: '🟡', nit: '⚪' }
@@ -172,11 +173,7 @@ async function main() {
         '',
         '## Title and description',
         '',
-        '<untrusted>',
-        `Title: ${pr.title}`,
-        '',
-        pr.body ?? '',
-        '</untrusted>',
+        untrusted(`Title: ${pr.title}\n\n${pr.body ?? ''}`),
         '',
       ].join('\n'),
     )
