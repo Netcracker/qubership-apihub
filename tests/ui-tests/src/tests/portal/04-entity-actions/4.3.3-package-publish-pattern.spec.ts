@@ -66,6 +66,9 @@ test.describe('4.3.3 Package publishing via Portal (Negative)', () => {
         pkg: PK_PUB_IMM_2,
         version: '@',
       })
+
+      await expect(configureVersionTab.browseFilesBtn).toBeEnabled()
+
       await configureVersionTab.filesUploader.setInputFiles(FILE_P_PETSTORE30)
 
       await test.step('Publish version', async () => {
@@ -92,6 +95,9 @@ test.describe('4.3.3 Package publishing via Portal (Negative)', () => {
         pkg: PK_PUB_IMM_2,
         version: '@',
       })
+
+      await expect(configureVersionTab.browseFilesBtn).toBeEnabled()
+
       await configureVersionTab.filesUploader.setInputFiles(FILE_P_PETSTORE30)
 
       await test.step('Publish version', async () => {
@@ -117,6 +123,9 @@ test.describe('4.3.3 Package publishing via Portal (Negative)', () => {
         pkg: PK_PUB_IMM_2,
         version: '@',
       })
+
+      await expect(configureVersionTab.browseFilesBtn).toBeEnabled()
+
       await configureVersionTab.filesUploader.setInputFiles(FILE_P_PETSTORE30)
 
       await test.step('Publish version', async () => {
@@ -142,6 +151,9 @@ test.describe('4.3.3 Package publishing via Portal (Negative)', () => {
         pkg: PK_PUB_IMM_2,
         version: '@',
       })
+
+      await expect(configureVersionTab.browseFilesBtn).toBeEnabled()
+
       await configureVersionTab.filesUploader.setInputFiles(FILE_P_PETSTORE30)
 
       await test.step('Publish version', async () => {
@@ -168,6 +180,9 @@ test.describe('4.3.3 Package publishing via Portal (Negative)', () => {
         pkg: PK_PUB_IMM_1,
         version: '@',
       })
+
+      await expect(configureVersionTab.browseFilesBtn).toBeEnabled()
+
       await configureVersionTab.filesUploader.setInputFiles(FILE_P_PETSTORE30)
 
       await test.step('Publish version', async () => {

@@ -161,6 +161,7 @@ export const VersionConfigurationSubPage: FC = memo(() => {
             multiple
             onUpload={handleOnChange}
             variant="contained"
+            disabled={isFilesLoading}
             title="Browse Files"
             data-testid="BrowseFilesButton"
           />

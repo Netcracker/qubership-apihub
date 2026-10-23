@@ -51,6 +51,8 @@ export const UploadButton: FC<UploadButtonProps> = memo<UploadButtonProps>(({
         multiple={multiple}
         type="file"
         accept={acceptableFileTypes?.toString()}
+        // A click on the label opens the file dialog even when the button is disabled, so the input is disabled too.
+        disabled={buttonProps.disabled}
         onChange={onUpload}
         onClick={(event) => {
           // Reset the input value to allow the same file to be selected again

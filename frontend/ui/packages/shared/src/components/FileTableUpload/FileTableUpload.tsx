@@ -79,11 +79,14 @@ export const FileTableUpload: FC<FileTableUploadProps> = memo<FileTableUploadPro
       onDrop: (event: DragEvent<HTMLElement>): void => {
         handleCommonDragEvent(event)
         setIsDragOver(false)
+        if (isLoading) {
+          return
+        }
         const { dataTransfer: { files } } = event
         onAddFiles(transformFileListToFileArray(files))
       },
     }),
-    [onAddFiles],
+    [isLoading, onAddFiles],
   )
 
   const onFileInputChange = useCallback(({ target: { files } }: ChangeEvent<HTMLInputElement>) => {
@@ -112,7 +115,7 @@ export const FileTableUpload: FC<FileTableUploadProps> = memo<FileTableUploadPro
     [showTable, customFilesTable, isLoading, showPlaceholder, uploadFilesMap, getFileClickHandler, getFileActions, getFileLeftIcon, getFileRightIcon],
   )
 
-  if (!isDragOver && showTable) {
+  if (isLoading || (!isDragOver && showTable)) {
     return (
       <Box
         {...dragEvents}
