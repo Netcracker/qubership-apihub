@@ -11,6 +11,7 @@
 const { spawn } = require('node:child_process')
 const fs = require('node:fs')
 const path = require('node:path')
+const log = require('./log')
 
 const CONFIG_DIR = path.join(__dirname, '..', 'opencode')
 
@@ -26,6 +27,14 @@ function runEnv(parentEnv) {
   env.OPENCODE_CONFIG_DIR = CONFIG_DIR
   env.OPENCODE_DISABLE_AUTOUPDATE = '1'
   return env
+}
+
+const LOG_LEVELS = new Set(['DEBUG', 'INFO', 'WARN', 'ERROR'])
+
+/** opencode's own log flags: `AGENT_LOG_LEVEL` (default INFO) goes to stderr, which the job log shows. */
+function logArgs(env) {
+  const level = String(env.AGENT_LOG_LEVEL ?? '').trim().toUpperCase() || 'INFO'
+  return LOG_LEVELS.has(level) ? ['--print-logs', '--log-level', level] : []
 }
 
 /**
@@ -49,19 +58,28 @@ function runAgent({ agent, model, message, files, title, cwd, eventsFile, env = 
   return new Promise((resolve, reject) => {
     fs.mkdirSync(path.dirname(eventsFile), { recursive: true })
     const out = fs.createWriteStream(eventsFile)
-    const child = spawn(bin, runArgs({ agent, model, message, files, title }), {
-      cwd,
-      env: runEnv(env),
-      stdio: ['ignore', 'pipe', 'pipe'],
-    })
+    const args = [...logArgs(env), ...runArgs({ agent, model, message, files, title })]
+    log.info(`${agent} starts`, { model: model.id, variant: model.variant, files, cwd })
+    const started = Date.now()
+    const child = spawn(bin, args, { cwd, env: runEnv(env), stdio: ['ignore', 'pipe', 'pipe'] })
     let stderr = ''
-    child.stdout.pipe(out)
+    let pending = ''
+    // Every complete line of the stream is one event: log it as it arrives, so a long run shows its progress.
+    child.stdout.on('data', (d) => {
+      out.write(d)
+      pending += d
+      const lines = pending.split('\n')
+      pending = lines.pop()
+      for (const line of lines) logLine(agent, line)
+    })
     child.stderr.on('data', (d) => {
       process.stderr.write(d)
       stderr = (stderr + d).slice(-4000)
     })
     child.on('error', reject)
     child.on('close', (code) => {
+      logLine(agent, pending)
+      log.info(`${agent} exits`, { code, seconds: ((Date.now() - started) / 1000).toFixed(1) })
       out.end(() =>
         resolve({ exitCode: code ?? 1, eventsText: fs.readFileSync(eventsFile, 'utf8'), stderrTail: stderr }),
       )
@@ -69,4 +87,14 @@ function runAgent({ agent, model, message, files, title, cwd, eventsFile, env = 
   })
 }
 
-module.exports = { CONFIG_DIR, runEnv, runArgs, runAgent }
+function logLine(agent, line) {
+  const trimmed = line.trim()
+  if (!trimmed.startsWith('{')) return
+  try {
+    log.modelEvent(agent, JSON.parse(trimmed))
+  } catch {
+    // A partial or non-JSON line; the events file keeps it for the record.
+  }
+}
+
+module.exports = { CONFIG_DIR, runEnv, runArgs, logArgs, runAgent }

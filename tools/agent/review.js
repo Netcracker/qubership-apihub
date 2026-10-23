@@ -31,6 +31,7 @@ const { commentableLines } = require('./lib/diff')
 const { computeFacts } = require('./lib/facts')
 const { runAgent } = require('./lib/opencode')
 const { untrusted } = require('./lib/prompt')
+const log = require('./lib/log')
 
 const SEVERITY_ORDER = ['blocker', 'major', 'minor', 'nit']
 const SEVERITY_ICON = { blocker: '🛑', major: '🔴', minor: '🟡', nit: '⚪' }
@@ -117,11 +118,27 @@ async function callAgent({ role, agent, model, message, inputFile, out, costs, r
   const run = await runAgent({ agent, model, message, files: [inputFile], cwd: process.cwd(), eventsFile })
   const summary = usage.summarize(usage.parseEvents(run.eventsText))
   costs.push(usage.costRecord({ run: runUrl, flow: 'review', role, model: model.id, variant: model.variant, summary }))
+  log.info(`${agent} usage`, {
+    steps: summary.steps,
+    uncached: summary.input,
+    cached: summary.cached,
+    output: summary.output,
+    reasoning: summary.reasoning,
+    usd: summary.usd.toFixed(4),
+  })
   fs.writeFileSync(path.join(out, `${agent}.final.md`), summary.finalText)
   if (run.exitCode !== 0 && !summary.finalText) {
     throw new Error(`${agent} exited with ${run.exitCode}: ${run.stderrTail.slice(-500)}`)
   }
-  return validate(schema, extractJson(summary.finalText))
+  let output
+  try {
+    output = validate(schema, extractJson(summary.finalText))
+  } catch (err) {
+    log.error(`${agent} broke its output contract: ${err.message}`)
+    throw err
+  }
+  log.json(`${agent} output`, output)
+  return output
 }
 
 async function main() {
@@ -132,22 +149,42 @@ async function main() {
   const runUrl = env.AGENT_RUN_URL
   fs.mkdirSync(out, { recursive: true })
   const gh = createClient({ token: env.GITHUB_TOKEN, repo: env.GITHUB_REPOSITORY })
-
-  const pr = await gh.getPull(number)
-  const files = await gh.listPullFiles(number)
-  git(['fetch', '--no-tags', 'origin', pr.base.ref])
-  const mergeBase = git(['merge-base', 'FETCH_HEAD', 'HEAD'])
-  const headSha = git(['rev-parse', 'HEAD'])
-  const facts = computeFacts({
-    files: files.map((f) => f.filename),
-    labelerYaml: fs.readFileSync(env.AGENT_LABELER, 'utf8'),
-    title: pr.title,
-    body: pr.body ?? '',
+  log.info('review starts', {
+    pr: number,
+    dryRun: config.dryRun,
+    review: `${config.models.review.id}:${config.models.review.variant}`,
+    verify: `${config.models.verify.id}:${config.models.verify.variant}`,
   })
 
-  const comments = await gh.listIssueComments(number)
-  const existing = state.findStateComment(comments)
-  let st = (existing && state.parse(existing.body)) || state.emptyPullState(number)
+  const { pr, files, mergeBase, headSha, facts } = await log.group('Load the pull request', async () => {
+    const pr = await gh.getPull(number)
+    const files = await gh.listPullFiles(number)
+    git(['fetch', '--no-tags', 'origin', pr.base.ref])
+    const mergeBase = git(['merge-base', 'FETCH_HEAD', 'HEAD'])
+    const headSha = git(['rev-parse', 'HEAD'])
+    log.info('pull request', { title: pr.title, author: pr.user?.login, base: pr.base.ref, mergeBase, headSha })
+    log.info('changed files', { count: files.length, withoutPatch: files.filter((f) => !f.patch).length })
+    const facts = computeFacts({
+      files: files.map((f) => f.filename),
+      labelerYaml: fs.readFileSync(env.AGENT_LABELER, 'utf8'),
+      title: pr.title,
+      body: pr.body ?? '',
+    })
+    log.json('impact facts', facts)
+    return { pr, files, mergeBase, headSha, facts }
+  })
+
+  const { existing, initial } = await log.group('Load the state', async () => {
+    const existing = state.findStateComment(await gh.listIssueComments(number))
+    const initial = (existing && state.parse(existing.body)) || state.emptyPullState(number)
+    log.info('state', {
+      comment: existing?.id ?? 'none',
+      reviews: initial.reviews?.length ?? 0,
+      usdSoFar: (initial.costs ?? []).reduce((s, c) => s + c.usd, 0).toFixed(4),
+    })
+    return { existing, initial }
+  })
+  let st = initial
   const costs = []
   let human = null
   let failure = null
@@ -177,19 +214,23 @@ async function main() {
         '',
       ].join('\n'),
     )
-    review = await callAgent({
-      role: 'pr-reviewer',
-      agent: 'pr-reviewer',
-      model: config.models.review,
-      message: `Review pull request #${number}. Your input is the attached review-input.md.`,
-      inputFile: reviewInput,
-      out,
-      costs,
-      runUrl,
-      schema: 'review',
-    })
+    review = await log.group('Review (pr-reviewer)', () =>
+      callAgent({
+        role: 'pr-reviewer',
+        agent: 'pr-reviewer',
+        model: config.models.review,
+        message: `Review pull request #${number}. Your input is the attached review-input.md.`,
+        inputFile: reviewInput,
+        out,
+        costs,
+        runUrl,
+        schema: 'review',
+      }),
+    )
+    log.info('review', { risk: review.risk, findings: review.findings.length })
 
     let verdicts = []
+    if (!review.findings.length) log.info('verification skipped: no findings')
     if (review.findings.length) {
       const verifyInput = path.join(out, 'verify-input.md')
       fs.writeFileSync(
@@ -205,31 +246,51 @@ async function main() {
         ].join('\n'),
       )
       verdicts = (
-        await callAgent({
-          role: 'verifier',
-          agent: 'verifier',
-          model: config.models.verify,
-          message: 'Verify the findings in the attached verify-input.md.',
-          inputFile: verifyInput,
-          out,
-          costs,
-          runUrl,
-          schema: 'verification',
-        })
+        await log.group('Verify the findings (verifier)', () =>
+          callAgent({
+            role: 'verifier',
+            agent: 'verifier',
+            model: config.models.verify,
+            message: 'Verify the findings in the attached verify-input.md.',
+            inputFile: verifyInput,
+            out,
+            costs,
+            runUrl,
+            schema: 'verification',
+          }),
+        )
       ).verdicts
     }
 
     const kept = selectFindings(review.findings, verdicts)
     const placed = placeFindings(kept, files)
     inline = placed.inline
+    // One line per finding: what happened to it and why, so a missing comment can be explained from the log.
+    for (const f of review.findings) {
+      const v = verdicts.find((x) => x.id === f.id)
+      const where = placed.inline.includes(kept.find((k) => k.id === f.id)) ? 'inline' : 'summary'
+      log.info('finding', {
+        id: f.id,
+        severity: f.severity,
+        at: `${f.file}:${f.line ?? '-'}`,
+        verdict: v?.verdict ?? 'none',
+        placed: v?.verdict === 'rejected' ? 'dropped' : where,
+        title: f.title,
+      })
+    }
     const totalUsd = [...st.costs, ...costs].reduce((s, c) => s + c.usd, 0)
     human = renderSummary({ review, other: placed.other, inlineCount: inline.length, headSha, runUrl, totalUsd })
     fs.writeFileSync(path.join(out, 'summary.md'), human)
   } catch (err) {
     failure = err
+    log.error(`review failed: ${err.message}`)
   }
 
   for (const c of costs) st = state.addCost(st, c)
+  log.info('cost', {
+    thisRun: costs.reduce((s, c) => s + c.usd, 0).toFixed(4),
+    pullRequestTotal: st.costs.reduce((s, c) => s + c.usd, 0).toFixed(4),
+  })
   if (!failure) {
     const entry = { sha: headSha, run: runUrl, at: new Date().toISOString() }
     st = { ...st, reviews: [...(st.reviews ?? []), entry] }
@@ -240,25 +301,37 @@ async function main() {
   }
   const body = state.render(human, st)
 
-  if (config.dryRun) {
-    const report = [`## Dry run: AI review of #${number}`, '', human, '']
-    for (const f of inline) {
-      report.push(`- inline \`${f.file}:${f.line}\`: ${findingBody(f).replace(/\s*\n\s*/g, ' ')}`)
+  await log.group(config.dryRun ? 'Publish (dry run: job summary only)' : 'Publish', async () => {
+    if (config.dryRun) {
+      const report = [`## Dry run: AI review of #${number}`, '', human, '']
+      for (const f of inline) {
+        report.push(`- inline \`${f.file}:${f.line}\`: ${findingBody(f).replace(/\s*\n\s*/g, ' ')}`)
+      }
+      fs.appendFileSync(env.GITHUB_STEP_SUMMARY, report.join('\n') + '\n')
+      log.info('dry run: written to the job summary', { inline: inline.length })
+      return
     }
-    fs.appendFileSync(env.GITHUB_STEP_SUMMARY, report.join('\n') + '\n')
-  } else {
     if (inline.length) {
-      await gh.createReview(number, {
+      const created = await gh.createReview(number, {
         commitId: headSha,
         body: `AI review of ${headSha.slice(0, 7)}: ${inline.length} inline finding(s). The summary is in the AI ` +
           'review comment of this pull request.',
         comments: inline.map((f) => ({ path: f.file, line: f.line, body: findingBody(f) })),
       })
+      log.info('review posted', { id: created?.id, comments: inline.length })
     }
-    if (existing) await gh.updateIssueComment(existing.id, body)
-    else await gh.createIssueComment(number, body)
-    if (!failure) await gh.addLabels(number, ['agent:pr-reviewed'])
-  }
+    if (existing) {
+      await gh.updateIssueComment(existing.id, body)
+      log.info('state comment updated', { id: existing.id })
+    } else {
+      const created = await gh.createIssueComment(number, body)
+      log.info('state comment created', { id: created?.id })
+    }
+    if (!failure) {
+      await gh.addLabels(number, ['agent:pr-reviewed'])
+      log.info('label added', { label: 'agent:pr-reviewed' })
+    }
+  })
   if (failure) throw failure
 }
 
