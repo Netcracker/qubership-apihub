@@ -1,0 +1,80 @@
+name: 'Dependabot: Go workspace sync'
+
+# Dependabot updates one go.mod at a time and does not know about go.work. A bump in one module
+# raises shared indirect dependencies, so the other modules no longer state what the workspace
+# resolves, and the go-checks job of CI fails on the drift (tools/ci/go-work-sync-check.sh). This
+# workflow brings the other go.mod and go.sum files in line on the Dependabot branch and pushes the
+# result as a second commit.
+#
+# The push uses GO_WORK_SYNC_TOKEN, a fine-grained PAT with `contents: write` on this repository,
+# stored in the Dependabot secrets: a run started by Dependabot sees only those, and a push made with
+# GITHUB_TOKEN would not start CI for the new commit. The PAT's push is not by Dependabot, so it does
+# not start this workflow again.
+#
+# Once the branch holds a commit that is not its own, Dependabot stops rebasing the pull request by
+# itself. `@dependabot rebase` (or `recreate`) still works: Dependabot force-pushes its single
+# commit, and this workflow syncs the branch again.
+
+on:
+  push:
+    branches:
+      - 'dependabot/go_modules/**'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dependabot-go-work-sync-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sync:
+    # Only Dependabot's own pushes; a deleted branch also fires `push`.
+    if: github.actor == 'dependabot[bot]' && !github.event.deleted
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          token: ${{ secrets.GO_WORK_SYNC_TOKEN }}
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: backend/.go-version
+          cache-dependency-path: |
+            backend/**/go.sum
+            go.work.sum
+
+      # `go work sync` raises every go.mod to the versions the workspace resolves, but it can leave
+      # a go.sum short of an entry the module needs on its own. `go mod tidy` with GOWORK=off adds
+      # those, the way each image builds the module.
+      - name: sync the go.mod files with the workspace
+        shell: bash
+        run: |
+          set -euo pipefail
+          go work sync
+          go work edit -json | jq -r '.Use[].DiskPath' | while read -r mod; do
+            echo "tidy $mod"
+            (cd "$mod" && GOWORK=off go mod tidy)
+          done
+
+      # The same check as the go-checks job of CI, so a branch that would still fail is not pushed.
+      - name: every go.mod states what the workspace resolves
+        shell: bash
+        run: bash tools/ci/go-work-sync-check.sh
+
+      # The commit author is github-actions[bot], which the CLA check skips.
+      - name: push the synced files
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet; then
+            echo "the go.mod and go.sum files already match the workspace"
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A -- 'go.work' 'go.work.sum' 'backend/**/go.mod' 'backend/**/go.sum'
+          git status --short
+          git commit -m 'chore: deps: sync the Go modules with go.work'
+          git push
