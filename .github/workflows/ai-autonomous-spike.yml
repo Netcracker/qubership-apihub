@@ -1,0 +1,122 @@
+# Phase 0 spike of the AI Autonomous agent (docs/internal/autonomous-agent/plan.md). It lives on the spike branch only
+# and is never merged: a push of the branch runs it, because workflow_dispatch needs the file on the default branch.
+name: 'AI Autonomous: Spike'
+
+on:
+  push:
+    branches: [feature/ai-autonomous-spike]
+    paths:
+      - .github/workflows/ai-autonomous-spike.yml
+      - tools/agent/spike/**
+
+permissions:
+  contents: read
+
+jobs:
+  # opencode against the repository: skills, nested AGENTS.md, rules, shell permissions, step limit, variants, cost.
+  opencode:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      - name: Install opencode
+        run: npm install --global opencode-ai@1.19.4
+
+      - name: Run the probes
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: bash tools/agent/spike/run.sh "$RUNNER_TEMP/spike" | tee "$RUNNER_TEMP/summary.md"
+
+      - name: Summary
+        if: always()
+        run: cat "$RUNNER_TEMP/summary.md" >> "$GITHUB_STEP_SUMMARY" || true
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: spike-opencode
+          path: ${{ runner.temp }}/spike
+          retention-days: 7
+
+  # How long the toolchain of an implementation run takes to set up.
+  setup-timing:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Start
+        run: echo "START=$(date +%s)" >> "$GITHUB_ENV"
+
+      - uses: ./.github/actions/setup-workspace
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: backend/.go-version
+          cache-dependency-path: '**/go.sum'
+
+      - name: Report
+        run: |
+          set -euo pipefail
+          setup=$(( $(date +%s) - START ))
+          t0=$(date +%s)
+          pnpm exec nx show projects --affected --base=origin/develop --head=HEAD --json > /dev/null
+          nx=$(( $(date +%s) - t0 ))
+          echo "| setup-workspace + setup-go | ${setup} s |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| nx show projects --affected | ${nx} s |" >> "$GITHUB_STEP_SUMMARY"
+
+  # Does a push with AGENT_PAT start CI? It pushes an empty commit to a scratch branch, waits for the CI run, cancels
+  # it, and deletes the branch.
+  pat-push:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      AGENT_PAT: ${{ secrets.AGENT_PAT }}
+      SCRATCH: feature/ai-autonomous-spike-pat
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Push with the PAT
+        run: |
+          set -euo pipefail
+          # The commit author is the PAT owner, as the agent's commits will be, so the CLA check knows them.
+          user="$(GH_TOKEN="$AGENT_PAT" gh api user --jq '.login + " " + (.id|tostring)')"
+          login="${user% *}"; id="${user#* }"
+          git config user.name "$login"
+          git config user.email "${id}+${login}@users.noreply.github.com"
+          git commit --allow-empty -m 'chore: AI Autonomous spike, PAT push check'
+          git push "https://x-access-token:${AGENT_PAT}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:refs/heads/$SCRATCH"
+          echo "| PAT owner | $login |" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Wait for CI
+        run: |
+          set -euo pipefail
+          for _ in $(seq 1 18); do
+            run="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow ci.yml --branch "$SCRATCH" \
+              --json databaseId,event --jq '.[0] | select(.) | "\(.databaseId) \(.event)"')"
+            if [ -n "$run" ]; then
+              echo "| PAT push started CI | yes, run ${run% *} (${run#* }) |" >> "$GITHUB_STEP_SUMMARY"
+              gh run cancel "${run% *}" --repo "$GITHUB_REPOSITORY" || true
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "| PAT push started CI | no run within 3 minutes |" >> "$GITHUB_STEP_SUMMARY"
+          exit 1
+
+      - name: Delete the scratch branch
+        if: always()
+        run: git push "https://x-access-token:${AGENT_PAT}@github.com/${GITHUB_REPOSITORY}.git" --delete "$SCRATCH" || true

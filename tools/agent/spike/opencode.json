@@ -1,0 +1,16 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "share": "disabled",
+  "autoupdate": false,
+  "enabled_providers": ["openai"],
+  "instructions": [".claude/rules/*.md"],
+  "permission": {
+    "edit": "deny",
+    "bash": "deny",
+    "webfetch": "deny",
+    "websearch": "deny",
+    "question": "deny",
+    "external_directory": "deny",
+    "skill": "allow"
+  }
+}
