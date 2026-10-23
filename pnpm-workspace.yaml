@@ -36,6 +36,7 @@ allowBuilds:
   msw: false
   # Native binaries ship as optional platform packages; the script only falls back to a local build.
   sharp: false
+  fsevents: false
 
 # Lets `pnpm deploy` build build-task-consumer's production tree without injectWorkspacePackages,
 # which would change how every internal dependency resolves.

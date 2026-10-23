@@ -44,12 +44,14 @@ type SystemInfoService interface {
 	GetOpenAIModel() string
 	GetOpenAIRateLimitRPS() float64
 	GetOpenAIRateLimitBurst() int
+	GetOpenAIMaxConcurrentRequests() int
+	GetOpenAIExtraBodyJSON() string
 	IsAiOasLinterEnabled() bool
 	IsAiLinterOptional() bool
 	GetAiLinterWorkers() int
 	GetAiLinterExcludedPackages() []string
 	GetAiLinterIncludedPackages() []string
-	GetAiLinterDeduplicationPrompt() string
+	GetAiLinterDeduplicationConfig() config.AIDeduplicationConfig
 	GetSpectralLinterWorkers() int
 	IsSpectralLinterOptional() bool
 
@@ -88,15 +90,7 @@ func getConfigFolder() string {
 	return folder
 }
 
-const defaultAiDeduplicationPrompt = `You filter a JSON array of OpenAPI lint issues. Return only the issues that remain.
-Two issues are duplicates if they describe the same underlying problem in the 'message' field, even if the wording differs. When comparing messages, use the problem statement only; ignore any suggested fix or action text in the same message.
-Keep issues that are the same kind of finding but at different 'path' values. Those are not duplicates.
-Rules:
-1. Do not rewrite any field. Copy the kept object byte-for-byte from the input.
-2. Do not add issues.
-3. Do not drop an issue unless it is a duplicate of one you keep.
-4. If several issues are duplicates, keep the first one in input order and discard the rest.
-5. If there are no duplicates, return the input list unchanged and in the same order.`
+const defaultAiDeduplicationCriteriaPrompt = `Two issues describe the same problem if their 'message' fields state the same underlying defect, even if the wording differs. Compare the problem statement only; ignore any suggested fix or action text.`
 
 func setDefaults() {
 	viper.SetDefault("database.host", "localhost")
@@ -119,7 +113,11 @@ func setDefaults() {
 	viper.SetDefault("linters.ai.workers", 1)
 	viper.SetDefault("linters.ai.openAI.rateLimitRPS", 10.0)
 	viper.SetDefault("linters.ai.openAI.rateLimitBurst", 30)
-	viper.SetDefault("linters.ai.deduplicationPrompt", defaultAiDeduplicationPrompt)
+	viper.SetDefault("linters.ai.openAI.maxConcurrentRequests", 0)
+	viper.SetDefault("linters.ai.openAI.extraBodyJSON", "")
+	viper.SetDefault("linters.ai.deduplication.criteriaPrompt", defaultAiDeduplicationCriteriaPrompt)
+	viper.SetDefault("linters.ai.deduplication.requestTokenBudget", 24000)
+	viper.SetDefault("linters.ai.deduplication.maxCompletionTokens", 12000)
 }
 
 type systemInfoServiceImpl struct {
@@ -221,6 +219,14 @@ func (s *systemInfoServiceImpl) GetOpenAIRateLimitBurst() int {
 	return s.config.Linters.AI.OpenAI.RateLimitBurst
 }
 
+func (s *systemInfoServiceImpl) GetOpenAIMaxConcurrentRequests() int {
+	return s.config.Linters.AI.OpenAI.MaxConcurrentRequests
+}
+
+func (s *systemInfoServiceImpl) GetOpenAIExtraBodyJSON() string {
+	return s.config.Linters.AI.OpenAI.ExtraBodyJSON
+}
+
 func (s *systemInfoServiceImpl) IsAiOasLinterEnabled() bool {
 	return s.config.Linters.AI.Enabled
 }
@@ -241,8 +247,8 @@ func (s *systemInfoServiceImpl) GetAiLinterIncludedPackages() []string {
 	return s.config.Linters.AI.IncludedPackages
 }
 
-func (s *systemInfoServiceImpl) GetAiLinterDeduplicationPrompt() string {
-	return s.config.Linters.AI.DeduplicationPrompt
+func (s *systemInfoServiceImpl) GetAiLinterDeduplicationConfig() config.AIDeduplicationConfig {
+	return s.config.Linters.AI.Deduplication
 }
 
 func (s *systemInfoServiceImpl) GetSpectralLinterWorkers() int {

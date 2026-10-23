@@ -51,19 +51,27 @@ type SpectralLinterConfig struct {
 }
 
 type AILinterConfig struct {
-	Enabled             bool
-	Optional            bool
-	Workers             int `validate:"gte=1"`
-	ExcludedPackages    []string
-	IncludedPackages    []string
-	OpenAI              OpenAIConfig
-	DeduplicationPrompt string
+	Enabled          bool
+	Optional         bool
+	Workers          int `validate:"gte=1"`
+	ExcludedPackages []string
+	IncludedPackages []string
+	OpenAI           OpenAIConfig
+	Deduplication    AIDeduplicationConfig
+}
+
+type AIDeduplicationConfig struct {
+	CriteriaPrompt      string
+	RequestTokenBudget  int `validate:"gte=4000"`
+	MaxCompletionTokens int `validate:"gte=1000"`
 }
 
 type OpenAIConfig struct {
-	APIKey         string `sensitive:"true"`
-	APIProxy       string
-	Model          string
-	RateLimitRPS   float64 `validate:"gt=0"`
-	RateLimitBurst int     `validate:"gte=1"`
+	APIKey                string `sensitive:"true"`
+	APIProxy              string
+	Model                 string
+	RateLimitRPS          float64 `validate:"gt=0"`
+	RateLimitBurst        int     `validate:"gte=1"`
+	MaxConcurrentRequests int     `validate:"gte=0"`
+	ExtraBodyJSON         string
 }
