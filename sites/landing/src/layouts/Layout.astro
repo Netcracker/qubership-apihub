@@ -1,5 +1,6 @@
 ---
-import { ViewTransitions } from 'astro:transitions';
+import { ClientRouter } from 'astro:transitions';
+import '../styles/tailwind.css';
 import {
   NAV_LINKS,
   REPO_URL,
@@ -57,7 +58,7 @@ const currentPath = norm(Astro.url.pathname);
       rel="stylesheet"
     />
     <title>{title}</title>
-    <ViewTransitions />
+    <ClientRouter />
     <style is:global>
       :root { color-scheme: dark; }
       body {

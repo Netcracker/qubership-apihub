@@ -36,7 +36,7 @@
     "eslint": "8.48.0",
     "eslint-plugin-react-hooks": "4.6.0",
     "eslint-plugin-react-refresh": "0.4.3",
-    "eslint-plugin-storybook": "10.5.10",
+    "eslint-plugin-storybook": "10.6.3",
     "lodash-es": "^4.17.21",
     "typescript": "6.0.3",
     "yaml": "2.9.0"

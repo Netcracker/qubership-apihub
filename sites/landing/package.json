@@ -30,8 +30,9 @@
     "preview": "astro preview --host"
   },
   "dependencies": {
-    "@astrojs/tailwind": "5.1.5",
-    "astro": "4.16.19",
+    "astro": "7.4.2",
+    "autoprefixer": "10.6.1",
+    "postcss": "8.5.31",
     "tailwindcss": "3.4.19"
   }
 }

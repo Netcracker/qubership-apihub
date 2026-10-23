@@ -1,4 +1,4 @@
 name: apihub-ui-authoring
-version: 1.0.0
-description: Points agents at APIHUB UI TypeScript coding conventions in docs/dev/CODING_GUIDELINES.md.
+version: 1.2.0
+description: "Conventions of the APIHUB UI module (frontend/ui) on top of the TypeScript, React, and MUI technology packages: coding guidelines, module layout, worker-only imports, test IDs, and how request errors reach the user."
 author: Netcracker
