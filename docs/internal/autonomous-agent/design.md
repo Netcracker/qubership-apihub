@@ -513,7 +513,10 @@ Points to settle:
 - **Rules are path-scoped; opencode does not read `paths:`.** The 54 rules in `.claude/rules/` are 25 KB together, and
   each one names its scope in its text. Loading them all costs about 7,000 tokens per run and is the default. If that
   confuses the model, the alternatives are the APM `opencode` target, if it keeps the scope, or a small opencode
-  plugin that adds a rule when the agent reads a file that matches its `paths`. The phase 0 spike decides.
+  plugin that adds a rule when the agent reads a file that matches its `paths`. A relative glob does not reach the
+  hidden `.claude` folder, so `opencode.json` names it with an absolute path:
+  `{env:GITHUB_WORKSPACE}/.claude/rules/*.md` ([spike](./spike.md)).
+- **A skill needs `name` in its frontmatter** for opencode to load it.
 - **`disable-model-invocation: true`** (in `apihub-backend-self-review`, for example) means nothing to opencode. The
   playbook skills name the skills to load, so this does not change behavior.
 

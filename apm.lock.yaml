@@ -1,5 +1,5 @@
 lockfile_version: '1'
-generated_at: '2026-10-23T17:43:01.334195+00:00'
+generated_at: '2026-10-23T17:46:39.315975+00:00'
 apm_version: 0.27.0
 dependencies:
 - repo_url: _local/advanced-verification
@@ -324,6 +324,20 @@ dependencies:
     .cursor/skills/apihub-agent-developer/SKILL.md: sha256:fdf3edabce498b791b02fa0263bcce2b9aa44d88e51fb11c0397c66bd4096603
   source: local
   local_path: ./backend/agent/agent-packages/apihub-agent-developer
+- repo_url: _local/apihub-autonomous-agent
+  name: apihub-autonomous-agent
+  version: 0.1.0
+  package_type: apm_package
+  deployed_files:
+  - .claude/skills/apihub-pr-review
+  - .claude/skills/apihub-pr-review/SKILL.md
+  - .cursor/skills/apihub-pr-review
+  - .cursor/skills/apihub-pr-review/SKILL.md
+  deployed_file_hashes:
+    .claude/skills/apihub-pr-review/SKILL.md: sha256:a46cb17206a3716da1b73ecd6d9c533f1087657dad7e45e2ecbaf5ba8e595aa3
+    .cursor/skills/apihub-pr-review/SKILL.md: sha256:a46cb17206a3716da1b73ecd6d9c533f1087657dad7e45e2ecbaf5ba8e595aa3
+  source: local
+  local_path: ./agent-packages/apihub-autonomous-agent
 - repo_url: _local/apihub-backend-developer
   name: apihub-backend-developer
   version: 0.2.0
@@ -1845,6 +1859,24 @@ deployments:
   content_hash: sha256:4652b932a8baee821757e5c4cff7f493e94c4156a873aeba34845f1966854b0b
 - kind: project-relative
   target: claude
+  value: .claude/skills/apihub-pr-review
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-autonomous-agent
+  active_owner: ./agent-packages/apihub-autonomous-agent
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/apihub-pr-review/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-autonomous-agent
+  active_owner: ./agent-packages/apihub-autonomous-agent
+  content_hash: sha256:a46cb17206a3716da1b73ecd6d9c533f1087657dad7e45e2ecbaf5ba8e595aa3
+- kind: project-relative
+  target: claude
   value: .claude/skills/ddlapi-authoring
   runtime: null
   scope: project
@@ -3130,6 +3162,24 @@ deployments:
   - ./agent-packages/apihub-landing-refresh
   active_owner: ./agent-packages/apihub-landing-refresh
   content_hash: sha256:4652b932a8baee821757e5c4cff7f493e94c4156a873aeba34845f1966854b0b
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/apihub-pr-review
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-autonomous-agent
+  active_owner: ./agent-packages/apihub-autonomous-agent
+  content_hash: null
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/apihub-pr-review/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-autonomous-agent
+  active_owner: ./agent-packages/apihub-autonomous-agent
+  content_hash: sha256:a46cb17206a3716da1b73ecd6d9c533f1087657dad7e45e2ecbaf5ba8e595aa3
 - kind: project-relative
   target: cursor
   value: .cursor/skills/ddlapi-authoring
