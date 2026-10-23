@@ -54,6 +54,13 @@ dependencies:
     - ./frontend/json-crawl/agent-packages/json-crawl-using
     # frontend/ui
     - ./frontend/ui/agent-packages/apihub-ui-authoring
+    - ./frontend/ui/agent-packages/apihub-typescript-coding
+    - ./frontend/ui/agent-packages/apihub-react-coding
+    - ./frontend/ui/agent-packages/apihub-mui-coding
+    - ./frontend/ui/agent-packages/apihub-unit-testing
+    - ./frontend/ui/agent-packages/apihub-quality-gates
+    - ./frontend/ui/agent-packages/apihub-agents-claude
+    - ./frontend/ui/agent-packages/apihub-agents-cursor
     # tests/postman-collections
     - ./tests/postman-collections/agent-packages/postman-e2e-authoring
     - ./tests/postman-collections/agent-packages/postman-e2e-followup

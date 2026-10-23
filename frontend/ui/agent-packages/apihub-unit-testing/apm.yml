@@ -1,0 +1,6 @@
+name: apihub-unit-testing
+version: 1.0.0
+description: "Tool-independent rules for unit tests in the frontend modules: write the minimal sufficient set, only for complex or critical logic, without growing the test scope"
+author: Qubership
+dependencies:
+  apm: []
