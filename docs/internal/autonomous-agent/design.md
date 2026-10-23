@@ -539,13 +539,23 @@ The repository is public, so issue text, comments, and fork code are untrusted i
 
 - **Writes go through code, not the model.** The opencode step gets `OPENAI_API_KEY` and no GitHub token. The publish
   step pushes, comments, and labels after the model has exited, and only what the contract allows.
+- **Two jobs split the secrets for Flow C.** The tests of a change run code that the model wrote, as the same user as
+  the scripts, so a token in the environment of any step of that job could be read from `/proc` or by a process that
+  outlives the step. The work job (`implement`) therefore holds only the OpenAI key after its preflight, which runs
+  before any model code. It hands a JSON outcome and a Git bundle to the `publish` job as an artifact. `publish` holds
+  `GITHUB_TOKEN` and `AGENT_PAT`, runs no model and no repository code, and treats the artifact as data from a source
+  that may lie: it pushes only to the branch it derives itself from the state, checks that the bundle holds the commit
+  the outcome names, and validates every answer against its contract. The OpenAI key stays reachable by the code under
+  test in the work job. The proof of concept accepts that; give the key its own OpenAI project and a budget on it.
 - **Only maintainers start write flows.** Every command needs write access. The analysis runs for any author, but it
   has no edit permission and its output is one label and one comment.
 - **Untrusted text is marked as data.** The prompt wraps issue and comment text in a block that the model is told not
   to follow, as `opencode github run` does.
 - **Narrow tools.** The implementer's shell allows the repository's build, test, and lint commands, and denies
   `curl`, `wget`, `gh`, `git push`, and web fetch. The other roles cannot edit and run read-only commands only.
-- **The PAT is narrow.** One repository, Contents and Pull requests only, no Workflows. Only the publish step sees it.
+- **The PAT is narrow.** One repository, Contents and Pull requests only, no Workflows. Only the preflight (for the
+  Git identity, before any model code), the `publish` job, and the `ci-gate` job (to take a pull request out of
+  draft) see it. None of them runs model or repository code.
 - **The orchestrator of the write flows runs from `develop`.** `issues`, `issue_comment`, and `workflow_run` use the
   workflow file of the default branch, so a pull request cannot change the code that pushes for it or judges its CI.
   Flow A on `pull_request` runs the version of the pull request, but only pull requests from this repository get

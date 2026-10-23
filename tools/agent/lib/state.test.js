@@ -79,3 +79,12 @@ test('addCost returns a new state and leaves the input alone', () => {
   )
   assert.deepEqual(state.addCost({ schema: 1 }, { run: 'r' }).costs, [{ run: 'r' }])
 })
+
+test('actorOf: the running attempt, else the last attempt, else null', () => {
+  assert.equal(state.actorOf(null), null)
+  assert.equal(state.actorOf({}), null)
+  assert.equal(state.actorOf({ attempts: [{ n: 1 }] }), null)
+  assert.equal(state.actorOf({ attempts: [{ n: 1, actor: 'carol' }, { n: 2, actor: 'dave' }] }), 'dave')
+  assert.equal(state.actorOf({ attempts: [{ actor: 'carol' }], implementing: { actor: 'erin' } }), 'erin')
+  assert.equal(state.actorOf({ attempts: [{ actor: 'carol' }], implementing: {} }), 'carol')
+})

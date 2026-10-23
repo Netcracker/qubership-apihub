@@ -9,7 +9,7 @@ const path = require('node:path')
 const log = require('./lib/log')
 const state = require('./lib/state')
 const { nextState } = require('./analyze')
-const { preflight, run, main } = require('./implement')
+const { preflight, writeContext, work, publish, main, recoverCosts } = require('./implement')
 const { noreplyEmail } = require('./implement')
 
 const logged = []
@@ -107,13 +107,18 @@ function fakeGh({ issueOverrides = {}, labels = [], comments = [], pulls = {} } 
 
 function fakePatGh() {
   const calls = []
+  const edits = []
   return {
     calls,
+    edits,
     getAuthenticatedUser: async () => ({ login: 'pat-owner', id: 4242 }),
     createPull: async (options) => {
       calls.push(options)
       return { number: 77 }
     },
+    updatePull: async (n, options) => edits.push(['updatePull', n, options]),
+    markPullReady: async (nodeId) => edits.push(['markPullReady', nodeId]),
+    convertPullToDraft: async (nodeId) => edits.push(['convertPullToDraft', nodeId]),
   }
 }
 
@@ -124,6 +129,8 @@ function fakeExec({
   shortstat = ' 2 files changed, 30 insertions(+), 5 deletions(-)',
   remote = '',
   pushFails = false,
+  changed = 'backend/x.go',
+  mergeBase = BASE,
 } = {}) {
   const calls = []
   let head = BASE
@@ -143,6 +150,11 @@ function fakeExec({
         return ok(remote)
       case 'rev-parse':
         return ok(`${head}\n`)
+      case 'merge-base':
+        return ok(`${mergeBase}\n`)
+      case 'bundle':
+        fs.writeFileSync(args[2], 'a bundle')
+        return ok()
       case 'status':
         statusCalls += 1
         return ok(porcelain ? (porcelain[statusCalls - 1] ?? '') : 'M backend/x.go\n')
@@ -152,6 +164,7 @@ function fakeExec({
         return ok()
       case 'diff':
         if (args.includes('--shortstat')) return ok(shortstat)
+        if (args.includes('--name-only')) return ok(changed)
         if (args.includes('--stat')) return ok(' backend/x.go | 2 +-')
         return ok('diff --git a/backend/x.go b/backend/x.go\n+changed\n')
       case 'push':
@@ -219,6 +232,17 @@ function setup({ env = {}, command = { name: 'implement', force: false, notes: '
     outputs: () => read(fullEnv.GITHUB_OUTPUT),
     outFiles: () => fs.readdirSync(fullEnv.AGENT_OUT).sort(),
   }
+}
+
+/**
+ * The three steps in order, like the two jobs: the preflight's context, the work step with no GitHub client and no
+ * token, and the publish step.
+ */
+async function run(env, deps) {
+  await writeContext(env, deps)
+  const { AGENT_PAT: _pat, GITHUB_TOKEN: _token, ...workEnv } = env
+  await work(workEnv, { exec: deps.exec, runAgent: deps.runAgent })
+  return publish(env, deps)
 }
 
 /** Runs `fn(ctx)` with a prepared context and always cleans up. */
@@ -383,7 +407,10 @@ test('main dispatches to preflight and run, and rejects anything else', async ()
   await withContext({}, async (ctx) => {
     const result = await main(['preflight'], ctx.env, ctx.deps)
     assert.equal(result.outcome, 'analyze-first')
-    await assert.rejects(main(['deploy'], ctx.env, ctx.deps), /Usage: node tools\/agent\/implement\.js preflight\|run/)
+    await assert.rejects(
+      main(['deploy'], ctx.env, ctx.deps),
+      /Usage: node tools\/agent\/implement\.js preflight\|work\|publish/,
+    )
     await assert.rejects(main([], ctx.env, ctx.deps), /Usage/)
   })
 })
@@ -430,7 +457,7 @@ test('run, green path: branch, identity, implement, checks, self-review, push, P
       'push',
       '--no-verify',
       `https://x-access-token:${PAT}@github.com/o/r.git`,
-      'HEAD:refs/heads/bugfix/200-changelog-is-empty-for-a',
+      `${sha(1)}:refs/heads/bugfix/200-changelog-is-empty-for-a`,
     ])
 
     // The pull request is made with the PAT client.
@@ -462,8 +489,8 @@ test('run, green path: branch, identity, implement, checks, self-review, push, P
     assert.deepEqual(
       { ...saved.attempts[0], at: 'x' },
       {
-        n: 1, kind: 'initial', run: RUN, result: 'pr-opened', rounds: 1, checks: 'green', selfReview: 'approve',
-        notes: 'The nil came from an empty package.', at: 'x',
+        n: 1, kind: 'initial', actor: 'carol', run: RUN, result: 'pr-opened', rounds: 1, checks: 'green',
+        selfReview: 'approve', notes: 'The nil came from an empty package.', at: 'x',
       },
     )
     assert.deepEqual(
@@ -534,7 +561,7 @@ test('run: the self-review asks for changes, the second round fixes them, and on
       ctx.runAgent.runs[2].inputText,
       new RegExp(
         [
-          '## Result of round 1: fix this first\\n\\n### Self-review findings\\n\\n',
+          '## Result of round 1: fix this first\\n\\n### Self-review findings\\n\\n<untrusted>\\n',
           '- major at `backend\\/x\\.go:12`: The error is swallowed\\.',
         ].join(''),
       ),
@@ -885,12 +912,13 @@ test('run in dry-run without a PAT commits as the workflow bot', async () => {
   })
 })
 
-test('run without a PAT outside dry-run fails before any model call', async () => {
+test('without a PAT outside dry-run the preflight fails before any model call and writes nothing', async () => {
   await withContext({ ...readyToRun(), env: { AGENT_PAT: '' } }, async (ctx) => {
     ctx.deps.patGh = undefined
     await assert.rejects(run(ctx.env, ctx.deps), /AGENT_PAT is not set/)
     assert.equal(ctx.runAgent.runs.length, 0)
-    assert.equal(savedState(ctx.gh).phase, 'needs-human')
+    assert.deepEqual(ctx.gh.calls, [])
+    assert.deepEqual(ctx.exec.calls, [])
   })
 })
 
@@ -909,5 +937,356 @@ test('run: an issue that changed after a fresh preflight is not analyzed again',
   await withContext({ gh, agents: { implementer: [done], 'self-reviewer': [approve] } }, async (ctx) => {
     await run(ctx.env, ctx.deps)
     assert.deepEqual(ctx.runAgent.runs.map((r) => r.agent), ['implementer', 'self-reviewer'])
+  })
+})
+
+// ------------------------------------------------------------------------------------ preflight context and CI fix
+
+test('preflight writes context.json for the work step: issue, comments, state, identity, and the facts', async () => {
+  const comments = [
+    botComment(5, analyzed(suitable, { label: 'ai:suitable' })),
+    { id: 6, user: { login: 'bob' }, body: 'Hi' },
+  ]
+  await withContext({ gh: fakeGh({ comments }) }, async (ctx) => {
+    await preflight(ctx.env, ctx.deps)
+    const context = JSON.parse(fs.readFileSync(path.join(ctx.env.AGENT_OUT, 'context.json'), 'utf8'))
+    assert.deepEqual(
+      [context.number, context.ciFix, context.actor, context.analyzeFirst, context.runUrl],
+      [200, false, 'carol', false, RUN],
+    )
+    assert.equal(context.state.phase, 'implementing')
+    assert.deepEqual(context.identity, { name: 'pat-owner', email: noreplyEmail(4242, 'pat-owner') })
+    assert.equal(context.issue.title, bug.title)
+    assert.deepEqual(context.comments.map((c) => c.id), [6])
+    assert.ok(!JSON.stringify(context).includes(PAT))
+  })
+})
+
+/** The state the CI gate leaves for a CI fix: attempt 1 was red, the pull request is open. */
+function ciFixState(extra = {}) {
+  const earlier = {
+    n: 1, kind: 'initial', actor: 'carol', run: 'r1', result: 'ci-red', signature: 'abc123def456',
+    notes: 'Tried a guard.',
+  }
+  const base = analyzed(suitable, {
+    extra: {
+      branch: 'bugfix/200-changelog-is-empty-for-a',
+      pr: 70,
+      playbook: 'bug-fix',
+      attempts: [earlier],
+      lastCiReport: '# CI report for pull request #70\n\nFAIL packages/x',
+      ...extra,
+    },
+  })
+  return {
+    ...base,
+    phase: 'implementing',
+    implementing: { run: RUN, actor: 'dave', at: '2026-10-03T02:00:00Z', kind: 'ci-fix' },
+  }
+}
+const BRANCH = 'bugfix/200-changelog-is-empty-for-a'
+const REMOTE = `${sha(900)}\trefs/heads/${BRANCH}\n`
+const openPull = (extra = {}) => ({ 70: { number: 70, state: 'open', draft: false, node_id: 'PR_70', ...extra } })
+const ciFixOptions = (extra = {}) => ({
+  gh: fakeGh({ comments: [botComment(5, ciFixState())], pulls: openPull(), labels: ['agent:needs-human'] }),
+  env: { AGENT_KIND: 'ci-fix', AGENT_ACTOR: '' },
+  exec: fakeExec({ remote: REMOTE }),
+  ...extra,
+})
+
+test('preflight of a CI fix needs no decision: it checks the state and writes the context', async () => {
+  await withContext(ciFixOptions(), async (ctx) => {
+    const result = await preflight(ctx.env, ctx.deps)
+    assert.deepEqual([result.proceed, result.outcome], [true, 'ci-fix'])
+    assert.equal(ctx.outputs(), 'proceed=true\noutcome=ci-fix\n')
+    assert.deepEqual(ctx.gh.calls, [])
+    const context = JSON.parse(fs.readFileSync(path.join(ctx.env.AGENT_OUT, 'context.json'), 'utf8'))
+    assert.deepEqual([context.ciFix, context.actor, context.analyzeFirst], [true, 'dave', false])
+  })
+  const wrongPhase = fakeGh({ comments: [botComment(5, analyzed(suitable))] })
+  await withContext({ gh: wrongPhase, env: { AGENT_KIND: 'ci-fix', AGENT_ACTOR: '' } }, async (ctx) => {
+    await assert.rejects(preflight(ctx.env, ctx.deps), /does not hold a CI fix to run \(phase 'analyzed'\)/)
+    assert.deepEqual(wrongPhase.calls, [])
+  })
+  await withContext({ env: { AGENT_KIND: 'later' } }, async (ctx) => {
+    await assert.rejects(preflight(ctx.env, ctx.deps), /AGENT_KIND must be initial or ci-fix, got 'later'/)
+  })
+})
+
+test('run, CI fix: continues the branch, retests the whole pull request, adds a commit, no force', async () => {
+  const agents = { implementer: [done], 'self-reviewer': [approve] }
+  await withContext({ ...ciFixOptions(), agents }, async (ctx) => {
+    const result = await run(ctx.env, ctx.deps)
+    assert.deepEqual(result, { result: 'pr-opened', pr: 70, branch: BRANCH })
+
+    const git = ctx.exec.calls.filter((c) => c.file === 'git').map((c) => c.args)
+    assert.deepEqual(git[0], ['ls-remote', '--heads', 'origin', BRANCH])
+    assert.deepEqual(git[1], ['fetch', '--no-tags', 'origin', BRANCH])
+    assert.deepEqual(git[2], ['checkout', '-B', BRANCH, 'FETCH_HEAD'])
+    assert.deepEqual(git[3], ['fetch', '--no-tags', 'origin', 'develop'])
+    assert.deepEqual(git[4], ['merge-base', 'origin/develop', 'HEAD'])
+    const commits = ctx.exec.git('commit')
+    assert.equal(commits.length, 1)
+    assert.ok(!commits[0].args.includes('--amend'))
+    const pushArgs = ctx.exec.git('push')[0].args
+    assert.ok(!pushArgs.some((a) => a.startsWith('--force')))
+    assert.equal(pushArgs.at(-1), `${sha(1)}:refs/heads/${BRANCH}`)
+
+    // The existing pull request stays as it is: no new one, no new title, still ready for review.
+    assert.deepEqual(ctx.patGh.calls, [])
+    assert.deepEqual(ctx.patGh.edits, [])
+
+    // The analysis is not repeated; the implementer sees the CI report and the skill to load.
+    assert.deepEqual(ctx.runAgent.runs.map((r) => r.agent), ['implementer', 'self-reviewer'])
+    const input = ctx.runAgent.runs[0].inputText
+    assert.match(input, /- Attempt: 2 \(ci-fix\)\n/)
+    assert.match(input, /- Also load the skill: apihub-ci-failure-triage\n/)
+    assert.match(
+      input,
+      /## CI report\n\n<untrusted>\n# CI report for pull request #70\n\nFAIL packages\/x\n<\/untrusted>/,
+    )
+    assert.match(input, /### Attempt 1 \(initial\): ci-red\n\n<untrusted>\nTried a guard\./)
+    assert.match(ctx.runAgent.runs[1].inputText, /fixes a red CI run: the last commit/)
+    assert.ok(ctx.exec.calls.find((c) => c.file === 'pnpm').args.includes(`--base=${BASE}`))
+
+    const saved = savedState(ctx.gh)
+    assert.deepEqual([saved.phase, saved.pr, saved.implementing], ['waiting-ci', 70, undefined])
+    assert.equal(saved.attempts.length, 2)
+    assert.equal(saved.attempts[0].signature, 'abc123def456')
+    assert.deepEqual(
+      { ...saved.attempts[1], at: 'x' },
+      {
+        n: 2, kind: 'ci-fix', actor: 'dave', run: RUN, result: 'pr-opened', rounds: 1, checks: 'green',
+        selfReview: 'approve', notes: 'The nil came from an empty package.', at: 'x',
+      },
+    )
+    assert.match(ctx.gh.store[0].body, /### AI implementation: CI fix pushed to pull request #70/)
+    assert.deepEqual(ctx.gh.calls.map((c) => c[0]), ['updateIssueComment', 'removeLabel'])
+  })
+})
+
+test('run, CI fix: a fix that is not green makes the ready pull request a draft and tells the person', async () => {
+  const agents = { implementer: [done, done], 'self-reviewer': [approve, approve] }
+  const options = ciFixOptions({ exec: fakeExec({ remote: REMOTE, checks: [1, 1] }) })
+  await withContext({ ...options, agents }, async (ctx) => {
+    const result = await run(ctx.env, ctx.deps)
+    assert.equal(result.result, 'draft')
+    assert.deepEqual(ctx.patGh.edits, [['convertPullToDraft', 'PR_70']])
+    const saved = savedState(ctx.gh)
+    assert.deepEqual([saved.phase, saved.attempts[1].kind, saved.attempts[1].checks], ['needs-human', 'ci-fix', 'red'])
+    assert.deepEqual(ctx.gh.calls.map((c) => c[0]), ['updateIssueComment', 'addLabels', 'createIssueComment'])
+    assert.match(ctx.gh.calls[2][2], /^@dave, I pushed a fix to pull request #70, but it is not green yet\./)
+    assert.match(ctx.gh.store[0].body, /### AI implementation needs a person: CI fix for pull request #70/)
+  })
+})
+
+test('run, CI fix: a wrong state, a missing branch, or a closed pull request fails clearly', async () => {
+  const gh = fakeGh({ comments: [botComment(5, analyzed(suitable))] })
+  await withContext({ gh, env: { AGENT_KIND: 'ci-fix', AGENT_ACTOR: '' } }, async (ctx) => {
+    await assert.rejects(run(ctx.env, ctx.deps), /does not hold a CI fix to run/)
+    assert.deepEqual(gh.calls, [])
+    await assert.rejects(publish(ctx.env, ctx.deps), /does not hold a CI fix to run/)
+    assert.deepEqual(gh.calls, [])
+  })
+  await withContext({ ...ciFixOptions({ exec: fakeExec({ remote: '' }) }) }, async (ctx) => {
+    await assert.rejects(run(ctx.env, ctx.deps), /is gone from the remote, so the CI fix has nothing to continue/)
+    assert.equal(savedState(ctx.gh).attempts[1].result, 'error')
+    assert.deepEqual(ctx.exec.git('push'), [])
+  })
+  const gone = ciFixOptions({ gh: fakeGh({ comments: [botComment(5, ciFixState())], pulls: {} }) })
+  await withContext({ ...gone, agents: { implementer: [done], 'self-reviewer': [approve] } }, async (ctx) => {
+    await assert.rejects(run(ctx.env, ctx.deps), /Pull request #70 is not open, so the CI fix has no place to go/)
+    assert.deepEqual(ctx.patGh.calls, [])
+  })
+})
+
+// ---------------------------------------------------------------------------------- the work step and the publish step
+
+test('work needs no GitHub client and no token; it writes the outcome, the costs, and a bundle', async () => {
+  const agents = { implementer: [done], 'self-reviewer': [approve] }
+  await withContext({ ...readyToRun(), agents }, async (ctx) => {
+    await writeContext(ctx.env, ctx.deps)
+    const callsBefore = ctx.gh.calls.length
+    const { AGENT_PAT: _pat, GITHUB_TOKEN: _token, ...workEnv } = ctx.env
+    const outcome = await work(workEnv, { exec: ctx.exec, runAgent: ctx.runAgent })
+    assert.equal(ctx.gh.calls.length, callsBefore)
+    assert.equal(ctx.patGh.calls.length, 0)
+
+    const saved = JSON.parse(fs.readFileSync(path.join(ctx.env.AGENT_OUT, 'outcome.json'), 'utf8'))
+    assert.deepEqual(saved, outcome)
+    assert.deepEqual([saved.result, saved.rounds, saved.bundle, saved.kind], ['pr-opened', 1, true, 'initial'])
+    assert.deepEqual([saved.branchInfo.head, saved.branchInfo.base, saved.branchInfo.previousSha], [sha(1), BASE, null])
+    assert.deepEqual(saved.costs.map((c) => c.role), ['implementer', 'self-reviewer'])
+    assert.equal(saved.diff.stat, 'backend/x.go | 2 +-')
+    assert.ok(ctx.outFiles().includes('branch.bundle'))
+    assert.deepEqual(ctx.exec.git('bundle')[0].args.slice(0, 2), ['bundle', 'create'])
+    assert.equal(ctx.exec.git('bundle')[0].args.at(-1), `${BASE}..HEAD`)
+    assert.deepEqual(ctx.exec.git('push'), [])
+    assert.ok(!JSON.stringify(saved).includes(PAT))
+  })
+})
+
+test('work records a failure in the outcome with the costs, and exits normally; no bundle is made', async () => {
+  const agents = { implementer: [{ ...done, commitType: 'feat' }] }
+  await withContext({ ...readyToRun(), agents }, async (ctx) => {
+    await writeContext(ctx.env, ctx.deps)
+    const outcome = await work(ctx.env, { exec: ctx.exec, runAgent: ctx.runAgent })
+    assert.match(outcome.failure.message, /a bug-fix must use 'fix'/)
+    assert.equal(outcome.failure.stage, 'implementation')
+    assert.equal(outcome.costs.length, 1)
+    assert.equal(outcome.bundle, false)
+    assert.ok(!ctx.outFiles().includes('branch.bundle'))
+  })
+})
+
+test('work stops after a needs-info analysis; publish posts the questions and the analysis state', async () => {
+  const gh = fakeGh({ comments: [botComment(5, running(state.emptyIssueState(200), true))] })
+  await withContext({ gh, agents: { analyst: [needsInfo] } }, async (ctx) => {
+    await writeContext(ctx.env, ctx.deps)
+    const outcome = await work(ctx.env, { exec: ctx.exec, runAgent: ctx.runAgent })
+    assert.equal(outcome.stopped, 'refuse-needs-info')
+    assert.equal(outcome.analysis.verdict, 'needs-info')
+    assert.equal(outcome.analysis.issueUpdatedAt, bug.updated_at)
+    assert.deepEqual(gh.calls, [])
+    assert.deepEqual(ctx.exec.calls, [])
+
+    const result = await publish(ctx.env, ctx.deps)
+    assert.deepEqual(result, { stopped: 'refuse-needs-info' })
+    assert.deepEqual(gh.calls.map((c) => c[0]), ['addLabels', 'updateIssueComment', 'createIssueComment'])
+    assert.match(gh.calls[2][2], /^@carol, the issue needs more information/)
+    assert.equal(savedState(gh).implementing, undefined)
+    assert.equal(savedState(gh).costs.length, 1)
+  })
+})
+
+test('publish without outcome.json records the failure and the costs found in the event files', async () => {
+  await withContext(readyToRun(), async (ctx) => {
+    await writeContext(ctx.env, ctx.deps)
+    fs.writeFileSync(path.join(ctx.env.AGENT_OUT, 'implementer-r1.jsonl'), eventsFor(done))
+    fs.writeFileSync(path.join(ctx.env.AGENT_OUT, 'notes.txt'), 'not an event file')
+    await assert.rejects(publish(ctx.env, ctx.deps), /The work step left no outcome: it crashed, timed out/)
+    const saved = savedState(ctx.gh)
+    assert.deepEqual([saved.phase, saved.attempts[0].result], ['needs-human', 'error'])
+    assert.deepEqual(saved.costs.map((c) => [c.flow, c.role, c.model, c.usd]), [
+      ['implement', 'implementer', 'openai/gpt-6.1-sol', 0.01],
+    ])
+    assert.deepEqual(ctx.gh.calls.map((c) => c[0]), ['updateIssueComment', 'addLabels', 'createIssueComment'])
+    assert.match(ctx.gh.calls[2][2], /^@carol, the implementation failed: The work step left no outcome/)
+    assert.deepEqual(ctx.exec.git('push'), [])
+  })
+})
+
+test('recoverCosts reads every kind of event file and ignores the rest', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'recover-test-'))
+  try {
+    for (const name of ['analyst.jsonl', 'implementer-r1.jsonl', 'implementer-r2.jsonl', 'self-reviewer-r1.jsonl']) {
+      fs.writeFileSync(path.join(dir, name), eventsFor('text'))
+    }
+    fs.writeFileSync(path.join(dir, 'implementer.final.md'), 'x')
+    const config = require('./lib/config').loadConfig({})
+    const records = recoverCosts(dir, config, RUN)
+    assert.deepEqual(records.map((r) => [r.flow, r.role, r.model]), [
+      ['analyze', 'analyst', 'openai/gpt-6-luna'],
+      ['implement', 'implementer', 'openai/gpt-6.1-sol'],
+      ['implement', 'implementer', 'openai/gpt-6.1-sol'],
+      ['implement', 'self-reviewer', 'openai/gpt-6-luna'],
+    ])
+    assert.deepEqual(recoverCosts(path.join(dir, 'missing'), config, RUN), [])
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true })
+  }
+})
+
+test('publish refuses a bundle whose head is not the commit the outcome names', async () => {
+  const agents = { implementer: [done], 'self-reviewer': [approve] }
+  await withContext({ ...readyToRun(), agents }, async (ctx) => {
+    await writeContext(ctx.env, ctx.deps)
+    const outcome = await work(ctx.env, { exec: ctx.exec, runAgent: ctx.runAgent })
+    const file = path.join(ctx.env.AGENT_OUT, 'outcome.json')
+    fs.writeFileSync(file, JSON.stringify({ ...outcome, branchInfo: { ...outcome.branchInfo, head: 'f'.repeat(40) } }))
+    await assert.rejects(publish(ctx.env, ctx.deps), /The bundle holds .* but the outcome names f{40}/)
+    assert.deepEqual(ctx.exec.git('push'), [])
+    assert.equal(savedState(ctx.gh).attempts[0].result, 'error')
+  })
+})
+
+test('publish pushes only to the branch it derives itself, whatever the outcome of the work step says', async () => {
+  const agents = { implementer: [done], 'self-reviewer': [approve] }
+  await withContext({ ...readyToRun(), agents }, async (ctx) => {
+    await writeContext(ctx.env, ctx.deps)
+    const outcome = await work(ctx.env, { exec: ctx.exec, runAgent: ctx.runAgent })
+    const file = path.join(ctx.env.AGENT_OUT, 'outcome.json')
+    fs.writeFileSync(file, JSON.stringify({ ...outcome, branchInfo: { ...outcome.branchInfo, branch: 'main' } }))
+    await assert.rejects(
+      publish(ctx.env, ctx.deps),
+      /not trusted: the branch 'main' is not 'bugfix\/200-changelog-is-empty-for-a'/,
+    )
+    assert.deepEqual(ctx.exec.git('push'), [])
+    assert.deepEqual(ctx.patGh.calls, [])
+    const saved = savedState(ctx.gh)
+    assert.deepEqual([saved.phase, saved.attempts[0].result, saved.costs.length], ['needs-human', 'error', 2])
+  })
+})
+
+// --------------------------------------------------------------------------------- continued branch and pull request
+
+test('run: a continued branch is measured from the branch point of the whole pull request', async () => {
+  const earlier = { n: 1, kind: 'initial', run: 'r1', result: 'draft', rounds: 2, notes: 'n', at: 't' }
+  const st = running(analyzed(suitable, { extra: { branch: BRANCH, pr: 70, attempts: [earlier] } }))
+  const gh = fakeGh({ comments: [botComment(5, st)], pulls: openPull() })
+  const exec = fakeExec({ remote: REMOTE, mergeBase: sha(500) })
+  await withContext({ gh, exec, agents: { implementer: [done], 'self-reviewer': [approve] } }, async (ctx) => {
+    await run(ctx.env, ctx.deps)
+    const git = ctx.exec.calls.filter((c) => c.file === 'git').map((c) => c.args)
+    assert.deepEqual(git[3], ['fetch', '--no-tags', 'origin', 'develop'])
+    assert.deepEqual(git[4], ['merge-base', 'origin/develop', 'HEAD'])
+    assert.ok(ctx.exec.calls.find((c) => c.file === 'pnpm').args.includes(`--base=${sha(500)}`))
+    assert.match(ctx.runAgent.runs[1].inputText, new RegExp(`git diff ${sha(500)} ${sha(1)}`))
+    assert.deepEqual(
+      ctx.exec.git('diff').find((c) => c.args.includes('--shortstat')).args.slice(-2),
+      [sha(500), 'HEAD'],
+    )
+    assert.equal(ctx.exec.git('bundle')[0].args.at(-1), `${sha(500)}..HEAD`)
+    // A human attempt leases the push on the previous tip.
+    assert.ok(ctx.exec.git('push')[0].args.includes(`--force-with-lease=refs/heads/${BRANCH}:${sha(900)}`))
+  })
+})
+
+test('run: an open pull request gets the new title and body, and leaves draft when green', async () => {
+  const st = running(analyzed(suitable, { extra: { branch: BRANCH, pr: 70, attempts: [{ n: 1 }] } }))
+  const gh = fakeGh({ comments: [botComment(5, st)], pulls: openPull({ draft: true }) })
+  const agents = { implementer: [done], 'self-reviewer': [approve] }
+  await withContext({ gh, exec: fakeExec({ remote: REMOTE }), agents }, async (ctx) => {
+    await run(ctx.env, ctx.deps)
+    assert.deepEqual(ctx.patGh.calls, [])
+    const [update, ready] = ctx.patGh.edits
+    assert.deepEqual(
+      [update[0], update[1], update[2].title],
+      ['updatePull', 70, 'fix(portal-backend): guard the nil changelog'],
+    )
+    assert.match(update[2].body, /<!-- ai-autonomous-agent issue=200 -->/)
+    assert.deepEqual(ready, ['markPullReady', 'PR_70'])
+    assert.equal(ctx.patGh.edits.length, 2)
+  })
+})
+
+test('run: an open pull request becomes a draft when the new attempt is not green', async () => {
+  const st = running(analyzed(suitable, { extra: { branch: BRANCH, pr: 70, attempts: [{ n: 1 }] } }))
+  const gh = fakeGh({ comments: [botComment(5, st)], pulls: openPull({ draft: false }) })
+  const options = {
+    gh,
+    exec: fakeExec({ remote: REMOTE, checks: [1, 1] }),
+    agents: { implementer: [done, done], 'self-reviewer': [approve, approve] },
+  }
+  await withContext(options, async (ctx) => {
+    await run(ctx.env, ctx.deps)
+    assert.deepEqual(ctx.patGh.edits.map((e) => e[0]), ['updatePull', 'convertPullToDraft'])
+    assert.match(ctx.patGh.edits[0][2].body, /Local checks failed/)
+    assert.equal(ctx.patGh.edits[1][1], 'PR_70')
+  })
+  const same = fakeGh({ comments: [botComment(5, st)], pulls: openPull({ draft: true }) })
+  await withContext({ ...options, gh: same, exec: fakeExec({ remote: REMOTE, checks: [1, 1] }) }, async (ctx) => {
+    await run(ctx.env, ctx.deps)
+    assert.deepEqual(ctx.patGh.edits.map((e) => e[0]), ['updatePull'])
   })
 })

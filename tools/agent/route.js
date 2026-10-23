@@ -3,15 +3,17 @@
  * Router of the AI Autonomous agent: turns a GitHub event into one decision for the workflow.
  *
  * `decide` is pure. It looks at the event, the configuration, the permission of the person behind the event, and the
- * state of the pull request or issue, and returns `{ action, number, reason, command?, trigger? }`. The actions are
- * `review` (phase 1), `analyze` (phase 2), `implement` (phase 3), and `skip`. Later phases add actions by registering
- * more rules in EVENT_HANDLERS and COMMAND_HANDLERS; `decide` itself does not change.
+ * state of the pull request or issue, and returns `{ action, number, reason, command?, trigger?, pr?, headSha? }`. The
+ * actions are `review` (phase 1), `analyze` (phase 2), `implement` (phase 3), `ci-gate` (phase 4), and `skip`. Later
+ * phases add actions by registering more rules in EVENT_HANDLERS and COMMAND_HANDLERS; `decide` itself does not change.
  *
  * The CLI (`node tools/agent/route.js`) gathers the facts that need the GitHub API, but only when the event calls
  * for them: the permission of a commenter who wrote a command, the state comment of a pull request that became
- * ready for review, and the state comment of an issue that may be waiting for information. It then writes `action`,
- * `number`, `reason`, and `command` (JSON, or empty) to `$GITHUB_OUTPUT`, plus `trigger` for an `analyze` decision,
- * and one line to `$GITHUB_STEP_SUMMARY`. It logs the event, the gathered facts, and the decision.
+ * ready for review, the state comment of an issue that may be waiting for information, and, for a finished workflow
+ * run, the open pull request of its branch with the state of the issue it names. It then writes `action`, `number`,
+ * `reason`, and `command` (JSON, or empty) to `$GITHUB_OUTPUT`, plus `trigger` for an `analyze` decision and `pr` and
+ * `head_sha` for a `ci-gate` decision, and one line to `$GITHUB_STEP_SUMMARY`. It logs the event, the gathered facts,
+ * and the decision.
  *
  * Environment: GITHUB_EVENT_NAME, GITHUB_EVENT_PATH, GITHUB_REPOSITORY, GITHUB_TOKEN, GITHUB_OUTPUT,
  * GITHUB_STEP_SUMMARY, and the AGENT_* variables of lib/config.js.
@@ -22,11 +24,13 @@ const fs = require('node:fs')
 const { loadConfig, isActorAllowed } = require('./lib/config')
 const { parseCommand } = require('./lib/commands')
 const { createClient, hasWriteAccess } = require('./lib/github')
-const { findStateComment, parse: parseState } = require('./lib/state')
+const { findStateComment, parse: parseState, actorOf } = require('./lib/state')
 const log = require('./lib/log')
 
 /** The agent writes this at the top of the body of every pull request it opens. */
 const AGENT_PR_MARKER = '<!-- ai-autonomous-agent '
+/** The whole marker with the issue the pull request implements. */
+const AGENT_PR_ISSUE = /<!--\s*ai-autonomous-agent\s+issue=(\d+)\s*-->/
 
 const isBot = (login) => typeof login === 'string' && /\[bot\]$/i.test(login)
 /** Dependabot, as the login appears in an event (`dependabot[bot]`) or in some API responses (`dependabot`). */
@@ -52,7 +56,20 @@ const labelNames = (issue) => (issue.labels ?? []).map((label) => (typeof label 
 
 /** The number of the pull request or issue the event is about, or `null`. */
 function numberOf(payload) {
-  return payload?.pull_request?.number ?? payload?.issue?.number ?? null
+  return payload?.pull_request?.number ?? payload?.issue?.number ?? payload?.workflow_run?.pull_requests?.[0]?.number ??
+    null
+}
+
+/** The issue number from the marker in the body of a pull request the agent opened, or `null`. */
+function agentIssueOf(body) {
+  const match = AGENT_PR_ISSUE.exec(typeof body === 'string' ? body : '')
+  return match ? Number(match[1]) : null
+}
+
+/** True when the run of the workflow was made from a branch of another repository, or of a deleted one. */
+function isForkRun(run, repository) {
+  const base = run?.repository?.full_name ?? repository?.full_name
+  return !sameRepo(run?.head_repository?.full_name, base)
 }
 
 /** `pull_request` events: review a new pull request that the agent should look at without being asked. */
@@ -106,7 +123,7 @@ const COMMAND_HANDLERS = {
     const reason = command.force ? '/agent implement force' : '/agent implement'
     return { action: 'implement', number, reason, command }
   },
-  // PHASE 4+: retry, stop, cost, help, and chat get their rules here.
+  // PHASE 5+: retry, stop, cost, help, and chat get their rules here.
 }
 
 /**
@@ -203,24 +220,65 @@ function decideIssueComment({ payload, config, actorPermission, issueState }) {
   return handler({ number, isPull: Boolean(issue.pull_request), command, issue })
 }
 
-/** Rules per event name. Later phases add `workflow_run` here. */
+/**
+ * `workflow_run` events: a CI workflow finished on a branch. The gate acts only on the open pull request that the
+ * agent made, that its issue's state names, and that waits for CI at this very commit.
+ *
+ * @param {{ payload: object, config: object, ciFacts?: { pull: object|null, issueState: object|null } }} input
+ */
+function decideWorkflowRun({ payload, config, ciFacts }) {
+  const run = payload.workflow_run
+  if (!run) throw new TypeError('A workflow_run event must carry a workflow_run payload')
+  const pull = ciFacts?.pull ?? null
+  const unknown = pull?.number ?? run.pull_requests?.[0]?.number ?? null
+
+  if (payload.action !== 'completed') return skip(unknown, `workflow_run action '${payload.action}' is not handled`)
+  if (isForkRun(run, payload.repository)) return skip(unknown, 'the workflow ran for a branch of a fork')
+  if (!pull || pull.state !== 'open') return skip(unknown, `no open pull request for the branch '${run.head_branch}'`)
+  const issueNumber = agentIssueOf(pull.body)
+  if (issueNumber === null) return skip(pull.number, "the pull request is not the agent's: it has no marker")
+
+  // The marker is text in a description that anyone can edit; the state is written by the workflow bot.
+  const st = ciFacts.issueState
+  if (!st) return skip(pull.number, `issue #${issueNumber} has no state comment`)
+  if (st.pr !== pull.number) {
+    return skip(pull.number, `the state of issue #${issueNumber} names pull request #${st.pr ?? 'none'}, not this one`)
+  }
+  if (st.phase !== 'waiting-ci') return skip(pull.number, `the issue is in the phase '${st.phase}', not 'waiting-ci'`)
+  const headSha = pull.head?.sha
+  if (run.head_sha !== headSha) return skip(pull.number, 'a newer commit is on the branch; its checks decide')
+  const actor = actorOf(st)
+  if (!actor) return skip(pull.number, 'the state records nobody who asked for the implementation')
+  if (!isActorAllowed(config, actor)) return skip(pull.number, `'${actor}' is not in AGENT_ALLOWED_ACTORS`)
+  return {
+    action: 'ci-gate',
+    number: issueNumber,
+    pr: pull.number,
+    headSha,
+    reason: `${run.name ?? 'a workflow'} finished for pull request #${pull.number}`,
+  }
+}
+
+/** Rules per event name. */
 const EVENT_HANDLERS = {
   pull_request: decidePullRequest,
   issue_comment: decideIssueComment,
   issues: decideIssues,
+  workflow_run: decideWorkflowRun,
 }
 
 /**
  * @param {{ eventName: string, payload: object, config: object, actorPermission?: string,
- *   pullState?: object|null, issueState?: object|null }} input
- * @returns {{ action: string, number: number|null, reason: string, command?: object, trigger?: string }}
+ *   pullState?: object|null, issueState?: object|null, ciFacts?: object|null }} input
+ * @returns {{ action: string, number: number|null, reason: string, command?: object, trigger?: string,
+ *   pr?: number, headSha?: string }}
  */
 function decide(input) {
   const { eventName, payload, config } = input
   if (!config.enabled) return skip(numberOf(payload), 'AGENT_ENABLED is not true')
   const handler = EVENT_HANDLERS[eventName]
   if (!handler) return skip(numberOf(payload), `event '${eventName}' is not handled`)
-  return handler({ actorPermission: 'none', pullState: null, issueState: null, ...input })
+  return handler({ actorPermission: 'none', pullState: null, issueState: null, ciFacts: null, ...input })
 }
 
 /** True when `decide` needs the permission of the commenter: a human wrote a command. */
@@ -255,6 +313,44 @@ function needsIssueState(eventName, payload) {
   return false
 }
 
+/** True when `decide` needs the pull request of the branch: a workflow finished in this repository. */
+function needsCiFacts(eventName, payload) {
+  return eventName === 'workflow_run' && payload?.action === 'completed' &&
+    !isForkRun(payload.workflow_run, payload.repository)
+}
+
+/**
+ * The open pull request of the branch of a finished workflow run and the state of the issue its marker names. The
+ * state is read only for a pull request that carries the agent's marker.
+ */
+async function gatherCiFacts({ payload, getClient }) {
+  const run = payload.workflow_run
+  const gh = getClient()
+  const listed = run.pull_requests?.[0]
+  let pull = null
+  if (listed) {
+    pull = await gh.getPull(listed.number)
+  } else {
+    const owner = String(run.head_repository.full_name).split('/')[0]
+    pull = (await gh.listPulls({ head: `${owner}:${run.head_branch}`, state: 'open' }))[0] ?? null
+  }
+  const issueNumber = pull && pull.state === 'open' ? agentIssueOf(pull.body) : null
+  let issueState = null
+  if (issueNumber !== null) {
+    const stateComment = findStateComment(await gh.listIssueComments(issueNumber))
+    issueState = stateComment ? parseState(stateComment.body) : null
+  }
+  log.info('pull request of the branch resolved', {
+    branch: run.head_branch,
+    pr: pull?.number ?? 'none',
+    state: pull?.state,
+    issue: issueNumber ?? 'none',
+    phase: issueState?.phase,
+    statePr: issueState?.pr,
+  })
+  return { pull, issueState }
+}
+
 /**
  * Resolves the inputs of `decide` that need the GitHub API. `getClient` is called only when a call is needed, so an
  * event that needs nothing works without a token.
@@ -283,6 +379,7 @@ async function gather({ eventName, payload, config, getClient }) {
       analyses: extra.issueState?.analyses?.length,
     })
   }
+  if (needsCiFacts(eventName, payload)) extra.ciFacts = await gatherCiFacts({ payload, getClient })
   return extra
 }
 
@@ -291,7 +388,8 @@ const oneLine = (value) => String(value).replace(/[\r\n]+/g, ' ')
 
 /**
  * The `key=value` lines for `$GITHUB_OUTPUT`. `command` is JSON on one line, or empty. `trigger` is written only for
- * a decision that has one, so the outputs of the phase 1 actions stay as they were.
+ * a decision that has one, and `pr` and `head_sha` for a `ci-gate` decision, so the outputs of the earlier actions
+ * stay as they were.
  */
 function formatOutputs(decision) {
   return [
@@ -300,6 +398,7 @@ function formatOutputs(decision) {
     `reason=${oneLine(decision.reason)}`,
     `command=${decision.command ? JSON.stringify(decision.command) : ''}`,
     ...(decision.trigger ? [`trigger=${decision.trigger}`] : []),
+    ...(decision.pr ? [`pr=${decision.pr}`, `head_sha=${decision.headSha}`] : []),
     '',
   ].join('\n')
 }
@@ -366,6 +465,8 @@ module.exports = {
   needsActorPermission,
   needsPullState,
   needsIssueState,
+  needsCiFacts,
+  agentIssueOf,
   formatOutputs,
   formatSummary,
   main,

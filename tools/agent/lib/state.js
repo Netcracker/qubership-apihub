@@ -72,4 +72,13 @@ function addCost(state, record) {
   return { ...state, costs: [...(state.costs ?? []), record] }
 }
 
-module.exports = { MARKER, render, parse, findStateComment, emptyIssueState, emptyPullState, addCost }
+/**
+ * The login that asked for the work on an issue: the running attempt's actor, else the actor of the last attempt, else
+ * `null`. The CI gate uses it to mention the person and to apply AGENT_ALLOWED_ACTORS.
+ */
+function actorOf(state) {
+  const attempts = state?.attempts ?? []
+  return state?.implementing?.actor || attempts[attempts.length - 1]?.actor || null
+}
+
+module.exports = { MARKER, render, parse, findStateComment, emptyIssueState, emptyPullState, addCost, actorOf }

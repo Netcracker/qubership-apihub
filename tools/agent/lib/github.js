@@ -90,7 +90,8 @@ function createClient({
 }) {
   const expand = (path) => path.replaceAll('{repo}', repo)
 
-  async function request(method, path, { body, query, accept } = {}) {
+  /** `text: true` returns the body as text, also when it looks like JSON (a job log, for example). */
+  async function request(method, path, { body, query, accept, text = false } = {}) {
     let url = apiUrl + expand(path)
     if (query) {
       const params = new URLSearchParams()
@@ -121,7 +122,8 @@ function createClient({
     for (let attempt = 0; ; attempt += 1) {
       const response = await fetchImpl(url, init)
       if (response.ok) {
-        return response.status === 204 ? null : readBody(response)
+        if (response.status === 204) return null
+        return text ? response.text() : readBody(response)
       }
       const delay = attempt < MAX_RETRIES ? retryDelaySeconds(response, attempt, now()) : null
       if (delay !== null) {
@@ -211,6 +213,67 @@ function createClient({
   const createPull = ({ title, head, base, body, draft = false }) =>
     request('POST', '/repos/{repo}/pulls', { body: { title, head, base, body, draft } })
 
+  /** Changes the title and the description of a pull request. */
+  const updatePull = (n, { title, body }) => request('PATCH', `/repos/{repo}/pulls/${n}`, { body: { title, body } })
+
+  /** Open or closed pull requests of a branch: `head` is `owner:branch`. */
+  const listPulls = ({ head, state = 'open' }) => paginate('/repos/{repo}/pulls', { head, state })
+
+  /** Marks a draft pull request ready for review. Only GraphQL can do it; `nodeId` is `node_id` of the pull request. */
+  const markPullReady = (nodeId) =>
+    graphql(
+      'mutation($id: ID!) { markPullRequestReadyForReview(input: { pullRequestId: $id }) { pullRequest { isDraft } } }',
+      { id: nodeId },
+    )
+
+  /** Turns a ready pull request back into a draft. `nodeId` is `node_id` of the pull request. */
+  const convertPullToDraft = (nodeId) =>
+    graphql(
+      'mutation($id: ID!) { convertPullRequestToDraft(input: { pullRequestId: $id }) { pullRequest { isDraft } } }',
+      { id: nodeId },
+    )
+
+  /** The latest check run of every name on a commit; the endpoint wraps its list, so `paginate` does not fit. */
+  async function listCheckRuns(sha) {
+    const runs = []
+    for (let page = 1; ; page += 1) {
+      const result = await request('GET', `/repos/{repo}/commits/${sha}/check-runs`, {
+        query: { filter: 'latest', per_page: PAGE_SIZE, page },
+      })
+      if (!Array.isArray(result?.check_runs)) {
+        throw new GitHubError(`GitHub GET check-runs of ${sha} did not return a list`, { status: 200, body: result })
+      }
+      runs.push(...result.check_runs)
+      if (result.check_runs.length < PAGE_SIZE) return runs
+    }
+  }
+
+  /**
+   * The commit statuses of a commit (the CLA check reports here), newest per context. `state` is the combined state of
+   * GitHub, which is `pending` also when there are no statuses at all: judge `statuses`, not `state`.
+   */
+  async function getCombinedStatus(sha) {
+    const statuses = []
+    let combined = 'pending'
+    for (let page = 1; ; page += 1) {
+      const result = await request('GET', `/repos/{repo}/commits/${sha}/status`, {
+        query: { per_page: PAGE_SIZE, page },
+      })
+      if (!Array.isArray(result?.statuses)) {
+        throw new GitHubError(`GitHub GET status of ${sha} did not return a list`, { status: 200, body: result })
+      }
+      combined = result.state
+      statuses.push(...result.statuses)
+      if (result.statuses.length < PAGE_SIZE) return { state: combined, statuses }
+    }
+  }
+
+  /** The log of one Actions job as text. GitHub answers with a redirect; `fetch` follows it. */
+  const getJobLog = (jobId) => request('GET', `/repos/{repo}/actions/jobs/${jobId}/logs`, { text: true })
+
+  /** Reruns the failed jobs of a workflow run (and the jobs that depend on them). Needs `actions: write`. */
+  const rerunFailedJobs = (runId) => request('POST', `/repos/{repo}/actions/runs/${runId}/rerun-failed-jobs`)
+
   const addReaction = (commentId, content) =>
     request('POST', `/repos/{repo}/issues/comments/${commentId}/reactions`, { body: { content } })
 
@@ -231,6 +294,14 @@ function createClient({
     getPermission,
     getAuthenticatedUser,
     createPull,
+    updatePull,
+    listPulls,
+    convertPullToDraft,
+    markPullReady,
+    listCheckRuns,
+    getCombinedStatus,
+    getJobLog,
+    rerunFailedJobs,
     addReaction,
   }
 }
