@@ -162,6 +162,7 @@ function createClient({
 
   const getPull = (n) => request('GET', `/repos/{repo}/pulls/${n}`)
   const listPullFiles = (n) => paginate(`/repos/{repo}/pulls/${n}/files`)
+  const listPullCommits = (n) => paginate(`/repos/{repo}/pulls/${n}/commits`)
   const getIssue = (n) => request('GET', `/repos/{repo}/issues/${n}`)
   const listIssueComments = (n) => paginate(`/repos/{repo}/issues/${n}/comments`)
   const createIssueComment = (n, body) => request('POST', `/repos/{repo}/issues/${n}/comments`, { body: { body } })
@@ -212,6 +213,7 @@ function createClient({
     graphql,
     getPull,
     listPullFiles,
+    listPullCommits,
     getIssue,
     listIssueComments,
     createIssueComment,

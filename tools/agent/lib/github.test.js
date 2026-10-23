@@ -190,6 +190,12 @@ test('getPull, getIssue, and the file and comment lists use the expected paths',
   )
 })
 
+test('listPullCommits reads the commits of a pull request', async () => {
+  const { client, calls } = setup([json([{ sha: 'a', commit: { message: 'x' } }])])
+  assert.deepEqual(await client.listPullCommits(8), [{ sha: 'a', commit: { message: 'x' } }])
+  assert.equal(calls[0].url, 'https://api.github.com/repos/acme/widgets/pulls/8/commits?per_page=100&page=1')
+})
+
 test('createIssueComment and updateIssueComment send the body', async () => {
   const { client, calls } = setup([json({ id: 1 }), json({ id: 1 })])
   await client.createIssueComment(12, 'hello')

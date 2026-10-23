@@ -10,6 +10,10 @@ name: 'AI Autonomous: Agent'
 on:
   pull_request:
     types: [opened, ready_for_review]
+  # `typed` fires when an issue gets its type after it was opened; `edited` is how an author answers the questions of
+  # the analysis by changing the issue.
+  issues:
+    types: [opened, typed, edited]
   issue_comment:
     types: [created]
 
@@ -29,13 +33,18 @@ env:
   AGENT_MAX_ATTEMPTS: ${{ vars.AGENT_MAX_ATTEMPTS }}
   AGENT_MAX_REVIEW_ROUNDS: ${{ vars.AGENT_MAX_REVIEW_ROUNDS }}
   AGENT_MAX_ANALYSES: ${{ vars.AGENT_MAX_ANALYSES }}
+  # opencode's own log level in the job log: DEBUG, INFO (the default), WARN, or ERROR.
+  AGENT_LOG_LEVEL: ${{ vars.AGENT_LOG_LEVEL }}
 
 jobs:
   route:
-    # A cheap filter before a runner starts: most comments are not commands, and bots never command the agent.
+    # A cheap filter before a runner starts: bots never command the agent. A comment must hold `/agent`, unless it is
+    # on an issue: the author of an issue that waits for information answers without a command, and the router checks
+    # that. Comments on pull requests stay command-only.
     if: >-
       github.event_name != 'issue_comment' ||
-      (contains(github.event.comment.body, '/agent') && github.event.comment.user.type != 'Bot')
+      (github.event.comment.user.type != 'Bot' &&
+      (contains(github.event.comment.body, '/agent') || github.event.issue.pull_request == null))
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -46,6 +55,7 @@ jobs:
       action: ${{ steps.route.outputs.action }}
       number: ${{ steps.route.outputs.number }}
       command: ${{ steps.route.outputs.command }}
+      trigger: ${{ steps.route.outputs.trigger }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -77,6 +87,7 @@ jobs:
       pull-requests: write
     env:
       AGENT_NUMBER: ${{ needs.route.outputs.number }}
+      AGENT_COMMAND: ${{ needs.route.outputs.command }}
     steps:
       # The pull request is data: its head is the working tree the reviewer reads, never code that runs.
       - uses: actions/checkout@v6
@@ -85,7 +96,8 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      # The agent's own code, opencode config, skills, rules, and AGENTS.md files come from the ref of this workflow run.
+      # The agent's own code, opencode config, skills, rules, and AGENTS.md files come from the ref of this workflow
+      # run.
       # For `/agent review` that is develop, so a pull request from a fork cannot change the tools or the instructions
       # that review it. For a `pull_request` event the ref is the pull request itself: only pull requests from this
       # repository get there with secrets, and their authors can already run any workflow with them.
@@ -137,5 +149,53 @@ jobs:
         if: always()
         with:
           name: ai-autonomous-review-${{ needs.route.outputs.number }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/agent
+          retention-days: 30
+
+  # Flow B: decide whether a Bug or Task issue is suitable for AI implementation. It writes a label and comments only.
+  analyze:
+    needs: route
+    if: needs.route.outputs.action == 'analyze'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # One agent job per issue at a time, so two writes of its state comment do not race.
+    concurrency:
+      group: ai-autonomous-${{ needs.route.outputs.number }}
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      issues: write
+    env:
+      AGENT_NUMBER: ${{ needs.route.outputs.number }}
+      AGENT_TRIGGER: ${{ needs.route.outputs.trigger }}
+    steps:
+      # An issue has no code to protect, so the working tree is the default branch of the repository. That makes the
+      # tools, the opencode config, the skills, and the AGENTS.md files trusted without a second checkout. The history
+      # stays complete because the analyst reads `git log` and `git show`.
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      # The analysis needs no YAML parser, unlike the review, so opencode is the only install.
+      - name: Install opencode
+        run: npm install --global "opencode-ai@${OPENCODE_VERSION}"
+
+      - name: Analyze
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          AGENT_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          AGENT_OUT: ${{ runner.temp }}/agent
+        run: node tools/agent/analyze.js
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ai-autonomous-analysis-${{ needs.route.outputs.number }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/agent
           retention-days: 30

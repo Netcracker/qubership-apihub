@@ -187,6 +187,56 @@ test('every object in the schemas requires all its properties and forbids extras
       walk(schema.items, `${where}[]`)
     }
   }
-  assert.deepEqual(Object.keys(SCHEMAS).sort(), ['review', 'verification'])
+  assert.deepEqual(Object.keys(SCHEMAS).sort(), ['analysis', 'review', 'verification'])
   for (const [name, schema] of Object.entries(SCHEMAS)) walk(schema, name)
+})
+
+function goodAnalysis(extra = {}) {
+  return {
+    verdict: 'suitable',
+    reason: 'The bug is located and one test shows the fix.',
+    questions: [],
+    plan: {
+      modules: ['portal-backend'],
+      approach: 'Guard the nil changelog in the builder.',
+      tests: 'Add a unit test; run the portal-backend tests.',
+      risk: 'low',
+    },
+    ...extra,
+  }
+}
+
+test('good analyses validate: suitable with a plan, needs-info and unsuitable without one', () => {
+  const suitable = goodAnalysis()
+  assert.equal(validate('analysis', suitable), suitable)
+  const needsInfo = goodAnalysis({ verdict: 'needs-info', questions: ['Which version?'], plan: null })
+  assert.equal(validate('analysis', needsInfo), needsInfo)
+  const unsuitable = goodAnalysis({ verdict: 'unsuitable', plan: null })
+  assert.equal(validate('analysis', unsuitable), unsuitable)
+})
+
+test('analysis problems are listed with their paths', () => {
+  const analysis = goodAnalysis({ verdict: 'maybe', reason: '', questions: ['ok', 3] })
+  analysis.plan.risk = 'extreme'
+  analysis.plan.approach = ''
+  delete analysis.plan.tests
+  analysis.plan.extra = 1
+  analysis.extra = true
+  assert.deepEqual(problemsOf('analysis', analysis).sort(), [
+    'extra: unexpected property',
+    'plan.approach: expected at least 1 character(s)',
+    'plan.extra: unexpected property',
+    'plan.risk: expected one of "low", "medium", "high"',
+    'plan.tests: missing required property',
+    'questions[1]: expected string',
+    'reason: expected at least 1 character(s)',
+    'verdict: expected one of "suitable", "unsuitable", "needs-info"',
+  ])
+})
+
+test('analysis allows at most 10 questions and rejects a plan of the wrong type', () => {
+  const many = goodAnalysis({ verdict: 'needs-info', plan: null, questions: Array.from({ length: 11 }, () => 'q') })
+  assert.deepEqual(problemsOf('analysis', many), ['questions: expected at most 10 item(s), got 11'])
+  assert.deepEqual(problemsOf('analysis', goodAnalysis({ plan: 'later' })), ['plan: expected object or null'])
+  assert.deepEqual(problemsOf('analysis', goodAnalysis({ plan: undefined })), ['plan: missing required property'])
 })

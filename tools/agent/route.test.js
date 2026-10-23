@@ -6,6 +6,7 @@ const os = require('node:os')
 const path = require('node:path')
 const { loadConfig } = require('./lib/config')
 const state = require('./lib/state')
+const log = require('./lib/log')
 const {
   decide,
   gather,
@@ -15,6 +16,9 @@ const {
   formatSummary,
   main,
 } = require('./route')
+
+// The router logs to stdout; keep the test output readable.
+log.setWriter(() => {})
 
 const fixture = (name) => JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures', `${name}.json`), 'utf8'))
 const enabled = (extra = {}) => loadConfig({ AGENT_ENABLED: 'true', ...extra })
@@ -190,7 +194,7 @@ test('ordinary comments and bot comments are skipped', () => {
 })
 
 test('commands other than review are not available yet', () => {
-  for (const body of ['/agent', '/agent analyze', '/agent fix force', '/agent implement', '/agent retry',
+  for (const body of ['/agent', '/agent fix force', '/agent implement', '/agent retry',
     '/agent stop', '/agent cost', '/agent what do you think?']) {
     const result = route('issue_comment', comment(body), { actorPermission: 'write' })
     assert.equal(result.action, 'skip', body)

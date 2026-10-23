@@ -1,0 +1,41 @@
+{
+  "action": "closed",
+  "number": 130,
+  "pull_request": {
+    "number": 130,
+    "state": "closed",
+    "merged": true,
+    "draft": false,
+    "title": "fix(portal-backend): show a message for an empty changelog",
+    "body": "Fixes the empty changelog.\n\nCloses #200",
+    "labels": [
+      {
+        "name": "ai:l0-assistant"
+      }
+    ],
+    "user": {
+      "login": "alice",
+      "type": "User"
+    },
+    "head": {
+      "ref": "bugfix/200-empty-changelog",
+      "sha": "4a1b2c3d4e5f60718293a4b5c6d7e8f901234567",
+      "repo": {
+        "full_name": "Netcracker/qubership-apihub"
+      }
+    },
+    "base": {
+      "ref": "develop",
+      "repo": {
+        "full_name": "Netcracker/qubership-apihub"
+      }
+    }
+  },
+  "repository": {
+    "full_name": "Netcracker/qubership-apihub"
+  },
+  "sender": {
+    "login": "carol",
+    "type": "User"
+  }
+}

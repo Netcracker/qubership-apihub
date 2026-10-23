@@ -159,6 +159,25 @@ const SCHEMAS = {
       }),
     },
   }),
+  // Output of the analyst (Flow B). Which fields must be filled for which verdict is checked in analyze.js.
+  analysis: strictObject({
+    verdict: { type: 'string', enum: ['suitable', 'unsuitable', 'needs-info'] },
+    reason: { type: 'string', minLength: 1 },
+    // Only for needs-info; empty otherwise.
+    questions: { type: 'array', maxItems: 10, items: str },
+    // Only for suitable; null otherwise.
+    plan: {
+      type: ['object', 'null'],
+      required: ['modules', 'approach', 'tests', 'risk'],
+      properties: {
+        modules: strings,
+        approach: { type: 'string', minLength: 1 },
+        tests: str,
+        risk: { type: 'string', enum: ['low', 'medium', 'high'] },
+      },
+      additionalProperties: false,
+    },
+  }),
 }
 
 /** Returns `value` when it fits the schema `schemaName`; else throws `ContractError` listing every problem. */
