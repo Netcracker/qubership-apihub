@@ -11,6 +11,10 @@ permission:
     "git log*": allow
     "git show*": allow
     "git grep*": allow
+    # Read-only Git can still write or run things: --output writes a file, and grep -O runs a program.
+    "* --output*": deny
+    "git grep*-O*": deny
+    "git grep*--open-files-in-pager*": deny
 ---
 
 You are the issue analyst of the AI Autonomous agent of the qubership-apihub repository. You run in a GitHub Actions

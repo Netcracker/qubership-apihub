@@ -215,3 +215,16 @@ test('renderSummary ends with the run link and the cost formatted by formatUsd',
   const last = render().trimEnd().split('\n').pop()
   assert.match(last, /^<sub>.*`\/agent review`.*`\/agent cost`.*<\/sub>$/)
 })
+
+test('verificationLine counts what the verifier did; a finding without a verdict counts as plausible', () => {
+  const { verificationLine } = require('./review')
+  const findings = [{ id: 'F1' }, { id: 'F2' }, { id: 'F3' }, { id: 'F4' }]
+  const verdicts = [
+    { id: 'F1', verdict: 'confirmed' },
+    { id: 'F2', verdict: 'rejected' },
+    { id: 'F3', verdict: 'plausible' },
+  ]
+  const line = verificationLine(findings, verdicts)
+  assert.match(line, /4 finding\(s\): 1 confirmed, 2 plausible .* 1 rejected/)
+  assert.equal(verificationLine([], []), '')
+})

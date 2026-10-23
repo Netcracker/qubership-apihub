@@ -70,8 +70,18 @@ const yesNo = (b) => (b ? 'yes' : 'no')
 // Model text in a table cell: one line, and a pipe must not end the cell.
 const cell = (s) => String(s).replace(/\s*\n\s*/g, ' ').replace(/\|/g, '\\|')
 
+/** What the verifier did with the findings, for the summary: the review text was written before the verification. */
+function verificationLine(findings, verdicts) {
+  if (!findings.length) return ''
+  const verdictOf = (f) => verdicts.find((x) => x.id === f.id)?.verdict ?? 'plausible'
+  const count = (v) => findings.filter((f) => verdictOf(f) === v).length
+  return `A second model checked the ${findings.length} finding(s): ${count('confirmed')} confirmed, ` +
+    `${count('plausible')} plausible (shown, marked as not confirmed), ${count('rejected')} rejected (not shown). ` +
+    'The text above was written before that check.'
+}
+
 /** The human part of the state comment: impact, findings outside the diff lines, and the cost so far. */
-function renderSummary({ review, other, inlineCount, headSha, runUrl, totalUsd }) {
+function renderSummary({ review, other, inlineCount, headSha, runUrl, totalUsd, verification = '' }) {
   const i = review.impact
   const changed = (x) => `changed: ${yesNo(x.changed)}${'breaking' in x ? `, breaking: ${yesNo(x.breaking)}` : ''}`
   const out = [
@@ -91,6 +101,7 @@ function renderSummary({ review, other, inlineCount, headSha, runUrl, totalUsd }
     `| E2E | ${cell(i.e2e.collections.join(', ') || 'none named')}. ${cell(i.e2e.notes)} |`,
     '',
   ]
+  if (verification) out.push(verification, '')
   if (inlineCount) out.push(`${inlineCount} finding(s) are inline comments on the diff.`, '')
   if (other.length) {
     out.push('**Findings outside the diff lines**', '')
@@ -145,6 +156,8 @@ async function main() {
   const env = process.env
   const config = loadConfig(env)
   const number = Number(env.AGENT_NUMBER)
+  // The parsed `/agent review` command, when a comment started the run; empty for a pull_request event.
+  const command = env.AGENT_COMMAND ? JSON.parse(env.AGENT_COMMAND) : null
   const out = env.AGENT_OUT
   const runUrl = env.AGENT_RUN_URL
   fs.mkdirSync(out, { recursive: true })
@@ -212,6 +225,10 @@ async function main() {
         '',
         untrusted(`Title: ${pr.title}\n\n${pr.body ?? ''}`),
         '',
+        // The notes after `/agent review` steer the review: what the maintainer wants looked at.
+        ...(command?.notes
+          ? ['## Request of the maintainer who asked for this review', '', untrusted(command.notes), '']
+          : []),
       ].join('\n'),
     )
     review = await log.group('Review (pr-reviewer)', () =>
@@ -279,7 +296,15 @@ async function main() {
       })
     }
     const totalUsd = [...st.costs, ...costs].reduce((s, c) => s + c.usd, 0)
-    human = renderSummary({ review, other: placed.other, inlineCount: inline.length, headSha, runUrl, totalUsd })
+    human = renderSummary({
+      review,
+      other: placed.other,
+      inlineCount: inline.length,
+      headSha,
+      runUrl,
+      totalUsd,
+      verification: verificationLine(review.findings, verdicts),
+    })
     fs.writeFileSync(path.join(out, 'summary.md'), human)
   } catch (err) {
     failure = err
@@ -311,21 +336,27 @@ async function main() {
       log.info('dry run: written to the job summary', { inline: inline.length })
       return
     }
-    if (inline.length) {
-      const created = await gh.createReview(number, {
-        commitId: headSha,
-        body: `AI review of ${headSha.slice(0, 7)}: ${inline.length} inline finding(s). The summary is in the AI ` +
-          'review comment of this pull request.',
-        comments: inline.map((f) => ({ path: f.file, line: f.line, body: findingBody(f) })),
-      })
-      log.info('review posted', { id: created?.id, comments: inline.length })
-    }
+    // The state comment goes first: it holds the cost record, which must survive a failed review post.
     if (existing) {
       await gh.updateIssueComment(existing.id, body)
       log.info('state comment updated', { id: existing.id })
     } else {
       const created = await gh.createIssueComment(number, body)
       log.info('state comment created', { id: created?.id })
+    }
+    if (inline.length) {
+      try {
+        const created = await gh.createReview(number, {
+          commitId: headSha,
+          body: `AI review of ${headSha.slice(0, 7)}: ${inline.length} inline finding(s). The summary is in the AI ` +
+            'review comment of this pull request.',
+          comments: inline.map((f) => ({ path: f.file, line: f.line, body: findingBody(f) })),
+        })
+        log.info('review posted', { id: created?.id, comments: inline.length })
+      } catch (err) {
+        log.error(`the inline review could not be posted: ${err.message}`)
+        failure ??= err
+      }
     }
     if (!failure) {
       await gh.addLabels(number, ['agent:pr-reviewed'])
@@ -342,4 +373,4 @@ if (require.main === module) {
   })
 }
 
-module.exports = { selectFindings, placeFindings, renderSummary, findingBody }
+module.exports = { selectFindings, placeFindings, renderSummary, findingBody, verificationLine }
