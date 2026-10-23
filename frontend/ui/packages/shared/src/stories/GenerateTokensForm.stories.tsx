@@ -42,5 +42,6 @@ export const DefaultStory: Story = {
     isLoading: false,
     generatedApiKey: '',
     generateApiKey: () => console.log('generateApiKey'),
+    setUserSearch: () => {},
   },
 }

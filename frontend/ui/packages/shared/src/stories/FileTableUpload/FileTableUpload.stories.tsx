@@ -21,7 +21,7 @@ import { fullHeight } from '../commons/decorators'
 import { SpecLogo } from '../../components/SpecLogo'
 
 const meta: Meta<typeof FileTableUpload> = {
-  title: '/File Table Upload/File Table Upload',
+  title: 'File Table Upload/File Table Upload',
   parameters: {
     layout: 'fullscreen',
   },

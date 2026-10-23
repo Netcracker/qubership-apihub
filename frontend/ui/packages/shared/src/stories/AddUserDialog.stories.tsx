@@ -41,6 +41,7 @@ export const AddUserDialogStory: Story = {
   args: {
     open: true,
     users: USERS,
+    setUserSearch: () => {},
     roles: ROLES_LIST,
   },
 }

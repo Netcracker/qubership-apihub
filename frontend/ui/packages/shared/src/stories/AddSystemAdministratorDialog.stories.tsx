@@ -41,5 +41,6 @@ export const DefaultStory: Story = {
   args: {
     open: true,
     users: USERS,
+    setUserSearch: () => {},
   },
 }
