@@ -1,6 +1,6 @@
 ---
 description: main.go wiring conventions for qubership-apihub-backend
-globs: "backend/portal-backend/**/*.go"
+globs: backend/portal-backend/**/*.go
 ---
 
 # main.go Wiring

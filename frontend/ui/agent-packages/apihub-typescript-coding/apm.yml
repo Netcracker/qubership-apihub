@@ -1,0 +1,6 @@
+name: apihub-typescript-coding
+version: 1.0.0
+description: TypeScript conventions shared by the TypeScript modules of the qubership-apihub monorepo, and where each module deviates from them
+author: Qubership
+dependencies:
+  apm: []
