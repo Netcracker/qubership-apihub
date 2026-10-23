@@ -19,7 +19,7 @@ import { memo, useCallback, useMemo } from 'react'
 import { Box, Button } from '@mui/material'
 import { useNavigate, useParams } from 'react-router-dom'
 import { PackageBreadcrumbs } from '../../PackageBreadcrumbs'
-import { useFiles } from '../FilesProvider'
+import { useFiles, useFilesLoading } from '../FilesProvider'
 import { useMcpPublishValidation } from '@portal/routes/root/PortalPage/PackagePage/useMcpPublishValidation'
 import { useBackwardLocationContext } from '@portal/routes/BackwardLocationProvider'
 import { useEventBus } from '@portal/routes/EventBusProvider'
@@ -40,9 +40,10 @@ export const PackageVersionPageToolbar: FC = memo(() => {
   const backwardLocation = useBackwardLocationContext()
   const { showPublishPackageVersionDialog } = useEventBus()
   const { filesWithLabels, mcpStagedFileMetaByName } = useFiles()
+  const isFilesLoading = useFilesLoading()
   const { hasBlockingIssues, publishDisabledHint } = useMcpPublishValidation(mcpStagedFileMetaByName, filesWithLabels)
   const hasFilesToPublish = isNotEmptyRecord(filesWithLabels)
-  const isPublishDisabled = !hasFilesToPublish || hasBlockingIssues
+  const isPublishDisabled = isFilesLoading || !hasFilesToPublish || hasBlockingIssues
   const publishHint = !hasFilesToPublish
     ? 'Add at least one file to publish package version'
     : hasBlockingIssues
@@ -91,7 +92,7 @@ export const PackageVersionPageToolbar: FC = memo(() => {
           <ButtonWithHint
             variant="contained"
             disabled={isPublishDisabled}
-            disableHint={!isPublishDisabled}
+            disableHint={!isPublishDisabled || isFilesLoading}
             hint={publishHint}
             onClick={showPublishPackageVersionDialog}
             title="Publish"

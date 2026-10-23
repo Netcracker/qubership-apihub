@@ -114,9 +114,11 @@ export const BasePage: FC = memo(() => {
     <MainPageProvider>
       <SidePanelManagerProvider>
         <ModuleFetchingErrorBoundary showReloadPopup={packageJson.version !== frontendVersion}>
-          {aiChatEnabled
-            ? <AiAssistantProvider>{pageContent}</AiAssistantProvider>
-            : pageContent}
+          {/* Render the provider unconditionally. A conditional wrapper remounts the page when
+              aiChatEnabled arrives with the system info, and every component on it loses its state. */}
+          <AiAssistantProvider>
+            {pageContent}
+          </AiAssistantProvider>
         </ModuleFetchingErrorBoundary>
       </SidePanelManagerProvider>
     </MainPageProvider>
