@@ -16883,7 +16883,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\r\n    \"roles\": [\r\n  \"admin\",\r\n  \"owner\",\r\n  \"{{role_id}}\",\r\n  \"editor\",\r\n  \"viewer\",\r\n  \"none\"\r\n]\r\n}",
+                            "raw": "{\r\n    \"roles\": [\r\n  \"admin\",\r\n  \"owner\",\r\n  \"{{role_id}}\",\r\n  \"editor\",\r\n  \"viewer\"\r\n}",
                             "options": {
                                 "raw": {
                                     "language": "json"
