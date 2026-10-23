@@ -38,6 +38,13 @@ The release scripts. [The release process](../docs/development/release-process.m
 - `notes/` writes the release notes; `landing-card.js` checks the release card of the landing.
 - `ensure-ci.sh` and `merge-into.sh` serve the release workflows.
 
+## `agent/`
+
+The AI Autonomous agent, described in [its design](../docs/internal/autonomous-agent/design.md).
+
+- `labels.sh` and `labels.ps1` create or update the `ai:*` and `agent:*` labels the agent uses. Run one of them once per
+  repository; `--dry-run` (`-DryRun`) prints the commands instead.
+
 ## `nx/`
 
 `go-lang-tag.js` is an Nx plugin that tags every Go module with `lang:go`. CI selects the tag in the `go` job and
