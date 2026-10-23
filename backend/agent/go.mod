@@ -89,7 +89,7 @@ require (
 	github.com/netcracker/qubership-core-lib-go-rest-utils/v2 v2.10.1 // indirect
 	github.com/netcracker/qubership-core-lib-go/v3 v3.15.2 // indirect
 	github.com/onsi/ginkgo v1.16.5 // indirect
-	github.com/onsi/gomega v1.10.1 // indirect
+	github.com/onsi/gomega v1.35.1 // indirect
 	github.com/openshift/api v0.0.0-20261016092100-6b7ae5e90d8d // indirect
 	github.com/openshift/client-go v0.0.0-20261014115618-03a1e773ff3d // indirect
 	github.com/pelletier/go-toml/v2 v2.3.1 // indirect
