@@ -1,4 +1,5 @@
 ---
+name: api-doc-viewer-review-session
 description: Review a just-finished api-doc-viewer session for unexpected behavior, ambiguous requirements, or doc/reality drift, then update the canonical agent-packages skill docs. Use at the end of a non-trivial api-doc-viewer task, on request.
 ---
 
