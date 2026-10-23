@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+// Returns an integer in the range 0 to 9.
 export function generateRandomDigit(): number {
   return Math.floor(Math.random() * 10)
 }

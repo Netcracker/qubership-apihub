@@ -6,7 +6,7 @@ import (
 	"github.com/Netcracker/qubership-apihub/backend/commons-go/api-spec-exposer/internal/scanner"
 )
 
-// SpecExposer is the main interface for API spec exposure
+// SpecExposer discovers API specifications on disk and returns endpoint configuration for each one.
 type SpecExposer interface {
 	Discover() config.DiscoveryResult
 }
@@ -15,14 +15,14 @@ type specExposer struct {
 	config config.DiscoveryConfig
 }
 
-// New creates a new SpecExposer instance
+// New returns a SpecExposer for the given discovery configuration.
 func New(config config.DiscoveryConfig) SpecExposer {
 	return &specExposer{
 		config: config,
 	}
 }
 
-// Discover scans directory and generates endpoint configurations (@config.EndpointConfig) for all discovered specs
+// Discover scans the configured directory and returns endpoint configuration for every specification it finds.
 func (se *specExposer) Discover() config.DiscoveryResult {
 	var discoveryResult config.DiscoveryResult
 	specScanner := scanner.New(se.config)
