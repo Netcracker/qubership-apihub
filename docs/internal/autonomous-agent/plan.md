@@ -18,7 +18,7 @@ Goal: everything outside the code is ready, and the unknowns of the design have 
 | 0.1 | A fine-grained PAT for `Netcracker/qubership-apihub`: Contents and Pull requests read and write, no Workflows. Secrets `AGENT_PAT` and `OPENAI_API_KEY` | S |
 | 0.2 | Repository variables: `AGENT_ENABLED`, `AGENT_DRY_RUN`, the limits from [the design](./design.md#budgets-and-the-stop-rule), and the Balanced models: `AGENT_MODEL_IMPLEMENT=openai/gpt-6.1-sol:high`, `AGENT_MODEL_REVIEW=openai/gpt-6-luna:max`, `AGENT_MODEL_LIGHT=openai/gpt-6-luna:medium` (the verifier uses the implement model at medium effort) | S |
 | 0.3 | `tools/agent/labels.sh` and `labels.ps1`: create or update the `ai:*` and `agent:*` labels with their colors and descriptions | S |
-| 0.4 | Delete `.agents/`. Drop its exclusions from `.lycheeignore` and `.github/workflows/link-checker.yaml`, and its mention in `docs/development/ai-assistants.md`. The `.gitignore` lines in the frontend modules and `backend/agent/.dockerignore` stay: they keep a local copy out | S |
+| 0.4 | Delete `.agents/` and ignore it in the root `.gitignore`. The linter exclusions of `.agents/` stay: they cover every APM-deployed tree, present or not, and keep a local copy out of the checks | S |
 | 0.5 | Spike, in a throwaway workflow `AI Autonomous: Spike` on a branch: see the list below | M |
 
 The spike answers, with a short note in this folder:
