@@ -1,0 +1,125 @@
+# The AI Autonomous agent: one entry point for every trigger. `route` decides what an event asks for; the other jobs
+# act. Design: docs/internal/autonomous-agent/design.md.
+#
+# Repository variables: AGENT_ENABLED (`true` to act), AGENT_DRY_RUN (`false` to write to GitHub; otherwise the
+# results go to the job summary), AGENT_ALLOWED_ACTORS (comma-separated logins; empty means everyone with write
+# access), AGENT_MODEL_* and AGENT_MAX_* (defaults in tools/agent/lib/config.js).
+# Secrets: OPENAI_API_KEY; AGENT_PAT (push and pull request creation, later phases).
+name: 'AI Autonomous: Agent'
+
+on:
+  pull_request:
+    types: [opened, ready_for_review]
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+
+env:
+  OPENCODE_VERSION: '1.19.4'
+  AGENT_ENABLED: ${{ vars.AGENT_ENABLED }}
+  AGENT_DRY_RUN: ${{ vars.AGENT_DRY_RUN }}
+  # A variable is the intended home; a secret of the same name works too.
+  AGENT_ALLOWED_ACTORS: ${{ vars.AGENT_ALLOWED_ACTORS || secrets.AGENT_ALLOWED_ACTORS }}
+  AGENT_MODEL_IMPLEMENT: ${{ vars.AGENT_MODEL_IMPLEMENT }}
+  AGENT_MODEL_REVIEW: ${{ vars.AGENT_MODEL_REVIEW }}
+  AGENT_MODEL_VERIFY: ${{ vars.AGENT_MODEL_VERIFY }}
+  AGENT_MODEL_LIGHT: ${{ vars.AGENT_MODEL_LIGHT }}
+  AGENT_MAX_ATTEMPTS: ${{ vars.AGENT_MAX_ATTEMPTS }}
+  AGENT_MAX_REVIEW_ROUNDS: ${{ vars.AGENT_MAX_REVIEW_ROUNDS }}
+  AGENT_MAX_ANALYSES: ${{ vars.AGENT_MAX_ANALYSES }}
+
+jobs:
+  route:
+    # A cheap filter before a runner starts: most comments are not commands, and bots never command the agent.
+    if: >-
+      github.event_name != 'issue_comment' ||
+      (contains(github.event.comment.body, '/agent') && github.event.comment.user.type != 'Bot')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: read
+      pull-requests: read
+    outputs:
+      action: ${{ steps.route.outputs.action }}
+      number: ${{ steps.route.outputs.number }}
+      command: ${{ steps.route.outputs.command }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          sparse-checkout: tools/agent
+          persist-credentials: false
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      - id: route
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node tools/agent/route.js
+
+  # Flow A: review a pull request and assess its impact.
+  review:
+    needs: route
+    if: needs.route.outputs.action == 'review'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # One agent job per pull request at a time, so two writes of its state comment do not race.
+    concurrency:
+      group: ai-autonomous-${{ needs.route.outputs.number }}
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+    env:
+      AGENT_NUMBER: ${{ needs.route.outputs.number }}
+    steps:
+      # The pull request is data: its head is the working tree the reviewer reads, never code that runs.
+      - uses: actions/checkout@v6
+        with:
+          ref: refs/pull/${{ needs.route.outputs.number }}/head
+          fetch-depth: 0
+          persist-credentials: false
+
+      # The agent's own code and opencode config come from the ref of this workflow run (develop for a comment), so a
+      # pull request from a fork cannot change the tools that review it.
+      - uses: actions/checkout@v6
+        with:
+          path: .agent-tools
+          sparse-checkout: |
+            tools/agent
+            .github/labeler.yml
+          persist-credentials: false
+
+      - name: Keep the tools out of the reviewed tree
+        run: echo '.agent-tools/' >> .git/info/exclude
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      # The tools' only dependency besides opencode: the YAML parser for .github/labeler.yml.
+      - name: Install opencode
+        run: |
+          npm install --global "opencode-ai@${OPENCODE_VERSION}"
+          npm install --no-save --prefix .agent-tools yaml@2.9.1
+
+      - name: Review
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          AGENT_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          AGENT_LABELER: .agent-tools/.github/labeler.yml
+          AGENT_OUT: ${{ runner.temp }}/agent
+        run: node .agent-tools/tools/agent/review.js
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ai-autonomous-review-${{ needs.route.outputs.number }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/agent
+          retention-days: 30
