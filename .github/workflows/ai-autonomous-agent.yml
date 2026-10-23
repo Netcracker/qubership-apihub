@@ -4,7 +4,8 @@
 # Repository variables: AGENT_ENABLED (`true` to act), AGENT_DRY_RUN (`false` to write to GitHub; otherwise the
 # results go to the job summary), AGENT_ALLOWED_ACTORS (comma-separated logins; empty means everyone with write
 # access), AGENT_MODEL_* and AGENT_MAX_* (defaults in tools/agent/lib/config.js).
-# Secrets: OPENAI_API_KEY; AGENT_PAT (push and pull request creation, later phases).
+# Secrets: OPENAI_API_KEY; AGENT_PAT (push and pull request creation of the `implement` job; only its `Implement`
+# step gets it, and the scripts keep it away from the models and from the code under test).
 name: 'AI Autonomous: Agent'
 
 on:
@@ -41,10 +42,16 @@ jobs:
     # A cheap filter before a runner starts: bots never command the agent. A comment must hold `/agent`, unless it is
     # on an issue: the author of an issue that waits for information answers without a command, and the router checks
     # that. Comments on pull requests stay command-only.
+    # Dependabot pull requests are never reviewed, also on request: a dependency bump has nothing to review, and a
+    # review costs money. So no runner starts for Dependabot's own events or for a comment on its pull request.
     if: >-
-      github.event_name != 'issue_comment' ||
+      github.actor != 'dependabot[bot]' &&
+      github.event.pull_request.user.login != 'dependabot[bot]' &&
+      !(github.event_name == 'issue_comment' && github.event.issue.pull_request != null &&
+      github.event.issue.user.login == 'dependabot[bot]') &&
+      (github.event_name != 'issue_comment' ||
       (github.event.comment.user.type != 'Bot' &&
-      (contains(github.event.comment.body, '/agent') || github.event.issue.pull_request == null))
+      (contains(github.event.comment.body, '/agent') || github.event.issue.pull_request == null)))
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -199,3 +206,82 @@ jobs:
           name: ai-autonomous-analysis-${{ needs.route.outputs.number }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/agent
           retention-days: 30
+
+  # Flow C: implement a Bug or Task issue up to a pull request. One attempt per run; the CI gate is a later phase.
+  # The preflight runs before the slow toolchain setup, so a refusal (wrong type, busy, ai:unsuitable, questions open)
+  # costs seconds.
+  implement:
+    needs: route
+    if: needs.route.outputs.action == 'implement'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    # One agent job per issue at a time, so two writes of its state comment do not race.
+    concurrency:
+      group: ai-autonomous-${{ needs.route.outputs.number }}
+      cancel-in-progress: false
+    # The push and the pull request use AGENT_PAT; everything else uses this token.
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+    env:
+      AGENT_NUMBER: ${{ needs.route.outputs.number }}
+      AGENT_COMMAND: ${{ needs.route.outputs.command }}
+      AGENT_ACTOR: ${{ github.event.comment.user.login }}
+      AGENT_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      # The issue has no code to protect, so the working tree is the default branch, and the tools, the opencode
+      # config, the skills, and the AGENTS.md files are trusted. The history stays complete for `nx affected` and for
+      # the agents, which read `git log`. The token is not kept in the checkout: the script pushes with AGENT_PAT.
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      - name: Install opencode
+        run: npm install --global "opencode-ai@${OPENCODE_VERSION}"
+
+      - name: Preflight
+        id: preflight
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          AGENT_OUT: ${{ runner.temp }}/agent
+        run: node tools/agent/implement.js preflight
+
+      - name: Set up the workspace
+        if: steps.preflight.outputs.proceed == 'true'
+        uses: ./.github/actions/setup-workspace
+        with:
+          cache-scope: ai-autonomous
+
+      # The local checks run `go test` through Nx, so Go is needed next to Node, Java, and Maven. Not `**/go.sum`: it
+      # scans node_modules and hangs.
+      - name: Set up Go
+        if: steps.preflight.outputs.proceed == 'true'
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: backend/.go-version
+          cache-dependency-path: |
+            backend/**/go.sum
+            go.work.sum
+
+      - name: Implement
+        if: steps.preflight.outputs.proceed == 'true'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          AGENT_PAT: ${{ secrets.AGENT_PAT }}
+          AGENT_OUT: ${{ runner.temp }}/agent
+        run: node tools/agent/implement.js run
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ai-autonomous-implement-${{ needs.route.outputs.number }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/agent
+          retention-days: 30
+          if-no-files-found: ignore

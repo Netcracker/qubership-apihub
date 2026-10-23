@@ -204,6 +204,13 @@ function createClient({
     }
   }
 
+  /** The user the token belongs to: `login` and `id` give the Git identity of the agent's commits. */
+  const getAuthenticatedUser = () => request('GET', '/user')
+
+  /** Opens a pull request. The author is the owner of the client's token, so the caller picks which client to use. */
+  const createPull = ({ title, head, base, body, draft = false }) =>
+    request('POST', '/repos/{repo}/pulls', { body: { title, head, base, body, draft } })
+
   const addReaction = (commentId, content) =>
     request('POST', `/repos/{repo}/issues/comments/${commentId}/reactions`, { body: { content } })
 
@@ -222,6 +229,8 @@ function createClient({
     removeLabel,
     createReview,
     getPermission,
+    getAuthenticatedUser,
+    createPull,
     addReaction,
   }
 }

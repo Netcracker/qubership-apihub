@@ -4,8 +4,8 @@
  *
  * `decide` is pure. It looks at the event, the configuration, the permission of the person behind the event, and the
  * state of the pull request or issue, and returns `{ action, number, reason, command?, trigger? }`. The actions are
- * `review` (phase 1), `analyze` (phase 2), and `skip`. Later phases add actions by registering more rules in
- * EVENT_HANDLERS and COMMAND_HANDLERS; `decide` itself does not change.
+ * `review` (phase 1), `analyze` (phase 2), `implement` (phase 3), and `skip`. Later phases add actions by registering
+ * more rules in EVENT_HANDLERS and COMMAND_HANDLERS; `decide` itself does not change.
  *
  * The CLI (`node tools/agent/route.js`) gathers the facts that need the GitHub API, but only when the event calls
  * for them: the permission of a commenter who wrote a command, the state comment of a pull request that became
@@ -29,6 +29,8 @@ const log = require('./lib/log')
 const AGENT_PR_MARKER = '<!-- ai-autonomous-agent '
 
 const isBot = (login) => typeof login === 'string' && /\[bot\]$/i.test(login)
+/** Dependabot, as the login appears in an event (`dependabot[bot]`) or in some API responses (`dependabot`). */
+const isDependabot = (login) => typeof login === 'string' && /^dependabot(\[bot\])?$/i.test(login)
 const sameRepo = (a, b) => typeof a === 'string' && typeof b === 'string' && a.toLowerCase() === b.toLowerCase()
 
 const sameLogin = (a, b) => typeof a === 'string' && typeof b === 'string' && a.toLowerCase() === b.toLowerCase()
@@ -39,6 +41,12 @@ const skip = (number, reason) => ({ action: 'skip', number, reason })
 const ANALYZED_TYPES = new Set(['Bug', 'Task'])
 /** Labels a person sets to decide the question the analysis answers; the agent then leaves the issue alone. */
 const DECISION_LABELS = ['ai:suitable', 'ai:unsuitable']
+
+/** A skip decision when the analysis does not cover the issue type, else `null`. */
+function checkAnalyzedType(number, typeName) {
+  if (ANALYZED_TYPES.has(typeName)) return null
+  return skip(number, `analysis covers Bug and Task issues, not '${typeName ?? 'no type'}'`)
+}
 
 const labelNames = (issue) => (issue.labels ?? []).map((label) => (typeof label === 'string' ? label : label?.name))
 
@@ -78,16 +86,27 @@ function decidePullRequest({ payload, config, pullState }) {
  * is known to the parser but not implemented yet.
  */
 const COMMAND_HANDLERS = {
-  review: ({ number, isPull, command }) => {
+  review: ({ number, isPull, command, issue }) => {
     // Fork pull requests are reviewed only on request: the person who asks has write access.
     if (!isPull) return skip(number, 'review works on pull requests')
+    // Nothing to review in a dependency bump, and a review costs money, also when a person asks for it.
+    if (isDependabot(issue?.user?.login)) return skip(number, 'dependency update pull requests are not reviewed')
     return { action: 'review', number, reason: '/agent review', command }
   },
-  analyze: ({ number, isPull, command }) => {
+  analyze: ({ number, isPull, command, issue }) => {
     if (isPull) return skip(number, 'analyze works on issues')
+    const wrongType = checkAnalyzedType(number, issue?.type?.name)
+    if (wrongType) return wrongType
     return { action: 'analyze', number, reason: '/agent analyze', trigger: 'command', command }
   },
-  // PHASE 3+: implement, retry, stop, cost, help, and chat get their rules here.
+  // The router does not look at the type, the labels, or the state of the issue: `implement.js preflight` does, and
+  // it answers the person in a comment, because a refusal must be explained.
+  implement: ({ number, isPull, command }) => {
+    if (isPull) return skip(number, 'implement works on issues')
+    const reason = command.force ? '/agent implement force' : '/agent implement'
+    return { action: 'implement', number, reason, command }
+  },
+  // PHASE 4+: retry, stop, cost, help, and chat get their rules here.
 }
 
 /**
@@ -123,6 +142,9 @@ function decideIssues({ payload, config, issueState }) {
   if (isBot(author)) return skip(number, `issue author '${author}' is a bot`)
 
   if (action === 'edited') {
+    // The type may have changed since the agent asked its questions.
+    const wrongType = checkAnalyzedType(number, issue.type?.name)
+    if (wrongType) return wrongType
     // An edit counts only as an answer: the author edits the issue while it waits for information.
     if (issueState?.phase !== 'needs-info') return skip(number, 'issue is not waiting for information')
     const editor = payload.sender?.login
@@ -130,10 +152,8 @@ function decideIssues({ payload, config, issueState }) {
     return analyzeIssue({ number, author, config, issueState, trigger: 'edited', reason: 'author edited the issue' })
   }
 
-  const typeName = issue.type?.name
-  if (!ANALYZED_TYPES.has(typeName)) {
-    return skip(number, `analysis covers Bug and Task issues, not '${typeName ?? 'no type'}'`)
-  }
+  const wrongType = checkAnalyzedType(number, issue.type?.name)
+  if (wrongType) return wrongType
   if (labelNames(issue).some((name) => DECISION_LABELS.includes(name))) {
     return skip(number, 'a person already set ai:suitable or ai:unsuitable')
   }
@@ -151,6 +171,8 @@ function decideCommentWithoutCommand({ payload, config, issueState }) {
   if (issueState?.phase !== 'needs-info') {
     return skip(number, 'not a command, and the issue is not waiting for information')
   }
+  const wrongType = checkAnalyzedType(number, issue.type?.name)
+  if (wrongType) return wrongType
   const author = issue.user.login
   return analyzeIssue({
     number,
@@ -178,7 +200,7 @@ function decideIssueComment({ payload, config, actorPermission, issueState }) {
 
   const handler = COMMAND_HANDLERS[command.name]
   if (!handler) return skip(number, `/agent ${command.name} is not available yet`)
-  return handler({ number, isPull: Boolean(issue.pull_request), command })
+  return handler({ number, isPull: Boolean(issue.pull_request), command, issue })
 }
 
 /** Rules per event name. Later phases add `workflow_run` here. */

@@ -274,6 +274,33 @@ test('addReaction posts the content to the comment', async () => {
   assert.deepEqual(calls[0].body, { content: 'eyes' })
 })
 
+test('getAuthenticatedUser reads /user with the token of the client', async () => {
+  const { client, calls } = setup([json({ login: 'agent-owner', id: 4242 })])
+  assert.deepEqual(await client.getAuthenticatedUser(), { login: 'agent-owner', id: 4242 })
+  assert.equal(calls[0].url, 'https://api.github.com/user')
+  assert.equal(calls[0].init.method, 'GET')
+  assert.equal(calls[0].init.headers.Authorization, 'Bearer t0ken')
+})
+
+test('createPull posts the title, head, base, body, and draft flag', async () => {
+  const { client, calls } = setup([json({ number: 55, html_url: 'https://github.com/acme/widgets/pull/55' })])
+  const pull = await client.createPull({ title: 'fix(x): y', head: 'bugfix/1-y', base: 'develop', body: 'B' })
+  assert.equal(pull.number, 55)
+  assert.equal(calls[0].url, 'https://api.github.com/repos/acme/widgets/pulls')
+  assert.equal(calls[0].init.method, 'POST')
+  assert.deepEqual(calls[0].body, { title: 'fix(x): y', head: 'bugfix/1-y', base: 'develop', body: 'B', draft: false })
+})
+
+test('createPull sends draft: true when asked and surfaces a refusal', async () => {
+  const { client, calls } = setup([json({ number: 56 }), status(422, {}, { message: 'Validation Failed' })])
+  await client.createPull({ title: 't', head: 'h', base: 'develop', body: 'b', draft: true })
+  assert.equal(calls[0].body.draft, true)
+  await assert.rejects(
+    client.createPull({ title: 't', head: 'h', base: 'develop', body: 'b' }),
+    (error) => error instanceof GitHubError && error.status === 422,
+  )
+})
+
 test('hasWriteAccess accepts admin, maintain, and write only', () => {
   for (const permission of ['admin', 'maintain', 'write']) {
     assert.equal(hasWriteAccess(permission), true, permission)

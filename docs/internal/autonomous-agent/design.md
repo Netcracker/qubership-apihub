@@ -223,7 +223,7 @@ What follows from this choice:
   reviews. Paths that only the PAT owner owns (the default `*` rule covers `tools/`, `deploy/`, `docs/`, and the root)
   need another maintainer or an admin bypass. Accepted for the proof of concept.
 - **The author does not mark the agent's pull requests,** so the scripts do: the pull request body carries a hidden
-  marker `<!-- apihub-agent issue=<N> -->`, and the state comment of the issue names the pull request. `route.js`
+  marker `<!-- ai-autonomous-agent issue=<N> -->`, and the state comment of the issue names the pull request. `route.js`
   trusts a pull request as the agent's only when both agree.
 - **Commits carry the PAT owner as author,** so the CLA check passes, and a trailer `Agent-Run: <run URL>` that says
   which run made them.

@@ -7,12 +7,15 @@
  *
  *   1. load the issue, its comments, and its state comment;
  *   2. `analyst` (the light model) reads the issue and the code and answers with `analysis` JSON;
- *   3. publish: the `ai:suitable` or `ai:unsuitable` label (or `agent:needs-human` for missing information), the
- *      state comment of the issue rewritten with the verdict, and, for `needs-info`, a separate comment that
- *      mentions the author, because only a new comment notifies people. In dry-run, the job summary instead.
+ *   3. publish: the `ai:suitable` or `ai:unsuitable` label (or `agent:needs-human` for missing information), read
+ *      again after the model call so that a label a person set meanwhile wins; then the state comment of the issue
+ *      rewritten with the verdict and with the labels that were really changed; and, for `needs-info`, a separate
+ *      comment that mentions the author, because only a new comment notifies people. In dry-run, the job summary
+ *      instead.
  *
- * The cost of the run is recorded in the state, also when the analysis fails. The agent never changes an
- * `ai:suitable` or `ai:unsuitable` label that a person set.
+ * The cost of the run is recorded in the state, also when the analysis or a label call fails. The agent never
+ * changes an `ai:suitable` or `ai:unsuitable` label that a person set. `implement.js` calls `analyze` when the issue
+ * changed since its last analysis.
  *
  * Environment: GITHUB_REPOSITORY, GITHUB_TOKEN, OPENAI_API_KEY, AGENT_NUMBER (the issue), AGENT_TRIGGER (why the
  * job runs: opened, typed, edited, author-reply, or command), AGENT_RUN_URL, AGENT_OUT (folder for inputs, events,
@@ -26,8 +29,9 @@ const { loadConfig } = require('./lib/config')
 const { createClient } = require('./lib/github')
 const state = require('./lib/state')
 const usage = require('./lib/usage')
-const { ContractError, extractJson, validate } = require('./lib/contract')
-const { runAgent } = require('./lib/opencode')
+const { ContractError } = require('./lib/contract')
+const { callAgent } = require('./lib/agent-call')
+const { inline, clip: clipText } = require('./lib/text')
 const { untrusted } = require('./lib/prompt')
 const log = require('./lib/log')
 
@@ -106,6 +110,36 @@ function agentLabelAfter(issueLabels, st, changes) {
   return before !== null && have.includes(before) ? before : null
 }
 
+/**
+ * Applies label changes one call at a time. A failed call is logged and does not stop the others.
+ *
+ * @returns {Promise<{ applied: { add: string[], remove: string[] }, error: Error|null }>} what really changed, and the
+ *   first error
+ */
+async function applyLabels(gh, number, changes) {
+  const applied = { add: [], remove: [] }
+  let error = null
+  const attempt = async (what, labels, call, into) => {
+    try {
+      await call()
+      into.push(...labels)
+    } catch (err) {
+      error ??= err
+      log.error(`The label call failed (${what} ${labels.join(', ')}): ${err.message}`)
+    }
+  }
+  if (changes.add.length) await attempt('add', changes.add, () => gh.addLabels(number, changes.add), applied.add)
+  for (const label of changes.remove) {
+    await attempt('remove', [label], () => gh.removeLabel(number, label), applied.remove)
+  }
+  log.info('labels applied', {
+    add: applied.add.join(',') || 'none',
+    remove: applied.remove.join(',') || 'none',
+    failed: error ? 'yes' : 'no',
+  })
+  return { applied, error }
+}
+
 /** The state of the issue after a finished analysis. The input is not changed. */
 function nextState(st, { analysis, label, issueUpdatedAt, run, at, trigger }) {
   return {
@@ -133,10 +167,6 @@ function nextState(st, { analysis, label, issueUpdatedAt, run, at, trigger }) {
 function failedState(st, { run, at, trigger }) {
   return { ...st, analyses: [...(st.analyses ?? []), { at, run, verdict: 'failed', trigger }] }
 }
-
-// Model text in a list item or a paragraph: one line. A mention in it would notify a person or a team on behalf of
-// the bot, so the `@` is separated from the name by a zero-width space.
-const inline = (s) => String(s).replace(/\s*\n\s*/g, ' ').trim().replace(/@(?=[\w-])/g, '@​')
 
 /** Numbered questions as Markdown lines, one line per question. */
 const questionLines = (questions) =>
@@ -198,10 +228,7 @@ function questionsComment({ author, questions }) {
   ].join('\n')
 }
 
-const clip = (text) => {
-  const s = String(text ?? '')
-  return s.length > MAX_TEXT ? `${s.slice(0, MAX_TEXT)}\n[cut: the text is longer than ${MAX_TEXT} characters]` : s
-}
+const clip = (text) => clipText(text, MAX_TEXT)
 
 /**
  * The text of `analysis-input.md`: facts of the issue, then everything people wrote inside `<untrusted>` blocks, then
@@ -231,47 +258,29 @@ function renderInput({ issue, comments, st, trigger }) {
     out.push(untrusted(clip(c.body)), '')
   }
   if (prior) {
+    // The reason and the questions are model output, written after reading people's text: they may echo it.
     out.push('## Previous analysis', '')
-    out.push(`- Verdict: ${prior.verdict}`, `- At: ${prior.at}`, `- Reason: ${inline(prior.reason)}`)
-    if (prior.questions?.length) out.push('- Questions asked:', ...questionLines(prior.questions).map((q) => `  ${q}`))
-    out.push('')
+    out.push(`- Verdict: ${prior.verdict}`, `- At: ${prior.at}`, '')
+    out.push('Reason:', '', untrusted(prior.reason), '')
+    if (prior.questions?.length) {
+      out.push('Questions asked:', '', untrusted(questionLines(prior.questions).join('\n')), '')
+    }
   }
   return out.join('\n')
 }
 
-/** One opencode call; returns the validated analysis and appends the cost record, whatever happens. */
-async function callAnalyst({ model, message, inputFile, out, costs, runUrl, run: runOpencode }) {
-  const eventsFile = path.join(out, 'analyst.jsonl')
-  const cwd = process.cwd()
-  const run = await runOpencode({ agent: 'analyst', model, message, files: [inputFile], cwd, eventsFile })
-  const summary = usage.summarize(usage.parseEvents(run.eventsText))
-  const record = usage.costRecord({
-    run: runUrl,
-    flow: 'analyze',
-    role: 'analyst',
-    model: model.id,
-    variant: model.variant,
-    summary,
-  })
-  costs.push(record)
-  log.info('analyst run finished', {
-    exitCode: run.exitCode,
-    steps: summary.steps,
-    input: summary.input,
-    cached: summary.cached,
-    output: summary.output,
-    reasoning: summary.reasoning,
-    usd: usage.formatUsd(summary.usd),
-  })
-  fs.writeFileSync(path.join(out, 'analyst.final.md'), summary.finalText)
-  if (run.exitCode !== 0 && !summary.finalText) {
-    throw new Error(`analyst exited with ${run.exitCode}: ${run.stderrTail.slice(-500)}`)
-  }
-  return checkAnalysis(validate('analysis', extractJson(summary.finalText)))
-}
-
-/** `deps.gh` and `deps.runAgent` are injectable so that tests never touch the network or start opencode. */
-async function main(env = process.env, deps = {}) {
+/**
+ * Runs the analysis and publishes it. `deps.gh` and `deps.runAgent` are injectable so that tests never touch the
+ * network or start opencode.
+ *
+ * A failed analysis does not throw: the failure state is written like any state, and the result carries `failure`,
+ * so a caller that goes on (the implementation, Flow C) can still use the state and the comment id. `askAuthor: false`
+ * leaves out the separate comment with the questions, for a caller that tells the person who asked.
+ *
+ * @returns {Promise<{ state: object, analysis: object|null, failure: Error|null, commentId: number|null,
+ *   issue: object }>} the state as written (in dry-run: as it would be written)
+ */
+async function analyze(env = process.env, deps = {}, { askAuthor = true } = {}) {
   const config = loadConfig(env)
   const number = Number(env.AGENT_NUMBER)
   const trigger = env.AGENT_TRIGGER || 'unknown'
@@ -308,6 +317,9 @@ async function main(env = process.env, deps = {}) {
   let analysis = null
   let failure = null
   let changes = { add: [], remove: [] }
+  // The labels of the issue when the changes are computed: fetched again after the model call, which takes minutes,
+  // so a label that a person set during the run wins.
+  let labelsNow = issue.labels
   const at = new Date().toISOString()
 
   try {
@@ -318,22 +330,38 @@ async function main(env = process.env, deps = {}) {
       log.info('input written', { file: inputFile, characters: text.length })
     })
     analysis = await log.group('Run the analyst', () =>
-      callAnalyst({
+      callAgent({
+        flow: 'analyze',
+        role: 'analyst',
+        agent: 'analyst',
         model: config.models.light,
         message: `Analyze issue #${number}. Your input is the attached analysis-input.md.`,
         inputFile,
         out,
         costs,
         runUrl,
-        run: deps.runAgent ?? runAgent,
+        schema: 'analysis',
+        check: checkAnalysis,
+        deps,
       }),
     )
     log.json('Analysis', analysis)
-    changes = labelChanges(issue.labels, st, analysis.verdict)
+    labelsNow = (await log.group('Read the labels again', () => gh.getIssue(number))).labels
+    changes = labelChanges(labelsNow, st, analysis.verdict)
     log.info('label changes', { add: changes.add.join(',') || 'none', remove: changes.remove.join(',') || 'none' })
   } catch (err) {
     failure = err
     log.error(`Analysis failed: ${err.message}`)
+  }
+
+  // The labels first, then the state: the state records which `ai:*` label is the agent's, and it must say what the
+  // calls really did. A failed call is logged, the state keeps the previous ownership, and the cost is still written.
+  let applied = changes
+  let labelFailure = null
+  if (!config.dryRun) {
+    const result = await log.group('Apply the labels', () => applyLabels(gh, number, changes))
+    applied = result.applied
+    labelFailure = result.error
   }
 
   const human = await log.group('Prepare the state', async () => {
@@ -345,7 +373,7 @@ async function main(env = process.env, deps = {}) {
       st = failedState(st, { run: runUrl, at, trigger })
       text = renderFailure({ message: failure.message, runUrl, totalUsd })
     } else {
-      const label = agentLabelAfter(issue.labels, st, changes)
+      const label = agentLabelAfter(labelsNow, st, applied)
       st = nextState(st, { analysis, label, issueUpdatedAt: issue.updated_at, at, run: runUrl, trigger })
       text = renderAnalysis({ analysis, runUrl, totalUsd })
     }
@@ -358,7 +386,8 @@ async function main(env = process.env, deps = {}) {
   const body = state.render(human, st)
   const author = issue.user?.login
   const asksAuthor = !failure && analysis.verdict === 'needs-info'
-  const questions = asksAuthor ? questionsComment({ author, questions: analysis.questions }) : null
+  let commentId = existing?.id ?? null
+  const questions = asksAuthor && askAuthor ? questionsComment({ author, questions: analysis.questions }) : null
 
   if (config.dryRun) {
     await log.group('Write the dry-run report', async () => {
@@ -372,16 +401,13 @@ async function main(env = process.env, deps = {}) {
       log.info('dry run: nothing written to GitHub')
     })
   } else {
-    // The state first: if a label call fails, the next run sees what the agent decided and repairs the labels.
     await log.group('Write the state comment', async () => {
-      if (existing) await gh.updateIssueComment(existing.id, body)
-      else await gh.createIssueComment(number, body)
-      log.info('state comment written', { id: existing ? existing.id : 'new' })
-    })
-    await log.group('Apply the labels', async () => {
-      if (changes.add.length) await gh.addLabels(number, changes.add)
-      for (const label of changes.remove) await gh.removeLabel(number, label)
-      log.info('labels applied', { add: changes.add.join(',') || 'none', remove: changes.remove.join(',') || 'none' })
+      if (existing) {
+        await gh.updateIssueComment(existing.id, body)
+      } else {
+        commentId = (await gh.createIssueComment(number, body))?.id ?? null
+      }
+      log.info('state comment written', { id: commentId ?? 'new' })
     })
     if (questions) {
       await log.group('Ask the author', async () => {
@@ -390,7 +416,13 @@ async function main(env = process.env, deps = {}) {
       })
     }
   }
-  if (failure) throw failure
+  return { state: st, analysis, failure: failure ?? labelFailure, commentId, issue }
+}
+
+/** The entry point of the `analyze` job: the analysis, and a failed job when the analysis failed. */
+async function main(env = process.env, deps = {}) {
+  const result = await analyze(env, deps)
+  if (result.failure) throw result.failure
 }
 
 if (require.main === module) {
@@ -403,6 +435,8 @@ if (require.main === module) {
 
 module.exports = {
   main,
+  analyze,
+  applyLabels,
   checkAnalysis,
   labelChanges,
   agentLabelAfter,
