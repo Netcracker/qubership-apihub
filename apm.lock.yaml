@@ -1,5 +1,5 @@
 lockfile_version: '1'
-generated_at: '2026-10-23T17:46:39.315975+00:00'
+generated_at: '2026-10-23T18:36:59.457263+00:00'
 apm_version: 0.27.0
 dependencies:
 - repo_url: _local/advanced-verification
@@ -329,12 +329,18 @@ dependencies:
   version: 0.1.0
   package_type: apm_package
   deployed_files:
+  - .claude/skills/apihub-issue-analysis
+  - .claude/skills/apihub-issue-analysis/SKILL.md
   - .claude/skills/apihub-pr-review
   - .claude/skills/apihub-pr-review/SKILL.md
+  - .cursor/skills/apihub-issue-analysis
+  - .cursor/skills/apihub-issue-analysis/SKILL.md
   - .cursor/skills/apihub-pr-review
   - .cursor/skills/apihub-pr-review/SKILL.md
   deployed_file_hashes:
+    .claude/skills/apihub-issue-analysis/SKILL.md: sha256:0eca430b89676a4f48bf8979e1b916056f6053b5d9d39fb64b2e00aa32cf5f2e
     .claude/skills/apihub-pr-review/SKILL.md: sha256:a46cb17206a3716da1b73ecd6d9c533f1087657dad7e45e2ecbaf5ba8e595aa3
+    .cursor/skills/apihub-issue-analysis/SKILL.md: sha256:0eca430b89676a4f48bf8979e1b916056f6053b5d9d39fb64b2e00aa32cf5f2e
     .cursor/skills/apihub-pr-review/SKILL.md: sha256:a46cb17206a3716da1b73ecd6d9c533f1087657dad7e45e2ecbaf5ba8e595aa3
   source: local
   local_path: ./agent-packages/apihub-autonomous-agent
@@ -1841,6 +1847,24 @@ deployments:
   content_hash: sha256:0a4914ca688a5cadfa0c8d046c1bcf620a4f78835ac3217b1e5c0fdeb31f65f2
 - kind: project-relative
   target: claude
+  value: .claude/skills/apihub-issue-analysis
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-autonomous-agent
+  active_owner: ./agent-packages/apihub-autonomous-agent
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/apihub-issue-analysis/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-autonomous-agent
+  active_owner: ./agent-packages/apihub-autonomous-agent
+  content_hash: sha256:0eca430b89676a4f48bf8979e1b916056f6053b5d9d39fb64b2e00aa32cf5f2e
+- kind: project-relative
+  target: claude
   value: .claude/skills/apihub-landing-refresh
   runtime: null
   scope: project
@@ -3144,6 +3168,24 @@ deployments:
   - netcracker/qubership-apihub-ci/agent-packages/apihub-go-self-review
   active_owner: netcracker/qubership-apihub-ci/agent-packages/apihub-go-self-review
   content_hash: sha256:0a4914ca688a5cadfa0c8d046c1bcf620a4f78835ac3217b1e5c0fdeb31f65f2
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/apihub-issue-analysis
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-autonomous-agent
+  active_owner: ./agent-packages/apihub-autonomous-agent
+  content_hash: null
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/apihub-issue-analysis/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-autonomous-agent
+  active_owner: ./agent-packages/apihub-autonomous-agent
+  content_hash: sha256:0eca430b89676a4f48bf8979e1b916056f6053b5d9d39fb64b2e00aa32cf5f2e
 - kind: project-relative
   target: cursor
   value: .cursor/skills/apihub-landing-refresh
