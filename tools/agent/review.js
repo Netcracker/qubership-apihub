@@ -39,7 +39,10 @@ function selectFindings(findings, verdicts) {
   const byId = new Map(verdicts.map((v) => [v.id, v]))
   // A finding the verifier skipped stays, marked plausible: dropping it would hide a possibly real problem.
   return findings
-    .map((f) => ({ ...f, verdict: byId.get(f.id)?.verdict ?? 'plausible', verdictReason: byId.get(f.id)?.reason ?? '' }))
+    .map((f) => {
+      const v = byId.get(f.id)
+      return { ...f, verdict: v?.verdict ?? 'plausible', verdictReason: v?.reason ?? '' }
+    })
     .filter((f) => f.verdict !== 'rejected')
     .sort((a, b) => SEVERITY_ORDER.indexOf(a.severity) - SEVERITY_ORDER.indexOf(b.severity))
 }
