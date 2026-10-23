@@ -1,6 +1,6 @@
 ---
 description: Self-review APIHub backend changes against project standards.
-globs: "backend/portal-backend/**/*.go"
+globs: backend/portal-backend/**/*.go
 ---
 
 When the user asks for self-review, code review of a diff, or a post-implementation

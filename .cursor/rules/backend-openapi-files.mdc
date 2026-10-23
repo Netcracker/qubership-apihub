@@ -1,8 +1,6 @@
 ---
 description: Backend OpenAPI file list and sync requirements
-globs:
-  - "backend/portal-backend/docs/api/**"
-  - "backend/portal-backend/controller/**"
+globs: backend/portal-backend/docs/api/**, backend/portal-backend/controller/**
 ---
 
 # Backend OpenAPI Files
