@@ -14,7 +14,7 @@
   "packageManager": "pnpm@12.4.2",
   "devDependencies": {
     "@nx-go/nx-go": "4.1.1",
-    "@nx/js": "23.2.0",
+    "@nx/js": "23.3.0",
     "@nx/maven": "23.2.0",
     "@types/react": "^18.3.31",
     "@types/react-dom": "^18.3.7",
