@@ -55,7 +55,7 @@
     "object-hash": "3.0.0"
   },
   "devDependencies": {
-    "@asyncapi/parser": "3.6.0",
+    "@asyncapi/parser": "3.6.6",
     "@jest/globals": "30.4.1",
     "@types/jest": "30.0.0",
     "@types/node": "^24.0.0",
