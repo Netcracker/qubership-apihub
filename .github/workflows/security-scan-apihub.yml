@@ -119,7 +119,7 @@ jobs:
       contents: read
       security-events: write
       packages: read
-    uses: Netcracker/qubership-workflow-hub/.github/workflows/re-security-scan.yml@396774180000abdb825cbf150b56cc59c6913db8 # v2.0.5
+    uses: Netcracker/qubership-workflow-hub/.github/workflows/re-security-scan.yml@0eefd4976131d113c986281eed8bc642b6da303d # v2.8.1
     with:
       target: docker
       image: ${{ matrix.image }}
@@ -138,7 +138,7 @@ jobs:
       contents: read
       security-events: write
       packages: read
-    uses: Netcracker/qubership-workflow-hub/.github/workflows/re-security-scan.yml@396774180000abdb825cbf150b56cc59c6913db8 # v2.0.5
+    uses: Netcracker/qubership-workflow-hub/.github/workflows/re-security-scan.yml@0eefd4976131d113c986281eed8bc642b6da303d # v2.8.1
     with:
       target: source
       only-high-critical: ${{ inputs.only-high-critical }}
