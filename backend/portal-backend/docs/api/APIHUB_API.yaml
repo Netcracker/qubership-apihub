@@ -1006,6 +1006,7 @@ paths:
                               type: object
                               description: |
                                 Details about the last release version and it's changes with previous version.
+                                The `summary` counts both operation changes and contract changes against the previous version.
                                 * Returns only if the lastReleaseVersionDetails:true and the lastReleaseVersion is explicitly filled in on a package.
                                 * Otherwise - will be omitted in the answer.
                               properties:

@@ -1154,6 +1154,7 @@ func (v versionServiceImpl) getVersionChangeSummary(ctx context.Context, package
 	}
 	changeSummary := &view.ChangeSummary{}
 	versionOperationTypes := make([]view.OperationType, 0)
+	versionContractTypes := make([]view.ContractType, 0)
 
 	if len(versionComparison.Refs) > 0 {
 		versionComparisons, err := v.publishedRepo.GetVersionRefsComparisons(ctx, comparisonId)
@@ -1162,18 +1163,18 @@ func (v versionServiceImpl) getVersionChangeSummary(ctx context.Context, package
 		}
 		for _, comparison := range versionComparisons {
 			versionOperationTypes = append(versionOperationTypes, comparison.OperationTypes...)
+			versionContractTypes = append(versionContractTypes, comparison.ContractTypes...)
 		}
 	} else {
 		versionOperationTypes = append(versionOperationTypes, versionComparison.OperationTypes...)
+		versionContractTypes = append(versionContractTypes, versionComparison.ContractTypes...)
 	}
 
 	for _, opType := range versionOperationTypes {
-		changeSummary.Breaking += opType.ChangesSummary.Breaking
-		changeSummary.SemiBreaking += opType.ChangesSummary.SemiBreaking
-		changeSummary.Deprecated += opType.ChangesSummary.Deprecated
-		changeSummary.NonBreaking += opType.ChangesSummary.NonBreaking
-		changeSummary.Annotation += opType.ChangesSummary.Annotation
-		changeSummary.Unclassified += opType.ChangesSummary.Unclassified
+		changeSummary.Add(opType.ChangesSummary)
+	}
+	for _, contractType := range versionContractTypes {
+		changeSummary.Add(contractType.ChangesSummary)
 	}
 	return changeSummary, nil
 }

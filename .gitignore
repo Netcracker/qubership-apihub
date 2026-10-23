@@ -11,6 +11,19 @@ deploy/helm-templates/local-k8s-quickstart/qubership-apihub/with-keycloak-local-
 deploy/helm-templates/local-k8s-quickstart/qubership-apihub/certs/
 deploy/helm-templates/local-k8s-quickstart/keycloak/files/realm.json
 .idea
+.vscode/
+
+# AI assistants: keep the agent configuration that APM deploys or the repository commits, ignore local state
+.claude/*
+!.claude/rules/
+!.claude/skills/
+!.claude/agents/
+!.claude/settings.json
+.cursor/*
+!.cursor/rules/
+!.cursor/skills/
+!.cursor/agents/
+!.cursor/permissions.json
 
 # APM cache (installed package sources)
 apm_modules/

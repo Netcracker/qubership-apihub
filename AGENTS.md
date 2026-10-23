@@ -87,7 +87,7 @@ packages live next to the code they describe:
 | `backend/portal-backend/agent-packages/` | `apihub-backend-developer`, `apihub-backend-self-review`, `backend-conventions`, `advanced-verification` |
 | `backend/agent/agent-packages/` | `apihub-agent-developer`, `agent-conventions` |
 | `frontend/<library>/agent-packages/` | `api-diff-*`, `api-doc-viewer-*`, `next-data-model-*`, `api-processor-*`, `api-unifier-*`, `ddlapi-*`, `json-crawl-*` |
-| `frontend/ui/agent-packages/` | `apihub-ui-authoring` |
+| `frontend/ui/agent-packages/` | `apihub-ui-authoring`, `apihub-typescript-coding`, `apihub-react-coding`, `apihub-mui-coding`, `apihub-unit-testing`, `apihub-quality-gates`, `apihub-agents-claude`, `apihub-agents-cursor` |
 | `tests/postman-collections/agent-packages/` | `postman-e2e-authoring`, `postman-e2e-followup` |
 
 Every module instruction has an `applyTo` glob that starts with its module path, so it does not apply to another

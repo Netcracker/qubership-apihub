@@ -14,7 +14,7 @@ Nx project names are in parentheses.
 | Agents SPA and server (`ui-agents`) | `packages/agents/` (`src/`, `server/`) |
 | Shared components, Storybook (`ui-shared`) | `packages/shared/` |
 | Workspace root (`ui-root`) | `package.json`, `.eslintrc.json`, `Dockerfile`, `Dockerfile.local` |
-| Coding rules, user guides, dev docs | `docs/dev/CODING_GUIDELINES.md`, `docs/dev/`, `docs/*.md` |
+| User guides, dev docs | `docs/dev/`, `docs/*.md` |
 
 ## Build and test
 
@@ -44,8 +44,8 @@ msw:init` once to create the mock worker files. Portal `build` runs `tsc` and `v
 
 Local package (`agent-packages/`):
 
-- `apihub-ui-authoring` (rule for `frontend/ui/**/*.{ts,tsx}`): points to `docs/dev/CODING_GUIDELINES.md`; it
-  applies whenever you edit UI source.
+- `apihub-ui-authoring` and the frontend technology, quality-gate, and verifier packages; see
+  [`agent-packages/README.md`](agent-packages/README.md).
 
 Packages from other modules whose `applyTo` reaches this module:
 
