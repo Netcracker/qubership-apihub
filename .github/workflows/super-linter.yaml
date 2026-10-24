@@ -87,7 +87,7 @@ jobs:
         fi
 
     - name: Lint Code Base
-      uses: super-linter/super-linter/slim@v7.3.0
+      uses: super-linter/super-linter/slim@v8.7.0
       env:
         VALIDATE_ALL_CODEBASE: ${{ inputs.full_scan || false }}
         # To report GitHub Actions status checks
