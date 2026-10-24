@@ -21,7 +21,7 @@ import type {
   QueryParameter,
 } from 'swagger-schema-official';
 import pickBy = require('lodash.pickby');
-import pick = require('lodash.pick');
+import { pick } from 'lodash';
 
 import { withContext } from '../../context';
 import { isBoolean, isNonNullable, isString } from '../../guards';
