@@ -553,13 +553,13 @@ test('prBody follows the template and ends with the actor line and the marker on
         'Guards the nil changelog in the builder\\.\\n',
         '\\nCloses #200\\.\\n\\n## What\\n\\nGuards the nil changelog in the builder\\. A test covers it\\.\\n',
         '\\n## How to verify\\n\\nAdded TestBuildNilChangelog\\.\\n\\n',
-        'Local checks passed: `pnpm exec nx affected`\\.\\n',
+        'Local checks passed, as reported by the work job: `pnpm exec nx affected`\\.\\n',
         '\\n## Checklist\\n\\n- \\[x\\] The issue is linked under Development or with "Closes #123"\\.\\n',
         '- \\[ \\] The documentation is updated',
       ].join(''),
     ),
   )
-  assert.match(text, /Self-review by a second model: approved after 1 round\(s\)\./)
+  assert.match(text, /Self-review by a second model, as reported by the work job: approved after 1 round\(s\)\./)
   assert.match(
     text,
     /\n\nImplemented by the AI Autonomous agent on request of @carol\.\n\n<!-- ai-autonomous-agent issue=200 -->\n$/,
@@ -575,7 +575,7 @@ test('prBody for a draft: failing checks and the open findings, with mentions de
     rounds: 2,
     implementation: { ...implementation, summary: 'Thanks @dave! More.', verification: '' },
   })
-  assert.match(text, /Local checks failed: `pnpm exec nx affected`\./)
+  assert.match(text, /Local checks failed, as reported by the work job: `pnpm exec nx affected`\./)
   assert.match(
     text,
     new RegExp(
@@ -602,7 +602,8 @@ test('renderOutcome: green, draft, blocked, and error texts', () => {
   }
   const green = renderOutcome({ ...common, result: 'pr-opened', attempt: entry, checks: greenChecks })
   assert.match(green, /^### AI implementation: pull request #77 is open\n\nBranch `bugfix\/200-x`\. 1 round\(s\)\./)
-  assert.match(green, /- Local checks: green\n- Self-review: approved\n/)
+  assert.match(green, /- Local checks \(reported by the work job\): green\n/)
+  assert.match(green, /- Self-review \(reported by the work job\): approved\n/)
   assert.match(
     green,
     /<sub>\[Run\]\(https:\/\/x\/runs\/1\) · AI cost of this issue so far: \$1\.23 · closes #200 when merged<\/sub>$/,
@@ -861,11 +862,14 @@ test('noreplyEmail is the private commit address of an account', () => {
 
 const { attemptKind, requireCiFixState, outcomeProblems } = require('./implement')
 
-test('attemptKind: initial by default, ci-fix on request, nothing else', () => {
+test('attemptKind: initial by default, then ci-fix, human, and review on request, nothing else', () => {
   assert.equal(attemptKind({}), 'initial')
   assert.equal(attemptKind({ AGENT_KIND: '' }), 'initial')
-  assert.equal(attemptKind({ AGENT_KIND: 'ci-fix' }), 'ci-fix')
-  assert.throws(() => attemptKind({ AGENT_KIND: 'human' }), /AGENT_KIND must be initial or ci-fix, got 'human'/)
+  for (const kind of ['ci-fix', 'human', 'review']) assert.equal(attemptKind({ AGENT_KIND: kind }), kind)
+  assert.throws(
+    () => attemptKind({ AGENT_KIND: 'later' }),
+    /AGENT_KIND must be initial, ci-fix, human, or review, got 'later'/,
+  )
 })
 
 test('requireCiFixState: needs the phase, the kind, a branch, and a pull request', () => {

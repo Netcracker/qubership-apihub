@@ -296,7 +296,6 @@ async function main() {
     human = `### AI review failed\n\nThe review of ${headSha.slice(0, 7)} did not finish: ${failure.message}\n\n` +
       `<sub>[Run](${runUrl}) · comment \`/agent review\` to try again</sub>`
   }
-  const body = state.render(human, st)
 
   await log.group(config.dryRun ? 'Publish (dry run: job summary only)' : 'Publish', async () => {
     if (config.dryRun) {
@@ -308,7 +307,9 @@ async function main() {
       log.info('dry run: written to the job summary', { inline: inline.length })
       return
     }
-    // The state comment goes first: it holds the cost record, which must survive a failed review post.
+    // The state comment goes first: it holds the cost record, which must survive a failed review post. It is read
+    // again right before the write, so a cost record that chat added since the state was loaded survives too.
+    const body = state.render(human, await state.withFreshCosts(gh, number, st))
     if (existing) {
       await gh.updateIssueComment(existing.id, body)
       log.info('state comment updated', { id: existing.id })

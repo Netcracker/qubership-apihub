@@ -16,9 +16,12 @@
  *      the whole history in the state comment, one concrete request); anything else starts the next attempt
  *      (`next=implement` for the `implement` job, which runs with `AGENT_KIND=ci-fix`).
  *
- * The decision is recorded in the state (`ciGate`), so a second workflow run of the same commit does nothing. In
- * dry-run nothing is written to GitHub and no attempt starts; the job summary shows the decision. Check logs contain
- * the output of code the model wrote, so they are untrusted: the report reaches a model only inside `untrusted()`.
+ * The decision is recorded in the state (`ciGate`), so a second workflow run of the same commit does nothing. Right
+ * before the first write the gate reads the pull request and the state comment again: a newer commit ends the run as
+ * `superseded`, and a phase other than `waiting-ci` (a `/agent stop` came in) ends it as `state-changed`; neither
+ * writes anything. In dry-run nothing is written to GitHub and no attempt starts; the job summary shows the decision.
+ * Check logs contain the output of code the model wrote, so they are untrusted: the report reaches a model only inside
+ * `untrusted()`.
  *
  * Environment: GITHUB_REPOSITORY, GITHUB_TOKEN, AGENT_PAT (green result of a draft pull request only), AGENT_NUMBER
  * (the issue), AGENT_PR and AGENT_HEAD_SHA (from the router), AGENT_WORKFLOW_RUN_ID, AGENT_RUN_URL, AGENT_OUT (folder
@@ -329,8 +332,13 @@ function lastSignature(attempts) {
   return null
 }
 
-/** The attempts that count against `AGENT_MAX_ATTEMPTS`: the first one and the CI fixes, not a person's retries. */
-const countedAttempts = (attempts) => (attempts ?? []).filter((a) => a.kind === 'initial' || a.kind === 'ci-fix').length
+/**
+ * The attempts that count against `AGENT_MAX_ATTEMPTS`: the first one and the CI fixes, not a person's attempts. Only
+ * the attempts from index `from` on count: a person who steers the agent (`/agent retry`, an answer, a change request)
+ * gives the loop a fresh budget, and the preflight records the index as `budgetFrom` in the state.
+ */
+const countedAttempts = (attempts, from = 0) =>
+  (attempts ?? []).slice(from).filter((a) => a.kind === 'initial' || a.kind === 'ci-fix').length
 
 /**
  * What to do with a red result, in this order: the same signature as the latest recorded one means no progress, and
@@ -341,7 +349,9 @@ const countedAttempts = (attempts) => (attempts ?? []).filter((a) => a.kind === 
  */
 function stopDecision({ state: st, signature, config }) {
   if (lastSignature(st.attempts) === signature) return { action: 'stop', reason: 'same-failure' }
-  if (countedAttempts(st.attempts) >= config.limits.maxAttempts) return { action: 'stop', reason: 'budget' }
+  if (countedAttempts(st.attempts, st.budgetFrom) >= config.limits.maxAttempts) {
+    return { action: 'stop', reason: 'budget' }
+  }
   return { action: 'next-attempt', reason: 'new-failure' }
 }
 
@@ -549,8 +559,8 @@ function rerunTargets(failed, fallbackRunId) {
  * Decides once for the head commit of the pull request. `deps.gh` is the client of GITHUB_TOKEN, `deps.patGh` the
  * client of AGENT_PAT (only a green result of a draft pull request uses it).
  *
- * @returns {Promise<{ outcome: 'skipped'|'waiting'|'already-decided'|'green'|'rerun'|'stopped'|'next-attempt',
- *   reason?: string, next?: string }>}
+ * @returns {Promise<{ outcome: 'skipped'|'waiting'|'already-decided'|'superseded'|'green'|'rerun'|'stopped'
+ *   |'next-attempt', reason?: string, next?: string }>}
  */
 async function gate(env = process.env, deps = {}) {
   const config = loadConfig(env)
@@ -619,8 +629,64 @@ async function gate(env = process.env, deps = {}) {
 
 }
 
-/** Writes the state comment: edits the one that exists, else creates it. */
-async function writeState({ gh, number, loaded, human, st }) {
+/**
+ * True when a newer commit is on the branch than the one the checks were collected for. The gate reads the checks and
+ * the logs for minutes, and a push in between makes its verdict about an old commit: it writes nothing then, and the
+ * checks of the newer commit start their own gate run.
+ */
+async function supersededBy({ gh, prNumber, headSha }) {
+  const fresh = await gh.getPull(prNumber)
+  if (fresh.head?.sha === headSha) return null
+  log.info('decision', { action: 'exit: superseded', collectedFor: headSha, head: fresh.head?.sha })
+  return fresh.head?.sha ?? 'unknown'
+}
+
+/** The result of a gate run that stops because of a newer commit; the summary says so. */
+function supersededResult(ctx, newSha) {
+  const reason = `a newer commit (${String(newSha).slice(0, 12)}) is on the branch; its checks decide`
+  const sha = ctx.headSha.slice(0, 12)
+  appendSummary(ctx.env, `- CI gate for #${ctx.prNumber} wrote nothing for \`${sha}\`: ${reason}\n`)
+  return { outcome: 'superseded', reason }
+}
+
+/**
+ * The phase the state comment holds now when it is not `waiting-ci` any more, else `null`. The gate loaded the state
+ * before it collected the checks and the logs; a person may have stopped the work (`/agent stop`) or started another
+ * attempt in the meantime, and the gate must not write over that.
+ */
+async function phaseMovedOn({ gh, number }) {
+  const existing = state.findStateComment(await gh.listIssueComments(number))
+  const phase = (existing && state.parse(existing.body))?.phase ?? null
+  if (phase === 'waiting-ci') return null
+  log.info('decision', { action: 'exit: state changed', phase: phase ?? 'none' })
+  return phase ?? 'none'
+}
+
+/** The result of a gate run that stops because the state is not `waiting-ci` any more; the summary says so. */
+function stateChangedResult(ctx, phase) {
+  const reason = `the issue is in the phase '${phase}' now, not 'waiting-ci'; the gate leaves it alone`
+  const sha = ctx.headSha.slice(0, 12)
+  appendSummary(ctx.env, `- CI gate for #${ctx.prNumber} wrote nothing for \`${sha}\`: ${reason}\n`)
+  return { outcome: 'state-changed', reason }
+}
+
+/**
+ * The result that ends the run when the decision is stale, else `null`. Called right before the first write: a newer
+ * commit makes the verdict about an old commit, and a changed phase means someone else owns the state now.
+ */
+async function staleResult(ctx) {
+  const newer = await supersededBy(ctx)
+  if (newer) return supersededResult(ctx, newer)
+  const phase = await phaseMovedOn(ctx)
+  return phase ? stateChangedResult(ctx, phase) : null
+}
+
+/**
+ * Writes the state comment: edits the one that exists, else creates it. The cost records of the comment as it is now
+ * are merged in, because chat and publish may have added one since the gate loaded the state.
+ */
+async function writeState({ gh, number, loaded, human, st: mine }) {
+  const st = await state.withFreshCosts(gh, number, mine)
   const body = state.render(human, st)
   if (loaded.existing) {
     await gh.updateIssueComment(loaded.existing.id, body)
@@ -638,6 +704,8 @@ async function handleGreen(ctx) {
     issue: { add: [LABEL_COMPLETED], remove: [LABEL_NEEDS_HUMAN] },
   }
   log.info('decision', { action: 'green', sha: headSha, draft: pull.draft })
+  const stale = await staleResult(ctx)
+  if (stale) return stale
 
   let readyError = null
   if (pull.draft && !config.dryRun) {
@@ -706,6 +774,8 @@ async function handleRed(ctx) {
   const report = buildReport({ pr: prNumber, headSha, failed, errorsByJob, notes, signature })
   fs.writeFileSync(path.join(out, 'ci-report.md'), report)
   log.info('ci report', { signature, characters: report.length, failed: failed.length })
+  const stale = await staleResult(ctx)
+  if (stale) return stale
   let st = ctx.st
   const totalUsd = sum(st.costs ?? [], 'usd')
 
@@ -740,7 +810,7 @@ async function handleRed(ctx) {
     reason: decision.reason,
     signature,
     previous: lastSignature(st.attempts) ?? 'none',
-    attempts: countedAttempts(st.attempts),
+    attempts: countedAttempts(st.attempts, st.budgetFrom),
     max: config.limits.maxAttempts,
   })
   const max = config.limits.maxAttempts
@@ -773,7 +843,7 @@ async function handleRed(ctx) {
   }
 
   const next = nextAttemptState(st, { signature, report, sha: headSha, at, run: runUrl, actor })
-  const attemptNo = countedAttempts(st.attempts) + 1
+  const attemptNo = countedAttempts(st.attempts, st.budgetFrom) + 1
   const human = renderNextAttempt({ pr: prNumber, n: attemptNo, max, failed, runUrl, totalUsd })
   if (config.dryRun) {
     appendSummary(env, [`## Dry run: CI gate for #${number}`, '', human, '',

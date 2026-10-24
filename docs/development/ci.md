@@ -36,6 +36,7 @@ numbered in the order they run.
 | Release: 1. Start (manual), Release: 2. Finish (manual), Release: Sync | `release-*.yml` | manual; `release-sync.yml` on push to `release` | the release flow, see [Release process](./release-process.md) |
 | Release: Artifacts | `release-artifacts.yml` | called by `ci.yml` on `main` | publishes image version tags, npm packages, Helm charts, GitHub Releases |
 | AI Autonomous: Agent | `ai-autonomous-agent.yml` | pull request opened or ready for review, `/agent` comment | the AI agent: review, and in later phases analysis and implementation; see [AI Autonomous agent](./autonomous-agent.md) |
+| AI Autonomous: Weekly report | `ai-autonomous-report.yml` | Mondays at 06:00 UTC, manual | counts the work of the AI agent over the last week and posts the report to the job summary and, if configured, an issue; see [AI Autonomous agent](./autonomous-agent.md#weekly-report) |
 
 Only `ci-ok` is a required check. The linters, the link checker, the license check, and the title checks report
 on the pull request, and reviewers expect them green, but they do not block the merge by themselves.

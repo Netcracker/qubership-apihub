@@ -132,7 +132,7 @@ records in the state.
 
 ## Phase 6: reporting
 
-Goal: the team sees the progress toward autonomy.
+Goal: the team sees the progress toward autonomy. Task 6.1 is done; 6.2 is open.
 
 | # | Task | Size |
 |---|---|---|

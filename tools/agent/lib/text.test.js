@@ -1,7 +1,7 @@
 'use strict'
 const { test } = require('node:test')
 const assert = require('node:assert/strict')
-const { inline, clip, tailLines, stripAnsi } = require('./text')
+const { inline, defuseMentions, clip, tailLines, stripAnsi } = require('./text')
 
 test('inline: one line, and a mention cannot notify anyone', () => {
   assert.equal(inline('  a\n\n  b  '), 'a b')
@@ -26,4 +26,10 @@ test('tailLines: the last lines, trailing blank lines dropped', () => {
 test('stripAnsi: removes color and cursor sequences', () => {
   assert.equal(stripAnsi('\u001b[31mred\u001b[0m \u001b[2K\u001b[1Gdone'), 'red done')
   assert.equal(stripAnsi(undefined), '')
+})
+
+test('defuseMentions: every mention is defused, line breaks stay', () => {
+  assert.equal(defuseMentions('hi @alice\nand @org/team'), 'hi @​alice\nand @​org/team')
+  assert.equal(defuseMentions('mail me@ home'), 'mail me@ home')
+  assert.equal(defuseMentions(undefined), '')
 })
