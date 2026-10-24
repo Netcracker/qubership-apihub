@@ -26,7 +26,7 @@ const EMPTY_ICON_STYLE = { width: 20, height: 20, color: DEFAULT_TEXT_COLOR } as
 
 const DOCUMENT_NAME_STYLE = { fontWeight: 600 } as const
 
-export type DocumentSelectorProps = {
+type DocumentSelectorProps = {
   options: Documents
   selected: DocumentSelection
   fallbackTitle: string
