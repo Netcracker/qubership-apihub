@@ -11,6 +11,15 @@ import { optionalSearchParams } from '@netcracker/qubership-apihub-ui-shared/uti
 import { portalRequestBlob } from '@portal/utils/requests'
 import { useShowErrorNotification } from '../../../../BasePage/Notification'
 
+type ExportDocumentErrorsFunction = (options: Options) => void
+
+type Options = Readonly<{
+  packageKey: PackageKey
+  versionKey: VersionKey
+  documentId?: Key
+  emptyDocumentId?: boolean
+}>
+
 export function useExportDocumentErrors(): [ExportDocumentErrorsFunction, IsLoading] {
   const showErrorNotification = useShowErrorNotification()
 
@@ -25,7 +34,7 @@ export function useExportDocumentErrors(): [ExportDocumentErrorsFunction, IsLoad
   return [mutate, isLoading]
 }
 
-export async function exportDocumentErrors(
+async function exportDocumentErrors(
   packageKey: PackageKey,
   versionKey: VersionKey,
   documentId?: Key,
@@ -58,12 +67,3 @@ export async function exportDocumentErrors(
 
   fileDownload(await response.blob(), filename)
 }
-
-type ExportDocumentErrorsFunction = (options: Options) => void
-
-type Options = Readonly<{
-  packageKey: PackageKey
-  versionKey: VersionKey
-  documentId?: Key
-  emptyDocumentId?: boolean
-}>

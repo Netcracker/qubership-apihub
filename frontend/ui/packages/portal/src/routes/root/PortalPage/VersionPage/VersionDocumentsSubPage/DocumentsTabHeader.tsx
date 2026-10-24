@@ -72,7 +72,7 @@ export const DocumentsTabHeader: FC<DocumentsTabHeaderProps> = (props) => {
     handleChange: handleShareabilityChange,
   } = useDocumentShareabilityState(slug)
 
-  const handleShowErrorDetails = useCallback(() => {
+  const handleShowDocumentErrors = useCallback(() => {
     if (!docPackageKey || !fullVersion) {
       return
     }
@@ -134,7 +134,7 @@ export const DocumentsTabHeader: FC<DocumentsTabHeaderProps> = (props) => {
         {hasErrors && (
           <Button
             variant="outlined"
-            onClick={handleShowErrorDetails}
+            onClick={handleShowDocumentErrors}
             data-testid="ShowDocumentErrorsButton"
             startIcon={<ErrorOutlineIcon />}
           >
