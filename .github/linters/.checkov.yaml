@@ -44,3 +44,8 @@ skip-path:
 - backend/portal-backend/tests/api/fixtures
 - tests/ui-tests/resources
 - tests/postman-collections/working-directory
+# Example tokens and keys that CKV_SECRET_9 and CKV_SECRET_13 report: a sample refresh-token cookie in the
+# internal API spec and its test-service copy, and viewer fixtures copied from a public GitHub spec.
+- backend/portal-backend/docs/api/APIHUB_API_internal\.yaml
+- backend/test-service/static
+- frontend/apispec-view/packages/[^/]+/src/__fixtures__
