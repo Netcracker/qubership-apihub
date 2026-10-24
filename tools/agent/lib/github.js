@@ -18,6 +18,7 @@ const USER_AGENT = 'ai-autonomous-agent'
 const MAX_RETRIES = 3
 const MAX_WAIT_SECONDS = 60
 const PAGE_SIZE = 100
+const SEARCH_MAX_RESULTS = 1000
 const RETRYABLE_SERVER_STATUSES = new Set([502, 503, 504])
 const WRITE_PERMISSIONS = new Set(['admin', 'maintain', 'write'])
 
@@ -150,6 +151,35 @@ function createClient({
       if (batch.length < PAGE_SIZE) {
         return items
       }
+    }
+  }
+
+  /**
+   * All issues and pull requests that match a search query (`GET /search/issues`). The search API returns at most 1000
+   * results and may time out with partial results; both cases throw, because a silently short list would falsify a
+   * report. Narrow the query instead.
+   */
+  async function searchIssues(query) {
+    const items = []
+    for (let page = 1; ; page += 1) {
+      const result = await request('GET', '/search/issues', { query: { q: query, per_page: PAGE_SIZE, page } })
+      if (!Array.isArray(result?.items)) {
+        throw new GitHubError('GitHub GET /search/issues did not return a list', { status: 200, body: result })
+      }
+      if (result.total_count > SEARCH_MAX_RESULTS) {
+        throw new GitHubError(
+          `GitHub search found ${result.total_count} results, more than the ${SEARCH_MAX_RESULTS} it returns: ${query}`,
+          { status: 200, body: result },
+        )
+      }
+      if (result.incomplete_results) {
+        throw new GitHubError(`GitHub search timed out and returned partial results: ${query}`, {
+          status: 200,
+          body: result,
+        })
+      }
+      items.push(...result.items)
+      if (result.items.length < PAGE_SIZE || items.length >= result.total_count) return items
     }
   }
 
@@ -327,6 +357,7 @@ function createClient({
   return {
     request,
     paginate,
+    searchIssues,
     graphql,
     getPull,
     listPullFiles,

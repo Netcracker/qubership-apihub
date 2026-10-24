@@ -396,7 +396,6 @@ async function analyze(env = process.env, deps = {}, { askAuthor = true } = {}) 
     fs.writeFileSync(path.join(out, 'summary.md'), text)
     return text
   })
-  const body = state.render(human, st)
   const author = issue.user?.login
   const asksAuthor = !failure && analysis.verdict === 'needs-info'
   let commentId = existing?.id ?? null
@@ -415,6 +414,8 @@ async function analyze(env = process.env, deps = {}, { askAuthor = true } = {}) 
     })
   } else {
     await log.group('Write the state comment', async () => {
+      // Read again right before the write: chat may have added a cost record since the state was loaded.
+      const body = state.render(human, await state.withFreshCosts(gh, number, st))
       if (existing) {
         await gh.updateIssueComment(existing.id, body)
       } else {

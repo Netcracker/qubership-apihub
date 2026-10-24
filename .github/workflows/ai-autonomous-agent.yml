@@ -457,25 +457,69 @@ jobs:
           retention-days: 30
           if-no-files-found: ignore
 
-  # Flow D: a comment that asks the agent something without asking for a change: `/agent help`, `/agent cost`,
-  # `/agent stop`, and `/agent <question>`. The assistant is read-only and answers in a comment.
-  chat:
+  # Flow D, the stop: `/agent stop` writes the phase `stopped` and cancels the run of the attempt. It has no concurrency
+  # group on purpose. In the group of `chat` it could wait behind a 15-minute answer, or be replaced by a later pending
+  # chat job, and a stop that waits is not a stop. The command is idempotent: it reads the state again, writes the
+  # phase, and cancels the run recorded in the state, so two stops in a row do no harm. It runs the same script as
+  # `chat`, without the model: no OpenAI key, no opencode, and a checkout of `tools/agent` only.
+  stop:
     needs: route
-    if: needs.route.outputs.action == 'chat'
+    if: needs.route.outputs.action == 'stop'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-    # Its own group, not the one of the other jobs of the number: `/agent stop` must not wait for the attempt it stops.
-    # The job writes the state comment only for a stop and for the cost of an answer, and it reads that comment again
-    # right before it writes.
-    concurrency:
-      group: ai-autonomous-chat-${{ needs.route.outputs.number }}
-      cancel-in-progress: false
+    timeout-minutes: 5
     # `actions: write` cancels the run of a stopped attempt.
     permissions:
       contents: read
       issues: write
       pull-requests: write
       actions: write
+    env:
+      AGENT_NUMBER: ${{ needs.route.outputs.number }}
+      AGENT_COMMAND: ${{ needs.route.outputs.command }}
+      AGENT_ACTOR: ${{ github.event.comment.user.login }}
+      AGENT_COMMENT_ID: ${{ github.event.comment.id }}
+      AGENT_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          sparse-checkout: tools/agent
+          persist-credentials: false
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      - name: Stop
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          AGENT_OUT: ${{ runner.temp }}/agent
+        run: node tools/agent/chat.js
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ai-autonomous-stop-${{ needs.route.outputs.number }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/agent
+          retention-days: 30
+          if-no-files-found: ignore
+
+  # Flow D: a comment that asks the agent something without asking for a change: `/agent help`, `/agent cost`, and
+  # `/agent <question>`. The assistant is read-only and answers in a comment. `/agent stop` has its own job.
+  chat:
+    needs: route
+    if: needs.route.outputs.action == 'chat'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # Its own group, not the one of the other jobs of the number. The job writes the state comment only for the cost of
+    # an answer, and it reads that comment again right before it writes.
+    concurrency:
+      group: ai-autonomous-chat-${{ needs.route.outputs.number }}
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
     env:
       AGENT_NUMBER: ${{ needs.route.outputs.number }}
       AGENT_COMMAND: ${{ needs.route.outputs.command }}

@@ -70,12 +70,12 @@ test('/agent cost goes to the chat job on an issue and on a pull request', () =>
   assert.deepEqual([pull.action, pull.number, pull.reason], ['chat', 123, '/agent cost'])
 })
 
-test('/agent stop goes to the chat job on an issue and on a pull request of the agent', () => {
+test('/agent stop goes to the stop job on an issue and on a pull request of the agent', () => {
   const issue = route('issue_comment', fixture('issue_comment.stop'), write)
-  assert.deepEqual([issue.action, issue.number, issue.reason], ['chat', 200, '/agent stop'])
+  assert.deepEqual([issue.action, issue.number, issue.reason], ['stop', 200, '/agent stop'])
   const pull = comment('issue_comment.chat.agent-pr', '/agent stop')
   const result = route('issue_comment', pull, { ...write, agentFacts: agentFacts() })
-  assert.deepEqual([result.action, result.number, result.command.name], ['chat', 70, 'stop'])
+  assert.deepEqual([result.action, result.number, result.command.name], ['stop', 70, 'stop'])
 })
 
 test('/agent stop on a pull request that is not the agent\'s, or not named by its issue, is skipped', () => {

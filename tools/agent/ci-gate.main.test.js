@@ -625,3 +625,95 @@ test('an unchanged head is not superseded: the decision is written as before', a
     assert.equal(savedState(gh).phase, 'completed')
   })
 })
+
+// ------------------------------------------------------------------------------------------------ state changed
+
+/** Rewrites the state comment, as `/agent stop` or a chat answer does while the gate reads checks and logs. */
+function changeState(gh, change) {
+  const comment = gh.store.find((c) => state.parse(c.body))
+  comment.body = state.render('changed by someone else', { ...state.parse(comment.body), ...change })
+}
+
+/** Calls `fn` once when `gh[method]` runs first, before the original does its work. */
+function onFirstCall(gh, method, fn) {
+  const original = gh[method]
+  let done = false
+  gh[method] = async (...args) => {
+    if (!done) {
+      done = true
+      fn()
+    }
+    return original(...args)
+  }
+  return gh
+}
+
+test('state changed: a stop while the checks are collected is not overwritten by a green decision', async () => {
+  const gh = onFirstCall(fakeGh(), 'getCombinedStatus', () => changeState(gh, { phase: 'stopped', stoppedBy: 'dave' }))
+  await withContext({ gh }, async (ctx) => {
+    const result = await gate(ctx.env, ctx.deps)
+    assert.equal(result.outcome, 'state-changed')
+    assert.match(result.reason, /phase 'stopped' now, not 'waiting-ci'/)
+    assert.equal(result.next, undefined)
+    assert.deepEqual(gh.calls, [])
+    assert.deepEqual(ctx.patGh.calls, [])
+    assert.equal(ctx.outputs(), 'outcome=state-changed\nnext=\n')
+    assert.match(ctx.summary(), /wrote nothing for `3f2a9c1d5b7e`: the issue is in the phase 'stopped'/)
+    assert.ok(logged.some((line) => line.includes('exit: state changed') && line.includes('stopped')))
+    assert.equal(savedState(gh).phase, 'stopped')
+  })
+})
+
+test('state changed: a stop while the logs are read never returns next=implement and writes nothing', async () => {
+  for (const checkRuns of [
+    [checkRun('build', 'failure'), checkRun('lint', 'success', { id: 12 })],
+    [checkRun('e2e tests', 'failure')],
+  ]) {
+    const gh = fakeGh({ checkRuns, logs: { 11: failingLog('a') } })
+    onFirstCall(gh, 'getJobLog', () => changeState(gh, { phase: 'stopped' }))
+    await withContext({ gh }, async (ctx) => {
+      const result = await gate(ctx.env, ctx.deps)
+      assert.equal(result.outcome, 'state-changed')
+      assert.equal(result.next, undefined)
+      assert.deepEqual(gh.calls, [])
+      assert.equal(ctx.outputs(), 'outcome=state-changed\nnext=\n')
+      assert.equal(savedState(gh).phase, 'stopped')
+    })
+  }
+})
+
+test('state changed: the state comment is gone or holds no phase, and the dry run decides the same', async () => {
+  const gh = onFirstCall(fakeGh(), 'getCombinedStatus', () => changeState(gh, { phase: null }))
+  await withContext({ gh, env: { AGENT_DRY_RUN: 'true' } }, async (ctx) => {
+    const result = await gate(ctx.env, ctx.deps)
+    assert.equal(result.outcome, 'state-changed')
+    assert.match(result.reason, /phase 'none' now/)
+    assert.deepEqual(gh.calls, [])
+  })
+})
+
+test('an unchanged phase is not a change: the decision is written as before', async () => {
+  const gh = onFirstCall(fakeGh(), 'getCombinedStatus', () => changeState(gh, { reason: 'same phase' }))
+  await withContext({ gh }, async (ctx) => {
+    assert.equal((await gate(ctx.env, ctx.deps)).outcome, 'green')
+    assert.equal(savedState(gh).phase, 'completed')
+  })
+})
+
+test('costs: a cost record that chat wrote while the gate ran survives the gate\'s write', async () => {
+  const added = { run: 'r2', flow: 'chat', role: 'assistant', at: '2026-10-23T10:00:00Z', usd: 0.2 }
+  for (const options of [{}, red()]) {
+    const gh = fakeGh(options)
+    onFirstCall(gh, 'getCombinedStatus', () => {
+      const current = savedState(gh)
+      changeState(gh, { costs: [...current.costs, added] })
+    })
+    await withContext({ gh }, async (ctx) => {
+      const result = await gate(ctx.env, ctx.deps)
+      assert.ok(['green', 'next-attempt'].includes(result.outcome), result.outcome)
+      const saved = savedState(gh)
+      assert.deepEqual(saved.costs.map((c) => c.run), ['r1', 'r2'])
+      assert.ok(saved.costs.some((c) => c.usd === 0.2))
+    })
+  }
+})

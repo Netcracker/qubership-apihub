@@ -196,6 +196,44 @@ test('listPullCommits reads the commits of a pull request', async () => {
   assert.equal(calls[0].url, 'https://api.github.com/repos/acme/widgets/pulls/8/commits?per_page=100&page=1')
 })
 
+test('searchIssues sends the query and follows pages up to total_count', async () => {
+  const page1 = Array.from({ length: 100 }, (_, i) => ({ number: i }))
+  const page2 = Array.from({ length: 20 }, (_, i) => ({ number: 100 + i }))
+  const { client, calls } = setup([
+    json({ total_count: 120, incomplete_results: false, items: page1 }),
+    json({ total_count: 120, incomplete_results: false, items: page2 }),
+  ])
+  const items = await client.searchIssues('repo:acme/widgets is:pr label:"a:b"')
+  assert.equal(items.length, 120)
+  assert.equal(calls.length, 2)
+  const first = new URL(calls[0].url)
+  assert.equal(first.pathname, '/search/issues')
+  assert.equal(first.searchParams.get('q'), 'repo:acme/widgets is:pr label:"a:b"')
+  assert.equal(first.searchParams.get('per_page'), '100')
+  assert.equal(new URL(calls[1].url).searchParams.get('page'), '2')
+})
+
+test('searchIssues stops on a full last page and on an empty result', async () => {
+  const full = Array.from({ length: 100 }, (_, i) => ({ number: i }))
+  const exact = setup([json({ total_count: 100, incomplete_results: false, items: full })])
+  assert.equal((await exact.client.searchIssues('q')).length, 100)
+  assert.equal(exact.calls.length, 1)
+
+  const none = setup([json({ total_count: 0, incomplete_results: false, items: [] })])
+  assert.deepEqual(await none.client.searchIssues('q'), [])
+})
+
+test('searchIssues throws on more than 1000 results, partial results, and a payload without a list', async () => {
+  const many = setup([json({ total_count: 1001, incomplete_results: false, items: [{ number: 1 }] })])
+  await assert.rejects(many.client.searchIssues('q'), /1001 results, more than the 1000/)
+
+  const partial = setup([json({ total_count: 1, incomplete_results: true, items: [{ number: 1 }] })])
+  await assert.rejects(partial.client.searchIssues('q'), /partial results/)
+
+  const bad = setup([json({ message: 'odd' })])
+  await assert.rejects(bad.client.searchIssues('q'), GitHubError)
+})
+
 test('createIssueComment and updateIssueComment send the body', async () => {
   const { client, calls } = setup([json({ id: 1 }), json({ id: 1 })])
   await client.createIssueComment(12, 'hello')

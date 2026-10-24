@@ -22,6 +22,7 @@ comments. It is a proof of concept; the design is in [the internal docs](../inte
 - **Copies the execution level** (`ai:l0-assistant` to `ai:l3-autonomous`) of a merged pull request to the issues it
   closes. When several merged pull requests close one issue, the issue gets the lowest level. A merged pull request
   without a level gets a reminder comment. This is the workflow `AI Autonomous: Execution levels`.
+- **Reports weekly** on the progress toward autonomy. See [Weekly report](#weekly-report).
 
 The agent never approves or requests changes; its review is a comment. The review comment ends with what the AI calls
 on the pull request have cost so far. Dependabot pull requests are never reviewed, also not with `/agent review`: a
@@ -71,8 +72,12 @@ estimates from the price table of opencode. The OpenAI bill is the authority.
 
 `/agent stop` writes the phase `stopped` to the state of the issue, cancels the workflow run of a running attempt,
 removes `agent:needs-human`, and replies with what it stopped. The cancelled attempt records its cost and ends as
-`stopped`: it pushes nothing and posts nothing. The CI gate ignores a stopped issue. To start again, comment
+`stopped`: it pushes nothing and posts nothing. The CI gate ignores a stopped issue: when you stop the work while the
+gate reads the checks, the gate finds the new phase before it writes anything and exits. To start again, comment
 `/agent implement` on the issue, or `/agent retry`.
+
+A stop runs at once. It has its own job without a concurrency group, so it never waits behind an answer of the
+assistant or another agent job of the same number, and a later comment cannot replace it.
 
 ### Retry, answers, and change requests
 
@@ -94,10 +99,11 @@ and when the issue is closed or is not a `Bug` or a `Task`.
 ### Reviews with change requests
 
 When a person with write access submits a review with the state "changes requested" on a pull request of the agent,
-the agent makes one attempt. The implementer gets the review text and every unresolved review thread (file, line, and
-the conversation). After the push, the agent replies once in each of those threads with the short commit id. It never
-resolves a thread: a person does. The title and the description of the pull request stay, and the pull request goes
-back to a draft when the new result is not green.
+the agent makes one attempt. The implementer gets the review text and the unresolved review threads (file, line, and
+the conversation), at most 30 of them; the prompt says how many more were left out. After the push, the agent replies
+once in each thread the implementer saw, with the short commit id, and in no other. It never resolves a thread: a
+person does. The title and the description of the pull request stay, and the pull request goes back to a draft when
+the new result is not green.
 
 ## Implement an issue
 
@@ -194,8 +200,9 @@ forks.
    status). While any is still running or pending, it exits; the workflow run that finishes last decides. The agent's
    own jobs do not count.
 2. **It decides once** per commit. A second workflow run of the same commit changes nothing. Right before it writes
-   anything, the gate reads the pull request again. When a newer commit is on the branch, it writes nothing and exits
-   as `superseded`; the checks of the newer commit start their own gate run.
+   anything, the gate reads the pull request and the state again. When a newer commit is on the branch, it writes
+   nothing and exits as `superseded`; the checks of the newer commit start their own gate run. When the issue is no
+   longer in the phase `waiting-ci` (for example after `/agent stop`), it writes nothing and exits as `state-changed`.
 3. **Green:** every check succeeded, was neutral, or was skipped. The pull request leaves draft (the gate is the only
    place where that happens), gets `agent:completed` and `ai:l1-executor`, and the issue gets `agent:completed`.
    `agent:needs-human` goes away from both. The agent comments on the issue and mentions the person who asked: a
@@ -223,6 +230,22 @@ it names. While `AGENT_DRY_RUN` is not `false`, the agent runs the whole attempt
 a pull request, label, or comment. The job summary shows the commit message, the pull request description, the labels,
 the state, and the start of the diff.
 
+## Weekly report
+
+The workflow `AI Autonomous: Weekly report` runs on Mondays at 06:00 UTC, and on demand with an optional `days`
+input. It uses no model and costs nothing. It counts, for the last `AGENT_REPORT_DAYS` days (default 7):
+
+- the `Bug` and `Task` issues created, and how many are `ai:suitable`, `ai:unsuitable`, or not assessed yet;
+- the pull requests merged, by execution level and with the share of each level;
+- the pull requests the agent opened, and how many are `agent:completed`, draft or `agent:needs-human`, or merged;
+- the pull requests the agent reviewed;
+- the attempts by result, and how many were forced;
+- the AI calls and their estimated cost, by flow and by model, from the state comments.
+
+The report shows numbers only. It always goes to the job summary. When `AGENT_REPORT_ISSUE` names an issue and
+`AGENT_DRY_RUN` is `false`, it is also posted there as a new comment. A forced attempt is an attempt on an issue that
+a person forced; the state keeps one flag per issue, so all its attempts count as forced.
+
 ## Settings
 
 The workflow is [`ai-autonomous-agent.yml`](../../.github/workflows/ai-autonomous-agent.yml) (`AI Autonomous: Agent`);
@@ -238,6 +261,8 @@ the scripts are in [`tools/agent/`](../../tools/agent/).
 | `AGENT_MODEL_REVIEW`, `AGENT_MODEL_VERIFY`, `AGENT_MODEL_IMPLEMENT`, `AGENT_MODEL_LIGHT` | variables | `provider/model:variant`, for example `openai/gpt-6-luna:max`; defaults in `tools/agent/lib/config.js` |
 | `AGENT_MAX_ATTEMPTS` | variable | attempts per issue before the agent hands over on red CI (default 3): the first attempt and every CI fix; a retry, an answer, a change request, or a review starts a fresh count |
 | `AGENT_MAX_ANALYSES` | variable | analyses per issue started by edits and answers (default 5); `/agent analyze` is not counted |
+| `AGENT_REPORT_ISSUE` | variable | the number of the issue that gets the weekly report as a comment; empty means the job summary only |
+| `AGENT_REPORT_DAYS` | variable | the length of the weekly report period in days (default 7); the `days` input of a manual run overrides it |
 | `AGENT_LOG_LEVEL` | variable | opencode's own log level in the job log: `DEBUG`, `INFO` (default), `WARN`, or `ERROR` |
 
 The review model and the implement model must differ: the agent refuses to start otherwise.

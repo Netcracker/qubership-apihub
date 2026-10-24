@@ -16,9 +16,12 @@
  *      the whole history in the state comment, one concrete request); anything else starts the next attempt
  *      (`next=implement` for the `implement` job, which runs with `AGENT_KIND=ci-fix`).
  *
- * The decision is recorded in the state (`ciGate`), so a second workflow run of the same commit does nothing. In
- * dry-run nothing is written to GitHub and no attempt starts; the job summary shows the decision. Check logs contain
- * the output of code the model wrote, so they are untrusted: the report reaches a model only inside `untrusted()`.
+ * The decision is recorded in the state (`ciGate`), so a second workflow run of the same commit does nothing. Right
+ * before the first write the gate reads the pull request and the state comment again: a newer commit ends the run as
+ * `superseded`, and a phase other than `waiting-ci` (a `/agent stop` came in) ends it as `state-changed`; neither
+ * writes anything. In dry-run nothing is written to GitHub and no attempt starts; the job summary shows the decision.
+ * Check logs contain the output of code the model wrote, so they are untrusted: the report reaches a model only inside
+ * `untrusted()`.
  *
  * Environment: GITHUB_REPOSITORY, GITHUB_TOKEN, AGENT_PAT (green result of a draft pull request only), AGENT_NUMBER
  * (the issue), AGENT_PR and AGENT_HEAD_SHA (from the router), AGENT_WORKFLOW_RUN_ID, AGENT_RUN_URL, AGENT_OUT (folder
@@ -646,8 +649,44 @@ function supersededResult(ctx, newSha) {
   return { outcome: 'superseded', reason }
 }
 
-/** Writes the state comment: edits the one that exists, else creates it. */
-async function writeState({ gh, number, loaded, human, st }) {
+/**
+ * The phase the state comment holds now when it is not `waiting-ci` any more, else `null`. The gate loaded the state
+ * before it collected the checks and the logs; a person may have stopped the work (`/agent stop`) or started another
+ * attempt in the meantime, and the gate must not write over that.
+ */
+async function phaseMovedOn({ gh, number }) {
+  const existing = state.findStateComment(await gh.listIssueComments(number))
+  const phase = (existing && state.parse(existing.body))?.phase ?? null
+  if (phase === 'waiting-ci') return null
+  log.info('decision', { action: 'exit: state changed', phase: phase ?? 'none' })
+  return phase ?? 'none'
+}
+
+/** The result of a gate run that stops because the state is not `waiting-ci` any more; the summary says so. */
+function stateChangedResult(ctx, phase) {
+  const reason = `the issue is in the phase '${phase}' now, not 'waiting-ci'; the gate leaves it alone`
+  const sha = ctx.headSha.slice(0, 12)
+  appendSummary(ctx.env, `- CI gate for #${ctx.prNumber} wrote nothing for \`${sha}\`: ${reason}\n`)
+  return { outcome: 'state-changed', reason }
+}
+
+/**
+ * The result that ends the run when the decision is stale, else `null`. Called right before the first write: a newer
+ * commit makes the verdict about an old commit, and a changed phase means someone else owns the state now.
+ */
+async function staleResult(ctx) {
+  const newer = await supersededBy(ctx)
+  if (newer) return supersededResult(ctx, newer)
+  const phase = await phaseMovedOn(ctx)
+  return phase ? stateChangedResult(ctx, phase) : null
+}
+
+/**
+ * Writes the state comment: edits the one that exists, else creates it. The cost records of the comment as it is now
+ * are merged in, because chat and publish may have added one since the gate loaded the state.
+ */
+async function writeState({ gh, number, loaded, human, st: mine }) {
+  const st = await state.withFreshCosts(gh, number, mine)
   const body = state.render(human, st)
   if (loaded.existing) {
     await gh.updateIssueComment(loaded.existing.id, body)
@@ -665,8 +704,8 @@ async function handleGreen(ctx) {
     issue: { add: [LABEL_COMPLETED], remove: [LABEL_NEEDS_HUMAN] },
   }
   log.info('decision', { action: 'green', sha: headSha, draft: pull.draft })
-  const newer = await supersededBy({ gh, prNumber, headSha })
-  if (newer) return supersededResult(ctx, newer)
+  const stale = await staleResult(ctx)
+  if (stale) return stale
 
   let readyError = null
   if (pull.draft && !config.dryRun) {
@@ -735,8 +774,8 @@ async function handleRed(ctx) {
   const report = buildReport({ pr: prNumber, headSha, failed, errorsByJob, notes, signature })
   fs.writeFileSync(path.join(out, 'ci-report.md'), report)
   log.info('ci report', { signature, characters: report.length, failed: failed.length })
-  const newer = await supersededBy({ gh, prNumber, headSha })
-  if (newer) return supersededResult(ctx, newer)
+  const stale = await staleResult(ctx)
+  if (stale) return stale
   let st = ctx.st
   const totalUsd = sum(st.costs ?? [], 'usd')
 
