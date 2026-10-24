@@ -20,8 +20,8 @@ The state of the AI Autonomous agent proof of concept on October 24, 2026, and h
 
 Each phase targets the branch of the phase before it. Merge them from the top down: #941 into #940, #940 into #938,
 and so on, then #934 into `develop`, after the documentation of
-[Before the merge into develop](#before-the-merge-into-develop) is written. Every branch already contains `develop` with #932, so the
-last merge has no conflicts. #934 closes #939.
+[Before the merge into develop](#before-the-merge-into-develop) is written.
+Every branch already contains `develop` with #932, so the last merge has no conflicts. #934 closes #939.
 
 | Phase | Pull request | Branch |
 |---|---|---|
