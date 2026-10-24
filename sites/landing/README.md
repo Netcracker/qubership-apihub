@@ -27,7 +27,7 @@ landing pages with `withBase(...)` from `src/lib/paths.ts`, never with a root-ab
 - `src/data/*.ts`: shared copy, navigation, and the radar. `src/data/content.ts` is the one place for outbound URLs
   (`SITE_ROOT`, `DOCS_URL`, `REPO_URL`, and so on); pages import these constants.
 - `src/content/`: Markdown collections. `releases/` feeds `/releases/` and `use-cases/` feeds `/use-cases/`. The schemas
-  are in `src/content/config.ts`.
+  are in `src/content.config.ts`.
 - `src/pages/`: one `.astro` file per route, including the `/docs/architecture/` pages.
 - `public/images/`: static images. The architecture diagrams there are generated.
 
