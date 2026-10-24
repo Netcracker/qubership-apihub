@@ -21,7 +21,7 @@ Goal: everything outside the code is ready, and the unknowns of the design have 
 | 0.4 | Delete `.agents/` and ignore it in the root `.gitignore`. The linter exclusions of `.agents/` stay: they cover every APM-deployed tree, present or not, and keep a local copy out of the checks | S |
 | 0.5 | Spike, in a throwaway workflow `AI Autonomous: Spike` on a branch: see the list below | M |
 
-The spike answers, with a short note in this folder:
+The spike answers, with a short note in this folder ([spike.md](./spike.md), done):
 
 - Does opencode 1.19.x in a runner discover the skills in `.claude/skills/` and load the one a prompt names?
 - Does it attach the module `AGENTS.md` when it reads a file under `backend/portal-backend/`?
@@ -132,7 +132,7 @@ records in the state.
 
 ## Phase 6: reporting
 
-Goal: the team sees the progress toward autonomy.
+Goal: the team sees the progress toward autonomy. Task 6.1 is done; 6.2 is open.
 
 | # | Task | Size |
 |---|---|---|

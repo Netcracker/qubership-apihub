@@ -9,14 +9,14 @@
     "semiColons": "asi",
     "quoteStyle": "alwaysSingle",
     "trailingCommas": "onlyMultiLine",
-	"typeAssertion.spaceBeforeExpression": false,
-    "jsx.quoteStyle": "preferDouble"
+    "typeAssertion.spaceBeforeExpression": false,
+    "jsx.quoteStyle": "preferDouble",
   },
   "json": {
-    "trailingCommas": "never"
+    "trailingCommas": "never",
   },
   "includes": [
-    "**/*.{ts,tsx,js,jsx,mjs,json,jsonc,md,yaml,yml,html,css,scss,less,graphql}"
+    "**/*.{ts,tsx,js,jsx,mjs,json,jsonc,md,yaml,yml,html,css,scss,less,graphql}",
   ],
   "plugins": [
     "https://plugins.dprint.dev/typescript-0.95.5.wasm",
@@ -25,6 +25,6 @@
     "https://plugins.dprint.dev/g-plane/pretty_yaml-v0.5.1.wasm",
     "https://plugins.dprint.dev/g-plane/pretty_graphql-v0.2.1.wasm",
     "https://plugins.dprint.dev/g-plane/malva-v0.12.1.wasm",
-    "https://plugins.dprint.dev/g-plane/markup_fmt-v0.20.0.wasm"
-  ]
+    "https://plugins.dprint.dev/g-plane/markup_fmt-v0.20.0.wasm",
+  ],
 }

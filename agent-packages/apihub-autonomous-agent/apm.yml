@@ -1,0 +1,6 @@
+name: apihub-autonomous-agent
+version: 0.1.0
+description: Playbooks of the AI Autonomous agent (pull request review, issue analysis, bug and task implementation)
+author: Qubership
+dependencies:
+  apm: []

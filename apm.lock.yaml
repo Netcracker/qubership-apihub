@@ -1,5 +1,5 @@
 lockfile_version: '1'
-generated_at: '2026-10-23T20:43:41.820001+00:00'
+generated_at: '2026-10-23T20:46:08.043117+00:00'
 apm_version: 0.34.0
 dependencies:
 - repo_url: _local/advanced-verification
@@ -344,6 +344,44 @@ dependencies:
     .cursor/agents/verifier.md: sha256:9a2319b6a7ccd750e740321d3d7c94a538bc9393b57315be4c8ae77c770a1cce
   source: local
   local_path: ./frontend/ui/agent-packages/apihub-agents-cursor
+- repo_url: _local/apihub-autonomous-agent
+  name: apihub-autonomous-agent
+  version: 0.1.0
+  package_type: apm_package
+  deployed_files:
+  - .claude/skills/apihub-bug-fix
+  - .claude/skills/apihub-bug-fix/SKILL.md
+  - .claude/skills/apihub-ci-failure-triage
+  - .claude/skills/apihub-ci-failure-triage/SKILL.md
+  - .claude/skills/apihub-issue-analysis
+  - .claude/skills/apihub-issue-analysis/SKILL.md
+  - .claude/skills/apihub-pr-review
+  - .claude/skills/apihub-pr-review/SKILL.md
+  - .claude/skills/apihub-task
+  - .claude/skills/apihub-task/SKILL.md
+  - .cursor/skills/apihub-bug-fix
+  - .cursor/skills/apihub-bug-fix/SKILL.md
+  - .cursor/skills/apihub-ci-failure-triage
+  - .cursor/skills/apihub-ci-failure-triage/SKILL.md
+  - .cursor/skills/apihub-issue-analysis
+  - .cursor/skills/apihub-issue-analysis/SKILL.md
+  - .cursor/skills/apihub-pr-review
+  - .cursor/skills/apihub-pr-review/SKILL.md
+  - .cursor/skills/apihub-task
+  - .cursor/skills/apihub-task/SKILL.md
+  deployed_file_hashes:
+    .claude/skills/apihub-bug-fix/SKILL.md: sha256:1ca79fce52fe3b9998a27112f10271cd9304f7d0c35c48b86af8acd5daabd158
+    .claude/skills/apihub-ci-failure-triage/SKILL.md: sha256:fef1d06c0bea2fed152146771b288d91469a2526a12255babf3e6a84d0ace13c
+    .claude/skills/apihub-issue-analysis/SKILL.md: sha256:0eca430b89676a4f48bf8979e1b916056f6053b5d9d39fb64b2e00aa32cf5f2e
+    .claude/skills/apihub-pr-review/SKILL.md: sha256:a46cb17206a3716da1b73ecd6d9c533f1087657dad7e45e2ecbaf5ba8e595aa3
+    .claude/skills/apihub-task/SKILL.md: sha256:aed20fe58346b12100a798fd8e4add7a890cf586070fda249ddd32c00f2b830d
+    .cursor/skills/apihub-bug-fix/SKILL.md: sha256:1ca79fce52fe3b9998a27112f10271cd9304f7d0c35c48b86af8acd5daabd158
+    .cursor/skills/apihub-ci-failure-triage/SKILL.md: sha256:fef1d06c0bea2fed152146771b288d91469a2526a12255babf3e6a84d0ace13c
+    .cursor/skills/apihub-issue-analysis/SKILL.md: sha256:0eca430b89676a4f48bf8979e1b916056f6053b5d9d39fb64b2e00aa32cf5f2e
+    .cursor/skills/apihub-pr-review/SKILL.md: sha256:a46cb17206a3716da1b73ecd6d9c533f1087657dad7e45e2ecbaf5ba8e595aa3
+    .cursor/skills/apihub-task/SKILL.md: sha256:aed20fe58346b12100a798fd8e4add7a890cf586070fda249ddd32c00f2b830d
+  source: local
+  local_path: ./agent-packages/apihub-autonomous-agent
 - repo_url: _local/apihub-backend-developer
   name: apihub-backend-developer
   version: 0.2.0
@@ -1920,6 +1958,42 @@ deployments:
   content_hash: sha256:469341ad3a1bcd37fc61f78c329e7c95a9b826fb4de8d017bdd4e04750993d8f
 - kind: project-relative
   target: claude
+  value: .claude/skills/apihub-bug-fix
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-autonomous-agent
+  active_owner: ./agent-packages/apihub-autonomous-agent
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/apihub-bug-fix/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-autonomous-agent
+  active_owner: ./agent-packages/apihub-autonomous-agent
+  content_hash: sha256:1ca79fce52fe3b9998a27112f10271cd9304f7d0c35c48b86af8acd5daabd158
+- kind: project-relative
+  target: claude
+  value: .claude/skills/apihub-ci-failure-triage
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-autonomous-agent
+  active_owner: ./agent-packages/apihub-autonomous-agent
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/apihub-ci-failure-triage/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-autonomous-agent
+  active_owner: ./agent-packages/apihub-autonomous-agent
+  content_hash: sha256:fef1d06c0bea2fed152146771b288d91469a2526a12255babf3e6a84d0ace13c
+- kind: project-relative
+  target: claude
   value: .claude/skills/apihub-deployment-authoring
   runtime: null
   scope: project
@@ -2001,6 +2075,24 @@ deployments:
   content_hash: sha256:0a4914ca688a5cadfa0c8d046c1bcf620a4f78835ac3217b1e5c0fdeb31f65f2
 - kind: project-relative
   target: claude
+  value: .claude/skills/apihub-issue-analysis
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-autonomous-agent
+  active_owner: ./agent-packages/apihub-autonomous-agent
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/apihub-issue-analysis/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-autonomous-agent
+  active_owner: ./agent-packages/apihub-autonomous-agent
+  content_hash: sha256:0eca430b89676a4f48bf8979e1b916056f6053b5d9d39fb64b2e00aa32cf5f2e
+- kind: project-relative
+  target: claude
   value: .claude/skills/apihub-landing-refresh
   runtime: null
   scope: project
@@ -2037,6 +2129,24 @@ deployments:
   content_hash: sha256:0cc291e22389c01339665dd0d8dba910a224036beba31b7c6fa1e1f6d98595c2
 - kind: project-relative
   target: claude
+  value: .claude/skills/apihub-pr-review
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-autonomous-agent
+  active_owner: ./agent-packages/apihub-autonomous-agent
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/apihub-pr-review/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-autonomous-agent
+  active_owner: ./agent-packages/apihub-autonomous-agent
+  content_hash: sha256:a46cb17206a3716da1b73ecd6d9c533f1087657dad7e45e2ecbaf5ba8e595aa3
+- kind: project-relative
+  target: claude
   value: .claude/skills/apihub-react-coding
   runtime: null
   scope: project
@@ -2053,6 +2163,24 @@ deployments:
   - ./frontend/ui/agent-packages/apihub-react-coding
   active_owner: ./frontend/ui/agent-packages/apihub-react-coding
   content_hash: sha256:c122b40c6302b430e63c1cc7cddc25d0d0bfcbda919c653eca4b4d718eea3252
+- kind: project-relative
+  target: claude
+  value: .claude/skills/apihub-task
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-autonomous-agent
+  active_owner: ./agent-packages/apihub-autonomous-agent
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/apihub-task/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-autonomous-agent
+  active_owner: ./agent-packages/apihub-autonomous-agent
+  content_hash: sha256:aed20fe58346b12100a798fd8e4add7a890cf586070fda249ddd32c00f2b830d
 - kind: project-relative
   target: claude
   value: .claude/skills/apihub-typescript-coding
@@ -3378,6 +3506,42 @@ deployments:
   content_hash: sha256:469341ad3a1bcd37fc61f78c329e7c95a9b826fb4de8d017bdd4e04750993d8f
 - kind: project-relative
   target: cursor
+  value: .cursor/skills/apihub-bug-fix
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-autonomous-agent
+  active_owner: ./agent-packages/apihub-autonomous-agent
+  content_hash: null
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/apihub-bug-fix/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-autonomous-agent
+  active_owner: ./agent-packages/apihub-autonomous-agent
+  content_hash: sha256:1ca79fce52fe3b9998a27112f10271cd9304f7d0c35c48b86af8acd5daabd158
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/apihub-ci-failure-triage
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-autonomous-agent
+  active_owner: ./agent-packages/apihub-autonomous-agent
+  content_hash: null
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/apihub-ci-failure-triage/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-autonomous-agent
+  active_owner: ./agent-packages/apihub-autonomous-agent
+  content_hash: sha256:fef1d06c0bea2fed152146771b288d91469a2526a12255babf3e6a84d0ace13c
+- kind: project-relative
+  target: cursor
   value: .cursor/skills/apihub-deployment-authoring
   runtime: null
   scope: project
@@ -3459,6 +3623,24 @@ deployments:
   content_hash: sha256:0a4914ca688a5cadfa0c8d046c1bcf620a4f78835ac3217b1e5c0fdeb31f65f2
 - kind: project-relative
   target: cursor
+  value: .cursor/skills/apihub-issue-analysis
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-autonomous-agent
+  active_owner: ./agent-packages/apihub-autonomous-agent
+  content_hash: null
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/apihub-issue-analysis/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-autonomous-agent
+  active_owner: ./agent-packages/apihub-autonomous-agent
+  content_hash: sha256:0eca430b89676a4f48bf8979e1b916056f6053b5d9d39fb64b2e00aa32cf5f2e
+- kind: project-relative
+  target: cursor
   value: .cursor/skills/apihub-landing-refresh
   runtime: null
   scope: project
@@ -3495,6 +3677,24 @@ deployments:
   content_hash: sha256:0cc291e22389c01339665dd0d8dba910a224036beba31b7c6fa1e1f6d98595c2
 - kind: project-relative
   target: cursor
+  value: .cursor/skills/apihub-pr-review
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-autonomous-agent
+  active_owner: ./agent-packages/apihub-autonomous-agent
+  content_hash: null
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/apihub-pr-review/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-autonomous-agent
+  active_owner: ./agent-packages/apihub-autonomous-agent
+  content_hash: sha256:a46cb17206a3716da1b73ecd6d9c533f1087657dad7e45e2ecbaf5ba8e595aa3
+- kind: project-relative
+  target: cursor
   value: .cursor/skills/apihub-react-coding
   runtime: null
   scope: project
@@ -3511,6 +3711,24 @@ deployments:
   - ./frontend/ui/agent-packages/apihub-react-coding
   active_owner: ./frontend/ui/agent-packages/apihub-react-coding
   content_hash: sha256:c122b40c6302b430e63c1cc7cddc25d0d0bfcbda919c653eca4b4d718eea3252
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/apihub-task
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-autonomous-agent
+  active_owner: ./agent-packages/apihub-autonomous-agent
+  content_hash: null
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/apihub-task/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-autonomous-agent
+  active_owner: ./agent-packages/apihub-autonomous-agent
+  content_hash: sha256:aed20fe58346b12100a798fd8e4add7a890cf586070fda249ddd32c00f2b830d
 - kind: project-relative
   target: cursor
   value: .cursor/skills/apihub-typescript-coding
