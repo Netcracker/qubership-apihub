@@ -11,6 +11,11 @@ site.
 - [Monorepo migration record](./monorepo-migration/README.md): the final account of the move from separate
   repositories to this monorepo, with the [plan](./monorepo-migration/plan.md) and the
   [decisions](./monorepo-migration/decisions.md).
+- [Autonomous agent](./autonomous-agent/design.md): the design of the AI agent that reviews pull requests and
+  implements bugs and tasks in GitHub Actions, with its [implementation plan](./autonomous-agent/plan.md), the
+  [spike results](./autonomous-agent/spike.md), the [handover](./autonomous-agent/handover.md), the
+  [architecture](./autonomous-agent/architecture.md) of what was built, and its
+  [technical details](./autonomous-agent/technical-details.md).
 
 ## Why it is not on the site
 

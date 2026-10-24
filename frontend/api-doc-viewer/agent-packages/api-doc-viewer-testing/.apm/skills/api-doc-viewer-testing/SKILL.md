@@ -1,4 +1,5 @@
 ---
+name: api-doc-viewer-testing
 description: Write api-doc-viewer screenshot integration tests against Storybook stories and sample fixtures. Use when adding or changing stories, samples, IT test files, or screenshot baselines in frontend/api-doc-viewer.
 ---
 

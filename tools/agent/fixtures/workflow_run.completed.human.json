@@ -1,0 +1,36 @@
+{
+  "action": "completed",
+  "workflow_run": {
+    "id": 910,
+    "name": "Lint: Code base",
+    "event": "pull_request",
+    "status": "completed",
+    "conclusion": "success",
+    "run_attempt": 1,
+    "head_branch": "feature/search-box",
+    "head_sha": "9b8a7c6d5e4f30211203948576a1b2c3d4e5f607",
+    "html_url": "https://github.com/Netcracker/qubership-apihub/actions/runs/910",
+    "actor": {
+      "login": "alice",
+      "type": "User"
+    },
+    "head_repository": {
+      "full_name": "Netcracker/qubership-apihub",
+      "fork": false
+    },
+    "repository": {
+      "full_name": "Netcracker/qubership-apihub"
+    },
+    "pull_requests": []
+  },
+  "workflow": {
+    "name": "Lint: Code base"
+  },
+  "repository": {
+    "full_name": "Netcracker/qubership-apihub"
+  },
+  "sender": {
+    "login": "alice",
+    "type": "User"
+  }
+}
