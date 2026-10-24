@@ -44,6 +44,7 @@ it refuses or fails.
 | `/agent cost` | issue or pull request | The agent shows the cost table. |
 | `/agent stop` | issue or pull request of the agent | The agent stops its work on the issue. |
 | `/agent retry [notes]` | issue or pull request of the agent | A new attempt with a fresh budget; the notes are guidance. |
+| `/agent rerun [notes]` | issue or pull request of the agent | Reruns the failed CI checks; no new attempt, no model. |
 | `/agent <question>` | issue, or pull request of a person | The assistant answers in a comment and changes nothing. |
 | `/agent <text>` | pull request of the agent | A change request: one attempt on the branch of the pull request. |
 | a comment without `/agent` | issue or pull request of the agent that waits for a person | The comment answers the hand-off. |
@@ -95,6 +96,22 @@ and when the issue is closed or is not a `Bug` or a `Task`.
   as guidance. It needs a branch that an earlier attempt pushed and an open pull request.
 - **A fresh budget.** Each of these attempts gives the CI loop a fresh budget of `AGENT_MAX_ATTEMPTS`. The attempt
   itself does not count against it.
+
+### Rerun CI
+
+`/agent rerun` is the way on when CI is red for a reason the change does not cause, such as a flaky test or an outage.
+It checks the CI of the pull request of the agent again: it reruns the failed checks of the head commit and puts the
+issue back to waiting for CI, so the [CI gate](#the-ci-loop) decides when they end. It is not an attempt and calls no
+model, so it costs nothing and does not touch the attempt budget. Any text after the command is ignored.
+
+- It removes `agent:needs-human` from the issue and the pull request, and it records the request in the state.
+- It replies and refuses, with a confused face, when there is no pull request of the agent to rerun CI for, when an
+  attempt is running (a record older than two hours counts as dead), when the work is stopped, when the pull request
+  is not open, or when the only failed checks are commit statuses or checks of another app, which the agent cannot
+  rerun.
+- When the checks still run, it only hands the decision back to the gate. When they are all green, it takes the gate's
+  green path: the pull request leaves draft, gets its labels, and the issue is `completed`.
+- It runs in its own job `rerun`, which holds `AGENT_PAT` only to take a green pull request out of draft.
 
 ### Reviews with change requests
 
@@ -210,18 +227,41 @@ forks.
 4. **Red:** the gate reads the logs of the failed jobs, cuts them to the error blocks, and builds a CI report of at
    most 12,000 characters. Its failure signature is a hash of the failed check names and the first normalized error
    lines, so timestamps, run IDs, and durations do not change it.
-5. **One free rerun.** When every failed check is an E2E job, the gate reruns the failed jobs once per pull request and
-   decides on the result of the rerun. E2E jobs flake more than the rest.
+5. **One free rerun per commit.** When every failed check is an E2E job, the gate reruns the failed jobs once for that
+   head commit and decides on the result of the rerun. A new commit gets its own free rerun. E2E jobs flake more than
+   the rest. The verdict check `ci-ok` of `ci.yml` always fails together with E2E, so it does not count: a red result
+   of E2E jobs and `ci-ok` is still an E2E-only failure. The gate reruns the workflow runs of all failed checks,
+   including the run of `ci-ok`, which depends on the E2E job.
 6. **The stop rule.** The agent stops, sets `agent:needs-human` on the issue and the pull request, and hands over when
    the failure has the same signature as the attempt before (the same fix twice would only spend money), or when
    `AGENT_MAX_ATTEMPTS` attempts are spent (default 3, counting the first attempt and every CI fix). The state comment
-   lists every attempt with its result, signature, and notes, and shows the current failure. A new comment mentions
-   the person who asked and names one thing to look at. Comment `/agent retry` with guidance to let the agent try
-   again, with a fresh budget (see [Retry, answers, and change requests](#retry-answers-and-change-requests)).
+   lists every attempt with its result, signature, and notes, and shows the current failure. See
+   [What a hand-off says](#what-a-hand-off-says).
 7. **Otherwise the next attempt starts.** The `implement` job runs a CI fix: it continues the branch of the pull
    request, reads the CI report, adds one new commit, and pushes without force. The local checks, the self-review, the
    diff size limit, and the workflow-file block apply to the whole pull request, measured from its branch point. A
    green result moves the issue back to waiting for CI; anything else is a draft and `agent:needs-human`.
+8. **The CI fix may find that the change is not the cause.** When the CI report shows a flaky or infrastructure
+   failure, or a test that the change does not touch, the implementer answers `unrelated` with its evidence and
+   changes no code. The agent then pushes nothing: it reruns the failed checks, puts the issue back to waiting for CI,
+   removes `agent:needs-human` from the issue, and comments on the pull request, without a mention, which checks
+   failed and why it thinks the change does not cause it. The attempt counts toward `AGENT_MAX_ATTEMPTS`, so a flake
+   loop ends, and a rerun that fails the same way ends by the stop rule. When no failed check can be rerun, the
+   agent hands over as for a blocked attempt.
+
+The log excerpts in the CI report leave out the echo of the step scripts that Actions prints before each step, so a
+command such as `echo "::error::..."` in a workflow does not look like a failure.
+
+### What a hand-off says
+
+When the agent hands over on a red CI, after the stop rule or after a blocked CI fix, the comment lists, in this order:
+the failed checks (at most five, then "and N more"), the first error line of the first failed check, and the reason of
+the agent. It then offers two ways on:
+
+- If the failure is not caused by the change, comment `/agent rerun`: it reruns the failed checks, with no new attempt
+  and no model cost.
+- To try another fix, comment `/agent retry` with guidance (see
+  [Retry, answers, and change requests](#retry-answers-and-change-requests)).
 
 In dry-run the gate writes its decision to the job summary and starts no attempt.
 

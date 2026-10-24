@@ -390,16 +390,23 @@ function commitMessage({ type, scope, title, number, runUrl }) {
 }
 
 /**
- * The semantic rules of the implementer's answer that the schema cannot express: a `bug-fix` is a `fix`, and a
- * blocked answer says why. Throws `ContractError`; returns the answer otherwise.
+ * The semantic rules of the implementer's answer that the schema cannot express: a `bug-fix` is a `fix`, a blocked
+ * or unrelated answer says why, and `unrelated` (the failure is not caused by the change) is for a CI fix only. Throws
+ * `ContractError`; returns the answer otherwise.
+ *
+ * @param {'initial'|'human'|'ci-fix'|'review'} [kind] why the attempt runs
  */
-function checkImplementation(output, playbook) {
+function checkImplementation(output, playbook, kind) {
   const problems = []
   if (playbook === 'bug-fix' && output.commitType !== 'fix') {
     problems.push(`commitType: a bug-fix must use 'fix', got '${output.commitType}'`)
   }
   if (output.status === 'blocked' && output.blockedReason.trim() === '') {
     problems.push('blockedReason: a blocked answer needs a reason')
+  }
+  if (output.status === 'unrelated') {
+    if (kind !== 'ci-fix') problems.push("status: 'unrelated' is allowed only on a CI fix")
+    if (output.blockedReason.trim() === '') problems.push('blockedReason: an unrelated answer needs a reason')
   }
   if (problems.length > 0) {
     throw new ContractError(`The implementation is inconsistent: ${problems.join('; ')}`, problems)
@@ -493,6 +500,11 @@ const NOTES_HEADING = {
   review: 'The review that asks for changes',
 }
 
+/** What the implementer of a CI fix does when the change did not cause the failure. */
+const UNRELATED_HINT = 'If the CI report shows that this change did not cause the failure (a flaky or infrastructure ' +
+  'failure, a test the change does not touch), change no code and answer with `"status": "unrelated"`. Put the ' +
+  'evidence in `blockedReason`: which checks failed and why the change cannot cause them.'
+
 const MAX_THREADS = 30
 const MAX_THREAD_COMMENT = 4000
 
@@ -567,6 +579,8 @@ function renderImplementInput({
       ? [
         'The pull request of this issue is open and its CI is red. Fix the failure that the CI report names, on top ' +
           'of the branch you have checked out, and nothing else.',
+        '',
+        UNRELATED_HINT,
         '',
       ]
       : []),
@@ -720,15 +734,52 @@ function prBody({ number, issueTitle, implementation, checks, review, rounds, ac
 const costLine = (runUrl, totalUsd, hint) =>
   `<sub>[Run](${runUrl}) · AI cost of this issue so far: $${usage.formatUsd(totalUsd)} · ${hint}</sub>`
 
+/** The two ways on after a hand-off on a red CI: a rerun of the failed checks, or another fix. */
+const WAY_RERUN = 'If the failure is not caused by the change (a flaky test, an outage), comment `/agent rerun`: it ' +
+  'reruns the failed checks, with no new attempt and no model cost.'
+const WAY_RETRY = 'To try another fix, comment `/agent retry` with guidance.'
+
+/** The lines that close a hand-off on a red CI. */
+const waysOnLines = () => ['What you can do:', '', `- ${WAY_RERUN}`, `- ${WAY_RETRY}`]
+
+/**
+ * The bullets of a hand-off on a red CI that the agent knows only from the CI report in the state: the failed checks,
+ * the first error line, and why the agent stopped. Without a readable report only the reason is left.
+ */
+function ciHandOffLines(report, reason) {
+  // ci-gate.js requires this module, so it is loaded when it is needed.
+  const { reportFacts, failureLines } = require('./ci-gate')
+  const facts = reportFacts(report)
+  const lines = facts.failed.length > 0 ? failureLines(facts.failed, facts.errorsByJob, facts.total) : []
+  return [...lines, `Why I stopped: ${inline(reason)}`].map((line) => `- ${line}`)
+}
+
 /**
  * The human part of the state comment after the run.
  *
  * @param {object} input
- * @param {'pr-opened'|'draft'|'blocked'|'error'} input.result
+ * @param {'pr-opened'|'draft'|'blocked'|'unrelated'|'error'} input.result
+ * @param {string} [input.ciReport] the CI report of a CI fix, for the hand-off texts
+ * @param {{ names: string, counted: number, max: number }} [input.rerun] for `unrelated`: the failed checks (as
+ *   `checkNames` writes them), the attempts counted so far, and the limit
  */
 function renderOutcome({ result, number, pr, branch, attempt, implementation, checks, review, reason, message, runUrl,
-  totalUsd, kind }) {
+  totalUsd, kind, ciReport, rerun }) {
   const retry = 'comment `/agent implement` with guidance to try again'
+  if (result === 'unrelated') {
+    return [
+      '### AI implementation: CI failed, but not because of this change',
+      '',
+      `Failed on pull request #${pr}: ${rerun.names}.`,
+      '',
+      `Why I think the change does not cause it: ${inline(reason)}`,
+      '',
+      `I reran the failed checks (attempt ${rerun.counted} of ${rerun.max}). No code changed; the CI gate decides ` +
+        'again.',
+      '',
+      costLine(runUrl, totalUsd, 'the result of the rerun decides'),
+    ].join('\n')
+  }
   if (result === 'error') {
     return [
       '### AI implementation failed',
@@ -736,6 +787,20 @@ function renderOutcome({ result, number, pr, branch, attempt, implementation, ch
       `The implementation did not finish: ${inline(message)}`,
       '',
       costLine(runUrl, totalUsd, retry),
+    ].join('\n')
+  }
+  if (result === 'blocked' && kind === 'ci-fix') {
+    return [
+      '### AI implementation needs a person: CI is red',
+      '',
+      `I stopped without changing pull request #${pr}.`,
+      '',
+      ...ciHandOffLines(ciReport, reason),
+      '',
+      ...(attempt.notes ? ['**What I tried**', '', inline(attempt.notes), ''] : []),
+      ...waysOnLines(),
+      '',
+      costLine(runUrl, totalUsd, 'comment `/agent rerun` to rerun the checks, or `/agent retry` with guidance'),
     ].join('\n')
   }
   if (result === 'blocked') {
@@ -789,7 +854,7 @@ function renderOutcome({ result, number, pr, branch, attempt, implementation, ch
 }
 
 /** The short comment that notifies the person who asked. State comment edits notify nobody. */
-function actorComment({ result, actor, pr, reason, message, kind }) {
+function actorComment({ result, actor, pr, reason, message, kind, ciReport }) {
   switch (result) {
     case 'draft':
       if (kind === 'ci-fix') {
@@ -798,7 +863,14 @@ function actorComment({ result, actor, pr, reason, message, kind }) {
       }
       return `@${actor}, I opened draft pull request ${pr ? `#${pr}` : '(dry run)'}, but it is not green yet. ` +
         'The AI implementation comment on this issue says what is open.'
+    case 'unrelated':
+      return `@${actor}, CI failed on #${pr}, but I think this change does not cause it: ${inline(reason)} ` +
+        'I reran the failed checks; the CI gate decides again.'
     case 'blocked':
+      if (kind === 'ci-fix') {
+        return [`@${actor}, I could not fix CI on #${pr}.`, '', ...ciHandOffLines(ciReport, reason), '',
+          ...waysOnLines()].join('\n')
+      }
       return `@${actor}, I could not implement this issue: ${inline(reason)} The AI implementation comment on this ` +
         'issue has the details.'
     case 'error':
@@ -1102,7 +1174,7 @@ function markedPersonState(st, { runUrl, actor, kind, pr, fresh, threads, at }) 
   delete base.stoppedBy
   delete base.stoppedAt
   if (fresh) {
-    for (const key of ['branch', 'pr', 'ciGate', 'lastCiReport', 'e2eReruns']) delete base[key]
+    for (const key of ['branch', 'pr', 'ciGate', 'lastCiReport', 'e2eRerun', 'e2eReruns']) delete base[key]
     base.retired = [...(st.retired ?? []), { pr: st.pr, branch: st.branch ?? null }]
   }
   return {
@@ -1331,8 +1403,8 @@ async function runChecks({ exec, base }) {
  * The rounds: implement, commit locally, run the local checks, and self-review. They repeat while the checks are red or
  * the self-review asks for changes, up to `maxReviewRounds`. An attempt is always one commit: later rounds amend it.
  *
- * @returns {Promise<{ status: 'done'|'blocked', rounds: number, reason?: string, implementation: object|null,
- *   checks: object|null, review: object|null, head: string|null }>}
+ * @returns {Promise<{ status: 'done'|'blocked'|'unrelated', rounds: number, reason?: string,
+ *   implementation: object|null, checks: object|null, review: object|null, head: string|null }>}
  */
 async function implementRounds(ctx) {
   const { config, exec, out, costs, runUrl, deps, issue, number, base } = ctx
@@ -1378,7 +1450,7 @@ async function implementRounds(ctx) {
         message: `Implement issue #${number}. Your input is the attached implement-input.md.`,
         inputFile,
         schema: 'implementation',
-        check: (o) => checkImplementation(o, ctx.playbook),
+        check: (o) => checkImplementation(o, ctx.playbook, ctx.kind),
       })
       log.info('implementer answer', { status: output.status, commitType: output.commitType, title: output.title })
       return output
@@ -1387,6 +1459,16 @@ async function implementRounds(ctx) {
       log.info('decision', { stage: 'implement', action: 'blocked', reason: implementation.blockedReason })
       const reason = implementation.blockedReason
       return { status: 'blocked', rounds: round, reason, implementation, checks, review, head }
+    }
+    if (implementation.status === 'unrelated') {
+      // The failure is not caused by the change: commit nothing, keep nothing of the working tree, run no checks.
+      const reason = implementation.blockedReason
+      log.info('decision', { stage: 'implement', action: 'unrelated: no commit, no checks, no self-review', reason })
+      await log.group(`${tag}: discard the working tree`, async () => {
+        await git(exec, ['checkout', '--', '.'])
+        await git(exec, ['clean', '-fd'])
+      })
+      return { status: 'unrelated', rounds: round, reason, implementation, checks, review, head }
     }
 
     const dirty = await log.group(`${tag}: commit locally`, async () => {
@@ -1640,6 +1722,22 @@ async function workOnIssue(ctx) {
   const base = branchInfo.base
   const info = { ...branchInfo, head: rounds.head }
 
+  if (rounds.status === 'unrelated') {
+    // Nothing to push: `publish` reruns the failed checks instead.
+    log.info('decision', { stage: 'publish', result: 'unrelated', reason: rounds.reason })
+    return {
+      result: 'unrelated',
+      blockedReason: rounds.reason,
+      rounds: rounds.rounds,
+      implementation: rounds.implementation,
+      checks: null,
+      review: null,
+      branchInfo: info,
+      diff: null,
+      bundle: false,
+    }
+  }
+
   let blockedReason = rounds.status === 'blocked' ? rounds.reason : null
   if (!blockedReason) {
     await log.group('Diff size', async () => {
@@ -1748,7 +1846,7 @@ function readOutcome(out) {
 }
 
 const COMMIT_ID = /^[0-9a-f]{40,64}$/
-const RESULTS = new Set(['blocked', 'pr-opened', 'draft'])
+const RESULTS = new Set(['blocked', 'pr-opened', 'draft', 'unrelated'])
 
 /**
  * True when `branch` is the branch `publish` derives. A fresh start, which the state shows by no recorded branch, may
@@ -1766,12 +1864,20 @@ function branchAllowed(branch, expected, mayBeVersioned) {
  * the branch it derives itself (the state, else the issue), and the texts it builds from the outcome must have the
  * shape the contracts promise.
  *
+ * `unrelated` is a result of a CI fix only, and has no code: no bundle, no checks, no self-review. `kind` is the kind
+ * the publish job derived itself; without it the outcome's own claim is used.
+ *
  * @returns {string[]} the problems; empty when the outcome may be published
  */
-function outcomeProblems({ outcome, st, issue, number }) {
+function outcomeProblems({ outcome, st, issue, number, kind = outcome.kind }) {
   const problems = []
   const hasCode = outcome.result === 'pr-opened' || outcome.result === 'draft'
   if (outcome.result !== null && !RESULTS.has(outcome.result)) problems.push(`result '${outcome.result}' is unknown`)
+  if (outcome.result === 'unrelated') {
+    if (kind !== 'ci-fix') problems.push("result 'unrelated' is allowed only on a CI fix")
+    if (String(outcome.blockedReason ?? '').trim() === '') problems.push('an unrelated result needs a reason')
+    if (outcome.bundle) problems.push('an unrelated result carries no code')
+  }
   if (outcome.stopped !== null && outcome.stopped !== 'refuse-needs-info' && outcome.stopped !== 'refuse-unsuitable') {
     problems.push(`stopped '${outcome.stopped}' is unknown`)
   }
@@ -1867,8 +1973,9 @@ async function publish(env = process.env, deps = {}) {
   let content = 'confused'
   try {
     const result = await publishAttempt(env, { ...deps, gh })
-    // Only a pull request that the local checks and the self-review passed ends well; the CI gate decides the rest.
-    if (result.result === 'pr-opened') content = 'rocket'
+    // Only a pull request that the local checks and the self-review passed, or a rerun of checks that the change did
+    // not break, ends well; the CI gate decides the rest.
+    if (result.result === 'pr-opened' || result.result === 'unrelated') content = 'rocket'
     return result
   } finally {
     await react({ gh, commentId: commentIdOf(env.AGENT_COMMENT_ID), content, dryRun: config.dryRun })
@@ -1909,7 +2016,7 @@ async function publishAttempt(env, deps) {
       costs: recoverCosts(out, config, runUrl),
     })
   }
-  const problems = outcomeProblems({ outcome, st, issue, number })
+  const problems = outcomeProblems({ outcome, st, issue, number, kind })
   if (problems.length > 0) {
     // Keep the costs that have the right shape; drop the rest of an outcome that cannot be trusted.
     const costs = (outcome.costs ?? []).filter((c) => typeof c?.usd === 'number')
@@ -2030,6 +2137,28 @@ async function publishStop(ctx) {
   return { stopped: outcome.stopped }
 }
 
+/** The helpers of ci-gate.js that the texts of a CI fix need; loaded when used, see `rerunnableChecks`. */
+const ciChecks = () => require('./ci-gate')
+
+/**
+ * The failed checks of the head commit of the pull request that a rerun can start: the Actions jobs among them, and
+ * the workflow runs they belong to. For a CI fix that found the failure `unrelated` to the change. Throws when the
+ * pull request is not open.
+ *
+ * @returns {Promise<{ sha: string, failed: object[], targets: number[] }>}
+ */
+async function rerunnableChecks({ gh, pr }) {
+  // ci-gate.js requires this module, so it is loaded when it is needed.
+  const { relevantChecks, failedChecks, rerunTargets } = ciChecks()
+  const pull = await gh.getPull(pr)
+  if (pull.state !== 'open') throw new Error(`Pull request #${pr} is not open, so there is nothing to rerun`)
+  const sha = pull.head.sha
+  const checkRuns = relevantChecks(await gh.listCheckRuns(sha))
+  const { statuses } = await gh.getCombinedStatus(sha)
+  const failed = failedChecks(checkRuns, statuses).filter((f) => f.runId !== null)
+  return { sha, failed, targets: rerunTargets(failed, null) }
+}
+
 /** The state, the push and the pull request, the labels, and the comments. */
 async function finish(ctx) {
   const { config, env, deps, gh, exec, issue, costs, failure, progress, attemptNo, kind, actor, runUrl, number,
@@ -2046,7 +2175,7 @@ async function finish(ctx) {
   let pr = progress.pr
   // Every pull request opens as a draft: only the CI gate marks one ready, after real CI is green on GitHub.
   const published = { title: null, body: null, draft: true, toDraft: false }
-  const hasCode = !failure && outcome.result !== null && outcome.result !== 'blocked'
+  const hasCode = !failure && (outcome.result === 'pr-opened' || outcome.result === 'draft')
 
   async function publishCode() {
     if (!hasCode) return
@@ -2112,15 +2241,45 @@ async function finish(ctx) {
     })
   }
 
+  // A CI fix that found the failure `unrelated` pushes nothing: it reruns the failed checks of the pull request.
+  let rerun = null
+  async function rerunUnrelated() {
+    if (failure || outcome.result !== 'unrelated') return
+    rerun = await log.group('Find the failed checks', () => rerunnableChecks({ gh, pr: progress.pr }))
+    log.info('failed checks', {
+      sha: rerun.sha,
+      failed: rerun.failed.map((f) => f.name).join(', ') || 'none',
+      runs: rerun.targets.join(',') || 'none',
+    })
+    if (rerun.targets.length === 0 || config.dryRun) return
+    await log.group('Rerun the failed checks', async () => {
+      for (const id of rerun.targets) await gh.rerunFailedJobs(id)
+      log.info('rerun requested', { runs: rerun.targets.join(',') })
+    })
+  }
+
   let publishFailure = null
   let replyError = null
   try {
     await publishCode()
+    await rerunUnrelated()
   } catch (err) {
     publishFailure = err
     log.error(`Publishing failed: ${err.message}`)
   }
   const error = failure ?? publishFailure
+  // With nothing to rerun, an unrelated verdict is a hand-off like a blocked answer.
+  if (!error && outcome.result === 'unrelated' && (rerun?.targets.length ?? 0) === 0) {
+    const why = outcome.blockedReason.replace(/[.\s]+$/, '')
+    outcome = {
+      ...outcome,
+      result: 'blocked',
+      blockedReason: `${why}. I think this change does not cause the failure, but I found no failed check that I ` +
+        'can rerun.',
+    }
+    log.info('decision', { stage: 'publish', action: 'unrelated, but nothing to rerun: hand over as blocked' })
+  }
+  const ciReport = st.lastCiReport ?? ''
 
   const human = await log.group('Prepare the state', async () => {
     const totalUsd = sum(st.costs, 'usd')
@@ -2138,15 +2297,18 @@ async function finish(ctx) {
       checks: outcome.checks,
       review: outcome.review,
       notes,
-      reason: result === 'blocked' ? reason : undefined,
+      reason: result === 'blocked' || result === 'unrelated' ? reason : undefined,
       actor,
       at,
     })
-    const { implementing: _running, ...rest } = st
+    const { implementing: _running, ciGate: decidedBefore, ...rest } = st
     const green = !error && outcome.result === 'pr-opened'
+    const rerunning = !error && outcome.result === 'unrelated'
     st = {
       ...rest,
-      phase: green ? 'waiting-ci' : 'needs-human',
+      // The gate decided this commit before; after a rerun it decides the commit again.
+      ...(rerunning || !decidedBefore ? {} : { ciGate: decidedBefore }),
+      phase: green || rerunning ? 'waiting-ci' : 'needs-human',
       // The branch is the state's only once it exists on the remote; a dry run or a blocked attempt leaves it alone.
       ...(progress.pushed ? { branch: progress.branch } : {}),
       ...(pr ? { pr } : {}),
@@ -2170,18 +2332,31 @@ async function finish(ctx) {
       runUrl,
       totalUsd,
       kind,
+      ciReport,
+      rerun: result === 'unrelated'
+        ? {
+          names: ciChecks().checkNames(rerun.failed),
+          counted: ciChecks().countedAttempts(st.attempts, st.budgetFrom),
+          max: config.limits.maxAttempts,
+        }
+        : undefined,
     })
     fs.writeFileSync(path.join(out, 'summary.md'), text)
     return text
   })
 
   const result = error ? 'error' : outcome.result
-  const labelChanges = result === 'pr-opened'
+  const labelChanges = result === 'pr-opened' || result === 'unrelated'
     ? { add: [], remove: [LABEL_NEEDS_HUMAN] }
     : { add: [LABEL_NEEDS_HUMAN], remove: [] }
-  const note = result === 'pr-opened'
+  const note = result === 'pr-opened' || result === 'unrelated'
     ? null
-    : actorComment({ result, actor, pr, reason: outcome.blockedReason, message: error?.message, kind })
+    : actorComment({ result, actor, pr, reason: outcome.blockedReason, message: error?.message, kind, ciReport })
+  // Without a mention: this comment and the state comment tell the pull request why its CI runs again.
+  const prNote = result === 'unrelated'
+    ? `CI failed in ${ciChecks().checkNames(rerun.failed)}, which this change does not cause: ` +
+      `${inline(outcome.blockedReason).replace(/[.\s]+$/, '')}. I reran the failed checks; the CI gate decides again.`
+    : null
 
   if (config.dryRun) {
     await log.group('Write the dry-run report', async () => {
@@ -2202,6 +2377,10 @@ async function finish(ctx) {
       }
       report.push('### Labels', '', `- add: ${labelChanges.add.join(', ') || 'none'}`,
         `- remove: ${labelChanges.remove.join(', ') || 'none'}`, '')
+      if (result === 'unrelated') {
+        report.push(`Would rerun the failed jobs of workflow run(s) ${rerun.targets.join(', ')}.`, '')
+        report.push(quoted(`### Comment that would go on pull request #${pr}`, prNote))
+      }
       if (note) report.push(quoted('### Comment that would notify the person who asked', note))
       report.push('### State', '', fence(JSON.stringify(st, null, 2), 'json'), '')
       if (hasCode && outcome.diff) {
@@ -2236,6 +2415,12 @@ async function finish(ctx) {
       await log.group('Tell the person who asked', async () => {
         await gh.createIssueComment(number, note)
         log.info('comment posted', { mention: actor, result })
+      })
+    }
+    if (prNote) {
+      await log.group('Tell the pull request', async () => {
+        await gh.createIssueComment(pr, prNote)
+        log.info('comment posted', { on: `#${pr}`, result })
       })
     }
     if (kind === 'review' && progress.pushed && !error && threads.length > 0) {
@@ -2315,6 +2500,8 @@ module.exports = {
   writeOutputs,
   quoted,
   costLine,
+  waysOnLines,
+  BUSY_MS,
   loadIssue,
   needsAnalysis,
   preflightDecision,

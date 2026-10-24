@@ -124,6 +124,51 @@ test('/agent retry on a pull request without the agent is skipped', () => {
 })
 
 // ---------------------------------------------------------------------------------------------------------------
+// rerun
+// ---------------------------------------------------------------------------------------------------------------
+
+test('/agent rerun on an issue goes to the rerun job with the issue number', () => {
+  const result = route('issue_comment', comment('issue_comment.help', '/agent rerun a flaky test'), write)
+  assert.deepEqual(result, {
+    action: 'rerun',
+    number: 200,
+    reason: '/agent rerun',
+    command: { name: 'rerun', force: false, notes: 'a flaky test' },
+  })
+  assert.equal(formatOutputs(result).includes('pr='), false)
+})
+
+test('/agent rerun on a pull request of the agent names its issue and the pull request', () => {
+  const payload = comment('issue_comment.chat.agent-pr', '/agent rerun')
+  const result = route('issue_comment', payload, { ...write, agentFacts: agentFacts() })
+  assert.deepEqual(result, {
+    action: 'rerun',
+    number: 200,
+    pr: 70,
+    reason: '/agent rerun',
+    command: { name: 'rerun', force: false, notes: '' },
+  })
+  assert.match(formatOutputs(result), /^action=rerun\nnumber=200\n.*\npr=70\n$/s)
+})
+
+test('/agent rerun on a pull request of a person, or one the issue state does not confirm, is skipped', () => {
+  const person = route('issue_comment', onPersonPull('/agent rerun'), write)
+  assert.deepEqual([person.action, person.reason], ['skip', 'rerun works on an issue or a pull request of the agent'])
+  const pull = comment('issue_comment.chat.agent-pr', '/agent rerun')
+  for (const facts of [agentFacts(issueState({ pr: 99 })), { issueNumber: 200, issueState: null }, null]) {
+    assert.equal(route('issue_comment', pull, { ...write, agentFacts: facts }).action, 'skip')
+  }
+})
+
+test('/agent rerun without write access is skipped', () => {
+  for (const actorPermission of ['read', 'triage', 'none']) {
+    const result = route('issue_comment', comment('issue_comment.help', '/agent rerun'), { actorPermission })
+    assert.equal(result.action, 'skip', actorPermission)
+    assert.match(result.reason, /carol.*no write access/)
+  }
+})
+
+// ---------------------------------------------------------------------------------------------------------------
 // free text
 // ---------------------------------------------------------------------------------------------------------------
 
@@ -164,7 +209,7 @@ test('a marker that the issue state does not confirm is a pull request of a pers
 // ---------------------------------------------------------------------------------------------------------------
 
 test('every command needs an allowed commenter with write access who is not a bot', () => {
-  const bodies = ['/agent', '/agent cost', '/agent stop', '/agent retry', '/agent a question']
+  const bodies = ['/agent', '/agent cost', '/agent stop', '/agent retry', '/agent rerun', '/agent a question']
   for (const body of bodies) {
     const payload = comment('issue_comment.help', body)
     for (const actorPermission of ['read', 'triage', 'none']) {
@@ -184,7 +229,7 @@ test('every command needs an allowed commenter with write access who is not a bo
 })
 
 test('a pull request of Dependabot stays ignored by every new command', () => {
-  for (const body of ['/agent', '/agent cost', '/agent stop', '/agent retry', '/agent a question']) {
+  for (const body of ['/agent', '/agent cost', '/agent stop', '/agent retry', '/agent rerun', '/agent a question']) {
     const payload = onPersonPull(body)
     payload.issue.user.login = 'dependabot[bot]'
     const result = route('issue_comment', payload, { ...write, agentFacts: agentFacts() })
@@ -368,7 +413,7 @@ test('needsActorPermission and needsAgentFacts: a change request, a command, and
 
   assert.equal(needsAgentFacts('pull_request_review', fixture('pull_request_review.changes_requested')), true)
   assert.equal(needsAgentFacts('pull_request_review', approved), false)
-  for (const body of ['/agent retry', '/agent stop', '/agent a question', 'no command']) {
+  for (const body of ['/agent retry', '/agent rerun', '/agent stop', '/agent a question', 'no command']) {
     assert.equal(needsAgentFacts('issue_comment', comment('issue_comment.chat.agent-pr', body)), true, body)
   }
   for (const body of ['/agent cost', '/agent', '/agent review', '/agent implement']) {

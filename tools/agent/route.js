@@ -6,7 +6,8 @@
  * state of the pull request or issue, and returns
  * `{ action, number, reason, command?, trigger?, pr?, headSha?, kind? }`. The actions are `review` (phase 1), `analyze`
  * (phase 2), `implement` (phase 3; phase 5 adds `kind`: `human` or `review`), `ci-gate` (phase 4), `chat` (phase 5),
- * `stop` (a `/agent stop` command; the `stop` job has no concurrency group), and `skip`. Later phases add actions by
+ * `stop` (a `/agent stop` command; the `stop` job has no concurrency group), `rerun` (a `/agent rerun` command: the
+ * failed CI checks of the agent's pull request run again, no model), and `skip`. Later phases add actions by
  * registering more rules in EVENT_HANDLERS and COMMAND_HANDLERS; `decide` itself does not change.
  *
  * The CLI (`node tools/agent/route.js`) gathers the facts that need the GitHub API, but only when the event calls
@@ -15,7 +16,8 @@
  * of a pull request of the agent that got a comment or a review, and, for a finished workflow run, the open pull
  * request of its branch with the state of the issue it names. It then writes `action`, `number`, `reason`, and
  * `command` (JSON, or empty) to `$GITHUB_OUTPUT`, plus `trigger` for an `analyze` decision, `pr` and `head_sha` for a
- * `ci-gate` decision, `pr` and `kind` for an `implement` decision that a person asked for, and one line to
+ * `ci-gate` decision, `pr` and `kind` for an `implement` decision that a person asked for, `pr` for a `rerun`
+ * decision on a pull request, and one line to
  * `$GITHUB_STEP_SUMMARY`. It logs the event, the gathered facts,
  * and the decision.
  *
@@ -166,6 +168,14 @@ const COMMAND_HANDLERS = {
     const agent = agentPullOf(agentFacts, number)
     if (!agent) return skip(number, 'retry works on issues and on pull requests of the agent')
     return humanAttempt({ number: agent.issueNumber, pr: number, reason: '/agent retry', command })
+  },
+  // Rerun the failed checks of the pull request of the agent and let the CI gate decide; no attempt, no model.
+  rerun: ({ number, isPull, command, issue, agentFacts }) => {
+    if (!isPull) return { action: 'rerun', number, reason: '/agent rerun', command }
+    if (isDependabot(issue?.user?.login)) return skip(number, NO_DEPENDABOT)
+    const agent = agentPullOf(agentFacts, number)
+    if (!agent) return skip(number, 'rerun works on an issue or a pull request of the agent')
+    return { action: 'rerun', number: agent.issueNumber, pr: number, reason: '/agent rerun', command }
   },
   stop: ({ number, isPull, command, issue, agentFacts }) => {
     if (isPull && isDependabot(issue?.user?.login)) return skip(number, NO_DEPENDABOT)
@@ -459,7 +469,7 @@ function needsIssueState(eventName, payload) {
 }
 
 /** The commands that read the issue state of an agent pull request. */
-const AGENT_PULL_COMMANDS = new Set(['retry', 'stop', 'chat'])
+const AGENT_PULL_COMMANDS = new Set(['retry', 'rerun', 'stop', 'chat'])
 
 /**
  * True when `decide` needs the issue that a pull request of the agent names, with its state: a change request in a

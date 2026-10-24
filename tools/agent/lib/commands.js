@@ -8,7 +8,7 @@
  * Input: the comment body. Output: `null` for an ordinary comment, else `{ name, force, notes }`.
  */
 
-const KNOWN = new Set(['review', 'analyze', 'implement', 'fix', 'retry', 'stop', 'cost', 'help'])
+const KNOWN = new Set(['review', 'analyze', 'implement', 'fix', 'retry', 'rerun', 'stop', 'cost', 'help'])
 
 /** `/agent` must be followed by whitespace or the end of the line, so `/agentx` is not a command. */
 const PREFIX = /^\/agent(?=\s|$)/i

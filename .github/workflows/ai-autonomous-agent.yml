@@ -6,8 +6,8 @@
 # access), AGENT_MODEL_* and AGENT_MAX_* (defaults in tools/agent/lib/config.js).
 # Secrets: OPENAI_API_KEY (only the `Work` step of the `implement` job and the `Answer` step of the `chat` job have it);
 # AGENT_PAT (pushes the branch and opens or updates the pull request in the `publish` job, which opens it as a draft,
-# takes the pull request out of draft in `ci-gate`, and gives the Git identity in the `implement` preflight; no step
-# that runs model or repository code has it).
+# takes the pull request out of draft in `ci-gate` and in `rerun`, and gives the Git identity in the `implement`
+# preflight; no step that runs model or repository code has it).
 name: 'AI Autonomous: Agent'
 
 on:
@@ -287,6 +287,60 @@ jobs:
           retention-days: 30
           if-no-files-found: ignore
 
+  # `/agent rerun`: rerun the failed checks of the pull request of the agent and let the CI gate decide again. It is
+  # no attempt and runs no model and no repository code, so it shares the concurrency group of the issue and holds
+  # `AGENT_PAT` only to take a green pull request out of draft, as `ci-gate` does.
+  rerun:
+    needs: route
+    if: needs.route.outputs.action == 'rerun'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # One agent job per issue at a time, so two writes of its state comment do not race.
+    concurrency:
+      group: ai-autonomous-${{ needs.route.outputs.number }}
+      cancel-in-progress: false
+    # `actions: write` reruns the failed jobs; the checks and statuses are read to decide.
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+      actions: write
+      checks: read
+      statuses: read
+    env:
+      AGENT_NUMBER: ${{ needs.route.outputs.number }}
+      AGENT_PR: ${{ needs.route.outputs.pr }}
+      AGENT_COMMAND: ${{ needs.route.outputs.command }}
+      AGENT_ACTOR: ${{ github.event.comment.user.login }}
+      AGENT_COMMENT_ID: ${{ github.event.comment.id }}
+      AGENT_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          sparse-checkout: tools/agent
+          persist-credentials: false
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      # AGENT_PAT only takes a green pull request out of draft, as in `ci-gate`.
+      - name: Rerun
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          AGENT_PAT: ${{ secrets.AGENT_PAT }}
+          AGENT_OUT: ${{ runner.temp }}/agent
+        run: node tools/agent/ci-gate.js rerun
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ai-autonomous-rerun-${{ needs.route.outputs.number }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/agent
+          retention-days: 30
+          if-no-files-found: ignore
+
   # Flow C: implement a Bug or Task issue up to a pull request, or fix a red CI run of that pull request. One attempt
   # per run. The attempt is split in two jobs, because the tests of the change run code that the model wrote, as the
   # same user as the scripts: any token in the environment of a step could be read by that code. This job holds no
@@ -404,10 +458,15 @@ jobs:
     concurrency:
       group: ai-autonomous-${{ needs.route.outputs.number }}
       cancel-in-progress: false
+    # `actions: write` reruns the failed checks when a CI fix finds that the change did not cause the failure; the
+    # checks and statuses are read to find them.
     permissions:
       contents: read
       issues: write
       pull-requests: write
+      actions: write
+      checks: read
+      statuses: read
     env:
       AGENT_NUMBER: ${{ needs.route.outputs.number }}
       AGENT_COMMAND: ${{ needs.route.outputs.command }}

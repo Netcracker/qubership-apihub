@@ -188,7 +188,7 @@ const SCHEMAS = {
   }),
   // Output of the implementer (Flow C). Which fields must be filled for which status is checked in implement.js.
   implementation: strictObject({
-    status: { type: 'string', enum: ['done', 'blocked'] },
+    status: { type: 'string', enum: ['done', 'blocked', 'unrelated'] },
     summary: { type: 'string', minLength: 1 },
     commitType: {
       type: 'string',
@@ -199,7 +199,7 @@ const SCHEMAS = {
     title: { type: 'string', minLength: 1, maxLength: 72 },
     verification: str,
     notes: str,
-    // Only when blocked; empty otherwise.
+    // The explanation for `blocked` and for `unrelated`; empty otherwise.
     blockedReason: str,
   }),
   // Output of the self-reviewer (Flow C).

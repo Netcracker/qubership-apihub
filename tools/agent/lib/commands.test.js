@@ -24,10 +24,19 @@ test('/agent alone is help', () => {
 })
 
 test('known names are recognized in any case', () => {
-  for (const name of ['review', 'analyze', 'implement', 'retry', 'stop', 'cost', 'help']) {
+  for (const name of ['review', 'analyze', 'implement', 'retry', 'rerun', 'stop', 'cost', 'help']) {
     assert.deepEqual(parseCommand(`/agent ${name}`), { name, force: false, notes: '' })
     assert.deepEqual(parseCommand(`/Agent ${name.toUpperCase()}`), { name, force: false, notes: '' })
   }
+})
+
+test('rerun takes notes like the other commands', () => {
+  assert.deepEqual(parseCommand('/agent rerun'), { name: 'rerun', force: false, notes: '' })
+  assert.deepEqual(parseCommand('/agent rerun the E2E job flaked\nsecond line'), {
+    name: 'rerun',
+    force: false,
+    notes: 'the E2E job flaked\nsecond line',
+  })
 })
 
 test('fix is normalized to implement', () => {

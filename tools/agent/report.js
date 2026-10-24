@@ -40,7 +40,7 @@ const LABEL_REVIEWED = 'agent:pr-reviewed'
 
 /** The flows and attempt results that the report lists in this order; anything else follows, sorted by name. */
 const FLOWS = ['review', 'analyze', 'implement', 'ci-fix', 'chat']
-const RESULTS = ['pr-opened', 'draft', 'blocked', 'ci-green', 'ci-red', 'error', 'stopped']
+const RESULTS = ['pr-opened', 'draft', 'blocked', 'unrelated', 'ci-green', 'ci-red', 'error', 'stopped']
 
 const labelNames = (item) => (item?.labels ?? []).map((l) => (typeof l === 'string' ? l : l?.name))
 const hasLabel = (item, name) => labelNames(item).includes(name)

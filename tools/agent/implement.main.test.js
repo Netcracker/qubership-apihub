@@ -10,6 +10,7 @@ const log = require('./lib/log')
 const state = require('./lib/state')
 const { nextState } = require('./analyze')
 const { preflight, writeContext, work, publish, main, recoverCosts } = require('./implement')
+const { buildReport } = require('./ci-gate')
 const { noreplyEmail } = require('./implement')
 const {
   humanDecision,
@@ -90,7 +91,10 @@ function eventsFor(answer) {
 }
 
 /** A GitHub client that keeps the comments, like the real one, and records every write. */
-function fakeGh({ issueOverrides = {}, labels = [], comments = [], pulls = {}, threads = [] } = {}) {
+function fakeGh({
+  issueOverrides = {}, labels = [], comments = [], pulls = {}, threads = [], checkRuns = [], statuses = [],
+  rerunFails = false,
+} = {}) {
   const calls = []
   const store = comments.map((c) => ({ ...c }))
   let nextId = 1000
@@ -115,6 +119,12 @@ function fakeGh({ issueOverrides = {}, labels = [], comments = [], pulls = {}, t
     listReviewThreads: async (n) => (calls.push(['listReviewThreads', n]), threads.map((t) => ({ ...t }))),
     replyToReviewComment: async (n, id, body) => calls.push(['replyToReviewComment', n, id, body]),
     addReaction: async (id, content) => calls.push(['addReaction', id, content]),
+    listCheckRuns: async () => checkRuns.map((r) => ({ ...r })),
+    getCombinedStatus: async () => ({ state: 'failure', statuses }),
+    rerunFailedJobs: async (id) => {
+      if (rerunFails) throw new Error('Workflow is still running')
+      calls.push(['rerunFailedJobs', id])
+    },
   }
 }
 
@@ -1599,7 +1609,8 @@ test('preflight of a change request: it needs the open pull request of the state
 
 test('preflight of a retry after the pull request closed: a fresh start retires branch and pull request', async () => {
   const st = handOffState({
-    ciGate: { sha: 'a', decided: true }, lastCiReport: 'report', e2eReruns: 1, stoppedBy: 'dave',
+    ciGate: { sha: 'a', decided: true }, lastCiReport: 'report', e2eReruns: 1, e2eRerun: { sha: 'a', count: 1 },
+    stoppedBy: 'dave',
   })
   const options = personOptions('human', { st, pulls: openPull({ state: 'closed' }) })
   await withContext(options, async (ctx) => {
@@ -1609,7 +1620,9 @@ test('preflight of a retry after the pull request closed: a fresh start retires 
     assert.equal(saved.branch, undefined)
     assert.equal(saved.pr, undefined)
     assert.deepEqual(saved.retired, [{ pr: 70, branch: BRANCH }])
-    for (const key of ['ciGate', 'lastCiReport', 'e2eReruns', 'stoppedBy']) assert.equal(saved[key], undefined, key)
+    for (const key of ['ciGate', 'lastCiReport', 'e2eReruns', 'e2eRerun', 'stoppedBy']) {
+      assert.equal(saved[key], undefined, key)
+    }
     assert.equal(saved.budgetFrom, 1)
     assert.equal(JSON.parse(fs.readFileSync(path.join(ctx.env.AGENT_OUT, 'context.json'), 'utf8')).fresh, true)
   })
@@ -2004,4 +2017,214 @@ test('publish never marks a draft ready, but turns a ready pull request into a d
       assert.ok(ctx.patGh.edits.every((e) => e[0] !== 'markPullReady'))
     })
   }
+})
+
+// ------------------------------------------------------------------------------------------------ unrelated verdict
+
+const unrelated = {
+  ...done,
+  status: 'unrelated',
+  summary: 'No change: the E2E requests timed out.',
+  notes: '',
+  blockedReason: 'Two smoke requests answered 401 after a timeout. This change touches no auth code.',
+}
+const HEAD_SHA = sha(901)
+const e2eCheck = (extra = {}) => ({
+  id: 31,
+  name: 'E2E tests (kind)',
+  status: 'completed',
+  conclusion: 'failure',
+  html_url: 'https://github.com/o/r/actions/runs/902/job/31',
+  details_url: 'https://github.com/o/r/actions/runs/902/job/31',
+  app: { slug: 'github-actions' },
+  ...extra,
+})
+const greenCheck = () => ({ ...e2eCheck({ id: 32, name: 'build', conclusion: 'success' }) })
+const unrelatedOptions = (ghOptions = {}, extra = {}) => ({
+  gh: fakeGh({
+    comments: [botComment(5, ciFixState({ ciGate: { sha: HEAD_SHA, decided: true, at: 't', run: 'r' } }))],
+    pulls: openPull({ head: { sha: HEAD_SHA } }),
+    labels: ['agent:needs-human'],
+    checkRuns: [e2eCheck(), greenCheck()],
+    ...ghOptions,
+  }),
+  env: { AGENT_KIND: 'ci-fix', AGENT_ACTOR: '' },
+  exec: fakeExec({ remote: REMOTE }),
+  agents: { implementer: [unrelated] },
+  ...extra,
+})
+
+test('run, CI fix, unrelated: no commit, no checks, no bundle, no push; the failed checks run again', async () => {
+  await withContext(unrelatedOptions(), async (ctx) => {
+    const result = await run(ctx.env, ctx.deps)
+    assert.deepEqual(result, { result: 'unrelated', pr: 70, branch: BRANCH })
+
+    // The working tree is cleaned, nothing is committed, tested, reviewed, bundled, or pushed.
+    const git = ctx.exec.calls.filter((c) => c.file === 'git').map((c) => c.args)
+    assert.deepEqual(git.filter((a) => a[0] === 'checkout').at(-1), ['checkout', '--', '.'])
+    assert.deepEqual(git.filter((a) => a[0] === 'clean'), [['clean', '-fd']])
+    assert.deepEqual(ctx.exec.git('commit'), [])
+    assert.deepEqual(ctx.exec.git('bundle'), [])
+    assert.deepEqual(ctx.exec.git('push'), [])
+    assert.equal(ctx.exec.calls.filter((c) => c.file === 'pnpm').length, 0)
+    assert.deepEqual(ctx.runAgent.runs.map((r) => r.agent), ['implementer'])
+    assert.ok(!ctx.outFiles().includes('branch.bundle'))
+    const outcome = JSON.parse(fs.readFileSync(path.join(ctx.env.AGENT_OUT, 'outcome.json'), 'utf8'))
+    assert.deepEqual(
+      [outcome.result, outcome.blockedReason, outcome.bundle, outcome.checks, outcome.review],
+      ['unrelated', unrelated.blockedReason, false, null, null],
+    )
+    assert.deepEqual(ctx.patGh.calls, [])
+    assert.deepEqual(ctx.patGh.edits, [])
+
+    // The input tells the implementer about the verdict.
+    assert.match(ctx.runAgent.runs[0].inputText, /answer with `"status": "unrelated"`/)
+
+    // The failed E2E job is rerun; the state waits for CI and the gate decides again.
+    assert.deepEqual(ctx.gh.calls.map((c) => c.slice(0, 2)), [
+      ['rerunFailedJobs', 902],
+      ['updateIssueComment', 5],
+      ['removeLabel', 200],
+      ['createIssueComment', 70],
+    ])
+    assert.deepEqual(ctx.gh.calls[2], ['removeLabel', 200, 'agent:needs-human'])
+    const saved = savedState(ctx.gh)
+    assert.deepEqual([saved.phase, saved.ciGate, saved.implementing, saved.pr], ['waiting-ci', undefined, undefined, 70])
+    assert.equal(saved.attempts.length, 2)
+    assert.deepEqual(
+      { ...saved.attempts[1], at: 'x', notes: 'x' },
+      {
+        n: 2, kind: 'ci-fix', actor: 'dave', run: RUN, result: 'unrelated', rounds: 1, checks: null, selfReview: null,
+        reason: unrelated.blockedReason, notes: 'x', at: 'x',
+      },
+    )
+    assert.equal(saved.attempts[0].signature, 'abc123def456')
+    const body = ctx.gh.store[0].body
+    assert.match(body, /### AI implementation: CI failed, but not because of this change/)
+    assert.match(body, /Failed on pull request #70: `E2E tests \(kind\)`\./)
+    assert.match(body, /Why I think the change does not cause it: Two smoke requests answered 401/)
+    assert.match(body, /I reran the failed checks \(attempt 2 of 3\)\. No code changed; the CI gate decides again\./)
+    // A short comment on the pull request, without a mention.
+    assert.equal(
+      ctx.gh.calls[3][2],
+      'CI failed in `E2E tests (kind)`, which this change does not cause: Two smoke requests answered 401 after a ' +
+        'timeout. This change touches no auth code. I reran the failed checks; the CI gate decides again.',
+    )
+    assert.ok(!/@\w/.test(ctx.gh.calls[3][2]))
+  })
+})
+
+test('publish, unrelated: the reaction is a rocket, and a failed rerun call is an error with needs-human', async () => {
+  const options = unrelatedOptions({}, { env: { AGENT_KIND: 'ci-fix', AGENT_ACTOR: '', AGENT_COMMENT_ID: '555' } })
+  await withContext(options, async (ctx) => {
+    await run(ctx.env, ctx.deps)
+    assert.deepEqual(ctx.gh.calls.filter((c) => c[0] === 'addReaction'), [['addReaction', 555, 'rocket']])
+  })
+  const failing = unrelatedOptions({ rerunFails: true })
+  await withContext(failing, async (ctx) => {
+    await assert.rejects(run(ctx.env, ctx.deps), /Workflow is still running/)
+    const saved = savedState(ctx.gh)
+    assert.deepEqual([saved.phase, saved.attempts[1].result], ['needs-human', 'error'])
+  })
+})
+
+test('publish, unrelated, nothing to rerun: handed over as blocked with the ways on', async () => {
+  const report = buildReport({
+    pr: 70,
+    headSha: HEAD_SHA,
+    failed: [{ name: 'license/cla', conclusion: 'failure', url: null }],
+    errorsByJob: { 'license/cla': ['Error: CLA not signed'] },
+    signature: 'abc',
+  })
+  const gh = {
+    comments: [botComment(5, ciFixState({ lastCiReport: report }))],
+    checkRuns: [greenCheck()],
+    statuses: [{ context: 'license/cla', state: 'failure' }],
+  }
+  await withContext(unrelatedOptions(gh), async (ctx) => {
+    const result = await run(ctx.env, ctx.deps)
+    assert.equal(result.result, 'blocked')
+    assert.ok(!ctx.gh.calls.some((c) => c[0] === 'rerunFailedJobs'))
+    const saved = savedState(ctx.gh)
+    assert.deepEqual([saved.phase, saved.attempts[1].result], ['needs-human', 'blocked'])
+    assert.match(saved.attempts[1].reason, /^Two smoke requests answered 401 after a timeout\. This change touches no auth code\. I think this change does not cause the failure, but I found no failed check that I can rerun\.$/)
+    assert.deepEqual(ctx.gh.calls.map((c) => c.slice(0, 2)), [
+      ['updateIssueComment', 5],
+      ['addLabels', 200],
+      ['createIssueComment', 200],
+    ])
+    const body = ctx.gh.store[0].body
+    assert.match(body, /### AI implementation needs a person: CI is red\n\nI stopped without changing pull request #70\./)
+    assert.match(body, /\n- Failed checks: `license\/cla`\.\n- First error, in `license\/cla`: `Error: CLA not signed`\.\n- Why I stopped: /)
+    assert.match(body, /What you can do:\n\n- If the failure is not caused by the change .*`\/agent rerun`.*\n- To try another fix/)
+    const note = ctx.gh.calls[2][2]
+    assert.match(note, /^@dave, I could not fix CI on #70\.\n\n- Failed checks: `license\/cla`\.\n/)
+    assert.match(note, /\n- To try another fix, comment `\/agent retry` with guidance\.$/)
+  })
+})
+
+test('run: an unrelated answer on an attempt that is no CI fix breaks the contract', async () => {
+  const agents = { implementer: [unrelated, unrelated, unrelated] }
+  await withContext({ ...readyToRun(), agents }, async (ctx) => {
+    await assert.rejects(run(ctx.env, ctx.deps), /'unrelated' is allowed only on a CI fix/)
+    const saved = savedState(ctx.gh)
+    assert.deepEqual([saved.phase, saved.attempts[0].result], ['needs-human', 'error'])
+    assert.ok(!ctx.gh.calls.some((c) => c[0] === 'rerunFailedJobs'))
+    assert.deepEqual(ctx.exec.git('push'), [])
+  })
+})
+
+test('publish does not trust an unrelated result of the work step on an attempt that is no CI fix', async () => {
+  const agents = { implementer: [done], 'self-reviewer': [approve] }
+  await withContext({ ...readyToRun(), agents }, async (ctx) => {
+    await writeContext(ctx.env, ctx.deps)
+    const { AGENT_PAT: _pat, GITHUB_TOKEN: _token, ...workEnv } = ctx.env
+    await work(workEnv, { exec: ctx.exec, runAgent: ctx.runAgent })
+    const file = path.join(ctx.env.AGENT_OUT, 'outcome.json')
+    const outcome = JSON.parse(fs.readFileSync(file, 'utf8'))
+    fs.writeFileSync(file, JSON.stringify({ ...outcome, result: 'unrelated', blockedReason: 'Not mine.', bundle: false }))
+    await assert.rejects(publish(ctx.env, ctx.deps), /result 'unrelated' is allowed only on a CI fix/)
+    assert.ok(!ctx.gh.calls.some((c) => c[0] === 'rerunFailedJobs'))
+  })
+})
+
+test('publish, unrelated, in dry-run: nothing is rerun or written; the summary says what would happen', async () => {
+  const options = unrelatedOptions({}, { env: { AGENT_KIND: 'ci-fix', AGENT_ACTOR: '', AGENT_DRY_RUN: 'true' } })
+  await withContext(options, async (ctx) => {
+    const result = await run(ctx.env, ctx.deps)
+    assert.equal(result.result, 'unrelated')
+    assert.deepEqual(ctx.gh.calls, [])
+    assert.match(ctx.summary(), /Would rerun the failed jobs of workflow run\(s\) 902\./)
+    assert.match(ctx.summary(), /> CI failed in `E2E tests \(kind\)`, which this change does not cause/)
+    assert.match(ctx.summary(), /"phase": "waiting-ci"/)
+  })
+})
+
+test('run, CI fix, blocked: the hand-off names the failed checks, the first error, the reason, and the two ways on', async () => {
+  const report = buildReport({
+    pr: 70,
+    headSha: HEAD_SHA,
+    failed: [{ name: 'build', conclusion: 'failure', url: null }],
+    errorsByJob: { build: ['FAIL packages/x/a.test.ts', 'Error: expected 1 to be 2'] },
+    signature: 'abc',
+  })
+  const options = ciFixOptions({ gh: fakeGh({ comments: [botComment(5, ciFixState({ lastCiReport: report }))] }) })
+  await withContext({ ...options, agents: { implementer: [blocked] } }, async (ctx) => {
+    const result = await run(ctx.env, ctx.deps)
+    assert.equal(result.result, 'blocked')
+    const note = ctx.gh.calls.find((c) => c[0] === 'createIssueComment')[2]
+    assert.equal(note, [
+      '@dave, I could not fix CI on #70.',
+      '',
+      '- Failed checks: `build`.',
+      '- First error, in `build`: `FAIL packages/x/a.test.ts`.',
+      '- Why I stopped: The issue does not say which API to change.',
+      '',
+      'What you can do:',
+      '',
+      '- If the failure is not caused by the change (a flaky test, an outage), comment `/agent rerun`: it reruns the ' +
+        'failed checks, with no new attempt and no model cost.',
+      '- To try another fix, comment `/agent retry` with guidance.',
+    ].join('\n'))
+  })
 })

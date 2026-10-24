@@ -33,6 +33,7 @@ const {
   pushBranch,
   resolveIdentity,
 } = require('./implement')
+const { buildReport } = require('./ci-gate')
 
 log.setWriter(() => {})
 
@@ -321,6 +322,26 @@ test('checkImplementation: a bug-fix is a fix, and a blocked answer says why', (
     () => checkImplementation({ ...noReason, commitType: 'feat' }, 'bug-fix'),
     (e) => e.problems.length === 2,
   )
+})
+
+test('checkImplementation: unrelated needs a reason and is allowed only on a CI fix', () => {
+  const unrelated = { ...implementation, status: 'unrelated', blockedReason: 'Flaky E2E request.' }
+  assert.equal(checkImplementation(unrelated, 'bug-fix', 'ci-fix').status, 'unrelated')
+  assert.equal(checkImplementation(unrelated, 'task', 'ci-fix').status, 'unrelated')
+  for (const kind of ['initial', 'human', 'review', undefined]) {
+    assert.throws(() => checkImplementation(unrelated, 'task', kind), (e) => {
+      assert.ok(e instanceof ContractError)
+      assert.deepEqual(e.problems, ["status: 'unrelated' is allowed only on a CI fix"])
+      return true
+    })
+  }
+  assert.throws(
+    () => checkImplementation({ ...unrelated, blockedReason: ' ' }, 'task', 'ci-fix'),
+    /an unrelated answer needs a reason/,
+  )
+  // A blocked answer stays possible on every kind.
+  const blocked = { ...implementation, status: 'blocked', blockedReason: 'Unclear.' }
+  assert.equal(checkImplementation(blocked, 'task', 'ci-fix').status, 'blocked')
 })
 
 test('checkSelfReview: changes need findings, and an approval cannot carry a blocker', () => {
@@ -953,6 +974,69 @@ test('renderOutcome and actorComment: a CI fix talks about the fix, not about a 
   )
 })
 
+test('renderOutcome and actorComment: unrelated says what failed, why, and that the checks ran again', () => {
+  const text = renderOutcome({
+    result: 'unrelated',
+    number: 200,
+    pr: 70,
+    runUrl: 'u',
+    totalUsd: 1,
+    kind: 'ci-fix',
+    reason: 'Two requests timed out.\nThe change touches no auth.',
+    rerun: { names: '`E2E tests (kind)`, `ci-ok`', counted: 2, max: 3 },
+  })
+  assert.match(text, /^### AI implementation: CI failed, but not because of this change\n\nFailed on pull request #70: /)
+  assert.match(text, /Failed on pull request #70: `E2E tests \(kind\)`, `ci-ok`\./)
+  assert.match(text, /Why I think the change does not cause it: Two requests timed out\. The change touches no auth\./)
+  assert.match(text, /I reran the failed checks \(attempt 2 of 3\)\. No code changed; the CI gate decides again\./)
+  assert.match(text, /the result of the rerun decides<\/sub>$/)
+  assert.equal(
+    actorComment({ result: 'unrelated', actor: 'dave', pr: 70, reason: 'Flaky.\n@bob knows.', kind: 'ci-fix' }),
+    '@dave, CI failed on #70, but I think this change does not cause it: Flaky. @​bob knows. I reran the failed ' +
+      'checks; the CI gate decides again.',
+  )
+})
+
+test('renderOutcome and actorComment: a blocked CI fix lists the failed checks, the error, the reason, the two ways', () => {
+  const report = buildReport({
+    pr: 70,
+    headSha: 'a'.repeat(40),
+    failed: ['b', 'a', 'c', 'd', 'e', 'f', 'g'].sort().map((name) => ({ name, conclusion: 'failure', url: null })),
+    errorsByJob: { c: ['Error: boom'] },
+    signature: 'abc',
+  })
+  const common = {
+    number: 200, pr: 70, runUrl: 'u', totalUsd: 1, kind: 'ci-fix', attempt: { rounds: 1, notes: 'Tried it.' },
+    reason: 'I cannot reach the service.', ciReport: report,
+  }
+  const text = renderOutcome({ ...common, result: 'blocked' })
+  assert.match(text, /^### AI implementation needs a person: CI is red\n\nI stopped without changing pull request #70\.\n/)
+  assert.match(text, /\n- Failed checks: `a`, `b`, `c`, `d`, `e`, and 2 more\.\n- First error, in `c`: `Error: boom`\.\n/)
+  assert.match(text, /\n- Why I stopped: I cannot reach the service\.\n\n\*\*What I tried\*\*\n\nTried it\.\n\nWhat you can do:\n\n/)
+  assert.match(text, /\n- To try another fix, comment `\/agent retry` with guidance\.\n\n<sub>/)
+  const note = actorComment({ result: 'blocked', actor: 'dave', ...common })
+  assert.match(note, /^@dave, I could not fix CI on #70\.\n\n- Failed checks: /)
+  assert.match(note, /comment `\/agent rerun`: it reruns the failed checks, with no new attempt and no model cost\.\n/)
+  // Without a readable report only the reason is left; an initial attempt keeps the old texts.
+  const bare = actorComment({ result: 'blocked', actor: 'dave', ...common, ciReport: '' })
+  assert.match(bare, /\n\n- Why I stopped: I cannot reach the service\.\n\nWhat you can do:/)
+  assert.match(
+    actorComment({ result: 'blocked', actor: 'dave', reason: 'Unclear.', kind: 'initial' }),
+    /^@dave, I could not implement this issue: Unclear\./,
+  )
+})
+
+test('renderImplementInput: a CI fix may answer unrelated; the other kinds are not told', () => {
+  const base = {
+    playbook: 'bug-fix', issue, comments: [], plan: null, analysis: null, notes: '', attempts: [], round: 1,
+    previous: null,
+  }
+  const text = renderImplementInput({ ...base, kind: 'ci-fix', ciReport: '# CI report' })
+  assert.match(text, /did not cause the failure \(a flaky or infrastructure failure, a test the change does not touch\)/)
+  assert.match(text, /answer with `"status": "unrelated"`\. Put the evidence in `blockedReason`/)
+  assert.doesNotMatch(renderImplementInput({ ...base, kind: 'initial' }), /unrelated/)
+})
+
 test('attemptRecord: the actor is kept when given', () => {
   const base = { n: 2, kind: 'ci-fix', run: 'r', result: 'pr-opened', rounds: 1, notes: 'n', at: 't' }
   assert.equal(attemptRecord(base).actor, undefined)
@@ -1014,6 +1098,33 @@ test('outcomeProblems: a good outcome has none; a foreign branch, bad ids, and m
     branchInfo: { branch: 'bugfix/200-changelog-is-empty-for-a', head: null },
   }
   assert.deepEqual(outcomeProblems({ ...input, outcome: blocked }), [])
+  // An unrelated outcome is a CI fix without code: no bundle, no checks, no head commit.
+  const unrelated = {
+    kind: 'ci-fix',
+    result: 'unrelated',
+    blockedReason: 'Flaky E2E request.',
+    stopped: null,
+    implementation,
+    review: null,
+    checks: null,
+    bundle: false,
+    branchInfo: { branch: 'bugfix/200-changelog-is-empty-for-a', head: null },
+  }
+  assert.deepEqual(outcomeProblems({ ...input, outcome: unrelated }), [])
+  assert.deepEqual(outcomeProblems({ ...input, outcome: unrelated, kind: 'ci-fix' }), [])
+  assert.deepEqual(outcomeProblems({ ...input, outcome: { ...unrelated, kind: 'initial' } }), [
+    "result 'unrelated' is allowed only on a CI fix",
+  ])
+  // The kind that publish derives itself wins over what the outcome claims.
+  assert.deepEqual(outcomeProblems({ ...input, outcome: unrelated, kind: 'human' }), [
+    "result 'unrelated' is allowed only on a CI fix",
+  ])
+  assert.deepEqual(outcomeProblems({ ...input, outcome: { ...unrelated, blockedReason: ' ' } }), [
+    'an unrelated result needs a reason',
+  ])
+  assert.deepEqual(outcomeProblems({ ...input, outcome: { ...unrelated, bundle: true } }), [
+    'an unrelated result carries no code',
+  ])
   const analysis = { verdict: 'suitable', reason: 'r', questions: [], plan, issueUpdatedAt: 't' }
   assert.deepEqual(outcomeProblems({ ...input, outcome: { result: null, stopped: null, analysis } }), [])
   assert.ok(has({ result: null, stopped: null, analysis: { ...analysis, verdict: 'great' } }, /analysis: /))

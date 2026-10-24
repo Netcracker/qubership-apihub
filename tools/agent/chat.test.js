@@ -40,18 +40,20 @@ const record = (extra = {}) => ({
 test('helpReply lists the commands of the place and mentions the asker', () => {
   const issue = helpReply({ asker: 'carol', place: 'issue' })
   assert.match(issue, /^@carol, these commands work here:/)
-  for (const command of ['/agent analyze', '/agent implement [notes]', '/agent retry [notes]', '/agent stop',
-    '/agent cost', '/agent help', '/agent <question>']) {
+  for (const command of ['/agent analyze', '/agent implement [notes]', '/agent retry [notes]', '/agent rerun',
+    '/agent stop', '/agent cost', '/agent help', '/agent <question>']) {
     assert.ok(issue.includes(`\`${command}\``), command)
   }
   assert.ok(!issue.includes('/agent review'))
 
   const pull = helpReply({ asker: 'carol', place: 'pull' })
   assert.ok(pull.includes('`/agent review [notes]`') && pull.includes('`/agent <question>`'))
-  assert.ok(!pull.includes('/agent stop') && !pull.includes('/agent retry'))
+  assert.ok(!pull.includes('/agent stop') && !pull.includes('/agent retry') && !pull.includes('/agent rerun'))
 
   const agentPull = helpReply({ asker: 'carol', place: 'agentPull' })
   assert.ok(agentPull.includes('`/agent <text>`') && agentPull.includes('`/agent stop`'))
+  const rerunRow = "| `/agent rerun` | Rerun the failed CI checks of the agent's pull request; no new attempt, no model. |"
+  assert.ok(agentPull.includes(rerunRow) && issue.includes(rerunRow))
   assert.match(agentPull, /A review with change requests/)
   assert.ok(!agentPull.includes('/agent <question>'))
 })

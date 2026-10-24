@@ -136,7 +136,7 @@ test('attemptCounts counts the attempts of the period by result and counts force
   const attempt = (result, at = '2026-10-20T10:00:00Z') => ({ n: 1, result, at })
   const result = attemptCounts(
     [
-      { attempts: [attempt('ci-green'), attempt('pr-opened'), attempt('error')] },
+      { attempts: [attempt('ci-green'), attempt('pr-opened'), attempt('error'), attempt('unrelated')] },
       { forced: true, attempts: [attempt('draft'), attempt('ci-red'), attempt('ci-red', '2026-09-01T00:00:00Z')] },
       {
         forced: false,
@@ -147,12 +147,13 @@ test('attemptCounts counts the attempts of the period by result and counts force
     ],
     period,
   )
-  assert.equal(result.total, 9)
+  assert.equal(result.total, 10)
   assert.equal(result.forced, 2)
   assert.deepEqual(result.results, [
     { result: 'pr-opened', count: 1 },
     { result: 'draft', count: 1 },
     { result: 'blocked', count: 1 },
+    { result: 'unrelated', count: 1 },
     { result: 'ci-green', count: 1 },
     { result: 'ci-red', count: 1 },
     { result: 'error', count: 1 },

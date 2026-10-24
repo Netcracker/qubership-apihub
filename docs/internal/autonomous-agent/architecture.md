@@ -40,7 +40,7 @@ flowchart LR
   end
   subgraph agentwf["AI Autonomous: Agent"]
     ROUTE["route"]
-    JOBS["review, analyze, implement, publish,<br/>ci-gate, chat, stop"]
+    JOBS["review, analyze, implement, publish,<br/>ci-gate, rerun, chat, stop"]
   end
   LEVELS["AI Autonomous: Execution levels<br/>levels"]
   REPORT["AI Autonomous: Weekly report<br/>report"]
@@ -99,6 +99,7 @@ flowchart TB
   ROUTE -- "action = chat" --> CHAT["<b>chat</b><br/>chat.js<br/>GITHUB_TOKEN, OpenAI key<br/>assistant, read-only"]
   ROUTE -- "action = stop" --> STOP["<b>stop</b><br/>chat.js<br/>GITHUB_TOKEN, actions: write<br/>no model"]
   ROUTE -- "action = ci-gate" --> GATE["<b>ci-gate</b><br/>ci-gate.js<br/>GITHUB_TOKEN, AGENT_PAT<br/>no model, no repository code"]
+  ROUTE -- "action = rerun" --> RERUN["<b>rerun</b><br/>ci-gate.js rerun<br/>GITHUB_TOKEN, AGENT_PAT, actions: write<br/>no model, no repository code"]
   ROUTE -- "action = implement" --> IMPL
   GATE -- "next = implement" --> IMPL
   subgraph IMPL["<b>implement</b> (the work job)"]
@@ -116,7 +117,8 @@ flowchart TB
 | `analyze` | `action == 'analyze'` | `GITHUB_TOKEN`, `OPENAI_API_KEY` | `analyst` | the default branch | `ai-autonomous-<number>` |
 | `ci-gate` | `action == 'ci-gate'` | `GITHUB_TOKEN`, `AGENT_PAT` | none | `tools/agent` | `ai-autonomous-<number>` |
 | `implement` | `action == 'implement'` or `ci-gate` says `next == 'implement'` | preflight: `GITHUB_TOKEN`, `AGENT_PAT`; work: `OPENAI_API_KEY` only | `analyst`, `implementer`, `self-reviewer` | the default branch, then the agent's branch | `ai-autonomous-<number>` |
-| `publish` | `implement` set `proceed == 'true'` | `GITHUB_TOKEN`, `AGENT_PAT` | none | `tools/agent` of the default branch | `ai-autonomous-<number>` |
+| `rerun` | `action == 'rerun'` | `GITHUB_TOKEN` (`actions: write`, `checks: read`, `statuses: read`), `AGENT_PAT` | none | `tools/agent` of the default branch | `ai-autonomous-<number>` |
+| `publish` | `implement` set `proceed == 'true'` | `GITHUB_TOKEN` (`actions: write`, `checks: read`, `statuses: read`), `AGENT_PAT` | none | `tools/agent` of the default branch | `ai-autonomous-<number>` |
 | `stop` | `action == 'stop'` | `GITHUB_TOKEN` | none | `tools/agent` of the default branch | none, on purpose |
 | `chat` | `action == 'chat'` | `GITHUB_TOKEN`, `OPENAI_API_KEY` | `assistant` for a question | the default branch; a pull request head as a ref, never checked out | `ai-autonomous-chat-<number>` |
 
@@ -153,7 +155,7 @@ The state comment counts only when `github-actions[bot]` wrote it. The schema is
 | Label | Set on | By | When |
 |---|---|---|---|
 | `ai:suitable`, `ai:unsuitable` | issue | `analyze`, `implement` (analysis) | after an analysis, unless a person set one of them |
-| `agent:needs-human` | issue, pull request | `analyze`, `publish`, `ci-gate` | the agent waits for a person |
+| `agent:needs-human` | issue, pull request | `analyze`, `publish`, `ci-gate`; removed by `rerun`, `publish` (after an `unrelated` rerun), and `stop` | the agent waits for a person |
 | `agent:completed` | issue, pull request | `ci-gate` | CI is green on the agent's pull request |
 | `agent:pr-reviewed` | pull request | `review` | after a review is published |
 | `ai:l1-executor` | pull request | `ci-gate` | CI is green on the agent's pull request |
@@ -184,6 +186,8 @@ stateDiagram-v2
   waiting_ci --> needs_human: ci-gate red, stop rule
   waiting_ci --> stopped: /agent stop
   needs_human --> implementing: answer, retry, change request, review
+  needs_human --> waiting_ci: /agent rerun
+  implementing --> waiting_ci: publish, CI fix found the failure unrelated
   needs_human --> stopped: /agent stop
   stopped --> implementing: /agent implement or /agent retry
   completed --> implementing: retry or change request
@@ -199,7 +203,7 @@ hyphens. The values in the state are:
 | `analyzed` | the analysis said `suitable` or `unsuitable` | `analyze.js`, `implement.js publish` |
 | `needs-info` | the analysis asked the author questions | `analyze.js`, `implement.js publish` |
 | `implementing` | an attempt runs; `implementing` names its run, actor, and kind | `implement.js preflight`, `ci-gate.js` |
-| `waiting-ci` | the attempt pushed a commit whose local checks and self-review passed; CI decides | `implement.js publish` |
+| `waiting-ci` | the attempt pushed a commit whose local checks and self-review passed, a CI fix reran the checks as `unrelated`, or `/agent rerun` ran; CI decides | `implement.js publish`, `ci-gate.js rerun` |
 | `needs-human` | the agent handed over: draft, block, error, or the stop rule | `implement.js publish`, `ci-gate.js` |
 | `completed` | CI is green; a person reviews and merges | `ci-gate.js` |
 | `stopped` | a person stopped the work | `chat.js` (the `stop` job) |
@@ -369,13 +373,17 @@ flowchart TB
   FRESH1 -- no --> SUP(["exit: superseded or state-changed"])
   FRESH1 -- yes --> READY["PR ready for review with AGENT_PAT<br/>agent:completed, ai:l1-executor<br/>phase completed, mention the person"]
   GREEN -- no --> REPORT["CI report from the failed job logs<br/>failure signature"]
-  REPORT --> E2E{"only E2E jobs failed<br/>and no rerun yet?"}
-  E2E -- yes --> RERUN(["rerun the failed jobs once"])
+  REPORT --> E2E{"only E2E jobs failed<br/>(ci-ok aside) and no rerun<br/>of this commit yet?"}
+  E2E -- yes --> RERUN(["rerun the failed jobs once per commit"])
   E2E -- no --> RULE{"same signature as before,<br/>or AGENT_MAX_ATTEMPTS spent?"}
   RULE -- yes --> HAND["agent:needs-human on issue and PR<br/>phase needs-human, hand-off comment"]
   RULE -- no --> NEXT["phase implementing, kind ci-fix<br/>output next = implement"]
   NEXT --> IMPL(["implement and publish: a CI fix commit"])
   IMPL -.-> START
+  IMPL -- "CI fix answers unrelated" --> UNREL(["publish reruns the failed checks,<br/>phase waiting-ci, no push"])
+  UNREL -.-> START
+  PERSON(["/agent rerun"]) --> RERUNJOB(["rerun job: rerun the failed checks,<br/>phase waiting-ci, ciGate deleted"])
+  RERUNJOB -.-> START
 ```
 
 **Decisions.** The gate decides once per commit and writes `ciGate` with the commit. Right before it writes, it reads
@@ -383,8 +391,14 @@ the pull request and the state again: a newer head means `superseded`, another p
 gate writes nothing. The budget counts the attempts of kind `initial` and `ci-fix` from the index `budgetFrom`, which
 a person's attempt moves to the end of the list.
 
+**The free rerun.** The verdict check `ci-ok` fails together with E2E, so the gate ignores it when it asks whether only
+E2E jobs failed. The budget is one rerun per head commit (`e2eRerun: { sha, count }`).
+
+**Hand-offs.** The stop rule and a blocked CI fix write the failed checks (at most five), the first error line, the
+reason, and two ways on: `/agent rerun` for a failure the change does not cause, and `/agent retry` with guidance.
+
 **State.** The last attempt gets `result` `ci-green` or `ci-red` and the `signature`; `lastCiReport`, `ciGate`, and
-`e2eReruns` are written. **A person** reviews the green pull request, or answers the hand-off.
+`e2eRerun` are written. **A person** reviews the green pull request, or answers the hand-off.
 
 ## Flow D: commands
 
@@ -402,6 +416,7 @@ flowchart LR
   P -- "analyze" --> AN["analyze job"]
   P -- "implement, fix" --> IM["implement job<br/>kind initial"]
   P -- "retry" --> IH["implement job<br/>kind human"]
+  P -- "rerun" --> RR["rerun job<br/>no model"]
   P -- "text on the agent's PR" --> IC["implement job<br/>kind human, change request"]
   P -- "no command, issue or agent PR<br/>in needs-human" --> IA["implement job<br/>kind human, answer"]
   P -- "no command, author,<br/>issue in needs-info" --> AN
@@ -415,13 +430,15 @@ flowchart LR
 | `/agent <question>` | `chat` | `assistant` | a reply; the cost record in the state |
 | `/agent stop` | `stop` | none | `phase` `stopped`, the cancelled run, no `agent:needs-human`, a reply |
 | `/agent retry [notes]` | `implement` | the Flow C roles | a new attempt with a fresh CI budget |
+| `/agent rerun [notes]` | `rerun` | none | `phase` `waiting-ci`, `ciGate` deleted, an entry in `reruns`, no `agent:needs-human`; the failed checks run again; no attempt |
 | `/agent <text>` on the agent's pull request | `implement` | the Flow C roles | one attempt on its branch |
 | a review with change requests | `implement` | the Flow C roles | one attempt; a reply in each thread the implementer saw |
 | `/agent review [notes]` | `review` | Flow A | a review |
 | `/agent analyze` | `analyze` | `analyst` | an analysis |
 | `/agent implement [force] [notes]`, `/agent fix` | `implement` | the Flow C roles | an attempt |
 
-The `implement`, `chat`, and `stop` jobs react to the comment with an eyes emoji when they start, then with a rocket
+The `implement`, `rerun`, `chat`, and `stop` jobs react to the comment with an eyes emoji when they start, then with a
+rocket
 or a confused face; `review` and `analyze` add no reaction. The replies mention the person who asked and defuse every
 other mention.
 
@@ -475,7 +492,7 @@ flowchart LR
 | An issue is `ai:suitable` | decides with `/agent implement` | one attempt |
 | An issue is `ai:unsuitable` | sets another label, or comments `/agent implement force` | one forced attempt |
 | A draft or a block (`agent:needs-human`) | answers in a comment, `/agent retry`, or takes over | one attempt with the comment as guidance |
-| The stop rule hands over | the same | one attempt with a fresh CI budget |
+| The stop rule hands over | the same, or `/agent rerun` when the failure is not the change | one attempt with a fresh CI budget, or the failed checks run again |
 | CI is green (`agent:completed`) | reviews, asks changes in a review or with `/agent <text>`, merges | one attempt per review or comment |
 | Anything | `/agent stop` | stops at once |
 | A pull request is merged | checks or sets the `ai:l*` level | copies it to the issues |

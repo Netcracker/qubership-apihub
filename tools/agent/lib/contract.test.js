@@ -268,8 +268,10 @@ function goodImplementation(extra = {}) {
   }
 }
 
-test('implementation accepts a done and a blocked answer', () => {
+test('implementation accepts a done, a blocked, and an unrelated answer', () => {
   assert.doesNotThrow(() => validate('implementation', goodImplementation()))
+  const unrelated = goodImplementation({ status: 'unrelated', blockedReason: 'Flaky E2E; the change touches no auth.' })
+  assert.doesNotThrow(() => validate('implementation', unrelated))
   const blocked = goodImplementation({ status: 'blocked', blockedReason: 'The issue does not say which API.' })
   assert.doesNotThrow(() => validate('implementation', blocked))
 })
@@ -288,7 +290,7 @@ test('implementation lists every problem with its path, including the title leng
       '"test", "ci"',
     'extra: unexpected property',
     'notes: missing required property',
-    'status: expected one of "done", "blocked"',
+    'status: expected one of "done", "blocked", "unrelated"',
     'summary: expected at least 1 character(s)',
     'title: expected at most 72 character(s), got 73',
   ])
