@@ -46,9 +46,9 @@
     "elkjs": "^0.8.2",
     "fast-equals": "^6.0.2",
     "fontfaceobserver": "^2.3.0",
-    "lodash-es": "^4.17.21",
-    "web-worker": "^1.0.0",
-    "svg-round-corners": "0.4.1"
+    "lodash-es": "^4.18.1",
+    "svg-round-corners": "0.4.1",
+    "web-worker": "^1.0.0"
   },
   "devDependencies": {
     "@netcracker/qubership-apihub-jest-chrome-in-docker-environment": "workspace:^",
