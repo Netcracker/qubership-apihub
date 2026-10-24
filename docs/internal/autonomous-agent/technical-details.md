@@ -514,7 +514,7 @@ instruction files of the pull request with the trusted ones. The job has one con
     confirmed), Z rejected (not shown). The text above was written before that check." Empty without findings.
   - `<n> finding(s) are inline comments on the diff.`, then `**Findings outside the diff lines**` with a list item per
     finding, or `No findings.`
-  - The cost line, in a `<sub>` footer: a link to the run, "AI cost of this pull request so far: $<usd>", and the hint
+  - The cost line, in a `<sub>` footer: a link to the run, "AI cost of this pull request so far: $X", and the hint
     to comment `/agent review` or `/agent cost`. `<usd>` is the sum of all cost records of the state plus this run,
     formatted by `usage.formatUsd`.
   - An inline finding reads `<icon> **<severity>**[ (plausible, not confirmed)]: <title>` and the body. Icons: blocker
@@ -1385,11 +1385,11 @@ with `ai:l`. It checks out only `tools/agent` of the base branch and never runs 
 - **The reminder comment:** when the merged pull request itself has no level, it closes at least one issue, and no
   comment of `github-actions[bot]` with the marker `<!-- ai-autonomous-levels -->` exists, the script posts a
   reminder: "This pull request has no execution level label (ai:l0-assistant ... ai:l3-autonomous). Add one; the agent
-  copies it to issue(s) #<n>." A later `labeled` event with a level label runs the job again and copies the level.
+  copies it to issue(s) #N." A later `labeled` event with a level label runs the job again and copies the level.
 - **The people's commits count:** when the pull request body holds the agent marker and no comment with the
   marker `<!-- ai-autonomous-levels-commits -->` exists, the script lists the commits of the pull request and counts
   those whose message has no line matching `^Agent-Run:\s*\S` (case-insensitive, multiline). When the count is above
-  zero it posts: "<people> of <total> commits on this pull request have no Agent-Run: trailer, so people wrote them.
+  zero it posts: "N of M commits on this pull request have no Agent-Run: trailer, so people wrote them.
   The level stays as it is, because it is a human judgment. If the people's commits were substantial, consider
   ai:l0-assistant." The script does not change the level.
 - **Decisions:**
