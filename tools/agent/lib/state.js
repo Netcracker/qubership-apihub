@@ -29,6 +29,18 @@ function render(humanMarkdown, state) {
   return `${MARKER}\n${humanMarkdown}\n\n${JSON_OPEN}\n${json}\n-->\n`
 }
 
+/**
+ * `body` with its state block replaced by `state`; the human part stays as it is. For a writer that only adds data (a
+ * cost record) and must not replace what another flow wrote for people, such as the summary of a review.
+ */
+function replaceState(body, state) {
+  const text = typeof body === 'string' ? body : ''
+  const open = text.lastIndexOf(JSON_OPEN)
+  const head = open === -1 ? text : text.slice(0, open)
+  const human = head.startsWith(MARKER) ? head.slice(MARKER.length) : head
+  return render(human.replace(/^\n+|\s+$/g, ''), state)
+}
+
 /** The state object of `body`, or `null` when the body has no state block. Throws on a damaged block. */
 function parse(body) {
   if (typeof body !== 'string') return null
@@ -81,4 +93,14 @@ function actorOf(state) {
   return state?.implementing?.actor || attempts[attempts.length - 1]?.actor || null
 }
 
-module.exports = { MARKER, render, parse, findStateComment, emptyIssueState, emptyPullState, addCost, actorOf }
+module.exports = {
+  MARKER,
+  render,
+  replaceState,
+  parse,
+  findStateComment,
+  emptyIssueState,
+  emptyPullState,
+  addCost,
+  actorOf,
+}

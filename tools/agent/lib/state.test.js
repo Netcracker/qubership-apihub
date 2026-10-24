@@ -88,3 +88,12 @@ test('actorOf: the running attempt, else the last attempt, else null', () => {
   assert.equal(state.actorOf({ attempts: [{ actor: 'carol' }], implementing: { actor: 'erin' } }), 'erin')
   assert.equal(state.actorOf({ attempts: [{ actor: 'carol' }], implementing: {} }), 'carol')
 })
+
+test('replaceState swaps the state block and keeps the human part', () => {
+  const before = state.render('### AI review\n\nSummary.', { schema: 1, costs: [] })
+  const after = state.replaceState(before, { schema: 1, costs: [{ usd: 1 }] })
+  assert.equal(after, state.render('### AI review\n\nSummary.', { schema: 1, costs: [{ usd: 1 }] }))
+  assert.deepEqual(state.parse(after).costs, [{ usd: 1 }])
+  assert.equal(state.replaceState('no block at all', { a: 1 }), state.render('no block at all', { a: 1 }))
+  assert.deepEqual(state.parse(state.replaceState(undefined, { a: 1 })), { a: 1 })
+})

@@ -1,0 +1,32 @@
+{
+  "action": "created",
+  "issue": {
+    "number": 70,
+    "state": "open",
+    "title": "fix(portal-backend): guard the nil changelog",
+    "body": "## Why\n\nA fix.\n\nCloses #200.\n\n<!-- ai-autonomous-agent issue=200 -->\n",
+    "user": {
+      "login": "agent-owner",
+      "type": "User"
+    },
+    "pull_request": {
+      "url": "https://api.github.com/repos/Netcracker/qubership-apihub/pulls/70"
+    }
+  },
+  "comment": {
+    "id": 9101,
+    "body": "/agent rename the helper to buildChangelog",
+    "user": {
+      "login": "carol",
+      "type": "User"
+    },
+    "author_association": "MEMBER"
+  },
+  "repository": {
+    "full_name": "Netcracker/qubership-apihub"
+  },
+  "sender": {
+    "login": "carol",
+    "type": "User"
+  }
+}

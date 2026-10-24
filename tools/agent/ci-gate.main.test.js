@@ -563,3 +563,65 @@ test('main runs the gate', async () => {
     assert.equal((await main(ctx.env, ctx.deps)).outcome, 'green')
   })
 })
+
+// ------------------------------------------------------------------------------------------------ superseded
+
+/** A client whose pull request gets a newer head after `afterCalls` reads, as if someone pushed during the run. */
+function pushedDuringTheRun(gh, afterCalls = 1) {
+  const original = gh.getPull
+  let reads = 0
+  gh.getPull = async (n) => {
+    reads += 1
+    const pull = await original(n)
+    return reads > afterCalls ? { ...pull, head: { sha: 'b'.repeat(40) } } : pull
+  }
+  return gh
+}
+
+test('superseded: a push during a green decision writes nothing and exits', async () => {
+  const gh = pushedDuringTheRun(fakeGh())
+  await withContext({ gh }, async (ctx) => {
+    const result = await gate(ctx.env, ctx.deps)
+    assert.equal(result.outcome, 'superseded')
+    assert.match(result.reason, /a newer commit \(bbbbbbbbbbbb\) is on the branch/)
+    assert.deepEqual(gh.calls, [])
+    assert.deepEqual(ctx.patGh.calls, [])
+    assert.equal(ctx.outputs(), `outcome=superseded\nnext=\n`)
+    assert.match(ctx.summary(), /wrote nothing for `3f2a9c1d5b7e`/)
+    // The state still waits for CI, so the newer commit gets its own gate run.
+    assert.equal(savedState(gh).phase, 'waiting-ci')
+  })
+})
+
+test('superseded: a push while the logs are read writes nothing: no rerun, no stop, no next attempt', async () => {
+  for (const checkRuns of [
+    [checkRun('build', 'failure'), checkRun('lint', 'success', { id: 12 })],
+    [checkRun('e2e tests', 'failure')],
+  ]) {
+    const gh = pushedDuringTheRun(fakeGh({ checkRuns, logs: { 11: failingLog('a') } }))
+    await withContext({ gh }, async (ctx) => {
+      const result = await gate(ctx.env, ctx.deps)
+      assert.equal(result.outcome, 'superseded')
+      assert.equal(result.next, undefined)
+      assert.deepEqual(gh.calls, [])
+      assert.equal(ctx.outputs(), `outcome=superseded\nnext=\n`)
+      assert.equal(savedState(gh).phase, 'waiting-ci')
+    })
+  }
+})
+
+test('superseded: in dry-run the check reads only, and the decision is the same', async () => {
+  const gh = pushedDuringTheRun(fakeGh())
+  await withContext({ gh, env: { AGENT_DRY_RUN: 'true' } }, async (ctx) => {
+    assert.equal((await gate(ctx.env, ctx.deps)).outcome, 'superseded')
+    assert.deepEqual(gh.calls, [])
+  })
+})
+
+test('an unchanged head is not superseded: the decision is written as before', async () => {
+  const gh = fakeGh()
+  await withContext({ gh }, async (ctx) => {
+    assert.equal((await gate(ctx.env, ctx.deps)).outcome, 'green')
+    assert.equal(savedState(gh).phase, 'completed')
+  })
+})

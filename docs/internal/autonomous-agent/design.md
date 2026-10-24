@@ -326,16 +326,21 @@ One `implement` job runs one attempt and exits; nothing waits on a runner for CI
 5. **Self-review** (`self-reviewer`, the other model). Reviews the diff against the issue and the module's
    self-review skill. `changes` goes back to the implementer with the findings. After two rounds without approval, the
    pull request opens as a draft, with the open findings in its description, and gets `agent:needs-human`.
-6. **Publish, by script.** One Conventional Commit with the `Agent-Run` trailer, pushed with `AGENT_PAT`. A pull
-   request into `develop` that follows the repository template (Why, What, How to verify), says `Closes #<issue>`, and
-   carries the agent marker. The state comment of the issue links it. The run ends in the phase `waiting-ci`.
+6. **Publish, by script.** The publish job does not trust the work job. It measures the diff of the commits in the
+   bundle itself, from the branch point, and applies the diff limits and the protected paths again; a violation means
+   no push and a blocked attempt. Then it pushes one Conventional Commit with the `Agent-Run` trailer with
+   `AGENT_PAT`. The pull request into `develop` always opens as a draft. It follows the repository template (Why, What,
+   How to verify), says `Closes #<issue>`, labels the local check and self-review results as reported by the work job,
+   and carries the agent marker. The state comment of the issue links it. The run ends in the phase `waiting-ci`. Only
+   the CI gate marks the pull request ready.
 
 **The CI gate.** `workflow_run` `completed` of `CI`, `Lint: Code base`, `PR: Title`, and `PR: Commit messages` starts
 `ci-gate` when the head branch belongs to an open pull request of the agent. The gate reads every check run of the
 head commit and exits while any is still running, so it decides once.
 
-- **All green:** the pull request leaves draft, gets `agent:completed` and `ai:l1-executor`, and the issue gets a
-  short report.
+- **All green:** the pull request leaves draft (this is the only place where that happens), gets `agent:completed`
+  and `ai:l1-executor`, and the issue gets a short report. The gate writes nothing when a newer commit is on the
+  branch than the one it collected the checks for; that commit gets its own gate run.
 - **Red:** `ci-report.js` collects the failed jobs, the failing step logs (`gh run view --log-failed`, cut to the
   first error blocks), and the names of the E2E reports. The report and its failure signature go to the state. If the
   budget allows, the gate starts the next `implement` attempt with the report as input.
@@ -545,9 +550,17 @@ The repository is public, so issue text, comments, and fork code are untrusted i
   before any model code. It hands a JSON outcome and a Git bundle to the `publish` job as an artifact. `publish` holds
   `GITHUB_TOKEN` and `AGENT_PAT`, runs no model and no repository code, and treats the artifact as data from a source
   that may lie: it pushes only to the branch it derives itself from the state, checks that the bundle holds the commit
-  the outcome names, and validates every answer against its contract. The OpenAI key stays reachable by the code under
-  test in the work job. The proof of concept accepts that; give the key its own OpenAI project and a budget on it.
-- **Only maintainers start write flows.** Every command needs write access. The analysis runs for any author, but it
+  the outcome names, validates every answer against its contract, and measures the diff of the bundle itself, so the
+  diff limits and the protected paths (workflow files, the agent's own files) hold whatever the outcome says. It opens
+  every pull request as a draft and never marks one ready. Only the `ci-gate` job does, after real CI on GitHub is
+  green, so a forged "checks passed" from the work job cannot reach a reviewer as a ready pull request. The local check
+  and self-review results stay in the state and the description, labeled as reported by the work job. The OpenAI key
+  stays reachable by the code under test in the work job. The proof of concept accepts that; give the key its own
+  OpenAI project and a budget on it.
+- **Only maintainers start write flows.** Every command, every answer to a hand-off, and every review with change
+  requests needs write access. The marker in the description of a pull request counts only when the state of the issue
+  names that pull request. A review event runs the workflow file of the pull request, so the jobs name the default
+  branch in their checkouts and keep the code of the pull request out of them. The analysis runs for any author, but it
   has no edit permission and its output is one label and one comment.
 - **Untrusted text is marked as data.** The prompt wraps issue and comment text in a block that the model is told not
   to follow, as `opencode github run` does.

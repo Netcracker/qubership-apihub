@@ -30,6 +30,15 @@
  * work continues the recorded branch, the implementer gets the CI report of the state, and the attempt adds one new
  * commit on top of the branch and pushes without force.
  *
+ * A person steers the agent with `AGENT_KIND=human` (`/agent retry`, a free-text change request on a pull request of
+ * the agent, or an answer to a hand-off) or `AGENT_KIND=review` (a review with change requests: the unresolved
+ * review threads go to the implementer, and `publish` replies in each one after the push). These attempts skip the
+ * refusals about the issue type's suitability, give the CI loop a fresh budget (`budgetFrom` in the state), and, when
+ * the pull request of an earlier attempt is closed, start a new branch and pull request.
+ *
+ * `publish` does not trust the work job: it computes the diff of the pushed commits itself and enforces the diff
+ * limits and the protected paths, and it opens every pull request as a draft. Only the CI gate marks one ready.
+ *
  * The model never gets a token (lib/opencode.js strips them), and neither do the local checks, which run code the
  * model wrote (`cleanEnv`). `AGENT_PAT` is read only by `readPat`, for the Git identity, the push, and the pull
  * request. The push URL holds the token, so it is never logged, and `redact` cleans every message that may echo it.
@@ -38,9 +47,10 @@
  *
  * Environment: GITHUB_REPOSITORY, GITHUB_TOKEN (`preflight`, `publish`), OPENAI_API_KEY (`work`), AGENT_PAT
  * (`preflight`, `publish`), AGENT_NUMBER (the issue), AGENT_COMMAND (JSON of the parsed command), AGENT_ACTOR (login of
- * the commenter; a `ci-fix` attempt takes it from the state), AGENT_KIND (`initial`, the default, or `ci-fix`),
- * AGENT_RUN_URL, AGENT_OUT (folder for context, inputs, events, outcome, and bundle), the AGENT_* variables of
- * lib/config.js, GITHUB_OUTPUT, GITHUB_STEP_SUMMARY.
+ * the commenter or reviewer; a `ci-fix` attempt takes it from the state), AGENT_KIND (`initial`, the default,
+ * `ci-fix`, `human`, or `review`), AGENT_PR (the pull request of a comment or a review), AGENT_COMMENT_ID (the comment
+ * that gets the reactions), AGENT_RUN_URL, AGENT_OUT (folder for context, inputs, events, outcome, and bundle), the
+ * AGENT_* variables of lib/config.js, GITHUB_OUTPUT, GITHUB_STEP_SUMMARY.
  */
 'use strict'
 
@@ -65,12 +75,15 @@ const {
   applyLabels,
   renderAnalysis,
 } = require('./analyze')
+const { react, commentIdOf } = require('./lib/reactions')
 const log = require('./lib/log')
 
 const LABEL_UNSUITABLE = 'ai:unsuitable'
 const LABEL_SUITABLE = 'ai:suitable'
 const LABEL_NEEDS_HUMAN = 'agent:needs-human'
 const BASE_BRANCH = 'develop'
+/** A fresh start looks for a free branch name up to `<name>-v9`. */
+const MAX_BRANCH_VERSION = 9
 const BOT_LOGIN = 'github-actions[bot]'
 
 /** The playbook skill, the branch prefix, and the diff limits per issue type. */
@@ -156,6 +169,36 @@ function preflightDecision({ issue, state: st, command, now = Date.now() }) {
   return { outcome: 'analyze-first', forced }
 }
 
+/**
+ * What to do with an attempt that a person asked for (`kind` human or review): `/agent retry`, a change request on a
+ * pull request of the agent, an answer to a hand-off, or a review with change requests. The person explicitly asked to
+ * go on, so the labels and the verdict of the analysis do not refuse it; the issue must be open and typed, and no
+ * attempt may be running.
+ *
+ * A change request or a review needs the open pull request that the state names, because it changes that branch. A
+ * retry or an answer continues the open pull request of the earlier attempt, and starts a new branch and pull request
+ * (`fresh`) when that pull request is closed or merged.
+ *
+ * @param {{ issue: object, state: object|null, command: { name?: string }|null, kind: 'human'|'review',
+ *   pr: number|null, pull: object|null, now?: number }} input `pull` is the pull request of `state.pr`, or `null`
+ * @returns {{ outcome: 'refuse-closed'|'refuse-type'|'refuse-busy'|'refuse-no-branch'|'refuse-pr-closed'|'proceed',
+ *   fresh: boolean, changes: boolean }} `changes` is true for an attempt that changes the open pull request
+ */
+function humanDecision({ issue, state: st, command, kind, pr, pull, now = Date.now() }) {
+  const changes = kind === 'review' || command?.name === 'chat'
+  const refuse = (outcome) => ({ outcome, fresh: false, changes })
+  if (issue.state === 'closed') return refuse('refuse-closed')
+  if (!Object.hasOwn(PLAYBOOKS, issue.type?.name ?? '')) return refuse('refuse-type')
+  const startedAt = Date.parse(st?.implementing?.at ?? '')
+  if (st?.phase === 'implementing' && !(now - startedAt > BUSY_MS)) return refuse('refuse-busy')
+  const open = pull?.state === 'open'
+  if (changes) {
+    if (!st?.branch || !st.pr || st.pr !== pr) return refuse('refuse-no-branch')
+    if (!open) return refuse('refuse-pr-closed')
+  }
+  return { outcome: 'proceed', fresh: !changes && Boolean(st?.pr) && !open, changes }
+}
+
 /** The numbered questions of the analysis, one line each. */
 const questionLines = (questions) =>
   (questions ?? []).filter((q) => q.trim() !== '').map((q, i) => `${i + 1}. ${inline(q)}`)
@@ -198,6 +241,12 @@ function refusalReply({ outcome, actor, issue, state: st }) {
         ...(author && !sameLogin(author, actor) ? ['', `@${author}, these questions are for you.`] : []),
       ].join('\n')
     }
+    case 'refuse-no-branch':
+      return `${who}, I can change a branch only after an attempt of mine pushed it, and this pull request has no ` +
+        'such branch in the state of its issue. Make the change yourself, or comment `/agent retry` on the issue.'
+    case 'refuse-pr-closed':
+      return `${who}, the pull request is closed, so there is nothing to change on it. Comment ` +
+        '`/agent retry` with guidance to start a new pull request.'
     default:
       throw new Error(`No reply for the outcome '${outcome}'`)
   }
@@ -268,6 +317,33 @@ const PROTECTED = [/^\.claude\//, /^\.cursor\//, /^tools\/agent\//, /^agent-pack
 /** The changed files that belong to the agent's own instructions and tools. */
 function touchedAgentFiles(nameOnly) {
   return changedFiles(nameOnly).filter((l) => PROTECTED.some((re) => re.test(l)))
+}
+
+/**
+ * Why a change may not be pushed, or `null`: it has outgrown the issue (more files or changed lines than the playbook
+ * allows), it edits workflow files, or it edits the agent's own instructions or tools. The work step checks it, and
+ * `publish` checks it again on the commits it is about to push, because the work step ran code of the change.
+ *
+ * @param {{ stat: { files: number, insertions: number, deletions: number }, nameOnly: string, playbook: string }} input
+ */
+function diffBlockReason({ stat, nameOnly, playbook }) {
+  const limit = DIFF_LIMITS[playbook]
+  if (diffTooLarge(stat, playbook)) {
+    return `The change has outgrown the issue: ${stat.files} files and ` +
+      `${stat.insertions + stat.deletions} changed lines, and the limit for a ${playbook} is ` +
+      `${limit.files} files or ${limit.lines} lines.`
+  }
+  const workflows = touchedWorkflows(nameOnly)
+  if (workflows.length) {
+    return `The change edits workflow files (${workflows.join(', ')}), which the agent may not push. ` +
+      'A person has to make that part of the change.'
+  }
+  const agentFiles = touchedAgentFiles(nameOnly)
+  if (agentFiles.length) {
+    return `The change edits the agent's own instructions or tools (${agentFiles.join(', ')}). ` +
+      'A person has to make that part of the change.'
+  }
+  return null
 }
 
 function changedFiles(nameOnly) {
@@ -409,13 +485,45 @@ function renderCheckFailures(checks) {
   return out
 }
 
+/** The heading above the text a person wrote to steer an attempt. */
+const NOTES_HEADING = {
+  initial: 'Notes of the maintainer who asked for this implementation',
+  'ci-fix': 'Notes of the maintainer who asked for this implementation',
+  human: "The maintainer's guidance",
+  review: 'The review that asks for changes',
+}
+
+const MAX_THREADS = 30
+const MAX_THREAD_COMMENT = 4000
+
+/**
+ * The unresolved review threads for the implementer: where each one is and what was said in it. People wrote them, so
+ * every conversation is an `<untrusted>` block.
+ */
+function renderReviewThreads(threads) {
+  const out = ['## Unresolved review threads', '']
+  if (threads.length === 0) return [...out, 'No thread is unresolved. The review text above is all there is.', '']
+  const shown = threads.slice(0, MAX_THREADS)
+  if (threads.length > shown.length) {
+    out.push(`Only the first ${shown.length} of ${threads.length} threads are shown.`, '')
+  }
+  shown.forEach((thread, i) => {
+    const where = `${thread.path || 'no file'}${thread.line ? `:${thread.line}` : ''}`
+    out.push(`### Thread ${i + 1}: \`${where}\``, '')
+    const talk = thread.comments.map((c) => `${c.author}: ${clip(c.body, MAX_THREAD_COMMENT)}`).join('\n\n')
+    out.push(untrusted(talk), '')
+  })
+  return out
+}
+
 /**
  * The text of `implement-input.md` for the implementer: facts of the issue, what people wrote inside `<untrusted>`
  * blocks, the plan, earlier attempts, and, from round 2, what the previous round left to fix.
  *
  * @param {object} input
  * @param {string} input.playbook `bug-fix` or `task`
- * @param {'initial'|'human'|'ci-fix'} input.kind why this attempt runs; `ci-fix` is started by the CI gate
+ * @param {'initial'|'human'|'ci-fix'|'review'} input.kind why this attempt runs; `ci-fix` is started by the CI gate,
+ *   `human` and `review` by a person
  * @param {object} input.issue
  * @param {object[]} input.comments the comments of the issue without the state comment; bot comments are skipped
  * @param {object|null} input.plan the plan of the analysis
@@ -425,9 +533,10 @@ function renderCheckFailures(checks) {
  * @param {number} input.round 1, or more after a self-review or a failed check
  * @param {{ findings: object[], checks: object|null }|null} input.previous the previous round's open results
  * @param {string} [input.ciReport] the CI report of a `ci-fix` attempt, with the log text of failed jobs
+ * @param {object[]} [input.reviewThreads] the unresolved review threads of a `review` attempt
  */
 function renderImplementInput({
-  playbook, kind, issue, comments, plan, analysis, notes, attempts, round, previous, ciReport,
+  playbook, kind, issue, comments, plan, analysis, notes, attempts, round, previous, ciReport, reviewThreads,
 }) {
   const people = comments.filter((c) => !isBot(c.user))
   const shown = people.slice(-MAX_COMMENTS)
@@ -444,6 +553,13 @@ function renderImplementInput({
       ? [
         'The pull request of this issue is open and its CI is red. Fix the failure that the CI report names, on top ' +
           'of the branch you have checked out, and nothing else.',
+        '',
+      ]
+      : []),
+    ...(kind === 'review'
+      ? [
+        'The pull request of this issue is open, and a reviewer asked for changes. Address every unresolved review ' +
+          'thread below, on top of the branch you have checked out, and nothing else. A person resolves the threads.',
         '',
       ]
       : []),
@@ -465,7 +581,8 @@ function renderImplementInput({
     out.push(untrusted(clipText(c.body)), '')
   }
   out.push('## Plan of the analysis', '', ...renderPlan(plan, analysis), '')
-  if (notes) out.push('## Notes of the maintainer who asked for this implementation', '', untrusted(notes), '')
+  if (notes) out.push(`## ${NOTES_HEADING[kind] ?? NOTES_HEADING.initial}`, '', untrusted(notes), '')
+  if (kind === 'review') out.push(...renderReviewThreads(reviewThreads ?? []))
   if ((attempts ?? []).length > 0) {
     out.push('## Earlier attempts', '')
     for (const a of attempts) {
@@ -554,8 +671,9 @@ function prBody({ number, issueTitle, implementation, checks, review, rounds, ac
     inline(implementation.verification) || 'No verification was described.',
     '',
     checks.passed
-      ? `Local checks passed: ${checkNames(checks)}.`
-      : `Local checks failed: ${checkNames({ results: checks.results.filter((r) => r.exitCode !== 0) })}.`,
+      ? `Local checks passed, as reported by the work job: ${checkNames(checks)}.`
+      : 'Local checks failed, as reported by the work job: ' +
+        `${checkNames({ results: checks.results.filter((r) => r.exitCode !== 0) })}.`,
     '',
     '## Checklist',
     '',
@@ -565,8 +683,9 @@ function prBody({ number, issueTitle, implementation, checks, review, rounds, ac
       'description.',
     '',
     verdict === 'approve'
-      ? `Self-review by a second model: approved after ${rounds} round(s).`
-      : `Self-review by a second model: changes were still requested after ${rounds} round(s).`,
+      ? `Self-review by a second model, as reported by the work job: approved after ${rounds} round(s).`
+      : `Self-review by a second model, as reported by the work job: changes were still requested after ${rounds} ` +
+        'round(s).',
   ]
   if (review.findings.length > 0) {
     out.push('')
@@ -622,15 +741,17 @@ function renderOutcome({ result, number, pr, branch, attempt, implementation, ch
   const lead = result === 'pr-opened'
     ? [ciFix ? `### AI implementation: CI fix pushed to pull request #${pr}`
       : pr ? `### AI implementation: pull request #${pr} is open` : '### AI implementation: ready for a pull request',
-    '', `Branch \`${branch}\`. ${rounds}. CI runs ${ciFix ? 'again ' : ''}on the pull request.`]
+    '', `Branch \`${branch}\`. ${rounds}. CI runs ${ciFix ? 'again ' : ''}on the pull request. It stays a draft ` +
+      'until CI is green on GitHub.']
     : [ciFix ? `### AI implementation needs a person: CI fix for pull request #${pr}`
       : pr ? `### AI implementation needs a person: draft pull request #${pr}` : '### AI implementation needs a person',
     '', `Branch \`${branch}\`. I stopped after ${rounds} without a green result.`]
   const out = [
     ...lead,
     '',
-    `- Local checks: ${checks.passed ? 'green' : 'red'}`,
-    `- Self-review: ${effectiveVerdict(review) === 'approve' ? 'approved' : 'changes requested'}`,
+    `- Local checks (reported by the work job): ${checks.passed ? 'green' : 'red'}`,
+    '- Self-review (reported by the work job): ' +
+      `${effectiveVerdict(review) === 'approve' ? 'approved' : 'changes requested'}`,
     `- Summary: ${inline(implementation.summary)}`,
     '',
   ]
@@ -815,12 +936,26 @@ function requireEnv(env, name) {
   return env[name]
 }
 
-/** `AGENT_KIND`: `initial` (the default; the run decides between initial and human) or `ci-fix`. */
+const ENV_KINDS = new Set(['initial', 'ci-fix', 'human', 'review'])
+
+/**
+ * `AGENT_KIND`: `initial` (the default; the run decides between initial and human by the number of earlier attempts),
+ * `ci-fix` (started by the CI gate), or `human` and `review` (started by a person).
+ */
 function attemptKind(env) {
   const kind = env.AGENT_KIND || 'initial'
-  if (kind !== 'initial' && kind !== 'ci-fix') throw new Error(`AGENT_KIND must be initial or ci-fix, got '${kind}'`)
+  if (!ENV_KINDS.has(kind)) throw new Error(`AGENT_KIND must be initial, ci-fix, human, or review, got '${kind}'`)
   return kind
 }
+
+/** The kind that the attempt record carries: a second `initial` attempt is a person's attempt, so it is `human`. */
+const attemptKindOf = (envKind, attemptNo) => (envKind === 'initial' && attemptNo > 1 ? 'human' : envKind)
+
+/** The attempts a person asked for: they skip the refusals about suitability and give the CI loop a fresh budget. */
+const isPersonKind = (kind) => kind === 'human' || kind === 'review'
+
+/** The pull request number from `AGENT_PR`, or `null`. */
+const pullOf = (env) => (Number(env.AGENT_PR) > 0 ? Number(env.AGENT_PR) : null)
 
 /**
  * The state a CI fix may start from: the CI gate set the phase `implementing` with `kind: 'ci-fix'`, and the earlier
@@ -877,17 +1012,27 @@ function writeOutputs(env, outputs) {
  * @param {string} input.out
  * @param {object} input.loaded the result of `loadIssue`
  * @param {object} input.st the state to work from (the marked one)
+ * @param {boolean} [input.fresh] start a new branch and pull request: the one of the earlier attempt is closed
+ * @param {boolean} [input.changes] the attempt changes the open pull request (a change request or a review)
+ * @param {object[]} [input.reviewThreads] the unresolved review threads of a `review` attempt
  * @param {{ name: string, email: string }} input.identity
  */
-function saveContext({ out, number, ciFix, actor, command, runUrl, analyzeFirst, loaded, st, identity }) {
+function saveContext({
+  out, number, ciFix, kind, actor, command, runUrl, analyzeFirst, loaded, st, identity, fresh = false, changes = false,
+  reviewThreads = [],
+}) {
   const context = {
     version: 1,
     number,
     ciFix,
+    kind: kind ?? (ciFix ? 'ci-fix' : 'initial'),
     actor,
     command,
     runUrl,
     analyzeFirst,
+    fresh,
+    changes,
+    reviewThreads,
     identity,
     issue: loaded.issue,
     comments: loaded.comments,
@@ -915,40 +1060,81 @@ async function writeContext(env = process.env, deps = {}) {
   const number = Number(requireEnv(env, 'AGENT_NUMBER'))
   const runUrl = requireEnv(env, 'AGENT_RUN_URL')
   const out = requireEnv(env, 'AGENT_OUT')
-  const ciFix = attemptKind(env) === 'ci-fix'
+  const kind = attemptKind(env)
+  const ciFix = kind === 'ci-fix'
   const gh = deps.gh ?? createClient({ token: env.GITHUB_TOKEN, repo: env.GITHUB_REPOSITORY })
   const loaded = await loadIssue(gh, number)
   if (ciFix) requireCiFixState(loaded.st)
   const actor = ciFix ? loaded.st.implementing.actor || env.AGENT_ACTOR : requireEnv(env, 'AGENT_ACTOR')
   const { issue, st: loadedState } = loaded
-  const analyzeFirst = ciFix
-    ? false
-    : analyzeFirstOf(issue, loadedState, runUrl)
+  const analyzeFirst = ciFix || isPersonKind(kind) ? false : analyzeFirstOf(issue, loadedState, runUrl)
   const identity = await resolveIdentity({ env, repo: env.GITHUB_REPOSITORY, deps, dryRun: config.dryRun })
+  const command = parseCommandEnv(env.AGENT_COMMAND)
   return saveContext({
-    out, number, ciFix, actor, command: parseCommandEnv(env.AGENT_COMMAND), runUrl,
-    analyzeFirst, loaded, st: loaded.st, identity,
+    out, number, ciFix, kind, actor, command, runUrl, analyzeFirst, loaded, st: loaded.st, identity,
+    changes: kind === 'review' || command.name === 'chat',
   })
 }
 
 /**
+ * The state a person's attempt starts from. `budgetFrom` gives the CI loop a fresh budget. A fresh start (the pull
+ * request of the earlier attempt is closed) retires the branch and the pull request, and the CI bookkeeping of that
+ * pull request. The threads of a review are recorded, so `publish` replies in the ones the implementer saw.
+ */
+function markedPersonState(st, { runUrl, actor, kind, pr, fresh, threads, at }) {
+  const base = { ...st }
+  delete base.stoppedBy
+  delete base.stoppedAt
+  if (fresh) {
+    for (const key of ['branch', 'pr', 'ciGate', 'lastCiReport', 'e2eReruns']) delete base[key]
+    base.retired = [...(st.retired ?? []), { pr: st.pr, branch: st.branch ?? null }]
+  }
+  return {
+    ...base,
+    phase: 'implementing',
+    budgetFrom: (st.attempts ?? []).length,
+    implementing: {
+      run: runUrl,
+      actor,
+      at,
+      kind,
+      analyzeFirst: false,
+      ...(pr ? { pr } : {}),
+      ...(threads.length > 0
+        ? { threads: threads.map((t) => ({ id: t.id, commentId: t.comments[0]?.databaseId ?? null })) }
+        : {}),
+    },
+  }
+}
+
+/** The comment that ends a refusal without noise: an answer to a hand-off that finds the flow busy says nothing. */
+const staysSilent = (command, outcome) => command?.name === 'answer' && outcome === 'refuse-busy'
+
+/**
  * Decides, answers a refusal, marks the issue as being implemented, and writes `context.json` for the work step.
  * `deps.gh` and `deps.patGh` are injectable. A CI fix (`AGENT_KIND=ci-fix`) has no decision: the CI gate made it, so
- * only the state is checked.
+ * only the state is checked. An attempt that a person asked for (`human`, `review`) has the decision of
+ * `humanDecision`. The comment that started the job (`AGENT_COMMENT_ID`) gets an `eyes` reaction at once, and
+ * `confused` when the preflight refuses.
  *
  * @returns {Promise<{ proceed: boolean, outcome: string, forced: boolean }>}
  */
 async function preflight(env = process.env, deps = {}) {
   const config = loadConfig(env)
   const number = Number(requireEnv(env, 'AGENT_NUMBER'))
-  const ciFix = attemptKind(env) === 'ci-fix'
+  const kind = attemptKind(env)
+  const ciFix = kind === 'ci-fix'
+  const person = isPersonKind(kind)
   const envActor = ciFix ? env.AGENT_ACTOR : requireEnv(env, 'AGENT_ACTOR')
   const runUrl = requireEnv(env, 'AGENT_RUN_URL')
   const out = requireEnv(env, 'AGENT_OUT')
   const command = parseCommandEnv(env.AGENT_COMMAND)
+  const prNumber = pullOf(env)
+  const commentId = commentIdOf(env.AGENT_COMMENT_ID)
   const gh = deps.gh ?? createClient({ token: env.GITHUB_TOKEN, repo: env.GITHUB_REPOSITORY })
-  log.info('preflight starts', { issue: number, actor: envActor || 'from the state', force: command.force, ciFix,
-    dryRun: config.dryRun })
+  log.info('preflight starts', { issue: number, actor: envActor || 'from the state', force: command.force, kind,
+    pr: prNumber ?? 'none', dryRun: config.dryRun })
+  await react({ gh, commentId, content: 'eyes', dryRun: config.dryRun })
 
   const loaded = await log.group('Load the issue, its comments, and its state', () => loadIssue(gh, number))
   const { issue, existing, st } = loaded
@@ -959,21 +1145,38 @@ async function preflight(env = process.env, deps = {}) {
     const identity = await log.group('Git identity', () =>
       resolveIdentity({ env, repo: env.GITHUB_REPOSITORY, deps, dryRun: config.dryRun }),
     )
-    saveContext({ out, number, ciFix: true, actor, command, runUrl, analyzeFirst: false, loaded, st, identity })
+    saveContext({
+      out, number, ciFix: true, kind, actor, command, runUrl, analyzeFirst: false, loaded, st, identity,
+    })
     log.info('preflight decision', { outcome: 'ci-fix', note: 'the CI gate decided; no checks of the issue apply' })
     writeOutputs(env, { proceed: 'true', outcome: 'ci-fix' })
     return { proceed: true, outcome: 'ci-fix', forced: false }
   }
   const actor = envActor
+  let pull = null
   const decision = await log.group('Decide', async () => {
-    const result = preflightDecision({ issue, state: st, command, config })
-    log.info('preflight decision', { outcome: result.outcome, forced: result.forced })
+    let result
+    if (person) {
+      // The pull request of the state tells a retry whether to continue it or to start again.
+      pull = st.pr ? await gh.getPull(st.pr) : null
+      result = humanDecision({ issue, state: st, command, kind, pr: prNumber, pull })
+    } else {
+      result = preflightDecision({ issue, state: st, command, config })
+    }
+    log.info('preflight decision', { outcome: result.outcome, forced: result.forced ?? false, kind,
+      fresh: result.fresh ?? false })
     return result
   })
 
   if (decision.outcome.startsWith('refuse')) {
-    const reply = refusalReply({ outcome: decision.outcome, actor, issue, state: st })
+    const reply = staysSilent(command, decision.outcome)
+      ? null
+      : refusalReply({ outcome: decision.outcome, actor, issue, state: st })
     await log.group(config.dryRun ? 'Refuse (dry run: job summary only)' : 'Refuse', async () => {
+      if (reply === null) {
+        log.info('refusal stays silent: an answer to a hand-off found the flow busy', { outcome: decision.outcome })
+        return
+      }
       if (config.dryRun) {
         appendSummary(env, quoted(`## Dry run: AI implementation of #${number} refused`, reply))
         log.info('dry run: the reply is in the job summary')
@@ -982,25 +1185,29 @@ async function preflight(env = process.env, deps = {}) {
       await gh.createIssueComment(number, reply)
       log.info('reply posted', { mention: actor, outcome: decision.outcome })
     })
+    await react({ gh, commentId, content: 'confused', dryRun: config.dryRun })
     writeOutputs(env, { proceed: 'false', outcome: decision.outcome })
     return { proceed: false, ...decision }
   }
 
-  const analyzeFirst = decision.outcome === 'analyze-first'
+  const analyzeFirst = !person && decision.outcome === 'analyze-first'
+  const threads = kind === 'review'
+    ? (await log.group('Read the review threads', () => gh.listReviewThreads(prNumber))).filter((t) => !t.isResolved)
+    : []
+  if (kind === 'review') log.info('unresolved review threads', { count: threads.length })
   // The identity of the PAT owner: the only use of the PAT before the publish job. No model code has run yet.
   const identity = await log.group('Git identity', () =>
     resolveIdentity({ env, repo: env.GITHUB_REPOSITORY, deps, dryRun: config.dryRun }),
   )
-  const marked = {
-    ...st,
-    phase: 'implementing',
-    implementing: { run: runUrl, actor, at: new Date().toISOString(), analyzeFirst },
-  }
+  const at = new Date().toISOString()
+  const marked = person
+    ? markedPersonState(st, { runUrl, actor, kind, pr: prNumber, fresh: decision.fresh, threads, at })
+    : { ...st, phase: 'implementing', implementing: { run: runUrl, actor, at, analyzeFirst } }
   const markTitle = config.dryRun ? 'Mark the issue (dry run: nothing written)' : 'Mark the issue as being implemented'
   await log.group(markTitle, async () => {
     if (config.dryRun) {
       appendSummary(env, `## Dry run: AI implementation of #${number} may proceed\n\n- outcome: ${decision.outcome}\n` +
-        `- forced: ${decision.forced}\n`)
+        `- forced: ${decision.forced ?? false}\n- kind: ${kind}\n`)
       return
     }
     const human = `### AI implementation is running\n\n[The run](${runUrl}) was started by @${actor}.`
@@ -1010,12 +1217,14 @@ async function preflight(env = process.env, deps = {}) {
     log.info('state comment written', { phase: 'implementing', id: existing ? existing.id : 'new' })
   })
   saveContext({
-    out, number, ciFix: false, actor, command, runUrl, analyzeFirst, loaded, st: marked, identity,
+    out, number, ciFix: false, kind, actor, command, runUrl, analyzeFirst, loaded, st: marked, identity,
+    fresh: Boolean(decision.fresh), changes: Boolean(decision.changes), reviewThreads: threads,
   })
   writeOutputs(env, { proceed: 'true', outcome: decision.outcome })
   return { proceed: true, ...decision }
 }
 
+// ---------------------------------------------------------------------------------------------------------------
 // ---------------------------------------------------------------------------------------------------------------
 // run
 // ---------------------------------------------------------------------------------------------------------------
@@ -1027,14 +1236,31 @@ async function preflight(env = process.env, deps = {}) {
  * cover the whole pull request, not only what this attempt adds. On a new branch that is `origin/develop`; on a
  * continued branch it is `git merge-base origin/develop HEAD`, after `develop` is fetched. A CI fix (`ciFix`)
  * continues the recorded branch or fails: there is no pull request to fix without it. It has no `previousSha`: the
- * fix is a new commit on top, pushed without force.
+ * fix is a new commit on top, pushed without force. A change to an open pull request (`mustContinue`: a change request
+ * or a review) continues the branch too, but pushes with a lease like any person's attempt. A fresh start (`fresh`: the
+ * pull request of the earlier attempt is closed) takes a new branch name, `<name>-v2` and on, when the old one is still
+ * on the remote.
  */
-async function prepareBranch({ exec, st, type, number, title, ciFix = false }) {
-  const branch = st.branch ?? branchName(type, number, title)
-  const remote = parseLsRemote(await git(exec, ['ls-remote', '--heads', 'origin', branch]), branch)
-  if (ciFix) {
-    if (!st.branch) throw new Error('A CI fix continues the branch of an earlier attempt, and the state records none')
-    if (!remote) throw new Error(`The branch ${branch} is gone from the remote, so the CI fix has nothing to continue`)
+async function prepareBranch({ exec, st, type, number, title, ciFix = false, mustContinue = ciFix, fresh = false }) {
+  let branch = st.branch ?? branchName(type, number, title)
+  const lookup = async () => parseLsRemote(await git(exec, ['ls-remote', '--heads', 'origin', branch]), branch)
+  let remote = await lookup()
+  if (fresh) {
+    const wanted = branch
+    for (let version = 2; remote && version <= MAX_BRANCH_VERSION; version += 1) {
+      branch = `${wanted}-v${version}`
+      remote = await lookup()
+    }
+    if (remote) throw new Error(`The branches ${wanted} to ${branch} exist on the remote; delete one of them`)
+    log.info('branch decision', { branch, note: 'fresh start: the pull request of the earlier attempt is closed' })
+  }
+  if (mustContinue) {
+    const what = ciFix ? 'A CI fix' : 'A change to the pull request'
+    const change = ciFix ? 'CI fix' : 'change'
+    if (!st.branch) throw new Error(`${what} continues the branch of an earlier attempt, and the state records none`)
+    if (!remote) {
+      throw new Error(`The branch ${branch} is gone from the remote, so the ${change} has nothing to continue`)
+    }
   }
   // A branch the state does not record is not the agent's: pushing to it would need a force over someone's work.
   if (remote && !st.branch) {
@@ -1118,6 +1344,7 @@ async function implementRounds(ctx) {
         round,
         previous,
         ciReport: ctx.ciReport,
+        reviewThreads: ctx.reviewThreads,
       })
       fs.writeFileSync(inputFile, text)
       fs.writeFileSync(path.join(out, `implement-input${suffix}.md`), text)
@@ -1255,7 +1482,7 @@ async function work(env = process.env, deps = {}) {
   const costs = []
   const ciFix = Boolean(context.ciFix)
   const attemptNo = (st.attempts?.length ?? 0) + 1
-  const kind = ciFix ? 'ci-fix' : attemptNo === 1 ? 'initial' : 'human'
+  const kind = attemptKindOf(context.kind ?? (ciFix ? 'ci-fix' : 'initial'), attemptNo)
   const labelsBefore = names(issue.labels)
   const outcome = {
     version: 1,
@@ -1324,7 +1551,8 @@ async function work(env = process.env, deps = {}) {
     } else {
       Object.assign(outcome, await workOnIssue({
         config, deps, exec, issue, comments, st, command, out, runUrl, costs, type, playbook: outcome.playbook, kind,
-        number, identity, analysis, ciFix,
+        number, identity, analysis, ciFix, fresh: Boolean(context.fresh), changes: Boolean(context.changes),
+        reviewThreads: context.reviewThreads ?? [],
       }))
     }
   } catch (err) {
@@ -1349,7 +1577,16 @@ async function workOnIssue(ctx) {
   const { deps, exec, issue, st, command, number, costs, config, identity, out } = ctx
 
   const branchInfo = await log.group('Branch', () =>
-    prepareBranch({ exec, st, type: ctx.type, number, title: issue.title, ciFix: ctx.ciFix }),
+    prepareBranch({
+      exec,
+      st,
+      type: ctx.type,
+      number,
+      title: issue.title,
+      ciFix: ctx.ciFix,
+      mustContinue: ctx.ciFix || ctx.changes,
+      fresh: ctx.fresh,
+    }),
   )
 
   await log.group('Git identity', async () => {
@@ -1377,6 +1614,7 @@ async function workOnIssue(ctx) {
     command,
     attempts: st.attempts ?? [],
     ciReport: ctx.ciFix ? st.lastCiReport ?? '' : '',
+    reviewThreads: ctx.reviewThreads,
   })
   const base = branchInfo.base
   const info = { ...branchInfo, head: rounds.head }
@@ -1387,26 +1625,15 @@ async function workOnIssue(ctx) {
       const shortstat = await git(exec, ['diff', '--shortstat', base, 'HEAD'])
       const stat = parseShortstat(shortstat)
       const limit = DIFF_LIMITS[ctx.playbook]
-      const tooLarge = diffTooLarge(stat, ctx.playbook)
-      log.info('diff size', { ...stat, limitFiles: limit.files, limitLines: limit.lines, tooLarge })
-      if (tooLarge) {
-        blockedReason = `The change has outgrown the issue: ${stat.files} files and ` +
-          `${stat.insertions + stat.deletions} changed lines, and the limit for a ${ctx.playbook} is ` +
-          `${limit.files} files or ${limit.lines} lines.`
-      }
+      log.info('diff size', { ...stat, limitFiles: limit.files, limitLines: limit.lines,
+        tooLarge: diffTooLarge(stat, ctx.playbook) })
       // AGENT_PAT has no Workflows permission, so GitHub would reject the push; say why instead of failing on it.
       const nameOnly = await git(exec, ['diff', '--name-only', base, 'HEAD'])
-      const workflows = touchedWorkflows(nameOnly)
-      const agentFiles = touchedAgentFiles(nameOnly)
-      log.info('protected files changed', { workflows, agentFiles })
-      if (!blockedReason && workflows.length) {
-        blockedReason = `The change edits workflow files (${workflows.join(', ')}), which the agent may not push. ` +
-          'A person has to make that part of the change.'
-      }
-      if (!blockedReason && agentFiles.length) {
-        blockedReason = `The change edits the agent's own instructions or tools (${agentFiles.join(', ')}). ` +
-          'A person has to make that part of the change.'
-      }
+      log.info('protected files changed', {
+        workflows: touchedWorkflows(nameOnly),
+        agentFiles: touchedAgentFiles(nameOnly),
+      })
+      blockedReason = diffBlockReason({ stat, nameOnly, playbook: ctx.playbook })
     })
   }
   const green = !blockedReason && rounds.checks.passed && effectiveVerdict(rounds.review) === 'approve'
@@ -1503,6 +1730,16 @@ const COMMIT_ID = /^[0-9a-f]{40,64}$/
 const RESULTS = new Set(['blocked', 'pr-opened', 'draft'])
 
 /**
+ * True when `branch` is the branch `publish` derives. A fresh start, which the state shows by no recorded branch, may
+ * also take `<expected>-v<n>`, because the old name can still be on the remote after its pull request closed.
+ */
+function branchAllowed(branch, expected, mayBeVersioned) {
+  if (branch === expected) return true
+  if (!mayBeVersioned || !expected || !branch.startsWith(`${expected}-v`)) return false
+  return /^[0-9]+$/.test(branch.slice(expected.length + 2))
+}
+
+/**
  * What is wrong with an outcome that came out of the work job. That job ran code the model wrote, as the same user
  * as the script, so `outcome.json` and the bundle are data of a source that may lie. The publish job pushes only to
  * the branch it derives itself (the state, else the issue), and the texts it builds from the outcome must have the
@@ -1520,7 +1757,7 @@ function outcomeProblems({ outcome, st, issue, number }) {
   if (outcome.branchInfo) {
     const type = issue.type?.name
     const expected = st.branch ?? (Object.hasOwn(PLAYBOOKS, type ?? '') ? branchName(type, number, issue.title) : null)
-    if (outcome.branchInfo.branch !== expected) {
+    if (!branchAllowed(outcome.branchInfo.branch, expected, !st.branch)) {
       problems.push(`the branch '${outcome.branchInfo.branch}' is not '${expected}'`)
     }
     const head = outcome.branchInfo.head
@@ -1564,22 +1801,35 @@ async function fetchBundle({ exec, file, head }) {
 }
 
 /**
- * Makes an open pull request match the new outcome: its title and description (not for a CI fix, which keeps the
- * description of the change as a whole) and its draft state, in both directions. Done as the PAT owner, so the events
- * start the workflows of the repository.
+ * Makes an open pull request match the new outcome: its title and description (not for a CI fix or a review, which keep
+ * the description of the change as a whole), and its draft state in one direction only. A ready pull request goes back
+ * to draft when the attempt is not green. `publish` never marks one ready: only the CI gate does, after the checks on
+ * GitHub are green, because the local results come from a job that ran code of the change. Done as the PAT owner, so
+ * the events start the workflows of the repository.
  */
-async function updateOpenPull({ client, open, title, body, draft, kind }) {
-  if (kind !== 'ci-fix') {
+async function updateOpenPull({ client, open, title, body, toDraft, kind }) {
+  if (kind !== 'ci-fix' && kind !== 'review') {
     await client.updatePull(open.number, { title, body })
     log.info('pull request updated', { pr: open.number, title })
   }
-  if (draft && !open.draft) {
+  if (toDraft && !open.draft) {
     await client.convertPullToDraft(open.node_id)
     log.info('pull request is a draft again', { pr: open.number })
-  } else if (!draft && open.draft) {
-    await client.markPullReady(open.node_id)
-    log.info('pull request is ready for review', { pr: open.number })
   }
+}
+
+/**
+ * Why the commits that were just fetched from the bundle may not be pushed, or `null`. The work step ran code of the
+ * change, so its claims about the diff are not evidence: this measures the diff itself, from the branch point of the
+ * pull request, and applies the limits of the playbook and the protected paths.
+ */
+async function pushedDiffProblem({ exec, head, type }) {
+  const base = await git(exec, ['merge-base', `origin/${BASE_BRANCH}`, head])
+  const stat = parseShortstat(await git(exec, ['diff', '--shortstat', base, head]))
+  const nameOnly = await git(exec, ['diff', '--name-only', base, head])
+  const reason = diffBlockReason({ stat, nameOnly, playbook: playbookOf(type).playbook })
+  log.info('diff of the bundle', { base, ...stat, blocked: reason ? 'yes' : 'no' })
+  return reason
 }
 
 /**
@@ -1592,15 +1842,31 @@ async function updateOpenPull({ client, open, title, body, draft, kind }) {
  */
 async function publish(env = process.env, deps = {}) {
   const config = loadConfig(env)
+  const gh = deps.gh ?? createClient({ token: env.GITHUB_TOKEN, repo: env.GITHUB_REPOSITORY })
+  let content = 'confused'
+  try {
+    const result = await publishAttempt(env, { ...deps, gh })
+    // Only a pull request that the local checks and the self-review passed ends well; the CI gate decides the rest.
+    if (result.result === 'pr-opened') content = 'rocket'
+    return result
+  } finally {
+    await react({ gh, commentId: commentIdOf(env.AGENT_COMMENT_ID), content, dryRun: config.dryRun })
+  }
+}
+
+async function publishAttempt(env, deps) {
+  const config = loadConfig(env)
   const number = Number(requireEnv(env, 'AGENT_NUMBER'))
   const runUrl = requireEnv(env, 'AGENT_RUN_URL')
   const out = requireEnv(env, 'AGENT_OUT')
   const repo = env.GITHUB_REPOSITORY
-  const ciFix = attemptKind(env) === 'ci-fix'
+  const envKind = attemptKind(env)
+  const ciFix = envKind === 'ci-fix'
   const envActor = ciFix ? env.AGENT_ACTOR : requireEnv(env, 'AGENT_ACTOR')
-  const gh = deps.gh ?? createClient({ token: env.GITHUB_TOKEN, repo })
+  const gh = deps.gh
   const exec = deps.exec ?? defaultExec
-  log.info('publish starts', { issue: number, ciFix, dryRun: config.dryRun })
+  const command = parseCommandEnv(env.AGENT_COMMAND)
+  log.info('publish starts', { issue: number, kind: envKind, dryRun: config.dryRun })
 
   const loaded = await log.group('Load the issue, its comments, and its state', () => loadIssue(gh, number))
   const { issue } = loaded
@@ -1610,7 +1876,7 @@ async function publish(env = process.env, deps = {}) {
   const actor = ciFix ? st.implementing.actor || envActor : envActor
   if (!actor) throw new Error('Nobody is recorded as the person who asked for this implementation')
   const attemptNo = (st.attempts?.length ?? 0) + 1
-  const kind = ciFix ? 'ci-fix' : attemptNo === 1 ? 'initial' : 'human'
+  const kind = attemptKindOf(envKind, attemptNo)
 
   let outcome = readOutcome(out)
   if (!outcome) {
@@ -1638,6 +1904,12 @@ async function publish(env = process.env, deps = {}) {
     result: outcome.result ?? 'none', stopped: outcome.stopped ?? 'no', failure: outcome.failure ? 'yes' : 'no',
     kind, costs: costs.length,
   })
+
+  // A person stopped this very run (`/agent stop` wrote the phase and left `implementing` alone): record the costs and
+  // the attempt, and write nothing else. A dry run never marks the state, so it never matches.
+  if (st.phase === 'stopped' && st.implementing?.run === runUrl) {
+    return publishStopped({ gh, loaded, st, costs, outcome, kind, attemptNo, actor, runUrl, at, out })
+  }
 
   // The analysis of this run: its labels and its place in the state, like a run of `analyze.js`.
   if (outcome.failure?.stage === 'analysis') {
@@ -1672,7 +1944,41 @@ async function publish(env = process.env, deps = {}) {
   return finish({
     config, env, deps, gh, exec, issue, st, commentId: loaded.existing?.id ?? null, costs, outcome, failure, progress,
     attemptNo, kind, actor, runUrl, number, at, out, repo,
+    changesPull: kind === 'review' || command.name === 'chat',
   })
+}
+
+/**
+ * The run was stopped by `/agent stop`: the state keeps the phase `stopped`, gets the cost records and the attempt as
+ * `stopped`, and loses `implementing`. Nothing is pushed, no label changes, and no comment is posted.
+ */
+async function publishStopped({ gh, loaded, st: state0, costs, outcome, kind, attemptNo, actor, runUrl, at, out }) {
+  let st = state0
+  for (const c of costs) st = state.addCost(st, c)
+  const { implementing: _running, ...rest } = st
+  const entry = attemptRecord({
+    n: attemptNo,
+    kind,
+    run: runUrl,
+    result: 'stopped',
+    rounds: outcome.rounds ?? 0,
+    checks: null,
+    review: null,
+    notes: `${st.stoppedBy ? `@${st.stoppedBy}` : 'A person'} stopped this attempt.`,
+    actor,
+    at,
+  })
+  const next = { ...rest, attempts: [...(rest.attempts ?? []), entry] }
+  fs.writeFileSync(path.join(out, 'summary.md'), `The attempt was stopped; ${costs.length} cost record(s) are kept.`)
+  await log.group('Record the stopped attempt', async () => {
+    if (loaded.existing) {
+      await gh.updateIssueComment(loaded.existing.id, state.replaceState(loaded.existing.body, next))
+    } else {
+      await gh.createIssueComment(next.number ?? 0, state.render('### AI implementation was stopped', next))
+    }
+    log.info('state comment written', { phase: next.phase, attempts: next.attempts.length, costs: costs.length })
+  })
+  return { stopped: 'stopped' }
 }
 
 /** The run ended after the analysis (needs-info, unsuitable): the state of the analysis and the reply that explains. */
@@ -1703,15 +2009,20 @@ async function publishStop(ctx) {
 
 /** The state, the push and the pull request, the labels, and the comments. */
 async function finish(ctx) {
-  const { config, env, deps, gh, exec, issue, costs, outcome, failure, progress, attemptNo, kind, actor, runUrl, number,
-    at, repo, out } = ctx
+  const { config, env, deps, gh, exec, issue, costs, failure, progress, attemptNo, kind, actor, runUrl, number,
+    at, repo, out, changesPull } = ctx
+  // `publish` may block the attempt itself, when the commits it is about to push break a limit.
+  let outcome = ctx.outcome
   let st = ctx.st
+  // The threads that the implementer of a review attempt saw: the preflight recorded them in the state.
+  const threads = st.implementing?.threads ?? []
   let commentId = ctx.commentId
   const existing = commentId !== null
 
   // Pull request: opened after the push, so a failure of either leaves the state with what exists.
   let pr = progress.pr
-  const published = { title: null, body: null, draft: false }
+  // Every pull request opens as a draft: only the CI gate marks one ready, after real CI is green on GitHub.
+  const published = { title: null, body: null, draft: true, toDraft: false }
   const hasCode = !failure && outcome.result !== null && outcome.result !== 'blocked'
 
   async function publishCode() {
@@ -1731,29 +2042,42 @@ async function finish(ctx) {
       rounds: outcome.rounds,
       actor,
     })
-    published.draft = outcome.result !== 'pr-opened'
+    // An open pull request that is ready stays so after a green attempt and goes back to draft after any other.
+    published.toDraft = outcome.result !== 'pr-opened'
     if (config.dryRun) return
+    let blockedBy = null
     await log.group('Push the branch', async () => {
       await fetchBundle({ exec, file: path.join(out, BUNDLE_FILE), head: branchInfo.head })
+      blockedBy = await pushedDiffProblem({ exec, head: branchInfo.head, type: issue.type?.name })
+      if (blockedBy) {
+        log.info('decision', { stage: 'publish', action: 'no push: the commits break a limit', reason: blockedBy })
+        return
+      }
       await pushBranch({
         env, repo, branch: branchInfo.branch, previousSha: branchInfo.previousSha, exec, ref: branchInfo.head,
       })
       progress.pushed = true
       log.info('branch pushed', { branch: branchInfo.branch, leased: Boolean(branchInfo.previousSha) })
     })
+    if (blockedBy) {
+      outcome = { ...outcome, result: 'blocked', blockedReason: blockedBy, bundle: false }
+      return
+    }
     await log.group('Pull request', async () => {
       const open = progress.pr ? await gh.getPull(progress.pr) : null
       if (open && open.state === 'open') {
         pr = open.number
         const client = deps.patGh ?? createClient({ token: readPat(env), repo })
         await updateOpenPull({
-          client, open, title: published.title, body: published.body, draft: published.draft, kind,
+          client, open, title: published.title, body: published.body, toDraft: published.toDraft, kind,
         })
         return
       }
-      // A CI fix belongs to the pull request that is red; a new one would be a different change.
-      if (kind === 'ci-fix') {
-        throw new Error(`Pull request #${progress.pr} is not open, so the CI fix has no place to go`)
+      // A CI fix belongs to the pull request that is red, and so does a change request; a new one would be a
+      // different change.
+      if (kind === 'ci-fix' || changesPull) {
+        throw new Error(`Pull request #${progress.pr} is not open, so the ${kind === 'ci-fix' ? 'CI fix' : 'change'} ` +
+          'has no place to go')
       }
       const created = await openPull({
         env, repo, deps, title: published.title, head: branchInfo.branch, base: BASE_BRANCH, body: published.body,
@@ -1766,6 +2090,7 @@ async function finish(ctx) {
   }
 
   let publishFailure = null
+  let replyError = null
   try {
     await publishCode()
   } catch (err) {
@@ -1847,9 +2172,11 @@ async function finish(ctx) {
           number,
           runUrl,
         })), '')
-        const kindOfPull = published.draft ? 'draft' : 'ready for review'
-        report.push(`### Pull request (${kindOfPull})`, '', `Title: ${published.title}`, '',
+        report.push('### Pull request (a draft; only the CI gate marks it ready)', '', `Title: ${published.title}`, '',
           fence(published.body, 'markdown'), '')
+        if (kind === 'review') {
+          report.push('Would reply in each review thread that the implementer saw, after the push.', '')
+        }
       }
       report.push('### Labels', '', `- add: ${labelChanges.add.join(', ') || 'none'}`,
         `- remove: ${labelChanges.remove.join(', ') || 'none'}`, '')
@@ -1886,9 +2213,41 @@ async function finish(ctx) {
         log.info('comment posted', { mention: actor, result })
       })
     }
+    if (kind === 'review' && progress.pushed && !error && threads.length > 0) {
+      replyError = await log.group('Reply in the review threads', () =>
+        replyInThreads({ gh, pr, threads, head: outcome.branchInfo.head }),
+      )
+    }
   }
   if (error) throw error
+  if (replyError) throw replyError
   return { result, pr, branch: progress.branch }
+}
+
+/**
+ * One reply in each review thread that the implementer saw: the commit that answers the review. The agent never
+ * resolves a thread; a person does. A failed reply is logged and the others still go out.
+ *
+ * @returns {Promise<Error|null>} the first error
+ */
+async function replyInThreads({ gh, pr, threads, head }) {
+  const sha = String(head).slice(0, 7)
+  const text = `The AI Autonomous agent pushed ${sha} for this review. A person resolves the thread.`
+  let first = null
+  for (const thread of threads) {
+    if (!thread.commentId) {
+      log.warn(`The review thread ${thread.id} has no first comment to reply to`)
+      continue
+    }
+    try {
+      await gh.replyToReviewComment(pr, thread.commentId, text)
+      log.info('replied in the review thread', { thread: thread.id, comment: thread.commentId })
+    } catch (err) {
+      first ??= err
+      log.error(`The reply in the review thread ${thread.id} failed: ${err.message}`)
+    }
+  }
+  return first
 }
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -1919,6 +2278,12 @@ module.exports = {
   recoverCosts,
   outcomeProblems,
   attemptKind,
+  attemptKindOf,
+  humanDecision,
+  diffBlockReason,
+  prepareBranch,
+  branchAllowed,
+  renderReviewThreads,
   requireCiFixState,
   appendSummary,
   writeOutputs,

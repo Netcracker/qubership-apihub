@@ -577,3 +577,32 @@ test('greenComment and stopComment mention the person, name the check and its er
   const quiet = stopComment({ actor: 'carol', pr: 70, reason: 'same-failure', max: 3, failed, errorsByJob: {} })
   assert.match(quiet, /Look at `build 'x'`; its log has no error line I could read\. Comment `\/agent retry`/)
 })
+
+test('countedAttempts counts only from the budget index: a person who steers the agent gives a fresh budget', () => {
+  const attempts = [attempt(1, 'initial'), attempt(2, 'ci-fix'), attempt(3, 'human'), attempt(4, 'ci-fix')]
+  assert.equal(countedAttempts(attempts), 3)
+  assert.equal(countedAttempts(attempts, 0), 3)
+  assert.equal(countedAttempts(attempts, 2), 1)
+  assert.equal(countedAttempts(attempts, 4), 0)
+  assert.equal(countedAttempts(attempts, 99), 0)
+})
+
+test('stopDecision: attempts before budgetFrom do not count against the budget; the signature still does', () => {
+  const spent = [attempt(1, 'initial', { signature: 'a' }), attempt(2, 'ci-fix', { signature: 'b' })]
+  const before = { attempts: [...spent, attempt(3, 'ci-fix', { signature: 'c' })] }
+  assert.equal(stopDecision({ state: before, signature: 'd', config: config() }).reason, 'budget')
+  // A retry after the stop: attempt 4 is the person's attempt, budgetFrom is 3.
+  const retried = { attempts: [...before.attempts, attempt(4, 'human')], budgetFrom: 3 }
+  assert.deepEqual(stopDecision({ state: retried, signature: 'd', config: config() }), {
+    action: 'next-attempt',
+    reason: 'new-failure',
+  })
+  const again = {
+    attempts: [...retried.attempts, attempt(5, 'ci-fix'), attempt(6, 'ci-fix'), attempt(7, 'ci-fix')],
+    budgetFrom: 3,
+  }
+  assert.equal(stopDecision({ state: again, signature: 'e', config: config() }).reason, 'budget')
+  // The same failure as the last recorded one still stops at once, across the boundary.
+  const same = { attempts: [...before.attempts, attempt(4, 'human', { signature: 'c' })], budgetFrom: 3 }
+  assert.equal(stopDecision({ state: same, signature: 'c', config: config() }).reason, 'same-failure')
+})

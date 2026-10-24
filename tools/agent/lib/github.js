@@ -277,6 +277,53 @@ function createClient({
   const addReaction = (commentId, content) =>
     request('POST', `/repos/{repo}/issues/comments/${commentId}/reactions`, { body: { content } })
 
+  /**
+   * Cancels a workflow run. Returns `true` when GitHub accepted the request and `false` for 409: the run has finished,
+   * which is the state the caller wants. Needs `actions: write`.
+   */
+  async function cancelRun(runId) {
+    try {
+      await request('POST', `/repos/{repo}/actions/runs/${runId}/cancel`)
+      return true
+    } catch (error) {
+      if (error instanceof GitHubError && error.status === 409) return false
+      throw error
+    }
+  }
+
+  /** Replies in the thread of a review comment; `commentId` is the `databaseId` of the first comment of the thread. */
+  const replyToReviewComment = (n, commentId, body) =>
+    request('POST', `/repos/{repo}/pulls/${n}/comments/${commentId}/replies`, { body: { body } })
+
+  /**
+   * The first 100 review threads of a pull request, each with its first 20 comments:
+   * `{ id, isResolved, path, line, comments: [{ author, body, databaseId }] }`.
+   */
+  async function listReviewThreads(n) {
+    const [owner, name] = repo.split('/')
+    const result = await graphql(
+      'query($owner: String!, $name: String!, $number: Int!) { repository(owner: $owner, name: $name) { ' +
+        'pullRequest(number: $number) { reviewThreads(first: 100) { nodes { id isResolved path line ' +
+        'comments(first: 20) { nodes { author { login } body databaseId } } } } } } }',
+      { owner, name, number: Number(n) },
+    )
+    const nodes = result?.data?.repository?.pullRequest?.reviewThreads?.nodes
+    if (!Array.isArray(nodes)) {
+      throw new GitHubError(`GitHub GraphQL did not return the review threads of #${n}`, { status: 200, body: result })
+    }
+    return nodes.map((thread) => ({
+      id: thread.id,
+      isResolved: Boolean(thread.isResolved),
+      path: thread.path ?? '',
+      line: thread.line ?? null,
+      comments: (thread.comments?.nodes ?? []).map((c) => ({
+        author: c.author?.login ?? 'unknown',
+        body: c.body ?? '',
+        databaseId: c.databaseId ?? null,
+      })),
+    }))
+  }
+
   return {
     request,
     paginate,
@@ -303,6 +350,9 @@ function createClient({
     getJobLog,
     rerunFailedJobs,
     addReaction,
+    cancelRun,
+    replyToReviewComment,
+    listReviewThreads,
   }
 }
 

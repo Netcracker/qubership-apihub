@@ -182,6 +182,10 @@ const SCHEMAS = {
       additionalProperties: false,
     },
   }),
+  // Output of the assistant (Flow D): the Markdown answer to a question in a comment.
+  chatAnswer: strictObject({
+    answer: { type: 'string', minLength: 1, maxLength: 6000 },
+  }),
   // Output of the implementer (Flow C). Which fields must be filled for which status is checked in implement.js.
   implementation: strictObject({
     status: { type: 'string', enum: ['done', 'blocked'] },
