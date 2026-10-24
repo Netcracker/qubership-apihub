@@ -18,8 +18,9 @@ The state of the AI Autonomous agent proof of concept on October 24, 2026, and h
 
 ## The stack of pull requests
 
-Each phase targets the branch of the phase before it. Merge them from the top down: #941 (phase 6, when opened) into
-#940, #940 into #938, and so on, then #934 into `develop`. Every branch already contains `develop` with #932, so the
+Each phase targets the branch of the phase before it. Merge them from the top down: #941 into #940, #940 into #938,
+and so on, then #934 into `develop`, after the documentation of
+[Before the merge into develop](#before-the-merge-into-develop) is written. Every branch already contains `develop` with #932, so the
 last merge has no conflicts. #934 closes #939.
 
 | Phase | Pull request | Branch |
@@ -30,7 +31,7 @@ last merge has no conflicts. #934 closes #939.
 | 3: implementation on `/agent implement` | #937 | `feature/ai-autonomous-phase-3` |
 | 4: CI loop, stop rule, work and publish split | #938 | `feature/ai-autonomous-phase-4` |
 | 5: commands and conversation | #940 | `feature/ai-autonomous-phase-5` |
-| 6: weekly report, fixes from the review of #940 | to open | `feature/ai-autonomous-phase-6` |
+| 6: weekly report, fixes from the review of #940, this handover | #941 | `feature/ai-autonomous-phase-6` |
 
 ## What has run for real
 
@@ -44,6 +45,33 @@ Nothing else has run on GitHub yet: `issues`, `issue_comment`, `workflow_run`, `
 `pull_request_target` take the workflow from the default branch, so analysis, implementation, the CI loop, the
 commands, and the level copy run only after the stack reaches `develop`. They are covered by unit tests and by
 `*.main.test.js` tests over fake GitHub and opencode clients.
+
+## Before the merge into develop
+
+The stabilization on `develop` comes after the merge, but the documentation comes before it: the stack does not merge
+until these two documents exist, in `docs/internal/autonomous-agent/`, on the branch of the last phase (or of a new
+phase 7 pull request on top of #941). The design and the plan describe intentions; these describe what was built.
+
+1. **`architecture.md`: the logic at a high level, with diagrams.** For each flow (review, analysis, implementation,
+   CI loop, commands, execution levels, weekly report): the trigger, the jobs in order, the decisions and their
+   outcomes, the labels and the state each flow reads and writes, and where a person steps in. Draw the diagrams in
+   Mermaid (GitHub renders it): one sequence or flow diagram per flow, one diagram of the jobs of
+   `ai-autonomous-agent.yml` and what each job may do (tokens, model, repository code), and the state machine of an
+   issue (`phase` values and the transitions between them). Keep it readable for a maintainer who has not seen the
+   code.
+2. **`technical-details.md`: the technical reference.** Every third-party piece and how and where it is used:
+   opencode (the pinned version, the `run` flags, the config keys, the JSON events, the permission patterns, what was
+   learned in the spike), the OpenAI models and the variables that choose them, the GitHub REST and GraphQL calls
+   (per script, with the token each one uses), the GitHub Actions used (with versions), APM and its version,
+   `yaml`, and the `nx` and `pnpm` commands of the local checks. Then the sources, one entry each, from the workflow
+   files down: every job of the three workflows (trigger, permissions, secrets, steps), every script in
+   `tools/agent/` and every module in `tools/agent/lib/` (purpose, inputs and environment, outputs, what it writes to
+   GitHub, its tests), every role in `tools/agent/opencode/agents/`, every playbook skill, the state comment schema,
+   the JSON contracts of the model outputs, and the files of an artifact.
+
+Write both with the `english-developer-style` and `markdown-line-length-120` skills, link them from
+`docs/internal/README.md` and from this handover, and check every path and name against the code; a document that
+disagrees with the code is worse than none. The agent's own review (Flow A) on that pull request is a good last check.
 
 ## Bring it up on develop
 
