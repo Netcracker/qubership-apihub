@@ -124,12 +124,13 @@ runner image and must be 3.9 or newer.
 ### APM
 
 The playbooks are the local APM package `agent-packages/apihub-autonomous-agent` (version `0.1.0`), listed in the root
-`apm.yml` and in `apm.lock.yaml`, which pins `apm_version: 0.34.0`. `apm install --target cursor,claude
---legacy-skill-paths` deploys each skill to `.claude/skills/<name>/` and `.cursor/skills/<name>/`; opencode reads the
+`apm.yml` and in `apm.lock.yaml`, which pins `apm_version: 0.34.0`.
+`apm install --target cursor,claude --legacy-skill-paths` deploys each skill to `.claude/skills/<name>/` and
+`.cursor/skills/<name>/`; opencode reads the
 `.claude` copy. Use APM 0.34.0 locally (`pip install apm-cli==0.34.0`): an older one rewrites `.cursor/rules` in another
 format.
 
-### yaml
+### The `yaml` package
 
 `yaml@2.9.1` is the only npm package the scripts need besides opencode. `lib/facts.js` uses it to read
 `.github/labeler.yml`. The `review` job installs it with `npm install --no-save --prefix .agent-tools yaml@2.9.1`; in a
@@ -331,7 +332,7 @@ calls for them. A decision that does nothing has the action `skip` (there is no 
 | Draft PR | `skip` | PR | | | | | |
 | Fork PR (`fork pull requests run only on /agent review`) | `skip` | PR | | | | | |
 | Author is a bot (Dependabot included) | `skip` | PR | | | | | |
-| Body holds `<!-- ai-autonomous-agent ` (the agent opened it) | `skip` | PR | | | | | |
+| Body holds the agent marker `<!-- ai-autonomous-agent issue=<n> -->` (the agent opened it) | `skip` | PR | | | | | |
 | Author not in `AGENT_ALLOWED_ACTORS` | `skip` | PR | | | | | |
 | `ready_for_review` and the state comment of the PR lists reviews | `skip` | PR | | | | | |
 | Otherwise (`opened`, or `ready_for_review` never reviewed) | `review` | PR | empty | | | | |
@@ -480,11 +481,12 @@ instruction files of the pull request with the trusted ones. The job has one con
   - Cost records (flow `review`, roles `pr-reviewer` and `verifier`) go to the `costs` list before anything can throw.
 - **GitHub reads (`GITHUB_TOKEN`):** `getPull` (`GET /repos/{repo}/pulls/{n}`), `listPullFiles`
   (`GET /repos/{repo}/pulls/{n}/files`), `listIssueComments` (`GET /repos/{repo}/issues/{n}/comments`, to find the state
-  comment, and again inside `state.withFreshCosts` right before the write). Git commands: `git fetch --no-tags origin
-  <base>`, `git merge-base FETCH_HEAD HEAD`, `git rev-parse HEAD`.
+  comment, and again inside `state.withFreshCosts` right before the write). Git commands:
+  `git fetch --no-tags origin <base>`, `git merge-base FETCH_HEAD HEAD`, `git rev-parse HEAD`.
 - **GitHub writes (`GITHUB_TOKEN`, permissions `issues: write`, `pull-requests: write`):**
-  - The state comment of the pull request, with `lib/state.js`: `updateIssueComment` (`PATCH
-    /repos/{repo}/issues/comments/{id}`) or `createIssueComment` (`POST /repos/{repo}/issues/{n}/comments`). The comment
+  - The state comment of the pull request, with `lib/state.js`: `updateIssueComment`
+    (`PATCH /repos/{repo}/issues/comments/{id}`) or `createIssueComment` (`POST /repos/{repo}/issues/{n}/comments`). The
+    comment
     is written first because it holds the cost record, which must survive a failed review post.
   - The review: `createReview` (`POST /repos/{repo}/pulls/{n}/reviews`) with `commit_id` set to the head SHA and the
     event `COMMENT` (the agent never approves or requests changes). The review body is
@@ -508,14 +510,13 @@ instruction files of the pull request with the trusted ones. The job has one con
   - A table `| Impact | |` with Modules, Images, REST API, Database, Deployment (each `changed: yes/no` and, for REST
     and Database, `breaking: yes/no`, plus the notes), and E2E (collections and notes). Model text is put in one line,
     and `|` is escaped.
-  - The verification line: `A second model checked the N finding(s): X confirmed, Y plausible (shown, marked as not
-    confirmed), Z rejected (not shown). The text above was written before that check.` Empty without findings.
+  - The verification line: "A second model checked the N finding(s): X confirmed, Y plausible (shown, marked as not
+    confirmed), Z rejected (not shown). The text above was written before that check." Empty without findings.
   - `<n> finding(s) are inline comments on the diff.`, then `**Findings outside the diff lines**` with a list item per
     finding, or `No findings.`
-  - The cost line, in a `<sub>` footer: `[Run](<run url>) · AI cost of this pull request so far: $<usd> · comment
-    /agent review to review again, /agent cost for
-    details`. `<usd>` is the sum of all cost records of the state plus this
-    run, formatted by `usage.formatUsd`.
+  - The cost line, in a `<sub>` footer: a link to the run, "AI cost of this pull request so far: $<usd>", and the hint
+    to comment `/agent review` or `/agent cost`. `<usd>` is the sum of all cost records of the state plus this run,
+    formatted by `usage.formatUsd`.
   - An inline finding reads `<icon> **<severity>**[ (plausible, not confirmed)]: <title>` and the body. Icons: blocker
     `🛑`, major `🔴`, minor `🟡`, nit `⚪`.
   - On failure the summary is `### AI review failed`, the reason, and a footer with the run link and the hint to comment
@@ -774,7 +775,7 @@ at most 30, `commentId` is the `databaseId` of the first comment), and `analyzeF
 
 **Tests:** `tools/agent/implement.test.js` (pure functions: decisions, replies, branch name, diff parsing, commit
 text, prompts, PR body, state record, `runChecks`, `pushBranch`, `outcomeProblems`) and
-`tools/agent/implement.main.test.js` (the three modes end to end with fake GitHub and Git clients: preflight
+`tools/agent/implement.main.test.js` (the three modes from start to finish with fake GitHub and Git clients: preflight
 refusals, `context.json`, retry, change request, review threads).
 
 #### `work`
@@ -786,7 +787,7 @@ Runs one attempt without GitHub. It reads `context.json` and writes `outcome.jso
   variables. Runs in a checkout of the default branch with Git history.
 - **Outputs:** the files below. The step does not set `$GITHUB_OUTPUT`. It does not throw on a stage failure; the
   failure goes to `outcome.failure`.
-- **GitHub reads and writes:** none. The git remote `origin` is used for `ls-remote` and `fetch` only.
+- **GitHub reads and writes:** none. The Git remote `origin` is used for `ls-remote` and `fetch` only.
 - **Model calls:**
 
 | Role (opencode agent) | Model variable | Contract (`lib/contract.js`) | When |
@@ -811,8 +812,9 @@ cannot carry a `blocker`. A broken contract throws and ends the attempt with `fa
    or the issue was updated after the last one) `work` runs `runAnalysis` with trigger `command` and stores the result
    as `outcome.analysis` (with `issueUpdatedAt`). The verdict then decides:
    - `needs-info` -> `outcome.stopped = 'refuse-needs-info'`, no implementation.
-   - `unsuitable` -> `outcome.stopped = 'refuse-unsuitable'`, unless the command has `force` (then `outcome.forced =
-     true`) or a person set `ai:suitable` (the label counts as a person's when the state does not show that the agent
+   - `unsuitable` -> `outcome.stopped = 'refuse-unsuitable'`, unless the command has `force` (then
+     `outcome.forced = true`) or a person set `ai:suitable` (the label counts as a person's when the state does not show
+     that the agent
      set it).
    - `suitable` -> go on; the new plan feeds the implementer.
    Without the analysis step, the plan comes from `st.analysis`.
@@ -820,8 +822,9 @@ cannot carry a `blocker`. A broken contract throws and ends the attempt with `fa
    `<prefix>/<number>-<slug>`; the slug is up to five words of the title, lowercased, characters other than `a-z0-9`
    replaced by `-`, at most 40 characters, trailing `-` trimmed (for example `bugfix/123-fix-the-null-pointer`).
    `git ls-remote --heads origin <branch>` looks for the remote head (`parseLsRemote`). Then:
-   - A branch on the remote that the state does not record throws (`... already exists on the remote and no earlier
-     attempt of the agent made it`): the agent never overwrites someone else's branch.
+   - A branch on the remote that the state does not record throws
+     (`... already exists on the remote and no earlier attempt of the agent made it`): the agent never overwrites
+     someone else's branch.
    - `ci-fix` and `changes` attempts must continue: a missing `st.branch`, or a branch gone from the remote, throws.
    - A recorded branch that exists on the remote is continued: `git fetch --no-tags origin <branch>`,
      `git checkout -B <branch> FETCH_HEAD`, `git fetch --no-tags origin develop`, and the base is
@@ -836,11 +839,12 @@ cannot carry a `blocker`. A broken contract throws and ends the attempt with `fa
 5. **Rounds** (`implementRounds`), from round 1 up to `AGENT_MAX_REVIEW_ROUNDS` (default 2):
    1. Write `implement-input.md` (`renderImplementInput`) and call `implementer`. If `status` is `blocked`, the attempt
       is blocked with `implementation.blockedReason`.
-   2. Commit: `git status --porcelain`. No changes in round 1 means blocked with `The implementer reported done, but
-      the working tree has no changes.` No new changes in a later round keeps the earlier commit. Otherwise
+   2. Commit: `git status --porcelain`. No changes in round 1 means blocked with
+      `The implementer reported done, but the working tree has no changes.` No new changes in a later round keeps the
+      earlier commit. Otherwise
       `git add -A` and `git commit --no-verify -m <message>`; later rounds add `--amend`, so an attempt is one commit.
    3. Local checks (`runChecks`, below).
-   4. Write `self-review-input.md` (`renderSelfReviewInput`: base and head commit, ``git diff <base> <head>``, the
+   4. Write `self-review-input.md` (`renderSelfReviewInput`: base and head commit, `git diff <base> <head>`, the
       issue, the notes, the plan, the implementer's summary) and call `self-reviewer`.
    5. Stop with status `done` when the checks passed and `effectiveVerdict(review) === 'approve'`, or when
       `round >= maxReviewRounds`. Otherwise the next round gets `previous = { findings, checks }`: the open findings
@@ -853,8 +857,9 @@ cannot carry a `blocker`. A broken contract throws and ends the attempt with `fa
    2. `pnpm test:tools`, only when `git diff --name-only <base> HEAD` lists a file under `tools/`.
    Each result is `{ command, exitCode, timedOut, tail }` (last 200 lines, ANSI colors removed). `checks` is
    `{ passed, results }`.
-7. **Diff limits and protected paths** (`diffBlockReason`, step `Diff size`), measured with `git diff --shortstat
-   <base> HEAD` and `git diff --name-only <base> HEAD`. They run after the rounds, not inside them:
+7. **Diff limits and protected paths** (`diffBlockReason`, step `Diff size`), measured with
+   `git diff --shortstat <base> HEAD` and `git diff --name-only <base> HEAD`. They run after the rounds, not inside
+   them:
 
    | Playbook | Files | Changed lines (insertions plus deletions) |
    |----------|-------|-------------------------------------------|
@@ -876,10 +881,9 @@ cannot carry a `blocker`. A broken contract throws and ends the attempt with `fa
 
 - `implementation.status === 'blocked'` (reason: `blockedReason` of the implementer).
 - No changes in the working tree after a `done` answer in round 1.
-- A diff over the limit, or a change to a protected path (reason texts: `The change has outgrown the issue: ...`,
-  `The change edits workflow files (...), which the agent may not push. A person has to make that part of the
-  change.`, `The change edits the agent's own instructions or tools (...). A person has to make that part of the
-  change.`).
+- A diff over the limit, or a change to a protected path. The reason texts start with "The change has outgrown the
+  issue", "The change edits workflow files", or "The change edits the agent's own instructions or tools", and the last
+  two end with "A person has to make that part of the change."
 - `publish` repeats the limit check and can turn `draft` or `pr-opened` into `blocked` (see `publish`).
 
 **Files written under `AGENT_OUT`:**
@@ -972,11 +976,12 @@ marks a pull request ready; only the CI gate does, after CI is green on GitHub.
    - **Contracts:** `implementation`, `review` (`selfReview`), and `analysis` (without `issueUpdatedAt`) are validated
      again with `lib/contract.js`; `checks` needs `results` (array) and `passed` (boolean).
    - A result with code (`pr-opened` or `draft`) needs `implementation`, `review`, `checks`, and `branchInfo`.
-   Any problem replaces the outcome with a `failedOutcome` (message `The outcome of the work step is not trusted:
-   <problems>`), keeping only cost records that have a numeric `usd`.
+   Any problem replaces the outcome with a `failedOutcome` (message
+   `The outcome of the work step is not trusted: <problems>`), keeping only cost records that have a numeric `usd`.
 4. **Stopped by a person.** When the state phase is `stopped` and `implementing.run` equals `AGENT_RUN_URL`,
-   `publishStopped` records the costs and an attempt with `result: 'stopped'` (notes `@<stoppedBy> stopped this
-   attempt.`), removes `implementing`, keeps the phase `stopped`, writes the state comment, and posts nothing else.
+   `publishStopped` records the costs and an attempt with `result: 'stopped'` (notes
+   `@<stoppedBy> stopped this attempt.`), removes `implementing`, keeps the phase `stopped`, writes the state comment,
+   and posts nothing else.
 5. **Analysis of this run.** If `outcome.failure.stage === 'analysis'`, the state goes through `failedState`. If
    `outcome.analysis` exists, `labelChanges` and `applyLabels` apply the analysis labels (`ai:suitable`,
    `ai:unsuitable`; not in dry-run), and `nextState` records the analysis. Costs are added with `state.addCost`.
@@ -1026,12 +1031,14 @@ request title is the first line (`commitTitle`).
 
 - `## Why`: the issue title, the first sentence of the implementer's summary, and `Closes #<number>.`
 - `## What`: the summary.
-- `## How to verify`: `implementation.verification`, or `No verification was described.`, and a line `Local checks
-  passed, as reported by the work job: ...` or `Local checks failed, as reported by the work job: ...` with the
+- `## How to verify`: `implementation.verification`, or `No verification was described.`, and a line
+  `Local checks passed, as reported by the work job: ...` or `Local checks failed, as reported by the work job: ...`
+  with the
   failed commands.
 - `## Checklist`: the three template items (issue linked is checked; documentation and breaking change are not).
-- A line with the self-review result (`approved after <N> round(s).` or `changes were still requested after <N>
-  round(s).`) and, when there are findings, one bullet per finding (`<severity> at <file>:<line>: <body>`).
+- A line with the self-review result (`approved after <N> round(s).` or
+  `changes were still requested after <N> round(s).`) and, when there are findings, one bullet per finding
+  (`<severity> at <file>:<line>: <body>`).
 - ``Implemented by the AI Autonomous agent on request of @<actor>.``
 - The marker on its own last line: `<!-- ai-autonomous-agent issue=<number> -->`. The router trusts this marker.
 
@@ -1078,21 +1085,24 @@ Other phases come from other scripts. This script also leaves `analyzed` or `nee
    (the same text goes to `summary.md`):
    - `error`: `### AI implementation failed`.
    - `blocked`: `### AI implementation is blocked`, with "What I tried" and "What I need from you".
-   - `pr-opened`: `### AI implementation: pull request #<n> is open` (a CI fix: `### AI implementation: CI fix pushed to
-     pull request #<n>`), with the branch, the rounds, and "It stays a draft until CI is green on GitHub."
-   - `draft`: `### AI implementation needs a person: draft pull request #<n>` (a CI fix: `... needs a person: CI fix
-     for pull request #<n>`), with "What I tried", "What is open" (failing checks and open findings), and "What I need
+   - `pr-opened`: `### AI implementation: pull request #<n> is open` (a CI fix:
+     `### AI implementation: CI fix pushed to pull request #<n>`), with the branch, the rounds, and "It stays a draft
+     until CI is green on GitHub."
+   - `draft`: `### AI implementation needs a person: draft pull request #<n>` (a CI fix:
+     `... needs a person: CI fix for pull request #<n>`), with "What I tried", "What is open" (failing checks and open
+     findings), and "What I need
      from you".
    Each ends with ``<sub>[Run](<run URL>) · AI cost of this issue so far: $<usd> · <hint>``.
 2. The mention comment (`actorComment`, a new comment so that the person is notified; none for `pr-opened`):
    - `draft`: ``@<actor>, I opened draft pull request #<n>, but it is not green yet. The AI implementation comment on
      this issue says what is open.`` (a CI fix: `I pushed a fix to pull request #<n>, but it is not green yet. ...`).
-   - `blocked`: `@<actor>, I could not implement this issue: <reason> The AI implementation comment on this issue has
-     the details.`
+   - `blocked`:
+     `@<actor>, I could not implement this issue: <reason> The AI implementation comment on this issue has the details.`
    - `error`: `@<actor>, the implementation failed: <message>`.
 3. Review-thread replies, only for kind `review`, a successful push, no error, and recorded threads: for each thread
-   of `implementing.threads` with a `commentId`, `replyToReviewComment(pr, commentId, text)` where `text` is `The AI
-   Autonomous agent pushed <first 7 characters of head> for this review. A person resolves the thread.` The agent
+   of `implementing.threads` with a `commentId`, `replyToReviewComment(pr, commentId, text)` where `text` is
+   `The AI Autonomous agent pushed <first 7 characters of head> for this review. A person resolves the thread.` The
+   agent
    never resolves a thread. A failed reply is logged and the others still go out; the first error is thrown at the
    end.
 
@@ -1116,28 +1126,6 @@ keeps `stopped`, and passes on `analyzed` and `needs-info` from `analyze.js` fun
   a stopped attempt, and the review-thread replies (including more than 30 threads). `implement.test.js` covers
   `outcomeProblems`, `prBody`, `renderOutcome`, `actorComment`, `attemptRecord`, `recoverCosts`, `pushBranch`
   (token in the URL only, lease, redaction, pushes the given commit).
-
-## Findings
-
-1. `docs/development/autonomous-agent.md:142` (step 7) says the agent "stops at once" when the change grows past the
-   limits. In `tools/agent/implement.js` (`workOnIssue`, step `Diff size`, line 1645) the limits are measured only
-   after `implementRounds` finishes, so an oversized change still uses every round (implementer, checks, and
-   self-review) before it is blocked. The wording matters for cost expectations.
-2. `docs/internal/autonomous-agent/design.md:325` says the local checks are `nx affected -t build test` "plus the
-   format checks of the changed languages". `checkCommands` (`implement.js`) runs only the Nx command and, when a file
-   under `tools/` changed, `pnpm test:tools`. No format check runs.
-3. `design.md:325` says the Nx command runs "against `origin/develop`". The code uses `--base=<branch point>`: on a
-   new branch that is `origin/develop`, on a continued branch it is the merge-base with `origin/develop`. The
-   difference matters only for later attempts and CI fixes.
-4. `implement.js:141-152`: the JSDoc of `preflightDecision` sits above the `BUSY_MS` comment and constant, so the
-   doc block documents the constant, not the function. Cosmetic, but the function has no doc in editors.
-5. Review replies (`implement.js`, `finish`) run only when `progress.pushed` is true. When `publish` blocks the attempt
-   on re-measure (limit or protected path), no push happens and the review threads get no reply; only the state
-   comment and the mention comment explain it. Probably intended, but the docs do not say so.
-6. `preflight` marks the state and `publish` writes it in separate jobs with read-modify-write of the state comment.
-   The concurrency group `ai-autonomous-<number>` (no cancellation) serializes them, but `/agent stop` runs in its
-   own job without the group by design; `publishStopped` and `withFreshCosts` re-read costs to limit the loss. No
-   bug found, but the protection relies on `st.implementing.run === AGENT_RUN_URL`, which a dry run never sets.
 
 ### `tools/agent/ci-gate.js`
 
@@ -1267,8 +1255,9 @@ job uses the group `ai-autonomous-chat-<number>`.
 
 - **Inputs:**
   - `GITHUB_REPOSITORY`, `GITHUB_TOKEN` (the job token, no `AGENT_PAT`), `OPENAI_API_KEY` (questions only).
-  - `AGENT_NUMBER`, `AGENT_COMMAND` (JSON from the router, for example `{ "name": "chat", "force": false,
-    "notes": "..." }`), `AGENT_ACTOR` (who asked), `AGENT_COMMENT_ID` (gets the reactions), `AGENT_RUN_URL`,
+  - `AGENT_NUMBER`, `AGENT_COMMAND` (JSON from the router, for example
+    `{ "name": "chat", "force": false, "notes": "..." }`), `AGENT_ACTOR` (who asked), `AGENT_COMMENT_ID` (gets the
+    reactions), `AGENT_RUN_URL`,
     `AGENT_OUT`, and `AGENT_PR_HEAD_REF` (chat job only; `refs/remotes/pull/<n>/head`, fetched by the workflow).
   - Required: `AGENT_NUMBER`, `AGENT_ACTOR`, `AGENT_RUN_URL`, `AGENT_OUT`. An unknown command name throws
     `The chat job does not handle the command '<name>'`.
@@ -1371,8 +1360,9 @@ with `ai:l`. It checks out only `tools/agent` of the base branch and never runs 
   - `getPull` (`GET /repos/{repo}/pulls/{n}`): `merged`, author, labels.
   - GraphQL `CLOSING_ISSUES_QUERY` through `graphql` (`POST /graphql`): `pullRequest.closingIssuesReferences(first: 20)`
     with number and labels of each issue.
-  - GraphQL `CLOSING_PULLS_QUERY`, once per closed issue: `issue.closedByPullRequestsReferences(first: 20,
-    includeClosedPrs: true)` with `number`, `merged`, and labels. Only merged pull requests count. The pull request of
+  - GraphQL `CLOSING_PULLS_QUERY`, once per closed issue:
+    `issue.closedByPullRequestsReferences(first: 20, includeClosedPrs: true)` with `number`, `merged`, and labels. Only
+    merged pull requests count. The pull request of
     this run replaces its own entry (or is added), because the GitHub index can lag behind a merge or a label.
   - `listIssueComments` (`GET /repos/{repo}/issues/{n}/comments`) on the pull request, to find earlier comments of the
     workflow bot.
@@ -1393,15 +1383,15 @@ with `ai:l`. It checks out only `tools/agent` of the base branch and never runs 
   - `levelChanges`: the issue gets the lowest level and loses every other `LEVELS` label. With no level (`null`) the
     issue stays as it is. Labels that only look similar are left alone.
 - **The reminder comment:** when the merged pull request itself has no level, it closes at least one issue, and no
-  comment of `github-actions[bot]` with the marker `<!-- ai-autonomous-levels -->` exists, the script posts: `This pull
-  request has no execution level label (ai:l0-assistant ... ai:l3-autonomous). Add one; the agent copies it to issue(s)
-  #<n>.` A later `labeled` event with a level label runs the job again and copies the level.
-- **The people's commits count:** when the pull request body holds `<!-- ai-autonomous-agent ` and no comment with the
+  comment of `github-actions[bot]` with the marker `<!-- ai-autonomous-levels -->` exists, the script posts a
+  reminder: "This pull request has no execution level label (ai:l0-assistant ... ai:l3-autonomous). Add one; the agent
+  copies it to issue(s) #<n>." A later `labeled` event with a level label runs the job again and copies the level.
+- **The people's commits count:** when the pull request body holds the agent marker and no comment with the
   marker `<!-- ai-autonomous-levels-commits -->` exists, the script lists the commits of the pull request and counts
   those whose message has no line matching `^Agent-Run:\s*\S` (case-insensitive, multiline). When the count is above
-  zero it posts: `<people> of <total> commits on this pull request have no Agent-Run: trailer, so people wrote them.
+  zero it posts: "<people> of <total> commits on this pull request have no Agent-Run: trailer, so people wrote them.
   The level stays as it is, because it is a human judgment. If the people's commits were substantial, consider
-  ai:l0-assistant.` The script does not change the level.
+  ai:l0-assistant." The script does not change the level.
 - **Decisions:**
   - `AGENT_ENABLED` is not `true` -> stop.
   - The pull request is not merged -> stop.
@@ -1472,35 +1462,6 @@ The weekly report: how far the team has come toward autonomy, in numbers. It use
   `agentPrCounts`, `costByFlow`, `attemptCounts`, `renderReport`, `queriesOf`). `tools/agent/report.main.test.js` covers
   `main` with an injected client and clock: posting, the dry run, no issue set, an empty period, a disabled agent,
   invalid input, and a failed search.
-
-## Findings
-
-1. `tools/agent/report.js:323` (query `reviewed`): the query is `label:"agent:pr-reviewed" updated:>=<from>`. The label
-   stays on a pull request forever, and any later update (a comment, a push) moves `updated`. The metric "Reviewed by
-   the
-   agent" therefore counts pull requests that carry the label and changed in the period, not pull requests that were
-   reviewed in the period. The report paragraph says "it reviewed N pull requests". The number can be too high.
-2. `tools/agent/report.js:371-378`: the states read are those of the issues, merged pull requests, agent pull requests,
-   reviewed pull requests, and linked issues found by the five searches. A cost record (for example from `chat`) in the
-   state of an older issue or pull request that has no activity matching a search in the period is not counted, although
-   its `at` is in the period. The AI-call total can be lower than the real spend. The text says costs are estimates, but
-   not that it can miss some.
-3. `tools/agent/route.js:5-19` (header comment): it says `pr` and `kind` are written for "an `implement` decision that a
-   person asked for". `/agent implement` is such a decision but writes neither (it does not use `humanAttempt`). Only
-   `retry`, a change request, an answer to a hand-off, and a review write `kind`. The comment is imprecise, not the
-   code.
-4. `tools/agent/review.js:334-337`: after a failed inline review post the label is not added and the job fails, but the
-   state comment already holds the summary and a `reviews` entry is not written (`failure` is set only later in the
-   publish block, after `reviews` was appended at line 292-294). The entry is added before the publish, so a post
-   failure
-   still leaves a `reviews` entry in the state. A later `ready_for_review` then skips the automatic review as "already
-   reviewed", although the inline comments were never posted. Low impact: `/agent review` repeats the review.
-5. `tools/agent/levels.js:208`: the level reminder is posted only when the pull request closes at least one issue. A
-   merged
-   pull request without a level and without a closing issue gets no reminder and is counted as `No level` in the report.
-   This matches the code comment but may surprise a reader of `docs/development/autonomous-agent.md`, which says a
-   merged
-   pull request without a level gets a reminder.
 
 ## Library modules
 
@@ -1797,7 +1758,7 @@ Tokens and cost of one opencode run, from the event stream.
 Each role is an opencode agent: a Markdown file under `tools/agent/opencode/agents/`, selected with
 `--agent <file name without .md>`. All six have `mode: primary`.
 
-**Model handling.** No agent file names a model or a reasoning effort. The model and the variant come from the
+**Model handling.** No agent filenames a model or a reasoning effort. The model and the variant come from the
 repository variables through `lib/config.js` and are passed as `--model` and `--variant` (`lib/opencode.js`). A model
 change needs no commit.
 
@@ -2169,6 +2130,6 @@ scripts and 14 next to the library modules.
 - `tools/agent/fixtures/` holds 29 recorded event payloads, one per case, named `<event>.<case>.json`, for example
   `issue_comment.implement-force.json`, `pull_request.fork.json`, and `workflow_run.completed.human.json`.
 - `lib/facts.test.js` and `review.test.js` need the `yaml` package, which a checkout gets with `node_modules`
-  (see [yaml](#yaml)).
+  (see [the `yaml` package](#the-yaml-package)).
 
 Test data must not look like a secret or an e-mail address: the CyberFerret pre-commit hook rejects such commits.
