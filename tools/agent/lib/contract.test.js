@@ -187,7 +187,9 @@ test('every object in the schemas requires all its properties and forbids extras
       walk(schema.items, `${where}[]`)
     }
   }
-  assert.deepEqual(Object.keys(SCHEMAS).sort(), ['analysis', 'implementation', 'review', 'selfReview', 'verification'])
+  assert.deepEqual(Object.keys(SCHEMAS).sort(), [
+    'analysis', 'chatAnswer', 'implementation', 'review', 'selfReview', 'verification',
+  ])
   for (const [name, schema] of Object.entries(SCHEMAS)) walk(schema, name)
 })
 
@@ -239,6 +241,17 @@ test('analysis allows at most 10 questions and rejects a plan of the wrong type'
   assert.deepEqual(problemsOf('analysis', many), ['questions: expected at most 10 item(s), got 11'])
   assert.deepEqual(problemsOf('analysis', goodAnalysis({ plan: 'later' })), ['plan: expected object or null'])
   assert.deepEqual(problemsOf('analysis', goodAnalysis({ plan: undefined })), ['plan: missing required property'])
+})
+
+test('chatAnswer needs a non-empty answer of at most 6000 characters and nothing else', () => {
+  assert.doesNotThrow(() => validate('chatAnswer', { answer: 'The state lives in one comment.' }))
+  assert.doesNotThrow(() => validate('chatAnswer', { answer: 'x'.repeat(6000) }))
+  assert.deepEqual(problemsOf('chatAnswer', { answer: '' }), ['answer: expected at least 1 character(s)'])
+  assert.deepEqual(problemsOf('chatAnswer', { answer: 'x'.repeat(6001) }), [
+    'answer: expected at most 6000 character(s), got 6001',
+  ])
+  assert.deepEqual(problemsOf('chatAnswer', { answer: 'ok', extra: 1 }), ['extra: unexpected property'])
+  assert.deepEqual(problemsOf('chatAnswer', {}), ['answer: missing required property'])
 })
 
 function goodImplementation(extra = {}) {

@@ -235,7 +235,8 @@ test('needsIssueState asks for the state only when a rule reads it', () => {
   assert.equal(needsIssueState('issue_comment', fixture('issue_comment.analyze')), false)
   const other = fixture('issue_comment.author-reply')
   other.comment.user.login = 'carol'
-  assert.equal(needsIssueState('issue_comment', other), false)
+  // Anyone may answer a hand-off of the agent without a command (phase 5), so the state is needed.
+  assert.equal(needsIssueState('issue_comment', other), true)
   const pull = fixture('issue_comment.author-reply')
   pull.issue.pull_request = { url: 'x' }
   assert.equal(needsIssueState('issue_comment', pull), false)

@@ -193,12 +193,19 @@ test('ordinary comments and bot comments are skipped', () => {
   assert.match(result.reason, /bot/)
 })
 
-test('commands other than review, analyze, and implement are not available yet', () => {
-  for (const body of ['/agent', '/agent retry', '/agent stop', '/agent cost', '/agent what do you think?']) {
+test('help, cost, and a question go to the chat job; stop and retry need the agent (phase 5)', () => {
+  const expected = [
+    ['/agent', 'chat'],
+    ['/agent cost', 'chat'],
+    ['/agent stop', 'skip'],
+    ['/agent retry', 'skip'],
+    ['/agent what do you think?', 'chat'],
+  ]
+  // The fixture is a pull request of a person: stop and retry work on issues and on pull requests of the agent.
+  for (const [body, action] of expected) {
     const result = route('issue_comment', comment(body), { actorPermission: 'write' })
-    assert.equal(result.action, 'skip', body)
-    assert.match(result.reason, /not available yet/, body)
-    assert.equal(result.number, 123)
+    assert.equal(result.action, action, body)
+    assert.equal(result.number, 123, body)
   }
 })
 

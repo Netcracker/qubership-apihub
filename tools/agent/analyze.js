@@ -270,6 +270,40 @@ function renderInput({ issue, comments, st, trigger }) {
 }
 
 /**
+ * The model part of an analysis, without any call to GitHub: writes the analyst input, runs the analyst (the light
+ * model), and returns its validated output. The cost record goes to `costs` also when the call fails. The
+ * implementation job calls it (`implement.js work`), where no GitHub token exists, and publishes the result later.
+ *
+ * @param {{ issue: object, comments: object[], st: object, trigger: string, config: object, out: string,
+ *   costs: object[], runUrl: string, deps?: { runAgent?: Function } }} input `comments` hold no state comment
+ */
+async function runAnalysis({ issue, comments, st, trigger, config, out, costs, runUrl, deps = {} }) {
+  fs.mkdirSync(out, { recursive: true })
+  const inputFile = path.join(out, 'analysis-input.md')
+  await log.group('Build the analyst input', async () => {
+    const text = renderInput({ issue, comments, st, trigger })
+    fs.writeFileSync(inputFile, text)
+    log.info('input written', { file: inputFile, characters: text.length })
+  })
+  return log.group('Run the analyst', () =>
+    callAgent({
+      flow: 'analyze',
+      role: 'analyst',
+      agent: 'analyst',
+      model: config.models.light,
+      message: `Analyze issue #${issue.number}. Your input is the attached analysis-input.md.`,
+      inputFile,
+      out,
+      costs,
+      runUrl,
+      schema: 'analysis',
+      check: checkAnalysis,
+      deps,
+    }),
+  )
+}
+
+/**
  * Runs the analysis and publishes it. `deps.gh` and `deps.runAgent` are injectable so that tests never touch the
  * network or start opencode.
  *
@@ -323,28 +357,7 @@ async function analyze(env = process.env, deps = {}, { askAuthor = true } = {}) 
   const at = new Date().toISOString()
 
   try {
-    const inputFile = path.join(out, 'analysis-input.md')
-    await log.group('Build the analyst input', async () => {
-      const text = renderInput({ issue, comments, st, trigger })
-      fs.writeFileSync(inputFile, text)
-      log.info('input written', { file: inputFile, characters: text.length })
-    })
-    analysis = await log.group('Run the analyst', () =>
-      callAgent({
-        flow: 'analyze',
-        role: 'analyst',
-        agent: 'analyst',
-        model: config.models.light,
-        message: `Analyze issue #${number}. Your input is the attached analysis-input.md.`,
-        inputFile,
-        out,
-        costs,
-        runUrl,
-        schema: 'analysis',
-        check: checkAnalysis,
-        deps,
-      }),
-    )
+    analysis = await runAnalysis({ issue, comments, st, trigger, config, out, costs, runUrl, deps })
     log.json('Analysis', analysis)
     labelsNow = (await log.group('Read the labels again', () => gh.getIssue(number))).labels
     changes = labelChanges(labelsNow, st, analysis.verdict)
@@ -383,7 +396,6 @@ async function analyze(env = process.env, deps = {}, { askAuthor = true } = {}) 
     fs.writeFileSync(path.join(out, 'summary.md'), text)
     return text
   })
-  const body = state.render(human, st)
   const author = issue.user?.login
   const asksAuthor = !failure && analysis.verdict === 'needs-info'
   let commentId = existing?.id ?? null
@@ -402,6 +414,8 @@ async function analyze(env = process.env, deps = {}, { askAuthor = true } = {}) 
     })
   } else {
     await log.group('Write the state comment', async () => {
+      // Read again right before the write: chat may have added a cost record since the state was loaded.
+      const body = state.render(human, await state.withFreshCosts(gh, number, st))
       if (existing) {
         await gh.updateIssueComment(existing.id, body)
       } else {
@@ -436,6 +450,7 @@ if (require.main === module) {
 module.exports = {
   main,
   analyze,
+  runAnalysis,
   applyLabels,
   checkAnalysis,
   labelChanges,
