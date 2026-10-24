@@ -81,7 +81,7 @@ const COLUMNS: ColumnDef<VersionNotification>[] = [
   },
 ]
 
-type DocumentErrorsTableProps = {
+type DocumentNotificationsTableProps = {
   data: VersionNotifications
   selectedId?: string
   onSelectNotification: (id: string) => void
@@ -90,7 +90,7 @@ type DocumentErrorsTableProps = {
   hasNextPage: HasNextPage
 }
 
-export const DocumentErrorsTable: FC<DocumentErrorsTableProps> = memo<DocumentErrorsTableProps>(({
+export const DocumentNotificationsTable: FC<DocumentNotificationsTableProps> = memo<DocumentNotificationsTableProps>(({
   data,
   selectedId,
   onSelectNotification,
@@ -111,7 +111,7 @@ export const DocumentErrorsTable: FC<DocumentErrorsTableProps> = memo<DocumentEr
 
   return (
     <StyledTableContainer>
-      <Table stickyHeader data-testid="DocumentErrorsTable">
+      <Table stickyHeader data-testid="NotificationsTable">
         <TableHead>
           {getHeaderGroups().map(headerGroup => (
             <TableRow key={headerGroup.id}>
@@ -132,7 +132,7 @@ export const DocumentErrorsTable: FC<DocumentErrorsTableProps> = memo<DocumentEr
               key={row.original.id}
               selected={row.original.id === selectedId}
               onClick={() => onSelectNotification(row.original.id)}
-              data-testid="DocumentErrorsTableRow"
+              data-testid="NotificationRow"
             >
               {row.getVisibleCells().map(cell => (
                 <TableCell
@@ -158,7 +158,7 @@ export const DocumentErrorsTable: FC<DocumentErrorsTableProps> = memo<DocumentEr
   )
 })
 
-DocumentErrorsTable.displayName = 'DocumentErrorsTable'
+DocumentNotificationsTable.displayName = 'DocumentNotificationsTable'
 
 const StyledTableContainer = styled(TableContainer)(({ theme }) => ({
   padding: theme.spacing(1.5, 3),

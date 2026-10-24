@@ -62,7 +62,7 @@ export const DocumentsTabHeader: FC<DocumentsTabHeaderProps> = (props) => {
 
   const { shareabilityStatus, hasErrors } = document
 
-  const { showDocumentErrorsDialog } = useEventBus()
+  const { showDocumentNotificationsDialog } = useEventBus()
 
   const {
     hasPermission: hasShareabilityPermission,
@@ -76,13 +76,13 @@ export const DocumentsTabHeader: FC<DocumentsTabHeaderProps> = (props) => {
     if (!docPackageKey || !fullVersion) {
       return
     }
-    showDocumentErrorsDialog({
+    showDocumentNotificationsDialog({
       packageKey: docPackageKey,
       versionKey: fullVersion,
       documentId: slug,
       documentTitle: title,
     })
-  }, [docPackageKey, fullVersion, showDocumentErrorsDialog, slug, title])
+  }, [docPackageKey, fullVersion, showDocumentNotificationsDialog, slug, title])
 
   if (isLoading) {
     return (
