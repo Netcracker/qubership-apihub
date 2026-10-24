@@ -31,6 +31,10 @@ apm_modules/
 # APM pack build artifacts
 agent-packages/**/build/
 
+# Skills for Codex from `apm install --target codex`. opencode reads this folder too, so a stale copy here would
+# shadow .claude/skills for the AI Autonomous agent.
+/.agents/
+
 # Workspace build output
 node_modules/
 dist/

@@ -9,8 +9,8 @@ CI runs, see [Build and test](./build-and-test.md).
 
 ## The workflows
 
-Each workflow name except `CI` starts with a group prefix: `E2E:`, `Images:`, `Lint:`, `Pages:`, `PR:`, or
-`Release:`. The Actions sidebar sorts workflows by name, so each group stays together there. Give a new workflow the
+Each workflow name except `CI` starts with a group prefix: `AI Autonomous:`, `E2E:`, `Images:`, `Lint:`, `Pages:`,
+`PR:`, or `Release:`. The Actions sidebar sorts workflows by name, so each group stays together there. Give a new workflow the
 prefix of its group. A workflow that a person starts ends with `(manual)`, and the manual release workflows are
 numbered in the order they run.
 
@@ -35,6 +35,8 @@ numbered in the order they run.
 | PR: Title | `pr-lint-title.yaml` | pull request opened, edited, or updated | checks that the title is a Conventional Commit |
 | Release: 1. Start (manual), Release: 2. Finish (manual), Release: Sync | `release-*.yml` | manual; `release-sync.yml` on push to `release` | the release flow, see [Release process](./release-process.md) |
 | Release: Artifacts | `release-artifacts.yml` | called by `ci.yml` on `main` | publishes image version tags, npm packages, Helm charts, GitHub Releases |
+| AI Autonomous: Agent | `ai-autonomous-agent.yml` | pull request opened or ready for review, `/agent` comment | the AI agent: review, and in later phases analysis and implementation; see [AI Autonomous agent](./autonomous-agent.md) |
+| AI Autonomous: Weekly report | `ai-autonomous-report.yml` | Mondays at 06:00 UTC, manual | counts the work of the AI agent over the last week and posts the report to the job summary and, if configured, an issue; see [AI Autonomous agent](./autonomous-agent.md#weekly-report) |
 
 Only `ci-ok` is a required check. The linters, the link checker, the license check, and the title checks report
 on the pull request, and reviewers expect them green, but they do not block the merge by themselves.

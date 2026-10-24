@@ -1,0 +1,32 @@
+{
+  "action": "created",
+  "issue": {
+    "number": 200,
+    "state": "open",
+    "title": "Changelog is empty for a package with no operations",
+    "type": {
+      "name": "Bug"
+    },
+    "labels": [],
+    "user": {
+      "login": "alice",
+      "type": "User"
+    }
+  },
+  "comment": {
+    "id": 9101,
+    "body": "/agent analyze",
+    "user": {
+      "login": "carol",
+      "type": "User"
+    },
+    "author_association": "MEMBER"
+  },
+  "repository": {
+    "full_name": "Netcracker/qubership-apihub"
+  },
+  "sender": {
+    "login": "carol",
+    "type": "User"
+  }
+}

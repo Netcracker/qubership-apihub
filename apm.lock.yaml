@@ -1,5 +1,5 @@
 lockfile_version: '1'
-generated_at: '2026-10-23T15:07:36.085504+00:00'
+generated_at: '2026-10-23T20:46:08.043117+00:00'
 apm_version: 0.34.0
 dependencies:
 - repo_url: _local/advanced-verification
@@ -53,9 +53,9 @@ dependencies:
   - .cursor/skills/api-diff-authoring/SKILL.md
   deployed_file_hashes:
     .claude/rules/api-diff-authoring.md: sha256:71a9b7d94d23dd62b2d3f0310837dd94089f6dd04aa6f0cad5800408bd49f94e
-    .claude/skills/api-diff-authoring/SKILL.md: sha256:f3ef43fc7b2cdad0a47e644cd1c31acd5a77030da68ed0399cc464475febe620
+    .claude/skills/api-diff-authoring/SKILL.md: sha256:f13fcb2d0bffa93acbbaeda2767c18a25889b8e72825d1fa12a6f7d5bf68247a
     .cursor/rules/api-diff-authoring.mdc: sha256:6328c308852729506ad2de6ee7f411ae0a3f707dda0be8ea220e7c320ff6308c
-    .cursor/skills/api-diff-authoring/SKILL.md: sha256:f3ef43fc7b2cdad0a47e644cd1c31acd5a77030da68ed0399cc464475febe620
+    .cursor/skills/api-diff-authoring/SKILL.md: sha256:f13fcb2d0bffa93acbbaeda2767c18a25889b8e72825d1fa12a6f7d5bf68247a
   source: local
   local_path: ./frontend/api-diff/agent-packages/api-diff-authoring
 - repo_url: _local/api-diff-testing
@@ -71,9 +71,9 @@ dependencies:
   - .cursor/skills/api-diff-testing/SKILL.md
   deployed_file_hashes:
     .claude/rules/api-diff-testing.md: sha256:17ecebc22a02f2ec71488182bfc1f7a6bff20c77afe25b5a87ff27c797194abf
-    .claude/skills/api-diff-testing/SKILL.md: sha256:cd79d37d1b68cd1e7048dd066a2804345b567ecd47a1825588dc16183e4a8e70
+    .claude/skills/api-diff-testing/SKILL.md: sha256:49bc73ce484bc7bdbdc1589b77e42e4d8305f6b860c057facfa7cba02c2c78e8
     .cursor/rules/api-diff-testing.mdc: sha256:59ceee6509d4ff56780ce923c14d54c4021ce3e7e96b67215f86e283ad40b314
-    .cursor/skills/api-diff-testing/SKILL.md: sha256:cd79d37d1b68cd1e7048dd066a2804345b567ecd47a1825588dc16183e4a8e70
+    .cursor/skills/api-diff-testing/SKILL.md: sha256:49bc73ce484bc7bdbdc1589b77e42e4d8305f6b860c057facfa7cba02c2c78e8
   source: local
   local_path: ./frontend/api-diff/agent-packages/api-diff-testing
 - repo_url: _local/api-doc-viewer-authoring
@@ -91,10 +91,10 @@ dependencies:
   - .cursor/skills/api-doc-viewer-authoring/refactoring-notes.md
   deployed_file_hashes:
     .claude/rules/api-doc-viewer-authoring.md: sha256:77d745d1a570e5e2080795f1721d40dc97a2684c0c6d3f620de96d061086f406
-    .claude/skills/api-doc-viewer-authoring/SKILL.md: sha256:776e5e16d36b533ee36c575c7c1ae2b65500c565a2759cd34032975d2792b9cf
+    .claude/skills/api-doc-viewer-authoring/SKILL.md: sha256:dd87e8c8bc13ce15fbf7291f56699afa6df39303a2dd35ee40cbc06ca3826091
     .claude/skills/api-doc-viewer-authoring/refactoring-notes.md: sha256:8fe5dea79ced846478511998aea4dae74dff706ada2ba5e90b0f59955cdecfba
     .cursor/rules/api-doc-viewer-authoring.mdc: sha256:17c23a846bf33344970f822081b12d554c2a3f6bd1e240e8b29c4b6fdd6db481
-    .cursor/skills/api-doc-viewer-authoring/SKILL.md: sha256:776e5e16d36b533ee36c575c7c1ae2b65500c565a2759cd34032975d2792b9cf
+    .cursor/skills/api-doc-viewer-authoring/SKILL.md: sha256:dd87e8c8bc13ce15fbf7291f56699afa6df39303a2dd35ee40cbc06ca3826091
     .cursor/skills/api-doc-viewer-authoring/refactoring-notes.md: sha256:8fe5dea79ced846478511998aea4dae74dff706ada2ba5e90b0f59955cdecfba
   source: local
   local_path: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-authoring
@@ -111,9 +111,9 @@ dependencies:
   - .cursor/skills/api-doc-viewer-review-session/SKILL.md
   deployed_file_hashes:
     .claude/rules/api-doc-viewer-review-session.md: sha256:b62b588a3f26daa96b7ffb25ae51ce652b6806f4d717bff63e91610c1d151ad2
-    .claude/skills/api-doc-viewer-review-session/SKILL.md: sha256:a7c30ba04399cff35e33cc24c22bd2fb06da4ed4077656f6b884e479e6676ef3
+    .claude/skills/api-doc-viewer-review-session/SKILL.md: sha256:38ecc35629ea76fe65b32144cef0c902d5a8b04ecb6d4685ac5c2df130fc2ba4
     .cursor/rules/api-doc-viewer-review-session.mdc: sha256:defa7606da8b0dcc81a9697079c9c5d7203b40f5ed44aed3c27ff4c5abb634a2
-    .cursor/skills/api-doc-viewer-review-session/SKILL.md: sha256:a7c30ba04399cff35e33cc24c22bd2fb06da4ed4077656f6b884e479e6676ef3
+    .cursor/skills/api-doc-viewer-review-session/SKILL.md: sha256:38ecc35629ea76fe65b32144cef0c902d5a8b04ecb6d4685ac5c2df130fc2ba4
   source: local
   local_path: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-review-session
 - repo_url: _local/api-doc-viewer-reviewing
@@ -163,9 +163,9 @@ dependencies:
   - .cursor/skills/api-doc-viewer-testing/SKILL.md
   deployed_file_hashes:
     .claude/rules/api-doc-viewer-testing.md: sha256:56dbe13ef83743f14c08c8fbb0852e2764d2f8b03a44b8ae0a94951a4ecfa62f
-    .claude/skills/api-doc-viewer-testing/SKILL.md: sha256:54599f6222ebd95dfe789bd892f58e8b9d3edd4c24f0d83b7266fd60cc17f0d0
+    .claude/skills/api-doc-viewer-testing/SKILL.md: sha256:ba9d99dc10533a4d48ff8222b790bb2e7440ff51aea84e7b54f72700b3473040
     .cursor/rules/api-doc-viewer-testing.mdc: sha256:da6f2bff0ad97eef742cc9ab4a0f3a688a52c114cf179c6272e4355834e7449e
-    .cursor/skills/api-doc-viewer-testing/SKILL.md: sha256:54599f6222ebd95dfe789bd892f58e8b9d3edd4c24f0d83b7266fd60cc17f0d0
+    .cursor/skills/api-doc-viewer-testing/SKILL.md: sha256:ba9d99dc10533a4d48ff8222b790bb2e7440ff51aea84e7b54f72700b3473040
   source: local
   local_path: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-testing
 - repo_url: _local/api-doc-viewer-using
@@ -181,9 +181,9 @@ dependencies:
   - .cursor/skills/api-doc-viewer-using/SKILL.md
   deployed_file_hashes:
     .claude/rules/api-doc-viewer-using.md: sha256:973ac261fd82da1a721c8609cb6edeb7e8c6f616f8af1509071d95ace8f6c833
-    .claude/skills/api-doc-viewer-using/SKILL.md: sha256:1b51161e2ec578252bd5768c8fce6ae76ec6109c04f868f79bd7802c4aa35408
+    .claude/skills/api-doc-viewer-using/SKILL.md: sha256:011de5d48fef73ee52e7ba24bad0947993b8e5eb5156825973533ea59393212c
     .cursor/rules/api-doc-viewer-using.mdc: sha256:90485a5bfcf35bc5d51cd75ce1e36562560a171b417d9af42e460644cc6744ae
-    .cursor/skills/api-doc-viewer-using/SKILL.md: sha256:1b51161e2ec578252bd5768c8fce6ae76ec6109c04f868f79bd7802c4aa35408
+    .cursor/skills/api-doc-viewer-using/SKILL.md: sha256:011de5d48fef73ee52e7ba24bad0947993b8e5eb5156825973533ea59393212c
   source: local
   local_path: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-using
 - repo_url: _local/api-processor-authoring
@@ -344,6 +344,44 @@ dependencies:
     .cursor/agents/verifier.md: sha256:9a2319b6a7ccd750e740321d3d7c94a538bc9393b57315be4c8ae77c770a1cce
   source: local
   local_path: ./frontend/ui/agent-packages/apihub-agents-cursor
+- repo_url: _local/apihub-autonomous-agent
+  name: apihub-autonomous-agent
+  version: 0.1.0
+  package_type: apm_package
+  deployed_files:
+  - .claude/skills/apihub-bug-fix
+  - .claude/skills/apihub-bug-fix/SKILL.md
+  - .claude/skills/apihub-ci-failure-triage
+  - .claude/skills/apihub-ci-failure-triage/SKILL.md
+  - .claude/skills/apihub-issue-analysis
+  - .claude/skills/apihub-issue-analysis/SKILL.md
+  - .claude/skills/apihub-pr-review
+  - .claude/skills/apihub-pr-review/SKILL.md
+  - .claude/skills/apihub-task
+  - .claude/skills/apihub-task/SKILL.md
+  - .cursor/skills/apihub-bug-fix
+  - .cursor/skills/apihub-bug-fix/SKILL.md
+  - .cursor/skills/apihub-ci-failure-triage
+  - .cursor/skills/apihub-ci-failure-triage/SKILL.md
+  - .cursor/skills/apihub-issue-analysis
+  - .cursor/skills/apihub-issue-analysis/SKILL.md
+  - .cursor/skills/apihub-pr-review
+  - .cursor/skills/apihub-pr-review/SKILL.md
+  - .cursor/skills/apihub-task
+  - .cursor/skills/apihub-task/SKILL.md
+  deployed_file_hashes:
+    .claude/skills/apihub-bug-fix/SKILL.md: sha256:1ca79fce52fe3b9998a27112f10271cd9304f7d0c35c48b86af8acd5daabd158
+    .claude/skills/apihub-ci-failure-triage/SKILL.md: sha256:fef1d06c0bea2fed152146771b288d91469a2526a12255babf3e6a84d0ace13c
+    .claude/skills/apihub-issue-analysis/SKILL.md: sha256:0eca430b89676a4f48bf8979e1b916056f6053b5d9d39fb64b2e00aa32cf5f2e
+    .claude/skills/apihub-pr-review/SKILL.md: sha256:a46cb17206a3716da1b73ecd6d9c533f1087657dad7e45e2ecbaf5ba8e595aa3
+    .claude/skills/apihub-task/SKILL.md: sha256:aed20fe58346b12100a798fd8e4add7a890cf586070fda249ddd32c00f2b830d
+    .cursor/skills/apihub-bug-fix/SKILL.md: sha256:1ca79fce52fe3b9998a27112f10271cd9304f7d0c35c48b86af8acd5daabd158
+    .cursor/skills/apihub-ci-failure-triage/SKILL.md: sha256:fef1d06c0bea2fed152146771b288d91469a2526a12255babf3e6a84d0ace13c
+    .cursor/skills/apihub-issue-analysis/SKILL.md: sha256:0eca430b89676a4f48bf8979e1b916056f6053b5d9d39fb64b2e00aa32cf5f2e
+    .cursor/skills/apihub-pr-review/SKILL.md: sha256:a46cb17206a3716da1b73ecd6d9c533f1087657dad7e45e2ecbaf5ba8e595aa3
+    .cursor/skills/apihub-task/SKILL.md: sha256:aed20fe58346b12100a798fd8e4add7a890cf586070fda249ddd32c00f2b830d
+  source: local
+  local_path: ./agent-packages/apihub-autonomous-agent
 - repo_url: _local/apihub-backend-developer
   name: apihub-backend-developer
   version: 0.2.0
@@ -729,7 +767,7 @@ dependencies:
   - .cursor/skills/next-data-model-authoring/node-visibility/general-approach.md
   deployed_file_hashes:
     .claude/rules/next-data-model-authoring.md: sha256:40c358121f78527037a130522586d164c81519874b26b6c8355ad5a39a3e56ec
-    .claude/skills/next-data-model-authoring/SKILL.md: sha256:3e91d0b9b37746389c82314282ec6f6dacfeb077200ec1b199a67844321baecd
+    .claude/skills/next-data-model-authoring/SKILL.md: sha256:ee0a9809e095beec42fa84105b96dcb3c515e92000a85bddfcf70c978c5024de
     .claude/skills/next-data-model-authoring/json-schema/json-schema-meta-flags-and-required.md: sha256:8e6d7f9bb652d770446d6afb7a7968bc42af0a2226a175cc819eb72899ad8d87
     .claude/skills/next-data-model-authoring/json-schema/json-schema-nesting-indicator-row-diffs.md: sha256:678b65fabc6f610ec90e951856e3797ab259022e24e2976b14e3c7f48f776de7
     .claude/skills/next-data-model-authoring/json-schema/json-schema-node-key-rename.md: sha256:cf508d9732c25e06428ea84eee124afb427c6c0de91735271ecd3f9f20254b22
@@ -738,7 +776,7 @@ dependencies:
     .claude/skills/next-data-model-authoring/node-visibility/ddlapi.md: sha256:a8945401440060035907c66f79d124520351981a10d19544c951acf174c00400
     .claude/skills/next-data-model-authoring/node-visibility/general-approach.md: sha256:2b6f93f8797bedaac1cfa590d82de6cdb2497df92b36fe3dd54def464c08a64c
     .cursor/rules/next-data-model-authoring.mdc: sha256:2d1d357104e86960cc240d9cf03e79926b259f9a0a2664f52d8fabc6d9ea66f7
-    .cursor/skills/next-data-model-authoring/SKILL.md: sha256:3e91d0b9b37746389c82314282ec6f6dacfeb077200ec1b199a67844321baecd
+    .cursor/skills/next-data-model-authoring/SKILL.md: sha256:ee0a9809e095beec42fa84105b96dcb3c515e92000a85bddfcf70c978c5024de
     .cursor/skills/next-data-model-authoring/json-schema/json-schema-meta-flags-and-required.md: sha256:8e6d7f9bb652d770446d6afb7a7968bc42af0a2226a175cc819eb72899ad8d87
     .cursor/skills/next-data-model-authoring/json-schema/json-schema-nesting-indicator-row-diffs.md: sha256:678b65fabc6f610ec90e951856e3797ab259022e24e2976b14e3c7f48f776de7
     .cursor/skills/next-data-model-authoring/json-schema/json-schema-node-key-rename.md: sha256:cf508d9732c25e06428ea84eee124afb427c6c0de91735271ecd3f9f20254b22
@@ -761,9 +799,9 @@ dependencies:
   - .cursor/skills/next-data-model-using/SKILL.md
   deployed_file_hashes:
     .claude/rules/next-data-model-using.md: sha256:4c9768e14f192d138f7c673a7fbf999390e2009d04af2f0f1a96f3d9c365ed4d
-    .claude/skills/next-data-model-using/SKILL.md: sha256:e0c29e67e2d34ff8c6e550e080fe2dab86219ad8af1a70a0a5ef0c112aed3670
+    .claude/skills/next-data-model-using/SKILL.md: sha256:7896e1f4f85d7ad819e57b4aac99bfee3103b8a02a4b70dfa887c9b38a91ae92
     .cursor/rules/next-data-model-using.mdc: sha256:2e7e66830abf4ccf4f1248271d708d6ddb7f670c0909547c79422e17d24222e0
-    .cursor/skills/next-data-model-using/SKILL.md: sha256:e0c29e67e2d34ff8c6e550e080fe2dab86219ad8af1a70a0a5ef0c112aed3670
+    .cursor/skills/next-data-model-using/SKILL.md: sha256:7896e1f4f85d7ad819e57b4aac99bfee3103b8a02a4b70dfa887c9b38a91ae92
   source: local
   local_path: ./frontend/api-doc-viewer/agent-packages/next-data-model-using
 - repo_url: _local/postman-e2e-authoring
@@ -1557,7 +1595,7 @@ deployments:
   owners:
   - ./frontend/api-diff/agent-packages/api-diff-authoring
   active_owner: ./frontend/api-diff/agent-packages/api-diff-authoring
-  content_hash: sha256:f3ef43fc7b2cdad0a47e644cd1c31acd5a77030da68ed0399cc464475febe620
+  content_hash: sha256:f13fcb2d0bffa93acbbaeda2767c18a25889b8e72825d1fa12a6f7d5bf68247a
 - kind: project-relative
   target: claude
   value: .claude/skills/api-diff-testing
@@ -1575,7 +1613,7 @@ deployments:
   owners:
   - ./frontend/api-diff/agent-packages/api-diff-testing
   active_owner: ./frontend/api-diff/agent-packages/api-diff-testing
-  content_hash: sha256:cd79d37d1b68cd1e7048dd066a2804345b567ecd47a1825588dc16183e4a8e70
+  content_hash: sha256:49bc73ce484bc7bdbdc1589b77e42e4d8305f6b860c057facfa7cba02c2c78e8
 - kind: project-relative
   target: claude
   value: .claude/skills/api-doc-viewer-authoring
@@ -1593,7 +1631,7 @@ deployments:
   owners:
   - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-authoring
   active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-authoring
-  content_hash: sha256:776e5e16d36b533ee36c575c7c1ae2b65500c565a2759cd34032975d2792b9cf
+  content_hash: sha256:dd87e8c8bc13ce15fbf7291f56699afa6df39303a2dd35ee40cbc06ca3826091
 - kind: project-relative
   target: claude
   value: .claude/skills/api-doc-viewer-authoring/refactoring-notes.md
@@ -1620,7 +1658,7 @@ deployments:
   owners:
   - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-review-session
   active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-review-session
-  content_hash: sha256:a7c30ba04399cff35e33cc24c22bd2fb06da4ed4077656f6b884e479e6676ef3
+  content_hash: sha256:38ecc35629ea76fe65b32144cef0c902d5a8b04ecb6d4685ac5c2df130fc2ba4
 - kind: project-relative
   target: claude
   value: .claude/skills/api-doc-viewer-reviewing
@@ -1692,7 +1730,7 @@ deployments:
   owners:
   - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-testing
   active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-testing
-  content_hash: sha256:54599f6222ebd95dfe789bd892f58e8b9d3edd4c24f0d83b7266fd60cc17f0d0
+  content_hash: sha256:ba9d99dc10533a4d48ff8222b790bb2e7440ff51aea84e7b54f72700b3473040
 - kind: project-relative
   target: claude
   value: .claude/skills/api-doc-viewer-using
@@ -1710,7 +1748,7 @@ deployments:
   owners:
   - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-using
   active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-using
-  content_hash: sha256:1b51161e2ec578252bd5768c8fce6ae76ec6109c04f868f79bd7802c4aa35408
+  content_hash: sha256:011de5d48fef73ee52e7ba24bad0947993b8e5eb5156825973533ea59393212c
 - kind: project-relative
   target: claude
   value: .claude/skills/api-processor-build-result
@@ -1920,6 +1958,42 @@ deployments:
   content_hash: sha256:469341ad3a1bcd37fc61f78c329e7c95a9b826fb4de8d017bdd4e04750993d8f
 - kind: project-relative
   target: claude
+  value: .claude/skills/apihub-bug-fix
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-autonomous-agent
+  active_owner: ./agent-packages/apihub-autonomous-agent
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/apihub-bug-fix/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-autonomous-agent
+  active_owner: ./agent-packages/apihub-autonomous-agent
+  content_hash: sha256:1ca79fce52fe3b9998a27112f10271cd9304f7d0c35c48b86af8acd5daabd158
+- kind: project-relative
+  target: claude
+  value: .claude/skills/apihub-ci-failure-triage
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-autonomous-agent
+  active_owner: ./agent-packages/apihub-autonomous-agent
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/apihub-ci-failure-triage/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-autonomous-agent
+  active_owner: ./agent-packages/apihub-autonomous-agent
+  content_hash: sha256:fef1d06c0bea2fed152146771b288d91469a2526a12255babf3e6a84d0ace13c
+- kind: project-relative
+  target: claude
   value: .claude/skills/apihub-deployment-authoring
   runtime: null
   scope: project
@@ -2001,6 +2075,24 @@ deployments:
   content_hash: sha256:0a4914ca688a5cadfa0c8d046c1bcf620a4f78835ac3217b1e5c0fdeb31f65f2
 - kind: project-relative
   target: claude
+  value: .claude/skills/apihub-issue-analysis
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-autonomous-agent
+  active_owner: ./agent-packages/apihub-autonomous-agent
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/apihub-issue-analysis/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-autonomous-agent
+  active_owner: ./agent-packages/apihub-autonomous-agent
+  content_hash: sha256:0eca430b89676a4f48bf8979e1b916056f6053b5d9d39fb64b2e00aa32cf5f2e
+- kind: project-relative
+  target: claude
   value: .claude/skills/apihub-landing-refresh
   runtime: null
   scope: project
@@ -2037,6 +2129,24 @@ deployments:
   content_hash: sha256:0cc291e22389c01339665dd0d8dba910a224036beba31b7c6fa1e1f6d98595c2
 - kind: project-relative
   target: claude
+  value: .claude/skills/apihub-pr-review
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-autonomous-agent
+  active_owner: ./agent-packages/apihub-autonomous-agent
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/apihub-pr-review/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-autonomous-agent
+  active_owner: ./agent-packages/apihub-autonomous-agent
+  content_hash: sha256:a46cb17206a3716da1b73ecd6d9c533f1087657dad7e45e2ecbaf5ba8e595aa3
+- kind: project-relative
+  target: claude
   value: .claude/skills/apihub-react-coding
   runtime: null
   scope: project
@@ -2053,6 +2163,24 @@ deployments:
   - ./frontend/ui/agent-packages/apihub-react-coding
   active_owner: ./frontend/ui/agent-packages/apihub-react-coding
   content_hash: sha256:c122b40c6302b430e63c1cc7cddc25d0d0bfcbda919c653eca4b4d718eea3252
+- kind: project-relative
+  target: claude
+  value: .claude/skills/apihub-task
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-autonomous-agent
+  active_owner: ./agent-packages/apihub-autonomous-agent
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/apihub-task/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-autonomous-agent
+  active_owner: ./agent-packages/apihub-autonomous-agent
+  content_hash: sha256:aed20fe58346b12100a798fd8e4add7a890cf586070fda249ddd32c00f2b830d
 - kind: project-relative
   target: claude
   value: .claude/skills/apihub-typescript-coding
@@ -2313,7 +2441,7 @@ deployments:
   owners:
   - ./frontend/api-doc-viewer/agent-packages/next-data-model-authoring
   active_owner: ./frontend/api-doc-viewer/agent-packages/next-data-model-authoring
-  content_hash: sha256:3e91d0b9b37746389c82314282ec6f6dacfeb077200ec1b199a67844321baecd
+  content_hash: sha256:ee0a9809e095beec42fa84105b96dcb3c515e92000a85bddfcf70c978c5024de
 - kind: project-relative
   target: claude
   value: .claude/skills/next-data-model-authoring/json-schema/json-schema-meta-flags-and-required.md
@@ -2394,7 +2522,7 @@ deployments:
   owners:
   - ./frontend/api-doc-viewer/agent-packages/next-data-model-using
   active_owner: ./frontend/api-doc-viewer/agent-packages/next-data-model-using
-  content_hash: sha256:e0c29e67e2d34ff8c6e550e080fe2dab86219ad8af1a70a0a5ef0c112aed3670
+  content_hash: sha256:7896e1f4f85d7ad819e57b4aac99bfee3103b8a02a4b70dfa887c9b38a91ae92
 - kind: project-relative
   target: claude
   value: .claude/skills/postman-e2e-authoring
@@ -3015,7 +3143,7 @@ deployments:
   owners:
   - ./frontend/api-diff/agent-packages/api-diff-authoring
   active_owner: ./frontend/api-diff/agent-packages/api-diff-authoring
-  content_hash: sha256:f3ef43fc7b2cdad0a47e644cd1c31acd5a77030da68ed0399cc464475febe620
+  content_hash: sha256:f13fcb2d0bffa93acbbaeda2767c18a25889b8e72825d1fa12a6f7d5bf68247a
 - kind: project-relative
   target: cursor
   value: .cursor/skills/api-diff-testing
@@ -3033,7 +3161,7 @@ deployments:
   owners:
   - ./frontend/api-diff/agent-packages/api-diff-testing
   active_owner: ./frontend/api-diff/agent-packages/api-diff-testing
-  content_hash: sha256:cd79d37d1b68cd1e7048dd066a2804345b567ecd47a1825588dc16183e4a8e70
+  content_hash: sha256:49bc73ce484bc7bdbdc1589b77e42e4d8305f6b860c057facfa7cba02c2c78e8
 - kind: project-relative
   target: cursor
   value: .cursor/skills/api-doc-viewer-authoring
@@ -3051,7 +3179,7 @@ deployments:
   owners:
   - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-authoring
   active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-authoring
-  content_hash: sha256:776e5e16d36b533ee36c575c7c1ae2b65500c565a2759cd34032975d2792b9cf
+  content_hash: sha256:dd87e8c8bc13ce15fbf7291f56699afa6df39303a2dd35ee40cbc06ca3826091
 - kind: project-relative
   target: cursor
   value: .cursor/skills/api-doc-viewer-authoring/refactoring-notes.md
@@ -3078,7 +3206,7 @@ deployments:
   owners:
   - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-review-session
   active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-review-session
-  content_hash: sha256:a7c30ba04399cff35e33cc24c22bd2fb06da4ed4077656f6b884e479e6676ef3
+  content_hash: sha256:38ecc35629ea76fe65b32144cef0c902d5a8b04ecb6d4685ac5c2df130fc2ba4
 - kind: project-relative
   target: cursor
   value: .cursor/skills/api-doc-viewer-reviewing
@@ -3150,7 +3278,7 @@ deployments:
   owners:
   - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-testing
   active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-testing
-  content_hash: sha256:54599f6222ebd95dfe789bd892f58e8b9d3edd4c24f0d83b7266fd60cc17f0d0
+  content_hash: sha256:ba9d99dc10533a4d48ff8222b790bb2e7440ff51aea84e7b54f72700b3473040
 - kind: project-relative
   target: cursor
   value: .cursor/skills/api-doc-viewer-using
@@ -3168,7 +3296,7 @@ deployments:
   owners:
   - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-using
   active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-using
-  content_hash: sha256:1b51161e2ec578252bd5768c8fce6ae76ec6109c04f868f79bd7802c4aa35408
+  content_hash: sha256:011de5d48fef73ee52e7ba24bad0947993b8e5eb5156825973533ea59393212c
 - kind: project-relative
   target: cursor
   value: .cursor/skills/api-processor-build-result
@@ -3378,6 +3506,42 @@ deployments:
   content_hash: sha256:469341ad3a1bcd37fc61f78c329e7c95a9b826fb4de8d017bdd4e04750993d8f
 - kind: project-relative
   target: cursor
+  value: .cursor/skills/apihub-bug-fix
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-autonomous-agent
+  active_owner: ./agent-packages/apihub-autonomous-agent
+  content_hash: null
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/apihub-bug-fix/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-autonomous-agent
+  active_owner: ./agent-packages/apihub-autonomous-agent
+  content_hash: sha256:1ca79fce52fe3b9998a27112f10271cd9304f7d0c35c48b86af8acd5daabd158
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/apihub-ci-failure-triage
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-autonomous-agent
+  active_owner: ./agent-packages/apihub-autonomous-agent
+  content_hash: null
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/apihub-ci-failure-triage/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-autonomous-agent
+  active_owner: ./agent-packages/apihub-autonomous-agent
+  content_hash: sha256:fef1d06c0bea2fed152146771b288d91469a2526a12255babf3e6a84d0ace13c
+- kind: project-relative
+  target: cursor
   value: .cursor/skills/apihub-deployment-authoring
   runtime: null
   scope: project
@@ -3459,6 +3623,24 @@ deployments:
   content_hash: sha256:0a4914ca688a5cadfa0c8d046c1bcf620a4f78835ac3217b1e5c0fdeb31f65f2
 - kind: project-relative
   target: cursor
+  value: .cursor/skills/apihub-issue-analysis
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-autonomous-agent
+  active_owner: ./agent-packages/apihub-autonomous-agent
+  content_hash: null
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/apihub-issue-analysis/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-autonomous-agent
+  active_owner: ./agent-packages/apihub-autonomous-agent
+  content_hash: sha256:0eca430b89676a4f48bf8979e1b916056f6053b5d9d39fb64b2e00aa32cf5f2e
+- kind: project-relative
+  target: cursor
   value: .cursor/skills/apihub-landing-refresh
   runtime: null
   scope: project
@@ -3495,6 +3677,24 @@ deployments:
   content_hash: sha256:0cc291e22389c01339665dd0d8dba910a224036beba31b7c6fa1e1f6d98595c2
 - kind: project-relative
   target: cursor
+  value: .cursor/skills/apihub-pr-review
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-autonomous-agent
+  active_owner: ./agent-packages/apihub-autonomous-agent
+  content_hash: null
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/apihub-pr-review/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-autonomous-agent
+  active_owner: ./agent-packages/apihub-autonomous-agent
+  content_hash: sha256:a46cb17206a3716da1b73ecd6d9c533f1087657dad7e45e2ecbaf5ba8e595aa3
+- kind: project-relative
+  target: cursor
   value: .cursor/skills/apihub-react-coding
   runtime: null
   scope: project
@@ -3511,6 +3711,24 @@ deployments:
   - ./frontend/ui/agent-packages/apihub-react-coding
   active_owner: ./frontend/ui/agent-packages/apihub-react-coding
   content_hash: sha256:c122b40c6302b430e63c1cc7cddc25d0d0bfcbda919c653eca4b4d718eea3252
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/apihub-task
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-autonomous-agent
+  active_owner: ./agent-packages/apihub-autonomous-agent
+  content_hash: null
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/apihub-task/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-autonomous-agent
+  active_owner: ./agent-packages/apihub-autonomous-agent
+  content_hash: sha256:aed20fe58346b12100a798fd8e4add7a890cf586070fda249ddd32c00f2b830d
 - kind: project-relative
   target: cursor
   value: .cursor/skills/apihub-typescript-coding
@@ -3771,7 +3989,7 @@ deployments:
   owners:
   - ./frontend/api-doc-viewer/agent-packages/next-data-model-authoring
   active_owner: ./frontend/api-doc-viewer/agent-packages/next-data-model-authoring
-  content_hash: sha256:3e91d0b9b37746389c82314282ec6f6dacfeb077200ec1b199a67844321baecd
+  content_hash: sha256:ee0a9809e095beec42fa84105b96dcb3c515e92000a85bddfcf70c978c5024de
 - kind: project-relative
   target: cursor
   value: .cursor/skills/next-data-model-authoring/json-schema/json-schema-meta-flags-and-required.md
@@ -3852,7 +4070,7 @@ deployments:
   owners:
   - ./frontend/api-doc-viewer/agent-packages/next-data-model-using
   active_owner: ./frontend/api-doc-viewer/agent-packages/next-data-model-using
-  content_hash: sha256:e0c29e67e2d34ff8c6e550e080fe2dab86219ad8af1a70a0a5ef0c112aed3670
+  content_hash: sha256:7896e1f4f85d7ad819e57b4aac99bfee3103b8a02a4b70dfa887c9b38a91ae92
 - kind: project-relative
   target: cursor
   value: .cursor/skills/postman-e2e-authoring
