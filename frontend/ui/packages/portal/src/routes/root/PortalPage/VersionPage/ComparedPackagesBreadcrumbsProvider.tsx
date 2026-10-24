@@ -14,29 +14,12 @@
  * limitations under the License.
  */
 
-import type { FC, PropsWithChildren } from 'react'
 import { createContext, useContext } from 'react'
-import type { ComparedPackagesBreadcrumbsData } from './breadcrumbs'
 
-export const COMPARISON_TOOLBAR_BREADCRUMBS_CONTEXT = 'forComparisonToolbar'
-export const VERSIONS_SWAPPER_BREADCRUMBS_CONTEXT = 'forVersionsSwapper'
-export type BreadcrumbsDataStoreKey =
-  | typeof COMPARISON_TOOLBAR_BREADCRUMBS_CONTEXT
-  | typeof VERSIONS_SWAPPER_BREADCRUMBS_CONTEXT
-export type BreadcrumbsDataStore = Record<BreadcrumbsDataStoreKey, ComparedPackagesBreadcrumbsData | null>
+import type { ComparedPackagesBreadcrumbsData } from './breadcrumbs'
 
 export const BreadcrumbsDataContext = createContext<ComparedPackagesBreadcrumbsData | null>()
 
 export function useBreadcrumbsData(): ComparedPackagesBreadcrumbsData | null {
   return useContext(BreadcrumbsDataContext)
-}
-
-export const ComparedPackagesBreadcrumbsProvider: FC<PropsWithChildren & BreadcrumbsDataStore> = (props) => {
-  const { children, forComparisonToolbar } = props
-
-  return (
-    <BreadcrumbsDataContext.Provider value={forComparisonToolbar}>
-      {children}
-    </BreadcrumbsDataContext.Provider>
-  )
 }
