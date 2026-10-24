@@ -1758,7 +1758,7 @@ Tokens and cost of one opencode run, from the event stream.
 Each role is an opencode agent: a Markdown file under `tools/agent/opencode/agents/`, selected with
 `--agent <file name without .md>`. All six have `mode: primary`.
 
-**Model handling.** No agent filenames a model or a reasoning effort. The model and the variant come from the
+**Model handling.** No agent file sets a model or a reasoning effort. The model and the variant come from the
 repository variables through `lib/config.js` and are passed as `--model` and `--variant` (`lib/opencode.js`). A model
 change needs no commit.
 
