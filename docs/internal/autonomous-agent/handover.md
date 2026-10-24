@@ -1,7 +1,8 @@
 # Autonomous agent: handover
 
 The state of the AI Autonomous agent proof of concept on October 24, 2026, and how to take it from here. Read it with
-[the design](./design.md), [the plan](./plan.md), and [the spike results](./spike.md). The guide for contributors is
+[the design](./design.md), [the plan](./plan.md), and [the spike results](./spike.md). What was built is in
+[the architecture](./architecture.md) and [the technical details](./technical-details.md). The guide for contributors is
 [AI Autonomous agent](../../development/autonomous-agent.md). Tracking issue: #939.
 
 ## Where things are
@@ -32,6 +33,7 @@ Every branch already contains `develop` with #932, so the last merge has no conf
 | 4: CI loop, stop rule, work and publish split | #938 | `feature/ai-autonomous-phase-4` |
 | 5: commands and conversation | #940 | `feature/ai-autonomous-phase-5` |
 | 6: weekly report, fixes from the review of #940, this handover | #941 | `feature/ai-autonomous-phase-6` |
+| 7: the architecture and the technical details | on top of #941 | `feature/ai-autonomous-phase-7` |
 
 ## What has run for real
 
@@ -47,6 +49,9 @@ commands, and the level copy run only after the stack reaches `develop`. They ar
 `*.main.test.js` tests over fake GitHub and opencode clients.
 
 ## Before the merge into develop
+
+Done in phase 7: [architecture.md](./architecture.md) and [technical-details.md](./technical-details.md). The task as it
+was set:
 
 The stabilization on `develop` comes after the merge, but the documentation comes before it: the stack does not merge
 until these two documents exist, in `docs/internal/autonomous-agent/`, on the branch of the last phase (or of a new
@@ -102,6 +107,15 @@ disagrees with the code is worse than none. The agent's own review (Flow A) on t
 | opencode 1.x is pinned; the 2.0 line has no `github` command and may change `run` | an upgrade needs a check of the CLI flags and the JSON events | `tools/agent/lib/opencode.js` is the only caller |
 | Rules in `.claude/rules/` are loaded all at once | about 7,000 tokens per run; their path scope is in their text only | the APM `opencode` target or a small plugin |
 | The local APM must be 0.34.0 | an older APM rewrites `.cursor/rules` in another format | upgrade with `pip install apm-cli==0.34.0` |
+| `/agent analyze` writes the phase `analyzed` or `needs-info` whatever the phase was | on an issue in `waiting-ci`, the CI gate then skips the pull request (`route.js` wants `waiting-ci`), and the CI loop stops without a word | `analyze.js` `nextState`: keep an active phase, or refuse `/agent analyze` while an attempt or the CI loop runs |
+| The gate waits for a `cancelled` check run and for a missing `ci-ok` | a CI run that a person cancelled, or a repository without `ci-ok`, keeps the gate waiting with no comment | the same timeout as above, or treat a cancelled run as red |
+| `/agent stop` has no concurrency group | a stop between the gate's re-read and its write is overwritten by the gate's phase | the preflight of the next attempt; a lock would close it |
+| The stop writes "I cancelled the running attempt" before it calls the cancel | the state comment says so also when the cancel fails or the run had finished; the reply is right | `chat.js` `doStop`: write the text after the cancel, or say "asked to cancel" |
+| `review.js` adds the `reviews` entry before it posts the inline review | when the post fails, `ready_for_review` later skips the automatic review | add the entry after the post |
+| The weekly report counts reviewed pull requests by `updated:` and reads only the states its searches find | "reviewed" can be too high, and cost records on items outside the searches are missed | search by the time of the `reviews` entries; read the states of every item with a cost in the period |
+| The guide says the agent "stops at once" past the diff limit, and that every merged pull request without a level gets a reminder | the limit is measured after the last round, and the reminder goes only to a pull request that closes an issue | the guide, or the code |
+| The header of `ai-autonomous-agent.yml` says only `Work` and `Answer` hold the OpenAI key | `Review` and `Analyze` hold it too | the comment |
+| The design differs from the code in places: no `context.js`, `publish.js`, or `cost.js`; no format checks; a 90-minute job; the model in a variable, not in the role file; a 12-character signature | a reader of the design expects another layout | the architecture and the technical details describe the code; mark the design as the intent |
 
 ## How the work was done
 
