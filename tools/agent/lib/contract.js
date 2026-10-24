@@ -7,7 +7,8 @@
  * message lists every problem with its path, so it can be sent back to the model as a repair prompt.
  *
  * The validator covers only the subset of JSON Schema that the schemas below use: `type` (one name or an
- * array), `enum`, `required`, `properties`, `additionalProperties: false`, `items`, `minLength`, `maxItems`.
+ * array), `enum`, `required`, `properties`, `additionalProperties: false`, `items`, `minLength`, `maxLength`,
+ * `maxItems`.
  */
 
 class ContractError extends Error {
@@ -87,6 +88,9 @@ function check(schema, value, path, problems) {
   }
   if (typeof value === 'string' && schema.minLength !== undefined && value.length < schema.minLength) {
     problems.push(`${label}: expected at least ${schema.minLength} character(s)`)
+  }
+  if (typeof value === 'string' && schema.maxLength !== undefined && value.length > schema.maxLength) {
+    problems.push(`${label}: expected at most ${schema.maxLength} character(s), got ${value.length}`)
   }
   if (Array.isArray(value)) {
     if (schema.maxItems !== undefined && value.length > schema.maxItems) {
@@ -176,6 +180,40 @@ const SCHEMAS = {
         risk: { type: 'string', enum: ['low', 'medium', 'high'] },
       },
       additionalProperties: false,
+    },
+  }),
+  // Output of the assistant (Flow D): the Markdown answer to a question in a comment.
+  chatAnswer: strictObject({
+    answer: { type: 'string', minLength: 1, maxLength: 6000 },
+  }),
+  // Output of the implementer (Flow C). Which fields must be filled for which status is checked in implement.js.
+  implementation: strictObject({
+    status: { type: 'string', enum: ['done', 'blocked'] },
+    summary: { type: 'string', minLength: 1 },
+    commitType: {
+      type: 'string',
+      enum: ['fix', 'feat', 'perf', 'refactor', 'revert', 'build', 'chore', 'style', 'docs', 'test', 'ci'],
+    },
+    // The module name, or an empty string when the change spans several modules.
+    scope: str,
+    title: { type: 'string', minLength: 1, maxLength: 72 },
+    verification: str,
+    notes: str,
+    // Only when blocked; empty otherwise.
+    blockedReason: str,
+  }),
+  // Output of the self-reviewer (Flow C).
+  selfReview: strictObject({
+    verdict: { type: 'string', enum: ['approve', 'changes'] },
+    findings: {
+      type: 'array',
+      maxItems: 20,
+      items: strictObject({
+        severity: { type: 'string', enum: ['blocker', 'major', 'minor'] },
+        file: str,
+        line: { type: ['integer', 'null'] },
+        body: { type: 'string', minLength: 1 },
+      }),
     },
   }),
 }

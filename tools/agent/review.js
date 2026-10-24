@@ -26,10 +26,9 @@ const { loadConfig } = require('./lib/config')
 const { createClient } = require('./lib/github')
 const state = require('./lib/state')
 const usage = require('./lib/usage')
-const { extractJson, validate } = require('./lib/contract')
 const { commentableLines } = require('./lib/diff')
 const { computeFacts } = require('./lib/facts')
-const { runAgent } = require('./lib/opencode')
+const { callAgent } = require('./lib/agent-call')
 const { untrusted } = require('./lib/prompt')
 const log = require('./lib/log')
 
@@ -123,35 +122,6 @@ function git(args) {
   return execFileSync('git', args, { encoding: 'utf8' }).trim()
 }
 
-/** One opencode call; returns the parsed JSON output and appends the cost record, whatever happens. */
-async function callAgent({ role, agent, model, message, inputFile, out, costs, runUrl, schema }) {
-  const eventsFile = path.join(out, `${agent}.jsonl`)
-  const run = await runAgent({ agent, model, message, files: [inputFile], cwd: process.cwd(), eventsFile })
-  const summary = usage.summarize(usage.parseEvents(run.eventsText))
-  costs.push(usage.costRecord({ run: runUrl, flow: 'review', role, model: model.id, variant: model.variant, summary }))
-  log.info(`${agent} usage`, {
-    steps: summary.steps,
-    uncached: summary.input,
-    cached: summary.cached,
-    output: summary.output,
-    reasoning: summary.reasoning,
-    usd: summary.usd.toFixed(4),
-  })
-  fs.writeFileSync(path.join(out, `${agent}.final.md`), summary.finalText)
-  if (run.exitCode !== 0 && !summary.finalText) {
-    throw new Error(`${agent} exited with ${run.exitCode}: ${run.stderrTail.slice(-500)}`)
-  }
-  let output
-  try {
-    output = validate(schema, extractJson(summary.finalText))
-  } catch (err) {
-    log.error(`${agent} broke its output contract: ${err.message}`)
-    throw err
-  }
-  log.json(`${agent} output`, output)
-  return output
-}
-
 async function main() {
   const env = process.env
   const config = loadConfig(env)
@@ -233,6 +203,7 @@ async function main() {
     )
     review = await log.group('Review (pr-reviewer)', () =>
       callAgent({
+        flow: 'review',
         role: 'pr-reviewer',
         agent: 'pr-reviewer',
         model: config.models.review,
@@ -265,6 +236,7 @@ async function main() {
       verdicts = (
         await log.group('Verify the findings (verifier)', () =>
           callAgent({
+            flow: 'review',
             role: 'verifier',
             agent: 'verifier',
             model: config.models.verify,
@@ -324,7 +296,6 @@ async function main() {
     human = `### AI review failed\n\nThe review of ${headSha.slice(0, 7)} did not finish: ${failure.message}\n\n` +
       `<sub>[Run](${runUrl}) · comment \`/agent review\` to try again</sub>`
   }
-  const body = state.render(human, st)
 
   await log.group(config.dryRun ? 'Publish (dry run: job summary only)' : 'Publish', async () => {
     if (config.dryRun) {
@@ -332,11 +303,13 @@ async function main() {
       for (const f of inline) {
         report.push(`- inline \`${f.file}:${f.line}\`: ${findingBody(f).replace(/\s*\n\s*/g, ' ')}`)
       }
-      fs.appendFileSync(env.GITHUB_STEP_SUMMARY, report.join('\n') + '\n')
+      if (env.GITHUB_STEP_SUMMARY) fs.appendFileSync(env.GITHUB_STEP_SUMMARY, report.join('\n') + '\n')
       log.info('dry run: written to the job summary', { inline: inline.length })
       return
     }
-    // The state comment goes first: it holds the cost record, which must survive a failed review post.
+    // The state comment goes first: it holds the cost record, which must survive a failed review post. It is read
+    // again right before the write, so a cost record that chat added since the state was loaded survives too.
+    const body = state.render(human, await state.withFreshCosts(gh, number, st))
     if (existing) {
       await gh.updateIssueComment(existing.id, body)
       log.info('state comment updated', { id: existing.id })

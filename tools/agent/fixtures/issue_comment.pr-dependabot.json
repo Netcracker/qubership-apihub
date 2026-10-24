@@ -1,0 +1,31 @@
+{
+  "action": "created",
+  "issue": {
+    "number": 124,
+    "state": "open",
+    "title": "chore(deps): bump yaml from 2.8.0 to 2.8.1",
+    "user": {
+      "login": "dependabot[bot]",
+      "type": "Bot"
+    },
+    "pull_request": {
+      "url": "https://api.github.com/repos/Netcracker/qubership-apihub/pulls/124"
+    }
+  },
+  "comment": {
+    "id": 9301,
+    "body": "/agent review",
+    "user": {
+      "login": "carol",
+      "type": "User"
+    },
+    "author_association": "MEMBER"
+  },
+  "repository": {
+    "full_name": "Netcracker/qubership-apihub"
+  },
+  "sender": {
+    "login": "carol",
+    "type": "User"
+  }
+}

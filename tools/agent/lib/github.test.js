@@ -196,6 +196,44 @@ test('listPullCommits reads the commits of a pull request', async () => {
   assert.equal(calls[0].url, 'https://api.github.com/repos/acme/widgets/pulls/8/commits?per_page=100&page=1')
 })
 
+test('searchIssues sends the query and follows pages up to total_count', async () => {
+  const page1 = Array.from({ length: 100 }, (_, i) => ({ number: i }))
+  const page2 = Array.from({ length: 20 }, (_, i) => ({ number: 100 + i }))
+  const { client, calls } = setup([
+    json({ total_count: 120, incomplete_results: false, items: page1 }),
+    json({ total_count: 120, incomplete_results: false, items: page2 }),
+  ])
+  const items = await client.searchIssues('repo:acme/widgets is:pr label:"a:b"')
+  assert.equal(items.length, 120)
+  assert.equal(calls.length, 2)
+  const first = new URL(calls[0].url)
+  assert.equal(first.pathname, '/search/issues')
+  assert.equal(first.searchParams.get('q'), 'repo:acme/widgets is:pr label:"a:b"')
+  assert.equal(first.searchParams.get('per_page'), '100')
+  assert.equal(new URL(calls[1].url).searchParams.get('page'), '2')
+})
+
+test('searchIssues stops on a full last page and on an empty result', async () => {
+  const full = Array.from({ length: 100 }, (_, i) => ({ number: i }))
+  const exact = setup([json({ total_count: 100, incomplete_results: false, items: full })])
+  assert.equal((await exact.client.searchIssues('q')).length, 100)
+  assert.equal(exact.calls.length, 1)
+
+  const none = setup([json({ total_count: 0, incomplete_results: false, items: [] })])
+  assert.deepEqual(await none.client.searchIssues('q'), [])
+})
+
+test('searchIssues throws on more than 1000 results, partial results, and a payload without a list', async () => {
+  const many = setup([json({ total_count: 1001, incomplete_results: false, items: [{ number: 1 }] })])
+  await assert.rejects(many.client.searchIssues('q'), /1001 results, more than the 1000/)
+
+  const partial = setup([json({ total_count: 1, incomplete_results: true, items: [{ number: 1 }] })])
+  await assert.rejects(partial.client.searchIssues('q'), /partial results/)
+
+  const bad = setup([json({ message: 'odd' })])
+  await assert.rejects(bad.client.searchIssues('q'), GitHubError)
+})
+
 test('createIssueComment and updateIssueComment send the body', async () => {
   const { client, calls } = setup([json({ id: 1 }), json({ id: 1 })])
   await client.createIssueComment(12, 'hello')
@@ -272,6 +310,186 @@ test('addReaction posts the content to the comment', async () => {
   await client.addReaction(77, 'eyes')
   assert.equal(calls[0].url, 'https://api.github.com/repos/acme/widgets/issues/comments/77/reactions')
   assert.deepEqual(calls[0].body, { content: 'eyes' })
+})
+
+test('getAuthenticatedUser reads /user with the token of the client', async () => {
+  const { client, calls } = setup([json({ login: 'agent-owner', id: 4242 })])
+  assert.deepEqual(await client.getAuthenticatedUser(), { login: 'agent-owner', id: 4242 })
+  assert.equal(calls[0].url, 'https://api.github.com/user')
+  assert.equal(calls[0].init.method, 'GET')
+  assert.equal(calls[0].init.headers.Authorization, 'Bearer t0ken')
+})
+
+test('createPull posts the title, head, base, body, and draft flag', async () => {
+  const { client, calls } = setup([json({ number: 55, html_url: 'https://github.com/acme/widgets/pull/55' })])
+  const pull = await client.createPull({ title: 'fix(x): y', head: 'bugfix/1-y', base: 'develop', body: 'B' })
+  assert.equal(pull.number, 55)
+  assert.equal(calls[0].url, 'https://api.github.com/repos/acme/widgets/pulls')
+  assert.equal(calls[0].init.method, 'POST')
+  assert.deepEqual(calls[0].body, { title: 'fix(x): y', head: 'bugfix/1-y', base: 'develop', body: 'B', draft: false })
+})
+
+test('createPull sends draft: true when asked and surfaces a refusal', async () => {
+  const { client, calls } = setup([json({ number: 56 }), status(422, {}, { message: 'Validation Failed' })])
+  await client.createPull({ title: 't', head: 'h', base: 'develop', body: 'b', draft: true })
+  assert.equal(calls[0].body.draft, true)
+  await assert.rejects(
+    client.createPull({ title: 't', head: 'h', base: 'develop', body: 'b' }),
+    (error) => error instanceof GitHubError && error.status === 422,
+  )
+})
+
+test('listPulls asks for the open pull requests of a head and follows the pages', async () => {
+  const page = Array.from({ length: 100 }, (_, i) => ({ number: i + 1 }))
+  const { client, calls } = setup([json(page), json([{ number: 101 }])])
+  const pulls = await client.listPulls({ head: 'acme:bugfix/1-x' })
+  assert.equal(pulls.length, 101)
+  const first = new URL(calls[0].url)
+  assert.equal(first.pathname, '/repos/acme/widgets/pulls')
+  assert.deepEqual(
+    [first.searchParams.get('head'), first.searchParams.get('state'), first.searchParams.get('page')],
+    ['acme:bugfix/1-x', 'open', '1'],
+  )
+})
+
+test('markPullReady sends the GraphQL mutation with the node id and surfaces errors', async () => {
+  const { client, calls } = setup([
+    json({ data: { markPullRequestReadyForReview: { pullRequest: { isDraft: false } } } }),
+    json({ errors: [{ message: 'Resource not accessible' }] }),
+  ])
+  await client.markPullReady('PR_node1')
+  assert.equal(calls[0].url, 'https://api.github.com/graphql')
+  assert.match(calls[0].body.query, /markPullRequestReadyForReview\(input: \{ pullRequestId: \$id \}\)/)
+  assert.deepEqual(calls[0].body.variables, { id: 'PR_node1' })
+  await assert.rejects(
+    client.markPullReady('x'),
+    (e) => e instanceof GitHubError && /Resource not accessible/.test(e.message),
+  )
+})
+
+test('updatePull patches the title and the body', async () => {
+  const { client, calls } = setup([json({ number: 5 })])
+  await client.updatePull(5, { title: 'fix(x): y', body: 'B' })
+  assert.equal(calls[0].url, 'https://api.github.com/repos/acme/widgets/pulls/5')
+  assert.equal(calls[0].init.method, 'PATCH')
+  assert.deepEqual(calls[0].body, { title: 'fix(x): y', body: 'B' })
+})
+
+test('convertPullToDraft sends the GraphQL mutation with the node id', async () => {
+  const { client, calls } = setup([json({ data: { convertPullRequestToDraft: { pullRequest: { isDraft: true } } } })])
+  await client.convertPullToDraft('PR_node2')
+  assert.match(calls[0].body.query, /convertPullRequestToDraft\(input: \{ pullRequestId: \$id \}\)/)
+  assert.deepEqual(calls[0].body.variables, { id: 'PR_node2' })
+})
+
+test('listCheckRuns reads the latest check run of each name across pages', async () => {
+  const page = Array.from({ length: 100 }, (_, i) => ({ id: i, name: `job ${i}` }))
+  const { client, calls } = setup([
+    json({ total_count: 101, check_runs: page }),
+    json({ total_count: 101, check_runs: [{ id: 100, name: 'job 100' }] }),
+  ])
+  const runs = await client.listCheckRuns('abc123')
+  assert.equal(runs.length, 101)
+  const url = new URL(calls[0].url)
+  assert.equal(url.pathname, '/repos/acme/widgets/commits/abc123/check-runs')
+  assert.equal(url.searchParams.get('filter'), 'latest')
+  assert.equal(new URL(calls[1].url).searchParams.get('page'), '2')
+})
+
+test('listCheckRuns and getCombinedStatus reject an answer that is not a list', async () => {
+  const { client } = setup([json({ message: 'odd' }), json({ state: 'pending' })])
+  await assert.rejects(client.listCheckRuns('abc'), /did not return a list/)
+  await assert.rejects(client.getCombinedStatus('abc'), /did not return a list/)
+})
+
+test('getCombinedStatus returns every status and the combined state', async () => {
+  const { client, calls } = setup([
+    json({ state: 'pending', statuses: [{ context: 'cla', state: 'success' }, { context: 'x', state: 'pending' }] }),
+  ])
+  const result = await client.getCombinedStatus('abc123')
+  assert.equal(result.state, 'pending')
+  assert.deepEqual(result.statuses.map((s) => s.context), ['cla', 'x'])
+  assert.equal(new URL(calls[0].url).pathname, '/repos/acme/widgets/commits/abc123/status')
+})
+
+test('getJobLog returns the log as text, also when the text is valid JSON', async () => {
+  const { client, calls } = setup([
+    new Response('2026-10-23T09:00:00Z hello\n', { status: 200 }),
+    new Response('{"looks":"like json"}', { status: 200 }),
+  ])
+  assert.equal(await client.getJobLog(55), '2026-10-23T09:00:00Z hello\n')
+  assert.equal(await client.getJobLog(56), '{"looks":"like json"}')
+  assert.equal(calls[0].url, 'https://api.github.com/repos/acme/widgets/actions/jobs/55/logs')
+})
+
+test('rerunFailedJobs posts to the run and tolerates the empty answer', async () => {
+  const { client, calls } = setup([new Response(null, { status: 201 }), status(403, {}, { message: 'still running' })])
+  assert.equal(await client.rerunFailedJobs(900), null)
+  assert.equal(calls[0].url, 'https://api.github.com/repos/acme/widgets/actions/runs/900/rerun-failed-jobs')
+  assert.equal(calls[0].init.method, 'POST')
+  await assert.rejects(client.rerunFailedJobs(901), (e) => e instanceof GitHubError && e.status === 403)
+})
+
+test('cancelRun posts to the run; 409 (already finished) is not an error, other errors are', async () => {
+  const { client, calls } = setup([
+    new Response(null, { status: 202 }),
+    status(409, {}, { message: 'Cannot cancel a workflow run that is completed.' }),
+    status(403, {}, { message: 'no' }),
+  ])
+  assert.equal(await client.cancelRun(900), true)
+  assert.equal(calls[0].url, 'https://api.github.com/repos/acme/widgets/actions/runs/900/cancel')
+  assert.equal(calls[0].init.method, 'POST')
+  assert.equal(await client.cancelRun(901), false)
+  await assert.rejects(client.cancelRun(902), (e) => e instanceof GitHubError && e.status === 403)
+})
+
+test('replyToReviewComment posts the body to the replies of the comment', async () => {
+  const { client, calls } = setup([json({ id: 5 })])
+  await client.replyToReviewComment(70, 1234, 'Pushed abc1234.')
+  assert.equal(calls[0].url, 'https://api.github.com/repos/acme/widgets/pulls/70/comments/1234/replies')
+  assert.equal(calls[0].init.method, 'POST')
+  assert.deepEqual(calls[0].body, { body: 'Pushed abc1234.' })
+})
+
+test('listReviewThreads queries the threads of the pull request and flattens the nodes', async () => {
+  const nodes = [
+    {
+      id: 'T1',
+      isResolved: false,
+      path: 'backend/x.go',
+      line: 12,
+      comments: {
+        nodes: [{ author: { login: 'bob' }, body: 'Check nil.', databaseId: 501 }, { author: null, body: null }],
+      },
+    },
+    { id: 'T2', isResolved: true, path: null, line: null, comments: { nodes: [] } },
+  ]
+  const { client, calls } = setup([json({ data: { repository: { pullRequest: { reviewThreads: { nodes } } } } })])
+  const threads = await client.listReviewThreads('70')
+  assert.equal(calls[0].url, 'https://api.github.com/graphql')
+  assert.deepEqual(calls[0].body.variables, { owner: 'acme', name: 'widgets', number: 70 })
+  assert.match(calls[0].body.query, /reviewThreads\(first: 100\)/)
+  assert.deepEqual(threads, [
+    {
+      id: 'T1',
+      isResolved: false,
+      path: 'backend/x.go',
+      line: 12,
+      comments: [
+        { author: 'bob', body: 'Check nil.', databaseId: 501 },
+        { author: 'unknown', body: '', databaseId: null },
+      ],
+    },
+    { id: 'T2', isResolved: true, path: '', line: null, comments: [] },
+  ])
+})
+
+test('listReviewThreads fails when the answer holds no threads', async () => {
+  const { client } = setup([json({ data: { repository: { pullRequest: null } } })])
+  await assert.rejects(
+    client.listReviewThreads(70),
+    (e) => e instanceof GitHubError && /review threads of #70/.test(e.message),
+  )
 })
 
 test('hasWriteAccess accepts admin, maintain, and write only', () => {

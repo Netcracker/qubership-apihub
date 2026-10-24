@@ -193,13 +193,19 @@ test('ordinary comments and bot comments are skipped', () => {
   assert.match(result.reason, /bot/)
 })
 
-test('commands other than review are not available yet', () => {
-  for (const body of ['/agent', '/agent fix force', '/agent implement', '/agent retry',
-    '/agent stop', '/agent cost', '/agent what do you think?']) {
+test('help, cost, and a question go to the chat job; stop and retry need the agent (phase 5)', () => {
+  const expected = [
+    ['/agent', 'chat'],
+    ['/agent cost', 'chat'],
+    ['/agent stop', 'skip'],
+    ['/agent retry', 'skip'],
+    ['/agent what do you think?', 'chat'],
+  ]
+  // The fixture is a pull request of a person: stop and retry work on issues and on pull requests of the agent.
+  for (const [body, action] of expected) {
     const result = route('issue_comment', comment(body), { actorPermission: 'write' })
-    assert.equal(result.action, 'skip', body)
-    assert.match(result.reason, /not available yet/, body)
-    assert.equal(result.number, 123)
+    assert.equal(result.action, action, body)
+    assert.equal(result.number, 123, body)
   }
 })
 
@@ -390,4 +396,20 @@ test('main fails on a bad configuration and on missing event variables', async (
 
 test('main needs a token only when it must call the API', async () => {
   await assert.rejects(runMain('issue_comment.pr', { AGENT_ENABLED: 'true' }), /GITHUB_TOKEN is not set/)
+})
+
+test('/agent review on a Dependabot pull request is skipped, whoever asks', () => {
+  for (const permission of ['write', 'admin']) {
+    const result = route('issue_comment', fixture('issue_comment.pr-dependabot'), { actorPermission: permission })
+    assert.deepEqual([result.action, result.number], ['skip', 124], permission)
+    assert.equal(result.reason, 'dependency update pull requests are not reviewed')
+  }
+  const plain = fixture('issue_comment.pr-dependabot')
+  plain.issue.user = { login: 'Dependabot', type: 'Bot' }
+  assert.equal(route('issue_comment', plain, { actorPermission: 'write' }).action, 'skip')
+})
+
+test('/agent review on a pull request of a person is still reviewed', () => {
+  const result = route('issue_comment', fixture('issue_comment.pr'), { actorPermission: 'write' })
+  assert.equal(result.action, 'review')
 })

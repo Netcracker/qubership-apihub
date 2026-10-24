@@ -235,7 +235,8 @@ test('needsIssueState asks for the state only when a rule reads it', () => {
   assert.equal(needsIssueState('issue_comment', fixture('issue_comment.analyze')), false)
   const other = fixture('issue_comment.author-reply')
   other.comment.user.login = 'carol'
-  assert.equal(needsIssueState('issue_comment', other), false)
+  // Anyone may answer a hand-off of the agent without a command (phase 5), so the state is needed.
+  assert.equal(needsIssueState('issue_comment', other), true)
   const pull = fixture('issue_comment.author-reply')
   pull.issue.pull_request = { url: 'x' }
   assert.equal(needsIssueState('issue_comment', pull), false)
@@ -317,4 +318,99 @@ test('main routes a new Bug issue without a token and writes the trigger', async
   } finally {
     fs.rmSync(dir, { recursive: true, force: true })
   }
+})
+
+// Phase 3: /agent implement.
+
+test('/agent implement on an issue starts the implementation and carries the parsed command', () => {
+  const result = route('issue_comment', fixture('issue_comment.implement'), { actorPermission: 'write' })
+  assert.deepEqual(result, {
+    action: 'implement',
+    number: 200,
+    reason: '/agent implement',
+    command: { name: 'implement', force: false, notes: '' },
+  })
+})
+
+test('/agent fix force is the implement command with force and the notes', () => {
+  const result = route('issue_comment', fixture('issue_comment.implement-force'), { actorPermission: 'maintain' })
+  assert.equal(result.action, 'implement')
+  assert.equal(result.number, 202)
+  assert.equal(result.reason, '/agent implement force')
+  assert.deepEqual(result.command, {
+    name: 'implement',
+    force: true,
+    notes: 'Keep the old paths working for one release.',
+  })
+})
+
+test('the router does not look at the type, the labels, or the state of the issue', () => {
+  const untyped = fixture('issue_comment.implement')
+  untyped.issue.type = null
+  untyped.issue.labels = [{ name: 'ai:unsuitable' }]
+  const issueState = needsInfo({ phase: 'implementing' })
+  const result = route('issue_comment', untyped, { actorPermission: 'write', issueState })
+  assert.equal(result.action, 'implement')
+})
+
+test('/agent implement on a pull request is skipped with a reason', () => {
+  const payload = fixture('issue_comment.pr')
+  payload.comment.body = '/agent implement'
+  const result = route('issue_comment', payload, { actorPermission: 'write' })
+  assert.deepEqual([result.action, result.number, result.reason], ['skip', 123, 'implement works on issues'])
+})
+
+test('/agent implement needs write access and an allowed commenter', () => {
+  const payload = fixture('issue_comment.implement')
+  const noWrite = route('issue_comment', payload, { actorPermission: 'read' })
+  assert.equal(noWrite.action, 'skip')
+  assert.match(noWrite.reason, /no write access/)
+  const denied = route('issue_comment', payload, { actorPermission: 'write' }, { AGENT_ALLOWED_ACTORS: 'bob' })
+  assert.equal(denied.action, 'skip')
+  assert.match(denied.reason, /carol.*AGENT_ALLOWED_ACTORS/)
+})
+
+test('the outputs of an implement decision carry the command as JSON', () => {
+  const decision = route('issue_comment', fixture('issue_comment.implement-force'), { actorPermission: 'write' })
+  const lines = formatOutputs(decision).split('\n')
+  assert.equal(lines[0], 'action=implement')
+  assert.equal(lines[1], 'number=202')
+  assert.deepEqual(JSON.parse(lines[3].slice('command='.length)), decision.command)
+})
+
+// Review of phase 2: the type check applies to every path to an analysis.
+
+test('an edit of an issue that is no longer a Bug or Task is skipped', () => {
+  for (const type of [{ name: 'Feature' }, null]) {
+    const payload = fixture('issues.edited')
+    payload.issue.type = type
+    const result = route('issues', payload, { issueState: needsInfo() })
+    assert.equal(result.action, 'skip', JSON.stringify(type))
+    assert.match(result.reason, /analysis covers Bug and Task issues/)
+  }
+})
+
+test('/agent analyze on a Feature or an untyped issue is skipped', () => {
+  for (const type of [{ name: 'Feature' }, undefined]) {
+    const payload = fixture('issue_comment.analyze')
+    payload.issue.type = type
+    const result = route('issue_comment', payload, { actorPermission: 'write' })
+    assert.equal(result.action, 'skip', JSON.stringify(type))
+    assert.equal(result.number, 200)
+    assert.match(result.reason, /^analysis covers Bug and Task issues/)
+  }
+})
+
+test('/agent analyze works on a Task', () => {
+  const payload = fixture('issue_comment.analyze')
+  payload.issue.type = { name: 'Task' }
+  assert.equal(route('issue_comment', payload, { actorPermission: 'write' }).action, 'analyze')
+})
+
+test('an answer of the author on an issue that is no longer a Bug or Task is skipped too', () => {
+  const reply = fixture('issue_comment.author-reply')
+  reply.issue.type = { name: 'Feature' }
+  const result = route('issue_comment', reply, { issueState: needsInfo() })
+  assert.equal(result.action, 'skip')
+  assert.match(result.reason, /analysis covers Bug and Task issues/)
 })

@@ -1,7 +1,7 @@
 const { test } = require('node:test')
 const assert = require('node:assert/strict')
 const path = require('node:path')
-const { CONFIG_DIR, runEnv, runArgs } = require('./opencode')
+const { CONFIG_DIR, SECRET_ENV, runEnv, runArgs } = require('./opencode')
 
 test('the run environment drops every token and runner secret but keeps the OpenAI key', () => {
   const env = runEnv({
@@ -42,4 +42,13 @@ test('the message comes first and the files last, so --file cannot swallow the m
 test('a model without a variant passes no --variant', () => {
   const args = runArgs({ agent: 'a', model: { id: 'openai/m', variant: null }, message: 'm' })
   assert.equal(args.includes('--variant'), false)
+})
+
+test('SECRET_ENV matches the variables that a run must not see', () => {
+  for (const name of ['GITHUB_TOKEN', 'GH_TOKEN', 'AGENT_PAT', 'ACTIONS_ID_TOKEN_REQUEST_URL', 'INPUT_X']) {
+    assert.ok(SECRET_ENV.test(name), name)
+  }
+  for (const name of ['PATH', 'OPENAI_API_KEY', 'AGENT_COMMAND', 'GITHUB_REPOSITORY']) {
+    assert.ok(!SECRET_ENV.test(name), name)
+  }
 })

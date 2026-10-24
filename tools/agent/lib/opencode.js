@@ -97,4 +97,4 @@ function logLine(agent, line) {
   }
 }
 
-module.exports = { CONFIG_DIR, runEnv, runArgs, logArgs, runAgent }
+module.exports = { CONFIG_DIR, SECRET_ENV, runEnv, runArgs, logArgs, runAgent }

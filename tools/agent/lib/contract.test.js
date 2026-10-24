@@ -187,7 +187,9 @@ test('every object in the schemas requires all its properties and forbids extras
       walk(schema.items, `${where}[]`)
     }
   }
-  assert.deepEqual(Object.keys(SCHEMAS).sort(), ['analysis', 'review', 'verification'])
+  assert.deepEqual(Object.keys(SCHEMAS).sort(), [
+    'analysis', 'chatAnswer', 'implementation', 'review', 'selfReview', 'verification',
+  ])
   for (const [name, schema] of Object.entries(SCHEMAS)) walk(schema, name)
 })
 
@@ -239,4 +241,81 @@ test('analysis allows at most 10 questions and rejects a plan of the wrong type'
   assert.deepEqual(problemsOf('analysis', many), ['questions: expected at most 10 item(s), got 11'])
   assert.deepEqual(problemsOf('analysis', goodAnalysis({ plan: 'later' })), ['plan: expected object or null'])
   assert.deepEqual(problemsOf('analysis', goodAnalysis({ plan: undefined })), ['plan: missing required property'])
+})
+
+test('chatAnswer needs a non-empty answer of at most 6000 characters and nothing else', () => {
+  assert.doesNotThrow(() => validate('chatAnswer', { answer: 'The state lives in one comment.' }))
+  assert.doesNotThrow(() => validate('chatAnswer', { answer: 'x'.repeat(6000) }))
+  assert.deepEqual(problemsOf('chatAnswer', { answer: '' }), ['answer: expected at least 1 character(s)'])
+  assert.deepEqual(problemsOf('chatAnswer', { answer: 'x'.repeat(6001) }), [
+    'answer: expected at most 6000 character(s), got 6001',
+  ])
+  assert.deepEqual(problemsOf('chatAnswer', { answer: 'ok', extra: 1 }), ['extra: unexpected property'])
+  assert.deepEqual(problemsOf('chatAnswer', {}), ['answer: missing required property'])
+})
+
+function goodImplementation(extra = {}) {
+  return {
+    status: 'done',
+    summary: 'Guards the nil changelog in the builder.',
+    commitType: 'fix',
+    scope: 'portal-backend',
+    title: 'guard the nil changelog',
+    verification: 'Added TestBuildNilChangelog; go test ./... passes.',
+    notes: 'The nil came from an empty package.',
+    blockedReason: '',
+    ...extra,
+  }
+}
+
+test('implementation accepts a done and a blocked answer', () => {
+  assert.doesNotThrow(() => validate('implementation', goodImplementation()))
+  const blocked = goodImplementation({ status: 'blocked', blockedReason: 'The issue does not say which API.' })
+  assert.doesNotThrow(() => validate('implementation', blocked))
+})
+
+test('implementation lists every problem with its path, including the title length', () => {
+  const bad = goodImplementation({
+    status: 'finished',
+    commitType: 'oops',
+    title: 'x'.repeat(73),
+    summary: '',
+    extra: 1,
+  })
+  delete bad.notes
+  assert.deepEqual(problemsOf('implementation', bad).sort(), [
+    'commitType: expected one of "fix", "feat", "perf", "refactor", "revert", "build", "chore", "style", "docs", ' +
+      '"test", "ci"',
+    'extra: unexpected property',
+    'notes: missing required property',
+    'status: expected one of "done", "blocked"',
+    'summary: expected at least 1 character(s)',
+    'title: expected at most 72 character(s), got 73',
+  ])
+  assert.deepEqual(problemsOf('implementation', goodImplementation({ title: '' })), [
+    'title: expected at least 1 character(s)',
+  ])
+  assert.doesNotThrow(() => validate('implementation', goodImplementation({ title: 'x'.repeat(72) })))
+})
+
+test('selfReview accepts an approval without findings and findings with a null line', () => {
+  assert.doesNotThrow(() => validate('selfReview', { verdict: 'approve', findings: [] }))
+  const changes = {
+    verdict: 'changes',
+    findings: [{ severity: 'major', file: 'a/b.go', line: null, body: 'The error is swallowed.' }],
+  }
+  assert.doesNotThrow(() => validate('selfReview', changes))
+})
+
+test('selfReview lists the problems of a finding and limits the findings to 20', () => {
+  const bad = { verdict: 'maybe', findings: [{ severity: 'nit', file: 'a', line: 1.5, body: '' }] }
+  assert.deepEqual(problemsOf('selfReview', bad).sort(), [
+    'findings[0].body: expected at least 1 character(s)',
+    'findings[0].line: expected integer or null',
+    'findings[0].severity: expected one of "blocker", "major", "minor"',
+    'verdict: expected one of "approve", "changes"',
+  ])
+  const finding = { severity: 'minor', file: 'a', line: 1, body: 'b' }
+  const many = { verdict: 'approve', findings: Array.from({ length: 21 }, () => finding) }
+  assert.deepEqual(problemsOf('selfReview', many), ['findings: expected at most 20 item(s), got 21'])
 })

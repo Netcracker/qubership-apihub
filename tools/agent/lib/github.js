@@ -18,6 +18,7 @@ const USER_AGENT = 'ai-autonomous-agent'
 const MAX_RETRIES = 3
 const MAX_WAIT_SECONDS = 60
 const PAGE_SIZE = 100
+const SEARCH_MAX_RESULTS = 1000
 const RETRYABLE_SERVER_STATUSES = new Set([502, 503, 504])
 const WRITE_PERMISSIONS = new Set(['admin', 'maintain', 'write'])
 
@@ -90,7 +91,8 @@ function createClient({
 }) {
   const expand = (path) => path.replaceAll('{repo}', repo)
 
-  async function request(method, path, { body, query, accept } = {}) {
+  /** `text: true` returns the body as text, also when it looks like JSON (a job log, for example). */
+  async function request(method, path, { body, query, accept, text = false } = {}) {
     let url = apiUrl + expand(path)
     if (query) {
       const params = new URLSearchParams()
@@ -121,7 +123,8 @@ function createClient({
     for (let attempt = 0; ; attempt += 1) {
       const response = await fetchImpl(url, init)
       if (response.ok) {
-        return response.status === 204 ? null : readBody(response)
+        if (response.status === 204) return null
+        return text ? response.text() : readBody(response)
       }
       const delay = attempt < MAX_RETRIES ? retryDelaySeconds(response, attempt, now()) : null
       if (delay !== null) {
@@ -148,6 +151,35 @@ function createClient({
       if (batch.length < PAGE_SIZE) {
         return items
       }
+    }
+  }
+
+  /**
+   * All issues and pull requests that match a search query (`GET /search/issues`). The search API returns at most 1000
+   * results and may time out with partial results; both cases throw, because a silently short list would falsify a
+   * report. Narrow the query instead.
+   */
+  async function searchIssues(query) {
+    const items = []
+    for (let page = 1; ; page += 1) {
+      const result = await request('GET', '/search/issues', { query: { q: query, per_page: PAGE_SIZE, page } })
+      if (!Array.isArray(result?.items)) {
+        throw new GitHubError('GitHub GET /search/issues did not return a list', { status: 200, body: result })
+      }
+      if (result.total_count > SEARCH_MAX_RESULTS) {
+        throw new GitHubError(
+          `GitHub search found ${result.total_count} results, more than the ${SEARCH_MAX_RESULTS} it returns: ${query}`,
+          { status: 200, body: result },
+        )
+      }
+      if (result.incomplete_results) {
+        throw new GitHubError(`GitHub search timed out and returned partial results: ${query}`, {
+          status: 200,
+          body: result,
+        })
+      }
+      items.push(...result.items)
+      if (result.items.length < PAGE_SIZE || items.length >= result.total_count) return items
     }
   }
 
@@ -204,12 +236,128 @@ function createClient({
     }
   }
 
+  /** The user the token belongs to: `login` and `id` give the Git identity of the agent's commits. */
+  const getAuthenticatedUser = () => request('GET', '/user')
+
+  /** Opens a pull request. The author is the owner of the client's token, so the caller picks which client to use. */
+  const createPull = ({ title, head, base, body, draft = false }) =>
+    request('POST', '/repos/{repo}/pulls', { body: { title, head, base, body, draft } })
+
+  /** Changes the title and the description of a pull request. */
+  const updatePull = (n, { title, body }) => request('PATCH', `/repos/{repo}/pulls/${n}`, { body: { title, body } })
+
+  /** Open or closed pull requests of a branch: `head` is `owner:branch`. */
+  const listPulls = ({ head, state = 'open' }) => paginate('/repos/{repo}/pulls', { head, state })
+
+  /** Marks a draft pull request ready for review. Only GraphQL can do it; `nodeId` is `node_id` of the pull request. */
+  const markPullReady = (nodeId) =>
+    graphql(
+      'mutation($id: ID!) { markPullRequestReadyForReview(input: { pullRequestId: $id }) { pullRequest { isDraft } } }',
+      { id: nodeId },
+    )
+
+  /** Turns a ready pull request back into a draft. `nodeId` is `node_id` of the pull request. */
+  const convertPullToDraft = (nodeId) =>
+    graphql(
+      'mutation($id: ID!) { convertPullRequestToDraft(input: { pullRequestId: $id }) { pullRequest { isDraft } } }',
+      { id: nodeId },
+    )
+
+  /** The latest check run of every name on a commit; the endpoint wraps its list, so `paginate` does not fit. */
+  async function listCheckRuns(sha) {
+    const runs = []
+    for (let page = 1; ; page += 1) {
+      const result = await request('GET', `/repos/{repo}/commits/${sha}/check-runs`, {
+        query: { filter: 'latest', per_page: PAGE_SIZE, page },
+      })
+      if (!Array.isArray(result?.check_runs)) {
+        throw new GitHubError(`GitHub GET check-runs of ${sha} did not return a list`, { status: 200, body: result })
+      }
+      runs.push(...result.check_runs)
+      if (result.check_runs.length < PAGE_SIZE) return runs
+    }
+  }
+
+  /**
+   * The commit statuses of a commit (the CLA check reports here), newest per context. `state` is the combined state of
+   * GitHub, which is `pending` also when there are no statuses at all: judge `statuses`, not `state`.
+   */
+  async function getCombinedStatus(sha) {
+    const statuses = []
+    let combined = 'pending'
+    for (let page = 1; ; page += 1) {
+      const result = await request('GET', `/repos/{repo}/commits/${sha}/status`, {
+        query: { per_page: PAGE_SIZE, page },
+      })
+      if (!Array.isArray(result?.statuses)) {
+        throw new GitHubError(`GitHub GET status of ${sha} did not return a list`, { status: 200, body: result })
+      }
+      combined = result.state
+      statuses.push(...result.statuses)
+      if (result.statuses.length < PAGE_SIZE) return { state: combined, statuses }
+    }
+  }
+
+  /** The log of one Actions job as text. GitHub answers with a redirect; `fetch` follows it. */
+  const getJobLog = (jobId) => request('GET', `/repos/{repo}/actions/jobs/${jobId}/logs`, { text: true })
+
+  /** Reruns the failed jobs of a workflow run (and the jobs that depend on them). Needs `actions: write`. */
+  const rerunFailedJobs = (runId) => request('POST', `/repos/{repo}/actions/runs/${runId}/rerun-failed-jobs`)
+
   const addReaction = (commentId, content) =>
     request('POST', `/repos/{repo}/issues/comments/${commentId}/reactions`, { body: { content } })
+
+  /**
+   * Cancels a workflow run. Returns `true` when GitHub accepted the request and `false` for 409: the run has finished,
+   * which is the state the caller wants. Needs `actions: write`.
+   */
+  async function cancelRun(runId) {
+    try {
+      await request('POST', `/repos/{repo}/actions/runs/${runId}/cancel`)
+      return true
+    } catch (error) {
+      if (error instanceof GitHubError && error.status === 409) return false
+      throw error
+    }
+  }
+
+  /** Replies in the thread of a review comment; `commentId` is the `databaseId` of the first comment of the thread. */
+  const replyToReviewComment = (n, commentId, body) =>
+    request('POST', `/repos/{repo}/pulls/${n}/comments/${commentId}/replies`, { body: { body } })
+
+  /**
+   * The first 100 review threads of a pull request, each with its first 20 comments:
+   * `{ id, isResolved, path, line, comments: [{ author, body, databaseId }] }`.
+   */
+  async function listReviewThreads(n) {
+    const [owner, name] = repo.split('/')
+    const result = await graphql(
+      'query($owner: String!, $name: String!, $number: Int!) { repository(owner: $owner, name: $name) { ' +
+        'pullRequest(number: $number) { reviewThreads(first: 100) { nodes { id isResolved path line ' +
+        'comments(first: 20) { nodes { author { login } body databaseId } } } } } } }',
+      { owner, name, number: Number(n) },
+    )
+    const nodes = result?.data?.repository?.pullRequest?.reviewThreads?.nodes
+    if (!Array.isArray(nodes)) {
+      throw new GitHubError(`GitHub GraphQL did not return the review threads of #${n}`, { status: 200, body: result })
+    }
+    return nodes.map((thread) => ({
+      id: thread.id,
+      isResolved: Boolean(thread.isResolved),
+      path: thread.path ?? '',
+      line: thread.line ?? null,
+      comments: (thread.comments?.nodes ?? []).map((c) => ({
+        author: c.author?.login ?? 'unknown',
+        body: c.body ?? '',
+        databaseId: c.databaseId ?? null,
+      })),
+    }))
+  }
 
   return {
     request,
     paginate,
+    searchIssues,
     graphql,
     getPull,
     listPullFiles,
@@ -222,7 +370,20 @@ function createClient({
     removeLabel,
     createReview,
     getPermission,
+    getAuthenticatedUser,
+    createPull,
+    updatePull,
+    listPulls,
+    convertPullToDraft,
+    markPullReady,
+    listCheckRuns,
+    getCombinedStatus,
+    getJobLog,
+    rerunFailedJobs,
     addReaction,
+    cancelRun,
+    replyToReviewComment,
+    listReviewThreads,
   }
 }
 

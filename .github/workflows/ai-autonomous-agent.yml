@@ -4,7 +4,10 @@
 # Repository variables: AGENT_ENABLED (`true` to act), AGENT_DRY_RUN (`false` to write to GitHub; otherwise the
 # results go to the job summary), AGENT_ALLOWED_ACTORS (comma-separated logins; empty means everyone with write
 # access), AGENT_MODEL_* and AGENT_MAX_* (defaults in tools/agent/lib/config.js).
-# Secrets: OPENAI_API_KEY; AGENT_PAT (push and pull request creation, later phases).
+# Secrets: OPENAI_API_KEY (only the `Work` step of the `implement` job and the `Answer` step of the `chat` job have it);
+# AGENT_PAT (pushes the branch and opens or updates the pull request in the `publish` job, which opens it as a draft,
+# takes the pull request out of draft in `ci-gate`, and gives the Git identity in the `implement` preflight; no step
+# that runs model or repository code has it).
 name: 'AI Autonomous: Agent'
 
 on:
@@ -16,6 +19,14 @@ on:
     types: [opened, typed, edited]
   issue_comment:
     types: [created]
+  # A CI workflow finished: the CI gate of the pull requests that the agent opened. The names are those of the workflows
+  # whose checks a pull request needs.
+  workflow_run:
+    workflows: ['CI', 'Lint: Code base', 'PR: Title', 'PR: Commit messages', 'Lint: Markdown links', 'PR: CLA']
+    types: [completed]
+  # A review with change requests on a pull request of the agent: one attempt over the unresolved threads.
+  pull_request_review:
+    types: [submitted]
 
 permissions:
   contents: read
@@ -41,10 +52,24 @@ jobs:
     # A cheap filter before a runner starts: bots never command the agent. A comment must hold `/agent`, unless it is
     # on an issue: the author of an issue that waits for information answers without a command, and the router checks
     # that. Comments on pull requests stay command-only.
+    # Dependabot pull requests are never reviewed, also on request: a dependency bump has nothing to review, and a
+    # review costs money. So no runner starts for Dependabot's own events or for a comment on its pull request.
     if: >-
-      github.event_name != 'issue_comment' ||
+      github.actor != 'dependabot[bot]' &&
+      github.event.pull_request.user.login != 'dependabot[bot]' &&
+      github.event.workflow_run.actor.login != 'dependabot[bot]' &&
+      (github.event_name != 'workflow_run' ||
+      github.event.workflow_run.head_repository.full_name == github.repository) &&
+      !(github.event_name == 'issue_comment' && github.event.issue.pull_request != null &&
+      github.event.issue.user.login == 'dependabot[bot]') &&
+      (github.event_name != 'issue_comment' ||
       (github.event.comment.user.type != 'Bot' &&
-      (contains(github.event.comment.body, '/agent') || github.event.issue.pull_request == null))
+      (contains(github.event.comment.body, '/agent') || github.event.issue.pull_request == null ||
+      contains(github.event.issue.body, 'ai-autonomous-agent issue=')))) &&
+      (github.event_name != 'pull_request_review' ||
+      (github.event.review.state == 'changes_requested' && github.event.review.user.type != 'Bot' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      contains(github.event.pull_request.body, 'ai-autonomous-agent issue=')))
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -56,9 +81,15 @@ jobs:
       number: ${{ steps.route.outputs.number }}
       command: ${{ steps.route.outputs.command }}
       trigger: ${{ steps.route.outputs.trigger }}
+      pr: ${{ steps.route.outputs.pr }}
+      head_sha: ${{ steps.route.outputs.head_sha }}
+      kind: ${{ steps.route.outputs.kind }}
     steps:
+      # A `pull_request_review` event would check out the pull request itself; the router runs from the default branch
+      # there. The other events check out the default branch already.
       - uses: actions/checkout@v6
         with:
+          ref: ${{ github.event_name == 'pull_request_review' && github.event.repository.default_branch || '' }}
           sparse-checkout: tools/agent
           persist-credentials: false
 
@@ -199,3 +230,346 @@ jobs:
           name: ai-autonomous-analysis-${{ needs.route.outputs.number }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/agent
           retention-days: 30
+
+  # Flow C, after the pull request is open: when a CI workflow finishes on the branch of a pull request that the agent
+  # opened, decide once for the head commit. Green: ready for review, `agent:completed`. Red: the next attempt (the
+  # `implement` job below, which then runs a CI fix) or the stop rule. The job runs no model and no repository code.
+  ci-gate:
+    needs: route
+    if: needs.route.outputs.action == 'ci-gate'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # One agent job per issue at a time, so two writes of its state comment do not race.
+    concurrency:
+      group: ai-autonomous-${{ needs.route.outputs.number }}
+      cancel-in-progress: false
+    # `actions: write` reruns the failed E2E jobs once; the checks and statuses are read to decide.
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+      actions: write
+      checks: read
+      statuses: read
+    outputs:
+      next: ${{ steps.gate.outputs.next }}
+    env:
+      AGENT_NUMBER: ${{ needs.route.outputs.number }}
+      AGENT_PR: ${{ needs.route.outputs.pr }}
+      AGENT_HEAD_SHA: ${{ needs.route.outputs.head_sha }}
+      AGENT_WORKFLOW_RUN_ID: ${{ github.event.workflow_run.id }}
+      AGENT_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          sparse-checkout: tools/agent
+          persist-credentials: false
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      # AGENT_PAT only takes the pull request out of draft: the token of the workflow cannot do it in a way that
+      # starts the workflows of the repository.
+      - name: Decide
+        id: gate
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          AGENT_PAT: ${{ secrets.AGENT_PAT }}
+          AGENT_OUT: ${{ runner.temp }}/agent
+        run: node tools/agent/ci-gate.js
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ai-autonomous-ci-gate-${{ needs.route.outputs.number }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/agent
+          retention-days: 30
+          if-no-files-found: ignore
+
+  # Flow C: implement a Bug or Task issue up to a pull request, or fix a red CI run of that pull request. One attempt
+  # per run. The attempt is split in two jobs, because the tests of the change run code that the model wrote, as the
+  # same user as the scripts: any token in the environment of a step could be read by that code. This job holds no
+  # GitHub token after the preflight and no PAT; it has the OpenAI key, and it hands its result to `publish` as an
+  # artifact. The preflight runs before the slow toolchain setup, so a refusal (wrong type, busy, ai:unsuitable,
+  # questions open) costs seconds.
+  implement:
+    needs: [route, ci-gate]
+    if: >-
+      always() &&
+      (needs.route.outputs.action == 'implement' || needs.ci-gate.outputs.next == 'implement')
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    # One agent job per issue at a time, so two writes of its state comment do not race.
+    concurrency:
+      group: ai-autonomous-${{ needs.route.outputs.number }}
+      cancel-in-progress: false
+    # The preflight comments and writes the state with the token of the workflow; the next steps do not get it.
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+    outputs:
+      proceed: ${{ steps.preflight.outputs.proceed }}
+    env:
+      AGENT_NUMBER: ${{ needs.route.outputs.number }}
+      AGENT_COMMAND: ${{ needs.route.outputs.command }}
+      # The person who commented or reviewed. Empty for a CI fix: the state knows who asked.
+      AGENT_ACTOR: ${{ github.event.comment.user.login || github.event.review.user.login }}
+      # `human` or `review` when a person steers the agent (the router decides), else `ci-fix` or `initial`.
+      AGENT_KIND: >-
+        ${{ needs.route.outputs.kind || (needs.ci-gate.outputs.next == 'implement' && 'ci-fix' || 'initial') }}
+      AGENT_PR: ${{ needs.route.outputs.pr }}
+      AGENT_COMMENT_ID: ${{ github.event.comment.id }}
+      AGENT_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      # The runner context is not available in a job's env, so the output folder is set by the first step.
+      - name: Output folder
+        run: echo "AGENT_OUT=$RUNNER_TEMP/agent" >> "$GITHUB_ENV"
+
+      # The issue has no code to protect, so the working tree is the default branch, and the tools, the opencode
+      # config, the skills, and the AGENTS.md files are trusted. The default branch is named, because a
+      # `pull_request_review` event would check out the pull request itself. The history stays complete for
+      # `nx affected` and for the agents, which read `git log`. No token is kept in the checkout.
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      - name: Install opencode
+        run: npm install --global "opencode-ai@${OPENCODE_VERSION}"
+
+      # The only step with tokens. No model code has run yet. AGENT_PAT is read once, for the Git identity of its owner.
+      - name: Preflight
+        id: preflight
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          AGENT_PAT: ${{ secrets.AGENT_PAT }}
+        run: node tools/agent/implement.js preflight
+
+      - name: Set up the workspace
+        if: steps.preflight.outputs.proceed == 'true'
+        uses: ./.github/actions/setup-workspace
+        with:
+          cache-scope: ai-autonomous
+
+      # The local checks run `go test` through Nx, so Go is needed next to Node, Java, and Maven. Not `**/go.sum`: it
+      # scans node_modules and hangs.
+      - name: Set up Go
+        if: steps.preflight.outputs.proceed == 'true'
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: backend/.go-version
+          cache-dependency-path: |
+            backend/**/go.sum
+            go.work.sum
+
+      # The work step checks out the agent's branch, where the implementer edits files. The scripts and the opencode
+      # config run from this copy of the default branch, so a change on the branch cannot rewrite the agent's own
+      # roles or the reviewer's instructions.
+      - name: Keep a trusted copy of the agent
+        if: steps.preflight.outputs.proceed == 'true'
+        run: cp -R tools/agent "$RUNNER_TEMP/agent-tools"
+
+      # The model and the tests of the change run here. The step has the OpenAI key and nothing else of value.
+      - name: Work
+        if: steps.preflight.outputs.proceed == 'true'
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: node "$RUNNER_TEMP/agent-tools/implement.js" work
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ai-autonomous-implement-${{ needs.route.outputs.number }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/agent
+          retention-days: 30
+          if-no-files-found: ignore
+
+  # Flow C, the writes: push the branch, open or update the pull request, write the state, the labels, and the
+  # comments. This job holds `GITHUB_TOKEN` and `AGENT_PAT` and runs no model and no repository code: it takes the
+  # result of `implement` from the artifact, and only the scripts of the default branch run. When `implement` crashed
+  # or timed out, there is no outcome in the artifact, and the job records the failure and the costs it can find.
+  publish:
+    needs: [route, ci-gate, implement]
+    if: always() && needs.implement.outputs.proceed == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # One agent job per issue at a time, so two writes of its state comment do not race.
+    concurrency:
+      group: ai-autonomous-${{ needs.route.outputs.number }}
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+    env:
+      AGENT_NUMBER: ${{ needs.route.outputs.number }}
+      AGENT_COMMAND: ${{ needs.route.outputs.command }}
+      AGENT_ACTOR: ${{ github.event.comment.user.login || github.event.review.user.login }}
+      AGENT_KIND: >-
+        ${{ needs.route.outputs.kind || (needs.ci-gate.outputs.next == 'implement' && 'ci-fix' || 'initial') }}
+      AGENT_PR: ${{ needs.route.outputs.pr }}
+      AGENT_COMMENT_ID: ${{ github.event.comment.id }}
+      AGENT_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      # The runner context is not available in a job's env, so the output folder is set by the first step.
+      - name: Output folder
+        run: echo "AGENT_OUT=$RUNNER_TEMP/agent" >> "$GITHUB_ENV"
+
+      # The scripts come from the default branch, which is named because a `pull_request_review` event would check out
+      # the pull request itself. The history is complete: the bundle of the work job holds the commits of the pull
+      # request on top of its branch point, which the push needs, and `publish` measures their diff from it.
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          sparse-checkout: tools/agent
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      # A missing artifact is an outcome the script handles: the work job left nothing.
+      - uses: actions/download-artifact@v5
+        continue-on-error: true
+        with:
+          name: ai-autonomous-implement-${{ needs.route.outputs.number }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/agent
+
+      - name: Publish
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          AGENT_PAT: ${{ secrets.AGENT_PAT }}
+        run: node tools/agent/implement.js publish
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ai-autonomous-publish-${{ needs.route.outputs.number }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/agent/summary.md
+          retention-days: 30
+          if-no-files-found: ignore
+
+  # Flow D, the stop: `/agent stop` writes the phase `stopped` and cancels the run of the attempt. It has no concurrency
+  # group on purpose. In the group of `chat` it could wait behind a 15-minute answer, or be replaced by a later pending
+  # chat job, and a stop that waits is not a stop. The command is idempotent: it reads the state again, writes the
+  # phase, and cancels the run recorded in the state, so two stops in a row do no harm. It runs the same script as
+  # `chat`, without the model: no OpenAI key, no opencode, and a checkout of `tools/agent` only.
+  stop:
+    needs: route
+    if: needs.route.outputs.action == 'stop'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    # `actions: write` cancels the run of a stopped attempt.
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+      actions: write
+    env:
+      AGENT_NUMBER: ${{ needs.route.outputs.number }}
+      AGENT_COMMAND: ${{ needs.route.outputs.command }}
+      AGENT_ACTOR: ${{ github.event.comment.user.login }}
+      AGENT_COMMENT_ID: ${{ github.event.comment.id }}
+      AGENT_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          sparse-checkout: tools/agent
+          persist-credentials: false
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      - name: Stop
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          AGENT_OUT: ${{ runner.temp }}/agent
+        run: node tools/agent/chat.js
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ai-autonomous-stop-${{ needs.route.outputs.number }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/agent
+          retention-days: 30
+          if-no-files-found: ignore
+
+  # Flow D: a comment that asks the agent something without asking for a change: `/agent help`, `/agent cost`, and
+  # `/agent <question>`. The assistant is read-only and answers in a comment. `/agent stop` has its own job.
+  chat:
+    needs: route
+    if: needs.route.outputs.action == 'chat'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # Its own group, not the one of the other jobs of the number. The job writes the state comment only for the cost of
+    # an answer, and it reads that comment again right before it writes.
+    concurrency:
+      group: ai-autonomous-chat-${{ needs.route.outputs.number }}
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+    env:
+      AGENT_NUMBER: ${{ needs.route.outputs.number }}
+      AGENT_COMMAND: ${{ needs.route.outputs.command }}
+      AGENT_ACTOR: ${{ github.event.comment.user.login }}
+      AGENT_COMMENT_ID: ${{ github.event.comment.id }}
+      AGENT_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      # The working tree is the default branch, so the tools, the opencode config, the skills, and the AGENTS.md files
+      # are trusted. The history stays complete because the assistant reads `git log` and `git show`. No token is kept
+      # in the checkout: the assistant could read it from the Git config.
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      # The head of a pull request is fetched under a ref of its own and never checked out: the assistant reads it with
+      # `git show` and `git diff`. The token is passed for this command only; it is not stored.
+      - name: Fetch the pull request head
+        if: github.event.issue.pull_request != null
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ needs.route.outputs.number }}
+        run: |
+          set -euo pipefail
+          header="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GITHUB_TOKEN" | base64 -w0)"
+          git -c "http.https://github.com/.extraheader=$header" fetch --no-tags origin \
+            "pull/${PR_NUMBER}/head:refs/remotes/pull/${PR_NUMBER}/head"
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      # Only a question needs the model.
+      - name: Install opencode
+        if: fromJSON(needs.route.outputs.command).name == 'chat'
+        run: npm install --global "opencode-ai@${OPENCODE_VERSION}"
+
+      - name: Answer
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          AGENT_OUT: ${{ runner.temp }}/agent
+          AGENT_PR_HEAD_REF: refs/remotes/pull/${{ needs.route.outputs.number }}/head
+        run: node tools/agent/chat.js
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ai-autonomous-chat-${{ needs.route.outputs.number }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/agent
+          retention-days: 30
+          if-no-files-found: ignore
