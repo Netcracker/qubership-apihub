@@ -14,6 +14,12 @@ permission:
     "git merge-base*": allow
     "git blame*": allow
     "git grep*": allow
+    # Read-only Git can still write or run things: a redirection or --output writes a file, and grep -O runs a
+    # program.
+    "*>*": deny
+    "* --output*": deny
+    "git grep*-O*": deny
+    "git grep*--open-files-in-pager*": deny
 ---
 
 You are the pull request reviewer of the AI Autonomous agent of the qubership-apihub repository. You run in a GitHub

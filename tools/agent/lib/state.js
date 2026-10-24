@@ -29,6 +29,18 @@ function render(humanMarkdown, state) {
   return `${MARKER}\n${humanMarkdown}\n\n${JSON_OPEN}\n${json}\n-->\n`
 }
 
+/**
+ * `body` with its state block replaced by `state`; the human part stays as it is. For a writer that only adds data (a
+ * cost record) and must not replace what another flow wrote for people, such as the summary of a review.
+ */
+function replaceState(body, state) {
+  const text = typeof body === 'string' ? body : ''
+  const open = text.lastIndexOf(JSON_OPEN)
+  const head = open === -1 ? text : text.slice(0, open)
+  const human = head.startsWith(MARKER) ? head.slice(MARKER.length) : head
+  return render(human.replace(/^\n+|\s+$/g, ''), state)
+}
+
 /** The state object of `body`, or `null` when the body has no state block. Throws on a damaged block. */
 function parse(body) {
   if (typeof body !== 'string') return null
@@ -72,4 +84,54 @@ function addCost(state, record) {
   return { ...state, costs: [...(state.costs ?? []), record] }
 }
 
-module.exports = { MARKER, render, parse, findStateComment, emptyIssueState, emptyPullState, addCost }
+const costKey = (c) => JSON.stringify([c?.run, c?.role, c?.at, c?.usd])
+
+/**
+ * `mine` with `costs` holding the records of both states: the ones of `fresh` first, then those of `mine` that
+ * `fresh` lacks. A record counts once per run, role, time, and price. Chat and publish write the same comment from
+ * different concurrency groups, and the writer that comes second must not drop the cost record of the first. Neither
+ * input is changed; `fresh` may be `null` (the comment is gone or holds no state).
+ */
+function mergeCosts(fresh, mine) {
+  const seen = new Set()
+  const costs = []
+  for (const c of [...(fresh?.costs ?? []), ...(mine?.costs ?? [])]) {
+    const key = costKey(c)
+    if (seen.has(key)) continue
+    seen.add(key)
+    costs.push(c)
+  }
+  return { ...mine, costs }
+}
+
+/**
+ * `mine` with the costs of the state comment as it is now on GitHub merged in: the comment is read again right before a
+ * writer replaces it, so a cost record that another flow wrote since this run loaded the state survives.
+ */
+async function withFreshCosts(gh, number, mine) {
+  const existing = findStateComment(await gh.listIssueComments(number))
+  return mergeCosts(existing ? parse(existing.body) : null, mine)
+}
+
+/**
+ * The login that asked for the work on an issue: the running attempt's actor, else the actor of the last attempt, else
+ * `null`. The CI gate uses it to mention the person and to apply AGENT_ALLOWED_ACTORS.
+ */
+function actorOf(state) {
+  const attempts = state?.attempts ?? []
+  return state?.implementing?.actor || attempts[attempts.length - 1]?.actor || null
+}
+
+module.exports = {
+  MARKER,
+  render,
+  replaceState,
+  parse,
+  findStateComment,
+  emptyIssueState,
+  emptyPullState,
+  addCost,
+  mergeCosts,
+  withFreshCosts,
+  actorOf,
+}

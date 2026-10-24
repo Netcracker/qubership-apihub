@@ -13,6 +13,12 @@ permission:
     "git show*": allow
     "git blame*": allow
     "git grep*": allow
+    # Read-only Git can still write or run things: a redirection or --output writes a file, and grep -O runs a
+    # program.
+    "*>*": deny
+    "* --output*": deny
+    "git grep*-O*": deny
+    "git grep*--open-files-in-pager*": deny
 ---
 
 You verify the findings of another model's pull request review for the AI Autonomous agent of the qubership-apihub
