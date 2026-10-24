@@ -497,21 +497,33 @@ const MAX_THREADS = 30
 const MAX_THREAD_COMMENT = 4000
 
 /**
- * The unresolved review threads for the implementer: where each one is and what was said in it. People wrote them, so
- * every conversation is an `<untrusted>` block.
+ * The threads the implementer sees: the first `MAX_THREADS`. The state records only these, so `publish` replies in the
+ * threads that were shown and in no other. `omitted` is the number of unresolved threads left out.
  */
-function renderReviewThreads(threads) {
+function limitThreads(threads) {
+  const shown = threads.slice(0, MAX_THREADS)
+  return { shown, omitted: threads.length - shown.length }
+}
+
+/**
+ * The unresolved review threads for the implementer: where each one is and what was said in it. People wrote them, and
+ * so did the pull request that names the file, so the location goes inside the `<untrusted>` block with the
+ * conversation; outside it stands only a counter. `omitted` threads were left out by `limitThreads`.
+ */
+function renderReviewThreads(threads, omitted = 0) {
   const out = ['## Unresolved review threads', '']
   if (threads.length === 0) return [...out, 'No thread is unresolved. The review text above is all there is.', '']
-  const shown = threads.slice(0, MAX_THREADS)
-  if (threads.length > shown.length) {
-    out.push(`Only the first ${shown.length} of ${threads.length} threads are shown.`, '')
+  if (omitted > 0) {
+    out.push(
+      `${omitted} more unresolved thread(s) are not shown and stay open. Work on the ${threads.length} shown below.`,
+      '',
+    )
   }
-  shown.forEach((thread, i) => {
+  threads.forEach((thread, i) => {
     const where = `${thread.path || 'no file'}${thread.line ? `:${thread.line}` : ''}`
-    out.push(`### Thread ${i + 1}: \`${where}\``, '')
+    out.push(`### Thread ${i + 1} of ${threads.length}`, '')
     const talk = thread.comments.map((c) => `${c.author}: ${clip(c.body, MAX_THREAD_COMMENT)}`).join('\n\n')
-    out.push(untrusted(talk), '')
+    out.push(untrusted(`Location: ${where}\n\n${talk}`), '')
   })
   return out
 }
@@ -533,10 +545,12 @@ function renderReviewThreads(threads) {
  * @param {number} input.round 1, or more after a self-review or a failed check
  * @param {{ findings: object[], checks: object|null }|null} input.previous the previous round's open results
  * @param {string} [input.ciReport] the CI report of a `ci-fix` attempt, with the log text of failed jobs
- * @param {object[]} [input.reviewThreads] the unresolved review threads of a `review` attempt
+ * @param {object[]} [input.reviewThreads] the unresolved review threads of a `review` attempt that the implementer sees
+ * @param {number} [input.omittedThreads] how many more unresolved threads were left out
  */
 function renderImplementInput({
   playbook, kind, issue, comments, plan, analysis, notes, attempts, round, previous, ciReport, reviewThreads,
+  omittedThreads = 0,
 }) {
   const people = comments.filter((c) => !isBot(c.user))
   const shown = people.slice(-MAX_COMMENTS)
@@ -582,7 +596,7 @@ function renderImplementInput({
   }
   out.push('## Plan of the analysis', '', ...renderPlan(plan, analysis), '')
   if (notes) out.push(`## ${NOTES_HEADING[kind] ?? NOTES_HEADING.initial}`, '', untrusted(notes), '')
-  if (kind === 'review') out.push(...renderReviewThreads(reviewThreads ?? []))
+  if (kind === 'review') out.push(...renderReviewThreads(reviewThreads ?? [], omittedThreads))
   if ((attempts ?? []).length > 0) {
     out.push('## Earlier attempts', '')
     for (const a of attempts) {
@@ -1014,12 +1028,13 @@ function writeOutputs(env, outputs) {
  * @param {object} input.st the state to work from (the marked one)
  * @param {boolean} [input.fresh] start a new branch and pull request: the one of the earlier attempt is closed
  * @param {boolean} [input.changes] the attempt changes the open pull request (a change request or a review)
- * @param {object[]} [input.reviewThreads] the unresolved review threads of a `review` attempt
+ * @param {object[]} [input.reviewThreads] the unresolved review threads of a `review` attempt that the implementer sees
+ * @param {number} [input.omittedThreads] how many more unresolved threads were left out
  * @param {{ name: string, email: string }} input.identity
  */
 function saveContext({
   out, number, ciFix, kind, actor, command, runUrl, analyzeFirst, loaded, st, identity, fresh = false, changes = false,
-  reviewThreads = [],
+  reviewThreads = [], omittedThreads = 0,
 }) {
   const context = {
     version: 1,
@@ -1033,6 +1048,7 @@ function saveContext({
     fresh,
     changes,
     reviewThreads,
+    omittedThreads,
     identity,
     issue: loaded.issue,
     comments: loaded.comments,
@@ -1191,10 +1207,12 @@ async function preflight(env = process.env, deps = {}) {
   }
 
   const analyzeFirst = !person && decision.outcome === 'analyze-first'
-  const threads = kind === 'review'
+  const unresolved = kind === 'review'
     ? (await log.group('Read the review threads', () => gh.listReviewThreads(prNumber))).filter((t) => !t.isResolved)
     : []
-  if (kind === 'review') log.info('unresolved review threads', { count: threads.length })
+  // Only the threads the implementer sees are recorded, so `publish` replies in exactly those.
+  const { shown: threads, omitted: omittedThreads } = limitThreads(unresolved)
+  if (kind === 'review') log.info('unresolved review threads', { count: unresolved.length, shown: threads.length })
   // The identity of the PAT owner: the only use of the PAT before the publish job. No model code has run yet.
   const identity = await log.group('Git identity', () =>
     resolveIdentity({ env, repo: env.GITHUB_REPOSITORY, deps, dryRun: config.dryRun }),
@@ -1211,7 +1229,7 @@ async function preflight(env = process.env, deps = {}) {
       return
     }
     const human = `### AI implementation is running\n\n[The run](${runUrl}) was started by @${actor}.`
-    const body = state.render(human, marked)
+    const body = state.render(human, await state.withFreshCosts(gh, number, marked))
     if (existing) await gh.updateIssueComment(existing.id, body)
     else await gh.createIssueComment(number, body)
     log.info('state comment written', { phase: 'implementing', id: existing ? existing.id : 'new' })
@@ -1219,6 +1237,7 @@ async function preflight(env = process.env, deps = {}) {
   saveContext({
     out, number, ciFix: false, kind, actor, command, runUrl, analyzeFirst, loaded, st: marked, identity,
     fresh: Boolean(decision.fresh), changes: Boolean(decision.changes), reviewThreads: threads,
+    omittedThreads,
   })
   writeOutputs(env, { proceed: 'true', outcome: decision.outcome })
   return { proceed: true, ...decision }
@@ -1345,6 +1364,7 @@ async function implementRounds(ctx) {
         previous,
         ciReport: ctx.ciReport,
         reviewThreads: ctx.reviewThreads,
+        omittedThreads: ctx.omittedThreads,
       })
       fs.writeFileSync(inputFile, text)
       fs.writeFileSync(path.join(out, `implement-input${suffix}.md`), text)
@@ -1552,7 +1572,7 @@ async function work(env = process.env, deps = {}) {
       Object.assign(outcome, await workOnIssue({
         config, deps, exec, issue, comments, st, command, out, runUrl, costs, type, playbook: outcome.playbook, kind,
         number, identity, analysis, ciFix, fresh: Boolean(context.fresh), changes: Boolean(context.changes),
-        reviewThreads: context.reviewThreads ?? [],
+        reviewThreads: context.reviewThreads ?? [], omittedThreads: context.omittedThreads ?? 0,
       }))
     }
   } catch (err) {
@@ -1615,6 +1635,7 @@ async function workOnIssue(ctx) {
     attempts: st.attempts ?? [],
     ciReport: ctx.ciFix ? st.lastCiReport ?? '' : '',
     reviewThreads: ctx.reviewThreads,
+    omittedThreads: ctx.omittedThreads,
   })
   const base = branchInfo.base
   const info = { ...branchInfo, head: rounds.head }
@@ -1971,10 +1992,12 @@ async function publishStopped({ gh, loaded, st: state0, costs, outcome, kind, at
   const next = { ...rest, attempts: [...(rest.attempts ?? []), entry] }
   fs.writeFileSync(path.join(out, 'summary.md'), `The attempt was stopped; ${costs.length} cost record(s) are kept.`)
   await log.group('Record the stopped attempt', async () => {
+    // Read again right before the write: a cost record that chat added since the state was loaded must survive.
+    const merged = await state.withFreshCosts(gh, next.number ?? 0, next)
     if (loaded.existing) {
-      await gh.updateIssueComment(loaded.existing.id, state.replaceState(loaded.existing.body, next))
+      await gh.updateIssueComment(loaded.existing.id, state.replaceState(loaded.existing.body, merged))
     } else {
-      await gh.createIssueComment(next.number ?? 0, state.render('### AI implementation was stopped', next))
+      await gh.createIssueComment(merged.number ?? 0, state.render('### AI implementation was stopped', merged))
     }
     log.info('state comment written', { phase: next.phase, attempts: next.attempts.length, costs: costs.length })
   })
@@ -1996,7 +2019,7 @@ async function publishStop(ctx) {
         ...reply.split('\n').map((l) => `> ${l}`), ''].join('\n'))
       return
     }
-    const body = state.render(human, st)
+    const body = state.render(human, await state.withFreshCosts(gh, number, st))
     if (loaded.existing) await gh.updateIssueComment(loaded.existing.id, body)
     else await gh.createIssueComment(number, body)
     log.info('state comment written', { phase: st.phase })
@@ -2159,7 +2182,6 @@ async function finish(ctx) {
   const note = result === 'pr-opened'
     ? null
     : actorComment({ result, actor, pr, reason: outcome.blockedReason, message: error?.message, kind })
-  const body = state.render(human, st)
 
   if (config.dryRun) {
     await log.group('Write the dry-run report', async () => {
@@ -2192,10 +2214,13 @@ async function finish(ctx) {
   } else {
     // The state first: it holds the cost record and the pull request number, which must survive a failed label call.
     await log.group('Write the state comment', async () => {
+      // Read again right before the write: chat may have added a cost record since the state was loaded.
+      const merged = await state.withFreshCosts(gh, number, st)
+      const text = state.render(human, merged)
       if (existing) {
-        await gh.updateIssueComment(commentId, body)
+        await gh.updateIssueComment(commentId, text)
       } else {
-        commentId = (await gh.createIssueComment(number, body))?.id ?? null
+        commentId = (await gh.createIssueComment(number, text))?.id ?? null
       }
       log.info('state comment written', { id: commentId ?? 'new' })
     })
@@ -2284,6 +2309,7 @@ module.exports = {
   prepareBranch,
   branchAllowed,
   renderReviewThreads,
+  limitThreads,
   requireCiFixState,
   appendSummary,
   writeOutputs,

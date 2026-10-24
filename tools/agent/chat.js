@@ -2,6 +2,8 @@
 /**
  * Flow D of the AI Autonomous agent: the conversation. The `chat` job runs this script for a comment that asks the
  * agent something without asking for a change: `/agent help`, `/agent cost`, `/agent stop`, and `/agent <question>`.
+ * `/agent stop` runs in its own `stop` job of the workflow, which has no concurrency group and runs this same script
+ * without the model, so a stop never queues behind an answer.
  *
  *   help      replies with the commands that work where the comment is (an issue, a pull request of a person, a pull
  *             request of the agent).

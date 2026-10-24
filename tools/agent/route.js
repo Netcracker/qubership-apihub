@@ -6,8 +6,8 @@
  * state of the pull request or issue, and returns
  * `{ action, number, reason, command?, trigger?, pr?, headSha?, kind? }`. The actions are `review` (phase 1), `analyze`
  * (phase 2), `implement` (phase 3; phase 5 adds `kind`: `human` or `review`), `ci-gate` (phase 4), `chat` (phase 5),
- * and `skip`. Later phases add actions by registering more rules in EVENT_HANDLERS and COMMAND_HANDLERS; `decide`
- * itself does not change.
+ * `stop` (a `/agent stop` command; the `stop` job has no concurrency group), and `skip`. Later phases add actions by
+ * registering more rules in EVENT_HANDLERS and COMMAND_HANDLERS; `decide` itself does not change.
  *
  * The CLI (`node tools/agent/route.js`) gathers the facts that need the GitHub API, but only when the event calls
  * for them: the permission of a commenter who wrote a command, the state comment of a pull request that became
@@ -157,8 +157,9 @@ const COMMAND_HANDLERS = {
     const reason = command.force ? '/agent implement force' : '/agent implement'
     return { action: 'implement', number, reason, command }
   },
-  // Phase 5: a person steers the agent. Retry and a change request start a new attempt (`kind: 'human'`); the rest is
-  // the `chat` job, which reads, answers, or stops.
+  // Phase 5: a person steers the agent. Retry and a change request start a new attempt (`kind: 'human'`); stop is the
+  // `stop` job, which has no concurrency group so that it never queues; the rest is the `chat` job, which reads or
+  // answers.
   retry: ({ number, isPull, command, issue, agentFacts }) => {
     if (!isPull) return humanAttempt({ number, reason: '/agent retry', command })
     if (isDependabot(issue?.user?.login)) return skip(number, NO_DEPENDABOT)
@@ -171,7 +172,7 @@ const COMMAND_HANDLERS = {
     if (isPull && !agentPullOf(agentFacts, number)) {
       return skip(number, 'stop works on issues and on pull requests of the agent')
     }
-    return { action: 'chat', number, reason: '/agent stop', command }
+    return { action: 'stop', number, reason: '/agent stop', command }
   },
   cost: ({ number, isPull, command, issue }) => answerOnly({ number, isPull, command, issue, reason: '/agent cost' }),
   help: ({ number, isPull, command, issue }) => answerOnly({ number, isPull, command, issue, reason: '/agent help' }),

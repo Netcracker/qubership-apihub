@@ -12,8 +12,8 @@ site.
   repositories to this monorepo, with the [plan](./monorepo-migration/plan.md) and the
   [decisions](./monorepo-migration/decisions.md).
 - [Autonomous agent](./autonomous-agent/design.md): the design of the AI agent that reviews pull requests and
-  implements bugs and tasks in GitHub Actions, with its [implementation plan](./autonomous-agent/plan.md). Draft for
-  review.
+  implements bugs and tasks in GitHub Actions, with its [implementation plan](./autonomous-agent/plan.md), the
+  [spike results](./autonomous-agent/spike.md), and the [handover](./autonomous-agent/handover.md).
 
 ## Why it is not on the site
 

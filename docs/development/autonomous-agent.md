@@ -72,8 +72,12 @@ estimates from the price table of opencode. The OpenAI bill is the authority.
 
 `/agent stop` writes the phase `stopped` to the state of the issue, cancels the workflow run of a running attempt,
 removes `agent:needs-human`, and replies with what it stopped. The cancelled attempt records its cost and ends as
-`stopped`: it pushes nothing and posts nothing. The CI gate ignores a stopped issue. To start again, comment
+`stopped`: it pushes nothing and posts nothing. The CI gate ignores a stopped issue: when you stop the work while the
+gate reads the checks, the gate finds the new phase before it writes anything and exits. To start again, comment
 `/agent implement` on the issue, or `/agent retry`.
+
+A stop runs at once. It has its own job without a concurrency group, so it never waits behind an answer of the
+assistant or another agent job of the same number, and a later comment cannot replace it.
 
 ### Retry, answers, and change requests
 
@@ -95,10 +99,11 @@ and when the issue is closed or is not a `Bug` or a `Task`.
 ### Reviews with change requests
 
 When a person with write access submits a review with the state "changes requested" on a pull request of the agent,
-the agent makes one attempt. The implementer gets the review text and every unresolved review thread (file, line, and
-the conversation). After the push, the agent replies once in each of those threads with the short commit id. It never
-resolves a thread: a person does. The title and the description of the pull request stay, and the pull request goes
-back to a draft when the new result is not green.
+the agent makes one attempt. The implementer gets the review text and the unresolved review threads (file, line, and
+the conversation), at most 30 of them; the prompt says how many more were left out. After the push, the agent replies
+once in each thread the implementer saw, with the short commit id, and in no other. It never resolves a thread: a
+person does. The title and the description of the pull request stay, and the pull request goes back to a draft when
+the new result is not green.
 
 ## Implement an issue
 
@@ -195,8 +200,9 @@ forks.
    status). While any is still running or pending, it exits; the workflow run that finishes last decides. The agent's
    own jobs do not count.
 2. **It decides once** per commit. A second workflow run of the same commit changes nothing. Right before it writes
-   anything, the gate reads the pull request again. When a newer commit is on the branch, it writes nothing and exits
-   as `superseded`; the checks of the newer commit start their own gate run.
+   anything, the gate reads the pull request and the state again. When a newer commit is on the branch, it writes
+   nothing and exits as `superseded`; the checks of the newer commit start their own gate run. When the issue is no
+   longer in the phase `waiting-ci` (for example after `/agent stop`), it writes nothing and exits as `state-changed`.
 3. **Green:** every check succeeded, was neutral, or was skipped. The pull request leaves draft (the gate is the only
    place where that happens), gets `agent:completed` and `ai:l1-executor`, and the issue gets `agent:completed`.
    `agent:needs-human` goes away from both. The agent comments on the issue and mentions the person who asked: a
