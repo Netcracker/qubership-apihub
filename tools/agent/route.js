@@ -2,9 +2,10 @@
 /**
  * Router of the AI Autonomous agent: turns a GitHub event into one decision for the workflow.
  *
- * `decide` is pure. It looks at the event, the configuration, the permission of the person behind the event, and the
- * state of the pull request or issue, and returns
- * `{ action, number, reason, command?, trigger?, pr?, headSha?, kind? }`. The actions are `review` (phase 1), `analyze`
+ * `decide` is pure. It looks at the event, the configuration, the permission of the person behind the event, the
+ * state of the pull request or issue, and the count of automatic work in the last 24 hours, and returns
+ * `{ action, number, reason, command?, trigger?, pr?, headSha?, kind?, numbers? }`. The actions are `review` (phase 1),
+ * `analyze`
  * (phase 2), `implement` (phase 3; phase 5 adds `kind`: `human` or `review`), `ci-gate` (phase 4), `chat` (phase 5),
  * `stop` (a `/agent stop` command; the `stop` job has no concurrency group), `rerun` (a `/agent rerun` command: the
  * failed CI checks of the agent's pull request run again, no model), `ci-check` (a `/agent ci_check` command: the
@@ -15,8 +16,11 @@
  * for them: the permission of a commenter who wrote a command, the state comment of a pull request that became
  * ready for review, the state comment of an issue that may be waiting for information or for a person, the issue state
  * of a pull request of the agent that got a comment or a review, and, for a finished workflow run, the open pull
- * request of its branch with the state of the issue it names. It then writes `action`, `number`, `reason`, and
- * `command` (JSON, or empty) to `$GITHUB_OUTPUT`, plus `trigger` for an `analyze` decision, `pr` and `head_sha` for a
+ * request of its branch with the state of the issue it names. An event that may start an automatic analysis or review
+ * also gets the count of such work in the last 24 hours (the daily caps), and the `schedule` event, the sweep, gets the
+ * new issues past the grace period that no analysis has seen. It then writes `action`, `number`, `reason`, and
+ * `command` (JSON, or empty) to `$GITHUB_OUTPUT`, plus `trigger` and `numbers` (a JSON array of the issues to analyze:
+ * one for an event, up to five for the sweep) for an `analyze` decision, `pr` and `head_sha` for a
  * `ci-gate` decision, `pr` and `kind` for an `implement` decision that a person asked for, `pr` for a `rerun`
  * decision on a pull request, `issue` for a `ci-check` decision on a pull request of the agent, and one line to
  * `$GITHUB_STEP_SUMMARY`. It logs the event, the gathered facts,
@@ -29,6 +33,7 @@
 
 const fs = require('node:fs')
 const { loadConfig, isActorAllowed } = require('./lib/config')
+const daily = require('./lib/daily-usage')
 const { parseCommand } = require('./lib/commands')
 const { createClient, hasWriteAccess } = require('./lib/github')
 const { findStateComment, parse: parseState, actorOf } = require('./lib/state')
@@ -47,6 +52,13 @@ const sameRepo = (a, b) => typeof a === 'string' && typeof b === 'string' && a.t
 const sameLogin = (a, b) => typeof a === 'string' && typeof b === 'string' && a.toLowerCase() === b.toLowerCase()
 
 const skip = (number, reason) => ({ action: 'skip', number, reason })
+
+/** Days back the sweep looks for new issues; an older issue that no analysis saw is left alone. */
+const SWEEP_LOOKBACK_DAYS = 7
+/** The most issues one sweep run analyzes; the rest wait for the next run. */
+const MAX_SWEEP = 5
+/** The triggers of an analysis that nobody asked for, so the daily cap applies. */
+const AUTOMATIC_TRIGGERS = new Set(['opened', 'typed'])
 
 /** Issue types the analysis covers. */
 const ANALYZED_TYPES = new Set(['Bug', 'Task'])
@@ -109,8 +121,24 @@ function isForkRun(run, repository) {
   return !sameRepo(run?.head_repository?.full_name, base)
 }
 
+/**
+ * Why a pull request is not reviewed automatically, or `null`. The author may be anyone, not only a listed actor:
+ * the review writes a comment and a label, nothing else.
+ */
+function pullRequestSkipReason(pr) {
+  if (pr.draft) return 'draft pull request'
+  // A fork cannot be reviewed on its own: the job would run with the token of the base repository.
+  if (!sameRepo(pr.head?.repo?.full_name, pr.base?.repo?.full_name)) {
+    return 'fork pull requests run only on /agent review'
+  }
+  const author = pr.user?.login
+  if (isBot(author)) return `pull request author '${author}' is a bot`
+  if (typeof pr.body === 'string' && pr.body.includes(AGENT_PR_MARKER)) return 'pull request was opened by the agent'
+  return null
+}
+
 /** `pull_request` events: review a new pull request that the agent should look at without being asked. */
-function decidePullRequest({ payload, config, pullState }) {
+function decidePullRequest({ payload, config, pullState, dailyUsage }) {
   const pr = payload.pull_request
   if (!pr) throw new TypeError('A pull_request event must carry a pull_request payload')
   const number = pr.number
@@ -118,19 +146,15 @@ function decidePullRequest({ payload, config, pullState }) {
   if (payload.action !== 'opened' && payload.action !== 'ready_for_review') {
     return skip(number, `pull_request action '${payload.action}' is not handled`)
   }
-  if (pr.draft) return skip(number, 'draft pull request')
-  // A fork cannot be reviewed on its own: the job would run with the token of the base repository.
-  if (!sameRepo(pr.head?.repo?.full_name, pr.base?.repo?.full_name)) {
-    return skip(number, 'fork pull requests run only on /agent review')
-  }
-  const author = pr.user?.login
-  if (isBot(author)) return skip(number, `pull request author '${author}' is a bot`)
-  if (typeof pr.body === 'string' && pr.body.includes(AGENT_PR_MARKER)) {
-    return skip(number, 'pull request was opened by the agent')
-  }
-  if (!isActorAllowed(config, author)) return skip(number, `author '${author}' is not in AGENT_ALLOWED_ACTORS`)
+  const why = pullRequestSkipReason(pr)
+  if (why) return skip(number, why)
+  // A review skipped for the size of the diff is a review entry too: only `/agent review` asks again.
   if (payload.action === 'ready_for_review' && pullState?.reviews?.length > 0) {
     return skip(number, 'already reviewed; use /agent review')
+  }
+  const cap = config.limits.dailyReviews
+  if ((dailyUsage?.reviews ?? 0) >= cap) {
+    return skip(number, `daily limit of ${cap} automatic reviews reached; comment /agent review`)
   }
   return { action: 'review', number, reason: `pull request ${payload.action}` }
 }
@@ -232,17 +256,30 @@ function checkAnalysisLimit({ number, config, issueState, trigger }) {
   return skip(number, 'analysis limit reached; comment /agent analyze')
 }
 
+/** A skip decision when the automatic analyses of the last 24 hours reached the cap, else `null`. */
+function checkDailyAnalyses({ number, config, dailyUsage }) {
+  const cap = config.limits.dailyAnalyses
+  if ((dailyUsage?.analyses ?? 0) < cap) return null
+  return skip(number, `daily limit of ${cap} automatic analyses reached`)
+}
+
 /**
- * The analysis is read-only (it writes a label and comments), so it needs no write access. During the proof of
- * concept it still answers only the listed users: the issue author must pass `isActorAllowed`.
+ * The analysis is read-only (it writes a label and comments), so it needs no write access, and it runs for the author
+ * of any issue: AGENT_ALLOWED_ACTORS limits commands and implementation, not this. A new issue (`opened`, `typed`) also
+ * counts toward the daily cap of automatic analyses; the sweep picks it up later.
  */
-function analyzeIssue({ number, author, config, issueState, trigger, reason }) {
-  if (!isActorAllowed(config, author)) return skip(number, `author '${author}' is not in AGENT_ALLOWED_ACTORS`)
-  return checkAnalysisLimit({ number, config, issueState, trigger }) ?? { action: 'analyze', number, reason, trigger }
+function analyzeIssue({ number, config, issueState, trigger, reason, dailyUsage }) {
+  const limited = checkAnalysisLimit({ number, config, issueState, trigger })
+  if (limited) return limited
+  if (AUTOMATIC_TRIGGERS.has(trigger)) {
+    const capped = checkDailyAnalyses({ number, config, dailyUsage })
+    if (capped) return capped
+  }
+  return { action: 'analyze', number, reason, trigger }
 }
 
 /** `issues` events: analyze a new Bug or Task, or an issue whose author edited it after the agent asked questions. */
-function decideIssues({ payload, config, issueState }) {
+function decideIssues({ payload, config, issueState, dailyUsage }) {
   const issue = payload.issue
   if (!issue) throw new TypeError('An issues event must carry an issue payload')
   const number = issue.number
@@ -262,7 +299,7 @@ function decideIssues({ payload, config, issueState }) {
     if (issueState?.phase !== 'needs-info') return skip(number, 'issue is not waiting for information')
     const editor = payload.sender?.login
     if (!sameLogin(editor, author)) return skip(number, `'${editor}' edited the issue, not its author`)
-    return analyzeIssue({ number, author, config, issueState, trigger: 'edited', reason: 'author edited the issue' })
+    return analyzeIssue({ number, config, issueState, trigger: 'edited', reason: 'author edited the issue' })
   }
 
   const wrongType = checkAnalyzedType(number, issue.type?.name)
@@ -270,7 +307,37 @@ function decideIssues({ payload, config, issueState }) {
   if (labelNames(issue).some((name) => DECISION_LABELS.includes(name))) {
     return skip(number, 'a person already set ai:suitable or ai:unsuitable')
   }
-  return analyzeIssue({ number, author, config, issueState, trigger: action, reason: `issue ${action}` })
+  // People keep editing a new issue for a while: the sweep analyzes it once the grace period is over.
+  const grace = config.limits.analysisGraceMinutes
+  if (grace > 0) return skip(number, `the sweep analyzes it after the grace period of ${grace} minutes`)
+  return analyzeIssue({ number, config, issueState, trigger: action, reason: `issue ${action}`, dailyUsage })
+}
+
+/**
+ * How many issues one sweep run may take: at most `MAX_SWEEP`, and not more than the daily cap of automatic analyses
+ * leaves. Zero or less means none.
+ */
+function sweepBudget(config, dailyUsage) {
+  return Math.min(MAX_SWEEP, config.limits.dailyAnalyses - (dailyUsage?.analyses ?? 0))
+}
+
+/**
+ * `schedule` events: the sweep. `sweep.numbers` are the new Bug and Task issues past the grace period that no analysis
+ * has seen, oldest first (the facts gathered for this event).
+ */
+function decideSchedule({ config, dailyUsage, sweep }) {
+  if (sweepBudget(config, dailyUsage) <= 0) {
+    return skip(null, `daily limit of ${config.limits.dailyAnalyses} automatic analyses reached`)
+  }
+  const numbers = (sweep?.numbers ?? []).slice(0, sweepBudget(config, dailyUsage))
+  if (numbers.length === 0) return skip(null, 'no new issue is past the grace period')
+  return {
+    action: 'analyze',
+    number: numbers[0],
+    numbers,
+    reason: `the grace period is over for ${numbers.length} new issue(s): ${numbers.map((n) => `#${n}`).join(', ')}`,
+    trigger: 'sweep',
+  }
 }
 
 /**
@@ -311,10 +378,8 @@ function decideCommentWithoutCommand({ payload, config, actorPermission, issueSt
   }
   const wrongType = checkAnalyzedType(number, issue.type?.name)
   if (wrongType) return wrongType
-  const author = issue.user.login
   return analyzeIssue({
     number,
-    author,
     config,
     issueState,
     trigger: 'author-reply',
@@ -420,13 +485,15 @@ const EVENT_HANDLERS = {
   issues: decideIssues,
   workflow_run: decideWorkflowRun,
   pull_request_review: decidePullRequestReview,
+  schedule: decideSchedule,
 }
 
 /**
  * @param {{ eventName: string, payload: object, config: object, actorPermission?: string,
- *   pullState?: object|null, issueState?: object|null, ciFacts?: object|null, agentFacts?: object|null }} input
+ *   pullState?: object|null, issueState?: object|null, ciFacts?: object|null, agentFacts?: object|null,
+ *   dailyUsage?: { analyses?: number, reviews?: number }|null, sweep?: { numbers: number[] }|null }} input
  * @returns {{ action: string, number: number|null, reason: string, command?: object, trigger?: string,
- *   pr?: number, headSha?: string, kind?: string, issue?: number }}
+ *   pr?: number, headSha?: string, kind?: string, issue?: number, numbers?: number[] }}
  */
 function decide(input) {
   const { eventName, payload, config } = input
@@ -434,7 +501,14 @@ function decide(input) {
   const handler = EVENT_HANDLERS[eventName]
   if (!handler) return skip(numberOf(payload), `event '${eventName}' is not handled`)
   return handler({
-    actorPermission: 'none', pullState: null, issueState: null, ciFacts: null, agentFacts: null, ...input,
+    actorPermission: 'none',
+    pullState: null,
+    issueState: null,
+    ciFacts: null,
+    agentFacts: null,
+    dailyUsage: null,
+    sweep: null,
+    ...input,
   })
 }
 
@@ -567,10 +641,103 @@ function isHandOffAnswer(eventName, payload, { issueState, agentFacts }) {
 }
 
 /**
- * Resolves the inputs of `decide` that need the GitHub API. `getClient` is called only when a call is needed, so an
- * event that needs nothing works without a token.
+ * Which daily count `decide` needs, `'analyses'` or `'reviews'`, or `null`. Only an event that would start an
+ * automatic analysis or review needs one, so no other event spends the searches. `extra` holds the facts gathered so
+ * far (the state of a pull request that left the draft).
  */
-async function gather({ eventName, payload, config, getClient }) {
+function dailyCountNeeded(eventName, payload, config, extra) {
+  if (eventName === 'schedule') return 'analyses'
+  if (eventName === 'pull_request') {
+    const pr = payload?.pull_request
+    if (!pr || (payload.action !== 'opened' && payload.action !== 'ready_for_review')) return null
+    if (pullRequestSkipReason(pr) !== null) return null
+    if (payload.action === 'ready_for_review' && extra.pullState?.reviews?.length > 0) return null
+    return 'reviews'
+  }
+  const issue = payload?.issue
+  // With a grace period above 0 the event is skipped, and the sweep counts for itself.
+  if (eventName !== 'issues' || !issue || config.limits.analysisGraceMinutes > 0) return null
+  if (payload.action !== 'opened' && payload.action !== 'typed') return null
+  if (issue.pull_request || isBot(issue.user?.login) || !ANALYZED_TYPES.has(issue.type?.name)) return null
+  if (labelNames(issue).some((name) => DECISION_LABELS.includes(name))) return null
+  return 'analyses'
+}
+
+/**
+ * The automatic analyses or reviews of the last 24 hours, counted from the state comments of the issues or pull
+ * requests that were updated in that time. At most `MAX_STATES_READ` of them are read; the log says when that cap cuts
+ * the list.
+ *
+ * @returns {Promise<number>}
+ */
+async function countDaily({ kind, repository, now, getClient }) {
+  const gh = getClient()
+  const since = daily.windowStart(now)
+  const type = kind === 'analyses' ? 'is:issue' : 'is:pr'
+  const found = await gh.searchIssues(`repo:${repository} ${type} updated:>=${daily.toSearchTime(since)}`)
+  const read = found.slice(0, daily.MAX_STATES_READ)
+  if (found.length > read.length) {
+    log.warn(`${found.length} ${kind === 'analyses' ? 'issues' : 'pull requests'} were updated in the last 24 hours; ` +
+      `only ${read.length} state comments are read, so the count may be too low`)
+  }
+  const states = []
+  for (const item of read) {
+    const stateComment = findStateComment(await gh.listIssueComments(item.number))
+    if (!stateComment) continue
+    try {
+      const parsed = parseState(stateComment.body)
+      if (parsed) states.push(parsed)
+    } catch (error) {
+      log.warn(`The state comment of #${item.number} is unreadable and not counted: ${error.message}`)
+    }
+  }
+  const count = kind === 'analyses' ? daily.countAnalyses(states, since) : daily.countReviews(states, since)
+  log.info('daily count', { kind, count, searched: found.length, read: read.length, since: daily.toSearchTime(since) })
+  return count
+}
+
+/**
+ * The new Bug and Task issues past the grace period that no analysis has seen: created between `SWEEP_LOOKBACK_DAYS`
+ * ago and the grace period ago, without a decision label, opened by a person, and without an entry in the `analyses` of
+ * their state comment. Oldest first, at most `budget`.
+ *
+ * @returns {Promise<{ numbers: number[], found: number, left: number }>} `left` counts the candidates not looked at
+ */
+async function gatherSweep({ config, repository, now, getClient, budget }) {
+  const gh = getClient()
+  const day = 24 * 60 * 60 * 1000
+  const to = daily.toSearchTime(new Date(now.getTime() - config.limits.analysisGraceMinutes * 60 * 1000))
+  const from = daily.toSearchTime(new Date(now.getTime() - SWEEP_LOOKBACK_DAYS * day))
+  const found = new Map()
+  for (const type of ['Bug', 'Task']) {
+    const query = `repo:${repository} is:issue is:open type:${type} -label:"ai:suitable" -label:"ai:unsuitable" ` +
+      `created:${from}..${to}`
+    for (const item of await gh.searchIssues(query)) found.set(item.number, item)
+  }
+  const candidates = [...found.values()]
+    .filter((item) => !item.pull_request && !isBot(item.user?.login))
+    .sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)) || a.number - b.number)
+  const numbers = []
+  let looked = 0
+  for (const item of candidates) {
+    if (numbers.length >= budget) break
+    looked += 1
+    const stateComment = findStateComment(await gh.listIssueComments(item.number))
+    const st = stateComment ? parseState(stateComment.body) : null
+    if ((st?.analyses?.length ?? 0) > 0) continue
+    numbers.push(item.number)
+  }
+  const left = candidates.length - looked
+  log.info('sweep candidates', { from, to, candidates: candidates.length, picked: numbers.join(',') || 'none', left, budget })
+  return { numbers, found: candidates.length, left }
+}
+
+/**
+ * Resolves the inputs of `decide` that need the GitHub API. `getClient` is called only when a call is needed, so an
+ * event that needs nothing works without a token. `repository` (`owner/name`) and `now` are for the searches of the
+ * daily caps and of the sweep; `now` is injectable so that a test fixes the clock.
+ */
+async function gather({ eventName, payload, config, getClient, repository, now = new Date() }) {
   const extra = { actorPermission: 'none', pullState: null }
   if (!config.enabled) return extra
   if (needsActorPermission(eventName, payload)) {
@@ -604,6 +771,16 @@ async function gather({ eventName, payload, config, getClient }) {
     extra.actorPermission = await getClient().getPermission(login)
     log.info('permission resolved', { login, permission: extra.actorPermission })
   }
+  const kind = dailyCountNeeded(eventName, payload, config, extra)
+  if (kind !== null) {
+    if (!repository) throw new Error('GITHUB_REPOSITORY is not set')
+    extra.dailyUsage = { [kind]: await countDaily({ kind, repository, now, getClient }) }
+  }
+  if (eventName === 'schedule') {
+    // A cap that is used up leaves nothing to look for: the decision is a skip.
+    const budget = sweepBudget(config, extra.dailyUsage)
+    if (budget > 0) extra.sweep = await gatherSweep({ config, repository, now, getClient, budget })
+  }
   return extra
 }
 
@@ -612,7 +789,7 @@ const oneLine = (value) => String(value).replace(/[\r\n]+/g, ' ')
 
 /**
  * The `key=value` lines for `$GITHUB_OUTPUT`. `command` is JSON on one line, or empty. `trigger` is written only for
- * a decision that has one, `pr` and `head_sha` for a `ci-gate` decision, `issue` for a `ci-check` decision on a pull
+ * a decision that has one, `numbers` for every `analyze` decision, `pr` and `head_sha` for a `ci-gate` decision, `issue` for a `ci-check` decision on a pull
  * request of the agent, and `kind` for an attempt that a person asked for, so the outputs of the earlier actions stay
  * as they were.
  */
@@ -623,6 +800,8 @@ function formatOutputs(decision) {
     `reason=${oneLine(decision.reason)}`,
     `command=${decision.command ? JSON.stringify(decision.command) : ''}`,
     ...(decision.trigger ? [`trigger=${decision.trigger}`] : []),
+    // The job that analyzes runs once per number, so it always gets a list.
+    ...(decision.action === 'analyze' ? [`numbers=${JSON.stringify(decision.numbers ?? [decision.number])}`] : []),
     ...(decision.pr ? [`pr=${decision.pr}`] : []),
     ...(decision.issue ? [`issue=${decision.issue}`] : []),
     ...(decision.headSha ? [`head_sha=${decision.headSha}`] : []),
@@ -642,19 +821,22 @@ function requireVariable(env, name) {
   return env[name]
 }
 
-/** Reads the event, decides, and writes the outputs. Returns the decision. Throws on bad config or payload. */
-async function main(env = process.env) {
+/**
+ * Reads the event, decides, and writes the outputs. Returns the decision. Throws on bad config or payload.
+ * `deps.getClient` and `deps.now` are injectable so that a test uses no network and fixes the clock.
+ */
+async function main(env = process.env, deps = {}) {
   const eventName = requireVariable(env, 'GITHUB_EVENT_NAME')
   const payload = JSON.parse(fs.readFileSync(requireVariable(env, 'GITHUB_EVENT_PATH'), 'utf8'))
   const config = loadConfig(env)
   let client = null
-  const getClient = () => {
+  const getClient = deps.getClient ?? (() => {
     client ??= createClient({
       token: requireVariable(env, 'GITHUB_TOKEN'),
       repo: requireVariable(env, 'GITHUB_REPOSITORY'),
     })
     return client
-  }
+  })
   log.info('event', {
     name: eventName,
     action: payload.action,
@@ -664,7 +846,8 @@ async function main(env = process.env) {
     dryRun: config.dryRun,
     allowedActors: config.allowedActors ? config.allowedActors.join(',') : 'everyone',
   })
-  const extra = await log.group('Gather facts', () => gather({ eventName, payload, config, getClient }))
+  const extra = await log.group('Gather facts', () =>
+    gather({ eventName, payload, config, getClient, repository: env.GITHUB_REPOSITORY, now: deps.now }))
   const decision = decide({ eventName, payload, config, ...extra })
   log.info('decision', {
     action: decision.action,
@@ -673,6 +856,14 @@ async function main(env = process.env) {
     trigger: decision.trigger,
     kind: decision.kind,
     command: decision.command?.name,
+    numbers: decision.numbers?.join(','),
+    // The daily caps count only automatic work; they are shown when this event needed a count.
+    dailyAnalyses: extra.dailyUsage?.analyses === undefined
+      ? undefined
+      : `${extra.dailyUsage.analyses}/${config.limits.dailyAnalyses}`,
+    dailyReviews: extra.dailyUsage?.reviews === undefined
+      ? undefined
+      : `${extra.dailyUsage.reviews}/${config.limits.dailyReviews}`,
   })
 
   if (env.GITHUB_OUTPUT) fs.appendFileSync(env.GITHUB_OUTPUT, formatOutputs(decision))
@@ -696,6 +887,12 @@ module.exports = {
   needsIssueState,
   needsAgentFacts,
   needsCiFacts,
+  dailyCountNeeded,
+  countDaily,
+  gatherSweep,
+  sweepBudget,
+  SWEEP_LOOKBACK_DAYS,
+  MAX_SWEEP,
   isHandOffAnswer,
   agentIssueOf,
   formatOutputs,

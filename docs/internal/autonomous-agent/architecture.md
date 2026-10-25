@@ -32,6 +32,7 @@ flowchart LR
   subgraph events["GitHub events"]
     PR["pull_request<br/>opened, ready_for_review"]
     IS["issues<br/>opened, typed, edited"]
+    SW["schedule every 10 minutes<br/>the sweep of new issues"]
     IC["issue_comment<br/>created"]
     PRR["pull_request_review<br/>submitted"]
     WR["workflow_run completed<br/>CI and five PR checks"]
@@ -46,6 +47,7 @@ flowchart LR
   REPORT["AI Autonomous: Weekly report<br/>report"]
   PR --> ROUTE
   IS --> ROUTE
+  SW --> ROUTE
   IC --> ROUTE
   PRR --> ROUTE
   WR --> ROUTE
@@ -84,7 +86,9 @@ start when `AGENT_MODEL_IMPLEMENT` and `AGENT_MODEL_REVIEW` name the same model.
 
 Two switches guard every run. `AGENT_ENABLED` must be `true`, or every script exits without acting. `AGENT_DRY_RUN`
 must be exactly `false` for the agent to write to GitHub; otherwise each script writes what it would post to the job
-summary. `AGENT_ALLOWED_ACTORS`, while set, limits the agent to the people it names.
+summary. `AGENT_ALLOWED_ACTORS`, while set, limits commands, answers to a hand-off, and implementation to the people it
+names. It does not limit the automatic review of a pull request or the automatic analysis of an issue: those run for
+every author, within the size limit of the review and the daily caps.
 
 ## The jobs of the agent workflow
 
@@ -116,7 +120,7 @@ flowchart TB
 |---|---|---|---|---|---|
 | `route` | every event that passes the `if` filter | `GITHUB_TOKEN` (read) | none | `tools/agent` of the default branch | none |
 | `review` | `action == 'review'` | `GITHUB_TOKEN`, `OPENAI_API_KEY` | `pr-reviewer`, `verifier` | the pull request head as data; trusted tools and instructions in `.agent-tools/` | `ai-autonomous-<number>` |
-| `analyze` | `action == 'analyze'` | `GITHUB_TOKEN`, `OPENAI_API_KEY` | `analyst` | the default branch | `ai-autonomous-<number>` |
+| `analyze` | `action == 'analyze'`; one matrix job per number, two at a time | `GITHUB_TOKEN`, `OPENAI_API_KEY` | `analyst` | the default branch | `ai-autonomous-<number>` |
 | `ci-gate` | `action == 'ci-gate'` | `GITHUB_TOKEN`, `AGENT_PAT` | none | `tools/agent` | `ai-autonomous-<number>` |
 | `implement` | `action == 'implement'` or `ci-gate` says `next == 'implement'` | preflight: `GITHUB_TOKEN`, `AGENT_PAT`; work: `OPENAI_API_KEY` only | `analyst`, `implementer`, `self-reviewer` | the default branch, then the agent's branch | `ai-autonomous-<number>` |
 | `rerun` | `action == 'rerun'` | `GITHUB_TOKEN` (`actions: write`, `checks: read`, `statuses: read`), `AGENT_PAT` | none | `tools/agent` of the default branch | `ai-autonomous-<number>` |
@@ -224,9 +228,16 @@ Three details matter when you read a state:
 ## Flow A: review
 
 **Trigger.** A pull request opens outside draft, or leaves draft for the first time (`route` reads the pull request
-state and skips one that has a review). Then on demand, with `/agent review [notes]` from a person with write access,
-also on a pull request from a fork. Dependabot pull requests are never reviewed: the workflow `if` drops their events,
-and `route` refuses `/agent review` on them.
+state and skips one that has a review, also a skipped one), whoever its author is. A pull request from a fork waits
+for a command. Then on demand, with `/agent review [notes]` from a person with write access, also on a pull request
+from a fork. Dependabot pull requests are never reviewed: the workflow `if` drops their events, and `route` refuses
+`/agent review` on them.
+
+**Limits.** An automatic review counts toward the daily cap `AGENT_DAILY_REVIEWS` (default 15 in any 24 hours, counted
+from the state comments); over the cap, `route` skips with a reason that points to `/agent review`. A command is not
+counted and not capped. Before any model call, `review.js` also measures the diff: more than `AGENT_REVIEW_MAX_LINES`
+changed lines or `AGENT_REVIEW_MAX_FILES` files, lock files not counted, ends the job green with a state comment that
+says so and an entry in `reviews` marked `skipped: 'size'`. `/agent review force` reviews such a diff anyway.
 
 ```mermaid
 sequenceDiagram
@@ -236,10 +247,11 @@ sequenceDiagram
   participant V as review job
   participant M as opencode
   GH->>R: pull_request opened or ready_for_review, or /agent review
-  R->>R: enabled, actor, write access, Dependabot, earlier review
+  R->>R: enabled, draft, fork, bot, Dependabot, earlier review, daily cap (a command: write access, actor)
   R-->>V: action = review, number, command
+  V->>GH: read the pull request, its files, and the state comment
+  V->>V: size check: above the limit and no force, write the skip comment and stop
   V->>V: check out the PR head as data, the tools from the trusted ref
-  V->>GH: read the pull request, files, labels, state comment
   V->>V: facts: changed files, Nx projects, module labels, risk areas
   V->>M: pr-reviewer with the facts and the notes
   M-->>V: review JSON: summary, impact, findings
@@ -253,15 +265,27 @@ sequenceDiagram
 finding without a line goes to the summary comment. When a model call fails, the summary comment says so and the
 person comments `/agent review` again.
 
-**State.** The pull request state gets a record in `reviews` and the cost records. **Labels:** `agent:pr-reviewed`.
+**State.** The pull request state gets a record in `reviews` (with `trigger`: `auto` for a pull request event,
+`command` for `/agent review`) and the cost records. **Labels:** `agent:pr-reviewed`, but not for a skipped review.
 **A person** reads the review; the agent never approves or requests changes.
 
 ## Flow B: analysis
 
-**Trigger.** A `Bug` or `Task` issue is opened or gets its type (`issues` `opened`, `typed`), unless a person already
-set `ai:suitable` or `ai:unsuitable`. Again when the issue waits for information (`phase == 'needs-info'`) and its
-author comments or edits it, at most `AGENT_MAX_ANALYSES` times (default 5). Any time on `/agent analyze`, which the
-limit does not count.
+**Trigger.** A `Bug` or `Task` issue of any author is opened or gets its type (`issues` `opened`, `typed`), unless a
+person already set `ai:suitable` or `ai:unsuitable`. People edit a new issue for about half an hour, so the event waits:
+with the grace period `AGENT_ANALYSIS_GRACE_MINUTES` above 0 (default 30), `route` skips it, and the **sweep** picks
+it up. The sweep is a `schedule` event every 10 minutes. It searches for open `Bug` and `Task` issues without a decision
+label that were created between 7 days ago and the grace period ago, drops pull requests, bots, and issues whose state
+comment already has an analysis, and takes the oldest ones, at most 5 per run. The `analyze` job runs once per number
+(two at a time) and checks the issue again before it calls the model, so two sweeps never analyze one issue twice.
+With a grace period of 0 the event analyzes at once, and the sweep still catches issues the event missed.
+Again when the issue waits for information (`phase == 'needs-info'`) and its author comments or edits it, at most
+`AGENT_MAX_ANALYSES` times (default 5); that answer is immediate. Any time on `/agent analyze`, which the limits do
+not count.
+
+**Daily cap.** The analyses started by `opened`, `typed`, or the sweep count toward `AGENT_DAILY_ANALYSES` (default 10
+in any 24 hours, counted from the state comments). The sweep takes only what the cap leaves; an event over the cap is
+skipped and left to a later sweep. Answers of the author and commands are not counted and not capped.
 
 ```mermaid
 sequenceDiagram
@@ -270,9 +294,9 @@ sequenceDiagram
   participant R as route
   participant A as analyze job
   participant M as opencode
-  GH->>R: issues opened or typed, an author's answer, or /agent analyze
-  R->>R: type Bug or Task, labels set by a person, author allowed, analysis limit
-  R-->>A: action = analyze, trigger
+  GH->>R: the sweep (schedule), issues opened or typed with grace 0, an author's answer, or /agent analyze
+  R->>R: type Bug or Task, labels set by a person, grace period, analysis limit, daily cap
+  R-->>A: action = analyze, trigger, numbers
   A->>GH: read the issue, its comments, the state comment
   A->>M: analyst with the issue and its comments
   M-->>A: suitable with a plan, unsuitable with a reason, or needs-info with questions
@@ -438,7 +462,7 @@ flowchart LR
 | `/agent ci_check [notes]` | `ci-check` | `ci-triager`, only when CI is red | a reply with the verdict, the cause, and the places to fix; the cost record and a `ciChecks` entry on the pull request; a rerun of the failed jobs for a flaky or infrastructure failure, and, on the agent's pull request in `needs-human` or `waiting-ci`, the same state change as `/agent rerun` |
 | `/agent <text>` on the agent's pull request | `implement` | the Flow C roles | one attempt on its branch |
 | a review with change requests | `implement` | the Flow C roles | one attempt; a reply in each thread the implementer saw |
-| `/agent review [notes]` | `review` | Flow A | a review |
+| `/agent review [force] [notes]` | `review` | Flow A | a review; `force` reviews a diff above the size limit |
 | `/agent analyze` | `analyze` | `analyst` | an analysis |
 | `/agent implement [force] [notes]`, `/agent fix` | `implement` | the Flow C roles | an attempt |
 
@@ -524,6 +548,8 @@ flowchart LR
 | Moment | What the person does | What the agent does next |
 |---|---|---|
 | A review is posted | reads it, fixes the pull request, or asks `/agent review` again | nothing until asked |
+| A review is skipped (a huge diff, or the daily cap) | comments `/agent review force` or `/agent review` | one review |
+| A new issue waits for the grace period | edits it freely; the sweep analyzes it later | one analysis, at most 5 per sweep |
 | The analysis asks questions | answers in a comment or edits the issue | analyzes again |
 | An issue is `ai:suitable` | decides with `/agent implement` | one attempt |
 | An issue is `ai:unsuitable` | sets another label, or comments `/agent implement force` | one forced attempt |

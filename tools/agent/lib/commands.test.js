@@ -59,7 +59,7 @@ test('leading blank lines are ignored and the first line is trimmed', () => {
   assert.deepEqual(parseCommand('\n\n   /agent   review   \n'), { name: 'review', force: false, notes: '' })
 })
 
-test('force counts only after implement or fix', () => {
+test('force counts only after implement, fix, or review', () => {
   assert.deepEqual(parseCommand('/agent implement force'), { name: 'implement', force: true, notes: '' })
   assert.deepEqual(parseCommand('/agent fix FORCE use the v2 API'), {
     name: 'implement',
@@ -71,7 +71,14 @@ test('force counts only after implement or fix', () => {
     force: false,
     notes: 'forceful change',
   })
-  assert.deepEqual(parseCommand('/agent review force'), { name: 'review', force: false, notes: 'force' })
+  assert.deepEqual(parseCommand('/agent review force'), { name: 'review', force: true, notes: '' })
+  assert.deepEqual(parseCommand('/agent Review FORCE\nLook at the migration.'), {
+    name: 'review',
+    force: true,
+    notes: 'Look at the migration.',
+  })
+  assert.deepEqual(parseCommand('/agent review forced march'), { name: 'review', force: false, notes: 'forced march' })
+  assert.deepEqual(parseCommand('/agent analyze force'), { name: 'analyze', force: false, notes: 'force' })
 })
 
 test('notes hold the rest of the first line and all following lines', () => {

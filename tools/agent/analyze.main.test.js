@@ -42,7 +42,7 @@ function eventsFor(answer) {
   return [step, { type: 'text', part: { text } }].map((e) => JSON.stringify(e)).join('\n')
 }
 
-function fakeGh({ labels = [], laterLabels = null, comments = [], failOn = null } = {}) {
+function fakeGh({ labels = [], laterLabels = null, comments = [], failOn = null, issuePatch = {} } = {}) {
   const calls = []
   let reads = 0
   // `failOn` names a method that rejects, to show what the state says after a failed label call.
@@ -56,7 +56,7 @@ function fakeGh({ labels = [], laterLabels = null, comments = [], failOn = null 
     getIssue: async () => {
       reads += 1
       const current = reads > 1 && laterLabels ? laterLabels : labels
-      return { ...issue, labels: current.map((name) => ({ name })) }
+      return { ...issue, ...issuePatch, labels: current.map((name) => ({ name })) }
     },
     listIssueComments: async () => comments,
     createIssueComment: async (n, body) => call('createIssueComment', n, body),
@@ -299,4 +299,46 @@ test('askAuthor: false leaves out the separate comment with the questions', asyn
   } finally {
     fs.rmSync(dir, { recursive: true, force: true })
   }
+})
+
+// The sweep: the job checks again before it spends a model call.
+
+const sweepEnv = { AGENT_TRIGGER: 'sweep' }
+
+test('a sweep analyzes a new issue like any trigger and records the trigger', async () => {
+  const gh = fakeGh({ issuePatch: { state: 'open' } })
+  const { error, agentCalls } = await runMain({ answer: suitable, gh, env: sweepEnv })
+  assert.equal(error, null)
+  assert.equal(agentCalls.length, 1)
+  assert.match(agentCalls[0].inputText, /- Analysis trigger: sweep/)
+  assert.deepEqual(state.parse(gh.calls.at(-1)[2]).analyses.map((a) => a.trigger), ['sweep'])
+})
+
+const stateComment = (st) => ({ id: 5, user: { login: 'github-actions[bot]' }, body: state.render('old', st) })
+const sweepSkips = [
+  ['an analysis exists', { comments: [stateComment(stateAfter(suitable, null))] }],
+  ['a person set ai:suitable', { labels: ['ai:suitable'] }],
+  ['a person set ai:unsuitable', { labels: ['bug', 'ai:unsuitable'] }],
+  ['the issue is closed', { issuePatch: { state: 'closed' } }],
+  ['the type is no longer Bug or Task', { issuePatch: { type: { name: 'Feature' } } }],
+  ['the issue has no type', { issuePatch: { type: null } }],
+]
+
+for (const [name, setup] of sweepSkips) {
+  test(`a sweep skips without a model call or a write when ${name}`, async () => {
+    const gh = fakeGh(setup)
+    const { error, agentCalls, files, summary } = await runMain({ answer: suitable, gh, env: sweepEnv })
+    assert.equal(error, null)
+    assert.deepEqual(agentCalls, [])
+    assert.deepEqual(gh.calls, [])
+    assert.deepEqual(files, [])
+    assert.equal(summary, '')
+  })
+}
+
+test('the re-check is only for the sweep: a command analyzes an issue that has an analysis', async () => {
+  const gh = fakeGh({ comments: [stateComment(stateAfter(suitable, null))] })
+  const { error, agentCalls } = await runMain({ answer: suitable, gh, env: { AGENT_TRIGGER: 'command' } })
+  assert.equal(error, null)
+  assert.equal(agentCalls.length, 1)
 })

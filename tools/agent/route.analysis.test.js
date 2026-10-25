@@ -13,7 +13,8 @@ const { decide, gather, needsIssueState, formatOutputs, main } = require('./rout
 log.setWriter(() => {})
 
 const fixture = (name) => JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures', `${name}.json`), 'utf8'))
-const enabled = (extra = {}) => loadConfig({ AGENT_ENABLED: 'true', ...extra })
+// The grace period is 0 here, so a new issue is analyzed on its event; route.sweep.test.js covers the grace period.
+const enabled = (extra = {}) => loadConfig({ AGENT_ENABLED: 'true', AGENT_ANALYSIS_GRACE_MINUTES: '0', ...extra })
 const route = (eventName, payload, extra = {}, env = {}) =>
   decide({ eventName, payload, config: enabled(env), ...extra })
 const needsInfo = (extra = {}) => ({ ...state.emptyIssueState(200), phase: 'needs-info', ...extra })
@@ -72,14 +73,11 @@ test('a decision a person made is respected, whatever the label objects look lik
   assert.equal(route('issues', other).action, 'analyze')
 })
 
-test('the issue author must be in AGENT_ALLOWED_ACTORS; the sender does not matter', () => {
-  const denied = route('issues', fixture('issues.opened.bug'), {}, { AGENT_ALLOWED_ACTORS: 'bob' })
-  assert.equal(denied.action, 'skip')
-  assert.match(denied.reason, /alice.*AGENT_ALLOWED_ACTORS/)
-  assert.equal(route('issues', fixture('issues.opened.bug'), {}, { AGENT_ALLOWED_ACTORS: 'Alice' }).action, 'analyze')
-  // carol typed the issue, but the author (alice) decides.
-  const typed = route('issues', fixture('issues.typed.task'), {}, { AGENT_ALLOWED_ACTORS: 'carol' })
-  assert.equal(typed.action, 'skip')
+test('the issue author may be anyone: AGENT_ALLOWED_ACTORS does not limit the analysis', () => {
+  for (const actors of ['bob', 'Alice']) {
+    assert.equal(route('issues', fixture('issues.opened.bug'), {}, { AGENT_ALLOWED_ACTORS: actors }).action, 'analyze')
+  }
+  assert.equal(route('issues', fixture('issues.typed.task'), {}, { AGENT_ALLOWED_ACTORS: 'carol' }).action, 'analyze')
 })
 
 test('an analysis needs no write access', () => {
@@ -119,8 +117,11 @@ test('an edit is skipped without the needs-info phase, from another user, or ove
   assert.match(byOther.reason, /carol.*not its author/)
   const full = route('issues', fixture('issues.edited'), { issueState: needsInfo({ analyses: analyses(5) }) })
   assert.match(full.reason, /limit reached/)
-  const denied = route('issues', fixture('issues.edited'), { issueState: needsInfo() }, { AGENT_ALLOWED_ACTORS: 'bob' })
-  assert.match(denied.reason, /AGENT_ALLOWED_ACTORS/)
+})
+
+test('an edit by the author is analyzed for an author outside AGENT_ALLOWED_ACTORS too', () => {
+  const result = route('issues', fixture('issues.edited'), { issueState: needsInfo() }, { AGENT_ALLOWED_ACTORS: 'bob' })
+  assert.deepEqual([result.action, result.trigger], ['analyze', 'edited'])
 })
 
 test('other issues actions are skipped', () => {
@@ -170,10 +171,10 @@ test('a comment is not an answer unless the author writes it on an issue that wa
   assert.match(route('issue_comment', bot, { issueState: needsInfo() }).reason, /bot/)
 })
 
-test('an author reply respects AGENT_ALLOWED_ACTORS and the limit', () => {
+test('an author reply starts the analysis for any author, and respects the limit', () => {
   const reply = fixture('issue_comment.author-reply')
-  const denied = route('issue_comment', reply, { issueState: needsInfo() }, { AGENT_ALLOWED_ACTORS: 'carol' })
-  assert.match(denied.reason, /alice.*AGENT_ALLOWED_ACTORS/)
+  const outside = route('issue_comment', reply, { issueState: needsInfo() }, { AGENT_ALLOWED_ACTORS: 'carol' })
+  assert.deepEqual([outside.action, outside.trigger], ['analyze', 'author-reply'])
   const full = route('issue_comment', reply, { issueState: needsInfo({ analyses: analyses(5) }) })
   assert.equal(full.reason, 'analysis limit reached; comment /agent analyze')
 })
@@ -218,7 +219,16 @@ test('/agent analyze on a pull request is skipped', () => {
 
 test('formatOutputs adds the trigger only to decisions that have one', () => {
   const text = formatOutputs({ action: 'analyze', number: 200, reason: 'issue opened', trigger: 'opened' })
-  assert.equal(text, 'action=analyze\nnumber=200\nreason=issue opened\ncommand=\ntrigger=opened\n')
+  assert.equal(text, 'action=analyze\nnumber=200\nreason=issue opened\ncommand=\ntrigger=opened\nnumbers=[200]\n')
+})
+
+test('formatOutputs writes the numbers of a sweep and one number for every other analyze decision', () => {
+  const sweep = formatOutputs({ action: 'analyze', number: 7, numbers: [7, 9, 12], reason: 'x', trigger: 'sweep' })
+  assert.equal(sweep, 'action=analyze\nnumber=7\nreason=x\ncommand=\ntrigger=sweep\nnumbers=[7,9,12]\n')
+  const command = formatOutputs({ action: 'analyze', number: 3, reason: 'y', trigger: 'command' })
+  assert.match(command, /\ntrigger=command\nnumbers=\[3\]\n$/)
+  assert.doesNotMatch(formatOutputs({ action: 'skip', number: 3, reason: 'z' }), /numbers=/)
+  assert.doesNotMatch(formatOutputs({ action: 'review', number: 3, reason: 'z' }), /numbers=/)
 })
 
 test('needsIssueState asks for the state only when a rule reads it', () => {
@@ -250,6 +260,7 @@ function fakeClient({ comments = [] } = {}) {
     calls,
     getPermission: async (login) => (calls.push(['getPermission', login]), 'write'),
     listIssueComments: async (n) => (calls.push(['listIssueComments', n]), comments),
+    searchIssues: async (query) => (calls.push(['searchIssues', query]), []),
   }
 }
 
@@ -286,18 +297,18 @@ test('gather asks for the permission, not the state, for /agent analyze', async 
   assert.deepEqual(client.calls, [['getPermission', 'carol']])
 })
 
-test('gather makes no API call for a new issue', async () => {
+test('gather makes no API call for a new issue while the grace period holds the analysis back', async () => {
   const getClient = () => assert.fail('the client must not be created')
   const result = await gather({
     eventName: 'issues',
     payload: fixture('issues.opened.bug'),
-    config: enabled(),
+    config: enabled({ AGENT_ANALYSIS_GRACE_MINUTES: '30' }),
     getClient,
   })
   assert.deepEqual(result, { actorPermission: 'none', pullState: null })
 })
 
-test('main routes a new Bug issue without a token and writes the trigger', async () => {
+test('main routes a new Bug issue and writes the trigger and the numbers', async () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'route-analysis-test-'))
   try {
     const env = {
@@ -305,14 +316,17 @@ test('main routes a new Bug issue without a token and writes the trigger', async
       GITHUB_EVENT_PATH: path.join(dir, 'event.json'),
       GITHUB_OUTPUT: path.join(dir, 'output'),
       GITHUB_STEP_SUMMARY: path.join(dir, 'summary'),
+      GITHUB_REPOSITORY: 'o/r',
       AGENT_ENABLED: 'true',
+      AGENT_ANALYSIS_GRACE_MINUTES: '0',
     }
     fs.copyFileSync(path.join(__dirname, 'fixtures', 'issues.opened.bug.json'), env.GITHUB_EVENT_PATH)
-    const decision = await main(env)
+    // With no grace period, the daily count of automatic analyses is read.
+    const decision = await main(env, { getClient: () => fakeClient() })
     assert.equal(decision.action, 'analyze')
     assert.equal(
       fs.readFileSync(env.GITHUB_OUTPUT, 'utf8'),
-      'action=analyze\nnumber=200\nreason=issue opened\ncommand=\ntrigger=opened\n',
+      'action=analyze\nnumber=200\nreason=issue opened\ncommand=\ntrigger=opened\nnumbers=[200]\n',
     )
     assert.match(fs.readFileSync(env.GITHUB_STEP_SUMMARY, 'utf8'), /chose `analyze` for #200/)
   } finally {

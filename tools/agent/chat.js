@@ -64,6 +64,7 @@ const HELP_COMMON = [
   ['`/agent help`', 'Show this list.'],
 ]
 
+const REVIEW_WHAT = 'Review this pull request again. `review force` also reviews a diff above the size limit.'
 const CI_CHECK_WHAT = 'Find the root cause of a red CI; rerun the failed jobs when it is flaky or an outage.'
 
 /** The commands per place. The wording follows docs/development/autonomous-agent.md. */
@@ -79,13 +80,13 @@ const HELP = {
     ['`/agent <question>`', 'Ask about this issue. The assistant answers and changes nothing.'],
   ],
   pull: [
-    ['`/agent review [notes]`', 'Review this pull request again.'],
+    ['`/agent review [notes]`', REVIEW_WHAT],
     ['`/agent ci_check [notes]`', CI_CHECK_WHAT],
     ...HELP_COMMON,
     ['`/agent <question>`', 'Ask about this pull request. The assistant answers and changes nothing.'],
   ],
   agentPull: [
-    ['`/agent review [notes]`', 'Review this pull request again.'],
+    ['`/agent review [notes]`', REVIEW_WHAT],
     ['`/agent retry [notes]`', 'Try again after a hand-off, with a fresh attempt budget. The notes are guidance.'],
     ['`/agent rerun`', "Rerun the failed CI checks of the agent's pull request; no new attempt, no model."],
     ['`/agent ci_check [notes]`', CI_CHECK_WHAT],

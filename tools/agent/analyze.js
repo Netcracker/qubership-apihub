@@ -5,7 +5,8 @@
  * The working tree is the default branch, and so are this script and the opencode config, so the instructions the
  * analyst reads are trusted (see the `analyze` job of .github/workflows/ai-autonomous-agent.yml). Steps:
  *
- *   1. load the issue, its comments, and its state comment;
+ *   1. load the issue, its comments, and its state comment; for the trigger `sweep`, stop here without a model call when
+ *      the issue already has an analysis or a decision label, is closed, or is no longer a Bug or Task;
  *   2. `analyst` (the light model) reads the issue and the code and answers with `analysis` JSON;
  *   3. publish: the `ai:suitable` or `ai:unsuitable` label (or `agent:needs-human` for missing information), read
  *      again after the model call so that a label a person set meanwhile wins; then the state comment of the issue
@@ -18,8 +19,8 @@
  * changed since its last analysis.
  *
  * Environment: GITHUB_REPOSITORY, GITHUB_TOKEN, OPENAI_API_KEY, AGENT_NUMBER (the issue), AGENT_TRIGGER (why the
- * job runs: opened, typed, edited, author-reply, or command), AGENT_RUN_URL, AGENT_OUT (folder for inputs, events,
- * and outputs), the AGENT_* variables of lib/config.js, GITHUB_STEP_SUMMARY.
+ * job runs: opened, typed, sweep, edited, author-reply, or command), AGENT_RUN_URL, AGENT_OUT (folder for inputs,
+ * events, and outputs), the AGENT_* variables of lib/config.js, GITHUB_STEP_SUMMARY.
  */
 'use strict'
 
@@ -49,6 +50,27 @@ const VERDICT_WORDS = {
 }
 
 const names = (labels) => (labels ?? []).map((label) => (typeof label === 'string' ? label : label?.name))
+
+/** Issue types the analysis covers; the router has the same list. */
+const ANALYZED_TYPES = new Set(['Bug', 'Task'])
+
+/**
+ * Why a sweep must not analyze the issue after all, or `null`. The sweep picks its issues from a search, and two
+ * sweeps (or a sweep and an event) can pick the same one, so the job checks again right after it loads the issue.
+ *
+ * @param {object} issue the issue as GitHub returns it now
+ * @param {object|null} st the state of the issue
+ */
+function sweepSkipReason(issue, st) {
+  if ((st?.analyses?.length ?? 0) > 0) return 'the issue already has an analysis'
+  const decided = names(issue.labels).find((name) => DECISION_LABELS.includes(name))
+  if (decided) return `the issue has the label ${decided}`
+  if (issue.state === 'closed') return 'the issue is closed'
+  if (!ANALYZED_TYPES.has(issue.type?.name)) {
+    return `the issue type is '${issue.type?.name ?? 'none'}', not Bug or Task`
+  }
+  return null
+}
 
 /**
  * The semantic rules the schema cannot express: `needs-info` asks at least one question, and `suitable` brings a
@@ -312,7 +334,8 @@ async function runAnalysis({ issue, comments, st, trigger, config, out, costs, r
  * leaves out the separate comment with the questions, for a caller that tells the person who asked.
  *
  * @returns {Promise<{ state: object, analysis: object|null, failure: Error|null, commentId: number|null,
- *   issue: object }>} the state as written (in dry-run: as it would be written)
+ *   issue: object, skipped?: string }>} the state as written (in dry-run: as it would be written); `skipped` holds the
+ *   reason when a sweep found nothing to do and wrote nothing
  */
 async function analyze(env = process.env, deps = {}, { askAuthor = true } = {}) {
   const config = loadConfig(env)
@@ -345,6 +368,14 @@ async function analyze(env = process.env, deps = {}, { askAuthor = true } = {}) 
     return { issue, comments: all.filter((c) => c !== existing), existing, st }
   })
   const { issue, comments, existing } = loaded
+
+  if (trigger === 'sweep') {
+    const reason = sweepSkipReason(issue, loaded.st)
+    if (reason) {
+      log.info('decision', { action: 'skip', reason })
+      return { state: loaded.st, analysis: null, failure: null, commentId: existing?.id ?? null, issue, skipped: reason }
+    }
+  }
 
   let st = loaded.st
   const costs = []
@@ -461,4 +492,5 @@ module.exports = {
   renderFailure,
   renderInput,
   questionsComment,
+  sweepSkipReason,
 }

@@ -3,7 +3,10 @@
 #
 # Repository variables: AGENT_ENABLED (`true` to act), AGENT_DRY_RUN (`false` to write to GitHub; otherwise the
 # results go to the job summary), AGENT_ALLOWED_ACTORS (comma-separated logins; empty means everyone with write
-# access), AGENT_MODEL_* and AGENT_MAX_* (defaults in tools/agent/lib/config.js).
+# access; it limits commands and implementation, not the automatic analysis and review), AGENT_MODEL_* and
+# AGENT_MAX_* (defaults in tools/agent/lib/config.js), AGENT_ANALYSIS_GRACE_MINUTES (the wait before a new issue is
+# analyzed), AGENT_REVIEW_MAX_LINES and AGENT_REVIEW_MAX_FILES (the size of a diff the agent reviews on its own), and
+# AGENT_DAILY_ANALYSES and AGENT_DAILY_REVIEWS (the caps on automatic work in 24 hours).
 # Secrets: OPENAI_API_KEY (only the `Work` step of the `implement` job, the `Answer` step of the `chat` job, and the
 # `Check CI` step of the `ci-check` job have it);
 # AGENT_PAT (pushes the branch and opens or updates the pull request in the `publish` job, which opens it as a draft,
@@ -28,6 +31,9 @@ on:
   # A review with change requests on a pull request of the agent: one attempt over the unresolved threads.
   pull_request_review:
     types: [submitted]
+  # The sweep of new issues whose grace period is over (AGENT_ANALYSIS_GRACE_MINUTES).
+  schedule:
+    - cron: '*/10 * * * *'
 
 permissions:
   contents: read
@@ -46,18 +52,25 @@ env:
   AGENT_MAX_ATTEMPTS: ${{ vars.AGENT_MAX_ATTEMPTS }}
   AGENT_MAX_REVIEW_ROUNDS: ${{ vars.AGENT_MAX_REVIEW_ROUNDS }}
   AGENT_MAX_ANALYSES: ${{ vars.AGENT_MAX_ANALYSES }}
+  AGENT_ANALYSIS_GRACE_MINUTES: ${{ vars.AGENT_ANALYSIS_GRACE_MINUTES }}
+  AGENT_REVIEW_MAX_LINES: ${{ vars.AGENT_REVIEW_MAX_LINES }}
+  AGENT_REVIEW_MAX_FILES: ${{ vars.AGENT_REVIEW_MAX_FILES }}
+  AGENT_DAILY_ANALYSES: ${{ vars.AGENT_DAILY_ANALYSES }}
+  AGENT_DAILY_REVIEWS: ${{ vars.AGENT_DAILY_REVIEWS }}
   # opencode's own log level in the job log: DEBUG, INFO (the default), WARN, or ERROR.
   AGENT_LOG_LEVEL: ${{ vars.AGENT_LOG_LEVEL }}
 
 jobs:
   route:
-    # A cheap filter before a runner starts: bots never command the agent. A comment must hold `/agent`, unless it is
-    # on an issue: the author of an issue that waits for information answers without a command, and the router checks
-    # that. Comments on pull requests stay command-only.
+    # A cheap filter before a runner starts: bots never command the agent. A `schedule` event (the sweep) passes every
+    # condition below: the event fields they read are empty there, and its `github.actor` is whoever last changed the
+    # workflow file, often Dependabot bumping an action, so the actor check skips it. A comment must hold `/agent`,
+    # unless it is on an issue: the author of an issue that waits for information answers without a command, and the
+    # router checks that. Comments on pull requests stay command-only.
     # Dependabot pull requests are never reviewed, also on request: a dependency bump has nothing to review, and a
     # review costs money. So no runner starts for Dependabot's own events or for a comment on its pull request.
     if: >-
-      github.actor != 'dependabot[bot]' &&
+      (github.event_name == 'schedule' || github.actor != 'dependabot[bot]') &&
       github.event.pull_request.user.login != 'dependabot[bot]' &&
       github.event.workflow_run.actor.login != 'dependabot[bot]' &&
       (github.event_name != 'workflow_run' ||
@@ -81,6 +94,7 @@ jobs:
     outputs:
       action: ${{ steps.route.outputs.action }}
       number: ${{ steps.route.outputs.number }}
+      numbers: ${{ steps.route.outputs.numbers }}
       command: ${{ steps.route.outputs.command }}
       trigger: ${{ steps.route.outputs.trigger }}
       pr: ${{ steps.route.outputs.pr }}
@@ -187,20 +201,26 @@ jobs:
           retention-days: 30
 
   # Flow B: decide whether a Bug or Task issue is suitable for AI implementation. It writes a label and comments only.
+  # An event or a command analyzes one issue; the sweep analyzes up to five, two at a time.
   analyze:
     needs: route
     if: needs.route.outputs.action == 'analyze'
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    strategy:
+      matrix:
+        number: ${{ fromJSON(needs.route.outputs.numbers || '[]') }}
+      max-parallel: 2
+      fail-fast: false
     # One agent job per issue at a time, so two writes of its state comment do not race.
     concurrency:
-      group: ai-autonomous-${{ needs.route.outputs.number }}
+      group: ai-autonomous-${{ matrix.number }}
       cancel-in-progress: false
     permissions:
       contents: read
       issues: write
     env:
-      AGENT_NUMBER: ${{ needs.route.outputs.number }}
+      AGENT_NUMBER: ${{ matrix.number }}
       AGENT_TRIGGER: ${{ needs.route.outputs.trigger }}
     steps:
       # An issue has no code to protect, so the working tree is the default branch of the repository. That makes the
@@ -230,7 +250,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: ai-autonomous-analysis-${{ needs.route.outputs.number }}-${{ github.run_attempt }}
+          name: ai-autonomous-analysis-${{ matrix.number }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/agent
           retention-days: 30
 

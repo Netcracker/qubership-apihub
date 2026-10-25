@@ -47,7 +47,7 @@ function parseCommand(body) {
   const name = ALIASES[word] ?? word
   let rest = afterPrefix.slice(word.length).trim()
   let force = false
-  if (name === 'implement') {
+  if (name === 'implement' || name === 'review') {
     const next = rest.split(/\s+/)[0].toLowerCase()
     if (next === 'force') {
       force = true

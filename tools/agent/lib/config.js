@@ -18,6 +18,11 @@
  *   AGENT_MAX_ATTEMPTS        positive integer, default 3
  *   AGENT_MAX_REVIEW_ROUNDS   positive integer, default 2
  *   AGENT_MAX_ANALYSES        positive integer, default 5
+ *   AGENT_ANALYSIS_GRACE_MINUTES  non-negative integer, default 30; 0 analyzes a new issue at once
+ *   AGENT_REVIEW_MAX_LINES    positive integer, default 5000; a bigger diff is not reviewed without `force`
+ *   AGENT_REVIEW_MAX_FILES    positive integer, default 150; more changed files are not reviewed without `force`
+ *   AGENT_DAILY_ANALYSES      positive integer, default 10; automatic analyses in the last 24 hours
+ *   AGENT_DAILY_REVIEWS       positive integer, default 15; automatic reviews in the last 24 hours
  */
 
 const DEFAULT_MODELS = {
@@ -32,6 +37,11 @@ const DEFAULT_LIMITS = {
   maxAttempts: 3,
   maxReviewRounds: 2,
   maxAnalyses: 5,
+  analysisGraceMinutes: 30,
+  reviewMaxLines: 5000,
+  reviewMaxFiles: 150,
+  dailyAnalyses: 10,
+  dailyReviews: 15,
 }
 
 const MODEL_VARIABLES = {
@@ -46,6 +56,15 @@ const LIMIT_VARIABLES = {
   maxAttempts: 'AGENT_MAX_ATTEMPTS',
   maxReviewRounds: 'AGENT_MAX_REVIEW_ROUNDS',
   maxAnalyses: 'AGENT_MAX_ANALYSES',
+  reviewMaxLines: 'AGENT_REVIEW_MAX_LINES',
+  reviewMaxFiles: 'AGENT_REVIEW_MAX_FILES',
+  dailyAnalyses: 'AGENT_DAILY_ANALYSES',
+  dailyReviews: 'AGENT_DAILY_REVIEWS',
+}
+
+/** Limits where `0` is a valid value. */
+const NON_NEGATIVE_LIMIT_VARIABLES = {
+  analysisGraceMinutes: 'AGENT_ANALYSIS_GRACE_MINUTES',
 }
 
 /** A variable that is unset or blank counts as not provided. */
@@ -85,6 +104,14 @@ function parsePositiveInt(value, name) {
   return Number(value)
 }
 
+/** A non-negative integer written in plain digits; `0` is allowed, `1.5`, `-1`, `1e3`, and `abc` are rejected. */
+function parseNonNegativeInt(value, name) {
+  if (!/^[0-9]+$/.test(value) || !Number.isSafeInteger(Number(value))) {
+    throw new Error(`${name}: expected a non-negative integer, got '${value}'`)
+  }
+  return Number(value)
+}
+
 /** Lowercased, trimmed logins without empty items; `null` when nothing is left (no restriction). */
 function parseActors(value) {
   if (value === undefined) return null
@@ -113,6 +140,10 @@ function loadConfig(env = process.env) {
   for (const [key, name] of Object.entries(LIMIT_VARIABLES)) {
     const value = readVariable(env, name)
     limits[key] = value === undefined ? DEFAULT_LIMITS[key] : parsePositiveInt(value, name)
+  }
+  for (const [key, name] of Object.entries(NON_NEGATIVE_LIMIT_VARIABLES)) {
+    const value = readVariable(env, name)
+    limits[key] = value === undefined ? DEFAULT_LIMITS[key] : parseNonNegativeInt(value, name)
   }
 
   return {

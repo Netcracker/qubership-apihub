@@ -5,16 +5,30 @@ comments. It is a proof of concept; the design is in [the internal docs](../inte
 
 ## What it does now
 
-- **Reviews a pull request** when the pull request opens outside draft, or when it leaves draft for the first time.
-  It posts one comment with the impact (modules, images, REST contract, database, deployment, E2E, risk) and inline
-  comments on the lines it has findings for, and adds the label `agent:pr-reviewed`. A second model checks every
-  finding first: it drops the ones it rejects and marks the ones it cannot confirm as "plausible, not confirmed".
+- **Reviews a pull request** when the pull request opens outside draft, or when it leaves draft for the first time,
+  whoever its author is. It posts one comment with the impact (modules, images, REST contract, database, deployment,
+  E2E, risk) and inline comments on the lines it has findings for, and adds the label `agent:pr-reviewed`. A second
+  model checks every finding first: it drops the ones it rejects and marks the ones it cannot confirm as "plausible,
+  not confirmed". A pull request from a fork is reviewed only on request.
+- **Skips a huge diff.** A review of a diff above `AGENT_REVIEW_MAX_LINES` changed lines (default 5000) or
+  `AGENT_REVIEW_MAX_FILES` files (default 150) costs much and finds little, so the agent makes no model call. Lock
+  files (`pnpm-lock.yaml`, `package-lock.json`, `yarn.lock`, `go.sum`, `go.work.sum`) are not counted. The agent
+  says so in its comment, and `/agent review force` reviews the pull request anyway.
 - **Reviews again on request:** comment `/agent review` on the pull request. This also works for a pull request from
   a fork. Text after the command tells the reviewer what to look at, for example `/agent review check the migration`.
-- **Assesses every new `Bug` and `Task` issue** and sets `ai:suitable` or `ai:unsuitable`, with the reason and, for a
-  suitable issue, a short plan in its comment on the issue. When the issue lacks information, it asks the author and
-  sets `agent:needs-human`; the author's answer in a comment, or an edit of the issue, starts the analysis again.
-  Comment `/agent analyze` to run it again yourself. The agent never changes an `ai:*` label that a person set.
+  Start the text with `force` to review a diff above the size limit.
+- **Assesses every new `Bug` and `Task` issue**, whoever its author is, and sets `ai:suitable` or `ai:unsuitable`,
+  with the reason and, for a suitable issue, a short plan in its comment on the issue. People keep editing a new issue
+  for a while, so the agent waits for the grace period `AGENT_ANALYSIS_GRACE_MINUTES` (default 30) and then picks the
+  issue up in a sweep that runs every 10 minutes. It analyzes at most 5 issues per sweep. When the issue lacks
+  information, it asks the author and sets `agent:needs-human`; the author's answer in a comment, or an edit of the
+  issue, starts the analysis again at once. Comment `/agent analyze` to run it again yourself. The agent never changes
+  an `ai:*` label that a person set.
+- **Caps its automatic work.** In any 24 hours the agent starts at most `AGENT_DAILY_ANALYSES` analyses of new issues
+  (default 10) and `AGENT_DAILY_REVIEWS` reviews of new pull requests (default 15), so a flood of issues or pull
+  requests cannot run up a bill. Commands, answers of an author, and edits do not count and are never capped. The job
+  summary says why a skipped run did nothing; an issue over the cap stays in line for a later sweep, and a pull
+  request over the cap gets a review on `/agent review`.
 - **Implements a `Bug` or `Task` issue** on request, up to a pull request. See
   [Implement an issue](#implement-an-issue).
 - **Talks with you** in comments that start with `/agent`: it answers questions, shows what the AI calls cost,
@@ -28,8 +42,10 @@ The agent never approves or requests changes; its review is a comment. The revie
 on the pull request have cost so far. Dependabot pull requests are never reviewed, also not with `/agent review`: a
 dependency bump has nothing to review, and a review costs money.
 
-Who can use it: a user with write access to the repository, and, while `AGENT_ALLOWED_ACTORS` is set, only the users
-it names. The agent ignores comments of everyone else and of bots.
+Who can use it: anyone who opens a pull request or a `Bug` or `Task` issue gets the automatic review and the automatic
+analysis. A command, an answer to a hand-off, and an implementation need a user with write access to the repository,
+and, while `AGENT_ALLOWED_ACTORS` is set, only the users it names. The agent ignores comments of everyone else and of
+bots.
 
 ## Commands
 
@@ -50,7 +66,7 @@ it refuses or fails.
 | `/agent <text>` | pull request of the agent | A change request: one attempt on the branch of the pull request. |
 | a comment without `/agent` | issue or pull request of the agent that waits for a person | The comment answers the hand-off. |
 | a review with change requests | pull request of the agent | One attempt over the unresolved review threads. |
-| `/agent review [notes]` | pull request | The agent reviews again. |
+| `/agent review [notes]` | pull request | The agent reviews again. `/agent review force` also reviews a diff above the size limit. |
 | `/agent analyze` | `Bug` or `Task` issue | The agent assesses the issue again. |
 | `/agent implement [notes]` | `Bug` or `Task` issue | See [Implement an issue](#implement-an-issue). |
 
@@ -336,10 +352,13 @@ the scripts are in [`tools/agent/`](../../tools/agent/).
 | `AGENT_PAT` | secret | gives the Git identity, pushes the branch, opens and updates the pull request, and takes it out of draft; held by the preflight, `publish`, and `ci-gate` only; fine-grained, Contents and Pull requests read and write, no Workflows |
 | `AGENT_ENABLED` | variable | `true` to act; anything else makes every run a no-op |
 | `AGENT_DRY_RUN` | variable | `false` to write to GitHub; otherwise the agent writes its comments to the job summary only |
-| `AGENT_ALLOWED_ACTORS` | variable or secret | comma-separated logins the agent answers; empty means everyone with write access |
+| `AGENT_ALLOWED_ACTORS` | variable or secret | comma-separated logins the agent answers; empty means everyone with write access; it limits commands, answers, and implementation, not the automatic analysis and review |
 | `AGENT_MODEL_REVIEW`, `AGENT_MODEL_VERIFY`, `AGENT_MODEL_IMPLEMENT`, `AGENT_MODEL_LIGHT`, `AGENT_MODEL_TRIAGE` | variables | `provider/model:variant`, for example `openai/gpt-6-luna:max`; defaults in `tools/agent/lib/config.js` |
 | `AGENT_MAX_ATTEMPTS` | variable | attempts per issue before the agent hands over on red CI (default 3): the first attempt and every CI fix; a retry, an answer, a change request, or a review starts a fresh count |
 | `AGENT_MAX_ANALYSES` | variable | analyses per issue started by edits and answers (default 5); `/agent analyze` is not counted |
+| `AGENT_ANALYSIS_GRACE_MINUTES` | variable | minutes a new `Bug` or `Task` issue waits before the sweep analyzes it (default 30); `0` analyzes it at once, on the event |
+| `AGENT_REVIEW_MAX_LINES`, `AGENT_REVIEW_MAX_FILES` | variables | the largest diff the agent reviews on its own: changed lines (default 5000) and files (default 150), lock files not counted; `/agent review force` goes beyond |
+| `AGENT_DAILY_ANALYSES`, `AGENT_DAILY_REVIEWS` | variables | automatic analyses (default 10) and reviews (default 15) in the last 24 hours; commands are not counted |
 | `AGENT_REPORT_ISSUE` | variable | the number of the issue that gets the weekly report as a comment; empty means the job summary only |
 | `AGENT_REPORT_DAYS` | variable | the length of the weekly report period in days (default 7); the `days` input of a manual run overrides it |
 | `AGENT_LOG_LEVEL` | variable | opencode's own log level in the job log: `DEBUG`, `INFO` (default), `WARN`, or `ERROR` |

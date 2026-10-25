@@ -158,18 +158,20 @@ All three workflows set `permissions: contents: read` at the top and widen them 
 
 **Triggers:** `pull_request` (`opened`, `ready_for_review`), `issues` (`opened`, `typed`, `edited`), `issue_comment`
 (`created`), `workflow_run` (`completed` of `CI`, `Lint: Code base`, `PR: Title`, `PR: Commit messages`,
-`Lint: Markdown links`, `PR: CLA`), and `pull_request_review` (`submitted`).
+`Lint: Markdown links`, `PR: CLA`), `pull_request_review` (`submitted`), and `schedule` (`*/10 * * * *`, the sweep of
+new issues whose grace period is over).
 
 **Workflow environment:** `OPENCODE_VERSION`, and the repository variables `AGENT_ENABLED`, `AGENT_DRY_RUN`,
 `AGENT_ALLOWED_ACTORS` (a variable, or a secret of the same name), `AGENT_MODEL_IMPLEMENT`, `AGENT_MODEL_REVIEW`,
 `AGENT_MODEL_VERIFY`, `AGENT_MODEL_LIGHT`, `AGENT_MODEL_TRIAGE`, `AGENT_MAX_ATTEMPTS`, `AGENT_MAX_REVIEW_ROUNDS`,
-`AGENT_MAX_ANALYSES`, and `AGENT_LOG_LEVEL`.
+`AGENT_MAX_ANALYSES`, `AGENT_ANALYSIS_GRACE_MINUTES`, `AGENT_REVIEW_MAX_LINES`, `AGENT_REVIEW_MAX_FILES`,
+`AGENT_DAILY_ANALYSES`, `AGENT_DAILY_REVIEWS`, and `AGENT_LOG_LEVEL`.
 
 | Job | Needs and condition | Timeout | Concurrency | Permissions | Secrets (step) |
 |---|---|---|---|---|---|
 | `route` | the `if` filter below | 5 | none | `contents`, `issues`, `pull-requests`: read | none |
 | `review` | `action == 'review'` | 30 | `ai-autonomous-<number>` | `contents: read`, `issues: write`, `pull-requests: write` | `OPENAI_API_KEY` (`Review`) |
-| `analyze` | `action == 'analyze'` | 20 | `ai-autonomous-<number>` | `contents: read`, `issues: write` | `OPENAI_API_KEY` (`Analyze`) |
+| `analyze` | `action == 'analyze'`; a matrix over the `numbers` output | 20 | `ai-autonomous-<matrix number>` | `contents: read`, `issues: write` | `OPENAI_API_KEY` (`Analyze`) |
 | `ci-gate` | `action == 'ci-gate'` | 15 | `ai-autonomous-<number>` | `contents: read`, `issues`, `pull-requests`, `actions`: write, `checks`, `statuses`: read | `AGENT_PAT` (`Decide`) |
 | `rerun` | `action == 'rerun'` | 10 | `ai-autonomous-<number>` | `contents: read`, `issues`, `pull-requests`, `actions`: write, `checks`, `statuses`: read | `AGENT_PAT` (`Rerun`) |
 | `ci-check` | `action == 'ci-check'` | 20 | `ai-autonomous-ci-check-<number>` | `contents: read`, `issues`, `pull-requests`, `actions`: write, `checks`, `statuses`: read | `OPENAI_API_KEY` (`Check CI`) |
@@ -185,6 +187,14 @@ Every job has `cancel-in-progress: false`. `GITHUB_TOKEN` is passed only to the 
 `workflow_run` from another repository, for a comment on a Dependabot pull request, for a comment by a bot, for a
 comment on a pull request without `/agent` unless the pull request body holds `ai-autonomous-agent issue=`, or for a
 review that is not `changes_requested`, is by a bot, comes from a fork, or is on a pull request without that marker.
+A `schedule` event passes every condition: the event fields they read are empty there, and the actor check skips it,
+because its `github.actor` is whoever last changed the workflow file, often Dependabot bumping an action.
+
+**The `analyze` matrix.** The job has `strategy: { matrix: { number: fromJSON(needs.route.outputs.numbers || '[]') },
+max-parallel: 2, fail-fast: false }`. Each matrix entry sets `AGENT_NUMBER` to its number, takes the concurrency group
+`ai-autonomous-<matrix number>`, and uploads the artifact `ai-autonomous-analysis-<matrix number>-<run_attempt>`. The
+fallback `'[]'` keeps the expression valid when the router wrote no `numbers` (every action but `analyze`). An event or
+a command gives a one-element list; the sweep gives up to five. A failed entry does not cancel the others.
 
 **Steps per job.**
 
@@ -202,8 +212,9 @@ review that is not `changes_requested`, is by a bot, comes from a fork, or is on
 | `chat` | checkout of the default branch with full history; `Fetch the pull request head` (pull requests only, into `refs/remotes/pull/<number>/head`); setup-node; install opencode (questions only); `Answer` (`node tools/agent/chat.js`); upload |
 
 **Job environment.** `AGENT_NUMBER` is the `number` output of `route` everywhere. `review` adds `AGENT_COMMAND`;
-`analyze` adds `AGENT_TRIGGER`; `ci-gate` adds `AGENT_PR`, `AGENT_HEAD_SHA`, and `AGENT_WORKFLOW_RUN_ID`; `rerun` adds
-`AGENT_PR`, `AGENT_COMMAND`, `AGENT_ACTOR`, and `AGENT_COMMENT_ID`; `ci-check` adds `AGENT_ISSUE` (the `issue` output of
+`analyze` adds `AGENT_TRIGGER` (and takes `AGENT_NUMBER` from the matrix); `ci-gate` adds `AGENT_PR`, `AGENT_HEAD_SHA`,
+and `AGENT_WORKFLOW_RUN_ID`; `rerun` adds `AGENT_PR`, `AGENT_COMMAND`, `AGENT_ACTOR`, and `AGENT_COMMENT_ID`;
+`ci-check` adds `AGENT_ISSUE` (the `issue` output of
 `route`), `AGENT_COMMAND`, `AGENT_ACTOR`, and `AGENT_COMMENT_ID`, and its `Check CI` step `AGENT_PR_HEAD_REF`;
 `implement` and `publish` add `AGENT_COMMAND`, `AGENT_ACTOR` (the commenter or the reviewer), `AGENT_KIND` (the `kind`
 output, else `ci-fix` after the gate, else `initial`), `AGENT_PR`, and `AGENT_COMMENT_ID`; `stop` and `chat` add
@@ -257,9 +268,12 @@ calls for them. A decision that does nothing has the action `skip` (there is no 
 
 - **Inputs:** `GITHUB_EVENT_NAME`, `GITHUB_EVENT_PATH` (the event JSON), `GITHUB_REPOSITORY`, `GITHUB_TOKEN` (needed
   only when a GitHub call is needed), `GITHUB_OUTPUT`, `GITHUB_STEP_SUMMARY`, and the `AGENT_*` variables of
-  `tools/agent/lib/config.js` (`AGENT_ENABLED`, `AGENT_DRY_RUN`, `AGENT_ALLOWED_ACTORS`, `AGENT_MAX_ANALYSES`, and so
-  on).
+  `tools/agent/lib/config.js` (`AGENT_ENABLED`, `AGENT_DRY_RUN`, `AGENT_ALLOWED_ACTORS`, `AGENT_MAX_ANALYSES`,
+  `AGENT_ANALYSIS_GRACE_MINUTES`, `AGENT_DAILY_ANALYSES`, `AGENT_DAILY_REVIEWS`, and so on). `GITHUB_REPOSITORY` is
+  needed for the searches of the sweep and of the daily caps.
   `AGENT_PAT` is not used.
+  `main(env, deps)` takes `deps.getClient` and `deps.now`, and `gather` takes `repository` and `now`, so that a test
+  uses no network and fixes the clock.
 - **Outputs:** one `key=value` line each in `$GITHUB_OUTPUT` (function `formatOutputs`), and one line in
   `$GITHUB_STEP_SUMMARY` (`- AI Autonomous agent chose <action> for #<n>: <reason>`).
 
@@ -269,14 +283,15 @@ calls for them. A decision that does nothing has the action `skip` (there is no 
   | `number` | Always written. The issue or pull request the job works on; empty when the event has none. |
   | `reason` | Always written. One line (line breaks become spaces). It is not a job output of the workflow. |
   | `command` | Always written. JSON on one line, or empty. Shape: `{"name":"<name>","force":<bool>,"notes":"<text>"}`. |
-  | `trigger` | Only for `analyze`: `opened`, `typed`, `edited`, `author-reply`, or `command`. Empty otherwise. |
+  | `trigger` | Only for `analyze`: `opened`, `typed`, `sweep`, `edited`, `author-reply`, or `command`. Empty otherwise. |
+  | `numbers` | Only for `analyze`: a JSON array of the issue numbers. One number for an event or a command, up to five for the sweep. `number` is the first one. |
   | `pr` | Only when set: `ci-gate`, a `rerun` decision on a pull request of the agent, and an `implement` decision that a person asked for on a pull request. |
   | `issue` | Only for `ci-check` on a pull request of the agent: the issue its marker names. |
   | `head_sha` | Only for `ci-gate`: the head commit of the pull request. |
   | `kind` | Only for `implement` through `humanAttempt`: `human`, or `review` (a change request in a review). |
 
-  The `route` job exports `action`, `number`, `command`, `trigger`, `pr`, `head_sha`, `kind`, and `issue` as job
-  outputs. An output that was not written reaches the later jobs as an empty string.
+  The `route` job exports `action`, `number`, `numbers`, `command`, `trigger`, `pr`, `head_sha`, `kind`, and `issue`
+  as job outputs. An output that was not written reaches the later jobs as an empty string.
 
   `command.name` is one of `review`, `analyze`, `implement`, `retry`, `rerun`, `ci-check`, `stop`, `cost`, `help`,
   `chat` (from `tools/agent/lib/commands.js`; `fix` is reported as `implement`, and `ci_check` as `ci-check`; `force` is
@@ -294,6 +309,8 @@ calls for them. A decision that does nothing has the action `skip` (there is no 
     pull request (`ready_for_review`), of an issue, or of the issue named by an agent pull request.
   - `getPull(n)`: `GET /repos/{repo}/pulls/{n}`, and `listPulls({ head, state: 'open' })`:
     `GET /repos/{repo}/pulls?head=<owner>:<branch>&state=open`. Used by `gatherCiFacts` for a finished workflow run.
+  - `searchIssues(query)`: `GET /search/issues`. Used for the daily count (`countDaily`) and by the sweep
+    (`gatherSweep`); see [Daily caps and the sweep](#daily-caps-and-the-sweep).
 - **GitHub writes:** none. The router writes no comment, label, or reaction.
 - **Reactions:** the router adds none. The `eyes`, `rocket`, and `confused` reactions come from `lib/reactions.js` and
   are added by `implement.js`, `chat.js`, `ci-check.js`, and `ci-gate.js rerun` to the comment that started the job
@@ -305,16 +322,17 @@ calls for them. A decision that does nothing has the action `skip` (there is no 
 
 1. `AGENT_ENABLED` is not `true` -> `skip` (`AGENT_ENABLED is not true`), for every event. `gather` then makes no call.
 2. The event is not in `EVENT_HANDLERS` -> `skip`. The handled events are `pull_request`, `issue_comment`, `issues`,
-   `workflow_run`, and `pull_request_review`.
+   `workflow_run`, `pull_request_review`, and `schedule`.
 3. Bot: a login that ends in `[bot]` (case-insensitive) is skipped for the author of a pull request, the author of an
    issue, the author of a comment, and the author of a review. A comment of a bot also costs no GitHub call.
 4. Actor allowed (`isActorAllowed`): the login is in `AGENT_ALLOWED_ACTORS` (compared in lower case), or the variable
-   is empty. Applied to the pull request author (`pull_request`), the issue author (`issues` and an author reply), the
-   commenter (any command or hand-off answer), the reviewer, and, for `ci-gate`, to the person recorded in the state.
-   The actor of the `workflow_run` event does not matter.
+   is empty. Applied to the commenter (any command or hand-off answer), the reviewer, and, for `ci-gate`, to the person
+   recorded in the state. It is not applied to the author of a pull request that gets the automatic review, or to the
+   author of an issue that gets the automatic analysis, an edit, or a reply: those run for every author. The actor of
+   the `workflow_run` event does not matter.
 5. Write permission (`hasWriteAccess`: `admin`, `maintain`, or `write`): required for every command, for a hand-off
-   answer, and for a review with change requests. It is not required for the analysis of an issue (the author needs only
-   to be allowed) or for the review of a new pull request.
+   answer, and for a review with change requests. It is not required for the analysis of an issue or for the review of
+   a new pull request.
 6. Dependabot: a login that matches `dependabot` or `dependabot[bot]`. The workflow already filters it before a runner
    starts (see `if:` of the `route` job). The router checks again for a command on a pull request: `review`, `retry`,
    `rerun`, `ci-check`, `stop`, `cost`, `help`, `chat`, and a review with change requests give `skip`
@@ -343,11 +361,13 @@ calls for them. A decision that does nothing has the action `skip` (there is no 
 | Fork PR (`fork pull requests run only on /agent review`) | `skip` | PR | | | | | |
 | Author is a bot (Dependabot included) | `skip` | PR | | | | | |
 | Body holds the agent marker `<!-- ai-autonomous-agent issue=<n> -->` (the agent opened it) | `skip` | PR | | | | | |
-| Author not in `AGENT_ALLOWED_ACTORS` | `skip` | PR | | | | | |
-| `ready_for_review` and the state comment of the PR lists reviews | `skip` | PR | | | | | |
+| `ready_for_review` and the state comment of the PR lists reviews (a review skipped for size is one) | `skip` | PR | | | | | |
+| The automatic reviews of the last 24 hours reach `AGENT_DAILY_REVIEWS` (`daily limit of <N> automatic reviews reached; comment /agent review`) | `skip` | PR | | | | | |
 | Otherwise (`opened`, or `ready_for_review` never reviewed) | `review` | PR | empty | | | | |
 
-For `ready_for_review` the router reads the state comment of the PR (`listIssueComments`).
+The author may be anyone: `AGENT_ALLOWED_ACTORS` does not apply. For `ready_for_review` the router reads the state
+comment of the PR (`listIssueComments`). For a PR that would be reviewed it also counts the automatic reviews of the
+last 24 hours (see [Daily caps and the sweep](#daily-caps-and-the-sweep)).
 
 **Event `issues`** (`opened`, `typed`, `edited`)
 
@@ -356,15 +376,25 @@ For `ready_for_review` the router reads the state comment of the PR (`listIssueC
 | Item is a PR, or author is a bot | `skip` | issue | | | | | |
 | Type is not `Bug` or `Task` | `skip` | issue | | | | | |
 | `opened` or `typed` and the issue has `ai:suitable` or `ai:unsuitable` | `skip` | issue | | | | | |
-| Author not in `AGENT_ALLOWED_ACTORS` | `skip` | issue | | | | | |
 | `edited`, phase is not `needs-info`, or the editor is not the author | `skip` | issue | | | | | |
+| `opened` or `typed` and `AGENT_ANALYSIS_GRACE_MINUTES` is above 0 (`the sweep analyzes it after the grace period of <N> minutes`) | `skip` | issue | | | | | |
 | State already holds `AGENT_MAX_ANALYSES` analyses (`analysis limit reached`) | `skip` | issue | | | | | |
-| `opened` | `analyze` | issue | empty | `opened` | | | |
-| `typed` (a Bug or Task type was set later) | `analyze` | issue | empty | `typed` | | | |
+| `opened` or `typed` and the automatic analyses of the last 24 hours reach `AGENT_DAILY_ANALYSES` (`daily limit of <N> automatic analyses reached`) | `skip` | issue | | | | | |
+| `opened` (grace period 0) | `analyze` | issue | empty | `opened` | | | |
+| `typed` (grace period 0; a Bug or Task type was set later) | `analyze` | issue | empty | `typed` | | | |
 | `edited` by the author while the phase is `needs-info` | `analyze` | issue | empty | `edited` | | | |
 
-The state comment of the issue is read for `typed`, and for `edited` when the editor is the author. A new issue has no
-state, so `opened` reads nothing.
+The author may be anyone: `AGENT_ALLOWED_ACTORS` does not apply. The state comment of the issue is read for `typed`,
+and for `edited` when the editor is the author. A new issue has no state, so `opened` reads nothing. With a grace
+period of 0, `opened` and `typed` also get the daily count. `edited` is immediate and is never capped.
+
+**Event `schedule`** (the sweep)
+
+| Condition | action | number | numbers | trigger |
+|---|---|---|---|---|
+| The automatic analyses of the last 24 hours reach `AGENT_DAILY_ANALYSES` (`daily limit of <N> automatic analyses reached`) | `skip` | empty | | |
+| No candidate (`no new issue is past the grace period`) | `skip` | empty | | |
+| Otherwise | `analyze` | the first issue | up to `min(5, cap - count)` issues, oldest first | `sweep` |
 
 **Event `issue_comment`** (`created`; `edited` and `deleted` give `skip`). A bot commenter gives `skip`.
 
@@ -406,7 +436,7 @@ an agent PR carry `pr`; the `implement` row for `/agent implement` has no `pr` a
 |---|---|---|---|---|---|
 | On an issue whose phase is `needs-human`; commenter allowed and a writer | `implement` | issue | `answer` | | `human` |
 | On an agent PR whose issue is in `needs-human`; commenter allowed and a writer | `implement` | issue named by the marker | `answer` | PR | `human` |
-| On an issue in `needs-info`, written by the issue author, Bug or Task, author allowed, limit not reached | `analyze` (trigger `author-reply`) | issue | empty | | |
+| On an issue in `needs-info`, written by the issue author (any author), Bug or Task, limit not reached | `analyze` (trigger `author-reply`) | issue | empty | | |
 | Anything else (a PR that is not an agent PR, another commenter, another phase) | `skip` (`not a command`) | issue or PR | | | |
 
 The commenter of an `answer` is checked for permission after the state shows a hand-off (`isHandOffAnswer`), so an
@@ -449,13 +479,57 @@ the default branch, not the pull request.
   - `tools/agent/route.test.js`: the `pull_request` rules, `/agent review`, the permission and actor checks, the
     Dependabot
     case, `gather`, `formatOutputs`, and `main`.
-  - `tools/agent/route.analysis.test.js`: the `issues` rules, the author reply, `/agent analyze`, `/agent implement`,
-    the limit of analyses, and the `trigger` output.
+  - `tools/agent/route.analysis.test.js`: the `issues` rules (with the grace period set to 0), the author reply,
+    `/agent analyze`, `/agent implement`, the limit of analyses, and the `trigger` and `numbers` outputs.
+  - `tools/agent/route.sweep.test.js`: the grace period on the events, the sweep (`gatherSweep` queries with a fixed
+    clock, filters, order, the cap of 5, the `numbers` output), the daily count (window edges, automatic and command
+    entries, the 100-state read cap), and the daily caps in `decide`.
   - `tools/agent/route.chat.test.js`: `retry`, `rerun`, `ci-check`, `stop`, `cost`, `help`, `chat`, the hand-off
     answer, the change request in a review, and the `pr` and `kind` outputs.
   - `tools/agent/route.ci.test.js`: the CI gate decision, the marker and state trust checks, forks, and `gatherCiFacts`.
   - Fixtures: `tools/agent/fixtures/*.json`, one event per file (for example `issue_comment.chat.agent-pr.json`,
     `workflow_run.completed.json`, `pull_request_review.changes_requested.json`).
+
+#### Daily caps and the sweep
+
+Two features of `route.js` guard the cost of the automatic work. Commands from people are never counted and never
+capped.
+
+**The count** (`countDaily`, with `lib/daily-usage.js`). `dailyCountNeeded` names the count an event needs, so that no
+other event spends the searches: `analyses` for a `schedule` event and for `opened` or `typed` when the grace period is
+0 (a Bug or Task issue of a person, without a decision label); `reviews` for a `pull_request` event that
+`pullRequestSkipReason` lets through and that is not an already reviewed `ready_for_review`. The count searches
+`repo:<repo> is:issue updated:>=<now - 24 hours>` (or `is:pr`), reads the state comment of at most 100 results
+(`MAX_STATES_READ`; the log warns when the search found more, so the count may be low), and counts the entries whose
+`at` is in the window (inclusive at the start):
+
+| Count | Entries | Counted | Not counted |
+|---|---|---|---|
+| analyses | `analyses[]` of issue states | `trigger` is `opened`, `typed`, or `sweep` | `edited`, `author-reply`, `command`, or no trigger |
+| reviews | `reviews[]` of pull request states | `trigger` is `auto`, or missing (an entry from before `trigger` existed) | `trigger` is `command`; `skipped` is `size` (it cost nothing) |
+
+A damaged state comment is logged as a warning and not counted. The caps are `limits.dailyAnalyses` and
+`limits.dailyReviews`. `decide` receives the result as `dailyUsage` (`{ analyses }` or `{ reviews }`; missing means 0).
+`main` logs `dailyAnalyses` or `dailyReviews` as `count/cap` with the decision, and the reason of a skip reaches the
+summary line.
+
+**The sweep** (`decideSchedule`, `gatherSweep`). A `schedule` event first gets the analyses count. The budget is
+`min(MAX_SWEEP, dailyAnalyses - count)`, where `MAX_SWEEP` is 5; with no budget `gather` makes no further call and
+`decide` skips with the daily limit. Otherwise `gatherSweep` runs two searches (`gh.searchIssues`, `GITHUB_TOKEN`):
+
+```text
+repo:<repo> is:issue is:open type:Bug -label:"ai:suitable" -label:"ai:unsuitable" created:<from>..<to>
+repo:<repo> is:issue is:open type:Task -label:"ai:suitable" -label:"ai:unsuitable" created:<from>..<to>
+```
+
+`to` is now minus `AGENT_ANALYSIS_GRACE_MINUTES` and `from` is now minus `SWEEP_LOOKBACK_DAYS` (7), both UTC ISO
+without milliseconds. The labels are quoted because they hold a colon. The results are merged by number and sorted
+oldest first; pull requests and bot authors are dropped. The state comment of each candidate is read in that order
+until the budget is filled, and a candidate with any entry in `analyses` is dropped. The log shows the candidates, the
+picked numbers, and how many were left for the next run. The decision is `analyze` with `trigger: sweep`, `numbers`,
+and `number` set to the first one. An issue left over stays a candidate for the next run, while the 7-day lookback
+lasts. When the grace period is 0 the sweep still runs and picks the issues the event missed. The injectable clock is
+the `now` argument of `gather` (`deps.now` of `main`).
 
 ### `tools/agent/review.js`
 
@@ -472,7 +546,10 @@ instruction files of the pull request with the trusted ones. The job has one con
   - `GITHUB_REPOSITORY`, `GITHUB_TOKEN`, `OPENAI_API_KEY`, `GITHUB_STEP_SUMMARY`.
   - `AGENT_NUMBER` (the pull request), `AGENT_COMMAND` (the parsed command JSON; empty for a `pull_request` event),
     `AGENT_RUN_URL`, `AGENT_LABELER` (`.agent-tools/.github/labeler.yml`), `AGENT_OUT` (`${{ runner.temp }}/agent`).
-  - The `AGENT_*` variables of `lib/config.js`: `config.models.review`, `config.models.verify`, `config.dryRun`.
+  - The `AGENT_*` variables of `lib/config.js`: `config.models.review`, `config.models.verify`, `config.dryRun`,
+    `config.limits.reviewMaxLines`, and `config.limits.reviewMaxFiles`.
+  - `main(env, deps)` takes `deps.gh` and `deps.computeFacts`. `lib/facts.js`, which needs the `yaml` package, is loaded
+    only when the facts are computed.
 - **Outputs:** files under `AGENT_OUT`; the workflow uploads the folder as the artifact
   `ai-autonomous-review-<number>-<run_attempt>` (30 days, also on failure):
 
@@ -484,7 +561,8 @@ instruction files of the pull request with the trusted ones. The job has one con
   | `verifier.jsonl`, `verifier.final.md` | Events and final answer of the verifier. |
   | `summary.md` | The summary comment text (see below). Not written when a step failed. |
 
-  In dry-run the job summary gets `## Dry run: AI review of #<n>`, the summary, and one line per inline finding.
+  In dry-run the job summary gets `## Dry run: AI review of #<n>`, the summary, and one line per inline finding. A
+  review skipped for size writes no file.
 - **Model calls:** through `callAgent` (`lib/agent-call.js`) and opencode. The answer is validated against a schema of
   `lib/contract.js`.
   - `pr-reviewer`: model `config.models.review` (`AGENT_MODEL_REVIEW`). Schema `review`: `summary`, `risk`
@@ -511,14 +589,26 @@ instruction files of the pull request with the trusted ones. The job has one con
     failed.
   - No reaction.
 - **Stages:**
-  1. Facts (`Load the pull request`, `Load the state`): the pull request, its files, the merge base, and
-     `computeFacts` (`lib/facts.js`: changed files, modules, risk flags from the labeler config, title, body). Then the
-     state comment is parsed, or `emptyPullState(number)` is used.
-  2. `pr-reviewer` writes the review as JSON (see the contract above).
-  3. `verifier` checks each finding. `selectFindings` drops `rejected` findings, marks a finding without a verdict as
+  1. Load (`Load the pull request`, `Load the state`): the pull request, its files, and the state comment (parsed, or
+     `emptyPullState(number)`).
+  2. Size check (`checkSize` of `lib/review-size.js`), before any model call. The size is the sum of `additions` and
+     `deletions` of the files of `listPullFiles`, and their count, both without lock files (`LOCK_FILES`: a file whose
+     basename is `pnpm-lock.yaml`, `package-lock.json`, `yarn.lock`, `go.sum`, or `go.work.sum`). A size above
+     `AGENT_REVIEW_MAX_LINES` lines or `AGENT_REVIEW_MAX_FILES` files (exactly at a limit is allowed) ends the job green
+     unless `command.force` is set (`/agent review force`). See "The size skip" below.
+  3. Facts (`Compute the facts`): `git fetch`, the merge base, the head, and `computeFacts` (`lib/facts.js`: changed
+     files, modules, risk flags from the labeler config, title, body).
+  4. `pr-reviewer` writes the review as JSON (see the contract above).
+  5. `verifier` checks each finding. `selectFindings` drops `rejected` findings, marks a finding without a verdict as
      `plausible`, and sorts by severity. `placeFindings` puts a finding inline when its file has a patch and its line is
      in `commentableLines(patch)` (`lib/diff.js`); the others go to the summary.
-  4. Publish: state comment, review, label (in dry-run, only the job summary).
+  6. Publish: state comment, review, label (in dry-run, only the job summary).
+- **The size skip** (`skipForSize`): no model call, no label, no inline review. The human part of the state comment is
+  `### AI review of <sha7> skipped`, then "The diff has N changed lines in M files (lock files not counted), above the
+  limit of L lines or F files (AGENT_REVIEW_MAX_LINES, AGENT_REVIEW_MAX_FILES). An AI review of a diff this large costs
+  much and finds little. Comment `/agent review force` to review it anyway." (`renderSkip`), with the run link. The
+  state keeps its cost records and gets `{ sha, run, at, skipped: 'size', lines, files, trigger }` in `reviews`, so
+  `ready_for_review` does not try again. The sha is the head of the pull request from `getPull`.
 - **The summary comment:** it is the human part of the state comment (`state.render(human, state)`), so there is one
   comment, with the hidden JSON state under it. `renderSummary` builds it:
   - `### AI review of <sha7>`, the `summary` text, and `**Risk: <risk>.** <riskReason>`.
@@ -537,8 +627,9 @@ instruction files of the pull request with the trusted ones. The job has one con
   - On failure the summary is `### AI review failed`, the reason, and a footer with the run link and the hint to comment
     `/agent review`. The job then fails after it has written the state and the failure text.
 - **State written:** the cost records of this run are added to `costs`, also after a failure. On success an entry
-  `{ sha, run, at }` is added to `reviews`. The router reads `reviews` to skip a second automatic review on
-  `ready_for_review`.
+  `{ sha, run, at, trigger }` is added to `reviews`; `trigger` is `command` when `AGENT_COMMAND` is set and `auto`
+  otherwise. The router reads `reviews` to skip a second automatic review on `ready_for_review` (a size skip counts as
+  a review), and the daily count reads `trigger` and `skipped`.
 - **Decisions:**
   - No findings -> the verifier is not called.
   - A finding the verifier did not mention -> kept, marked `plausible`.
@@ -546,10 +637,12 @@ instruction files of the pull request with the trusted ones. The job has one con
   - A failed review or verification -> failure text in the state comment, no label, no `reviews` entry, the job fails.
   - A failed inline review post -> the label is not added, the job fails (the state comment is already written).
   - `AGENT_DRY_RUN` is not `false` -> job summary only, no write to GitHub.
+  - A diff above a size limit without `force` -> the size skip above; with `force` -> the normal review.
 - **Tests:** `tools/agent/review.test.js` covers `selectFindings`, `placeFindings`, `findingBody`, `renderSummary` (the
-  table, empty lists, the cost line), and `verificationLine`. `main` has no test: the opencode calls and the Git
-  commands
-  are not injectable.
+  table, empty lists, the cost line), and `verificationLine`. `tools/agent/review.main.test.js` runs `main` over a fake
+  GitHub client for the size skip (state comment text, the `reviews` entry, kept costs, no label and no review, no
+  facts, dry-run). `lib/review-size.test.js` covers the count, the lock files, the limits, and `force`. The path that
+  runs the models needs Git and opencode and has no `main` test.
 
 ### `tools/agent/analyze.js`
 
@@ -561,7 +654,8 @@ The job exits non-zero when the analysis or a label call failed (`main` throws `
 
 - **Inputs:**
   - `GITHUB_REPOSITORY`, `GITHUB_TOKEN` (the job token), `OPENAI_API_KEY`.
-  - `AGENT_NUMBER` (the issue), `AGENT_TRIGGER` (from the router output `trigger`; `unknown` when empty).
+  - `AGENT_NUMBER` (the issue; the matrix entry of the job), `AGENT_TRIGGER` (from the router output `trigger`;
+    `unknown` when empty).
   - `AGENT_RUN_URL`, `AGENT_OUT`, `GITHUB_STEP_SUMMARY`, and the `AGENT_*` variables of `lib/config.js`
     (`dryRun`, `models.light`).
 - **Outputs:** no step outputs.
@@ -601,10 +695,11 @@ The job exits non-zero when the analysis or a label call failed (`main` throws `
 
   | Trigger | Event | Rule |
   |---|---|---|
-  | `opened` | `issues` `opened` | Bug or Task, no person-set `ai:suitable`/`ai:unsuitable`, author allowed |
+  | `opened` | `issues` `opened` | Bug or Task, no person-set `ai:suitable`/`ai:unsuitable`, grace period 0, daily cap not reached; any author |
   | `typed` | `issues` `typed` | Same rules (the type was set after creation) |
-  | `edited` | `issues` `edited` | Phase is `needs-info`, and the author made the edit |
-  | `author-reply` | `issue_comment` without a command | Phase is `needs-info`, and the author wrote the comment |
+  | `sweep` | `schedule` | The grace period is over; the issue has no analysis and no decision label (the sweep, up to 5 per run) |
+  | `edited` | `issues` `edited` | Phase is `needs-info`, and the author made the edit; any author; not capped |
+  | `author-reply` | `issue_comment` without a command | Phase is `needs-info`, and the author wrote the comment; any author; not capped |
   | `command` | `/agent analyze` | Writer permission; the issue type is still checked; no limit |
 
   The analysis covers the types `Bug` and `Task` only (`ANALYZED_TYPES` in `route.js`). Bot authors are skipped.
@@ -613,7 +708,12 @@ The job exits non-zero when the analysis or a label call failed (`main` throws `
   - Skip rules live in the router, not in `analyze.js`: a person-set `ai:suitable` or `ai:unsuitable` label skips
     `opened` and `typed`. `checkAnalysisLimit` skips every trigger except `command` when `state.analyses.length` is
     at or above `AGENT_MAX_ANALYSES` (default 5); the reason is `analysis limit reached; comment /agent analyze`.
-    `isActorAllowed` (`AGENT_ALLOWED_ACTORS`) applies to the issue author.
+    `AGENT_ALLOWED_ACTORS` does not apply to the issue author.
+  - The sweep re-check (`sweepSkipReason`): only for the trigger `sweep`, right after the issue and its state are
+    loaded. Two sweeps, or a sweep and an event, can pick the same issue, so the job stops without a model call and
+    writes nothing (it logs the decision and exits 0, `analyze()` returns `skipped`) when the state already has an entry
+    in `analyses`, the issue has `ai:suitable` or `ai:unsuitable`, the issue is closed, or its type is no longer `Bug`
+    or `Task`.
   - Label rule (`labelChanges`): a label is the agent's only when the state has `analysis.labelSetBy === 'agent'` and
     `analysis.label` equals it. Any other `ai:suitable` or `ai:unsuitable` on the issue is a person's decision, and
     then the agent adds and removes no decision label. The labels are read again after the model call, so a label set
@@ -639,7 +739,8 @@ The job exits non-zero when the analysis or a label call failed (`main` throws `
     `agentLabelAfter`, `nextState`, `failedState`, the renderers, the state round trip, `renderInput` (untrusted
     blocks, cuts, previous analysis).
   - `tools/agent/analyze.main.test.js`: `analyze()` with injected GitHub and agent clients: each verdict, re-analysis,
-    person labels, dry-run, failures, labels re-read after the model call, failed label calls, `askAuthor: false`.
+    person labels, dry-run, failures, labels re-read after the model call, failed label calls, `askAuthor: false`, and
+    the sweep re-check (each skip reason, no call and no write, and the normal path).
 
 ### `tools/agent/implement.js`
 
@@ -1484,8 +1585,8 @@ it merges the cost records on write.
      signature, then the title with the failed checks, the CI report, and the notes of the person, each inside an
      `<untrusted>` block.
   4. Run the `ci-triager`. When the call or its contract fails, record the cost, reply "I could not finish the CI
-     check:" followed by the error message, add the cost line, and throw (the job fails, the reaction is `confused`). A `change`
-     verdict without a fix breaks the contract.
+     check:" followed by the error message, add the cost line, and throw (the job fails, the reaction is `confused`). A
+     `change` verdict without a fix breaks the contract.
   5. Find out whether the pull request is the agent's (`loadAgent`): `AGENT_ISSUE` is set, the marker in the
      description names that issue, and the state of the issue has `pr` equal to this pull request.
   6. `flaky` or `infra` (`effectiveVerdict`: low confidence counts as `unknown`): rerun the failed jobs of every
@@ -1676,14 +1777,14 @@ Parser of `/agent ...` comments.
   |---|---|
   | `/agent` alone (nothing on later lines) | `name: 'help'` |
   | `/agent <word> ...` with `<word>` (case-insensitive) in `review`, `analyze`, `implement`, `fix`, `retry`, `rerun`, `ci_check`, `ci-check`, `stop`, `cost`, `help` | `name: <word>`, with `fix` reported as `implement`, and `ci_check` and `ci-check` as `ci-check` |
-  | `/agent implement force ...` or `/agent fix force ...` | `force: true`; `force` counts only after `implement` or `fix` |
+  | `/agent implement force ...`, `/agent fix force ...`, or `/agent review force ...` | `force: true`; `force` counts only after `implement`, `fix`, or `review` |
   | `/agent` followed by any other word, or by text on a later line only | `name: 'chat'`, `notes` holds all the text |
 
   `notes` is the rest of the first line plus every following line, trimmed. Who may issue the command is decided by the
   caller (`route.js`). The command name `answer`, which `implement.js` and `chat.js` test for, is not produced here:
   `route.js` sets it.
 - **Tests:** `commands.test.js` covers ordinary comments, `/agentx`, bare `/agent`, case, `fix` mapping, blank leading
-  lines, `force`, `notes` (also of `rerun` and `ci-check`), and the chat fallback.
+  lines, `force` (also after `review`), `notes` (also of `rerun` and `ci-check`), and the chat fallback.
 
 ### `tools/agent/lib/config.js`
 
@@ -1705,14 +1806,38 @@ The configuration from the environment, with safe defaults. A bad value throws a
   | `AGENT_MAX_ATTEMPTS` | `limits.maxAttempts` | 3 |
   | `AGENT_MAX_REVIEW_ROUNDS` | `limits.maxReviewRounds` | 2 |
   | `AGENT_MAX_ANALYSES` | `limits.maxAnalyses` | 5 |
+  | `AGENT_ANALYSIS_GRACE_MINUTES` | `limits.analysisGraceMinutes` | 30; a non-negative integer, `0` means analyze at once |
+  | `AGENT_REVIEW_MAX_LINES` | `limits.reviewMaxLines` | 5000 |
+  | `AGENT_REVIEW_MAX_FILES` | `limits.reviewMaxFiles` | 150 |
+  | `AGENT_DAILY_ANALYSES` | `limits.dailyAnalyses` | 10 |
+  | `AGENT_DAILY_REVIEWS` | `limits.dailyReviews` | 15 |
 
 - **Model syntax:** `provider/model[:variant]`. The variant is whatever follows the last colon, else `null`. A blank
-  variable counts as unset. Limits must be positive integers in plain digits.
+  variable counts as unset. Limits must be positive integers in plain digits; the grace period also allows 0.
 - **Decisions:** `models.implement.id` equal to `models.review.id` throws (the variants are not compared, so
   `:high` and `:max` of one model are still refused).
 - `isActorAllowed` is true without a list; with a list it compares lowercased logins.
-- **Tests:** `config.test.js` covers defaults, the exact-value rules, actor parsing, model and limit parsing, and the
-  same-model refusal.
+- **Tests:** `config.test.js` covers defaults, the exact-value rules, actor parsing, model and limit parsing, the
+  grace period, and the same-model refusal.
+
+### `tools/agent/lib/daily-usage.js`
+
+The pure part of the daily caps (see [Daily caps and the sweep](#daily-caps-and-the-sweep)).
+
+- **Exports:** `WINDOW_MS` (24 hours), `MAX_STATES_READ` (100), `AUTOMATIC_ANALYSIS_TRIGGERS` (`opened`, `typed`,
+  `sweep`), `windowStart(now)`, `toSearchTime(date)` (UTC ISO without milliseconds), `isInWindow(at, since)`,
+  `countAnalyses(states, since)`, and `countReviews(states, since)`.
+- **Rules:** an entry counts when `at` is a string at or after `since`. `countAnalyses` counts the automatic triggers.
+  `countReviews` counts `trigger: 'auto'` and entries without a trigger, and leaves out `command` and `skipped: 'size'`.
+- **Tests:** `daily-usage.test.js` covers the window edges, each trigger, old entries, and missing fields.
+
+### `tools/agent/lib/review-size.js`
+
+The size limit of the review (see [`tools/agent/review.js`](#toolsagentreviewjs)). All functions are pure.
+
+- **Exports:** `LOCK_FILES`, `measureDiff(files)` (changed lines and file count without lock files),
+  `exceedsLimit(size, limits)` (above, not at, a limit), `checkSize(files, limits, force)`, and `renderSkip(...)`.
+- **Tests:** `review-size.test.js`.
 
 ### `tools/agent/lib/contract.js`
 
@@ -2204,7 +2329,7 @@ Built by `attemptRecord` in `implement.js`:
 | Field | Type | Writer | Meaning |
 |---|---|---|---|
 | `schema`, `kind`, `number`, `phase`, `costs` | as above | `state.js`, `review.js` | `kind` is `pull`; `phase` stays `null` |
-| `reviews` | array | `review.js` | one `{ sha, run, at }` per finished review; a failed review adds none |
+| `reviews` | array | `review.js` | one `{ sha, run, at, trigger }` per finished review (`trigger` is `auto` for a `pull_request` event and `command` for `/agent review`; an entry from before it existed has none and counts as automatic); a review skipped for its size adds `{ sha, run, at, trigger, skipped: 'size', lines, files }`; a failed review adds none |
 | `ciChecks` | array | `ci-check.js` | one `{ at, actor, sha, verdict, confidence, runs }` per finished `/agent ci_check` on a red CI; `verdict` and `confidence` are what the model said, and `runs` are the workflow runs that were rerun (empty when none). A failed call adds only its cost record |
 
 `report.js` only reads states. `levels.js` and `route.js` read no model-written field except `phase` and `pr`
@@ -2335,16 +2460,16 @@ The tests use the Node.js test runner and no other dependency. Run them from the
 node --test "tools/agent/**/*.test.js"
 ```
 
-`pnpm test:tools` runs them with the tests of `tools/release` and `tools/ci`. There are 32 test files: 18 next to the
-scripts and 14 next to the library modules.
+`pnpm test:tools` runs them with the tests of `tools/release` and `tools/ci`. There are 36 test files: 20 next to the
+scripts and 16 next to the library modules.
 
 - `<script>.test.js` and `lib/<module>.test.js` test the pure functions.
 - `<script>.main.test.js` run a whole `main` over fake GitHub, Git, and opencode clients (`analyze`, `chat`, `ci-check`,
-  `ci-gate`, `implement`, `report`). `route.analysis.test.js`, `route.chat.test.js`, and `route.ci.test.js` cover the
-  routing of each phase.
-- `tools/agent/fixtures/` holds 29 recorded event payloads, one per case, named `<event>.<case>.json`, for example
+  `ci-gate`, `implement`, `report`; `review` for the size skip only). `route.analysis.test.js`, `route.chat.test.js`,
+  `route.ci.test.js`, and `route.sweep.test.js` cover the routing of each phase.
+- `tools/agent/fixtures/` holds 30 recorded event payloads, one per case, named `<event>.<case>.json`, for example
   `issue_comment.implement-force.json`, `pull_request.fork.json`, and `workflow_run.completed.human.json`.
-- `lib/facts.test.js` and `review.test.js` need the `yaml` package, which a checkout gets with `node_modules`
+- `lib/facts.test.js` needs the `yaml` package, which a checkout gets with `node_modules`
   (see [the `yaml` package](#the-yaml-package)).
 
 Test data must not look like a secret or an e-mail address: the CyberFerret pre-commit hook rejects such commits.

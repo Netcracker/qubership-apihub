@@ -48,6 +48,8 @@ test('helpReply lists the commands of the place and mentions the asker', () => {
 
   const pull = helpReply({ asker: 'carol', place: 'pull' })
   assert.ok(pull.includes('`/agent review [notes]`') && pull.includes('`/agent <question>`'))
+  const reviewRow = '| `/agent review [notes]` | Review this pull request again. `review force` also reviews a diff above the size limit. |'
+  assert.ok(pull.includes(reviewRow) && helpReply({ asker: 'carol', place: 'agentPull' }).includes(reviewRow))
   assert.ok(!pull.includes('/agent stop') && !pull.includes('/agent retry') && !pull.includes('/agent rerun'))
 
   const agentPull = helpReply({ asker: 'carol', place: 'agentPull' })
