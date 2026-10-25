@@ -114,7 +114,7 @@
     "@types/react-window-infinite-loader": "1.0.9",
     "@types/supertest": "7.2.0",
     "@types/ws": "8.5.3",
-    "@typescript-eslint/eslint-plugin": "5.52.0",
+    "@typescript-eslint/eslint-plugin": "8.72.0",
     "@typescript-eslint/parser": "5.52.0",
     "@vitejs/plugin-react": "6.1.1",
     "buffer": "5.7.1",
