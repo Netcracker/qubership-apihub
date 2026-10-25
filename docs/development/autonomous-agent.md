@@ -5,16 +5,34 @@ comments. It is a proof of concept; the design is in [the internal docs](../inte
 
 ## What it does now
 
-- **Reviews a pull request** when the pull request opens outside draft, or when it leaves draft for the first time.
-  It posts one comment with the impact (modules, images, REST contract, database, deployment, E2E, risk) and inline
-  comments on the lines it has findings for, and adds the label `agent:pr-reviewed`. A second model checks every
-  finding first: it drops the ones it rejects and marks the ones it cannot confirm as "plausible, not confirmed".
+- **Reviews a pull request** when the pull request opens outside draft, or when it leaves draft for the first time,
+  whoever its author is. It posts one comment with the impact (modules, images, REST contract, database, deployment,
+  E2E, risk) and inline comments on the lines it has findings for, and adds the label `agent:pr-reviewed`. A second
+  model checks every finding first: it drops the ones it rejects and marks the ones it cannot confirm as "plausible,
+  not confirmed". A pull request from a fork is reviewed only on request.
+- **Skips a huge diff.** A review of a diff above `AGENT_REVIEW_MAX_LINES` changed lines (default 5000) or
+  `AGENT_REVIEW_MAX_FILES` files (default 150) costs much and finds little, so the agent makes no model call. Lock
+  files (`pnpm-lock.yaml`, `package-lock.json`, `yarn.lock`, `go.sum`, `go.work.sum`) are not counted. The agent
+  says so in its comment, and `/agent review force` reviews the pull request anyway.
 - **Reviews again on request:** comment `/agent review` on the pull request. This also works for a pull request from
   a fork. Text after the command tells the reviewer what to look at, for example `/agent review check the migration`.
-- **Assesses every new `Bug` and `Task` issue** and sets `ai:suitable` or `ai:unsuitable`, with the reason and, for a
-  suitable issue, a short plan in its comment on the issue. When the issue lacks information, it asks the author and
-  sets `agent:needs-human`; the author's answer in a comment, or an edit of the issue, starts the analysis again.
-  Comment `/agent analyze` to run it again yourself. The agent never changes an `ai:*` label that a person set.
+  Start the text with `force` to review a diff above the size limit.
+- **Assesses every new `Bug` and `Task` issue**, whoever its author is, and sets `ai:suitable` or `ai:unsuitable`,
+  with the reason and, for a suitable issue, a short plan in its comment on the issue. People keep editing a new issue
+  for a while, so the agent waits for the grace period `AGENT_ANALYSIS_GRACE_MINUTES` (default 30) and then picks the
+  issue up in a sweep that runs every 10 minutes. It analyzes at most 5 issues per sweep. The sweep needs
+  `AGENT_DRY_RUN=false`: a dry-run analysis writes no state, so the same issues would come up again and again. In dry
+  run the sweep does nothing; comment `/agent analyze` to try the analysis. When the issue lacks
+  information, it asks the author and sets `agent:needs-human`; the author's answer in a comment, or an edit of the
+  issue, starts the analysis again at once. Comment `/agent analyze` to run it again yourself. The agent never changes
+  an `ai:*` label that a person set.
+- **Caps its automatic work.** In any 24 hours the agent starts at most `AGENT_DAILY_ANALYSES` analyses of new issues
+  (default 10) and `AGENT_DAILY_REVIEWS` reviews of new pull requests (default 15), so a flood of issues or pull
+  requests cannot run up a bill. Commands, answers of an author, and edits do not count and are never capped. The job
+  summary says why a skipped run did nothing; an issue over the cap stays in line for a later sweep, and a pull
+  request over the cap gets a review on `/agent review`. A review that failed after its model calls counts too, because
+  it cost money; the failure comment tells you to comment `/agent review`, and a pull request that left draft with
+  such a review is not reviewed again on its own.
 - **Implements a `Bug` or `Task` issue** on request, up to a pull request. See
   [Implement an issue](#implement-an-issue).
 - **Talks with you** in comments that start with `/agent`: it answers questions, shows what the AI calls cost,
@@ -28,8 +46,10 @@ The agent never approves or requests changes; its review is a comment. The revie
 on the pull request have cost so far. Dependabot pull requests are never reviewed, also not with `/agent review`: a
 dependency bump has nothing to review, and a review costs money.
 
-Who can use it: a user with write access to the repository, and, while `AGENT_ALLOWED_ACTORS` is set, only the users
-it names. The agent ignores comments of everyone else and of bots.
+Who can use it: anyone who opens a pull request or a `Bug` or `Task` issue gets the automatic review and the automatic
+analysis. A command, an answer to a hand-off, and an implementation need a user with write access to the repository,
+and, while `AGENT_ALLOWED_ACTORS` is set, only the users it names. The agent ignores comments of everyone else and of
+bots.
 
 ## Commands
 
@@ -44,11 +64,13 @@ it refuses or fails.
 | `/agent cost` | issue or pull request | The agent shows the cost table. |
 | `/agent stop` | issue or pull request of the agent | The agent stops its work on the issue. |
 | `/agent retry [notes]` | issue or pull request of the agent | A new attempt with a fresh budget; the notes are guidance. |
+| `/agent rerun [notes]` | issue or pull request of the agent | Reruns the failed CI checks; no new attempt, no model. |
+| `/agent ci_check [notes]` | pull request | Finds the root cause of a red CI; reruns the failed jobs when it is flaky or an outage. |
 | `/agent <question>` | issue, or pull request of a person | The assistant answers in a comment and changes nothing. |
 | `/agent <text>` | pull request of the agent | A change request: one attempt on the branch of the pull request. |
 | a comment without `/agent` | issue or pull request of the agent that waits for a person | The comment answers the hand-off. |
 | a review with change requests | pull request of the agent | One attempt over the unresolved review threads. |
-| `/agent review [notes]` | pull request | The agent reviews again. |
+| `/agent review [notes]` | pull request | The agent reviews again. `/agent review force` also reviews a diff above the size limit. |
 | `/agent analyze` | `Bug` or `Task` issue | The agent assesses the issue again. |
 | `/agent implement [notes]` | `Bug` or `Task` issue | See [Implement an issue](#implement-an-issue). |
 
@@ -95,6 +117,67 @@ and when the issue is closed or is not a `Bug` or a `Task`.
   as guidance. It needs a branch that an earlier attempt pushed and an open pull request.
 - **A fresh budget.** Each of these attempts gives the CI loop a fresh budget of `AGENT_MAX_ATTEMPTS`. The attempt
   itself does not count against it.
+
+### Rerun CI
+
+`/agent rerun` is the way on when CI is red for a reason the change does not cause, such as a flaky test or an outage.
+It checks the CI of the pull request of the agent again: it reruns the failed checks of the head commit and puts the
+issue back to waiting for CI, so the [CI gate](#the-ci-loop) decides when they end. It is not an attempt and calls no
+model, so it costs nothing and does not touch the attempt budget. Any text after the command is ignored.
+
+- It removes `agent:needs-human` from the issue and the pull request, and it records the request in the state.
+- It replies and refuses, with a confused face, when there is no pull request of the agent to rerun CI for, when an
+  attempt is running (a record older than two hours counts as dead), when the work is stopped, when the pull request
+  is not open, or when the only failed checks are commit statuses or checks of another app, which the agent cannot
+  rerun.
+- When the checks still run, it only hands the decision back to the gate. When they are all green, it takes the gate's
+  green path: the pull request leaves draft, gets its labels, and the issue is `completed`.
+- A missing verdict check `ci-ok` is not a running CI. With failed checks, the command reruns them as usual. When
+  nothing failed and `ci-ok` is missing, the reply says that no CI verdict is reported for the head commit (CI may
+  wait for an approval of the workflows of a fork), instead of "CI still runs".
+- It runs in its own job `rerun`, which holds `AGENT_PAT` only to take a green pull request out of draft.
+
+### CI check
+
+`/agent ci_check [notes]` answers the question "why is CI red here?" on any pull request, also one from a fork. The
+notes tell the triager what to look at. The agent reads the checks of the head commit, and what follows depends on
+what it finds:
+
+- **CI still runs.** The reply lists the checks that run. Ask again when they end. No model call.
+- **No CI verdict.** Nothing failed, but the verdict check `ci-ok` is not reported for the head commit, for example
+  because CI waits for an approval of the workflows of a fork. The reply says so. No model call. When checks failed,
+  the missing `ci-ok` is ignored and the command goes on with the failed checks.
+- **CI is green.** The reply says so and names the commit. No model call.
+- **No check at all.** The reply says so. No model call.
+- **CI is red.** The agent collects the failed jobs and their logs, cleaned the same way as for the
+  [CI gate](#the-ci-loop), and asks the `ci-triager` (model `AGENT_MODEL_TRIAGE`, read-only) for the root cause. The
+  reply gives the verdict, the root cause, where to fix it (file, line, and what to change), the evidence from the
+  logs, and what the agent did.
+
+The verdict is one of four:
+
+| Verdict | Meaning | What the agent does |
+|---|---|---|
+| `change` | The failure comes from this change. | Nothing. On the pull request of the agent it suggests `/agent retry` with this guidance. |
+| `flaky` | A flaky test, not caused by the change. | Reruns the failed jobs. |
+| `infra` | A network, registry, or runner problem. | Reruns the failed jobs. |
+| `unknown` | The evidence does not settle it. | Nothing. It suggests `/agent rerun` on the pull request of the agent, and a rerun from the Actions page elsewhere. |
+
+A `flaky` or `infra` verdict with low confidence counts as `unknown`: the agent does not rerun on a guess, and the
+reply says so. A `change` verdict always names at least one place to fix.
+
+- On the pull request of the agent, when its issue waits for a person (`agent:needs-human`) or for CI, an accepted
+  rerun also puts the issue back to waiting for CI and removes `agent:needs-human`, as `/agent rerun` does, so the
+  CI gate decides again when the checks end. In any other phase the state stays as it is.
+- When GitHub rejects the rerun, the reply says so and nothing else changes. The reaction is a confused face.
+- The cost of the call goes to the state of the pull request (flow `ci-check`), also when the call fails, together
+  with a record of the check in `ciChecks`. `/agent cost` shows it.
+- When the triager fails or breaks its answer contract, the reply says "I could not finish the CI check", and the job
+  fails.
+- The CI report is the output of code under test, so the triager reads it as untrusted data. It reads the diff of the
+  pull request, which the job fetches but never checks out.
+- It runs in its own job `ci-check`. Its concurrency group is the one of the issue for a pull request of the agent,
+  else the one of the pull request, so it never writes a state comment at the same time as another job.
 
 ### Reviews with change requests
 
@@ -210,18 +293,41 @@ forks.
 4. **Red:** the gate reads the logs of the failed jobs, cuts them to the error blocks, and builds a CI report of at
    most 12,000 characters. Its failure signature is a hash of the failed check names and the first normalized error
    lines, so timestamps, run IDs, and durations do not change it.
-5. **One free rerun.** When every failed check is an E2E job, the gate reruns the failed jobs once per pull request and
-   decides on the result of the rerun. E2E jobs flake more than the rest.
+5. **One free rerun per commit.** When every failed check is an E2E job, the gate reruns the failed jobs once for that
+   head commit and decides on the result of the rerun. A new commit gets its own free rerun. E2E jobs flake more than
+   the rest. The verdict check `ci-ok` of `ci.yml` always fails together with E2E, so it does not count: a red result
+   of E2E jobs and `ci-ok` is still an E2E-only failure. The gate reruns the workflow runs of all failed checks,
+   including the run of `ci-ok`, which depends on the E2E job.
 6. **The stop rule.** The agent stops, sets `agent:needs-human` on the issue and the pull request, and hands over when
    the failure has the same signature as the attempt before (the same fix twice would only spend money), or when
    `AGENT_MAX_ATTEMPTS` attempts are spent (default 3, counting the first attempt and every CI fix). The state comment
-   lists every attempt with its result, signature, and notes, and shows the current failure. A new comment mentions
-   the person who asked and names one thing to look at. Comment `/agent retry` with guidance to let the agent try
-   again, with a fresh budget (see [Retry, answers, and change requests](#retry-answers-and-change-requests)).
+   lists every attempt with its result, signature, and notes, and shows the current failure. See
+   [What a hand-off says](#what-a-hand-off-says).
 7. **Otherwise the next attempt starts.** The `implement` job runs a CI fix: it continues the branch of the pull
    request, reads the CI report, adds one new commit, and pushes without force. The local checks, the self-review, the
    diff size limit, and the workflow-file block apply to the whole pull request, measured from its branch point. A
    green result moves the issue back to waiting for CI; anything else is a draft and `agent:needs-human`.
+8. **The CI fix may find that the change is not the cause.** When the CI report shows a flaky or infrastructure
+   failure, or a test that the change does not touch, the implementer answers `unrelated` with its evidence and
+   changes no code. The agent then pushes nothing: it reruns the failed checks, puts the issue back to waiting for CI,
+   removes `agent:needs-human` from the issue, and comments on the pull request, without a mention, which checks
+   failed and why it thinks the change does not cause it. The attempt counts toward `AGENT_MAX_ATTEMPTS`, so a flake
+   loop ends, and a rerun that fails the same way ends by the stop rule. When no failed check can be rerun, the
+   agent hands over as for a blocked attempt.
+
+The log excerpts in the CI report leave out the echo of the step scripts that Actions prints before each step, so a
+command such as `echo "::error::..."` in a workflow does not look like a failure.
+
+### What a hand-off says
+
+When the agent hands over on a red CI, after the stop rule or after a blocked CI fix, the comment lists, in this order:
+the failed checks (at most five, then "and N more"), the first error line of the first failed check, and the reason of
+the agent. It then offers two ways on:
+
+- If the failure is not caused by the change, comment `/agent rerun`: it reruns the failed checks, with no new attempt
+  and no model cost.
+- To try another fix, comment `/agent retry` with guidance (see
+  [Retry, answers, and change requests](#retry-answers-and-change-requests)).
 
 In dry-run the gate writes its decision to the job summary and starts no attempt.
 
@@ -255,17 +361,21 @@ the scripts are in [`tools/agent/`](../../tools/agent/).
 |---|---|---|
 | `OPENAI_API_KEY` | secret | the OpenAI key of every model call |
 | `AGENT_PAT` | secret | gives the Git identity, pushes the branch, opens and updates the pull request, and takes it out of draft; held by the preflight, `publish`, and `ci-gate` only; fine-grained, Contents and Pull requests read and write, no Workflows |
-| `AGENT_ENABLED` | variable | `true` to act; anything else makes every run a no-op |
-| `AGENT_DRY_RUN` | variable | `false` to write to GitHub; otherwise the agent writes its comments to the job summary only |
-| `AGENT_ALLOWED_ACTORS` | variable or secret | comma-separated logins the agent answers; empty means everyone with write access |
-| `AGENT_MODEL_REVIEW`, `AGENT_MODEL_VERIFY`, `AGENT_MODEL_IMPLEMENT`, `AGENT_MODEL_LIGHT` | variables | `provider/model:variant`, for example `openai/gpt-6-luna:max`; defaults in `tools/agent/lib/config.js` |
+| `AGENT_ENABLED` | variable | `true` to act; anything else makes every run a no-op, and the 10-minute schedule starts no runner |
+| `AGENT_DRY_RUN` | variable | `false` to write to GitHub; otherwise the agent writes its comments to the job summary only, and the sweep of new issues does nothing |
+| `AGENT_ALLOWED_ACTORS` | variable or secret | comma-separated logins the agent answers; empty means everyone with write access; it limits commands, answers, and implementation, not the automatic analysis and review |
+| `AGENT_MODEL_REVIEW`, `AGENT_MODEL_VERIFY`, `AGENT_MODEL_IMPLEMENT`, `AGENT_MODEL_LIGHT`, `AGENT_MODEL_TRIAGE` | variables | `provider/model:variant`, for example `openai/gpt-6-luna:max`; defaults in `tools/agent/lib/config.js` |
 | `AGENT_MAX_ATTEMPTS` | variable | attempts per issue before the agent hands over on red CI (default 3): the first attempt and every CI fix; a retry, an answer, a change request, or a review starts a fresh count |
 | `AGENT_MAX_ANALYSES` | variable | analyses per issue started by edits and answers (default 5); `/agent analyze` is not counted |
+| `AGENT_ANALYSIS_GRACE_MINUTES` | variable | minutes a new `Bug` or `Task` issue waits before the sweep analyzes it (default 30); `0` analyzes it at once, on the event |
+| `AGENT_REVIEW_MAX_LINES`, `AGENT_REVIEW_MAX_FILES` | variables | the largest diff the agent reviews on its own: changed lines (default 5000) and files (default 150), lock files not counted; `/agent review force` goes beyond |
+| `AGENT_DAILY_ANALYSES`, `AGENT_DAILY_REVIEWS` | variables | automatic analyses (default 10) and reviews (default 15) in the last 24 hours; commands are not counted |
 | `AGENT_REPORT_ISSUE` | variable | the number of the issue that gets the weekly report as a comment; empty means the job summary only |
 | `AGENT_REPORT_DAYS` | variable | the length of the weekly report period in days (default 7); the `days` input of a manual run overrides it |
 | `AGENT_LOG_LEVEL` | variable | opencode's own log level in the job log: `DEBUG`, `INFO` (default), `WARN`, or `ERROR` |
 
-The review model and the implement model must differ: the agent refuses to start otherwise.
+The review model and the implement model must differ: the agent refuses to start otherwise. `AGENT_MODEL_TRIAGE` is the
+model of `/agent ci_check`; its default is `openai/gpt-6.1-sol:medium`.
 
 ## When something goes wrong
 

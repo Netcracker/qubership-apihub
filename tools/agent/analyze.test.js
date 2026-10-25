@@ -13,6 +13,7 @@ const {
   renderFailure,
   renderInput,
   questionsComment,
+  sweepSkipReason,
 } = require('./analyze')
 
 const plan = {
@@ -363,4 +364,36 @@ test('renderInput cuts a very long comment', () => {
   const text = renderInput({ issue, comments, st: null, trigger: 'opened' })
   assert.match(text, /\[cut: the text is longer than 20000 characters\]/)
   assert.ok(text.length < 25000)
+})
+
+test('sweepSkipReason is null for an open Bug or Task without an analysis or a decision label', () => {
+  for (const type of ['Bug', 'Task']) {
+    const issue = { state: 'open', type: { name: type }, labels: [{ name: 'bug' }, 'agent:needs-human'] }
+    assert.equal(sweepSkipReason(issue, null), null, type)
+    assert.equal(sweepSkipReason(issue, state.emptyIssueState(1)), null, type)
+    assert.equal(sweepSkipReason(issue, { analyses: [] }), null, type)
+  }
+  // The state of an older version of the agent may lack the state fields; an open issue without a state is new.
+  assert.equal(sweepSkipReason({ type: { name: 'Bug' } }, undefined), null)
+})
+
+test('sweepSkipReason names the first reason: analysis, label, closed, type', () => {
+  const open = { state: 'open', type: { name: 'Bug' }, labels: [] }
+  assert.equal(sweepSkipReason(open, { analyses: [{ trigger: 'opened' }] }), 'the issue already has an analysis')
+  assert.equal(sweepSkipReason({ ...open, labels: ['ai:suitable'] }, null), 'the issue has the label ai:suitable')
+  assert.equal(
+    sweepSkipReason({ ...open, labels: [{ name: 'ai:unsuitable' }] }, null),
+    'the issue has the label ai:unsuitable',
+  )
+  assert.equal(sweepSkipReason({ ...open, state: 'closed' }, null), 'the issue is closed')
+  assert.equal(
+    sweepSkipReason({ ...open, type: { name: 'Feature' } }, null),
+    "the issue type is 'Feature', not Bug or Task",
+  )
+  assert.equal(sweepSkipReason({ ...open, type: null }, null), "the issue type is 'none', not Bug or Task")
+  // An analysis wins over everything else.
+  assert.equal(
+    sweepSkipReason({ ...open, state: 'closed', labels: ['ai:suitable'] }, { analyses: [{}] }),
+    'the issue already has an analysis',
+  )
 })

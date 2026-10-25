@@ -64,6 +64,9 @@ const HELP_COMMON = [
   ['`/agent help`', 'Show this list.'],
 ]
 
+const REVIEW_WHAT = 'Review this pull request again. `review force` also reviews a diff above the size limit.'
+const CI_CHECK_WHAT = 'Find the root cause of a red CI; rerun the failed jobs when it is flaky or an outage.'
+
 /** The commands per place. The wording follows docs/development/autonomous-agent.md. */
 const HELP = {
   issue: [
@@ -71,18 +74,22 @@ const HELP = {
     ['`/agent implement [notes]`', 'Implement a Bug or Task up to a pull request. `implement force` starts on an ' +
       '`ai:unsuitable` issue.'],
     ['`/agent retry [notes]`', 'Try again after a hand-off, with a fresh attempt budget. The notes are guidance.'],
+    ['`/agent rerun`', "Rerun the failed CI checks of the agent's pull request; no new attempt, no model."],
     ['`/agent stop`', 'Stop the work of the agent on this issue.'],
     ...HELP_COMMON,
     ['`/agent <question>`', 'Ask about this issue. The assistant answers and changes nothing.'],
   ],
   pull: [
-    ['`/agent review [notes]`', 'Review this pull request again.'],
+    ['`/agent review [notes]`', REVIEW_WHAT],
+    ['`/agent ci_check [notes]`', CI_CHECK_WHAT],
     ...HELP_COMMON,
     ['`/agent <question>`', 'Ask about this pull request. The assistant answers and changes nothing.'],
   ],
   agentPull: [
-    ['`/agent review [notes]`', 'Review this pull request again.'],
+    ['`/agent review [notes]`', REVIEW_WHAT],
     ['`/agent retry [notes]`', 'Try again after a hand-off, with a fresh attempt budget. The notes are guidance.'],
+    ['`/agent rerun`', "Rerun the failed CI checks of the agent's pull request; no new attempt, no model."],
+    ['`/agent ci_check [notes]`', CI_CHECK_WHAT],
     ['`/agent stop`', 'Stop the work of the agent on this pull request and its issue.'],
     ...HELP_COMMON,
     ['`/agent <text>`', 'A change request: the agent makes one attempt on the branch of this pull request.'],

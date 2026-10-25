@@ -3,7 +3,6 @@ deploy/docker-compose/apihub-generic/jwt_private_key
 deploy/docker-compose/with-keycloak/data/**
 deploy/docker-compose/backend-debug/data/**
 deploy/docker-compose/with-keycloak/jwt_private_key
-deploy/docker-compose/with-gitlab/gitlab/**
 deploy/helm-templates/qubership-apihub/jwt_private_key
 deploy/helm-templates/qubership-apihub/local-secrets.yaml
 deploy/helm-templates/local-k8s-quickstart/qubership-apihub/local-secrets.yaml

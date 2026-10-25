@@ -24,10 +24,31 @@ test('/agent alone is help', () => {
 })
 
 test('known names are recognized in any case', () => {
-  for (const name of ['review', 'analyze', 'implement', 'retry', 'stop', 'cost', 'help']) {
+  for (const name of ['review', 'analyze', 'implement', 'retry', 'rerun', 'stop', 'cost', 'help']) {
     assert.deepEqual(parseCommand(`/agent ${name}`), { name, force: false, notes: '' })
     assert.deepEqual(parseCommand(`/Agent ${name.toUpperCase()}`), { name, force: false, notes: '' })
   }
+})
+
+test('ci_check and ci-check are the command ci-check', () => {
+  assert.deepEqual(parseCommand('/agent ci_check'), { name: 'ci-check', force: false, notes: '' })
+  assert.deepEqual(parseCommand('/agent CI-CHECK'), { name: 'ci-check', force: false, notes: '' })
+  assert.deepEqual(parseCommand('/agent ci_check look at the E2E job\nsecond line'), {
+    name: 'ci-check',
+    force: false,
+    notes: 'look at the E2E job\nsecond line',
+  })
+  // Not a command word: a question for the assistant.
+  assert.equal(parseCommand('/agent ci_checks').name, 'chat')
+})
+
+test('rerun takes notes like the other commands', () => {
+  assert.deepEqual(parseCommand('/agent rerun'), { name: 'rerun', force: false, notes: '' })
+  assert.deepEqual(parseCommand('/agent rerun the E2E job flaked\nsecond line'), {
+    name: 'rerun',
+    force: false,
+    notes: 'the E2E job flaked\nsecond line',
+  })
 })
 
 test('fix is normalized to implement', () => {
@@ -38,7 +59,7 @@ test('leading blank lines are ignored and the first line is trimmed', () => {
   assert.deepEqual(parseCommand('\n\n   /agent   review   \n'), { name: 'review', force: false, notes: '' })
 })
 
-test('force counts only after implement or fix', () => {
+test('force counts only after implement, fix, or review', () => {
   assert.deepEqual(parseCommand('/agent implement force'), { name: 'implement', force: true, notes: '' })
   assert.deepEqual(parseCommand('/agent fix FORCE use the v2 API'), {
     name: 'implement',
@@ -50,7 +71,14 @@ test('force counts only after implement or fix', () => {
     force: false,
     notes: 'forceful change',
   })
-  assert.deepEqual(parseCommand('/agent review force'), { name: 'review', force: false, notes: 'force' })
+  assert.deepEqual(parseCommand('/agent review force'), { name: 'review', force: true, notes: '' })
+  assert.deepEqual(parseCommand('/agent Review FORCE\nLook at the migration.'), {
+    name: 'review',
+    force: true,
+    notes: 'Look at the migration.',
+  })
+  assert.deepEqual(parseCommand('/agent review forced march'), { name: 'review', force: false, notes: 'forced march' })
+  assert.deepEqual(parseCommand('/agent analyze force'), { name: 'analyze', force: false, notes: 'force' })
 })
 
 test('notes hold the rest of the first line and all following lines', () => {

@@ -39,8 +39,8 @@ const LABEL_COMPLETED = 'agent:completed'
 const LABEL_REVIEWED = 'agent:pr-reviewed'
 
 /** The flows and attempt results that the report lists in this order; anything else follows, sorted by name. */
-const FLOWS = ['review', 'analyze', 'implement', 'ci-fix', 'chat']
-const RESULTS = ['pr-opened', 'draft', 'blocked', 'ci-green', 'ci-red', 'error', 'stopped']
+const FLOWS = ['review', 'analyze', 'implement', 'ci-fix', 'ci-check', 'chat']
+const RESULTS = ['pr-opened', 'draft', 'blocked', 'unrelated', 'ci-green', 'ci-red', 'error', 'stopped']
 
 const labelNames = (item) => (item?.labels ?? []).map((l) => (typeof l === 'string' ? l : l?.name))
 const hasLabel = (item, name) => labelNames(item).includes(name)
@@ -179,7 +179,8 @@ function costByFlow(records, period) {
 /**
  * The attempts recorded in the period, by result, and how many of them were forced. An attempt is the entry of
  * `attempts` in a state; a CI verdict replaces the result of the attempt it judges, so an attempt counts once with its
- * latest result. The state keeps one `forced` flag for the whole issue, so every attempt of a forced issue counts as
+ * latest result. An attempt that found the failure unrelated (`unrelated: true`) counts as `unrelated`, whatever the
+ * CI verdict was: its rerun is what the attempt did. The state keeps one `forced` flag for the whole issue, so every attempt of a forced issue counts as
  * forced.
  *
  * @param {object[]} states the states of issues
@@ -194,7 +195,8 @@ function attemptCounts(states, period) {
       if (!inPeriod(attempt?.at, period)) continue
       total += 1
       if (st.forced === true) forced += 1
-      const result = attempt.result ?? 'unknown'
+      // An attempt that found the failure unrelated keeps `unrelated: true` after the CI verdict replaced its result.
+      const result = attempt.unrelated === true ? 'unrelated' : attempt.result ?? 'unknown'
       results.set(result, (results.get(result) ?? 0) + 1)
     }
   }

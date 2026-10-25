@@ -13,8 +13,18 @@ test('an empty environment gives the safe defaults', () => {
       review: { id: 'openai/gpt-6-luna', variant: 'max' },
       verify: { id: 'openai/gpt-6.1-sol', variant: 'medium' },
       light: { id: 'openai/gpt-6-luna', variant: 'medium' },
+      triage: { id: 'openai/gpt-6.1-sol', variant: 'medium' },
     },
-    limits: { maxAttempts: 3, maxReviewRounds: 2, maxAnalyses: 5 },
+    limits: {
+      maxAttempts: 3,
+      maxReviewRounds: 2,
+      maxAnalyses: 5,
+      analysisGraceMinutes: 30,
+      reviewMaxLines: 5000,
+      reviewMaxFiles: 150,
+      dailyAnalyses: 10,
+      dailyReviews: 15,
+    },
   })
 })
 
@@ -48,7 +58,18 @@ test('models and limits come from the environment', () => {
   })
   assert.deepEqual(config.models.implement, { id: 'anthropic/claude-x', variant: null })
   assert.deepEqual(config.models.light, { id: 'openai/mini', variant: 'low' })
-  assert.deepEqual(config.limits, { maxAttempts: 7, maxReviewRounds: 4, maxAnalyses: 1 })
+  assert.equal(config.limits.maxAttempts, 7)
+  assert.equal(config.limits.maxReviewRounds, 4)
+  assert.equal(config.limits.maxAnalyses, 1)
+})
+
+test('the triage model has a default and comes from AGENT_MODEL_TRIAGE', () => {
+  assert.deepEqual(loadConfig({}).models.triage, { id: 'openai/gpt-6.1-sol', variant: 'medium' })
+  assert.deepEqual(loadConfig({ AGENT_MODEL_TRIAGE: 'openai/mini:low' }).models.triage, {
+    id: 'openai/mini',
+    variant: 'low',
+  })
+  assert.throws(() => loadConfig({ AGENT_MODEL_TRIAGE: 'nonsense' }), /AGENT_MODEL_TRIAGE/)
 })
 
 test('a blank variable falls back to the default', () => {
@@ -82,6 +103,34 @@ test('integer limits must be positive integers', () => {
   }
   assert.throws(() => loadConfig({ AGENT_MAX_REVIEW_ROUNDS: '0' }), /AGENT_MAX_REVIEW_ROUNDS/)
   assert.throws(() => loadConfig({ AGENT_MAX_ANALYSES: '2.5' }), /AGENT_MAX_ANALYSES/)
+})
+
+test('the grace period of the analysis allows 0 and rejects other non-integers', () => {
+  assert.equal(loadConfig({}).limits.analysisGraceMinutes, 30)
+  assert.equal(loadConfig({ AGENT_ANALYSIS_GRACE_MINUTES: '0' }).limits.analysisGraceMinutes, 0)
+  assert.equal(loadConfig({ AGENT_ANALYSIS_GRACE_MINUTES: ' 45 ' }).limits.analysisGraceMinutes, 45)
+  assert.equal(loadConfig({ AGENT_ANALYSIS_GRACE_MINUTES: '' }).limits.analysisGraceMinutes, 30)
+  for (const bad of ['-1', '1.5', 'abc', '1e3', '30 min']) {
+    assert.throws(() => loadConfig({ AGENT_ANALYSIS_GRACE_MINUTES: bad }), /AGENT_ANALYSIS_GRACE_MINUTES/, bad)
+  }
+})
+
+test('the size limits of the review and the daily caps are positive integers with defaults', () => {
+  const config = loadConfig({
+    AGENT_REVIEW_MAX_LINES: '100',
+    AGENT_REVIEW_MAX_FILES: '7',
+    AGENT_DAILY_ANALYSES: '3',
+    AGENT_DAILY_REVIEWS: '4',
+  })
+  assert.deepEqual(
+    [config.limits.reviewMaxLines, config.limits.reviewMaxFiles, config.limits.dailyAnalyses, config.limits.dailyReviews],
+    [100, 7, 3, 4],
+  )
+  for (const name of ['AGENT_REVIEW_MAX_LINES', 'AGENT_REVIEW_MAX_FILES', 'AGENT_DAILY_ANALYSES', 'AGENT_DAILY_REVIEWS']) {
+    for (const bad of ['0', '-1', '1.5', 'abc']) {
+      assert.throws(() => loadConfig({ [name]: bad }), new RegExp(name), `${name}=${bad}`)
+    }
+  }
 })
 
 test('the implementer and the reviewer must be different models', () => {

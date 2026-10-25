@@ -103,6 +103,7 @@ test('costByFlow sums the records of the period by flow, by model, and in total'
       cost(),
       cost({ flow: 'review', usd: 2 }),
       cost({ flow: 'ci-fix', usd: 0.5 }),
+      cost({ flow: 'ci-check', usd: 0.125 }),
       cost({ flow: 'zeta', usd: 0.5 }),
       cost({ flow: 'review', usd: 4, at: '2026-10-10T10:00:00Z' }),
       cost({ usd: 8, at: '2026-10-25T10:00:00Z' }),
@@ -115,14 +116,15 @@ test('costByFlow sums the records of the period by flow, by model, and in total'
     { flow: 'review', calls: 1, usd: 2 },
     { flow: 'implement', calls: 1, usd: 1 },
     { flow: 'ci-fix', calls: 1, usd: 0.5 },
+    { flow: 'ci-check', calls: 1, usd: 0.125 },
     { flow: 'chat', calls: 1, usd: 0.25 },
     { flow: 'zeta', calls: 1, usd: 0.5 },
   ])
   assert.deepEqual(result.models, [
-    { model: 'openai/model-a:high', calls: 4, usd: 4 },
+    { model: 'openai/model-a:high', calls: 5, usd: 4.125 },
     { model: 'openai/model-b', calls: 1, usd: 0.25 },
   ])
-  assert.deepEqual(result.total, { calls: 5, usd: 4.25 })
+  assert.deepEqual(result.total, { calls: 6, usd: 4.375 })
 })
 
 test('costByFlow copes with missing fields and with no records', () => {
@@ -136,7 +138,7 @@ test('attemptCounts counts the attempts of the period by result and counts force
   const attempt = (result, at = '2026-10-20T10:00:00Z') => ({ n: 1, result, at })
   const result = attemptCounts(
     [
-      { attempts: [attempt('ci-green'), attempt('pr-opened'), attempt('error')] },
+      { attempts: [attempt('ci-green'), attempt('pr-opened'), attempt('error'), attempt('unrelated')] },
       { forced: true, attempts: [attempt('draft'), attempt('ci-red'), attempt('ci-red', '2026-09-01T00:00:00Z')] },
       {
         forced: false,
@@ -147,12 +149,13 @@ test('attemptCounts counts the attempts of the period by result and counts force
     ],
     period,
   )
-  assert.equal(result.total, 9)
+  assert.equal(result.total, 10)
   assert.equal(result.forced, 2)
   assert.deepEqual(result.results, [
     { result: 'pr-opened', count: 1 },
     { result: 'draft', count: 1 },
     { result: 'blocked', count: 1 },
+    { result: 'unrelated', count: 1 },
     { result: 'ci-green', count: 1 },
     { result: 'ci-red', count: 1 },
     { result: 'error', count: 1 },
@@ -160,6 +163,16 @@ test('attemptCounts counts the attempts of the period by result and counts force
     { result: 'odd', count: 1 },
     { result: 'unknown', count: 1 },
   ])
+})
+
+test('attemptCounts counts an attempt with unrelated: true as unrelated, whatever the CI verdict was', () => {
+  const at = '2026-10-20T10:00:00Z'
+  const result = attemptCounts(
+    [{ attempts: [{ result: 'ci-green', unrelated: true, at }, { result: 'ci-red', unrelated: true, at }, { result: 'ci-red', at }] }],
+    period,
+  )
+  assert.equal(result.total, 3)
+  assert.deepEqual(result.results, [{ result: 'unrelated', count: 2 }, { result: 'ci-red', count: 1 }])
 })
 
 test('attemptCounts is empty without states', () => {

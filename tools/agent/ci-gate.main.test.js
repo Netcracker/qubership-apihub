@@ -7,7 +7,7 @@ const os = require('node:os')
 const path = require('node:path')
 const log = require('./lib/log')
 const state = require('./lib/state')
-const { gate, main } = require('./ci-gate')
+const { gate, main, rerunCommand } = require('./ci-gate')
 
 const logged = []
 log.setWriter((line) => logged.push(line))
@@ -117,6 +117,7 @@ function fakeGh({
       if (entry === undefined) throw new Error(`no log for job ${id}`)
       return entry
     },
+    addReaction: async (id, content) => calls.push(['addReaction', id, content]),
     rerunFailedJobs: async (id) => {
       if (rerunFails) throw new Error('Workflow is still running')
       calls.push(['rerunFailedJobs', id])
@@ -338,7 +339,7 @@ test('red with attempts left: the next attempt starts with the report in the sta
     assert.match(saved.lastCiReport, /FAIL packages\/x\/a\.test\.ts \(3\.2 s\)\nError: expected 1 to be 2/)
     assert.doesNotMatch(saved.lastCiReport, /2026-10-23T09/)
     assert.equal(saved.ciGate.sha, SHA)
-    assert.equal(saved.e2eReruns, undefined)
+    assert.equal(saved.e2eRerun, undefined)
     assert.match(ctx.gh.store[0].body, /Attempt 2 of 3 fixes it\./)
     assert.equal(ctx.report(), saved.lastCiReport)
     assert.deepEqual(saved.costs, [{ run: 'r1', flow: 'implement', role: 'implementer', usd: 1.5 }])
@@ -374,16 +375,17 @@ test('red with the same failure as the attempt before: needs-human at once, with
     )
     assert.equal(saved.implementing, undefined)
     const body = ctx.gh.store[0].body
-    assert.match(body, /I stopped\. The last attempt failed in the same way as the one before it/)
+    assert.match(body, /\n- Failed checks: `build`\.\n- First error, in `build`: `FAIL packages\/x\/a\.test\.ts \(3\.2 s\)`\.\n/)
+    assert.match(body, /- Why I stopped: The last attempt failed in the same way as the one before it/)
+    assert.match(body, /What you can do:\n\n- If the failure is not caused by the change .*comment `\/agent rerun`/)
     assert.match(body, /\| 1 \| initial \| ci-red \| `[0-9a-f]{12}` \| Tried a guard\. \|/)
     assert.match(body, /\| 2 \| ci-fix \| ci-red \| `[0-9a-f]{12}` \| Tried a test\. \|/)
     assert.match(body, /<details><summary>CI report<\/summary>/)
     const note = ctx.gh.calls[3][2]
-    assert.match(note, /^@dave, I stopped on #70\. The last attempt failed in the same way/)
-    assert.match(
-      note,
-      /Look at `build`: `FAIL packages\/x\/a\.test\.ts \(3\.2 s\)`\. Comment `\/agent retry` with guidance/,
-    )
+    assert.match(note, /^@dave, I stopped on #70: CI is red\.\n\n- Failed checks: `build`\.\n/)
+    assert.match(note, /- First error, in `build`: `FAIL packages\/x\/a\.test\.ts \(3\.2 s\)`\.\n/)
+    assert.match(note, /- Why I stopped: The last attempt failed in the same way/)
+    assert.match(note, /- To try another fix, comment `\/agent retry` with guidance\.$/)
   })
 })
 
@@ -395,7 +397,7 @@ test('red with the attempts spent: needs-human with the reason budget, also for 
   ] })
   await withContext({ gh: fakeGh(red({ st })) }, async (ctx) => {
     assert.deepEqual(await gate(ctx.env, ctx.deps), { outcome: 'stopped', reason: 'budget' })
-    assert.match(ctx.gh.calls.at(-1)[2], /^@carol, I stopped on #70\. I used all 3 attempts, and CI is still red\./)
+    assert.match(ctx.gh.calls.at(-1)[2], /^@carol, I stopped on #70: CI is red\.\n[\s\S]*- Why I stopped: I used all 3 attempts, and CI is still red\./)
     assert.equal(savedState(ctx.gh).attempts.length, 3)
   })
   // AGENT_MAX_ATTEMPTS counts: with 2, the second attempt was the last.
@@ -467,7 +469,7 @@ test('only E2E jobs failed: their run is rerun once and the decision is left for
     assert.equal(ctx.outputs(), 'outcome=rerun\nnext=\n')
     assert.deepEqual(ctx.gh.calls.map((c) => c.slice(0, 2)), [['rerunFailedJobs', 902], ['updateIssueComment', 5]])
     const saved = savedState(ctx.gh)
-    assert.equal(saved.e2eReruns, 1)
+    assert.deepEqual(saved.e2eRerun, { sha: SHA, count: 1 })
     assert.equal(saved.phase, 'waiting-ci')
     assert.equal(saved.ciGate, undefined)
     assert.equal(saved.attempts[0].signature, undefined)
@@ -475,13 +477,34 @@ test('only E2E jobs failed: their run is rerun once and the decision is left for
   })
 })
 
-test('the second red E2E result of the pull request is decided like any red result', async () => {
-  const st = waitingState({ e2eReruns: 1 })
+test('the verdict check ci-ok fails with E2E: the E2E jobs are still rerun once', async () => {
+  const checkRuns = [...e2eRed().checkRuns, checkRun('ci-ok', 'failure', { id: 34 })]
+  await withContext({ gh: fakeGh(e2eRed({ checkRuns })) }, async (ctx) => {
+    const result = await gate(ctx.env, ctx.deps)
+    assert.deepEqual(result, { outcome: 'rerun' })
+    assert.deepEqual(ctx.gh.calls.map((c) => c.slice(0, 2)), [['rerunFailedJobs', 902], ['rerunFailedJobs', 900],
+      ['updateIssueComment', 5]])
+    assert.deepEqual(savedState(ctx.gh).e2eRerun, { sha: SHA, count: 1 })
+  })
+})
+
+test('the second red E2E result of the same commit is decided like any red result', async () => {
+  const st = waitingState({ e2eRerun: { sha: SHA, count: 1 } })
   await withContext({ gh: fakeGh(e2eRed({ st })) }, async (ctx) => {
     const result = await gate(ctx.env, ctx.deps)
     assert.equal(result.outcome, 'next-attempt')
     assert.ok(!ctx.gh.calls.some((c) => c[0] === 'rerunFailedJobs'))
-    assert.equal(savedState(ctx.gh).e2eReruns, 1)
+    assert.deepEqual(savedState(ctx.gh).e2eRerun, { sha: SHA, count: 1 })
+  })
+})
+
+test('a new commit gets its own free rerun, and the counter of the old state is dropped', async () => {
+  const st = waitingState({ e2eRerun: { sha: 'oldsha', count: 1 }, e2eReruns: 1 })
+  await withContext({ gh: fakeGh(e2eRed({ st })) }, async (ctx) => {
+    assert.equal((await gate(ctx.env, ctx.deps)).outcome, 'rerun')
+    const saved = savedState(ctx.gh)
+    assert.deepEqual(saved.e2eRerun, { sha: SHA, count: 1 })
+    assert.equal(saved.e2eReruns, undefined)
   })
 })
 
@@ -492,7 +515,7 @@ test('an E2E job together with another failed job is no free rerun; a failed rer
   })
   await withContext({ gh: fakeGh(e2eRed({ rerunFails: true })) }, async (ctx) => {
     await assert.rejects(gate(ctx.env, ctx.deps), /Workflow is still running/)
-    assert.equal(savedState(ctx.gh).e2eReruns, undefined)
+    assert.equal(savedState(ctx.gh).e2eRerun, undefined)
   })
 })
 
@@ -560,7 +583,7 @@ test('no token reaches a comment, the state, the summary, a log line, or the rep
 
 test('main runs the gate', async () => {
   await withContext({}, async (ctx) => {
-    assert.equal((await main(ctx.env, ctx.deps)).outcome, 'green')
+    assert.equal((await main([], ctx.env, ctx.deps)).outcome, 'green')
   })
 })
 
@@ -716,4 +739,298 @@ test('costs: a cost record that chat wrote while the gate ran survives the gate\
       assert.ok(saved.costs.some((c) => c.usd === 0.2))
     })
   }
+})
+
+// ------------------------------------------------------------------------------------------------ /agent rerun
+
+const ASKER = 'erin'
+const COMMENT = 555
+/** The environment of the `rerun` job for a comment on the issue; `AGENT_PR` is set for a comment on the pull request. */
+const rerunEnv = (env = {}) => ({
+  AGENT_PR: '',
+  AGENT_HEAD_SHA: '',
+  AGENT_WORKFLOW_RUN_ID: '',
+  AGENT_ACTOR: ASKER,
+  AGENT_COMMENT_ID: String(COMMENT),
+  ...env,
+})
+const handedOff = (extra = {}) =>
+  waitingState({ phase: 'needs-human', ciGate: { sha: SHA, decided: true, at: 't', run: 'r' }, ...extra })
+const callNames = (gh) => gh.calls.map((c) => c[0])
+const reactions = (gh) => gh.calls.filter((c) => c[0] === 'addReaction').map((c) => c[2])
+const replies = (gh) => gh.calls.filter((c) => c[0] === 'createIssueComment')
+
+test('rerun: the failed checks run again, the state waits for CI, the label goes, the person gets one reply', async () => {
+  const labelled = handedOff({
+    implementing: { run: 'old', actor: 'carol', at: '2020-01-01T00:00:00Z', kind: 'ci-fix' },
+  })
+  await withContext({ gh: fakeGh(e2eRed({ st: labelled })), env: rerunEnv() }, async (ctx) => {
+    const result = await rerunCommand(ctx.env, ctx.deps)
+    assert.deepEqual([result.ok, result.outcome], [true, 'rerun'])
+    // The rerun comes first: a rejected rerun must leave the state and the label as they are.
+    assert.deepEqual(ctx.gh.calls.map((c) => c.slice(0, 2)), [
+      ['addReaction', COMMENT],
+      ['rerunFailedJobs', 902],
+      ['updateIssueComment', 5],
+      ['removeLabel', 200],
+      ['removeLabel', 70],
+      ['createIssueComment', 200],
+      ['addReaction', COMMENT],
+    ])
+    assert.deepEqual(reactions(ctx.gh), ['eyes', 'rocket'])
+    assert.deepEqual(
+      ctx.gh.calls.filter((c) => c[0] === 'removeLabel').map((c) => c[2]),
+      ['agent:needs-human', 'agent:needs-human'],
+    )
+    const saved = savedState(ctx.gh)
+    assert.equal(saved.phase, 'waiting-ci')
+    assert.equal(saved.ciGate, undefined)
+    assert.equal(saved.implementing, undefined)
+    assert.equal(saved.attempts.length, 1)
+    assert.deepEqual(saved.reruns, [{ at: saved.reruns[0].at, actor: ASKER, sha: SHA, runs: [902], run: RUN }])
+    assert.match(saved.reruns[0].at, /^\d{4}-\d\d-\d\dT/)
+    assert.deepEqual(saved.costs, labelled.costs)
+    assert.match(ctx.gh.store[0].body, /^<!-- ai-autonomous-state -->\n### AI implementation: waiting for CI on pull request #70/)
+    assert.equal(
+      replies(ctx.gh)[0][2],
+      '@erin, I reran the failed checks of #70 (`E2E tests (kind)`) on 3f2a9c1d5b7e. ' +
+        'No new attempt and no model call: the CI gate decides when they end.',
+    )
+    assert.equal(ctx.outputs(), '')
+  })
+})
+
+test('rerun on the pull request of the agent: the reply goes to the pull request, the state to the issue', async () => {
+  await withContext({ gh: fakeGh(e2eRed({ st: handedOff() })), env: rerunEnv({ AGENT_PR: '70' }) }, async (ctx) => {
+    assert.equal((await rerunCommand(ctx.env, ctx.deps)).outcome, 'rerun')
+    assert.equal(replies(ctx.gh)[0][1], 70)
+    assert.equal(savedState(ctx.gh).phase, 'waiting-ci')
+  })
+})
+
+test('rerun appends to the earlier reruns and keeps the attempts', async () => {
+  const earlier = [{ at: 'a', actor: 'bob', sha: 'x', runs: [1], run: 'u' }]
+  await withContext({ gh: fakeGh(e2eRed({ st: handedOff({ reruns: earlier }) })), env: rerunEnv() }, async (ctx) => {
+    await rerunCommand(ctx.env, ctx.deps)
+    const saved = savedState(ctx.gh)
+    assert.equal(saved.reruns.length, 2)
+    assert.deepEqual(saved.reruns[0], earlier[0])
+    assert.equal(saved.attempts.length, 1)
+  })
+})
+
+test('rerun: a failed verdict check is rerun with the others, and a status that cannot be rerun is named', async () => {
+  const checkRuns = [...e2eRed().checkRuns, checkRun('ci-ok', 'failure', { id: 34 })]
+  const statuses = [{ context: 'license/cla', state: 'failure' }]
+  await withContext({ gh: fakeGh(e2eRed({ st: handedOff(), checkRuns, statuses })), env: rerunEnv() }, async (ctx) => {
+    assert.equal((await rerunCommand(ctx.env, ctx.deps)).outcome, 'rerun')
+    assert.deepEqual(ctx.gh.calls.filter((c) => c[0] === 'rerunFailedJobs').map((c) => c[1]), [902, 900])
+    assert.match(replies(ctx.gh)[0][2], /I cannot rerun `license\/cla` from here\.$/)
+  })
+})
+
+test('rerun refuses without a pull request of the agent: no state, no branch, or another pull request', async () => {
+  const cases = [
+    { st: null, env: {} },
+    { st: waitingState({ pr: undefined }), env: {} },
+    { st: waitingState({ branch: undefined }), env: {} },
+    { st: waitingState({ pr: 71 }), env: { AGENT_PR: '70' } },
+  ]
+  for (const { st, env } of cases) {
+    await withContext({ gh: fakeGh({ st }), env: rerunEnv(env) }, async (ctx) => {
+      const result = await rerunCommand(ctx.env, ctx.deps)
+      assert.deepEqual([result.ok, result.outcome], [false, 'refused'])
+      assert.deepEqual(callNames(ctx.gh), ['addReaction', 'createIssueComment', 'addReaction'])
+      assert.equal(replies(ctx.gh)[0][2], '@erin, there is no pull request of the agent to rerun CI for.')
+      assert.deepEqual(reactions(ctx.gh), ['eyes', 'confused'])
+    })
+  }
+})
+
+test('rerun refuses while an attempt runs, but not when its record is older than 120 minutes', async () => {
+  const young = new Date(Date.now() - 10 * 60 * 1000).toISOString()
+  const old = new Date(Date.now() - 130 * 60 * 1000).toISOString()
+  const running = (at) =>
+    waitingState({ phase: 'implementing', implementing: { run: 'https://x/run/9', actor: 'carol', at } })
+  await withContext({ gh: fakeGh(e2eRed({ st: running(young) })), env: rerunEnv() }, async (ctx) => {
+    assert.equal((await rerunCommand(ctx.env, ctx.deps)).outcome, 'refused')
+    assert.equal(replies(ctx.gh)[0][2], '@erin, an implementation is already running: https://x/run/9.')
+    assert.ok(!callNames(ctx.gh).includes('updateIssueComment'))
+    assert.ok(!callNames(ctx.gh).includes('rerunFailedJobs'))
+  })
+  await withContext({ gh: fakeGh(e2eRed({ st: running(old) })), env: rerunEnv() }, async (ctx) => {
+    assert.equal((await rerunCommand(ctx.env, ctx.deps)).outcome, 'rerun')
+    assert.equal(savedState(ctx.gh).phase, 'waiting-ci')
+  })
+})
+
+test('rerun refuses a stopped piece of work and a pull request that is not open', async () => {
+  await withContext({ gh: fakeGh({ st: waitingState({ phase: 'stopped' }) }), env: rerunEnv() }, async (ctx) => {
+    assert.equal((await rerunCommand(ctx.env, ctx.deps)).outcome, 'refused')
+    assert.equal(replies(ctx.gh)[0][2], '@erin, the work is stopped; comment `/agent retry` to start again.')
+  })
+  await withContext({ gh: fakeGh({ st: handedOff(), pull: { state: 'closed' } }), env: rerunEnv() }, async (ctx) => {
+    assert.equal((await rerunCommand(ctx.env, ctx.deps)).outcome, 'refused')
+    assert.match(
+      replies(ctx.gh)[0][2],
+      /^@erin, pull request #70 is not open, so there is nothing to rerun\. Comment `\/agent retry`/,
+    )
+    assert.ok(!callNames(ctx.gh).includes('updateIssueComment'))
+    assert.equal(savedState(ctx.gh).phase, 'needs-human')
+  })
+})
+
+test('rerun refuses when only statuses failed: the state stays as it is', async () => {
+  const statuses = [{ context: 'license/cla', state: 'failure' }]
+  await withContext({ gh: fakeGh({ st: handedOff(), statuses }), env: rerunEnv() }, async (ctx) => {
+    const result = await rerunCommand(ctx.env, ctx.deps)
+    assert.deepEqual([result.ok, result.outcome], [false, 'refused'])
+    assert.deepEqual(callNames(ctx.gh), ['addReaction', 'createIssueComment', 'addReaction'])
+    assert.match(
+      replies(ctx.gh)[0][2],
+      /^@erin, the failed checks of #70 on 3f2a9c1d5b7e \(`license\/cla`\) cannot be rerun from here/,
+    )
+    assert.deepEqual(reactions(ctx.gh), ['eyes', 'confused'])
+    assert.equal(savedState(ctx.gh).phase, 'needs-human')
+  })
+})
+
+test('rerun while CI still runs: the state waits for the gate, nothing is rerun', async () => {
+  const checkRuns = [checkRun('lint', 'success'), running('build')]
+  await withContext({ gh: fakeGh({ st: handedOff(), checkRuns }), env: rerunEnv() }, async (ctx) => {
+    const result = await rerunCommand(ctx.env, ctx.deps)
+    assert.deepEqual([result.ok, result.outcome], [true, 'pending'])
+    assert.ok(!callNames(ctx.gh).includes('rerunFailedJobs'))
+    const saved = savedState(ctx.gh)
+    assert.deepEqual([saved.phase, saved.ciGate, saved.reruns[0].runs], ['waiting-ci', undefined, []])
+    assert.equal(
+      replies(ctx.gh)[0][2],
+      '@erin, CI still runs on #70 at 3f2a9c1d5b7e (`build` in_progress). ' +
+        'There is nothing to rerun yet; the CI gate decides when it ends.',
+    )
+    assert.deepEqual(reactions(ctx.gh), ['eyes', 'rocket'])
+  })
+})
+
+test('rerun with failed checks goes on when the only pending entry is the missing ci-ok', async () => {
+  await withContext({ gh: fakeGh({ ...e2eRed({ st: handedOff() }), noCiOk: true }), env: rerunEnv() }, async (ctx) => {
+    const result = await rerunCommand(ctx.env, ctx.deps)
+    assert.deepEqual([result.ok, result.outcome], [true, 'rerun'])
+    assert.deepEqual(ctx.gh.calls.filter((c) => c[0] === 'rerunFailedJobs').map((c) => c[1]), [902])
+    assert.match(replies(ctx.gh)[0][2], /^@erin, I reran the failed checks of #70/)
+    assert.equal(savedState(ctx.gh).phase, 'waiting-ci')
+  })
+})
+
+test('rerun with nothing failed and no ci-ok says that no CI verdict is reported, not that CI still runs', async () => {
+  const checkRuns = [checkRun('build', 'success')]
+  await withContext({ gh: fakeGh({ st: handedOff(), checkRuns, noCiOk: true }), env: rerunEnv() }, async (ctx) => {
+    const result = await rerunCommand(ctx.env, ctx.deps)
+    assert.deepEqual([result.ok, result.outcome], [true, 'pending'])
+    assert.ok(!callNames(ctx.gh).includes('rerunFailedJobs'))
+    const reply = replies(ctx.gh)[0][2]
+    assert.equal(
+      reply,
+      '@erin, no CI verdict (`ci-ok`) is reported for #70 at 3f2a9c1d5b7e, and no check failed, so there is nothing ' +
+        'to rerun. CI may wait for an approval of the workflows of a fork. The CI gate keeps waiting for the verdict.',
+    )
+    assert.doesNotMatch(reply, /still runs/)
+    assert.match(ctx.gh.store[0].body, /No CI verdict \(`ci-ok`\) is reported for `3f2a9c1d5b7e`, and no check failed\./)
+    assert.doesNotMatch(ctx.gh.store[0].body, /CI still runs/)
+  })
+})
+
+test('rerun when CI is green: the green path of the gate runs, and there is one comment', async () => {
+  await withContext({ gh: fakeGh({ st: handedOff(), pull: { draft: true } }), env: rerunEnv() }, async (ctx) => {
+    const result = await rerunCommand(ctx.env, ctx.deps)
+    assert.deepEqual([result.ok, result.outcome], [true, 'green'])
+    assert.deepEqual(ctx.patGh.calls, [['markPullReady', 'PR_70']])
+    const saved = savedState(ctx.gh)
+    assert.equal(saved.phase, 'completed')
+    assert.equal(saved.reruns.length, 1)
+    assert.equal(saved.attempts[0].result, 'ci-green')
+    assert.deepEqual(
+      ctx.gh.calls.filter((c) => c[0] === 'addLabels').map((c) => [c[1], c[2]]),
+      [[70, ['agent:completed', 'ai:l1-executor']], [200, ['agent:completed']]],
+    )
+    assert.equal(replies(ctx.gh).length, 1)
+    assert.equal(replies(ctx.gh)[0][2], '@erin, CI is green on #70. A person reviews and merges it.')
+    assert.deepEqual(reactions(ctx.gh), ['eyes', 'rocket'])
+  })
+})
+
+test('rerun: a stop that came in after the first read ends the rerun without a write', async () => {
+  const gh = fakeGh(e2eRed({ st: handedOff() }))
+  const original = gh.listIssueComments
+  let reads = 0
+  gh.listIssueComments = async (n) => {
+    reads += 1
+    const comments = await original(n)
+    if (reads === 1) return comments
+    return comments.map((c) => ({ ...c, body: state.render('stopped', { ...handedOff(), phase: 'stopped' }) }))
+  }
+  await withContext({ gh, env: rerunEnv() }, async (ctx) => {
+    const result = await rerunCommand(ctx.env, ctx.deps)
+    assert.deepEqual([result.ok, result.outcome], [false, 'refused'])
+    assert.ok(!callNames(gh).includes('updateIssueComment'))
+    assert.ok(!callNames(gh).includes('rerunFailedJobs'))
+    assert.match(replies(gh)[0][2], /the work is stopped/)
+  })
+})
+
+test('rerun: a rejected rerun changes nothing, keeps the hand-off label, and says why', async () => {
+  await withContext({ gh: fakeGh(e2eRed({ st: handedOff(), rerunFails: true })), env: rerunEnv() }, async (ctx) => {
+    const result = await rerunCommand(ctx.env, ctx.deps)
+    assert.deepEqual([result.ok, result.outcome], [false, 'refused'])
+    assert.ok(!callNames(ctx.gh).includes('updateIssueComment'))
+    assert.ok(!callNames(ctx.gh).includes('removeLabel'))
+    assert.equal(savedState(ctx.gh).phase, 'needs-human')
+    assert.match(
+      replies(ctx.gh)[0][2],
+      /^@erin, GitHub did not rerun the failed checks of #70: .*Workflow is still running.* Nothing changed\./,
+    )
+    assert.deepEqual(reactions(ctx.gh), ['eyes', 'confused'])
+  })
+})
+
+test('rerun when CI is green, asked on the pull request: the green comment goes to the pull request', async () => {
+  const env = rerunEnv({ AGENT_PR: '70' })
+  await withContext({ gh: fakeGh({ st: handedOff(), pull: { draft: true } }), env }, async (ctx) => {
+    assert.equal((await rerunCommand(ctx.env, ctx.deps)).outcome, 'green')
+    assert.deepEqual(replies(ctx.gh).map((c) => c[1]), [70])
+    assert.equal(savedState(ctx.gh).phase, 'completed')
+  })
+})
+
+test('rerun in dry-run: no write, no rerun, no reaction; the summary says what would happen', async () => {
+  const dry = rerunEnv({ AGENT_DRY_RUN: 'true' })
+  await withContext({ gh: fakeGh(e2eRed({ st: handedOff() })), env: dry }, async (ctx) => {
+    const result = await rerunCommand(ctx.env, ctx.deps)
+    assert.deepEqual([result.ok, result.outcome], [true, 'rerun'])
+    assert.deepEqual(ctx.gh.calls, [])
+    assert.match(ctx.summary(), /^## Dry run: rerun CI for #200\n/)
+    assert.match(ctx.summary(), /Would rerun the failed jobs of workflow run\(s\) 902\./)
+    assert.match(ctx.summary(), /"phase": "waiting-ci"/)
+    assert.match(ctx.summary(), /> @erin, I reran the failed checks of #70/)
+  })
+  await withContext({ gh: fakeGh({ st: handedOff() }), env: dry }, async (ctx) => {
+    assert.equal((await rerunCommand(ctx.env, ctx.deps)).outcome, 'green')
+    assert.deepEqual(ctx.gh.calls, [])
+    assert.deepEqual(ctx.patGh.calls, [])
+    assert.match(ctx.summary(), /CI is green: the green path of the CI gate would run\./)
+    assert.match(ctx.summary(), /> @erin, CI is green on #70\./)
+  })
+  await withContext({ gh: fakeGh({ st: null }), env: dry }, async (ctx) => {
+    assert.equal((await rerunCommand(ctx.env, ctx.deps)).outcome, 'refused')
+    assert.deepEqual(ctx.gh.calls, [])
+    assert.match(ctx.summary(), /> @erin, there is no pull request of the agent to rerun CI for\./)
+  })
+})
+
+test('main dispatches the rerun mode and refuses an unknown one; no token reaches a comment', async () => {
+  await withContext({ gh: fakeGh(e2eRed({ st: handedOff() })), env: rerunEnv() }, async (ctx) => {
+    assert.equal((await main(['rerun'], ctx.env, ctx.deps)).outcome, 'rerun')
+    assert.ok(!JSON.stringify([ctx.gh.calls, logged, ctx.summary()]).includes(PAT))
+    await assert.rejects(main(['bogus'], ctx.env, ctx.deps), /Usage: node tools\/agent\/ci-gate\.js \[rerun\]/)
+  })
 })

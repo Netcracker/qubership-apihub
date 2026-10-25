@@ -5,6 +5,9 @@
  * The working tree is the head of the pull request; this script and the opencode config come from a trusted checkout
  * (see the `review` job of .github/workflows/ai-autonomous-agent.yml). Steps:
  *
+ *   0. a size check, before any model call: a diff above `limits.reviewMaxLines` changed lines or
+ *      `limits.reviewMaxFiles` files (lock files not counted) is skipped unless `/agent review force` asks for it; the
+ *      state comment says so and no label or review is posted;
  *   1. facts by script: changed files, modules, risk flags, the merge base;
  *   2. `pr-reviewer` (the review model) writes the review as JSON;
  *   3. `verifier` (the verify model, a different one) confirms or rejects each finding;
@@ -12,6 +15,9 @@
  *      pull request rewritten with the summary, and the `agent:pr-reviewed` label. In dry-run, the job summary instead.
  *
  * The cost of every opencode run is recorded in the state, also when a later step fails.
+ *
+ * `main(env, deps)` takes `deps.gh` and `deps.computeFacts` so that a test can run the skip path without the network,
+ * Git, or the YAML parser of lib/facts.js (which is loaded only when facts are computed).
  *
  * Environment: GITHUB_REPOSITORY, GITHUB_TOKEN, OPENAI_API_KEY, AGENT_NUMBER (the pull request), AGENT_RUN_URL,
  * AGENT_LABELER (path of .github/labeler.yml), AGENT_OUT (folder for inputs, events, and outputs), the AGENT_*
@@ -27,7 +33,7 @@ const { createClient } = require('./lib/github')
 const state = require('./lib/state')
 const usage = require('./lib/usage')
 const { commentableLines } = require('./lib/diff')
-const { computeFacts } = require('./lib/facts')
+const { checkSize, renderSkip } = require('./lib/review-size')
 const { callAgent } = require('./lib/agent-call')
 const { untrusted } = require('./lib/prompt')
 const log = require('./lib/log')
@@ -122,8 +128,65 @@ function git(args) {
   return execFileSync('git', args, { encoding: 'utf8' }).trim()
 }
 
-async function main() {
-  const env = process.env
+/** Writes the state comment: the human part and the state, with the cost records another flow added meanwhile. */
+async function writeStateComment(gh, number, existing, human, st) {
+  const body = state.render(human, await state.withFreshCosts(gh, number, st))
+  if (existing) {
+    await gh.updateIssueComment(existing.id, body)
+    log.info('state comment updated', { id: existing.id })
+  } else {
+    const created = await gh.createIssueComment(number, body)
+    log.info('state comment created', { id: created?.id })
+  }
+}
+
+/**
+ * The review of a pull request above the size limit: no model call, no label, no inline review. The state comment says
+ * why, and the `reviews` entry stops `ready_for_review` from trying again. In dry-run, the job summary instead.
+ */
+async function skipForSize({ env, config, gh, number, pr, size, existing, initial, command, runUrl }) {
+  const headSha = pr.head.sha
+  log.info('review skipped: the diff is above the size limit', {
+    lines: size.lines,
+    files: size.files,
+    maxLines: config.limits.reviewMaxLines,
+    maxFiles: config.limits.reviewMaxFiles,
+  })
+  const human = renderSkip({ headSha, size, limits: config.limits, runUrl })
+  const entry = {
+    sha: headSha,
+    run: runUrl,
+    at: new Date().toISOString(),
+    skipped: 'size',
+    lines: size.lines,
+    files: size.files,
+    trigger: command ? 'command' : 'auto',
+  }
+  const st = { ...initial, reviews: [...(initial.reviews ?? []), entry] }
+  await log.group(config.dryRun ? 'Publish (dry run: job summary only)' : 'Publish', async () => {
+    if (config.dryRun) {
+      if (env.GITHUB_STEP_SUMMARY) {
+        const report = [`## Dry run: AI review of #${number}`, '', human, '']
+        fs.appendFileSync(env.GITHUB_STEP_SUMMARY, report.join('\n') + '\n')
+      }
+      log.info('dry run: written to the job summary')
+      return
+    }
+    await writeStateComment(gh, number, existing, human, st)
+  })
+}
+
+/**
+ * The `reviews` entry of a finished review. A failed review is an entry too (`failed: true`): it cost model calls, so
+ * the daily cap counts it, and `ready_for_review` does not start it again; the failure comment tells the person to
+ * comment `/agent review`.
+ */
+function reviewEntry({ headSha, runUrl, command, failed }) {
+  const entry = { sha: headSha, run: runUrl, at: new Date().toISOString(), trigger: command ? 'command' : 'auto' }
+  return failed ? { ...entry, failed: true } : entry
+}
+
+async function main(env = process.env, deps = {}) {
   const config = loadConfig(env)
   const number = Number(env.AGENT_NUMBER)
   // The parsed `/agent review` command, when a comment started the run; empty for a pull_request event.
@@ -131,30 +194,21 @@ async function main() {
   const out = env.AGENT_OUT
   const runUrl = env.AGENT_RUN_URL
   fs.mkdirSync(out, { recursive: true })
-  const gh = createClient({ token: env.GITHUB_TOKEN, repo: env.GITHUB_REPOSITORY })
+  const gh = deps.gh ?? createClient({ token: env.GITHUB_TOKEN, repo: env.GITHUB_REPOSITORY })
   log.info('review starts', {
     pr: number,
     dryRun: config.dryRun,
+    force: Boolean(command?.force),
     review: `${config.models.review.id}:${config.models.review.variant}`,
     verify: `${config.models.verify.id}:${config.models.verify.variant}`,
   })
 
-  const { pr, files, mergeBase, headSha, facts } = await log.group('Load the pull request', async () => {
+  const { pr, files } = await log.group('Load the pull request', async () => {
     const pr = await gh.getPull(number)
     const files = await gh.listPullFiles(number)
-    git(['fetch', '--no-tags', 'origin', pr.base.ref])
-    const mergeBase = git(['merge-base', 'FETCH_HEAD', 'HEAD'])
-    const headSha = git(['rev-parse', 'HEAD'])
-    log.info('pull request', { title: pr.title, author: pr.user?.login, base: pr.base.ref, mergeBase, headSha })
+    log.info('pull request', { title: pr.title, author: pr.user?.login, base: pr.base.ref, head: pr.head?.sha })
     log.info('changed files', { count: files.length, withoutPatch: files.filter((f) => !f.patch).length })
-    const facts = computeFacts({
-      files: files.map((f) => f.filename),
-      labelerYaml: fs.readFileSync(env.AGENT_LABELER, 'utf8'),
-      title: pr.title,
-      body: pr.body ?? '',
-    })
-    log.json('impact facts', facts)
-    return { pr, files, mergeBase, headSha, facts }
+    return { pr, files }
   })
 
   const { existing, initial } = await log.group('Load the state', async () => {
@@ -166,6 +220,29 @@ async function main() {
       usdSoFar: (initial.costs ?? []).reduce((s, c) => s + c.usd, 0).toFixed(4),
     })
     return { existing, initial }
+  })
+
+  const { size, tooBig, skip } = checkSize(files, config.limits, Boolean(command?.force))
+  log.info('size', { lines: size.lines, files: size.files, tooBig, force: Boolean(command?.force) })
+  if (skip) {
+    await skipForSize({ env, config, gh, number, pr, size, existing, initial, command, runUrl })
+    return
+  }
+
+  const { mergeBase, headSha, facts } = await log.group('Compute the facts', async () => {
+    git(['fetch', '--no-tags', 'origin', pr.base.ref])
+    const mergeBase = git(['merge-base', 'FETCH_HEAD', 'HEAD'])
+    const headSha = git(['rev-parse', 'HEAD'])
+    log.info('git', { mergeBase, headSha })
+    const computeFacts = deps.computeFacts ?? require('./lib/facts').computeFacts
+    const facts = computeFacts({
+      files: files.map((f) => f.filename),
+      labelerYaml: fs.readFileSync(env.AGENT_LABELER, 'utf8'),
+      title: pr.title,
+      body: pr.body ?? '',
+    })
+    log.json('impact facts', facts)
+    return { mergeBase, headSha, facts }
   })
   let st = initial
   const costs = []
@@ -288,10 +365,7 @@ async function main() {
     thisRun: costs.reduce((s, c) => s + c.usd, 0).toFixed(4),
     pullRequestTotal: st.costs.reduce((s, c) => s + c.usd, 0).toFixed(4),
   })
-  if (!failure) {
-    const entry = { sha: headSha, run: runUrl, at: new Date().toISOString() }
-    st = { ...st, reviews: [...(st.reviews ?? []), entry] }
-  }
+  st = { ...st, reviews: [...(st.reviews ?? []), reviewEntry({ headSha, runUrl, command, failed: failure !== null })] }
   if (failure) {
     human = `### AI review failed\n\nThe review of ${headSha.slice(0, 7)} did not finish: ${failure.message}\n\n` +
       `<sub>[Run](${runUrl}) · comment \`/agent review\` to try again</sub>`
@@ -309,14 +383,7 @@ async function main() {
     }
     // The state comment goes first: it holds the cost record, which must survive a failed review post. It is read
     // again right before the write, so a cost record that chat added since the state was loaded survives too.
-    const body = state.render(human, await state.withFreshCosts(gh, number, st))
-    if (existing) {
-      await gh.updateIssueComment(existing.id, body)
-      log.info('state comment updated', { id: existing.id })
-    } else {
-      const created = await gh.createIssueComment(number, body)
-      log.info('state comment created', { id: created?.id })
-    }
+    await writeStateComment(gh, number, existing, human, st)
     if (inline.length) {
       try {
         const created = await gh.createReview(number, {
@@ -346,4 +413,4 @@ if (require.main === module) {
   })
 }
 
-module.exports = { selectFindings, placeFindings, renderSummary, findingBody, verificationLine }
+module.exports = { selectFindings, placeFindings, renderSummary, findingBody, verificationLine, reviewEntry, main }

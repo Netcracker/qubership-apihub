@@ -228,3 +228,12 @@ test('verificationLine counts what the verifier did; a finding without a verdict
   assert.match(line, /4 finding\(s\): 1 confirmed, 2 plausible .* 1 rejected/)
   assert.equal(verificationLine([], []), '')
 })
+
+test('reviewEntry records a failed review with failed: true, and the trigger of the command or the event', () => {
+  const { reviewEntry } = require('./review')
+  const base = { headSha: 'abc', runUrl: 'https://github.com/o/r/actions/runs/1' }
+  const ok = reviewEntry({ ...base, command: null, failed: false })
+  assert.deepEqual({ ...ok, at: 'x' }, { sha: 'abc', run: base.runUrl, at: 'x', trigger: 'auto' })
+  const failed = reviewEntry({ ...base, command: { name: 'review' }, failed: true })
+  assert.deepEqual({ ...failed, at: 'x' }, { sha: 'abc', run: base.runUrl, at: 'x', trigger: 'command', failed: true })
+})
