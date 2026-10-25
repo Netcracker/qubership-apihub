@@ -449,11 +449,11 @@ dependencies:
     .claude/rules/apihub-deployment-authoring.md: sha256:3822f880ac71bbe92a3b2b7992a792ce7a31fcf8342374b466e72eb403409955
     .claude/rules/apihub-deployment-compose.md: sha256:b6c3e8c0df80c38d9cfdef2e118eaa950dc16da45328e84d7a7704fddb67c3dd
     .claude/rules/apihub-deployment-docs.md: sha256:d079e041da06cfa313bdb25e52b650f792e2d438e7c629c066b03aff067c3214
-    .claude/skills/apihub-deployment-authoring/SKILL.md: sha256:7494b0abce2c5c827e5a0b820169f1f70febcefdf5c9ec19d571bd5de4bf0dfd
+    .claude/skills/apihub-deployment-authoring/SKILL.md: sha256:1904ed06142e724ea186089835e0480ecd611947c2668f316f4ee38147ce7826
     .cursor/rules/apihub-deployment-authoring.mdc: sha256:63a9ca4bb678a4899523276c8b7d930ac0fa3f310a98d5da0d0dc6a5f3aefb08
     .cursor/rules/apihub-deployment-compose.mdc: sha256:3befe9f7eb0767607396d6e04035127b43ec7e2b2ce7272f67faa7e0caa98f2e
     .cursor/rules/apihub-deployment-docs.mdc: sha256:6d42635d27c54602244deaa1b053ddf992f2ef1a171153d26873c64b92fee26d
-    .cursor/skills/apihub-deployment-authoring/SKILL.md: sha256:7494b0abce2c5c827e5a0b820169f1f70febcefdf5c9ec19d571bd5de4bf0dfd
+    .cursor/skills/apihub-deployment-authoring/SKILL.md: sha256:1904ed06142e724ea186089835e0480ecd611947c2668f316f4ee38147ce7826
   source: local
   local_path: ./agent-packages/apihub-deployment-authoring
 - repo_url: _local/apihub-deployment-followup
@@ -2009,7 +2009,7 @@ deployments:
   owners:
   - ./agent-packages/apihub-deployment-authoring
   active_owner: ./agent-packages/apihub-deployment-authoring
-  content_hash: sha256:7494b0abce2c5c827e5a0b820169f1f70febcefdf5c9ec19d571bd5de4bf0dfd
+  content_hash: sha256:1904ed06142e724ea186089835e0480ecd611947c2668f316f4ee38147ce7826
 - kind: project-relative
   target: claude
   value: .claude/skills/apihub-deployment-followup
@@ -3557,7 +3557,7 @@ deployments:
   owners:
   - ./agent-packages/apihub-deployment-authoring
   active_owner: ./agent-packages/apihub-deployment-authoring
-  content_hash: sha256:7494b0abce2c5c827e5a0b820169f1f70febcefdf5c9ec19d571bd5de4bf0dfd
+  content_hash: sha256:1904ed06142e724ea186089835e0480ecd611947c2668f316f4ee38147ce7826
 - kind: project-relative
   target: cursor
   value: .cursor/skills/apihub-deployment-followup

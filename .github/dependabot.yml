@@ -132,7 +132,7 @@ updates:
         patterns:
           - "*"
 
-  # Images in the Docker Compose stacks for users. with-gitlab has no compose file.
+  # Images in the Docker Compose stacks for users.
   - package-ecosystem: "docker-compose"
     directories:
       - "/deploy/docker-compose/apihub-generic"

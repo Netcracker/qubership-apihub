@@ -263,7 +263,7 @@ diagramSlide('Kubernetes deployment', 'Helm chart deploy/helm-templates/qubershi
   'Backend and Linter have ServiceAccounts / RoleBindings for Olric cluster discovery (olric-cloud-plugin); ServiceMonitor and two Grafana dashboards ship with the chart.',
   'Sizing: Backend 3 CPU / 3 Gi in production with GOMEMLIMIT ≈ 80 % of the limit; Build Task Consumer 3–6 replicas; Linter 1000 Mi; Agents Backend 256 Mi.',
   'PostgreSQL 14+ external (or local-k8s-quickstart/postgres-db), optional S3, optional Keycloak and Apache Superset in the quickstart.',
-  'Docker Compose apihub-generic runs all five services + postgres; variants with-keycloak and with-gitlab; java-task-consumer has its own chart and compose file.'], 'Deployment notes');
+  'Docker Compose apihub-generic runs all five services + postgres; variant with-keycloak; java-task-consumer has its own chart and compose file.'], 'Deployment notes');
 diagramSlide('Publish flow', 'From upload to lint results — Backend, Build Task Consumer, Olric, Linter', 'S1_publish', [
   '1–3  UI posts sources; Backend stores a build task and sources (DB or S3).',
   '4–6  Consumer polls, receives task ZIP, sends running heartbeats, runs PackageVersionBuilder (parse, normalize, diff against previous version, classify, BWC, pack).',
