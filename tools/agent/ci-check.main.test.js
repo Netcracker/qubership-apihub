@@ -324,6 +324,61 @@ test('the triager gets the diff refs, the signature, the report, and the notes i
   })
 })
 
+/** The shape of #943: two cancelled lint runs, a failed test job, and the failed verdict check. */
+const shape943 = () => [
+  checkRun('run-lint', 'cancelled', { runId: 903, jobId: 51 }),
+  checkRun('run-lint', 'cancelled', { runId: 904, jobId: 52 }),
+  checkRun('js', 'failure', { runId: 900, jobId: 11 }),
+  checkRun('ci-ok', 'failure', { runId: 900, jobId: 13 }),
+  checkRun('build', 'success', { jobId: 12 }),
+]
+
+test('cancelled checks are failed, not pending: the check triages the red CI of the #943 shape', async () => {
+  await withContext({ checkRuns: shape943(), answers: [triage()] }, async (ctx) => {
+    const result = await ciCheck(ctx.env, ctx.deps)
+    assert.deepEqual(result, { ok: true, outcome: 'triaged', verdict: 'change', rerun: [] })
+    assert.equal(ctx.runAgent.runs.length, 1)
+    const text = ctx.runAgent.runs[0].inputText
+    // The input marks the cancelled checks, and counts them.
+    assert.ok(text.includes('- run-lint: cancelled [cancelled: it was stopped, it did not fail by itself] (https://'))
+    assert.ok(text.includes('- js: failure (https://'))
+    assert.ok(text.includes('- Cancelled checks: 2 of 4 failed checks'))
+    const [, , reply] = replies(ctx.gh, 123)[0]
+    assert.ok(!reply.includes('CI still runs'))
+    assert.deepEqual(reactions(ctx.gh), ['eyes', 'rocket'])
+  })
+})
+
+test('cancelled checks only: the triager decides; an infra verdict reruns the cancelled runs', async () => {
+  const checkRuns = [
+    checkRun('run-lint', 'cancelled', { runId: 903, jobId: 51 }),
+    checkRun('ci-ok', 'failure', { runId: 900, jobId: 13 }),
+    checkRun('build', 'success', { jobId: 12 }),
+  ]
+  const answer = triage({
+    verdict: 'infra', confidence: 'high', fixes: [], rootCause: 'The lint run hit the 65 minute limit.',
+  })
+  await withContext({ checkRuns, answers: [answer] }, async (ctx) => {
+    const result = await ciCheck(ctx.env, ctx.deps)
+    assert.deepEqual(result, { ok: true, outcome: 'triaged', verdict: 'infra', rerun: [900, 903] })
+    const reruns = ctx.gh.calls.filter((c) => c[0] === 'rerunFailedJobs')
+    assert.deepEqual(reruns, [['rerunFailedJobs', 900], ['rerunFailedJobs', 903]])
+    const [, , reply] = replies(ctx.gh, 123)[0]
+    assert.ok(reply.includes('**What I did.** I reran the failed jobs (`ci-ok`, `run-lint` (cancelled)).'))
+    assert.ok(ctx.runAgent.runs[0].inputText.includes('- Cancelled checks: 1 of 2 failed checks'))
+  })
+})
+
+test('a cancelled check next to a running one: CI still runs, and the reply names the running check only', async () => {
+  const checkRuns = [checkRun('run-lint', 'cancelled', { jobId: 51 }), running('build')]
+  await withContext({ checkRuns }, async (ctx) => {
+    assert.deepEqual(await ciCheck(ctx.env, ctx.deps), { ok: true, outcome: 'pending' })
+    const body = writes(ctx.gh)[0][2]
+    assert.ok(body.includes('(`build` in_progress)'))
+    assert.ok(!body.includes('run-lint'))
+  })
+})
+
 test('red and change on the pull request of the agent adds the retry hint and leaves the issue alone', async () => {
   await withContext({ targets: agentPulls(), number: 70, issue: 200, answers: [triage()] }, async (ctx) => {
     await ciCheck(ctx.env, ctx.deps)

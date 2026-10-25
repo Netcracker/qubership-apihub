@@ -197,6 +197,29 @@ test('renderCheckInput: refs, merge base, and everything written by people insid
   assert.ok(text.includes('<untrusted>\nThe E2E job failed twice.\n</untrusted>'))
 })
 
+test('renderCheckInput: a cancelled check is marked, and the header counts the cancelled checks', () => {
+  const cancelled = { ...job('run-lint'), conclusion: 'cancelled' }
+  const text = renderCheckInput({
+    pull: { number: 123, title: 't' },
+    sha: SHA,
+    refs: { base: 'origin/develop', head: 'h', mergeBase: null },
+    failed: [job('js'), cancelled, cancelled],
+    signature: 's',
+    report: 'r',
+    notes: '',
+    asker: 'carol',
+  })
+  const note = '(stopped by a timeout, a person, or a newer run)'
+  assert.ok(text.includes(`- Cancelled checks: 2 of 3 failed checks ${note}\n`))
+  assert.equal(text.match(/\[cancelled: it was stopped, it did not fail by itself\]/g).length, 2)
+  assert.ok(text.includes('- js: failure ('))
+  const plain = renderCheckInput({
+    pull: { number: 5, title: 't' }, sha: SHA, refs: { base: 'b', head: 'h', mergeBase: null }, failed: [job('js')],
+    signature: 's', report: 'r', notes: '', asker: 'carol',
+  })
+  assert.ok(plain.includes('- Cancelled checks: 0 of 1 failed checks\n'))
+})
+
 test('renderCheckInput: no merge base and no notes', () => {
   const text = renderCheckInput({
     pull: { number: 5, title: 't' },

@@ -220,10 +220,18 @@ test('/agent ci_check on an issue is skipped', () => {
   assert.deepEqual([result.action, result.number, result.reason], ['skip', 200, 'ci_check works on a pull request'])
 })
 
-test('/agent ci_check on a pull request of Dependabot is skipped; one from a fork is allowed', () => {
+test('/agent ci_check on a pull request of Dependabot goes to the ci-check job; one from a fork too', () => {
   const dependabot = onPersonPull('/agent ci_check')
   dependabot.issue.user.login = 'dependabot[bot]'
-  assert.equal(route('issue_comment', dependabot, write).reason, 'dependency update pull requests are not handled')
+  assert.deepEqual(route('issue_comment', dependabot, write), {
+    action: 'ci-check',
+    number: 123,
+    reason: '/agent ci_check',
+    command: { name: 'ci-check', force: false, notes: '' },
+  })
+  const hyphen = onPersonPull('/agent ci-check the E2E job failed')
+  hyphen.issue.user.login = 'dependabot[bot]'
+  assert.equal(route('issue_comment', hyphen, write).action, 'ci-check')
   // The router looks at the comment, not at the origin of the branch.
   assert.equal(route('issue_comment', onPersonPull('/agent ci_check'), write).action, 'ci-check')
 })
@@ -294,10 +302,8 @@ test('every command needs an allowed commenter with write access who is not a bo
   assert.equal(disabled.reason, 'AGENT_ENABLED is not true')
 })
 
-test('a pull request of Dependabot stays ignored by every new command', () => {
-  const bodies = [
-    '/agent', '/agent cost', '/agent stop', '/agent retry', '/agent rerun', '/agent ci_check', '/agent a question',
-  ]
+test('a pull request of Dependabot stays ignored by every new command but ci_check', () => {
+  const bodies = ['/agent', '/agent cost', '/agent stop', '/agent retry', '/agent rerun', '/agent a question']
   for (const body of bodies) {
     const payload = onPersonPull(body)
     payload.issue.user.login = 'dependabot[bot]'
