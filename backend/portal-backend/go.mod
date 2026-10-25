@@ -33,7 +33,7 @@ require (
 	github.com/x-cray/logrus-prefixed-formatter v0.5.2
 	github.com/xuri/excelize/v2 v2.11.1-0.20260929015830-8ffeb07ec9a3
 	github.com/zeebo/xxh3 v1.1.0
-	go.opentelemetry.io/contrib/bridges/prometheus v0.71.0
+	go.opentelemetry.io/contrib/bridges/prometheus v0.72.0
 	go.opentelemetry.io/otel v1.47.0
 	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp v1.47.0
 	go.opentelemetry.io/otel/sdk v1.47.0
