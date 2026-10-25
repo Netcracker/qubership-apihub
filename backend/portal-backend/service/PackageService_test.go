@@ -14,12 +14,13 @@ import (
 
 type createPackageRepoStub struct {
 	repository.PublishedRepository
-	parent  *entity.PackageEntity
-	created *entity.PackageEntity
+	parent        *entity.PackageEntity
+	getPackageErr error
+	created       *entity.PackageEntity
 }
 
 func (s *createPackageRepoStub) GetPackage(context.Context, string) (*entity.PackageEntity, error) {
-	return s.parent, nil
+	return s.parent, s.getPackageErr
 }
 
 func (s *createPackageRepoStub) GetPackageIncludingDeleted(context.Context, string) (*entity.PackageEntity, error) {
@@ -80,10 +81,20 @@ func (createPackageActivityServiceStub) TrackEvent(context.Context, view.Activit
 func TestCreatePackageValidatesParentKind(t *testing.T) {
 	const parentId = "AB.CD"
 	const alias = "CHILD"
-	for _, parentKind := range []string{entity.KIND_WORKSPACE, entity.KIND_GROUP, entity.KIND_PACKAGE, entity.KIND_DASHBOARD} {
+	for _, parent := range []struct {
+		kind    string
+		allowed bool
+	}{
+		{kind: entity.KIND_WORKSPACE, allowed: true},
+		{kind: entity.KIND_GROUP, allowed: true},
+		{kind: entity.KIND_PACKAGE},
+		{kind: entity.KIND_DASHBOARD},
+		{kind: "unknown"},
+		{kind: ""},
+	} {
 		for _, childKind := range []string{entity.KIND_GROUP, entity.KIND_PACKAGE, entity.KIND_DASHBOARD} {
-			t.Run(parentKind+"/"+childKind, func(t *testing.T) {
-				repo := &createPackageRepoStub{parent: &entity.PackageEntity{Id: parentId, Kind: parentKind}}
+			t.Run(parent.kind+"/"+childKind, func(t *testing.T) {
+				repo := &createPackageRepoStub{parent: &entity.PackageEntity{Id: parentId, Kind: parent.kind}}
 				service := packageServiceImpl{
 					publishedRepo: repo,
 					userRepo:      createPackageUserRepoStub{},
@@ -100,7 +111,7 @@ func TestCreatePackageValidatesParentKind(t *testing.T) {
 					ParentId:              parentId,
 					ReleaseVersionPattern: ".*",
 				})
-				if parentKind == entity.KIND_PACKAGE || parentKind == entity.KIND_DASHBOARD {
+				if !parent.allowed {
 					var customErr *exception.CustomError
 					if !errors.As(err, &customErr) {
 						t.Fatalf("expected a parent-kind validation error, got result %+v and error %v", result, err)
@@ -111,7 +122,7 @@ func TestCreatePackageValidatesParentKind(t *testing.T) {
 					if customErr.Message != exception.IncorrectPackageParentKindMsg {
 						t.Fatalf("expected the parent-kind validation message, got %q", customErr.Message)
 					}
-					if customErr.Params["parentId"] != parentId || customErr.Params["kind"] != parentKind {
+					if customErr.Params["parentId"] != parentId || customErr.Params["kind"] != parent.kind {
 						t.Fatalf("expected parent ID and kind in error parameters, got %v", customErr.Params)
 					}
 					if result != nil || repo.created != nil {
@@ -120,7 +131,7 @@ func TestCreatePackageValidatesParentKind(t *testing.T) {
 					return
 				}
 				if err != nil {
-					t.Fatalf("expected creation under %s to succeed, got %v", parentKind, err)
+					t.Fatalf("expected creation under %s to succeed, got %v", parent.kind, err)
 				}
 				if result == nil || repo.created == nil {
 					t.Fatal("expected a child to be created")
@@ -130,5 +141,43 @@ func TestCreatePackageValidatesParentKind(t *testing.T) {
 				}
 			})
 		}
+	}
+}
+
+func TestCreatePackageParentLookupFailures(t *testing.T) {
+	const parentId = "AB.CD"
+	lookupErr := errors.New("parent lookup failed")
+	for _, tc := range []struct {
+		name string
+		err  error
+	}{
+		{name: "missing parent"},
+		{name: "repository error", err: lookupErr},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			repo := &createPackageRepoStub{getPackageErr: tc.err}
+			service := packageServiceImpl{publishedRepo: repo}
+			result, err := service.CreatePackage(context.Background(), view.SimplePackage{
+				Alias:    "CHILD",
+				Kind:     entity.KIND_PACKAGE,
+				ParentId: parentId,
+			})
+			if tc.err != nil {
+				if !errors.Is(err, tc.err) {
+					t.Fatalf("expected the parent lookup error, got %v", err)
+				}
+			} else {
+				var customErr *exception.CustomError
+				if !errors.As(err, &customErr) {
+					t.Fatalf("expected a missing-parent error, got %v", err)
+				}
+				if customErr.Status != http.StatusNotFound || customErr.Code != exception.PackageNotFound {
+					t.Fatalf("unexpected missing-parent error: %+v", customErr)
+				}
+			}
+			if result != nil || repo.created != nil {
+				t.Fatal("a failed parent lookup must not create a child")
+			}
+		})
 	}
 }
