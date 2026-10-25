@@ -161,7 +161,7 @@
     "@types/lodash.pickby": "4.6.6",
     "@types/postman-collection": "^3.5.7",
     "@typescript-eslint/eslint-plugin": "^5.19.0",
-    "@typescript-eslint/parser": "^5.19.0",
+    "@typescript-eslint/parser": "^8.72.0",
     "eslint": "^8.13.0",
     "eslint-plugin-import": "^2.26.0",
     "eslint-plugin-jest": "25.7.0",
