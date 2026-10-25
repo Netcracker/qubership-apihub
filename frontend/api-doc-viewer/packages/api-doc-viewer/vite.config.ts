@@ -16,9 +16,8 @@
 
 import react from '@vitejs/plugin-react';
 import path from "path";
-import { defineConfig } from 'vite';
+import { defineConfig, esmExternalRequirePlugin } from 'vite';
 import dts from 'vite-plugin-dts';
-import { esmExternalRequirePlugin } from 'rolldown/plugins';
 import ts from 'typescript';
 
 /* The aliases are defined once, in tsconfig.json "paths"; tsc reads them there, jest.config.ts
@@ -63,7 +62,10 @@ export default defineConfig({
 
        react/react-dom MOVE here from build.rollupOptions.external rather than being listed
        in both: top-level external takes precedence, and a module named in both stays a raw
-       require(). The rewrite only applies to ESM output, which is what lib.formats gives. */
+       require(). The rewrite only applies to ESM output, which is what lib.formats gives.
+
+       The plugin comes from vite, not rolldown/plugins: vite ignores a plugin created by a
+       rolldown copy other than its own, without a warning, and React lands in dist/index.js. */
     esmExternalRequirePlugin({
       external: ['react', 'react-dom'],
     }),

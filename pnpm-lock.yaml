@@ -533,9 +533,6 @@ importers:
       react-remove-scroll:
         specifier: ^2.6.0
         version: 2.7.2(@types/react@18.3.31)(react@18.3.1)
-      rolldown:
-        specifier: ~1.2.4
-        version: 1.2.7
       start-server-and-test:
         specifier: 3.0.12
         version: 3.0.12(supports-color@9.4.0)
