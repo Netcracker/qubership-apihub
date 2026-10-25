@@ -93,12 +93,14 @@ every author, within the size limit of the review and the daily caps.
 ## The jobs of the agent workflow
 
 `ai-autonomous-agent.yml` has one entry job, `route`, and one job per action. `route` reads the event and the state,
-decides, and passes the decision on as job outputs. Exactly one of the other jobs runs, except `implement` and
-`publish`, which run as a pair, and `ci-gate`, which can hand over to that pair in the same run.
+decides, and passes the decision on as job outputs. It runs no model and only default-branch code. Its token can write
+comments and reactions and read the runs of the workflow, for one reason: to decline a command while another run works
+on the same number (see [One command at a time](#one-command-at-a-time)). Exactly one of the other jobs runs, except
+`implement` and `publish`, which run as a pair, and `ci-gate`, which can hand over to that pair in the same run.
 
 ```mermaid
 flowchart TB
-  ROUTE["<b>route</b><br/>route.js<br/>GITHUB_TOKEN read-only<br/>no model"]
+  ROUTE["<b>route</b><br/>route.js<br/>GITHUB_TOKEN: comments, reactions, read runs<br/>no model"]
   ROUTE -- "action = review" --> REVIEW["<b>review</b><br/>review.js<br/>GITHUB_TOKEN, OpenAI key<br/>pr-reviewer, verifier<br/>reads the PR head as data"]
   ROUTE -- "action = analyze" --> ANALYZE["<b>analyze</b><br/>analyze.js<br/>GITHUB_TOKEN, OpenAI key<br/>analyst"]
   ROUTE -- "action = chat" --> CHAT["<b>chat</b><br/>chat.js<br/>GITHUB_TOKEN, OpenAI key<br/>assistant, read-only"]
@@ -118,7 +120,7 @@ flowchart TB
 
 | Job | Runs when | Token and secrets | Model | Code it checks out | Concurrency group |
 |---|---|---|---|---|---|
-| `route` | every event that passes the `if` filter | `GITHUB_TOKEN` (read) | none | `tools/agent` of the default branch | none |
+| `route` | every event that passes the `if` filter | `GITHUB_TOKEN` (`issues: write`, `pull-requests: write`, `actions: read`) | none | `tools/agent` of the default branch | none |
 | `review` | `action == 'review'` | `GITHUB_TOKEN`, `OPENAI_API_KEY` | `pr-reviewer`, `verifier` | the pull request head as data; trusted tools and instructions in `.agent-tools/` | `ai-autonomous-<number>` |
 | `analyze` | `action == 'analyze'`; one matrix job per number, two at a time | `GITHUB_TOKEN`, `OPENAI_API_KEY` | `analyst` | the default branch | `ai-autonomous-<number>` |
 | `ci-gate` | `action == 'ci-gate'` | `GITHUB_TOKEN`, `AGENT_PAT` | none | `tools/agent` | `ai-autonomous-<number>` |
@@ -144,6 +146,29 @@ Three rules hold for every job:
   CI gate, so its group is the one of that issue for a pull request of the agent, else the one of the pull request
   (the group of `review`). `chat` has its own group and merges the cost records on write; `stop` has none, so a stop
   never waits behind another job.
+
+### One command at a time
+
+The concurrency groups alone would drop commands in silence: GitHub keeps one running and one pending job per group and
+cancels older pending ones. So `route` makes the drop explicit. The workflow sets `run-name` to
+`AI Autonomous: <event> #<number>`, so the title of a run ends with the issue or pull request number (empty for the
+sweep). The workflow `name` stays `AI Autonomous: Agent`. The CI gate recognizes its own checks by the workflow name
+and by job names (`isOwnCheck`), and `run-name` changes neither: it only changes the title of the run.
+
+After `decide` returns a worker action for a command of a person (`review`, `analyze`, `implement`, `rerun`,
+`ci-check`, or `chat` with a question; an answer to a hand-off and a change request in a review count too), `route`
+lists the runs of the workflow from the last 6 hours and keeps the unfinished ones whose title ends with `#<n>` for the
+number of the decision, its pull request, or its issue. For a command written on an issue, `route` also reads the
+state comment of that issue and adds the pull request it names, so a run titled with the pull request number blocks a
+command on the issue; a command on a pull request checks its issue through the marker. The CI gate run of a push can
+have an empty `workflow_run.pull_requests`, so its title has no number and the check cannot see it (the concurrency
+group of the number still orders its writes). The oldest of them with an id below the id of this run makes
+the router decline: the decision becomes `skip` with the reason `busy: run <id> works on #<n>`, one comment says so
+where the command was written, and the command comment gets a confused face. A newer run is ignored, because it
+declines itself, so the first comment wins. `stop`, `help`, `cost`, and the automatic events are never declined. A run
+whose `route` job still runs counts as busy, because the router cannot yet know whether it will skip. The window is
+seconds, and the decline text asks the person to comment again, so a wrong decline costs a retry and never a double
+run. A failed listing or comment fails the router, and no worker starts.
 
 ## Where the state lives
 
@@ -233,7 +258,9 @@ Three details matter when you read a state:
 state and skips one that has a review, also a skipped one), whoever its author is. A pull request from a fork waits
 for a command. Then on demand, with `/agent review [notes]` from a person with write access, also on a pull request
 from a fork. Dependabot pull requests are never reviewed: the workflow `if` drops their events, and `route` refuses
-`/agent review` on them.
+`/agent review` on them. The one command that reaches a Dependabot pull request is `/agent ci_check`: the workflow `if`
+lets a comment through that holds `/agent` and `ci_check` or `ci-check`, and `route` parses it and refuses everything
+else there.
 
 **Limits.** An automatic review counts toward the daily cap `AGENT_DAILY_REVIEWS` (default 15 in any 24 hours, counted
 from the state comments of the pull requests that carry `agent:pr-reviewed`; a failed review sets no label, so it
@@ -402,7 +429,7 @@ flowchart TB
   START(["workflow_run completed"]) --> R{"route: agent PR,<br/>head commit,<br/>phase waiting-ci?"}
   R -- no --> SKIP(["skip"])
   R -- yes --> READ["ci-gate: read check runs and statuses<br/>of the head commit, without the agent's jobs"]
-  READ --> PENDING{"any still running<br/>or pending?"}
+  READ --> PENDING{"any still running<br/>or pending?<br/>(a cancelled check<br/>is finished)"}
   PENDING -- yes --> WAIT(["exit: the last run decides"])
   PENDING -- no --> DONE{"already decided<br/>for this commit?"}
   DONE -- yes --> EXIT1(["exit"])
@@ -411,7 +438,7 @@ flowchart TB
   FRESH1 -- no --> SUP(["exit: superseded or state-changed"])
   FRESH1 -- yes --> READY["PR ready for review with AGENT_PAT<br/>agent:completed, ai:l1-executor<br/>phase completed, mention the person"]
   GREEN -- no --> REPORT["CI report from the failed job logs<br/>failure signature"]
-  REPORT --> E2E{"only E2E jobs failed<br/>(ci-ok aside) and no rerun<br/>of this commit yet?"}
+  REPORT --> E2E{"only E2E jobs failed, or only<br/>cancelled checks (ci-ok aside),<br/>and no rerun of this commit yet?"}
   E2E -- yes --> RERUN(["rerun the failed jobs once per commit"])
   E2E -- no --> RULE{"same signature as before,<br/>or AGENT_MAX_ATTEMPTS spent?"}
   RULE -- yes --> HAND["agent:needs-human on issue and PR<br/>phase needs-human, hand-off comment"]
@@ -430,7 +457,13 @@ gate writes nothing. The budget counts the attempts of kind `initial` and `ci-fi
 a person's attempt moves to the end of the list.
 
 **The free rerun.** The verdict check `ci-ok` fails together with E2E, so the gate ignores it when it asks whether only
-E2E jobs failed. The budget is one rerun per head commit (`e2eRerun: { sha, count }`).
+E2E jobs failed. The same holds for a result in which every failed check is `cancelled`: a cancelled check was stopped
+(a timeout, a person, a newer run), nothing in it failed, and `pendingChecks` does not wait for it because nobody
+reruns it by itself. `failedChecks` lists it with the conclusion `cancelled`. Both cases share one rerun per head commit
+(`e2eRerun: { sha, count }`; the name stays). A mix of cancelled and really failed checks is a normal red result.
+When the rerun is used up or no run can be rerun and only cancelled checks remain, nothing failed, so the gate does not
+start a CI fix: it takes the stop path (`needs-human`, labels, hand-off comment) with the reason that the checks were
+cancelled again. The failure signature leaves cancelled checks out when any other check failed.
 
 **Hand-offs.** The stop rule and a blocked CI fix write the failed checks (at most five), the first error line, the
 reason, and two ways on: `/agent rerun` for a failure the change does not cause, and `/agent retry` with guidance.

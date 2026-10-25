@@ -11,8 +11,11 @@
  *   3. Green: the pull request leaves draft (`AGENT_PAT`), gets `agent:completed` and `ai:l1-executor`, the issue gets
  *      `agent:completed`, and a comment tells the person who asked.
  *   4. Red: read the logs of the failed jobs, cut them to the error blocks, and build the CI report and its failure
- *      signature. A red result made only of E2E jobs (the verdict check `ci-ok` aside) is rerun once per commit for
- *      free. Otherwise the stop rule decides: the same signature as the attempt before, or the attempts spent, hands
+ *      signature. A red result made only of E2E jobs, or only of cancelled checks (the verdict check `ci-ok` aside),
+ *      is rerun once per commit for free; both share that one rerun. A cancelled check was stopped (a timeout, a
+ *      person, a newer run), so it counts as failed, not as pending. When the free rerun is used up and only cancelled
+ *      checks remain, the gate hands over to a person: nothing failed, so no CI-fix attempt starts. Otherwise the stop
+ *      rule decides: the same signature as the attempt before, or the attempts spent, hands
  *      the issue to a person (`agent:needs-human`, the whole history in the state comment, one concrete request);
  *      anything else starts the next attempt (`next=implement` for the `implement` job, which runs with
  *      `AGENT_KIND=ci-fix`).
@@ -115,26 +118,26 @@ const REQUIRED_CHECKS = ['ci-ok']
 function pendingChecks(checkRuns, statuses) {
   const runs = checkRuns ?? []
   return [
+    // A cancelled check is finished: nobody reruns it by itself, so waiting for it would never end. It is a failed
+    // check (see `failedChecks`).
     ...runs.filter((r) => r.status !== 'completed').map((r) => ({ name: r.name, state: r.status })),
-    // A cancelled check was stopped by a person or by a newer push: the gate waits instead of fixing it.
-    ...runs.filter((r) => r.status === 'completed' && r.conclusion === 'cancelled')
-      .map((r) => ({ name: r.name, state: 'cancelled' })),
     ...REQUIRED_CHECKS.filter((name) => !runs.some((r) => r.name === name)).map((name) => ({ name, state: 'missing' })),
     ...(statuses ?? []).filter((s) => s.state === 'pending').map((s) => ({ name: s.context, state: 'pending' })),
   ]
 }
 
 /**
- * The pending entries that are real waiting: a check that runs, a pending status, a cancelled check. A `missing` entry
- * (a required check with no run yet) is left out: it may never come, for example when CI waits for an approval of the
- * workflows of a fork, so `/agent rerun` and `/agent ci_check` do not read it as "CI still runs".
+ * The pending entries that are real waiting: a check that runs, a pending status. A `missing` entry (a required check
+ * with no run yet) is left out: it may never come, for example when CI waits for an approval of the workflows of a
+ * fork, so `/agent rerun` and `/agent ci_check` do not read it as "CI still runs".
  */
 const stillRunning = (pending) => pending.filter((p) => p.state !== 'missing')
 
 /**
  * The checks that did not succeed, sorted by name. A check run fails with any conclusion but success, neutral, and
- * skipped; a status fails as `failure` or `error`. For a GitHub Actions check run `jobId` is the id of the job (the id
- * of the check run), found also in the link, and `runId` the id of its workflow run; both are `null` for other apps.
+ * skipped, so a `cancelled` one fails too (its conclusion stays in `conclusion`); a status fails as `failure` or
+ * `error`. For a GitHub Actions check run `jobId` is the id of the job (the id of the check run), found also in the
+ * link, and `runId` the id of its workflow run; both are `null` for other apps.
  *
  * @returns {Array<{ kind: 'check'|'status', name: string, conclusion: string, url: string|null, jobId: number|null,
  *   runId: number|null }>}
@@ -142,7 +145,7 @@ const stillRunning = (pending) => pending.filter((p) => p.state !== 'missing')
 function failedChecks(checkRuns, statuses) {
   const failed = []
   for (const run of checkRuns ?? []) {
-    if (run.status !== 'completed' || GREEN_CONCLUSIONS.has(run.conclusion) || run.conclusion === 'cancelled') continue
+    if (run.status !== 'completed' || GREEN_CONCLUSIONS.has(run.conclusion)) continue
     const ids = actionsIds(run.details_url)
     const isActions = run.app?.slug === 'github-actions'
     failed.push({
@@ -183,7 +186,20 @@ function isE2eOnly(failed) {
   return rest.length > 0 && rest.every((f) => f.kind === 'check' && /e2e/i.test(f.name))
 }
 
-/** True when the free E2E rerun of the head commit `sha` is still unused. */
+/**
+ * True when every failed check, the verdict check `ci-ok` aside, is a cancelled check run: nothing really failed, the
+ * checks were stopped (a timeout, a person, a newer run). The verdict job fails with them, so it does not count; at
+ * least one other failed check must remain. A mix of cancelled and really failed checks is a normal red result.
+ */
+function isCancelledOnly(failed) {
+  const rest = failed.filter((f) => !(f.kind === 'check' && REQUIRED_CHECKS.includes(f.name)))
+  return rest.length > 0 && rest.every((f) => f.kind === 'check' && f.conclusion === 'cancelled')
+}
+
+/**
+ * True when the free rerun of the head commit `sha` is still unused. One rerun per commit covers both cases that
+ * qualify, "only E2E failed" and "only cancelled"; the record keeps its name `e2eRerun`.
+ */
 const e2eRerunLeft = (st, sha) => st.e2eRerun?.sha !== sha || (st.e2eRerun.count ?? 0) < MAX_E2E_RERUNS
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -296,13 +312,16 @@ function signatureLines(lines) {
 
 /**
  * The signature of a failure: the first 12 hex characters of the SHA-1 of the sorted names of the failed checks and
- * the first 5 normalized error lines of each. The same failure gives the same signature in every run.
+ * the first 5 normalized error lines of each. The same failure gives the same signature in every run. Cancelled checks
+ * are left out when any other check failed: they were stopped, so a changing set of them must not change the
+ * signature of the real failure. When only cancelled checks failed, they make the signature.
  *
  * @param {Array<{ name: string }>} failed
  * @param {Record<string, string[]>} errorsByJob the extracted error lines per check name
  */
 function failureSignature(failed, errorsByJob) {
-  const names = failed.map((f) => f.name).sort()
+  const real = failed.filter((f) => f.conclusion !== 'cancelled')
+  const names = (real.length > 0 ? real : failed).map((f) => f.name).sort()
   const parts = [names.join('\n')]
   for (const name of names) parts.push(`${name}\n${signatureLines(errorsByJob?.[name]).join('\n')}`)
   return crypto.createHash('sha1').update(parts.join('\n--\n')).digest('hex').slice(0, SIGNATURE_LENGTH)
@@ -319,11 +338,15 @@ function firstError(failed, errorsByJob) {
 
 const MAX_NAMED_CHECKS = 5
 
-/** The names of the failed checks for a person: at most five, then "and N more". `total` counts the unlisted ones. */
+/**
+ * The names of the failed checks for a person: at most five, then "and N more". `total` counts the unlisted ones. A
+ * cancelled check carries its conclusion: "`run-lint` (cancelled)".
+ */
 function checkNames(failed, total = failed.length) {
   const shown = failed.slice(0, MAX_NAMED_CHECKS)
   const more = total - shown.length
-  return `${shown.map((f) => `\`${code(f.name)}\``).join(', ')}${more > 0 ? `, and ${more} more` : ''}`
+  const named = (f) => `\`${code(f.name)}\`${f.conclusion === 'cancelled' ? ' (cancelled)' : ''}`
+  return `${shown.map(named).join(', ')}${more > 0 ? `, and ${more} more` : ''}`
 }
 
 /** What a person reads first on a red CI: the failed checks, then the first error line of the first one that has it. */
@@ -496,10 +519,16 @@ function gateGuard({ st, pull, expectedPr, expectedSha }) {
 // Texts
 // ---------------------------------------------------------------------------------------------------------------
 
-const reasonSentence = (reason, max) =>
-  reason === 'same-failure'
-    ? 'The last attempt failed in the same way as the one before it, so another try would repeat it.'
-    : `I used all ${max} attempts, and CI is still red.`
+const reasonSentence = (reason, max) => {
+  if (reason === 'same-failure') {
+    return 'The last attempt failed in the same way as the one before it, so another try would repeat it.'
+  }
+  if (reason === 'cancelled') {
+    return 'The checks were cancelled again and nothing failed, so a new attempt would change nothing. ' +
+      'Rerun them once more.'
+  }
+  return `I used all ${max} attempts, and CI is still red.`
+}
 
 /** The table of every attempt for the hand-off. */
 function attemptsTable(attempts) {
@@ -577,12 +606,16 @@ function renderNextAttempt({ pr, n, max, failed, runUrl, totalUsd }) {
   ].join('\n')
 }
 
-/** The state comment while the free rerun of the E2E jobs runs. */
-function renderRerun({ pr, failed, runUrl, totalUsd }) {
+/** The state comment while the free rerun runs; `kind` is `e2e` (the default) or `cancelled`. */
+function renderRerun({ pr, failed, runUrl, totalUsd, kind = 'e2e' }) {
+  const why = kind === 'cancelled'
+    ? 'The failed checks were cancelled, so nothing really failed. I reran them once for this commit. ' +
+      'The cancelled jobs:'
+    : 'Only E2E jobs failed. I reran them once for this commit, because they flake. The failed jobs:'
   return [
     `### AI implementation: waiting for CI on pull request #${pr}`,
     '',
-    'Only E2E jobs failed. I reran them once for this commit, because they flake. The failed jobs:',
+    why,
     '',
     ...failedList(failed),
     '',
@@ -868,32 +901,38 @@ async function handleRed(ctx) {
   let st = ctx.st
   const totalUsd = sum(st.costs ?? [], 'usd')
 
-  // 1. The free rerun of a red result that only E2E jobs caused.
+  // 1. The free rerun of a red result that only E2E jobs caused, or that only cancelled checks show. One rerun per
+  // commit covers both.
   const reruns = st.e2eRerun?.sha === headSha ? st.e2eRerun.count ?? 0 : 0
   const targets = rerunTargets(failed, ctx.env.AGENT_WORKFLOW_RUN_ID)
-  if (isE2eOnly(failed) && e2eRerunLeft(st, headSha) && targets.length > 0) {
-    log.info('decision', { action: 'rerun the failed E2E jobs once per commit', runs: targets.join(','), reruns })
+  const freeKind = isE2eOnly(failed) ? 'e2e' : isCancelledOnly(failed) ? 'cancelled' : null
+  if (freeKind && e2eRerunLeft(st, headSha) && targets.length > 0) {
+    const what = freeKind === 'cancelled' ? 'cancelled' : 'E2E'
+    log.info('decision', { action: `rerun the failed ${what} jobs once per commit`, runs: targets.join(','), reruns })
     st = rerunState(st, headSha)
-    const human = renderRerun({ pr: prNumber, failed, runUrl, totalUsd })
+    const human = renderRerun({ pr: prNumber, failed, runUrl, totalUsd, kind: freeKind })
     if (config.dryRun) {
       appendSummary(env, [`## Dry run: CI gate for #${number}`, '', human, '',
         `Would rerun the failed jobs of workflow run(s) ${targets.join(', ')}.`, ''].join('\n'))
       return { outcome: 'rerun' }
     }
-    await log.group('Rerun the failed E2E jobs', async () => {
+    await log.group(`Rerun the failed ${what} jobs`, async () => {
       for (const id of targets) await gh.rerunFailedJobs(id)
       log.info('rerun requested', { runs: targets.join(',') })
     })
     await log.group('Write the state comment', () => writeState({ gh, number, loaded: ctx.loaded, human, st }))
     return { outcome: 'rerun' }
   }
-  if (isE2eOnly(failed)) {
+  if (freeKind) {
     const why = e2eRerunLeft(st, headSha) ? 'no run id' : 'used'
     log.info('rerun skipped', { reruns, targets: targets.length, why })
   }
 
-  // 2. The stop rule.
-  const decision = stopDecision({ state: st, signature, config })
+  // 2. The stop rule. Checks that were only cancelled leave nothing to fix, so the free rerun being gone hands over to
+  // a person instead of starting a paid CI-fix attempt.
+  const decision = isCancelledOnly(failed)
+    ? { action: 'stop', reason: 'cancelled' }
+    : stopDecision({ state: st, signature, config })
   log.info('decision', {
     stage: 'stop rule',
     action: decision.action,
@@ -1235,6 +1274,7 @@ module.exports = {
   failedChecks,
   allGreen,
   isE2eOnly,
+  isCancelledOnly,
   isErrorLine,
   extractErrors,
   capTotalLines,

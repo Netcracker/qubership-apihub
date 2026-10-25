@@ -531,6 +531,109 @@ test('an E2E job without a run link is rerun through the workflow run that start
   })
 })
 
+// ------------------------------------------------------------------------------------------------ cancelled checks
+
+const cancelledRed = (extra = {}) => ({
+  checkRuns: [
+    checkRun('run-lint', 'cancelled', { id: 51, details_url: 'https://github.com/o/r/actions/runs/903/job/51' }),
+    checkRun('build', 'success', { id: 52 }),
+  ],
+  logs: { 51: new Error('the log is gone') },
+  ...extra,
+})
+
+test('only cancelled checks failed: nothing waits, their run is rerun once, and the text says so', async () => {
+  await withContext({ gh: fakeGh(cancelledRed()) }, async (ctx) => {
+    const result = await gate(ctx.env, ctx.deps)
+    assert.deepEqual(result, { outcome: 'rerun' })
+    assert.deepEqual(ctx.gh.calls.map((c) => c.slice(0, 2)), [['rerunFailedJobs', 903], ['updateIssueComment', 5]])
+    const saved = savedState(ctx.gh)
+    assert.deepEqual(saved.e2eRerun, { sha: SHA, count: 1 })
+    assert.equal(saved.phase, 'waiting-ci')
+    assert.equal(saved.ciGate, undefined)
+    assert.match(ctx.gh.store[0].body, /The failed checks were cancelled, so nothing really failed\. I reran them once/)
+    assert.match(ctx.gh.store[0].body, /- `run-lint`: cancelled/)
+  })
+})
+
+test('the verdict check ci-ok fails with the cancelled checks: they are still rerun once', async () => {
+  const checkRuns = [...cancelledRed().checkRuns, checkRun('ci-ok', 'failure', { id: 54 })]
+  await withContext({ gh: fakeGh(cancelledRed({ checkRuns })) }, async (ctx) => {
+    assert.deepEqual(await gate(ctx.env, ctx.deps), { outcome: 'rerun' })
+    assert.deepEqual(ctx.gh.calls.filter((c) => c[0] === 'rerunFailedJobs').map((c) => c[1]), [900, 903])
+  })
+})
+
+test('the free rerun is shared with E2E: once used, cancelled-only checks hand over to a person', async () => {
+  const st = waitingState({ e2eRerun: { sha: SHA, count: 1 } })
+  await withContext({ gh: fakeGh(cancelledRed({ st })) }, async (ctx) => {
+    const result = await gate(ctx.env, ctx.deps)
+    assert.deepEqual(result, { outcome: 'stopped', reason: 'cancelled' })
+    assert.ok(!ctx.gh.calls.some((c) => c[0] === 'rerunFailedJobs'))
+    const saved = savedState(ctx.gh)
+    assert.deepEqual(saved.e2eRerun, { sha: SHA, count: 1 })
+    assert.equal(saved.phase, 'needs-human')
+    assert.equal(saved.ciGate.sha, SHA)
+    assert.equal(saved.attempts.length, 1)
+    assert.notEqual(ctx.outputs(), 'outcome=next-attempt\nnext=implement\n')
+    const labels = ctx.gh.calls.filter((c) => c[0] === 'addLabels')
+    assert.deepEqual(labels, [['addLabels', 200, ['agent:needs-human']], ['addLabels', 70, ['agent:needs-human']]])
+    const note = ctx.gh.calls.find((c) => c[0] === 'createIssueComment')
+    assert.match(note[2], /The checks were cancelled again and nothing failed/)
+    assert.match(note[2], /`run-lint` \(cancelled\)/)
+    assert.match(note[2], /\/agent rerun/)
+    assert.match(ctx.gh.store[0].body, /needs a person: CI is red/)
+  })
+  // No workflow run to rerun (a check of another app): the same hand-over.
+  const outside = { id: 41, details_url: 'https://elsewhere.test/1', app: { slug: 'other' } }
+  const gh = fakeGh({ checkRuns: [checkRun('lint', 'cancelled', outside)] })
+  await withContext({ gh, env: { AGENT_WORKFLOW_RUN_ID: '' } }, async (ctx) => {
+    assert.deepEqual(await gate(ctx.env, ctx.deps), { outcome: 'stopped', reason: 'cancelled' })
+    assert.equal(savedState(ctx.gh).phase, 'needs-human')
+  })
+  // And the other way round: the cancelled rerun uses the budget of the E2E rerun.
+  await withContext({ gh: fakeGh(cancelledRed()) }, async (ctx) => {
+    assert.equal((await gate(ctx.env, ctx.deps)).outcome, 'rerun')
+    const later = fakeGh(e2eRed({ st: savedState(ctx.gh) }))
+    await withContext({ gh: later }, async (next) => {
+      assert.equal((await gate(next.env, next.deps)).outcome, 'next-attempt')
+    })
+    // The same budget makes the next cancelled-only result a hand-over.
+    await withContext({ gh: fakeGh(cancelledRed({ st: savedState(ctx.gh) })) }, async (next) => {
+      assert.equal((await gate(next.env, next.deps)).outcome, 'stopped')
+    })
+  })
+})
+
+test('cancelled and really failed checks together are a normal red result', async () => {
+  const checkRuns = [...cancelledRed().checkRuns, checkRun('js', 'failure', { id: 53 })]
+  const gh = fakeGh(cancelledRed({ checkRuns, logs: { 51: new Error('gone'), 53: failingLog('js') } }))
+  await withContext({ gh }, async (ctx) => {
+    assert.equal((await gate(ctx.env, ctx.deps)).outcome, 'next-attempt')
+    assert.ok(!ctx.gh.calls.some((c) => c[0] === 'rerunFailedJobs'))
+    assert.match(ctx.gh.store[0].body, /- `run-lint`: cancelled/)
+    assert.match(ctx.gh.store[0].body, /- `js`: failure/)
+  })
+})
+
+test('a cancelled check next to a running one still waits for the running one', async () => {
+  const checkRuns = [checkRun('run-lint', 'cancelled', { id: 51 }), running('build')]
+  await withContext({ gh: fakeGh({ checkRuns }) }, async (ctx) => {
+    const result = await gate(ctx.env, ctx.deps)
+    assert.equal(result.outcome, 'waiting')
+    assert.equal(result.reason, 'build (in_progress)')
+  })
+})
+
+test('dry run, only cancelled checks: nothing is rerun or written, the summary says what would happen', async () => {
+  await withContext({ gh: fakeGh(cancelledRed()), env: { AGENT_DRY_RUN: 'true' } }, async (ctx) => {
+    assert.deepEqual(await gate(ctx.env, ctx.deps), { outcome: 'rerun' })
+    assert.deepEqual(ctx.gh.calls, [])
+    assert.match(ctx.summary(), /The failed checks were cancelled/)
+    assert.match(ctx.summary(), /Would rerun the failed jobs of workflow run\(s\) 903\./)
+  })
+})
+
 // ------------------------------------------------------------------------------------------------ dry run
 
 test('dry run, red: no write to GitHub, no next attempt, and the decision in the job summary', async () => {
@@ -804,6 +907,20 @@ test('rerun on the pull request of the agent: the reply goes to the pull request
   await withContext({ gh: fakeGh(e2eRed({ st: handedOff() })), env: rerunEnv({ AGENT_PR: '70' }) }, async (ctx) => {
     assert.equal((await rerunCommand(ctx.env, ctx.deps)).outcome, 'rerun')
     assert.equal(replies(ctx.gh)[0][1], 70)
+    assert.equal(savedState(ctx.gh).phase, 'waiting-ci')
+  })
+})
+
+test('rerun: cancelled checks are rerun like failed ones and named with their conclusion', async () => {
+  await withContext({ gh: fakeGh(cancelledRed({ st: handedOff() })), env: rerunEnv() }, async (ctx) => {
+    const result = await rerunCommand(ctx.env, ctx.deps)
+    assert.deepEqual([result.ok, result.outcome], [true, 'rerun'])
+    assert.deepEqual(ctx.gh.calls.filter((c) => c[0] === 'rerunFailedJobs').map((c) => c[1]), [903])
+    assert.equal(
+      replies(ctx.gh)[0][2],
+      '@erin, I reran the failed checks of #70 (`run-lint` (cancelled)) on 3f2a9c1d5b7e. ' +
+        'No new attempt and no model call: the CI gate decides when they end.',
+    )
     assert.equal(savedState(ctx.gh).phase, 'waiting-ci')
   })
 })

@@ -27,8 +27,15 @@
  * `$GITHUB_STEP_SUMMARY`. It logs the event, the gathered facts,
  * and the decision.
  *
- * Environment: GITHUB_EVENT_NAME, GITHUB_EVENT_PATH, GITHUB_REPOSITORY, GITHUB_TOKEN, GITHUB_OUTPUT,
- * GITHUB_STEP_SUMMARY, and the AGENT_* variables of lib/config.js.
+ * One command at a time: when a person's command would start a worker job (`review`, `analyze`, `implement`, `rerun`,
+ * `ci-check`, or a `chat` question; also the answer to a hand-off and a change request in a review), the router looks
+ * for an older run of this workflow that is still active on the same issue or pull request (the title of a run ends
+ * with `#<number>`, see `run-name` in the workflow). When there is one, the decision becomes a `skip` with the reason
+ * `busy: ...`, the router answers on the issue or pull request with one comment, and reacts with `confused`. `stop`,
+ * `help`, `cost`, and the automatic events are never declined.
+ *
+ * Environment: GITHUB_EVENT_NAME, GITHUB_EVENT_PATH, GITHUB_REPOSITORY, GITHUB_TOKEN, GITHUB_RUN_ID (for a command
+ * that starts a worker job), GITHUB_OUTPUT, GITHUB_STEP_SUMMARY, and the AGENT_* variables of lib/config.js.
  */
 'use strict'
 
@@ -38,6 +45,7 @@ const daily = require('./lib/daily-usage')
 const { parseCommand } = require('./lib/commands')
 const { createClient, hasWriteAccess } = require('./lib/github')
 const { findStateComment, parse: parseState, actorOf } = require('./lib/state')
+const { react, commentIdOf } = require('./lib/reactions')
 const log = require('./lib/log')
 
 /** The agent writes this at the top of the body of every pull request it opens. */
@@ -204,11 +212,10 @@ const COMMAND_HANDLERS = {
     return { action: 'rerun', number: agent.issueNumber, pr: number, reason: '/agent rerun', command }
   },
   // Read the CI of the head commit of a pull request, find the root cause of a red result, and rerun a flaky one. It
-  // works on any pull request; `issue` is set when the pull request is the agent's, so the job can hand the decision
-  // back to the CI gate.
-  'ci-check': ({ number, isPull, command, issue, agentFacts }) => {
+  // works on any pull request, also a Dependabot one (a red dependency bump is what people ask it about); `issue` is
+  // set when the pull request is the agent's, so the job can hand the decision back to the CI gate.
+  'ci-check': ({ number, isPull, command, agentFacts }) => {
     if (!isPull) return skip(number, 'ci_check works on a pull request')
-    if (isDependabot(issue?.user?.login)) return skip(number, NO_DEPENDABOT)
     const agent = agentPullOf(agentFacts, number)
     return {
       action: 'ci-check',
@@ -819,6 +826,148 @@ async function gather({ eventName, payload, config, getClient, repository, now =
   return extra
 }
 
+/** The workflow file whose runs the busy check lists. */
+const WORKFLOW_FILE = 'ai-autonomous-agent.yml'
+/** How far back the busy check looks for runs; an older run is long dead or stuck, not working. */
+const BUSY_WINDOW_MS = 6 * 60 * 60 * 1000
+/** The statuses of a run that has not finished. */
+const ACTIVE_RUN_STATUSES = new Set(['queued', 'in_progress', 'waiting', 'pending', 'requested'])
+/** The actions that start a worker job and can be declined. `stop`, `ci-gate`, and `skip` never are. */
+const WORKER_ACTIONS = new Set(['review', 'analyze', 'implement', 'rerun', 'ci-check', 'chat'])
+
+/**
+ * True for a decision about a command of a person that starts a worker job: a comment with a parsed command, the
+ * answer to a hand-off, or a change request in a review. `chat` counts only for a question; `help` and `cost` are
+ * answered at once. The automatic events carry no command.
+ */
+function isWorkerCommand(eventName, decision) {
+  if (eventName !== 'issue_comment' && eventName !== 'pull_request_review') return false
+  if (!decision.command || !WORKER_ACTIONS.has(decision.action)) return false
+  return decision.action !== 'chat' || decision.command.name === 'chat'
+}
+
+/**
+ * The issue and pull request numbers that one piece of work covers: where the command was written, the number of the
+ * decision, and the pull request or issue it is linked to when the router knows it. `linked` holds numbers found by
+ * other means (the pull request that the state of an issue names).
+ *
+ * @returns {Set<number>}
+ */
+function workNumbers(decision, payload, linked = []) {
+  const all = [numberOf(payload), decision.number, decision.pr, decision.issue, ...linked]
+  return new Set(all.map(Number).filter((n) => Number.isSafeInteger(n) && n > 0))
+}
+
+/** The number a run works on: the `#<number>` that ends its title (`run-name`), or `null`. */
+function runNumberOf(run) {
+  const match = /#(\d+)$/.exec(String(run?.display_title ?? '').trim())
+  return match ? Number(match[1]) : null
+}
+
+/**
+ * The oldest run that is still active, was created inside the window, works on one of `numbers`, and is older than
+ * this run (a smaller id). A newer run is ignored: it declines itself, so the first comment wins. This run is ignored.
+ *
+ * @returns {{ run: object, number: number }|null}
+ */
+function findBusyRun(runs, { numbers, ownRunId, now }) {
+  const since = now.getTime() - BUSY_WINDOW_MS
+  const busy = []
+  for (const run of runs) {
+    const id = Number(run.id)
+    if (!ACTIVE_RUN_STATUSES.has(run.status) || !Number.isFinite(id) || id >= ownRunId) continue
+    if (!(Date.parse(run.created_at) >= since)) continue
+    const number = runNumberOf(run)
+    if (number !== null && numbers.has(number)) busy.push({ run, number })
+  }
+  return busy.sort((a, b) => a.run.id - b.run.id)[0] ?? null
+}
+
+/** What the agent did not do, as the end of "so I did not ...". */
+function declinedAction(command) {
+  if (command.name === 'ci-check') return 'start `/agent ci_check`'
+  if (command.name === 'chat') return 'answer your question'
+  if (command.name === 'answer') return 'act on your answer'
+  if (command.name === 'review-changes') return 'act on your change request'
+  return `start \`/agent ${command.name}\``
+}
+
+/** The comment of the router that declines a command because a run already works on the issue or pull request. */
+function declineComment({ actor, number, runId, runUrl, command }) {
+  return `@${actor}, I am already working on #${number} ([run ${runId}](${runUrl})), so I did not ` +
+    `${declinedAction(command)}. Comment it again when that run ends.`
+}
+
+/**
+ * The pull request that the state comment of the issue names, for a command written on an issue, else `[]`. A run on
+ * that pull request (titled with its number) is work on the issue too. The read is guarded: an unreadable state or a
+ * failed call leaves the issue alone, as if it had no pull request, and the log says so.
+ *
+ * @returns {Promise<number[]>}
+ */
+async function linkedPullOf({ eventName, payload, gh }) {
+  const issue = payload?.issue
+  if (eventName !== 'issue_comment' || !issue || issue.pull_request) return []
+  try {
+    const stateComment = findStateComment(await gh.listIssueComments(issue.number))
+    const pr = Number((stateComment ? parseState(stateComment.body) : null)?.pr)
+    log.info('pull request of the issue state', { issue: issue.number, pr: pr > 0 ? pr : 'none' })
+    return pr > 0 ? [pr] : []
+  } catch (error) {
+    log.warn(`The state of #${issue.number} could not be read, so its pull request is not checked: ${error.message}`)
+    return []
+  }
+}
+
+/**
+ * One command at a time per issue or pull request. Returns `decision` unchanged, or a `skip` when an older run of the
+ * workflow still works on the same piece of work (for a command on an issue, also on the pull request that the state of
+ * the issue names); then it comments where the command was written and reacts with
+ * `confused` (in dry run it only says in the job summary what it would post). A failed listing or comment throws, so
+ * the job fails and no worker starts: a command is never run on a guess.
+ *
+ * @param {{ eventName: string, payload: object, decision: object, config: object, env: object,
+ *   getClient: Function, now: Date }} input
+ */
+async function declineIfBusy({ eventName, payload, decision, config, env, getClient, now }) {
+  if (!isWorkerCommand(eventName, decision)) return decision
+  const ownRunId = Number(requireVariable(env, 'GITHUB_RUN_ID'))
+  const gh = getClient()
+  const numbers = workNumbers(decision, payload, await linkedPullOf({ eventName, payload, gh }))
+  const created = `>=${daily.toSearchTime(new Date(now.getTime() - BUSY_WINDOW_MS))}`
+  const runs = await gh.listWorkflowRuns(WORKFLOW_FILE, { created })
+  const busy = findBusyRun(runs, { numbers, ownRunId, now })
+  log.info('busy check', {
+    numbers: [...numbers].join(','),
+    runs: runs.length,
+    own: ownRunId,
+    busy: busy ? `${busy.run.id} on #${busy.number}` : 'none',
+  })
+  if (!busy) return decision
+
+  const reason = `busy: run ${busy.run.id} works on #${busy.number}`
+  const actor = payload.comment?.user?.login ?? payload.review?.user?.login
+  const target = numberOf(payload)
+  const runUrl = busy.run.html_url ?? `https://github.com/${env.GITHUB_REPOSITORY}/actions/runs/${busy.run.id}`
+  const text = declineComment({ actor, number: busy.number, runId: busy.run.id, runUrl, command: decision.command })
+  if (config.dryRun) {
+    if (env.GITHUB_STEP_SUMMARY) {
+      const quote = text.split('\n').map((line) => `> ${line}`).join('\n')
+      fs.appendFileSync(
+        env.GITHUB_STEP_SUMMARY,
+        `## Dry run: decline on #${target}\n\nWould post this comment and react with confused:\n\n${quote}\n\n`,
+      )
+    }
+    log.info('dry run: the decline is in the job summary', { on: `#${target}` })
+  } else {
+    await gh.createIssueComment(target, text)
+    log.info('decline posted', { mention: actor, on: `#${target}`, run: busy.run.id })
+  }
+  // A review has no comment to react to.
+  await react({ gh, commentId: commentIdOf(payload.comment?.id), content: 'confused', dryRun: config.dryRun })
+  return skip(decision.number, reason)
+}
+
 /** Output values must stay on one line; GitHub reads `key=value` per line. */
 const oneLine = (value) => String(value).replace(/[\r\n]+/g, ' ')
 
@@ -881,9 +1030,12 @@ async function main(env = process.env, deps = {}) {
     dryRun: config.dryRun,
     allowedActors: config.allowedActors ? config.allowedActors.join(',') : 'everyone',
   })
+  const now = deps.now ?? new Date()
   const extra = await log.group('Gather facts', () =>
-    gather({ eventName, payload, config, getClient, repository: env.GITHUB_REPOSITORY, now: deps.now }))
-  const decision = decide({ eventName, payload, config, ...extra })
+    gather({ eventName, payload, config, getClient, repository: env.GITHUB_REPOSITORY, now }))
+  const decided = decide({ eventName, payload, config, ...extra })
+  const decision = await log.group('Check for a busy run', () =>
+    declineIfBusy({ eventName, payload, decision: decided, config, env, getClient, now }))
   log.info('decision', {
     action: decision.action,
     number: decision.number,
@@ -933,4 +1085,10 @@ module.exports = {
   formatOutputs,
   formatSummary,
   main,
+  declineIfBusy,
+  isWorkerCommand,
+  workNumbers,
+  findBusyRun,
+  WORKFLOW_FILE,
+  BUSY_WINDOW_MS,
 }

@@ -14,6 +14,11 @@
 # preflight; no step that runs model or repository code has it).
 name: 'AI Autonomous: Agent'
 
+# The title of a run ends with the issue or pull request number (empty for the sweep). The `route` job reads it to find
+# an older run that still works on the same number (one command at a time). The workflow `name` above stays as it is:
+# the CI gate recognizes its own checks by it, and `run-name` changes only the title of the run.
+run-name: "AI Autonomous: ${{ github.event_name }} #${{ github.event.issue.number || github.event.pull_request.number || github.event.workflow_run.pull_requests[0].number || '' }}"
+
 on:
   pull_request:
     types: [opened, ready_for_review]
@@ -69,7 +74,10 @@ jobs:
     # `/agent`, unless it is on an issue: the author of an issue that waits for information answers without a
     # command, and the router checks that. Comments on pull requests stay command-only.
     # Dependabot pull requests are never reviewed, also on request: a dependency bump has nothing to review, and a
-    # review costs money. So no runner starts for Dependabot's own events or for a comment on its pull request.
+    # review costs money. So no runner starts for Dependabot's own events or for a comment on its pull request. The one
+    # exception is a comment that holds `/agent` and `ci_check` or `ci-check` (`contains()` ignores case): a red
+    # dependency bump is what people ask the CI check about. The filter is loose on purpose; the router parses the
+    # comment and skips everything but `/agent ci_check` on such a pull request.
     if: >-
       (github.event_name != 'schedule' || vars.AGENT_ENABLED == 'true') &&
       (github.event_name == 'schedule' || github.actor != 'dependabot[bot]') &&
@@ -78,7 +86,9 @@ jobs:
       (github.event_name != 'workflow_run' ||
       github.event.workflow_run.head_repository.full_name == github.repository) &&
       !(github.event_name == 'issue_comment' && github.event.issue.pull_request != null &&
-      github.event.issue.user.login == 'dependabot[bot]') &&
+      github.event.issue.user.login == 'dependabot[bot]' &&
+      !(contains(github.event.comment.body, '/agent') &&
+      (contains(github.event.comment.body, 'ci_check') || contains(github.event.comment.body, 'ci-check')))) &&
       (github.event_name != 'issue_comment' ||
       (github.event.comment.user.type != 'Bot' &&
       (contains(github.event.comment.body, '/agent') || github.event.issue.pull_request == null ||
@@ -89,10 +99,14 @@ jobs:
       contains(github.event.pull_request.body, 'ai-autonomous-agent issue=')))
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    # It runs no model and only the default-branch code. `issues: write` and `pull-requests: write` let it decline a
+    # command with a comment and a reaction when an older run already works on the same issue or pull request;
+    # `actions: read` lists the runs of this workflow for that check.
     permissions:
       contents: read
-      issues: read
-      pull-requests: read
+      issues: write
+      pull-requests: write
+      actions: read
     outputs:
       action: ${{ steps.route.outputs.action }}
       number: ${{ steps.route.outputs.number }}
@@ -104,11 +118,12 @@ jobs:
       kind: ${{ steps.route.outputs.kind }}
       issue: ${{ steps.route.outputs.issue }}
     steps:
-      # A `pull_request_review` event would check out the pull request itself; the router runs from the default branch
-      # there. The other events check out the default branch already.
+      # The router always runs from the default branch. Without a `ref`, a `pull_request` event would check out the merge
+      # ref of the pull request and a `pull_request_review` event the pull request itself. The `schedule` payload may
+      # carry no repository; an empty `ref` then checks out the default branch anyway.
       - uses: actions/checkout@v6
         with:
-          ref: ${{ github.event_name == 'pull_request_review' && github.event.repository.default_branch || '' }}
+          ref: ${{ github.event.repository.default_branch || '' }}
           sparse-checkout: tools/agent
           persist-credentials: false
 

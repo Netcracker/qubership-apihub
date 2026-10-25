@@ -5,8 +5,9 @@
  * also one from a fork. The pull request of the agent gets one more step at the end.
  *
  *   1. Read the checks of the head commit. CI still runs, CI is green, or there is no check at all: reply, no model.
- *   2. Red: collect the failed jobs and their logs (the collection, the cleaning, the report, and the signature of the
- *      CI gate), and ask the `ci-triager` (read-only) for the verdict: `change`, `flaky`, `infra`, or `unknown`, the
+ *   2. Red: collect the failed jobs, cancelled ones included (a cancelled check was stopped, so it has no failure
+ *      of its own; the input marks it), and their logs (the collection, the cleaning, the report, and the signature
+ *      of the CI gate), and ask the `ci-triager` (read-only) for the verdict: `change`, `flaky`, `infra`, or `unknown`, the
  *      root cause, where to fix it, and the evidence.
  *   3. `flaky` or `infra` with at least medium confidence: rerun the failed jobs. When the pull request is the
  *      agent's and its issue waits (`needs-human` or `waiting-ci`), the issue state goes back to `waiting-ci`, as after
@@ -117,7 +118,11 @@ function gitMergeBase(base, head) {
  * @param {string} input.asker
  */
 function renderCheckInput({ pull, sha, refs, failed, signature, report, notes, asker }) {
-  const checks = failed.map((f) => `- ${f.name}: ${f.conclusion}${f.url ? ` (${f.url})` : ''}`)
+  const checks = failed.map((f) => {
+    const mark = f.conclusion === 'cancelled' ? ' [cancelled: it was stopped, it did not fail by itself]' : ''
+    return `- ${f.name}: ${f.conclusion}${mark}${f.url ? ` (${f.url})` : ''}`
+  })
+  const cancelled = failed.filter((f) => f.conclusion === 'cancelled').length
   return [
     `# CI check of pull request #${pull.number}`,
     '',
@@ -130,6 +135,8 @@ function renderCheckInput({ pull, sha, refs, failed, signature, report, notes, a
       ? `- Merge base: \`${refs.mergeBase}\` (\`git diff ${refs.mergeBase} ${refs.head}\` is the change)`
       : '- Merge base: not computed; use the three-dot diff.',
     `- Failure signature: \`${signature}\``,
+    `- Cancelled checks: ${cancelled} of ${failed.length} failed checks` +
+      (cancelled > 0 ? ' (stopped by a timeout, a person, or a newer run)' : ''),
     '',
     '## Pull request and failed checks',
     '',

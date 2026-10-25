@@ -161,6 +161,17 @@ All three workflows set `permissions: contents: read` at the top and widen them 
 `Lint: Markdown links`, `PR: CLA`), `pull_request_review` (`submitted`), and `schedule` (`*/10 * * * *`, the sweep of
 new issues whose grace period is over).
 
+**Run title.** The workflow `name` is `AI Autonomous: Agent`. The top-level `run-name` is:
+
+```yaml
+run-name: "AI Autonomous: ${{ github.event_name }} #${{ github.event.issue.number || github.event.pull_request.number || github.event.workflow_run.pull_requests[0].number || '' }}"
+```
+
+The title of a run (`display_title` in the API) therefore ends with the issue or pull request number, and with a bare
+`#` for the sweep. The `route` job reads the titles to find a run that works on the same number. `run-name` changes
+only the title: the workflow `name`, which the CI gate matches in `isOwnCheck` (the prefix `AI Autonomous`), and the
+job names stay as they were.
+
 **Workflow environment:** `OPENCODE_VERSION`, and the repository variables `AGENT_ENABLED`, `AGENT_DRY_RUN`,
 `AGENT_ALLOWED_ACTORS` (a variable, or a secret of the same name), `AGENT_MODEL_IMPLEMENT`, `AGENT_MODEL_REVIEW`,
 `AGENT_MODEL_VERIFY`, `AGENT_MODEL_LIGHT`, `AGENT_MODEL_TRIAGE`, `AGENT_MAX_ATTEMPTS`, `AGENT_MAX_REVIEW_ROUNDS`,
@@ -169,7 +180,7 @@ new issues whose grace period is over).
 
 | Job | Needs and condition | Timeout | Concurrency | Permissions | Secrets (step) |
 |---|---|---|---|---|---|
-| `route` | the `if` filter below | 5 | none | `contents`, `issues`, `pull-requests`: read | none |
+| `route` | the `if` filter below | 5 | none | `contents: read`, `issues`, `pull-requests`: write, `actions: read` | none |
 | `review` | `action == 'review'` | 30 | `ai-autonomous-<number>` | `contents: read`, `issues: write`, `pull-requests: write` | `OPENAI_API_KEY` (`Review`) |
 | `analyze` | `action == 'analyze'`; a matrix over the `numbers` output | 20 | `ai-autonomous-<matrix number>` | `contents: read`, `issues: write` | `OPENAI_API_KEY` (`Analyze`) |
 | `ci-gate` | `action == 'ci-gate'` | 15 | `ai-autonomous-<number>` | `contents: read`, `issues`, `pull-requests`, `actions`: write, `checks`, `statuses`: read | `AGENT_PAT` (`Decide`) |
@@ -184,12 +195,18 @@ Every job has `cancel-in-progress: false`. `GITHUB_TOKEN` is passed only to the 
 [GitHub API and tokens](#github-api-and-tokens), never to `Work`.
 
 **The `route` filter.** No runner starts when the actor or the pull request author is `dependabot[bot]`, for a
-`workflow_run` from another repository, for a comment on a Dependabot pull request, for a comment by a bot, for a
+`workflow_run` from another repository, for a comment on a Dependabot pull request (except one that holds `/agent`
+and `ci_check` or `ci-check`; `contains()` ignores case, and the router parses the comment and skips anything but
+`/agent ci_check`), for a comment by a bot, for a
 comment on a pull request without `/agent` unless the pull request body holds `ai-autonomous-agent issue=`, or for a
 review that is not `changes_requested`, is by a bot, comes from a fork, or is on a pull request without that marker.
 A `schedule` event starts a runner only when `vars.AGENT_ENABLED == 'true'`, so a disabled agent costs nothing every
 10 minutes. It passes the other conditions: the event fields they read are empty there, and the actor check skips it,
 because its `github.actor` is whoever last changed the workflow file, often Dependabot bumping an action.
+
+**The `route` permissions.** `issues: write` and `pull-requests: write` let the router post the decline comment and
+the confused reaction (see [the busy check](#the-busy-check-one-command-at-a-time)). `actions: read` lets it list the
+runs of the workflow. The job still runs no model, and only code of the default branch.
 
 **The `analyze` matrix.** The job has `strategy: { matrix: { number: fromJSON(needs.route.outputs.numbers || '[]') },
 max-parallel: 2, fail-fast: false }`. Each matrix entry sets `AGENT_NUMBER` to its number, takes the concurrency group
@@ -201,7 +218,7 @@ a command gives a one-element list; the sweep gives up to five. A failed entry d
 
 | Job | Steps |
 |---|---|
-| `route` | checkout of `tools/agent` (the default branch for `pull_request_review`), setup-node, `node tools/agent/route.js` |
+| `route` | checkout of `tools/agent` of the default branch (`ref` is `github.event.repository.default_branch`; the `schedule` payload may have none, and an empty `ref` is the default branch), setup-node, `node tools/agent/route.js` |
 | `review` | checkout of `refs/pull/<number>/head` with full history; checkout of `/tools/agent/`, `/.github/labeler.yml`, `/.claude/`, and `AGENTS.md` into `.agent-tools`; "Use the trusted agent instructions" (replace `.claude/` and every `AGENTS.md` and `CLAUDE.md` of the pull request with the trusted copies); setup-node; install opencode and `yaml`; `Review` (`node .agent-tools/tools/agent/review.js`); upload |
 | `analyze` | checkout of the default branch with full history; setup-node; install opencode; `Analyze` (`node tools/agent/analyze.js`); upload |
 | `ci-gate` | checkout of `tools/agent`; setup-node; `Decide` (`node tools/agent/ci-gate.js`, output `next`); upload |
@@ -268,7 +285,8 @@ pure function `decide` makes the decision; `gather` fetches the facts that need 
 calls for them. A decision that does nothing has the action `skip` (there is no action named `none`).
 
 - **Inputs:** `GITHUB_EVENT_NAME`, `GITHUB_EVENT_PATH` (the event JSON), `GITHUB_REPOSITORY`, `GITHUB_TOKEN` (needed
-  only when a GitHub call is needed), `GITHUB_OUTPUT`, `GITHUB_STEP_SUMMARY`, and the `AGENT_*` variables of
+  only when a GitHub call is needed), `GITHUB_RUN_ID` (needed for a command that starts a worker job, see [the busy
+  check](#the-busy-check-one-command-at-a-time)), `GITHUB_OUTPUT`, `GITHUB_STEP_SUMMARY`, and the `AGENT_*` variables of
   `tools/agent/lib/config.js` (`AGENT_ENABLED`, `AGENT_DRY_RUN`, `AGENT_ALLOWED_ACTORS`, `AGENT_MAX_ANALYSES`,
   `AGENT_ANALYSIS_GRACE_MINUTES`, `AGENT_DAILY_ANALYSES`, `AGENT_DAILY_REVIEWS`, and so on). `GITHUB_REPOSITORY` is
   needed for the searches of the sweep and of the daily caps.
@@ -335,10 +353,13 @@ calls for them. A decision that does nothing has the action `skip` (there is no 
    answer, and for a review with change requests. It is not required for the analysis of an issue or for the review of
    a new pull request.
 6. Dependabot: a login that matches `dependabot` or `dependabot[bot]`. The workflow already filters it before a runner
-   starts (see `if:` of the `route` job). The router checks again for a command on a pull request: `review`, `retry`,
-   `rerun`, `ci-check`, `stop`, `cost`, `help`, `chat`, and a review with change requests give `skip`
+   starts (see `if:` of the `route` job), and lets only a comment through that holds `/agent` and `ci_check` or
+   `ci-check`. The router checks
+   again for a command on a pull request: `review`, `retry`, `rerun`, `stop`, `cost`, `help`, `chat`, and a review with
+   change requests give `skip`
    (`dependency update pull requests are not handled`; for `review`:
-   `dependency update pull requests are not reviewed`). A pull request of Dependabot is a bot author for `pull_request`
+   `dependency update pull requests are not reviewed`). `ci-check` is the exception: it works on a pull request of
+   Dependabot like on any other. A pull request of Dependabot is a bot author for `pull_request`
    events.
 7. Fork: a pull request whose head repository differs from its base repository (compared in lower case; a deleted fork
    counts as a fork). `pull_request` events and `pull_request_review` are skipped. A fork is reviewed only on
@@ -418,7 +439,7 @@ access), then the rule of the command. Without a command, see the last table.
 | `/agent rerun` | agent PR | | `rerun` | issue named by the marker | `rerun` | | PR | | |
 | `/agent rerun` | other PR | Not an agent PR (`rerun works on an issue or a pull request of the agent`) | `skip` | PR | | | | | |
 | `/agent ci_check [notes]` | issue | `ci_check works on a pull request` | `skip` | issue | | | | | |
-| `/agent ci_check` | PR, not an agent PR | Fork pull requests are allowed | `ci-check` | PR | `ci-check` | | | | |
+| `/agent ci_check` | PR, not an agent PR | Fork and Dependabot pull requests are allowed | `ci-check` | PR | `ci-check` | | | | |
 | `/agent ci_check` | agent PR | The output `issue` names the issue of the marker | `ci-check` | PR | `ci-check` | | | | |
 | `/agent stop` | issue | | `stop` | issue | `stop` | | | | |
 | `/agent stop` | agent PR | | `stop` | PR | `stop` | | | | |
@@ -431,8 +452,9 @@ access), then the rule of the command. Without a command, see the last table.
 
 On a PR, `retry`, `rerun`, `ci-check`, `stop`, and `chat` also need the issue state of the marker, which `gather` reads
 (`gatherAgentFacts`).
-For `cost`, `help`, `chat`, and `review` on a PR of Dependabot the result is `skip`. Both `action=implement` rows for
-an agent PR carry `pr`; the `implement` row for `/agent implement` has no `pr` and no `kind`.
+For `retry`, `rerun`, `stop`, `cost`, `help`, `chat`, and `review` on a PR of Dependabot the result is `skip`. Both
+`action=implement` rows for an agent PR carry `pr`; the `implement` row for `/agent implement` has no `pr` and no
+`kind`.
 
 | Comment without a command | action | number | command.name | pr | kind |
 |---|---|---|---|---|---|
@@ -471,8 +493,9 @@ run. The state is read only for an open PR that carries the marker.
 | All pass | `implement` | issue named by the marker | `{"name":"review-changes","force":false,"notes":"<review text>"}` | PR | `review` |
 
 The workflow runs the `route` job for a review only when it has the state `changes_requested`, is not from a bot, comes
-from a branch of this repository, and the PR body holds `ai-autonomous-agent issue=`. For this event the job checks out
-the default branch, not the pull request.
+from a branch of this repository, and the PR body holds `ai-autonomous-agent issue=`. The job always checks out the
+default branch, never the pull request: without a `ref`, a `pull_request` event would check out the merge ref and a
+`pull_request_review` event the pull request itself.
 
 - **Decisions:** see the tables above. Two filters sit in the workflow, not in the router: the `if:` of the `route` job
   (bot and Dependabot actors, forks of `workflow_run`, comments without `/agent` on a pull request that is not an agent
@@ -490,8 +513,47 @@ the default branch, not the pull request.
   - `tools/agent/route.chat.test.js`: `retry`, `rerun`, `ci-check`, `stop`, `cost`, `help`, `chat`, the hand-off
     answer, the change request in a review, and the `pr` and `kind` outputs.
   - `tools/agent/route.ci.test.js`: the CI gate decision, the marker and state trust checks, forks, and `gatherCiFacts`.
+  - `tools/agent/route.busy.test.js`: the busy check (older, newer, own, and old runs, linked numbers, the commands
+    that are never declined, dry run, the comment and the reaction).
   - Fixtures: `tools/agent/fixtures/*.json`, one event per file (for example `issue_comment.chat.agent-pr.json`,
     `workflow_run.completed.json`, `pull_request_review.changes_requested.json`).
+
+#### The busy check (one command at a time)
+
+After `decide`, `main` calls `declineIfBusy` (log group `Check for a busy run`). The jobs of one number share the
+concurrency group `ai-autonomous-<number>` with `cancel-in-progress: false`, and GitHub keeps one running and one
+pending job per group and cancels older pending ones without a word. The groups stay, because they guard the state
+comment. The busy check makes the drop explicit and puts the decline where the person sees it.
+
+- **Which decisions.** `isWorkerCommand`: the event is `issue_comment` or `pull_request_review`, the decision has a
+  `command`, and its action is `review`, `analyze`, `implement`, `rerun`, `ci-check`, or `chat` with
+  `command.name === 'chat'` (a question). That covers a parsed command, the answer to a hand-off (`answer`), and a
+  change request in a review (`review-changes`). `stop`, `help`, `cost`, a `skip`, and every automatic event
+  (`pull_request`, `issues`, `workflow_run`, `schedule`) pass untouched and make no API call.
+- **Which numbers.** `workNumbers`: the number of the event (where the command was written), and `number`, `pr`, and
+  `issue` of the decision, and `linkedPullOf`: for a worker command written on an issue (and only then), the router
+  reads the state comment of the issue (`findStateComment`, `parse`, guarded: an unreadable state or a failing read is
+  logged and leaves the issue alone) and adds `state.pr`. The agent's pull request and its issue are one piece of work,
+  so a run titled with the pull request number blocks a command on the issue, and a `ci_check` or `retry` on the
+  agent's pull request covers its issue through the marker. Known gap: the CI gate run of a push event may have an empty
+  `workflow_run.pull_requests`, so its title has no number and the check cannot see it.
+- **Which runs.** One call of `gh.listWorkflowRuns('ai-autonomous-agent.yml', { created: '>=<now - 6 hours>' })`
+  (`BUSY_WINDOW_MS`), filtered in code to the statuses `queued`, `in_progress`, `waiting`, `pending`, and `requested`,
+  to a `created_at` inside the window, and to a `display_title` that ends with `#<n>` for one of the numbers (the
+  match is on the whole trailing number, so `#20` is not `#200`). `findBusyRun` ignores the run with the id
+  `GITHUB_RUN_ID` and every run with a larger id: a newer run declines itself, so the first comment wins. The oldest
+  match is the busy one. A run whose `route` job still runs counts, because the router cannot yet know whether that
+  run will skip; the window is seconds, and the comment tells the person to comment again, so a wrong decline costs a
+  retry and never a double run. There is no job-level listing: a run counts as busy as a whole.
+- **The decline.** The decision becomes `skip` with the reason `busy: run <id> works on #<n>`. The router posts one
+  comment on the issue or pull request of the event: the mention of the commenter, then "I am already working on #n
+  (run link), so I did not start `/agent <command>`. Comment it again when that run ends." The words after "did not"
+  depend on the command: `start /agent rerun`, `start /agent ci_check`, `answer your question`,
+  `act on your answer`, and `act on your change request`. A command comment gets the reaction `confused`; a review
+  has no comment to react to. In dry run nothing is posted or reacted with, and the job summary holds the comment
+  that would be posted.
+- **Failures.** A failed listing or comment throws, so the `route` job fails and no worker starts. A missing
+  `GITHUB_RUN_ID` throws too. The router never starts a command on a guess.
 
 #### Daily caps and the sweep
 
@@ -1347,15 +1409,17 @@ issue is in the phase `waiting-ci` at that commit. The job checks out `tools/age
      `AI Autonomous`, or a job name in `route`, `review`, `analyze`, `implement`, `ci-gate`, `levels`. Statuses (the CLA
      check reports there) are kept.
   4. Wait (`pendingChecks`), outcome `waiting` with the pending names as the reason; nothing is written. Pending are:
-     check runs that are not `completed`; completed runs with the conclusion `cancelled` (a person or a newer push
-     stopped them); the required check `ci-ok` (`REQUIRED_CHECKS`) when it does not exist yet; statuses in `pending`.
+     check runs that are not `completed`; the required check `ci-ok` (`REQUIRED_CHECKS`) when it does not exist yet;
+     statuses in `pending`. A completed run with the conclusion `cancelled` is not pending: it is finished, nobody
+     reruns it by itself, and waiting for it would never end (it was seen on #943). It is a failed check.
      A commit with no check run and no status also waits ("no check reported yet"). The workflow run that finishes last
      decides.
   5. Once per commit: `state.ciGate.sha === headSha` with `decided: true` gives `already-decided`. This check comes
      after the wait check.
   6. All green (`allGreen`: at least one check, none pending, none failed) goes to `handleGreen`; otherwise
      `handleRed`. Green conclusions are `success`, `neutral`, `skipped`; a status fails as `failure` or `error`; every
-     other conclusion fails a check run.
+     other conclusion fails a check run, `cancelled` included (`failedChecks` keeps the conclusion, so the texts say
+     "`run-lint` (cancelled)", see `checkNames`).
   7. Re-read before write (`staleResult`), before the first write of both branches. For red, this comes after the logs
      are read. `supersededBy` reads the pull request again: another head sha gives `superseded`. `phaseMovedOn`
      reads the state comment again: a phase other than `waiting-ci` (a `/agent stop` came in) gives `state-changed`.
@@ -1391,22 +1455,29 @@ issue is in the phase `waiting-ci` at that commit. The job checks out `tools/age
      temporary paths with `<tmp>`, durations with `<dur>`, `file:line:col` with `:<pos>`, `(line,col)` with `(<pos>)`,
      hex strings of 7 or more characters with `<hex>`, and every other number with `<n>`; it also collapses
      whitespace. The text is joined as `names` + `\n--\n` + `name\nlines` per check, hashed with SHA-1, and the first
-     12 hex characters are the signature.
+     12 hex characters are the signature. The failed checks with the conclusion `cancelled` are left out when any other
+     check failed, so a changing set of cancelled checks does not change the signature of the same real failure; when
+     only cancelled checks failed, they make it.
   6. `staleResult` (see step 7 above).
-  7. Free E2E rerun: when every failed item, the verdict check `ci-ok` (`REQUIRED_CHECKS`) aside, is a check run whose
-     name matches `/e2e/i`, and at least one failed item remains (`isE2eOnly`), the head commit has no rerun left
-     unused (`e2eRerunLeft`: `state.e2eRerun.sha !== headSha` or `count < MAX_E2E_RERUNS`, which is 1), and there is a
-     run to rerun (`rerunTargets`: the distinct `runId`s of the failed jobs, else `AGENT_WORKFLOW_RUN_ID`): call
-     `gh.rerunFailedJobs` per run (that includes the run of `ci-ok`, which depends on the E2E job), set
-     `e2eRerun` to `{ sha, count }` in the state (`rerunState`; a new commit starts at 1, and an old `e2eReruns` field
-     is deleted), and write the state comment (`### AI implementation: waiting for CI on pull request #<n>`). The
-     phase stays `waiting-ci`, `ciGate` is not set, and the outcome is `rerun`. The next result is decided like any
-     red result.
-  8. Stop rule (`stopDecision`), in this order: the signature equals the latest signature recorded on an attempt
-     (`lastSignature`) gives `stop` with reason `same-failure`, whatever the budget; counted attempts at or above
-     `AGENT_MAX_ATTEMPTS` gives `stop` with reason `budget`; otherwise `next-attempt` (reason `new-failure`). Counted
-     attempts (`countedAttempts`) are the attempts of kind `initial` or `ci-fix` from index `state.budgetFrom` on, so a
-     person's `retry`, answer, or change request gives a fresh budget.
+  7. Free rerun: when every failed item, the verdict check `ci-ok` (`REQUIRED_CHECKS`) aside, is a check run whose name
+     matches `/e2e/i`, and at least one failed item remains (`isE2eOnly`), or is a check run with the conclusion
+     `cancelled` (`isCancelledOnly`: nothing really failed, the checks were stopped by a timeout, a person, or a newer
+     run; a mix of cancelled and really failed checks is a normal red result), the head commit has no rerun left unused
+     (`e2eRerunLeft`: `state.e2eRerun.sha !== headSha` or `count < MAX_E2E_RERUNS`, which is 1), and there is a run to
+     rerun (`rerunTargets`: the distinct `runId`s of the failed jobs, else `AGENT_WORKFLOW_RUN_ID`): call
+     `gh.rerunFailedJobs` per run (that includes the run of `ci-ok`, which depends on the E2E job), set `e2eRerun` to
+     `{ sha, count }` in the state (`rerunState`; a new commit starts at 1, and an old `e2eReruns` field is deleted),
+     and write the state comment (`### AI implementation: waiting for CI on pull request #<n>`; it says "Only E2E jobs
+     failed" or "The failed checks were cancelled, so nothing really failed", see `renderRerun`). The one free rerun per
+     commit covers both cases and keeps the field name `e2eRerun`. The phase stays `waiting-ci`, `ciGate` is not set,
+     and the outcome is `rerun`. The next result is decided like any red result.
+  8. Stop rule. When `isCancelledOnly(failed)` holds here (the free rerun is used up, or no run can be rerun), the
+     decision is `stop` with the reason `cancelled`: nothing failed, so no attempt starts, and the hand-off says that
+     the checks were cancelled again (`reasonSentence`). Otherwise `stopDecision`, in this order: the signature equals
+     the latest signature recorded on an attempt (`lastSignature`) gives `stop` with reason `same-failure`, whatever the
+     budget; counted attempts at or above `AGENT_MAX_ATTEMPTS` gives `stop` with reason `budget`; otherwise
+     `next-attempt` (reason `new-failure`). Counted attempts (`countedAttempts`) are the attempts of kind `initial` or
+     `ci-fix` from index `state.budgetFrom` on, so a person's `retry`, answer, or change request gives a fresh budget.
   9. Stop: `stoppedState` sets `phase: 'needs-human'`, the last attempt `result: 'ci-red'` and `signature`,
      `lastCiReport`, and `ciGate`. The state comment (`### AI implementation needs a person`) starts with the failed
      checks (`checkNames`: at most 5, then "and N more"), the first error line of the first failed check
@@ -1427,17 +1498,17 @@ issue is in the phase `waiting-ci` at that commit. The job checks out `tools/age
   comment that would be posted. The re-read checks (`superseded`, `state-changed`) still run, because they only read.
   Dry-run returns `next-attempt` without `next`.
 - **Tests:**
-  - `tools/agent/ci-gate.test.js`: own-check filter, pending and failed checks, `allGreen`, `isE2eOnly` (with
-    `ci-ok`), `e2eRerunLeft` and `rerunState` (per commit), error extraction (with the script echo), line caps,
-    `normalizeLine`, `failureSignature`, `buildReport` (12,000 cap, fences), stop rule and
-    `budgetFrom`, the state builders, `gateGuard`, `rerunTargets`, `checkNames`, `failureLines`, `reportFacts`,
-    `rerunRefusal`, `rerunRequestState`, the
-    renderers and comments.
-  - `tools/agent/ci-gate.main.test.js`: `gate()` with injected clients: waiting, own jobs, skips, already decided,
-    green (with and without PAT), red (next attempt, same failure, budget, statuses, missing logs, caps), the E2E rerun
-    (per commit, with `ci-ok`), dry-run, token leaks, `superseded`, `state-changed`, cost records written during the
-    run; and `rerunCommand()`: every refusal, the rerun, statuses only, pending, green, a stop between the two reads,
-    a failed rerun call, dry-run, and the reactions.
+  - `tools/agent/ci-gate.test.js`: own-check filter, pending and failed checks (a cancelled check is failed, not
+    pending), `allGreen`, `isE2eOnly` and `isCancelledOnly` (with `ci-ok`), `e2eRerunLeft` and `rerunState` (per
+    commit), error extraction (with the script echo), line caps, `normalizeLine`, `failureSignature`, `buildReport`
+    (12,000 cap, fences), stop rule and `budgetFrom`, the state builders, `gateGuard`, `rerunTargets`, `checkNames`,
+    `failureLines`, `reportFacts`, `rerunRefusal`, `rerunRequestState`, the renderers and comments.
+  - `tools/agent/ci-gate.main.test.js`: `gate()` with injected clients: waiting, own jobs, skips, already decided, green
+    (with and without PAT), red (next attempt, same failure, budget, statuses, missing logs, caps), the E2E rerun (per
+    commit, with `ci-ok`), the rerun of cancelled-only results (shared with the E2E budget, mixed results), dry-run,
+    token leaks, `superseded`, `state-changed`, cost records written during the run; and `rerunCommand()`: every
+    refusal, the rerun, statuses only, pending, green, a stop between the two reads, a failed rerun call, dry-run, and
+    the reactions.
   - `tools/agent/route.ci.test.js`: the routing of `workflow_run` events to `ci-gate`.
 
 #### Rerun mode (`/agent rerun`)
@@ -1584,10 +1655,10 @@ job uses the group `ai-autonomous-chat-<number>`.
 
 Flow D, the command `/agent ci_check`: the root cause of a red CI on a pull request. The `Check CI` step of the
 `ci-check` job runs it. The router sends it every `ci_check` comment on a pull request, of the agent or not, also one
-from a fork. The job writes the state comment of the pull request (the cost) and, when it hands a flaky failure back to
-the CI gate, the state comment of the issue. So it uses the group of the issue (`AGENT_ISSUE`, the `issue` output of the
-router) for a pull request of the agent, else the group of the pull request, which is the group of `review`. It still
-merges the cost records on write.
+from a fork or one of Dependabot. The job writes the state comment of the pull request (the cost) and, when it hands a
+flaky failure back to the CI gate, the state comment of the issue. So it uses the group of the issue (`AGENT_ISSUE`, the
+`issue` output of the router) for a pull request of the agent, else the group of the pull request, which is the group of
+`review`. It still merges the cost records on write.
 
 - **Inputs:**
   - `GITHUB_REPOSITORY`, `GITHUB_TOKEN` (the job token, no `AGENT_PAT`), `OPENAI_API_KEY` (red CI only).
@@ -1604,17 +1675,20 @@ merges the cost records on write.
 - **Sequence** (`ciCheck`, then `checkCi`):
   1. React with `eyes`. Load the pull request (`gh.getPull`) and the checks of its head commit
      (`gh.listCheckRuns`, `gh.getCombinedStatus`), without the agent's own jobs (`relevantChecks`).
-  2. No check run and no status: reply that no check is reported. Any check running, pending, or cancelled
-     (`stillRunning`; a missing `ci-ok` is not one): reply with the checks that run (at most five, then "and N
-     more"). Nothing failed and only a missing `ci-ok` is pending: outcome `no-verdict`, the reply says that no CI
-     verdict is reported for the head commit, for example because CI waits for an approval of the workflows of a fork.
-     All green: reply that CI is green. None of these calls a model. The reply asks to comment `/agent ci_check`
-     again when CI ends. With failed checks and a missing `ci-ok`, the command goes on to step 3.
+  2. No check run and no status: reply that no check is reported. Any check running or pending (`stillRunning`; a
+     missing `ci-ok` is not one, and a cancelled check is finished, so it is not one either): reply with the checks that
+     run (at most five, then "and N more"). Nothing failed and only a missing `ci-ok` is pending: outcome `no-verdict`,
+     the reply says that no CI verdict is reported for the head commit, for example because CI waits for an approval of
+     the workflows of a fork. All green: reply that CI is green. None of these calls a model. The reply asks to comment
+     `/agent ci_check` again when CI ends. With failed checks and a missing `ci-ok`, the command goes on to step 3.
   3. Red: collect the logs (`collectLogs`), the signature, and the report (`buildReport`, at most 12,000
      characters), and write `ci-report.md`. Compute the merge base with `git merge-base origin/<base> <head ref>`
      (`null` with a warning when Git cannot) and write `ci-check-input.md` (`renderCheckInput`): the refs, the
-     signature, then the title with the failed checks, the CI report, and the notes of the person, each inside an
-     `<untrusted>` block.
+     signature, the count of cancelled checks, then the title with the failed checks (a cancelled one is marked
+     "[cancelled: it was stopped, it did not fail by itself]"), the CI report, and the notes of the person, each inside
+     an `<untrusted>` block. The failed checks include the cancelled ones, so `/agent ci_check` triages a result such as
+     two cancelled `run-lint`, a failed `js`, and a failed `ci-ok`, and the rerun of step 6 covers the runs of the
+     cancelled checks too.
   4. Run the `ci-triager`. When the call or its contract fails, record the cost, reply "I could not finish the CI
      check:" followed by the error message, add the cost line, and throw (the job fails, the reaction is `confused`). A
      `change` verdict without a fix breaks the contract.
@@ -1940,7 +2014,7 @@ The GitHub REST and GraphQL client.
 | `listPullCommits(n)` | `GET /repos/{repo}/pulls/{n}/commits` (paginated) | `levels.js` |
 | `getIssue(n)` | `GET /repos/{repo}/issues/{n}` | `analyze.js`, `chat.js`, `implement.js` |
 | `listIssueComments(n)` | `GET /repos/{repo}/issues/{n}/comments` (paginated) | `analyze.js`, `chat.js`, `ci-gate.js`, `implement.js`, `levels.js`, `report.js`, `review.js`, `route.js`; also `state.withFreshCosts` |
-| `createIssueComment(n, body)` | `POST /repos/{repo}/issues/{n}/comments` | `analyze.js`, `chat.js`, `ci-gate.js`, `implement.js`, `levels.js`, `report.js`, `review.js` |
+| `createIssueComment(n, body)` | `POST /repos/{repo}/issues/{n}/comments` | `analyze.js`, `chat.js`, `ci-gate.js`, `implement.js`, `levels.js`, `report.js`, `review.js`, `route.js` (the decline) |
 | `updateIssueComment(id, body)` | `PATCH /repos/{repo}/issues/comments/{id}` | `analyze.js`, `chat.js`, `ci-gate.js`, `implement.js`, `review.js` |
 | `addLabels(n, labels)` | `POST /repos/{repo}/issues/{n}/labels` | `analyze.js`, `ci-gate.js`, `implement.js`, `levels.js`, `review.js` |
 | `removeLabel(n, label)` | `DELETE /repos/{repo}/issues/{n}/labels/{label}`; a 404 is not an error | `analyze.js`, `chat.js`, `ci-gate.js`, `implement.js`, `levels.js` |
@@ -1953,11 +2027,12 @@ The GitHub REST and GraphQL client.
 | `convertPullToDraft(nodeId)` | GraphQL mutation `convertPullRequestToDraft` (PAT) | `implement.js` |
 | `markPullReady(nodeId)` | GraphQL mutation `markPullRequestReadyForReview` (PAT) | `ci-gate.js` |
 | `listCheckRuns(sha)` | `GET /repos/{repo}/commits/{sha}/check-runs?filter=latest` | `ci-gate.js` |
+| `listWorkflowRuns(file, { status, created })` | `GET /repos/{repo}/actions/workflows/{file}/runs` with the optional filters `status` and `created` (the list is wrapped in `workflow_runs`, paginated by hand) | `route.js` (the busy check) |
 | `getCombinedStatus(sha)` | `GET /repos/{repo}/commits/{sha}/status` | `ci-gate.js` |
 | `getJobLog(jobId)` | `GET /repos/{repo}/actions/jobs/{jobId}/logs` (text, redirect followed) | `ci-gate.js` |
 | `rerunFailedJobs(runId)` | `POST /repos/{repo}/actions/runs/{runId}/rerun-failed-jobs` | `ci-gate.js` (the gate and `rerun`), `implement.js` (`publish`, `unrelated`) |
 | `cancelRun(runId)` | `POST /repos/{repo}/actions/runs/{runId}/cancel`; 409 returns `false` | `chat.js` (`/agent stop`) |
-| `addReaction(commentId, content)` | `POST /repos/{repo}/issues/comments/{commentId}/reactions` | via `lib/reactions.js`: `chat.js`, `implement.js`, `ci-gate.js` (`rerun`) |
+| `addReaction(commentId, content)` | `POST /repos/{repo}/issues/comments/{commentId}/reactions` | via `lib/reactions.js`: `chat.js`, `implement.js`, `ci-gate.js` (`rerun`), `ci-check.js`, `route.js` (the decline) |
 | `replyToReviewComment(n, commentId, body)` | `POST /repos/{repo}/pulls/{n}/comments/{commentId}/replies` | `implement.js` |
 | `listReviewThreads(n)` | GraphQL query `repository.pullRequest.reviewThreads(first: 100)` with `comments(first: 20)` | `implement.js` |
 | `searchIssues(query)` | `GET /search/issues` (paginated) | `report.js` |
@@ -2225,11 +2300,13 @@ Finds the root cause of a red CI on a pull request. It changes nothing; `ci-chec
 - **Bash:** the same as `pr-reviewer`: `"*": deny`; allowed `git diff*`, `git log*`, `git show*`, `git merge-base*`,
   `git blame*`, `git grep*`; the same four denials.
 - **Input:** `ci-check-input.md` (the pull request number, the head commit, the base ref, the head ref, the merge base,
-  the failure signature, the failed checks and the CI report inside an `<untrusted>` block, the notes of the person
-  inside another). The CI report is the output of the code under test, so the prompt says never to follow instructions
-  in it.
+  the failure signature, the failed checks (a cancelled one is marked) and the CI report inside an `<untrusted>` block,
+  the notes of the person inside another). The CI report is the output of the code under test, so the prompt says never
+  to follow instructions in it.
 - **Task:** load the `apihub-ci-failure-triage` skill; read `git diff <base>...<head>` with the refs of the input and
   the code the failure points at; decide whether the change caused the failure; never name a file that it did not read.
+  A cancelled check has no failure of its own (a timeout, a person, or a newer run stopped it): alone it is `infra` or
+  `unknown`, never `change`, and it gets no fix.
 - **Output:** the `ciTriage` contract.
 
 ## Playbook skills
@@ -2331,7 +2408,7 @@ again first and merge cost records (`withFreshCosts`), so `chat` and `publish` d
 | `retired` | array | `implement.js preflight` | `{ pr, branch }` of a closed pull request when a person starts fresh; the keys `branch`, `pr`, `ciGate`, `lastCiReport`, `e2eRerun`, `e2eReruns` are deleted at the same time |
 | `ciGate` | object | `ci-gate.js` | `{ sha, decided: true, at, run }`: the CI gate decided once for this head commit |
 | `lastCiReport` | string | `ci-gate.js` (red) | the CI report of the last red run; the next CI-fix attempt gets it as input; removed on green |
-| `e2eRerun` | object | `ci-gate.js` | `{ sha, count }`: the free reruns of E2E-only failures used for the head commit `sha` (limit 1 per commit). An old number field `e2eReruns` is ignored and deleted on write |
+| `e2eRerun` | object | `ci-gate.js` | `{ sha, count }`: the free reruns used for the head commit `sha` (limit 1 per commit), for an E2E-only or a cancelled-only failure; the two share the budget. An old number field `e2eReruns` is ignored and deleted on write |
 | `reruns` | array | `ci-gate.js rerun`, `ci-check.js` | one entry per `/agent rerun`, and per rerun that `/agent ci_check` made on a `flaky` or `infra` verdict: `{ at, actor, sha, runs, run }` (the commit, the workflow run ids that were rerun, and the URL of the workflow run of the command) |
 | `stoppedBy` | string | `chat.js` (`stop`) | login that sent `/agent stop` |
 | `stoppedAt` | string | `chat.js` (`stop`) | ISO time of the stop |

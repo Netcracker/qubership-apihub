@@ -44,7 +44,8 @@ comments. It is a proof of concept; the design is in [the internal docs](../inte
 
 The agent never approves or requests changes; its review is a comment. The review comment ends with what the AI calls
 on the pull request have cost so far. Dependabot pull requests are never reviewed, also not with `/agent review`: a
-dependency bump has nothing to review, and a review costs money.
+dependency bump has nothing to review, and a review costs money. The only command the agent takes on a Dependabot pull
+request is `/agent ci_check`.
 
 Who can use it: anyone who opens a pull request or a `Bug` or `Task` issue gets the automatic review and the automatic
 analysis. A command, an answer to a hand-off, and an implementation need a user with write access to the repository,
@@ -54,9 +55,9 @@ bots.
 ## Commands
 
 A command is a comment whose first non-empty line starts with `/agent`. Only a user with write access can give one, and
-only the users in `AGENT_ALLOWED_ACTORS` while it is set. The agent ignores bots and Dependabot pull requests. It
-reacts to your comment with an eyes emoji when it starts, then with a rocket when it ends well or a confused face when
-it refuses or fails.
+only the users in `AGENT_ALLOWED_ACTORS` while it is set. The agent ignores bots and Dependabot pull requests, except
+for `/agent ci_check` on a Dependabot pull request. It reacts to your comment with an eyes emoji when it starts, then
+with a rocket when it ends well or a confused face when it refuses or fails.
 
 | Command | Where | What happens |
 |---|---|---|
@@ -73,6 +74,27 @@ it refuses or fails.
 | `/agent review [notes]` | pull request | The agent reviews again. `/agent review force` also reviews a diff above the size limit. |
 | `/agent analyze` | `Bug` or `Task` issue | The agent assesses the issue again. |
 | `/agent implement [notes]` | `Bug` or `Task` issue | See [Implement an issue](#implement-an-issue). |
+
+### One command at a time
+
+The agent works on one command at a time per issue or pull request. The title of every run of the workflow ends with
+the number of the issue or pull request it is about. When you comment a command that starts a worker job (`review`,
+`analyze`, `implement`, `retry`, `rerun`, `ci_check`, a question, an answer to a hand-off, or a change request in a
+review) and an older run of the workflow still works on the same number, the agent declines it:
+
+- It posts one comment where you wrote the command: "I am already working on the number, with a link to the run, so I
+  did not start the command. Comment it again when that run ends." It reacts to your comment with a confused face.
+- An issue and the pull request of the agent that implements it are one piece of work. A run on the pull request
+  blocks a command on its issue (the agent reads the pull request from the state of the issue), and a run on the issue
+  blocks a command on its pull request. One gap remains: the run of the CI gate for a push may carry no pull request
+  number in its title, so a command that arrives while only that run is active is not declined. The concurrency group
+  of the number then keeps the writes in order.
+- When several commands arrive at about the same time, the first comment wins and the others are declined. The router
+  cannot yet tell whether an older run will skip your command, so a decline in that window costs a retry, never a
+  double run.
+- `/agent stop`, `/agent help`, and `/agent cost` are never declined. Neither are the automatic reviews, analyses, and
+  CI gate runs; the concurrency group of each number still keeps their writes in order.
+- With `AGENT_DRY_RUN` on, nothing is posted. The job summary shows the comment that the agent would post.
 
 ### Questions
 
@@ -135,6 +157,7 @@ model, so it costs nothing and does not touch the attempt budget. Any text after
 - A missing verdict check `ci-ok` is not a running CI. With failed checks, the command reruns them as usual. When
   nothing failed and `ci-ok` is missing, the reply says that no CI verdict is reported for the head commit (CI may
   wait for an approval of the workflows of a fork), instead of "CI still runs".
+- Cancelled checks are rerun like failed ones.
 - It runs in its own job `rerun`, which holds `AGENT_PAT` only to take a green pull request out of draft.
 
 ### CI check
@@ -143,7 +166,8 @@ model, so it costs nothing and does not touch the attempt budget. Any text after
 notes tell the triager what to look at. The agent reads the checks of the head commit, and what follows depends on
 what it finds:
 
-- **CI still runs.** The reply lists the checks that run. Ask again when they end. No model call.
+- **CI still runs.** The reply lists the checks that run. Ask again when they end. No model call. A cancelled check
+  does not count as running: it is finished, and it is handled as a failed check (see below).
 - **No CI verdict.** Nothing failed, but the verdict check `ci-ok` is not reported for the head commit, for example
   because CI waits for an approval of the workflows of a fork. The reply says so. No model call. When checks failed,
   the missing `ci-ok` is ignored and the command goes on with the failed checks.
@@ -153,6 +177,10 @@ what it finds:
   [CI gate](#the-ci-loop), and asks the `ci-triager` (model `AGENT_MODEL_TRIAGE`, read-only) for the root cause. The
   reply gives the verdict, the root cause, where to fix it (file, line, and what to change), the evidence from the
   logs, and what the agent did.
+
+A cancelled check (stopped by a timeout, a person, or a newer run) is part of the failed checks. It has no failure of
+its own, so the input of the triager marks it, and on its own it is `infra` or `unknown`, never `change`. A rerun of the
+failed jobs reruns the cancelled ones too.
 
 The verdict is one of four:
 
@@ -281,7 +309,7 @@ forks.
 
 1. **It waits.** The gate reads every check run and every commit status of the head commit (the CLA check reports as a
    status). While any is still running or pending, it exits; the workflow run that finishes last decides. The agent's
-   own jobs do not count.
+   own jobs do not count. A cancelled check has finished, so the gate does not wait for it: it counts as failed.
 2. **It decides once** per commit. A second workflow run of the same commit changes nothing. Right before it writes
    anything, the gate reads the pull request and the state again. When a newer commit is on the branch, it writes
    nothing and exits as `superseded`; the checks of the newer commit start their own gate run. When the issue is no
@@ -292,12 +320,18 @@ forks.
    person reviews and merges the pull request.
 4. **Red:** the gate reads the logs of the failed jobs, cuts them to the error blocks, and builds a CI report of at
    most 12,000 characters. Its failure signature is a hash of the failed check names and the first normalized error
-   lines, so timestamps, run IDs, and durations do not change it.
-5. **One free rerun per commit.** When every failed check is an E2E job, the gate reruns the failed jobs once for that
-   head commit and decides on the result of the rerun. A new commit gets its own free rerun. E2E jobs flake more than
-   the rest. The verdict check `ci-ok` of `ci.yml` always fails together with E2E, so it does not count: a red result
-   of E2E jobs and `ci-ok` is still an E2E-only failure. The gate reruns the workflow runs of all failed checks,
-   including the run of `ci-ok`, which depends on the E2E job.
+   lines, so timestamps, run IDs, and durations do not change it. Cancelled checks are left out of the hash when any
+   other check failed, so a changing set of cancelled checks does not make the same failure look new.
+5. **One free rerun per commit.** When every failed check is an E2E job, or every failed check is cancelled, the gate
+   reruns the failed jobs once for that head commit and decides on the result of the rerun. Both cases share that one
+   rerun. A new commit gets its own free rerun. E2E jobs flake more than the rest, and a cancelled check (a timeout, a
+   person, a newer run) has no failure of its own. The verdict check `ci-ok` of `ci.yml` fails together with them, so
+   it does not count: a red result of E2E jobs and `ci-ok` is still an E2E-only failure. The gate reruns the workflow
+   runs of all failed checks, including the run of `ci-ok`, which depends on the other jobs. Cancelled checks together
+   with a really failed check are a normal red result. When the free rerun is used up (or no run can be rerun) and
+   only cancelled checks remain, nothing failed, so the agent does not start a CI fix: it hands over as in the next
+   step, saying that the checks were cancelled again, and `/agent rerun` is the way on. In any other red result the
+   stop rule below decides.
 6. **The stop rule.** The agent stops, sets `agent:needs-human` on the issue and the pull request, and hands over when
    the failure has the same signature as the attempt before (the same fix twice would only spend money), or when
    `AGENT_MAX_ATTEMPTS` attempts are spent (default 3, counting the first attempt and every CI fix). The state comment
