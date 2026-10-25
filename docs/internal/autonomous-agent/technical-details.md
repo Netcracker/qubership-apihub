@@ -1332,20 +1332,22 @@ is no attempt: it neither spends nor resets the attempt budget.
   3. Read the head commit of the pull request, its check runs without the agent's own (`relevantChecks`), and its
      statuses. Failed checks without a workflow run (statuses, other apps) cannot be rerun: when no failed check has
      one, the reply names them, the state stays as it is, and the outcome is `refused`.
-  4. Read the state comment again and refuse if it now fails `rerunRefusal` (a stop came in). Then write the state
-     (`rerunRequestState`): `phase: 'waiting-ci'`, `ciGate` and `implementing` deleted, and an entry
-     `{ at, actor, sha, runs, run }` appended to `reruns`. The state comment is
-     `### AI implementation: waiting for CI on pull request #<n>`. `agent:needs-human` is removed from the issue and the
-     pull request.
-  5. By the checks: failed checks with a run (`gh.rerunFailedJobs` per run; the reply says which checks and that no new
-     attempt and no model call follow); checks still pending (the reply says CI still runs; the gate decides); all
-     green (`handleGreen` of the gate: the pull request leaves draft, `agent:completed` and `ai:l1-executor`, phase
-     `completed`, and its comment, which is the only reply).
-  6. The reply goes where the comment was written (the pull request when `AGENT_PR` is set, else the issue). Reaction
-     `rocket` at the end, `confused` on a refusal or an error; an error also fails the job.
+  4. Read the state comment again and refuse if it now fails `rerunRefusal` (a stop came in).
+  5. With failed checks: rerun them first (`gh.rerunFailedJobs` per run), before any write. When GitHub rejects every
+     rerun, nothing is written, `agent:needs-human` stays, and the reply says why (outcome `refused`): no workflow run
+     would wake the gate otherwise. When it rejects some of them, the reply names how many.
+  6. Write the state (`rerunRequestState`): `phase: 'waiting-ci'`, `ciGate` and `implementing` deleted, and an entry
+     `{ at, actor, sha, runs, run }` appended to `reruns` (`runs` are the workflow runs that were rerun). The state
+     comment is `### AI implementation: waiting for CI on pull request #<n>`. `agent:needs-human` is removed from the
+     issue and the pull request.
+  7. The reply by the checks: failed checks rerun (which checks, and that no new attempt and no model call follow);
+     checks still pending (CI still runs; the gate decides); all green (`handleGreen` of the gate: the pull request
+     leaves draft, `agent:completed` and `ai:l1-executor`, phase `completed`, and its comment, which is the only reply).
+  8. The reply goes where the comment was written (the pull request when `AGENT_PR` is set, else the issue), the green
+     comment too (`commentNumber`). Reaction `rocket` at the end, `confused` on a refusal or an error; an error also
+     fails the job.
 - **Dry-run:** no write, no rerun, no reaction. The job summary shows the state, the labels, the workflow runs that
-  would
-  be rerun, and the reply. The green path skips its re-read of the phase (`skipStale`), because the state was not
+  would be rerun, and the reply. The green path skips its re-read of the phase (`skipStale`), because the state was not
   written.
 
 ### `tools/agent/chat.js`

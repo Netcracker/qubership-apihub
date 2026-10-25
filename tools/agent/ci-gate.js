@@ -829,9 +829,11 @@ async function handleGreen(ctx) {
     for (const label of labelChanges.issue.remove) await gh.removeLabel(number, label)
     log.info('labels applied', { pr: prNumber, issue: number })
   })
+  // `/agent rerun` on the pull request answers there; the gate answers on the issue.
+  const commentOn = ctx.commentNumber ?? number
   await log.group('Tell the person who asked', async () => {
-    await gh.createIssueComment(number, note)
-    log.info('comment posted', { mention: actor, result: 'green' })
+    await gh.createIssueComment(commentOn, note)
+    log.info('comment posted', { mention: actor, result: 'green', on: `#${commentOn}` })
   })
   if (readyError) throw readyError
   return { outcome: 'green' }
@@ -1065,15 +1067,46 @@ async function rerunRequest(ctx) {
   const again = rerunRefusal({ st: fresh.st, actor, issue: loaded.issue, prHint })
   if (again) return refuse(again, `the state of #${number} changed (phase '${fresh.st.phase}')`)
 
+  const plan = failed.length > 0 ? 'rerun' : pending.length > 0 ? 'pending' : 'green'
+
+  // The rerun comes before any write: when GitHub rejects it, no workflow run will wake the gate, so the state and the
+  // hand-off label stay as they are and the person learns why.
+  let rerun = targets
+  let rerunError = null
+  if (plan === 'rerun' && !config.dryRun) {
+    rerun = []
+    await log.group('Rerun the failed jobs', async () => {
+      for (const id of targets) {
+        try {
+          await gh.rerunFailedJobs(id)
+          rerun.push(id)
+        } catch (err) {
+          rerunError ??= err
+          log.error(`The rerun of workflow run ${id} was rejected: ${err.message}`)
+        }
+      }
+      log.info('rerun requested', { runs: rerun.join(',') || 'none', rejected: targets.length - rerun.length })
+    })
+    if (rerun.length === 0) {
+      return refuse(
+        `@${actor}, GitHub did not rerun the failed checks of #${prNumber}: ${inline(rerunError.message)} ` +
+          'Nothing changed. Comment `/agent rerun` again later, or rerun them from the Actions page.',
+        'the rerun was rejected',
+      )
+    }
+  }
+
   const at = new Date().toISOString()
-  const st = rerunRequestState(fresh.st, { sha: headSha, runs: targets, actor, at, run: runUrl })
+  const st = rerunRequestState(fresh.st, { sha: headSha, runs: rerun, actor, at, run: runUrl })
   const human = renderRerunRequest({
     pr: prNumber, sha, actor, failed: rerunnable, pending, runUrl, totalUsd: sum(st.costs ?? [], 'usd'),
   })
-  const plan = failed.length > 0 ? 'rerun' : pending.length > 0 ? 'pending' : 'green'
   const labelPlan = `remove ${LABEL_NEEDS_HUMAN} from #${prNumber} and #${number}`
+  const partial = rerunError
+    ? `\n\nGitHub rejected the rerun of ${targets.length - rerun.length} workflow run(s): ${inline(rerunError.message)}`
+    : ''
   const reply = plan === 'rerun'
-    ? rerunReply({ actor, pr: prNumber, sha, failed: rerunnable, notRerun })
+    ? rerunReply({ actor, pr: prNumber, sha, failed: rerunnable, notRerun }) + partial
     : pendingReply({ actor, pr: prNumber, sha, pending })
 
   if (config.dryRun) {
@@ -1099,15 +1132,9 @@ async function rerunRequest(ctx) {
     const result = await handleGreen({
       config, env, deps, gh, out, number, prNumber, pull, headSha, actor, runUrl, repo, at, loaded: {
         ...loaded, existing: fresh.existing ?? loaded.existing,
-      }, st, checkRuns, statuses, skipStale: config.dryRun,
+      }, st, checkRuns, statuses, skipStale: config.dryRun, commentNumber: ctx.replyNumber,
     })
     return { ok: result.outcome === 'green', ...result }
-  }
-  if (plan === 'rerun' && !config.dryRun) {
-    await log.group('Rerun the failed jobs', async () => {
-      for (const id of targets) await gh.rerunFailedJobs(id)
-      log.info('rerun requested', { runs: targets.join(',') })
-    })
   }
   await replyTo(ctx, reply)
   return { ok: true, outcome: plan }

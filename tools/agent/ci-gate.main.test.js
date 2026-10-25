@@ -767,12 +767,13 @@ test('rerun: the failed checks run again, the state waits for CI, the label goes
   await withContext({ gh: fakeGh(e2eRed({ st: labelled })), env: rerunEnv() }, async (ctx) => {
     const result = await rerunCommand(ctx.env, ctx.deps)
     assert.deepEqual([result.ok, result.outcome], [true, 'rerun'])
+    // The rerun comes first: a rejected rerun must leave the state and the label as they are.
     assert.deepEqual(ctx.gh.calls.map((c) => c.slice(0, 2)), [
       ['addReaction', COMMENT],
+      ['rerunFailedJobs', 902],
       ['updateIssueComment', 5],
       ['removeLabel', 200],
       ['removeLabel', 70],
-      ['rerunFailedJobs', 902],
       ['createIssueComment', 200],
       ['addReaction', COMMENT],
     ])
@@ -949,11 +950,27 @@ test('rerun: a stop that came in after the first read ends the rerun without a w
   })
 })
 
-test('rerun: a failed rerun call fails the job, with the confused reaction', async () => {
+test('rerun: a rejected rerun changes nothing, keeps the hand-off label, and says why', async () => {
   await withContext({ gh: fakeGh(e2eRed({ st: handedOff(), rerunFails: true })), env: rerunEnv() }, async (ctx) => {
-    await assert.rejects(rerunCommand(ctx.env, ctx.deps), /Workflow is still running/)
+    const result = await rerunCommand(ctx.env, ctx.deps)
+    assert.deepEqual([result.ok, result.outcome], [false, 'refused'])
+    assert.ok(!callNames(ctx.gh).includes('updateIssueComment'))
+    assert.ok(!callNames(ctx.gh).includes('removeLabel'))
+    assert.equal(savedState(ctx.gh).phase, 'needs-human')
+    assert.match(
+      replies(ctx.gh)[0][2],
+      /^@erin, GitHub did not rerun the failed checks of #70: .*Workflow is still running.* Nothing changed\./,
+    )
     assert.deepEqual(reactions(ctx.gh), ['eyes', 'confused'])
-    assert.equal(replies(ctx.gh).length, 0)
+  })
+})
+
+test('rerun when CI is green, asked on the pull request: the green comment goes to the pull request', async () => {
+  const env = rerunEnv({ AGENT_PR: '70' })
+  await withContext({ gh: fakeGh({ st: handedOff(), pull: { draft: true } }), env }, async (ctx) => {
+    assert.equal((await rerunCommand(ctx.env, ctx.deps)).outcome, 'green')
+    assert.deepEqual(replies(ctx.gh).map((c) => c[1]), [70])
+    assert.equal(savedState(ctx.gh).phase, 'completed')
   })
 })
 
