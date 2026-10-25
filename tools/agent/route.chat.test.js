@@ -169,6 +169,72 @@ test('/agent rerun without write access is skipped', () => {
 })
 
 // ---------------------------------------------------------------------------------------------------------------
+// ci_check
+// ---------------------------------------------------------------------------------------------------------------
+
+test('/agent ci_check on a pull request of a person goes to the ci-check job with the pull request alone', () => {
+  const result = route('issue_comment', onPersonPull('/agent ci_check the E2E job failed'), write)
+  assert.deepEqual(result, {
+    action: 'ci-check',
+    number: 123,
+    reason: '/agent ci_check',
+    command: { name: 'ci-check', force: false, notes: 'the E2E job failed' },
+  })
+  assert.equal(formatOutputs(result).includes('issue='), false)
+  assert.equal(route('issue_comment', onPersonPull('/agent ci-check'), write).action, 'ci-check')
+})
+
+test('/agent ci_check on a pull request of the agent also names its issue', () => {
+  const payload = comment('issue_comment.chat.agent-pr', '/agent ci_check')
+  const result = route('issue_comment', payload, { ...write, agentFacts: agentFacts() })
+  assert.deepEqual(result, {
+    action: 'ci-check',
+    number: 70,
+    issue: 200,
+    reason: '/agent ci_check',
+    command: { name: 'ci-check', force: false, notes: '' },
+  })
+  assert.match(formatOutputs(result), /^action=ci-check\nnumber=70\n.*\ncommand=.*\nissue=200\n$/s)
+})
+
+test('a marker that the issue state does not confirm is a pull request of a person for ci_check', () => {
+  const payload = comment('issue_comment.chat.agent-pr', '/agent ci_check')
+  for (const facts of [agentFacts(issueState({ pr: 99 })), { issueNumber: 200, issueState: null }, null]) {
+    const result = route('issue_comment', payload, { ...write, agentFacts: facts })
+    assert.deepEqual([result.action, result.number, result.issue], ['ci-check', 70, undefined])
+  }
+})
+
+test('/agent ci_check needs an allowed commenter with write access who is not a bot', () => {
+  const payload = onPersonPull('/agent ci_check')
+  for (const actorPermission of ['read', 'triage', 'none']) {
+    assert.match(route('issue_comment', payload, { actorPermission }).reason, /carol.*no write access/, actorPermission)
+  }
+  assert.match(route('issue_comment', payload, write, { AGENT_ALLOWED_ACTORS: 'dave' }).reason, /AGENT_ALLOWED_ACTORS/)
+  payload.comment.user = { login: 'github-actions[bot]', type: 'Bot' }
+  assert.match(route('issue_comment', payload, write).reason, /bot/)
+})
+
+test('/agent ci_check on an issue is skipped', () => {
+  const result = route('issue_comment', comment('issue_comment.help', '/agent ci_check'), write)
+  assert.deepEqual([result.action, result.number, result.reason], ['skip', 200, 'ci_check works on a pull request'])
+})
+
+test('/agent ci_check on a pull request of Dependabot is skipped; one from a fork is allowed', () => {
+  const dependabot = onPersonPull('/agent ci_check')
+  dependabot.issue.user.login = 'dependabot[bot]'
+  assert.equal(route('issue_comment', dependabot, write).reason, 'dependency update pull requests are not handled')
+  // The router looks at the comment, not at the origin of the branch.
+  assert.equal(route('issue_comment', onPersonPull('/agent ci_check'), write).action, 'ci-check')
+})
+
+test('an agent pull request command ci_check makes the router read the issue state', () => {
+  const payload = comment('issue_comment.chat.agent-pr', '/agent ci_check')
+  assert.equal(needsAgentFacts('issue_comment', payload), true)
+  assert.equal(needsAgentFacts('issue_comment', onPersonPull('/agent ci_check')), false)
+})
+
+// ---------------------------------------------------------------------------------------------------------------
 // free text
 // ---------------------------------------------------------------------------------------------------------------
 
@@ -229,7 +295,10 @@ test('every command needs an allowed commenter with write access who is not a bo
 })
 
 test('a pull request of Dependabot stays ignored by every new command', () => {
-  for (const body of ['/agent', '/agent cost', '/agent stop', '/agent retry', '/agent rerun', '/agent a question']) {
+  const bodies = [
+    '/agent', '/agent cost', '/agent stop', '/agent retry', '/agent rerun', '/agent ci_check', '/agent a question',
+  ]
+  for (const body of bodies) {
     const payload = onPersonPull(body)
     payload.issue.user.login = 'dependabot[bot]'
     const result = route('issue_comment', payload, { ...write, agentFacts: agentFacts() })

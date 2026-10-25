@@ -188,7 +188,7 @@ test('every object in the schemas requires all its properties and forbids extras
     }
   }
   assert.deepEqual(Object.keys(SCHEMAS).sort(), [
-    'analysis', 'chatAnswer', 'implementation', 'review', 'selfReview', 'verification',
+    'analysis', 'chatAnswer', 'ciTriage', 'implementation', 'review', 'selfReview', 'verification',
   ])
   for (const [name, schema] of Object.entries(SCHEMAS)) walk(schema, name)
 })
@@ -252,6 +252,60 @@ test('chatAnswer needs a non-empty answer of at most 6000 characters and nothing
   ])
   assert.deepEqual(problemsOf('chatAnswer', { answer: 'ok', extra: 1 }), ['extra: unexpected property'])
   assert.deepEqual(problemsOf('chatAnswer', {}), ['answer: missing required property'])
+})
+
+function goodTriage(extra = {}) {
+  return {
+    verdict: 'change',
+    confidence: 'high',
+    rootCause: 'The change renames the field, and the test still reads the old name.',
+    fixes: [{ file: 'backend/portal-backend/service/x_test.go', line: 42, what: 'Read the new field name.' }],
+    evidence: ['--- FAIL: TestBuild (0.00s)'],
+    ...extra,
+  }
+}
+
+test('ciTriage accepts a full answer, a fix without a line, and empty lists', () => {
+  assert.doesNotThrow(() => validate('ciTriage', goodTriage()))
+  assert.doesNotThrow(() => validate('ciTriage', goodTriage({ fixes: [{ file: 'a.go', line: null, what: 'x' }] })))
+  assert.doesNotThrow(() => validate('ciTriage', goodTriage({ verdict: 'unknown', fixes: [], evidence: [] })))
+})
+
+test('ciTriage checks the enums, the lengths, and the list sizes', () => {
+  assert.deepEqual(problemsOf('ciTriage', goodTriage({ verdict: 'maybe' })), [
+    'verdict: expected one of "change", "flaky", "infra", "unknown"',
+  ])
+  assert.deepEqual(problemsOf('ciTriage', goodTriage({ confidence: 'certain' })), [
+    'confidence: expected one of "low", "medium", "high"',
+  ])
+  assert.deepEqual(problemsOf('ciTriage', goodTriage({ rootCause: '' })), [
+    'rootCause: expected at least 1 character(s)',
+  ])
+  assert.deepEqual(problemsOf('ciTriage', goodTriage({ rootCause: 'x'.repeat(2001) })), [
+    'rootCause: expected at most 2000 character(s), got 2001',
+  ])
+  assert.doesNotThrow(() => validate('ciTriage', goodTriage({ rootCause: 'x'.repeat(2000) })))
+  const fix = { file: 'a.go', line: 1, what: 'x' }
+  assert.deepEqual(problemsOf('ciTriage', goodTriage({ fixes: Array(11).fill(fix) })), [
+    'fixes: expected at most 10 item(s), got 11',
+  ])
+  assert.deepEqual(problemsOf('ciTriage', goodTriage({ evidence: Array(11).fill('x') })), [
+    'evidence: expected at most 10 item(s), got 11',
+  ])
+  assert.deepEqual(problemsOf('ciTriage', goodTriage({ evidence: ['x'.repeat(301)] })), [
+    'evidence[0]: expected at most 300 character(s), got 301',
+  ])
+})
+
+test('ciTriage fixes need a file, an integer or null line, and a non-empty what; nothing else is allowed', () => {
+  assert.deepEqual(problemsOf('ciTriage', goodTriage({ fixes: [{ file: 'a.go', line: 1.5, what: '' }] })), [
+    'fixes[0].line: expected integer or null',
+    'fixes[0].what: expected at least 1 character(s)',
+  ])
+  assert.deepEqual(problemsOf('ciTriage', goodTriage({ fixes: [{ file: 'a.go', what: 'x' }] })), [
+    'fixes[0].line: missing required property',
+  ])
+  assert.deepEqual(problemsOf('ciTriage', goodTriage({ extra: 1 })), ['extra: unexpected property'])
 })
 
 function goodImplementation(extra = {}) {

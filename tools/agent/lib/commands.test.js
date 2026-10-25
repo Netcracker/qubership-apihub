@@ -30,6 +30,18 @@ test('known names are recognized in any case', () => {
   }
 })
 
+test('ci_check and ci-check are the command ci-check', () => {
+  assert.deepEqual(parseCommand('/agent ci_check'), { name: 'ci-check', force: false, notes: '' })
+  assert.deepEqual(parseCommand('/agent CI-CHECK'), { name: 'ci-check', force: false, notes: '' })
+  assert.deepEqual(parseCommand('/agent ci_check look at the E2E job\nsecond line'), {
+    name: 'ci-check',
+    force: false,
+    notes: 'look at the E2E job\nsecond line',
+  })
+  // Not a command word: a question for the assistant.
+  assert.equal(parseCommand('/agent ci_checks').name, 'chat')
+})
+
 test('rerun takes notes like the other commands', () => {
   assert.deepEqual(parseCommand('/agent rerun'), { name: 'rerun', force: false, notes: '' })
   assert.deepEqual(parseCommand('/agent rerun the E2E job flaked\nsecond line'), {

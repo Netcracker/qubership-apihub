@@ -1226,6 +1226,7 @@ module.exports = {
   e2eRerunLeft,
   gateGuard,
   rerunTargets,
+  collectLogs,
   attemptsTable,
   renderGreen,
   renderStopped,

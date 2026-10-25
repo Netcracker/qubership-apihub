@@ -79,6 +79,7 @@ Each model variable holds `provider/model[:variant]`; the variant is the reasoni
 | `AGENT_MODEL_REVIEW` | `openai/gpt-6-luna:max` | `pr-reviewer`, `self-reviewer` |
 | `AGENT_MODEL_VERIFY` | `openai/gpt-6.1-sol:medium` | `verifier` |
 | `AGENT_MODEL_LIGHT` | `openai/gpt-6-luna:medium` | `analyst`, `assistant` |
+| `AGENT_MODEL_TRIAGE` | `openai/gpt-6.1-sol:medium` | `ci-triager` |
 
 `loadConfig` throws when `AGENT_MODEL_IMPLEMENT` and `AGENT_MODEL_REVIEW` have the same model id; the variants are not
 compared, so `:high` and `:max` of one model are refused too. The role files name no model, so a model change needs no
@@ -94,16 +95,16 @@ model never calls GitHub. Two tokens exist:
 
 | Token | Held by (step) | Used for |
 |---|---|---|
-| `GITHUB_TOKEN` of the job | `route`, `Review`, `Analyze`, `Decide` (`ci-gate`), `Rerun`, `Preflight`, `Publish`, `Stop`, `Answer` (`chat`), the `levels` and `report` steps | every read, every comment, label, reaction, review, review reply, run cancel, and rerun |
+| `GITHUB_TOKEN` of the job | `route`, `Review`, `Analyze`, `Decide` (`ci-gate`), `Rerun`, `Preflight`, `Publish`, `Stop`, `Answer` (`chat`), `Check CI` (`ci-check`), the `levels` and `report` steps | every read, every comment, label, reaction, review, review reply, run cancel, and rerun |
 | `AGENT_PAT` | `Preflight`, `Publish`, `Decide`, `Rerun` | `GET /user` (the Git identity), `git push`, `POST /pulls`, `PATCH /pulls/{n}`, the GraphQL mutations `convertPullRequestToDraft` and `markPullRequestReadyForReview` |
 
-The PAT exists because events made with `GITHUB_TOKEN` start no workflow: the push, the new pull request, and the
-"ready for review" must start `CI`. The PAT is fine-grained, with Contents and Pull requests read and write and no
-Workflows permission, so GitHub refuses a push that changes `.github/workflows/`. Every call, with the scripts that make
-it, is in the table of [`lib/github.js`](#toolsagentlibgithubjs). Git itself talks to GitHub three times: the `chat` job
-fetches a pull request head with `GITHUB_TOKEN` in an `http.extraheader` for that one command, the work step fetches and
-lists branches over the token-less checkout, and `publish` pushes with the PAT in the URL (`pushBranch`), which it never
-logs.
+The PAT exists because events made with `GITHUB_TOKEN` start no workflow: the push, the new pull request, and the "ready
+for review" must start `CI`. The PAT is fine-grained, with Contents and Pull requests read and write and no Workflows
+permission, so GitHub refuses a push that changes `.github/workflows/`. Every call, with the scripts that make it, is in
+the table of [`lib/github.js`](#toolsagentlibgithubjs). Git itself talks to GitHub three times: the `chat` and
+`ci-check` jobs fetch a pull request head with `GITHUB_TOKEN` in an `http.extraheader` for that one command, the work
+step fetches and lists branches over the token-less checkout, and `publish` pushes with the PAT in the URL
+(`pushBranch`), which it never logs.
 
 ### GitHub Actions
 
@@ -111,7 +112,7 @@ logs.
 |---|---|---|
 | `actions/checkout` | `v6` | every job of the three workflows; always `persist-credentials: false` |
 | `actions/setup-node` | `v6` | every job, `node-version: '24'` |
-| `actions/upload-artifact` | `v4` | `review`, `analyze`, `ci-gate`, `rerun`, `implement`, `publish`, `stop`, `chat`; 30 days |
+| `actions/upload-artifact` | `v4` | `review`, `analyze`, `ci-gate`, `rerun`, `ci-check`, `implement`, `publish`, `stop`, `chat`; 30 days |
 | `actions/download-artifact` | `v5` | `publish`, with `continue-on-error: true` |
 | `actions/setup-go` | `v7` | `implement`, `go-version-file: backend/.go-version` |
 | `./.github/actions/setup-workspace` | local | `implement`, `cache-scope: ai-autonomous` |
@@ -161,8 +162,8 @@ All three workflows set `permissions: contents: read` at the top and widen them 
 
 **Workflow environment:** `OPENCODE_VERSION`, and the repository variables `AGENT_ENABLED`, `AGENT_DRY_RUN`,
 `AGENT_ALLOWED_ACTORS` (a variable, or a secret of the same name), `AGENT_MODEL_IMPLEMENT`, `AGENT_MODEL_REVIEW`,
-`AGENT_MODEL_VERIFY`, `AGENT_MODEL_LIGHT`, `AGENT_MAX_ATTEMPTS`, `AGENT_MAX_REVIEW_ROUNDS`, `AGENT_MAX_ANALYSES`, and
-`AGENT_LOG_LEVEL`.
+`AGENT_MODEL_VERIFY`, `AGENT_MODEL_LIGHT`, `AGENT_MODEL_TRIAGE`, `AGENT_MAX_ATTEMPTS`, `AGENT_MAX_REVIEW_ROUNDS`,
+`AGENT_MAX_ANALYSES`, and `AGENT_LOG_LEVEL`.
 
 | Job | Needs and condition | Timeout | Concurrency | Permissions | Secrets (step) |
 |---|---|---|---|---|---|
@@ -171,6 +172,7 @@ All three workflows set `permissions: contents: read` at the top and widen them 
 | `analyze` | `action == 'analyze'` | 20 | `ai-autonomous-<number>` | `contents: read`, `issues: write` | `OPENAI_API_KEY` (`Analyze`) |
 | `ci-gate` | `action == 'ci-gate'` | 15 | `ai-autonomous-<number>` | `contents: read`, `issues`, `pull-requests`, `actions`: write, `checks`, `statuses`: read | `AGENT_PAT` (`Decide`) |
 | `rerun` | `action == 'rerun'` | 10 | `ai-autonomous-<number>` | `contents: read`, `issues`, `pull-requests`, `actions`: write, `checks`, `statuses`: read | `AGENT_PAT` (`Rerun`) |
+| `ci-check` | `action == 'ci-check'` | 20 | `ai-autonomous-ci-check-<number>` | `contents: read`, `issues`, `pull-requests`, `actions`: write, `checks`, `statuses`: read | `OPENAI_API_KEY` (`Check CI`) |
 | `implement` | `route` and `ci-gate`; `always()` and `action == 'implement'` or `next == 'implement'` | 90 | `ai-autonomous-<number>` | `contents: read`, `issues: write`, `pull-requests: write` | `AGENT_PAT` (`Preflight`), `OPENAI_API_KEY` (`Work`) |
 | `publish` | `route`, `ci-gate`, `implement`; `always()` and `proceed == 'true'` | 15 | `ai-autonomous-<number>` | `contents: read`, `issues`, `pull-requests`, `actions`: write, `checks`, `statuses`: read | `AGENT_PAT` (`Publish`) |
 | `stop` | `action == 'stop'` | 5 | none | `contents: read`, `issues`, `pull-requests`, `actions`: write | none |
@@ -193,6 +195,7 @@ review that is not `changes_requested`, is by a bot, comes from a fork, or is on
 | `analyze` | checkout of the default branch with full history; setup-node; install opencode; `Analyze` (`node tools/agent/analyze.js`); upload |
 | `ci-gate` | checkout of `tools/agent`; setup-node; `Decide` (`node tools/agent/ci-gate.js`, output `next`); upload |
 | `rerun` | checkout of `tools/agent` of the default branch; setup-node; `Rerun` (`node tools/agent/ci-gate.js rerun`); upload (`if-no-files-found: ignore`) |
+| `ci-check` | checkout of the default branch with full history; `Fetch the pull request head` (into `refs/remotes/pull/<number>/head`); setup-node; install opencode; `Check CI` (`node tools/agent/ci-check.js`); upload (`if-no-files-found: ignore`) |
 | `implement` | `Output folder`; checkout of the default branch with full history; setup-node; install opencode; `Preflight` (`implement.js preflight`, output `proceed`); then, when `proceed == 'true'`: `setup-workspace`, `Set up Go`, `Keep a trusted copy of the agent` (`cp -R tools/agent "$RUNNER_TEMP/agent-tools"`), `Work` (`node "$RUNNER_TEMP/agent-tools/implement.js" work`); upload |
 | `publish` | `Output folder`; checkout of `tools/agent` of the default branch with full history; setup-node; download the `implement` artifact; `Publish` (`implement.js publish`); upload `summary.md` |
 | `stop` | checkout of `tools/agent` of the default branch; setup-node; `Stop` (`node tools/agent/chat.js`); upload |
@@ -200,11 +203,12 @@ review that is not `changes_requested`, is by a bot, comes from a fork, or is on
 
 **Job environment.** `AGENT_NUMBER` is the `number` output of `route` everywhere. `review` adds `AGENT_COMMAND`;
 `analyze` adds `AGENT_TRIGGER`; `ci-gate` adds `AGENT_PR`, `AGENT_HEAD_SHA`, and `AGENT_WORKFLOW_RUN_ID`; `rerun` adds
-`AGENT_PR`, `AGENT_COMMAND`, `AGENT_ACTOR`, and `AGENT_COMMENT_ID`; `implement`
-and `publish` add `AGENT_COMMAND`, `AGENT_ACTOR` (the commenter or the reviewer), `AGENT_KIND` (the `kind` output, else
-`ci-fix` after the gate, else `initial`), `AGENT_PR`, and `AGENT_COMMENT_ID`; `stop` and `chat` add `AGENT_COMMAND`,
-`AGENT_ACTOR`, and `AGENT_COMMENT_ID`. Every script step gets `AGENT_RUN_URL` and `AGENT_OUT` (`$RUNNER_TEMP/agent`)
-where it writes files.
+`AGENT_PR`, `AGENT_COMMAND`, `AGENT_ACTOR`, and `AGENT_COMMENT_ID`; `ci-check` adds `AGENT_ISSUE` (the `issue` output of
+`route`), `AGENT_COMMAND`, `AGENT_ACTOR`, and `AGENT_COMMENT_ID`, and its `Check CI` step `AGENT_PR_HEAD_REF`;
+`implement` and `publish` add `AGENT_COMMAND`, `AGENT_ACTOR` (the commenter or the reviewer), `AGENT_KIND` (the `kind`
+output, else `ci-fix` after the gate, else `initial`), `AGENT_PR`, and `AGENT_COMMENT_ID`; `stop` and `chat` add
+`AGENT_COMMAND`, `AGENT_ACTOR`, and `AGENT_COMMENT_ID`. Every script step gets `AGENT_RUN_URL` and `AGENT_OUT`
+(`$RUNNER_TEMP/agent`) where it writes files.
 
 ### `.github/workflows/ai-autonomous-levels.yml` (`AI Autonomous: Execution levels`)
 
@@ -261,23 +265,25 @@ calls for them. A decision that does nothing has the action `skip` (there is no 
 
   | Output | Value |
   |---|---|
-  | `action` | Always written: `review`, `analyze`, `implement`, `ci-gate`, `rerun`, `chat`, `stop`, or `skip`. |
+  | `action` | Always written: `review`, `analyze`, `implement`, `ci-gate`, `rerun`, `ci-check`, `chat`, `stop`, or `skip`. |
   | `number` | Always written. The issue or pull request the job works on; empty when the event has none. |
   | `reason` | Always written. One line (line breaks become spaces). It is not a job output of the workflow. |
   | `command` | Always written. JSON on one line, or empty. Shape: `{"name":"<name>","force":<bool>,"notes":"<text>"}`. |
   | `trigger` | Only for `analyze`: `opened`, `typed`, `edited`, `author-reply`, or `command`. Empty otherwise. |
   | `pr` | Only when set: `ci-gate`, a `rerun` decision on a pull request of the agent, and an `implement` decision that a person asked for on a pull request. |
+  | `issue` | Only for `ci-check` on a pull request of the agent: the issue its marker names. |
   | `head_sha` | Only for `ci-gate`: the head commit of the pull request. |
   | `kind` | Only for `implement` through `humanAttempt`: `human`, or `review` (a change request in a review). |
 
-  The `route` job exports `action`, `number`, `command`, `trigger`, `pr`, `head_sha`, and `kind` as job outputs. An
-  output that was not written reaches the later jobs as an empty string.
+  The `route` job exports `action`, `number`, `command`, `trigger`, `pr`, `head_sha`, `kind`, and `issue` as job
+  outputs. An output that was not written reaches the later jobs as an empty string.
 
-  `command.name` is one of `review`, `analyze`, `implement`, `retry`, `rerun`, `stop`, `cost`, `help`, `chat` (from
-  `tools/agent/lib/commands.js`; `fix` is reported as `implement`; `force` is true only for `implement force`), or one
-  of two names that only the router creates: `answer` (a comment without a command that answers a hand-off) and
-  `review-changes` (a review with change requests). For those two, `notes` holds the comment or review text, cut at
-  8000 characters (`MAX_NOTES`) with the line `[cut: the text is longer]`, because a job output has a size limit.
+  `command.name` is one of `review`, `analyze`, `implement`, `retry`, `rerun`, `ci-check`, `stop`, `cost`, `help`,
+  `chat` (from `tools/agent/lib/commands.js`; `fix` is reported as `implement`, and `ci_check` as `ci-check`; `force` is
+  true only for `implement force`), or one of two names that only the router creates: `answer` (a comment without a
+  command that answers a hand-off) and `review-changes` (a review with change requests). For those two, `notes` holds
+  the comment or review text, cut at 8000 characters (`MAX_NOTES`) with the line `[cut: the text is longer]`, because a
+  job output has a size limit.
 - **Model calls:** none.
 - **GitHub reads:** all with `GITHUB_TOKEN` of the job (`contents`, `issues`, `pull-requests`: read). The client is
   built
@@ -290,7 +296,7 @@ calls for them. A decision that does nothing has the action `skip` (there is no 
     `GET /repos/{repo}/pulls?head=<owner>:<branch>&state=open`. Used by `gatherCiFacts` for a finished workflow run.
 - **GitHub writes:** none. The router writes no comment, label, or reaction.
 - **Reactions:** the router adds none. The `eyes`, `rocket`, and `confused` reactions come from `lib/reactions.js` and
-  are added by `implement.js`, `chat.js`, and `ci-gate.js rerun` to the comment that started the job
+  are added by `implement.js`, `chat.js`, `ci-check.js`, and `ci-gate.js rerun` to the comment that started the job
   (`AGENT_COMMENT_ID`). `eyes` is added
   when the work starts, `rocket` when it ends well, `confused` when the agent refuses or fails. Review, analyze, and the
   CI gate add no reaction.
@@ -311,7 +317,7 @@ calls for them. A decision that does nothing has the action `skip` (there is no 
    to be allowed) or for the review of a new pull request.
 6. Dependabot: a login that matches `dependabot` or `dependabot[bot]`. The workflow already filters it before a runner
    starts (see `if:` of the `route` job). The router checks again for a command on a pull request: `review`, `retry`,
-   `rerun`, `stop`, `cost`, `help`, `chat`, and a review with change requests give `skip`
+   `rerun`, `ci-check`, `stop`, `cost`, `help`, `chat`, and a review with change requests give `skip`
    (`dependency update pull requests are not handled`; for `review`:
    `dependency update pull requests are not reviewed`). A pull request of Dependabot is a bot author for `pull_request`
    events.
@@ -379,6 +385,9 @@ access), then the rule of the command. Without a command, see the last table.
 | `/agent rerun [notes]` | issue | | `rerun` | issue | `rerun` | | | | |
 | `/agent rerun` | agent PR | | `rerun` | issue named by the marker | `rerun` | | PR | | |
 | `/agent rerun` | other PR | Not an agent PR (`rerun works on an issue or a pull request of the agent`) | `skip` | PR | | | | | |
+| `/agent ci_check [notes]` | issue | `ci_check works on a pull request` | `skip` | issue | | | | | |
+| `/agent ci_check` | PR, not an agent PR | Fork pull requests are allowed | `ci-check` | PR | `ci-check` | | | | |
+| `/agent ci_check` | agent PR | The output `issue` names the issue of the marker | `ci-check` | PR | `ci-check` | | | | |
 | `/agent stop` | issue | | `stop` | issue | `stop` | | | | |
 | `/agent stop` | agent PR | | `stop` | PR | `stop` | | | | |
 | `/agent stop` | other PR | Not an agent PR | `skip` | PR | | | | | |
@@ -388,7 +397,7 @@ access), then the rule of the command. Without a command, see the last table.
 | `/agent <text>` | PR, not an agent PR | | `chat` | PR | `chat` | | | | |
 | `/agent <text>` | agent PR | Change request | `implement` | issue named by the marker | `chat` | | PR | | `human` |
 
-On a PR, `retry`, `rerun`, `stop`, and `chat` also need the issue state of the marker, which `gather` reads
+On a PR, `retry`, `rerun`, `ci-check`, `stop`, and `chat` also need the issue state of the marker, which `gather` reads
 (`gatherAgentFacts`).
 For `cost`, `help`, `chat`, and `review` on a PR of Dependabot the result is `skip`. Both `action=implement` rows for
 an agent PR carry `pr`; the `implement` row for `/agent implement` has no `pr` and no `kind`.
@@ -441,12 +450,9 @@ the default branch, not the pull request.
     Dependabot
     case, `gather`, `formatOutputs`, and `main`.
   - `tools/agent/route.analysis.test.js`: the `issues` rules, the author reply, `/agent analyze`, `/agent implement`,
-    the
-    limit of analyses, and the `trigger` output.
-  - `tools/agent/route.chat.test.js`: `retry`, `rerun`, `stop`, `cost`, `help`, `chat`, the hand-off answer, the change
-    request
-    in
-    a review, and the `pr` and `kind` outputs.
+    the limit of analyses, and the `trigger` output.
+  - `tools/agent/route.chat.test.js`: `retry`, `rerun`, `ci-check`, `stop`, `cost`, `help`, `chat`, the hand-off
+    answer, the change request in a review, and the `pr` and `kind` outputs.
   - `tools/agent/route.ci.test.js`: the CI gate decision, the marker and state trust checks, forks, and `gatherCiFacts`.
   - Fixtures: `tools/agent/fixtures/*.json`, one event per file (for example `issue_comment.chat.agent-pr.json`,
     `workflow_run.completed.json`, `pull_request_review.changes_requested.json`).
@@ -1387,7 +1393,7 @@ job uses the group `ai-autonomous-chat-<number>`.
   - `help` (`helpReply`): a table of the commands that work in the place: `issue`, `pull` (a pull request of a person),
     or `agentPull`. Every table has `/agent cost`, `/agent help`, and `/agent <question>` (or `/agent <text>` as a
     change request on a pull request of the agent). Issues also list `analyze`, `implement`, `retry`, `rerun`, `stop`.
-    Pull requests list `review`; an agent pull request adds `retry`, `rerun`, and `stop`.
+    Pull requests list `review` and `ci_check`; an agent pull request adds `retry`, `rerun`, and `stop`.
   - `cost` (`doCost`, `costTable`, `costReply`): see the table format below.
   - `stop` (`doStop`): see the stop sequence below.
   - `chat` (a question, `doQuestion`): see the assistant context below.
@@ -1446,6 +1452,72 @@ job uses the group `ai-autonomous-chat-<number>`.
     contract failure, reactions, environment checks.
   - `tools/agent/route.chat.test.js`: the routing of `help`, `cost`, `stop`, and free text to the `chat` and `stop`
     actions.
+
+### `tools/agent/ci-check.js`
+
+Flow D, the command `/agent ci_check`: the root cause of a red CI on a pull request. The `Check CI` step of the
+`ci-check` job runs it. The router sends it every `ci_check` comment on a pull request, of the agent or not, also one
+from a fork. The job uses the group `ai-autonomous-ci-check-<number>`, so it never queues behind a running attempt, and
+it merges the cost records on write.
+
+- **Inputs:**
+  - `GITHUB_REPOSITORY`, `GITHUB_TOKEN` (the job token, no `AGENT_PAT`), `OPENAI_API_KEY` (red CI only).
+  - `AGENT_NUMBER` (the pull request), `AGENT_ISSUE` (the issue of an agent pull request, from the router; empty
+    otherwise), `AGENT_COMMAND`, `AGENT_ACTOR`, `AGENT_COMMENT_ID`, `AGENT_PR_HEAD_REF` (default
+    `refs/remotes/pull/<n>/head`), `AGENT_RUN_URL`, `AGENT_OUT`, and the `AGENT_*` variables of `lib/config.js`.
+  - Required: `AGENT_NUMBER`, `AGENT_ACTOR`, `AGENT_RUN_URL`, `AGENT_OUT`. - **Exports:** `main`, `ciCheck` (the same,
+    with injectable `deps.gh`, `deps.runAgent`, and `deps.mergeBase`), `checkTriage`, `effectiveVerdict`,
+    `renderCheckInput`, `renderTriage`, `failedCheckReply`, `hintFor`. It reuses `relevantChecks`, `failedChecks`,
+    `pendingChecks`, `allGreen`, `collectLogs`, `buildReport`, `failureSignature`, `rerunTargets`, and
+    `rerunRequestState` from `ci-gate.js`.
+- **Model calls:** one, only for a red CI. Role and agent `ci-triager`, flow `ci-check`, model `config.models.triage`,
+  schema `ciTriage`, semantic check `checkTriage`. The files are `ci-triager.jsonl` and `ci-triager.final.md`.
+- **Sequence** (`ciCheck`, then `checkCi`):
+  1. React with `eyes`. Load the pull request (`gh.getPull`) and the checks of its head commit
+     (`gh.listCheckRuns`, `gh.getCombinedStatus`), without the agent's own jobs (`relevantChecks`).
+  2. No check run and no status: reply that no check is reported. Any check pending or cancelled: reply with the
+     checks that run (at most five, then "and N more"). All green: reply that CI is green. None of the three calls
+     a model. The reply asks to comment `/agent ci_check` again when CI ends.
+  3. Red: collect the logs (`collectLogs`), the signature, and the report (`buildReport`, at most 12,000
+     characters), and write `ci-report.md`. Compute the merge base with `git merge-base origin/<base> <head ref>`
+     (`null` with a warning when Git cannot) and write `ci-check-input.md` (`renderCheckInput`): the refs, the
+     signature, then the title with the failed checks, the CI report, and the notes of the person, each inside an
+     `<untrusted>` block.
+  4. Run the `ci-triager`. When the call or its contract fails, record the cost, reply "I could not finish the CI
+     check:" followed by the error message, add the cost line, and throw (the job fails, the reaction is `confused`). A `change`
+     verdict without a fix breaks the contract.
+  5. Find out whether the pull request is the agent's (`loadAgent`): `AGENT_ISSUE` is set, the marker in the
+     description names that issue, and the state of the issue has `pr` equal to this pull request.
+  6. `flaky` or `infra` (`effectiveVerdict`: low confidence counts as `unknown`): rerun the failed jobs of every
+     workflow run (`gh.rerunFailedJobs` per run from `rerunTargets`). A rejected run is logged and counted. All
+     rejected: the reply says GitHub did not rerun, nothing else changes, the reaction is `confused`, and the job
+     does not fail. No failed check has a workflow run: nothing to rerun, and the reply says so.
+  7. Write the state of the pull request: the cost records and the `ciChecks` entry (`recordOnPull`, read again,
+     `state.replaceState`; a state comment is created when there is none).
+  8. After an accepted rerun on the agent's pull request, when the state of the issue (read again right before the
+     write) has the phase `needs-human` or `waiting-ci` and `pr` equal to this pull request: write
+     `rerunRequestState` (phase `waiting-ci`, `ciGate` and `implementing` deleted, an entry in `reruns`) and remove
+     `agent:needs-human` from the issue and the pull request, so the CI gate decides when the checks end. Any other
+     phase is left alone.
+  9. Reply (`renderTriage`) and react with `rocket`.
+- **Reply:** the verdict sentence with the confidence, the root cause, the places to fix (when there are any), the
+  evidence in a `text` fence (when there is any), what the agent did, a hint, and the cost line. All model text goes
+  through `inline` or `defuseMentions`, and a backtick in a code span becomes an apostrophe. Hints: `change` on the
+  agent's pull request suggests `/agent retry` with the guidance; `unknown` (also a low-confidence `flaky` or `infra`)
+  suggests `/agent rerun` on the agent's pull request and a rerun from the Actions page elsewhere, because
+  `/agent rerun` works only on the agent's pull requests.
+- **GitHub writes** (`GITHUB_TOKEN`): the reply (`gh.createIssueComment`), the state comment of the pull request
+  (`gh.updateIssueComment` or `gh.createIssueComment`), the rerun
+  (`POST /repos/{repo}/actions/runs/{id}/rerun-failed-jobs`), the state comment of the issue and `gh.removeLabel` (the
+  hand-back), and the reactions.
+- **Dry-run:** the model still runs. Nothing is written, rerun, or reacted with. The job summary shows the reply
+  (`## Dry run: reply to #<n>`), the workflow runs that would be rerun, and the hand-back that would happen.
+- **Tests:**
+  - `tools/agent/ci-check.test.js`: `checkTriage`, `effectiveVerdict`, `hintFor`, `renderTriage` (each verdict, empty
+    lists, mention defusing, fences, the rerun and hand-back texts), and `renderCheckInput`.
+  - `tools/agent/ci-check.main.test.js`: `ciCheck()` over fake clients: pending, green, no checks (no model), change,
+    flaky, and infra, the hand-back to the gate per phase, a phase that moved on, a rejected rerun, low confidence, a
+    check that is no Actions job, contract failures with the cost kept, dry-run, secrets, and reactions.
 
 ### `tools/agent/levels.js`
 
@@ -1603,7 +1675,7 @@ Parser of `/agent ...` comments.
   | Input | Result |
   |---|---|
   | `/agent` alone (nothing on later lines) | `name: 'help'` |
-  | `/agent <word> ...` with `<word>` (case-insensitive) in `review`, `analyze`, `implement`, `fix`, `retry`, `rerun`, `stop`, `cost`, `help` | `name: <word>`, with `fix` reported as `implement` |
+  | `/agent <word> ...` with `<word>` (case-insensitive) in `review`, `analyze`, `implement`, `fix`, `retry`, `rerun`, `ci_check`, `ci-check`, `stop`, `cost`, `help` | `name: <word>`, with `fix` reported as `implement`, and `ci_check` and `ci-check` as `ci-check` |
   | `/agent implement force ...` or `/agent fix force ...` | `force: true`; `force` counts only after `implement` or `fix` |
   | `/agent` followed by any other word, or by text on a later line only | `name: 'chat'`, `notes` holds all the text |
 
@@ -1611,7 +1683,7 @@ Parser of `/agent ...` comments.
   caller (`route.js`). The command name `answer`, which `implement.js` and `chat.js` test for, is not produced here:
   `route.js` sets it.
 - **Tests:** `commands.test.js` covers ordinary comments, `/agentx`, bare `/agent`, case, `fix` mapping, blank leading
-  lines, `force`, `notes` (also of `rerun`), and the chat fallback.
+  lines, `force`, `notes` (also of `rerun` and `ci-check`), and the chat fallback.
 
 ### `tools/agent/lib/config.js`
 
@@ -1629,6 +1701,7 @@ The configuration from the environment, with safe defaults. A bad value throws a
   | `AGENT_MODEL_REVIEW` | `models.review` | `openai/gpt-6-luna:max` |
   | `AGENT_MODEL_VERIFY` | `models.verify` | `openai/gpt-6.1-sol:medium` |
   | `AGENT_MODEL_LIGHT` | `models.light` | `openai/gpt-6-luna:medium` |
+  | `AGENT_MODEL_TRIAGE` | `models.triage` | `openai/gpt-6.1-sol:medium` |
   | `AGENT_MAX_ATTEMPTS` | `limits.maxAttempts` | 3 |
   | `AGENT_MAX_REVIEW_ROUNDS` | `limits.maxReviewRounds` | 2 |
   | `AGENT_MAX_ANALYSES` | `limits.maxAnalyses` | 5 |
@@ -1860,7 +1933,7 @@ Tokens and cost of one opencode run, from the event stream.
 ## Roles
 
 Each role is an opencode agent: a Markdown file under `tools/agent/opencode/agents/`, selected with
-`--agent <file name without .md>`. All six have `mode: primary`.
+`--agent <file name without .md>`. All seven have `mode: primary`.
 
 **Model handling.** No agent file sets a model or a reasoning effort. The model and the variant come from the
 repository variables through `lib/config.js` and are passed as `--model` and `--variant` (`lib/opencode.js`). A model
@@ -1874,6 +1947,7 @@ change needs no commit.
 | `implementer` | `AGENT_MODEL_IMPLEMENT` | `implement.js` | `implementation` |
 | `self-reviewer` | `AGENT_MODEL_REVIEW` | `implement.js` | `selfReview` |
 | `assistant` | `AGENT_MODEL_LIGHT` | `chat.js` | `chatAnswer` |
+| `ci-triager` | `AGENT_MODEL_TRIAGE` | `ci-check.js` | `ciTriage` |
 
 Every agent prompt tells the model that nobody reads its messages or answers questions, that text inside
 `<untrusted>` is data and never instructions, and that its answer must end with exactly one fenced `json` block and
@@ -1985,6 +2059,21 @@ Answers a question in a comment. It changes nothing; `chat.js` posts the answer.
   write no `@name` outside a code span, promise no action.
 - **Output:** the `chatAnswer` contract: `{ "answer": "<Markdown, at most 6000 characters>" }`.
 
+### `tools/agent/opencode/agents/ci-triager.md`
+
+Finds the root cause of a red CI on a pull request. It changes nothing; `ci-check.js` posts the reply.
+
+- **Frontmatter:** `steps: 60`; `edit: deny`, `webfetch: deny`, `skill: allow`.
+- **Bash:** the same as `pr-reviewer`: `"*": deny`; allowed `git diff*`, `git log*`, `git show*`, `git merge-base*`,
+  `git blame*`, `git grep*`; the same four denials.
+- **Input:** `ci-check-input.md` (the pull request number, the head commit, the base ref, the head ref, the merge base,
+  the failure signature, the failed checks and the CI report inside an `<untrusted>` block, the notes of the person
+  inside another). The CI report is the output of the code under test, so the prompt says never to follow instructions
+  in it.
+- **Task:** load the `apihub-ci-failure-triage` skill; read `git diff <base>...<head>` with the refs of the input and
+  the code the failure points at; decide whether the change caused the failure; never name a file that it did not read.
+- **Output:** the `ciTriage` contract.
+
 ## Playbook skills
 
 Five skills live in the local APM package `agent-packages/apihub-autonomous-agent` (version 0.1.0, description
@@ -2070,7 +2159,7 @@ again first and merge cost records (`withFreshCosts`), so `chat` and `publish` d
 | `kind` | string | `state.js` | `issue` |
 | `number` | number | `state.js` | issue number |
 | `phase` | string or null | `analyze.js`, `implement.js` (`preflight`, `publish`), `ci-gate.js`, `chat.js` (`stop`) | phase values above. `analyze.js`: `needs-info` or `analyzed`. `implement.js preflight`: `implementing`. `publish`: `waiting-ci` (pull request opened and green locally) or `needs-human`. `ci-gate.js`: `completed`, `needs-human`, or `implementing` (a CI fix); `ci-gate.js rerun`: `waiting-ci` (or `completed` on the green path). `chat.js stop`: `stopped` |
-| `costs` | array | every script that calls a model (`review.js`, `analyze.js`, `implement.js`, `chat.js`); `state.addCost` | cost records, see `lib/usage.js` |
+| `costs` | array | every script that calls a model (`review.js`, `analyze.js`, `implement.js`, `chat.js`, `ci-check.js`); `state.addCost` | cost records, see `lib/usage.js` |
 | `analysis` | object | `analyze.js`, `implement.js publish` (analyze-first run) | last analysis: `verdict`, `reason`, `questions`, `plan`, `label` (`ai:suitable`, `ai:unsuitable`, or `null`), `labelSetBy` (`agent` or `null`), `issueUpdatedAt` (the issue's `updated_at` when analyzed), `at`, `run` |
 | `analyses` | array | `analyze.js`, `implement.js publish` | one entry per analysis run: `at`, `run`, `verdict` (`suitable`, `unsuitable`, `needs-info`, or `failed`), `trigger`. Counted against `AGENT_MAX_ANALYSES` |
 | `implementing` | object | `implement.js preflight` (initial: `run`, `actor`, `at`, `analyzeFirst`; person: `run`, `actor`, `at`, `kind`, `analyzeFirst: false`, optional `pr`, optional `threads`); `ci-gate.js` (`run`, `actor`, `at`, `kind: 'ci-fix'`) | the running attempt. Removed by `publish` and `publishStopped`. A new run within the busy window refuses with `refuse-busy` |
@@ -2085,7 +2174,7 @@ again first and merge cost records (`withFreshCosts`), so `chat` and `publish` d
 | `ciGate` | object | `ci-gate.js` | `{ sha, decided: true, at, run }`: the CI gate decided once for this head commit |
 | `lastCiReport` | string | `ci-gate.js` (red) | the CI report of the last red run; the next CI-fix attempt gets it as input; removed on green |
 | `e2eRerun` | object | `ci-gate.js` | `{ sha, count }`: the free reruns of E2E-only failures used for the head commit `sha` (limit 1 per commit). An old number field `e2eReruns` is ignored and deleted on write |
-| `reruns` | array | `ci-gate.js rerun` | one entry per `/agent rerun`: `{ at, actor, sha, runs, run }` (the commit, the workflow run ids that were rerun, and the URL of the workflow run of the command) |
+| `reruns` | array | `ci-gate.js rerun`, `ci-check.js` | one entry per `/agent rerun`, and per rerun that `/agent ci_check` made on a `flaky` or `infra` verdict: `{ at, actor, sha, runs, run }` (the commit, the workflow run ids that were rerun, and the URL of the workflow run of the command) |
 | `stoppedBy` | string | `chat.js` (`stop`) | login that sent `/agent stop` |
 | `stoppedAt` | string | `chat.js` (`stop`) | ISO time of the stop |
 
@@ -2116,6 +2205,7 @@ Built by `attemptRecord` in `implement.js`:
 |---|---|---|---|
 | `schema`, `kind`, `number`, `phase`, `costs` | as above | `state.js`, `review.js` | `kind` is `pull`; `phase` stays `null` |
 | `reviews` | array | `review.js` | one `{ sha, run, at }` per finished review; a failed review adds none |
+| `ciChecks` | array | `ci-check.js` | one `{ at, actor, sha, verdict, confidence, runs }` per finished `/agent ci_check` on a red CI; `verdict` and `confidence` are what the model said, and `runs` are the workflow runs that were rerun (empty when none). A failed call adds only its cost record |
 
 `report.js` only reads states. `levels.js` and `route.js` read no model-written field except `phase` and `pr`
 (`route.js`).
@@ -2134,6 +2224,7 @@ key is allowed (`additionalProperties: false`), except the `plan` object of `ana
 | `implementation` | `implementer` | `checkImplementation` in `implement.js` |
 | `selfReview` | `self-reviewer` | `checkSelfReview` in `implement.js` |
 | `chatAnswer` | `assistant` | none |
+| `ciTriage` | `ci-triager` | `checkTriage` in `ci-check.js` |
 
 ### `review`
 
@@ -2201,6 +2292,19 @@ treats `changes` with only `minor` findings as `approve` (`effectiveVerdict`).
 |---|---|
 | `answer` | string, 1 to 6000 characters |
 
+### `ciTriage`
+
+| Field | Type and limits |
+|---|---|
+| `verdict` | `change`, `flaky`, `infra`, `unknown` |
+| `confidence` | `low`, `medium`, `high` |
+| `rootCause` | string, 1 to 2000 characters |
+| `fixes` | array, at most 10 items, each `{ file: string, line: integer or null, what: string (at least 1 character) }`; may be empty |
+| `evidence` | array, at most 10 strings of at most 300 characters each; may be empty |
+
+`checkTriage`: `change` needs at least one fix. `effectiveVerdict` in `ci-check.js` treats `flaky` and `infra` with
+`confidence` `low` as `unknown` for the rerun decision.
+
 ## Artifacts
 
 Each job uploads `AGENT_OUT` (`$RUNNER_TEMP/agent`) with `if: always()` and a retention of 30 days. Nothing reads an
@@ -2214,6 +2318,7 @@ text of the model). The token in `AGENT_PAT` never appears in an artifact.
 | `ai-autonomous-analysis-<number>-<attempt>` | `analyze` | `analysis-input.md`, `analyst.jsonl`, `analyst.final.md`, `summary.md` |
 | `ai-autonomous-ci-gate-<number>-<attempt>` | `ci-gate` | `summary.md`, and `ci-report.md` for a red result |
 | `ai-autonomous-rerun-<number>-<attempt>` | `rerun` | `reply.md`, and `summary.md` on the green path; may be empty |
+| `ai-autonomous-ci-check-<number>-<attempt>` | `ci-check` | `ci-report.md` and `ci-check-input.md` for a red CI, `ci-triager.jsonl`, `ci-triager.final.md`, `reply.md` |
 | `ai-autonomous-implement-<number>-<attempt>` | `implement` | `context.json`, the analysis files when the work step analyzed, `implement-input.md` and `implement-input-r<N>.md`, `implementer-r<N>.jsonl` and `.final.md`, `self-review-input.md` and `self-review-input-r<N>.md`, `self-reviewer-r<N>.jsonl` and `.final.md`, `branch.bundle`, `outcome.json` |
 | `ai-autonomous-publish-<number>-<attempt>` | `publish` | `summary.md` |
 | `ai-autonomous-stop-<number>-<attempt>` | `stop` | `reply.md` |
@@ -2230,13 +2335,13 @@ The tests use the Node.js test runner and no other dependency. Run them from the
 node --test "tools/agent/**/*.test.js"
 ```
 
-`pnpm test:tools` runs them with the tests of `tools/release` and `tools/ci`. There are 30 test files: 16 next to the
+`pnpm test:tools` runs them with the tests of `tools/release` and `tools/ci`. There are 32 test files: 18 next to the
 scripts and 14 next to the library modules.
 
 - `<script>.test.js` and `lib/<module>.test.js` test the pure functions.
-- `<script>.main.test.js` run a whole `main` over fake GitHub, Git, and opencode clients (`analyze`, `chat`, `ci-gate`,
-  `implement`, `report`). `route.analysis.test.js`, `route.chat.test.js`, and `route.ci.test.js` cover the routing of
-  each phase.
+- `<script>.main.test.js` run a whole `main` over fake GitHub, Git, and opencode clients (`analyze`, `chat`, `ci-check`,
+  `ci-gate`, `implement`, `report`). `route.analysis.test.js`, `route.chat.test.js`, and `route.ci.test.js` cover the
+  routing of each phase.
 - `tools/agent/fixtures/` holds 29 recorded event payloads, one per case, named `<event>.<case>.json`, for example
   `issue_comment.implement-force.json`, `pull_request.fork.json`, and `workflow_run.completed.human.json`.
 - `lib/facts.test.js` and `review.test.js` need the `yaml` package, which a checkout gets with `node_modules`

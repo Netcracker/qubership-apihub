@@ -186,6 +186,22 @@ const SCHEMAS = {
   chatAnswer: strictObject({
     answer: { type: 'string', minLength: 1, maxLength: 6000 },
   }),
+  // Output of the CI triager (`/agent ci_check`). A `change` verdict needs a fix; that is checked in ci-check.js.
+  ciTriage: strictObject({
+    verdict: { type: 'string', enum: ['change', 'flaky', 'infra', 'unknown'] },
+    confidence: { type: 'string', enum: ['low', 'medium', 'high'] },
+    rootCause: { type: 'string', minLength: 1, maxLength: 2000 },
+    fixes: {
+      type: 'array',
+      maxItems: 10,
+      items: strictObject({
+        file: str,
+        line: { type: ['integer', 'null'] },
+        what: { type: 'string', minLength: 1 },
+      }),
+    },
+    evidence: { type: 'array', maxItems: 10, items: { type: 'string', maxLength: 300 } },
+  }),
   // Output of the implementer (Flow C). Which fields must be filled for which status is checked in implement.js.
   implementation: strictObject({
     status: { type: 'string', enum: ['done', 'blocked', 'unrelated'] },

@@ -8,14 +8,19 @@
  * Input: the comment body. Output: `null` for an ordinary comment, else `{ name, force, notes }`.
  */
 
-const KNOWN = new Set(['review', 'analyze', 'implement', 'fix', 'retry', 'rerun', 'stop', 'cost', 'help'])
+const KNOWN = new Set([
+  'review', 'analyze', 'implement', 'fix', 'retry', 'rerun', 'ci_check', 'ci-check', 'stop', 'cost', 'help',
+])
+
+/** The names `fix`, `ci_check`, and `ci-check` are spellings of `implement` and `ci-check`. */
+const ALIASES = { fix: 'implement', ci_check: 'ci-check' }
 
 /** `/agent` must be followed by whitespace or the end of the line, so `/agentx` is not a command. */
 const PREFIX = /^\/agent(?=\s|$)/i
 
 /**
  * Returns `{ name, force, notes }` or `null` when the comment is not a command. `fix` is reported as
- * `implement`. An unknown word after `/agent` makes the whole text a `chat` request.
+ * `implement`, and `ci_check` as `ci-check`. An unknown word after `/agent` makes the whole text a `chat` request.
  */
 function parseCommand(body) {
   if (typeof body !== 'string') return null
@@ -39,7 +44,7 @@ function parseCommand(body) {
     return { name: 'chat', force: false, notes: everything }
   }
 
-  const name = word === 'fix' ? 'implement' : word
+  const name = ALIASES[word] ?? word
   let rest = afterPrefix.slice(word.length).trim()
   let force = false
   if (name === 'implement') {

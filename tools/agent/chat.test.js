@@ -56,6 +56,12 @@ test('helpReply lists the commands of the place and mentions the asker', () => {
   assert.ok(agentPull.includes(rerunRow) && issue.includes(rerunRow))
   assert.match(agentPull, /A review with change requests/)
   assert.ok(!agentPull.includes('/agent <question>'))
+
+  // ci_check works on every pull request and on no issue.
+  const ciCheckRow = '| `/agent ci_check [notes]` | Find the root cause of a red CI; rerun the failed jobs when it is flaky ' +
+    'or an outage. |'
+  assert.ok(pull.includes(ciCheckRow) && agentPull.includes(ciCheckRow))
+  assert.ok(!issue.includes('ci_check'))
 })
 
 test('helpReply is a Markdown table whose lines stay short, and rejects an unknown place', () => {

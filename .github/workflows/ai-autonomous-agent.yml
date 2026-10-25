@@ -4,7 +4,8 @@
 # Repository variables: AGENT_ENABLED (`true` to act), AGENT_DRY_RUN (`false` to write to GitHub; otherwise the
 # results go to the job summary), AGENT_ALLOWED_ACTORS (comma-separated logins; empty means everyone with write
 # access), AGENT_MODEL_* and AGENT_MAX_* (defaults in tools/agent/lib/config.js).
-# Secrets: OPENAI_API_KEY (only the `Work` step of the `implement` job and the `Answer` step of the `chat` job have it);
+# Secrets: OPENAI_API_KEY (only the `Work` step of the `implement` job, the `Answer` step of the `chat` job, and the
+# `Check CI` step of the `ci-check` job have it);
 # AGENT_PAT (pushes the branch and opens or updates the pull request in the `publish` job, which opens it as a draft,
 # takes the pull request out of draft in `ci-gate` and in `rerun`, and gives the Git identity in the `implement`
 # preflight; no step that runs model or repository code has it).
@@ -41,6 +42,7 @@ env:
   AGENT_MODEL_REVIEW: ${{ vars.AGENT_MODEL_REVIEW }}
   AGENT_MODEL_VERIFY: ${{ vars.AGENT_MODEL_VERIFY }}
   AGENT_MODEL_LIGHT: ${{ vars.AGENT_MODEL_LIGHT }}
+  AGENT_MODEL_TRIAGE: ${{ vars.AGENT_MODEL_TRIAGE }}
   AGENT_MAX_ATTEMPTS: ${{ vars.AGENT_MAX_ATTEMPTS }}
   AGENT_MAX_REVIEW_ROUNDS: ${{ vars.AGENT_MAX_REVIEW_ROUNDS }}
   AGENT_MAX_ANALYSES: ${{ vars.AGENT_MAX_ANALYSES }}
@@ -84,6 +86,7 @@ jobs:
       pr: ${{ steps.route.outputs.pr }}
       head_sha: ${{ steps.route.outputs.head_sha }}
       kind: ${{ steps.route.outputs.kind }}
+      issue: ${{ steps.route.outputs.issue }}
     steps:
       # A `pull_request_review` event would check out the pull request itself; the router runs from the default branch
       # there. The other events check out the default branch already.
@@ -337,6 +340,79 @@ jobs:
         if: always()
         with:
           name: ai-autonomous-rerun-${{ needs.route.outputs.number }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/agent
+          retention-days: 30
+          if-no-files-found: ignore
+
+  # `/agent ci_check`: read the CI of the head commit of a pull request, find the root cause of a red result, and rerun
+  # the failed jobs when it is flaky or an outage. It works on any pull request, also one from a fork. The working tree
+  # is the default branch, so the tools, the opencode config, and the skills are trusted; the head of the pull
+  # request is fetched under a ref of its own and never checked out. The `Check CI` step holds the GitHub token and
+  # the OpenAI key, as the `Answer` step of `chat` does. Its own group: the job writes the state of the pull request
+  # for the cost, and the state of the issue only when it hands a flaky failure of the agent's pull request back to the
+  # CI gate.
+  ci-check:
+    needs: route
+    if: needs.route.outputs.action == 'ci-check'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    concurrency:
+      group: ai-autonomous-ci-check-${{ needs.route.outputs.number }}
+      cancel-in-progress: false
+    # `actions: write` reruns the failed jobs and reads their logs; the checks and statuses are read to decide.
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+      actions: write
+      checks: read
+      statuses: read
+    env:
+      AGENT_NUMBER: ${{ needs.route.outputs.number }}
+      AGENT_ISSUE: ${{ needs.route.outputs.issue }}
+      AGENT_COMMAND: ${{ needs.route.outputs.command }}
+      AGENT_ACTOR: ${{ github.event.comment.user.login }}
+      AGENT_COMMENT_ID: ${{ github.event.comment.id }}
+      AGENT_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      # The history stays complete because the triager reads `git log`, `git blame`, and `git diff`. No token is kept in
+      # the checkout: the triager could read it from the Git config.
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      # The token is passed for this command only; it is not stored.
+      - name: Fetch the pull request head
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ needs.route.outputs.number }}
+        run: |
+          set -euo pipefail
+          header="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GITHUB_TOKEN" | base64 -w0)"
+          git -c "http.https://github.com/.extraheader=$header" fetch --no-tags origin \
+            "pull/${PR_NUMBER}/head:refs/remotes/pull/${PR_NUMBER}/head"
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      - name: Install opencode
+        run: npm install --global "opencode-ai@${OPENCODE_VERSION}"
+
+      - name: Check CI
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          AGENT_OUT: ${{ runner.temp }}/agent
+          AGENT_PR_HEAD_REF: refs/remotes/pull/${{ needs.route.outputs.number }}/head
+        run: node tools/agent/ci-check.js
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ai-autonomous-ci-check-${{ needs.route.outputs.number }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/agent
           retention-days: 30
           if-no-files-found: ignore

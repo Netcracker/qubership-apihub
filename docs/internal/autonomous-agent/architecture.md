@@ -22,7 +22,7 @@ How the AI Autonomous agent works, flow by flow, as it was built. The [design](.
 
 ## The pieces
 
-The agent is three GitHub Actions workflows, a set of Node.js scripts, and six opencode roles. GitHub events start the
+The agent is three GitHub Actions workflows, a set of Node.js scripts, and seven opencode roles. GitHub events start the
 workflows. A script reads GitHub, builds the prompt input, runs `opencode run --agent <role>` when it needs a model,
 checks the answer against a JSON contract, and writes the result back to GitHub. The model never gets a GitHub token:
 every write is a script.
@@ -40,7 +40,7 @@ flowchart LR
   end
   subgraph agentwf["AI Autonomous: Agent"]
     ROUTE["route"]
-    JOBS["review, analyze, implement, publish,<br/>ci-gate, rerun, chat, stop"]
+    JOBS["review, analyze, implement, publish,<br/>ci-gate, rerun, ci-check, chat, stop"]
   end
   LEVELS["AI Autonomous: Execution levels<br/>levels"]
   REPORT["AI Autonomous: Weekly report<br/>report"]
@@ -61,7 +61,7 @@ flowchart LR
 | Layer | Where | What it does |
 |---|---|---|
 | Workflows | `.github/workflows/ai-autonomous-*.yml` | Triggers, permissions, tokens, checkouts, one job per action |
-| Scripts | `tools/agent/*.js` | One script per job: `route`, `review`, `analyze`, `implement`, `ci-gate`, `chat`, `levels`, `report` |
+| Scripts | `tools/agent/*.js` | One script per job: `route`, `review`, `analyze`, `implement`, `ci-gate`, `ci-check`, `chat`, `levels`, `report` |
 | Library | `tools/agent/lib/` | GitHub client, state comment, opencode runner, contracts, cost records, logging |
 | Roles | `tools/agent/opencode/agents/*.md` | What each model call may do: steps, permissions, output contract |
 | Playbooks | `agent-packages/apihub-autonomous-agent/` | Skills that tell a role how to do its work in this repository |
@@ -77,6 +77,7 @@ The roles and the models that play them by default (the variables are in
 | `implementer` | C | `AGENT_MODEL_IMPLEMENT` | `openai/gpt-6.1-sol:high` | yes |
 | `self-reviewer` | C | `AGENT_MODEL_REVIEW` | `openai/gpt-6-luna:max` | no |
 | `assistant` | D | `AGENT_MODEL_LIGHT` | `openai/gpt-6-luna:medium` | no |
+| `ci-triager` | D | `AGENT_MODEL_TRIAGE` | `openai/gpt-6.1-sol:medium` | no |
 
 The rule behind the choice: a better model writes, a different and cheaper one reviews. `lib/config.js` refuses to
 start when `AGENT_MODEL_IMPLEMENT` and `AGENT_MODEL_REVIEW` name the same model.
@@ -100,6 +101,7 @@ flowchart TB
   ROUTE -- "action = stop" --> STOP["<b>stop</b><br/>chat.js<br/>GITHUB_TOKEN, actions: write<br/>no model"]
   ROUTE -- "action = ci-gate" --> GATE["<b>ci-gate</b><br/>ci-gate.js<br/>GITHUB_TOKEN, AGENT_PAT<br/>no model, no repository code"]
   ROUTE -- "action = rerun" --> RERUN["<b>rerun</b><br/>ci-gate.js rerun<br/>GITHUB_TOKEN, AGENT_PAT, actions: write<br/>no model, no repository code"]
+  ROUTE -- "action = ci-check" --> CICHECK["<b>ci-check</b><br/>ci-check.js<br/>GITHUB_TOKEN, OpenAI key, actions: write<br/>ci-triager, read-only<br/>reads the PR head as data"]
   ROUTE -- "action = implement" --> IMPL
   GATE -- "next = implement" --> IMPL
   subgraph IMPL["<b>implement</b> (the work job)"]
@@ -118,6 +120,7 @@ flowchart TB
 | `ci-gate` | `action == 'ci-gate'` | `GITHUB_TOKEN`, `AGENT_PAT` | none | `tools/agent` | `ai-autonomous-<number>` |
 | `implement` | `action == 'implement'` or `ci-gate` says `next == 'implement'` | preflight: `GITHUB_TOKEN`, `AGENT_PAT`; work: `OPENAI_API_KEY` only | `analyst`, `implementer`, `self-reviewer` | the default branch, then the agent's branch | `ai-autonomous-<number>` |
 | `rerun` | `action == 'rerun'` | `GITHUB_TOKEN` (`actions: write`, `checks: read`, `statuses: read`), `AGENT_PAT` | none | `tools/agent` of the default branch | `ai-autonomous-<number>` |
+| `ci-check` | `action == 'ci-check'` | `GITHUB_TOKEN` (`actions: write`, `checks: read`, `statuses: read`), `OPENAI_API_KEY` | `ci-triager` when CI is red | the default branch; a pull request head as a ref, never checked out | `ai-autonomous-ci-check-<number>` |
 | `publish` | `implement` set `proceed == 'true'` | `GITHUB_TOKEN` (`actions: write`, `checks: read`, `statuses: read`), `AGENT_PAT` | none | `tools/agent` of the default branch | `ai-autonomous-<number>` |
 | `stop` | `action == 'stop'` | `GITHUB_TOKEN` | none | `tools/agent` of the default branch | none, on purpose |
 | `chat` | `action == 'chat'` | `GITHUB_TOKEN`, `OPENAI_API_KEY` | `assistant` for a question | the default branch; a pull request head as a ref, never checked out | `ai-autonomous-chat-<number>` |
@@ -128,13 +131,13 @@ Three rules hold for every job:
   `AGENTS.md` files always come from the default branch, or, for a `pull_request` event, from the pull request of this
   repository. A pull request from a fork never changes the tools that review it.
 - **A step that runs repository code or model-written code has no GitHub token.** The work step of `implement` holds
-  the OpenAI key only. The `review`, `analyze`, and `chat` steps hold `GITHUB_TOKEN` and the OpenAI key together, but
-  their roles cannot edit files or run anything but read-only commands, and `lib/opencode.js` starts opencode without
-  `GITHUB_TOKEN`, `GH_TOKEN`, `AGENT_PAT`, and the `ACTIONS_*` variables. No checkout keeps a token
+  the OpenAI key only. The `review`, `analyze`, `chat`, and `ci-check` steps hold `GITHUB_TOKEN` and the OpenAI key
+  together, but their roles cannot edit files or run anything but read-only commands, and `lib/opencode.js` starts
+  opencode without `GITHUB_TOKEN`, `GH_TOKEN`, `AGENT_PAT`, and the `ACTIONS_*` variables. No checkout keeps a token
   (`persist-credentials: false`).
 - **One job per number at a time.** The jobs that write the state comment of an issue or a pull request share the
-  group `ai-autonomous-<number>`. `chat` has its own group and merges the cost records on write; `stop` has none, so a
-  stop never waits behind another job.
+  group `ai-autonomous-<number>`. `chat` and `ci-check` have their own groups and merge the cost records on write;
+  `stop` has none, so a stop never waits behind another job.
 
 ## Where the state lives
 
@@ -417,6 +420,7 @@ flowchart LR
   P -- "implement, fix" --> IM["implement job<br/>kind initial"]
   P -- "retry" --> IH["implement job<br/>kind human"]
   P -- "rerun" --> RR["rerun job<br/>no model"]
+  P -- "ci_check" --> CC["ci-check job<br/>ci-triager only when CI is red"]
   P -- "text on the agent's PR" --> IC["implement job<br/>kind human, change request"]
   P -- "no command, issue or agent PR<br/>in needs-human" --> IA["implement job<br/>kind human, answer"]
   P -- "no command, author,<br/>issue in needs-info" --> AN
@@ -431,16 +435,48 @@ flowchart LR
 | `/agent stop` | `stop` | none | `phase` `stopped`, the cancelled run, no `agent:needs-human`, a reply |
 | `/agent retry [notes]` | `implement` | the Flow C roles | a new attempt with a fresh CI budget |
 | `/agent rerun [notes]` | `rerun` | none | `phase` `waiting-ci`, `ciGate` deleted, an entry in `reruns`, no `agent:needs-human`; the failed checks run again; no attempt |
+| `/agent ci_check [notes]` | `ci-check` | `ci-triager`, only when CI is red | a reply with the verdict, the cause, and the places to fix; the cost record and a `ciChecks` entry on the pull request; a rerun of the failed jobs for a flaky or infrastructure failure, and, on the agent's pull request in `needs-human` or `waiting-ci`, the same state change as `/agent rerun` |
 | `/agent <text>` on the agent's pull request | `implement` | the Flow C roles | one attempt on its branch |
 | a review with change requests | `implement` | the Flow C roles | one attempt; a reply in each thread the implementer saw |
 | `/agent review [notes]` | `review` | Flow A | a review |
 | `/agent analyze` | `analyze` | `analyst` | an analysis |
 | `/agent implement [force] [notes]`, `/agent fix` | `implement` | the Flow C roles | an attempt |
 
-The `implement`, `rerun`, `chat`, and `stop` jobs react to the comment with an eyes emoji when they start, then with a
-rocket
-or a confused face; `review` and `analyze` add no reaction. The replies mention the person who asked and defuse every
-other mention.
+The `implement`, `rerun`, `ci-check`, `chat`, and `stop` jobs react to the comment with an eyes emoji when they start,
+then with a rocket or a confused face; `review` and `analyze` add no reaction. The replies mention the person who
+asked and defuse every other mention.
+
+### The CI check
+
+`/agent ci_check` works on any pull request of the repository, also one from a fork, and finds the root cause of a red
+CI. The `ci-check` job reads the checks of the head commit and calls the `ci-triager` only when CI is red.
+
+```mermaid
+flowchart TB
+  C(["/agent ci_check on a pull request"]) --> READ["ci-check: read check runs and statuses<br/>of the head commit"]
+  READ --> NONE{"any check?"}
+  NONE -- no --> R1(["reply: no check, no model"])
+  NONE -- yes --> PEND{"any still running<br/>or pending?"}
+  PEND -- yes --> R2(["reply: which checks run, no model"])
+  PEND -- no --> GREEN{"all green?"}
+  GREEN -- yes --> R3(["reply: green, no model"])
+  GREEN -- no --> LOGS["collect the logs of the failed jobs,<br/>CI report and signature of the CI gate"]
+  LOGS --> TRI["ci-triager reads the diff and the code:<br/>verdict, cause, fixes, evidence"]
+  TRI --> V{"verdict"}
+  V -- "change, unknown, or flaky/infra<br/>with low confidence" --> NO["no rerun"]
+  V -- "flaky or infra" --> RERUN["rerun the failed jobs"]
+  RERUN --> ACC{"accepted, and the agent's PR<br/>in needs-human or waiting-ci?"}
+  ACC -- yes --> GATE["issue: phase waiting-ci, ciGate deleted,<br/>no agent:needs-human; the CI gate decides"]
+  ACC -- no --> REPLY
+  GATE --> REPLY
+  NO --> REPLY["cost record and ciChecks entry on the PR,<br/>then the reply"]
+```
+
+The job fetches the head of the pull request under `refs/remotes/pull/<number>/head` and never checks it out. The CI
+report is the output of the code under test, so it reaches the model inside an `<untrusted>` block. The rerun comes
+before every write, as in `/agent rerun`: when GitHub rejects it, nothing else changes. The cost of the call is written
+to the state of the pull request also when the call or its contract fails; the issue state is read again right before
+the hand-back to the CI gate, so a `/agent stop` or a new attempt in the meantime wins.
 
 ## Execution levels
 
@@ -494,5 +530,6 @@ flowchart LR
 | A draft or a block (`agent:needs-human`) | answers in a comment, `/agent retry`, or takes over | one attempt with the comment as guidance |
 | The stop rule hands over | the same, or `/agent rerun` when the failure is not the change | one attempt with a fresh CI budget, or the failed checks run again |
 | CI is green (`agent:completed`) | reviews, asks changes in a review or with `/agent <text>`, merges | one attempt per review or comment |
+| CI is red and the cause is unclear | `/agent ci_check` | the triager names the root cause; a flaky or infrastructure failure is rerun |
 | Anything | `/agent stop` | stops at once |
 | A pull request is merged | checks or sets the `ai:l*` level | copies it to the issues |

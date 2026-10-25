@@ -13,6 +13,7 @@ test('an empty environment gives the safe defaults', () => {
       review: { id: 'openai/gpt-6-luna', variant: 'max' },
       verify: { id: 'openai/gpt-6.1-sol', variant: 'medium' },
       light: { id: 'openai/gpt-6-luna', variant: 'medium' },
+      triage: { id: 'openai/gpt-6.1-sol', variant: 'medium' },
     },
     limits: { maxAttempts: 3, maxReviewRounds: 2, maxAnalyses: 5 },
   })
@@ -49,6 +50,15 @@ test('models and limits come from the environment', () => {
   assert.deepEqual(config.models.implement, { id: 'anthropic/claude-x', variant: null })
   assert.deepEqual(config.models.light, { id: 'openai/mini', variant: 'low' })
   assert.deepEqual(config.limits, { maxAttempts: 7, maxReviewRounds: 4, maxAnalyses: 1 })
+})
+
+test('the triage model has a default and comes from AGENT_MODEL_TRIAGE', () => {
+  assert.deepEqual(loadConfig({}).models.triage, { id: 'openai/gpt-6.1-sol', variant: 'medium' })
+  assert.deepEqual(loadConfig({ AGENT_MODEL_TRIAGE: 'openai/mini:low' }).models.triage, {
+    id: 'openai/mini',
+    variant: 'low',
+  })
+  assert.throws(() => loadConfig({ AGENT_MODEL_TRIAGE: 'nonsense' }), /AGENT_MODEL_TRIAGE/)
 })
 
 test('a blank variable falls back to the default', () => {

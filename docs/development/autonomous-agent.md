@@ -45,6 +45,7 @@ it refuses or fails.
 | `/agent stop` | issue or pull request of the agent | The agent stops its work on the issue. |
 | `/agent retry [notes]` | issue or pull request of the agent | A new attempt with a fresh budget; the notes are guidance. |
 | `/agent rerun [notes]` | issue or pull request of the agent | Reruns the failed CI checks; no new attempt, no model. |
+| `/agent ci_check [notes]` | pull request | Finds the root cause of a red CI; reruns the failed jobs when it is flaky or an outage. |
 | `/agent <question>` | issue, or pull request of a person | The assistant answers in a comment and changes nothing. |
 | `/agent <text>` | pull request of the agent | A change request: one attempt on the branch of the pull request. |
 | a comment without `/agent` | issue or pull request of the agent that waits for a person | The comment answers the hand-off. |
@@ -112,6 +113,44 @@ model, so it costs nothing and does not touch the attempt budget. Any text after
 - When the checks still run, it only hands the decision back to the gate. When they are all green, it takes the gate's
   green path: the pull request leaves draft, gets its labels, and the issue is `completed`.
 - It runs in its own job `rerun`, which holds `AGENT_PAT` only to take a green pull request out of draft.
+
+### CI check
+
+`/agent ci_check [notes]` answers the question "why is CI red here?" on any pull request, also one from a fork. The
+notes tell the triager what to look at. The agent reads the checks of the head commit, and what follows depends on
+what it finds:
+
+- **CI still runs.** The reply lists the checks that run. Ask again when they end. No model call.
+- **CI is green.** The reply says so and names the commit. No model call.
+- **No check at all.** The reply says so. No model call.
+- **CI is red.** The agent collects the failed jobs and their logs, cleaned the same way as for the
+  [CI gate](#the-ci-loop), and asks the `ci-triager` (model `AGENT_MODEL_TRIAGE`, read-only) for the root cause. The
+  reply gives the verdict, the root cause, where to fix it (file, line, and what to change), the evidence from the
+  logs, and what the agent did.
+
+The verdict is one of four:
+
+| Verdict | Meaning | What the agent does |
+|---|---|---|
+| `change` | The failure comes from this change. | Nothing. On the pull request of the agent it suggests `/agent retry` with this guidance. |
+| `flaky` | A flaky test, not caused by the change. | Reruns the failed jobs. |
+| `infra` | A network, registry, or runner problem. | Reruns the failed jobs. |
+| `unknown` | The evidence does not settle it. | Nothing. It suggests `/agent rerun` on the pull request of the agent, and a rerun from the Actions page elsewhere. |
+
+A `flaky` or `infra` verdict with low confidence counts as `unknown`: the agent does not rerun on a guess, and the
+reply says so. A `change` verdict always names at least one place to fix.
+
+- On the pull request of the agent, when its issue waits for a person (`agent:needs-human`) or for CI, an accepted
+  rerun also puts the issue back to waiting for CI and removes `agent:needs-human`, as `/agent rerun` does, so the
+  CI gate decides again when the checks end. In any other phase the state stays as it is.
+- When GitHub rejects the rerun, the reply says so and nothing else changes. The reaction is a confused face.
+- The cost of the call goes to the state of the pull request (flow `ci-check`), also when the call fails, together
+  with a record of the check in `ciChecks`. `/agent cost` shows it.
+- When the triager fails or breaks its answer contract, the reply says "I could not finish the CI check", and the job
+  fails.
+- The CI report is the output of code under test, so the triager reads it as untrusted data. It reads the diff of the
+  pull request, which the job fetches but never checks out.
+- It runs in its own job `ci-check`, with its own concurrency group per pull request.
 
 ### Reviews with change requests
 
@@ -298,14 +337,15 @@ the scripts are in [`tools/agent/`](../../tools/agent/).
 | `AGENT_ENABLED` | variable | `true` to act; anything else makes every run a no-op |
 | `AGENT_DRY_RUN` | variable | `false` to write to GitHub; otherwise the agent writes its comments to the job summary only |
 | `AGENT_ALLOWED_ACTORS` | variable or secret | comma-separated logins the agent answers; empty means everyone with write access |
-| `AGENT_MODEL_REVIEW`, `AGENT_MODEL_VERIFY`, `AGENT_MODEL_IMPLEMENT`, `AGENT_MODEL_LIGHT` | variables | `provider/model:variant`, for example `openai/gpt-6-luna:max`; defaults in `tools/agent/lib/config.js` |
+| `AGENT_MODEL_REVIEW`, `AGENT_MODEL_VERIFY`, `AGENT_MODEL_IMPLEMENT`, `AGENT_MODEL_LIGHT`, `AGENT_MODEL_TRIAGE` | variables | `provider/model:variant`, for example `openai/gpt-6-luna:max`; defaults in `tools/agent/lib/config.js` |
 | `AGENT_MAX_ATTEMPTS` | variable | attempts per issue before the agent hands over on red CI (default 3): the first attempt and every CI fix; a retry, an answer, a change request, or a review starts a fresh count |
 | `AGENT_MAX_ANALYSES` | variable | analyses per issue started by edits and answers (default 5); `/agent analyze` is not counted |
 | `AGENT_REPORT_ISSUE` | variable | the number of the issue that gets the weekly report as a comment; empty means the job summary only |
 | `AGENT_REPORT_DAYS` | variable | the length of the weekly report period in days (default 7); the `days` input of a manual run overrides it |
 | `AGENT_LOG_LEVEL` | variable | opencode's own log level in the job log: `DEBUG`, `INFO` (default), `WARN`, or `ERROR` |
 
-The review model and the implement model must differ: the agent refuses to start otherwise.
+The review model and the implement model must differ: the agent refuses to start otherwise. `AGENT_MODEL_TRIAGE` is the
+model of `/agent ci_check`; its default is `openai/gpt-6.1-sol:medium`.
 
 ## When something goes wrong
 

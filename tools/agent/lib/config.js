@@ -14,6 +14,7 @@
  *   AGENT_MODEL_REVIEW        default `openai/gpt-6-luna:max`
  *   AGENT_MODEL_VERIFY        default `openai/gpt-6.1-sol:medium`
  *   AGENT_MODEL_LIGHT         default `openai/gpt-6-luna:medium`
+ *   AGENT_MODEL_TRIAGE        default `openai/gpt-6.1-sol:medium`
  *   AGENT_MAX_ATTEMPTS        positive integer, default 3
  *   AGENT_MAX_REVIEW_ROUNDS   positive integer, default 2
  *   AGENT_MAX_ANALYSES        positive integer, default 5
@@ -24,6 +25,7 @@ const DEFAULT_MODELS = {
   review: 'openai/gpt-6-luna:max',
   verify: 'openai/gpt-6.1-sol:medium',
   light: 'openai/gpt-6-luna:medium',
+  triage: 'openai/gpt-6.1-sol:medium',
 }
 
 const DEFAULT_LIMITS = {
@@ -37,6 +39,7 @@ const MODEL_VARIABLES = {
   review: 'AGENT_MODEL_REVIEW',
   verify: 'AGENT_MODEL_VERIFY',
   light: 'AGENT_MODEL_LIGHT',
+  triage: 'AGENT_MODEL_TRIAGE',
 }
 
 const LIMIT_VARIABLES = {

@@ -7,7 +7,8 @@
  * `{ action, number, reason, command?, trigger?, pr?, headSha?, kind? }`. The actions are `review` (phase 1), `analyze`
  * (phase 2), `implement` (phase 3; phase 5 adds `kind`: `human` or `review`), `ci-gate` (phase 4), `chat` (phase 5),
  * `stop` (a `/agent stop` command; the `stop` job has no concurrency group), `rerun` (a `/agent rerun` command: the
- * failed CI checks of the agent's pull request run again, no model), and `skip`. Later phases add actions by
+ * failed CI checks of the agent's pull request run again, no model), `ci-check` (a `/agent ci_check` command: the
+ * root cause of a red CI on any pull request), and `skip`. Later phases add actions by
  * registering more rules in EVENT_HANDLERS and COMMAND_HANDLERS; `decide` itself does not change.
  *
  * The CLI (`node tools/agent/route.js`) gathers the facts that need the GitHub API, but only when the event calls
@@ -17,7 +18,7 @@
  * request of its branch with the state of the issue it names. It then writes `action`, `number`, `reason`, and
  * `command` (JSON, or empty) to `$GITHUB_OUTPUT`, plus `trigger` for an `analyze` decision, `pr` and `head_sha` for a
  * `ci-gate` decision, `pr` and `kind` for an `implement` decision that a person asked for, `pr` for a `rerun`
- * decision on a pull request, and one line to
+ * decision on a pull request, `issue` for a `ci-check` decision on a pull request of the agent, and one line to
  * `$GITHUB_STEP_SUMMARY`. It logs the event, the gathered facts,
  * and the decision.
  *
@@ -176,6 +177,21 @@ const COMMAND_HANDLERS = {
     const agent = agentPullOf(agentFacts, number)
     if (!agent) return skip(number, 'rerun works on an issue or a pull request of the agent')
     return { action: 'rerun', number: agent.issueNumber, pr: number, reason: '/agent rerun', command }
+  },
+  // Read the CI of the head commit of a pull request, find the root cause of a red result, and rerun a flaky one. It
+  // works on any pull request; `issue` is set when the pull request is the agent's, so the job can hand the decision
+  // back to the CI gate.
+  'ci-check': ({ number, isPull, command, issue, agentFacts }) => {
+    if (!isPull) return skip(number, 'ci_check works on a pull request')
+    if (isDependabot(issue?.user?.login)) return skip(number, NO_DEPENDABOT)
+    const agent = agentPullOf(agentFacts, number)
+    return {
+      action: 'ci-check',
+      number,
+      ...(agent ? { issue: agent.issueNumber } : {}),
+      reason: '/agent ci_check',
+      command,
+    }
   },
   stop: ({ number, isPull, command, issue, agentFacts }) => {
     if (isPull && isDependabot(issue?.user?.login)) return skip(number, NO_DEPENDABOT)
@@ -410,7 +426,7 @@ const EVENT_HANDLERS = {
  * @param {{ eventName: string, payload: object, config: object, actorPermission?: string,
  *   pullState?: object|null, issueState?: object|null, ciFacts?: object|null, agentFacts?: object|null }} input
  * @returns {{ action: string, number: number|null, reason: string, command?: object, trigger?: string,
- *   pr?: number, headSha?: string, kind?: string }}
+ *   pr?: number, headSha?: string, kind?: string, issue?: number }}
  */
 function decide(input) {
   const { eventName, payload, config } = input
@@ -469,7 +485,7 @@ function needsIssueState(eventName, payload) {
 }
 
 /** The commands that read the issue state of an agent pull request. */
-const AGENT_PULL_COMMANDS = new Set(['retry', 'rerun', 'stop', 'chat'])
+const AGENT_PULL_COMMANDS = new Set(['retry', 'rerun', 'ci-check', 'stop', 'chat'])
 
 /**
  * True when `decide` needs the issue that a pull request of the agent names, with its state: a change request in a
@@ -596,8 +612,9 @@ const oneLine = (value) => String(value).replace(/[\r\n]+/g, ' ')
 
 /**
  * The `key=value` lines for `$GITHUB_OUTPUT`. `command` is JSON on one line, or empty. `trigger` is written only for
- * a decision that has one, `pr` and `head_sha` for a `ci-gate` decision, and `kind` for an attempt that a person asked
- * for, so the outputs of the earlier actions stay as they were.
+ * a decision that has one, `pr` and `head_sha` for a `ci-gate` decision, `issue` for a `ci-check` decision on a pull
+ * request of the agent, and `kind` for an attempt that a person asked for, so the outputs of the earlier actions stay
+ * as they were.
  */
 function formatOutputs(decision) {
   return [
@@ -607,6 +624,7 @@ function formatOutputs(decision) {
     `command=${decision.command ? JSON.stringify(decision.command) : ''}`,
     ...(decision.trigger ? [`trigger=${decision.trigger}`] : []),
     ...(decision.pr ? [`pr=${decision.pr}`] : []),
+    ...(decision.issue ? [`issue=${decision.issue}`] : []),
     ...(decision.headSha ? [`head_sha=${decision.headSha}`] : []),
     ...(decision.kind ? [`kind=${decision.kind}`] : []),
     '',
