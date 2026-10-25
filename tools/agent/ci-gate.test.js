@@ -160,6 +160,8 @@ test('isCancelledOnly: every failed check is a cancelled check run, the verdict 
   const status = { kind: 'status', name: 'cla', conclusion: 'failure' }
   assert.equal(isCancelledOnly([check('run-lint', 'cancelled'), status]), false)
   assert.equal(isCancelledOnly([check('ci-ok', 'failure')]), false)
+  // The workflow was stopped after its other jobs passed: the cancelled verdict alone counts.
+  assert.equal(isCancelledOnly([check('ci-ok', 'cancelled')]), true)
   assert.equal(isCancelledOnly([]), false)
   // A cancelled E2E job is both; the gate reruns it once either way, from the same budget.
   assert.equal(isE2eOnly([check('E2E tests', 'cancelled')]), true)

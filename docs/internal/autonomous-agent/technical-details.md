@@ -549,7 +549,8 @@ comment. The busy check makes the drop explicit and puts the decline where the p
   comment on the issue or pull request of the event: the mention of the commenter, then "I am already working on #n
   (run link), so I did not start `/agent <command>`. Comment it again when that run ends." The words after "did not"
   depend on the command: `start /agent rerun`, `start /agent ci_check`, `answer your question`,
-  `act on your answer`, and `act on your change request`. A command comment gets the reaction `confused`; a review
+  `act on your answer`, and `act on your change request` (also for `/agent <text>` on the agent's pull request, whose
+  command name is `chat` but whose decision is `implement`). A command comment gets the reaction `confused`; a review
   has no comment to react to. In dry run nothing is posted or reacted with, and the job summary holds the comment
   that would be posted.
 - **Failures.** A failed listing or comment throws, so the `route` job fails and no worker starts. A missing
@@ -1462,22 +1463,28 @@ issue is in the phase `waiting-ci` at that commit. The job checks out `tools/age
   7. Free rerun: when every failed item, the verdict check `ci-ok` (`REQUIRED_CHECKS`) aside, is a check run whose name
      matches `/e2e/i`, and at least one failed item remains (`isE2eOnly`), or is a check run with the conclusion
      `cancelled` (`isCancelledOnly`: nothing really failed, the checks were stopped by a timeout, a person, or a newer
-     run; a mix of cancelled and really failed checks is a normal red result), the head commit has no rerun left unused
+     run; a cancelled `ci-ok` alone counts, because the workflow was stopped after its other jobs passed; a mix of
+     cancelled and really failed checks is a normal red result; a result that is both is treated as cancelled), the
+     head commit has no rerun left unused
      (`e2eRerunLeft`: `state.e2eRerun.sha !== headSha` or `count < MAX_E2E_RERUNS`, which is 1), and there is a run to
-     rerun (`rerunTargets`: the distinct `runId`s of the failed jobs, else `AGENT_WORKFLOW_RUN_ID`): call
+     rerun (`rerunTargets`: the distinct `runId`s of the failed jobs, else `AGENT_WORKFLOW_RUN_ID`; a cancelled-only
+     result has no such fallback, so a cancelled check of another app never reruns an unrelated workflow): call
      `gh.rerunFailedJobs` per run (that includes the run of `ci-ok`, which depends on the E2E job), set `e2eRerun` to
      `{ sha, count }` in the state (`rerunState`; a new commit starts at 1, and an old `e2eReruns` field is deleted),
      and write the state comment (`### AI implementation: waiting for CI on pull request #<n>`; it says "Only E2E jobs
      failed" or "The failed checks were cancelled, so nothing really failed", see `renderRerun`). The one free rerun per
      commit covers both cases and keeps the field name `e2eRerun`. The phase stays `waiting-ci`, `ciGate` is not set,
-     and the outcome is `rerun`. The next result is decided like any red result.
-  8. Stop rule. When `isCancelledOnly(failed)` holds here (the free rerun is used up, or no run can be rerun), the
-     decision is `stop` with the reason `cancelled`: nothing failed, so no attempt starts, and the hand-off says that
-     the checks were cancelled again (`reasonSentence`). Otherwise `stopDecision`, in this order: the signature equals
-     the latest signature recorded on an attempt (`lastSignature`) gives `stop` with reason `same-failure`, whatever the
-     budget; counted attempts at or above `AGENT_MAX_ATTEMPTS` gives `stop` with reason `budget`; otherwise
-     `next-attempt` (reason `new-failure`). Counted attempts (`countedAttempts`) are the attempts of kind `initial` or
-     `ci-fix` from index `state.budgetFrom` on, so a person's `retry`, answer, or change request gives a fresh budget.
+     and the outcome is `rerun`. The next result is decided like any red result. The state is written only when GitHub
+     accepted at least one rerun; when it rejects every one, no workflow run will wake the gate, so the decision is
+     `stop` with the reason `rerun-rejected` (step 8).
+  8. Stop rule. A rejected free rerun gives `stop` with the reason `rerun-rejected`. When `isCancelledOnly(failed)`
+     holds here (the free rerun is used up, or no run can be rerun), the decision is `stop` with the reason `cancelled`:
+     nothing failed, so no attempt starts, and the hand-off says that the checks were cancelled again
+     (`reasonSentence`). Otherwise `stopDecision`, in this order: the signature equals the latest signature recorded on
+     an attempt (`lastSignature`) gives `stop` with reason `same-failure`, whatever the budget; counted attempts at or
+     above `AGENT_MAX_ATTEMPTS` gives `stop` with reason `budget`; otherwise `next-attempt` (reason `new-failure`).
+     Counted attempts (`countedAttempts`) are the attempts of kind `initial` or `ci-fix` from index `state.budgetFrom`
+     on, so a person's `retry`, answer, or change request gives a fresh budget.
   9. Stop: `stoppedState` sets `phase: 'needs-human'`, the last attempt `result: 'ci-red'` and `signature`,
      `lastCiReport`, and `ciGate`. The state comment (`### AI implementation needs a person`) starts with the failed
      checks (`checkNames`: at most 5, then "and N more"), the first error line of the first failed check

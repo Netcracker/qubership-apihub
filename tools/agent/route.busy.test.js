@@ -290,6 +290,16 @@ test('a change request in a review is declined on the pull request, without a re
   assert.deepEqual(calls.reactions, [])
 })
 
+test('a change request written as /agent <text> on the agent pull request is not called a question', async () => {
+  const payload = fixture('issue_comment.chat.agent-pr')
+  const extra = { ...write, agentFacts: agentFacts() }
+  const { decision, result, calls } = await check({ payload, extra, runs: [run(4000, 70)] })
+  assert.deepEqual([decision.action, decision.command.name], ['implement', 'chat'])
+  assert.match(result.reason, /^busy: run 4000 works on #/)
+  assert.match(calls.comments[0].body, /so I did not act on your change request\./)
+  assert.doesNotMatch(calls.comments[0].body, /question/)
+})
+
 test('stop, help, and cost are never declined, and the busy check does not even list the runs', async () => {
   for (const [name, body] of [['issue_comment.stop', '/agent stop'], ['issue_comment.help', '/agent help'],
     ['issue_comment.cost', '/agent cost'], ['issue_comment.help', '/agent']]) {

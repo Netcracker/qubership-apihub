@@ -508,14 +508,55 @@ test('a new commit gets its own free rerun, and the counter of the old state is 
   })
 })
 
-test('an E2E job together with another failed job is no free rerun; a failed rerun call fails the job', async () => {
+test('an E2E job together with another failed job is no free rerun; a rejected rerun hands over', async () => {
   const mixed = fakeGh(e2eRed({ checkRuns: [...e2eRed().checkRuns, checkRun('build', 'failure', { id: 33 })] }))
   await withContext({ gh: mixed }, async (ctx) => {
     assert.equal((await gate(ctx.env, ctx.deps)).outcome, 'next-attempt')
   })
+  // A rejected rerun starts no workflow run, so no gate would wake again: the issue goes to a person, not a CI fix.
   await withContext({ gh: fakeGh(e2eRed({ rerunFails: true })) }, async (ctx) => {
-    await assert.rejects(gate(ctx.env, ctx.deps), /Workflow is still running/)
-    assert.equal(savedState(ctx.gh).e2eRerun, undefined)
+    const result = await gate(ctx.env, ctx.deps)
+    assert.deepEqual([result.outcome, result.reason], ['stopped', 'rerun-rejected'])
+    const saved = savedState(ctx.gh)
+    assert.equal(saved.phase, 'needs-human')
+    assert.equal(saved.e2eRerun, undefined)
+    assert.ok(!ctx.outputs().includes('next=implement'))
+  })
+})
+
+/** The body of the state comment, its people's part included. */
+const savedComment = (gh) => gh.store.find((c) => state.parse(c.body)).body
+
+test('a lone cancelled ci-ok is a cancelled-only result: rerun once, never a CI fix', async () => {
+  const checkRuns = [checkRun('build', 'success', { id: 31 }), checkRun('ci-ok', 'cancelled', { id: 34 })]
+  await withContext({ gh: fakeGh({ checkRuns }) }, async (ctx) => {
+    assert.equal((await gate(ctx.env, ctx.deps)).outcome, 'rerun')
+    assert.match(savedComment(ctx.gh), /cancelled/i)
+  })
+  await withContext({ gh: fakeGh({ checkRuns, st: waitingState({ e2eRerun: { sha: SHA, count: 1 } }) }) }, async (ctx) => {
+    const result = await gate(ctx.env, ctx.deps)
+    assert.deepEqual([result.outcome, result.reason], ['stopped', 'cancelled'])
+    assert.ok(!ctx.outputs().includes('next=implement'))
+  })
+})
+
+test('a cancelled E2E job is reported as cancelled, not as a flaky failure', async () => {
+  const checkRuns = [checkRun('e2e / e2e', 'cancelled', { id: 35 }), checkRun('ci-ok', 'failure', { id: 34 })]
+  await withContext({ gh: fakeGh({ checkRuns }) }, async (ctx) => {
+    assert.equal((await gate(ctx.env, ctx.deps)).outcome, 'rerun')
+    const text = savedComment(ctx.gh)
+    assert.match(text, /cancelled/i)
+    assert.doesNotMatch(text, /flake/i)
+  })
+})
+
+test('a cancelled check of another app is not rerun through the workflow run that woke the gate', async () => {
+  const outside = { id: 42, details_url: 'https://elsewhere.test/2', app: { slug: 'other' } }
+  const checkRuns = [checkRun('scan', 'cancelled', outside)]
+  await withContext({ gh: fakeGh({ checkRuns }) }, async (ctx) => {
+    const result = await gate(ctx.env, ctx.deps)
+    assert.deepEqual([result.outcome, result.reason], ['stopped', 'cancelled'])
+    assert.ok(!ctx.gh.calls.some((c) => c[0] === 'rerunFailedJobs'))
   })
 })
 

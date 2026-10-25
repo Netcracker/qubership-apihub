@@ -188,12 +188,15 @@ function isE2eOnly(failed) {
 
 /**
  * True when every failed check, the verdict check `ci-ok` aside, is a cancelled check run: nothing really failed, the
- * checks were stopped (a timeout, a person, a newer run). The verdict job fails with them, so it does not count; at
- * least one other failed check must remain. A mix of cancelled and really failed checks is a normal red result.
+ * checks were stopped (a timeout, a person, a newer run). The verdict job fails with them, so it does not count. When
+ * the verdict is the only failed check, it counts when it was cancelled itself: the workflow was stopped after its
+ * other jobs passed. A mix of cancelled and really failed checks is a normal red result.
  */
 function isCancelledOnly(failed) {
+  const cancelled = (f) => f.kind === 'check' && f.conclusion === 'cancelled'
   const rest = failed.filter((f) => !(f.kind === 'check' && REQUIRED_CHECKS.includes(f.name)))
-  return rest.length > 0 && rest.every((f) => f.kind === 'check' && f.conclusion === 'cancelled')
+  if (rest.length === 0) return failed.length > 0 && failed.every(cancelled)
+  return rest.every(cancelled)
 }
 
 /**
@@ -526,6 +529,9 @@ const reasonSentence = (reason, max) => {
   if (reason === 'cancelled') {
     return 'The checks were cancelled again and nothing failed, so a new attempt would change nothing. ' +
       'Rerun them once more.'
+  }
+  if (reason === 'rerun-rejected') {
+    return 'GitHub rejected the rerun of the failed checks, so no new CI result will come on its own.'
   }
   return `I used all ${max} attempts, and CI is still red.`
 }
@@ -904,8 +910,12 @@ async function handleRed(ctx) {
   // 1. The free rerun of a red result that only E2E jobs caused, or that only cancelled checks show. One rerun per
   // commit covers both.
   const reruns = st.e2eRerun?.sha === headSha ? st.e2eRerun.count ?? 0 : 0
-  const targets = rerunTargets(failed, ctx.env.AGENT_WORKFLOW_RUN_ID)
-  const freeKind = isE2eOnly(failed) ? 'e2e' : isCancelledOnly(failed) ? 'cancelled' : null
+  // Cancelled first: a cancelled E2E job did not flake, it was stopped.
+  const freeKind = isCancelledOnly(failed) ? 'cancelled' : isE2eOnly(failed) ? 'e2e' : null
+  // A cancelled check without a workflow run of its own (another app) must not fall back to the run that woke the gate:
+  // that run may be an unrelated, green workflow.
+  const targets = rerunTargets(failed, freeKind === 'cancelled' ? null : ctx.env.AGENT_WORKFLOW_RUN_ID)
+  let rerunRejected = null
   if (freeKind && e2eRerunLeft(st, headSha) && targets.length > 0) {
     const what = freeKind === 'cancelled' ? 'cancelled' : 'E2E'
     log.info('decision', { action: `rerun the failed ${what} jobs once per commit`, runs: targets.join(','), reruns })
@@ -916,23 +926,40 @@ async function handleRed(ctx) {
         `Would rerun the failed jobs of workflow run(s) ${targets.join(', ')}.`, ''].join('\n'))
       return { outcome: 'rerun' }
     }
+    // A rejected rerun starts no workflow run, so no gate would ever wake: the state is written only when GitHub accepted
+    // at least one rerun, and a full rejection hands the issue to a person below.
+    const accepted = []
     await log.group(`Rerun the failed ${what} jobs`, async () => {
-      for (const id of targets) await gh.rerunFailedJobs(id)
-      log.info('rerun requested', { runs: targets.join(',') })
+      for (const id of targets) {
+        try {
+          await gh.rerunFailedJobs(id)
+          accepted.push(id)
+        } catch (err) {
+          rerunRejected ??= err
+          log.error(`The rerun of workflow run ${id} was rejected: ${err.message}`)
+        }
+      }
+      log.info('rerun requested', { runs: accepted.join(',') || 'none', rejected: targets.length - accepted.length })
     })
-    await log.group('Write the state comment', () => writeState({ gh, number, loaded: ctx.loaded, human, st }))
-    return { outcome: 'rerun' }
+    if (accepted.length > 0) {
+      await log.group('Write the state comment', () => writeState({ gh, number, loaded: ctx.loaded, human, st }))
+      return { outcome: 'rerun' }
+    }
+    st = ctx.st
   }
   if (freeKind) {
-    const why = e2eRerunLeft(st, headSha) ? 'no run id' : 'used'
+    const why = rerunRejected ? 'rejected' : e2eRerunLeft(st, headSha) ? 'no run id' : 'used'
     log.info('rerun skipped', { reruns, targets: targets.length, why })
   }
 
   // 2. The stop rule. Checks that were only cancelled leave nothing to fix, so the free rerun being gone hands over to
-  // a person instead of starting a paid CI-fix attempt.
-  const decision = isCancelledOnly(failed)
-    ? { action: 'stop', reason: 'cancelled' }
-    : stopDecision({ state: st, signature, config })
+  // a person instead of starting a paid CI-fix attempt. A rejected free rerun hands over too: nothing would wake the
+  // gate again.
+  const decision = rerunRejected
+    ? { action: 'stop', reason: 'rerun-rejected' }
+    : isCancelledOnly(failed)
+      ? { action: 'stop', reason: 'cancelled' }
+      : stopDecision({ state: st, signature, config })
   log.info('decision', {
     stage: 'stop rule',
     action: decision.action,

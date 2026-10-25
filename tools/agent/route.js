@@ -883,19 +883,22 @@ function findBusyRun(runs, { numbers, ownRunId, now }) {
   return busy.sort((a, b) => a.run.id - b.run.id)[0] ?? null
 }
 
-/** What the agent did not do, as the end of "so I did not ...". */
-function declinedAction(command) {
+/**
+ * What the agent did not do, as the end of "so I did not ...". `/agent <text>` on a pull request of the agent keeps the
+ * command name `chat` but is a change request (an `implement` decision), not a question.
+ */
+function declinedAction(command, action) {
   if (command.name === 'ci-check') return 'start `/agent ci_check`'
-  if (command.name === 'chat') return 'answer your question'
+  if (command.name === 'chat') return action === 'implement' ? 'act on your change request' : 'answer your question'
   if (command.name === 'answer') return 'act on your answer'
   if (command.name === 'review-changes') return 'act on your change request'
   return `start \`/agent ${command.name}\``
 }
 
 /** The comment of the router that declines a command because a run already works on the issue or pull request. */
-function declineComment({ actor, number, runId, runUrl, command }) {
+function declineComment({ actor, number, runId, runUrl, command, action }) {
   return `@${actor}, I am already working on #${number} ([run ${runId}](${runUrl})), so I did not ` +
-    `${declinedAction(command)}. Comment it again when that run ends.`
+    `${declinedAction(command, action)}. Comment it again when that run ends.`
 }
 
 /**
@@ -949,7 +952,9 @@ async function declineIfBusy({ eventName, payload, decision, config, env, getCli
   const actor = payload.comment?.user?.login ?? payload.review?.user?.login
   const target = numberOf(payload)
   const runUrl = busy.run.html_url ?? `https://github.com/${env.GITHUB_REPOSITORY}/actions/runs/${busy.run.id}`
-  const text = declineComment({ actor, number: busy.number, runId: busy.run.id, runUrl, command: decision.command })
+  const text = declineComment({
+    actor, number: busy.number, runId: busy.run.id, runUrl, command: decision.command, action: decision.action,
+  })
   if (config.dryRun) {
     if (env.GITHUB_STEP_SUMMARY) {
       const quote = text.split('\n').map((line) => `> ${line}`).join('\n')
