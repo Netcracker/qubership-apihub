@@ -124,7 +124,7 @@ flowchart TB
 | `ci-gate` | `action == 'ci-gate'` | `GITHUB_TOKEN`, `AGENT_PAT` | none | `tools/agent` | `ai-autonomous-<number>` |
 | `implement` | `action == 'implement'` or `ci-gate` says `next == 'implement'` | preflight: `GITHUB_TOKEN`, `AGENT_PAT`; work: `OPENAI_API_KEY` only | `analyst`, `implementer`, `self-reviewer` | the default branch, then the agent's branch | `ai-autonomous-<number>` |
 | `rerun` | `action == 'rerun'` | `GITHUB_TOKEN` (`actions: write`, `checks: read`, `statuses: read`), `AGENT_PAT` | none | `tools/agent` of the default branch | `ai-autonomous-<number>` |
-| `ci-check` | `action == 'ci-check'` | `GITHUB_TOKEN` (`actions: write`, `checks: read`, `statuses: read`), `OPENAI_API_KEY` | `ci-triager` when CI is red | the default branch; a pull request head as a ref, never checked out | `ai-autonomous-ci-check-<number>` |
+| `ci-check` | `action == 'ci-check'` | `GITHUB_TOKEN` (`actions: write`, `checks: read`, `statuses: read`), `OPENAI_API_KEY` | `ci-triager` when CI is red | the default branch; a pull request head as a ref, never checked out | `ai-autonomous-<issue or number>` |
 | `publish` | `implement` set `proceed == 'true'` | `GITHUB_TOKEN` (`actions: write`, `checks: read`, `statuses: read`), `AGENT_PAT` | none | `tools/agent` of the default branch | `ai-autonomous-<number>` |
 | `stop` | `action == 'stop'` | `GITHUB_TOKEN` | none | `tools/agent` of the default branch | none, on purpose |
 | `chat` | `action == 'chat'` | `GITHUB_TOKEN`, `OPENAI_API_KEY` | `assistant` for a question | the default branch; a pull request head as a ref, never checked out | `ai-autonomous-chat-<number>` |
@@ -140,8 +140,10 @@ Three rules hold for every job:
   opencode without `GITHUB_TOKEN`, `GH_TOKEN`, `AGENT_PAT`, and the `ACTIONS_*` variables. No checkout keeps a token
   (`persist-credentials: false`).
 - **One job per number at a time.** The jobs that write the state comment of an issue or a pull request share the
-  group `ai-autonomous-<number>`. `chat` and `ci-check` have their own groups and merge the cost records on write;
-  `stop` has none, so a stop never waits behind another job.
+  group `ai-autonomous-<number>`. `ci-check` writes the state of the issue when it hands a flaky failure back to the
+  CI gate, so its group is the one of that issue for a pull request of the agent, else the one of the pull request
+  (the group of `review`). `chat` has its own group and merges the cost records on write; `stop` has none, so a stop
+  never waits behind another job.
 
 ## Where the state lives
 
@@ -234,10 +236,12 @@ from a fork. Dependabot pull requests are never reviewed: the workflow `if` drop
 `/agent review` on them.
 
 **Limits.** An automatic review counts toward the daily cap `AGENT_DAILY_REVIEWS` (default 15 in any 24 hours, counted
-from the state comments); over the cap, `route` skips with a reason that points to `/agent review`. A command is not
-counted and not capped. Before any model call, `review.js` also measures the diff: more than `AGENT_REVIEW_MAX_LINES`
-changed lines or `AGENT_REVIEW_MAX_FILES` files, lock files not counted, ends the job green with a state comment that
-says so and an entry in `reviews` marked `skipped: 'size'`. `/agent review force` reviews such a diff anyway.
+from the state comments of the pull requests that carry `agent:pr-reviewed`; a failed review sets no label, so it
+counts only on a pull request that an earlier review labeled); over the cap, `route` skips with a reason that points to
+`/agent review`. A command is not counted and not capped. Before any model call, `review.js` also measures the diff:
+more than `AGENT_REVIEW_MAX_LINES` changed lines or `AGENT_REVIEW_MAX_FILES` files, lock files not counted, ends the
+job green with a state comment that says so and an entry in `reviews` marked `skipped: 'size'`.
+`/agent review force` reviews such a diff anyway.
 
 ```mermaid
 sequenceDiagram
@@ -266,8 +270,10 @@ finding without a line goes to the summary comment. When a model call fails, the
 person comments `/agent review` again.
 
 **State.** The pull request state gets a record in `reviews` (with `trigger`: `auto` for a pull request event,
-`command` for `/agent review`) and the cost records. **Labels:** `agent:pr-reviewed`, but not for a skipped review.
-**A person** reads the review; the agent never approves or requests changes.
+`command` for `/agent review`) and the cost records. A review that failed after its model calls is a record too
+(`failed: true`): it cost money, so the daily cap counts it, and `ready_for_review` does not start it again; the
+failure comment tells the person to comment `/agent review`. **Labels:** `agent:pr-reviewed`, but not for a skipped or
+failed review. **A person** reads the review; the agent never approves or requests changes.
 
 ## Flow B: analysis
 
@@ -276,15 +282,20 @@ person already set `ai:suitable` or `ai:unsuitable`. People edit a new issue for
 with the grace period `AGENT_ANALYSIS_GRACE_MINUTES` above 0 (default 30), `route` skips it, and the **sweep** picks
 it up. The sweep is a `schedule` event every 10 minutes. It searches for open `Bug` and `Task` issues without a decision
 label that were created between 7 days ago and the grace period ago, drops pull requests, bots, and issues whose state
-comment already has an analysis, and takes the oldest ones, at most 5 per run. The `analyze` job runs once per number
+comment already has an analysis (a state comment it cannot read leaves that issue out), and takes the oldest ones, at
+most 5 per run. It counts the daily usage only when it found a candidate. The `analyze` job runs once per number
 (two at a time) and checks the issue again before it calls the model, so two sweeps never analyze one issue twice.
 With a grace period of 0 the event analyzes at once, and the sweep still catches issues the event missed.
+The sweep needs `AGENT_DRY_RUN=false`: a dry-run analysis writes no state, so every sweep would pick the same issues
+and the daily cap would never fill. In dry run the sweep skips with that reason and makes no search; use
+`/agent analyze`. With `AGENT_ENABLED` not `true` the `schedule` event starts no runner at all.
 Again when the issue waits for information (`phase == 'needs-info'`) and its author comments or edits it, at most
 `AGENT_MAX_ANALYSES` times (default 5); that answer is immediate. Any time on `/agent analyze`, which the limits do
 not count.
 
 **Daily cap.** The analyses started by `opened`, `typed`, or the sweep count toward `AGENT_DAILY_ANALYSES` (default 10
-in any 24 hours, counted from the state comments). The sweep takes only what the cap leaves; an event over the cap is
+in any 24 hours, counted from the state comments of the issues that carry `ai:suitable`, `ai:unsuitable`, or
+`agent:needs-human`, newest first, at most 100 read). The sweep takes only what the cap leaves; an event over the cap is
 skipped and left to a later sweep. Answers of the author and commands are not counted and not capped.
 
 ```mermaid
@@ -480,11 +491,12 @@ flowchart TB
   C(["/agent ci_check on a pull request"]) --> READ["ci-check: read check runs and statuses<br/>of the head commit"]
   READ --> NONE{"any check?"}
   NONE -- no --> R1(["reply: no check, no model"])
-  NONE -- yes --> PEND{"any still running<br/>or pending?"}
+  NONE -- yes --> PEND{"any still running<br/>or pending?<br/>(a missing ci-ok is not)"}
   PEND -- yes --> R2(["reply: which checks run, no model"])
   PEND -- no --> GREEN{"all green?"}
   GREEN -- yes --> R3(["reply: green, no model"])
-  GREEN -- no --> LOGS["collect the logs of the failed jobs,<br/>CI report and signature of the CI gate"]
+  GREEN -- "no, nothing failed,<br/>ci-ok is missing" --> R4(["reply: no CI verdict is reported,<br/>no model"])
+  GREEN -- "no, a check failed" --> LOGS["collect the logs of the failed jobs,<br/>CI report and signature of the CI gate"]
   LOGS --> TRI["ci-triager reads the diff and the code:<br/>verdict, cause, fixes, evidence"]
   TRI --> V{"verdict"}
   V -- "change, unknown, or flaky/infra<br/>with low confidence" --> NO["no rerun"]

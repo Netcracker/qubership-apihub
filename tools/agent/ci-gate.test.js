@@ -512,6 +512,20 @@ test('stoppedState and nextAttemptState: the signature on the last attempt, the 
   )
 })
 
+test('an unrelated attempt keeps unrelated: true when the CI verdict replaces its result', () => {
+  const unrelated = () => ({ ...waiting(), attempts: [attempt(1, 'ci-fix', { result: 'unrelated' })] })
+  const green = greenState(unrelated(), { sha: 'abc', at, run: 'r' })
+  assert.deepEqual([green.attempts[0].result, green.attempts[0].unrelated], ['ci-green', true])
+  const stopped = stoppedState(unrelated(), { signature: 's1', report: 'R', sha: 'abc', at, run: 'r' })
+  assert.deepEqual([stopped.attempts[0].result, stopped.attempts[0].unrelated], ['ci-red', true])
+  const next = nextAttemptState(unrelated(), { signature: 's1', report: 'R', sha: 'abc', at, run: 'r', actor: 'carol' })
+  assert.deepEqual([next.attempts[0].result, next.attempts[0].unrelated], ['ci-red', true])
+  // The flag stays on a later patch, and another attempt never gets it.
+  const again = greenState(stoppedState(unrelated(), { signature: 's', report: 'R', sha: 'a', at, run: 'r' }), { sha: 'b', at, run: 'r' })
+  assert.equal(again.attempts[0].unrelated, true)
+  assert.equal(greenState(waiting(), { sha: 'abc', at, run: 'r' }).attempts[0].unrelated, undefined)
+})
+
 test('rerunState counts the free rerun per commit and decides nothing', () => {
   assert.deepEqual(rerunState({}, 'aaa').e2eRerun, { sha: 'aaa', count: 1 })
   assert.deepEqual(rerunState({ e2eRerun: { sha: 'aaa', count: 1 } }, 'aaa').e2eRerun, { sha: 'aaa', count: 2 })

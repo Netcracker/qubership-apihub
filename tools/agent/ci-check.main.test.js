@@ -71,7 +71,9 @@ const triage = (extra = {}) => ({
  * A GitHub client over targets by number: `targets[n]` is `{ pull?, comments }`. It keeps the comments like GitHub does
  * and records every write in order.
  */
-function fakeGh({ targets, checkRuns = red(), statuses = [], logs = { 11: failingLog }, rerunFails = false }) {
+function fakeGh({
+  targets, checkRuns = red(), statuses = [], logs = { 11: failingLog }, rerunFails = false, noCiOk = false,
+}) {
   const calls = []
   let nextId = 1000
   const at = (n) => {
@@ -93,7 +95,7 @@ function fakeGh({ targets, checkRuns = red(), statuses = [], logs = { 11: failin
     listCheckRuns: async (sha) => {
       assert.equal(sha, SHA)
       // CI's verdict job exists in every real run.
-      return checkRuns.length === 0 || checkRuns.some((r) => r.name === 'ci-ok')
+      return noCiOk || checkRuns.length === 0 || checkRuns.some((r) => r.name === 'ci-ok')
         ? checkRuns
         : [...checkRuns, checkRun('ci-ok', checkRuns.every((r) => r.conclusion === 'success') ? 'success' : 'failure', {
           jobId: 99,
@@ -213,6 +215,34 @@ test('CI still runs: the reply names the checks that run, no model, no state wri
     assert.ok(body.startsWith('@carol, CI still runs on #123 at 3f2a9c1d5b7e (`e2e / smoke` in_progress'))
     assert.ok(body.endsWith('Comment `/agent ci_check` again when it ends.'))
     assert.deepEqual(reactions(ctx.gh), ['eyes', 'rocket'])
+  })
+})
+
+test('no ci-ok and nothing failed: the reply says that no CI verdict is reported, not that CI still runs', async () => {
+  await withContext({ checkRuns: [checkRun('build', 'success')], noCiOk: true }, async (ctx) => {
+    assert.deepEqual(await ciCheck(ctx.env, ctx.deps), { ok: true, outcome: 'no-verdict' })
+    assert.equal(ctx.runAgent.runs.length, 0)
+    assert.deepEqual(writes(ctx.gh), [[
+      'createIssueComment',
+      123,
+      '@carol, no CI verdict (`ci-ok`) is reported for #123 at 3f2a9c1d5b7e, and no check failed. CI may wait for ' +
+        'an approval of the workflows of a fork. Comment `/agent ci_check` again when the verdict appears.',
+    ]])
+  })
+})
+
+test('failed checks and no ci-ok: the missing verdict is no running CI, so the command triages the failure', async () => {
+  await withContext({ answers: [triage()], noCiOk: true }, async (ctx) => {
+    const result = await ciCheck(ctx.env, ctx.deps)
+    assert.deepEqual(result, { ok: true, outcome: 'triaged', verdict: 'change', rerun: [] })
+    assert.equal(ctx.runAgent.runs.length, 1)
+  })
+})
+
+test('a running check still wins over the missing verdict: the reply says that CI still runs', async () => {
+  await withContext({ checkRuns: [running('build')], noCiOk: true }, async (ctx) => {
+    assert.deepEqual(await ciCheck(ctx.env, ctx.deps), { ok: true, outcome: 'pending' })
+    assert.match(writes(ctx.gh)[0][2], /^@carol, CI still runs on #123/)
   })
 })
 

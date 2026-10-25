@@ -18,7 +18,8 @@
  * of a pull request of the agent that got a comment or a review, and, for a finished workflow run, the open pull
  * request of its branch with the state of the issue it names. An event that may start an automatic analysis or review
  * also gets the count of such work in the last 24 hours (the daily caps), and the `schedule` event, the sweep, gets the
- * new issues past the grace period that no analysis has seen. It then writes `action`, `number`, `reason`, and
+ * new issues past the grace period that no analysis has seen (the usage is counted only when there is one; in dry run
+ * the sweep searches for nothing and the decision is a skip). It then writes `action`, `number`, `reason`, and
  * `command` (JSON, or empty) to `$GITHUB_OUTPUT`, plus `trigger` and `numbers` (a JSON array of the issues to analyze:
  * one for an event, up to five for the sweep) for an `analyze` decision, `pr` and `head_sha` for a
  * `ci-gate` decision, `pr` and `kind` for an `implement` decision that a person asked for, `pr` for a `rerun`
@@ -323,9 +324,17 @@ function sweepBudget(config, dailyUsage) {
 
 /**
  * `schedule` events: the sweep. `sweep.numbers` are the new Bug and Task issues past the grace period that no analysis
- * has seen, oldest first (the facts gathered for this event).
+ * has seen, oldest first (the facts gathered for this event). In dry run the sweep does nothing: an analysis writes no
+ * state, so the next run would pick the same issues again and the daily cap would never fill.
  */
 function decideSchedule({ config, dailyUsage, sweep }) {
+  if (config.dryRun) {
+    return skip(
+      null,
+      'the sweep needs AGENT_DRY_RUN=false: a dry-run analysis writes no state, so the same issues would be ' +
+        'analyzed again and again; use /agent analyze',
+    )
+  }
   if (sweepBudget(config, dailyUsage) <= 0) {
     return skip(null, `daily limit of ${config.limits.dailyAnalyses} automatic analyses reached`)
   }
@@ -646,7 +655,8 @@ function isHandOffAnswer(eventName, payload, { issueState, agentFacts }) {
  * far (the state of a pull request that left the draft).
  */
 function dailyCountNeeded(eventName, payload, config, extra) {
-  if (eventName === 'schedule') return 'analyses'
+  // The sweep counts for itself, and only when it found a candidate (see `gatherSweep`).
+  if (eventName === 'schedule') return null
   if (eventName === 'pull_request') {
     const pr = payload?.pull_request
     if (!pr || (payload.action !== 'opened' && payload.action !== 'ready_for_review')) return null
@@ -665,16 +675,23 @@ function dailyCountNeeded(eventName, payload, config, extra) {
 
 /**
  * The automatic analyses or reviews of the last 24 hours, counted from the state comments of the issues or pull
- * requests that were updated in that time. At most `MAX_STATES_READ` of them are read; the log says when that cap cuts
- * the list.
+ * requests that were updated in that time and carry a label the agent leaves behind: `agent:pr-reviewed` for a review,
+ * `ai:suitable`, `ai:unsuitable`, or `agent:needs-human` for an analysis (a comma list is an OR in a search). A failed
+ * review sets no label, so it is found only on a pull request that an earlier review labeled; the count may miss the
+ * others. The newest come first (`sort:updated-desc`). At most `MAX_STATES_READ` of them are read; the log says when
+ * that cap cuts the list.
  *
  * @returns {Promise<number>}
  */
 async function countDaily({ kind, repository, now, getClient }) {
   const gh = getClient()
   const since = daily.windowStart(now)
-  const type = kind === 'analyses' ? 'is:issue' : 'is:pr'
-  const found = await gh.searchIssues(`repo:${repository} ${type} updated:>=${daily.toSearchTime(since)}`)
+  const scope = kind === 'analyses'
+    ? 'is:issue label:"ai:suitable","ai:unsuitable","agent:needs-human"'
+    : 'is:pr label:"agent:pr-reviewed"'
+  const found = await gh.searchIssues(
+    `repo:${repository} ${scope} updated:>=${daily.toSearchTime(since)} sort:updated-desc`,
+  )
   const read = found.slice(0, daily.MAX_STATES_READ)
   if (found.length > read.length) {
     log.warn(`${found.length} ${kind === 'analyses' ? 'issues' : 'pull requests'} were updated in the last 24 hours; ` +
@@ -699,11 +716,15 @@ async function countDaily({ kind, repository, now, getClient }) {
 /**
  * The new Bug and Task issues past the grace period that no analysis has seen: created between `SWEEP_LOOKBACK_DAYS`
  * ago and the grace period ago, without a decision label, opened by a person, and without an entry in the `analyses` of
- * their state comment. Oldest first, at most `budget`.
+ * their state comment. Oldest first, at most the budget that the daily cap leaves.
  *
- * @returns {Promise<{ numbers: number[], found: number, left: number }>} `left` counts the candidates not looked at
+ * The candidates are searched first and the daily usage is counted only when there is at least one, so a sweep with
+ * nothing to do spends no state reads. A state comment that cannot be read leaves that candidate out.
+ *
+ * @returns {Promise<{ numbers: number[], found: number, left: number, dailyUsage?: { analyses: number } }>} `left`
+ *   counts the candidates not looked at; `dailyUsage` is set when the usage was counted
  */
-async function gatherSweep({ config, repository, now, getClient, budget }) {
+async function gatherSweep({ config, repository, now, getClient }) {
   const gh = getClient()
   const day = 24 * 60 * 60 * 1000
   const to = daily.toSearchTime(new Date(now.getTime() - config.limits.analysisGraceMinutes * 60 * 1000))
@@ -717,19 +738,31 @@ async function gatherSweep({ config, repository, now, getClient, budget }) {
   const candidates = [...found.values()]
     .filter((item) => !item.pull_request && !isBot(item.user?.login))
     .sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)) || a.number - b.number)
+  if (candidates.length === 0) {
+    log.info('sweep candidates', { from, to, candidates: 0, picked: 'none', left: 0 })
+    return { numbers: [], found: 0, left: 0 }
+  }
+  const dailyUsage = { analyses: await countDaily({ kind: 'analyses', repository, now, getClient }) }
+  const budget = sweepBudget(config, dailyUsage)
   const numbers = []
   let looked = 0
   for (const item of candidates) {
     if (numbers.length >= budget) break
     looked += 1
     const stateComment = findStateComment(await gh.listIssueComments(item.number))
-    const st = stateComment ? parseState(stateComment.body) : null
+    let st = null
+    try {
+      st = stateComment ? parseState(stateComment.body) : null
+    } catch (error) {
+      log.warn(`The state comment of #${item.number} is unreadable and the issue is left out of the sweep: ${error.message}`)
+      continue
+    }
     if ((st?.analyses?.length ?? 0) > 0) continue
     numbers.push(item.number)
   }
   const left = candidates.length - looked
   log.info('sweep candidates', { from, to, candidates: candidates.length, picked: numbers.join(',') || 'none', left, budget })
-  return { numbers, found: candidates.length, left }
+  return { numbers, found: candidates.length, left, dailyUsage }
 }
 
 /**
@@ -776,10 +809,12 @@ async function gather({ eventName, payload, config, getClient, repository, now =
     if (!repository) throw new Error('GITHUB_REPOSITORY is not set')
     extra.dailyUsage = { [kind]: await countDaily({ kind, repository, now, getClient }) }
   }
-  if (eventName === 'schedule') {
-    // A cap that is used up leaves nothing to look for: the decision is a skip.
-    const budget = sweepBudget(config, extra.dailyUsage)
-    if (budget > 0) extra.sweep = await gatherSweep({ config, repository, now, getClient, budget })
+  // In dry run the decision is a skip, so the sweep searches for nothing.
+  if (eventName === 'schedule' && !config.dryRun) {
+    if (!repository) throw new Error('GITHUB_REPOSITORY is not set')
+    const { dailyUsage, ...sweep } = await gatherSweep({ config, repository, now, getClient })
+    extra.sweep = sweep
+    if (dailyUsage) extra.dailyUsage = dailyUsage
   }
   return extra
 }

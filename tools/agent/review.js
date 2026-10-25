@@ -176,6 +176,16 @@ async function skipForSize({ env, config, gh, number, pr, size, existing, initia
   })
 }
 
+/**
+ * The `reviews` entry of a finished review. A failed review is an entry too (`failed: true`): it cost model calls, so
+ * the daily cap counts it, and `ready_for_review` does not start it again; the failure comment tells the person to
+ * comment `/agent review`.
+ */
+function reviewEntry({ headSha, runUrl, command, failed }) {
+  const entry = { sha: headSha, run: runUrl, at: new Date().toISOString(), trigger: command ? 'command' : 'auto' }
+  return failed ? { ...entry, failed: true } : entry
+}
+
 async function main(env = process.env, deps = {}) {
   const config = loadConfig(env)
   const number = Number(env.AGENT_NUMBER)
@@ -355,10 +365,7 @@ async function main(env = process.env, deps = {}) {
     thisRun: costs.reduce((s, c) => s + c.usd, 0).toFixed(4),
     pullRequestTotal: st.costs.reduce((s, c) => s + c.usd, 0).toFixed(4),
   })
-  if (!failure) {
-    const entry = { sha: headSha, run: runUrl, at: new Date().toISOString(), trigger: command ? 'command' : 'auto' }
-    st = { ...st, reviews: [...(st.reviews ?? []), entry] }
-  }
+  st = { ...st, reviews: [...(st.reviews ?? []), reviewEntry({ headSha, runUrl, command, failed: failure !== null })] }
   if (failure) {
     human = `### AI review failed\n\nThe review of ${headSha.slice(0, 7)} did not finish: ${failure.message}\n\n` +
       `<sub>[Run](${runUrl}) · comment \`/agent review\` to try again</sub>`
@@ -406,4 +413,4 @@ if (require.main === module) {
   })
 }
 
-module.exports = { selectFindings, placeFindings, renderSummary, findingBody, verificationLine, main }
+module.exports = { selectFindings, placeFindings, renderSummary, findingBody, verificationLine, reviewEntry, main }

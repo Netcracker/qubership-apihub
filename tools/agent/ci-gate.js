@@ -125,6 +125,13 @@ function pendingChecks(checkRuns, statuses) {
 }
 
 /**
+ * The pending entries that are real waiting: a check that runs, a pending status, a cancelled check. A `missing` entry
+ * (a required check with no run yet) is left out: it may never come, for example when CI waits for an approval of the
+ * workflows of a fork, so `/agent rerun` and `/agent ci_check` do not read it as "CI still runs".
+ */
+const stillRunning = (pending) => pending.filter((p) => p.state !== 'missing')
+
+/**
  * The checks that did not succeed, sorted by name. A check run fails with any conclusion but success, neutral, and
  * skipped; a status fails as `failure` or `error`. For a GitHub Actions check run `jobId` is the id of the job (the id
  * of the check run), found also in the link, and `runId` the id of its workflow run; both are `null` for other apps.
@@ -422,10 +429,17 @@ function stopDecision({ state: st, signature, config }) {
 // The state after a decision
 // ---------------------------------------------------------------------------------------------------------------
 
-/** The latest attempt gets the result, and, for a red one, the signature. The input is not changed. */
+/**
+ * The latest attempt gets the result, and, for a red one, the signature. The input is not changed. An attempt whose
+ * result is `unrelated` keeps that as `unrelated: true` when the CI verdict replaces the result, so the report still
+ * knows that the agent found the failure unrelated to the change.
+ */
 function withLastAttempt(st, patch) {
   const attempts = [...(st.attempts ?? [])]
-  if (attempts.length > 0) attempts[attempts.length - 1] = { ...attempts[attempts.length - 1], ...patch }
+  if (attempts.length > 0) {
+    const last = attempts[attempts.length - 1]
+    attempts[attempts.length - 1] = { ...last, ...patch, ...(last.result === 'unrelated' ? { unrelated: true } : {}) }
+  }
   return { ...st, attempts }
 }
 
@@ -964,11 +978,16 @@ function rerunRequestState(st, { sha, runs, actor, at, run }) {
 
 /** The state comment after `/agent rerun`; `failed` is empty when CI still runs. */
 function renderRerunRequest({ pr, sha, actor, failed, pending, runUrl, totalUsd }) {
+  const running = stillRunning(pending)
+  const names = (list) => list.map((p) => `\`${code(p.name)}\``).join(', ')
   const lead = failed.length > 0
     ? [`I reran the failed checks at \`${sha}\` on request of \`${code(actor)}\`. No new attempt and no model call. ` +
       'The failed checks:', '', ...failedList(failed)]
-    : [`CI still runs at \`${sha}\` (${pending.map((p) => `\`${code(p.name)}\` ${p.state}`).join(', ')}). ` +
-      `\`${code(actor)}\` asked for a rerun; there is nothing to rerun yet.`]
+    : running.length === 0 && pending.length > 0
+      ? [`No CI verdict (${names(pending)}) is reported for \`${sha}\`, and no check failed. ` +
+        `\`${code(actor)}\` asked for a rerun; there is nothing to rerun.`]
+      : [`CI still runs at \`${sha}\` (${pending.map((p) => `\`${code(p.name)}\` ${p.state}`).join(', ')}). ` +
+        `\`${code(actor)}\` asked for a rerun; there is nothing to rerun yet.`]
   return [
     `### AI implementation: waiting for CI on pull request #${pr}`,
     '',
@@ -987,10 +1006,18 @@ const noRerunReply = ({ actor, pr, sha, failed }) =>
   `@${actor}, the failed checks of #${pr} on ${sha} (${checkNames(failed)}) cannot be rerun from here: they are ` +
   'commit statuses or checks of another app, not GitHub Actions jobs. Rerun them where they run, or push a fix.'
 
+/** Only `missing` entries are pending: no CI verdict exists for the commit, so CI is not "still running". */
+const noVerdictReply = ({ actor, pr, sha, pending }) =>
+  `@${actor}, no CI verdict (${pending.map((p) => `\`${code(p.name)}\``).join(', ')}) is reported for #${pr} at ` +
+  `${sha}, and no check failed, so there is nothing to rerun. CI may wait for an approval of the workflows of a ` +
+  'fork. The CI gate keeps waiting for the verdict.'
+
 const pendingReply = ({ actor, pr, sha, pending }) =>
-  `@${actor}, CI still runs on #${pr} at ${sha} (${pending.slice(0, MAX_NAMED_CHECKS)
-    .map((p) => `\`${code(p.name)}\` ${p.state}`).join(', ')}). There is nothing to rerun yet; the CI gate decides ` +
-  'when it ends.'
+  stillRunning(pending).length === 0
+    ? noVerdictReply({ actor, pr, sha, pending })
+    : `@${actor}, CI still runs on #${pr} at ${sha} (${pending.slice(0, MAX_NAMED_CHECKS)
+      .map((p) => `\`${code(p.name)}\` ${p.state}`).join(', ')}). There is nothing to rerun yet; the CI gate decides ` +
+      'when it ends.'
 
 /** Posts a reply on the issue or pull request of the comment, or, in dry-run, puts it in the job summary. */
 async function replyTo(ctx, body) {
@@ -1067,6 +1094,7 @@ async function rerunRequest(ctx) {
   const again = rerunRefusal({ st: fresh.st, actor, issue: loaded.issue, prHint })
   if (again) return refuse(again, `the state of #${number} changed (phase '${fresh.st.phase}')`)
 
+  // Failed checks come first: a `missing` verdict check (CI waits for an approval, say) does not hold the rerun back.
   const plan = failed.length > 0 ? 'rerun' : pending.length > 0 ? 'pending' : 'green'
 
   // The rerun comes before any write: when GitHub rejects it, no workflow run will wake the gate, so the state and the
@@ -1203,6 +1231,7 @@ module.exports = {
   relevantChecks,
   actionsIds,
   pendingChecks,
+  stillRunning,
   failedChecks,
   allGreen,
   isE2eOnly,

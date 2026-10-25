@@ -165,6 +165,16 @@ test('attemptCounts counts the attempts of the period by result and counts force
   ])
 })
 
+test('attemptCounts counts an attempt with unrelated: true as unrelated, whatever the CI verdict was', () => {
+  const at = '2026-10-20T10:00:00Z'
+  const result = attemptCounts(
+    [{ attempts: [{ result: 'ci-green', unrelated: true, at }, { result: 'ci-red', unrelated: true, at }, { result: 'ci-red', at }] }],
+    period,
+  )
+  assert.equal(result.total, 3)
+  assert.deepEqual(result.results, [{ result: 'unrelated', count: 2 }, { result: 'ci-red', count: 1 }])
+})
+
 test('attemptCounts is empty without states', () => {
   assert.deepEqual(attemptCounts([], period), { total: 0, results: [], forced: 0 })
   assert.deepEqual(attemptCounts(undefined, period), { total: 0, results: [], forced: 0 })

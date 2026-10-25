@@ -41,8 +41,8 @@ const { react, commentIdOf } = require('./lib/reactions')
 const { agentIssueOf } = require('./route')
 const { appendSummary, quoted, fence, costLine } = require('./implement')
 const {
-  relevantChecks, failedChecks, pendingChecks, allGreen, collectLogs, buildReport, failureSignature, rerunTargets,
-  rerunRequestState, checkNames,
+  relevantChecks, failedChecks, pendingChecks, stillRunning, allGreen, collectLogs, buildReport, failureSignature,
+  rerunTargets, rerunRequestState, checkNames,
 } = require('./ci-gate')
 const log = require('./lib/log')
 
@@ -246,6 +246,12 @@ const pendingReply = ({ actor, pr, sha, pending }) => {
   const names = `${shown.join(', ')}${more > 0 ? `, and ${more} more` : ''}`
   return `@${actor}, CI still runs on #${pr} at ${sha12(sha)} (${names}). Comment \`/agent ci_check\` again when it ends.`
 }
+
+/** Nothing failed and the only pending entries are `missing` ones: no verdict check has run for the commit. */
+const noVerdictReply = ({ actor, pr, sha, pending }) =>
+  `@${actor}, no CI verdict (${pending.map((p) => `\`${code(p.name)}\``).join(', ')}) is reported for #${pr} at ` +
+  `${sha12(sha)}, and no check failed. CI may wait for an approval of the workflows of a fork. ` +
+  'Comment `/agent ci_check` again when the verdict appears.'
 
 const greenReply = ({ actor, pr, sha }) => `@${actor}, CI is green on #${pr} at ${sha12(sha)}.`
 
@@ -576,8 +582,13 @@ async function checkCi(ctx) {
   if (checkRuns.length + statuses.length === 0) {
     return answerWithoutModel(ctx, { outcome: 'no-checks', text: noChecksReply({ actor, pr: number, sha }) })
   }
-  if (pending.length > 0) {
+  // A `missing` verdict check is no running CI: the command goes on with the failed checks, or says that no verdict
+  // exists when nothing failed.
+  if (stillRunning(pending).length > 0) {
     return answerWithoutModel(ctx, { outcome: 'pending', text: pendingReply({ actor, pr: number, sha, pending }) })
+  }
+  if (failed.length === 0 && pending.length > 0) {
+    return answerWithoutModel(ctx, { outcome: 'no-verdict', text: noVerdictReply({ actor, pr: number, sha, pending }) })
   }
   if (allGreen(checkRuns, statuses)) {
     return answerWithoutModel(ctx, { outcome: 'green', text: greenReply({ actor, pr: number, sha }) })
@@ -589,7 +600,7 @@ async function checkCi(ctx) {
  * Runs `/agent ci_check`. `deps.gh` and `deps.runAgent` are injectable so that tests never touch the network or start
  * opencode; `deps.mergeBase` replaces the call of `git merge-base`.
  *
- * @returns {Promise<{ ok: boolean, outcome: 'no-checks'|'pending'|'green'|'triaged', verdict?: string,
+ * @returns {Promise<{ ok: boolean, outcome: 'no-checks'|'pending'|'no-verdict'|'green'|'triaged', verdict?: string,
  *   rerun?: number[] }>} `ok` is false for a rerun that GitHub rejected
  */
 async function ciCheck(env = process.env, deps = {}) {

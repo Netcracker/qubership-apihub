@@ -912,6 +912,34 @@ test('rerun while CI still runs: the state waits for the gate, nothing is rerun'
   })
 })
 
+test('rerun with failed checks goes on when the only pending entry is the missing ci-ok', async () => {
+  await withContext({ gh: fakeGh({ ...e2eRed({ st: handedOff() }), noCiOk: true }), env: rerunEnv() }, async (ctx) => {
+    const result = await rerunCommand(ctx.env, ctx.deps)
+    assert.deepEqual([result.ok, result.outcome], [true, 'rerun'])
+    assert.deepEqual(ctx.gh.calls.filter((c) => c[0] === 'rerunFailedJobs').map((c) => c[1]), [902])
+    assert.match(replies(ctx.gh)[0][2], /^@erin, I reran the failed checks of #70/)
+    assert.equal(savedState(ctx.gh).phase, 'waiting-ci')
+  })
+})
+
+test('rerun with nothing failed and no ci-ok says that no CI verdict is reported, not that CI still runs', async () => {
+  const checkRuns = [checkRun('build', 'success')]
+  await withContext({ gh: fakeGh({ st: handedOff(), checkRuns, noCiOk: true }), env: rerunEnv() }, async (ctx) => {
+    const result = await rerunCommand(ctx.env, ctx.deps)
+    assert.deepEqual([result.ok, result.outcome], [true, 'pending'])
+    assert.ok(!callNames(ctx.gh).includes('rerunFailedJobs'))
+    const reply = replies(ctx.gh)[0][2]
+    assert.equal(
+      reply,
+      '@erin, no CI verdict (`ci-ok`) is reported for #70 at 3f2a9c1d5b7e, and no check failed, so there is nothing ' +
+        'to rerun. CI may wait for an approval of the workflows of a fork. The CI gate keeps waiting for the verdict.',
+    )
+    assert.doesNotMatch(reply, /still runs/)
+    assert.match(ctx.gh.store[0].body, /No CI verdict \(`ci-ok`\) is reported for `3f2a9c1d5b7e`, and no check failed\./)
+    assert.doesNotMatch(ctx.gh.store[0].body, /CI still runs/)
+  })
+})
+
 test('rerun when CI is green: the green path of the gate runs, and there is one comment', async () => {
   await withContext({ gh: fakeGh({ st: handedOff(), pull: { draft: true } }), env: rerunEnv() }, async (ctx) => {
     const result = await rerunCommand(ctx.env, ctx.deps)

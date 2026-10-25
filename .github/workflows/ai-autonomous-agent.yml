@@ -62,14 +62,16 @@ env:
 
 jobs:
   route:
-    # A cheap filter before a runner starts: bots never command the agent. A `schedule` event (the sweep) passes every
-    # condition below: the event fields they read are empty there, and its `github.actor` is whoever last changed the
-    # workflow file, often Dependabot bumping an action, so the actor check skips it. A comment must hold `/agent`,
-    # unless it is on an issue: the author of an issue that waits for information answers without a command, and the
-    # router checks that. Comments on pull requests stay command-only.
+    # A cheap filter before a runner starts: bots never command the agent. A `schedule` event (the sweep) starts a
+    # runner only when `AGENT_ENABLED` is `true`, so a disabled agent costs nothing every 10 minutes. It passes the
+    # other conditions below: the event fields they read are empty there, and its `github.actor` is whoever last
+    # changed the workflow file, often Dependabot bumping an action, so the actor check skips it. A comment must hold
+    # `/agent`, unless it is on an issue: the author of an issue that waits for information answers without a
+    # command, and the router checks that. Comments on pull requests stay command-only.
     # Dependabot pull requests are never reviewed, also on request: a dependency bump has nothing to review, and a
     # review costs money. So no runner starts for Dependabot's own events or for a comment on its pull request.
     if: >-
+      (github.event_name != 'schedule' || vars.AGENT_ENABLED == 'true') &&
       (github.event_name == 'schedule' || github.actor != 'dependabot[bot]') &&
       github.event.pull_request.user.login != 'dependabot[bot]' &&
       github.event.workflow_run.actor.login != 'dependabot[bot]' &&
@@ -368,16 +370,17 @@ jobs:
   # the failed jobs when it is flaky or an outage. It works on any pull request, also one from a fork. The working tree
   # is the default branch, so the tools, the opencode config, and the skills are trusted; the head of the pull
   # request is fetched under a ref of its own and never checked out. The `Check CI` step holds the GitHub token and
-  # the OpenAI key, as the `Answer` step of `chat` does. Its own group: the job writes the state of the pull request
-  # for the cost, and the state of the issue only when it hands a flaky failure of the agent's pull request back to the
-  # CI gate.
+  # the OpenAI key, as the `Answer` step of `chat` does. The job writes the state of the pull request for the cost, and
+  # the state of the issue when it hands a flaky failure of the agent's pull request back to the CI gate. So its group
+  # is the one of that issue, else the one of the pull request, which is the group of `review`; no other job writes
+  # that state at the same time.
   ci-check:
     needs: route
     if: needs.route.outputs.action == 'ci-check'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     concurrency:
-      group: ai-autonomous-ci-check-${{ needs.route.outputs.number }}
+      group: ai-autonomous-${{ needs.route.outputs.issue || needs.route.outputs.number }}
       cancel-in-progress: false
     # `actions: write` reruns the failed jobs and reads their logs; the checks and statuses are read to decide.
     permissions:

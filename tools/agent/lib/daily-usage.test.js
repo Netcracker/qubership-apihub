@@ -73,3 +73,13 @@ test('countReviews leaves out commands, size skips, and entries outside the wind
   assert.equal(countReviews(states, since), 0)
   assert.equal(countReviews([{}, null, { reviews: null }], since), 0)
 })
+
+test('countReviews counts a failed automatic review: it cost model calls', () => {
+  const states = [{
+    reviews: [
+      { sha: 'a', at: '2026-10-25T09:00:00Z', trigger: 'auto', failed: true },
+      { sha: 'b', at: '2026-10-25T09:00:00Z', trigger: 'command', failed: true },
+    ],
+  }]
+  assert.equal(countReviews(states, since), 1)
+})

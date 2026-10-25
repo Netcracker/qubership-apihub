@@ -13,7 +13,7 @@ const { decide, gather, dailyCountNeeded, sweepBudget, formatOutputs, formatSumm
 log.setWriter(() => {})
 
 const fixture = (name) => JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures', `${name}.json`), 'utf8'))
-const enabled = (env = {}) => loadConfig({ AGENT_ENABLED: 'true', ...env })
+const enabled = (env = {}) => loadConfig({ AGENT_ENABLED: 'true', AGENT_DRY_RUN: 'false', ...env })
 const NOW = new Date('2026-10-25T12:00:00.500Z')
 const REPO = 'o/r'
 const needsInfo = (extra = {}) => ({ ...state.emptyIssueState(200), phase: 'needs-info', ...extra })
@@ -90,6 +90,15 @@ test('the sweep skips when no issue is past the grace period', () => {
   assert.equal(decide({ eventName: 'schedule', payload: sweepEvent(), config: enabled() }).action, 'skip')
 })
 
+const DRY_RUN_REASON = 'the sweep needs AGENT_DRY_RUN=false: a dry-run analysis writes no state, so the same issues ' +
+  'would be analyzed again and again; use /agent analyze'
+
+test('in dry run the sweep skips with the reason, also when issues were found', () => {
+  const result = sweep([12, 15], { AGENT_DRY_RUN: 'true' })
+  assert.deepEqual(result, { action: 'skip', number: null, reason: DRY_RUN_REASON })
+  assert.equal(sweep([], { AGENT_DRY_RUN: 'true' }).reason, DRY_RUN_REASON)
+})
+
 test('the sweep skips when the agent is disabled', () => {
   const result = decide({ eventName: 'schedule', payload: sweepEvent(), config: loadConfig({}), sweep: { numbers: [1] } })
   assert.deepEqual(result, { action: 'skip', number: null, reason: 'AGENT_ENABLED is not true' })
@@ -159,26 +168,52 @@ const sweepGather = (client, env = {}, now = NOW) =>
     now,
   })
 
-test('the sweep searches open Bug and Task issues without a decision label between the lookback and the grace period', async () => {
+const BASE = 'repo:o/r is:issue is:open'
+const NO_DECISION = '-label:"ai:suitable" -label:"ai:unsuitable"'
+const WINDOW = 'created:2026-10-18T12:00:00Z..2026-10-25T11:30:00Z'
+const ANALYSIS_COUNT = 'repo:o/r is:issue label:"ai:suitable","ai:unsuitable","agent:needs-human" ' +
+  'updated:>=2026-10-24T12:00:00Z sort:updated-desc'
+
+test('the sweep searches the candidates first and counts nothing when there is none', async () => {
   const client = sweepClient()
-  await sweepGather(client)
-  const base = 'repo:o/r is:issue is:open'
-  const labels = '-label:"ai:suitable" -label:"ai:unsuitable"'
-  const window = 'created:2026-10-18T12:00:00Z..2026-10-25T11:30:00Z'
+  const extra = await sweepGather(client)
   assert.deepEqual(client.calls, [
-    ['searchIssues', 'repo:o/r is:issue updated:>=2026-10-24T12:00:00Z'],
-    ['searchIssues', `${base} type:Bug ${labels} ${window}`],
-    ['searchIssues', `${base} type:Task ${labels} ${window}`],
+    ['searchIssues', `${BASE} type:Bug ${NO_DECISION} ${WINDOW}`],
+    ['searchIssues', `${BASE} type:Task ${NO_DECISION} ${WINDOW}`],
   ])
+  assert.equal(extra.dailyUsage, undefined)
+  assert.deepEqual(extra.sweep, { numbers: [], found: 0, left: 0 })
+  const result = decide({ eventName: 'schedule', payload: sweepEvent(), config: enabled(), ...extra })
+  assert.deepEqual(result, { action: 'skip', number: null, reason: 'no new issue is past the grace period' })
+})
+
+test('with a candidate the sweep counts the daily usage after the searches and before it reads a state', async () => {
+  const client = sweepClient({ bugs: [issueItem(7, '2026-10-20T00:00:00Z')] })
+  await sweepGather(client)
+  assert.deepEqual(client.calls, [
+    ['searchIssues', `${BASE} type:Bug ${NO_DECISION} ${WINDOW}`],
+    ['searchIssues', `${BASE} type:Task ${NO_DECISION} ${WINDOW}`],
+    ['searchIssues', ANALYSIS_COUNT],
+    ['listIssueComments', 7],
+  ])
+})
+
+test('in dry run the sweep gathers nothing: no client, no search, and the decision is a skip', async () => {
+  const getClient = () => assert.fail('the client must not be created')
+  const config = enabled({ AGENT_DRY_RUN: 'true' })
+  const extra = await gather({ eventName: 'schedule', payload: sweepEvent(), config, getClient, repository: REPO })
+  assert.deepEqual(extra, { actorPermission: 'none', pullState: null })
+  const result = decide({ eventName: 'schedule', payload: sweepEvent(), config, ...extra })
+  assert.deepEqual(result, { action: 'skip', number: null, reason: DRY_RUN_REASON })
 })
 
 test('the end of the window follows the grace period, also at 0', async () => {
   const client = sweepClient()
   await sweepGather(client, { AGENT_ANALYSIS_GRACE_MINUTES: '5' })
-  assert.match(client.calls[1][1], /created:2026-10-18T12:00:00Z\.\.2026-10-25T11:55:00Z$/)
+  assert.match(client.calls[0][1], /created:2026-10-18T12:00:00Z\.\.2026-10-25T11:55:00Z$/)
   const now = sweepClient()
   await sweepGather(now, { AGENT_ANALYSIS_GRACE_MINUTES: '0' })
-  assert.match(now.calls[1][1], /created:2026-10-18T12:00:00Z\.\.2026-10-25T12:00:00Z$/)
+  assert.match(now.calls[0][1], /created:2026-10-18T12:00:00Z\.\.2026-10-25T12:00:00Z$/)
 })
 
 test('the sweep keeps new issues of people, oldest first, merged over both types', async () => {
@@ -248,15 +283,41 @@ test('the sweep reads only as many issues as the daily cap leaves', async () => 
   assert.deepEqual(result.numbers, [1, 2])
 })
 
-test('a used-up daily cap ends the sweep before it searches for issues', async () => {
+test('a used-up daily cap ends the sweep after the count and before it reads a candidate state', async () => {
   const analyses = Array.from({ length: 10 }, () => ({ at: '2026-10-25T10:00:00Z', trigger: 'sweep' }))
   const busy = { ...state.emptyIssueState(900), analyses }
-  const client = sweepClient({ updated: [{ number: 900 }], comments: { 900: [stateComment(busy)] } })
+  const client = sweepClient({
+    bugs: [issueItem(1, '2026-10-20T00:00:00Z')],
+    updated: [{ number: 900 }],
+    comments: { 900: [stateComment(busy)] },
+  })
   const extra = await sweepGather(client)
-  assert.equal(extra.sweep, undefined)
-  assert.equal(client.calls.filter((c) => typeof c[1] === 'string' && c[1].includes('type:')).length, 0)
+  assert.deepEqual(extra.sweep.numbers, [])
+  assert.deepEqual(client.calls.filter((c) => c[0] === 'listIssueComments').map((c) => c[1]), [900])
   const result = decide({ eventName: 'schedule', payload: sweepEvent(), config: enabled(), ...extra })
   assert.deepEqual(result, { action: 'skip', number: null, reason: 'daily limit of 10 automatic analyses reached' })
+})
+
+test('a damaged state comment leaves that candidate out of the sweep and does not stop it', async () => {
+  const bad = {
+    id: 2,
+    user: { login: 'github-actions[bot]' },
+    body: `${state.MARKER}\nhuman\n\n<!-- ai-autonomous-state-json\n{ not json\n-->\n`,
+  }
+  const client = sweepClient({
+    bugs: [issueItem(1, '2026-10-20T00:00:00Z'), issueItem(2, '2026-10-20T01:00:00Z'), issueItem(3, '2026-10-20T02:00:00Z')],
+    comments: { 2: [bad] },
+  })
+  const lines = []
+  log.setWriter((line) => lines.push(line))
+  let extra
+  try {
+    extra = await sweepGather(client)
+  } finally {
+    log.setWriter(() => {})
+  }
+  assert.deepEqual(extra.sweep.numbers, [1, 3])
+  assert.ok(lines.some((line) => /^::warning::The state comment of #2 is unreadable.*left out of the sweep/.test(line)))
 })
 
 test('a disabled agent gathers nothing for the sweep', async () => {
@@ -282,6 +343,7 @@ async function runScheduleMain(env, deps) {
       GITHUB_STEP_SUMMARY: path.join(dir, 'summary'),
       GITHUB_REPOSITORY: REPO,
       AGENT_ENABLED: 'true',
+      AGENT_DRY_RUN: 'false',
       ...env,
     }
     fs.copyFileSync(path.join(__dirname, 'fixtures', 'schedule.sweep.json'), full.GITHUB_EVENT_PATH)
@@ -311,6 +373,15 @@ test('main writes a skip for a sweep with nothing to do', async () => {
   const { output, summary } = await runScheduleMain({}, { getClient: () => sweepClient(), now: NOW })
   assert.equal(output, 'action=skip\nnumber=\nreason=no new issue is past the grace period\ncommand=\n')
   assert.equal(summary, '- AI Autonomous agent chose `skip`: no new issue is past the grace period\n')
+})
+
+test('main skips a sweep in dry run without a client and says why', async () => {
+  const { output, summary } = await runScheduleMain(
+    { AGENT_DRY_RUN: 'true' },
+    { getClient: () => assert.fail('no client') },
+  )
+  assert.equal(output, `action=skip\nnumber=\nreason=${DRY_RUN_REASON}\ncommand=\n`)
+  assert.match(summary, /chose `skip`: the sweep needs AGENT_DRY_RUN=false/)
 })
 
 test('main skips a sweep of a disabled agent without a client', async () => {
@@ -369,7 +440,10 @@ test('the review count searches the pull requests updated in the last 24 hours a
   })
   const extra = await gatherPull(client)
   assert.deepEqual(extra.dailyUsage, { reviews: 3 })
-  assert.deepEqual(client.calls[0], ['searchIssues', 'repo:o/r is:pr updated:>=2026-10-24T12:00:00Z'])
+  assert.deepEqual(client.calls[0], [
+    'searchIssues',
+    'repo:o/r is:pr label:"agent:pr-reviewed" updated:>=2026-10-24T12:00:00Z sort:updated-desc',
+  ])
   assert.deepEqual(client.calls.slice(1).map((c) => c[1]), [1, 2, 3, 4])
 })
 
@@ -400,7 +474,7 @@ test('the analysis count reads issue states and counts only opened, typed, and s
     now: NOW,
   })
   assert.deepEqual(extra.dailyUsage, { analyses: 3 })
-  assert.equal(client.calls[0][1], 'repo:o/r is:issue updated:>=2026-10-24T12:00:00Z')
+  assert.equal(client.calls[0][1], ANALYSIS_COUNT)
 })
 
 test('the count reads at most 100 state comments and warns when the search found more', async () => {
@@ -455,7 +529,8 @@ test('a pull request that needs no count does not search', async () => {
 test('dailyCountNeeded names the count only for an event that would start automatic work', () => {
   const grace0 = enabled({ AGENT_ANALYSIS_GRACE_MINUTES: '0' })
   const grace30 = enabled()
-  assert.equal(dailyCountNeeded('schedule', sweepEvent(), grace30, {}), 'analyses')
+  // The sweep counts for itself, after it found a candidate.
+  assert.equal(dailyCountNeeded('schedule', sweepEvent(), grace30, {}), null)
   assert.equal(dailyCountNeeded('pull_request', openedPull(), grace30, {}), 'reviews')
   const ready = fixture('pull_request.ready_for_review')
   assert.equal(dailyCountNeeded('pull_request', ready, grace30, { pullState: null }), 'reviews')
@@ -644,4 +719,15 @@ test('main logs the count and the cap of the decision', async () => {
     log.setWriter(() => {})
   }
   assert.ok(lines.some((line) => /decision action=review/.test(line) && /dailyReviews=0\/15/.test(line)))
+})
+
+test('ready_for_review treats a failed review as reviewed: the failure comment tells the person to ask again', () => {
+  const pullState = { ...state.emptyPullState(1), reviews: [{ sha: 'a', at: hoursAgo(1), trigger: 'auto', failed: true }] }
+  const result = decide({
+    eventName: 'pull_request',
+    payload: fixture('pull_request.ready_for_review'),
+    config: enabled(),
+    pullState,
+  })
+  assert.deepEqual([result.action, result.reason], ['skip', 'already reviewed; use /agent review'])
 })
