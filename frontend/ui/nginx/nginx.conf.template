@@ -192,7 +192,7 @@ http {
             proxy_intercept_errors off;
         }
 
-        location ~ ^/(portal|agents)/(version|build-info)\.json$ {
+        location ~ ^/(portal|agents)/version\.json$ {
             root /usr/share/nginx/html;
             add_header Cache-Control "no-store" always;
             add_header X-Content-Type-Options  "nosniff"                         always;
@@ -201,6 +201,18 @@ http {
             add_header X-Frame-Options         "DENY"                            always;
             add_header Content-Security-Policy "frame-ancestors 'none'"          always;
             try_files $uri =404;
+        }
+
+        location ~ ^/(portal|agents)/build-info\.json$ {
+            alias /app/nginx/build-info.json;
+            add_header Cache-Control "no-store" always;
+            add_header X-Content-Type-Options  "nosniff"                         always;
+            add_header X-XSS-Protection        "0"                               always;
+            add_header Referrer-Policy         "strict-origin-when-cross-origin" always;
+            add_header X-Frame-Options         "DENY"                            always;
+            add_header Content-Security-Policy "frame-ancestors 'none'"          always;
+            default_type application/json;
+            try_files "" =404;
         }
 
         location ~ ^/(portal|agents)/index\.html$ {

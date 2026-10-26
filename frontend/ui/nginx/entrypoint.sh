@@ -49,12 +49,11 @@ adjust_addr APIHUB_AGENTS_BACKEND_ADDRESS
 # shellcheck disable=SC2016 # envsubst requires literal variable names in single quotes
 envsubst '${APIHUB_BACKEND_ADDRESS} ${APIHUB_NC_SERVICE_ADDRESS} ${API_LINTER_SERVICE_ADDRESS} ${APIHUB_AGENTS_BACKEND_ADDRESS} ${DNS_RESOLVERS}' </app/nginx.conf.template >/app/nginx/nginx.conf
 # GIT_BRANCH and GIT_HASH exist only in a branch-tagged image; System Info shows them next to the versions.
+# /app/nginx is the one writable path of the root filesystem in Kubernetes; nginx serves the file from there.
 if [ -n "${GIT_BRANCH:-}" ] && [ -n "${GIT_HASH:-}" ]; then
   json_escape() { printf '%s' "$1" | sed 's/[\\"]/\\&/g'; }
-  for app in portal agents; do
-    printf '{"branch":"%s","commit":"%s"}\n' "$(json_escape "$GIT_BRANCH")" "$(json_escape "$GIT_HASH")" \
-      >"/usr/share/nginx/html/$app/build-info.json"
-  done
+  printf '{"branch":"%s","commit":"%s"}\n' "$(json_escape "$GIT_BRANCH")" "$(json_escape "$GIT_HASH")" \
+    >/app/nginx/build-info.json
 fi
 
 nginx -c /app/nginx/nginx.conf -g "daemon off;"
