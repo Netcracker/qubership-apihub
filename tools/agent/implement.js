@@ -312,7 +312,14 @@ function touchedWorkflows(nameOnly) {
 
 // The agent's own instructions and tools. A change to them would steer the next model call of this run (the
 // self-reviewer reads skills, rules, and AGENTS.md from the working tree), so a person makes such a change.
-const PROTECTED = [/^\.claude\//, /^\.cursor\//, /^tools\/agent\//, /^agent-packages\//, /(^|\/)(AGENTS|CLAUDE)\.md$/]
+const PROTECTED = [
+  /^\.agents\//,
+  /^\.claude\//,
+  /^\.cursor\//,
+  /^tools\/agent\//,
+  /^agent-packages\//,
+  /(^|\/)(AGENTS|CLAUDE)\.md$/,
+]
 
 /** The changed files that belong to the agent's own instructions and tools. */
 function touchedAgentFiles(nameOnly) {

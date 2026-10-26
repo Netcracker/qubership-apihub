@@ -96,12 +96,14 @@ module. The `*-using` packages are the exception by design: they name the consum
 After you edit a package, run from the repository root:
 
 ```bash
-apm install --target cursor,claude --legacy-skill-paths
+apm install --target cursor,claude
 ```
 
-Commit the package sources and the deployed `.cursor/` and `.claude/` trees together. Never edit the
-deployed trees by hand. Do not run `apm compile`: it does not finish on a repository of this size. The
-`AGENTS.md` and `CLAUDE.md` files in this repository, including those inside modules, are hand-written.
+Commit the package sources, `.agents/skills/`, and the refreshed `.cursor/` and `.claude/` rule trees together.
+Do not commit `.cursor/skills/` or `.claude/skills/`. `apm install` still writes the Claude skill copy on disk,
+and those directories are gitignored so OpenCode and Cursor load each skill once, from `.agents/skills/`.
+Never edit the deployed trees by hand. Do not run `apm compile`: it does not finish on a repository of this
+size. The `AGENTS.md` and `CLAUDE.md` files in this repository, including those inside modules, are hand-written.
 
 Always-on conventions: `development-conventions`, `english-developer-style`, `markdown-line-length-120`. Adding a
 Go service: use the `apihub-add-go-service` skill. See [`agent-packages/README.md`](agent-packages/README.md).

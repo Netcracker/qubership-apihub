@@ -1133,6 +1133,7 @@ test('outcomeProblems: a good outcome has none; a foreign branch, bad ids, and m
 test('touchedAgentFiles lists changes to the agent instructions and tools, at any depth for AGENTS.md', () => {
   const { touchedAgentFiles } = require('./implement')
   const out = [
+    '.agents/skills/x/SKILL.md',
     '.claude/skills/x/SKILL.md',
     '.cursor/rules/y.mdc',
     'tools/agent/opencode/agents/implementer.md',
@@ -1142,5 +1143,5 @@ test('touchedAgentFiles lists changes to the agent instructions and tools, at an
     'backend/portal-backend/service/x.go',
     'tools/ci/ci-verdict.js',
   ].join('\n')
-  assert.deepEqual(touchedAgentFiles(out), out.split('\n').slice(0, 6))
+  assert.deepEqual(touchedAgentFiles(out), out.split('\n').slice(0, 7))
 })

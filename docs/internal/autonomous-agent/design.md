@@ -68,8 +68,9 @@ pull request from a fork.
 5. **State lives in GitHub:** labels for the phase, one comment per issue and per pull request with a hidden JSON block
    for the details, and run artifacts for the transcripts. No external storage.
 6. **Every run rebuilds its context from GitHub.** No opencode session is carried between runs.
-7. **Knowledge comes from the repository:** `AGENTS.md` files, the skills in `.claude/skills/`, the rules in
-   `.claude/rules/`, and a new APM package with the agent's own skills. The stale `.agents/` tree goes away.
+7. **Knowledge comes from the repository:** `AGENTS.md` files, the skills in `.agents/skills/`, the rules in
+   `.claude/rules/`, and the APM package with the agent's own skills. `.cursor/skills/` and `.claude/skills/` are
+   not committed, so OpenCode loads each skill once.
 
 ## Engine
 
@@ -78,7 +79,7 @@ pull request from a fork.
 | Option | Fit | Verdict |
 |---|---|---|
 | opencode, `opencode github run` (the official action) | Comment chat, issue and PR context, branch and PR creation out of the box | Rejected as the core; see below |
-| opencode, `opencode run` with a thin orchestrator | Any OpenAI model, custom agents with their own model and permissions, reads `.claude/skills` and `AGENTS.md` | **Chosen** |
+| opencode, `opencode run` with a thin orchestrator | Any OpenAI model, custom agents with their own model and permissions, reads `.agents/skills` and `AGENTS.md` | **Chosen** |
 | `openai/codex-action` (Codex CLI) | OpenAI's own agent, `AGENTS.md`, Apache-2.0; no comment chat, no PR creation | Fallback engine |
 | OpenHands resolver | Label-driven issue fixing with iterations | Heavy Docker runtime; its own skill format |
 | PR-Agent (Qodo) | Mature PR review with OpenAI | Review only; ignores our skills and rules |
@@ -105,7 +106,7 @@ data the model must not act on. That costs about a hundred lines of script.
 
 ### Why opencode over Codex
 
-opencode reads `.claude/skills/*/SKILL.md` and `AGENTS.md` natively, attaches the nested `AGENTS.md` of a module when
+opencode reads `.agents/skills/*/SKILL.md` and `AGENTS.md` natively, attaches the nested `AGENTS.md` of a module when
 the agent reads a file in it, and lets each custom agent set its own model, reasoning effort, step limit, and tool
 permissions. The roles of this design map onto that directly. The engine-specific part is small: one config directory
 and one `opencode run` call in a script. The prompts and skills are plain Markdown, so a move to Codex or to opencode
@@ -505,16 +506,18 @@ issue when the work lands. It uses no model and costs nothing.
 | Root `AGENTS.md` | opencode loads it at start |
 | Module `AGENTS.md` | opencode 1.x attaches the nearest `AGENTS.md` above a file when the agent reads that file |
 | `CLAUDE.md` | ignored where an `AGENTS.md` exists; ours only import `AGENTS.md` |
-| Skills in `.claude/skills/` | opencode discovers them and loads one on demand through its `skill` tool |
+| Skills in `.agents/skills/` | opencode discovers them and loads one on demand through its `skill` tool |
 | Rules in `.claude/rules/` | listed in `instructions` of `opencode.json`; see below |
 | The agent's playbooks | new skills in `agent-packages/apihub-autonomous-agent/`, deployed by `apm install` like any other |
 
 Points to settle:
 
-- **`.agents/` is deleted.** opencode reads skills from `.agents/skills/` as well as from `.claude/skills/`. The
-  `.agents/` copy is stale: four files differ from `.claude/skills/`, and `apm.lock.yaml` lists no file under it.
-  Without it, the agent sees one version of each skill. Codex also reads `.agents/skills/`, so a person who uses Codex
-  locally loses the skills; `apm install --target codex` brings them back if needed.
+- **One committed skill tree.** `apm install --target cursor,claude` writes shared skills to `.agents/skills/` and a
+  Claude copy to `.claude/skills/`. This repository commits `.agents/skills/` only. `.cursor/skills/` and
+  `.claude/skills/` are gitignored. OpenCode scans `.claude/skills/` first and keeps that copy when the same skill
+  name also exists under `.agents/skills/`, so a second committed tree would hide the shared one whenever they
+  differed. The review job replaces both `.agents/` and `.claude/` from the workflow ref, so a pull request cannot
+  change the skills or rules that review it. Codex and Cursor read `.agents/skills/` from a fresh clone.
 - **Rules are path-scoped; opencode does not read `paths:`.** The 54 rules in `.claude/rules/` are 25 KB together, and
   each one names its scope in its text. Loading them all costs about 7,000 tokens per run and is the default. If that
   confuses the model, the alternatives are the APM `opencode` target, if it keeps the scope, or a small opencode
