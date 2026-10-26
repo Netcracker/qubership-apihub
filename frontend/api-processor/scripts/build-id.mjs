@@ -45,6 +45,15 @@ const IGNORED_DIRECTORIES = new Set([
 ])
 const IGNORED_FILE = /(\.md|\.map|\.tsbuildinfo|\.log)$|(^|\.)(unit-)?test\.[cm]?[jt]sx?$|\.stories\.[jt]sx?$|^LICENSE$/
 
+// The names are fed into the hash in sorted order, so the order must not depend on the locale or the ICU data of the
+// machine that builds: `localeCompare` would give two hosts two ids for the same sources.
+function compareNames(a, b) {
+  if (a === b) {
+    return 0
+  }
+  return a < b ? -1 : 1
+}
+
 function findWorkspaceRoot(from) {
   let dir = from
   while (!existsSync(path.join(dir, 'pnpm-workspace.yaml'))) {
@@ -110,12 +119,12 @@ function sourcePackages(root, packageDir, includeDevDependencies) {
     }
   }
   visit(packageDir, true)
-  return [...result.entries()].sort(([a], [b]) => a.localeCompare(b))
+  return [...result.entries()].sort(([a], [b]) => compareNames(a, b))
 }
 
 function listFiles(dir, base = dir) {
   const files = []
-  for (const entry of readdirSync(dir, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
+  for (const entry of readdirSync(dir, { withFileTypes: true }).sort((a, b) => compareNames(a.name, b.name))) {
     const full = path.join(dir, entry.name)
     if (entry.isDirectory()) {
       if (!IGNORED_DIRECTORIES.has(entry.name)) {

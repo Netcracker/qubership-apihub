@@ -1,6 +1,6 @@
 import { test } from '@fixtures'
-import { expect } from '@services/expect-decorator'
-import { getExtensionVersion, getSysInfo } from '@test-data/props'
+import { expect, expectText } from '@services/expect-decorator'
+import { getExtensionVersion, getPortalVersionInfo, getSysInfo } from '@test-data/props'
 import { PortalPage } from '@portal/pages'
 import { TICKET_BASE_URL } from '@test-setup'
 import { VS_CODE_EXTENSION_TOOLTIP } from '@test-data/portal'
@@ -64,6 +64,7 @@ test.describe('General', () => {
       const { build } = await getSysInfo()
       const linterVersion = await getExtensionVersion('api-linter')
       const agentsBackendVersion = await getExtensionVersion('agents-backend')
+      const { frontendVersion, apiProcessorVersion, buildRef } = await getPortalVersionInfo()
 
       await portalPage.goto()
       await portalPage.header.sysInfoBtn.click()
@@ -73,8 +74,15 @@ test.describe('General', () => {
       await expect.soft(sysInfoPopup.content).toContainText(`Backend v. ${build.backendVersion}`)
       await expect.soft(sysInfoPopup.content).toContainText(`API Linter v. ${linterVersion}`)
       await expect.soft(sysInfoPopup.content).toContainText(`Agents Backend v. ${agentsBackendVersion}`)
-      await expect.soft(sysInfoPopup.content).toContainText(/Frontend\sv.\s\S+/)
-      await expect.soft(sysInfoPopup.content).toContainText(/API Processor\sv.\s\S+/)
+      // Both versions carry the build id: `<version>+<10 hex digits>`.
+      await expectText.soft(frontendVersion).toMatch(/^\d+\.\d+\.\d+\+[0-9a-f]{10}$/)
+      await expectText.soft(apiProcessorVersion).toMatch(/^\d+\.\d+\.\d+\+[0-9a-f]{10}$/)
+      await expect.soft(sysInfoPopup.content).toContainText(`Frontend v. ${frontendVersion}`)
+      await expect.soft(sysInfoPopup.content).toContainText(`API Processor v. ${apiProcessorVersion}`)
+      // `build-info.json` exists only in a branch-tagged image, so a stack on a `src-<hash>` image has no caption.
+      if (buildRef) {
+        await expect.soft(sysInfoPopup.content).toContainText(buildRef)
+      }
       // TODO: Add checking api/v1/system/info "externalLinks": []
     })
 
