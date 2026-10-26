@@ -15,11 +15,34 @@
  */
 
 import * as path from 'path'
+import type { Plugin } from 'vite'
 import { defineConfig } from 'vite'
 import dts from 'vite-plugin-dts'
+import { stampedVersion } from './scripts/build-id.mjs'
+
+const PACKAGE_JSON = path.resolve(__dirname, 'package.json')
+const STAMPED_VERSION_MODULE = '\0api-processor-stamped-package'
+
+// The sources import `version` from package.json. The build replaces that module with the version stamped by
+// scripts/build-id.mjs, so the ES build reports the same string as the CommonJS one (scripts/stamp-cjs-version.mjs).
+// A virtual module, because Vite's JSON plugin would try to parse JavaScript returned for a .json id.
+const stampedVersionPlugin: Plugin = {
+  name: 'stamped-version',
+  enforce: 'pre',
+  resolveId(source, importer) {
+    if (importer && source.endsWith('package.json') && path.resolve(path.dirname(importer), source) === PACKAGE_JSON) {
+      return STAMPED_VERSION_MODULE
+    }
+    return undefined
+  },
+  load(id) {
+    return id === STAMPED_VERSION_MODULE ? `export const version = ${JSON.stringify(stampedVersion())}` : undefined
+  },
+}
 
 export default defineConfig({
   plugins: [
+    stampedVersionPlugin,
     dts({
       insertTypesEntry: true,
     }),

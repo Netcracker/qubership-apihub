@@ -32,7 +32,7 @@ type SystemInfoPopupProps = {
 }
 
 function withBuildRef(version: string | undefined, buildRef: string | undefined): string | undefined {
-  return version && buildRef ? `${version}-${buildRef}` : version
+  return version && buildRef ? `${version} (${buildRef})` : version
 }
 
 export const SystemInfoPopup: FC<SystemInfoPopupProps> = memo(({

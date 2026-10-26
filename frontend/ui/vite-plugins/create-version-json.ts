@@ -74,6 +74,10 @@ function versionDataFor(app: string): VersionData | null {
  * Writes `dist/version.json`, which the running application surfaces, and serves the same
  * payload from the dev server. The dev server has no dist folder.
  *
+ * `apiProcessorVersion` is the stamped version of api-processor, `<version>+<build id>`: its build rewrites
+ * `dist/cjs/package.json`, the first manifest that `installedVersion` finds. The build-task-consumer reports the same
+ * string into every package version, and the UI compares the two for equality.
+ *
  * Both values used to come from package-manager metadata: `frontendVersion` from
  * lerna.json's `version`, and `apiProcessorVersion` from package-lock.json. Neither input
  * survives a change of package manager or layout. An application's package.json carries its
