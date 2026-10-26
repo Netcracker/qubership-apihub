@@ -15,16 +15,17 @@
  */
 
 /**
- * The api-processor version that a build reports: `<package.json version>+<build id>`.
+ * The version that a build reports: `<package.json version>+<build id>`. Used for api-processor and for the UI apps.
  *
- * The build id is a hash of the sources of this package and of every workspace package it depends on. It is the
+ * The build id is a hash of the sources of the package and of every workspace package it depends on. It is the
  * semver build metadata, so a release bump still reads as a new version, and two builds of the same sources
  * report the same string wherever they run. Without it, a branch that changes the processor but not its version
  * reports the same version as the release, and the UI cannot tell that a published package version was built by a
  * different processor.
  *
- * Both consumers read the stamped value from this package's build output: the build-task-consumer reports it into
- * every package version it builds, and the UI reads it into `version.json`. They agree because they read one file.
+ * api-processor: the build-task-consumer reports the stamped value into every package version it builds, and the UI
+ * reads it into `version.json`. They agree because they read one build output. A UI app: its bundle and its
+ * `version.json` get the value from one build, and the page reloads when the two differ.
  */
 
 import { createHash } from 'crypto'
@@ -38,8 +39,11 @@ const BUILD_ID_LENGTH = 10
 // Directories and files that cannot change what the package builds or does at runtime.
 const IGNORED_DIRECTORIES = new Set([
   'node_modules', 'dist', 'coverage', 'test', 'tests', 'docs', 'agent-packages', '.git', '.idea', 'temp', 'storybook-static',
+  'stories', '.storybook', '.jest', '.vite', '.nx', 'dist-showcase',
+  // Screenshot and integration tests of the viewer libraries: tens of megabytes that no build reads.
+  'it', '__image_snapshots__', '__snapshots__',
 ])
-const IGNORED_FILE = /(\.md|\.map|\.tsbuildinfo|\.log)$|(^|\.)(unit-)?test\.[cm]?[jt]sx?$|^LICENSE$/
+const IGNORED_FILE = /(\.md|\.map|\.tsbuildinfo|\.log)$|(^|\.)(unit-)?test\.[cm]?[jt]sx?$|\.stories\.[jt]sx?$|^LICENSE$/
 
 function findWorkspaceRoot(from) {
   let dir = from
@@ -76,26 +80,36 @@ function workspacePackages(root) {
   return packages
 }
 
-/** The package and the workspace packages it depends on, transitively, sorted by name. */
-function sourcePackages(root, packageDir) {
+/**
+ * The package and the workspace packages it depends on, transitively, sorted by name. Only the package itself
+ * contributes its devDependencies: a library reaches the bundle through its build output, not through its own tools.
+ */
+function sourcePackages(root, packageDir, includeDevDependencies) {
   const known = workspacePackages(root)
   const result = new Map()
-  const visit = dir => {
+  const visit = (dir, isRoot) => {
     const manifest = JSON.parse(readFileSync(path.join(dir, 'package.json'), 'utf-8'))
     if (result.has(manifest.name)) {
       return
     }
     result.set(manifest.name, dir)
-    for (const [name, range] of Object.entries(manifest.dependencies ?? {})) {
-      if (String(range).startsWith('workspace:')) {
-        if (!known.has(name)) {
-          throw new Error(`${manifest.name} depends on ${name}, which is not a workspace package`)
-        }
-        visit(known.get(name))
+    const workspaceNames = kind => Object.entries(manifest[kind] ?? {})
+      .filter(([, range]) => String(range).startsWith('workspace:'))
+      .map(([name]) => name)
+    for (const name of workspaceNames('dependencies')) {
+      if (!known.has(name)) {
+        throw new Error(`${manifest.name} depends on ${name}, which is not a workspace package`)
+      }
+      visit(known.get(name), false)
+    }
+    // A development tool outside frontend/ (a test environment, for example) is not part of the bundle.
+    for (const name of isRoot && includeDevDependencies ? workspaceNames('devDependencies') : []) {
+      if (known.has(name)) {
+        visit(known.get(name), false)
       }
     }
   }
-  visit(packageDir)
+  visit(packageDir, true)
   return [...result.entries()].sort(([a], [b]) => a.localeCompare(b))
 }
 
@@ -114,9 +128,10 @@ function listFiles(dir, base = dir) {
   return files
 }
 
-export function computeBuildId(packageDir = PACKAGE_DIR) {
+/** `includeDevDependencies`: an app bundles its workspace devDependencies, a library does not. */
+export function computeBuildId(packageDir = PACKAGE_DIR, { includeDevDependencies = false } = {}) {
   const hash = createHash('sha256')
-  for (const [name, dir] of sourcePackages(findWorkspaceRoot(packageDir), packageDir)) {
+  for (const [name, dir] of sourcePackages(findWorkspaceRoot(packageDir), packageDir, includeDevDependencies)) {
     hash.update(`package ${name}\0`)
     for (const file of listFiles(dir)) {
       // Line endings differ between a Windows checkout and a Linux one; the build output does not.
@@ -127,9 +142,9 @@ export function computeBuildId(packageDir = PACKAGE_DIR) {
   return hash.digest('hex').slice(0, BUILD_ID_LENGTH)
 }
 
-export function stampedVersion(packageDir = PACKAGE_DIR) {
+export function stampedVersion(packageDir = PACKAGE_DIR, options = {}) {
   const { version } = JSON.parse(readFileSync(path.join(packageDir, 'package.json'), 'utf-8'))
-  return `${version}+${computeBuildId(packageDir)}`
+  return `${version}+${computeBuildId(packageDir, options)}`
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

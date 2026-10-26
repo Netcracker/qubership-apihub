@@ -2,6 +2,7 @@ import fs from 'fs'
 import { createRequire } from 'module'
 import path from 'path'
 import type { Plugin } from 'vite'
+import { appStampedVersion } from './stamped-app-version'
 
 const requireFromHere = createRequire(import.meta.url)
 
@@ -52,13 +53,13 @@ function installedVersion(name: string): string | null {
   }
 }
 
-/** The version an application declares for itself. */
+/** The version an application declares for itself, with the build id of its sources (see stamped-app-version.ts). */
 function appVersion(app: string): string | null {
   const manifestPath = path.resolve(UI_ROOT, 'packages', app, 'package.json')
-  if (!fs.existsSync(manifestPath)) {
+  if (!fs.existsSync(manifestPath) || !JSON.parse(fs.readFileSync(manifestPath, 'utf-8')).version) {
     return null
   }
-  return JSON.parse(fs.readFileSync(manifestPath, 'utf-8')).version ?? null
+  return appStampedVersion(app)
 }
 
 function versionDataFor(app: string): VersionData | null {

@@ -26,11 +26,23 @@ export type VersionInfoDto = {
 }
 export type VersionInfo = VersionInfoDto
 
-// Written by the image entrypoint from GIT_BRANCH and GIT_HASH, which the branch tag adds on top of the content image.
-// The file does not exist outside the image, for example on a dev server.
+// Written by the image entrypoint from GIT_BRANCH, GIT_HASH, and BUILD_TIME, which the branch tag adds on top of the
+// content image. The file does not exist outside the image, for example on a dev server.
 export type BuildInfoDto = {
   branch: string
   commit: string
+  // UTC, yyyymmddHHMMSS: when the tag was published. Empty when the image has no BUILD_TIME.
+  builtAt?: string
+}
+
+const BUILD_TIME_PATTERN = /^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})\d{2}$/
+
+// `develop.a1b2c3d, 2026-10-26 10:45 UTC`
+function formatBuildRef({ branch, commit, builtAt }: BuildInfoDto): string {
+  const time = builtAt?.match(BUILD_TIME_PATTERN)
+  return time
+    ? `${branch}.${commit}, ${time[1]}-${time[2]}-${time[3]} ${time[4]}:${time[5]} UTC`
+    : `${branch}.${commit}`
 }
 
 export const Apps = {
@@ -63,7 +75,7 @@ export function getBuildInfoOptions(appType: AppTypeApiHub): UseQueryOptions<Bui
   return {
     queryKey: [BUILD_INFO_QUERY_KEY, appType],
     queryFn: () => getBuildInfo(appType),
-    select: buildInfo => (buildInfo ? `${buildInfo.branch}.${buildInfo.commit}` : undefined),
+    select: buildInfo => (buildInfo ? formatBuildRef(buildInfo) : undefined),
     retry: false,
     staleTime: Infinity,
     refetchOnWindowFocus: false,

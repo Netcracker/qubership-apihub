@@ -36,6 +36,9 @@ msw:init` once to create the mock worker files. Portal `build` runs `tsc` and `v
 
 - It uses nearly every TypeScript library of the monorepo (`api-processor`, `api-diff`, `api-doc-viewer`,
   `apispec-view`, `class-view`, `rest-playground`, and others); `nx` builds them first, so a cold build is long.
+- Each app reports `<package.json version>+<build id>`: the id hashes the sources of the app and of the workspace
+  packages it bundles (`vite-plugins/stamped-app-version.ts`). The bundle and `version.json` get it from one build, and
+  BasePage asks for a reload when they differ. `version.json` also carries the stamped api-processor version.
 - Do not run `npm install` here. Install once at the workspace root with `pnpm install`.
 - The ports and proxy targets of the dev servers must match your backend (`docs/dev/local-development.md`).
 - UI end-to-end tests live in `tests/ui-tests`; a change to visible behaviour usually needs them updated.

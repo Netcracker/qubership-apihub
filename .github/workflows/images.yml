@@ -247,6 +247,7 @@ jobs:
             --build-arg "BASE=$BASE:$SRC_TAG" \
             --build-arg "GIT_BRANCH=$REF_NAME" \
             --build-arg "GIT_HASH=${SHA::7}" \
+            --build-arg "BUILD_TIME=$(date -u +%Y%m%d%H%M%S)" \
             --annotation "index:org.opencontainers.image.revision=$SHA" \
             --annotation "index:org.opencontainers.image.version=$REF_NAME" \
             --annotation "index:org.opencontainers.image.source=$SOURCE_URL" \

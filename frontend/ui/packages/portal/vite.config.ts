@@ -9,6 +9,7 @@ import { visualizer as bundleVisualizer } from 'rollup-plugin-visualizer'
 import inject from '@rollup/plugin-inject'
 import monacoWorkerHashPlugin from '../../vite-plugins/monaco-worker-hash'
 import createVersionJsonFilePlugin from '../../vite-plugins/create-version-json'
+import stampedAppVersionPlugin from '../../vite-plugins/stamped-app-version'
 import removeMswFromDistPlugin from '../../vite-plugins/remove-msw-from-dist'
 import { createRequire } from 'module'
 
@@ -92,6 +93,7 @@ export default defineConfig(({ mode }) => {
           injectTo: 'head-prepend',
         },
       }),
+      stampedAppVersionPlugin('portal'),
       createVersionJsonFilePlugin(),
       removeMswFromDistPlugin(),
     ],
