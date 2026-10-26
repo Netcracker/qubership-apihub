@@ -11,6 +11,8 @@ const {
   failedChecks,
   allGreen,
   isE2eOnly,
+  isCancelledOnly,
+  stillRunning,
   e2eRerunLeft,
   isErrorLine,
   extractErrors,
@@ -81,7 +83,7 @@ test('actionsIds: run and job from a link, nulls from anything else', () => {
   assert.deepEqual(actionsIds(undefined), { runId: null, jobId: null })
 })
 
-test('pendingChecks: unfinished check runs and pending statuses, by their own state', () => {
+test('pendingChecks: unfinished check runs and pending statuses; a cancelled check is finished', () => {
   const runs = [
     run('ci-ok', 'success'),
     run('a', 'success'),
@@ -93,14 +95,21 @@ test('pendingChecks: unfinished check runs and pending statuses, by their own st
   assert.deepEqual(pendingChecks(runs, statuses), [
     { name: 'b', state: 'in_progress' },
     { name: 'c', state: 'queued' },
-    { name: 'd', state: 'cancelled' },
     { name: 'x', state: 'pending' },
   ])
   // CI's verdict job has to exist before the gate decides: the first workflow to finish may come before it.
   assert.deepEqual(pendingChecks([], []), [{ name: 'ci-ok', state: 'missing' }])
+  // Only cancelled checks are no waiting: the verdict exists, and nothing runs.
+  assert.deepEqual(pendingChecks([run('ci-ok', 'failure'), run('run-lint', 'cancelled')], []), [])
 })
 
-test('failedChecks: every conclusion but success, neutral, skipped, and cancelled; failed statuses; by name', () => {
+test('stillRunning: a running check or a pending status, never a cancelled check or a missing verdict', () => {
+  const pending = pendingChecks([run('run-lint', 'cancelled'), { ...run('b', null), status: 'queued' }], [])
+  assert.deepEqual(stillRunning(pending), [{ name: 'b', state: 'queued' }])
+  assert.deepEqual(stillRunning(pendingChecks([run('run-lint', 'cancelled')], [])), [])
+})
+
+test('failedChecks: every conclusion but success, neutral, and skipped; failed statuses; by name', () => {
   const runs = [
     run('z-build', 'failure'),
     run('a-lint', 'cancelled'),
@@ -119,13 +128,14 @@ test('failedChecks: every conclusion but success, neutral, skipped, and cancelle
   ]
   const failed = failedChecks(runs, statuses)
   assert.deepEqual(failed.map((f) => [f.kind, f.name, f.conclusion]), [
+    ['check', 'a-lint', 'cancelled'],
     ['status', 'cla', 'failure'],
     ['check', 'manual', 'action_required'],
     ['status', 'old', 'error'],
     ['check', 'timeout', 'timed_out'],
     ['check', 'z-build', 'failure'],
   ])
-  assert.deepEqual(failed[0], {
+  assert.deepEqual(failed[1], {
     kind: 'status', name: 'cla', conclusion: 'failure', url: 'https://cla.test/1', jobId: null, runId: null,
   })
 })
@@ -138,6 +148,24 @@ test('failedChecks: the job id of an Actions check run is in its link, else its 
   const codeql = run('CodeQL', 'failure', { id: 6, app: { slug: 'codeql' }, details_url: 'https://c/1' })
   const [other] = failedChecks([codeql], [])
   assert.deepEqual([other.jobId, other.runId], [null, null])
+})
+
+test('isCancelledOnly: every failed check is a cancelled check run, the verdict check ci-ok aside', () => {
+  const check = (name, conclusion) => ({ kind: 'check', name, conclusion })
+  assert.equal(isCancelledOnly([check('run-lint', 'cancelled')]), true)
+  assert.equal(isCancelledOnly([check('ci-ok', 'failure'), check('run-lint', 'cancelled')]), true)
+  assert.equal(isCancelledOnly([check('ci-ok', 'cancelled'), check('a', 'cancelled'), check('b', 'cancelled')]), true)
+  // A cancelled check with a really failed one is a normal red result.
+  assert.equal(isCancelledOnly([check('run-lint', 'cancelled'), check('js', 'failure')]), false)
+  const status = { kind: 'status', name: 'cla', conclusion: 'failure' }
+  assert.equal(isCancelledOnly([check('run-lint', 'cancelled'), status]), false)
+  assert.equal(isCancelledOnly([check('ci-ok', 'failure')]), false)
+  // The workflow was stopped after its other jobs passed: the cancelled verdict alone counts.
+  assert.equal(isCancelledOnly([check('ci-ok', 'cancelled')]), true)
+  assert.equal(isCancelledOnly([]), false)
+  // A cancelled E2E job is both; the gate reruns it once either way, from the same budget.
+  assert.equal(isE2eOnly([check('E2E tests', 'cancelled')]), true)
+  assert.equal(isCancelledOnly([check('E2E tests', 'cancelled')]), true)
 })
 
 test('allGreen: needs a check, and no pending or failed one', () => {
@@ -317,6 +345,22 @@ test('failureSignature: 12 hex characters; the same failure gives the same signa
   assert.match(a, /^[0-9a-f]{12}$/)
   assert.equal(failureSignature(failed, second), a)
   assert.equal(failureSignature(failedSet('e2e', 'build'), second), a, 'the order of the checks does not matter')
+})
+
+test('failureSignature: cancelled checks are left out when a real failure exists, and make it when alone', () => {
+  const real = { name: 'js', conclusion: 'failure' }
+  const lint = { name: 'run-lint', conclusion: 'cancelled' }
+  const other = { name: 'storybooks', conclusion: 'cancelled' }
+  const errors = { js: ['FAIL a.test.ts', 'Error: boom'], 'run-lint': ['stopped'], storybooks: ['also stopped'] }
+  const plain = failureSignature([real], errors)
+  assert.equal(failureSignature([real, lint], errors), plain)
+  assert.equal(failureSignature([lint, real, other], errors), plain, 'a changing set of cancelled checks')
+  assert.equal(failureSignature([real, { ...lint, conclusion: 'timed_out' }], errors) === plain, false)
+  // Alone, the cancelled checks are the failure.
+  const alone = failureSignature([lint], errors)
+  assert.notEqual(alone, plain)
+  assert.notEqual(failureSignature([lint, other], errors), alone)
+  assert.equal(failureSignature([other, lint], errors), failureSignature([lint, other], errors))
 })
 
 test('failureSignature: another failing test, another failing check, or another message changes it', () => {
@@ -600,6 +644,10 @@ test('renderGreen, renderNextAttempt, and renderRerun say what happened and what
   )
   assert.match(next, /- `build`: failure \(\[log\]\(https:\/\/x\/job\/1\)\)/)
   assert.match(renderRerun({ pr: 70, failed, runUrl: 'u', totalUsd: 0 }), /Only E2E jobs failed\. I reran them once/)
+  const cancelled = [{ kind: 'check', name: 'run-lint', conclusion: 'cancelled', url: null }]
+  const rerunText = renderRerun({ pr: 70, failed: cancelled, runUrl: 'u', totalUsd: 0, kind: 'cancelled' })
+  assert.match(rerunText, /The failed checks were cancelled, so nothing really failed\. I reran them once/)
+  assert.match(rerunText, /- `run-lint`: cancelled/)
 })
 
 test('renderStopped: the reason, every attempt, the current failure, and one request', () => {
@@ -685,6 +733,11 @@ test('checkNames lists at most five checks, then says how many more; the names a
   assert.equal(checkNames(failed.slice(0, 5)), '`a`, `b`, `c`, `d`, `e`')
   assert.equal(checkNames(failed.slice(0, 5), 8), '`a`, `b`, `c`, `d`, `e`, and 3 more')
   assert.equal(checkNames([{ name: 'build `x` @bob' }]), "`build 'x' @​bob`")
+  // A cancelled check keeps its conclusion in the text.
+  assert.equal(
+    checkNames([{ name: 'js', conclusion: 'failure' }, { name: 'run-lint', conclusion: 'cancelled' }]),
+    '`js`, `run-lint` (cancelled)',
+  )
 })
 
 test('failureLines: the failed checks, then the first error line of the first check that has one', () => {

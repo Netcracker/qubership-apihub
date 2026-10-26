@@ -402,6 +402,31 @@ test('listCheckRuns and getCombinedStatus reject an answer that is not a list', 
   await assert.rejects(client.getCombinedStatus('abc'), /did not return a list/)
 })
 
+test('listWorkflowRuns reads the runs of a workflow file across pages with its filters', async () => {
+  const page = Array.from({ length: 100 }, (_, i) => ({ id: i, display_title: `AI Autonomous: issue_comment #${i}` }))
+  const { client, calls } = setup([
+    json({ total_count: 101, workflow_runs: page }),
+    json({ total_count: 101, workflow_runs: [{ id: 100 }] }),
+  ])
+  const filters = { status: 'queued', created: '>=2026-10-26T00:00:00Z' }
+  const runs = await client.listWorkflowRuns('ai-autonomous-agent.yml', filters)
+  assert.equal(runs.length, 101)
+  const url = new URL(calls[0].url)
+  assert.equal(url.pathname, '/repos/acme/widgets/actions/workflows/ai-autonomous-agent.yml/runs')
+  assert.equal(url.searchParams.get('status'), 'queued')
+  assert.equal(url.searchParams.get('created'), '>=2026-10-26T00:00:00Z')
+  assert.equal(new URL(calls[1].url).searchParams.get('page'), '2')
+})
+
+test('listWorkflowRuns sends no filter by default and rejects an answer that is not a list', async () => {
+  const { client, calls } = setup([json({ total_count: 0, workflow_runs: [] }), json({ message: 'odd' })])
+  assert.deepEqual(await client.listWorkflowRuns('ai-autonomous-agent.yml'), [])
+  const url = new URL(calls[0].url)
+  assert.equal(url.searchParams.has('status'), false)
+  assert.equal(url.searchParams.has('created'), false)
+  await assert.rejects(client.listWorkflowRuns('ai-autonomous-agent.yml'), /did not return a list/)
+})
+
 test('getCombinedStatus returns every status and the combined state', async () => {
   const { client, calls } = setup([
     json({ state: 'pending', statuses: [{ context: 'cla', state: 'success' }, { context: 'x', state: 'pending' }] }),
