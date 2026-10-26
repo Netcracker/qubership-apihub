@@ -705,7 +705,7 @@ function prBody({ number, issueTitle, implementation, checks, review, rounds, ac
     '',
     '## Checklist',
     '',
-    '- [x] The issue is linked under Development or with "Closes #123".',
+    '- [x] The issue is linked under Development or with "Closes #XXX".',
     '- [ ] The documentation is updated in this pull request.',
     '- [ ] A breaking change has `!` in the title, or a "BREAKING CHANGE:" footer at the start of a line in this ' +
       'description.',
