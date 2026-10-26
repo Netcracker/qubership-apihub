@@ -83,8 +83,8 @@ apm install --target cursor,claude
 | `json-crawl-using` | json-crawl rules (`frontend/json-crawl`) |
 
 Canonical skill sources live under `agent-packages/` of this module. After editing skills there, run
-`apm install --target cursor,claude` from the repository root so `.agents/skills/` and the rule trees
-stay in sync. Store packages (`development-conventions`, `github-ticket-implementation-planner`,
+`apm install --target cursor,claude` from the repository root so `.agents/skills/`, `.claude/skills/`, and the
+rule trees stay in sync. Store packages (`development-conventions`, `github-ticket-implementation-planner`,
 `english-developer-style`, `markdown-line-length-120`) also apply.
 
 ## Always-on conventions

@@ -126,9 +126,9 @@ runner image and must be 3.9 or newer.
 
 The playbooks are the local APM package `agent-packages/apihub-autonomous-agent` (version `0.1.0`), listed in the root
 `apm.yml` and in `apm.lock.yaml`, which pins `apm_version: 0.34.0`.
-`apm install --target cursor,claude` deploys each skill to `.agents/skills/<name>/`. The Claude target also writes
-`.claude/skills/<name>/`; that directory is gitignored, and CI does not have it. opencode reads `.agents/skills/`
-(and `.claude/skills/` when that directory exists, preferring it on a name clash). Use APM 0.34.0 locally
+`apm install --target cursor,claude` deploys each skill to `.agents/skills/<name>/` and
+`.claude/skills/<name>/`. Both directories are committed, so a clone has the skills without APM. opencode reads
+both and prefers `.claude/skills/` when the name clashes. Use APM 0.34.0 locally
 (`pip install apm-cli==0.34.0`): an older one rewrites `.cursor/rules` in another format.
 
 ### The `yaml` package
@@ -2323,11 +2323,11 @@ Five skills live in the local APM package `agent-packages/apihub-autonomous-agen
 `agent-packages/apihub-autonomous-agent/.apm/skills/<name>/SKILL.md`.
 Each skill says that people can use it the same way as the agent.
 
-**Deployment.** `apm install --target cursor,claude` copies each skill to `.agents/skills/<name>/SKILL.md`.
-`apm.lock.yaml` lists those files under `_local/apihub-autonomous-agent` with their hashes. The deployed trees are
-never edited by hand. In CI, opencode reads the skills from `.agents/skills/` of the working tree. The review job
-replaces `.agents/` and `.claude/` with the copies from the workflow's own ref, so a pull request cannot change the
-skills or rules that review it.
+**Deployment.** `apm install --target cursor,claude` copies each skill to `.agents/skills/<name>/SKILL.md` and
+`.claude/skills/<name>/SKILL.md`. `apm.lock.yaml` lists those files under `_local/apihub-autonomous-agent` with
+their hashes. The deployed trees are never edited by hand. In CI, opencode reads both trees and prefers
+`.claude/skills/` when the same name exists in both. The review job replaces `.agents/` and `.claude/` with the
+copies from the workflow's own ref, so a pull request cannot change the skills or rules that review it.
 
 ### `apihub-pr-review`
 

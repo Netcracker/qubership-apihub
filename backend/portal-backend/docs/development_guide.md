@@ -10,7 +10,8 @@ When using Cursor, Claude Code, or other coding agents on this repository:
 - Claude Code loads the same instructions via [`CLAUDE.md`](../CLAUDE.md).
 - Generic packages come from `qubership-apihub-ci/agent-packages`; backend-specific sources live in this repo under
   `agent-packages/`. After changing packages or `apm.yml`, run `apm install --target cursor,claude` and commit
-  `.agents/skills/` plus the refreshed rule trees (see [AI assistants](../../../docs/development/ai-assistants.md)).
+  `.agents/skills/`, `.claude/skills/`, and the refreshed rule trees
+  (see [AI assistants](../../../docs/development/ai-assistants.md)).
 - Helm charts and Postman E2E tests live in **other modules of this monorepo** — agents should remind you using
   [`backend/README.md`](../../README.md#follow-up-in-other-modules).
 

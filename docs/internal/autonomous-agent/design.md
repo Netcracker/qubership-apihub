@@ -68,9 +68,9 @@ pull request from a fork.
 5. **State lives in GitHub:** labels for the phase, one comment per issue and per pull request with a hidden JSON block
    for the details, and run artifacts for the transcripts. No external storage.
 6. **Every run rebuilds its context from GitHub.** No opencode session is carried between runs.
-7. **Knowledge comes from the repository:** `AGENTS.md` files, the skills in `.agents/skills/`, the rules in
-   `.claude/rules/`, and the APM package with the agent's own skills. `.cursor/skills/` and `.claude/skills/` are
-   not committed, so OpenCode loads each skill once.
+7. **Knowledge comes from the repository:** `AGENTS.md` files, the skills in `.agents/skills/` and
+   `.claude/skills/`, the rules in `.claude/rules/`, and the APM package with the agent's own skills. The two
+   skill trees are one install. `.cursor/skills/` is not committed.
 
 ## Engine
 
@@ -506,18 +506,18 @@ issue when the work lands. It uses no model and costs nothing.
 | Root `AGENTS.md` | opencode loads it at start |
 | Module `AGENTS.md` | opencode 1.x attaches the nearest `AGENTS.md` above a file when the agent reads that file |
 | `CLAUDE.md` | ignored where an `AGENTS.md` exists; ours only import `AGENTS.md` |
-| Skills in `.agents/skills/` | opencode discovers them and loads one on demand through its `skill` tool |
+| Skills in `.agents/skills/` and `.claude/skills/` | opencode discovers them and loads one on demand. On a name clash it keeps the `.claude/skills/` copy |
 | Rules in `.claude/rules/` | listed in `instructions` of `opencode.json`; see below |
 | The agent's playbooks | new skills in `agent-packages/apihub-autonomous-agent/`, deployed by `apm install` like any other |
 
 Points to settle:
 
-- **One committed skill tree.** `apm install --target cursor,claude` writes shared skills to `.agents/skills/` and a
-  Claude copy to `.claude/skills/`. This repository commits `.agents/skills/` only. `.cursor/skills/` and
-  `.claude/skills/` are gitignored. OpenCode scans `.claude/skills/` first and keeps that copy when the same skill
-  name also exists under `.agents/skills/`, so a second committed tree would hide the shared one whenever they
-  differed. The review job replaces both `.agents/` and `.claude/` from the workflow ref, so a pull request cannot
-  change the skills or rules that review it. Codex and Cursor read `.agents/skills/` from a fresh clone.
+- **Two committed skill trees, one install.** `apm install --target cursor,claude` writes the same skills to
+  `.agents/skills/` and `.claude/skills/`. Both are committed, so a clone works for Claude Code and for harnesses
+  that read `.agents/skills/` without running APM. `.cursor/skills/` is gitignored. OpenCode scans
+  `.claude/skills/` first and keeps that copy when the same name also exists under `.agents/skills/`, so the two
+  trees have to stay identical and land in the same commit. The review job replaces both `.agents/` and
+  `.claude/` from the workflow ref, so a pull request cannot change the skills or rules that review it.
 - **Rules are path-scoped; opencode does not read `paths:`.** The 54 rules in `.claude/rules/` are 25 KB together, and
   each one names its scope in its text. Loading them all costs about 7,000 tokens per run and is the default. If that
   confuses the model, the alternatives are the APM `opencode` target, if it keeps the scope, or a small opencode

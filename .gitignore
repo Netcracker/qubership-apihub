@@ -12,10 +12,12 @@ deploy/helm-templates/local-k8s-quickstart/keycloak/files/realm.json
 .idea
 .vscode/
 
-# AI assistants: commit rules, subagents, and permissions. Ignore local state and per-harness skill copies.
-# Skills are committed only under `.agents/skills/`, so OpenCode and Cursor load each skill once.
+# AI assistants: commit rules, subagents, permissions, and the skill trees a clone must have.
+# `.agents/skills/` is the shared tree. `.claude/skills/` is the same install for Claude Code.
+# `.cursor/skills/` stays ignored: Cursor reads the two committed trees.
 .claude/*
 !.claude/rules/
+!.claude/skills/
 !.claude/agents/
 !.claude/settings.json
 .cursor/*

@@ -110,9 +110,9 @@ dependencies:
   - .claude/skills/api-doc-viewer-review-session/SKILL.md
   - .cursor/rules/api-doc-viewer-review-session.mdc
   deployed_file_hashes:
-    .agents/skills/api-doc-viewer-review-session/SKILL.md: sha256:c2499be72f450f74261542575f1e59c105a6b6f5b9db4b6e0d23bbf390f11f5d
+    .agents/skills/api-doc-viewer-review-session/SKILL.md: sha256:24420ea0567987df9b8ab159e0e23b3bf9520e8aacfdd321fd04805b3139c3dc
     .claude/rules/api-doc-viewer-review-session.md: sha256:b62b588a3f26daa96b7ffb25ae51ce652b6806f4d717bff63e91610c1d151ad2
-    .claude/skills/api-doc-viewer-review-session/SKILL.md: sha256:c2499be72f450f74261542575f1e59c105a6b6f5b9db4b6e0d23bbf390f11f5d
+    .claude/skills/api-doc-viewer-review-session/SKILL.md: sha256:24420ea0567987df9b8ab159e0e23b3bf9520e8aacfdd321fd04805b3139c3dc
     .cursor/rules/api-doc-viewer-review-session.mdc: sha256:defa7606da8b0dcc81a9697079c9c5d7203b40f5ed44aed3c27ff4c5abb634a2
   source: local
   local_path: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-review-session
@@ -1658,7 +1658,7 @@ deployments:
   owners:
   - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-review-session
   active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-review-session
-  content_hash: sha256:c2499be72f450f74261542575f1e59c105a6b6f5b9db4b6e0d23bbf390f11f5d
+  content_hash: sha256:24420ea0567987df9b8ab159e0e23b3bf9520e8aacfdd321fd04805b3139c3dc
 - kind: project-relative
   target: claude
   value: .claude/skills/api-doc-viewer-reviewing
@@ -2666,7 +2666,7 @@ deployments:
   owners:
   - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-review-session
   active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-review-session
-  content_hash: sha256:c2499be72f450f74261542575f1e59c105a6b6f5b9db4b6e0d23bbf390f11f5d
+  content_hash: sha256:24420ea0567987df9b8ab159e0e23b3bf9520e8aacfdd321fd04805b3139c3dc
 - kind: project-relative
   target: cursor
   value: .agents/skills/api-doc-viewer-reviewing
