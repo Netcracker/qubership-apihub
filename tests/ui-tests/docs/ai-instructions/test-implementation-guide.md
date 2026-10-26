@@ -104,6 +104,12 @@ test.describe('Some suite', () => {
 
 ## Common Errors & Preventive Actions
 
+### Using Page Matchers with the Decorated Expect Helper
+
+The `expect` helper from `@services/expect-decorator` accepts components and locators, not Playwright `Page` objects.
+After opening a new tab, construct its page object and assert on the loaded resource, such as the version selector.
+Keep tab-opening waits in the relevant page-object method and return the opened `Page` to the test.
+
 ### Mixing Object Shorthand Styles
 
 ```typescript
