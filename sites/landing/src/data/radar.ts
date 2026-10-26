@@ -296,7 +296,7 @@ const RAW: Omit<RadarBlip, 'id'>[] = [
     quadrant: 'tools',
     ring: 'trial',
     domain: 'engineering',
-    why: 'apm install --target cursor,claude --legacy-skill-paths. Central store is qubership-apihub-ci/agent-packages; consumers keep apm.yml.',
+    why: 'apm install --target cursor,claude. Central store is qubership-apihub-ci/agent-packages; consumers keep apm.yml.',
   },
   {
     name: 'Cursor / Claude Code',

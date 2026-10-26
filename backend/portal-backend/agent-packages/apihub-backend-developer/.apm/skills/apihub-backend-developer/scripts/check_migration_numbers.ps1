@@ -1,5 +1,5 @@
 # Checks SQL migration file names against the rules the service enforces at startup.
-# Run from repository root: pwsh .cursor/skills/apihub-backend-developer/scripts/check_migration_numbers.ps1
+# Run from repository root: pwsh .agents/skills/apihub-backend-developer/scripts/check_migration_numbers.ps1
 #
 # Errors (exit 1, all reported at once):
 #   1. two up files or two down files share a number, including padded variants such as 1_ and 01_;

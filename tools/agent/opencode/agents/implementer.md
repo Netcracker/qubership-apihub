@@ -7,6 +7,7 @@ permission:
   # the reviewer of this run, and the push of a workflow file is refused anyway.
   edit:
     "*": allow
+    "*.agents/*": deny
     "*.claude/*": deny
     "*.cursor/*": deny
     "*tools/agent/*": deny

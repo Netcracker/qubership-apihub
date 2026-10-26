@@ -67,7 +67,7 @@ config. Install once at the workspace root with `pnpm install`; do not run `npm 
 Install or refresh agent packages from the repository root (never `apm compile`):
 
 ```bash
-apm install --target cursor,claude --legacy-skill-paths
+apm install --target cursor,claude
 ```
 
 | Skill | When |
@@ -83,8 +83,8 @@ apm install --target cursor,claude --legacy-skill-paths
 | `json-crawl-using` | json-crawl rules (`frontend/json-crawl`) |
 
 Canonical skill sources live under `agent-packages/` of this module. After editing skills there, run
-`apm install --target cursor,claude --legacy-skill-paths` from the repository root so `.cursor/` and `.claude/`
-stay in sync. Store packages (`development-conventions`, `github-ticket-implementation-planner`,
+`apm install --target cursor,claude` from the repository root so `.agents/skills/`, `.claude/skills/`, and the
+rule trees stay in sync. Store packages (`development-conventions`, `github-ticket-implementation-planner`,
 `english-developer-style`, `markdown-line-length-120`) also apply.
 
 ## Always-on conventions
@@ -342,5 +342,5 @@ zero-padded renames that treat `08`/`09` as octal in shell arithmetic.
 - Refactoring candidates (viewer CSS, hiding-unchanged toggle):
   `agent-packages/api-doc-viewer-authoring/.apm/skills/api-doc-viewer-authoring/refactoring-notes.md`.
 - This file is **hand-written and committed**. Never run `apm compile` in the repository: it overwrites
-  `AGENTS.md`. Only `apm install --target cursor,claude --legacy-skill-paths` is used.
+  `AGENTS.md`. Only `apm install --target cursor,claude` is used.
 - Do **not** add minor feature notes to the repository root `README.md` unless asked.

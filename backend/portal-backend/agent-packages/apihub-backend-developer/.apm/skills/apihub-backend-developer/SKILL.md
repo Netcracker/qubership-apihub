@@ -29,13 +29,13 @@ After adding or renaming migration files, from the **repository root**:
 **Linux / WSL / Git Bash:**
 
 ```bash
-bash .cursor/skills/apihub-backend-developer/scripts/check_migration_numbers.sh
+bash .agents/skills/apihub-backend-developer/scripts/check_migration_numbers.sh
 ```
 
 **Windows PowerShell (native):**
 
 ```powershell
-powershell -File .cursor/skills/apihub-backend-developer/scripts/check_migration_numbers.ps1
+powershell -File .agents/skills/apihub-backend-developer/scripts/check_migration_numbers.ps1
 ```
 
 The script reports:

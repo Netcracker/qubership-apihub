@@ -10,13 +10,11 @@ whole-module `lint:check` or `nx affected`: they are slow and report problems th
 
 ## Command
 
-The script is `scripts/validate.mjs` in this skill's directory. APM deploys the skill per harness:
-`.claude/skills/apihub-validate/` for Claude Code, `.cursor/skills/apihub-validate/` for Cursor while the repository
-installs with `--legacy-skill-paths`, `.agents/skills/apihub-validate/` without it. Run it from the repository root
-with the files you created or changed, for example in Claude Code:
+The script is `scripts/validate.mjs` in this skill's directory. The committed copy is
+`.agents/skills/apihub-validate/`. Run it from the repository root with the files you created or changed:
 
 ```bash
-node .claude/skills/apihub-validate/scripts/validate.mjs --files <path> <path> ...
+node .agents/skills/apihub-validate/scripts/validate.mjs --files <path> <path> ...
 ```
 
 - Run it as one command: do not prefix it with `cd`, and do not run `git status` or Nx yourself.
