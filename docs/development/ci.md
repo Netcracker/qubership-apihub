@@ -28,6 +28,7 @@ numbered in the order they run.
 | Lint: Markdown links | `link-checker.yaml` | push, pull request, manual | lychee over every Markdown file |
 | Pages: Database ERDs | `erd.yml` | push to `develop` or `main` that changes SQL migrations, manual | renders the ERD of each backend that owns a database |
 | Pages: Publish | `pages.yml` | dispatched by `ci.yml` and `erd.yml`, branch deletion, daily, manual | assembles and deploys the GitHub Pages site |
+| PR: Available in versions | `announce-versions.yml` | CI succeeds on a push to `develop`, manual | comments on the issues that the merged pull request closes with the version of each component, as System Information shows it |
 | PR: CLA | `cla.yaml` | pull request, comment | asks first-time contributors to sign the CLA |
 | PR: Commit messages | `pr-conventional-commits.yaml` | pull request opened, edited, or updated | checks the commit messages of the pull request |
 | PR: Labels | `automatic-pr-labeler.yaml` | pull request into `develop`, `release`, or `main` | adds type labels and `module:<name>` labels by path |
