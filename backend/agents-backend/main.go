@@ -145,6 +145,7 @@ func main() {
 	logsController := controller.NewLogsController(resp)
 
 	healthController := controller.NewHealthController(readyChan)
+	versionController := controller.NewVersionController(service.BackendVersionFromEnv(), resp)
 
 	//TODO: it is necessary to add a new permission for the entire agent’s functionality after adding the ability to extend permissions in qubership-apihub-backend
 	r.HandleFunc("/api/v2/agents", authenticator.Secure(agentController.ListAgents)).Methods(http.MethodGet)
@@ -203,6 +204,7 @@ func main() {
 		r.HandleFunc(endpointConfig.Path, endpointConfig.Handler).Methods(http.MethodGet)
 	}
 
+	r.HandleFunc("/api/v1/system/version", versionController.GetVersion).Methods(http.MethodGet)
 	r.HandleFunc("/live", healthController.HandleLiveRequest).Methods(http.MethodGet)
 	r.HandleFunc("/ready", healthController.HandleReadyRequest).Methods(http.MethodGet)
 	r.PathPrefix("/debug/").Handler(http.DefaultServeMux)

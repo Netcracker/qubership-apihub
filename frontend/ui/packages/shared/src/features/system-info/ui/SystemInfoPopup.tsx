@@ -20,6 +20,7 @@ import { Box, DialogContent, DialogTitle, Divider, IconButton, Link, Popover, Ty
 import CloseOutlinedIcon from '@mui/icons-material/CloseOutlined'
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
 import { ButtonWithHint } from '../../../components/Buttons/ButtonWithHint'
+import { useExtensionVersions } from '../api/useExtensionVersions'
 import { useSystemInfo } from '../api/useSystemInfo'
 import { isNotEmpty } from '../../../utils/arrays'
 import { InfoContextIcon } from '../../../icons/InfoContextIcon'
@@ -31,9 +32,9 @@ type SystemInfoPopupProps = {
   migrationInProgress?: boolean
 }
 
-function withBuildRef(version: string | undefined, buildRef: string | undefined): string | undefined {
-  return version && buildRef ? `${version} (${buildRef})` : version
-}
+// A version line can be long (`develop.a1b2c3d.20261026104501`); it wraps instead of widening the popup without limit.
+const VERSION_TEXT_SX = { overflowWrap: 'anywhere' } as const
+const CONTENT_MAX_WIDTH = 480
 
 export const SystemInfoPopup: FC<SystemInfoPopupProps> = memo(({
   frontendVersionKey,
@@ -42,6 +43,7 @@ export const SystemInfoPopup: FC<SystemInfoPopupProps> = memo(({
 }) => {
   const [anchor, setAnchor] = useState<HTMLElement>()
   const { backendVersionKey, externalLinks, migrationInProgress } = useSystemInfo()
+  const extensionVersions = useExtensionVersions(!!anchor)
 
   return (
     <>
@@ -72,7 +74,7 @@ export const SystemInfoPopup: FC<SystemInfoPopupProps> = memo(({
             <CloseOutlinedIcon/>
           </IconButton>
         </DialogTitle>
-        <DialogContent data-testid="SystemInfoContent" sx={{ minWidth: 236, pb: 2 }}>
+        <DialogContent data-testid="SystemInfoContent" sx={{ minWidth: 236, maxWidth: CONTENT_MAX_WIDTH, pb: 2 }}>
           <Box sx={{
             display: 'grid',
             rowGap: 1,
@@ -86,16 +88,34 @@ export const SystemInfoPopup: FC<SystemInfoPopupProps> = memo(({
               </Box>)
             }
 
-            <Typography variant="subtitle2">
+            <Typography variant="subtitle2" sx={VERSION_TEXT_SX} data-testid="SystemInfoBackendVersion">
               {`Backend v. ${backendVersionKey}`}
             </Typography>
 
-            <Typography variant="subtitle2">
-              {`Frontend v. ${withBuildRef(frontendVersionKey, buildRef)}`}
-            </Typography>
+            {extensionVersions.map(({ extensionName, title, version }) => (
+              <Typography
+                key={extensionName}
+                variant="subtitle2"
+                sx={VERSION_TEXT_SX}
+                data-testid={`SystemInfoExtensionVersion-${extensionName}`}
+              >
+                {`${title} v. ${version ?? '...'}`}
+              </Typography>
+            ))}
 
-            <Typography variant="subtitle2">
-              {`API Processor v. ${withBuildRef(apiProcessorVersion, buildRef)}`}
+            <Box>
+              <Typography variant="subtitle2" sx={VERSION_TEXT_SX} data-testid="SystemInfoFrontendVersion">
+                {`Frontend v. ${frontendVersionKey}`}
+              </Typography>
+              {buildRef && (
+                <Typography variant="caption" color="text.secondary" sx={VERSION_TEXT_SX} data-testid="SystemInfoFrontendBuild">
+                  {buildRef}
+                </Typography>
+              )}
+            </Box>
+
+            <Typography variant="subtitle2" sx={VERSION_TEXT_SX} data-testid="SystemInfoApiProcessorVersion">
+              {`API Processor v. ${apiProcessorVersion}`}
             </Typography>
 
             {isNotEmpty(externalLinks) && <>

@@ -1,6 +1,6 @@
 import { test } from '@fixtures'
 import { expect } from '@services/expect-decorator'
-import { getSysInfo } from '@test-data/props'
+import { getExtensionVersion, getSysInfo } from '@test-data/props'
 import { PortalPage } from '@portal/pages'
 import { TICKET_BASE_URL } from '@test-setup'
 import { VS_CODE_EXTENSION_TOOLTIP } from '@test-data/portal'
@@ -62,14 +62,19 @@ test.describe('General', () => {
       const portalPage = new PortalPage(page)
       const { sysInfoPopup } = portalPage.header
       const { build } = await getSysInfo()
+      const linterVersion = await getExtensionVersion('api-linter')
+      const agentsBackendVersion = await getExtensionVersion('agents-backend')
 
       await portalPage.goto()
       await portalPage.header.sysInfoBtn.click()
 
       await expect.soft(sysInfoPopup.content).toBeVisible()
       await expect.soft(sysInfoPopup.closeBtn).toBeVisible()
-      await expect.soft(sysInfoPopup.content).toContainText(build.backendVersion)
+      await expect.soft(sysInfoPopup.content).toContainText(`Backend v. ${build.backendVersion}`)
+      await expect.soft(sysInfoPopup.content).toContainText(`API Linter v. ${linterVersion}`)
+      await expect.soft(sysInfoPopup.content).toContainText(`Agents Backend v. ${agentsBackendVersion}`)
       await expect.soft(sysInfoPopup.content).toContainText(/Frontend\sv.\s\S+/)
+      await expect.soft(sysInfoPopup.content).toContainText(/API Processor\sv.\s\S+/)
       // TODO: Add checking api/v1/system/info "externalLinks": []
     })
 

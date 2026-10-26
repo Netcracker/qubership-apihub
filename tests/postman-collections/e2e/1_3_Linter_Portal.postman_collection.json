@@ -6,6 +6,45 @@
     },
     "item": [
         {
+            "name": "0.0 Get version of api-linter",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"api-linter reports its version\" , function () {",
+                            "    const version = pm.response.json().version;",
+                            "    pm.expect(version).to.be.a('string').and.not.empty;",
+                            "});"
+                        ]
+                    }
+                }
+            ],
+            "request": {
+                "url": {
+                    "raw": "{{SERVER_HOST}}/api-linter/api/v1/system/version",
+                    "host": [
+                        "{{SERVER_HOST}}"
+                    ],
+                    "path": [
+                        "api-linter",
+                        "api",
+                        "v1",
+                        "system",
+                        "version"
+                    ]
+                },
+                "method": "GET",
+                "header": []
+            },
+            "response": []
+        },
+        {
             "name": "0. Init and Login",
             "item": [
                 {

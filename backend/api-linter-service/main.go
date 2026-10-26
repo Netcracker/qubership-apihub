@@ -177,6 +177,7 @@ func main() {
 	rulesetController := controller.NewRulesetController(rulesetService, authorizationService, resp)
 	cleanupController := controller.NewCleanupController(cleanupService, authorizationService, systemInfoService, resp)
 	healthController := controller.NewHealthController(readyChan)
+	versionController := controller.NewVersionController(service.BackendVersionFromEnv(), resp)
 	logsController := controller.NewLogsController(resp)
 	linterController := controller.NewLinterController(linterConfigService, resp)
 	scoringController := controller.NewScoringController(scoringService, authorizationService, resp)
@@ -213,6 +214,7 @@ func main() {
 	r.HandleFunc("/api/internal/clear/{testId}", authenticator.Secure(cleanupController.ClearTestData)).Methods(http.MethodDelete)
 
 	// Service endpoints
+	r.HandleFunc("/api/v1/system/version", versionController.GetVersion).Methods(http.MethodGet)
 	r.HandleFunc("/live", healthController.HandleLiveRequest).Methods(http.MethodGet)
 	r.HandleFunc("/ready", healthController.HandleReadyRequest).Methods(http.MethodGet)
 	r.PathPrefix("/debug/").Handler(http.DefaultServeMux) // TODO: env to config!
