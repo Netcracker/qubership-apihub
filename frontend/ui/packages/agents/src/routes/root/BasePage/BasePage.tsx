@@ -29,7 +29,7 @@ import { AppHeader } from '@netcracker/qubership-apihub-ui-shared/components/App
 import { MaintenanceNotification } from '@netcracker/qubership-apihub-ui-shared/components/MaintenanceNotification'
 import { SystemInfoPopup, useSystemInfo } from '@netcracker/qubership-apihub-ui-shared/features/system-info'
 import * as packageJson from '../../../../package.json'
-import { useVersionInfo } from '@netcracker/qubership-apihub-ui-shared/hooks/frontend-version/useVersionInfo'
+import { useBuildRef, useVersionInfo } from '@netcracker/qubership-apihub-ui-shared/hooks/frontend-version/useVersionInfo'
 import { agent } from '@netcracker/qubership-apihub-ui-shared/utils/version-info'
 import {
   ModuleFetchingErrorBoundary,
@@ -45,6 +45,7 @@ import { useAgentEnabled } from '@netcracker/qubership-apihub-ui-shared/features
 export const BasePage: FC = memo(() => {
   const { notification: systemNotification } = useSystemInfo()
   const { frontendVersion, apiProcessorVersion } = useVersionInfo(agent, packageJson.version)
+  const buildRef = useBuildRef(agent)
   const agentEnabled = useAgentEnabled()
   const viewPortStyleCalculator = useCallback(
     (theme: Theme): SystemStyleObject<Theme> => {
@@ -83,6 +84,7 @@ export const BasePage: FC = memo(() => {
               <SystemInfoPopup
                 frontendVersionKey={frontendVersion}
                 apiProcessorVersion={apiProcessorVersion}
+                buildRef={buildRef}
               />
               <UserPanel/>
             </>

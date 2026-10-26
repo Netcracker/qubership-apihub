@@ -15,9 +15,8 @@
  */
 
 import { useQuery } from '@tanstack/react-query'
-import type { AppTypeApiHub, VersionInfo, VersionInfoDto } from '../../utils/version-info'
-import { portal } from '../../utils/version-info'
-import { getVersionInfoOptions } from '../../utils/version-info'
+import type { AppTypeApiHub, BuildInfoDto, VersionInfo, VersionInfoDto } from '../../utils/version-info'
+import { getBuildInfoOptions, getVersionInfoOptions, portal } from '../../utils/version-info'
 
 // `frontendVersion` used to come from `import * as packageJson from
 // '../../../../portal/package.json'`, and both halves of that were wrong.
@@ -64,4 +63,13 @@ export function useAppApiProcessorVersion(appType: AppTypeApiHub = portal): stri
   )
 
   return data?.apiProcessorVersion
+}
+
+// `<branch>.<commit>` of the image the app is served from, or `undefined` when the image carries no build info.
+export function useBuildRef(appType: AppTypeApiHub = portal): string | undefined {
+  const { data } = useQuery<BuildInfoDto | null, Error, string | undefined>(
+    getBuildInfoOptions(appType),
+  )
+
+  return data
 }

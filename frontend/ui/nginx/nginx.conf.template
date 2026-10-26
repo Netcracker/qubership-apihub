@@ -192,7 +192,7 @@ http {
             proxy_intercept_errors off;
         }
 
-        location ~ ^/(portal|agents)/version\.json$ {
+        location ~ ^/(portal|agents)/(version|build-info)\.json$ {
             root /usr/share/nginx/html;
             add_header Cache-Control "no-store" always;
             add_header X-Content-Type-Options  "nosniff"                         always;

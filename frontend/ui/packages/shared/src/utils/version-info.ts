@@ -18,12 +18,20 @@ import { DEFAULT_REFETCH_INTERVAL, requestJson } from './requests'
 import type { UseQueryOptions } from '@tanstack/react-query'
 
 const VERSION_INFO_QUERY_KEY = 'version-info'
+const BUILD_INFO_QUERY_KEY = 'build-info'
 
 export type VersionInfoDto = {
   frontendVersion: string
   apiProcessorVersion: string
 }
 export type VersionInfo = VersionInfoDto
+
+// Written by the image entrypoint from GIT_BRANCH and GIT_HASH, which the branch tag adds on top of the content image.
+// The file does not exist outside the image, for example on a dev server.
+export type BuildInfoDto = {
+  branch: string
+  commit: string
+}
 
 export const Apps = {
   portal: 'portal',
@@ -49,4 +57,22 @@ export async function getVersionInfo(appType: AppTypeApiHub): Promise<VersionInf
   return await requestJson<VersionInfoDto>(`/${appType}/version.json`, {
     method: 'get',
   })
+}
+
+export function getBuildInfoOptions(appType: AppTypeApiHub): UseQueryOptions<BuildInfoDto | null, Error, string | undefined> {
+  return {
+    queryKey: [BUILD_INFO_QUERY_KEY, appType],
+    queryFn: () => getBuildInfo(appType),
+    select: buildInfo => (buildInfo ? `${buildInfo.branch}.${buildInfo.commit}` : undefined),
+    retry: false,
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+  }
+}
+
+async function getBuildInfo(appType: AppTypeApiHub): Promise<BuildInfoDto | null> {
+  return await requestJson<BuildInfoDto | null>(`/${appType}/build-info.json`, {
+    method: 'get',
+  }, { ignoreNotFound: true })
 }

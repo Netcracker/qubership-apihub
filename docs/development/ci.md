@@ -87,8 +87,11 @@ Every image goes to `ghcr.io/netcracker/<image>` under two kinds of tag:
 - `src-<hash>`: the content tag. The hash covers the sources of the project and its dependencies, the Dockerfile,
   `.dockerignore`, and the lockfile ([`tools/ci/image-input-hash.sh`](../../tools/ci/image-input-hash.sh)). An
   image is built only when its content tag is new; otherwise the job retags the existing image.
-- The branch tag: a floating alias of the content tag, from
-  [`tools/ci/branch-tag.sh`](../../tools/ci/branch-tag.sh).
+- The branch tag, from [`tools/ci/branch-tag.sh`](../../tools/ci/branch-tag.sh): the content image plus one thin
+  layer ([`tools/ci/ref-overlay`](../../tools/ci/ref-overlay/Dockerfile)) that sets `GIT_BRANCH` and `GIT_HASH` (the
+  short commit). The layer sets environment variables only, so it builds in seconds and never invalidates the content
+  image. System Info reads them: the backend from the environment, the UI from a `build-info.json` that its
+  entrypoint writes. The same ref is an OCI annotation on the tag's index.
 
 | Ref | Branch tag |
 |---|---|

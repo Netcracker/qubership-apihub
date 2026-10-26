@@ -220,14 +220,15 @@ jobs:
           # so the next step gives each branch tag its own index with its own annotations.
           tags: ${{ steps.tags.outputs.base }}:${{ steps.tags.outputs.src_tag }}
           # No GIT_BRANCH or GIT_HASH build args: they are not in the content hash, so a retagged image
-          # reported the wrong ref. Hashing them would rebuild identical content once per ref.
+          # would report the wrong ref. The branch tag step adds them in a thin layer instead.
           cache-from: type=gha,scope=${{ matrix.image }}
           cache-to: type=gha,mode=max,scope=${{ matrix.image }}
 
       # ---- both paths: publish the branch tag -------------------------------------------
-      # A registry-side operation of about a second, on both paths. `imagetools create` wraps the
-      # content in a new index per tag, which carries this ref's annotations. `index:` is required:
-      # annotations apply to an index or a descriptor, never to a manifest.
+      # A thin layer on top of the content image adds GIT_BRANCH and GIT_HASH (tools/ci/ref-overlay), so
+      # the content image stays ref-free and cached while every branch tag reports its own branch and
+      # commit. It is ENV only, so it builds in seconds. The index also carries the ref as OCI annotations:
+      # they apply to an index or a descriptor, never to a manifest, hence the `index:` prefix.
       - name: Point the branch tag at this content
         if: inputs.push
         shell: bash
@@ -240,12 +241,18 @@ jobs:
           SOURCE_URL: ${{ github.server_url }}/${{ github.repository }}
         run: |
           set -euo pipefail
-          docker buildx imagetools create \
+          docker buildx build \
+            --platform linux/amd64,linux/arm64 \
+            --provenance=false \
+            --build-arg "BASE=$BASE:$SRC_TAG" \
+            --build-arg "GIT_BRANCH=$REF_NAME" \
+            --build-arg "GIT_HASH=${SHA::7}" \
             --annotation "index:org.opencontainers.image.revision=$SHA" \
             --annotation "index:org.opencontainers.image.version=$REF_NAME" \
             --annotation "index:org.opencontainers.image.source=$SOURCE_URL" \
             -t "$BASE:$BRANCH_TAG" \
-            "$BASE:$SRC_TAG"
+            --push \
+            tools/ci/ref-overlay
 
           # Read the annotation back: an unprefixed or misspelled --annotation level is not an
           # error, and the tag would be published without provenance.

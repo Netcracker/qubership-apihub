@@ -27,12 +27,18 @@ import { InfoContextIcon } from '../../../icons/InfoContextIcon'
 type SystemInfoPopupProps = {
   frontendVersionKey: string
   apiProcessorVersion?: string
+  buildRef?: string
   migrationInProgress?: boolean
+}
+
+function withBuildRef(version: string | undefined, buildRef: string | undefined): string | undefined {
+  return version && buildRef ? `${version}-${buildRef}` : version
 }
 
 export const SystemInfoPopup: FC<SystemInfoPopupProps> = memo(({
   frontendVersionKey,
   apiProcessorVersion,
+  buildRef,
 }) => {
   const [anchor, setAnchor] = useState<HTMLElement>()
   const { backendVersionKey, externalLinks, migrationInProgress } = useSystemInfo()
@@ -85,11 +91,11 @@ export const SystemInfoPopup: FC<SystemInfoPopupProps> = memo(({
             </Typography>
 
             <Typography variant="subtitle2">
-              {`Frontend v. ${frontendVersionKey}`}
+              {`Frontend v. ${withBuildRef(frontendVersionKey, buildRef)}`}
             </Typography>
 
             <Typography variant="subtitle2">
-              {`API Processor v. ${apiProcessorVersion}`}
+              {`API Processor v. ${withBuildRef(apiProcessorVersion, buildRef)}`}
             </Typography>
 
             {isNotEmpty(externalLinks) && <>
