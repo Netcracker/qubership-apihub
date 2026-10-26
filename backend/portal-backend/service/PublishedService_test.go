@@ -314,6 +314,108 @@ func TestMergeVersionComparisonsUnionsHasErrors(t *testing.T) {
 	})
 }
 
+type versionStatusRepoStub struct {
+	repository.PublishedRepository
+	versions        map[string]*entity.PublishedVersionEntity
+	errorSummaries  map[int]*entity.VersionErrorSummaryEntity
+	queriedRevision int
+}
+
+func (s *versionStatusRepoStub) GetVersion(_ context.Context, _ string, versionName string) (*entity.PublishedVersionEntity, error) {
+	return s.versions[versionName], nil
+}
+
+func (s *versionStatusRepoStub) GetVersionErrorSummary(_ context.Context, _ string, _ string, revision int, _ bool) (*entity.VersionErrorSummaryEntity, error) {
+	s.queriedRevision = revision
+	return s.errorSummaries[revision], nil
+}
+
+func TestGetVersionStatusSelectsRevision(t *testing.T) {
+	const (
+		packageId      = "QS.PKG"
+		version        = "2026.1"
+		firstRevision  = 1
+		latestRevision = 2
+	)
+	tests := []struct {
+		name            string
+		versionName     string
+		firstHasErrors  bool
+		latestHasErrors bool
+		wantRevision    int
+		wantHasErrors   bool
+	}{
+		{
+			name:            "clean requested revision with errors in the latest revision",
+			versionName:     version + "@1",
+			latestHasErrors: true,
+			wantRevision:    firstRevision,
+		},
+		{
+			name:           "errored requested revision with a clean latest revision",
+			versionName:    version + "@1",
+			firstHasErrors: true,
+			wantRevision:   firstRevision,
+			wantHasErrors:  true,
+		},
+		{
+			name:           "plain version selects the clean latest revision",
+			versionName:    version,
+			firstHasErrors: true,
+			wantRevision:   latestRevision,
+		},
+		{
+			name:            "plain version selects the errored latest revision",
+			versionName:     version,
+			latestHasErrors: true,
+			wantRevision:    latestRevision,
+			wantHasErrors:   true,
+		},
+		{
+			name:        "missing requested revision does not select the latest revision",
+			versionName: version + "@3",
+		},
+		{
+			name:        "missing version",
+			versionName: "missing",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			first := &entity.PublishedVersionEntity{PackageId: packageId, Version: version, Revision: firstRevision, Status: string(view.Draft)}
+			latest := &entity.PublishedVersionEntity{PackageId: packageId, Version: version, Revision: latestRevision, Status: string(view.Release)}
+			repo := &versionStatusRepoStub{
+				versions: map[string]*entity.PublishedVersionEntity{
+					version:        latest,
+					version + "@1": first,
+					version + "@2": latest,
+				},
+				errorSummaries: map[int]*entity.VersionErrorSummaryEntity{
+					firstRevision:  {HasErrors: tt.firstHasErrors},
+					latestRevision: {HasErrors: tt.latestHasErrors},
+				},
+			}
+			service := publishedServiceImpl{publishedRepo: repo}
+
+			status, hasErrors, found, err := service.GetVersionStatus(context.Background(), packageId, tt.versionName)
+			if err != nil {
+				t.Fatalf("GetVersionStatus() failed: %v", err)
+			}
+			wantFound := tt.wantRevision != 0
+			wantStatus := ""
+			if wantFound {
+				wantStatus = repo.versions[tt.versionName].Status
+			}
+			if status != wantStatus || hasErrors != tt.wantHasErrors || found != wantFound {
+				t.Errorf("GetVersionStatus() = (%q, %v, %v), want (%q, %v, %v)", status, hasErrors, found, wantStatus, tt.wantHasErrors, wantFound)
+			}
+			if repo.queriedRevision != tt.wantRevision {
+				t.Errorf("error summary revision = %d, want %d", repo.queriedRevision, tt.wantRevision)
+			}
+		})
+	}
+}
+
 type errorSummaryRepoStub struct {
 	repository.PublishedRepository
 	errorSummary     *entity.VersionErrorSummaryEntity
