@@ -32,9 +32,40 @@ type SystemInfoPopupProps = {
   migrationInProgress?: boolean
 }
 
-// A version line can be long (`develop.a1b2c3d.20261026104501`); it wraps instead of widening the popup without limit.
-const VERSION_TEXT_SX = { overflowWrap: 'anywhere' } as const
+// A version line is long (`develop.a1b2c3d.20261026104501`). The popup takes the width of its longest line, up to the
+// maximum, and a line wraps only beyond it. `overflowWrap: anywhere` would shrink that width to the minimum instead.
+const VERSION_TEXT_SX = { overflowWrap: 'break-word' } as const
+const CONTENT_MIN_WIDTH = 236
 const CONTENT_MAX_WIDTH = 480
+// The popover keeps a 16px margin on each side and the content 24px of padding; a narrow window shrinks the content.
+const CONTENT_MAX_WIDTH_IN_WINDOW = `min(${CONTENT_MAX_WIDTH}px, calc(100vw - 96px))`
+
+type VersionRowProps = {
+  title: string
+  version: string
+  // The image the version ships in: `<branch>.<commit>.<build time>`.
+  caption?: string
+  'data-testid': string
+}
+
+const VersionRow: FC<VersionRowProps> = memo(({ title, version, caption, 'data-testid': dataTestId }) => (
+  <Box>
+    <Typography variant="subtitle2" sx={VERSION_TEXT_SX} data-testid={dataTestId}>
+      {`${title} v. ${version}`}
+    </Typography>
+    {caption && (
+      <Typography
+        component="div"
+        variant="caption"
+        color="text.secondary"
+        sx={VERSION_TEXT_SX}
+        data-testid={`${dataTestId}Build`}
+      >
+        {caption}
+      </Typography>
+    )}
+  </Box>
+))
 
 export const SystemInfoPopup: FC<SystemInfoPopupProps> = memo(({
   frontendVersionKey,
@@ -74,7 +105,7 @@ export const SystemInfoPopup: FC<SystemInfoPopupProps> = memo(({
             <CloseOutlinedIcon/>
           </IconButton>
         </DialogTitle>
-        <DialogContent data-testid="SystemInfoContent" sx={{ minWidth: 236, maxWidth: CONTENT_MAX_WIDTH, pb: 2 }}>
+        <DialogContent data-testid="SystemInfoContent" sx={{ width: 'max-content', minWidth: CONTENT_MIN_WIDTH, maxWidth: CONTENT_MAX_WIDTH_IN_WINDOW, pb: 2 }}>
           <Box sx={{
             display: 'grid',
             rowGap: 1,
@@ -88,35 +119,30 @@ export const SystemInfoPopup: FC<SystemInfoPopupProps> = memo(({
               </Box>)
             }
 
-            <Typography variant="subtitle2" sx={VERSION_TEXT_SX} data-testid="SystemInfoBackendVersion">
-              {`Backend v. ${backendVersionKey}`}
-            </Typography>
+            <VersionRow title="Backend" version={backendVersionKey} data-testid="SystemInfoBackendVersion"/>
 
             {extensionVersions.map(({ extensionName, title, version }) => (
-              <Typography
+              <VersionRow
                 key={extensionName}
-                variant="subtitle2"
-                sx={VERSION_TEXT_SX}
+                title={title}
+                version={version ?? '...'}
                 data-testid={`SystemInfoExtensionVersion-${extensionName}`}
-              >
-                {`${title} v. ${version ?? '...'}`}
-              </Typography>
+              />
             ))}
 
-            <Box>
-              <Typography variant="subtitle2" sx={VERSION_TEXT_SX} data-testid="SystemInfoFrontendVersion">
-                {`Frontend v. ${frontendVersionKey}`}
-              </Typography>
-              {buildRef && (
-                <Typography variant="caption" color="text.secondary" sx={VERSION_TEXT_SX} data-testid="SystemInfoFrontendBuild">
-                  {buildRef}
-                </Typography>
-              )}
-            </Box>
+            <VersionRow
+              title="Frontend"
+              version={frontendVersionKey}
+              caption={buildRef}
+              data-testid="SystemInfoFrontendVersion"
+            />
 
-            <Typography variant="subtitle2" sx={VERSION_TEXT_SX} data-testid="SystemInfoApiProcessorVersion">
-              {`API Processor v. ${apiProcessorVersion}`}
-            </Typography>
+            <VersionRow
+              title="API Processor"
+              version={apiProcessorVersion ?? '...'}
+              caption={buildRef}
+              data-testid="SystemInfoApiProcessorVersion"
+            />
 
             {isNotEmpty(externalLinks) && <>
               <Divider sx={{ mx: 0 }} orientation="horizontal"/>
