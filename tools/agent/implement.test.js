@@ -575,7 +575,7 @@ test('prBody follows the template and ends with the actor line and the marker on
         '\\nCloses #200\\.\\n\\n## What\\n\\nGuards the nil changelog in the builder\\. A test covers it\\.\\n',
         '\\n## How to verify\\n\\nAdded TestBuildNilChangelog\\.\\n\\n',
         'Local checks passed, as reported by the work job: `pnpm exec nx affected`\\.\\n',
-        '\\n## Checklist\\n\\n- \\[x\\] The issue is linked under Development or with "Closes #123"\\.\\n',
+        '\\n## Checklist\\n\\n- \\[x\\] The issue is linked under Development or with "Closes #XXX"\\.\\n',
         '- \\[ \\] The documentation is updated',
       ].join(''),
     ),
