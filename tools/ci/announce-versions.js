@@ -24,7 +24,11 @@ const SHORT_SHA_LENGTH = 7
 const ROOT = path.resolve(__dirname, '..', '..')
 // Loaded by path: the workflow checks the commit out and runs no install, so the workspace link does not exist.
 const BUILD_ID_SCRIPT = path.join(ROOT, 'tools', 'build-id', 'build-id.mjs')
-const UI_APP = 'portal'
+// The Portal and the Agents SPA ship in one image but are two apps, each with its own stamped version.
+const UI_APPS = [
+  { name: 'Frontend (Portal)', app: 'portal' },
+  { name: 'Frontend (Agents)', app: 'agents' },
+]
 
 // What System Information lists, in its order, plus the build-task-consumer. `image` is the ghcr package.
 const IMAGE_COMPONENTS = [
@@ -142,7 +146,10 @@ async function stampedVersions() {
   const { stampedVersion } = await import(pathToFileURL(BUILD_ID_SCRIPT).href)
   return {
     apiProcessor: stampedVersion(path.join(ROOT, 'frontend', 'api-processor')),
-    ui: stampedVersion(path.join(ROOT, 'frontend', 'ui', 'packages', UI_APP), { includeDevDependencies: true }),
+    ui: Object.fromEntries(UI_APPS.map(({ app }) => [
+      app,
+      stampedVersion(path.join(ROOT, 'frontend', 'ui', 'packages', app), { includeDevDependencies: true }),
+    ])),
   }
 }
 
@@ -158,7 +165,7 @@ async function collectComponents(owner, tag) {
   const stamped = await stampedVersions()
   const uiEnv = imageEnv(owner, UI_IMAGE, tag)
   components.push(
-    { name: 'Frontend', version: stamped.ui, hash: uiEnv.GIT_HASH || null, build: imageVersion(uiEnv) },
+    ...UI_APPS.map(({ name, app }) => ({ name, version: stamped.ui[app], hash: uiEnv.GIT_HASH || null, build: imageVersion(uiEnv) })),
     { name: 'API Processor', version: stamped.apiProcessor },
   )
   return components
