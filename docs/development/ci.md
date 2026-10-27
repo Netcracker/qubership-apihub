@@ -86,8 +86,10 @@ The workflow has no path filters, so a documentation-only pull request also gets
 Every image goes to `ghcr.io/netcracker/<image>` under two kinds of tag:
 
 - `src-<hash>`: the content tag. The hash covers the sources of the project and its dependencies, the Dockerfile,
-  `.dockerignore`, and the lockfile ([`tools/ci/image-input-hash.sh`](../../tools/ci/image-input-hash.sh)). An
-  image is built only when its content tag is new; otherwise the job retags the existing image.
+  `.dockerignore`, and the lockfile ([`tools/ci/image-input-hash.sh`](../../tools/ci/image-input-hash.sh)). The UI
+  image also hashes `frontend/ui/nginx` and `frontend/ui/vite-plugins`. Those directories sit outside the portal
+  and agents project trees, and the image copies or bundles them. An image is built only when its content tag is
+  new; otherwise the job retags the existing image.
 - The branch tag, from [`tools/ci/branch-tag.sh`](../../tools/ci/branch-tag.sh): the content image plus one thin
   layer ([`tools/ci/ref-overlay`](../../tools/ci/ref-overlay/Dockerfile)) that sets `GIT_BRANCH`, `GIT_HASH` (the
   short commit), and `COMMIT_TIME` (UTC, the time of the commit). The layer sets environment variables only, so it

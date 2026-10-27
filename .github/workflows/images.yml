@@ -19,9 +19,10 @@ on:
       images:
         description: >-
           JSON array of matrix legs. Each is {project, image, dockerfile, build_projects, deploy,
-          context, dockerignore, workspace_build, outputs}. `outputs` is optional: space-separated
-          paths (globs allowed) that must exist after the Nx build; empty means `<root>/dist` of
-          every build project.
+          context, dockerignore, hash_paths, workspace_build, outputs}. `outputs` is optional:
+          space-separated paths (globs allowed) that must exist after the Nx build; empty means
+          `<root>/dist` of every build project. `hash_paths` is optional: space-separated paths
+          outside those project trees that still change the image. A directory contributes its git tree.
         required: true
         type: string
       push:
@@ -90,15 +91,17 @@ jobs:
           BUILD_PROJECTS: ${{ matrix.build_projects }}
           DOCKERFILE: ${{ matrix.dockerfile }}
           DOCKERIGNORE: ${{ matrix.dockerignore }}
+          HASH_PATHS: ${{ matrix.hash_paths }}
         run: |
           set -euo pipefail
           branch_tag="$(bash tools/ci/branch-tag.sh "$REF")"
 
           pnpm exec nx graph --file=graph.json >/dev/null
           # The ignore files decide what reaches the build context, so they are part of the hash.
-          # `DOCKERIGNORE` is a space-separated list, deliberately unquoted.
+          # `DOCKERIGNORE` and `HASH_PATHS` are space-separated lists, deliberately unquoted.
+          # HASH_PATHS is empty for every image but the UI. A directory is hashed as its git tree.
           # shellcheck disable=SC2086
-          src_hash="$(bash tools/ci/image-input-hash.sh "$BUILD_PROJECTS" graph.json "$DOCKERFILE" $DOCKERIGNORE)"
+          src_hash="$(bash tools/ci/image-input-hash.sh "$BUILD_PROJECTS" graph.json "$DOCKERFILE" $DOCKERIGNORE ${HASH_PATHS-})"
 
           repo_lc="$(echo "$OWNER" | tr '[:upper:]' '[:lower:]')"
           base="ghcr.io/${repo_lc}/${IMAGE}"

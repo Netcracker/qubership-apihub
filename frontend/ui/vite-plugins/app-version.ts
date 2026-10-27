@@ -8,8 +8,10 @@ const cache = new Map<string, string>()
 /**
  * The version an application reports: `<version from its package.json>+<build id>`.
  *
- * The id hashes the sources of the app and of the workspace packages it bundles (tools/build-id), so two builds of the
- * same sources agree and a build of other sources differs even when nobody bumped the version.
+ * The id hashes the sources of the app, of the workspace packages it bundles, and of this directory (tools/build-id).
+ * The plugins sit outside either app package, so without the extra directory a change here would leave the version
+ * string as it was. Two builds of the same sources agree, and a build of other sources differs even when nobody
+ * bumped the version.
  *
  * The bundle gets it through Vite `define` as `__APP_VERSION__`, and `version.json` carries the same string, so the page
  * asks for a reload when a newer build is deployed. It is computed once per process: the dev server and a build must
@@ -18,7 +20,11 @@ const cache = new Map<string, string>()
 export function appStampedVersion(app: string): string {
   let version = cache.get(app)
   if (!version) {
-    version = stampedVersion(path.resolve(UI_ROOT, 'packages', app), { includeDevDependencies: true })
+    version = stampedVersion(path.resolve(UI_ROOT, 'packages', app), {
+      includeDevDependencies: true,
+      // announce-versions.js passes the same directory. nginx is not here: it changes the image, not the bundle.
+      extraDirs: [path.resolve(UI_ROOT, 'vite-plugins')],
+    })
     cache.set(app, version)
   }
   return version

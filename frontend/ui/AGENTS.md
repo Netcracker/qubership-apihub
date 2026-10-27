@@ -36,8 +36,9 @@ msw:init` once to create the mock worker files. Portal `build` runs `tsc` and `v
 
 - It uses nearly every TypeScript library of the monorepo (`api-processor`, `api-diff`, `api-doc-viewer`,
   `apispec-view`, `class-view`, `rest-playground`, and others); `nx` builds them first, so a cold build is long.
-- Each app reports `<package.json version>+<build id>`: the id hashes the sources of the app and of the workspace
-  packages it bundles ([`tools/build-id`](../../tools/build-id/README.md), used through `vite-plugins/app-version.ts`).
+- Each app reports `<package.json version>+<build id>`: the id hashes the sources of the app, the workspace
+  packages it bundles, and `frontend/ui/vite-plugins` ([`tools/build-id`](../../tools/build-id/README.md), through
+  `vite-plugins/app-version.ts`).
   The bundle reads it as the global `__APP_VERSION__` (Vite `define`) and `version.json` carries the same string, so
   BasePage asks for a reload when they differ. Do not import the app's own `package.json` for its version.
   `version.json` also carries the stamped api-processor version.

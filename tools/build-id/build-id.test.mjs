@@ -111,6 +111,34 @@ test('only an app follows its own workspace devDependencies, and only with the o
   assert.equal(computeBuildId(workspace.app, { includeDevDependencies: true }), withLibraryTool)
 })
 
+test('an extra directory changes the id, and a directory that is not passed does not', () => {
+  const workspace = makeWorkspace()
+  const plugins = path.join(workspace.root, 'frontend/ui/vite-plugins')
+  const nginx = path.join(workspace.root, 'frontend/ui/nginx')
+  write(path.join(plugins, 'app-version.ts'), 'export const plugin = 1\n')
+  write(path.join(nginx, 'entrypoint.sh'), 'echo hi\n')
+
+  const plain = computeBuildId(workspace.app, { includeDevDependencies: true })
+  const options = { includeDevDependencies: true, extraDirs: [plugins] }
+  const stamped = computeBuildId(workspace.app, options)
+  assert.notEqual(stamped, plain)
+
+  write(path.join(nginx, 'entrypoint.sh'), 'echo bye\n')
+  assert.equal(computeBuildId(workspace.app, options), stamped)
+
+  write(path.join(plugins, 'app-version.ts'), 'export const plugin = 2\n')
+  assert.notEqual(computeBuildId(workspace.app, options), stamped)
+
+  assert.equal(
+    computeBuildId(workspace.app, { includeDevDependencies: true, extraDirs: [plugins, nginx] }),
+    computeBuildId(workspace.app, { includeDevDependencies: true, extraDirs: [nginx, plugins] }),
+  )
+  assert.throws(
+    () => computeBuildId(workspace.app, { extraDirs: [path.join(workspace.root, 'missing')] }),
+    /not a directory/,
+  )
+})
+
 test('stampedVersion is the version of the package and the build id', () => {
   const workspace = makeWorkspace()
   assert.match(stampedVersion(workspace.lib), /^1\.2\.3\+[0-9a-f]{10}$/)

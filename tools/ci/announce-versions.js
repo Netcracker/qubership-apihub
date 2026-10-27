@@ -148,7 +148,11 @@ async function stampedVersions() {
     apiProcessor: stampedVersion(path.join(ROOT, 'frontend', 'api-processor')),
     ui: Object.fromEntries(UI_APPS.map(({ app }) => [
       app,
-      stampedVersion(path.join(ROOT, 'frontend', 'ui', 'packages', app), { includeDevDependencies: true }),
+      stampedVersion(path.join(ROOT, 'frontend', 'ui', 'packages', app), {
+        includeDevDependencies: true,
+        // The same directory frontend/ui/vite-plugins/app-version.ts passes. It is outside both app packages.
+        extraDirs: [path.join(ROOT, 'frontend', 'ui', 'vite-plugins')],
+      }),
     ])),
   }
 }

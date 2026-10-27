@@ -12,6 +12,8 @@ and the "reload the page" prompt of the UI need.
 - The files of the package and of every package in its `dependencies` with a `workspace:` range, transitively.
 - An app (`includeDevDependencies: true`) also follows its own workspace `devDependencies`, because it bundles them.
   A library's `devDependencies` are its tools and never count.
+- `extraDirs`: directories outside that closure that the build still reads. Each one is labeled by its path
+  relative to the workspace root. The UI passes `frontend/ui/vite-plugins`.
 - Not `node_modules`, build output, tests, stories, documentation, Markdown, and similar files that no build reads.
 - Line endings are normalized and names are sorted by code unit, so a Windows and a Linux checkout of one commit agree.
 
@@ -41,7 +43,7 @@ From the command line: `node tools/build-id/build-id.mts <package dir>`.
 | Consumer | How |
 |----------|-----|
 | `frontend/api-processor` | the Vite plugin, and `scripts/stamp-cjs-version.mjs` for the CommonJS build |
-| `frontend/ui` | `vite-plugins/app-version.ts`, for `define` and for `version.json` |
+| `frontend/ui` | `vite-plugins/app-version.ts`, for `define` and for `version.json`; the stamp includes `vite-plugins` |
 | `tools/ci/announce-versions.js` | loads `build-id.mts` by path, because the workflow runs no install |
 
 ## Source

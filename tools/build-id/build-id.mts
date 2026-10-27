@@ -1,11 +1,11 @@
 /**
  * The version that a build reports: `<package.json version>+<build id>`. Used for api-processor and for the UI apps.
  *
- * The build id is a hash of the sources of the package and of every workspace package it depends on. It is the
- * semver build metadata, so a release bump still reads as a new version, and two builds of the same sources
- * report the same string wherever they run. Without it, a branch that changes the processor but not its version
- * reports the same version as the release, and the UI cannot tell that a published package version was built by a
- * different processor.
+ * The build id is a hash of the sources of the package and of every workspace package it depends on. A caller can add
+ * directories that sit outside that closure. The id is the semver build metadata, so a release bump still reads as a
+ * new version, and two builds of the same sources report the same string wherever they run. Without it, a branch
+ * that changes the processor but not its version reports the same version as the release, and the UI cannot tell
+ * that a published package version was built by a different processor.
  *
  * api-processor: the build-task-consumer reports the stamped value into every package version it builds, and the UI
  * reads it into `version.json`. They agree because they read one build output. A UI app: its bundle and its
@@ -17,7 +17,7 @@
  * It is TypeScript that Node runs as it is (type stripping), so it uses no syntax that needs a transform.
  */
 
-import { createHash } from 'node:crypto'
+import { createHash, type Hash } from 'node:crypto'
 import type { Dirent } from 'node:fs'
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import path from 'node:path'
@@ -25,6 +25,11 @@ import path from 'node:path'
 export type BuildIdOptions = {
   /** Follow the workspace packages in `devDependencies` of the package itself too. An app bundles them. */
   includeDevDependencies?: boolean
+  /**
+   * Directories the build reads that sit outside the package closure. The hash labels each one by its path
+   * relative to the workspace root, so the id does not depend on where the checkout lives.
+   */
+  extraDirs?: readonly string[]
 }
 
 type PackageManifest = {
@@ -143,18 +148,48 @@ function listFiles(dir: string, base: string = dir): string[] {
   return files
 }
 
-/** A hash of the sources of the package and of the workspace packages it depends on. */
-export function computeBuildId(packageDir: string, { includeDevDependencies = false }: BuildIdOptions = {}): string {
+/** A hash of the sources of the package, of the workspace packages it depends on, and of `extraDirs`. */
+export function computeBuildId(
+  packageDir: string,
+  { includeDevDependencies = false, extraDirs = [] }: BuildIdOptions = {},
+): string {
   const hash = createHash('sha256')
-  for (const [name, dir] of sourcePackages(findWorkspaceRoot(packageDir), packageDir, includeDevDependencies)) {
+  const root = findWorkspaceRoot(packageDir)
+  for (const [name, dir] of sourcePackages(root, packageDir, includeDevDependencies)) {
     hash.update(`package ${name}\0`)
-    for (const file of listFiles(dir)) {
-      // Line endings differ between a Windows checkout and a Linux one; the build output does not.
-      const content = readFileSync(path.join(dir, file), 'latin1').replace(/\r\n/g, '\n')
-      hash.update(`${file}\0${content}\0`)
-    }
+    addFiles(hash, dir)
+  }
+  for (const { label, absolute } of extraDirectories(root, extraDirs)) {
+    hash.update(`dir ${label}\0`)
+    addFiles(hash, absolute)
   }
   return hash.digest('hex').slice(0, BUILD_ID_LENGTH)
+}
+
+// Line endings differ between a Windows checkout and a Linux one; the build output does not.
+function addFiles(hash: Hash, dir: string): void {
+  for (const file of listFiles(dir)) {
+    const content = readFileSync(path.join(dir, file), 'latin1').replace(/\r\n/g, '\n')
+    hash.update(`${file}\0${content}\0`)
+  }
+}
+
+function extraDirectories(root: string, extraDirs: readonly string[]): Array<{ label: string, absolute: string }> {
+  const byLabel = new Map<string, string>()
+  for (const extra of extraDirs) {
+    const absolute = path.resolve(extra)
+    if (!existsSync(absolute) || !statSync(absolute).isDirectory()) {
+      throw new Error(`${extra} is not a directory`)
+    }
+    const relative = path.relative(root, absolute)
+    if (relative === '' || relative.startsWith('..') || path.isAbsolute(relative)) {
+      throw new Error(`${extra} is not inside the workspace`)
+    }
+    byLabel.set(relative.split(path.sep).join('/'), absolute)
+  }
+  return [...byLabel.entries()]
+    .sort(([a], [b]) => compareNames(a, b))
+    .map(([label, absolute]) => ({ label, absolute }))
 }
 
 /** `<version from package.json>+<build id>` */
