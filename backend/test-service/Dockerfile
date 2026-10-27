@@ -26,7 +26,7 @@ COPY . .
 # `go work sync` writes; CI checks that.
 RUN GOWORK=off GOSUMDB=off CGO_ENABLED=0 GOFLAGS=-mod=readonly go mod download && GOWORK=off GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -o qubership-apihub-test-service .
 
-FROM docker.io/alpine:3.24.2
+FROM docker.io/alpine:3.24.3
 
 ARG GIT_BRANCH=unknown
 ARG GIT_HASH=unknown
