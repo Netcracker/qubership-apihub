@@ -322,8 +322,8 @@ importers:
         specifier: ^24.0.0
         version: 24.13.3
       '@types/react':
-        specifier: ^18.3.31
-        version: 18.3.31
+        specifier: ^19.3.0
+        version: 19.3.0
       '@typescript-eslint/eslint-plugin':
         specifier: 6.0.0
         version: 6.0.0(@typescript-eslint/parser@6.0.0(eslint@8.48.0(supports-color@9.4.0))(supports-color@9.4.0)(typescript@6.0.3))(eslint@8.48.0(supports-color@9.4.0))(supports-color@9.4.0)(typescript@6.0.3)
@@ -10998,6 +10998,9 @@ packages:
 
   '@types/react@18.3.31':
     resolution: {integrity: sha512-vfEqpXTvwT91yhmwdfouStN2hSKwTvyRs8qpLfADyrq/kxDw0hZM7Wk9Ug1FELj8hIby+S/+kQCSRFF32nv2Qw==}
+
+  '@types/react@19.3.0':
+    resolution: {integrity: sha512-N0rFCuH9YoxG9/m61l9MfpJKfmLOVU0em7ipIz6TRgSSkvReLB9vL85GB+yr8Bs5leqpvg96JSwF4ZS1s4viQg==}
 
   '@types/resolve@1.17.1':
     resolution: {integrity: sha512-yy7HuzQhj0dhGpD8RLXSZWEkLsV9ibvxvi6EiJ3bkqLAO1RGo0WbkWQiwpRlSFymTJRz0d3k5LM3kkx8ArDbLw==}
@@ -37491,6 +37494,10 @@ snapshots:
   '@types/react@18.3.31':
     dependencies:
       '@types/prop-types': 15.7.15
+      csstype: 3.2.3
+
+  '@types/react@19.3.0':
+    dependencies:
       csstype: 3.2.3
 
   '@types/resolve@1.17.1':
