@@ -38,7 +38,7 @@ import { getBuildInfoOptions, getVersionInfoOptions, portal } from '../../utils/
 //
 // The real values come from the version.json that vite-plugins/create-version-json.ts generates per
 // app, fetched by the query below. The fallback is what the hook returns before that resolves,
-// or when the fetch fails. Each app passes its own package.json version as the fallback:
+// or when the fetch fails. Each app passes its own version (`__APP_VERSION__`) as the fallback:
 // BasePage shows the "APIHUB UI is out of date" dialog when its version differs from
 // frontendVersion, so a fallback that differs from the app's version shows that dialog on
 // every page load until version.json arrives.

@@ -9,7 +9,7 @@ import { visualizer as bundleVisualizer } from 'rollup-plugin-visualizer'
 import inject from '@rollup/plugin-inject'
 import monacoWorkerHashPlugin from '../../vite-plugins/monaco-worker-hash'
 import createVersionJsonFilePlugin from '../../vite-plugins/create-version-json'
-import stampedAppVersionPlugin from '../../vite-plugins/stamped-app-version'
+import { appStampedVersion } from '../../vite-plugins/app-version'
 import removeMswFromDistPlugin from '../../vite-plugins/remove-msw-from-dist'
 import { createRequire } from 'module'
 
@@ -47,6 +47,9 @@ export default defineConfig(({ mode }) => {
   const analyzeBundle = mode === 'analyze'
 
   return {
+    // The version of the app, `<version>+<build id>`: the bundle reads it as `__APP_VERSION__` and version.json carries
+    // the same string.
+    define: { __APP_VERSION__: JSON.stringify(appStampedVersion('portal')) },
     plugins: [
       tsconfigPaths(),
       react({ fastRefresh: false }),
@@ -93,7 +96,6 @@ export default defineConfig(({ mode }) => {
           injectTo: 'head-prepend',
         },
       }),
-      stampedAppVersionPlugin('portal'),
       createVersionJsonFilePlugin(),
       removeMswFromDistPlugin(),
     ],

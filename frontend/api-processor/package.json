@@ -74,6 +74,7 @@
   },
   "devDependencies": {
     "@jest/globals": "30.4.1",
+    "@netcracker/qubership-apihub-build-id": "workspace:^",
     "@types/jest": "30.0.0",
     "@types/mime-types": "^3.0.0",
     "@types/node": "^24.0.0",

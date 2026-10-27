@@ -33,7 +33,6 @@ import { AiAssistantPanel } from '@portal/components/AiAssistant/AiAssistantPane
 import {
   AiAssistantProvider,
 } from '@portal/components/AiAssistant/state/AiAssistantProvider'
-import * as packageJson from '../../../../package.json'
 import { portal } from '@netcracker/qubership-apihub-ui-shared/utils/version-info'
 import { PORTAL_PATH_PATTERNS } from '../../../routes'
 import { Notification, useShowErrorNotification } from '../BasePage/Notification'
@@ -48,7 +47,7 @@ export const BasePage: FC = memo(() => {
   const { notification: systemNotification, aiChatEnabled } = useSystemInfo()
   const showErrorNotification = useShowErrorNotification()
   const isSuperAdmin = useSuperAdminCheck()
-  const { frontendVersion, apiProcessorVersion } = useVersionInfo(portal, packageJson.version)
+  const { frontendVersion, apiProcessorVersion } = useVersionInfo(portal, __APP_VERSION__)
   const buildRef = useBuildRef(portal)
   const agentEnabled = useAgentEnabled()
   const viewPortStyleCalculator = useCallback(
@@ -115,7 +114,7 @@ export const BasePage: FC = memo(() => {
   return (
     <MainPageProvider>
       <SidePanelManagerProvider>
-        <ModuleFetchingErrorBoundary showReloadPopup={packageJson.version !== frontendVersion}>
+        <ModuleFetchingErrorBoundary showReloadPopup={__APP_VERSION__ !== frontendVersion}>
           {/* Render the provider unconditionally. A conditional wrapper remounts the page when
               aiChatEnabled arrives with the system info, and every component on it loses its state. */}
           <AiAssistantProvider>

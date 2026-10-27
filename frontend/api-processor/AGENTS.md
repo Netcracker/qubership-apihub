@@ -11,7 +11,7 @@ exports them. `build-task-consumer` and `ui` use it. Follow the root [`AGENTS.md
 |------|----------|
 | Source | `src/` |
 | Tests and helpers | `test/` (`test/helpers`) |
-| Build scripts | `scripts/build-id.mjs` (the build id), `scripts/stamp-cjs-version.mjs`, and the asserts `scripts/assert-light-entry-parser-free.mjs` and `scripts/assert-version-stamped.mjs` (run after `build`) |
+| Build scripts | `scripts/stamp-cjs-version.mjs`, and the asserts `scripts/assert-light-entry-parser-free.mjs` and `scripts/assert-version-stamped.mjs` (run after `build`) |
 | Build config | `vite.config.ts`, `jest.config.ts`, `vite.performance.config.ts` |
 
 ## Build and test
@@ -33,9 +33,10 @@ pull in the DDL parser and that both outputs carry the stamped version. The pack
   WASM); the post-build assertion fails otherwise.
 - It depends on `api-diff`, `api-unifier`, `ddlapi`, `graphapi`, and `json-crawl` in the workspace.
 - The version the build reports is `<package.json version>+<build id>`, for example `5.7.2+69e8c1f635`. The id hashes
-  the sources of this package and of the workspace packages it depends on, so a branch that changes the processor
-  without a version bump still reports a different version. `dist/cjs/package.json` and the ES build carry the
-  stamped value; the build-task-consumer writes it into every package version, and the UI reads it into
+  the sources of this package and of the workspace packages it depends on
+  ([`tools/build-id`](../../tools/build-id/README.md)), so a branch that changes the processor without a version
+  bump still reports a different version. `dist/cjs/package.json` and the ES build carry the stamped value;
+  the build-task-consumer writes it into every package version, and the UI reads it into
   `version.json`. Tests run the sources and see the plain version. Both sides compare the strings for equality.
 - Output lists must be deterministic: a reordered list reads as a changed build after a migration.
 - A broken document becomes a reported notification, not a thrown error that aborts the version.

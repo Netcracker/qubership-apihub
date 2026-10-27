@@ -26,6 +26,9 @@
  * api-processor: the build-task-consumer reports the stamped value into every package version it builds, and the UI
  * reads it into `version.json`. They agree because they read one build output. A UI app: its bundle and its
  * `version.json` get the value from one build, and the page reloads when the two differ.
+ *
+ * This package knows the layout of the workspace (`frontend/*` and `frontend/*` + `/packages/*`) and nothing about
+ * any one consumer. Usage from the command line: `node build-id.mjs <package dir>`.
  */
 
 import { createHash } from 'crypto'
@@ -33,7 +36,6 @@ import { existsSync, readdirSync, readFileSync, statSync } from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
 
-const PACKAGE_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const BUILD_ID_LENGTH = 10
 
 // Directories and files that cannot change what the package builds or does at runtime.
@@ -138,7 +140,7 @@ function listFiles(dir, base = dir) {
 }
 
 /** `includeDevDependencies`: an app bundles its workspace devDependencies, a library does not. */
-export function computeBuildId(packageDir = PACKAGE_DIR, { includeDevDependencies = false } = {}) {
+export function computeBuildId(packageDir, { includeDevDependencies = false } = {}) {
   const hash = createHash('sha256')
   for (const [name, dir] of sourcePackages(findWorkspaceRoot(packageDir), packageDir, includeDevDependencies)) {
     hash.update(`package ${name}\0`)
@@ -151,11 +153,16 @@ export function computeBuildId(packageDir = PACKAGE_DIR, { includeDevDependencie
   return hash.digest('hex').slice(0, BUILD_ID_LENGTH)
 }
 
-export function stampedVersion(packageDir = PACKAGE_DIR, options = {}) {
+export function stampedVersion(packageDir, options = {}) {
   const { version } = JSON.parse(readFileSync(path.join(packageDir, 'package.json'), 'utf-8'))
   return `${version}+${computeBuildId(packageDir, options)}`
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  console.log(stampedVersion())
+  const packageDir = process.argv[2]
+  if (!packageDir) {
+    console.error('usage: node build-id.mjs <package dir>')
+    process.exit(1)
+  }
+  console.log(stampedVersion(path.resolve(packageDir)))
 }

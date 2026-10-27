@@ -28,10 +28,11 @@
 import { readFileSync, writeFileSync } from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
-import { stampedVersion } from './build-id.mjs'
+import { stampedVersion } from '@netcracker/qubership-apihub-build-id'
 
-const manifestPath = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../dist/cjs/package.json')
+const packageDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
+const manifestPath = path.join(packageDir, 'dist/cjs/package.json')
 const manifest = JSON.parse(readFileSync(manifestPath, 'utf-8'))
-manifest.version = stampedVersion()
+manifest.version = stampedVersion(packageDir)
 writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 4)}\n`)
 console.log(`dist/cjs/package.json version: ${manifest.version}`)

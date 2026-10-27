@@ -1,0 +1,21 @@
+{
+  "name": "@netcracker/qubership-apihub-build-id",
+  "version": "1.0.0",
+  "private": true,
+  "description": "The build id of a workspace package: a hash of its sources and of the workspace packages it depends on.",
+  "type": "module",
+  "license": "Apache-2.0",
+  "exports": {
+    ".": {
+      "types": "./build-id.d.mts",
+      "default": "./build-id.mjs"
+    },
+    "./vite-plugin": {
+      "types": "./vite-plugin.d.mts",
+      "default": "./vite-plugin.mjs"
+    }
+  },
+  "nx": {
+    "name": "build-id"
+  }
+}

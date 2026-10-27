@@ -28,7 +28,6 @@ import { LogoIcon } from '@netcracker/qubership-apihub-ui-shared/icons/LogoIcon'
 import { AppHeader } from '@netcracker/qubership-apihub-ui-shared/components/AppHeader'
 import { MaintenanceNotification } from '@netcracker/qubership-apihub-ui-shared/components/MaintenanceNotification'
 import { SystemInfoPopup, useSystemInfo } from '@netcracker/qubership-apihub-ui-shared/features/system-info'
-import * as packageJson from '../../../../package.json'
 import { useBuildRef, useVersionInfo } from '@netcracker/qubership-apihub-ui-shared/hooks/frontend-version/useVersionInfo'
 import { agent } from '@netcracker/qubership-apihub-ui-shared/utils/version-info'
 import {
@@ -44,7 +43,7 @@ import { useAgentEnabled } from '@netcracker/qubership-apihub-ui-shared/features
 
 export const BasePage: FC = memo(() => {
   const { notification: systemNotification } = useSystemInfo()
-  const { frontendVersion, apiProcessorVersion } = useVersionInfo(agent, packageJson.version)
+  const { frontendVersion, apiProcessorVersion } = useVersionInfo(agent, __APP_VERSION__)
   const buildRef = useBuildRef(agent)
   const agentEnabled = useAgentEnabled()
   const viewPortStyleCalculator = useCallback(
@@ -67,7 +66,7 @@ export const BasePage: FC = memo(() => {
   )
 
   return (
-    <ModuleFetchingErrorBoundary showReloadPopup={packageJson.version !== frontendVersion}>
+    <ModuleFetchingErrorBoundary showReloadPopup={__APP_VERSION__ !== frontendVersion}>
       <Box
         display="grid"
         gridTemplateRows="max-content 1fr"

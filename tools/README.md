@@ -11,6 +11,7 @@ Helpers of `ci.yml`, the E2E workflows, and the Pages workflow. The workflows th
 - `branch-tag.sh` turns a Git ref into an image tag, such as `develop` into `dev`.
 - `image-input-hash.sh` computes the content hash behind a `src-<hash>` image tag.
 - `images-gc.js` deletes image versions in ghcr that no live ref needs.
+- `build-id/` computes the build id that stamps the versions of api-processor and of the UI apps; see its `README.md`.
 - `announce-versions.js` comments on the issues that a merged pull request closes with the versions that carry the change.
 - `ref-overlay/` is the thin image layer that gives a branch tag its branch, commit, and build time.
 - `ci-verdict.js` and `plan-summary.js` compute the `ci-ok` verdict and render the plan job summary;

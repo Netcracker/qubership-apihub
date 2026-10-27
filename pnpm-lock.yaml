@@ -654,6 +654,9 @@ importers:
       '@jest/globals':
         specifier: 30.4.1
         version: 30.4.1(supports-color@9.4.0)
+      '@netcracker/qubership-apihub-build-id':
+        specifier: workspace:^
+        version: link:../../tools/build-id
       '@types/jest':
         specifier: 30.0.0
         version: 30.0.0
@@ -2889,6 +2892,9 @@ importers:
       '@babel/core':
         specifier: 7.29.7
         version: 7.29.7(supports-color@5.5.0)
+      '@netcracker/qubership-apihub-build-id':
+        specifier: workspace:^
+        version: link:../../tools/build-id
       '@rollup/plugin-inject':
         specifier: 5.0.5
         version: 5.0.5(rollup@3.30.0)
@@ -3744,6 +3750,8 @@ importers:
       typescript:
         specifier: 6.0.3
         version: 6.0.3
+
+  tools/build-id: {}
 
   tools/jest-chrome-in-docker-environment:
     dependencies:

@@ -25,10 +25,11 @@
 import { readdirSync, readFileSync } from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
-import { stampedVersion } from './build-id.mjs'
+import { stampedVersion } from '@netcracker/qubership-apihub-build-id'
 
-const dist = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../dist')
-const expected = stampedVersion()
+const packageDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
+const dist = path.join(packageDir, 'dist')
+const expected = stampedVersion(packageDir)
 const failures = []
 
 const cjsVersion = JSON.parse(readFileSync(path.join(dist, 'cjs/package.json'), 'utf-8')).version

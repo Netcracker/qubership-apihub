@@ -23,7 +23,7 @@ import Unfonts from 'unplugin-fonts/vite'
 import { visualizer as bundleVisualizer } from 'rollup-plugin-visualizer'
 import inject from '@rollup/plugin-inject'
 import createVersionJsonFilePlugin from '../../vite-plugins/create-version-json'
-import stampedAppVersionPlugin from '../../vite-plugins/stamped-app-version'
+import { appStampedVersion } from '../../vite-plugins/app-version'
 import removeMswFromDistPlugin from '../../vite-plugins/remove-msw-from-dist'
 
 // const proxyServer = 'https://qubership-apihub.localtest.me'
@@ -42,6 +42,9 @@ export default defineConfig(({ mode }) => {
 
   return {
     base: !isProxyMode ? '/agents' : '',
+    // The version of the app, `<version>+<build id>`: the bundle reads it as `__APP_VERSION__` and version.json carries
+    // the same string.
+    define: { __APP_VERSION__: JSON.stringify(appStampedVersion('agents')) },
     plugins: [
       tsconfigPaths(),
       react({ fastRefresh: false }),
@@ -78,7 +81,6 @@ export default defineConfig(({ mode }) => {
           injectTo: 'head-prepend',
         },
       }),
-      stampedAppVersionPlugin('agents'),
       createVersionJsonFilePlugin(),
       removeMswFromDistPlugin(),
     ],

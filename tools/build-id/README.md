@@ -1,0 +1,53 @@
+# build-id
+
+The build id of a workspace package: a hash of its sources and of the workspace packages it depends on. A package
+reports `<version from package.json>+<build id>`, for example `5.7.2+282fe2a072`.
+
+Two builds of the same sources report the same string wherever they run. A branch that changes the code without a
+version bump reports a different one, which is what the check "this version was built by another api-processor"
+and the "reload the page" prompt of the UI need.
+
+## What it hashes
+
+- The files of the package and of every package in its `dependencies` with a `workspace:` range, transitively.
+- An app (`includeDevDependencies: true`) also follows its own workspace `devDependencies`, because it bundles them.
+  A library's `devDependencies` are its tools and never count.
+- Not `node_modules`, build output, tests, stories, documentation, Markdown, and similar files that no build reads.
+- Line endings are normalized and names are sorted by code unit, so a Windows and a Linux checkout of one commit agree.
+
+## API
+
+```js
+import { computeBuildId, stampedVersion } from '@netcracker/qubership-apihub-build-id'
+
+stampedVersion(packageDir)                                   // '5.7.2+282fe2a072'
+stampedVersion(appDir, { includeDevDependencies: true })     // '3.10.2+3ed957bfd9'
+```
+
+```js
+// vite.config.ts of a library with a tsc build next to the Vite one
+import { stampedVersionPlugin } from '@netcracker/qubership-apihub-build-id/vite-plugin'
+
+plugins: [stampedVersionPlugin(__dirname)]
+```
+
+`stampedVersionPlugin` replaces the import of the package's own `package.json` with a module that exports only
+`version`. A UI app does not use it: it passes the version through Vite `define` and never imports its manifest.
+
+From the command line: `node tools/build-id/build-id.mjs <package dir>`.
+
+## Who uses it
+
+| Consumer | How |
+|----------|-----|
+| `frontend/api-processor` | the Vite plugin, and `scripts/stamp-cjs-version.mjs` for the CommonJS build |
+| `frontend/ui` | `vite-plugins/app-version.ts`, for `define` and for `version.json` |
+| `tools/ci/announce-versions.js` | loads `build-id.mjs` by path, because the workflow runs no install |
+
+## Test
+
+```bash
+node --test tools/build-id/build-id.test.mjs
+```
+
+The root `pnpm run test:tools` runs it with the other tools.

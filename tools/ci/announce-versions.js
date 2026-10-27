@@ -4,7 +4,7 @@
 // It runs after CI succeeds on a push to `develop`. The pull request is the one whose merge commit is the pushed
 // commit. For every issue it closes, the script posts one comment with the version that System Information shows
 // for each component: the backends and the build-task-consumer report the version of their `dev` image, the UI and
-// api-processor the stamped version of their package (frontend/api-processor/scripts/build-id.mjs).
+// api-processor the stamped version of their package (tools/build-id).
 //
 // A SECOND BUILD. CI publishes `dev` again on the next push. If that already happened when this runs, the image
 // reports a newer commit than the merge; the comment says so, because the change is then in that version or later.
@@ -22,7 +22,8 @@ const { pathToFileURL } = require('url')
 
 const SHORT_SHA_LENGTH = 7
 const ROOT = path.resolve(__dirname, '..', '..')
-const BUILD_ID_SCRIPT = path.join(ROOT, 'frontend', 'api-processor', 'scripts', 'build-id.mjs')
+// Loaded by path: the workflow checks the commit out and runs no install, so the workspace link does not exist.
+const BUILD_ID_SCRIPT = path.join(ROOT, 'tools', 'build-id', 'build-id.mjs')
 const UI_APP = 'portal'
 
 // What System Information lists, in its order, plus the build-task-consumer. `image` is the ghcr package.
