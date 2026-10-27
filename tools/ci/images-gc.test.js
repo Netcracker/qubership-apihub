@@ -88,12 +88,23 @@ test('untagged and content versions under a day old stay, with what they list', 
   assert.deepEqual(gone, ['stale'])
 })
 
-test('pull request tags and versions with any live tag stay', async () => {
+test('liveTags() keeps pull-N-merge while the pull request head ref exists', () => {
+  const live = liveTags(['refs/heads/develop', 'refs/pull/605/head'])
+  assert.equal(live.has('pull-605-merge'), true)
+  assert.equal(live.has('pull-12-merge'), false)
+})
+
+test('an open pull request keeps its image and a closed one does not', async () => {
   const gone = await run(
-    [v('pr', ['pull-605-merge']), v('mixed', ['gone-branch', 'develop-copy']), v('gone', ['gone-branch-2'])],
-    ['refs/heads/develop', 'refs/heads/develop-copy'],
+    [
+      v('open', ['pull-605-merge']),
+      v('closed', ['pull-12-merge'], FRESH),
+      v('mixed', ['gone-branch', 'develop-copy']),
+      v('gone', ['gone-branch-2']),
+    ],
+    ['refs/heads/develop', 'refs/heads/develop-copy', 'refs/pull/605/head'],
   )
-  assert.deepEqual(gone, ['gone'])
+  assert.deepEqual(gone, ['closed', 'gone'])
 })
 
 test('content that only the base of a branch image names is unreachable without the annotation', async () => {

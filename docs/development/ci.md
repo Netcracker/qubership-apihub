@@ -21,7 +21,7 @@ numbered in the order they run.
 | E2E: Podman Compose | `e2e-tests-compose.yml` | called by `e2e-tests-manual.yml` | the same suites against a Compose stack, without the agent |
 | E2E: Run tests (manual) | `e2e-tests-manual.yml` | manual, nightly at 00:00 UTC | E2E against images you name; see [Manual E2E](#manual-e2e) |
 | Images: Build | `images.yml` | called by `ci.yml` | builds an image when its content is new, otherwise retags the existing one |
-| Images: Clean up | `images-gc.yml` | branch deletion, twice a day, manual | deletes image versions that no branch or tag needs |
+| Images: Clean up | `images-gc.yml` | branch deletion, twice a day, manual | deletes image versions that no branch, tag, or open pull request needs |
 | Images: Security scan | `security-scan-apihub.yml` | weekly (Sunday 03:00 UTC), manual | Grype and Trivy over the published images or the source tree |
 | Lint: Code base | `super-linter.yaml` | push to any branch, pull request, manual | super-linter on the changed files; `full_scan` lints everything |
 | Lint: Go module licenses | `go-check-license.yaml` | changes to `go.mod`, `go.sum`, or `wwhrd.yml`; manual | checks dependency licenses of every Go module |
