@@ -72,6 +72,7 @@ type SystemInfoService interface {
 	GetZeroDayAdminCreds() (string, string)
 	GetSystemApiKey() string
 	FailBuildOnBrokenRefs() bool
+	GetValidationRulesSeverity() view.ValidationRulesSeverity
 	GetAccessTokenDurationSec() int
 	GetRefreshTokenDurationSec() int
 	IsLegacySAML() bool
@@ -154,12 +155,13 @@ func (g *systemInfoServiceImpl) GetClientSecret() string {
 
 func (g *systemInfoServiceImpl) GetSystemInfo() *view.SystemInfo {
 	return &view.SystemInfo{
-		BackendVersion: g.GetBackendVersion(),
-		ProductionMode: g.IsProductionMode(),
-		Notification:   g.getSystemNotification(),
-		ExternalLinks:  g.GetExternalLinks(),
-		AiChatEnabled:  g.GetAiChatConfig().Enabled,
-		FeatureFlags:   g.GetFeatureFlags(),
+		BackendVersion:          g.GetBackendVersion(),
+		ProductionMode:          g.IsProductionMode(),
+		Notification:            g.getSystemNotification(),
+		ExternalLinks:           g.GetExternalLinks(),
+		AiChatEnabled:           g.GetAiChatConfig().Enabled,
+		FeatureFlags:            g.GetFeatureFlags(),
+		ValidationRulesSeverity: g.GetValidationRulesSeverity(),
 	}
 }
 
@@ -508,6 +510,13 @@ func (g *systemInfoServiceImpl) GetSystemApiKey() string {
 
 func (g *systemInfoServiceImpl) FailBuildOnBrokenRefs() bool {
 	return g.config.BusinessParameters.FailBuildOnBrokenRefs
+}
+
+func (g *systemInfoServiceImpl) GetValidationRulesSeverity() view.ValidationRulesSeverity {
+	if g.FailBuildOnBrokenRefs() {
+		return view.ValidationRulesSeverity{BrokenRefs: view.BrokenRefsSeverityError}
+	}
+	return view.ValidationRulesSeverity{BrokenRefs: view.BrokenRefsSeverityWarning}
 }
 
 func (g *systemInfoServiceImpl) GetAccessTokenDurationSec() int {

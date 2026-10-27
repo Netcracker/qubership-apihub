@@ -843,12 +843,40 @@ paths:
                           type: object
                           additionalProperties: true
                           description: External metadata as key-value pairs
+                        validationRulesSeverity:
+                          type: object
+                          description: |
+                            Present only when `clientBuild=true`. Severity levels that the browser-based
+                            builder applies to validation rules, copied from the APIHUB system info so that
+                            Agent and Portal publications are validated the same way. When `clientBuild=false`,
+                            APIHUB sets the severity itself.
+                          required:
+                            - brokenRefs
+                          properties:
+                            brokenRefs:
+                              type: string
+                              enum:
+                                - error
+                                - warning
+                              description: |
+                                Severity level for unresolved references. `error` when the APIHUB business
+                                parameter `failBuildOnBrokenRefs` is true, `warning` when it is false.
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
+        '424':
+          description: |
+            Failed dependency. In addition to the general causes, returned when `clientBuild=true` and
+            APIHUB system info cannot be read (code `18`) or does not report a valid
+            `validationRulesSeverity.brokenRefs` (code `19`), for example when portal-backend is older
+            than agents-backend. No package is created in this case.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomError'
         '500':
           $ref: '#/components/responses/InternalServerError'
     get:
