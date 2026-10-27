@@ -66,7 +66,7 @@ export function useAppApiProcessorVersion(appType: AppTypeApiHub = portal): stri
 }
 
 // `<branch>.<commit>.<UTC commit time>` of the image the app is served from, or `undefined` when the image carries no build info.
-export function useBuildRef(appType: AppTypeApiHub = portal): string | undefined {
+export function useImageVersion(appType: AppTypeApiHub = portal): string | undefined {
   const { data } = useQuery<BuildInfoDto | null, Error, string | undefined>(
     getBuildInfoOptions(appType),
   )

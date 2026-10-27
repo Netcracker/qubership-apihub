@@ -16,11 +16,13 @@
 
 import type { FC } from 'react'
 import { memo, useState } from 'react'
-import { Box, DialogContent, DialogTitle, Divider, IconButton, Link, Popover, Typography } from '@mui/material'
+import { Box, DialogContent, DialogTitle, Divider, IconButton, Link, Popover, styled, Typography } from '@mui/material'
 import CloseOutlinedIcon from '@mui/icons-material/CloseOutlined'
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
 import { ButtonWithHint } from '../../../components/Buttons/ButtonWithHint'
+import type { TestableProps } from '../../../components/Testable'
 import { useExtensionVersions } from '../api/useExtensionVersions'
+import type { ExtensionVersionState, VersionedExtensionName } from '../api/useExtensionVersions'
 import { useSystemInfo } from '../api/useSystemInfo'
 import { isNotEmpty } from '../../../utils/arrays'
 import { InfoContextIcon } from '../../../icons/InfoContextIcon'
@@ -28,49 +30,39 @@ import { InfoContextIcon } from '../../../icons/InfoContextIcon'
 type SystemInfoPopupProps = {
   frontendVersionKey: string
   apiProcessorVersion?: string
-  buildRef?: string
+  // The image that the app ships in: `<branch>.<commit>.<commit time>`. Absent outside an image.
+  imageVersion?: string
   migrationInProgress?: boolean
 }
 
-// A version line is long (`develop.a1b2c3d.20261026104501`). The popup takes the width of its longest line, up to the
-// maximum, and a line wraps only beyond it. `overflowWrap: anywhere` would shrink that width to the minimum instead.
-const VERSION_TEXT_SX = { overflowWrap: 'break-word' } as const
+const EXTENSION_TITLES: Record<VersionedExtensionName, string> = {
+  'api-linter': 'API Linter',
+  'agents-backend': 'Agents Backend',
+}
+const VERSION_PENDING_TEXT = '...'
+const VERSION_NO_DATA_TEXT = 'no data'
+
 const CONTENT_MIN_WIDTH = 236
 const CONTENT_MAX_WIDTH = 480
-// The popover keeps a 16px margin on each side and the content 24px of padding; a narrow window shrinks the content.
-const CONTENT_MAX_WIDTH_IN_WINDOW = `min(${CONTENT_MAX_WIDTH}px, calc(100vw - 96px))`
+// The popover keeps a 16px margin on each side and the content 24px of padding on each: 80px. A narrow window shrinks
+// the content by that much.
+const CONTENT_MAX_WIDTH_IN_WINDOW = `min(${CONTENT_MAX_WIDTH}px, calc(100vw - 80px))`
 
-type VersionRowProps = {
-  title: string
-  version: string
-  // The image the version ships in: `<branch>.<commit>.<commit time>`.
-  caption?: string
-  'data-testid': string
+function getExtensionVersionText(state: ExtensionVersionState): string {
+  switch (state.status) {
+    case 'success':
+      return state.version
+    case 'error':
+      return VERSION_NO_DATA_TEXT
+    case 'pending':
+      return VERSION_PENDING_TEXT
+  }
 }
-
-const VersionRow: FC<VersionRowProps> = memo(({ title, version, caption, 'data-testid': dataTestId }) => (
-  <Box>
-    <Typography variant="subtitle2" sx={VERSION_TEXT_SX} data-testid={dataTestId}>
-      {`${title} v. ${version}`}
-    </Typography>
-    {caption && (
-      <Typography
-        component="div"
-        variant="caption"
-        color="text.secondary"
-        sx={VERSION_TEXT_SX}
-        data-testid={`${dataTestId}Build`}
-      >
-        {caption}
-      </Typography>
-    )}
-  </Box>
-))
 
 export const SystemInfoPopup: FC<SystemInfoPopupProps> = memo(({
   frontendVersionKey,
   apiProcessorVersion,
-  buildRef,
+  imageVersion,
 }) => {
   const [anchor, setAnchor] = useState<HTMLElement>()
   const { backendVersionKey, externalLinks, migrationInProgress } = useSystemInfo()
@@ -105,7 +97,7 @@ export const SystemInfoPopup: FC<SystemInfoPopupProps> = memo(({
             <CloseOutlinedIcon/>
           </IconButton>
         </DialogTitle>
-        <DialogContent data-testid="SystemInfoContent" sx={{ width: 'max-content', minWidth: CONTENT_MIN_WIDTH, maxWidth: CONTENT_MAX_WIDTH_IN_WINDOW, pb: 2 }}>
+        <SystemInfoContent data-testid="SystemInfoContent">
           <Box sx={{
             display: 'grid',
             rowGap: 1,
@@ -121,26 +113,26 @@ export const SystemInfoPopup: FC<SystemInfoPopupProps> = memo(({
 
             <VersionRow title="Backend" version={backendVersionKey} data-testid="SystemInfoBackendVersion"/>
 
-            {extensionVersions.map(({ extensionName, title, version }) => (
+            {extensionVersions.map(state => (
               <VersionRow
-                key={extensionName}
-                title={title}
-                version={version ?? '...'}
-                data-testid={`SystemInfoExtensionVersion-${extensionName}`}
+                key={state.name}
+                title={EXTENSION_TITLES[state.name]}
+                version={getExtensionVersionText(state)}
+                data-testid={`SystemInfoExtensionVersion-${state.name}`}
               />
             ))}
 
             <VersionRow
               title="Frontend"
               version={frontendVersionKey}
-              caption={buildRef}
+              imageVersion={imageVersion}
               data-testid="SystemInfoFrontendVersion"
             />
 
             <VersionRow
               title="API Processor"
-              version={apiProcessorVersion ?? '...'}
-              caption={buildRef}
+              version={apiProcessorVersion ?? VERSION_PENDING_TEXT}
+              imageVersion={imageVersion}
               data-testid="SystemInfoApiProcessorVersion"
             />
 
@@ -157,11 +149,51 @@ export const SystemInfoPopup: FC<SystemInfoPopupProps> = memo(({
               ))}
             </>}
           </Box>
-        </DialogContent>
+        </SystemInfoContent>
       </Popover>
     </>
   )
 })
+
+type VersionRowProps = Readonly<{
+  title: string
+  version: string
+  // The image that the version ships in; the second line of the row.
+  imageVersion?: string
+}> & TestableProps
+
+const VersionRow: FC<VersionRowProps> = memo(({ title, version, imageVersion, 'data-testid': dataTestId }) => (
+  <VersionRowRoot>
+    <Typography variant="subtitle2" data-testid={dataTestId}>
+      {`${title} v. ${version}`}
+    </Typography>
+    {imageVersion && (
+      <Typography
+        component="div"
+        variant="caption"
+        color="text.secondary"
+        data-testid={dataTestId && `${dataTestId}ImageVersion`}
+      >
+        {imageVersion}
+      </Typography>
+    )}
+  </VersionRowRoot>
+))
+VersionRow.displayName = 'VersionRow'
+
+// A version line is long (`develop.a1b2c3d.20261026104501`). `overflow-wrap` is inherited, so the root of the row is enough.
+// `break-word` keeps the width of the popup that of its longest line, up to the maximum; `anywhere` would shrink it to the
+// minimum.
+const VersionRowRoot = styled(Box)({
+  overflowWrap: 'break-word',
+})
+
+const SystemInfoContent = styled(DialogContent)(({ theme }) => ({
+  width: 'max-content',
+  minWidth: CONTENT_MIN_WIDTH,
+  maxWidth: CONTENT_MAX_WIDTH_IN_WINDOW,
+  paddingBottom: theme.spacing(2),
+}))
 
 interface Link {
   title: string

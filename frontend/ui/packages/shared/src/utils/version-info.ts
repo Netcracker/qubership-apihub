@@ -31,13 +31,8 @@ export type VersionInfo = VersionInfoDto
 export type BuildInfoDto = {
   branch: string
   commit: string
-  // UTC, yyyymmddHHMMSS: the time of the commit. Empty when the image has no COMMIT_TIME.
-  committedAt?: string
-}
-
-// `develop.a1b2c3d.20261026104501`: the same form that the backends report, so the rows of System Information read alike.
-function formatBuildRef({ branch, commit, committedAt }: BuildInfoDto): string {
-  return committedAt ? `${branch}.${commit}.${committedAt}` : `${branch}.${commit}`
+  // UTC, yyyymmddHHMMSS: the time of the commit. The entrypoint writes an empty string when the image has no COMMIT_TIME.
+  committedAt: string
 }
 
 export const Apps = {
@@ -70,7 +65,7 @@ export function getBuildInfoOptions(appType: AppTypeApiHub): UseQueryOptions<Bui
   return {
     queryKey: [BUILD_INFO_QUERY_KEY, appType],
     queryFn: () => getBuildInfo(appType),
-    select: buildInfo => (buildInfo ? formatBuildRef(buildInfo) : undefined),
+    select: buildInfo => (buildInfo ? formatImageVersion(buildInfo) : undefined),
     retry: false,
     staleTime: Infinity,
     refetchOnWindowFocus: false,
@@ -82,4 +77,9 @@ async function getBuildInfo(appType: AppTypeApiHub): Promise<BuildInfoDto | null
   return await requestJson<BuildInfoDto | null>(`/${appType}/build-info.json`, {
     method: 'get',
   }, { ignoreNotFound: true })
+}
+
+// `develop.a1b2c3d.20261026104501`: the same form that the backends report, so the rows of System Information read alike.
+function formatImageVersion({ branch, commit, committedAt }: BuildInfoDto): string {
+  return committedAt ? `${branch}.${commit}.${committedAt}` : `${branch}.${commit}`
 }
