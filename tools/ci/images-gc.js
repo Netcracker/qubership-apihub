@@ -6,17 +6,21 @@
 // dev, a branch or a git tag by its name. Nothing in a tag says which repository wrote it, so each
 // tag is weighed against the refs of both: the monorepo and the repository the package links to.
 //
-// A TAG IS DEAD when no ref of either repository maps to it. Never dead: `latest`, `next`, `dev`,
-// `pull-N-merge` (closing a pull request deletes nothing), and `src-<hash>`, which is content and
-// is judged by what uses it. A git tag maps to its name and to its last path segment, so a release
-// image (`1.21.0`, or the monorepo's `<version>` for the tag `<component>/<version>`) stays for as
-// long as its git tag does.
+// A TAG IS DEAD when no ref of either repository maps to it. Never dead on their own: `latest`,
+// `next`, `dev`, and `src-<hash>`, which is content and is judged by what uses it. `pull-N-merge`
+// stays while `refs/pull/N/head` exists. GitHub keeps that ref for every open pull request, including
+// one that does not merge cleanly, and drops it when the pull request closes. `ls-remote --heads
+// --tags` does not list it, so the run asks for it on its own. A git tag maps to its name and to its
+// last path segment, so a release image (`1.21.0`, or the monorepo's `<version>` for the tag
+// `<component>/<version>`) stays for as long as its git tag does.
 //
 // A VERSION IS DELETED when nothing kept reaches it. The roots are the versions with a live tag,
 // and an index keeps every manifest it lists: a multi-arch image is an index whose platform
 // manifests are untagged versions of their own. A `src-<hash>` version stays while a kept index
-// lists it (one platform) or lists its platform manifests (images.yml wraps the content in a new
-// index per branch tag). An untagged or content version under 24h old stays with what it lists: a
+// lists it (one platform), lists its platform manifests, or names it as its base. The last is how a
+// branch tag reaches its content: the tag is a thin layer over the content image (tools/ci/ref-overlay),
+// its index lists manifests of its own and shares only layer blobs with the content, so images.yml
+// annotates it with `org.opencontainers.image.base.digest`, the digest of the content index. An untagged or content version under 24h old stays with what it lists: a
 // CI leg pushes the content first and the tag that names it after. So a deleted branch's tags go at
 // once; a superseded index, and content nothing points at, a day after their last change. Deleting
 // a version removes every tag on it, so a version with a live tag is never deleted.
@@ -43,7 +47,7 @@ const path = require('path')
 
 const GC_MIN_AGE_MS = 24 * 60 * 60 * 1000
 const CONTENT_TAG = /^src-[0-9a-f]{16}$/
-const PULL_TAG = /^pull-\d+-merge$/
+const PULL_HEAD = /^refs\/pull\/(\d+)\/head$/
 const FLOATING = ['latest', 'next', 'dev']
 const MANIFEST_TYPES = [
   'application/vnd.oci.image.index.v1+json',
@@ -90,18 +94,22 @@ function legacyTag(ref) {
     .replace(/\//g, '-')
 }
 
-// Every tag name some ref can have produced, from full ref names (`refs/heads/…`, `refs/tags/…`).
+// Every tag name some ref can have produced, from full ref names (`refs/heads/…`, `refs/tags/…`,
+// `refs/pull/N/head`). The published pull tag is `pull-N-merge`; the head ref would otherwise map to
+// `pull-N-head`, which no build publishes.
 function liveTags(refs) {
   const live = new Set(FLOATING)
   for (const ref of refs) {
     live.add(branchTag(ref))
     live.add(legacyTag(ref))
     if (ref.startsWith('refs/tags/')) live.add(ref.slice(ref.lastIndexOf('/') + 1))
+    const pull = PULL_HEAD.exec(ref)
+    if (pull) live.add(`pull-${pull[1]}-merge`)
   }
   return live
 }
 
-const isDead = (tag, live) => !CONTENT_TAG.test(tag) && !PULL_TAG.test(tag) && !live.has(tag)
+const isDead = (tag, live) => !CONTENT_TAG.test(tag) && !live.has(tag)
 
 // ---- the plan ---------------------------------------------------------------------------------
 
@@ -186,11 +194,21 @@ async function linkedRepository(pkg) {
   )).trim()
 }
 
-// Full names of every branch and tag. A repository always has a branch, so none is a failed read.
+function refNames(out) {
+  return out.split('\n').map((line) => line.split('\t')[1]).filter(Boolean).map((ref) => ref.replace(/\^\{\}$/, ''))
+}
+
+// Branches, tags, and the head of every open pull request. `--heads --tags` does not list
+// refs/pull. A failed read throws. Treating it as no refs would delete every pull image, or every
+// image when the branch list failed. An empty pull list is a real answer: no pull request is open.
 async function remoteRefs(remote) {
-  const out = await retried(`list the refs of ${remote}`, () => run('git', ['ls-remote', '--heads', '--tags', remote]))
-  const refs = [...new Set(out.split('\n').map((l) => l.split('\t')[1]).filter(Boolean).map((r) => r.replace(/\^\{\}$/, '')))]
-  if (!refs.some((r) => r.startsWith('refs/heads/'))) throw new Error(`git ls-remote ${remote} returned no branches; refusing to treat that as none`)
+  const listed = (what, args) => retried(what, () => run('git', args))
+  const heads = await listed(`list the refs of ${remote}`, ['ls-remote', '--heads', '--tags', remote])
+  const pulls = await listed(`list the open pull requests of ${remote}`, ['ls-remote', remote, 'refs/pull/*/head'])
+  const refs = [...new Set([...refNames(heads), ...refNames(pulls)])]
+  if (!refs.some((ref) => ref.startsWith('refs/heads/'))) {
+    throw new Error(`git ls-remote ${remote} returned no branches; refusing to treat that as none`)
+  }
   return refs
 }
 
@@ -215,17 +233,28 @@ function manifestReader(pkg) {
         res = await fetch(url, { headers: { Authorization: `Bearer ${token}`, Accept: MANIFEST_TYPES } })
       }
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      const listed = (await res.json()).manifests || []
+      const body = await res.json()
+      const listed = body.manifests || []
       // An index names its children's media types, so an image manifest is known to list
       // nothing without fetching it.
       for (const m of listed) if (!/index|list/.test(m.mediaType || '') && !cache.has(m.digest)) cache.set(m.digest, Promise.resolve([]))
-      return listed.map((m) => m.digest)
+      return referencedDigests(body)
     })
   const cache = new Map()
   return (digest) => {
     if (!cache.has(digest)) cache.set(digest, fetchChildren(digest))
     return cache.get(digest)
   }
+}
+
+const BASE_DIGEST_ANNOTATION = 'org.opencontainers.image.base.digest'
+
+// The digests that a manifest keeps alive: the manifests an index lists, and the base image that the index
+// names in its annotations (the content image under a branch tag).
+function referencedDigests(manifest) {
+  const listed = (manifest.manifests || []).map((m) => m.digest)
+  const base = manifest.annotations && manifest.annotations[BASE_DIGEST_ANNOTATION]
+  return base ? [...listed, base] : listed
 }
 
 // fn over every item, `size` at a time.
@@ -362,7 +391,7 @@ async function gc() {
 
 // ---- main -------------------------------------------------------------------------------------
 
-module.exports = { images, branchTag, legacyTag, liveTags, plan }
+module.exports = { images, branchTag, legacyTag, liveTags, plan, referencedDigests }
 
 if (require.main === module) {
   gc().catch((e) => {

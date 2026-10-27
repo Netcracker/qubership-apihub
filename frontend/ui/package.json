@@ -93,6 +93,7 @@
   },
   "devDependencies": {
     "@babel/core": "7.29.7",
+    "@netcracker/qubership-apihub-build-id": "workspace:^",
     "@rollup/plugin-inject": "5.0.5",
     "@storybook/addon-docs": "10.6.3",
     "@storybook/addon-links": "10.6.3",

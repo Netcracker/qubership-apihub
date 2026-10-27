@@ -438,7 +438,8 @@ the monorepo and of that repository.
 
 - A release image stays while its Git tag exists: `<image>:<version>` for `<component>/<version>`, and the legacy
   `X.Y.Z` tags.
-- `latest`, `next`, `dev`, and `pull-N-merge` always stay. Closing a pull request deletes nothing.
+- `latest`, `next`, and `dev` always stay. `pull-N-merge` stays while `refs/pull/N/head` exists and goes on the
+  next run after the pull request closes.
 - A deleted branch's tag goes on the next run. Superseded indexes and `src-<hash>` content that no kept tag uses go a
   day after their last change.
 - A run never takes the API rate limit below half, so CI keeps its share. The legacy backlog takes several weeks.

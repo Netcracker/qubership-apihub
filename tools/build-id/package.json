@@ -1,0 +1,26 @@
+{
+  "name": "@netcracker/qubership-apihub-build-id",
+  "version": "1.0.0",
+  "private": true,
+  "description": "The build id of a workspace package: a hash of its sources and of the workspace packages it depends on.",
+  "type": "module",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "exports": {
+    ".": "./build-id.mts",
+    "./vite-plugin": "./vite-plugin.mts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "6.0.3",
+    "vite": "^8.2.2"
+  },
+  "nx": {
+    "name": "build-id"
+  }
+}

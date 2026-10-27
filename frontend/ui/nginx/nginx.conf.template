@@ -203,6 +203,21 @@ http {
             try_files $uri =404;
         }
 
+        location ~ ^/(portal|agents)/build-info\.json$ {
+            # The one file serves both apps. The entrypoint writes it to /app/nginx, the writable volume of the pod; a
+            # missing file is a 404, and the UI treats that as "no build info". `alias` with `try_files` in a regex location
+            # is a known trap, hence root and rewrite.
+            root /app/nginx;
+            rewrite ^ /build-info.json break;
+            add_header Cache-Control "no-store" always;
+            add_header X-Content-Type-Options  "nosniff"                         always;
+            add_header X-XSS-Protection        "0"                               always;
+            add_header Referrer-Policy         "strict-origin-when-cross-origin" always;
+            add_header X-Frame-Options         "DENY"                            always;
+            add_header Content-Security-Policy "frame-ancestors 'none'"          always;
+            default_type application/json;
+        }
+
         location ~ ^/(portal|agents)/index\.html$ {
             root /usr/share/nginx/html;
             add_header Cache-Control             "no-store" always;

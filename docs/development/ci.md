@@ -21,13 +21,14 @@ numbered in the order they run.
 | E2E: Podman Compose | `e2e-tests-compose.yml` | called by `e2e-tests-manual.yml` | the same suites against a Compose stack, without the agent |
 | E2E: Run tests (manual) | `e2e-tests-manual.yml` | manual, nightly at 00:00 UTC | E2E against images you name; see [Manual E2E](#manual-e2e) |
 | Images: Build | `images.yml` | called by `ci.yml` | builds an image when its content is new, otherwise retags the existing one |
-| Images: Clean up | `images-gc.yml` | branch deletion, twice a day, manual | deletes image versions that no branch or tag needs |
+| Images: Clean up | `images-gc.yml` | branch deletion, twice a day, manual | deletes image versions that no branch, tag, or open pull request needs |
 | Images: Security scan | `security-scan-apihub.yml` | weekly (Sunday 03:00 UTC), manual | Grype and Trivy over the published images or the source tree |
 | Lint: Code base | `super-linter.yaml` | push to any branch, pull request, manual | super-linter on the changed files; `full_scan` lints everything |
 | Lint: Go module licenses | `go-check-license.yaml` | changes to `go.mod`, `go.sum`, or `wwhrd.yml`; manual | checks dependency licenses of every Go module |
 | Lint: Markdown links | `link-checker.yaml` | push, pull request, manual | lychee over every Markdown file |
 | Pages: Database ERDs | `erd.yml` | push to `develop` or `main` that changes SQL migrations, manual | renders the ERD of each backend that owns a database |
 | Pages: Publish | `pages.yml` | dispatched by `ci.yml` and `erd.yml`, branch deletion, daily, manual | assembles and deploys the GitHub Pages site |
+| PR: Available in versions | `announce-versions.yml` | CI succeeds on a push to `develop`, manual | comments on the issues that the merged pull request closes with the version of each component, as System Information shows it |
 | PR: CLA | `cla.yaml` | pull request, comment | asks first-time contributors to sign the CLA |
 | PR: Commit messages | `pr-conventional-commits.yaml` | pull request opened, edited, or updated | checks the commit messages of the pull request |
 | PR: Labels | `automatic-pr-labeler.yaml` | pull request into `develop`, `release`, or `main` | adds type labels and `module:<name>` labels by path |
@@ -86,10 +87,19 @@ The workflow has no path filters, so a documentation-only pull request also gets
 Every image goes to `ghcr.io/netcracker/<image>` under two kinds of tag:
 
 - `src-<hash>`: the content tag. The hash covers the sources of the project and its dependencies, the Dockerfile,
-  `.dockerignore`, and the lockfile ([`tools/ci/image-input-hash.sh`](../../tools/ci/image-input-hash.sh)). An
-  image is built only when its content tag is new; otherwise the job retags the existing image.
-- The branch tag: a floating alias of the content tag, from
-  [`tools/ci/branch-tag.sh`](../../tools/ci/branch-tag.sh).
+  `.dockerignore`, and the lockfile ([`tools/ci/image-input-hash.sh`](../../tools/ci/image-input-hash.sh)). The UI
+  image also hashes `frontend/ui/nginx` and `frontend/ui/vite-plugins`. Those directories sit outside the portal
+  and agents project trees, and the image copies or bundles them. An image is built only when its content tag is
+  new; otherwise the job retags the existing image.
+- The branch tag, from [`tools/ci/branch-tag.sh`](../../tools/ci/branch-tag.sh): the content image plus one thin
+  layer ([`tools/ci/ref-overlay`](../../tools/ci/ref-overlay/Dockerfile)) that sets `GIT_BRANCH`, `GIT_HASH` (the
+  short commit), and `COMMIT_TIME` (UTC, the time of the commit). The layer sets environment variables only, so it
+  builds in seconds and never invalidates the content image. The time is the commit's, not the run's, and the build
+  passes `SOURCE_DATE_EPOCH`, so a rerun of CI on the same commit publishes the same digest. System Info reads the
+  variables: the backend from the environment, the UI from a `build-info.json` that its entrypoint writes. The same ref
+  is an OCI annotation on the tag's index, together with the content image as its base
+  (`org.opencontainers.image.base.digest`): the branch image shares only layer blobs with the content, and the
+  [cleanup](../../tools/ci/images-gc.js) follows that annotation to keep the `src-<hash>` content alive.
 
 | Ref | Branch tag |
 |---|---|

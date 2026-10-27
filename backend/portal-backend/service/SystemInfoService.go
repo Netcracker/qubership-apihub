@@ -21,6 +21,7 @@ import (
 const (
 	GIT_BRANCH           = "GIT_BRANCH"
 	GIT_HASH             = "GIT_HASH"
+	COMMIT_TIME          = "COMMIT_TIME"
 	APIHUB_CONFIG_FOLDER = "APIHUB_CONFIG_FOLDER"
 
 	LocalIDPId = "local-idp"
@@ -332,6 +333,9 @@ func (g *systemInfoServiceImpl) setBackendVersion() {
 		g.config.TechnicalParameters.BackendVersion = "unknown"
 	} else {
 		g.config.TechnicalParameters.BackendVersion = gitBranch + "." + gitHash
+		if commitTime := os.Getenv(COMMIT_TIME); commitTime != "" {
+			g.config.TechnicalParameters.BackendVersion += "." + commitTime
+		}
 	}
 }
 

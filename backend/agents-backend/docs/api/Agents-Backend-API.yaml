@@ -33,6 +33,8 @@ security:
   - ApiKeyAuth: []
   - PersonalAccessToken: []
 tags:
+  - name: System
+    description: Information about the running service.
   - name: Agents
     description: Agent registration, listing, and namespace discovery operations
   - name: Discovery
@@ -50,6 +52,30 @@ tags:
       Service proxy operations that forward HTTP GET requests to discovered backend services.
       Preserves target response status codes, headers, and body content.
 paths:
+  /api/v1/system/version:
+    get:
+      tags:
+        - System
+      summary: Get the version of the service
+      description: >
+        Returns the version of the image the service runs from, in the form branch.commit.commitTime
+        (for example, develop.a1b2c3d.20261026104501), or "unknown" when the image carries no build information.
+        System Information in the UI shows this value for the service.
+      operationId: getSystemVersion
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+        - ApiKeyAuth: []
+        - PersonalAccessToken: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SystemVersion"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /api/v2/agents:
     get:
       tags:
@@ -1515,6 +1541,18 @@ components:
         - apihub-be
         - apihub-fe
   schemas:
+    SystemVersion:
+      description: Version of the image the service runs from.
+      type: object
+      required:
+        - version
+      properties:
+        version:
+          description: >
+            Image version in the form branch.commit.commitTime (the commit time is UTC, yyyymmddHHMMSS), or "unknown"
+            when the image carries no build information.
+          type: string
+          example: develop.a1b2c3d.20261026104501
     AgentInstance:
       type: object
       properties:

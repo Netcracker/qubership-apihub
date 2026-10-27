@@ -498,6 +498,7 @@ jobs:
       images: >-
         [{"project":"ui-portal","image":"qubership-apihub-ui","dockerfile":"frontend/ui/Dockerfile",
           "build_projects":"ui-portal,ui-agents","deploy":"","context":".","dockerignore":".dockerignore",
+          "hash_paths":"frontend/ui/nginx frontend/ui/vite-plugins",
           "workspace_build":"true","outputs":""},
          {"project":"build-task-consumer","image":"qubership-apihub-build-task-consumer",
           "dockerfile":"frontend/build-task-consumer/Dockerfile",

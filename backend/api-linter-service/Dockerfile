@@ -38,11 +38,7 @@ RUN if env | grep -Eiq '^(http|https|all)_proxy=https?://https?://'; then unset 
 
 FROM ghcr.io/netcracker/qubership-core-base:2.5.8@sha256:0c2c9e4b49e73efffb30edf8d3de8b3eb43194a6c4f688da08ec3236b570b486
 
-ARG GIT_BRANCH=unknown
-ARG GIT_HASH=unknown
-
-ENV GIT_BRANCH=$GIT_BRANCH
-ENV GIT_HASH=$GIT_HASH
+# GIT_BRANCH, GIT_HASH, and COMMIT_TIME are added to the branch tag by tools/ci/ref-overlay, not to this image.
 ENV SPECTRAL_BIN_PATH=resources/spectral/linux/spectral
 
 WORKDIR /app/qubership-api-linter-service
