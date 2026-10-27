@@ -6,10 +6,13 @@ import { appStampedVersion } from './app-version'
 
 const requireFromHere = createRequire(import.meta.url)
 
-const UI_ROOT = path.resolve(__dirname, '..')
+const UI_ROOT = path.resolve(import.meta.dirname, '..')
 const API_PROCESSOR = '@netcracker/qubership-apihub-api-processor'
 
 const APPS = ['portal', 'agents'] as const
+
+// Only an image has build info: its entrypoint writes the file from GIT_BRANCH, GIT_HASH, and COMMIT_TIME.
+const BUILD_INFO_PATH = /^\/(portal|agents)\/build-info\.json$/
 
 type VersionData = {
   frontendVersion: string
@@ -91,6 +94,14 @@ export default function createVersionJsonFilePlugin(): Plugin {
     configureServer: function(server) {
       server.middlewares.use((request, response, next) => {
         const url = request.url?.split('?')[0]
+        // Without this, the SPA fallback of the dev server answers 200 with index.html, and a client that expects JSON
+        // fails on it instead of seeing "no build info".
+        if (url && BUILD_INFO_PATH.test(url)) {
+          response.statusCode = 404
+          response.end()
+          return
+        }
+
         const app = APPS.find(name => url === `/${name}/version.json`)
         if (!app) {
           next()

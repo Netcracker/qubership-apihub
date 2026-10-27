@@ -1,7 +1,7 @@
 import path from 'path'
 import { stampedVersion } from '@netcracker/qubership-apihub-build-id'
 
-const UI_ROOT = path.resolve(__dirname, '..')
+const UI_ROOT = path.resolve(import.meta.dirname, '..')
 
 const cache = new Map<string, string>()
 

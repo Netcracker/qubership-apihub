@@ -196,6 +196,13 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
           secure: false,
         },
+        // System Information asks the registered extensions for their version, so the Portal needs the prefix of the
+        // agents backend too, even though it has no page of its own.
+        '/agents-backend': {
+          target: isProxyMode ? `${proxyServer}` : devServer,
+          changeOrigin: true,
+          secure: false,
+        },
         '/api': {
           target: isProxyMode ? `${proxyServer}/api` : devServer,
           rewrite: isProxyMode ? path => path.replace(/^\/api/, '') : undefined,
