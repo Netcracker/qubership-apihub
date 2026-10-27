@@ -4,11 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"testing"
 
 	"github.com/Netcracker/qubership-apihub/backend/agents-backend/client"
 	"github.com/Netcracker/qubership-apihub/backend/agents-backend/exception"
+	"github.com/Netcracker/qubership-apihub/backend/agents-backend/utils"
 	"github.com/Netcracker/qubership-apihub/backend/agents-backend/view"
 )
 
@@ -131,6 +133,117 @@ func TestGetValidationRulesSeverity(t *testing.T) {
 			}
 			if severity == nil || severity.BrokenRefs != tt.expectedBrokenRefs {
 				t.Errorf("severity = %+v, want brokenRefs %q", severity, tt.expectedBrokenRefs)
+			}
+		})
+	}
+}
+
+// snapshotApihubClient finds every package startSnapshot looks up, so no package is created.
+type snapshotApihubClient struct {
+	systemInfoApihubClient
+	kinds map[string]view.PackageKind // packages that are not groups, by id
+}
+
+func (c *snapshotApihubClient) GetPackageById(ctx context.Context, id string) (*view.SimplePackage, error) {
+	kind, ok := c.kinds[id]
+	if !ok {
+		kind = view.KindGroup
+	}
+	return &view.SimplePackage{Id: id, Kind: string(kind)}, nil
+}
+
+func (c *snapshotApihubClient) Publish(ctx context.Context, config view.BuildConfig, src []byte, clientBuild bool, builderId string, saveSources bool, dependencies []string) (string, error) {
+	return config.PublishId, nil
+}
+
+// failingAgentClient ends each service publishing worker of startSnapshot at its first call. The dashboard
+// publish that follows goes through the no-op Publish of snapshotApihubClient.
+type failingAgentClient struct {
+	client.AgentClient
+}
+
+func (c failingAgentClient) GetServiceSpecification(ctx context.Context, namespace string, workspaceId string, serviceId string, fileId string, agentUrl string, discoveryServices string) ([]byte, error) {
+	return nil, errors.New("agent is not available in tests")
+}
+
+type fixedUrlSystemInfoService struct {
+	SystemInfoService
+}
+
+func (s fixedUrlSystemInfoService) GetApihubUrl() string {
+	return "https://apihub.example.com"
+}
+
+func TestStartSnapshotPropagatesValidationRulesSeverity(t *testing.T) {
+	const (
+		namespace   = "ns"
+		workspaceId = "ws"
+		cloudName   = "cloud"
+	)
+	services := []view.Service{
+		{Id: "svc-a", Documents: []view.Document{{FileId: "a.json"}}, Baseline: &view.Baseline{PackageId: "ws.svc-a"}},
+		{Id: "svc-b", Documents: []view.Document{{FileId: "b.json"}}, Baseline: &view.Baseline{PackageId: "ws.svc-b"}},
+		{Id: "svc-c", Documents: []view.Document{{FileId: "c.json"}}, Baseline: &view.Baseline{PackageId: "ws.svc-c"}},
+	}
+	groupId := fmt.Sprintf("%s.%s.%s.%s", workspaceId, view.DefaultSnapshotsGroupAlias, utils.ToId(cloudName), utils.ToId(namespace))
+	kinds := map[string]view.PackageKind{view.MakeSnapshotDashboardIdByGroupId(groupId): view.KindDashbord}
+	for _, svc := range services {
+		kinds[groupId+"."+utils.ToId(svc.Id)] = view.KindPackage
+	}
+
+	tests := []struct {
+		name               string
+		promote            bool
+		clientBuild        bool
+		expectedBrokenRefs string // empty means the configs must not carry a severity
+	}{
+		{"promote, client build", true, true, view.BrokenRefsSeverityError},
+		{"snapshot, client build", false, true, view.BrokenRefsSeverityError},
+		{"snapshot, server build", false, false, ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			apihubClient := &snapshotApihubClient{
+				systemInfoApihubClient: systemInfoApihubClient{info: &view.ApihubSystemInfo{
+					ValidationRulesSeverity: &view.ValidationRulesSeverity{BrokenRefs: view.BrokenRefsSeverityError},
+				}},
+				kinds: kinds,
+			}
+			s := &snapshotServiceImpl{
+				systemInfoService: fixedUrlSystemInfoService{},
+				apihubClient:      apihubClient,
+				agentClient:       failingAgentClient{},
+			}
+			snapshotDTO := view.CreateSnapshotDTO{
+				CloudName:     cloudName,
+				Promote:       tt.promote,
+				ClientBuild:   tt.clientBuild,
+				VersionStatus: string(view.DraftStatus),
+			}
+			resp, err := s.startSnapshot(context.Background(), namespace, workspaceId, "v1", services, snapshotDTO)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if len(resp.Services) != len(services) {
+				t.Fatalf("services = %d, want %d", len(resp.Services), len(services))
+			}
+			for _, config := range resp.Services {
+				if tt.expectedBrokenRefs == "" {
+					if config.ValidationRulesSeverity != nil {
+						t.Errorf("%s: validationRulesSeverity = %+v, want nil", config.ServiceId, config.ValidationRulesSeverity)
+					}
+					continue
+				}
+				if config.ValidationRulesSeverity == nil || config.ValidationRulesSeverity.BrokenRefs != tt.expectedBrokenRefs {
+					t.Errorf("%s: validationRulesSeverity = %+v, want brokenRefs %q", config.ServiceId, config.ValidationRulesSeverity, tt.expectedBrokenRefs)
+				}
+			}
+			expectedCalls := 0
+			if tt.clientBuild {
+				expectedCalls = 1
+			}
+			if apihubClient.calls != expectedCalls {
+				t.Errorf("GetSystemInfo calls = %d, want %d", apihubClient.calls, expectedCalls)
 			}
 		})
 	}
