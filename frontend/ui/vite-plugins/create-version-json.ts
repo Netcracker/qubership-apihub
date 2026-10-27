@@ -1,7 +1,7 @@
 import fs from 'fs'
 import { createRequire } from 'module'
 import path from 'path'
-import type { Plugin } from 'vite'
+import type { Connect, Plugin } from 'vite'
 import { appStampedVersion } from './app-version'
 
 const requireFromHere = createRequire(import.meta.url)
@@ -13,6 +13,19 @@ const APPS = ['portal', 'agents'] as const
 
 // Only an image has build info: its entrypoint writes the file from GIT_BRANCH, GIT_HASH, and COMMIT_TIME.
 const BUILD_INFO_PATH = /^\/(portal|agents)\/build-info\.json$/
+
+// The dev server and the preview server both fall back to index.html with status 200 when the file is missing.
+// Answer 404 before that fallback, so a client that expects JSON sees "no build info" instead of parsing HTML.
+// Registered in the hook body, not in the function the hook returns: the returned function runs after the fallback.
+const rejectMissingBuildInfo: Connect.NextHandleFunction = (request, response, next) => {
+  const url = request.url?.split('?')[0]
+  if (url && BUILD_INFO_PATH.test(url)) {
+    response.statusCode = 404
+    response.end()
+    return
+  }
+  next()
+}
 
 type VersionData = {
   frontendVersion: string
@@ -76,7 +89,8 @@ function versionDataFor(app: string): VersionData | null {
 
 /**
  * Writes `dist/version.json`, which the running application surfaces, and serves the same
- * payload from the dev server. The dev server has no dist folder.
+ * payload from the dev server. The dev server has no dist folder. The preview server serves the
+ * file from dist, and both servers answer 404 for build-info.json.
  *
  * `apiProcessorVersion` is the stamped version of api-processor, `<version>+<build id>`: its build rewrites
  * `dist/cjs/package.json`, the first manifest that `installedVersion` finds. The build-task-consumer reports the same
@@ -92,16 +106,9 @@ export default function createVersionJsonFilePlugin(): Plugin {
   return {
     name: 'create-version-json-file',
     configureServer: function(server) {
+      server.middlewares.use(rejectMissingBuildInfo)
       server.middlewares.use((request, response, next) => {
         const url = request.url?.split('?')[0]
-        // Without this, the SPA fallback of the dev server answers 200 with index.html, and a client that expects JSON
-        // fails on it instead of seeing "no build info".
-        if (url && BUILD_INFO_PATH.test(url)) {
-          response.statusCode = 404
-          response.end()
-          return
-        }
-
         const app = APPS.find(name => url === `/${name}/version.json`)
         if (!app) {
           next()
@@ -117,6 +124,9 @@ export default function createVersionJsonFilePlugin(): Plugin {
         response.setHeader('Content-Type', 'application/json')
         response.end(JSON.stringify(versionData))
       })
+    },
+    configurePreviewServer: function(server) {
+      server.middlewares.use(rejectMissingBuildInfo)
     },
     closeBundle: async function() {
       const apiProcessorVersion = installedVersion(API_PROCESSOR)
