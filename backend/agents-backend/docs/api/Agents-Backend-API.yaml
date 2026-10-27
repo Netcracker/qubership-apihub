@@ -379,9 +379,17 @@ paths:
                             url:
                               type: string
                               description: Baseline URL
+                            releaseVersionPattern:
+                              type: string
+                              description: |
+                                Release version pattern (regular expression) of the baseline package, as stored in
+                                APIHUB. APIHUB validates the version name against it when a version is published
+                                with the release status. `.*` accepts any version name. Absent when the agent
+                                predates this field.
+                              example: '^[0-9]{4}\.[1-4]$'
                             versions:
                               type: array
-                              description: Versions of the baseline package that can be selected as previousVersion. Each entry carries the API processor version it was built with. Versions with build or changelog errors stay listed and carry the flags, so the client can mark them and block the selection.
+                              description: Release versions of the baseline package that can be selected as previousVersion. Draft versions are not listed, because they cannot be used as previousVersion. Each entry carries the API processor version it was built with. Versions with build or changelog errors stay listed and carry the flags, so the client can mark them and block the selection.
                               items:
                                 type: object
                                 properties:
@@ -512,9 +520,17 @@ paths:
                             url:
                               type: string
                               description: Baseline URL
+                            releaseVersionPattern:
+                              type: string
+                              description: |
+                                Release version pattern (regular expression) of the baseline package, as stored in
+                                APIHUB. APIHUB validates the version name against it when a version is published
+                                with the release status. `.*` accepts any version name. Absent when the agent
+                                predates this field.
+                              example: '^[0-9]{4}\.[1-4]$'
                             versions:
                               type: array
-                              description: Versions of the baseline package that can be selected as previousVersion. Each entry carries the API processor version it was built with. Versions with build or changelog errors stay listed and carry the flags, so the client can mark them and block the selection.
+                              description: Release versions of the baseline package that can be selected as previousVersion. Draft versions are not listed, because they cannot be used as previousVersion. Each entry carries the API processor version it was built with. Versions with build or changelog errors stay listed and carry the flags, so the client can mark them and block the selection.
                               items:
                                 type: object
                                 properties:
@@ -649,11 +665,13 @@ paths:
         - Snapshots
       summary: Create snapshot
       description: |
-        Creates a package snapshot for selected services in the workspace. The operation is
-        synchronous and returns build metadata on success. When `promote=true`, discovered
-        specifications are published to the baseline package. When `clientBuild=true`, a
-        `builderId` must be supplied in the request body to bind the build to a browser-based
-        executor.
+        Creates a package snapshot for selected services in the workspace. The response returns a
+        `publishId` per service (and optionally for the snapshot dashboard). Publication runs
+        asynchronously; poll `POST /api/v2/packages/{packageId}/publish/statuses` on the APIHUB
+        portal backend for each package to learn when each build completes and whether the version
+        has errors. When `promote=true`, discovered specifications are published to the baseline
+        package. When `clientBuild=true`, a `builderId` must be supplied in the request body to bind
+        the build to a browser-based executor.
       operationId: createSnapshot
       security:
         - BearerAuth: []
