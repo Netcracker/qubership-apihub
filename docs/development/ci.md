@@ -44,7 +44,8 @@ on the pull request, and reviewers expect them green, but they do not block the 
 ## The jobs of CI
 
 `ci.yml` runs once per push and once per pull request event. A newer push to the same ref cancels the older run,
-except on `main` and `release`, where runs queue: a run there publishes images and must not stop half-way.
+except on `develop`, `main`, and `release`, where runs queue: a run there publishes images and must not stop
+half-way.
 
 | Job | Runs when | Does |
 |---|---|---|
@@ -181,7 +182,8 @@ How the site picks its ref, the size budget, and the fallbacks for a missing ren
 - **A flaky job:** open the run and choose **Re-run failed jobs**, or run
   `gh run rerun <run-id> --failed`. GitHub reruns the failed jobs and the jobs that depend on them, including
   `ci-ok`.
-- **A new commit:** a push starts a new run and cancels the older one on the same ref.
+- **A new commit:** a push starts a new run and cancels the older one on the same ref. On `develop`, `main`, and
+  `release` the older run keeps going and the new one waits.
 - **CI did not start:** check that the workflow is not disabled, then start it by hand with
   `gh workflow run ci.yml --ref <branch>`. A manual run is not a pull request event, so it runs no E2E (except on
   `release`).
