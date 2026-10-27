@@ -3,7 +3,7 @@ const assert = require('node:assert/strict')
 const { execFileSync } = require('node:child_process')
 const fs = require('node:fs')
 const path = require('node:path')
-const { images, branchTag, legacyTag, liveTags, plan } = require('./images-gc')
+const { images, branchTag, legacyTag, liveTags, plan, referencedDigests } = require('./images-gc')
 
 const YAML = require(require.resolve('yaml', { paths: [require.resolve('nx/package.json')] }))
 const ciPath = path.join(__dirname, '..', '..', '.github', 'workflows', 'ci.yml')
@@ -94,4 +94,35 @@ test('pull request tags and versions with any live tag stay', async () => {
     ['refs/heads/develop', 'refs/heads/develop-copy'],
   )
   assert.deepEqual(gone, ['gone'])
+})
+
+test('content that only the base of a branch image names is unreachable without the annotation', async () => {
+  // The branch tag is a thin image over the content (tools/ci/ref-overlay): its index lists manifests of its own
+  // and shares only the layer blobs with the content, so nothing in the registry links it to src-0123….
+  const gone = await run(
+    [v('dev', ['dev']), v('ovl-amd'), v('ovl-arm'), v('src', ['src-0123456789abcdef']), v('amd'), v('arm')],
+    ['refs/heads/develop'],
+    { dev: ['ovl-amd', 'ovl-arm'], src: ['amd', 'arm'] },
+  )
+  assert.deepEqual(gone, ['amd', 'arm', 'src'])
+})
+
+test('referencedDigests adds the base digest that the index annotates to the manifests it lists', () => {
+  const base = 'sha256:' + '0'.repeat(64)
+  const amd = 'sha256:' + '1'.repeat(64)
+  assert.deepEqual(
+    referencedDigests({ manifests: [{ digest: amd }], annotations: { 'org.opencontainers.image.base.digest': base } }),
+    [amd, base],
+  )
+  assert.deepEqual(referencedDigests({ manifests: [{ digest: amd }] }), [amd])
+  assert.deepEqual(referencedDigests({ annotations: { 'org.opencontainers.image.revision': 'abc' } }), [])
+})
+
+test('content stays while a kept branch index names it as its base', async () => {
+  const gone = await run(
+    [v('dev', ['dev']), v('ovl-amd'), v('ovl-arm'), v('src', ['src-0123456789abcdef']), v('amd'), v('arm'), v('unused', ['src-fedcba9876543210'])],
+    ['refs/heads/develop'],
+    { dev: ['ovl-amd', 'ovl-arm', 'src'], src: ['amd', 'arm'] },
+  )
+  assert.deepEqual(gone, ['unused'])
 })

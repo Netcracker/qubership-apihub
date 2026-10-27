@@ -15,8 +15,10 @@
 // A VERSION IS DELETED when nothing kept reaches it. The roots are the versions with a live tag,
 // and an index keeps every manifest it lists: a multi-arch image is an index whose platform
 // manifests are untagged versions of their own. A `src-<hash>` version stays while a kept index
-// lists it (one platform) or lists its platform manifests (images.yml wraps the content in a new
-// index per branch tag). An untagged or content version under 24h old stays with what it lists: a
+// lists it (one platform), lists its platform manifests, or names it as its base. The last is how a
+// branch tag reaches its content: the tag is a thin layer over the content image (tools/ci/ref-overlay),
+// its index lists manifests of its own and shares only layer blobs with the content, so images.yml
+// annotates it with `org.opencontainers.image.base.digest`, the digest of the content index. An untagged or content version under 24h old stays with what it lists: a
 // CI leg pushes the content first and the tag that names it after. So a deleted branch's tags go at
 // once; a superseded index, and content nothing points at, a day after their last change. Deleting
 // a version removes every tag on it, so a version with a live tag is never deleted.
@@ -215,17 +217,28 @@ function manifestReader(pkg) {
         res = await fetch(url, { headers: { Authorization: `Bearer ${token}`, Accept: MANIFEST_TYPES } })
       }
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      const listed = (await res.json()).manifests || []
+      const body = await res.json()
+      const listed = body.manifests || []
       // An index names its children's media types, so an image manifest is known to list
       // nothing without fetching it.
       for (const m of listed) if (!/index|list/.test(m.mediaType || '') && !cache.has(m.digest)) cache.set(m.digest, Promise.resolve([]))
-      return listed.map((m) => m.digest)
+      return referencedDigests(body)
     })
   const cache = new Map()
   return (digest) => {
     if (!cache.has(digest)) cache.set(digest, fetchChildren(digest))
     return cache.get(digest)
   }
+}
+
+const BASE_DIGEST_ANNOTATION = 'org.opencontainers.image.base.digest'
+
+// The digests that a manifest keeps alive: the manifests an index lists, and the base image that the index
+// names in its annotations (the content image under a branch tag).
+function referencedDigests(manifest) {
+  const listed = (manifest.manifests || []).map((m) => m.digest)
+  const base = manifest.annotations && manifest.annotations[BASE_DIGEST_ANNOTATION]
+  return base ? [...listed, base] : listed
 }
 
 // fn over every item, `size` at a time.
@@ -362,7 +375,7 @@ async function gc() {
 
 // ---- main -------------------------------------------------------------------------------------
 
-module.exports = { images, branchTag, legacyTag, liveTags, plan }
+module.exports = { images, branchTag, legacyTag, liveTags, plan, referencedDigests }
 
 if (require.main === module) {
   gc().catch((e) => {

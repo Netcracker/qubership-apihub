@@ -249,30 +249,46 @@ jobs:
           COMMIT_TIME="$(date -u -d "@$SOURCE_DATE_EPOCH" +%Y%m%d%H%M%S)"
           export SOURCE_DATE_EPOCH
 
+          # The branch image shares only layer blobs with the content image, so nothing in the registry links the two.
+          # The index names the content as its base, and the cleanup (tools/ci/images-gc.js) follows that annotation:
+          # without it, it would delete the content, and the next run on the same content would build it again.
+          CONTENT_DIGEST="$(docker buildx imagetools inspect "$BASE:$SRC_TAG" --format '{{.Manifest.Digest}}')"
+
           docker buildx build \
             --platform linux/amd64,linux/arm64 \
             --provenance=false \
             --build-arg "BASE=$BASE:$SRC_TAG" \
             --build-arg "GIT_BRANCH=$REF_NAME" \
             --build-arg "GIT_HASH=${SHA::7}" \
-            --build-arg "COMMIT_TIME=$COMMIT_TIME"             --build-arg SOURCE_DATE_EPOCH \
+            --build-arg "COMMIT_TIME=$COMMIT_TIME" \
+            --build-arg SOURCE_DATE_EPOCH \
             --annotation "index:org.opencontainers.image.revision=$SHA" \
             --annotation "index:org.opencontainers.image.version=$REF_NAME" \
             --annotation "index:org.opencontainers.image.source=$SOURCE_URL" \
+            --annotation "index:org.opencontainers.image.base.name=$BASE:$SRC_TAG" \
+            --annotation "index:org.opencontainers.image.base.digest=$CONTENT_DIGEST" \
             -t "$BASE:$BRANCH_TAG" \
             --push \
             tools/ci/ref-overlay
 
-          # Read the annotation back: an unprefixed or misspelled --annotation level is not an
-          # error, and the tag would be published without provenance.
+          # Read the annotations back: an unprefixed or misspelled --annotation level is not an
+          # error, and the tag would be published without provenance, or without the link to its content.
           raw="$(docker buildx imagetools inspect --raw "$BASE:$BRANCH_TAG")"
-          got="$(node -e '
-            const m = JSON.parse(require("fs").readFileSync(0, "utf8"))
-            const a = m.annotations || {}
-            process.stdout.write(a["org.opencontainers.image.version"] || "")
-          ' <<< "$raw")"
+          annotation() {
+            node -e '
+              const m = JSON.parse(require("fs").readFileSync(0, "utf8"))
+              process.stdout.write((m.annotations || {})[process.argv[1]] || "")
+            ' "$1" <<< "$raw"
+          }
+          got="$(annotation org.opencontainers.image.version)"
+          got_base="$(annotation org.opencontainers.image.base.digest)"
           if [ "$got" != "$REF_NAME" ]; then
             echo "::error::branch tag published without its provenance — expected version='$REF_NAME', read '$got'"
+            echo "$raw" | head -40
+            exit 1
+          fi
+          if [ "$got_base" != "$CONTENT_DIGEST" ]; then
+            echo "::error::branch tag published without the link to its content — expected base.digest='$CONTENT_DIGEST', read '$got_base'"
             echo "$raw" | head -40
             exit 1
           fi

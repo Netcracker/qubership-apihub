@@ -94,7 +94,9 @@ Every image goes to `ghcr.io/netcracker/<image>` under two kinds of tag:
   builds in seconds and never invalidates the content image. The time is the commit's, not the run's, and the build
   passes `SOURCE_DATE_EPOCH`, so a rerun of CI on the same commit publishes the same digest. System Info reads the
   variables: the backend from the environment, the UI from a `build-info.json` that its entrypoint writes. The same ref
-  is an OCI annotation on the tag's index.
+  is an OCI annotation on the tag's index, together with the content image as its base
+  (`org.opencontainers.image.base.digest`): the branch image shares only layer blobs with the content, and the
+  [cleanup](../../tools/ci/images-gc.js) follows that annotation to keep the `src-<hash>` content alive.
 
 | Ref | Branch tag |
 |---|---|
