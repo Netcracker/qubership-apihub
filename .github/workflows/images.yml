@@ -241,13 +241,21 @@ jobs:
           SOURCE_URL: ${{ github.server_url }}/${{ github.repository }}
         run: |
           set -euo pipefail
+
+          # The time of the commit, not of this run: a rerun on the same commit builds the same layer and publishes
+          # the same digest. SOURCE_DATE_EPOCH also fixes the `created` field of the image config, the one other place
+          # where the layer would carry the time of the run. A pull request builds its merge commit; the commit is fixed.
+          SOURCE_DATE_EPOCH="$(git show -s --format=%ct "$SHA")"
+          COMMIT_TIME="$(date -u -d "@$SOURCE_DATE_EPOCH" +%Y%m%d%H%M%S)"
+          export SOURCE_DATE_EPOCH
+
           docker buildx build \
             --platform linux/amd64,linux/arm64 \
             --provenance=false \
             --build-arg "BASE=$BASE:$SRC_TAG" \
             --build-arg "GIT_BRANCH=$REF_NAME" \
             --build-arg "GIT_HASH=${SHA::7}" \
-            --build-arg "BUILD_TIME=$(date -u +%Y%m%d%H%M%S)" \
+            --build-arg "COMMIT_TIME=$COMMIT_TIME"             --build-arg SOURCE_DATE_EPOCH \
             --annotation "index:org.opencontainers.image.revision=$SHA" \
             --annotation "index:org.opencontainers.image.version=$REF_NAME" \
             --annotation "index:org.opencontainers.image.source=$SOURCE_URL" \

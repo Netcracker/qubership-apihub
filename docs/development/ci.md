@@ -90,9 +90,11 @@ Every image goes to `ghcr.io/netcracker/<image>` under two kinds of tag:
   image is built only when its content tag is new; otherwise the job retags the existing image.
 - The branch tag, from [`tools/ci/branch-tag.sh`](../../tools/ci/branch-tag.sh): the content image plus one thin
   layer ([`tools/ci/ref-overlay`](../../tools/ci/ref-overlay/Dockerfile)) that sets `GIT_BRANCH`, `GIT_HASH` (the
-  short commit), and `BUILD_TIME` (UTC, when the tag was published). The layer sets environment variables only, so it builds in seconds and never invalidates the content
-  image. System Info reads them: the backend from the environment, the UI from a `build-info.json` that its
-  entrypoint writes. The same ref is an OCI annotation on the tag's index.
+  short commit), and `COMMIT_TIME` (UTC, the time of the commit). The layer sets environment variables only, so it
+  builds in seconds and never invalidates the content image. The time is the commit's, not the run's, and the build
+  passes `SOURCE_DATE_EPOCH`, so a rerun of CI on the same commit publishes the same digest. System Info reads the
+  variables: the backend from the environment, the UI from a `build-info.json` that its entrypoint writes. The same ref
+  is an OCI annotation on the tag's index.
 
 | Ref | Branch tag |
 |---|---|

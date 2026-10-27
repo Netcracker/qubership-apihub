@@ -52,8 +52,8 @@ envsubst '${APIHUB_BACKEND_ADDRESS} ${APIHUB_NC_SERVICE_ADDRESS} ${API_LINTER_SE
 # /app/nginx is the one writable path of the root filesystem in Kubernetes; nginx serves the file from there.
 if [ -n "${GIT_BRANCH:-}" ] && [ -n "${GIT_HASH:-}" ]; then
   json_escape() { printf '%s' "$1" | sed 's/[\\"]/\\&/g'; }
-  printf '{"branch":"%s","commit":"%s","builtAt":"%s"}\n' \
-    "$(json_escape "$GIT_BRANCH")" "$(json_escape "$GIT_HASH")" "$(json_escape "${BUILD_TIME:-}")" \
+  printf '{"branch":"%s","commit":"%s","committedAt":"%s"}\n' \
+    "$(json_escape "$GIT_BRANCH")" "$(json_escape "$GIT_HASH")" "$(json_escape "${COMMIT_TIME:-}")" \
     >/app/nginx/build-info.json
 fi
 

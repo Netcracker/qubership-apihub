@@ -64,13 +64,13 @@ function parseImageEnv(config) {
   return env
 }
 
-// The same string the service reports: <branch>.<commit>.<build time>, or null when the image has no build info.
+// The same string the service reports: <branch>.<commit>.<commit time>, or null when the image has no build info.
 function imageVersion(env) {
   if (!env.GIT_BRANCH && !env.GIT_HASH) {
     return null
   }
   const version = `${env.GIT_BRANCH}.${env.GIT_HASH}`
-  return env.BUILD_TIME ? `${version}.${env.BUILD_TIME}` : version
+  return env.COMMIT_TIME ? `${version}.${env.COMMIT_TIME}` : version
 }
 
 function closingIssueNumbers(closingIssuesReferences, repository) {

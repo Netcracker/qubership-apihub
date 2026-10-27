@@ -43,7 +43,7 @@ const CONTENT_MAX_WIDTH_IN_WINDOW = `min(${CONTENT_MAX_WIDTH}px, calc(100vw - 96
 type VersionRowProps = {
   title: string
   version: string
-  // The image the version ships in: `<branch>.<commit>.<build time>`.
+  // The image the version ships in: `<branch>.<commit>.<commit time>`.
   caption?: string
   'data-testid': string
 }

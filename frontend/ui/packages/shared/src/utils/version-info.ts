@@ -26,18 +26,18 @@ export type VersionInfoDto = {
 }
 export type VersionInfo = VersionInfoDto
 
-// Written by the image entrypoint from GIT_BRANCH, GIT_HASH, and BUILD_TIME, which the branch tag adds on top of the
+// Written by the image entrypoint from GIT_BRANCH, GIT_HASH, and COMMIT_TIME, which the branch tag adds on top of the
 // content image. The file does not exist outside the image, for example on a dev server.
 export type BuildInfoDto = {
   branch: string
   commit: string
-  // UTC, yyyymmddHHMMSS: when the tag was published. Empty when the image has no BUILD_TIME.
-  builtAt?: string
+  // UTC, yyyymmddHHMMSS: the time of the commit. Empty when the image has no COMMIT_TIME.
+  committedAt?: string
 }
 
 // `develop.a1b2c3d.20261026104501`: the same form that the backends report, so the rows of System Information read alike.
-function formatBuildRef({ branch, commit, builtAt }: BuildInfoDto): string {
-  return builtAt ? `${branch}.${commit}.${builtAt}` : `${branch}.${commit}`
+function formatBuildRef({ branch, commit, committedAt }: BuildInfoDto): string {
+  return committedAt ? `${branch}.${commit}.${committedAt}` : `${branch}.${commit}`
 }
 
 export const Apps = {

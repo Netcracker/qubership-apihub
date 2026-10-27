@@ -13,7 +13,7 @@ Helpers of `ci.yml`, the E2E workflows, and the Pages workflow. The workflows th
 - `images-gc.js` deletes image versions in ghcr that no live ref needs.
 - `build-id/` computes the build id that stamps the versions of api-processor and of the UI apps; see its `README.md`.
 - `announce-versions.js` comments on the issues that a merged pull request closes with the versions that carry the change.
-- `ref-overlay/` is the thin image layer that gives a branch tag its branch, commit, and build time.
+- `ref-overlay/` is the thin image layer that gives a branch tag its branch, commit, and commit time.
 - `ci-verdict.js` and `plan-summary.js` compute the `ci-ok` verdict and render the plan job summary;
   `cache-summary.sh` renders the cache block of each job.
 - `go-version-check.sh` and `go-work-sync-check.sh` check that `backend/.go-version`, `go.work`, and every `go.mod`

@@ -46,9 +46,9 @@ export async function getPortalVersionInfo(): Promise<PortalVersionInfo> {
   if (buildResponse.status() !== 200) {
     return { frontendVersion, apiProcessorVersion }
   }
-  const { branch, commit, builtAt } = await buildResponse.json()
-  // The form the Portal shows: <branch>.<commit>.<build time>; the time is missing when the image has none.
-  const buildRef = builtAt ? `${branch}.${commit}.${builtAt}` : `${branch}.${commit}`
+  const { branch, commit, committedAt } = await buildResponse.json()
+  // The form the Portal shows: <branch>.<commit>.<commit time>; the time is missing when the image has none.
+  const buildRef = committedAt ? `${branch}.${commit}.${committedAt}` : `${branch}.${commit}`
 
   return { frontendVersion, apiProcessorVersion, buildRef }
 }

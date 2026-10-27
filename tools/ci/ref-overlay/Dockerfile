@@ -3,7 +3,7 @@
 # ENV only, no RUN, so it works for every base image and builds for both platforms in seconds.
 #
 #   docker buildx build --platform linux/amd64,linux/arm64 \
-#     --build-arg BASE=<image>:src-<hash> --build-arg GIT_BRANCH=<branch> --build-arg GIT_HASH=<short sha> --build-arg BUILD_TIME=<yyyymmddHHMMSS, UTC> \
+#     --build-arg BASE=<image>:src-<hash> --build-arg GIT_BRANCH=<branch> --build-arg GIT_HASH=<short sha> --build-arg COMMIT_TIME=<yyyymmddHHMMSS, UTC> \
 #     -t <image>:<branch tag> --push tools/ci/ref-overlay
 
 # BASE is a src-<hash> content image built by the same workflow run, so there is no tag to pin and no user to add:
@@ -16,9 +16,10 @@ FROM ${BASE}
 
 ARG GIT_BRANCH
 ARG GIT_HASH
-ARG BUILD_TIME
+ARG COMMIT_TIME
 
 ENV GIT_BRANCH=${GIT_BRANCH}
 ENV GIT_HASH=${GIT_HASH}
-# UTC, yyyymmddHHMMSS: when this tag was published, so QA can see how fresh a stand is.
-ENV BUILD_TIME=${BUILD_TIME}
+# UTC, yyyymmddHHMMSS: the time of the commit, so QA can see how fresh the code on a stand is. Not the time of the run,
+# which would give every rerun on one commit a digest of its own.
+ENV COMMIT_TIME=${COMMIT_TIME}

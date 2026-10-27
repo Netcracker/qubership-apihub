@@ -29,7 +29,7 @@ test('pickImageConfig takes the config of a single image or of the first platfor
 })
 
 test('imageVersion matches the version the services report', () => {
-  assert.equal(imageVersion({ GIT_BRANCH: 'develop', GIT_HASH: 'a1b2c3d', BUILD_TIME: '20261026104501' }), 'develop.a1b2c3d.20261026104501')
+  assert.equal(imageVersion({ GIT_BRANCH: 'develop', GIT_HASH: 'a1b2c3d', COMMIT_TIME: '20261026104501' }), 'develop.a1b2c3d.20261026104501')
   assert.equal(imageVersion({ GIT_BRANCH: 'develop', GIT_HASH: 'a1b2c3d' }), 'develop.a1b2c3d')
   assert.equal(imageVersion({}), null)
 })
