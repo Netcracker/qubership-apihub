@@ -1,20 +1,21 @@
-import { createRestWithToken, rGetAppFile, rGetExtensionVersion } from '@services/rest'
+import { createRestWithCredentials, createRestWithToken, rGetAppFile, rGetExtensionVersion } from '@services/rest'
 import { BASE_URL } from '@test-setup'
 import { getRestFailMsg } from '@services/utils'
+import { SYSADMIN } from '@test-data'
 import { getSysExtensions } from './sys-config'
 
 // The extensions that report a version, by the name they are registered under.
 export type VersionedExtensionName = 'api-linter' | 'agents-backend'
 export const VERSIONED_EXTENSION_NAMES: readonly VersionedExtensionName[] = ['api-linter', 'agents-backend']
 
-// None of these sources needs a login: nginx serves the files as they are, and the services register their version
-// route without an authenticator.
+// version.json and build-info.json need no login: nginx serves them as they are. The extension version
+// routes use the service authenticator, so the helper logs in.
 
 // The version of each registered extension, from the extension itself. An extension that this stand does not register
 // has no entry. The URL comes from the `pathPrefix` of the registration, which is not always the name.
 export async function getExtensionVersions(): Promise<Partial<Record<VersionedExtensionName, string>>> {
   const extensions = await getSysExtensions()
-  const rest = await createRestWithToken(BASE_URL)
+  const rest = await createRestWithCredentials(BASE_URL, SYSADMIN)
   const versions: Partial<Record<VersionedExtensionName, string>> = {}
 
   for (const name of VERSIONED_EXTENSION_NAMES) {

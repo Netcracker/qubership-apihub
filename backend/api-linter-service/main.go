@@ -214,7 +214,7 @@ func main() {
 	r.HandleFunc("/api/internal/clear/{testId}", authenticator.Secure(cleanupController.ClearTestData)).Methods(http.MethodDelete)
 
 	// Service endpoints
-	r.HandleFunc("/api/v1/system/version", versionController.GetVersion).Methods(http.MethodGet)
+	r.HandleFunc("/api/v1/system/version", authenticator.Secure(versionController.GetVersion)).Methods(http.MethodGet)
 	r.HandleFunc("/live", healthController.HandleLiveRequest).Methods(http.MethodGet)
 	r.HandleFunc("/ready", healthController.HandleReadyRequest).Methods(http.MethodGet)
 	r.PathPrefix("/debug/").Handler(http.DefaultServeMux) // TODO: env to config!

@@ -42,9 +42,8 @@ paths:
       description: >
         Returns the version of the image the service runs from, in the form branch.commit.commitTime
         (for example, develop.a1b2c3d.20261026104501), or "unknown" when the image carries no build information.
-        The endpoint needs no authorization: the UI reads it to show the versions of the components in System Information.
+        System Information in the UI shows this value for the service.
       operationId: getSystemVersion
-      security: []
       responses:
         "200":
           description: Success
@@ -52,6 +51,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SystemVersion"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /api/v1/linters:
     get:
       tags:

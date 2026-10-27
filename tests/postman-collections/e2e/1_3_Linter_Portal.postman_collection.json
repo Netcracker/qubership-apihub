@@ -40,7 +40,13 @@
                     ]
                 },
                 "method": "GET",
-                "header": []
+                "header": [
+                    {
+                        "key": "api-key",
+                        "value": "{{at-api-key}}",
+                        "type": "default"
+                    }
+                ]
             },
             "response": []
         },

@@ -204,7 +204,7 @@ func main() {
 		r.HandleFunc(endpointConfig.Path, endpointConfig.Handler).Methods(http.MethodGet)
 	}
 
-	r.HandleFunc("/api/v1/system/version", versionController.GetVersion).Methods(http.MethodGet)
+	r.HandleFunc("/api/v1/system/version", authenticator.Secure(versionController.GetVersion)).Methods(http.MethodGet)
 	r.HandleFunc("/live", healthController.HandleLiveRequest).Methods(http.MethodGet)
 	r.HandleFunc("/ready", healthController.HandleReadyRequest).Methods(http.MethodGet)
 	r.PathPrefix("/debug/").Handler(http.DefaultServeMux)
