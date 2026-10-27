@@ -10,7 +10,8 @@
  * Exits 1 when a gate fails, 2 on a usage error or when there is nothing to check.
  */
 import { execFileSync, spawnSync } from 'node:child_process'
-import { existsSync, readFileSync } from 'node:fs'
+import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
 import { join, posix, relative, resolve, sep } from 'node:path'
 
 const ROOT = git(['rev-parse', '--show-toplevel']) ?? process.cwd()
@@ -124,14 +125,24 @@ function eslintGate(pkg) {
   if (code.length === 0) return skip('no touched TypeScript or JavaScript file')
   const paths = code.map((file) => posix.relative(pkg.dir, file))
   const command = `pnpm exec eslint --fix (${paths.length} files in ${pkg.dir})`
-  const result = run('pnpm', ['exec', 'eslint', '--fix', '--format', 'json', ...paths], pkg.dir)
-  if (!result.stdout.trimStart().startsWith('[')) {
-    if (/Command "eslint" not found/.test(result.output)) return skip(`no ESLint in ${pkg.name}`)
-    if (/No ESLint configuration found/.test(result.output)) return skip(`no ESLint config in ${pkg.name}`)
-    return fail(command, excerpt(result.output))
+  // ESLint writes the report to a file because a plugin may print to stdout too: eslint-plugin-boundaries prints
+  // "[boundaries]: Please provide element types ..." in a package without the boundaries/elements setting.
+  const reportDir = mkdtempSync(join(tmpdir(), 'apihub-validate-'))
+  const reportFile = join(reportDir, 'eslint.json')
+  let report
+  try {
+    const result = run('pnpm', ['exec', 'eslint', '--fix', '--format', 'json', '--output-file', reportFile, ...paths], pkg.dir)
+    if (!existsSync(reportFile)) {
+      if (/Command "eslint" not found/.test(result.output)) return skip(`no ESLint in ${pkg.name}`)
+      if (/No ESLint configuration found/.test(result.output)) return skip(`no ESLint config in ${pkg.name}`)
+      return fail(command, excerpt(result.output))
+    }
+    report = JSON.parse(readFileSync(reportFile, 'utf8'))
+  } finally {
+    rmSync(reportDir, { recursive: true, force: true })
   }
   const problems = []
-  for (const { filePath, messages } of JSON.parse(result.stdout)) {
+  for (const { filePath, messages } of report) {
     for (const message of messages) {
       // An explicit path that the config ignores is reported as a warning; CI does not lint that file either.
       if (!message.ruleId && message.message.startsWith('File ignored')) continue
