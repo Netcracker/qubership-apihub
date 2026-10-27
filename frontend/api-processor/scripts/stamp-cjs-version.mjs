@@ -15,7 +15,7 @@
  */
 
 /**
- * Stamps the CommonJS build with the version from build-id.mjs.
+ * Stamps the CommonJS build with the version from tools/build-id.
  *
  * `tsc` copies package.json to dist/cjs/package.json, and the compiled code reads its version from there
  * (`require('../package.json')`). The UI resolves the package entry and reads the first manifest it finds on the

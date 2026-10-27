@@ -23,7 +23,7 @@ const { pathToFileURL } = require('url')
 const SHORT_SHA_LENGTH = 7
 const ROOT = path.resolve(__dirname, '..', '..')
 // Loaded by path: the workflow checks the commit out and runs no install, so the workspace link does not exist.
-const BUILD_ID_SCRIPT = path.join(ROOT, 'tools', 'build-id', 'build-id.mjs')
+const BUILD_ID_SCRIPT = path.join(ROOT, 'tools', 'build-id', 'build-id.mts')
 // The Portal and the Agents SPA ship in one image but are two apps, each with its own stamped version.
 const UI_APPS = [
   { name: 'Frontend (Portal)', app: 'portal' },

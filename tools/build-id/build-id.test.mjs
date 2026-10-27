@@ -3,7 +3,7 @@ import { cpSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { after, test } from 'node:test'
-import { computeBuildId, stampedVersion } from './build-id.mjs'
+import { computeBuildId, stampedVersion } from './build-id.mts'
 
 const roots = []
 

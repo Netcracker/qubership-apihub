@@ -34,7 +34,7 @@ plugins: [stampedVersionPlugin(__dirname)]
 `stampedVersionPlugin` replaces the import of the package's own `package.json` with a module that exports only
 `version`. A UI app does not use it: it passes the version through Vite `define` and never imports its manifest.
 
-From the command line: `node tools/build-id/build-id.mjs <package dir>`.
+From the command line: `node tools/build-id/build-id.mts <package dir>`.
 
 ## Who uses it
 
@@ -42,12 +42,19 @@ From the command line: `node tools/build-id/build-id.mjs <package dir>`.
 |----------|-----|
 | `frontend/api-processor` | the Vite plugin, and `scripts/stamp-cjs-version.mjs` for the CommonJS build |
 | `frontend/ui` | `vite-plugins/app-version.ts`, for `define` and for `version.json` |
-| `tools/ci/announce-versions.js` | loads `build-id.mjs` by path, because the workflow runs no install |
+| `tools/ci/announce-versions.js` | loads `build-id.mts` by path, because the workflow runs no install |
+
+## Source
+
+The package is TypeScript (`build-id.mts`, `vite-plugin.mts`) that Node 24 runs as it is, by stripping the types, so
+there is no build step and no separate declaration files: the consumers read the types from the source. It therefore
+uses only syntax that has no runtime form (no enums, no parameter properties), and `tsconfig.json` enforces that.
 
 ## Test
 
 ```bash
-node --test tools/build-id/build-id.test.mjs
+node --test tools/build-id/build-id.test.mjs   # behavior
+pnpm --filter @netcracker/qubership-apihub-build-id run typecheck
 ```
 
-The root `pnpm run test:tools` runs it with the other tools.
+The root `pnpm run test:tools` runs the tests with the other tools.

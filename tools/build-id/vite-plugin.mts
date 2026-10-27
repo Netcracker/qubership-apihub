@@ -1,21 +1,7 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-import path from 'path'
-import { stampedVersion } from './build-id.mjs'
+import path from 'node:path'
+import type { Plugin } from 'vite'
+import type { BuildIdOptions } from './build-id.mts'
+import { stampedVersion } from './build-id.mts'
 
 // A virtual module id starts with the NUL character by Vite's convention, so no other plugin touches it.
 const VIRTUAL_PREFIX = '\u0000stamped-version:'
@@ -29,15 +15,13 @@ const VIRTUAL_PREFIX = '\u0000stamped-version:'
  * Only `version` is exported. Use it where one build of a library needs the stamp; an app gets its version through
  * `define` instead and never imports its own manifest.
  *
- * @param {string} packageDir The directory of the package whose package.json is replaced.
- * @param {import('./build-id.d.mts').BuildIdOptions} [options]
- * @returns {import('vite').Plugin}
+ * @param packageDir The directory of the package whose package.json is replaced.
  */
-export function stampedVersionPlugin(packageDir, options = {}) {
+export function stampedVersionPlugin(packageDir: string, options: BuildIdOptions = {}): Plugin {
   const manifest = path.resolve(packageDir, 'package.json')
   // The id must not end in `.json`: Vite's JSON plugin claims every such id, virtual or not.
   const moduleId = `${VIRTUAL_PREFIX}${path.resolve(packageDir)}:version`
-  let version
+  let version: string | undefined
 
   return {
     name: 'stamped-version',

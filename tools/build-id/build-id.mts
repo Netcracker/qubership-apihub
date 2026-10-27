@@ -1,20 +1,4 @@
 /**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/**
  * The version that a build reports: `<package.json version>+<build id>`. Used for api-processor and for the UI apps.
  *
  * The build id is a hash of the sources of the package and of every workspace package it depends on. It is the
@@ -28,13 +12,27 @@
  * `version.json` get the value from one build, and the page reloads when the two differ.
  *
  * This package knows the layout of the workspace (`frontend/*` and `frontend/*` + `/packages/*`) and nothing about
- * any one consumer. Usage from the command line: `node build-id.mjs <package dir>`.
+ * any one consumer. Usage from the command line: `node build-id.mts <package dir>`.
+ *
+ * It is TypeScript that Node runs as it is (type stripping), so it uses no syntax that needs a transform.
  */
 
-import { createHash } from 'crypto'
-import { existsSync, readdirSync, readFileSync, statSync } from 'fs'
-import path from 'path'
-import { fileURLToPath } from 'url'
+import { createHash } from 'node:crypto'
+import type { Dirent } from 'node:fs'
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
+import path from 'node:path'
+
+export type BuildIdOptions = {
+  /** Follow the workspace packages in `devDependencies` of the package itself too. An app bundles them. */
+  includeDevDependencies?: boolean
+}
+
+type PackageManifest = {
+  name: string
+  version: string
+  dependencies?: Record<string, string>
+  devDependencies?: Record<string, string>
+}
 
 const BUILD_ID_LENGTH = 10
 
@@ -47,16 +45,20 @@ const IGNORED_DIRECTORIES = new Set([
 ])
 const IGNORED_FILE = /(\.md|\.map|\.tsbuildinfo|\.log)$|(^|\.)(unit-)?test\.[cm]?[jt]sx?$|\.stories\.[jt]sx?$|^LICENSE$/
 
+function readManifest(dir: string): PackageManifest {
+  return JSON.parse(readFileSync(path.join(dir, 'package.json'), 'utf-8'))
+}
+
 // The names are fed into the hash in sorted order, so the order must not depend on the locale or the ICU data of the
 // machine that builds: `localeCompare` would give two hosts two ids for the same sources.
-function compareNames(a, b) {
+function compareNames(a: string, b: string): number {
   if (a === b) {
     return 0
   }
   return a < b ? -1 : 1
 }
 
-function findWorkspaceRoot(from) {
+function findWorkspaceRoot(from: string): string {
   let dir = from
   while (!existsSync(path.join(dir, 'pnpm-workspace.yaml'))) {
     const parent = path.dirname(dir)
@@ -69,8 +71,8 @@ function findWorkspaceRoot(from) {
 }
 
 /** Package name -> directory, for the packages of `frontend/*` and `frontend/*` + `/packages/*`. */
-function workspacePackages(root) {
-  const packages = new Map()
+function workspacePackages(root: string): Map<string, string> {
+  const packages = new Map<string, string>()
   const frontend = path.join(root, 'frontend')
   for (const group of readdirSync(frontend, { withFileTypes: true })) {
     if (!group.isDirectory()) {
@@ -82,9 +84,8 @@ function workspacePackages(root) {
       candidates.push(...readdirSync(nested, { withFileTypes: true }).filter(e => e.isDirectory()).map(e => path.join(nested, e.name)))
     }
     for (const dir of candidates) {
-      const manifest = path.join(dir, 'package.json')
-      if (existsSync(manifest)) {
-        packages.set(JSON.parse(readFileSync(manifest, 'utf-8')).name, dir)
+      if (existsSync(path.join(dir, 'package.json'))) {
+        packages.set(readManifest(dir).name, dir)
       }
     }
   }
@@ -95,28 +96,30 @@ function workspacePackages(root) {
  * The package and the workspace packages it depends on, transitively, sorted by name. Only the package itself
  * contributes its devDependencies: a library reaches the bundle through its build output, not through its own tools.
  */
-function sourcePackages(root, packageDir, includeDevDependencies) {
+function sourcePackages(root: string, packageDir: string, includeDevDependencies: boolean): Array<[string, string]> {
   const known = workspacePackages(root)
-  const result = new Map()
-  const visit = (dir, isRoot) => {
-    const manifest = JSON.parse(readFileSync(path.join(dir, 'package.json'), 'utf-8'))
+  const result = new Map<string, string>()
+  const visit = (dir: string, isRoot: boolean): void => {
+    const manifest = readManifest(dir)
     if (result.has(manifest.name)) {
       return
     }
     result.set(manifest.name, dir)
-    const workspaceNames = kind => Object.entries(manifest[kind] ?? {})
+    const workspaceNames = (kind: 'dependencies' | 'devDependencies'): string[] => Object.entries(manifest[kind] ?? {})
       .filter(([, range]) => String(range).startsWith('workspace:'))
       .map(([name]) => name)
     for (const name of workspaceNames('dependencies')) {
-      if (!known.has(name)) {
+      const dependencyDir = known.get(name)
+      if (!dependencyDir) {
         throw new Error(`${manifest.name} depends on ${name}, which is not a workspace package`)
       }
-      visit(known.get(name), false)
+      visit(dependencyDir, false)
     }
     // A development tool outside frontend/ (a test environment, for example) is not part of the bundle.
     for (const name of isRoot && includeDevDependencies ? workspaceNames('devDependencies') : []) {
-      if (known.has(name)) {
-        visit(known.get(name), false)
+      const toolDir = known.get(name)
+      if (toolDir) {
+        visit(toolDir, false)
       }
     }
   }
@@ -124,9 +127,10 @@ function sourcePackages(root, packageDir, includeDevDependencies) {
   return [...result.entries()].sort(([a], [b]) => compareNames(a, b))
 }
 
-function listFiles(dir, base = dir) {
-  const files = []
-  for (const entry of readdirSync(dir, { withFileTypes: true }).sort((a, b) => compareNames(a.name, b.name))) {
+function listFiles(dir: string, base: string = dir): string[] {
+  const files: string[] = []
+  const entries: Dirent[] = readdirSync(dir, { withFileTypes: true }).sort((a, b) => compareNames(a.name, b.name))
+  for (const entry of entries) {
     const full = path.join(dir, entry.name)
     if (entry.isDirectory()) {
       if (!IGNORED_DIRECTORIES.has(entry.name)) {
@@ -139,8 +143,8 @@ function listFiles(dir, base = dir) {
   return files
 }
 
-/** `includeDevDependencies`: an app bundles its workspace devDependencies, a library does not. */
-export function computeBuildId(packageDir, { includeDevDependencies = false } = {}) {
+/** A hash of the sources of the package and of the workspace packages it depends on. */
+export function computeBuildId(packageDir: string, { includeDevDependencies = false }: BuildIdOptions = {}): string {
   const hash = createHash('sha256')
   for (const [name, dir] of sourcePackages(findWorkspaceRoot(packageDir), packageDir, includeDevDependencies)) {
     hash.update(`package ${name}\0`)
@@ -153,15 +157,15 @@ export function computeBuildId(packageDir, { includeDevDependencies = false } = 
   return hash.digest('hex').slice(0, BUILD_ID_LENGTH)
 }
 
-export function stampedVersion(packageDir, options = {}) {
-  const { version } = JSON.parse(readFileSync(path.join(packageDir, 'package.json'), 'utf-8'))
-  return `${version}+${computeBuildId(packageDir, options)}`
+/** `<version from package.json>+<build id>` */
+export function stampedVersion(packageDir: string, options: BuildIdOptions = {}): string {
+  return `${readManifest(packageDir).version}+${computeBuildId(packageDir, options)}`
 }
 
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+if (process.argv[1] && path.resolve(process.argv[1]) === import.meta.filename) {
   const packageDir = process.argv[2]
   if (!packageDir) {
-    console.error('usage: node build-id.mjs <package dir>')
+    console.error('usage: node build-id.mts <package dir>')
     process.exit(1)
   }
   console.log(stampedVersion(path.resolve(packageDir)))
