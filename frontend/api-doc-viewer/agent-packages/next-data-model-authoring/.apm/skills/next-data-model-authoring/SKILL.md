@@ -1,4 +1,5 @@
 ---
+name: next-data-model-authoring
 description: Extend next-data-model tree builders (plain → with-diffs inheritance), diff aggregators, and json-crawl rules for viewer data layers. Use when adding or changing tree builders, diff aggregators, or node-visibility rules in next-data-model.
 ---
 

@@ -1,4 +1,5 @@
 ---
+name: api-diff-testing
 description: How to write diff tests in api-diff — shared assertion and fixture conventions for every spec type, plus AsyncAPI-specific spec patterns and parser-built (e.g. ddlapi SQL) fixtures. Use when adding or changing tests under frontend/api-diff.
 ---
 

@@ -20,7 +20,7 @@ The root `apm.yml` lists the store dependencies and these local paths. After edi
 repository root:
 
 ```bash
-apm install --target cursor,claude --legacy-skill-paths
+apm install --target cursor,claude
 ```
 
 Sources in `agent-packages/` and deployed `.cursor/` / `.claude/` harness trees are **committed**.

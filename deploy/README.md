@@ -31,8 +31,7 @@ developers and R&D, not for production. The `apihub-with-keycloak-quickstart.sh`
 | [`docker-compose/with-keycloak`](docker-compose/with-keycloak/README.md) | The same, with SAML integration through Keycloak |
 | [`docker-compose/backend-debug`](docker-compose/backend-debug/README.md) | Everything except the backend (UI, builder, PostgreSQL), so you run and debug the backend from your IDE |
 
-`docker-compose/with-gitlab` holds only a backend config that adds the GitLab integration. The
-`generate_env_and_up_compose.sh` script of a stack rewrites its `.env` and `*-config.yaml` files in place, so run
+The `generate_env_and_up_compose.sh` script of a stack rewrites its `.env` and `*-config.yaml` files in place, so run
 `git restore .` in the folder before you commit. The commands are in
 [Run APIHUB locally](../docs/development/local-run.md).
 

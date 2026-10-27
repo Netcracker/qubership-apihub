@@ -44,7 +44,6 @@ After chart edits, sanity-check against `docs/configuration-reference.md` § Hel
 |-------|------|-------|
 | Generic | `apihub-generic/` | Default local rig |
 | Keycloak SSO | `with-keycloak/` | SSO example; parallel env/YAML layout |
-| GitLab | `with-gitlab/` | Backend config example only |
 
 - **Config-file services** — `qubership-apihub-backend-config.yaml`,
   `qubership-api-linter-service-config.yaml`, and `qubership-apihub-agents-backend-config.yaml`

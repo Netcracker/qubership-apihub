@@ -54,11 +54,11 @@ Directory: `resources/migrations/`
 Validate (from repository root):
 
 ```bash
-bash .cursor/skills/apihub-backend-developer/scripts/check_migration_numbers.sh
+bash .agents/skills/apihub-backend-developer/scripts/check_migration_numbers.sh
 ```
 
 ```powershell
-powershell -File .cursor/skills/apihub-backend-developer/scripts/check_migration_numbers.ps1
+powershell -File .agents/skills/apihub-backend-developer/scripts/check_migration_numbers.ps1
 ```
 
 ## Further reading
