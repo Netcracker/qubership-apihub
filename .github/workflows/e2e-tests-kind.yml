@@ -393,7 +393,8 @@ jobs:
             --wait --timeout 10m
 
       # Pods resolve the ingress host to the controller, so the backend's external URLs work inside
-      # the cluster. This restarts every deployment, so the rollout is awaited again.
+      # the cluster. This restarts every deployment, so the rollout is awaited again. The agent
+      # Deployment does not exist yet; Deploy the APIHUB agent applies the same aliases to it.
       - name: Point the pods at the ingress
         id: ingress_hosts
         shell: bash
@@ -546,9 +547,38 @@ jobs:
             --set-string "qubershipApihubAgent.version=$tag"
           )
           status=0
-          helm upgrade --install qubership-apihub-agent "$chart" "${args[@]}" --wait --timeout 5m || status=$?
+          # Helm returns once the Deployment exists. The wait is after the host-alias patch:
+          # waiting here would time out on the first pod, which cannot reach the public URL.
+          helm upgrade --install qubership-apihub-agent "$chart" "${args[@]}" || status=$?
           rm -f "$token_file"
-          exit "$status"
+          [ "$status" = 0 ] || exit "$status"
+
+          # localtest.me resolves to localhost inside a pod. The ingress host-alias step has
+          # already run, and this Deployment did not exist then. The agent calls the public APIHUB
+          # URL at startup, reaches [::1]:443, and exits. Same host aliases as
+          # scripts/6-patch-apihub-hosts.sh, for this Deployment only.
+          ingress_ip="$(kubectl get service ingress-nginx-controller \
+            --namespace ingress-nginx \
+            --output=jsonpath='{.spec.clusterIP}')"
+          [ -n "$ingress_ip" ] || { echo "::error::could not read the ingress controller ClusterIP"; exit 1; }
+          echo "pointing the agent at the ingress ($ingress_ip)"
+          kubectl patch deployment qubership-apihub-agent \
+            --namespace "$NAMESPACE" \
+            --type=merge \
+            --patch "$(cat <<EOF
+          spec:
+            template:
+              spec:
+                hostAliases:
+                  - ip: "${ingress_ip}"
+                    hostnames:
+                      - keycloak.localtest.me
+                      - qubership-apihub.localtest.me
+          EOF
+          )"
+          kubectl rollout status deployment/qubership-apihub-agent \
+            --namespace "$NAMESPACE" \
+            --timeout=5m
 
       - name: Check the agent configuration
         id: agent_token
