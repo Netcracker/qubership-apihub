@@ -507,9 +507,6 @@ func (d docTaskProcessorImpl) lintDocumentWithAi(ctx context.Context, task entit
 
 func (d docTaskProcessorImpl) saveAiLintStats(task entity.DocumentLintTask, stage entity.AiLintStage, start time.Time, stageErr error,
 	requests []entity.AiRequestMetrics, details any) {
-	if len(requests) == 0 && stageErr == nil {
-		return
-	}
 	stats, err := newAiLintStats(task, stage, d.aiModel, time.Since(start), stageErr, requests, details)
 	if err != nil {
 		log.Errorf("Failed to build AI lint stats for doc task %s: %s", task.Id, err)

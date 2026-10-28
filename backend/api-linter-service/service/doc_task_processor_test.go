@@ -47,6 +47,15 @@ func (f fakeApihubClient) GetOperationWithData(_ context.Context, _, _ string, _
 	return &view.Operation{OperationId: operationId, Data: json.RawMessage(data)}, nil
 }
 
+// noOperationsApihubClient serves a document that has no operations.
+type noOperationsApihubClient struct {
+	fakeApihubClient
+}
+
+func (noOperationsApihubClient) GetDocumentDetails(context.Context, string, string, string) (*view.PublishedDocument, error) {
+	return &view.PublishedDocument{}, nil
+}
+
 func testOperations() []view.DocumentOperation {
 	operations := make([]view.DocumentOperation, 0, testOperationCount)
 	for i := range testOperationCount {
@@ -189,7 +198,8 @@ func TestSingletonGroupsNeverReachTheClient(t *testing.T) {
 		}, nil
 	}
 	llm := &fakeLlmClient{lint: lintDistinctResolvedPaths}
-	d := newTestProcessor(llm, fakeApihubClient{}, nil, &fakeAiLintStatsRepository{})
+	statsRepo := &fakeAiLintStatsRepository{}
+	d := newTestProcessor(llm, fakeApihubClient{}, nil, statsRepo)
 
 	issues, _, err := d.lintDocumentWithAi(context.Background(), testTask, testOperations(), view.AiRuleset{Prompt: "p"})
 	if err != nil {
@@ -198,6 +208,21 @@ func TestSingletonGroupsNeverReachTheClient(t *testing.T) {
 
 	if calls := len(llm.recordedRequests()); calls != 0 {
 		t.Fatalf("expected no deduplication requests, got %d", calls)
+	}
+	if len(statsRepo.rows) != 2 {
+		t.Fatalf("expected lint and deduplication stats rows, got %+v", statsRepo.rows)
+	}
+	dedupRow := statsRepo.rows[1]
+	var dedupDetails entity.AiDeduplicationStageDetails
+	if err := json.Unmarshal(dedupRow.Details, &dedupDetails); err != nil {
+		t.Fatal(err)
+	}
+	wantDedupDetails := entity.AiDeduplicationStageDetails{
+		IssuesIn: 2 * testOperationCount, Groups: 2 * testOperationCount, Requests: []entity.AiDeduplicationRequestStats{},
+	}
+	if dedupRow.Stage != entity.AiLintStageDeduplication || dedupRow.Requests != 0 || dedupRow.Status != entity.AiRequestStatusSuccess ||
+		!reflect.DeepEqual(dedupDetails, wantDedupDetails) {
+		t.Fatalf("expected a request-free deduplication row with details %+v, got %+v with details %s", wantDedupDetails, dedupRow, dedupRow.Details)
 	}
 	var want []view.ValidationIssue
 	for i := range testOperationCount {
@@ -253,31 +278,41 @@ func (f *fakeAiLintStatsRepository) Save(_ context.Context, stats entity.AiLintS
 
 func TestProcessDocTaskSavesAiLintStats(t *testing.T) {
 	// lintByOperation returns three issues per operation: one exact repeat across operations and two duplicates.
-	wantDedupDetails := entity.AiDeduplicationStageDetails{IssuesIn: 1 + 2*testOperationCount, Groups: 1 + testOperationCount, MultiIssueGroups: testOperationCount}
+	lintByOperationDedup := func(duplicatesRemoved int) *entity.AiDeduplicationStageDetails {
+		return &entity.AiDeduplicationStageDetails{IssuesIn: 1 + 2*testOperationCount, Groups: 1 + testOperationCount,
+			MultiIssueGroups: testOperationCount, DuplicatesRemoved: duplicatesRemoved}
+	}
 	failLastOperation := lintInOrder([]int{0, 1, 2, 3}, &[]int{})
 	tests := []struct {
-		name           string
-		lint           func(string) ([]view.AiValidationIssue, error)
-		dedup          func(int, view.AiDeduplicationRequest) ([]view.AiDuplicatePair, error)
-		statsErr       error
-		wantStatus     view.LintedDocumentStatus
-		wantLintClass  entity.AiRequestErrorClass
-		wantDedupClass entity.AiRequestErrorClass
-		wantDedup      *entity.AiDeduplicationStageDetails
+		name              string
+		apihub            client.ApihubClient
+		lint              func(string) ([]view.AiValidationIssue, error)
+		dedup             func(int, view.AiDeduplicationRequest) ([]view.AiDuplicatePair, error)
+		statsErr          error
+		wantStatus        view.LintedDocumentStatus
+		wantLintRequests  int
+		wantLintClass     entity.AiRequestErrorClass
+		wantDedupClass    entity.AiRequestErrorClass
+		wantDedupRequests int
+		wantDedup         *entity.AiDeduplicationStageDetails
 	}{
 		{
-			name:       "success",
-			wantStatus: view.StatusSuccess,
-			wantDedup:  &entity.AiDeduplicationStageDetails{DuplicatesRemoved: testOperationCount},
+			name:              "success",
+			wantStatus:        view.StatusSuccess,
+			wantLintRequests:  testOperationCount,
+			wantDedupRequests: 1,
+			wantDedup:         lintByOperationDedup(testOperationCount),
 		},
 		{
 			name: "deduplication failure keeps the failed request",
 			dedup: func(int, view.AiDeduplicationRequest) ([]view.AiDuplicatePair, error) {
 				return nil, aiError(exception.AiRequestRefused)
 			},
-			wantStatus:     view.StatusError,
-			wantDedupClass: entity.AiRequestErrorClassRefusal,
-			wantDedup:      &entity.AiDeduplicationStageDetails{},
+			wantStatus:        view.StatusError,
+			wantLintRequests:  testOperationCount,
+			wantDedupClass:    entity.AiRequestErrorClassRefusal,
+			wantDedupRequests: 1,
+			wantDedup:         lintByOperationDedup(0),
 		},
 		{
 			name: "one failed operation keeps the completed reports and publishes no result",
@@ -288,14 +323,32 @@ func TestProcessDocTaskSavesAiLintStats(t *testing.T) {
 				}
 				return issues, err
 			},
-			wantStatus:    view.StatusError,
-			wantLintClass: entity.AiRequestErrorClassRefusal,
+			wantStatus:       view.StatusError,
+			wantLintRequests: testOperationCount,
+			wantLintClass:    entity.AiRequestErrorClassRefusal,
 		},
 		{
-			name:       "failed stats insert does not change the status",
-			statsErr:   errors.New("database is unavailable"),
+			name:              "failed stats insert does not change the status",
+			statsErr:          errors.New("database is unavailable"),
+			wantStatus:        view.StatusSuccess,
+			wantLintRequests:  testOperationCount,
+			wantDedupRequests: 1,
+			wantDedup:         lintByOperationDedup(testOperationCount),
+		},
+		{
+			name: "no issues records a deduplication stage without requests",
+			lint: func(string) ([]view.AiValidationIssue, error) {
+				return []view.AiValidationIssue{}, nil
+			},
+			wantStatus:       view.StatusSuccess,
+			wantLintRequests: testOperationCount,
+			wantDedup:        &entity.AiDeduplicationStageDetails{},
+		},
+		{
+			name:       "zero operations records both stages without requests",
+			apihub:     noOperationsApihubClient{},
 			wantStatus: view.StatusSuccess,
-			wantDedup:  &entity.AiDeduplicationStageDetails{DuplicatesRemoved: testOperationCount},
+			wantDedup:  &entity.AiDeduplicationStageDetails{},
 		},
 	}
 
@@ -305,11 +358,15 @@ func TestProcessDocTaskSavesAiLintStats(t *testing.T) {
 			if lint == nil {
 				lint = lintByOperation
 			}
+			apihub := tt.apihub
+			if apihub == nil {
+				apihub = fakeApihubClient{}
+			}
 			llm := &fakeLlmClient{lint: lint, dedup: tt.dedup}
 			docResults := &fakeDocResultRepository{}
 			statsRepo := &fakeAiLintStatsRepository{err: tt.statsErr}
 
-			newTestProcessor(llm, fakeApihubClient{}, docResults, statsRepo).processDocTask(context.Background(), testTask)
+			newTestProcessor(llm, apihub, docResults, statsRepo).processDocTask(context.Background(), testTask)
 
 			wantSaved := []savedLintResult{{status: tt.wantStatus, published: tt.wantStatus == view.StatusSuccess}}
 			if !reflect.DeepEqual(docResults.saved, wantSaved) {
@@ -332,9 +389,13 @@ func TestProcessDocTaskSavesAiLintStats(t *testing.T) {
 			if tt.wantLintClass != "" {
 				wantLintStatus = entity.AiRequestStatusError
 			}
-			if lintRow.Stage != entity.AiLintStageLint || lintRow.Model != testModelName || lintRow.Requests != testOperationCount ||
-				lintRow.Status != wantLintStatus || lintRow.ErrorClass != tt.wantLintClass {
+			if lintRow.Stage != entity.AiLintStageLint || lintRow.Model != testModelName || lintRow.Requests != tt.wantLintRequests ||
+				lintRow.Status != wantLintStatus || lintRow.ErrorClass != tt.wantLintClass ||
+				lintDetails.Operations == nil || len(lintDetails.Operations) != tt.wantLintRequests {
 				t.Fatalf("unexpected lint row %+v with details %s", lintRow, lintRow.Details)
+			}
+			if tt.wantLintRequests == 0 && (lintRow.PromptTokens != 0 || lintRow.CompletionTokens != 0) {
+				t.Fatalf("expected no tokens in a request-free lint row, got %+v", lintRow)
 			}
 			for i, operation := range lintDetails.Operations {
 				if operation.OperationId != testOperationId(i) {
@@ -350,12 +411,15 @@ func TestProcessDocTaskSavesAiLintStats(t *testing.T) {
 			if err := json.Unmarshal(dedupRow.Details, &dedupDetails); err != nil {
 				t.Fatal(err)
 			}
-			want := wantDedupDetails
-			want.DuplicatesRemoved = tt.wantDedup.DuplicatesRemoved
+			want := *tt.wantDedup
 			want.Requests = dedupDetails.Requests
-			if dedupRow.Stage != entity.AiLintStageDeduplication || dedupRow.ErrorClass != tt.wantDedupClass || dedupRow.Requests != 1 ||
-				len(dedupDetails.Requests) != 1 || !reflect.DeepEqual(dedupDetails, want) {
+			if dedupRow.Stage != entity.AiLintStageDeduplication || dedupRow.Model != testModelName || dedupRow.ErrorClass != tt.wantDedupClass ||
+				dedupRow.Requests != tt.wantDedupRequests || dedupDetails.Requests == nil || len(dedupDetails.Requests) != tt.wantDedupRequests ||
+				!reflect.DeepEqual(dedupDetails, want) {
 				t.Fatalf("expected deduplication details %+v, got %+v", want, dedupDetails)
+			}
+			if tt.wantDedupRequests == 0 && (dedupRow.Status != entity.AiRequestStatusSuccess || dedupRow.PromptTokens != 0 || dedupRow.CompletionTokens != 0) {
+				t.Fatalf("expected a successful request-free deduplication row, got %+v", dedupRow)
 			}
 		})
 	}

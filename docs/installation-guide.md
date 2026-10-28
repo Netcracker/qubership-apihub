@@ -379,6 +379,7 @@ insufficient.
 | `linters.spectral.binPath` | Yes | `resources/spectral/linux/spectral` | Path to the Spectral binary inside the container |
 | `linters.spectral.workers` | No | `1` | Number of concurrent Spectral linter workers |
 | `linters.ai.enabled` | No | `false` | Enable the AI-powered OpenAPI linter |
+| `linters.ai.optional` | No | `false` | Treat the AI linter as non-blocking: its failures do not affect the validation result or scoring, and failure details are still stored. The shipped `config.template.yaml` sets `true` |
 | `linters.ai.workers` | No | `1` | Number of concurrent AI linter workers |
 | `linters.ai.excludedPackages` | No | `[]` | Package IDs to exclude from AI linting |
 | `linters.ai.includedPackages` | No | `[]` | Package IDs to include (empty = all) |
@@ -387,9 +388,19 @@ insufficient.
 | `linters.ai.openAI.model` | No | — | OpenAI model to use (e.g. `gpt-4o`) |
 | `linters.ai.openAI.rateLimitRPS` | No | `10` | OpenAI requests per second limit |
 | `linters.ai.openAI.rateLimitBurst` | No | `30` | OpenAI burst limit |
+| `linters.ai.openAI.maxConcurrentRequests` | No | `0` | Maximum LLM requests in flight per instance, shared by the lint and deduplication requests of all AI workers; `0` means unbounded |
+| `linters.ai.openAI.extraBodyJSON` | No | `''` | String that holds a JSON object; its top-level keys are added to every LLM request body, for provider-specific parameters. Must not contain `messages`, `response_format`, `max_completion_tokens`, or `model`. Example: `extraBodyJSON: '{"thinking":{"type":"disabled"}}'` |
+| `linters.ai.deduplication.criteriaPrompt` | No | Built-in criterion | Rule that decides whether two AI linter issues at the same path describe the same problem; appended to the built-in deduplication instructions |
+| `linters.ai.deduplication.requestTokenBudget` | No | `24000` | Estimated input tokens per deduplication request, including the system prompt; minimum `4000`. Larger groups of issues are split into several requests |
+| `linters.ai.deduplication.maxCompletionTokens` | No | `12000` | Maximum completion tokens for one deduplication request (`max_completion_tokens`); minimum `1000` |
 | `olric.discoveryMode` | No | `local` | Olric discovery: `local` (single pod) or `lan` (multi-pod) |
 | `olric.replicaCount` | No | `1` | Olric replica count |
 | `olric.namespace` | No | — | Olric discovery namespace (set by Helm to the release namespace) |
+
+**Upgrade note:** the linter no longer reads `linters.ai.deduplicationPrompt`, shipped in `api-linter-service/1.3.7`.
+The service still starts with the old key, but a custom prompt in it is ignored. Move your criterion to
+`linters.ai.deduplication.criteriaPrompt` and keep only the criterion: the service adds the response-format
+instructions itself.
 
 ---
 
@@ -572,7 +583,7 @@ see the [agent chart guide](../backend/agent/helm-templates/README.md).
 | `qubershipApiLinterService.env.technicalParameters.apihub.url` | No | Default `http://localhost:8090`; in-cluster set to `http://qubership-apihub-ui:8080` |
 | `qubershipApiLinterService.goMemLimit` | No | → `GOMEMLIMIT` (default `800MiB`, ~80% of default `memory.limit` `1000Mi`) |
 | `qubershipApiLinterService.env.linters.spectral.*` | No | Spectral binary path and worker count |
-| `qubershipApiLinterService.env.linters.ai.*` | No | AI linter (OpenAI key, workers, include/exclude lists) |
+| `qubershipApiLinterService.env.linters.ai.*` | No | AI linter (OpenAI key, workers, include/exclude lists, LLM request concurrency, deduplication token budgets) |
 | `qubershipApiLinterService.env.olric.*` | No | Olric discovery mode / replicas (namespace set by Helm) |
 | `qubershipApiLinterService.customCa` | No | Optional Secret mounted at `/tmp/cert` for corporate HTTPS outbound |
 | `qubershipApihubAgentsBackend.env.database.*` | Yes | Agents-backend `config.yaml` `database.*` |
