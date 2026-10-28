@@ -16,7 +16,7 @@
 
 import react from '@vitejs/plugin-react';
 import path from "path";
-import { defineConfig, esmExternalRequirePlugin } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
 import dts from 'vite-plugin-dts';
 import ts from 'typescript';
 
@@ -44,40 +44,62 @@ function aliasesFromTsconfig(): Record<string, string> {
   return aliases
 }
 
+const BUNDLED_REACT_MODULE = /\/node_modules\/(react|react-dom)\/|esm-external-require/
+const REACT_REQUIRE_CALL = /require\(\s*["']react(-dom)?(\/[^"']*)?["']\s*\)/
+
+/* Fails the library build when React is bundled or required at runtime. Only require()
+   calls with a literal module name are detected. Storybook loads this config too and
+   bundles React on purpose, so the check runs only when build.lib is set. */
+function checkReactExternals(): Plugin {
+  let isLibraryBuild = false
+  return {
+    name: 'api-doc-viewer:check-react-externals',
+    configResolved(config) {
+      isLibraryBuild = Boolean(config.build.lib)
+    },
+    generateBundle(_, bundle) {
+      if (!isLibraryBuild) {
+        return
+      }
+      for (const output of Object.values(bundle)) {
+        if (output.type !== 'chunk') {
+          continue
+        }
+        const bundledModule = output.moduleIds.find(id => BUNDLED_REACT_MODULE.test(id.replace(/\\/g, '/')))
+        if (bundledModule) {
+          this.error(`${output.fileName} bundles ${bundledModule}. Keep React external through build.rolldownOptions.external, not through a plugin.`)
+        }
+        const requireCall = output.code.match(REACT_REQUIRE_CALL)
+        if (requireCall) {
+          this.error(`${output.fileName} calls ${requireCall[0]}, which throws in a browser. Make the module that calls it external, or replace it.`)
+        }
+      }
+    },
+  }
+}
+
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
     react(),
-    /* Vite 8 bundles with rolldown, which deliberately leaves an external dependency as a
-       literal require() rather than converting it to an import - the two have different
-       semantics, and require() is undefined in environments like Cloudflare Workers. It then
-       injects a helper that THROWS when that require is reached in a browser:
-
-         Uncaught Error: Calling `require` for "react" in an environment that
-         doesn't expose the `require` function
-
-       This library is consumed by ui, which bundles it, so the throw surfaces in ui's app
-       bundle regardless of which vite ui itself uses - a vite 4 build of ui shows the same
-       rolldown error. See rolldown-vite issues #223 and #596.
-
-       react/react-dom MOVE here from build.rollupOptions.external rather than being listed
-       in both: top-level external takes precedence, and a module named in both stays a raw
-       require(). The rewrite only applies to ESM output, which is what lib.formats gives.
-
-       The plugin comes from vite, not rolldown/plugins: vite ignores a plugin created by a
-       rolldown copy other than its own, without a warning, and React lands in dist/index.js. */
-    esmExternalRequirePlugin({
-      external: ['react', 'react-dom'],
-    }),
     dts({
       insertTypesEntry: true,
     }),
+    checkReactExternals(),
   ],
   build: {
     sourcemap: true,
     outDir: './dist',
     minify: false,
     emptyOutDir: true,
+    /* Consumers supply React, so react, react-dom, and their subpaths stay imports. With
+       only 'react' external, react/jsx-runtime was bundled as CommonJS, and its
+       require('react') reached dist: esmExternalRequirePlugin turned it into
+       m['module.exports'], which webpack 5 rejects in apispec-view. Keeping every subpath
+       external leaves no such require(), so the plugin is not needed. */
+    rolldownOptions: {
+      external: /^react(-dom)?(\/.*)?$/,
+    },
     lib: {
       entry: path.resolve(__dirname, 'src/index.ts'),
       formats: ['es'],
