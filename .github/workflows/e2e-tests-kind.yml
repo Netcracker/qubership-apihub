@@ -1,7 +1,8 @@
 name: 'E2E: Kind'
 
 # E2E on a Kind cluster, with the product installed by its Helm charts: Newman over the REST API
-# (tests/postman-collections), then the Playwright Portal project (tests/ui-tests). Unlike compose,
+# (tests/postman-collections), then the Playwright Portal and Agent projects (tests/ui-tests).
+# The Agent project runs when this workflow deploys the agent. Unlike compose,
 # this covers the charts, the ingress, TLS, the custom CA mount, and the agent. The charts, the agent
 # chart, and both suites come from the commit that started the run, unless deploy_ref, postman_ref,
 # or playwright_ref name another ref of this repository; only the pinned ingress-nginx manifest is
@@ -63,7 +64,9 @@ on:
         type: string
         default: ''
       playwright_args:
-        description: Arguments of `playwright test`. Empty means the default.
+        description: >-
+          Arguments of `playwright test`. Empty means Portal and Agent when the agent is deployed,
+          otherwise Portal. Both exclude @flaky.
         required: false
         type: string
         default: ''
@@ -569,13 +572,23 @@ jobs:
           CLEAR_TD: skip
           PLAYWRIGHT_ARGS: ${{ inputs.playwright_args }}
           TIER: ${{ inputs.tier }}
+          AGENT: ${{ inputs.agent }}
+          # cloudName in the agent chart values this job installs
+          # (backend/agent/helm-templates/qubership-apihub-agent/local-k8s-values.yaml).
+          AGENT_TEST_CLOUD: Kind
         shell: bash
         run: |
           set -euo pipefail
           # playwright.config.ts sets 10 workers under CI. The arguments are split like a shell would,
           # quotes included, without evaluating them.
           args="$PLAYWRIGHT_ARGS"
-          [ -n "${args//[[:space:]]/}" ] || args='--project=Portal --grep-invert=@flaky'
+          if [ -z "${args//[[:space:]]/}" ]; then
+            if [ "$AGENT" = 'true' ]; then
+              args='--project=Portal --project=Agent --grep-invert=@flaky'
+            else
+              args='--project=Portal --grep-invert=@flaky'
+            fi
+          fi
           mapfile -t argv < <(xargs -n1 <<< "$args")
           if [ "$TIER" = 'smoke' ]; then argv+=(--grep=@smoke); fi
           echo "playwright ${argv[*]}"
