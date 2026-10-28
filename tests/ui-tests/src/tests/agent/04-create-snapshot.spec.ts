@@ -491,10 +491,10 @@ test.describe('03. Create Snapshot', () => {
       }
     })
 
-  test('[A-SNP-5] Open a snapshot whose name contains a space',
+  test('[A-SNP-5-BUG-837] Open a snapshot whose name contains a space',
     {
       tag: '@smoke',
-      annotation: { type: 'Issue', description: 'https://github.com/Netcracker/qubership-apihub/issues/837' },
+      annotation: { type: 'URL', description: 'https://github.com/Netcracker/qubership-apihub/issues/837' },
     },
     async ({ sysadminPage: page }) => {
       const agentPage = new AgentPage(page)
