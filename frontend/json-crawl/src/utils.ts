@@ -2,6 +2,7 @@ export const isObject = (value: unknown): value is Record<PropertyKey, any> => t
 
 export const isArray = (value: unknown): value is Array<any> => Array.isArray(value)
 
+// Built once: an array's prototype keys do not change for the life of the process.
 const PURE_ARRAY_KEYS = new Set(Reflect.ownKeys([]))
 
 //[...context.value.keys()] - wrong way cause in doesn't contain symbols for object and include indexed in speared array
