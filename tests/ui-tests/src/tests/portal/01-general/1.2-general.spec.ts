@@ -1,19 +1,18 @@
 import { test } from '@fixtures'
 import { expect, expectText } from '@services/expect-decorator'
 import type { VersionedExtensionName } from '@test-data/props'
-import { getExtensionVersions, getPortalVersionInfo, getSysInfo } from '@test-data/props'
+import { getExtensionVersions, getPortalVersionInfo, getSysInfo, VERSIONED_EXTENSION_NAMES } from '@test-data/props'
 import { PortalPage } from '@portal/pages'
 import { TICKET_BASE_URL } from '@test-setup'
 import { VS_CODE_EXTENSION_TOOLTIP } from '@test-data/portal'
 import { SYSADMIN } from '@test-data'
 
-// The titles that System Information gives the extensions that report a version.
-const EXTENSION_TITLES: Record<VersionedExtensionName, string> = {
-  'api-linter': 'API Linter',
-  'agents-backend': 'Agents Backend',
-}
-
 test.describe('General', () => {
+  // The titles that System Information gives the extensions that report a version.
+  const EXTENSION_TITLES: Record<VersionedExtensionName, string> = {
+    'api-linter': 'API Linter',
+    'agents-backend': 'Agents Backend',
+  }
 
   test('[P-GEN-1.1] Opening Portal page',
     {
@@ -80,10 +79,10 @@ test.describe('General', () => {
       await expect.soft(sysInfoPopup.backendVersion).toHaveText(`Backend v. ${build.backendVersion}`)
 
       // A registered extension has a row with its own answer; one that this stand does not register has no row.
-      for (const [name, title] of Object.entries(EXTENSION_TITLES) as [VersionedExtensionName, string][]) {
+      for (const name of VERSIONED_EXTENSION_NAMES) {
         const version = extensionVersions[name]
         if (version) {
-          await expect.soft(sysInfoPopup.extensionVersion(name)).toHaveText(`${title} v. ${version}`)
+          await expect.soft(sysInfoPopup.extensionVersion(name)).toHaveText(`${EXTENSION_TITLES[name]} v. ${version}`)
         } else {
           await expect.soft(sysInfoPopup.extensionVersion(name)).toBeHidden()
         }
