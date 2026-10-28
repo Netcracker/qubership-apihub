@@ -312,11 +312,13 @@ func (r *issueDeduplicationRun) sendGroups(ctx context.Context, groups []prepare
 // stream deduplicates a group that does not fit into one request. Each request carries the issues found unique so
 // far as "known" and as many next issues as fit into budget and newLimit. A length error or an invalid response
 // reduces budget or newLimit for the rest of the stream and resends the same chunk; "known" is carried unchanged, so
-// the validation rules hold.
+// the validation rules hold. Each chunk may be repacked up to maxRepacks times, counting the repacks inherited from
+// the request that started the stream.
 func (r *issueDeduplicationRun) stream(ctx context.Context, group preparedGroup, budget int, newLimit int, repacks int) error {
 	known := []view.AiDeduplicationIssue{}
 	knownBytes := 0
 	var lengthErr error
+	chunkRepacks := repacks
 	for next := 0; next < len(group.issues); {
 		count := min(r.fittingCount(emptyRequestBytes+group.emptySize+knownBytes, group.sizes[next:], budget), newLimit)
 		if count == 0 {
@@ -333,10 +335,10 @@ func (r *issueDeduplicationRun) stream(ctx context.Context, group preparedGroup,
 			return err
 		}
 		if err != nil {
-			if repacks == maxRepacks {
+			if chunkRepacks == maxRepacks {
 				return fmt.Errorf(repacksExhaustedFormat, maxRepacks, err)
 			}
-			repacks++
+			chunkRepacks++
 			if isContextLengthError(err) {
 				lengthErr = err
 				budget = estimatedTokens / 2
@@ -359,6 +361,7 @@ func (r *issueDeduplicationRun) stream(ctx context.Context, group preparedGroup,
 			}
 		}
 		next += count
+		chunkRepacks = repacks
 	}
 	return nil
 }

@@ -318,10 +318,12 @@ func TestLengthErrorsAndInvalidResponsesReduceTheRequest(t *testing.T) {
 		{name: "context length of a streamed chunk", groups: []issueGroup{bigGroup}, budget: budgetForIssues(t, bigGroup, 12), dedup: failing(aiError(exception.AiContextLengthExceeded), 1)},
 		{name: "output length of a streamed chunk", groups: []issueGroup{bigGroup}, budget: budgetForIssues(t, bigGroup, 12), dedup: failing(aiError(exception.AiOutputLengthExceeded), 1)},
 		{name: "four length errors in a lineage", groups: []issueGroup{bigGroup}, budget: largeTestBudget, dedup: failing(aiError(exception.AiOutputLengthExceeded)), wantErr: aiError(exception.AiOutputLengthExceeded), wantRequests: maxRepacks + 1},
+		{name: "output length errors across streamed chunks", groups: []issueGroup{bigGroup}, budget: largeTestBudget, dedup: failing(aiError(exception.AiOutputLengthExceeded), 0, 1, 3, 5)},
 		{name: "output length with one new issue", groups: []issueGroup{testGroup("/a", 0, "x", "y")}, budget: largeTestBudget, dedup: failing(aiError(exception.AiOutputLengthExceeded)), wantErr: aiError(exception.AiOutputLengthExceeded), wantRequests: 2},
 		{name: "invalid response of whole groups", groups: smallGroups, budget: largeTestBudget, dedup: failing(aiError(exception.AiInvalidDeduplicationResponse), 0)},
 		{name: "invalid response of a streamed chunk", groups: []issueGroup{bigGroup}, budget: budgetForIssues(t, bigGroup, 12), dedup: failing(aiError(exception.AiInvalidDeduplicationResponse), 1)},
 		{name: "four invalid responses in a lineage", groups: []issueGroup{bigGroup}, budget: largeTestBudget, dedup: failing(aiError(exception.AiInvalidDeduplicationResponse)), wantErr: aiError(exception.AiInvalidDeduplicationResponse), wantRequests: maxRepacks + 1},
+		{name: "invalid responses across streamed chunks", groups: []issueGroup{bigGroup}, budget: largeTestBudget, dedup: failing(aiError(exception.AiInvalidDeduplicationResponse), 0, 1, 3, 5)},
 		{name: "malformed output with one new issue", groups: []issueGroup{testGroup("/a", 0, "x", "y")}, budget: largeTestBudget, dedup: failing(aiError(exception.AiMalformedOutput)), wantErr: aiError(exception.AiMalformedOutput), wantRequests: 2},
 	}
 	for _, tt := range tests {
