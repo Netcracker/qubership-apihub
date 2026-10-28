@@ -438,8 +438,9 @@ the monorepo and of that repository.
 
 - A release image stays while its Git tag exists: `<image>:<version>` for `<component>/<version>`, and the legacy
   `X.Y.Z` tags.
-- `latest`, `next`, and `dev` always stay. `pull-N-merge` stays while `refs/pull/N/head` exists and goes on the
-  next run after the pull request closes.
+- `latest`, `next`, and `dev` always stay. `pull-N-merge` stays while pull request N is open and goes on
+  the next run after it closes. Each page of that lookup is a core API call and counts toward the
+  rate-limit floor.
 - A deleted branch's tag goes on the next run. Superseded indexes and `src-<hash>` content that no kept tag uses go a
   day after their last change.
 - A run never takes the API rate limit below half, so CI keeps its share. The legacy backlog takes several weeks.

@@ -3,7 +3,10 @@ const assert = require('node:assert/strict')
 const { execFileSync } = require('node:child_process')
 const fs = require('node:fs')
 const path = require('node:path')
-const { images, branchTag, legacyTag, liveTags, plan, referencedDigests } = require('./images-gc')
+const {
+  images, branchTag, legacyTag, liveTags, plan, referencedDigests,
+  collectOpenPullNumbers, reserveCoreCall, OPEN_PULL_PAGE_SIZE,
+} = require('./images-gc')
 
 const YAML = require(require.resolve('yaml', { paths: [require.resolve('nx/package.json')] }))
 const ciPath = path.join(__dirname, '..', '..', '.github', 'workflows', 'ci.yml')
@@ -45,8 +48,8 @@ const NOW = Date.parse('2026-10-20T12:00:00Z')
 const OLD = '2026-10-01T00:00:00Z'
 const FRESH = '2026-10-20T11:00:00Z'
 const v = (name, tags = [], updated = OLD) => ({ id: name, name, updated_at: updated, tags })
-const run = async (versions, refs, graph = {}) =>
-  (await plan(versions, liveTags(refs), async (d) => graph[d] || [], NOW)).map((x) => x.name).sort()
+const run = async (versions, refs, graph = {}, openPulls = []) =>
+  (await plan(versions, liveTags(refs, openPulls), async (d) => graph[d] || [], NOW)).map((x) => x.name).sort()
 
 test('a deleted branch loses its tag at once, with what only it lists', async () => {
   const gone = await run(
@@ -88,10 +91,12 @@ test('untagged and content versions under a day old stay, with what they list', 
   assert.deepEqual(gone, ['stale'])
 })
 
-test('liveTags() keeps pull-N-merge while the pull request head ref exists', () => {
-  const live = liveTags(['refs/heads/develop', 'refs/pull/605/head'])
+test('liveTags() keeps pull-N-merge only for an open pull request number', () => {
+  const live = liveTags(['refs/heads/develop'], [605])
   assert.equal(live.has('pull-605-merge'), true)
   assert.equal(live.has('pull-12-merge'), false)
+  // Git still advertises this ref after the pull request closes, so it must not keep the image.
+  assert.equal(liveTags(['refs/pull/605/head']).has('pull-605-merge'), false)
 })
 
 test('an open pull request keeps its image and a closed one does not', async () => {
@@ -102,9 +107,32 @@ test('an open pull request keeps its image and a closed one does not', async () 
       v('mixed', ['gone-branch', 'develop-copy']),
       v('gone', ['gone-branch-2']),
     ],
-    ['refs/heads/develop', 'refs/heads/develop-copy', 'refs/pull/605/head'],
+    ['refs/heads/develop', 'refs/heads/develop-copy'],
+    {},
+    [605],
   )
   assert.deepEqual(gone, ['closed', 'gone'])
+})
+
+test('collectOpenPullNumbers stops on a short page and rejects a page that never ends', async () => {
+  const calls = []
+  const full = Array.from({ length: OPEN_PULL_PAGE_SIZE }, (_, index) => index + 1)
+  const numbers = await collectOpenPullNumbers(page => {
+    calls.push(page)
+    return page === 1 ? full : [OPEN_PULL_PAGE_SIZE + 1]
+  })
+  assert.deepEqual(calls, [1, 2])
+  assert.equal(numbers.length, OPEN_PULL_PAGE_SIZE + 1)
+  await assert.rejects(collectOpenPullNumbers(() => full))
+})
+
+test('reserveCoreCall counts the call and stops before crossing the floor', () => {
+  const ledger = { limit: 1000, remaining: 501, floor: 500, pullCalls: 0 }
+  reserveCoreCall(ledger, 'pulls')
+  assert.equal(ledger.pullCalls, 1)
+  assert.equal(ledger.remaining, 500)
+  assert.throws(() => reserveCoreCall(ledger, 'pulls'), /floor is 500/)
+  assert.equal(ledger.pullCalls, 1)
 })
 
 test('content that only the base of a branch image names is unreachable without the annotation', async () => {
