@@ -12,9 +12,11 @@ type DocumentResult struct {
 }
 
 type LinterResult struct {
-	Linter  Linter            `json:"linter"`
-	Ruleset Ruleset           `json:"ruleset"`
-	Issues  []ValidationIssue `json:"issues"`
+	Linter  Linter               `json:"linter"`
+	Ruleset Ruleset              `json:"ruleset"`
+	Issues  []ValidationIssue    `json:"issues"`
+	Status  LintedDocumentStatus `json:"status"`
+	Details string               `json:"details,omitempty"`
 }
 
 type ValidationIssue struct {

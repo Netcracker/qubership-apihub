@@ -63,6 +63,7 @@ func (v validationResultControllerImpl) GetValidationSummaryForVersion(w http.Re
 	result, err := v.validationService.GetVersionSummary(ctx, packageId, versionName)
 	if err != nil {
 		v.responder.RespondWithError(w, "Failed to get version summary", err)
+		return
 	}
 	if result == nil {
 		v.responder.RespondWithCustomError(w, &exception.CustomError{
@@ -109,6 +110,7 @@ func (v validationResultControllerImpl) GetValidationSummaryForVersion_deprecate
 	result, err := v.validationService.GetVersionSummary_deprecated(ctx, packageId, versionName)
 	if err != nil {
 		v.responder.RespondWithError(w, "Failed to get version summary", err)
+		return
 	}
 	if result == nil {
 		v.responder.RespondWithCustomError(w, &exception.CustomError{
@@ -167,6 +169,7 @@ func (v validationResultControllerImpl) GetValidationResultForDocument_deprecate
 	result, err := v.validationService.GetValidationResult_deprecated(secctx.MakeUserContext(r), packageId, versionName, slug)
 	if err != nil {
 		v.responder.RespondWithError(w, "Failed to get validation result for document", err)
+		return
 	}
 	if result == nil {
 		v.responder.RespondWithCustomError(w, &exception.CustomError{
@@ -225,6 +228,7 @@ func (v validationResultControllerImpl) GetValidationResultForDocument(w http.Re
 	result, err := v.validationService.GetValidationResult(secctx.MakeUserContext(r), packageId, versionName, slug)
 	if err != nil {
 		v.responder.RespondWithError(w, "Failed to get validation result for document", err)
+		return
 	}
 	if result == nil {
 		v.responder.RespondWithCustomError(w, &exception.CustomError{
