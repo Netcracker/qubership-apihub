@@ -68,7 +68,7 @@ on:
       playwright_args:
         description: >-
           Arguments of `playwright test`. Empty means Portal and Agent when the agent is deployed,
-          otherwise Portal. Both exclude @flaky.
+          otherwise Portal. Both use 8 workers and exclude @flaky and @specific.
         required: false
         type: string
         default: ''
@@ -382,13 +382,23 @@ jobs:
         working-directory: ${{ runner.temp }}/helm/local-k8s-quickstart
         run: |
           set -euo pipefail
-          # The images file goes last, so it overrides the repositories and tags that
-          # local-k8s-values.yaml names.
+          # The quickstart URL is the in-cluster Service. agents-backend copies it into portal
+          # links, and the browser cannot open that name. The agent chart gets the same public
+          # URL in Deploy the APIHUB agent. The images file stays last: it only sets repositories
+          # and tags, and a later file does not drop keys it does not name.
+          cat > "$RUNNER_TEMP/agents-backend-public-url.yaml" <<EOF
+          qubershipApihubAgentsBackend:
+            env:
+              technicalParameters:
+                apihub:
+                  url: 'https://${APIHUB_HOST}'
+          EOF
           helm upgrade --install apihub ../qubership-apihub \
             --namespace "$NAMESPACE" \
             --create-namespace \
             --values qubership-apihub/local-k8s-values.yaml \
             --values qubership-apihub/local-secrets.yaml \
+            --values "$RUNNER_TEMP/agents-backend-public-url.yaml" \
             --values '${{ steps.images.outputs.values }}' \
             --wait --timeout 10m
 
@@ -596,7 +606,11 @@ jobs:
           require "https://${APIHUB_HOST}" "the agent's configuration does not use the public APIHUB URL"
           require 'app.kubernetes.io/part-of' "the agent's configuration does not group by part-of"
           require 'app.kubernetes.io/version' "the agent's configuration does not group by version"
-          echo "the agent's configuration holds the access token, the public URL, and the grouping labels"
+          agents_config="$(kubectl get secret qubership-apihub-agents-backend-config-secret \
+            --namespace "$NAMESPACE" --output=jsonpath='{.data.config\.yaml}' | base64 --decode)"
+          printf '%s' "$agents_config" | grep --fixed-strings --quiet -- "https://${APIHUB_HOST}" \
+            || { echo "::error::agents-backend still points at the in-cluster UI URL"; exit 1; }
+          echo "the agent and agents-backend use the public APIHUB URL"
 
       # Reads the images back from the deployments: Helm ignores a values key the chart does not read,
       # and the release still succeeds with the chart's default image.
@@ -713,14 +727,15 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          # playwright.config.ts sets 10 workers under CI. The arguments are split like a shell would,
-          # quotes included, without evaluating them.
+          # playwright.config.ts sets 10 workers under CI. This job uses 8, and it skips @flaky
+          # and @specific (SSO, and Agent tabs that need the nc-service extension). The arguments
+          # are split like a shell would, quotes included, without evaluating them.
           args="$PLAYWRIGHT_ARGS"
           if [ -z "${args//[[:space:]]/}" ]; then
             if [ "$AGENT" = 'true' ]; then
-              args='--project=Portal --project=Agent --grep-invert=@flaky'
+              args='--project=Portal --project=Agent --workers=8 --grep-invert=@flaky|@specific'
             else
-              args='--project=Portal --grep-invert=@flaky'
+              args='--project=Portal --workers=8 --grep-invert=@flaky|@specific'
             fi
           fi
           mapfile -t argv < <(xargs -n1 <<< "$args")
