@@ -3,7 +3,6 @@ import { type FC, memo } from 'react'
 
 import { ChangeSeverityIndicator } from '../../../components/ChangeSeverityIndicator'
 import { OverflowTooltip } from '../../../components/OverflowTooltip'
-import type { ChangeSeverity } from '../../../entities/change-severities'
 import type { OperationChanges } from '../../../entities/operation-changelog'
 
 export type DdlEntityChangesSubTableProps = {
@@ -33,7 +32,7 @@ export const DdlEntityChangesSubTable: FC<DdlEntityChangesSubTableProps> = memo<
         <TableRow key={`${change.scope}-${index}`}>
           <ExpandCell colSpan={columnCount}>
             <DescriptionRow data-testid="ChangeDescriptionCell">
-              <ChangeSeverityIndicator severity={change.severity as ChangeSeverity} />
+              <ChangeSeverityIndicator severity={change.severity} />
               <OverflowTooltip title={change.description}>
                 <DescriptionText noWrap variant="inherit">{change.description}</DescriptionText>
               </OverflowTooltip>

@@ -29,7 +29,7 @@ export const OperationChangesSubTableWrapper: FC<OperationChangesSubTableWrapper
     packageKey,
     versionKey,
     apiType,
-    packageKind,
+    columnCount,
   },
 ) => {
   const { currentOperation, previousOperation } = value.original.change
@@ -46,7 +46,7 @@ export const OperationChangesSubTableWrapper: FC<OperationChangesSubTableWrapper
     <OperationChangesSubTable
       changes={changes}
       isLoading={isLoading}
-      packageKind={packageKind}
+      columnCount={columnCount}
     />
   )
 })

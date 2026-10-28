@@ -27,7 +27,7 @@ import { DASHBOARD_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/
 export type OperationChangesSubTableWrapper = SubTableComponentProps
 
 export const OperationChangesSubTableWrapper: FC<OperationChangesSubTableWrapper> = memo<OperationChangesSubTableWrapper>(
-  ({ value, packageKey, versionKey, apiType, packageKind }) => {
+  ({ value, packageKey, versionKey, apiType, packageKind, columnCount }) => {
     const { currentOperation, previousOperation } = value.original.change
     const operationKey = currentOperation?.operationKey ?? previousOperation!.operationKey
 
@@ -66,7 +66,7 @@ export const OperationChangesSubTableWrapper: FC<OperationChangesSubTableWrapper
       <OperationChangesSubTable
         changes={sortedChanges}
         isLoading={isLoading || (!isDashboard && isVersionLoading)}
-        packageKind={packageKind}
+        columnCount={columnCount}
       />
     )
   },
