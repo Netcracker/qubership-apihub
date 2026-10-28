@@ -157,7 +157,7 @@ from `develop`. It has nine inputs:
 | `postman-ref` | `develop` | ref of `tests/postman-collections` |
 | `postman-collections` | empty | comma-separated collections, as `1_1_Smoke_Portal` or `./e2e/1_1_Smoke_Portal.postman_collection.json`; empty means the default list |
 | `playwright-ref` | `develop` | ref of `tests/ui-tests` |
-| `playwright-args` | empty | arguments of `playwright test`; empty means `--project=Portal --grep-invert=@flaky` |
+| `playwright-args` | empty | arguments of `playwright test`; empty on Kind with the agent means `--project=Portal --project=Agent --grep-invert=@flaky`, and Portal only otherwise |
 | `agent` | `true` | deploy the agent and run its collection (Kind only) |
 
 Run it from **Actions > E2E: Run tests (manual) > Run workflow**, or with `gh`:
