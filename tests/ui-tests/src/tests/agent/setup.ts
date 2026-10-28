@@ -6,16 +6,21 @@ import {
   A_WS_N,
   A_GR_APIHUB,
   A_GR_APIHUB_R,
+  A_GR_APIHUB_N,
   A_GR_SUB,
   A_GR_SUB_R,
+  A_GR_SUB_N,
   A_WS_DEFAULT,
   A_GR_PRODUCT_R,
+  A_GR_PRODUCT_N,
   TEST_CLOUD,
   TEST_NAMESPACE_2,
   TEST_SERVICE_1,
   TEST_SERVICE_1_IMM,
+  TEST_SERVICE_1_VAR,
   TEST_SERVICE_2,
   TEST_SERVICE_2_IMM,
+  TEST_SERVICE_2_VAR,
   PK_A_UPLOAD_R,
   V_A_ANNOTUNCLAS,
   V_A_MULTI_CHANGES,
@@ -119,6 +124,20 @@ test.describe('Non-Reusable Test Data creation', async () => {
 
     await test.step('Create Workspace', async () => {
       await tdm.createPackage(A_WS_N)
+    })
+
+    await test.step('Create Groups', async () => {
+      const groups = [A_GR_PRODUCT_N, A_GR_SUB_N, A_GR_APIHUB_N]
+      for (const group of groups) {
+        await tdm.createPackage(group)
+      }
+    })
+
+    await test.step('Create Packages', async () => {
+      const packages = [TEST_SERVICE_1_VAR, TEST_SERVICE_2_VAR]
+      for (const pkg of packages) {
+        await tdm.createPackage(pkg)
+      }
     })
   })
 })
