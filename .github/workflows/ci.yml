@@ -524,11 +524,12 @@ jobs:
       push: ${{ needs.plan.outputs.can_publish == 'true' }}
       images: >-
         [{"project":"agent","image":"qubership-apihub-agent","dockerfile":"backend/agent/Dockerfile",
-          "build_projects":"agent","deploy":"","context":"backend/agent","dockerignore":".dockerignore backend/agent/.dockerignore",
+          "build_projects":"agent,commons-go","deploy":"","context":"backend",
+          "dockerignore":".dockerignore backend/.dockerignore",
           "workspace_build":"false","outputs":""},
          {"project":"test-service","image":"qubership-apihub-test-service",
-          "dockerfile":"backend/test-service/Dockerfile","build_projects":"test-service",
-          "deploy":"","context":"backend/test-service","dockerignore":".dockerignore backend/test-service/.dockerignore",
+          "dockerfile":"backend/test-service/Dockerfile","build_projects":"test-service,commons-go",
+          "deploy":"","context":"backend","dockerignore":".dockerignore backend/.dockerignore",
           "workspace_build":"false","outputs":""},
          {"project":"agents-backend","image":"qubership-apihub-agents-backend",
           "dockerfile":"backend/agents-backend/Dockerfile",

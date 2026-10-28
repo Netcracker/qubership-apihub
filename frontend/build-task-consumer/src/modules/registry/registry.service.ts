@@ -36,7 +36,7 @@ import { OperationsDto } from '../builder/builder.utils'
 
 @Injectable()
 export class RegistryService implements OnModuleInit {
-  private logger = new Logger('BuilderService', { timestamp: true })
+  private logger = new Logger('RegistryService', { timestamp: true })
   private baseUrl = 'http://' + this.configService.get<string>('apihubUrl')
   private apiKey = this.configService.get<string>('apiKey')
   private headers: any

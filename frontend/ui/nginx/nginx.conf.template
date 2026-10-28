@@ -29,8 +29,22 @@ http {
     client_header_timeout 60;
     client_max_body_size  0;
 
-    log_format main '$remote_addr - $remote_user [$time_local] '
-                    '($request_time) $http_x_request_id "$request" '
+    # The APIHUB log line: [2026-10-28T14:03:12.345] [INFO] [request_id=...] ... <message>.
+    # nginx has no millisecond time variable, so the date comes from $time_iso8601 (the container
+    # runs in UTC) and the milliseconds from $msec. error_log has a fixed format nginx cannot change.
+    map $time_iso8601 $log_time {
+        ~^(?<datetime>[^+]+) $datetime;
+    }
+    map $msec $log_millis {
+        ~\.(?<millis>\d+)$ $millis;
+    }
+    # nginx logs an empty variable as "-", so the map builds the whole field, which is never empty.
+    map $http_x_request_id $log_request_id {
+        ""      "[request_id=]";
+        default "[request_id=$http_x_request_id]";
+    }
+    log_format main '[$log_time.$log_millis] [INFO] $log_request_id [tenant_id=] [thread_id=] [class=] '
+                    '$remote_addr - $remote_user ($request_time) "$request" '
                     '$status $body_bytes_sent "$http_referer" '
                     '"$http_user_agent" "$http_x_forwarded_for"';
     access_log /var/log/nginx/access.log main;

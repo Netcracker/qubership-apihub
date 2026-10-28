@@ -13,10 +13,10 @@ import (
 	"github.com/Netcracker/qubership-apihub/backend/test-service/controller"
 	lumberjack "gopkg.in/natefinch/lumberjack.v2"
 
+	"github.com/Netcracker/qubership-apihub/backend/commons-go/logging"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
-	prefixed "github.com/x-cray/logrus-prefixed-formatter"
 )
 
 func init() {
@@ -28,18 +28,14 @@ func init() {
 		Filename: basePath + "/logs/apihub_test_service.log",
 		MaxSize:  10, // megabytes
 	})
-	log.SetFormatter(&prefixed.TextFormatter{
-		DisableColors:   true,
-		TimestampFormat: "2006-01-02 15:04:05",
-		FullTimestamp:   true,
-		ForceFormatting: true,
-	})
+	log.SetFormatter(logging.NewFormatter())
 	logLevel, err := log.ParseLevel(os.Getenv("LOG_LEVEL"))
 	if err != nil {
 		logLevel = log.InfoLevel
 	}
 	log.SetLevel(logLevel)
 	log.SetOutput(mw)
+	logging.RedirectStandardLog()
 }
 
 func main() {
@@ -55,6 +51,7 @@ func main() {
 	tryitController := controller.NewTryitController()
 
 	r := mux.NewRouter().SkipClean(true).UseEncodedPath()
+	r.Use(logging.RequestIDMiddleware)
 
 	r.HandleFunc("/v3/api-docs", openapiController.GetOpenapiSpec).Methods(http.MethodGet)
 	r.HandleFunc("/v3/api-docs/yaml", openapiController.GetOpenapiYamlSpec).Methods(http.MethodGet)

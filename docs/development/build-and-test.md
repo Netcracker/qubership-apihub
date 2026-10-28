@@ -120,8 +120,8 @@ They use `podman`; `docker` takes the same arguments.
 | `qubership-apihub-backend` | nothing | `podman build -f backend/portal-backend/Dockerfile backend` |
 | `qubership-api-linter-service` | nothing | `podman build -f backend/api-linter-service/Dockerfile backend` |
 | `qubership-apihub-agents-backend` | nothing | `podman build -f backend/agents-backend/Dockerfile backend` |
-| `qubership-apihub-agent` | nothing | `podman build -f backend/agent/Dockerfile backend/agent` |
-| `qubership-apihub-test-service` | nothing | `podman build -f backend/test-service/Dockerfile backend/test-service` |
+| `qubership-apihub-agent` | nothing | `podman build -f backend/agent/Dockerfile backend` |
+| `qubership-apihub-test-service` | nothing | `podman build -f backend/test-service/Dockerfile backend` |
 | `qubership-apihub-ui` | `pnpm exec nx run-many -t build -p ui-portal,ui-agents` | `podman build -f frontend/ui/Dockerfile .` |
 | `qubership-apihub-build-task-consumer` | `pnpm exec nx run build-task-consumer:build`, then `pnpm deploy --filter=./frontend/build-task-consumer --prod .deploy/build-task-consumer` | `podman build -f frontend/build-task-consumer/Dockerfile .` |
 | `qubership-apihub-java-task-consumer` | `pnpm exec nx run java-task-consumer:build` | `podman build backend/java-task-consumer` |
