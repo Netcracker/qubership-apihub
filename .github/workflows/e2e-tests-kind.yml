@@ -707,9 +707,9 @@ jobs:
           PLAYWRIGHT_ARGS: ${{ inputs.playwright_args }}
           TIER: ${{ inputs.tier }}
           AGENT: ${{ inputs.agent }}
-          # cloudName in the agent chart values this job installs
-          # (backend/agent/helm-templates/qubership-apihub-agent/local-k8s-values.yaml).
-          AGENT_TEST_CLOUD: Kind
+          # Registered agent id: lowercase(cloudName) + "_" + lowercase(release namespace).
+          # The chart cloudName is Kind; this job installs the agent into qubership-apihub.
+          AGENT_TEST_CLOUD: kind_qubership-apihub
         shell: bash
         run: |
           set -euo pipefail
