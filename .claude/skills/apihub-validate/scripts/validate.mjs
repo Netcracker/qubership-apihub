@@ -10,7 +10,7 @@
  * Exits 1 when a gate fails, 2 on a usage error or when there is nothing to check.
  */
 import { execFileSync, spawnSync } from 'node:child_process'
-import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs'
+import { closeSync, existsSync, mkdtempSync, openSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, posix, relative, resolve, sep } from 'node:path'
 
@@ -38,12 +38,15 @@ if (checked.length === 0) {
 
 let failed = false
 const reports = []
+const gateChecks = [['format', dprintGate], ['lint', eslintGate], ['typecheck', tscGate], ['test', jestGate]]
 for (const pkg of groupByPackage(checked)) {
   const gates = {}
-  if (wanted('format')) gates.format = dprintGate(pkg)
-  if (wanted('lint')) gates.lint = eslintGate(pkg)
-  if (wanted('typecheck')) gates.typecheck = tscGate(pkg)
-  if (wanted('test')) gates.test = jestGate(pkg)
+  for (const [name, check] of gateChecks) {
+    if (!wanted(name)) continue
+    // Progress goes to stderr, so stdout carries the report alone.
+    console.error(`${pkg.name}: ${name}...`)
+    gates[name] = check(pkg)
+  }
   failed ||= Object.values(gates).some((gate) => gate.status === 'FAIL')
   reports.push(report(pkg, gates))
 }
@@ -240,20 +243,41 @@ function skip(detail) {
   return { status: 'SKIP', detail, lines: [] }
 }
 
-/** Runs a command in a repository-relative directory; pnpm is a .cmd shim on Windows, which needs a shell. */
+/**
+ * Runs a command in a repository-relative directory; pnpm is a .cmd shim on Windows, which needs a shell.
+ *
+ * The output goes to temporary files rather than pipes. spawnSync waits until every handle to its pipes is closed,
+ * not only until the command exits, and on Windows a background process that the command starts inherits those
+ * handles. When no Nx daemon was running, `nx run` started one, and the test gate waited for it after Nx had finished.
+ */
 function run(command, args, cwd, env = {}) {
   const windows = process.platform === 'win32'
-  const spawnOptions = { cwd: join(ROOT, cwd), encoding: 'utf8', env: { ...process.env, ...env }, maxBuffer: 256 * 1024 * 1024 }
+  const outputDir = mkdtempSync(join(tmpdir(), 'apihub-validate-'))
+  const stdoutFile = join(outputDir, 'stdout.txt')
+  const stderrFile = join(outputDir, 'stderr.txt')
+  const stdoutFd = openSync(stdoutFile, 'w')
+  const stderrFd = openSync(stderrFile, 'w')
+  const spawnOptions = { cwd: join(ROOT, cwd), env: { ...process.env, ...env }, stdio: ['ignore', stdoutFd, stderrFd] }
   const quote = (arg) => (/[\s"&|<>^()]/.test(arg) ? `"${arg.replace(/"/g, '\\"')}"` : arg)
-  const result = windows
-    ? spawnSync([command, ...args].map(quote).join(' '), { ...spawnOptions, shell: true })
-    : spawnSync(command, args, spawnOptions)
-  const stdout = result.stdout ?? ''
-  return {
-    ok: result.status === 0,
-    missing: result.error?.code === 'ENOENT',
-    stdout,
-    output: `${stdout}\n${result.stderr ?? ''}`.trim(),
+  try {
+    const result = windows
+      ? spawnSync([command, ...args].map(quote).join(' '), { ...spawnOptions, shell: true })
+      : spawnSync(command, args, spawnOptions)
+    const stdout = readFileSync(stdoutFile, 'utf8')
+    return {
+      ok: result.status === 0,
+      missing: result.error?.code === 'ENOENT',
+      stdout,
+      output: `${stdout}\n${readFileSync(stderrFile, 'utf8')}`.trim(),
+    }
+  } finally {
+    closeSync(stdoutFd)
+    closeSync(stderrFd)
+    try {
+      rmSync(outputDir, { recursive: true, force: true })
+    } catch {
+      // A background process that inherited the files may still hold them open; the directory stays in the temp folder.
+    }
   }
 }
 

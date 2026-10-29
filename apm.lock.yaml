@@ -1,5 +1,5 @@
 lockfile_version: '1'
-generated_at: '2026-10-27T10:36:35.819548+00:00'
+generated_at: '2026-10-29T15:05:58.072125+00:00'
 apm_version: 0.35.0
 dependencies:
 - repo_url: _local/advanced-verification
@@ -549,15 +549,15 @@ dependencies:
   - .claude/skills/apihub-validate/scripts/validate.mjs
   - .cursor/rules/apihub-quality-gates.mdc
   deployed_file_hashes:
-    .agents/skills/apihub-validate/SKILL.md: sha256:a14975a91b566ddfc4237bb4501ae56b390960568713e64dec07f9ef4955a89f
-    .agents/skills/apihub-validate/scripts/validate.mjs: sha256:abed9ffbc862339e84533d5e3a349eb9109bbccbbb78a43cb4bc5f5c4d880e87
+    .agents/skills/apihub-validate/SKILL.md: sha256:f259d57a002088615cdad80a2d601737a3aea58048ad57a33ebef30c187bd357
+    .agents/skills/apihub-validate/scripts/validate.mjs: sha256:3d627626b3e46e2ffef15bf1ba1adcb310228d6d38ff52c17600ce070e8d8420
     .claude/rules/apihub-quality-gates.md: sha256:8cbaa316a0496aa71493a40afdefd91a00e969dafcad4b04c268d0c8e95e53d2
-    .claude/skills/apihub-validate/SKILL.md: sha256:a14975a91b566ddfc4237bb4501ae56b390960568713e64dec07f9ef4955a89f
-    .claude/skills/apihub-validate/scripts/validate.mjs: sha256:abed9ffbc862339e84533d5e3a349eb9109bbccbbb78a43cb4bc5f5c4d880e87
+    .claude/skills/apihub-validate/SKILL.md: sha256:f259d57a002088615cdad80a2d601737a3aea58048ad57a33ebef30c187bd357
+    .claude/skills/apihub-validate/scripts/validate.mjs: sha256:3d627626b3e46e2ffef15bf1ba1adcb310228d6d38ff52c17600ce070e8d8420
     .cursor/rules/apihub-quality-gates.mdc: sha256:750af8b784e5d765aee763883f29c6396d7ca7d65c6eca9ca41ab1799d6ec1c4
   source: local
   local_path: ./frontend/ui/agent-packages/apihub-quality-gates
-  content_hash: sha256:b6f580381f7b12a34e7eb13c64788f0a518bd6d46dca3df0d3677fff5b481e21
+  content_hash: sha256:e99fd8f31fc2cb9257974d469101909ff84545fceb0ff49f580a448c7f705ddf
 - repo_url: _local/apihub-react-coding
   name: apihub-react-coding
   version: 1.0.0
@@ -2305,7 +2305,7 @@ deployments:
   owners:
   - ./frontend/ui/agent-packages/apihub-quality-gates
   active_owner: ./frontend/ui/agent-packages/apihub-quality-gates
-  content_hash: sha256:a14975a91b566ddfc4237bb4501ae56b390960568713e64dec07f9ef4955a89f
+  content_hash: sha256:f259d57a002088615cdad80a2d601737a3aea58048ad57a33ebef30c187bd357
 - kind: project-relative
   target: claude
   value: .claude/skills/apihub-validate/scripts/validate.mjs
@@ -2314,7 +2314,7 @@ deployments:
   owners:
   - ./frontend/ui/agent-packages/apihub-quality-gates
   active_owner: ./frontend/ui/agent-packages/apihub-quality-gates
-  content_hash: sha256:abed9ffbc862339e84533d5e3a349eb9109bbccbbb78a43cb4bc5f5c4d880e87
+  content_hash: sha256:3d627626b3e46e2ffef15bf1ba1adcb310228d6d38ff52c17600ce070e8d8420
 - kind: project-relative
   target: claude
   value: .claude/skills/ddlapi-authoring
@@ -3313,7 +3313,7 @@ deployments:
   owners:
   - ./frontend/ui/agent-packages/apihub-quality-gates
   active_owner: ./frontend/ui/agent-packages/apihub-quality-gates
-  content_hash: sha256:a14975a91b566ddfc4237bb4501ae56b390960568713e64dec07f9ef4955a89f
+  content_hash: sha256:f259d57a002088615cdad80a2d601737a3aea58048ad57a33ebef30c187bd357
 - kind: project-relative
   target: cursor
   value: .agents/skills/apihub-validate/scripts/validate.mjs
@@ -3322,7 +3322,7 @@ deployments:
   owners:
   - ./frontend/ui/agent-packages/apihub-quality-gates
   active_owner: ./frontend/ui/agent-packages/apihub-quality-gates
-  content_hash: sha256:abed9ffbc862339e84533d5e3a349eb9109bbccbbb78a43cb4bc5f5c4d880e87
+  content_hash: sha256:3d627626b3e46e2ffef15bf1ba1adcb310228d6d38ff52c17600ce070e8d8420
 - kind: project-relative
   target: cursor
   value: .agents/skills/ddlapi-authoring
