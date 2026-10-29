@@ -4965,6 +4965,57 @@
                             "protocolProfileBehavior": {}
                         },
                         {
+                            "name": "1.3.3-1 Reject a package parent (#858)",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test(\"A package cannot be a parent\", function () {",
+                                            "    pm.response.to.have.status(400);",
+                                            "    const data = pm.response.json();",
+                                            "    pm.expect(data.code).to.eql(\"24\");",
+                                            "    pm.expect(data.params).to.eql({ parentId: pm.environment.get(\"package_1\"), kind: \"package\" });",
+                                            "    pm.expect(data.message).to.include(\"Parent kind must be 'workspace' or 'group'\");",
+                                            "});"
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v2",
+                                        "packages"
+                                    ]
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\r\n    \"alias\": \"CHILD\",\r\n    \"name\": \"Invalid child of a package\",\r\n    \"parentId\": \"{{package_1}}\",\r\n    \"kind\": \"package\"\r\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                }
+                            },
+                            "response": []
+                        },
+                        {
                             "name": "1.3.4 Create package withoud specified package ID",
                             "event": [
                                 {
@@ -6242,6 +6293,57 @@
                             },
                             "response": [],
                             "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "1.4.1-1 Reject a dashboard parent (#858)",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test(\"A dashboard cannot be a parent\", function () {",
+                                            "    pm.response.to.have.status(400);",
+                                            "    const data = pm.response.json();",
+                                            "    pm.expect(data.code).to.eql(\"24\");",
+                                            "    pm.expect(data.params).to.eql({ parentId: pm.environment.get(\"dashboard_1\"), kind: \"dashboard\" });",
+                                            "    pm.expect(data.message).to.include(\"Parent kind must be 'workspace' or 'group'\");",
+                                            "});"
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v2",
+                                        "packages"
+                                    ]
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\r\n    \"alias\": \"CHILD\",\r\n    \"name\": \"Invalid child of a dashboard\",\r\n    \"parentId\": \"{{dashboard_1}}\",\r\n    \"kind\": \"package\"\r\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                }
+                            },
+                            "response": []
                         },
                         {
                             "name": "1.4.2 Update dashboard with wrong body",

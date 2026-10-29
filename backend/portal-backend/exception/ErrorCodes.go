@@ -51,6 +51,9 @@ const PackageParentIsMissingMsg = "PackageId cannot be empty for package with ki
 const IncorrectPackageKind = "24"
 const IncorrectPackageKindMsg = "Kind '$kind' is not allowed for package"
 
+// IncorrectPackageParentKindMsg uses IncorrectPackageKind for an invalid parent kind.
+const IncorrectPackageParentKindMsg = "Parent '$parentId' has kind '$kind'. Parent kind must be 'workspace' or 'group'"
+
 const BranchDraftNotFound = "30"
 const BranchDraftNotFoundMsg = "Draft for project with id $projectId and branch $branch doesn't exist"
 
