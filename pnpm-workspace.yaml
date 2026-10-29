@@ -6,6 +6,29 @@ packages:
   - 'tools/jest-chrome-in-docker-environment'
   - 'sites/*'
 
+# One version of each build and test tool for the whole workspace. A project still declares what it
+# uses, with "catalog:" as the version, so each project resolves the same copy (#943: caret ranges let
+# vite drift apart between packages). Change a version here, never in a package.json. A project on
+# another major version (Storybook 8 and 9 in apispec-view and rest-playground) keeps its own range
+# until it moves. `pnpm publish` writes the version from here into the published package.json.
+catalog:
+  '@storybook/addon-docs': 10.6.3
+  '@storybook/addon-links': 10.6.3
+  '@storybook/html-vite': 10.6.3
+  '@storybook/react-vite': 10.6.3
+  '@types/jest': 30.0.0
+  '@types/node': 24.13.3
+  '@vitejs/plugin-react': 6.1.1
+  eslint-plugin-storybook: 10.6.3
+  jest: 30.4.2
+  jest-util: 30.4.1
+  storybook: 10.6.3
+  ts-jest: 29.4.12
+  typescript: 6.0.3
+  vite: 8.2.2
+  vite-plugin-dts: 4.5.4
+  vite-tsconfig-paths: 4.3.2
+
 # Settings other than auth and registry live here, not in .npmrc: pnpm 12 ignores them there without a
 # warning. An unknown key here fails with ERR_PNPM_UNRECOGNIZED_WORKSPACE_SETTINGS.
 

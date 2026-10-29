@@ -25,10 +25,10 @@
   "devDependencies": {
     "@netcracker/qubership-apihub-compatibility-suites": "workspace:^",
     "@netcracker/qubership-apihub-jest-chrome-in-docker-environment": "workspace:^",
-    "@types/jest": "30.0.0",
+    "@types/jest": "catalog:",
     "@types/jest-image-snapshot": "6.1.0",
     "@types/lodash-es": "^4.17.12",
-    "@types/node": "24.13.3",
+    "@types/node": "catalog:",
     "@types/react": "^18.3.31",
     "@typescript-eslint/eslint-plugin": "6.0.0",
     "@typescript-eslint/parser": "6.0.0",
@@ -36,9 +36,9 @@
     "eslint": "8.48.0",
     "eslint-plugin-react-hooks": "4.6.0",
     "eslint-plugin-react-refresh": "0.4.3",
-    "eslint-plugin-storybook": "10.6.3",
+    "eslint-plugin-storybook": "catalog:",
     "lodash-es": "^4.17.21",
-    "typescript": "6.0.3",
+    "typescript": "catalog:",
     "yaml": "2.9.0"
   },
   "eslintConfig": {

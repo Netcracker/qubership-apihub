@@ -48,14 +48,14 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "@types/jest": "30.0.0",
-    "@types/node": "24.13.3",
-    "jest": "30.4.2",
-    "jest-util": "^30.4.1",
-    "ts-jest": "29.4.12",
-    "typescript": "6.0.3",
-    "vite": "8.2.2",
-    "vite-plugin-dts": "4.5.4"
+    "@types/jest": "catalog:",
+    "@types/node": "catalog:",
+    "jest": "catalog:",
+    "jest-util": "catalog:",
+    "ts-jest": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vite-plugin-dts": "catalog:"
   },
   "dependencies": {
     "@pgsql/types": "17.6.2",

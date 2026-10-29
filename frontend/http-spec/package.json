@@ -154,7 +154,7 @@
   "devDependencies": {
     "@stoplight/eslint-config": "^3.0.0",
     "@stoplight/scripts": "^9.2.0",
-    "@types/jest": "30.0.0",
+    "@types/jest": "catalog:",
     "@types/lodash": "4.17.20",
     "@types/lodash.isequalwith": "4.4.6",
     "@types/lodash.pick": "4.4.6",
@@ -169,12 +169,12 @@
     "eslint-plugin-react": "^7.29.4",
     "eslint-plugin-react-hooks": "^4.4.0",
     "eslint-plugin-simple-import-sort": "^7.0.0",
-    "jest": "30.4.2",
-    "jest-util": "^30.4.1",
+    "jest": "catalog:",
+    "jest-util": "catalog:",
     "prettier": "^2.6.2",
     "rimraf": "^3.0.2",
-    "ts-jest": "29.4.12",
-    "typescript": "6.0.3",
+    "ts-jest": "catalog:",
+    "typescript": "catalog:",
     "utility-types": "^3.10.0"
   },
   "config": {

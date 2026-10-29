@@ -162,6 +162,57 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+catalogs:
+  default:
+    '@storybook/addon-docs':
+      specifier: 10.6.3
+      version: 10.6.3
+    '@storybook/addon-links':
+      specifier: 10.6.3
+      version: 10.6.3
+    '@storybook/html-vite':
+      specifier: 10.6.3
+      version: 10.6.3
+    '@storybook/react-vite':
+      specifier: 10.6.3
+      version: 10.6.3
+    '@types/jest':
+      specifier: 30.0.0
+      version: 30.0.0
+    '@types/node':
+      specifier: 24.13.3
+      version: 24.13.3
+    '@vitejs/plugin-react':
+      specifier: 6.1.1
+      version: 6.1.1
+    eslint-plugin-storybook:
+      specifier: 10.6.3
+      version: 10.6.3
+    jest:
+      specifier: 30.4.2
+      version: 30.4.2
+    jest-util:
+      specifier: 30.4.1
+      version: 30.4.1
+    storybook:
+      specifier: 10.6.3
+      version: 10.6.3
+    ts-jest:
+      specifier: 29.4.12
+      version: 29.4.12
+    typescript:
+      specifier: 6.0.3
+      version: 6.0.3
+    vite:
+      specifier: 8.2.2
+      version: 8.2.2
+    vite-plugin-dts:
+      specifier: 4.5.4
+      version: 4.5.4
+    vite-tsconfig-paths:
+      specifier: 4.3.2
+      version: 4.3.2
+
 overrides:
   jest-environment-node: 30.4.1
   jest-mock: 30.4.1
@@ -194,7 +245,7 @@ importers:
         specifier: 23.2.0
         version: 23.2.0
       typescript:
-        specifier: 6.0.3
+        specifier: 'catalog:'
         version: 6.0.3
 
   frontend/api-diff:
@@ -210,7 +261,7 @@ importers:
         version: link:../json-crawl
       fast-equals:
         specifier: ^6.0.2
-        version: 6.0.3
+        version: 6.0.2
     devDependencies:
       '@asyncapi/parser':
         specifier: 3.6.0
@@ -222,10 +273,10 @@ importers:
         specifier: workspace:^
         version: link:../graphapi
       '@types/jest':
-        specifier: 30.0.0
+        specifier: 'catalog:'
         version: 30.0.0
       '@types/node':
-        specifier: 24.13.3
+        specifier: 'catalog:'
         version: 24.13.3
       '@typescript-eslint/eslint-plugin':
         specifier: 7.18.0
@@ -246,13 +297,13 @@ importers:
         specifier: 16.12.0
         version: 16.12.0
       jest:
-        specifier: 30.4.2
+        specifier: 'catalog:'
         version: 30.4.2(@types/node@24.13.3)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.28.2)(supports-color@9.4.0))(supports-color@9.4.0)(ts-node@10.9.2(@types/node@24.13.3)(typescript@6.0.3))
       jest-extended:
         specifier: 7.0.0
         version: 7.0.0(jest@30.4.2(@types/node@24.13.3)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.28.2)(supports-color@9.4.0))(supports-color@9.4.0)(ts-node@10.9.2(@types/node@24.13.3)(typescript@6.0.3)))(typescript@6.0.3)
       jest-util:
-        specifier: ^30.4.1
+        specifier: 'catalog:'
         version: 30.4.1
       openapi-types:
         specifier: 12.1.3
@@ -261,7 +312,7 @@ importers:
         specifier: 6.1.2
         version: 6.1.2
       ts-jest:
-        specifier: 29.4.12
+        specifier: 'catalog:'
         version: 29.4.12(@babel/core@7.29.7(supports-color@9.4.0))(@jest/transform@30.4.1(supports-color@9.4.0))(@jest/types@30.5.1)(babel-jest@30.4.1(@babel/core@7.29.7(supports-color@9.4.0))(supports-color@9.4.0))(esbuild@0.28.2)(jest-util@30.4.1)(jest@30.4.2(@types/node@24.13.3)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.28.2)(supports-color@9.4.0))(supports-color@9.4.0)(ts-node@10.9.2(@types/node@24.13.3)(typescript@6.0.3)))(typescript@6.0.3)
       ts-loader:
         specifier: 9.5.4
@@ -273,13 +324,13 @@ importers:
         specifier: 6.1.3
         version: 6.1.3(typescript@6.0.3)
       typescript:
-        specifier: 6.0.3
+        specifier: 'catalog:'
         version: 6.0.3
       vite:
-        specifier: 8.2.2
+        specifier: 'catalog:'
         version: 8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.8.1)(yaml@2.9.0)
       vite-plugin-dts:
-        specifier: 4.5.4
+        specifier: 'catalog:'
         version: 4.5.4(@types/node@24.13.3)(rollup@4.63.1)(supports-color@9.4.0)(typescript@6.0.3)(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.8.1)(yaml@2.9.0))
       vite-plugin-singlefile:
         specifier: ^2.3.3
@@ -310,7 +361,7 @@ importers:
         specifier: workspace:^
         version: link:../../tools/jest-chrome-in-docker-environment
       '@types/jest':
-        specifier: 30.0.0
+        specifier: 'catalog:'
         version: 30.0.0
       '@types/jest-image-snapshot':
         specifier: 6.1.0
@@ -319,7 +370,7 @@ importers:
         specifier: ^4.17.12
         version: 4.17.12
       '@types/node':
-        specifier: 24.13.3
+        specifier: 'catalog:'
         version: 24.13.3
       '@types/react':
         specifier: ^18.3.31
@@ -343,13 +394,13 @@ importers:
         specifier: 0.4.3
         version: 0.4.3(eslint@8.48.0(supports-color@9.4.0))
       eslint-plugin-storybook:
-        specifier: 10.6.3
+        specifier: 'catalog:'
         version: 10.6.3(eslint@8.48.0(supports-color@9.4.0))(supports-color@9.4.0)(typescript@6.0.3)
       lodash-es:
         specifier: ^4.17.21
         version: 4.17.21
       typescript:
-        specifier: 6.0.3
+        specifier: 'catalog:'
         version: 6.0.3
       yaml:
         specifier: 2.9.0
@@ -380,13 +431,13 @@ importers:
         specifier: ^1.0.0
         version: 1.0.3
       jest:
-        specifier: 30.4.2
+        specifier: 'catalog:'
         version: 30.4.2(@types/node@24.13.3)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.28.2)(supports-color@9.4.0))(supports-color@9.4.0)(ts-node@10.7.0(@types/node@24.13.3)(typescript@6.0.3))
       treeify:
         specifier: ^1.1.0
         version: 1.1.0
       ts-jest:
-        specifier: 29.4.12
+        specifier: 'catalog:'
         version: 29.4.12(@babel/core@7.29.7(supports-color@9.4.0))(@jest/transform@30.4.1(supports-color@9.4.0))(@jest/types@30.5.1)(babel-jest@30.4.1(@babel/core@7.29.7(supports-color@9.4.0))(supports-color@9.4.0))(esbuild@0.28.2)(jest-util@30.5.1)(jest@30.4.2(@types/node@24.13.3)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.28.2)(supports-color@9.4.0))(supports-color@9.4.0)(ts-node@10.7.0(@types/node@24.13.3)(typescript@6.0.3)))(typescript@6.0.3)
       ts-node:
         specifier: 10.7.0
@@ -423,7 +474,7 @@ importers:
         version: 8.0.7(@types/react@18.3.31)(react@18.3.1)(supports-color@9.4.0)
       react-use:
         specifier: ^17.6.0
-        version: 17.6.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        version: 17.6.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       remark-gfm:
         specifier: 3.0.1
         version: 3.0.1(supports-color@9.4.0)
@@ -462,19 +513,19 @@ importers:
         specifier: workspace:*
         version: link:../samples
       '@storybook/addon-docs':
-        specifier: 10.6.3
+        specifier: 'catalog:'
         version: 10.6.3(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(storybook@10.6.3(@types/react@18.3.31)(prettier@3.9.6)(react@18.3.1))
       '@storybook/addon-links':
-        specifier: 10.6.3
+        specifier: 'catalog:'
         version: 10.6.3(@types/react@18.3.31)(react@18.3.1)(storybook@10.6.3(@types/react@18.3.31)(prettier@3.9.6)(react@18.3.1))
       '@storybook/react-vite':
-        specifier: 10.6.3
+        specifier: 'catalog:'
         version: 10.6.3(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(rollup@4.63.1)(storybook@10.6.3(@types/react@18.3.31)(prettier@3.9.6)(react@18.3.1))(supports-color@9.4.0)(typescript@6.0.3)(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.8.1)(yaml@2.9.0))
       '@types/fontfaceobserver':
         specifier: 2.1.0
         version: 2.1.0
       '@types/jest':
-        specifier: 30.0.0
+        specifier: 'catalog:'
         version: 30.0.0
       '@types/jest-image-snapshot':
         specifier: 6.1.0
@@ -489,7 +540,7 @@ importers:
         specifier: ^18.3.7
         version: 18.3.7(@types/react@18.3.31)
       '@vitejs/plugin-react':
-        specifier: 6.1.1
+        specifier: 'catalog:'
         version: 6.1.1(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.8.1)(yaml@2.9.0))
       autoprefixer:
         specifier: 10.4.15
@@ -501,7 +552,7 @@ importers:
         specifier: 16.12.0
         version: 16.12.0
       jest:
-        specifier: 30.4.2
+        specifier: 'catalog:'
         version: 30.4.2(@types/node@24.13.3)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.28.2)(supports-color@9.4.0))(supports-color@9.4.0)(ts-node@10.9.2(@types/node@24.13.3)(typescript@6.0.3))
       jest-environment-puppeteer:
         specifier: 11.0.0
@@ -535,24 +586,24 @@ importers:
         version: 2.7.2(@types/react@18.3.31)(react@18.3.1)
       rolldown:
         specifier: ~1.2.4
-        version: 1.2.7
+        version: 1.2.14
       start-server-and-test:
         specifier: 3.0.12
         version: 3.0.12(supports-color@9.4.0)
       storybook:
-        specifier: 10.6.3
+        specifier: 'catalog:'
         version: 10.6.3(@types/react@18.3.31)(prettier@3.9.6)(react@18.3.1)
       ts-jest:
-        specifier: 29.4.12
+        specifier: 'catalog:'
         version: 29.4.12(@babel/core@7.29.7(supports-color@9.4.0))(@jest/transform@30.4.1(supports-color@9.4.0))(@jest/types@30.5.1)(babel-jest@30.4.1(@babel/core@7.29.7(supports-color@9.4.0))(supports-color@9.4.0))(esbuild@0.28.2)(jest-util@30.5.1)(jest@30.4.2(@types/node@24.13.3)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.28.2)(supports-color@9.4.0))(supports-color@9.4.0)(ts-node@10.9.2(@types/node@24.13.3)(typescript@6.0.3)))(typescript@6.0.3)
       typescript:
-        specifier: 6.0.3
+        specifier: 'catalog:'
         version: 6.0.3
       vite:
-        specifier: 8.2.2
+        specifier: 'catalog:'
         version: 8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.8.1)(yaml@2.9.0)
       vite-plugin-dts:
-        specifier: 4.5.4
+        specifier: 'catalog:'
         version: 4.5.4(@types/node@24.13.3)(rollup@4.63.1)(supports-color@9.4.0)(typescript@6.0.3)(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.8.1)(yaml@2.9.0))
 
   frontend/api-doc-viewer/packages/api-state-model:
@@ -583,16 +634,16 @@ importers:
         version: link:../../../json-crawl
     devDependencies:
       '@types/jest':
-        specifier: 30.0.0
+        specifier: 'catalog:'
         version: 30.0.0
       '@types/node':
-        specifier: 24.13.3
+        specifier: 'catalog:'
         version: 24.13.3
       jest:
-        specifier: 30.4.2
+        specifier: 'catalog:'
         version: 30.4.2(@types/node@24.13.3)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.28.2)(supports-color@9.4.0))(supports-color@9.4.0)(ts-node@10.9.2(@types/node@24.13.3)(typescript@6.0.3))
       ts-jest:
-        specifier: 29.4.12
+        specifier: 'catalog:'
         version: 29.4.12(@babel/core@7.29.7(supports-color@9.4.0))(@jest/transform@30.4.1(supports-color@9.4.0))(@jest/types@30.5.1)(babel-jest@30.4.1(@babel/core@7.29.7(supports-color@9.4.0))(supports-color@9.4.0))(esbuild@0.28.2)(jest-util@30.5.1)(jest@30.4.2(@types/node@24.13.3)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.28.2)(supports-color@9.4.0))(supports-color@9.4.0)(ts-node@10.9.2(@types/node@24.13.3)(typescript@6.0.3)))(typescript@6.0.3)
 
   frontend/api-doc-viewer/packages/samples: {}
@@ -658,13 +709,13 @@ importers:
         specifier: workspace:^
         version: link:../../tools/build-id
       '@types/jest':
-        specifier: 30.0.0
+        specifier: 'catalog:'
         version: 30.0.0
       '@types/mime-types':
         specifier: ^3.0.0
         version: 3.0.1
       '@types/node':
-        specifier: 24.13.3
+        specifier: 'catalog:'
         version: 24.13.3
       '@types/object-hash':
         specifier: ^3.0.2
@@ -691,13 +742,13 @@ importers:
         specifier: ^0.8.0
         version: 0.8.0(eslint@8.57.1(supports-color@9.4.0))
       jest:
-        specifier: 30.4.2
+        specifier: 'catalog:'
         version: 30.4.2(@types/node@24.13.3)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.28.2)(supports-color@9.4.0))(supports-color@9.4.0)(ts-node@10.9.2(@types/node@24.13.3)(typescript@6.0.3))
       jest-extended:
         specifier: ^4.0.2
         version: 4.0.2(jest@30.4.2(@types/node@24.13.3)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.28.2)(supports-color@9.4.0))(supports-color@9.4.0)(ts-node@10.9.2(@types/node@24.13.3)(typescript@6.0.3)))
       jest-util:
-        specifier: ^30.4.1
+        specifier: 'catalog:'
         version: 30.4.1
       memfs:
         specifier: ^4.57.1
@@ -709,7 +760,7 @@ importers:
         specifier: ^12.1.0
         version: 12.1.3
       ts-jest:
-        specifier: 29.4.12
+        specifier: 'catalog:'
         version: 29.4.12(@babel/core@7.29.7(supports-color@9.4.0))(@jest/transform@30.4.1(supports-color@9.4.0))(@jest/types@30.5.1)(babel-jest@30.4.1(@babel/core@7.29.7(supports-color@9.4.0))(supports-color@9.4.0))(esbuild@0.28.2)(jest-util@30.4.1)(jest@30.4.2(@types/node@24.13.3)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.28.2)(supports-color@9.4.0))(supports-color@9.4.0)(ts-node@10.9.2(@types/node@24.13.3)(typescript@6.0.3)))(typescript@6.0.3)
       ts-node:
         specifier: ^10.9.1
@@ -718,13 +769,13 @@ importers:
         specifier: ^6.1.3
         version: 6.1.3(typescript@6.0.3)
       typescript:
-        specifier: 6.0.3
+        specifier: 'catalog:'
         version: 6.0.3
       vite:
-        specifier: 8.2.2
+        specifier: 'catalog:'
         version: 8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.8.1)(yaml@2.9.0)
       vite-plugin-dts:
-        specifier: 4.5.4
+        specifier: 'catalog:'
         version: 4.5.4(@types/node@24.13.3)(rollup@4.63.1)(supports-color@9.4.0)(typescript@6.0.3)(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.8.1)(yaml@2.9.0))
       vite-plugin-singlefile:
         specifier: ^2.3.3
@@ -750,7 +801,7 @@ importers:
         version: link:../json-crawl
       fast-equals:
         specifier: ^6.0.2
-        version: 6.0.3
+        version: 6.0.2
       flatted:
         specifier: ^3.2.9
         version: 3.4.4
@@ -765,10 +816,10 @@ importers:
         specifier: 30.4.1
         version: 30.4.1(supports-color@9.4.0)
       '@types/jest':
-        specifier: 30.0.0
+        specifier: 'catalog:'
         version: 30.0.0
       '@types/node':
-        specifier: 24.13.3
+        specifier: 'catalog:'
         version: 24.13.3
       '@types/object-hash':
         specifier: 3.0.6
@@ -786,13 +837,13 @@ importers:
         specifier: 16.12.0
         version: 16.12.0
       jest:
-        specifier: 30.4.2
+        specifier: 'catalog:'
         version: 30.4.2(@types/node@24.13.3)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.28.2)(supports-color@9.4.0))(supports-color@9.4.0)(ts-node@10.7.0(@types/node@24.13.3)(typescript@6.0.3))
       jest-extended:
         specifier: 4.0.2
         version: 4.0.2(jest@30.4.2(@types/node@24.13.3)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.28.2)(supports-color@9.4.0))(supports-color@9.4.0)(ts-node@10.7.0(@types/node@24.13.3)(typescript@6.0.3)))
       jest-util:
-        specifier: ^30.4.1
+        specifier: 'catalog:'
         version: 30.4.1
       json-schema-merge-allof:
         specifier: 0.8.1
@@ -804,7 +855,7 @@ importers:
         specifier: 5.0.5
         version: 5.0.5
       ts-jest:
-        specifier: 29.4.12
+        specifier: 'catalog:'
         version: 29.4.12(@babel/core@7.29.7(supports-color@9.4.0))(@jest/transform@30.4.1(supports-color@9.4.0))(@jest/types@30.5.1)(babel-jest@30.4.1(@babel/core@7.29.7(supports-color@9.4.0))(supports-color@9.4.0))(esbuild@0.28.2)(jest-util@30.4.1)(jest@30.4.2(@types/node@24.13.3)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.28.2)(supports-color@9.4.0))(supports-color@9.4.0)(ts-node@10.7.0(@types/node@24.13.3)(typescript@6.0.3)))(typescript@6.0.3)
       ts-loader:
         specifier: 9.4.3
@@ -816,13 +867,13 @@ importers:
         specifier: 6.1.2
         version: 6.1.2(typescript@6.0.3)
       typescript:
-        specifier: 6.0.3
+        specifier: 'catalog:'
         version: 6.0.3
       vite:
-        specifier: 8.2.2
+        specifier: 'catalog:'
         version: 8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.8.1)(yaml@2.9.0)
       vite-plugin-dts:
-        specifier: 4.5.4
+        specifier: 'catalog:'
         version: 4.5.4(@types/node@24.13.3)(rollup@4.63.1)(supports-color@9.4.0)(typescript@6.0.3)(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.8.1)(yaml@2.9.0))
       vite-plugin-singlefile:
         specifier: ^2.3.3
@@ -844,10 +895,10 @@ importers:
         version: link:../json-crawl
     devDependencies:
       '@types/jest':
-        specifier: 30.0.0
+        specifier: 'catalog:'
         version: 30.0.0
       '@types/node':
-        specifier: 24.13.3
+        specifier: 'catalog:'
         version: 24.13.3
       '@typescript-eslint/eslint-plugin':
         specifier: 6.13.2
@@ -862,19 +913,19 @@ importers:
         specifier: 0.8.0
         version: 0.8.0(eslint@8.55.0(supports-color@9.4.0))
       jest:
-        specifier: 30.4.2
+        specifier: 'catalog:'
         version: 30.4.2(@types/node@24.13.3)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.28.2)(supports-color@9.4.0))(supports-color@9.4.0)(ts-node@10.9.2(@types/node@24.13.3)(typescript@6.0.3))
       jest-extended:
         specifier: ^4.0.2
         version: 4.0.2(jest@30.4.2(@types/node@24.13.3)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.28.2)(supports-color@9.4.0))(supports-color@9.4.0)(ts-node@10.9.2(@types/node@24.13.3)(typescript@6.0.3)))
       jest-util:
-        specifier: ^30.4.1
+        specifier: 'catalog:'
         version: 30.4.1
       openapi-types:
         specifier: 12.1.3
         version: 12.1.3
       ts-jest:
-        specifier: 29.4.12
+        specifier: 'catalog:'
         version: 29.4.12(@babel/core@7.29.7(supports-color@9.4.0))(@jest/transform@30.4.1(supports-color@9.4.0))(@jest/types@30.5.1)(babel-jest@30.4.1(@babel/core@7.29.7(supports-color@9.4.0))(supports-color@9.4.0))(esbuild@0.28.2)(jest-util@30.4.1)(jest@30.4.2(@types/node@24.13.3)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.28.2)(supports-color@9.4.0))(supports-color@9.4.0)(ts-node@10.9.2(@types/node@24.13.3)(typescript@6.0.3)))(typescript@6.0.3)
       ts-node:
         specifier: ^10.9.2
@@ -883,13 +934,13 @@ importers:
         specifier: ^2.8.1
         version: 2.8.1
       typescript:
-        specifier: 6.0.3
+        specifier: 'catalog:'
         version: 6.0.3
       vite:
-        specifier: 8.2.2
+        specifier: 'catalog:'
         version: 8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.8.1)(yaml@2.9.0)
       vite-plugin-dts:
-        specifier: 4.5.4
+        specifier: 'catalog:'
         version: 4.5.4(@types/node@24.13.3)(rollup@4.63.1)(supports-color@9.4.0)(typescript@6.0.3)(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.8.1)(yaml@2.9.0))
 
   frontend/apispec-view:
@@ -1036,7 +1087,7 @@ importers:
         specifier: ^1.23.0
         version: 1.23.4
       '@types/jest':
-        specifier: 30.0.0
+        specifier: 'catalog:'
         version: 30.0.0
       '@types/jest-image-snapshot':
         specifier: 6.4.0
@@ -1048,7 +1099,7 @@ importers:
         specifier: ^4.14.181
         version: 4.17.20
       '@types/node':
-        specifier: 24.13.3
+        specifier: 'catalog:'
         version: 24.13.3
       '@types/prop-types':
         specifier: ^15.7.3
@@ -1135,7 +1186,7 @@ importers:
         specifier: ^1.24.0
         version: 1.25.0(mkdirp@1.0.4)(supports-color@6.1.0)
       jest:
-        specifier: 30.4.2
+        specifier: 'catalog:'
         version: 30.4.2(@types/node@24.13.3)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.25.12)(supports-color@6.1.0))(supports-color@6.1.0)(ts-node@10.9.2(@types/node@20.5.1)(typescript@5.9.3))
       jest-circus:
         specifier: 29.7.0
@@ -1187,7 +1238,7 @@ importers:
         version: 8.11.1
       nanoid:
         specifier: ^3.1.32
-        version: 3.3.18
+        version: 3.3.20
       postcss:
         specifier: 8.3.5
         version: 8.3.5
@@ -1258,7 +1309,7 @@ importers:
         specifier: ^1.1.0
         version: 1.1.0
       ts-jest:
-        specifier: 29.4.12
+        specifier: 'catalog:'
         version: 29.4.12(@babel/core@7.29.7(supports-color@6.1.0))(@jest/transform@30.4.1(supports-color@6.1.0))(@jest/types@30.5.1)(babel-jest@30.4.1(@babel/core@7.29.7(supports-color@6.1.0))(supports-color@6.1.0))(esbuild@0.25.12)(jest-util@30.5.1)(jest@30.4.2(@types/node@24.13.3)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.25.12)(supports-color@6.1.0))(supports-color@6.1.0)(ts-node@10.9.2(@types/node@20.5.1)(typescript@5.9.3)))(typescript@6.0.3)
       ts-loader:
         specifier: 9.6.2
@@ -1270,7 +1321,7 @@ importers:
         specifier: ^2.8.1
         version: 2.8.1
       typescript:
-        specifier: 6.0.3
+        specifier: 'catalog:'
         version: 6.0.3
       urijs:
         specifier: ^1.19.11
@@ -1395,7 +1446,7 @@ importers:
         version: 4.18.1
       nanoid:
         specifier: ^3.1.32
-        version: 3.3.18
+        version: 3.3.20
       prop-types:
         specifier: ^15.7.2
         version: 15.8.1
@@ -1488,7 +1539,7 @@ importers:
         specifier: ^2.3.0
         version: 2.3.0
       jest:
-        specifier: 30.4.2
+        specifier: 'catalog:'
         version: 30.4.2(@types/node@24.13.3)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.28.2)(supports-color@9.4.0))(supports-color@9.4.0)(ts-node@10.9.2(@types/node@24.13.3)(typescript@6.0.3))
       jest-image-snapshot:
         specifier: 6.5.2
@@ -1527,7 +1578,7 @@ importers:
         specifier: ^8.2.1
         version: 8.6.18(prettier@3.9.6)(supports-color@9.4.0)
       typescript:
-        specifier: 6.0.3
+        specifier: 'catalog:'
         version: 6.0.3
       webpack:
         specifier: 5.76.0
@@ -1619,7 +1670,7 @@ importers:
         version: 4.18.1
       nanoid:
         specifier: ^3.1.32
-        version: 3.3.18
+        version: 3.3.20
       prop-types:
         specifier: ^15.7.2
         version: 15.8.1
@@ -1743,7 +1794,7 @@ importers:
         version: 4.18.1
       nanoid:
         specifier: ^3.1.32
-        version: 3.3.18
+        version: 3.3.20
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -1820,13 +1871,13 @@ importers:
         specifier: ^5.0.0
         version: 5.0.6
       '@types/jest':
-        specifier: 30.0.0
+        specifier: 'catalog:'
         version: 30.0.0
       '@types/multer':
         specifier: ^2.0.0
         version: 2.2.0
       '@types/node':
-        specifier: 24.13.3
+        specifier: 'catalog:'
         version: 24.13.3
       '@types/supertest':
         specifier: ^2.0.12
@@ -1847,10 +1898,10 @@ importers:
         specifier: ^5.0.1
         version: 5.5.6(@types/eslint@9.6.1)(eslint-config-prettier@9.1.2(eslint@8.57.1(supports-color@9.4.0)))(eslint@8.57.1(supports-color@9.4.0))(prettier@3.9.6)
       jest:
-        specifier: 30.4.2
+        specifier: 'catalog:'
         version: 30.4.2(@types/node@24.13.3)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.28.2)(supports-color@9.4.0))(supports-color@9.4.0)(ts-node@10.9.2(@types/node@24.13.3)(typescript@6.0.3))
       jest-util:
-        specifier: ^30.4.1
+        specifier: 'catalog:'
         version: 30.4.1
       parse-multipart-data:
         specifier: ^1.5.0
@@ -1868,7 +1919,7 @@ importers:
         specifier: ^7.1.0
         version: 7.2.2(supports-color@9.4.0)
       ts-jest:
-        specifier: 29.4.12
+        specifier: 'catalog:'
         version: 29.4.12(@babel/core@7.29.7(supports-color@9.4.0))(@jest/transform@30.4.1(supports-color@9.4.0))(@jest/types@30.5.1)(babel-jest@30.4.1(@babel/core@7.29.7(supports-color@9.4.0))(supports-color@9.4.0))(esbuild@0.28.2)(jest-util@30.4.1)(jest@30.4.2(@types/node@24.13.3)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.28.2)(supports-color@9.4.0))(supports-color@9.4.0)(ts-node@10.9.2(@types/node@24.13.3)(typescript@6.0.3)))(typescript@6.0.3)
       ts-loader:
         specifier: ^9.5.1
@@ -1880,7 +1931,7 @@ importers:
         specifier: ^4.2.0
         version: 4.2.0
       typescript:
-        specifier: 6.0.3
+        specifier: 'catalog:'
         version: 6.0.3
 
   frontend/class-view:
@@ -1893,7 +1944,7 @@ importers:
         version: 0.8.2
       fast-equals:
         specifier: ^6.0.2
-        version: 6.0.3
+        version: 6.0.2
       fontfaceobserver:
         specifier: ^2.3.0
         version: 2.3.0
@@ -1911,11 +1962,11 @@ importers:
         specifier: workspace:^
         version: link:../../tools/jest-chrome-in-docker-environment
       '@storybook/addon-links':
-        specifier: 10.6.3
+        specifier: 'catalog:'
         version: 10.6.3(@types/react@18.3.31)(react@18.3.1)(storybook@10.6.3(@types/react@18.3.31)(prettier@3.9.6)(react@18.3.1))
       '@storybook/html-vite':
-        specifier: 10.6.3
-        version: 10.6.3(storybook@10.6.3(@types/react@18.3.31)(prettier@3.9.6)(react@18.3.1))(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(terser@5.51.2))
+        specifier: 'catalog:'
+        version: 10.6.3(storybook@10.6.3(@types/react@18.3.31)(prettier@3.9.6)(react@18.3.1))(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.8.1)(yaml@2.9.1))
       '@types/d3':
         specifier: ^7.4.3
         version: 7.4.3
@@ -1923,13 +1974,13 @@ importers:
         specifier: ^2.1.2
         version: 2.1.3
       '@types/jest':
-        specifier: 30.0.0
+        specifier: 'catalog:'
         version: 30.0.0
       '@types/jest-image-snapshot':
         specifier: 6.1.0
         version: 6.1.0
       '@types/node':
-        specifier: 24.13.3
+        specifier: 'catalog:'
         version: 24.13.3
       '@typescript-eslint/eslint-plugin':
         specifier: ^6.0.0
@@ -1941,22 +1992,22 @@ importers:
         specifier: ^8.45.0
         version: 8.57.1(supports-color@9.4.0)
       eslint-plugin-storybook:
-        specifier: 10.6.3
+        specifier: 'catalog:'
         version: 10.6.3(eslint@8.57.1(supports-color@9.4.0))(supports-color@9.4.0)(typescript@6.0.3)
       jest:
-        specifier: 30.4.2
+        specifier: 'catalog:'
         version: 30.4.2(@types/node@24.13.3)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.28.2)(supports-color@9.4.0))(supports-color@9.4.0)(ts-node@10.9.2(@types/node@24.13.3)(typescript@6.0.3))
       jest-environment-puppeteer:
         specifier: 11.0.0
         version: 11.0.0(debug@4.3.4(supports-color@9.4.0))(supports-color@9.4.0)(typescript@6.0.3)
       jest-image-snapshot:
         specifier: 6.5.2
-        version: 6.5.2(jest@30.4.2(@types/node@24.13.3)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.28.2)(supports-color@9.4.0))(supports-color@9.4.0))
+        version: 6.5.2(jest@30.4.2(@types/node@24.13.3)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.28.2)(supports-color@9.4.0))(supports-color@9.4.0)(ts-node@10.9.2(@types/node@24.13.3)(typescript@6.0.3)))
       jest-puppeteer:
         specifier: 11.0.0
         version: 11.0.0(debug@4.3.4(supports-color@9.4.0))(puppeteer@24.42.0(supports-color@9.4.0)(typescript@6.0.3))(supports-color@9.4.0)(typescript@6.0.3)
       jest-util:
-        specifier: ^30.4.1
+        specifier: 'catalog:'
         version: 30.4.1
       local-web-server:
         specifier: 5.3.0
@@ -1974,25 +2025,25 @@ importers:
         specifier: 2.0.0
         version: 2.0.0(supports-color@9.4.0)
       storybook:
-        specifier: 10.6.3
+        specifier: 'catalog:'
         version: 10.6.3(@types/react@18.3.31)(prettier@3.9.6)(react@18.3.1)
       ts-jest:
-        specifier: 29.4.12
-        version: 29.4.12(@babel/core@7.29.7(supports-color@9.4.0))(@jest/transform@30.4.1(supports-color@9.4.0))(@jest/types@30.5.1)(babel-jest@30.4.1(@babel/core@7.29.7(supports-color@9.4.0))(supports-color@9.4.0))(esbuild@0.28.2)(jest-util@30.4.1)(jest@30.4.2(@types/node@24.13.3)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.28.2)(supports-color@9.4.0))(supports-color@9.4.0))(typescript@6.0.3)
+        specifier: 'catalog:'
+        version: 29.4.12(@babel/core@7.29.7(supports-color@9.4.0))(@jest/transform@30.4.1(supports-color@9.4.0))(@jest/types@30.5.1)(babel-jest@30.4.1(@babel/core@7.29.7(supports-color@9.4.0))(supports-color@9.4.0))(esbuild@0.28.2)(jest-util@30.4.1)(jest@30.4.2(@types/node@24.13.3)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.28.2)(supports-color@9.4.0))(supports-color@9.4.0)(ts-node@10.9.2(@types/node@24.13.3)(typescript@6.0.3)))(typescript@6.0.3)
       typescript:
-        specifier: 6.0.3
+        specifier: 'catalog:'
         version: 6.0.3
       vite:
-        specifier: 8.2.2
+        specifier: 'catalog:'
         version: 8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.8.1)(yaml@2.9.1)
       vite-plugin-dts:
-        specifier: 4.5.4
-        version: 4.5.4(@types/node@24.13.3)(rollup@4.63.1)(supports-color@9.4.0)(typescript@6.0.3)(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(terser@5.51.2))
+        specifier: 'catalog:'
+        version: 4.5.4(@types/node@24.13.3)(rollup@4.63.1)(supports-color@9.4.0)(typescript@6.0.3)(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.8.1)(yaml@2.9.1))
 
   frontend/compatibility-suites:
     devDependencies:
       '@types/node':
-        specifier: 24.13.3
+        specifier: 'catalog:'
         version: 24.13.3
       tslib:
         specifier: ^2.8.1
@@ -2001,13 +2052,13 @@ importers:
         specifier: 4.8.1
         version: 4.8.1
       typescript:
-        specifier: 6.0.3
+        specifier: 'catalog:'
         version: 6.0.3
       vite:
-        specifier: 8.2.2
+        specifier: 'catalog:'
         version: 8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.8.1)(yaml@2.9.0)
       vite-plugin-dts:
-        specifier: 4.5.4
+        specifier: 'catalog:'
         version: 4.5.4(@types/node@24.13.3)(rollup@4.63.1)(supports-color@9.4.0)(typescript@6.0.3)(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.8.1)(yaml@2.9.0))
       yaml:
         specifier: 2.9.0
@@ -2026,52 +2077,52 @@ importers:
         version: 17.18.3
     devDependencies:
       '@types/jest':
-        specifier: 30.0.0
+        specifier: 'catalog:'
         version: 30.0.0
       '@types/node':
-        specifier: 24.13.3
+        specifier: 'catalog:'
         version: 24.13.3
       jest:
-        specifier: 30.4.2
+        specifier: 'catalog:'
         version: 30.4.2(@types/node@24.13.3)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.28.2)(supports-color@9.4.0))(supports-color@9.4.0)(ts-node@10.9.2(@types/node@24.13.3)(typescript@6.0.3))
       jest-util:
-        specifier: ^30.4.1
+        specifier: 'catalog:'
         version: 30.4.1
       ts-jest:
-        specifier: 29.4.12
+        specifier: 'catalog:'
         version: 29.4.12(@babel/core@7.29.7(supports-color@9.4.0))(@jest/transform@30.4.1(supports-color@9.4.0))(@jest/types@30.5.1)(babel-jest@30.4.1(@babel/core@7.29.7(supports-color@9.4.0))(supports-color@9.4.0))(esbuild@0.28.2)(jest-util@30.4.1)(jest@30.4.2(@types/node@24.13.3)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.28.2)(supports-color@9.4.0))(supports-color@9.4.0)(ts-node@10.9.2(@types/node@24.13.3)(typescript@6.0.3)))(typescript@6.0.3)
       typescript:
-        specifier: 6.0.3
+        specifier: 'catalog:'
         version: 6.0.3
       vite:
-        specifier: 8.2.2
+        specifier: 'catalog:'
         version: 8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.8.1)(yaml@2.9.0)
       vite-plugin-dts:
-        specifier: 4.5.4
+        specifier: 'catalog:'
         version: 4.5.4(@types/node@24.13.3)(rollup@4.63.1)(supports-color@9.4.0)(typescript@6.0.3)(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.8.1)(yaml@2.9.0))
 
   frontend/graphapi:
     devDependencies:
       '@storybook/addon-docs':
-        specifier: 10.6.3
+        specifier: 'catalog:'
         version: 10.6.3(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(storybook@10.6.3(@types/react@18.3.31)(prettier@3.9.6)(react@18.3.1))
       '@storybook/addon-links':
-        specifier: 10.6.3
+        specifier: 'catalog:'
         version: 10.6.3(@types/react@18.3.31)(react@18.3.1)(storybook@10.6.3(@types/react@18.3.31)(prettier@3.9.6)(react@18.3.1))
       '@storybook/addon-onboarding':
         specifier: 10.6.3
         version: 10.6.3(storybook@10.6.3(@types/react@18.3.31)(prettier@3.9.6)(react@18.3.1))
       '@storybook/react-vite':
-        specifier: 10.6.3
+        specifier: 'catalog:'
         version: 10.6.3(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(rollup@4.63.1)(storybook@10.6.3(@types/react@18.3.31)(prettier@3.9.6)(react@18.3.1))(supports-color@9.4.0)(typescript@6.0.3)(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.8.1)(yaml@2.9.0))
       '@types/jest':
-        specifier: 30.0.0
+        specifier: 'catalog:'
         version: 30.0.0
       '@types/json-schema':
         specifier: ^7.0.11
         version: 7.0.15
       '@types/node':
-        specifier: 24.13.3
+        specifier: 'catalog:'
         version: 24.13.3
       '@types/react':
         specifier: ^18.3.31
@@ -2086,7 +2137,7 @@ importers:
         specifier: 8.48.0
         version: 8.48.0(supports-color@9.4.0)
       eslint-plugin-storybook:
-        specifier: 10.6.3
+        specifier: 'catalog:'
         version: 10.6.3(eslint@8.48.0(supports-color@9.4.0))(supports-color@9.4.0)(typescript@6.0.3)
       fast-json-patch:
         specifier: ^3.1.1
@@ -2095,10 +2146,10 @@ importers:
         specifier: 16.12.0
         version: 16.12.0
       jest:
-        specifier: 30.4.2
+        specifier: 'catalog:'
         version: 30.4.2(@types/node@24.13.3)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.28.2)(supports-color@9.4.0))(supports-color@9.4.0)(ts-node@10.9.2(@types/node@24.13.3)(typescript@6.0.3))
       jest-util:
-        specifier: ^30.4.1
+        specifier: 'catalog:'
         version: 30.4.1
       json-schema:
         specifier: ^0.4.0
@@ -2113,10 +2164,10 @@ importers:
         specifier: 3.0.2
         version: 3.0.2
       storybook:
-        specifier: 10.6.3
+        specifier: 'catalog:'
         version: 10.6.3(@types/react@18.3.31)(prettier@3.9.6)(react@18.3.1)
       ts-jest:
-        specifier: 29.4.12
+        specifier: 'catalog:'
         version: 29.4.12(@babel/core@7.29.7(supports-color@9.4.0))(@jest/transform@30.4.1(supports-color@9.4.0))(@jest/types@30.5.1)(babel-jest@30.4.1(@babel/core@7.29.7(supports-color@9.4.0))(supports-color@9.4.0))(esbuild@0.28.2)(jest-util@30.4.1)(jest@30.4.2(@types/node@24.13.3)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.28.2)(supports-color@9.4.0))(supports-color@9.4.0)(ts-node@10.9.2(@types/node@24.13.3)(typescript@6.0.3)))(typescript@6.0.3)
       ts-loader:
         specifier: ^8.0.8
@@ -2128,13 +2179,13 @@ importers:
         specifier: ^6.1.2
         version: 6.1.3(typescript@6.0.3)
       typescript:
-        specifier: 6.0.3
+        specifier: 'catalog:'
         version: 6.0.3
       vite:
-        specifier: 8.2.2
+        specifier: 'catalog:'
         version: 8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.8.1)(yaml@2.9.0)
       vite-plugin-dts:
-        specifier: 4.5.4
+        specifier: 'catalog:'
         version: 4.5.4(@types/node@24.13.3)(rollup@4.63.1)(supports-color@9.4.0)(typescript@6.0.3)(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.8.1)(yaml@2.9.0))
       webpack:
         specifier: 5.97.1
@@ -2198,7 +2249,7 @@ importers:
         specifier: ^9.2.0
         version: 9.3.4(@types/node@24.13.3)(encoding@0.1.13)(supports-color@9.4.0)(typescript@6.0.3)
       '@types/jest':
-        specifier: 30.0.0
+        specifier: 'catalog:'
         version: 30.0.0
       '@types/lodash':
         specifier: 4.17.20
@@ -2243,10 +2294,10 @@ importers:
         specifier: ^7.0.0
         version: 7.0.0(eslint@8.57.1(supports-color@9.4.0))
       jest:
-        specifier: 30.4.2
+        specifier: 'catalog:'
         version: 30.4.2(@types/node@24.13.3)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.28.2)(supports-color@9.4.0))(supports-color@9.4.0)(ts-node@10.9.2(@types/node@24.13.3)(typescript@6.0.3))
       jest-util:
-        specifier: ^30.4.1
+        specifier: 'catalog:'
         version: 30.4.1
       prettier:
         specifier: ^2.6.2
@@ -2255,10 +2306,10 @@ importers:
         specifier: ^3.0.2
         version: 3.0.2
       ts-jest:
-        specifier: 29.4.12
+        specifier: 'catalog:'
         version: 29.4.12(@babel/core@7.29.7(supports-color@9.4.0))(@jest/transform@30.4.1(supports-color@9.4.0))(@jest/types@30.5.1)(babel-jest@30.4.1(@babel/core@7.29.7(supports-color@9.4.0))(supports-color@9.4.0))(esbuild@0.28.2)(jest-util@30.4.1)(jest@30.4.2(@types/node@24.13.3)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.28.2)(supports-color@9.4.0))(supports-color@9.4.0)(ts-node@10.9.2(@types/node@24.13.3)(typescript@6.0.3)))(typescript@6.0.3)
       typescript:
-        specifier: 6.0.3
+        specifier: 'catalog:'
         version: 6.0.3
       utility-types:
         specifier: ^3.10.0
@@ -2267,16 +2318,16 @@ importers:
   frontend/json-crawl:
     devDependencies:
       '@types/jest':
-        specifier: 30.0.0
+        specifier: 'catalog:'
         version: 30.0.0
       '@types/node':
-        specifier: 24.13.3
+        specifier: 'catalog:'
         version: 24.13.3
       jest:
-        specifier: 30.4.2
+        specifier: 'catalog:'
         version: 30.4.2(@types/node@24.13.3)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.28.2)(supports-color@9.4.0))(supports-color@9.4.0)(ts-node@10.9.2(@types/node@24.13.3)(typescript@6.0.3))
       jest-util:
-        specifier: ^30.4.1
+        specifier: 'catalog:'
         version: 30.4.1
       rimraf:
         specifier: ^5.0.5
@@ -2291,7 +2342,7 @@ importers:
         specifier: ^1.1.2
         version: 1.1.2
       ts-jest:
-        specifier: 29.4.12
+        specifier: 'catalog:'
         version: 29.4.12(@babel/core@7.29.7(supports-color@9.4.0))(@jest/transform@30.4.1(supports-color@9.4.0))(@jest/types@30.5.1)(babel-jest@30.4.1(@babel/core@7.29.7(supports-color@9.4.0))(supports-color@9.4.0))(esbuild@0.28.2)(jest-util@30.4.1)(jest@30.4.2(@types/node@24.13.3)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.28.2)(supports-color@9.4.0))(supports-color@9.4.0)(ts-node@10.9.2(@types/node@24.13.3)(typescript@6.0.3)))(typescript@6.0.3)
       ts-node:
         specifier: ^10.7.0
@@ -2300,13 +2351,13 @@ importers:
         specifier: ^6.1.2
         version: 6.1.3(typescript@6.0.3)
       typescript:
-        specifier: 6.0.3
+        specifier: 'catalog:'
         version: 6.0.3
       vite:
-        specifier: 8.2.2
+        specifier: 'catalog:'
         version: 8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.8.1)(yaml@2.9.0)
       vite-plugin-dts:
-        specifier: 4.5.4
+        specifier: 'catalog:'
         version: 4.5.4(@types/node@24.13.3)(rollup@2.80.0)(supports-color@9.4.0)(typescript@6.0.3)(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.8.1)(yaml@2.9.0))
 
   frontend/rest-playground:
@@ -2451,7 +2502,7 @@ importers:
         specifier: ^1.23.0
         version: 1.23.4
       '@types/jest':
-        specifier: 30.0.0
+        specifier: 'catalog:'
         version: 30.0.0
       '@types/json-schema':
         specifier: ^7.0.15
@@ -2460,7 +2511,7 @@ importers:
         specifier: ^4.14.181
         version: 4.17.20
       '@types/node':
-        specifier: 24.13.3
+        specifier: 'catalog:'
         version: 24.13.3
       '@types/prop-types':
         specifier: ^15.7.5
@@ -2535,13 +2586,13 @@ importers:
         specifier: ^2.0.0
         version: 2.0.0(mkdirp@1.0.4)(supports-color@8.1.1)
       jest:
-        specifier: 30.4.2
+        specifier: 'catalog:'
         version: 30.4.2(@types/node@24.13.3)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.25.12)(supports-color@8.1.1))(supports-color@8.1.1)(ts-node@10.9.2(@types/node@24.13.3)(typescript@6.0.3))
       jest-environment-jsdom:
         specifier: 30.4.1
         version: 30.4.1(supports-color@8.1.1)
       jest-util:
-        specifier: ^30.4.1
+        specifier: 'catalog:'
         version: 30.4.1
       jotai:
         specifier: 2.13.1
@@ -2602,7 +2653,7 @@ importers:
         version: 2.4.3(react-router-dom@5.3.4(react@18.3.1))(react@18.3.1)
       react-use:
         specifier: ^17.6.0
-        version: 17.6.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        version: 17.6.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       storybook:
         specifier: 9.1.21
         version: 9.1.21(@testing-library/dom@10.4.1)(msw@2.15.0(@types/node@24.13.3)(typescript@6.0.3))(prettier@2.8.8)(supports-color@8.1.1)(vite@5.4.21(@types/node@24.13.3)(lightningcss@1.33.0)(terser@5.51.2))
@@ -2610,7 +2661,7 @@ importers:
         specifier: ^2.0.0
         version: 2.0.0(webpack@5.101.3)
       ts-jest:
-        specifier: 29.4.12
+        specifier: 'catalog:'
         version: 29.4.12(@babel/core@7.29.7(supports-color@8.1.1))(@jest/transform@30.4.1(supports-color@8.1.1))(@jest/types@30.5.1)(babel-jest@30.4.1(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(esbuild@0.25.12)(jest-util@30.4.1)(jest@30.4.2(@types/node@24.13.3)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.25.12)(supports-color@8.1.1))(supports-color@8.1.1)(ts-node@10.9.2(@types/node@24.13.3)(typescript@6.0.3)))(typescript@6.0.3)
       ts-loader:
         specifier: ^9.6.2
@@ -2622,7 +2673,7 @@ importers:
         specifier: ^2.8.1
         version: 2.8.1
       typescript:
-        specifier: 6.0.3
+        specifier: 'catalog:'
         version: 6.0.3
       urijs:
         specifier: ^1.19.11
@@ -2875,16 +2926,16 @@ importers:
         specifier: 5.0.5
         version: 5.0.5(rollup@3.30.0)
       '@storybook/addon-docs':
-        specifier: 10.6.3
+        specifier: 'catalog:'
         version: 10.6.3(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(storybook@10.6.3(@types/react@18.3.31)(prettier@3.9.6)(react@18.3.1))
       '@storybook/addon-links':
-        specifier: 10.6.3
+        specifier: 'catalog:'
         version: 10.6.3(@types/react@18.3.31)(react@18.3.1)(storybook@10.6.3(@types/react@18.3.31)(prettier@3.9.6)(react@18.3.1))
       '@storybook/addon-onboarding':
         specifier: 10.6.3
         version: 10.6.3(storybook@10.6.3(@types/react@18.3.31)(prettier@3.9.6)(react@18.3.1))
       '@storybook/react-vite':
-        specifier: 10.6.3
+        specifier: 'catalog:'
         version: 10.6.3(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(rollup@3.30.0)(storybook@10.6.3(@types/react@18.3.31)(prettier@3.9.6)(react@18.3.1))(supports-color@5.5.0)(typescript@6.0.3)(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.8.1)(yaml@2.9.0))
       '@tanstack/eslint-plugin-query':
         specifier: 4.24.8
@@ -2899,10 +2950,10 @@ importers:
         specifier: 3.0.1
         version: 3.0.1
       '@types/jest':
-        specifier: 30.0.0
+        specifier: 'catalog:'
         version: 30.0.0
       '@types/node':
-        specifier: 24.13.3
+        specifier: 'catalog:'
         version: 24.13.3
       '@types/object-hash':
         specifier: 3.0.6
@@ -2941,7 +2992,7 @@ importers:
         specifier: 5.52.0
         version: 5.52.0(eslint@8.57.1(supports-color@5.5.0))(supports-color@5.5.0)(typescript@6.0.3)
       '@vitejs/plugin-react':
-        specifier: 6.1.1
+        specifier: 'catalog:'
         version: 6.1.1(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.8.1)(yaml@2.9.0))
       buffer:
         specifier: 5.7.1
@@ -2977,16 +3028,16 @@ importers:
         specifier: 0.8.0
         version: 0.8.0(eslint@8.57.1(supports-color@5.5.0))
       eslint-plugin-storybook:
-        specifier: 10.6.3
+        specifier: 'catalog:'
         version: 10.6.3(eslint@8.57.1(supports-color@5.5.0))(supports-color@5.5.0)(typescript@6.0.3)
       express:
         specifier: 5.2.1
         version: 5.2.1(supports-color@5.5.0)
       jest:
-        specifier: 30.4.2
+        specifier: 'catalog:'
         version: 30.4.2(@types/node@24.13.3)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.28.2)(supports-color@5.5.0))(supports-color@5.5.0)(ts-node@10.9.1(@types/node@24.13.3)(typescript@6.0.3))
       jest-util:
-        specifier: 30.4.1
+        specifier: 'catalog:'
         version: 30.4.1
       msw:
         specifier: 2.15.0
@@ -3007,25 +3058,25 @@ importers:
         specifier: 5.9.0
         version: 5.9.0(rollup@3.30.0)
       storybook:
-        specifier: 10.6.3
+        specifier: 'catalog:'
         version: 10.6.3(@types/react@18.3.31)(prettier@3.9.6)(react@18.3.1)
       supertest:
         specifier: 7.2.2
         version: 7.2.2(supports-color@5.5.0)
       ts-jest:
-        specifier: 29.4.12
+        specifier: 'catalog:'
         version: 29.4.12(@babel/core@7.29.7(supports-color@5.5.0))(@jest/transform@30.4.1(supports-color@5.5.0))(@jest/types@30.5.1)(babel-jest@30.4.1(@babel/core@7.29.7(supports-color@5.5.0))(supports-color@5.5.0))(esbuild@0.28.2)(jest-util@30.4.1)(jest@30.4.2(@types/node@24.13.3)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.28.2)(supports-color@5.5.0))(supports-color@5.5.0)(ts-node@10.9.1(@types/node@24.13.3)(typescript@6.0.3)))(typescript@6.0.3)
       ts-node:
         specifier: 10.9.1
         version: 10.9.1(@types/node@24.13.3)(typescript@6.0.3)
       typescript:
-        specifier: 6.0.3
+        specifier: 'catalog:'
         version: 6.0.3
       unplugin-fonts:
         specifier: 2.0.0
         version: 2.0.0(esbuild@0.28.2)(postcss@8.5.28)(rolldown@1.2.7)(rollup@3.30.0)(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.8.1)(yaml@2.9.0))(webpack@5.106.2)
       vite:
-        specifier: 8.2.2
+        specifier: 'catalog:'
         version: 8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.8.1)(yaml@2.9.0)
       vite-plugin-monaco-editor:
         specifier: 1.1.0
@@ -3053,7 +3104,7 @@ importers:
         version: 5.18.0(@emotion/react@11.10.6(@types/react@18.3.31)(react@18.3.1)(supports-color@9.4.0))(@emotion/styled@11.10.6(@emotion/react@11.10.6(@types/react@18.3.31)(react@18.3.1)(supports-color@9.4.0))(@types/react@18.3.31)(react@18.3.1)(supports-color@9.4.0))(@types/react@18.3.31)(react@18.3.1)
       '@mui/x-date-pickers':
         specifier: 5.0.9
-        version: 5.0.9(@emotion/react@11.10.6(@types/react@18.3.31)(react@18.3.1)(supports-color@9.4.0))(@emotion/styled@11.10.6(@emotion/react@11.10.6(@types/react@18.3.31)(react@18.3.1)(supports-color@9.4.0))(@types/react@18.3.31)(react@18.3.1)(supports-color@9.4.0))(@mui/material@5.11.10(@emotion/react@11.10.6(@types/react@18.3.31)(react@18.3.1)(supports-color@9.4.0))(@emotion/styled@11.10.6(@emotion/react@11.10.6(@types/react@18.3.31)(react@18.3.1)(supports-color@9.4.0))(@types/react@18.3.31)(react@18.3.1)(supports-color@9.4.0))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@mui/system@5.18.0(@emotion/react@11.10.6(@types/react@18.3.31)(react@18.3.1)(supports-color@9.4.0))(@emotion/styled@11.10.6(@emotion/react@11.10.6(@types/react@18.3.31)(react@18.3.1)(supports-color@9.4.0))(@types/react@18.3.31)(react@18.3.1)(supports-color@9.4.0))(@types/react@18.3.31)(react@18.3.1))(@types/react@18.3.31)(date-fns@2.30.0)(dayjs@1.11.23)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        version: 5.0.9(@emotion/react@11.10.6(@types/react@18.3.31)(react@18.3.1)(supports-color@9.4.0))(@emotion/styled@11.10.6(@emotion/react@11.10.6(@types/react@18.3.31)(react@18.3.1)(supports-color@9.4.0))(@types/react@18.3.31)(react@18.3.1)(supports-color@9.4.0))(@mui/material@5.11.10(@emotion/react@11.10.6(@types/react@18.3.31)(react@18.3.1)(supports-color@9.4.0))(@emotion/styled@11.10.6(@emotion/react@11.10.6(@types/react@18.3.31)(react@18.3.1)(supports-color@9.4.0))(@types/react@18.3.31)(react@18.3.1)(supports-color@9.4.0))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@mui/system@5.18.0(@emotion/react@11.10.6(@types/react@18.3.31)(react@18.3.1)(supports-color@9.4.0))(@emotion/styled@11.10.6(@emotion/react@11.10.6(@types/react@18.3.31)(react@18.3.1)(supports-color@9.4.0))(@types/react@18.3.31)(react@18.3.1)(supports-color@9.4.0))(@types/react@18.3.31)(react@18.3.1))(@types/react@18.3.31)(date-fns@2.30.0)(dayjs@1.11.21)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@netcracker/qubership-apihub-api-processor':
         specifier: workspace:^
         version: link:../../../api-processor
@@ -3083,7 +3134,7 @@ importers:
         version: 4.4.1
       dayjs:
         specifier: ^1.11.21
-        version: 1.11.23
+        version: 1.11.21
       graphql:
         specifier: ^16.6.0
         version: 16.12.0
@@ -3107,7 +3158,7 @@ importers:
         version: 6.18.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react-use:
         specifier: ^17.6.0
-        version: 17.6.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        version: 17.6.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       ts-event-bus:
         specifier: 4.1.1
         version: 4.1.1
@@ -3134,7 +3185,7 @@ importers:
         specifier: ^18.3.7
         version: 18.3.7(@types/react@18.3.31)
       '@vitejs/plugin-react':
-        specifier: 6.1.1
+        specifier: 'catalog:'
         version: 6.1.1(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.8.1)(yaml@2.9.0))
       buffer:
         specifier: 5.7.1
@@ -3158,19 +3209,19 @@ importers:
         specifier: 5.9.0
         version: 5.9.0(rollup@3.30.0)
       typescript:
-        specifier: 6.0.3
+        specifier: 'catalog:'
         version: 6.0.3
       unplugin-fonts:
         specifier: ^2.0.0
         version: 2.0.0(esbuild@0.28.2)(postcss@8.5.28)(rolldown@1.2.7)(rollup@3.30.0)(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.8.1)(yaml@2.9.0))(webpack@5.106.2)
       vite:
-        specifier: 8.2.2
+        specifier: 'catalog:'
         version: 8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.8.1)(yaml@2.9.0)
       vite-plugin-monaco-editor:
         specifier: 1.1.0
         version: 1.1.0(monaco-editor@0.52.2)
       vite-tsconfig-paths:
-        specifier: 4.3.2
+        specifier: 'catalog:'
         version: 4.3.2(supports-color@9.4.0)(typescript@6.0.3)(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.8.1)(yaml@2.9.0))
 
   frontend/ui/packages/portal:
@@ -3318,7 +3369,7 @@ importers:
         version: 6.18.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react-use:
         specifier: ^17.6.0
-        version: 17.6.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        version: 17.6.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react-virtualized-auto-sizer:
         specifier: 1.0.24
         version: 1.0.24(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -3351,7 +3402,7 @@ importers:
         specifier: 5.0.5
         version: 5.0.5(rollup@3.30.0)
       '@storybook/react-vite':
-        specifier: 10.6.3
+        specifier: 'catalog:'
         version: 10.6.3(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(rollup@3.30.0)(storybook@10.6.3(@types/react@18.3.31)(prettier@3.9.6)(react@18.3.1))(supports-color@9.4.0)(typescript@6.0.3)(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.8.1)(yaml@2.9.0))
       '@types/cors':
         specifier: 2.8.13
@@ -3366,7 +3417,7 @@ importers:
         specifier: ^4.17.20
         version: 4.17.20
       '@types/node':
-        specifier: 24.13.3
+        specifier: 'catalog:'
         version: 24.13.3
       '@types/react':
         specifier: ^18.3.31
@@ -3387,7 +3438,7 @@ importers:
         specifier: 7.2.0
         version: 7.2.0
       '@vitejs/plugin-react':
-        specifier: 6.1.1
+        specifier: 'catalog:'
         version: 6.1.1(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.8.1)(yaml@2.9.0))
       buffer:
         specifier: 5.7.1
@@ -3405,7 +3456,7 @@ importers:
         specifier: 5.2.1
         version: 5.2.1(supports-color@9.4.0)
       jest:
-        specifier: 30.4.2
+        specifier: 'catalog:'
         version: 30.4.2(@types/node@24.13.3)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.28.2)(supports-color@9.4.0))(supports-color@9.4.0)(ts-node@10.9.2(@types/node@24.13.3)(typescript@6.0.3))
       nodemon:
         specifier: 2.0.20
@@ -3426,19 +3477,19 @@ importers:
         specifier: 7.2.2
         version: 7.2.2(supports-color@9.4.0)
       typescript:
-        specifier: 6.0.3
+        specifier: 'catalog:'
         version: 6.0.3
       unplugin-fonts:
         specifier: ^2.0.0
         version: 2.0.0(esbuild@0.28.2)(postcss@8.5.28)(rolldown@1.2.7)(rollup@3.30.0)(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.8.1)(yaml@2.9.0))(webpack@5.106.2)
       vite:
-        specifier: 8.2.2
+        specifier: 'catalog:'
         version: 8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.8.1)(yaml@2.9.0)
       vite-plugin-monaco-editor:
         specifier: 1.1.0
         version: 1.1.0(monaco-editor@0.52.2)
       vite-tsconfig-paths:
-        specifier: 4.3.2
+        specifier: 'catalog:'
         version: 4.3.2(supports-color@9.4.0)(typescript@6.0.3)(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.8.1)(yaml@2.9.0))
 
   frontend/ui/packages/shared:
@@ -3541,10 +3592,10 @@ importers:
         version: 3.1.3
       dayjs:
         specifier: ^1.11.21
-        version: 1.11.23
+        version: 1.11.21
       fast-equals:
         specifier: ^6.0.2
-        version: 6.0.3
+        version: 6.0.2
       github-markdown-css:
         specifier: 5.1.0
         version: 5.1.0
@@ -3592,7 +3643,7 @@ importers:
         version: 6.18.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react-use:
         specifier: ^17.6.0
-        version: 17.6.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        version: 17.6.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       rehype-raw:
         specifier: 6.1.1
         version: 6.1.1
@@ -3610,7 +3661,7 @@ importers:
         specifier: 10.6.3
         version: 10.6.3(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(storybook@10.6.3(@types/react@18.3.31)(prettier@3.9.6)(react@18.3.1))(supports-color@9.4.0)(typescript@6.0.3)
       '@storybook/react-vite':
-        specifier: 10.6.3
+        specifier: 'catalog:'
         version: 10.6.3(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(rollup@4.63.1)(storybook@10.6.3(@types/react@18.3.31)(prettier@3.9.6)(react@18.3.1))(supports-color@9.4.0)(typescript@6.0.3)(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.8.1)(yaml@2.9.0))
       '@types/react':
         specifier: ^18.3.31
@@ -3622,25 +3673,25 @@ importers:
         specifier: 8.57.1
         version: 8.57.1(supports-color@9.4.0)
       jest:
-        specifier: 30.4.2
+        specifier: 'catalog:'
         version: 30.4.2(@types/node@24.13.3)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.28.2)(supports-color@9.4.0))(supports-color@9.4.0)(ts-node@10.9.2(@types/node@24.13.3)(typescript@6.0.3))
       openapi-types:
         specifier: ^12.1.0
         version: 12.1.3
       storybook:
-        specifier: 10.6.3
+        specifier: 'catalog:'
         version: 10.6.3(@types/react@18.3.31)(prettier@3.9.6)(react@18.3.1)
       ts-jest:
-        specifier: 29.4.12
+        specifier: 'catalog:'
         version: 29.4.12(@babel/core@7.29.7(supports-color@9.4.0))(@jest/transform@30.4.1(supports-color@9.4.0))(@jest/types@30.5.1)(babel-jest@30.4.1(@babel/core@7.29.7(supports-color@9.4.0))(supports-color@9.4.0))(esbuild@0.28.2)(jest-util@30.5.1)(jest@30.4.2(@types/node@24.13.3)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.28.2)(supports-color@9.4.0))(supports-color@9.4.0)(ts-node@10.9.2(@types/node@24.13.3)(typescript@6.0.3)))(typescript@6.0.3)
       typescript:
-        specifier: 6.0.3
+        specifier: 'catalog:'
         version: 6.0.3
       vite:
-        specifier: 8.2.2
+        specifier: 'catalog:'
         version: 8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.8.1)(yaml@2.9.0)
       vite-plugin-dts:
-        specifier: 4.5.4
+        specifier: 'catalog:'
         version: 4.5.4(@types/node@24.13.3)(rollup@4.63.1)(supports-color@9.4.0)(typescript@6.0.3)(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.8.1)(yaml@2.9.0))
 
   sites/docs:
@@ -3688,7 +3739,7 @@ importers:
         specifier: 1.62.1
         version: 1.62.1
       '@types/node':
-        specifier: 24.13.3
+        specifier: 'catalog:'
         version: 24.13.3
       '@typescript-eslint/eslint-plugin':
         specifier: 7.18.0
@@ -3701,7 +3752,7 @@ importers:
         version: 7.18.0
       dayjs:
         specifier: ^1.11.21
-        version: 1.11.23
+        version: 1.11.21
       dotenv:
         specifier: 17.4.2
         version: 17.4.2
@@ -3724,19 +3775,19 @@ importers:
         specifier: 3.10.1
         version: 3.10.1
       typescript:
-        specifier: 6.0.3
+        specifier: 'catalog:'
         version: 6.0.3
 
   tools/build-id:
     devDependencies:
       '@types/node':
-        specifier: 24.13.3
+        specifier: 'catalog:'
         version: 24.13.3
       typescript:
-        specifier: 6.0.3
+        specifier: 'catalog:'
         version: 6.0.3
       vite:
-        specifier: 8.2.2
+        specifier: 'catalog:'
         version: 8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.8.1)(yaml@2.9.1)
 
   tools/jest-chrome-in-docker-environment:
@@ -3764,10 +3815,10 @@ importers:
         specifier: 2.1.2
         version: 2.1.2
       '@types/node':
-        specifier: 24.13.3
+        specifier: 'catalog:'
         version: 24.13.3
       typescript:
-        specifier: 6.0.3
+        specifier: 'catalog:'
         version: 6.0.3
 
 packages:
@@ -10143,9 +10194,6 @@ packages:
   '@types/js-cookie@2.2.7':
     resolution: {integrity: sha512-aLkWa0C0vO5b4Sr798E26QgOkss68Un0bLjs7u9qxzPT5CG+8DuNTffWES58YzJs3hrVAOs1wonycqEBqNJubA==}
 
-  '@types/js-cookie@3.0.6':
-    resolution: {integrity: sha512-wkw9yd1kEXOPnvEeEV1Go1MmxtBJL0RR79aOTAApecWFVu7w0NNXNqhcWgvw2YgZDYadliXkl14pa3WXw5jlCQ==}
-
   '@types/js-yaml@4.0.9':
     resolution: {integrity: sha512-k4MGaQl5TGo/iipqb2UDG2UwjXziSWkh0uysQelTlJpX1qGlpUZYm8PnO4DxG1qBomtJUdYJ6qR6xdIah10JLg==}
 
@@ -13501,9 +13549,6 @@ packages:
   dayjs@1.11.21:
     resolution: {integrity: sha512-98IT+HOahAisibz/yjKbzuOBwYcjJ7BCLPzARyHiyEBmRz4fatF+KPJszEHXsGYjUG234aH/cOjW1wwTbKUZlA==}
 
-  dayjs@1.11.23:
-    resolution: {integrity: sha512-QDTCU0M0MxR3hQfnlDJfwekQiaanm1ubOD231u73WBckQ/fsamwRLiE2GBz6D3a/xF1NgfiDLJjXBa1hYOYTtQ==}
-
   de-indent@1.0.2:
     resolution: {integrity: sha512-e/1zu3xH5MQryN2zdVaF0OrdNLUbvWxzMbi+iNA6Bky7l1RoP8a2fIbRocyHclXt/arDrrR6lL3TqFD9pMQTsg==}
 
@@ -14805,10 +14850,6 @@ packages:
 
   fast-equals@6.0.2:
     resolution: {integrity: sha512-sAjhj9ZhOxYCGiNMnZLaucOqf5ZeFnHNoKoAZiD9thhJ0N8RP85qJK759/97C/3L7NzzmGVB5uiX9AUpySZmUQ==}
-    engines: {node: '>=6.0.0'}
-
-  fast-equals@6.0.3:
-    resolution: {integrity: sha512-IECu4C0fFZFoUC2cA2rDaNUuVIfWIZMwh3tY+ng924vOuD9OaUFFrcIrVwCKbV7TJDkGmrHfhwZ7R0AnHfVhyw==}
     engines: {node: '>=6.0.0'}
 
   fast-fifo@1.3.2:
@@ -17153,9 +17194,6 @@ packages:
 
   js-cookie@2.2.1:
     resolution: {integrity: sha512-HvdH2LzI/EAZcUwA8+0nKNtWHqS+ZmijLA30RwZA0bo7ToCckjK5MkGhjED9KoRcXO6BaGI3I9UIzSA1FKFPOQ==}
-
-  js-cookie@3.0.8:
-    resolution: {integrity: sha512-yeJd4aNAdYZQjaon2bpD/Gb0B/omw7HQOsynXXcOiWVCacbBcPlgn8S/d1X6blFSaHao7ozqtW7NZW19xpCtIw==}
 
   js-file-download@0.4.12:
     resolution: {integrity: sha512-rML+NkoD08p5Dllpjo0ffy4jRHeY6Zsapvr/W86N7E0yuzAO6qa5X9+xog6zQNlH102J7IXljNY2FtS6Lj3ucg==}
@@ -20756,12 +20794,6 @@ packages:
 
   react-use@17.6.0:
     resolution: {integrity: sha512-OmedEScUMKFfzn1Ir8dBxiLLSOzhKe/dPZwVxcujweSj45aNM7BEGPb9BEVIgVEqEXx6f3/TsXzwIktNgUR02g==}
-    peerDependencies:
-      react: '*'
-      react-dom: '*'
-
-  react-use@17.6.1:
-    resolution: {integrity: sha512-uibb3pgzV4LFsYPHyXYGu7dD2+pyk/ZJlPH+AizBR3zolqPWyCleKcWWbUQaKSKfydwgnQ3ymGm1Ab3/saGHCA==}
     peerDependencies:
       react: '*'
       react-dom: '*'
@@ -27775,11 +27807,11 @@ snapshots:
     optionalDependencies:
       date-fns: 2.30.0
 
-  '@date-io/dayjs@2.17.0(dayjs@1.11.23)':
+  '@date-io/dayjs@2.17.0(dayjs@1.11.21)':
     dependencies:
       '@date-io/core': 2.17.0
     optionalDependencies:
-      dayjs: 1.11.23
+      dayjs: 1.11.21
 
   '@date-io/luxon@2.17.0':
     dependencies:
@@ -29180,42 +29212,6 @@ snapshots:
       - supports-color
       - ts-node
 
-  '@jest/core@30.4.2(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.28.2)(supports-color@9.4.0))(supports-color@9.4.0)':
-    dependencies:
-      '@jest/console': 30.4.1
-      '@jest/pattern': 30.4.0
-      '@jest/reporters': 30.4.1(supports-color@9.4.0)
-      '@jest/test-result': 30.4.1
-      '@jest/transform': 30.4.1(supports-color@9.4.0)
-      '@jest/types': 30.4.1
-      '@types/node': 24.13.3
-      ansi-escapes: 4.3.2
-      chalk: 4.1.2
-      ci-info: 4.4.0
-      exit-x: 0.2.2
-      fast-json-stable-stringify: 2.1.0
-      graceful-fs: 4.2.11
-      jest-changed-files: 30.4.1
-      jest-config: 30.4.2(@types/node@24.13.3)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.28.2)(supports-color@9.4.0))(supports-color@9.4.0)
-      jest-haste-map: 30.4.1
-      jest-message-util: 30.4.1
-      jest-regex-util: 30.4.0
-      jest-resolve: 30.4.1
-      jest-resolve-dependencies: 30.4.2(supports-color@9.4.0)
-      jest-runner: 30.4.2(supports-color@9.4.0)
-      jest-runtime: 30.4.2(supports-color@9.4.0)
-      jest-snapshot: 30.4.1(supports-color@9.4.0)
-      jest-util: 30.4.1
-      jest-validate: 30.4.1
-      jest-watcher: 30.4.1
-      pretty-format: 30.4.1
-      slash: 3.0.0
-    transitivePeerDependencies:
-      - babel-plugin-macros
-      - esbuild-register
-      - supports-color
-      - ts-node
-
   '@jest/core@30.4.2(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.28.2)(supports-color@9.4.0))(supports-color@9.4.0)(ts-node@10.7.0(@types/node@24.13.3)(typescript@6.0.3))':
     dependencies:
       '@jest/console': 30.4.1
@@ -29468,7 +29464,7 @@ snapshots:
 
   '@jest/pattern@30.5.0':
     dependencies:
-      '@types/node': 24.0.0
+      '@types/node': 24.13.3
       jest-regex-util: 30.5.0
 
   '@jest/reporters@30.4.1(supports-color@5.5.0)':
@@ -29795,7 +29791,7 @@ snapshots:
       '@jest/schemas': 30.5.0
       '@types/istanbul-lib-coverage': 2.0.6
       '@types/istanbul-reports': 3.0.4
-      '@types/node': 24.0.0
+      '@types/node': 24.13.3
       '@types/yargs': 17.0.35
       chalk: 4.1.2
 
@@ -30388,12 +30384,12 @@ snapshots:
     optionalDependencies:
       '@types/react': 18.3.31
 
-  '@mui/x-date-pickers@5.0.9(@emotion/react@11.10.6(@types/react@18.3.31)(react@18.3.1)(supports-color@9.4.0))(@emotion/styled@11.10.6(@emotion/react@11.10.6(@types/react@18.3.31)(react@18.3.1)(supports-color@9.4.0))(@types/react@18.3.31)(react@18.3.1)(supports-color@9.4.0))(@mui/material@5.11.10(@emotion/react@11.10.6(@types/react@18.3.31)(react@18.3.1)(supports-color@9.4.0))(@emotion/styled@11.10.6(@emotion/react@11.10.6(@types/react@18.3.31)(react@18.3.1)(supports-color@9.4.0))(@types/react@18.3.31)(react@18.3.1)(supports-color@9.4.0))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@mui/system@5.18.0(@emotion/react@11.10.6(@types/react@18.3.31)(react@18.3.1)(supports-color@9.4.0))(@emotion/styled@11.10.6(@emotion/react@11.10.6(@types/react@18.3.31)(react@18.3.1)(supports-color@9.4.0))(@types/react@18.3.31)(react@18.3.1)(supports-color@9.4.0))(@types/react@18.3.31)(react@18.3.1))(@types/react@18.3.31)(date-fns@2.30.0)(dayjs@1.11.23)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+  '@mui/x-date-pickers@5.0.9(@emotion/react@11.10.6(@types/react@18.3.31)(react@18.3.1)(supports-color@9.4.0))(@emotion/styled@11.10.6(@emotion/react@11.10.6(@types/react@18.3.31)(react@18.3.1)(supports-color@9.4.0))(@types/react@18.3.31)(react@18.3.1)(supports-color@9.4.0))(@mui/material@5.11.10(@emotion/react@11.10.6(@types/react@18.3.31)(react@18.3.1)(supports-color@9.4.0))(@emotion/styled@11.10.6(@emotion/react@11.10.6(@types/react@18.3.31)(react@18.3.1)(supports-color@9.4.0))(@types/react@18.3.31)(react@18.3.1)(supports-color@9.4.0))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@mui/system@5.18.0(@emotion/react@11.10.6(@types/react@18.3.31)(react@18.3.1)(supports-color@9.4.0))(@emotion/styled@11.10.6(@emotion/react@11.10.6(@types/react@18.3.31)(react@18.3.1)(supports-color@9.4.0))(@types/react@18.3.31)(react@18.3.1)(supports-color@9.4.0))(@types/react@18.3.31)(react@18.3.1))(@types/react@18.3.31)(date-fns@2.30.0)(dayjs@1.11.21)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
       '@babel/runtime': 7.29.7
       '@date-io/core': 2.17.0
       '@date-io/date-fns': 2.17.0(date-fns@2.30.0)
-      '@date-io/dayjs': 2.17.0(dayjs@1.11.23)
+      '@date-io/dayjs': 2.17.0(dayjs@1.11.21)
       '@date-io/luxon': 2.17.0
       '@date-io/moment': 2.17.0
       '@mui/material': 5.11.10(@emotion/react@11.10.6(@types/react@18.3.31)(react@18.3.1)(supports-color@9.4.0))(@emotion/styled@11.10.6(@emotion/react@11.10.6(@types/react@18.3.31)(react@18.3.1)(supports-color@9.4.0))(@types/react@18.3.31)(react@18.3.1)(supports-color@9.4.0))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -30410,7 +30406,7 @@ snapshots:
       '@emotion/react': 11.10.6(@types/react@18.3.31)(react@18.3.1)(supports-color@9.4.0)
       '@emotion/styled': 11.10.6(@emotion/react@11.10.6(@types/react@18.3.31)(react@18.3.1)(supports-color@9.4.0))(@types/react@18.3.31)(react@18.3.1)(supports-color@9.4.0)
       date-fns: 2.30.0
-      dayjs: 1.11.23
+      dayjs: 1.11.21
     transitivePeerDependencies:
       - '@types/react'
 
@@ -33527,11 +33523,11 @@ snapshots:
       ts-dedent: 2.3.0
       vite: 8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.8.1)(yaml@2.9.0)
 
-  '@storybook/builder-vite@10.6.3(storybook@10.6.3(@types/react@18.3.31)(prettier@3.9.6)(react@18.3.1))(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(terser@5.51.2))':
+  '@storybook/builder-vite@10.6.3(storybook@10.6.3(@types/react@18.3.31)(prettier@3.9.6)(react@18.3.1))(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.8.1)(yaml@2.9.1))':
     dependencies:
       storybook: 10.6.3(@types/react@18.3.31)(prettier@3.9.6)(react@18.3.1)
       ts-dedent: 2.3.0
-      vite: 8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(terser@5.51.2)
+      vite: 8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.8.1)(yaml@2.9.1)
 
   '@storybook/builder-webpack5@8.1.11(clean-css@5.3.3)(cssnano@5.0.6(postcss@8.3.5))(csso@4.2.0)(encoding@0.1.13)(esbuild@0.25.12)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.3.5)(prettier@3.9.6)(supports-color@6.1.0)(typescript@6.0.3)(uglify-js@3.19.3)(webpack-cli@4.7.2)':
     dependencies:
@@ -33975,12 +33971,12 @@ snapshots:
 
   '@storybook/global@5.0.0': {}
 
-  '@storybook/html-vite@10.6.3(storybook@10.6.3(@types/react@18.3.31)(prettier@3.9.6)(react@18.3.1))(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(terser@5.51.2))':
+  '@storybook/html-vite@10.6.3(storybook@10.6.3(@types/react@18.3.31)(prettier@3.9.6)(react@18.3.1))(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.8.1)(yaml@2.9.1))':
     dependencies:
-      '@storybook/builder-vite': 10.6.3(storybook@10.6.3(@types/react@18.3.31)(prettier@3.9.6)(react@18.3.1))(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(terser@5.51.2))
+      '@storybook/builder-vite': 10.6.3(storybook@10.6.3(@types/react@18.3.31)(prettier@3.9.6)(react@18.3.1))(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.8.1)(yaml@2.9.1))
       '@storybook/html': 10.6.3(storybook@10.6.3(@types/react@18.3.31)(prettier@3.9.6)(react@18.3.1))
       storybook: 10.6.3(@types/react@18.3.31)(prettier@3.9.6)(react@18.3.1)
-      vite: 8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(terser@5.51.2)
+      vite: 8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.8.1)(yaml@2.9.1)
 
   '@storybook/html@10.6.3(storybook@10.6.3(@types/react@18.3.31)(prettier@3.9.6)(react@18.3.1))':
     dependencies:
@@ -35049,7 +35045,7 @@ snapshots:
 
   '@types/express-serve-static-core@4.19.9':
     dependencies:
-      '@types/node': 24.0.0
+      '@types/node': 24.13.3
       '@types/qs': 6.15.1
       '@types/range-parser': 1.2.7
       '@types/send': 1.2.1
@@ -35176,8 +35172,6 @@ snapshots:
       pretty-format: 30.5.1
 
   '@types/js-cookie@2.2.7': {}
-
-  '@types/js-cookie@3.0.6': {}
 
   '@types/js-yaml@4.0.9': {}
 
@@ -35392,7 +35386,7 @@ snapshots:
 
   '@types/send@1.2.1':
     dependencies:
-      '@types/node': 24.0.0
+      '@types/node': 24.13.3
 
   '@types/serve-index@1.9.4':
     dependencies:
@@ -35411,7 +35405,7 @@ snapshots:
 
   '@types/set-cookie-parser@2.4.10':
     dependencies:
-      '@types/node': 24.0.0
+      '@types/node': 24.13.3
 
   '@types/slug@5.0.9': {}
 
@@ -40189,8 +40183,6 @@ snapshots:
 
   dayjs@1.11.21: {}
 
-  dayjs@1.11.23: {}
-
   de-indent@1.0.2: {}
 
   debounce-promise@3.1.2: {}
@@ -42610,8 +42602,6 @@ snapshots:
   fast-diff@1.3.0: {}
 
   fast-equals@6.0.2: {}
-
-  fast-equals@6.0.3: {}
 
   fast-fifo@1.3.2: {}
 
@@ -45290,25 +45280,6 @@ snapshots:
       - supports-color
       - ts-node
 
-  jest-cli@30.4.2(@types/node@24.13.3)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.28.2)(supports-color@9.4.0))(supports-color@9.4.0):
-    dependencies:
-      '@jest/core': 30.4.2(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.28.2)(supports-color@9.4.0))(supports-color@9.4.0)
-      '@jest/test-result': 30.4.1
-      '@jest/types': 30.4.1
-      chalk: 4.1.2
-      exit-x: 0.2.2
-      import-local: 3.2.0
-      jest-config: 30.4.2(@types/node@24.13.3)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.28.2)(supports-color@9.4.0))(supports-color@9.4.0)
-      jest-util: 30.4.1
-      jest-validate: 30.4.1
-      yargs: 17.7.3
-    transitivePeerDependencies:
-      - '@types/node'
-      - babel-plugin-macros
-      - esbuild-register
-      - supports-color
-      - ts-node
-
   jest-cli@30.4.2(@types/node@24.13.3)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.28.2)(supports-color@9.4.0))(supports-color@9.4.0)(ts-node@10.7.0(@types/node@24.13.3)(typescript@6.0.3)):
     dependencies:
       '@jest/core': 30.4.2(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.28.2)(supports-color@9.4.0))(supports-color@9.4.0)(ts-node@10.7.0(@types/node@24.13.3)(typescript@6.0.3))
@@ -45442,38 +45413,6 @@ snapshots:
       '@types/node': 24.13.3
       esbuild-register: 3.6.0(esbuild@0.28.2)(supports-color@5.5.0)
       ts-node: 10.9.1(@types/node@24.13.3)(typescript@6.0.3)
-    transitivePeerDependencies:
-      - babel-plugin-macros
-      - supports-color
-
-  jest-config@30.4.2(@types/node@24.13.3)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.28.2)(supports-color@9.4.0))(supports-color@9.4.0):
-    dependencies:
-      '@babel/core': 7.29.7(supports-color@9.4.0)
-      '@jest/get-type': 30.1.0
-      '@jest/pattern': 30.4.0
-      '@jest/test-sequencer': 30.4.1
-      '@jest/types': 30.4.1
-      babel-jest: 30.4.1(@babel/core@7.29.7(supports-color@9.4.0))(supports-color@9.4.0)
-      chalk: 4.1.2
-      ci-info: 4.4.0
-      deepmerge: 4.3.1
-      glob: 10.5.0
-      graceful-fs: 4.2.11
-      jest-circus: 30.4.2(babel-plugin-macros@3.1.0)(supports-color@9.4.0)
-      jest-docblock: 30.4.0
-      jest-environment-node: 30.4.1
-      jest-regex-util: 30.4.0
-      jest-resolve: 30.4.1
-      jest-runner: 30.4.2(supports-color@9.4.0)
-      jest-util: 30.4.1
-      jest-validate: 30.4.1
-      parse-json: 5.2.0
-      pretty-format: 30.4.1
-      slash: 3.0.0
-      strip-json-comments: 3.1.1
-    optionalDependencies:
-      '@types/node': 24.13.3
-      esbuild-register: 3.6.0(esbuild@0.28.2)(supports-color@9.4.0)
     transitivePeerDependencies:
       - babel-plugin-macros
       - supports-color
@@ -45838,18 +45777,6 @@ snapshots:
       ssim.js: 3.5.0
     optionalDependencies:
       jest: 30.4.2(@types/node@24.13.3)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.28.2)(supports-color@9.4.0))(supports-color@9.4.0)(ts-node@10.9.2(@types/node@24.13.3)(typescript@6.0.3))
-
-  jest-image-snapshot@6.5.2(jest@30.4.2(@types/node@24.13.3)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.28.2)(supports-color@9.4.0))(supports-color@9.4.0)):
-    dependencies:
-      chalk: 4.1.2
-      get-stdin: 5.0.1
-      glur: 1.1.2
-      lodash: 4.18.1
-      pixelmatch: 5.3.0
-      pngjs: 3.4.0
-      ssim.js: 3.5.0
-    optionalDependencies:
-      jest: 30.4.2(@types/node@24.13.3)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.28.2)(supports-color@9.4.0))(supports-color@9.4.0)
 
   jest-junit@12.2.0:
     dependencies:
@@ -46450,7 +46377,7 @@ snapshots:
   jest-util@30.5.1:
     dependencies:
       '@jest/types': 30.5.1
-      '@types/node': 24.0.0
+      '@types/node': 24.13.3
       chalk: 4.1.2
       ci-info: 4.4.0
       graceful-fs: 4.2.11
@@ -46556,19 +46483,6 @@ snapshots:
       - supports-color
       - ts-node
 
-  jest@30.4.2(@types/node@24.13.3)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.28.2)(supports-color@9.4.0))(supports-color@9.4.0):
-    dependencies:
-      '@jest/core': 30.4.2(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.28.2)(supports-color@9.4.0))(supports-color@9.4.0)
-      '@jest/types': 30.4.1
-      import-local: 3.2.0
-      jest-cli: 30.4.2(@types/node@24.13.3)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.28.2)(supports-color@9.4.0))(supports-color@9.4.0)
-    transitivePeerDependencies:
-      - '@types/node'
-      - babel-plugin-macros
-      - esbuild-register
-      - supports-color
-      - ts-node
-
   jest@30.4.2(@types/node@24.13.3)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.28.2)(supports-color@9.4.0))(supports-color@9.4.0)(ts-node@10.7.0(@types/node@24.13.3)(typescript@6.0.3)):
     dependencies:
       '@jest/core': 30.4.2(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.28.2)(supports-color@9.4.0))(supports-color@9.4.0)(ts-node@10.7.0(@types/node@24.13.3)(typescript@6.0.3))
@@ -46647,8 +46561,6 @@ snapshots:
       react: 18.3.1
 
   js-cookie@2.2.1: {}
-
-  js-cookie@3.0.8: {}
 
   js-file-download@0.4.12: {}
 
@@ -48423,7 +48335,7 @@ snapshots:
       d3: 7.9.0
       d3-sankey: 0.12.3
       dagre-d3-es: 7.0.11
-      dayjs: 1.11.23
+      dayjs: 1.11.21
       dompurify: 3.4.14
       katex: 0.16.47
       khroma: 2.1.0
@@ -48448,7 +48360,7 @@ snapshots:
       d3: 7.9.0
       d3-sankey: 0.12.3
       dagre-d3-es: 7.0.11
-      dayjs: 1.11.23
+      dayjs: 1.11.21
       dompurify: 3.4.14
       katex: 0.16.47
       khroma: 2.1.0
@@ -51516,7 +51428,7 @@ snapshots:
   postcss@8.3.5:
     dependencies:
       colorette: 1.4.0
-      nanoid: 3.3.18
+      nanoid: 3.3.20
       source-map-js: 0.6.2
 
   postcss@8.4.29:
@@ -52115,7 +52027,7 @@ snapshots:
   react-overflow-list@0.5.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
     dependencies:
       react: 18.3.1
-      react-use: 17.6.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      react-use: 17.6.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
     transitivePeerDependencies:
       - react-dom
 
@@ -52248,25 +52160,6 @@ snapshots:
       fast-deep-equal: 3.1.3
       fast-shallow-equal: 1.0.0
       js-cookie: 2.2.1
-      nano-css: 5.6.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      react: 18.3.1
-      react-dom: 18.3.1(react@18.3.1)
-      react-universal-interface: 0.6.2(react@18.3.1)(tslib@2.8.1)
-      resize-observer-polyfill: 1.5.1
-      screenfull: 5.2.0
-      set-harmonic-interval: 1.0.1
-      throttle-debounce: 3.0.1
-      ts-easing: 0.2.0
-      tslib: 2.8.1
-
-  react-use@17.6.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
-    dependencies:
-      '@types/js-cookie': 3.0.6
-      '@xobotyi/scrollbar-width': 1.9.5
-      copy-to-clipboard: 3.3.3
-      fast-deep-equal: 3.1.3
-      fast-shallow-equal: 1.0.0
-      js-cookie: 3.0.8
       nano-css: 5.6.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
@@ -55405,27 +55298,6 @@ snapshots:
       esbuild: 0.28.2
       jest-util: 30.4.1
 
-  ts-jest@29.4.12(@babel/core@7.29.7(supports-color@9.4.0))(@jest/transform@30.4.1(supports-color@9.4.0))(@jest/types@30.5.1)(babel-jest@30.4.1(@babel/core@7.29.7(supports-color@9.4.0))(supports-color@9.4.0))(esbuild@0.28.2)(jest-util@30.4.1)(jest@30.4.2(@types/node@24.13.3)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.28.2)(supports-color@9.4.0))(supports-color@9.4.0))(typescript@6.0.3):
-    dependencies:
-      bs-logger: 0.2.6
-      fast-json-stable-stringify: 2.1.0
-      handlebars: 4.7.9
-      jest: 30.4.2(@types/node@24.13.3)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.28.2)(supports-color@9.4.0))(supports-color@9.4.0)
-      json5: 2.2.3
-      lodash.memoize: 4.1.2
-      make-error: 1.3.6
-      semver: 7.8.5
-      type-fest: 4.41.0
-      typescript: 6.0.3
-      yargs-parser: 21.1.1
-    optionalDependencies:
-      '@babel/core': 7.29.7(supports-color@9.4.0)
-      '@jest/transform': 30.4.1(supports-color@9.4.0)
-      '@jest/types': 30.5.1
-      babel-jest: 30.4.1(@babel/core@7.29.7(supports-color@9.4.0))(supports-color@9.4.0)
-      esbuild: 0.28.2
-      jest-util: 30.4.1
-
   ts-jest@29.4.12(@babel/core@7.29.7(supports-color@9.4.0))(@jest/transform@30.4.1(supports-color@9.4.0))(@jest/types@30.5.1)(babel-jest@30.4.1(@babel/core@7.29.7(supports-color@9.4.0))(supports-color@9.4.0))(esbuild@0.28.2)(jest-util@30.5.1)(jest@30.4.2(@types/node@24.13.3)(babel-plugin-macros@3.1.0)(esbuild-register@3.6.0(esbuild@0.28.2)(supports-color@9.4.0))(supports-color@9.4.0)(ts-node@10.7.0(@types/node@24.13.3)(typescript@6.0.3)))(typescript@6.0.3):
     dependencies:
       bs-logger: 0.2.6
@@ -56369,7 +56241,7 @@ snapshots:
       - rollup
       - supports-color
 
-  vite-plugin-dts@4.5.4(@types/node@24.13.3)(rollup@4.63.1)(supports-color@9.4.0)(typescript@6.0.3)(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(terser@5.51.2)):
+  vite-plugin-dts@4.5.4(@types/node@24.13.3)(rollup@4.63.1)(supports-color@9.4.0)(typescript@6.0.3)(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.8.1)(yaml@2.9.1)):
     dependencies:
       '@microsoft/api-extractor': 7.59.0(@types/node@24.13.3)
       '@rollup/pluginutils': 5.4.0(rollup@4.63.1)
@@ -56382,7 +56254,7 @@ snapshots:
       magic-string: 0.30.21
       typescript: 6.0.3
     optionalDependencies:
-      vite: 8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(terser@5.51.2)
+      vite: 8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.8.1)(yaml@2.9.1)
     transitivePeerDependencies:
       - '@types/node'
       - rollup
@@ -56457,19 +56329,6 @@ snapshots:
       terser: 5.51.2
       tsx: 4.8.1
       yaml: 2.9.1
-
-  vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(terser@5.51.2):
-    dependencies:
-      lightningcss: 1.33.0
-      picomatch: 4.0.7
-      postcss: 8.5.28
-      rolldown: 1.2.7
-      tinyglobby: 0.2.17
-    optionalDependencies:
-      '@types/node': 24.13.3
-      esbuild: 0.28.2
-      fsevents: 2.3.3
-      terser: 5.51.2
 
   vite@8.3.4(@types/node@24.13.3)(esbuild@0.28.2)(jiti@1.21.7)(terser@5.51.2)(tsx@4.8.1)(yaml@2.9.1):
     dependencies:

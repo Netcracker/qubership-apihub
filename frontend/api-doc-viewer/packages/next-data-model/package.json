@@ -19,10 +19,10 @@
     "test:coverage": "jest --verbose --coverage"
   },
   "devDependencies": {
-    "@types/jest": "30.0.0",
-    "@types/node": "24.13.3",
-    "jest": "30.4.2",
-    "ts-jest": "29.4.12"
+    "@types/jest": "catalog:",
+    "@types/node": "catalog:",
+    "jest": "catalog:",
+    "ts-jest": "catalog:"
   },
   "dependencies": {
     "@asyncapi/parser": "3.6.0",

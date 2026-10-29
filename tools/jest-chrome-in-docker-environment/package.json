@@ -22,8 +22,8 @@
   "devDependencies": {
     "@jest/types": "30.4.1",
     "@types/find-node-modules": "2.1.2",
-    "@types/node": "24.13.3",
-    "typescript": "6.0.3"
+    "@types/node": "catalog:",
+    "typescript": "catalog:"
   },
   "dependencies": {
     "colors": "1.4.0",
