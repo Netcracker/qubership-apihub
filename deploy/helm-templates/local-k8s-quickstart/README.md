@@ -178,9 +178,9 @@ Outbound HTTPS from backend / linter / agents-backend trusts the same local CA v
 
 `scripts/3-generate-secrets.sh` calls `generate-local-tls.sh`, which creates:
 
-| File | Purpose |
-|------|---------|
-| `qubership-apihub/certs/ca.crt` | Local CA; mounted into backend pods for TLS verification |
+| File                                         | Purpose                                                            |
+| -------------------------------------------- | ------------------------------------------------------------------ |
+| `qubership-apihub/certs/ca.crt`              | Local CA; mounted into backend pods for TLS verification           |
 | `qubership-apihub/certs/tls.crt` / `tls.key` | Server cert for `qubership-apihub.localtest.me` / `*.localtest.me` |
 
 Deploy scripts create Secret `apihub-local-custom-ca` and Helm values enable `customCa` for

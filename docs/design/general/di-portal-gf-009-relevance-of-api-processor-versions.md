@@ -11,9 +11,9 @@
 
 **Revision History:**  
 
-| Date           | Description                         |
-| -------------- | ----------------------------------- |
-| 22.05.2025     | Initial version for <https://github.com/Netcracker/qubership-apihub/issues/229>, <https://github.com/Netcracker/qubership-apihub/issues/230>|
+| Date       | Description                                                                                                                                  |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| 22.05.2025 | Initial version for <https://github.com/Netcracker/qubership-apihub/issues/229>, <https://github.com/Netcracker/qubership-apihub/issues/230> |
 
 ## Assumptions
 

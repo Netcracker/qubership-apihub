@@ -13,9 +13,9 @@
 
 **Revision History:**  
 
-| Date           | Description                         |
-| -------------- | ----------------------------------- |
-|14.04.2025      | Improvements of working with custom servers in <https://github.com/Netcracker/qubership-apihub/issues/127> |
+| Date       | Description                                                                                                |
+| ---------- | ---------------------------------------------------------------------------------------------------------- |
+| 14.04.2025 | Improvements of working with custom servers in <https://github.com/Netcracker/qubership-apihub/issues/127> |
 
 ***
 
