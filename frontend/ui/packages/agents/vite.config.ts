@@ -84,13 +84,13 @@ export default defineConfig(({ mode }) => {
       removeMswFromDistPlugin(),
     ],
     optimizeDeps: {
-      // npm link creates a symlink that points outside node_modules and by default such packages are not optimized.
-      // Using "include" here forces listed packages to be optimized.
-      // For example, without this setting, rolldownOptions are not being applied to the npm-linked
-      // @netcracker/qubership-apihub-api-processor during "npm run proxy", which leads to reference errors
-      // like "process is not defined" and "Buffer is not defined".
+      // api-processor is a workspace package linked from outside node_modules, and Vite pre-bundles a linked package
+      // only for the specifiers listed here. An entry that is not listed is served as is, rolldownOptions below does
+      // not apply to it, and the browser fails with "process is not defined" or "Buffer is not defined". Each entry
+      // point is listed on its own: the build worker imports PackageVersionBuilder from /processor.
       include: [
         '@netcracker/qubership-apihub-api-processor',
+        '@netcracker/qubership-apihub-api-processor/processor',
       ],
       // Vite 8 pre-bundles with Rolldown, not esbuild. It runs esbuild plugins only through a shim
       // whose `initialOptions` throws "Not implemented" on any property but `platform` and `plugins`,
