@@ -224,7 +224,7 @@ gh run view <run-id> --log-failed
    | `surefire-reports` | `java` | Maven test reports |
    | `screenshot-diffs-<project>` | `screenshot-tests` | PNG diffs of the failed screenshots |
    | `newman-reports` | `e2e` | HTML and JSON report per collection |
-   | `playwright-reports` | `e2e` | the Playwright reports and the test results |
+   | `playwright-reports` | `e2e` | the Playwright HTML report with the screenshots and traces of the failures, and the summary report |
    | `kubernetes-logs` | `e2e` | pod logs and events of the Kind cluster |
 
 6. In the `e2e` job, the test steps continue on error so that both suites run and every report is uploaded; the

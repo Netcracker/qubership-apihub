@@ -814,9 +814,9 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: playwright-reports
-          path: |
-            tests/ui-tests/reports
-            tests/ui-tests/temp/test-results
+          # The HTML report keeps a copy of the screenshot, trace, and error-context.md of each
+          # failure in reports/playwright/data, so temp/test-results is not uploaded.
+          path: tests/ui-tests/reports
           if-no-files-found: warn
           retention-days: 7
 
