@@ -5388,7 +5388,7 @@ paths:
       tags:
         - Roles
       summary: Get list of existing roles
-      description: List of all roles and their permissions.
+      description: List of roles and their permissions. The system role `none` is not returned.
       operationId: getRoles
       responses:
         "200":
