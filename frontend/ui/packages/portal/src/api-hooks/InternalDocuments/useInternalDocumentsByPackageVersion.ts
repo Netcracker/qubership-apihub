@@ -28,7 +28,10 @@ function getInternalDocumentsByPackageVersion(
   versionKey: VersionKey,
 ): Promise<InternalDocuments> {
   const endpointPattern = '/packages/:packageId/versions/:version/version-internal-documents'
-  const endpoint = generatePath(endpointPattern, { packageId: packageKey, version: versionKey })
+  const endpoint = generatePath(endpointPattern, {
+    packageId: encodeURIComponent(packageKey),
+    version: encodeURIComponent(versionKey),
+  })
 
   return requestJson<InternalDocuments>(
     endpoint,

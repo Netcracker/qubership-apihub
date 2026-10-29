@@ -39,7 +39,12 @@ export async function downloadDdlTablesAsExcel(
   const pathPattern = '/packages/:packageId/versions/:versionId/ddl/export/entities'
 
   const response = await portalRequestBlob(
-    `${generatePath(pathPattern, { packageId, versionId })}?${queryParams}`,
+    `${
+      generatePath(pathPattern, {
+        packageId: encodeURIComponent(packageId),
+        versionId: encodeURIComponent(versionId),
+      })
+    }?${queryParams}`,
     { method: 'GET' },
     {
       basePath: API_V1,

@@ -83,7 +83,13 @@ export const downloadOperationsAsExcel = async (
   const deprecatedPath = onlyDeprecated ? '/deprecated' : ''
 
   const response = await portalRequestBlob(
-    `${generatePath(pathPattern, { packageId, versionId, apiType })}${deprecatedPath}?${queryParams}`,
+    `${
+      generatePath(pathPattern, {
+        packageId: encodeURIComponent(packageId),
+        versionId: encodeURIComponent(versionId),
+        apiType: apiType,
+      })
+    }${deprecatedPath}?${queryParams}`,
     {
       method: 'GET',
     },

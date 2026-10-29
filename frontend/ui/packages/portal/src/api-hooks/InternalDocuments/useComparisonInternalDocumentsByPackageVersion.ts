@@ -42,15 +42,13 @@ export function useComparisonInternalDocumentsByPackageVersion(
   }
 
   const { currentPackageId, currentVersionId, previousPackageId, previousVersionId, refPackageId } = options
-  const currentPackageKey = encodeURIComponent(currentPackageId ?? '')
-  const currentPackageVersion = encodeURIComponent(currentVersionId ?? '')
-  const enabled = !!currentPackageKey && !!currentPackageVersion && !!previousPackageId
+  const enabled = !!currentPackageId && !!currentVersionId && !!previousPackageId
 
   const { data, isFetching, error } = useQuery<InternalDocuments, Error, InternalDocuments>({
     queryKey: [
       QUERY_KEY,
-      currentPackageKey,
-      currentPackageVersion,
+      currentPackageId,
+      currentVersionId,
       previousPackageId,
       previousVersionId,
       refPackageId,
@@ -87,8 +85,8 @@ function getComparisonInternalDocumentsByPackageVersion({
   const endpoint = generatePath(
     endpointPattern,
     {
-      packageId: currentPackageId ?? '',
-      versionId: currentVersionId ?? '',
+      packageId: encodeURIComponent(currentPackageId ?? ''),
+      versionId: encodeURIComponent(currentVersionId ?? ''),
     },
   )
   return requestJson<InternalDocuments>(
