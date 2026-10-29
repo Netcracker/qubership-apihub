@@ -35,19 +35,20 @@ type ExcelService interface {
 	ParseShareabilityReport(in io.Reader) ([]view.ShareabilityReportRow, error)
 }
 
-func NewExcelService(publishedRepo repository.PublishedRepository, versionService VersionService, operationService OperationService, packageService PackageService, ddlContractService DDLContractService, mcpContractService MCPContractService, buildService BuildService, buildRepository repository.BuildRepository) ExcelService {
-	return &excelServiceImpl{publishedRepo: publishedRepo, versionService: versionService, operationService: operationService, packageService: packageService, ddlContractService: ddlContractService, mcpContractService: mcpContractService, buildService: buildService, buildRepository: buildRepository}
+func NewExcelService(publishedRepo repository.PublishedRepository, versionService VersionService, operationService OperationService, packageService PackageService, ddlContractService DDLContractService, mcpContractService MCPContractService, buildService BuildService, buildRepository repository.BuildRepository, ddlTableGroupService DDLTableGroupService) ExcelService {
+	return &excelServiceImpl{publishedRepo: publishedRepo, versionService: versionService, operationService: operationService, packageService: packageService, ddlContractService: ddlContractService, mcpContractService: mcpContractService, buildService: buildService, buildRepository: buildRepository, ddlTableGroupService: ddlTableGroupService}
 }
 
 type excelServiceImpl struct {
-	publishedRepo      repository.PublishedRepository
-	buildService       BuildService
-	buildRepository    repository.BuildRepository
-	versionService     VersionService
-	operationService   OperationService
-	packageService     PackageService
-	ddlContractService DDLContractService
-	mcpContractService MCPContractService
+	publishedRepo        repository.PublishedRepository
+	buildService         BuildService
+	buildRepository      repository.BuildRepository
+	versionService       VersionService
+	operationService     OperationService
+	packageService       PackageService
+	ddlContractService   DDLContractService
+	mcpContractService   MCPContractService
+	ddlTableGroupService DDLTableGroupService
 }
 
 func (e excelServiceImpl) ExportApiChanges(ctx context.Context, packageId, version, apiType string, severities []string, req view.ExportApiChangesRequestView) (*excelize.File, string, error) {
@@ -153,7 +154,11 @@ func (e excelServiceImpl) ExportDdlEntities(ctx context.Context, packageId, vers
 	if err != nil {
 		return nil, "", err
 	}
-	file, err := buildDdlEntitiesWorkbook(entities, packageId, packageName, versionName, versionStatus)
+	groupNames, err := e.ddlTableGroupService.GetDdlEntityGroupNames(ctx, packageId, version)
+	if err != nil {
+		return nil, "", err
+	}
+	file, err := buildDdlEntitiesWorkbook(entities, groupNames, packageId, packageName, versionName, versionStatus)
 	return file, versionName, err
 }
 
@@ -188,6 +193,7 @@ func (e excelServiceImpl) ExportDdlChanges(ctx context.Context, packageId, versi
 		RefPackageId:             req.RefPackageId,
 		Severities:               req.Severities,
 		TextFilter:               req.TextFilter,
+		IncludeChanges:           true,
 	})
 	if err != nil {
 		return nil, "", err
@@ -207,7 +213,11 @@ func (e excelServiceImpl) ExportDdlChanges(ctx context.Context, packageId, versi
 	if err != nil {
 		return nil, "", err
 	}
-	file, err := buildDdlChangesWorkbook(changedEntities, packageName, versionName, versionStatus)
+	groupNames, err := e.ddlTableGroupService.GetDdlEntityGroupNames(ctx, packageId, version)
+	if err != nil {
+		return nil, "", err
+	}
+	file, err := buildDdlChangesWorkbook(changedEntities, groupNames, packageId, packageName, versionName, versionStatus)
 	return file, versionName, err
 }
 
@@ -344,7 +354,7 @@ func buildNotificationsWorkbook(notifications []view.Notification, reportName, p
 	return workbook, nil
 }
 
-func buildDdlEntitiesWorkbook(entities *view.DdlEntityListView, packageId, packageName, versionName, versionStatus string) (*excelize.File, error) {
+func buildDdlEntitiesWorkbook(entities *view.DdlEntityListView, groupNames map[string][]string, packageId, packageName, versionName, versionStatus string) (*excelize.File, error) {
 	workbook, err := excelize.OpenFile(ExcelTemplatePath)
 	defer func() {
 		if err := workbook.Close(); err != nil {
@@ -366,7 +376,7 @@ func buildDdlEntitiesWorkbook(entities *view.DdlEntityListView, packageId, packa
 	if err != nil {
 		return nil, err
 	}
-	if err = workbook.SetColWidth(view.DdlSheetName, "A", "G", 35); err != nil {
+	if err = workbook.SetColWidth(view.DdlSheetName, "A", "H", 35); err != nil {
 		return nil, err
 	}
 	header := map[string]interface{}{
@@ -377,14 +387,15 @@ func buildDdlEntitiesWorkbook(entities *view.DdlEntityListView, packageId, packa
 		"E1": view.NameColumnName,
 		"F1": view.DescriptionColumnName,
 		"G1": view.DocumentIdColumnName,
+		"H1": view.GroupColumnName,
 	}
 	if err = setCellsValues(workbook, view.DdlSheetName, header); err != nil {
 		return nil, err
 	}
-	if err = workbook.SetCellStyle(view.DdlSheetName, "A1", "G1", headerStyle); err != nil {
+	if err = workbook.SetCellStyle(view.DdlSheetName, "A1", "H1", headerStyle); err != nil {
 		return nil, err
 	}
-	if err = workbook.AutoFilter(view.DdlSheetName, "A1:G1", []excelize.AutoFilterOptions{}); err != nil {
+	if err = workbook.AutoFilter(view.DdlSheetName, "A1:H1", []excelize.AutoFilterOptions{}); err != nil {
 		return nil, err
 	}
 
@@ -408,14 +419,15 @@ func buildDdlEntitiesWorkbook(entities *view.DdlEntityListView, packageId, packa
 			fmt.Sprintf("E%d", rowIndex): entityView.Name,
 			fmt.Sprintf("F%d", rowIndex): entityView.Description,
 			fmt.Sprintf("G%d", rowIndex): entityView.DocumentId,
+			fmt.Sprintf("H%d", rowIndex): joinDdlGroupNames(groupNames, entityView.PackageRef, entityView.DdlEntityId),
 		}
 		if err = setCellsValues(workbook, view.DdlSheetName, cellsValues); err != nil {
 			return nil, err
 		}
 		if rowIndex%2 == 0 {
-			err = workbook.SetCellStyle(view.DdlSheetName, fmt.Sprintf("A%d", rowIndex), fmt.Sprintf("G%d", rowIndex), evenCellStyle)
+			err = workbook.SetCellStyle(view.DdlSheetName, fmt.Sprintf("A%d", rowIndex), fmt.Sprintf("H%d", rowIndex), evenCellStyle)
 		} else {
-			err = workbook.SetCellStyle(view.DdlSheetName, fmt.Sprintf("A%d", rowIndex), fmt.Sprintf("G%d", rowIndex), oddCellStyle)
+			err = workbook.SetCellStyle(view.DdlSheetName, fmt.Sprintf("A%d", rowIndex), fmt.Sprintf("H%d", rowIndex), oddCellStyle)
 		}
 		if err != nil {
 			return nil, err
@@ -518,13 +530,37 @@ func buildMcpEntitiesWorkbook(entities *view.McpEntityListView, packageId, packa
 	return workbook, nil
 }
 
-func resolveEntityRowPackage(packages map[string]view.PackageVersionRef, PackageRef string, packageId, packageName, versionName string) (string, string, string, error) {
-	//FIXME: impl
-
-	return "", "", "", nil
+// resolveEntityRowPackage returns the package id, package name and version name to show for a
+// contract entity row. For a dashboard these come from the entity's owning referenced package;
+// they fall back to the exported version when the entity has no resolvable reference.
+func resolveEntityRowPackage(packages map[string]view.PackageVersionRef, packageRef string, packageId, packageName, versionName string) (string, string, string, error) {
+	packageVersionRef, found := packages[packageRef]
+	if packageRef == "" || !found {
+		return packageId, packageName, versionName, nil
+	}
+	rowVersionName := packageVersionRef.RefPackageVersion
+	if !packageVersionRef.NotLatestRevision {
+		var err error
+		rowVersionName, err = getVersionNameFromVersionWithRevision(packageVersionRef.RefPackageVersion)
+		if err != nil {
+			return "", "", "", err
+		}
+	}
+	return packageVersionRef.RefPackageId, packageVersionRef.RefPackageName, rowVersionName, nil
 }
 
-func buildDdlChangesWorkbook(changedEntities *view.DdlChangedEntitiesView, packageName, versionName, versionStatus string) (*excelize.File, error) {
+// joinDdlGroupNames renders the Group cell of the DDL reports. Group membership is recorded per
+// package version, so an entity of a version that has no groups, or one that exists only in the
+// previous version of a comparison, gets an empty cell.
+func joinDdlGroupNames(groupNames map[string][]string, packageRef, ddlEntityId string) string {
+	return strings.Join(groupNames[entity.MakeDdlEntityGroupKey(packageRef, ddlEntityId)], ", ")
+}
+
+// ddlChangesLastColumn is the last column of the DDL changes sheet. The column-width, header-style,
+// auto-filter and per-row style ranges all end here, so they cannot drift apart when a column is added.
+const ddlChangesLastColumn = "I"
+
+func buildDdlChangesWorkbook(changedEntities *view.DdlChangedEntitiesView, groupNames map[string][]string, packageId, packageName, versionName, versionStatus string) (*excelize.File, error) {
 	workbook, err := excelize.OpenFile(ExcelTemplatePath)
 	defer func() {
 		if err := workbook.Close(); err != nil {
@@ -542,12 +578,122 @@ func buildDdlChangesWorkbook(changedEntities *view.DdlChangedEntitiesView, packa
 	headerStyle := getHeaderStyle(workbook)
 	evenCellStyle := getEvenCellStyle(workbook)
 	oddCellStyle := getOddCellStyle(workbook)
+	summaryCellStyle := getSummaryCellStyle(workbook)
+	summaryFirstHeaderStyle := getSummaryFirstHeaderStyle(workbook)
+	summaryHeaderStyle := getSummaryHeaderStyle(workbook)
 
-	sheetIndex, err := workbook.NewSheet(view.DdlSheetName)
+	// Summary is created first, so it becomes the active sheet and the tab order is
+	// Cover Page -> Summary -> DDL, matching the REST API changes export.
+	summarySheetIndex, err := workbook.NewSheet(view.SummarySheetName)
 	if err != nil {
 		return nil, err
 	}
-	if err = workbook.SetColWidth(view.DdlSheetName, "A", "K", 30); err != nil {
+	workbook.SetActiveSheet(summarySheetIndex)
+	if err = workbook.DeleteSheet("Sheet1"); err != nil {
+		return nil, err
+	}
+	if err = workbook.SetColWidth(view.SummarySheetName, "A", "B", 35); err != nil {
+		return nil, err
+	}
+
+	// Unlike REST, which spans a Summary column per referenced package to support dashboards, a
+	// DDL changes export always describes exactly one exported version, so the Summary sheet has a
+	// single data column: one pass aggregating every changed entity, no per-package bucketing.
+	var summary view.ChangeSummary
+	var servicePackageRef string
+	for _, e := range changedEntities.Entities {
+		changedView, ok := e.(view.DdlChangedEntityView)
+		if !ok {
+			continue
+		}
+		if changedView.ChangeSummary.Deprecated > 0 {
+			summary.Deprecated += 1
+		}
+		if changedView.ChangeSummary.NonBreaking > 0 {
+			summary.NonBreaking += 1
+		}
+		if changedView.ChangeSummary.Breaking > 0 {
+			summary.Breaking += 1
+		}
+		if changedView.ChangeSummary.SemiBreaking > 0 {
+			summary.SemiBreaking += 1
+		}
+		if changedView.ChangeSummary.Annotation > 0 {
+			summary.Annotation += 1
+		}
+		if changedView.ChangeSummary.Unclassified > 0 {
+			summary.Unclassified += 1
+		}
+		// Service Name is looked up from the enrichment map, so it needs a package ref key from
+		// some entity; prefer the first one that still exists in the current version, falling back
+		// to the previous side below only if no entity has one.
+		if servicePackageRef == "" && changedView.DdlEntityData != nil {
+			servicePackageRef = changedView.DdlEntityData.PackageRef
+		}
+	}
+	if servicePackageRef == "" {
+		for _, e := range changedEntities.Entities {
+			if changedView, ok := e.(view.DdlChangedEntityView); ok && changedView.PreviousDdlEntityData != nil {
+				servicePackageRef = changedView.PreviousDdlEntityData.PackageRef
+				break
+			}
+		}
+	}
+
+	summaryLabelCells := map[string]interface{}{
+		"A1":  view.SummarySheetName,
+		"A2":  view.PackageIDColumnName,
+		"A3":  view.PackageNameColumnName,
+		"A4":  view.ServiceNameColumnName,
+		"A5":  view.VersionColumnName,
+		"A6":  view.PreviousVersionColumnName,
+		"A7":  view.APITypeColumnName,
+		"A8":  "Number of entities with breaking changes",
+		"A9":  "Number of entities with changes requiring attention",
+		"A10": "Number of entities with non-breaking changes",
+		"A11": "Number of entities with deprecated changes",
+		"A12": "Number of entities with annotation changes",
+		"A13": "Number of entities with unclassified changes",
+	}
+	if err = setCellsValues(workbook, view.SummarySheetName, summaryLabelCells); err != nil {
+		return nil, err
+	}
+	if err = workbook.SetCellStyle(view.SummarySheetName, "A1", "A1", summaryFirstHeaderStyle); err != nil {
+		return nil, err
+	}
+	if err = workbook.SetCellStyle(view.SummarySheetName, "A2", "A13", summaryHeaderStyle); err != nil {
+		return nil, err
+	}
+
+	// Version/Package Name already are the clean, revision-resolved values used on the DDL sheet
+	// itself (columns A and, via the Cover Page, the report title); Previous Version matches the
+	// DDL sheet's own column B rather than re-deriving a separately-stripped revision for a single
+	// column that, unlike REST's per-referenced-package columns, always describes this one export.
+	summaryColumnCells := map[string]interface{}{
+		"B2":  packageId,
+		"B3":  packageName,
+		"B4":  changedEntities.Packages[servicePackageRef].ServiceName,
+		"B5":  versionName,
+		"B6":  changedEntities.PreviousVersion,
+		"B7":  view.ContractTypeDdl,
+		"B8":  summary.Breaking,
+		"B9":  summary.SemiBreaking,
+		"B10": summary.NonBreaking,
+		"B11": summary.Deprecated,
+		"B12": summary.Annotation,
+		"B13": summary.Unclassified,
+	}
+	if err = setCellsValues(workbook, view.SummarySheetName, summaryColumnCells); err != nil {
+		return nil, err
+	}
+	if err = workbook.SetCellStyle(view.SummarySheetName, "B1", "B13", summaryCellStyle); err != nil {
+		return nil, err
+	}
+
+	if _, err = workbook.NewSheet(view.DdlSheetName); err != nil {
+		return nil, err
+	}
+	if err = workbook.SetColWidth(view.DdlSheetName, "A", ddlChangesLastColumn, 30); err != nil {
 		return nil, err
 	}
 	header := map[string]interface{}{
@@ -556,20 +702,18 @@ func buildDdlChangesWorkbook(changedEntities *view.DdlChangedEntitiesView, packa
 		"C1": view.SchemaNameColumnName,
 		"D1": view.NameColumnName,
 		"E1": view.KindColumnNameContract,
-		"F1": view.BreakingChangesColumnName,
-		"G1": view.SemiBreakingChangesColumnName,
-		"H1": view.DeprecatedChangesColumnName,
-		"I1": view.NonBreakingChangesColumnName,
-		"J1": view.AnnotationChangesColumnName,
-		"K1": view.UnclassifiedChangesColumnName,
+		"F1": view.GroupColumnName,
+		"G1": view.ChangeDescriptionColumnName,
+		"H1": view.ChangeSeverityColumnName,
+		"I1": view.ChangeActionColumnName,
 	}
 	if err = setCellsValues(workbook, view.DdlSheetName, header); err != nil {
 		return nil, err
 	}
-	if err = workbook.SetCellStyle(view.DdlSheetName, "A1", "K1", headerStyle); err != nil {
+	if err = workbook.SetCellStyle(view.DdlSheetName, "A1", fmt.Sprintf("%s1", ddlChangesLastColumn), headerStyle); err != nil {
 		return nil, err
 	}
-	if err = workbook.AutoFilter(view.DdlSheetName, "A1:K1", []excelize.AutoFilterOptions{}); err != nil {
+	if err = workbook.AutoFilter(view.DdlSheetName, fmt.Sprintf("A1:%s1", ddlChangesLastColumn), []excelize.AutoFilterOptions{}); err != nil {
 		return nil, err
 	}
 
@@ -589,37 +733,48 @@ func buildDdlChangesWorkbook(changedEntities *view.DdlChangedEntitiesView, packa
 			name = entityData.Name
 			kind = entityData.Kind
 		}
-		cellsValues := map[string]interface{}{
-			fmt.Sprintf("A%d", rowIndex): versionName,
-			fmt.Sprintf("B%d", rowIndex): changedEntities.PreviousVersion,
-			fmt.Sprintf("C%d", rowIndex): schemaName,
-			fmt.Sprintf("D%d", rowIndex): name,
-			fmt.Sprintf("E%d", rowIndex): kind,
-			fmt.Sprintf("F%d", rowIndex): changedView.ChangeSummary.Breaking,
-			fmt.Sprintf("G%d", rowIndex): changedView.ChangeSummary.SemiBreaking,
-			fmt.Sprintf("H%d", rowIndex): changedView.ChangeSummary.Deprecated,
-			fmt.Sprintf("I%d", rowIndex): changedView.ChangeSummary.NonBreaking,
-			fmt.Sprintf("J%d", rowIndex): changedView.ChangeSummary.Annotation,
-			fmt.Sprintf("K%d", rowIndex): changedView.ChangeSummary.Unclassified,
+		//groups belong to the version under comparison, so an entity that only exists in the
+		//previous version has no group to report
+		var groupCell string
+		if changedView.DdlEntityData != nil {
+			groupCell = joinDdlGroupNames(groupNames, changedView.DdlEntityData.PackageRef, changedView.DdlEntityData.DdlEntityId)
 		}
-		if err = setCellsValues(workbook, view.DdlSheetName, cellsValues); err != nil {
-			return nil, err
+		//one row per individual change, with the entity columns repeated. An entity whose changes
+		//payload is absent or unreadable still gets a single row with blank change cells, so the
+		//entity and its counts never disappear from the report
+		changes := changedView.Changes
+		if len(changes) == 0 {
+			changes = []interface{}{nil}
 		}
-		if rowIndex%2 == 0 {
-			err = workbook.SetCellStyle(view.DdlSheetName, fmt.Sprintf("A%d", rowIndex), fmt.Sprintf("K%d", rowIndex), evenCellStyle)
-		} else {
-			err = workbook.SetCellStyle(view.DdlSheetName, fmt.Sprintf("A%d", rowIndex), fmt.Sprintf("K%d", rowIndex), oddCellStyle)
+		for _, change := range changes {
+			changeView := view.GetSingleOperationChangeCommon(change)
+			cellsValues := map[string]interface{}{
+				fmt.Sprintf("A%d", rowIndex): versionName,
+				fmt.Sprintf("B%d", rowIndex): changedEntities.PreviousVersion,
+				fmt.Sprintf("C%d", rowIndex): schemaName,
+				fmt.Sprintf("D%d", rowIndex): name,
+				fmt.Sprintf("E%d", rowIndex): kind,
+				fmt.Sprintf("F%d", rowIndex): groupCell,
+				fmt.Sprintf("G%d", rowIndex): changeView.Description,
+				fmt.Sprintf("H%d", rowIndex): mapSeverity(changeView.Severity),
+				fmt.Sprintf("I%d", rowIndex): changeView.Action,
+			}
+			if err = setCellsValues(workbook, view.DdlSheetName, cellsValues); err != nil {
+				return nil, err
+			}
+			lastCell := fmt.Sprintf("%s%d", ddlChangesLastColumn, rowIndex)
+			if rowIndex%2 == 0 {
+				err = workbook.SetCellStyle(view.DdlSheetName, fmt.Sprintf("A%d", rowIndex), lastCell, evenCellStyle)
+			} else {
+				err = workbook.SetCellStyle(view.DdlSheetName, fmt.Sprintf("A%d", rowIndex), lastCell, oddCellStyle)
+			}
+			if err != nil {
+				return nil, err
+			}
+			rowIndex++
 		}
-		if err != nil {
-			return nil, err
-		}
-		rowIndex++
 	}
 
-	workbook.SetActiveSheet(sheetIndex)
-	if err = workbook.DeleteSheet("Sheet1"); err != nil {
-		return nil, err
-	}
 	return workbook, nil
 }
 

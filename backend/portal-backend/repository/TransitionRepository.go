@@ -465,6 +465,22 @@ func moveNonVersionsData(tx *pg.Tx, fromPkg, toPkg string) (int, error) {
 	}
 	objAffected += res.RowsAffected()
 
+	//ddl_table_group.group_id is a stable uuid rather than a derived checksum, so unlike
+	//operation_group above it needs no re-derivation after the package id changes
+	updateDdlTableGroups := "update ddl_table_group set package_id = ? where package_id = ?;"
+	res, err = tx.Exec(updateDdlTableGroups, toPkg, fromPkg)
+	if err != nil {
+		return 0, fmt.Errorf("MoveAllData: failed to update package_id in ddl_table_group from %s to %s: %w", fromPkg, toPkg, err)
+	}
+	objAffected += res.RowsAffected()
+
+	updateGroupedDdlTables := "update grouped_ddl_table set package_id = ? where package_id = ?;"
+	res, err = tx.Exec(updateGroupedDdlTables, toPkg, fromPkg)
+	if err != nil {
+		return 0, fmt.Errorf("MoveAllData: failed to update package_id in grouped_ddl_table from %s to %s: %w", fromPkg, toPkg, err)
+	}
+	objAffected += res.RowsAffected()
+
 	updateOperationCompPrev := "update operation_comparison set previous_package_id  = ? where previous_package_id = ?;"
 	res, err = tx.Exec(updateOperationCompPrev, toPkg, fromPkg)
 	if err != nil {

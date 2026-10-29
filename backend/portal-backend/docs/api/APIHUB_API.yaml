@@ -6763,7 +6763,10 @@ paths:
         - Contracts
         - Export
       summary: Export DDL entities to xlsx file
-      description: Export DDL contract entities of a package version. Only `table` entities are supported now.
+      description: |
+        Export DDL contract entities of a package version. Only `table` entities are supported now.
+        The `Group` column lists the manual DDL table groups the entity belongs to, comma-separated,
+        and is empty for an entity that belongs to no group.
       operationId: getPackageVersionDdlEntitiesExport
       parameters:
         - $ref: "#/components/parameters/packageId"
@@ -6844,7 +6847,27 @@ paths:
         - Changes
         - Export
       summary: Export DDL changes to xlsx file
-      description: Export DDL contract changes between two compared package versions. Only `table` entities are supported now.
+      description: |
+        Export DDL contract changes between two compared package versions. Only `table` entities are supported now.
+
+        The workbook has a `Summary` tab in addition to `DDL`. Unlike the REST API changes export, which has one
+        Summary column per referenced package to support dashboards, the DDL Summary sheet always has a single
+        data column: the per-severity counts of impacted entities across the whole export, alongside the package,
+        service and version identifiers of the exported version.
+
+        The report has one row per individual change. The entity columns are repeated on every row of the same
+        entity, and the `Change Description`, `Change Severity` and `Change Action` columns carry that one change.
+        An entity whose comparison carries no individual changes is still reported as a single row with those three
+        columns empty. `Change Severity` uses the report wording, so `semi-breaking` is rendered as
+        `requires attention`. The `DDL` tab has no per-severity count columns; the per-severity counts of impacted
+        entities are on the `Summary` tab instead.
+
+        The `severity` filter selects entities, not individual changes: an entity that has at least one change of a
+        requested severity is exported with all of its changes, the same way the REST API changes export behaves.
+
+        The `Group` column lists the manual DDL table groups the entity belongs to, comma-separated. Groups are
+        defined per package version, so the column is empty for an entity that belongs to no group and for an
+        entity that exists only in the previous version.
       operationId: getPackageVersionDdlChangesExport
       parameters:
         - $ref: "#/components/parameters/packageId"
@@ -6904,6 +6927,390 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
               examples: {}
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                PackageNotFound:
+                  $ref: "#/components/examples/PackageNotFound"
+                VersionNotFound:
+                  $ref: "#/components/examples/VersionNotFound"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
+  "/api/v1/packages/{packageId}/versions/{version}/ddl/groups":
+    get:
+      tags:
+        - Contracts
+        - Operation groups
+      summary: Get DDL table groups
+      description: Get the manual DDL table groups defined on a package version.
+      operationId: getPackageVersionDdlTableGroups
+      parameters:
+        - $ref: "#/components/parameters/packageId"
+        - $ref: "#/components/parameters/version"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DdlTableGroupListView"
+        "301":
+          description: Moved Permanently
+          headers:
+            Location:
+              schema:
+                type: string
+              description: Current ednpoint with new packageId of moved package
+            X-New-Package-Id:
+              schema:
+                type: string
+              description: New packageId of moved package
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                IncorrectInputParams:
+                  $ref: "#/components/examples/IncorrectInputParameters"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                PackageNotFound:
+                  $ref: "#/components/examples/PackageNotFound"
+                VersionNotFound:
+                  $ref: "#/components/examples/VersionNotFound"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
+    post:
+      tags:
+        - Contracts
+        - Operation groups
+      summary: Create DDL table group
+      description: |
+        Create a manual DDL table group on a package version. The group name must be unique within the
+        package version revision. A group may hold at most 5000 DDL entities.
+      operationId: createPackageVersionDdlTableGroup
+      parameters:
+        - $ref: "#/components/parameters/packageId"
+        - $ref: "#/components/parameters/version"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateDdlTableGroupReq"
+      responses:
+        "201":
+          description: Created
+        "301":
+          description: Moved Permanently
+          headers:
+            Location:
+              schema:
+                type: string
+              description: Current ednpoint with new packageId of moved package
+            X-New-Package-Id:
+              schema:
+                type: string
+              description: New packageId of moved package
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                IncorrectInputParams:
+                  $ref: "#/components/examples/IncorrectInputParameters"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                PackageNotFound:
+                  $ref: "#/components/examples/PackageNotFound"
+                VersionNotFound:
+                  $ref: "#/components/examples/VersionNotFound"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
+  "/api/v1/packages/{packageId}/versions/{version}/ddl/groups/{groupName}":
+    get:
+      tags:
+        - Contracts
+        - Operation groups
+      summary: Get DDL entities of a group
+      description: |
+        Get the DDL entities that belong to a manual DDL table group. Members whose DDL entity no longer
+        exists in the package version are omitted.
+      operationId: getGroupedDdlEntities
+      parameters:
+        - $ref: "#/components/parameters/packageId"
+        - $ref: "#/components/parameters/version"
+        - $ref: "#/components/parameters/ddlGroupName"
+        - name: refPackageId
+          description: Filter by package id of the referenced package. Supported only for dashboards.
+          in: query
+          schema:
+            type: string
+        - name: textFilter
+          in: query
+          description: Filter by DDL entity name (case-insensitive substring match).
+          schema:
+            type: string
+        - $ref: "#/components/parameters/limit"
+        - name: offset
+          in: query
+          description: Number of records to skip.
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupedDdlEntitiesView"
+        "301":
+          description: Moved Permanently
+          headers:
+            Location:
+              schema:
+                type: string
+              description: Current ednpoint with new packageId of moved package
+            X-New-Package-Id:
+              schema:
+                type: string
+              description: New packageId of moved package
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                IncorrectInputParams:
+                  $ref: "#/components/examples/IncorrectInputParameters"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                PackageNotFound:
+                  $ref: "#/components/examples/PackageNotFound"
+                VersionNotFound:
+                  $ref: "#/components/examples/VersionNotFound"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
+    patch:
+      tags:
+        - Contracts
+        - Operation groups
+      summary: Update DDL table group
+      description: |
+        Update the parameters of a manual DDL table group. Only the properties present in the request body
+        are changed. A non-null `tables` array replaces the whole membership of the group.
+      operationId: updatePackageVersionDdlTableGroup
+      parameters:
+        - $ref: "#/components/parameters/packageId"
+        - $ref: "#/components/parameters/version"
+        - $ref: "#/components/parameters/ddlGroupName"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateDdlTableGroupReq"
+      responses:
+        "200":
+          description: Success
+        "301":
+          description: Moved Permanently
+          headers:
+            Location:
+              schema:
+                type: string
+              description: Current ednpoint with new packageId of moved package
+            X-New-Package-Id:
+              schema:
+                type: string
+              description: New packageId of moved package
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                IncorrectInputParams:
+                  $ref: "#/components/examples/IncorrectInputParameters"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                PackageNotFound:
+                  $ref: "#/components/examples/PackageNotFound"
+                VersionNotFound:
+                  $ref: "#/components/examples/VersionNotFound"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
+    delete:
+      tags:
+        - Contracts
+        - Operation groups
+      summary: Delete DDL table group
+      description: Delete a manual DDL table group. The DDL entities themselves are not affected.
+      operationId: deletePackageVersionDdlTableGroup
+      parameters:
+        - $ref: "#/components/parameters/packageId"
+        - $ref: "#/components/parameters/version"
+        - $ref: "#/components/parameters/ddlGroupName"
+      responses:
+        "204":
+          description: No Content
+        "301":
+          description: Moved Permanently
+          headers:
+            Location:
+              schema:
+                type: string
+              description: Current ednpoint with new packageId of moved package
+            X-New-Package-Id:
+              schema:
+                type: string
+              description: New packageId of moved package
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                IncorrectInputParams:
+                  $ref: "#/components/examples/IncorrectInputParameters"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "404":
           description: Not found
           content:
@@ -11968,6 +12375,14 @@ components:
       schema:
         type: string
         example: "public-table-users"
+    ddlGroupName:
+      name: groupName
+      in: path
+      required: true
+      description: DDL table group name. Clients must percent-encode unsafe characters.
+      schema:
+        type: string
+        example: "billing"
     previousVersion:
       name: previousVersion
       in: query
@@ -12326,6 +12741,107 @@ components:
               description: Package and version reference key.
               type: string
               example: "QS.CloudQSS.CPQ.Q-TMF@2023.2"
+    DdlTableGroupView:
+      description: Manual DDL table group of a package version.
+      type: object
+      required:
+        - groupName
+        - tablesCount
+      properties:
+        groupName:
+          description: Group name, unique within the package version revision.
+          type: string
+          example: "billing"
+        description:
+          description: Group description.
+          type: string
+          example: "Tables owned by the billing domain"
+        tablesCount:
+          description: Number of DDL entities in the group.
+          type: integer
+          example: 12
+    DdlTableGroupListView:
+      description: Manual DDL table groups of a package version.
+      type: object
+      required:
+        - groups
+      properties:
+        groups:
+          type: array
+          items:
+            $ref: "#/components/schemas/DdlTableGroupView"
+    DdlGroupTable:
+      description: |
+        Reference to a DDL entity to include in a group. `packageId` and `version` are only meaningful for a
+        dashboard, where they must name a non-excluded reference of the version; leave them empty to address an
+        entity of the group's own package version.
+      type: object
+      required:
+        - ddlEntityId
+      properties:
+        packageId:
+          type: string
+          example: "QS.CloudQSS.CPQ.Q-TMF"
+        version:
+          type: string
+          example: "2023.2"
+        ddlEntityId:
+          type: string
+          example: "public-table-users"
+    CreateDdlTableGroupReq:
+      description: Request to create a manual DDL table group.
+      type: object
+      required:
+        - groupName
+      properties:
+        groupName:
+          type: string
+          example: "billing"
+        description:
+          type: string
+          example: "Tables owned by the billing domain"
+        tables:
+          description: DDL entities of the group. At most 5000 entries.
+          type: array
+          items:
+            $ref: "#/components/schemas/DdlGroupTable"
+    UpdateDdlTableGroupReq:
+      description: |
+        Request to update a manual DDL table group. Only the properties present in the body are changed; a
+        `tables` array replaces the whole membership of the group.
+      type: object
+      properties:
+        groupName:
+          description: New group name.
+          type: string
+          example: "billing-core"
+        description:
+          type: string
+          example: "Tables owned by the billing domain"
+        tables:
+          description: New membership of the group. At most 5000 entries.
+          type: array
+          items:
+            $ref: "#/components/schemas/DdlGroupTable"
+    GroupedDdlEntitiesView:
+      description: DDL entities that belong to a manual DDL table group.
+      type: object
+      required:
+        - groupName
+        - entities
+      properties:
+        groupName:
+          type: string
+          example: "billing"
+        description:
+          type: string
+          example: "Tables owned by the billing domain"
+        entities:
+          type: array
+          items:
+            $ref: "#/components/schemas/DdlEntityView"
+        packages:
+          $ref: "#/components/schemas/PackagesMap"
     DdlEntityChange:
       description: One side (current or previous) of a DDL entity in a changelog change entry.
       type: object

@@ -205,6 +205,28 @@ func (d softDeletedDataCleanupRepositoryImpl) VacuumAffectedTables(ctx context.C
 				logger.Trace(ctx, "Successfully vacuumed 'grouped_operation' table")
 			}
 		}
+		if deletedItems.DdlTableGroups > 0 {
+			logger.Debugf(ctx, "Vacuuming 'ddl_table_group' table for %d deleted DDL table groups", deletedItems.DdlTableGroups)
+			_, err = d.cp.GetConnection().ExecContext(ctx, "VACUUM FULL ddl_table_group")
+			if err != nil {
+				errorMsg := fmt.Sprintf("Failed to vacuum 'ddl_table_group' table: %v", err)
+				logger.Warn(ctx, errorMsg)
+				vacuumErrors = append(vacuumErrors, errorMsg)
+			} else {
+				logger.Trace(ctx, "Successfully vacuumed 'ddl_table_group' table")
+			}
+		}
+		if deletedItems.GroupedDdlTables > 0 {
+			logger.Debugf(ctx, "Vacuuming 'grouped_ddl_table' table for %d deleted grouped DDL tables", deletedItems.GroupedDdlTables)
+			_, err = d.cp.GetConnection().ExecContext(ctx, "VACUUM FULL grouped_ddl_table")
+			if err != nil {
+				errorMsg := fmt.Sprintf("Failed to vacuum 'grouped_ddl_table' table: %v", err)
+				logger.Warn(ctx, errorMsg)
+				vacuumErrors = append(vacuumErrors, errorMsg)
+			} else {
+				logger.Trace(ctx, "Successfully vacuumed 'grouped_ddl_table' table")
+			}
+		}
 		if deletedItems.OperationOpenCounts > 0 {
 			logger.Debugf(ctx, "Vacuuming 'operation_open_count' table for %d deleted operation open count records", deletedItems.OperationOpenCounts)
 			_, err = d.cp.GetConnection().ExecContext(ctx, "VACUUM FULL operation_open_count")
