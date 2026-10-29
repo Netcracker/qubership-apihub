@@ -46,7 +46,10 @@ export class AgentServicesTab extends Tab {
 
   async restartDiscovery(): Promise<void> {
     await report.step('Restart Discovery', async () => {
-      await this.startDiscovery(this.restartDiscoveryBtn)
+      await this.restartDiscoveryBtn.click()
+      await expect(this.stepper.discoverIndicator.progressBar).toBeVisible()
+      await expect(this.stepper.discoverIndicator.progressBar).toBeHidden({ timeout: DISCOVERY_TIMEOUT })
+      await expect(this.restartDiscoveryBtn).toBeVisible()
     })
   }
 
@@ -194,28 +197,11 @@ export class AgentServicesTab extends Tab {
 
   private async runDiscovery(): Promise<void> {
     await report.step('Run Discovery', async () => {
-      await this.startDiscovery(this.runDiscoveryBtn)
+      await this.runDiscoveryBtn.click()
+      await expect(this.stepper.discoverIndicator.progressBar).toBeVisible()
+      await expect(this.stepper.discoverIndicator.progressBar).toBeHidden({ timeout: DISCOVERY_TIMEOUT })
+      await expect(this.restartDiscoveryBtn).toBeVisible()
     })
-  }
-
-  // A small namespace can finish discovery before the step renders its progress bar, so the progress bar is not
-  // a reliable signal. The UI reloads the services once the discovery request returns: the status after that
-  // reload belongs to this run, not to the previous one.
-  private async startDiscovery(button: Button): Promise<void> {
-    let isDiscoveryRequested = false
-    const servicesReloaded = this.page.waitForResponse(response => {
-      const method = response.request().method()
-      const { pathname } = new URL(response.url())
-      if (method === 'POST' && pathname.endsWith('/discover')) {
-        isDiscoveryRequested = true
-        return false
-      }
-      return isDiscoveryRequested && method === 'GET' && pathname.endsWith('/services')
-    })
-    await button.click()
-    await servicesReloaded
-    await expect(this.stepper.discoverIndicator.status).toHaveText(SUCCESS_STEP_STATUS, { timeout: DISCOVERY_TIMEOUT })
-    await expect(this.restartDiscoveryBtn).toBeEnabled()
   }
 
   private async isDiscovered(): Promise<boolean> {

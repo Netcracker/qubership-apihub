@@ -153,7 +153,7 @@ test.describe('Specific functionality', () => {
   const config = { namespace: TEST_NAMESPACE_2 }
 
   test('Navigate to the Automation tab', {
-    tag: ['@smoke', '@specific'],
+    tag: '@smoke',
   }, async ({ sysadminPage: page }) => {
     const agentPage = new AgentPage(page)
     const { automationTab } = agentPage
@@ -170,7 +170,7 @@ test.describe('Specific functionality', () => {
   })
 
   test('Navigate to the Gateway Routing Report tab', {
-    tag: ['@smoke', '@specific'],
+    tag: '@smoke',
   }, async ({ sysadminPage: page }) => {
     const agentPage = new AgentPage(page)
     const { reportsTab } = agentPage
