@@ -215,8 +215,8 @@ The Playwright suite lives in [`tests/ui-tests`](../../tests/ui-tests/README.md)
    ```
 
 `--debug` opens the Playwright Inspector instead and stops before each action. A test that failed and was retried
-in CI has a trace: download the `playwright-reports` artifact and open the trace with
-`pnpm exec playwright show-trace <file>.zip`.
+in CI has a trace: download the `playwright-reports` artifact and open the report with
+`pnpm exec playwright show-report <artifact>/playwright`. The report links the trace of each retried test.
 
 ## One Newman collection
 
