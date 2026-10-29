@@ -3,7 +3,7 @@ import { Box } from '@mui/material'
 import type { Theme } from '@mui/material/styles'
 import type { SystemStyleObject } from '@mui/system/styleFunctionSx/styleFunctionSx'
 import { type FC, memo, useCallback, useMemo } from 'react'
-import { generatePath, Outlet } from 'react-router-dom'
+import { Outlet } from 'react-router-dom'
 
 import { AppHeader } from '@netcracker/qubership-apihub-ui-shared/components/AppHeader'
 import {
@@ -140,13 +140,17 @@ const aiAssistantButtonProps = {
 }
 
 function replacePackageId(locationPathname: string, searchParams: URLSearchParams, packageId: Key): string {
-  const locationMatch = matchPathname(locationPathname, PORTAL_PATH_PATTERNS)!
-  const newPathname = generatePath(
-    locationMatch.pattern.path,
-    {
-      ...locationMatch!.params,
-      packageId,
-    },
-  )
-  return `${newPathname}?${searchParams}`
+  const locationMatch = matchPathname(locationPathname, PORTAL_PATH_PATTERNS)
+  if (!locationMatch) {
+    return `${locationPathname}?${searchParams}`
+  }
+  // Only the package segment is replaced: react-router versions differ in how matchPath decodes the other parameters.
+  // matchPathname appends '*' to each pattern, so the last segment can read ':packageId*'.
+  const packageIdIndex = locationMatch.pattern.path.split('/')
+    .findIndex(segment => segment.replace(/\*$/, '') === ':packageId')
+  const segments = locationPathname.split('/')
+  if (packageIdIndex >= 0) {
+    segments[packageIdIndex] = encodeURIComponent(packageId)
+  }
+  return `${segments.join('/')}?${searchParams}`
 }

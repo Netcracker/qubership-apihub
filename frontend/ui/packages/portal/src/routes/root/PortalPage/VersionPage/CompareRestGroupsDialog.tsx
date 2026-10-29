@@ -135,7 +135,7 @@ function useData(
 
     setBackwardLocation({ ...backwardLocation, fromOperationsComparison: { pathname: pathname!, search: search! } })
     navigate({
-      pathname: `/portal/packages/${defaultPackageKey}/${defaultVersionKey}/groups/${encodeURIComponent(changedGroup?.groupName ?? '')}/compare`,
+      pathname: `/portal/packages/${encodeURIComponent(defaultPackageKey!)}/${encodeURIComponent(defaultVersionKey!)}/groups/${encodeURIComponent(changedGroup?.groupName ?? '')}/compare`,
       search: `${searchParams}`,
     })
 

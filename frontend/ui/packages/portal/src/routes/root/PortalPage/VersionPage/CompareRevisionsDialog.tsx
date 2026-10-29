@@ -138,9 +138,9 @@ function useDialogData(
 
   const onSubmit = useMemo(() => form.handleSubmit(async ({ originalRevision, changedRevision }) => {
     setBackwardLocation({ ...backwardLocation, fromDocumentsComparison: { pathname: pathname!, search: search! } })
-    const originalPackageKey = encodeURIComponent(searchPackageKey ?? '')
-    const changedPackageKey = encodeURIComponent(defaultPackageKey ?? '')
-    const changedVersionKey = encodeURIComponent(`${defaultVersion}${REVISION_DELIMITER}${changedRevision?.revision}`)
+    const originalPackageKey = searchPackageKey ?? ''
+    const changedPackageKey = defaultPackageKey ?? ''
+    const changedVersionKey = `${defaultVersion}${REVISION_DELIMITER}${changedRevision?.revision}`
     const originVersionKey = `${defaultVersion}${REVISION_DELIMITER}${originalRevision?.revision}`
 
     const { data } = await refetch()

@@ -80,7 +80,7 @@ class BasicActivityMessageService implements ActivityMessageService {
   }
 
   protected getPackageVersionLink(packageId: string, displayName: string, version?: string): LinkData {
-    const commonPackagePath = `/portal/packages/${packageId}`
+    const commonPackagePath = `/portal/packages/${encodeURIComponent(packageId)}`
     return {
       path: version
         ? format(
@@ -96,7 +96,7 @@ class BasicActivityMessageService implements ActivityMessageService {
 
   protected getPackageSettingsLink(packageId: string, packageName: string): LinkData {
     return {
-      path: `/portal/packages/${packageId}/${SPECIAL_VERSION_KEY}/${PACKAGE_SETTINGS_PAGE}/${GENERAL_PAGE}`,
+      path: `/portal/packages/${encodeURIComponent(packageId)}/${SPECIAL_VERSION_KEY}/${PACKAGE_SETTINGS_PAGE}/${GENERAL_PAGE}`,
       displayName: packageName,
     }
   }
