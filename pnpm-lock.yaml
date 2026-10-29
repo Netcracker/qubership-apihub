@@ -213,8 +213,8 @@ importers:
         version: 6.0.3
     devDependencies:
       '@asyncapi/parser':
-        specifier: 3.6.0
-        version: 3.6.0(encoding@0.1.13)
+        specifier: 3.6.6
+        version: 3.6.6(encoding@0.1.13)
       '@netcracker/qubership-apihub-compatibility-suites':
         specifier: workspace:^
         version: link:../compatibility-suites
@@ -435,8 +435,8 @@ importers:
         version: 2.9.0
     devDependencies:
       '@asyncapi/parser':
-        specifier: ^3.4.0
-        version: 3.6.0(encoding@0.1.13)
+        specifier: ^3.6.6
+        version: 3.6.6(encoding@0.1.13)
       '@clack/prompts':
         specifier: ^0.9.1
         version: 0.9.1
@@ -567,8 +567,8 @@ importers:
   frontend/api-doc-viewer/packages/next-data-model:
     dependencies:
       '@asyncapi/parser':
-        specifier: 3.6.0
-        version: 3.6.0(encoding@0.1.13)
+        specifier: 3.6.6
+        version: 3.6.6(encoding@0.1.13)
       '@netcracker/qubership-apihub-api-diff':
         specifier: workspace:^
         version: link:../../../api-diff
@@ -600,8 +600,8 @@ importers:
   frontend/api-processor:
     dependencies:
       '@asyncapi/parser':
-        specifier: ^3.6.0
-        version: 3.6.0(encoding@0.1.13)
+        specifier: ^3.6.6
+        version: 3.6.6(encoding@0.1.13)
       '@netcracker/qubership-apihub-api-diff':
         specifier: workspace:^
         version: link:../api-diff
@@ -759,8 +759,8 @@ importers:
         version: 3.0.0
     devDependencies:
       '@asyncapi/parser':
-        specifier: 3.6.0
-        version: 3.6.0(encoding@0.1.13)
+        specifier: 3.6.6
+        version: 3.6.6(encoding@0.1.13)
       '@jest/globals':
         specifier: 30.4.1
         version: 30.4.1(supports-color@9.4.0)
@@ -2670,8 +2670,8 @@ importers:
   frontend/ui:
     dependencies:
       '@asyncapi/parser':
-        specifier: 3.6.0
-        version: 3.6.0(encoding@0.1.13)
+        specifier: 3.6.6
+        version: 3.6.6(encoding@0.1.13)
       '@emotion/react':
         specifier: 11.10.6
         version: 11.10.6(@types/react@18.3.31)(react@18.3.1)(supports-color@5.5.0)
@@ -3200,8 +3200,8 @@ importers:
   frontend/ui/packages/portal:
     dependencies:
       '@asyncapi/parser':
-        specifier: 3.6.0
-        version: 3.6.0(encoding@0.1.13)
+        specifier: 3.6.6
+        version: 3.6.6(encoding@0.1.13)
       '@lit-labs/react':
         specifier: 1.1.1
         version: 1.1.1
@@ -4010,8 +4010,8 @@ packages:
     resolution: {integrity: sha512-SMkvMsGOpM0FMAoT5pzhgI3LZC0JSPWf7Evwop+fZ3N6UkusPM7lI+sOJjMNI5OJrVoiei1/AGo1cY7sikTc5A==}
     engines: {node: '>=22.23.4'}
 
-  '@asyncapi/parser@3.6.0':
-    resolution: {integrity: sha512-6S0Yr8vI418a1IrpGsOYbfWVo9+aHvSqN2oSkiY0YJltS/C7oDOt9e0mo6hSld8bg+EeKrtgkVmpW4obh1JFvA==}
+  '@asyncapi/parser@3.6.6':
+    resolution: {integrity: sha512-DppE3OStajt6gHc+RsVf9VxRwW9WACagHnFvkOML5rZGwS9hXxtFYTxnsH3mHPRgHom0rClMs6DpbjNY65Y54A==}
 
   '@asyncapi/specs@3.2.1':
     resolution: {integrity: sha512-FO+EteK+Gk3zwumrBw6frpp9cJ4oQL5++hBBpfM81w16e9KaiA4sKrzvQsvVjifoZZHNvVEX4D2zoz9i8CLccQ==}
@@ -12619,10 +12619,6 @@ packages:
   available-typed-arrays@1.0.7:
     resolution: {integrity: sha512-wvUjBtSGN7+7SjNpq/9M2Tg350UZD3q62IFZLbRAR1bSMlCo1ZaeW+BJ+D090e4hIIZLBcTDWe4Mh4jvUDajzQ==}
     engines: {node: '>= 0.4'}
-
-  avsc@5.7.9:
-    resolution: {integrity: sha512-yOA4wFeI7ET3v32Di/sUybQ+ttP20JHSW3mxLuNGeO0uD6PPcvLrIQXSvy/rhJOWU5JrYh7U4OHplWMmtAtjMg==}
-    engines: {node: '>=0.11'}
 
   aws-sign2@0.7.0:
     resolution: {integrity: sha512-08kcGqnYf/YmjoRhfxyu+CLxBjUtHLXLXX/vUfx9l2LYzG3c1m61nrpyFUZI6zeS+Li/wWMMidD9KgrqtGq3mA==}
@@ -25630,7 +25626,7 @@ snapshots:
       is-docker: 4.0.0
       package-manager-detector: 1.9.0
 
-  '@asyncapi/parser@3.6.0(encoding@0.1.13)':
+  '@asyncapi/parser@3.6.6(encoding@0.1.13)':
     dependencies:
       '@asyncapi/specs': 6.11.1
       '@openapi-contrib/openapi-schema-to-json-schema': 3.2.0
@@ -25647,7 +25643,6 @@ snapshots:
       ajv: 8.20.0
       ajv-errors: 3.0.0(ajv@8.20.0)
       ajv-formats: 2.1.1(ajv@8.20.0)
-      avsc: 5.7.9
       js-yaml: 4.3.2
       jsonpath-plus: 10.4.0
       node-fetch: 2.6.7(encoding@0.1.13)
@@ -39830,8 +39825,6 @@ snapshots:
   available-typed-arrays@1.0.7:
     dependencies:
       possible-typed-array-names: 1.1.0
-
-  avsc@5.7.9: {}
 
   aws-sign2@0.7.0: {}
 
