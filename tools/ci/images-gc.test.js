@@ -3,7 +3,10 @@ const assert = require('node:assert/strict')
 const { execFileSync } = require('node:child_process')
 const fs = require('node:fs')
 const path = require('node:path')
-const { images, branchTag, legacyTag, liveTags, plan } = require('./images-gc')
+const {
+  images, branchTag, legacyTag, liveTags, plan, referencedDigests,
+  collectOpenPullNumbers, reserveCoreCall, OPEN_PULL_PAGE_SIZE,
+} = require('./images-gc')
 
 const YAML = require(require.resolve('yaml', { paths: [require.resolve('nx/package.json')] }))
 const ciPath = path.join(__dirname, '..', '..', '.github', 'workflows', 'ci.yml')
@@ -45,8 +48,8 @@ const NOW = Date.parse('2026-10-20T12:00:00Z')
 const OLD = '2026-10-01T00:00:00Z'
 const FRESH = '2026-10-20T11:00:00Z'
 const v = (name, tags = [], updated = OLD) => ({ id: name, name, updated_at: updated, tags })
-const run = async (versions, refs, graph = {}) =>
-  (await plan(versions, liveTags(refs), async (d) => graph[d] || [], NOW)).map((x) => x.name).sort()
+const run = async (versions, refs, graph = {}, openPulls = []) =>
+  (await plan(versions, liveTags(refs, openPulls), async (d) => graph[d] || [], NOW)).map((x) => x.name).sort()
 
 test('a deleted branch loses its tag at once, with what only it lists', async () => {
   const gone = await run(
@@ -88,10 +91,77 @@ test('untagged and content versions under a day old stay, with what they list', 
   assert.deepEqual(gone, ['stale'])
 })
 
-test('pull request tags and versions with any live tag stay', async () => {
+test('liveTags() keeps pull-N-merge only for an open pull request number', () => {
+  const live = liveTags(['refs/heads/develop'], [605])
+  assert.equal(live.has('pull-605-merge'), true)
+  assert.equal(live.has('pull-12-merge'), false)
+  // Git still advertises this ref after the pull request closes, so it must not keep the image.
+  assert.equal(liveTags(['refs/pull/605/head']).has('pull-605-merge'), false)
+})
+
+test('an open pull request keeps its image and a closed one does not', async () => {
   const gone = await run(
-    [v('pr', ['pull-605-merge']), v('mixed', ['gone-branch', 'develop-copy']), v('gone', ['gone-branch-2'])],
+    [
+      v('open', ['pull-605-merge']),
+      v('closed', ['pull-12-merge'], FRESH),
+      v('mixed', ['gone-branch', 'develop-copy']),
+      v('gone', ['gone-branch-2']),
+    ],
     ['refs/heads/develop', 'refs/heads/develop-copy'],
+    {},
+    [605],
   )
-  assert.deepEqual(gone, ['gone'])
+  assert.deepEqual(gone, ['closed', 'gone'])
+})
+
+test('collectOpenPullNumbers stops on a short page and rejects a page that never ends', async () => {
+  const calls = []
+  const full = Array.from({ length: OPEN_PULL_PAGE_SIZE }, (_, index) => index + 1)
+  const numbers = await collectOpenPullNumbers(page => {
+    calls.push(page)
+    return page === 1 ? full : [OPEN_PULL_PAGE_SIZE + 1]
+  })
+  assert.deepEqual(calls, [1, 2])
+  assert.equal(numbers.length, OPEN_PULL_PAGE_SIZE + 1)
+  await assert.rejects(collectOpenPullNumbers(() => full))
+})
+
+test('reserveCoreCall counts the call and stops before crossing the floor', () => {
+  const ledger = { limit: 1000, remaining: 501, floor: 500, pullCalls: 0 }
+  reserveCoreCall(ledger, 'pulls')
+  assert.equal(ledger.pullCalls, 1)
+  assert.equal(ledger.remaining, 500)
+  assert.throws(() => reserveCoreCall(ledger, 'pulls'), /floor is 500/)
+  assert.equal(ledger.pullCalls, 1)
+})
+
+test('content that only the base of a branch image names is unreachable without the annotation', async () => {
+  // The branch tag is a thin image over the content (tools/ci/ref-overlay): its index lists manifests of its own
+  // and shares only the layer blobs with the content, so nothing in the registry links it to src-0123….
+  const gone = await run(
+    [v('dev', ['dev']), v('ovl-amd'), v('ovl-arm'), v('src', ['src-0123456789abcdef']), v('amd'), v('arm')],
+    ['refs/heads/develop'],
+    { dev: ['ovl-amd', 'ovl-arm'], src: ['amd', 'arm'] },
+  )
+  assert.deepEqual(gone, ['amd', 'arm', 'src'])
+})
+
+test('referencedDigests adds the base digest that the index annotates to the manifests it lists', () => {
+  const base = 'sha256:' + '0'.repeat(64)
+  const amd = 'sha256:' + '1'.repeat(64)
+  assert.deepEqual(
+    referencedDigests({ manifests: [{ digest: amd }], annotations: { 'org.opencontainers.image.base.digest': base } }),
+    [amd, base],
+  )
+  assert.deepEqual(referencedDigests({ manifests: [{ digest: amd }] }), [amd])
+  assert.deepEqual(referencedDigests({ annotations: { 'org.opencontainers.image.revision': 'abc' } }), [])
+})
+
+test('content stays while a kept branch index names it as its base', async () => {
+  const gone = await run(
+    [v('dev', ['dev']), v('ovl-amd'), v('ovl-arm'), v('src', ['src-0123456789abcdef']), v('amd'), v('arm'), v('unused', ['src-fedcba9876543210'])],
+    ['refs/heads/develop'],
+    { dev: ['ovl-amd', 'ovl-arm', 'src'], src: ['amd', 'arm'] },
+  )
+  assert.deepEqual(gone, ['unused'])
 })

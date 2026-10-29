@@ -1,14 +1,31 @@
 import fs from 'fs'
 import { createRequire } from 'module'
 import path from 'path'
-import type { Plugin } from 'vite'
+import type { Connect, Plugin } from 'vite'
+import { appStampedVersion } from './app-version'
 
 const requireFromHere = createRequire(import.meta.url)
 
-const UI_ROOT = path.resolve(__dirname, '..')
+const UI_ROOT = path.resolve(import.meta.dirname, '..')
 const API_PROCESSOR = '@netcracker/qubership-apihub-api-processor'
 
 const APPS = ['portal', 'agents'] as const
+
+// Only an image has build info: its entrypoint writes the file from GIT_BRANCH, GIT_HASH, and COMMIT_TIME.
+const BUILD_INFO_PATH = /^\/(portal|agents)\/build-info\.json$/
+
+// The dev server and the preview server both fall back to index.html with status 200 when the file is missing.
+// Answer 404 before that fallback, so a client that expects JSON sees "no build info" instead of parsing HTML.
+// Registered in the hook body, not in the function the hook returns: the returned function runs after the fallback.
+const rejectMissingBuildInfo: Connect.NextHandleFunction = (request, response, next) => {
+  const url = request.url?.split('?')[0]
+  if (url && BUILD_INFO_PATH.test(url)) {
+    response.statusCode = 404
+    response.end()
+    return
+  }
+  next()
+}
 
 type VersionData = {
   frontendVersion: string
@@ -52,13 +69,13 @@ function installedVersion(name: string): string | null {
   }
 }
 
-/** The version an application declares for itself. */
+/** The version an application declares for itself, with the build id of its sources (see app-version.ts). */
 function appVersion(app: string): string | null {
   const manifestPath = path.resolve(UI_ROOT, 'packages', app, 'package.json')
-  if (!fs.existsSync(manifestPath)) {
+  if (!fs.existsSync(manifestPath) || !JSON.parse(fs.readFileSync(manifestPath, 'utf-8')).version) {
     return null
   }
-  return JSON.parse(fs.readFileSync(manifestPath, 'utf-8')).version ?? null
+  return appStampedVersion(app)
 }
 
 function versionDataFor(app: string): VersionData | null {
@@ -72,7 +89,12 @@ function versionDataFor(app: string): VersionData | null {
 
 /**
  * Writes `dist/version.json`, which the running application surfaces, and serves the same
- * payload from the dev server. The dev server has no dist folder.
+ * payload from the dev server. The dev server has no dist folder. The preview server serves the
+ * file from dist, and both servers answer 404 for build-info.json.
+ *
+ * `apiProcessorVersion` is the stamped version of api-processor, `<version>+<build id>`: its build rewrites
+ * `dist/cjs/package.json`, the first manifest that `installedVersion` finds. The build-task-consumer reports the same
+ * string into every package version, and the UI compares the two for equality.
  *
  * Both values used to come from package-manager metadata: `frontendVersion` from
  * lerna.json's `version`, and `apiProcessorVersion` from package-lock.json. Neither input
@@ -84,6 +106,7 @@ export default function createVersionJsonFilePlugin(): Plugin {
   return {
     name: 'create-version-json-file',
     configureServer: function(server) {
+      server.middlewares.use(rejectMissingBuildInfo)
       server.middlewares.use((request, response, next) => {
         const url = request.url?.split('?')[0]
         const app = APPS.find(name => url === `/${name}/version.json`)
@@ -101,6 +124,9 @@ export default function createVersionJsonFilePlugin(): Plugin {
         response.setHeader('Content-Type', 'application/json')
         response.end(JSON.stringify(versionData))
       })
+    },
+    configurePreviewServer: function(server) {
+      server.middlewares.use(rejectMissingBuildInfo)
     },
     closeBundle: async function() {
       const apiProcessorVersion = installedVersion(API_PROCESSOR)

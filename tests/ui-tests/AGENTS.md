@@ -83,8 +83,9 @@ Print `Detected project root: <abs path>` in the first response.
 - Lint and type check: `pnpm exec nx run ui-tests:lint:check` and `pnpm exec nx run ui-tests:typecheck`.
 - Run suites from this directory: `pnpm run test-e2e-portal`, `pnpm run test-component`, `ppnpm run test-unit`,
   `pnpm run cleanup`. The `Agent` and `ADV-*` projects run with `pnpm exec playwright test --project=<name>`.
-- Environment: `BASE_URL` and the variables in `README.md`. A running APIHUB stack (Compose or Kind) is required;
-  CI runs the Portal project through `.github/workflows/e2e-tests-compose.yml`.
+- Environment: `BASE_URL` and the variables in `README.md`. A running APIHUB stack (Compose or Kind) is required.
+  CI on Kind runs the Portal and Agent projects through `.github/workflows/e2e-tests-kind.yml`. Compose runs
+  the Portal project only.
 
 ## Agent packages
 

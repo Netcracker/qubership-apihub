@@ -6,17 +6,21 @@
 // dev, a branch or a git tag by its name. Nothing in a tag says which repository wrote it, so each
 // tag is weighed against the refs of both: the monorepo and the repository the package links to.
 //
-// A TAG IS DEAD when no ref of either repository maps to it. Never dead: `latest`, `next`, `dev`,
-// `pull-N-merge` (closing a pull request deletes nothing), and `src-<hash>`, which is content and
-// is judged by what uses it. A git tag maps to its name and to its last path segment, so a release
-// image (`1.21.0`, or the monorepo's `<version>` for the tag `<component>/<version>`) stays for as
-// long as its git tag does.
+// A TAG IS DEAD when no ref of either repository maps to it. Never dead on their own: `latest`,
+// `next`, `dev`, and `src-<hash>`, which is content and is judged by what uses it. `pull-N-merge`
+// stays while pull request N is open in either repository. Git still advertises `refs/pull/N/head`
+// after the pull request closes, so the run asks the API for `state=open` instead of trusting that
+// ref. Each page of that list is a core API call, counted against the same floor as the deletions.
+// A git tag maps to its name and to its last path segment, so a release image (`1.21.0`, or the
+// monorepo's `<version>` for the tag `<component>/<version>`) stays for as long as its git tag does.
 //
 // A VERSION IS DELETED when nothing kept reaches it. The roots are the versions with a live tag,
 // and an index keeps every manifest it lists: a multi-arch image is an index whose platform
 // manifests are untagged versions of their own. A `src-<hash>` version stays while a kept index
-// lists it (one platform) or lists its platform manifests (images.yml wraps the content in a new
-// index per branch tag). An untagged or content version under 24h old stays with what it lists: a
+// lists it (one platform), lists its platform manifests, or names it as its base. The last is how a
+// branch tag reaches its content: the tag is a thin layer over the content image (tools/ci/ref-overlay),
+// its index lists manifests of its own and shares only layer blobs with the content, so images.yml
+// annotates it with `org.opencontainers.image.base.digest`, the digest of the content index. An untagged or content version under 24h old stays with what it lists: a
 // CI leg pushes the content first and the tag that names it after. So a deleted branch's tags go at
 // once; a superseded index, and content nothing points at, a day after their last change. Deleting
 // a version removes every tag on it, so a version with a live tag is never deleted.
@@ -27,7 +31,9 @@
 // THE BUDGET. A GITHUB_TOKEN on a plan without enterprise limits makes 1,000 API calls an hour per
 // repository, shared with every other workflow, and the first runs face tens of thousands of
 // legacy versions. A run deletes at most MAX_DELETES (default 2000) versions and never takes the
-// rate limit below half; the oldest go first, and the schedule works off the rest.
+// rate limit below half; the oldest go first, and the schedule works off the rest. Open pull
+// request pages spend from that same remainder, and a page that would cross the floor is not
+// requested: a short list would look like "no open pull requests" and delete images that are in use.
 //
 // A RACE this accepts: CI can retag content over a day old that nothing uses (a revert) while a
 // run deletes it. The branch tag then names manifests that are gone; the next push to that branch
@@ -43,8 +49,11 @@ const path = require('path')
 
 const GC_MIN_AGE_MS = 24 * 60 * 60 * 1000
 const CONTENT_TAG = /^src-[0-9a-f]{16}$/
-const PULL_TAG = /^pull-\d+-merge$/
 const FLOATING = ['latest', 'next', 'dev']
+const OPEN_PULL_PAGE_SIZE = 100
+// One page past this is 2,000 open pull requests. The query is `state=open`; more than that means
+// the response is not ending, and guessing that it did would delete live images.
+const OPEN_PULL_PAGE_CAP = 20
 const MANIFEST_TYPES = [
   'application/vnd.oci.image.index.v1+json',
   'application/vnd.docker.distribution.manifest.list.v2+json',
@@ -90,18 +99,21 @@ function legacyTag(ref) {
     .replace(/\//g, '-')
 }
 
-// Every tag name some ref can have produced, from full ref names (`refs/heads/…`, `refs/tags/…`).
-function liveTags(refs) {
+// Every tag name some ref can have produced, from full ref names (`refs/heads/…`, `refs/tags/…`),
+// plus `pull-N-merge` for each open pull request number. A `refs/pull/N/head` ref is not evidence
+// that N is open: GitHub keeps it after the pull request closes.
+function liveTags(refs, openPulls = []) {
   const live = new Set(FLOATING)
   for (const ref of refs) {
     live.add(branchTag(ref))
     live.add(legacyTag(ref))
     if (ref.startsWith('refs/tags/')) live.add(ref.slice(ref.lastIndexOf('/') + 1))
   }
+  for (const number of openPulls) live.add(`pull-${number}-merge`)
   return live
 }
 
-const isDead = (tag, live) => !CONTENT_TAG.test(tag) && !PULL_TAG.test(tag) && !live.has(tag)
+const isDead = (tag, live) => !CONTENT_TAG.test(tag) && !live.has(tag)
 
 // ---- the plan ---------------------------------------------------------------------------------
 
@@ -152,6 +164,7 @@ async function retried(what, fn) {
     try {
       return await fn()
     } catch (e) {
+      if (e.rateLimitFloor) throw e
       last = e
       await sleep(2000 * attempt)
     }
@@ -186,12 +199,68 @@ async function linkedRepository(pkg) {
   )).trim()
 }
 
+function refNames(out) {
+  return out.split('\n').map((line) => line.split('\t')[1]).filter(Boolean).map((ref) => ref.replace(/\^\{\}$/, ''))
+}
+
 // Full names of every branch and tag. A repository always has a branch, so none is a failed read.
+// Open pull requests are not refs here: Git keeps `refs/pull/N/head` after the pull request closes.
 async function remoteRefs(remote) {
   const out = await retried(`list the refs of ${remote}`, () => run('git', ['ls-remote', '--heads', '--tags', remote]))
-  const refs = [...new Set(out.split('\n').map((l) => l.split('\t')[1]).filter(Boolean).map((r) => r.replace(/\^\{\}$/, '')))]
-  if (!refs.some((r) => r.startsWith('refs/heads/'))) throw new Error(`git ls-remote ${remote} returned no branches; refusing to treat that as none`)
+  const refs = [...new Set(refNames(out))]
+  if (!refs.some((ref) => ref.startsWith('refs/heads/'))) {
+    throw new Error(`git ls-remote ${remote} returned no branches; refusing to treat that as none`)
+  }
   return refs
+}
+
+// One core-limit request. The caller has just read `remaining`, so this spends one of those.
+// Crossing the floor throws before the request: stopping halfway through the open pull requests
+// would keep only the pages already read and delete the rest.
+function reserveCoreCall(ledger, what) {
+  if (ledger.remaining - 1 < ledger.floor) {
+    const error = new Error(`${what}: ${ledger.remaining} of ${ledger.limit} requests left, floor is ${ledger.floor}`)
+    error.rateLimitFloor = true
+    throw error
+  }
+  ledger.remaining -= 1
+  ledger.pullCalls += 1
+}
+
+// `fetchPage(page)` returns the pull request numbers on that page. A short page is the last one.
+async function collectOpenPullNumbers(fetchPage) {
+  const numbers = []
+  for (let page = 1; page <= OPEN_PULL_PAGE_CAP; page++) {
+    const batch = await fetchPage(page)
+    if (!Array.isArray(batch)) throw new Error(`open pull requests page ${page} was not a list`)
+    for (const number of batch) {
+      if (!Number.isInteger(number) || number < 1) throw new Error(`open pull requests page ${page} has a bad number`)
+      numbers.push(number)
+    }
+    if (batch.length < OPEN_PULL_PAGE_SIZE) return numbers
+  }
+  throw new Error(`open pull requests did not end within ${OPEN_PULL_PAGE_CAP} pages`)
+}
+
+// One repository is listed once per run. A failed read is not cached and not treated as none.
+async function openPullNumbers(repository, ledger, cache) {
+  const cached = cache.get(repository)
+  if (cached) return cached
+  const snapshot = JSON.parse(await retried('read the core rate limit', () => run('gh', ['api', 'rate_limit', '--jq', '.resources.core'])))
+  ledger.limit = snapshot.limit
+  ledger.remaining = snapshot.remaining
+  ledger.floor = Math.ceil(snapshot.limit / 2)
+  const numbers = await collectOpenPullNumbers(async page => {
+    const raw = await retried(`list open pull requests of ${repository} page ${page}`, () => {
+      reserveCoreCall(ledger, `list open pull requests of ${repository}`)
+      return run('gh', ['api', `repos/${repository}/pulls?state=open&per_page=${OPEN_PULL_PAGE_SIZE}&page=${page}`])
+    })
+    const body = JSON.parse(raw)
+    if (!Array.isArray(body)) throw new Error(`list open pull requests of ${repository}: page ${page} was not a list`)
+    return body.map((pull) => pull.number)
+  })
+  cache.set(repository, numbers)
+  return numbers
 }
 
 // childrenOf for one package, cached. ghcr's pull tokens expire, so a 401 fetches a new one.
@@ -215,17 +284,28 @@ function manifestReader(pkg) {
         res = await fetch(url, { headers: { Authorization: `Bearer ${token}`, Accept: MANIFEST_TYPES } })
       }
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      const listed = (await res.json()).manifests || []
+      const body = await res.json()
+      const listed = body.manifests || []
       // An index names its children's media types, so an image manifest is known to list
       // nothing without fetching it.
       for (const m of listed) if (!/index|list/.test(m.mediaType || '') && !cache.has(m.digest)) cache.set(m.digest, Promise.resolve([]))
-      return listed.map((m) => m.digest)
+      return referencedDigests(body)
     })
   const cache = new Map()
   return (digest) => {
     if (!cache.has(digest)) cache.set(digest, fetchChildren(digest))
     return cache.get(digest)
   }
+}
+
+const BASE_DIGEST_ANNOTATION = 'org.opencontainers.image.base.digest'
+
+// The digests that a manifest keeps alive: the manifests an index lists, and the base image that the index
+// names in its annotations (the content image under a branch tag).
+function referencedDigests(manifest) {
+  const listed = (manifest.manifests || []).map((m) => m.digest)
+  const base = manifest.annotations && manifest.annotations[BASE_DIGEST_ANNOTATION]
+  return base ? [...listed, base] : listed
 }
 
 // fn over every item, `size` at a time.
@@ -272,6 +352,8 @@ async function gc() {
   const packages = images(ciYml)
   if (packages.length === 0) throw new Error('found no "image" in ci.yml; refusing to treat that as no images')
   const now = Date.now()
+  const ledger = { limit: 0, remaining: 0, floor: 0, pullCalls: 0 }
+  const openPulls = new Map()
 
   const rows = new Map()
   const doomed = []
@@ -285,9 +367,15 @@ async function gc() {
       const linked = await linkedRepository(pkg)
       row.repos = [...new Set([monorepo, linked].filter(Boolean))]
       const refs = []
-      for (const repo of row.repos) refs.push(...(await remoteRefs(repo === monorepo ? 'origin' : `https://github.com/${repo}.git`)))
-      const live = liveTags(refs)
-      console.log(`${pkg}: ${versions.length} versions, ${refs.length} refs of ${row.repos.join(', ')}`)
+      const pulls = new Set()
+      for (const repo of row.repos) {
+        refs.push(...(await remoteRefs(repo === monorepo ? 'origin' : `https://github.com/${repo}.git`)))
+        // A failed or unfinished list is not cached, so this package deletes nothing rather than
+        // treating the missing pages as closed pull requests.
+        for (const number of await openPullNumbers(repo, ledger, openPulls)) pulls.add(number)
+      }
+      const live = liveTags(refs, pulls)
+      console.log(`${pkg}: ${versions.length} versions, ${refs.length} refs, ${pulls.size} open pull requests of ${row.repos.join(', ')}`)
 
       // The plan reads manifests one at a time; read the ones it may need in parallel first.
       const childrenOf = manifestReader(pkg)
@@ -345,6 +433,9 @@ async function gc() {
   for (const [pkg, r] of rows) {
     lines.push(`| ${pkg} | ${r.repos.join(', ')} | ${r.versions} | ${r.gone} | ${r.deleted} | ${r.refused} | ${r.failed} | ${r.note} |`)
   }
+  if (ledger.limit > 0) {
+    lines.push('', `Open pull request lookups: ${ledger.pullCalls} core API calls. At the last lookup, ${ledger.remaining} of ${ledger.limit} remained; the floor is ${ledger.floor}.`)
+  }
   lines.push('')
   if (dry) {
     const tagged = doomed.filter((d) => d.tags.length)
@@ -362,7 +453,10 @@ async function gc() {
 
 // ---- main -------------------------------------------------------------------------------------
 
-module.exports = { images, branchTag, legacyTag, liveTags, plan }
+module.exports = {
+  images, branchTag, legacyTag, liveTags, plan, referencedDigests,
+  collectOpenPullNumbers, reserveCoreCall, OPEN_PULL_PAGE_SIZE,
+}
 
 if (require.main === module) {
   gc().catch((e) => {

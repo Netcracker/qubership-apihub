@@ -23,10 +23,12 @@ import Unfonts from 'unplugin-fonts/vite'
 import { visualizer as bundleVisualizer } from 'rollup-plugin-visualizer'
 import inject from '@rollup/plugin-inject'
 import createVersionJsonFilePlugin from '../../vite-plugins/create-version-json'
+import { appStampedVersion } from '../../vite-plugins/app-version'
 import removeMswFromDistPlugin from '../../vite-plugins/remove-msw-from-dist'
 
 // const proxyServer = 'https://qubership-apihub.localtest.me'
 const proxyServer = 'http://host.docker.internal:8081'
+const apiLinterProxyServer = 'http://host.docker.internal:8091'
 const devServer = 'http://localhost:3003'
 
 export default defineConfig(({ mode }) => {
@@ -41,6 +43,9 @@ export default defineConfig(({ mode }) => {
 
   return {
     base: !isProxyMode ? '/agents' : '',
+    // The version of the app, `<version>+<build id>`: the bundle reads it as `__APP_VERSION__` and version.json carries
+    // the same string.
+    define: { __APP_VERSION__: JSON.stringify(appStampedVersion('agents')) },
     plugins: [
       tsconfigPaths(),
       react({ fastRefresh: false }),
@@ -172,6 +177,14 @@ export default defineConfig(({ mode }) => {
         },
         '/agents-backend': {
           target: isProxyMode ? `${proxyServer}` : devServer,
+          changeOrigin: true,
+          secure: false,
+        },
+        // System Information asks the registered extensions for their version, so the Agents SPA needs the prefix of the
+        // linter too, even though it has no page of its own.
+        '/api-linter': {
+          target: apiLinterProxyServer,
+          rewrite: path => path.replace(/^\/api-linter/, ''),
           changeOrigin: true,
           secure: false,
         },

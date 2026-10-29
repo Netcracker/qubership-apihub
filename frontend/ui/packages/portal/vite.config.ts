@@ -9,6 +9,7 @@ import { visualizer as bundleVisualizer } from 'rollup-plugin-visualizer'
 import inject from '@rollup/plugin-inject'
 import monacoWorkerHashPlugin from '../../vite-plugins/monaco-worker-hash'
 import createVersionJsonFilePlugin from '../../vite-plugins/create-version-json'
+import { appStampedVersion } from '../../vite-plugins/app-version'
 import removeMswFromDistPlugin from '../../vite-plugins/remove-msw-from-dist'
 import { createRequire } from 'module'
 
@@ -46,6 +47,9 @@ export default defineConfig(({ mode }) => {
   const analyzeBundle = mode === 'analyze'
 
   return {
+    // The version of the app, `<version>+<build id>`: the bundle reads it as `__APP_VERSION__` and version.json carries
+    // the same string.
+    define: { __APP_VERSION__: JSON.stringify(appStampedVersion('portal')) },
     plugins: [
       tsconfigPaths(),
       react({ fastRefresh: false }),
@@ -189,6 +193,13 @@ export default defineConfig(({ mode }) => {
         '/api-linter': {
           target: apiLinterProxyServer,
           rewrite: path => path.replace(/^\/api-linter/, ''),
+          changeOrigin: true,
+          secure: false,
+        },
+        // System Information asks the registered extensions for their version, so the Portal needs the prefix of the
+        // agents backend too, even though it has no page of its own.
+        '/agents-backend': {
+          target: isProxyMode ? `${proxyServer}` : devServer,
           changeOrigin: true,
           secure: false,
         },
