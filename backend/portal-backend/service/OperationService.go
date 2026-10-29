@@ -21,7 +21,7 @@ type OperationService interface {
 	GetOperations(ctx context.Context, packageId string, version string, skipRefs bool, searchReq view.OperationListReq) (*view.Operations, error)
 	GetOperation(ctx context.Context, searchReq view.OperationBasicSearchReq) (interface{}, error)
 	GetOperationsTags(ctx context.Context, searchReq view.OperationBasicSearchReq, skipRefs bool) (*view.OperationTags, error)
-	GetOperationChanges(ctx context.Context, packageId string, version string, operationId string, previousPackageId string, previousVersion string, severities []string) (*view.OperationChangesView, error)
+	GetOperationChanges(ctx context.Context, packageId string, version string, operationId string, previousPackageId string, previousVersion string, refPackageId string, severities []string) (*view.OperationChangesView, error)
 	GetVersionChanges(ctx context.Context, packageId string, version string, apiType string, searchReq view.VersionChangesReq) (*view.VersionChangesView, error)
 	GlobalSearchForOperations(ctx context.Context, searchReq view.SearchQueryReq) (*view.SearchResult, error)
 	GetDeprecatedOperations(ctx context.Context, packageId string, version string, searchReq view.DeprecatedOperationListReq) (*view.Operations, error)
@@ -356,7 +356,7 @@ func (o operationServiceImpl) GetOperationsTags(ctx context.Context, searchReq v
 	return &view.OperationTags{Tags: tags}, nil
 }
 
-func (o operationServiceImpl) GetOperationChanges(ctx context.Context, packageId string, version string, operationId string, previousPackageId string, previousVersion string, severities []string) (*view.OperationChangesView, error) {
+func (o operationServiceImpl) GetOperationChanges(ctx context.Context, packageId string, version string, operationId string, previousPackageId string, previousVersion string, refPackageId string, severities []string) (*view.OperationChangesView, error) {
 	versionEnt, err := o.publishedRepo.GetVersion(ctx, packageId, version)
 	if err != nil {
 		return nil, err
@@ -425,7 +425,7 @@ func (o operationServiceImpl) GetOperationChanges(ctx context.Context, packageId
 	}
 
 	changes := make([]interface{}, 0)
-	changedOperationEnt, err := o.operationRepository.GetOperationChanges(ctx, comparisonId, operationId, severities)
+	changedOperationEnt, err := o.operationRepository.GetOperationChanges(ctx, comparisonId, operationId, refPackageId, severities)
 	if err != nil {
 		return nil, err
 	}
