@@ -1,5 +1,4 @@
 import { defineConfig } from 'vite'
-import tsconfigPaths from 'vite-tsconfig-paths'
 import react from '@vitejs/plugin-react'
 import monacoEditor from 'vite-plugin-monaco-editor'
 import path, { resolve } from 'path'
@@ -31,13 +30,13 @@ const apispecViewDist = path.dirname(requireFromHere.resolve('@netcracker/qubers
   .split(path.sep)
   .join('/')
 
-// const proxyServer = 'https://qubership-apihub-2.localtest.me/'
+// const proxyServer = 'https://qubership-apihub.localtest.me'
 const proxyServer = 'http://host.docker.internal:8081'
-const apiLinterProxyServer = 'http://host.docker.internal:8091'
 const devServer = 'http://localhost:3003'
 
 export default defineConfig(({ mode }) => {
   const isProxyMode = mode === 'proxy'
+  const proxyOptions = { target: isProxyMode ? proxyServer : devServer, changeOrigin: true, secure: false }
   // Bundle-size analysis is opt-in via `npm run build:analyze` (which passes `--mode analyze`).
   // It is kept out of the default build because generating the report holds the full module graph
   // in memory and renders an HTML treemap, which inflates build memory and time — the portal CI
@@ -51,8 +50,7 @@ export default defineConfig(({ mode }) => {
     // the same string.
     define: { __APP_VERSION__: JSON.stringify(appStampedVersion('portal')) },
     plugins: [
-      tsconfigPaths(),
-      react({ fastRefresh: false }),
+      react(),
       ...(analyzeBundle ? [bundleVisualizer()] : []),
       monacoEditor({
         languageWorkers: ['editorWorkerService', 'json'],
@@ -122,9 +120,10 @@ export default defineConfig(({ mode }) => {
       },
     },
     resolve: {
-      // Path aliases come from tsconfig.json via tsconfigPaths(); only substitutions
-      // that no tsconfig declares are listed here. Array form rather than object form
-      // because the icons entry below matches on a pattern, which the object form
+      // Path aliases come from tsconfig.json. Vite resolves them itself, including in worker bundles.
+      tsconfigPaths: true,
+      // Only substitutions that no tsconfig declares are listed here. Array form rather than
+      // object form because the icons entry below matches on a pattern, which the object form
       // cannot express.
       alias: [
         { find: 'process', replacement: require.resolve('process/browser') },
@@ -152,18 +151,12 @@ export default defineConfig(({ mode }) => {
     },
     worker: {
       format: 'es',
-      // Worker bundles are a separate rollup pass with their own plugin list.
-      // resolve.alias is config-level and applies to them automatically; a resolver
-      // plugin is not, so it must be registered here too or aliased imports fail to
-      // resolve inside workers only - and nowhere else. Array form, not the function form:
-      // vite 4 expects an array here; the callback signature arrived in vite 5.1.
-      plugins: [tsconfigPaths()],
     },
     build: {
       emptyOutDir: true,
       // Skip gzip-compressing every chunk just to print its size: costly in memory and time on a large bundle.
       reportCompressedSize: analyzeBundle,
-      rollupOptions: {
+      rolldownOptions: {
         input: {
           app: resolve(__dirname, 'index.html'),
         },
@@ -182,40 +175,14 @@ export default defineConfig(({ mode }) => {
     server: {
       open: '/login',
       proxy: {
-        '/playground': {
-          target: isProxyMode ? `${proxyServer}/playground` : devServer,
-          rewrite: isProxyMode ? path => path.replace(/^\/playground/, '') : undefined,
-          changeOrigin: true,
-          secure: false,
-        },
+        '/playground': proxyOptions,
         // Endpoint prefix related to extension which is equal to "qubership-api-linter" has name defined in following file:
         // https://github.com/Netcracker/qubership-apihub/blob/linter/helm-templates/qubership-apihub/values.yaml#L210
-        '/api-linter': {
-          target: apiLinterProxyServer,
-          rewrite: path => path.replace(/^\/api-linter/, ''),
-          changeOrigin: true,
-          secure: false,
-        },
+        '/api-linter': proxyOptions,
         // System Information asks the registered extensions for their version, so the Portal needs the prefix of the
         // agents backend too, even though it has no page of its own.
-        '/agents-backend': {
-          target: isProxyMode ? `${proxyServer}` : devServer,
-          changeOrigin: true,
-          secure: false,
-        },
-        '/api': {
-          target: isProxyMode ? `${proxyServer}/api` : devServer,
-          rewrite: isProxyMode ? path => path.replace(/^\/api/, '') : undefined,
-          changeOrigin: true,
-          secure: false,
-        },
-        '/ws/v1': {
-          target: isProxyMode ? `${proxyServer}/ws` : devServer,
-          rewrite: isProxyMode ? path => path.replace(/^\/ws/, '') : undefined,
-          changeOrigin: true,
-          secure: false,
-          ws: true,
-        },
+        '/agents-backend': proxyOptions,
+        '/api': proxyOptions,
       },
     },
   }

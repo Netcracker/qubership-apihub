@@ -15,7 +15,6 @@
  */
 
 import { defineConfig } from 'vite'
-import tsconfigPaths from 'vite-tsconfig-paths'
 import react from '@vitejs/plugin-react'
 import monacoEditor from 'vite-plugin-monaco-editor'
 import path, { resolve } from 'path'
@@ -28,11 +27,11 @@ import removeMswFromDistPlugin from '../../vite-plugins/remove-msw-from-dist'
 
 // const proxyServer = 'https://qubership-apihub.localtest.me'
 const proxyServer = 'http://host.docker.internal:8081'
-const apiLinterProxyServer = 'http://host.docker.internal:8091'
 const devServer = 'http://localhost:3003'
 
 export default defineConfig(({ mode }) => {
   const isProxyMode = mode === 'proxy'
+  const proxyOptions = { target: isProxyMode ? proxyServer : devServer, changeOrigin: true, secure: false }
   // Bundle-size analysis is opt-in via `npm run build:analyze` (which passes `--mode analyze`).
   // It is kept out of the default build because generating the report holds the full module graph
   // in memory and renders an HTML treemap, which inflates build memory and time — the portal CI
@@ -47,8 +46,7 @@ export default defineConfig(({ mode }) => {
     // the same string.
     define: { __APP_VERSION__: JSON.stringify(appStampedVersion('agents')) },
     plugins: [
-      tsconfigPaths(),
-      react({ fastRefresh: false }),
+      react(),
       ...(analyzeBundle ? [bundleVisualizer()] : []),
       monacoEditor({
         languageWorkers: ['editorWorkerService', 'json'],
@@ -108,9 +106,10 @@ export default defineConfig(({ mode }) => {
       },
     },
     resolve: {
-      // Path aliases come from tsconfig.json via tsconfigPaths(); only substitutions
-      // that no tsconfig declares are listed here. Array form rather than object form
-      // because the icons entry below matches on a pattern, which the object form
+      // Path aliases come from tsconfig.json. Vite resolves them itself, including in worker bundles.
+      tsconfigPaths: true,
+      // Only substitutions that no tsconfig declares are listed here. Array form rather than
+      // object form because the icons entry below matches on a pattern, which the object form
       // cannot express.
       alias: [
         { find: 'buffer', replacement: require.resolve('buffer/') },
@@ -138,12 +137,6 @@ export default defineConfig(({ mode }) => {
     },
     worker: {
       format: 'es',
-      // Worker bundles are a separate rollup pass with their own plugin list.
-      // resolve.alias is config-level and applies to them automatically; a resolver
-      // plugin is not, so it must be registered here too or aliased imports fail to
-      // resolve inside workers only - and nowhere else. Array form, not the function form:
-      // vite 4 expects an array here; the callback signature arrived in vite 5.1.
-      plugins: [tsconfigPaths()],
     },
     build: {
       emptyOutDir: true,
@@ -151,7 +144,7 @@ export default defineConfig(({ mode }) => {
       // so it is skipped by default. It is genuinely useful when analyzing the bundle, so it is
       // enabled together with the visualizer under `npm run build:analyze`.
       reportCompressedSize: analyzeBundle,
-      rollupOptions: {
+      rolldownOptions: {
         input: {
           app: resolve(__dirname, 'index.html'),
         },
@@ -170,29 +163,12 @@ export default defineConfig(({ mode }) => {
     server: {
       open: '/login',
       proxy: {
-        '/api': {
-          target: isProxyMode ? `${proxyServer}` : devServer,
-          changeOrigin: true,
-          secure: false,
-        },
-        '/agents-backend': {
-          target: isProxyMode ? `${proxyServer}` : devServer,
-          changeOrigin: true,
-          secure: false,
-        },
+        '/api': proxyOptions,
+        '/agents-backend': proxyOptions,
         // System Information asks the registered extensions for their version, so the Agents SPA needs the prefix of the
         // linter too, even though it has no page of its own.
-        '/api-linter': {
-          target: apiLinterProxyServer,
-          rewrite: path => path.replace(/^\/api-linter/, ''),
-          changeOrigin: true,
-          secure: false,
-        },
-        '/apihub-nc': {
-          target: isProxyMode ? `${proxyServer}` : devServer,
-          changeOrigin: true,
-          secure: false,
-        },
+        '/api-linter': proxyOptions,
+        '/apihub-nc': proxyOptions,
       },
     },
   }
