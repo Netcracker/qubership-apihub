@@ -104,6 +104,19 @@ func (d OpsMigration) createTempTables() error {
 		_, err = withDBRetry(d, func() (orm.Result, error) {
 			return d.cp.GetConnection().ExecContext(d.migrationCtx, vcQuery, params...)
 		})
+		if err != nil {
+			return err
+		}
+
+		refsQuery := fmt.Sprintf(
+			`insert into migration."version_comparison_%[1]s"
+			select * from version_comparison
+			where comparison_id in (select unnest(refs) from migration."version_comparison_%[1]s")
+			and comparison_id not in (select comparison_id from migration."version_comparison_%[1]s");`,
+			d.ent.Id)
+		_, err = withDBRetry(d, func() (orm.Result, error) {
+			return d.cp.GetConnection().ExecContext(d.migrationCtx, refsQuery)
+		})
 	} else {
 		_, err = withDBRetry(d, func() (orm.Result, error) {
 			return d.cp.GetConnection().ExecContext(d.migrationCtx,
