@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Meta, StoryFn } from '@storybook/html'
+import { Meta, StoryFn } from '@storybook/html-vite'
 import {
   ClassObject,
   DefaultDomainMeta,
@@ -29,7 +29,7 @@ import {
 import { generateClassObject, generateContent, generatePropertiesGroupObject, storyArgsFunc } from 'stories/common'
 import { ClassViewComponent, EVENT_VIEWPORT_CENTER_CHANGE, EVENT_ZOOM_CHANGE } from 'main/component'
 import { isDefine } from 'main/core/utils'
-import { useArgs } from '@storybook/client-api'
+import { useArgs } from 'storybook/preview-api'
 
 const ROUNDING = 4
 let updateArgsCapture: Optional<(arg: Partial<StoryArgs>) => void>

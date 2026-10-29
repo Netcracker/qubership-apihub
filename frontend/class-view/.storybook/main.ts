@@ -20,8 +20,6 @@ const config: StorybookConfig = {
   stories: ['../src/stories/**/*.stories.@(js|jsx|mjs|ts|tsx)'],
   addons: [
     '@storybook/addon-links',
-    '@storybook/addon-essentials',
-    '@storybook/addon-actions',
   ],
   framework: {
     name: '@storybook/html-vite',

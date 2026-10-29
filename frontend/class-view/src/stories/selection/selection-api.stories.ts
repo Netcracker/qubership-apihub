@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Meta, StoryFn } from '@storybook/html'
+import { Meta, StoryFn } from '@storybook/html-vite'
 import {
   ClassObject,
   DefaultDomainMeta,
@@ -34,7 +34,7 @@ import {
   storyArgsFunc
 } from 'stories/common'
 import { EVENT_SELECTION_CHANGE, SelectableObject, SelectionChangeData } from 'main/component'
-import { useArgs } from '@storybook/client-api'
+import { useArgs } from 'storybook/preview-api'
 import { isDefine } from 'main/core/utils'
 
 export default {

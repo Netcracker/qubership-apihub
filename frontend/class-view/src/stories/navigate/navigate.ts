@@ -15,7 +15,7 @@
  */
 
 import { DEFAULT_ANIMATION_DURATION, DEFAULT_CONTENT_INSETS } from 'main/defaults'
-import { Args, ArgTypes } from '@storybook/html'
+import { Args, ArgTypes } from '@storybook/html-vite'
 import { Duration, Insets, Pixel } from 'main/domain'
 
 export const NAVIGATION_OPTION_ARGS_TYPE: ArgTypes = {
