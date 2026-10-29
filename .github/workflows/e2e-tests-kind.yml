@@ -4,11 +4,10 @@ name: 'E2E: Kind'
 # (tests/postman-collections), then the Playwright Portal and Agent projects (tests/ui-tests).
 # The Agent project runs when this workflow deploys the agent. That deploy also puts the
 # test-service fixtures into api-hub-ci and api-hub-preprod, which the Agent UI tests discover.
-# Unlike compose,
-# this covers the charts, the ingress, TLS, the custom CA mount, and the agent. The charts, the agent
-# chart, and both suites come from the commit that started the run, unless deploy_ref, postman_ref,
-# or playwright_ref name another ref of this repository; only the pinned ingress-nginx manifest is
-# downloaded.
+# Unlike compose, this covers the charts, the ingress, TLS, the custom CA mount, and the agent.
+# The charts, the agent chart, and both suites come from the commit that started the run, unless
+# deploy_ref, postman_ref, or playwright_ref name another ref of this repository; only the pinned
+# ingress-nginx manifest is downloaded.
 #
 # Callers: ci.yml (this run's images at the branch tag) and e2e-tests-manual.yml (the launch contract).
 # Keep the inputs shared with e2e-tests-compose.yml identical.
@@ -382,13 +381,37 @@ jobs:
         working-directory: ${{ runner.temp }}/helm/local-k8s-quickstart
         run: |
           set -euo pipefail
-          # The quickstart URL is the in-cluster Service. agents-backend copies it into portal
-          # links, and the browser cannot open that name. The agent chart gets the same public
-          # URL in Deploy the APIHUB agent. The images file stays last: it only sets repositories
-          # and tags, and a later file does not drop keys it does not name.
-          cat > "$RUNNER_TEMP/agents-backend-public-url.yaml" <<EOF
+          # What the UI tests need on top of the quickstart:
+          # - defaultWorkspaceId: the backend returns it in the system configuration, which the
+          #   tests read. agents-backend copies the package structure of QS into the workspace
+          #   under discovery, and [A-DRP-1] expects that copy as the baseline.
+          # - nc-service: the Agent UI shows the Automation and Gateway Routing Report tabs only
+          #   when this extension is registered. The stack has no nc-service, so the entry points
+          #   at the backend. Helm replaces a list as a whole, so the two quickstart extensions are
+          #   repeated here.
+          # - The public URL for agents-backend: it puts this URL into portal links, and the
+          #   browser cannot open the in-cluster one from the quickstart.
+          # The images file goes last, so it overrides the repositories and tags that
+          # local-k8s-values.yaml names.
+          cat > "$RUNNER_TEMP/apihub-e2e-values.yaml" <<EOF
+          qubershipApihubBackend:
+            env:
+              businessParameters:
+                defaultWorkspaceId: 'QS'
+              extensions:
+                - name: api-linter
+                  baseUrl: http://qubership-api-linter-service:8080
+                  pathPrefix: api-linter
+                - name: agents-backend
+                  baseUrl: http://qubership-apihub-agents-backend:8080
+                  pathPrefix: agents-backend
+                - name: nc-service
+                  baseUrl: http://qubership-apihub-backend:8080
+                  pathPrefix: apihub-nc
           qubershipApihubAgentsBackend:
             env:
+              businessParameters:
+                defaultWorkspaceId: 'QS'
               technicalParameters:
                 apihub:
                   url: 'https://${APIHUB_HOST}'
@@ -398,46 +421,31 @@ jobs:
             --create-namespace \
             --values qubership-apihub/local-k8s-values.yaml \
             --values qubership-apihub/local-secrets.yaml \
-            --values "$RUNNER_TEMP/agents-backend-public-url.yaml" \
+            --values "$RUNNER_TEMP/apihub-e2e-values.yaml" \
             --values '${{ steps.images.outputs.values }}' \
             --wait --timeout 10m
 
-      # Pods resolve the ingress host to the controller, so the backend's external URLs work inside
-      # the cluster. This restarts every deployment, so the rollout is awaited again. The agent
-      # Deployment does not exist yet; Deploy the APIHUB agent applies the same aliases to it.
-      - name: Point the pods at the ingress
-        id: ingress_hosts
-        shell: bash
-        working-directory: ${{ runner.temp }}/helm/local-k8s-quickstart
-        run: |
-          set -euo pipefail
-          sh scripts/6-patch-apihub-hosts.sh
-          for d in $(kubectl get deployments --namespace "$NAMESPACE" --output=name); do
-            kubectl rollout status "$d" --namespace "$NAMESPACE" --timeout=5m
-          done
-
-      # Through the ingress with TLS, as both suites connect: the page, API-key auth, and agents-backend.
-      - name: Wait for APIHUB to answer
-        id: answer
+      # Fails here, not in the UI tests, when the e2e values did not reach a config.
+      - name: Check the APIHUB configuration
+        id: apihub_config
         shell: bash
         run: |
           set -euo pipefail
-          url="https://$APIHUB_HOST"
-          end=$((SECONDS + 300))
-          while [ $SECONDS -lt $end ]; do
-            login="$(curl -ks -o /dev/null -w '%{http_code}' "$url/login" || true)"
-            key="$(curl -ks -o /dev/null -w '%{http_code}' -H "api-key: $APIHUB_ACCESS_TOKEN" "$url/api/v2/auth/apiKey" || true)"
-            agents="$(curl -ks -o /dev/null -w '%{http_code}' -H "api-key: $APIHUB_ACCESS_TOKEN" "$url/agents-backend/api/v2/agents" || true)"
-            if [ "$login" = 200 ] && [ "$key" = 200 ] && [ "$agents" = 200 ]; then
-              echo "up after ${SECONDS}s"
-              exit 0
-            fi
-            echo "  login $login, api key $key, agents-backend $agents; retrying"
-            sleep 5
-          done
-          echo "::error::APIHUB did not answer 200 on all three within 5 minutes"
-          kubectl get pods --all-namespaces
-          exit 1
+          config_of() {
+            kubectl get secret "$1" --namespace "$NAMESPACE" \
+              --output=jsonpath='{.data.config\.yaml}' | base64 --decode
+          }
+          backend="$(config_of qubership-apihub-backend-config-secret)"
+          agents_backend="$(config_of qubership-apihub-agents-backend-config-secret)"
+          require() {
+            printf '%s' "$1" | grep --fixed-strings --quiet -- "$2" \
+              || { echo "::error::$3"; exit 1; }
+          }
+          require "$backend" 'defaultWorkspaceId: QS' "the backend has no default workspace"
+          require "$backend" 'name: nc-service' "the backend does not register the nc-service extension"
+          require "$agents_backend" 'defaultWorkspaceId: QS' "agents-backend has no default workspace"
+          require "$agents_backend" "https://${APIHUB_HOST}" "agents-backend does not use the public APIHUB URL"
+          echo "the backend and agents-backend use the default workspace QS, nc-service, and the public URL"
 
       # The Agent UI tests discover these six deployments. The chart hardcodes its name and
       # app.kubernetes.io/part-of, so each copy is helm template plus a rewrite, the same pipeline the
@@ -557,38 +565,48 @@ jobs:
             --set-string "qubershipApihubAgent.version=$tag"
           )
           status=0
-          # Helm returns once the Deployment exists. The wait is after the host-alias patch:
-          # waiting here would time out on the first pod, which cannot reach the public URL.
+          # No --wait: the agent calls the public URL at startup, so its pod restarts until Point
+          # the pods at the ingress adds the host aliases. That step waits for the rollout.
           helm upgrade --install qubership-apihub-agent "$chart" "${args[@]}" || status=$?
           rm -f "$token_file"
-          [ "$status" = 0 ] || exit "$status"
+          exit "$status"
 
-          # localtest.me resolves to localhost inside a pod. The ingress host-alias step has
-          # already run, and this Deployment did not exist then. The agent calls the public APIHUB
-          # URL at startup, reaches [::1]:443, and exits. Same host aliases as
-          # scripts/6-patch-apihub-hosts.sh, for this Deployment only.
-          ingress_ip="$(kubectl get service ingress-nginx-controller \
-            --namespace ingress-nginx \
-            --output=jsonpath='{.spec.clusterIP}')"
-          [ -n "$ingress_ip" ] || { echo "::error::could not read the ingress controller ClusterIP"; exit 1; }
-          echo "pointing the agent at the ingress ($ingress_ip)"
-          kubectl patch deployment qubership-apihub-agent \
-            --namespace "$NAMESPACE" \
-            --type=merge \
-            --patch "$(cat <<EOF
-          spec:
-            template:
-              spec:
-                hostAliases:
-                  - ip: "${ingress_ip}"
-                    hostnames:
-                      - keycloak.localtest.me
-                      - qubership-apihub.localtest.me
-          EOF
-          )"
-          kubectl rollout status deployment/qubership-apihub-agent \
-            --namespace "$NAMESPACE" \
-            --timeout=5m
+      # localtest.me resolves to localhost inside a pod. The script maps the ingress host to the
+      # controller in every deployment of the namespace, the agent included, so external URLs
+      # work inside the cluster. The patch restarts the deployments, so the rollout is awaited.
+      - name: Point the pods at the ingress
+        id: ingress_hosts
+        shell: bash
+        working-directory: ${{ runner.temp }}/helm/local-k8s-quickstart
+        run: |
+          set -euo pipefail
+          sh scripts/6-patch-apihub-hosts.sh
+          for d in $(kubectl get deployments --namespace "$NAMESPACE" --output=name); do
+            kubectl rollout status "$d" --namespace "$NAMESPACE" --timeout=5m
+          done
+
+      # Through the ingress with TLS, as both suites connect: the page, API-key auth, and agents-backend.
+      - name: Wait for APIHUB to answer
+        id: answer
+        shell: bash
+        run: |
+          set -euo pipefail
+          url="https://$APIHUB_HOST"
+          end=$((SECONDS + 300))
+          while [ $SECONDS -lt $end ]; do
+            login="$(curl -ks -o /dev/null -w '%{http_code}' "$url/login" || true)"
+            key="$(curl -ks -o /dev/null -w '%{http_code}' -H "api-key: $APIHUB_ACCESS_TOKEN" "$url/api/v2/auth/apiKey" || true)"
+            agents="$(curl -ks -o /dev/null -w '%{http_code}' -H "api-key: $APIHUB_ACCESS_TOKEN" "$url/agents-backend/api/v2/agents" || true)"
+            if [ "$login" = 200 ] && [ "$key" = 200 ] && [ "$agents" = 200 ]; then
+              echo "up after ${SECONDS}s"
+              exit 0
+            fi
+            echo "  login $login, api key $key, agents-backend $agents; retrying"
+            sleep 5
+          done
+          echo "::error::APIHUB did not answer 200 on all three within 5 minutes"
+          kubectl get pods --all-namespaces
+          exit 1
 
       - name: Check the agent configuration
         id: agent_token
@@ -606,11 +624,7 @@ jobs:
           require "https://${APIHUB_HOST}" "the agent's configuration does not use the public APIHUB URL"
           require 'app.kubernetes.io/part-of' "the agent's configuration does not group by part-of"
           require 'app.kubernetes.io/version' "the agent's configuration does not group by version"
-          agents_config="$(kubectl get secret qubership-apihub-agents-backend-config-secret \
-            --namespace "$NAMESPACE" --output=jsonpath='{.data.config\.yaml}' | base64 --decode)"
-          printf '%s' "$agents_config" | grep --fixed-strings --quiet -- "https://${APIHUB_HOST}" \
-            || { echo "::error::agents-backend still points at the in-cluster UI URL"; exit 1; }
-          echo "the agent and agents-backend use the public APIHUB URL"
+          echo "the agent's configuration holds the access token, the public URL, and the grouping labels"
 
       # Reads the images back from the deployments: Helm ignores a values key the chart does not read,
       # and the release still succeeds with the chart's default image.
@@ -727,9 +741,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          # playwright.config.ts sets 10 workers under CI. This job uses 8, and it skips @flaky
-          # and @specific (SSO, and Agent tabs that need the nc-service extension). The arguments
-          # are split like a shell would, quotes included, without evaluating them.
+          # playwright.config.ts sets 10 workers under CI. This job uses 8, as the previous
+          # repository's Kind workflow did. @specific tests need a stand set up for them (SSO,
+          # creating a Gateway Routing report), so they are skipped together with @flaky. The
+          # arguments are split like a shell would, quotes included, without evaluating them.
           args="$PLAYWRIGHT_ARGS"
           if [ -z "${args//[[:space:]]/}" ]; then
             if [ "$AGENT" = 'true' ]; then
@@ -836,9 +851,10 @@ jobs:
               kind_config: "Write the Kind configuration", kind_cluster: "Create the Kind cluster",
               ingress: "Install the ingress controller", charts: "Stage the charts", credentials: "Take the stack\x27s credentials",
               secrets: "Generate TLS and template the secrets", postgres: "Deploy PostgreSQL", custom_ca: "Create the custom CA secret",
-              apihub: "Deploy APIHUB", ingress_hosts: "Point the pods at the ingress", answer: "Wait for APIHUB to answer",
-              test_services: "Deploy the agent test services",
-              agent: "Deploy the APIHUB agent", agent_token: "Check the agent configuration",
+              apihub: "Deploy APIHUB", apihub_config: "Check the APIHUB configuration",
+              test_services: "Deploy the agent test services", agent: "Deploy the APIHUB agent",
+              ingress_hosts: "Point the pods at the ingress", answer: "Wait for APIHUB to answer",
+              agent_token: "Check the agent configuration",
               stack_images: "Check which images the stack runs",
             }
             const id = Object.keys(setup).find((k) => steps[k] && steps[k].outcome === "failure")
