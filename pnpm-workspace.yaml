@@ -14,6 +14,8 @@ nodeLinker: isolated
 
 strictPeerDependencies: false
 
+pmOnFail: ignore
+
 # Every dependency build script in the lockfile, each denied. A new one fails `pnpm install`
 # (ERR_PNPM_IGNORED_BUILDS) until it is added here.
 allowBuilds:
