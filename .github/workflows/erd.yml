@@ -52,7 +52,7 @@ jobs:
       matrix: ${{ steps.plan.outputs.matrix }}
       registry: ${{ steps.plan.outputs.registry }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
           sparse-checkout: |
@@ -61,7 +61,7 @@ jobs:
 
       # 1.3.3, not the current 1.3.4: setup-oras verifies against a release table baked into the
       # action, and v2.0.1's ends at 1.3.3.
-      - uses: oras-project/setup-oras@v2.0.1
+      - uses: oras-project/setup-oras@v2.0.2
         with:
           version: 1.3.3
 
@@ -135,14 +135,14 @@ jobs:
           --health-cmd "pg_isready -U erd" --health-interval 5s --health-timeout 5s --health-retries 20
     steps:
       # No credentials on disk while the migrations and SchemaSpy run; render reads the checkout only.
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
           sparse-checkout: |
             tools/ci
             backend/${{ matrix.backend }}/resources/migrations
 
-      - uses: oras-project/setup-oras@v2.0.1
+      - uses: oras-project/setup-oras@v2.0.2
         with:
           version: 1.3.3
 

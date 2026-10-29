@@ -45,7 +45,7 @@ jobs:
     steps:
       # No credentials on disk: the worktree builds below run the pnpm installs and builds of the
       # site's ref. The repository is public, so the fetches and ls-remotes of this job need none.
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -167,7 +167,7 @@ jobs:
           run_install: false
 
       - if: steps.need.outputs.any == 'true'
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: '24'
 
@@ -220,7 +220,7 @@ jobs:
 
       # 1.3.3, not the current 1.3.4: setup-oras verifies against a release table baked into the
       # action, and v2.0.1's ends at 1.3.3.
-      - uses: oras-project/setup-oras@v2.0.1
+      - uses: oras-project/setup-oras@v2.0.2
         with:
           version: 1.3.3
 
@@ -320,11 +320,11 @@ jobs:
       packages: write
     steps:
       # The repository is public: gc's fetches of main and develop need no credentials.
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
-      - uses: oras-project/setup-oras@v2.0.1
+      - uses: oras-project/setup-oras@v2.0.2
         with:
           version: 1.3.3
 

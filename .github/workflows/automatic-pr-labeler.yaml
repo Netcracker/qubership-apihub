@@ -26,12 +26,12 @@ jobs:
     if: (github.event.pull_request.merged == false) && (github.event.pull_request.user.login != 'dependabot[bot]') && (github.event.pull_request.user.login != 'github-actions[bot]')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: "Assign module labels by changed paths"
         # A token of a pull request from a fork is read-only, so labels are not applied there.
         if: ${{ github.event.pull_request.base.repo.id == github.event.pull_request.head.repo.id }}
-        uses: actions/labeler@v5
+        uses: actions/labeler@v7
         with:
           repo-token: ${{ github.token }}
           configuration-path: .github/labeler.yml

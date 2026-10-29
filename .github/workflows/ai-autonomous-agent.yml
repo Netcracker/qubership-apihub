@@ -121,13 +121,13 @@ jobs:
       # The router always runs from the default branch. Without a `ref`, a `pull_request` event would check out the merge
       # ref of the pull request and a `pull_request_review` event the pull request itself. The `schedule` payload may
       # carry no repository; an empty `ref` then checks out the default branch anyway.
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.repository.default_branch || '' }}
           sparse-checkout: tools/agent
           persist-credentials: false
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: '24'
 
@@ -155,7 +155,7 @@ jobs:
       AGENT_COMMAND: ${{ needs.route.outputs.command }}
     steps:
       # The pull request is data: its head is the working tree the reviewer reads, never code that runs.
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           ref: refs/pull/${{ needs.route.outputs.number }}/head
           fetch-depth: 0
@@ -166,7 +166,7 @@ jobs:
       # For `/agent review` that is develop, so a pull request from a fork cannot change the tools or the instructions
       # that review it. For a `pull_request` event the ref is the pull request itself: only pull requests from this
       # repository get there with secrets, and their authors can already run any workflow with them.
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           path: .agent-tools
           sparse-checkout-cone-mode: false
@@ -193,7 +193,7 @@ jobs:
             cp ".agent-tools/$f" "$f"
           done
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: '24'
 
@@ -212,7 +212,7 @@ jobs:
           AGENT_OUT: ${{ runner.temp }}/agent
         run: node .agent-tools/tools/agent/review.js
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: ai-autonomous-review-${{ needs.route.outputs.number }}-${{ github.run_attempt }}
@@ -245,12 +245,12 @@ jobs:
       # An issue has no code to protect, so the working tree is the default branch of the repository. That makes the
       # tools, the opencode config, the skills, and the AGENTS.md files trusted without a second checkout. The history
       # stays complete because the analyst reads `git log` and `git show`.
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           persist-credentials: false
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: '24'
 
@@ -266,7 +266,7 @@ jobs:
           AGENT_OUT: ${{ runner.temp }}/agent
         run: node tools/agent/analyze.js
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: ai-autonomous-analysis-${{ matrix.number }}-${{ github.run_attempt }}
@@ -302,12 +302,12 @@ jobs:
       AGENT_WORKFLOW_RUN_ID: ${{ github.event.workflow_run.id }}
       AGENT_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           sparse-checkout: tools/agent
           persist-credentials: false
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: '24'
 
@@ -321,7 +321,7 @@ jobs:
           AGENT_OUT: ${{ runner.temp }}/agent
         run: node tools/agent/ci-gate.js
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: ai-autonomous-ci-gate-${{ needs.route.outputs.number }}-${{ github.run_attempt }}
@@ -357,13 +357,13 @@ jobs:
       AGENT_COMMENT_ID: ${{ github.event.comment.id }}
       AGENT_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.repository.default_branch }}
           sparse-checkout: tools/agent
           persist-credentials: false
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: '24'
 
@@ -375,7 +375,7 @@ jobs:
           AGENT_OUT: ${{ runner.temp }}/agent
         run: node tools/agent/ci-gate.js rerun
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: ai-autonomous-rerun-${{ needs.route.outputs.number }}-${{ github.run_attempt }}
@@ -417,7 +417,7 @@ jobs:
     steps:
       # The history stays complete because the triager reads `git log`, `git blame`, and `git diff`. No token is kept in
       # the checkout: the triager could read it from the Git config.
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.repository.default_branch }}
           fetch-depth: 0
@@ -434,7 +434,7 @@ jobs:
           git -c "http.https://github.com/.extraheader=$header" fetch --no-tags origin \
             "pull/${PR_NUMBER}/head:refs/remotes/pull/${PR_NUMBER}/head"
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: '24'
 
@@ -449,7 +449,7 @@ jobs:
           AGENT_PR_HEAD_REF: refs/remotes/pull/${{ needs.route.outputs.number }}/head
         run: node tools/agent/ci-check.js
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: ai-autonomous-ci-check-${{ needs.route.outputs.number }}-${{ github.run_attempt }}
@@ -501,13 +501,13 @@ jobs:
       # config, the skills, and the AGENTS.md files are trusted. The default branch is named, because a
       # `pull_request_review` event would check out the pull request itself. The history stays complete for
       # `nx affected` and for the agents, which read `git log`. No token is kept in the checkout.
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.repository.default_branch }}
           fetch-depth: 0
           persist-credentials: false
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: '24'
 
@@ -553,7 +553,7 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: node "$RUNNER_TEMP/agent-tools/implement.js" work
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: ai-autonomous-implement-${{ needs.route.outputs.number }}-${{ github.run_attempt }}
@@ -600,19 +600,19 @@ jobs:
       # The scripts come from the default branch, which is named because a `pull_request_review` event would check out
       # the pull request itself. The history is complete: the bundle of the work job holds the commits of the pull
       # request on top of its branch point, which the push needs, and `publish` measures their diff from it.
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.repository.default_branch }}
           sparse-checkout: tools/agent
           fetch-depth: 0
           persist-credentials: false
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: '24'
 
       # A missing artifact is an outcome the script handles: the work job left nothing.
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           name: ai-autonomous-implement-${{ needs.route.outputs.number }}-${{ github.run_attempt }}
@@ -624,7 +624,7 @@ jobs:
           AGENT_PAT: ${{ secrets.AGENT_PAT }}
         run: node tools/agent/implement.js publish
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: ai-autonomous-publish-${{ needs.route.outputs.number }}-${{ github.run_attempt }}
@@ -655,13 +655,13 @@ jobs:
       AGENT_COMMENT_ID: ${{ github.event.comment.id }}
       AGENT_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.repository.default_branch }}
           sparse-checkout: tools/agent
           persist-credentials: false
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: '24'
 
@@ -671,7 +671,7 @@ jobs:
           AGENT_OUT: ${{ runner.temp }}/agent
         run: node tools/agent/chat.js
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: ai-autonomous-stop-${{ needs.route.outputs.number }}-${{ github.run_attempt }}
@@ -705,7 +705,7 @@ jobs:
       # The working tree is the default branch, so the tools, the opencode config, the skills, and the AGENTS.md files
       # are trusted. The history stays complete because the assistant reads `git log` and `git show`. No token is kept
       # in the checkout: the assistant could read it from the Git config.
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.repository.default_branch }}
           fetch-depth: 0
@@ -724,7 +724,7 @@ jobs:
           git -c "http.https://github.com/.extraheader=$header" fetch --no-tags origin \
             "pull/${PR_NUMBER}/head:refs/remotes/pull/${PR_NUMBER}/head"
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: '24'
 
@@ -741,7 +741,7 @@ jobs:
           AGENT_PR_HEAD_REF: refs/remotes/pull/${{ needs.route.outputs.number }}/head
         run: node tools/agent/chat.js
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: ai-autonomous-chat-${{ needs.route.outputs.number }}-${{ github.run_attempt }}
