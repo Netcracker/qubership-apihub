@@ -216,7 +216,7 @@ func CreateSAMLInstance(idpId string, samlConfig *idp.SAMLConfiguration) (*samls
 		EntityID:    rootURL.Path,
 	})
 	if err != nil {
-		log.Errorf("New saml instanse wasn't created. Error -%s", err.Error())
+		log.Errorf("New saml instance wasn't created. Error -%s", err.Error())
 		return nil, err
 	}
 

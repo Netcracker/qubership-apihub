@@ -249,7 +249,7 @@ func (c comparisonControllerImpl) CompareTwoVersions(w http.ResponseWriter, r *h
 		return
 	case string(view.StatusComplete):
 		//this case is possible only if we have an old finished build for which we don't have a comparison (rebuild required)
-		//or if this build completed during this method execution (rebuild is not requried)
+		//or if this build completed during this method execution (rebuild is not required)
 		compareResult, err := c.comparisonService.ValidComparisonResultExists(ctx, compareVersionsReq.PackageId, compareVersionsReq.Version, compareVersionsReq.PreviousVersionPackageId, compareVersionsReq.PreviousVersion)
 		if err != nil {
 			c.responder.RespondWithError(w, r, "Failed to get versions comparison result", err)

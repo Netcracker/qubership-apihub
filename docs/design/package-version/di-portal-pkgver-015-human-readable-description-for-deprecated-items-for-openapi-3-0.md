@@ -216,7 +216,7 @@ paths:
     get:
       responses:
         '200':
-          $ref: '#/components/reponses/NotFound'
+          $ref: '#/components/responses/NotFound'
  
 components:
   responses:

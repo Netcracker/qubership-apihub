@@ -275,7 +275,7 @@ func (t transformationControllerImpl) TransformDocuments_deprecated_2(w http.Res
 		return
 	case string(view.StatusComplete):
 		//this case is possible only if we have an old finished build for which we don't have a transformed documents (rebuild required)
-		//or if this build completed during this method execution (rebuild is not requried)
+		//or if this build completed during this method execution (rebuild is not required)
 		content, err := t.versionService.GetTransformedDocuments(ctx, packageId, versionName, apiType, groupName, buildType, format)
 		if err != nil {
 			t.responder.RespondWithError(w, r, "Failed to get transformed documents", err)

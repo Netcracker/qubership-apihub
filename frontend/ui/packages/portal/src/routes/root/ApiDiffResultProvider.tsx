@@ -32,7 +32,7 @@ export function useSetApiDiffResult(): Dispatch<SetStateAction<ApiDiffResult | u
 }
 
 /*
-This is because by default it was "false" and occured "race condition" when changelog and operations
+This is because by default it was "false" and occurred "race condition" when changelog and operations
 were loaded successfully (their loading state === false), but loading/calculating of diff result
 hadn't started yat to that moment and its loading state was === false as well.
 It lead to "blinking" of doc view instead of loading indicator for a moment and changing it to loading indicator again.

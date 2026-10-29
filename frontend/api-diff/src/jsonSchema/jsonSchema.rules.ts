@@ -186,7 +186,7 @@ export const jsonSchemaRules = ({
       },
     },
     '/allOf': {
-      //TODO CHECK. This node wil be only if allOf broken!!! do we need merge it?
+      //TODO CHECK. This node will be only if allOf broken!!! do we need merge it?
       compare: combinersCompareResolver,
       '/*': () => ({
         ...rules,

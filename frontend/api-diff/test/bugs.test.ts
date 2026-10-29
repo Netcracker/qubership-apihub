@@ -337,7 +337,7 @@ describe('Real Data', () => {
     ]))
   })
 
-  it('should not report changes for the same string pattern overriden via ref', () => {
+  it('should not report changes for the same string pattern overridden via ref', () => {
     const before = loadYamlSample('uuid-pattern/before.yaml')
     const after = loadYamlSample('uuid-pattern/after.yaml')
 

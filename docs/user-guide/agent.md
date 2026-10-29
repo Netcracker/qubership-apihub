@@ -9,7 +9,7 @@ APIHUB Agent allows you to discover the environment for the relevant API documen
 The discovery process allows you to find all API documents in the selected namespace of the cloud service.
 
 1. Open APIHUB Agent.
-2. Select cloud service where the Agent is installed and appopriate namespace.
+2. Select cloud service where the Agent is installed and appropriate namespace.
 3. To start the discovery process, click **Run Discovery**. The discovery process finds all services in the current namespace and API documents in each service.
 
 When the discovery process completed, you will see list of all services and their API specifications. For each found service you may habe baseline package. Baseline package is a package from APIHUB Portal where you can promote your discovered API soecifcations.

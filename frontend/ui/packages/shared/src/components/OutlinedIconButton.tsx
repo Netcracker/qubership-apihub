@@ -41,7 +41,7 @@ export const OutlinedIconButton: FC<OutlinedIconButtonProps> = memo(({
   const bothIcons = startIcon && endIcon
   const width = bothIcons ? '48px' : '24px'
 
-  // TODO 12.07.23 Make this component more re-usable & configurable
+  // TODO 12.07.23 Make this component more reusable & configurable
 
   return (
     <Tooltip

@@ -166,7 +166,7 @@ describe.skip('old deprecated tests', () => {
     it('creates different children for "properties" and "methods"', () => {
       const graphql = `
         type Query {
-          """Get random book fro library. Returns "null" if no any books"""
+          """Get random book from library. Returns "null" if no any books"""
           getRandomBook: Book
         }
         
@@ -188,7 +188,7 @@ describe.skip('old deprecated tests', () => {
 
       const query = root!.children()?.find(node => node.kind === 'query')
       expect(query?.value()).toMatchObject({
-        description: 'Get random book fro library. Returns "null" if no any books',
+        description: 'Get random book from library. Returns "null" if no any books',
       })
 
       const args = query!.children().find(child => child.kind === 'args')

@@ -6,7 +6,7 @@
 **Related API**:
 
 - GET /api/v1/packages/{packageId}/exportConfig
-- PACTH /api/v1/packages/{packageId}/exportConfig
+- PATCH /api/v1/packages/{packageId}/exportConfig
 
 **Revision History:**  
 

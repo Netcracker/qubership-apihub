@@ -235,7 +235,7 @@ export function difference(array1: string[], array2: string[]): string[] {
 
 export function removeExcessiveSlashes(input: string): string {
   return input
-    .replace(/\/+/g, '/') // Replace multiple consecutive slashes with single slash TODO- may be it is better to remove double shashes explicitly when concatenating paths
+    .replace(/\/+/g, '/') // Replace multiple consecutive slashes with single slash TODO- may be it is better to remove double slashes explicitly when concatenating paths
     .replace(/^\//, '')    // Remove leading slash
 }
 

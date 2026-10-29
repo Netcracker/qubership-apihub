@@ -51,10 +51,10 @@ func (r ruleSetRepositoryImpl) ActivateRuleset(ctx context.Context, id, oldId st
 			return err
 		}
 		if oldRuleset == nil {
-			return fmt.Errorf("concurrect activation detected(current ruleset is locked). please retry")
+			return fmt.Errorf("concurrent activation detected(current ruleset is locked). please retry")
 		}
 		if oldRuleset.Status != view.RulesetStatusActive {
-			return fmt.Errorf("concurrect activation detected(current ruleset is already inactive). please retry")
+			return fmt.Errorf("concurrent activation detected(current ruleset is already inactive). please retry")
 		}
 
 		// Deactivate currently active ruleset for the same linter and API type
