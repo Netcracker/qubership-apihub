@@ -50,7 +50,7 @@ const routes = [
   `${versionPageRoute}/${COMPARE_PAGE}/:apiType/:operationId`,
 ]
 
-function generatePathname(
+export function generatePathname(
   pathname: string = '',
   params: Readonly<Params<string>>,
   valueToChange: string,
