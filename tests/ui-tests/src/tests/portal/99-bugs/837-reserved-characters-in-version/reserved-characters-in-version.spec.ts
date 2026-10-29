@@ -11,12 +11,12 @@ import { Group, Package, type Version } from '@test-data/props'
 import { HOOK_PUBLISH_TIMEOUT, LONG_EXPECT } from '@test-setup'
 
 /**
- * Portal navigation must keep a version name with characters reserved in URLs: a space, '?', and '#'.
- * Agent snapshot versions are published as encodeURI(name), so they may contain '?' and '#'
+ * Portal navigation must keep a version name with characters reserved in URLs: a space, '?', '#', and '%'.
+ * Agent snapshot versions are published as encodeURI(name), so they may contain '?', '#', and a literal '%'
  * (https://github.com/Netcracker/qubership-apihub/issues/837).
  *
- * The name has no literal '%': the backend decodes the previousVersion query parameter twice
- * (ComparisonController), so the comparison of revisions of such a version never loads.
+ * The comparison test uses a version without a literal '%': the backend decodes the previousVersion query
+ * parameter twice (ComparisonController), so the comparison of revisions of such a version never loads.
  */
 
 test.describe('Version name with reserved URL characters', () => {
@@ -32,8 +32,12 @@ test.describe('Version name with reserved URL characters', () => {
     parent: G_RESERVED_CHARS_N,
   }, { kindPrefix: true })
 
-  // Assigned in beforeAll. Each run of the hook publishes a version with a new name: the hook runs again in a new
+  // Assigned in beforeAll. Each run of the hook publishes versions with new names: the hook runs again in a new
   // worker after any failure, and publishing an existing version would add revisions instead of failing.
+  // vPercentRev* has a literal '%', as agent snapshot names do; vRev* has no '%' and is used for the comparison.
+  // The names differ in more than '%', so a key decoded once too often cannot open the other version.
+  let vPercentRev1: Version
+  let vPercentRev2: Version
   let vRev1: Version
   let vRev2: Version
 
@@ -43,27 +47,41 @@ test.describe('Version name with reserved URL characters', () => {
     await portalPage.gotoVersion({ ...version, version: encodeURIComponent(version.version) })
   }
 
-  test.beforeAll(async ({ apihubTDM }) => {
-    test.setTimeout(HOOK_PUBLISH_TIMEOUT)
-
-    vRev1 = {
+  // Helper functions - Data
+  const makeRevisions = (versionName: string): [Version, Version] => {
+    const rev1: Version = {
       pkg: PKG_RESERVED_CHARS_N,
-      version: `ATUI snapshot ?#${Date.now()}`,
+      version: versionName,
       status: 'draft',
       files: [{ file: FILE_P_PETSTORE30_CHANGELOG_BASE }],
     }
-    vRev2 = {
-      ...vRev1,
+    const rev2: Version = {
+      ...rev1,
       files: [{ file: FILE_P_PETSTORE30_CHANGELOG_CHANGED, fileId: FILE_P_PETSTORE30_CHANGELOG_BASE.name }],
     }
+    return [rev1, rev2]
+  }
+
+  test.beforeAll(async ({ apihubTDM }) => {
+    test.setTimeout(HOOK_PUBLISH_TIMEOUT)
+
+    const timestamp = Date.now()
+    const percentRevisions = makeRevisions(`ATUI percent%20?#${timestamp}`)
+    const revisions = makeRevisions(`ATUI snapshot ?#${timestamp}`)
+    vPercentRev1 = percentRevisions[0]
+    vPercentRev2 = percentRevisions[1]
+    vRev1 = revisions[0]
+    vRev2 = revisions[1]
 
     await apihubTDM.createPackage([G_RESERVED_CHARS_N, PKG_RESERVED_CHARS_N])
+    await apihubTDM.publishVersion(vPercentRev1)
+    await apihubTDM.publishVersion(vPercentRev2)
     await apihubTDM.publishVersion(vRev1)
     await apihubTDM.publishVersion(vRev2)
   })
 
   test.beforeEach(async ({ usedResources }) => {
-    registerVersionFiles(usedResources, [vRev1, vRev2])
+    registerVersionFiles(usedResources, [vPercentRev1, vPercentRev2, vRev1, vRev2])
   })
 
   test('P-BUG-837.1 Open the version and its revision history', async ({ sysadminPage: page }) => {
@@ -72,11 +90,11 @@ test.describe('Version name with reserved URL characters', () => {
     const { overviewTab } = versionPage
     const { summary } = overviewTab.summaryTab.body
 
-    await gotoEncodedVersion(portalPage, vRev2)
+    await gotoEncodedVersion(portalPage, vPercentRev2)
 
     await test.step('Verify the overview of the version is open', async () => {
-      await expect(summary.currentVersion).toHaveText(vRev2.version)
-      await expect.soft(versionPage.toolbar.versionSlt).toHaveText(vRev2.version)
+      await expect(summary.currentVersion).toHaveText(vPercentRev2.version)
+      await expect.soft(versionPage.toolbar.versionSlt).toHaveText(vPercentRev2.version)
       await expect.soft(summary.revision).toHaveText('2')
     })
 
