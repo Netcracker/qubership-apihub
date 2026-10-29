@@ -26,7 +26,7 @@ type OperationRepository interface {
 	GetOperations(ctx context.Context, packageId string, version string, revision int, operationType string, skipRefs bool, searchReq view.OperationListReq) ([]entity.OperationRichEntity, error)
 	GetOperationById(ctx context.Context, packageId string, version string, revision int, operationType string, operationId string, includeData bool) (*entity.OperationRichEntity, error)
 	GetOperationsTags(ctx context.Context, searchQuery entity.OperationTagsSearchQueryEntity, skipRefs bool) ([]string, error)
-	GetOperationChanges(ctx context.Context, comparisonId string, operationId string, severities []string) (*entity.OperationComparisonEntity, error)
+	GetOperationChanges(ctx context.Context, comparisonId string, operationId string, refPackageId string, severities []string) (*entity.OperationComparisonEntity, error)
 	GetOperationChangesSummary(ctx context.Context, comparisonId string, operationId string, refPackageId string) (*entity.OperationComparisonSummaryEntity, error)
 	GetChangelog(ctx context.Context, searchQuery entity.ChangelogSearchQueryEntity) ([]entity.OperationComparisonChangelogEntity, error)
 	GlobalSearchForOperations(ctx context.Context, searchQuery *entity.GlobalOperationSearchQuery) ([]entity.OperationSearchResult, error)
@@ -517,10 +517,18 @@ func (o operationRepositoryImpl) GetOperationsTags(ctx context.Context, searchQu
 	return result, nil
 }
 
-func (o operationRepositoryImpl) GetOperationChanges(ctx context.Context, comparisonId string, operationId string, severities []string) (*entity.OperationComparisonEntity, error) {
+func (o operationRepositoryImpl) GetOperationChanges(ctx context.Context, comparisonId string, operationId string, refPackageId string, severities []string) (*entity.OperationComparisonEntity, error) {
 	result := new(entity.OperationComparisonEntity)
 	err := o.cp.GetConnection().WithContext(ctx).Model(result).
-		Where("comparison_id = ?", comparisonId).
+		Where(`comparison_id in (
+			select unnest(array_append(refs, ?))
+			from version_comparison
+			where comparison_id = ?
+		)`, comparisonId, comparisonId).
+		Where(
+			"(? = '' or package_id = ? or previous_package_id = ?)",
+			refPackageId, refPackageId, refPackageId,
+		).
 		Where("operation_id = ?", operationId).
 		OrderExpr("data_hash, previous_data_hash").
 		Limit(1).
