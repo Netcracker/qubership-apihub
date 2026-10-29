@@ -105,6 +105,7 @@ paths:
           description: Refresh token that will be used to issue a new access token.
           schema:
             type: string
+            # checkov:skip=CKV_SECRET_9: the example JWT is a sample value, not a credential
             example: "apihub-refresh-token=eyJhbGciOiJSUzI1NiIsImtpZCI6InNlY3JldC1pZCIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhcGlodWIiLCJuYW1lIjoiQVBJIEh1YiIsImV4cCI6MTcwMDAwMDAwMCwiaWF0IjoxNjAwMDAwMDAwfQ..."
       responses:
         "200":
