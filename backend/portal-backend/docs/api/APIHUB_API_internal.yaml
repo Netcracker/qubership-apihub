@@ -272,7 +272,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -355,19 +355,19 @@ paths:
           --boundary--
           ```
 
-          ZIP archive with build result can contain folders with sources, builded documents, JSON operation files, and contract files. In addition, several config files are provided. The structure of these files is described in buildResult schema.
+          ZIP archive with build result can contain folders with sources, built documents, JSON operation files, and contract files. In addition, several config files are provided. The structure of these files is described in buildResult schema.
           There are following build types:
             - build - build process for version publication. It consist of contract and operations build and validation, calculation of the changelog, creation of the final version of the published contracts.
             - changelog - only the changelog calculation, no API contracts version will be created. Both version and previousVersion fields *must* contain @<revision> suffix when using changelog buildType.
             - prefix-groups-changelog - changelog calculation for prefixed operation groups.
-            - reducedSourceSpecifications - deprecated proccess that finds source specifications for all operations from operation group and removes from these specifications operations other than those that are included into operation group.
+            - reducedSourceSpecifications - deprecated process that finds source specifications for all operations from operation group and removes from these specifications operations other than those that are included into operation group.
             - mergedSpecification - deprecated process the merges all operations from an operation group into one specification.
             - exportVersion - process of exporting all documents from the package version.
             - exportRestDocument - process of exporting one OpenAPI document form the version.
             - exportRestOperationsGroup - process of exporting one operations group with apiType = rest.
             - exportGraphqlOperationsGroup - process of exporting one operations group with apiType = graphql.
             - exportAsyncapiOperationsGroup - process of exporting one operations group with apiType = asyncapi.
-          There are no any config files in buid result archive for exportVersion/exportRestDocument/exportRestOperationsGroup/exportGraphqlOperationsGroup/exportAsyncapiOperationsGroup build types, i.e. only the resulting build files will be in the archive.
+          There are no any config files in build result archive for exportVersion/exportRestDocument/exportRestOperationsGroup/exportGraphqlOperationsGroup/exportAsyncapiOperationsGroup build types, i.e. only the resulting build files will be in the archive.
         content:
           multipart/form-data:
             schema:
@@ -457,7 +457,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -587,7 +587,7 @@ paths:
                     type: string
                     description: |
                       Folder with source files for publish.
-                      **Required**, if the buidType = buid and "files" array is filled in config.
+                      **Required**, if the buildType = build and "files" array is filled in config.
                     format: binary
                   config.json:
                     oneOf:
@@ -1425,20 +1425,20 @@ components:
     BuildResult:
       description: |
         Result of build operation in ZIP archive.
-          - The archive can contain folders with sources, builded documents, JSON operation files, and contract files.
+          - The archive can contain folders with sources, built documents, JSON operation files, and contract files.
           - In addition, several config files are provided. The structure of these files is described in buildResult schema.
         There are following build types:
           - build - build process for version publication. It consist of contract and operations build and validation, calculation of the changelog, creation of the final version of the published contracts.
           - changelog - only the changelog calculation, no API contracts version will be created. Both version and previousVersion fields *must* contain @<revision> suffix when using changelog buildType.
           - prefix-groups-changelog - changelog calculation for prefixed operation groups.
-          - reducedSourceSpecifications - deprecated proccess that finds source specifications for all operations from operation group and removes from these specifications operations other than those that are included into operation group.
+          - reducedSourceSpecifications - deprecated process that finds source specifications for all operations from operation group and removes from these specifications operations other than those that are included into operation group.
           - mergedSpecification - deprecated process the merges all operations from an operation group into one specification.
           - exportVersion - process of exporting all documents from the package version.
           - exportRestDocument - process of exporting one OpenAPI document form the version.
           - exportRestOperationsGroup - process of exporting one operations group with apiType = rest.
           - exportGraphqlOperationsGroup - process of exporting one operations group with apiType = graphql.
           - exportAsyncapiOperationsGroup - process of exporting one operations group with apiType = asyncapi.
-        There are no any config files in buid result archive for exportVersion/exportRestDocument/exportRestOperationsGroup/exportGraphqlOperationsGroup/exportAsyncapiOperationsGroup build types, i.e. only the resulting build files will be in the archive.
+        There are no any config files in build result archive for exportVersion/exportRestDocument/exportRestOperationsGroup/exportGraphqlOperationsGroup/exportAsyncapiOperationsGroup build types, i.e. only the resulting build files will be in the archive.
       title: Build result
       oneOf:
         - title: Build result for build
@@ -1585,7 +1585,7 @@ components:
                 documents:
                   type: array
                   items:
-                    description: List of builded files.
+                    description: List of built files.
                     type: object
                     required:
                       - fileId
@@ -1952,8 +1952,8 @@ components:
                   example: v1
                 buildType:
                   description: |
-                    Type of the build process for OpeanAPI specification tranformation. Available options are:
-                    - **reducedSourceSpecifications** - proccess that finds source specifications for all operations from operation group and removes from these specifications operations other than those that are included into operation group.
+                    Type of the build process for OpenAPI specification transformation. Available options are:
+                    - **reducedSourceSpecifications** - process that finds source specifications for all operations from operation group and removes from these specifications operations other than those that are included into operation group.
                     - **mergedSpecification** - process the merges all operations from an operation group into one specification.
                   type: string
                   enum:
@@ -1969,7 +1969,7 @@ components:
                 documents:
                   type: array
                   items:
-                    description: List of builded files.
+                    description: List of built files.
                     type: object
                     required:
                       - fileId
@@ -2053,7 +2053,7 @@ components:
         currentDeclarationJsonPaths:
           description: |
             (below, a document is not considered to be an original document, but a document with one specific operation)\
-            When comparing two documents (origin and changed; difference from changed document apended to the original document), a declarative jsonPath is calculated for each change.
+            When comparing two documents (origin and changed; difference from changed document appended to the original document), a declarative jsonPath is calculated for each change.
           type: array
           items:
             type: array
@@ -2066,7 +2066,7 @@ components:
           type: string
           description: |
             Hash of the added entity.\
-            Hash is needed to identify that the same enitity was changed in other operations, that allows calculating declarative number of changes in package version.
+            Hash is needed to identify that the same entity was changed in other operations, that allows calculating declarative number of changes in package version.
     ChangeRemove:
       type: object
       description: Data of single operation change when change action = remove.
@@ -2074,7 +2074,7 @@ components:
         previousDeclarationJsonPaths:
           description: |
             (below, a document is not considered to be an original document, but a document with one specific operation)\
-            When comparing two documents (origin and changed; difference from changed document apended to the original document), a declarative jsonPath is calculated for each change.
+            When comparing two documents (origin and changed; difference from changed document appended to the original document), a declarative jsonPath is calculated for each change.
           type: array
           items:
             type: array
@@ -2087,7 +2087,7 @@ components:
           type: string
           description: |
             Hash of the removed entity.\
-            Hash is needed to identify that the same enitity was changed in other operations, that allows calculating declarative number of changes in package version.
+            Hash is needed to identify that the same entity was changed in other operations, that allows calculating declarative number of changes in package version.
     ChangeReplace:
       type: object
       description: Data of single operation change when change action = replace
@@ -2095,7 +2095,7 @@ components:
         currentDeclarationJsonPaths:
           description: |
             (below, a document is not considered to be an original document, but a document with one specific operation)\
-            When comparing two documents (origin and changed; difference from changed document apended to the original document), a declarative jsonPath is calculated for each change.
+            When comparing two documents (origin and changed; difference from changed document appended to the original document), a declarative jsonPath is calculated for each change.
           type: array
           items:
             type: array
@@ -2107,7 +2107,7 @@ components:
         previousDeclarationJsonPaths:
           description: |
             (below, a document is not considered to be an original document, but a document with one specific operation)\
-            When comparing two documents (origin and changed; difference from changed document apended to the original document), a declarative jsonPath is calculated for each change.
+            When comparing two documents (origin and changed; difference from changed document appended to the original document), a declarative jsonPath is calculated for each change.
           type: array
           items:
             type: array
@@ -2120,12 +2120,12 @@ components:
           type: string
           description: |
             Previous hash of the changed entity.\
-            Hash is needed to identify that the same enitity was changed in other operations, that allows calculating declarative number of changes in package version.
+            Hash is needed to identify that the same entity was changed in other operations, that allows calculating declarative number of changes in package version.
         currentValueHash:
           type: string
           description: |
             Current hash of the changed entity.\
-            Hash is needed to identify that the same enitity was changed in other operations, that allows calculating declarative number of changes in package version.
+            Hash is needed to identify that the same entity was changed in other operations, that allows calculating declarative number of changes in package version.
     ChangeRename:
       type: object
       description: Data of single operation change when change action = rename.
@@ -2133,7 +2133,7 @@ components:
         currentDeclarationJsonPaths:
           description: |
             (below, a document is not considered to be an original document, but a document with one specific operation)\
-            When comparing two documents (origin and changed; difference from changed document apended to the original document), a declarative jsonPath is calculated for each change.
+            When comparing two documents (origin and changed; difference from changed document appended to the original document), a declarative jsonPath is calculated for each change.
           type: array
           items:
             type: array
@@ -2145,7 +2145,7 @@ components:
         previousDeclarationJsonPaths:
           description: |
             (below, a document is not considered to be an original document, but a document with one specific operation)\
-            When comparing two documents (origin and changed; difference from changed document apended to the original document), a declarative jsonPath is calculated for each change.
+            When comparing two documents (origin and changed; difference from changed document appended to the original document), a declarative jsonPath is calculated for each change.
           type: array
           items:
             type: array
@@ -2505,8 +2505,8 @@ components:
           example: v1
         operationsSpecTransformation:
           description: >
-            Type of OpeanAPI specification tranformation. Available options are:
-              - **reducedSourceSpecifications** - proccess that finds source specifications for all operations from operation group and removes from these specifications operations other than those that are included into operation group.
+            Type of OpenAPI specification transformation. Available options are:
+              - **reducedSourceSpecifications** - process that finds source specifications for all operations from operation group and removes from these specifications operations other than those that are included into operation group.
               - **mergedSpecification** - process the merges all operations from an operation group into one specification.
           type: string
           enum:
