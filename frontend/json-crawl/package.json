@@ -42,7 +42,7 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "@types/jest": "30.0.0",
-    "@types/node": "^24.0.0",
+    "@types/node": "24.13.3",
     "jest": "30.4.2",
     "jest-util": "^30.4.1",
     "rimraf": "^5.0.5",
@@ -53,8 +53,8 @@
     "ts-node": "^10.7.0",
     "tslint": "^6.1.2",
     "typescript": "6.0.3",
-    "vite": "^8.2.2",
-    "vite-plugin-dts": "^4.5.4"
+    "vite": "8.2.2",
+    "vite-plugin-dts": "4.5.4"
   },
   "engines": {
     "node": ">=24.0.0"

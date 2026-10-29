@@ -65,7 +65,7 @@
     "@types/jest-image-snapshot": "6.4.0",
     "@types/json-schema": "^7.0.11",
     "@types/lodash": "^4.14.181",
-    "@types/node": "^24.0.0",
+    "@types/node": "24.13.3",
     "@types/prop-types": "^15.7.3",
     "@types/react": "^18.3.31",
     "@types/react-dom": "^18.3.7",
