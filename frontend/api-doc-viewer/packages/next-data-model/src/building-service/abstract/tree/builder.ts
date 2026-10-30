@@ -35,7 +35,7 @@ export abstract class TreeBuilder<
 
   /* Generic utilities */
 
-  // Pick up arbitary props by keys
+  // Pick up arbitrary props by keys
 
   protected pick<TargetType extends object>(
     source: UnknownObject | null,

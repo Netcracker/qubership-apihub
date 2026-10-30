@@ -1,6 +1,6 @@
 {
   "name": "@netcracker/qubership-apihub-apispec-view-json-schema-diff-viewer",
-  "version": "0.0.0",
+  "version": "2.2.0",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Netcracker/qubership-apihub.git",

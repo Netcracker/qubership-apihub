@@ -97,7 +97,7 @@ export class AgentTestDataManager {
           return
         }
       }
-      console.log(`Discovery of the "${params.namespace}" namespace has not been completed by timout`)
+      console.log(`Discovery of the "${params.namespace}" namespace has not been completed by timeout`)
       jsonData = undefined
     }, { box: true })
     const time = endTime ? endTime - startTime : -1

@@ -20,7 +20,9 @@ APIHUB maintainers (@alagishev, @viacheslav-lunev, @karpov-aleksandr)
 
 #### Related ADRs
 
-[0004](./0004-self-contained-ci-with-ci-ok.md), [0008](./0008-documentation-architecture-and-docs-site.md)
+[0004](./0004-self-contained-ci-with-ci-ok.md), [0008](./0008-documentation-architecture-and-docs-site.md).
+[0009](./0009-pages-published-from-develop.md) supersedes the ref rule in the Decision section. The layout,
+Storybook store, and ERD store in this record stay accepted.
 
 <!-- markdownlint-enable MD001 -->
 

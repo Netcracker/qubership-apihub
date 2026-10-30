@@ -4,9 +4,11 @@ Node.js **>= 24** is required (`engines` in the repository root `package.json`).
 
 ## Recommended: proxy mode (real APIHUB)
 
-**Default setup for Portal UI work.** Vite serves the frontend with HMR and forwards `/api`, `/playground`, and `/ws/v1` to a real APIHUB instance.
+**Default setup for Portal UI work.** Vite serves the frontend with HMR and forwards `/api`, `/api-linter`,
+`/agents-backend`, and `/playground` to a real APIHUB instance.
 
-1. Set `proxyServer` in `packages/portal/vite.config.ts` to your APIHUB URL (default: `https://qubership-apihub.localtest.me`).
+1. Set `proxyServer` in `packages/portal/vite.config.ts` to your APIHUB URL (default:
+   `http://host.docker.internal:8081`).
 2. From the workspace root, build the Portal once: `pnpm install`, then `pnpm exec nx build ui-portal`. The dev
    server loads the other workspace packages, such as api-processor, from their `dist/` directories.
 3. From `packages/portal`: `pnpm dev:proxy`.

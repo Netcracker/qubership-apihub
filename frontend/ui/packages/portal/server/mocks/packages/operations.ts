@@ -57,7 +57,7 @@ const restOperationData = {
           id: {
             type: 'string',
             format: 'UUID',
-            description: 'Unique idenfitier of an entity',
+            description: 'Unique identifier of an entity',
           },
           name: {
             type: 'string',

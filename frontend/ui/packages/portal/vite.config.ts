@@ -1,5 +1,4 @@
 import { defineConfig } from 'vite'
-import tsconfigPaths from 'vite-tsconfig-paths'
 import react from '@vitejs/plugin-react'
 import monacoEditor from 'vite-plugin-monaco-editor'
 import path, { resolve } from 'path'
@@ -31,13 +30,19 @@ const apispecViewDist = path.dirname(requireFromHere.resolve('@netcracker/qubers
   .split(path.sep)
   .join('/')
 
-// const proxyServer = 'https://qubership-apihub-2.localtest.me/'
+// The entry point of a running APIHUB: the UI nginx (port 8081 of the Docker Compose stacks, also when the backend
+// runs from the IDE) or the ingress of local Kubernetes. Not the backend itself: nginx strips the extension prefixes
+// such as /api-linter and forwards them to their services.
+// const proxyServer = 'https://qubership-apihub.localtest.me'
 const proxyServer = 'http://host.docker.internal:8081'
-const apiLinterProxyServer = 'http://host.docker.internal:8091'
+
+// The legacy Express mock of `pnpm dev:backend`, the proxy target outside proxy mode (`pnpm dev:frontend`).
+// TODO(ui): remove it with the mock once MSW covers its routes; every prefix then goes to proxyServer.
 const devServer = 'http://localhost:3003'
 
 export default defineConfig(({ mode }) => {
   const isProxyMode = mode === 'proxy'
+  const proxyOptions = { target: isProxyMode ? proxyServer : devServer, changeOrigin: true, secure: false }
   // Bundle-size analysis is opt-in via `npm run build:analyze` (which passes `--mode analyze`).
   // It is kept out of the default build because generating the report holds the full module graph
   // in memory and renders an HTML treemap, which inflates build memory and time — the portal CI
@@ -51,8 +56,7 @@ export default defineConfig(({ mode }) => {
     // the same string.
     define: { __APP_VERSION__: JSON.stringify(appStampedVersion('portal')) },
     plugins: [
-      tsconfigPaths(),
-      react({ fastRefresh: false }),
+      react(),
       ...(analyzeBundle ? [bundleVisualizer()] : []),
       monacoEditor({
         languageWorkers: ['editorWorkerService', 'json'],
@@ -100,13 +104,13 @@ export default defineConfig(({ mode }) => {
       removeMswFromDistPlugin(),
     ],
     optimizeDeps: {
-      // npm link creates a symlink that points outside node_modules and by default such packages are not optimized.
-      // Using "include" here forces listed packages to be optimized.
-      // For example, without this setting, rolldownOptions are not being applied to the npm-linked
-      // @netcracker/qubership-apihub-api-processor during "npm run proxy", which leads to reference errors
-      // like "process is not defined" and "Buffer is not defined".
+      // api-processor is a workspace package linked from outside node_modules, and Vite pre-bundles a linked package
+      // only for the specifiers listed here. An entry that is not listed is served as is, rolldownOptions below does
+      // not apply to it, and the browser fails with "process is not defined" or "Buffer is not defined". Each entry
+      // point is listed on its own: the build worker imports PackageVersionBuilder from /processor.
       include: [
         '@netcracker/qubership-apihub-api-processor',
+        '@netcracker/qubership-apihub-api-processor/processor',
       ],
       // Vite 8 pre-bundles with Rolldown, not esbuild. It runs esbuild plugins only through a shim
       // whose `initialOptions` throws "Not implemented" on any property but `platform` and `plugins`,
@@ -122,9 +126,10 @@ export default defineConfig(({ mode }) => {
       },
     },
     resolve: {
-      // Path aliases come from tsconfig.json via tsconfigPaths(); only substitutions
-      // that no tsconfig declares are listed here. Array form rather than object form
-      // because the icons entry below matches on a pattern, which the object form
+      // Path aliases come from tsconfig.json. Vite resolves them itself, including in worker bundles.
+      tsconfigPaths: true,
+      // Only substitutions that no tsconfig declares are listed here. Array form rather than
+      // object form because the icons entry below matches on a pattern, which the object form
       // cannot express.
       alias: [
         { find: 'process', replacement: require.resolve('process/browser') },
@@ -152,18 +157,12 @@ export default defineConfig(({ mode }) => {
     },
     worker: {
       format: 'es',
-      // Worker bundles are a separate rollup pass with their own plugin list.
-      // resolve.alias is config-level and applies to them automatically; a resolver
-      // plugin is not, so it must be registered here too or aliased imports fail to
-      // resolve inside workers only - and nowhere else. Array form, not the function form:
-      // vite 4 expects an array here; the callback signature arrived in vite 5.1.
-      plugins: [tsconfigPaths()],
     },
     build: {
       emptyOutDir: true,
       // Skip gzip-compressing every chunk just to print its size: costly in memory and time on a large bundle.
       reportCompressedSize: analyzeBundle,
-      rollupOptions: {
+      rolldownOptions: {
         input: {
           app: resolve(__dirname, 'index.html'),
         },
@@ -182,40 +181,13 @@ export default defineConfig(({ mode }) => {
     server: {
       open: '/login',
       proxy: {
-        '/playground': {
-          target: isProxyMode ? `${proxyServer}/playground` : devServer,
-          rewrite: isProxyMode ? path => path.replace(/^\/playground/, '') : undefined,
-          changeOrigin: true,
-          secure: false,
-        },
-        // Endpoint prefix related to extension which is equal to "qubership-api-linter" has name defined in following file:
-        // https://github.com/Netcracker/qubership-apihub/blob/linter/helm-templates/qubership-apihub/values.yaml#L210
-        '/api-linter': {
-          target: apiLinterProxyServer,
-          rewrite: path => path.replace(/^\/api-linter/, ''),
-          changeOrigin: true,
-          secure: false,
-        },
-        // System Information asks the registered extensions for their version, so the Portal needs the prefix of the
-        // agents backend too, even though it has no page of its own.
-        '/agents-backend': {
-          target: isProxyMode ? `${proxyServer}` : devServer,
-          changeOrigin: true,
-          secure: false,
-        },
-        '/api': {
-          target: isProxyMode ? `${proxyServer}/api` : devServer,
-          rewrite: isProxyMode ? path => path.replace(/^\/api/, '') : undefined,
-          changeOrigin: true,
-          secure: false,
-        },
-        '/ws/v1': {
-          target: isProxyMode ? `${proxyServer}/ws` : devServer,
-          rewrite: isProxyMode ? path => path.replace(/^\/ws/, '') : undefined,
-          changeOrigin: true,
-          secure: false,
-          ws: true,
-        },
+        // Vite matches the keys as path prefixes in order, so '/api' also covers the linter at '/api-linter'. A prefix
+        // with another target goes before it.
+        '/api': proxyOptions,
+        // System Information requests the version of the agents backend.
+        '/agents-backend': proxyOptions,
+        // Try It of the REST playground.
+        '/playground': proxyOptions,
       },
     },
   }

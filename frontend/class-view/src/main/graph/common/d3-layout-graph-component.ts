@@ -280,7 +280,7 @@ export class D3LayoutGraphComponent<Meta extends LayoutGraphMeta> {
   }
 
   private applyChangesInternal(trans: Transition<BaseType, unknown, null, unknown>): void {
-    //todo interupt previous transition
+    //todo interrupt previous transition
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     if (isDefine(this._deferredViewport)) {

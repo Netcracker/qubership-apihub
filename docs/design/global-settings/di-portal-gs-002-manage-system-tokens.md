@@ -12,9 +12,9 @@
 
 **Revision History:**  
 
-| Date           | Description                         |
-| -------------- | ----------------------------------- |
-|||
+| Date | Description |
+| ---- | ----------- |
+|      |             |
 
 ***
 
@@ -55,7 +55,7 @@ To create new API key:
      the system shows error message "API key with name \<name> already exists" after user clicks **Generate** button.
    - Roles - optional field. Value of this field defines role(s), i.e. set of permissions that will be available for API
      key. If the user does not specify a role, the role(s) will be the same as the user who generated the token, i.e.
-     system administator.
+     system administrator.
      - API to get list of available roles for package - GET /api/v2/roles
    - Created For - required field. User who will be the owner of API key shall be selected in this field. By default,
      the field is predefined with current user.

@@ -24,7 +24,7 @@ import type {
 import {
   useCreateSnapshotPublicationOptions,
 } from '../../ServicesPageProvider/ServicesPublicationOptionsProvider'
-import { publishSnapshot, toSnapshotVersionKey } from '@agents/entities/snapshots'
+import { publishSnapshot } from '@agents/entities/snapshots'
 import type { PublishConfig } from '@agents/entities/publish-config'
 import { toPublishConfig } from '@agents/entities/publish-config'
 import { WORKSPACE_SEARCH_PARAM } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
@@ -58,7 +58,7 @@ export function useCreateSnapshot(): [CreateSnapshot, IsLoading, IsSuccess, IsEr
         workspaceKey!,
         true,
         false,
-        toSnapshotVersionKey(name),
+        name,
         baseline,
         serviceKeys,
         builderId,
@@ -69,7 +69,7 @@ export function useCreateSnapshot(): [CreateSnapshot, IsLoading, IsSuccess, IsEr
     },
     onSuccess: (config, { name, baseline, serviceKeys }) => {
       setCreateSnapshotPublicationOptions({ name, baseline, serviceKeys, config })
-      removeDocumentErrorFileKeys(client, toSnapshotVersionKey(name))
+      removeDocumentErrorFileKeys(client, name)
       invalidateSnapshots()
     },
   })

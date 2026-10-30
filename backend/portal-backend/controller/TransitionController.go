@@ -127,6 +127,7 @@ func (t transitionControllerImpl) ListActivities(w http.ResponseWriter, r *http.
 				Params:  map[string]interface{}{"param": "offset", "type": "int"},
 				Debug:   err.Error(),
 			})
+			return
 		}
 		if offset < 0 {
 			t.responder.RespondWithCustomError(w, &exception.CustomError{
@@ -135,6 +136,7 @@ func (t transitionControllerImpl) ListActivities(w http.ResponseWriter, r *http.
 				Message: exception.InvalidParameterValueMsg,
 				Params:  map[string]interface{}{"value": offset, "param": "offset"},
 			})
+			return
 		}
 	}
 

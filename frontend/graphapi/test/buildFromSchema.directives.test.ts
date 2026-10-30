@@ -588,7 +588,7 @@ describe('Directives', () => {
     })
   })
 
-  it('directive "deprecated" overriden, but never used', () => {
+  it('directive "deprecated" overridden, but never used', () => {
     const graphApi = graphapi`
       directive @deprecated(reason: String!) on FIELD_DEFINITION
 
@@ -616,7 +616,7 @@ describe('Directives', () => {
     })
   })
 
-  it('directive "include" overriden, but never used', () => {
+  it('directive "include" overridden, but never used', () => {
     const graphApi = graphapi`
       directive @include(if: Boolean!) on FIELD_DEFINITION
 
@@ -646,7 +646,7 @@ describe('Directives', () => {
     })
   })
 
-  it('directive "skip" overriden, but never used', () => {
+  it('directive "skip" overridden, but never used', () => {
     const graphApi = graphapi`
       directive @skip(if: Boolean!) on FIELD_DEFINITION
 
@@ -676,7 +676,7 @@ describe('Directives', () => {
     })
   })
 
-  it('directive "specifiedBy" overriden, but never used', () => {
+  it('directive "specifiedBy" overridden, but never used', () => {
     const graphApi = graphapi`
       directive @specifiedBy(url: String!) on SCALAR
 
@@ -706,7 +706,7 @@ describe('Directives', () => {
     })
   })
 
-  it('directive "oneOf" overriden, but never used', () => {
+  it('directive "oneOf" overridden, but never used', () => {
     const graphApi = graphapi`
       directive @oneOf on FIELD
 

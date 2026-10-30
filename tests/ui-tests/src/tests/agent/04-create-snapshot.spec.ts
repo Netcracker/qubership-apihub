@@ -6,6 +6,7 @@ import { AgentPage } from '@agent/pages'
 import { VersionPackagePage } from '@portal/pages/PortalPage/VersionPage/VersionPackagePage'
 import { LONG_EXPECT, SNAPSHOT_TIMEOUT, TICKET_BASE_URL } from '@test-setup'
 import {
+  A_WS_N,
   SEARCH_SERVICE_LABEL,
   SNAPSHOT_NO_BASELINE,
   SNAPSHOT_NO_CHANGES,
@@ -485,6 +486,30 @@ test.describe('03. Create Snapshot', () => {
           const packagePage = new VersionPackagePage(newPage)
 
           await expect.soft(packagePage.toolbar.title).toHaveText(TEST_SERVICE)
+          await expect(packagePage.toolbar.versionSlt).toHaveText(snapshot.name)
+        })
+      }
+    })
+
+  test('[A-SNP-5-BUG-837] Open a snapshot whose name contains a space',
+    {
+      tag: '@smoke',
+      annotation: { type: 'URL', description: 'https://github.com/Netcracker/qubership-apihub/issues/837' },
+    },
+    async ({ sysadminPage: page }) => {
+      const agentPage = new AgentPage(page)
+      const { servicesTab } = agentPage
+      const snapshot = { ...SNAPSHOT_NO_BASELINE, name: 'test space' }
+
+      await servicesTab.gotoSnapshotStep({ ...config, workspaceId: A_WS_N.packageId })
+      await servicesTab.createSnapshot(snapshot)
+
+      if (!isLocalHost()) {
+        const snapshotPage = await servicesTab.getServiceRow(TEST_SERVICE).viewSnapshot()
+        const packagePage = new VersionPackagePage(snapshotPage)
+
+        await test.step('Verify the link opens the created snapshot in the portal', async () => {
+          await expect(packagePage.toolbar.title).toHaveText(TEST_SERVICE)
           await expect(packagePage.toolbar.versionSlt).toHaveText(snapshot.name)
         })
       }

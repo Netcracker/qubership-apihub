@@ -127,7 +127,7 @@ interface BaseDocsProps {
 
     /**
      * Provide a number to trigger compact mode when the component is within that pixel width,
-     * or a boolean to enable or diable compact mode.
+     * or a boolean to enable or disable compact mode.
      * @default false
      * @example 600
      */

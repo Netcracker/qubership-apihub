@@ -606,7 +606,9 @@ paths:
       summary: Get validation details for a specific document
       description: >
         Returns detailed validation results for a specific document within the package version.
-        Supports multiple linters (Spectral, ai_linter) — each linter result includes its ruleset and issues.
+        Supports multiple linters (Spectral, ai_linter) — each linter result includes its ruleset, status, and issues.
+        A linter that failed or has no stored report is returned with status error, empty issues, and details;
+        results from the other linters are still included.
         Issues within each linter result are sorted first by severity (error, then warning, then info),
         then lexicographically by path segment array: segments are compared left to right as strings
         (array indices are string tokens); when one path is a prefix of another, the shorter path comes first.
@@ -1000,6 +1002,7 @@ components:
         - linter
         - ruleset
         - issues
+        - status
       properties:
         linter:
           description: >
@@ -1011,10 +1014,22 @@ components:
         ruleset:
           $ref: "#/components/schemas/RulesetMetadata"
         issues:
-          description: List of validation issues found by this linter.
+          description: >
+            List of validation issues found by this linter. Empty when status is error.
           type: array
           items:
             $ref: "#/components/schemas/ValidationIssue"
+        status:
+          description: >
+            Outcome of this linter for the document. error means the linter did not produce a report;
+            issues is empty and details explains the failure.
+          type: string
+          enum:
+            - success
+            - error
+        details:
+          description: Failure explanation when status is error.
+          type: string
     ValidationIssue:
       description: >
         A single validation issue reported by a linter, including the location in the document, rule
