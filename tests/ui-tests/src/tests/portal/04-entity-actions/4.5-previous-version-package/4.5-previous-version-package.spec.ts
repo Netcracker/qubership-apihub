@@ -113,7 +113,7 @@ test.describe('4.5 Previous version package', () => {
         await expect.soft(summary.previousVersion).toHaveText(V_PVP_OTHER_RELEASE_N.version)
       })
 
-      await summary.previousVersion.click()
+      await summary.previousVersionLink.click()
 
       await test.step('Verify the previous version opens in another package', async () => {
         await expect(versionPage.toolbar.title).toHaveText(PKG_PVP_OTHER_N.name)
@@ -149,7 +149,7 @@ test.describe('4.5 Previous version package', () => {
         await expect.soft(summary.previousVersion).toHaveText(V_PVP_DSH_OTHER_RELEASE_N.version)
       })
 
-      await summary.previousVersion.click()
+      await summary.previousVersionLink.click()
 
       await test.step('Verify the previous version opens in another dashboard', async () => {
         await expect(versionPage.toolbar.title).toHaveText(DSH_PVP_OTHER_N.name)
