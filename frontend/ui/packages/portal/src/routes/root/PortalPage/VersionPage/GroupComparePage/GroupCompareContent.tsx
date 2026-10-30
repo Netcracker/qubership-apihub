@@ -183,7 +183,7 @@ export const GroupCompareContent: FC<GroupCompareContentProps> = memo(({ groupCh
                 const previousSpecValue = toSpecValue(previousMetadataObject, previousOperationId)
 
                 const comparingSearchParams = optionalSearchParams({
-                  [PACKAGE_SEARCH_PARAM]: { value: changedPackageKey === originPackageKey ? '' : encodeURIComponent(originPackageKey!) },
+                  [PACKAGE_SEARCH_PARAM]: { value: changedPackageKey === originPackageKey ? '' : originPackageKey! },
                   [VERSION_SEARCH_PARAM]: { value: originVersionKey! },
                   [REF_SEARCH_PARAM]: { value: refPackageKey },
                   [GROUP_SEARCH_PARAM]: { value: previousGroup },

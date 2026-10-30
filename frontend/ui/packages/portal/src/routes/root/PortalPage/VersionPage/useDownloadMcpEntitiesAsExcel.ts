@@ -40,8 +40,8 @@ async function downloadMcpEntitiesAsExcel(
   const response = await portalRequestBlob(
     `${
       generatePath(pathPattern, {
-        packageId: packageKey,
-        versionId: version,
+        packageId: encodeURIComponent(packageKey),
+        versionId: encodeURIComponent(version),
         entity: mcpCollectionToApiSegment(collection),
       })
     }?${queryParams}`,

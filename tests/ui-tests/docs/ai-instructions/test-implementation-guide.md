@@ -366,6 +366,12 @@ const retryIndex = test.info().retry + 1
 const rulesetName = `${ALIAS_PREFIX}-Quality-Tab-OAS30-${retryIndex}-${testIdN}`
 ```
 
+The retry index does not make a version name unique. After any failure, the tests that have not run yet move to a new
+worker with retry 0 and run `beforeAll` again. Publishing an existing version does not fail with 409: it adds a
+revision, so assertions on revision numbers break. When a `beforeAll` publishes an `_N` version and the tests depend on
+its revisions, give each run of the hook a new name (for example, with `Date.now()`), as
+`src/tests/portal/99-bugs/837-reserved-characters-in-version/reserved-characters-in-version.spec.ts` does.
+
 ### Preparing tests for retry verification
 
 When preparing tests for retry testing, add `forceRetryForTesting(test.info())` at the end of **every test** in the spec file:

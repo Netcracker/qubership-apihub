@@ -456,7 +456,7 @@ export class ApihubTestDataManager {
     return response.status() === 200 && jsonBody.packageId === packageId
   }
 
-  private async isVersionExist(params: { packageId: string; version: string }): Promise<boolean> {
+  async isVersionExist(params: { packageId: string; version: string }): Promise<boolean> {
     const response = await this.rest.send(rGetPackageVersion, [200, 404], params)
     if (response.status() !== 200 && response.status() !== 404) {
       throw Error(await getRestFailMsg(`Getting "${params.packageId}/${params.version}" version`, response))
