@@ -78,6 +78,12 @@ export const V_PVP_MAIN_FOREIGN_PREV_N: Version = {
   files: [{ file: FILE_P_PETSTORE30 }],
 }
 
+export const V_PVP_MAIN_PUBLISHED_N: Version = {
+  pkg: PKG_PVP_MAIN_N,
+  version: '2000.2',
+  status: 'release',
+}
+
 export const V_PVP_DSH_OTHER_RELEASE_N: Version = {
   pkg: DSH_PVP_OTHER_N,
   version: '2000.1',
@@ -91,6 +97,13 @@ export const V_PVP_DSH_MAIN_BASE_N: Version = {
   version: 'base',
   status: 'draft',
   refs: [{ refId: PKG_PVP_OTHER_N.packageId, version: V_PVP_OTHER_RELEASE_N.version }],
+}
+
+/** Published by the test through the publish dialog; see V_PVP_MAIN_PUBLISHED_N for the key. */
+export const V_PVP_DSH_MAIN_PUBLISHED_N: Version = {
+  pkg: DSH_PVP_MAIN_N,
+  version: '2000.2',
+  status: 'release',
 }
 
 /**

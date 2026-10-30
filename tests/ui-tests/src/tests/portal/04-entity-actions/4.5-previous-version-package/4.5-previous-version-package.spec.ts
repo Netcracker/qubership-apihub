@@ -8,9 +8,11 @@ import {
   PKG_PVP_OTHER_N,
   setupPreviousVersionPackageTestData,
   V_PVP_DSH_MAIN_BASE_N,
+  V_PVP_DSH_MAIN_PUBLISHED_N,
   V_PVP_DSH_OTHER_RELEASE_N,
   V_PVP_MAIN_BASE_N,
   V_PVP_MAIN_FOREIGN_PREV_N,
+  V_PVP_MAIN_PUBLISHED_N,
   V_PVP_OTHER_DRAFT_N,
   V_PVP_OTHER_RELEASE_N,
 } from './previous-version-package.test-data'
@@ -96,10 +98,9 @@ test.describe('4.5 Previous version package', () => {
 
       await portalPage.gotoVersionEditing(V_PVP_MAIN_BASE_N)
       await configureVersionTab.publishBtn.click()
-      // The same version key is allowed because the previous version belongs to another package
       await publishVersionDialog.fillForm({
-        version: V_PVP_OTHER_RELEASE_N.version,
-        status: 'release',
+        version: V_PVP_MAIN_PUBLISHED_N.version,
+        status: V_PVP_MAIN_PUBLISHED_N.status,
         previousVersionPackage: PKG_PVP_OTHER_N,
         previousVersion: MSG_OPTION_OTHER_RELEASE,
       })
@@ -108,7 +109,7 @@ test.describe('4.5 Previous version package', () => {
       await test.step('Verify the version is published with the previous version', async () => {
         await expect(publishVersionDialog.publishBtn).toBeHidden({ timeout: PUBLISH_TIMEOUT })
         await expect(versionPage.toolbar.title).toHaveText(PKG_PVP_MAIN_N.name)
-        await expect.soft(versionPage.toolbar.versionSlt).toHaveText(V_PVP_OTHER_RELEASE_N.version)
+        await expect.soft(versionPage.toolbar.versionSlt).toHaveText(V_PVP_MAIN_PUBLISHED_N.version)
         await expect.soft(summary.previousVersion).toHaveText(V_PVP_OTHER_RELEASE_N.version)
       })
 
@@ -135,8 +136,8 @@ test.describe('4.5 Previous version package', () => {
       await portalPage.gotoVersionEditing(V_PVP_DSH_MAIN_BASE_N)
       await configureVersionTab.publishBtn.click()
       await publishVersionDialog.fillForm({
-        version: V_PVP_DSH_OTHER_RELEASE_N.version,
-        status: 'release',
+        version: V_PVP_DSH_MAIN_PUBLISHED_N.version,
+        status: V_PVP_DSH_MAIN_PUBLISHED_N.status,
         previousVersionPackage: DSH_PVP_OTHER_N,
         previousVersion: MSG_OPTION_DSH_OTHER_RELEASE,
       })
@@ -144,7 +145,7 @@ test.describe('4.5 Previous version package', () => {
 
       await test.step('Verify the version is published with the previous version', async () => {
         await expect(publishVersionDialog.publishBtn).toBeHidden({ timeout: PUBLISH_TIMEOUT })
-        await expect.soft(versionPage.toolbar.versionSlt).toHaveText(V_PVP_DSH_OTHER_RELEASE_N.version)
+        await expect.soft(versionPage.toolbar.versionSlt).toHaveText(V_PVP_DSH_MAIN_PUBLISHED_N.version)
         await expect.soft(summary.previousVersion).toHaveText(V_PVP_DSH_OTHER_RELEASE_N.version)
       })
 

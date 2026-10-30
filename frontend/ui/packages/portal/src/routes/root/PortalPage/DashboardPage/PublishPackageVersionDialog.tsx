@@ -118,22 +118,23 @@ const PublishPackageVersionPopup: FC<PopupProps> = memo<PopupProps>(({ open, set
     if (currentVersionConfig) {
       setValue('status', currentVersionConfig.status as VersionStatus || DRAFT_VERSION_STATUS)
       setValue('labels', currentVersionConfig.metaData?.versionLabels ?? [])
-      setValue('previousVersion', currentVersionConfig.previousVersion || NO_PREVIOUS_RELEASE_VERSION_OPTION)
+      if (!currentVersionConfig.previousVersionPackageKey) {
+        setValue('previousVersion', currentVersionConfig.previousVersion || NO_PREVIOUS_RELEASE_VERSION_OPTION)
+      }
     }
   }, [currentVersionConfig, setValue])
   useEffect(() => {
-    if (!previousVersionPackageKey || isPreviousVersionPackageLoading) {
+    if (!currentVersionConfig || !previousVersionPackageKey || isPreviousVersionPackageLoading) {
       return
     }
-    // The user may have no access to the package. Keep the saved link, otherwise the version would be
-    // looked up in the current package, which can have a version with the same key.
     setValue(
       'previousVersionPackage',
       previousVersionPackage?.key === previousVersionPackageKey
         ? previousVersionPackage
         : toUnresolvedPackage(previousVersionPackageKey, packageKind),
     )
-  }, [isPreviousVersionPackageLoading, packageKind, previousVersionPackage, previousVersionPackageKey, setValue])
+    setValue('previousVersion', currentVersionConfig.previousVersion || NO_PREVIOUS_RELEASE_VERSION_OPTION)
+  }, [currentVersionConfig, isPreviousVersionPackageLoading, packageKind, previousVersionPackage, previousVersionPackageKey, setValue])
 
   const onPublish = useCallback(async (data: PublishInfo): Promise<void> => {
     const previousVersion = replaceEmptyPreviousVersion(data.previousVersion)
