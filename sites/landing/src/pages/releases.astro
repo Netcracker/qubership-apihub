@@ -20,7 +20,7 @@ const releases = rawReleases
     if (byDate !== 0) return byDate;
     return b.data.version.localeCompare(a.data.version, undefined, { numeric: true });
   })
-  .map((r) => ({ ...r.data, slug: r.slug }));
+  .map((r) => ({ ...r.data, slug: r.id }));
 ---
 
 <Layout

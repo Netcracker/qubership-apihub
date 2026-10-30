@@ -1,0 +1,35 @@
+{
+  "action": "opened",
+  "number": 123,
+  "pull_request": {
+    "number": 123,
+    "state": "open",
+    "draft": false,
+    "title": "feat(ui): add search box",
+    "body": "Adds a search box to the package list.\n\nCloses #120",
+    "user": {
+      "login": "bob",
+      "type": "User"
+    },
+    "head": {
+      "ref": "search",
+      "sha": "9a8b7c6d5e4f30211203f4e5d6c7b8a998877665",
+      "repo": {
+        "full_name": "bob/qubership-apihub"
+      }
+    },
+    "base": {
+      "ref": "develop",
+      "repo": {
+        "full_name": "Netcracker/qubership-apihub"
+      }
+    }
+  },
+  "repository": {
+    "full_name": "Netcracker/qubership-apihub"
+  },
+  "sender": {
+    "login": "bob",
+    "type": "User"
+  }
+}

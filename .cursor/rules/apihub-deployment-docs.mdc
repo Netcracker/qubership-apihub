@@ -1,6 +1,6 @@
 ---
 description: Product and deployment documentation for qubership-apihub.
-globs: "docs/**"
+globs: docs/**
 ---
 
 When editing installation, administration, or configuration documentation under `docs/`,

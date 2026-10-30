@@ -207,7 +207,8 @@ pnpm exec playwright install chromium
 BASE_URL=http://localhost:8081 TEST_USER_PASSWORD=<password> pnpm exec playwright test --project=Portal
 ```
 
-- CI runs `--project=Portal --grep-invert=@flaky`.
+- CI on Kind runs `--project=Portal --project=Agent --workers=8 --grep-invert=@flaky|@specific`. Compose runs
+  `--project=Portal --workers=8 --grep-invert=@flaky|@specific`: that stack has no agent.
 - A `.env` file in `tests/ui-tests` can hold `BASE_URL`, `TEST_USER_PASSWORD`, and the other variables. The
   [`tests/ui-tests` README](../../tests/ui-tests/README.md) lists them, with the extra settings for a local or Compose
   stack.

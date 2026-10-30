@@ -24,11 +24,12 @@ with its module path, so it never applies to another module.
 After you edit a package, run from the repository root:
 
 ```bash
-apm install --target cursor,claude --legacy-skill-paths
+apm install --target cursor,claude
 ```
 
 `apm install` deploys the rules and skills. `apm compile` (distributed `AGENTS.md` placement) does not finish
 on a repository of this size, so do not run it; the `AGENTS.md` files in this repository are hand-written.
 
-Package sources under `agent-packages/` and the deployed `.cursor/` and `.claude/` trees are **committed**.
-Gitignore: `apm_modules/`, `agent-packages/**/build/`.
+Package sources under `agent-packages/`, the skills in `.agents/skills/` and `.claude/skills/`, and the deployed
+`.cursor/` and `.claude/` rule trees are **committed**. `.cursor/skills/` is gitignored. Gitignore also covers
+`apm_modules/` and `agent-packages/**/build/`.

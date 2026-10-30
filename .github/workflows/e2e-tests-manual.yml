@@ -14,7 +14,7 @@ name: 'E2E: Run tests (manual)'
 # 1_2_Smoke_Agent there.
 #
 # Empty postman-collections and playwright-args mean the defaults of the runtime. The nightly run takes
-# every default: Kind, dev images, deploy/ from main, the suites from develop.
+# every default: Kind, dev images, deploy/ from develop, the suites from develop.
 
 on:
   workflow_dispatch:
@@ -30,7 +30,7 @@ on:
       deploy-ref:
         description: Ref of deploy/ (Helm charts, compose folders) and of the agent chart
         type: string
-        default: main
+        default: develop
       image-tags:
         description: JSON object with backend, buildTaskConsumer, ui, apiLinterService, agentsBackend, and agent tags; a missing key means dev
         type: string
@@ -56,7 +56,7 @@ on:
         type: string
         default: develop
       playwright-args:
-        description: "Playwright test command arguments. Empty means the runtime's default (--project=Portal --grep-invert=@flaky)"
+        description: "Playwright test command arguments. Empty means the runtime default: Kind with the agent runs Portal and Agent, otherwise Portal. All use 8 workers and exclude @flaky and @specific"
         type: string
         default: ''
       agent:
@@ -85,7 +85,7 @@ jobs:
       tier: full
       image_tags: ${{ inputs.image-tags || '{}' }}
       default_image_tag: dev
-      deploy_ref: ${{ inputs.deploy-ref || 'main' }}
+      deploy_ref: ${{ inputs.deploy-ref || 'develop' }}
       postman_ref: ${{ inputs.postman-ref || 'develop' }}
       playwright_ref: ${{ inputs.playwright-ref || 'develop' }}
       suites: ${{ inputs.suites || 'all' }}
@@ -109,7 +109,7 @@ jobs:
       compose_folder: ${{ inputs.runtime == 'compose-keycloak' && 'with-keycloak' || 'apihub-generic' }}
       image_tags: ${{ inputs.image-tags || '{}' }}
       default_image_tag: dev
-      deploy_ref: ${{ inputs.deploy-ref || 'main' }}
+      deploy_ref: ${{ inputs.deploy-ref || 'develop' }}
       postman_ref: ${{ inputs.postman-ref || 'develop' }}
       playwright_ref: ${{ inputs.playwright-ref || 'develop' }}
       suites: ${{ inputs.suites || 'all' }}

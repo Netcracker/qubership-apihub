@@ -448,3 +448,115 @@ func TestCheckSourceVersionCanBeCopiedForDashboards(t *testing.T) {
 		})
 	}
 }
+
+const (
+	summaryPackageId         = "QS.DDL"
+	summaryPreviousPackageId = "QS.DDL.OLD"
+	summaryVersion           = "2026.2"
+	summaryPreviousVersion   = "2026.1"
+	summaryRevision          = 1
+)
+
+type changeSummaryRepoStub struct {
+	repository.PublishedRepository
+	previousVersionPackageId string
+	comparison               entity.VersionComparisonEntity
+	refsComparisons          []entity.VersionComparisonEntity
+	queriedPreviousPackageId string
+	queriedComparisonId      string
+}
+
+func (s *changeSummaryRepoStub) GetVersionByRevision(context.Context, string, string, int) (*entity.PublishedVersionEntity, error) {
+	return &entity.PublishedVersionEntity{
+		PackageId:                summaryPackageId,
+		Version:                  summaryVersion,
+		Revision:                 summaryRevision,
+		PreviousVersion:          summaryPreviousVersion,
+		PreviousVersionPackageId: s.previousVersionPackageId,
+	}, nil
+}
+
+func (s *changeSummaryRepoStub) GetVersion(_ context.Context, packageId string, versionName string) (*entity.PublishedVersionEntity, error) {
+	s.queriedPreviousPackageId = packageId
+	return &entity.PublishedVersionEntity{PackageId: packageId, Version: versionName, Revision: summaryRevision}, nil
+}
+
+func (s *changeSummaryRepoStub) GetVersionComparison(_ context.Context, comparisonId string) (*entity.VersionComparisonEntity, error) {
+	s.queriedComparisonId = comparisonId
+	return &s.comparison, nil
+}
+
+func (s *changeSummaryRepoStub) GetVersionRefsComparisons(context.Context, string) ([]entity.VersionComparisonEntity, error) {
+	return s.refsComparisons, nil
+}
+
+func TestGetVersionChangeSummaryIncludesContractTypes(t *testing.T) {
+	ddlBreaking := view.ContractType{ContractType: view.ContractTypeDdl, ChangesSummary: view.ChangeSummary{Breaking: 1}}
+	restNonBreaking := view.OperationType{ApiType: string(view.RestApiType), ChangesSummary: view.ChangeSummary{NonBreaking: 1}}
+	tests := []struct {
+		name                     string
+		previousVersionPackageId string
+		comparison               entity.VersionComparisonEntity
+		refsComparisons          []entity.VersionComparisonEntity
+		wantPreviousPackageId    string
+		want                     view.ChangeSummary
+	}{
+		{
+			name:                  "DDL-only package",
+			comparison:            entity.VersionComparisonEntity{ContractTypes: []view.ContractType{ddlBreaking}},
+			wantPreviousPackageId: summaryPackageId,
+			want:                  view.ChangeSummary{Breaking: 1},
+		},
+		{
+			name: "package with operations and DDL",
+			comparison: entity.VersionComparisonEntity{
+				OperationTypes: []view.OperationType{restNonBreaking},
+				ContractTypes:  []view.ContractType{ddlBreaking},
+			},
+			wantPreviousPackageId: summaryPackageId,
+			want:                  view.ChangeSummary{Breaking: 1, NonBreaking: 1},
+		},
+		{
+			name:       "dashboard sums its ref comparisons",
+			comparison: entity.VersionComparisonEntity{Refs: []string{"ref-1", "ref-2"}},
+			refsComparisons: []entity.VersionComparisonEntity{
+				{OperationTypes: []view.OperationType{restNonBreaking}, ContractTypes: []view.ContractType{ddlBreaking}},
+				{ContractTypes: []view.ContractType{ddlBreaking}},
+			},
+			wantPreviousPackageId: summaryPackageId,
+			want:                  view.ChangeSummary{Breaking: 2, NonBreaking: 1},
+		},
+		{
+			name:                     "previous version in another package",
+			previousVersionPackageId: summaryPreviousPackageId,
+			comparison:               entity.VersionComparisonEntity{ContractTypes: []view.ContractType{ddlBreaking}},
+			wantPreviousPackageId:    summaryPreviousPackageId,
+			want:                     view.ChangeSummary{Breaking: 1},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repo := &changeSummaryRepoStub{
+				previousVersionPackageId: tt.previousVersionPackageId,
+				comparison:               tt.comparison,
+				refsComparisons:          tt.refsComparisons,
+			}
+			service := versionServiceImpl{publishedRepo: repo}
+
+			summary, err := service.getVersionChangeSummary(context.Background(), summaryPackageId, summaryVersion, summaryRevision)
+			if err != nil {
+				t.Fatalf("expected the change summary to be built, got %v", err)
+			}
+			if summary == nil || *summary != tt.want {
+				t.Fatalf("expected summary %+v, got %+v", tt.want, summary)
+			}
+			if repo.queriedPreviousPackageId != tt.wantPreviousPackageId {
+				t.Errorf("expected the previous version to be read from %q, got %q", tt.wantPreviousPackageId, repo.queriedPreviousPackageId)
+			}
+			wantComparisonId := view.MakeVersionComparisonId(summaryPackageId, summaryVersion, summaryRevision, tt.wantPreviousPackageId, summaryPreviousVersion, summaryRevision)
+			if repo.queriedComparisonId != wantComparisonId {
+				t.Errorf("expected comparison %q, got %q", wantComparisonId, repo.queriedComparisonId)
+			}
+		})
+	}
+}

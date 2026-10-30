@@ -1,0 +1,6 @@
+{
+  "schedule": "*/10 * * * *",
+  "repository": {
+    "full_name": "Netcracker/qubership-apihub"
+  }
+}

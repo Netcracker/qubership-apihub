@@ -1,11 +1,13 @@
 name: 'E2E: Kind'
 
 # E2E on a Kind cluster, with the product installed by its Helm charts: Newman over the REST API
-# (tests/postman-collections), then the Playwright Portal project (tests/ui-tests). Unlike compose,
-# this covers the charts, the ingress, TLS, the custom CA mount, and the agent. The charts, the agent
-# chart, and both suites come from the commit that started the run, unless deploy_ref, postman_ref,
-# or playwright_ref name another ref of this repository; only the pinned ingress-nginx manifest is
-# downloaded.
+# (tests/postman-collections), then the Playwright Portal and Agent projects (tests/ui-tests).
+# The Agent project runs when this workflow deploys the agent. That deploy also puts the
+# test-service fixtures into api-hub-ci and api-hub-preprod, which the Agent UI tests discover.
+# Unlike compose, this covers the charts, the ingress, TLS, the custom CA mount, and the agent.
+# The charts, the agent chart, and both suites come from the commit that started the run, unless
+# deploy_ref, postman_ref, or playwright_ref name another ref of this repository; only the pinned
+# ingress-nginx manifest is downloaded.
 #
 # Callers: ci.yml (this run's images at the branch tag) and e2e-tests-manual.yml (the launch contract).
 # Keep the inputs shared with e2e-tests-compose.yml identical.
@@ -63,12 +65,16 @@ on:
         type: string
         default: ''
       playwright_args:
-        description: Arguments of `playwright test`. Empty means the default.
+        description: >-
+          Arguments of `playwright test`. Empty means Portal and Agent when the agent is deployed,
+          otherwise Portal. Both use 8 workers and exclude @flaky and @specific.
         required: false
         type: string
         default: ''
       agent:
-        description: Deploy the APIHUB agent and run its Postman collection.
+        description: >-
+          Deploy the APIHUB agent, the test services the Agent UI tests discover, and run its
+          Postman collection.
         required: false
         type: boolean
         default: true
@@ -375,18 +381,199 @@ jobs:
         working-directory: ${{ runner.temp }}/helm/local-k8s-quickstart
         run: |
           set -euo pipefail
+          # What the UI tests need on top of the quickstart:
+          # - defaultWorkspaceId: the backend returns it in the system configuration, which the
+          #   tests read. agents-backend copies the package structure of QS into the workspace
+          #   under discovery, and [A-DRP-1] expects that copy as the baseline.
+          # - nc-service: the Agent UI shows the Automation and Gateway Routing Report tabs only
+          #   when this extension is registered. The stack has no nc-service, so the entry points
+          #   at the backend. Helm replaces a list as a whole, so the two quickstart extensions are
+          #   repeated here.
+          # - The public URL for agents-backend: it puts this URL into portal links, and the
+          #   browser cannot open the in-cluster one from the quickstart.
           # The images file goes last, so it overrides the repositories and tags that
           # local-k8s-values.yaml names.
+          cat > "$RUNNER_TEMP/apihub-e2e-values.yaml" <<EOF
+          qubershipApihubBackend:
+            env:
+              businessParameters:
+                defaultWorkspaceId: 'QS'
+              extensions:
+                - name: api-linter
+                  baseUrl: http://qubership-api-linter-service:8080
+                  pathPrefix: api-linter
+                - name: agents-backend
+                  baseUrl: http://qubership-apihub-agents-backend:8080
+                  pathPrefix: agents-backend
+                - name: nc-service
+                  baseUrl: http://qubership-apihub-backend:8080
+                  pathPrefix: apihub-nc
+          qubershipApihubAgentsBackend:
+            env:
+              businessParameters:
+                defaultWorkspaceId: 'QS'
+              technicalParameters:
+                apihub:
+                  url: 'https://${APIHUB_HOST}'
+          EOF
           helm upgrade --install apihub ../qubership-apihub \
             --namespace "$NAMESPACE" \
             --create-namespace \
             --values qubership-apihub/local-k8s-values.yaml \
             --values qubership-apihub/local-secrets.yaml \
+            --values "$RUNNER_TEMP/apihub-e2e-values.yaml" \
             --values '${{ steps.images.outputs.values }}' \
             --wait --timeout 10m
 
-      # Pods resolve the ingress host to the controller, so the backend's external URLs work inside
-      # the cluster. This restarts every deployment, so the rollout is awaited again.
+      # Fails here, not in the UI tests, when the e2e values did not reach a config.
+      - name: Check the APIHUB configuration
+        id: apihub_config
+        shell: bash
+        run: |
+          set -euo pipefail
+          config_of() {
+            kubectl get secret "$1" --namespace "$NAMESPACE" \
+              --output=jsonpath='{.data.config\.yaml}' | base64 --decode
+          }
+          backend="$(config_of qubership-apihub-backend-config-secret)"
+          agents_backend="$(config_of qubership-apihub-agents-backend-config-secret)"
+          require() {
+            printf '%s' "$1" | grep --fixed-strings --quiet -- "$2" \
+              || { echo "::error::$3"; exit 1; }
+          }
+          require "$backend" 'defaultWorkspaceId: QS' "the backend has no default workspace"
+          require "$backend" 'name: nc-service' "the backend does not register the nc-service extension"
+          require "$agents_backend" 'defaultWorkspaceId: QS' "agents-backend has no default workspace"
+          require "$agents_backend" "https://${APIHUB_HOST}" "agents-backend does not use the public APIHUB URL"
+          echo "the backend and agents-backend use the default workspace QS, nc-service, and the public URL"
+
+      # The Agent UI tests discover these six deployments. The chart hardcodes its name and
+      # app.kubernetes.io/part-of, so each copy is helm template plus a rewrite, the same pipeline the
+      # previous repository's Kind workflow used. The image tags are fixtures published on
+      # ghcr.io/netcracker/qubership-apihub-test-service, not the test-service image of this commit.
+      - name: Deploy the agent test services
+        id: test_services
+        if: inputs.agent
+        shell: bash
+        run: |
+          set -euo pipefail
+          chart="backend/test-service/helm-template/qubership-apihub-test-service"
+          apply_test_service() {
+            namespace=$1
+            name=$2
+            image_tag=$3
+            part_of=$4
+            helm template "$name" "$chart" \
+              --namespace "$namespace" \
+              --set-string "qubershipApihubTestService.image.tag=${image_tag}" \
+              --show-only templates/Deployment.yaml \
+              --show-only templates/Service.yaml \
+            | sed \
+              -e "s/name: qubership-apihub-test-service/name: ${name}/g" \
+              -e "s/part-of: qubership-apihub-test-service/part-of: ${part_of}/g" \
+            | awk -v ver="$image_tag" '
+                /app\.kubernetes\.io\/part-of:/ {
+                  print
+                  match($0, /^[[:space:]]*/)
+                  print substr($0, 1, RLENGTH) "app.kubernetes.io/version: \"" ver "\""
+                  next
+                }
+                { print }
+              ' \
+            | kubectl apply --namespace "$namespace" -f -
+          }
+          assert_test_service() {
+            namespace=$1
+            name=$2
+            part_of=$3
+            version=$4
+            if ! deploy_got=$(kubectl get deployment "$name" \
+              --namespace "$namespace" \
+              --output=jsonpath='{.metadata.labels.app\.kubernetes\.io/part-of}{"|"}{.spec.template.metadata.labels.app\.kubernetes\.io/part-of}{"|"}{.spec.template.metadata.labels.app\.kubernetes\.io/version}'); then
+              echo "::error::deployment/${name} is missing in namespace ${namespace}."
+              exit 1
+            fi
+            deploy_want="${part_of}|${part_of}|${version}"
+            if [ "$deploy_got" != "$deploy_want" ]; then
+              echo "::error::deployment/${name} in ${namespace}: expected ${deploy_want}, got ${deploy_got}."
+              exit 1
+            fi
+            if ! service_got=$(kubectl get service "$name" \
+              --namespace "$namespace" \
+              --output=jsonpath='{.metadata.labels.app\.kubernetes\.io/part-of}'); then
+              echo "::error::service/${name} is missing in namespace ${namespace}."
+              exit 1
+            fi
+            if [ "$service_got" != "$part_of" ]; then
+              echo "::error::service/${name} in ${namespace}: expected part-of=${part_of}, got ${service_got}."
+              exit 1
+            fi
+          }
+
+          for namespace in api-hub-ci api-hub-preprod; do
+            kubectl create namespace "$namespace" --dry-run=client -o yaml | kubectl apply -f -
+            apply_test_service "$namespace" apihub-agent-test-service protected-atui APIHUB
+            apply_test_service "$namespace" apihub-backend protected-atui "API-HUB"
+            apply_test_service "$namespace" apihub-agent protected-atui-empty APIHUB-AGENT
+          done
+
+          for namespace in api-hub-ci api-hub-preprod; do
+            for name in apihub-agent-test-service apihub-backend apihub-agent; do
+              kubectl rollout status "deployment/${name}" \
+                --namespace "$namespace" \
+                --timeout=5m
+            done
+            assert_test_service "$namespace" apihub-agent-test-service APIHUB protected-atui
+            assert_test_service "$namespace" apihub-backend "API-HUB" protected-atui
+            assert_test_service "$namespace" apihub-agent APIHUB-AGENT protected-atui-empty
+          done
+
+      # --set-file keeps the token off the command line. The extra values are what the Agent UI tests
+      # need: grouping by part-of and version, and the public URL, trusted through the local CA.
+      - name: Deploy the APIHUB agent
+        id: agent
+        if: inputs.agent
+        shell: bash
+        run: |
+          set -euo pipefail
+          chart="$RUNNER_TEMP/helm/qubership-apihub-agent"
+          token_file="$RUNNER_TEMP/apihub-agent-access-token"
+          printf '%s' "$APIHUB_ACCESS_TOKEN" > "$token_file"
+          cat > "$RUNNER_TEMP/apihub-agent-ui-tests-values.yaml" <<EOF
+          qubershipApihubAgent:
+            customCa:
+              enabled: true
+              secretName: apihub-local-custom-ca
+            env:
+              discovery:
+                groupingLabels:
+                  - app.kubernetes.io/part-of
+                  - app.kubernetes.io/version
+              technicalParameters:
+                apihub:
+                  url: 'https://${APIHUB_HOST}'
+          EOF
+          tag='${{ steps.images.outputs.agent_tag }}'
+          args=(
+            --namespace "$NAMESPACE"
+            --values "$chart/local-k8s-values.yaml"
+            --values "$RUNNER_TEMP/apihub-agent-ui-tests-values.yaml"
+            --set-string "qubershipApihubAgent.env.technicalParameters.agentHost=qubership-apihub-agent.$NAMESPACE.svc.cluster.local"
+            --set-file "qubershipApihubAgent.env.technicalParameters.apihub.accessToken=$token_file"
+            --set-string "qubershipApihubAgent.image.repository=${{ steps.images.outputs.agent_repository }}"
+            --set-string "qubershipApihubAgent.image.tag=$tag"
+            --set-string "qubershipApihubAgent.version=$tag"
+          )
+          status=0
+          # No --wait: the agent calls the public URL at startup, so its pod restarts until Point
+          # the pods at the ingress adds the host aliases. That step waits for the rollout.
+          helm upgrade --install qubership-apihub-agent "$chart" "${args[@]}" || status=$?
+          rm -f "$token_file"
+          exit "$status"
+
+      # localtest.me resolves to localhost inside a pod. The script maps the ingress host to the
+      # controller in every deployment of the namespace, the agent included, so external URLs
+      # work inside the cluster. The patch restarts the deployments, so the rollout is awaited.
       - name: Point the pods at the ingress
         id: ingress_hosts
         shell: bash
@@ -421,45 +608,23 @@ jobs:
           kubectl get pods --all-namespaces
           exit 1
 
-      # --set-file keeps the token off the command line.
-      - name: Deploy the APIHUB agent
-        id: agent
-        if: inputs.agent
-        shell: bash
-        run: |
-          set -euo pipefail
-          chart="$RUNNER_TEMP/helm/qubership-apihub-agent"
-          token_file="$RUNNER_TEMP/apihub-agent-access-token"
-          printf '%s' "$APIHUB_ACCESS_TOKEN" > "$token_file"
-          tag='${{ steps.images.outputs.agent_tag }}'
-          args=(
-            --namespace "$NAMESPACE"
-            --values "$chart/local-k8s-values.yaml"
-            --set-string "qubershipApihubAgent.env.technicalParameters.agentHost=qubership-apihub-agent.$NAMESPACE.svc.cluster.local"
-            --set-file "qubershipApihubAgent.env.technicalParameters.apihub.accessToken=$token_file"
-            --set-string "qubershipApihubAgent.image.repository=${{ steps.images.outputs.agent_repository }}"
-            --set-string "qubershipApihubAgent.image.tag=$tag"
-            --set-string "qubershipApihubAgent.version=$tag"
-          )
-          status=0
-          helm upgrade --install qubership-apihub-agent "$chart" "${args[@]}" --wait --timeout 5m || status=$?
-          rm -f "$token_file"
-          exit "$status"
-
-      - name: Check the agent carries the access token
+      - name: Check the agent configuration
         id: agent_token
         if: inputs.agent
         shell: bash
         run: |
           set -euo pipefail
-          if kubectl get secret qubership-apihub-agent-config-secret \
-              --namespace "$NAMESPACE" --output=jsonpath='{.data.config\.yaml}' \
-              | base64 --decode | grep --fixed-strings --quiet -- "$APIHUB_ACCESS_TOKEN"; then
-            echo "the agent's configuration holds the access token"
-          else
-            echo "::error::the agent's configuration does not hold the access token"
-            exit 1
-          fi
+          config="$(kubectl get secret qubership-apihub-agent-config-secret \
+            --namespace "$NAMESPACE" --output=jsonpath='{.data.config\.yaml}' | base64 --decode)"
+          require() {
+            printf '%s' "$config" | grep --fixed-strings --quiet -- "$1" \
+              || { echo "::error::$2"; exit 1; }
+          }
+          require "$APIHUB_ACCESS_TOKEN" "the agent's configuration does not hold the access token"
+          require "https://${APIHUB_HOST}" "the agent's configuration does not use the public APIHUB URL"
+          require 'app.kubernetes.io/part-of' "the agent's configuration does not group by part-of"
+          require 'app.kubernetes.io/version' "the agent's configuration does not group by version"
+          echo "the agent's configuration holds the access token, the public URL, and the grouping labels"
 
       # Reads the images back from the deployments: Helm ignores a values key the chart does not read,
       # and the release still succeeds with the chart's default image.
@@ -491,7 +656,7 @@ jobs:
       - name: Show the pods that did not start
         if: failure()
         shell: bash
-        run: bash tools/ci/k8s-pod-diagnostics.sh "$GITHUB_STEP_SUMMARY" "$NAMESPACE" postgres-db ingress-nginx
+        run: bash tools/ci/k8s-pod-diagnostics.sh "$GITHUB_STEP_SUMMARY" "$NAMESPACE" postgres-db ingress-nginx api-hub-ci api-hub-preprod
 
       - name: Run the postman collections
         id: newman
@@ -569,13 +734,25 @@ jobs:
           CLEAR_TD: skip
           PLAYWRIGHT_ARGS: ${{ inputs.playwright_args }}
           TIER: ${{ inputs.tier }}
+          AGENT: ${{ inputs.agent }}
+          # Registered agent id: lowercase(cloudName) + "_" + lowercase(release namespace).
+          # The chart cloudName is Kind; this job installs the agent into qubership-apihub.
+          AGENT_TEST_CLOUD: kind_qubership-apihub
         shell: bash
         run: |
           set -euo pipefail
-          # playwright.config.ts sets 10 workers under CI. The arguments are split like a shell would,
-          # quotes included, without evaluating them.
+          # playwright.config.ts sets 10 workers under CI. This job uses 8, as the previous
+          # repository's Kind workflow did. @specific tests need a stand set up for them (SSO,
+          # creating a Gateway Routing report), so they are skipped together with @flaky. The
+          # arguments are split like a shell would, quotes included, without evaluating them.
           args="$PLAYWRIGHT_ARGS"
-          [ -n "${args//[[:space:]]/}" ] || args='--project=Portal --grep-invert=@flaky'
+          if [ -z "${args//[[:space:]]/}" ]; then
+            if [ "$AGENT" = 'true' ]; then
+              args='--project=Portal --project=Agent --workers=8 --grep-invert=@flaky|@specific'
+            else
+              args='--project=Portal --workers=8 --grep-invert=@flaky|@specific'
+            fi
+          fi
           mapfile -t argv < <(xargs -n1 <<< "$args")
           if [ "$TIER" = 'smoke' ]; then argv+=(--grep=@smoke); fi
           echo "playwright ${argv[*]}"
@@ -637,9 +814,9 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: playwright-reports
-          path: |
-            tests/ui-tests/reports
-            tests/ui-tests/temp/test-results
+          # The HTML report keeps a copy of the screenshot, trace, and error-context.md of each
+          # failure in reports/playwright/data, so temp/test-results is not uploaded.
+          path: tests/ui-tests/reports
           if-no-files-found: warn
           retention-days: 7
 
@@ -674,8 +851,10 @@ jobs:
               kind_config: "Write the Kind configuration", kind_cluster: "Create the Kind cluster",
               ingress: "Install the ingress controller", charts: "Stage the charts", credentials: "Take the stack\x27s credentials",
               secrets: "Generate TLS and template the secrets", postgres: "Deploy PostgreSQL", custom_ca: "Create the custom CA secret",
-              apihub: "Deploy APIHUB", ingress_hosts: "Point the pods at the ingress", answer: "Wait for APIHUB to answer",
-              agent: "Deploy the APIHUB agent", agent_token: "Check the agent carries the access token",
+              apihub: "Deploy APIHUB", apihub_config: "Check the APIHUB configuration",
+              test_services: "Deploy the agent test services", agent: "Deploy the APIHUB agent",
+              ingress_hosts: "Point the pods at the ingress", answer: "Wait for APIHUB to answer",
+              agent_token: "Check the agent configuration",
               stack_images: "Check which images the stack runs",
             }
             const id = Object.keys(setup).find((k) => steps[k] && steps[k].outcome === "failure")

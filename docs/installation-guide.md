@@ -271,7 +271,7 @@ All other parameters are `config.yaml` keys. Most important:
 | `businessParameters.templateSizeLimitMb` | No | `1` | Max operation group template size (MB) |
 | `businessParameters.shareabilityReportSizeLimitMb` | No | `10` | Max shareability report XLSX size (MB) |
 | `businessParameters.systemNotification` | No | — | Banner text shown to all Portal users (e.g. maintenance window) |
-| `businessParameters.failBuildOnBrokenRefs` | No | `true` | Fail package build if file references can't be resolved |
+| `businessParameters.failBuildOnBrokenRefs` | No | `true` | Fail package build if file references can't be resolved. Applies to Portal publications and to Agent snapshot and promotion builds |
 | `businessParameters.defaultWorkspaceId` | No | — | Default workspace for Agents UI |
 | `businessParameters.ephemeralFileMaxSizeMb` | No | `50` | Max size (MB) for ephemeral (temporary) files |
 | `businessParameters.ephemeralFileTTLMinutes` | No | `30` | TTL (minutes) for ephemeral files before they expire |

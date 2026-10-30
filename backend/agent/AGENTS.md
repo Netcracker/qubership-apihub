@@ -144,7 +144,7 @@ Full checklist: `.cursor/rules/ci-super-linter.mdc` after `apm install`.
 
 ## Agent packages
 
-One root `apm.yml` covers the repository; deploy with `apm install --target cursor,claude --legacy-skill-paths`
+One root `apm.yml` covers the repository; deploy with `apm install --target cursor,claude`
 from the root (never `apm compile`). Sources of the local packages are in `agent-packages/` of this module.
 
 - `apihub-agent-developer` (skill and rule, local): use for any change to discovery runners, `main.go` wiring,

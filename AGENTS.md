@@ -87,7 +87,7 @@ packages live next to the code they describe:
 | `backend/portal-backend/agent-packages/` | `apihub-backend-developer`, `apihub-backend-self-review`, `backend-conventions`, `advanced-verification` |
 | `backend/agent/agent-packages/` | `apihub-agent-developer`, `agent-conventions` |
 | `frontend/<library>/agent-packages/` | `api-diff-*`, `api-doc-viewer-*`, `next-data-model-*`, `api-processor-*`, `api-unifier-*`, `ddlapi-*`, `json-crawl-*` |
-| `frontend/ui/agent-packages/` | `apihub-ui-authoring` |
+| `frontend/ui/agent-packages/` | `apihub-ui-authoring`, `apihub-typescript-coding`, `apihub-react-coding`, `apihub-mui-coding`, `apihub-unit-testing`, `apihub-quality-gates`, `apihub-agents-claude`, `apihub-agents-cursor` |
 | `tests/postman-collections/agent-packages/` | `postman-e2e-authoring`, `postman-e2e-followup` |
 
 Every module instruction has an `applyTo` glob that starts with its module path, so it does not apply to another
@@ -96,12 +96,14 @@ module. The `*-using` packages are the exception by design: they name the consum
 After you edit a package, run from the repository root:
 
 ```bash
-apm install --target cursor,claude --legacy-skill-paths
+apm install --target cursor,claude
 ```
 
-Commit the package sources and the deployed `.cursor/` and `.claude/` trees together. Never edit the
-deployed trees by hand. Do not run `apm compile`: it does not finish on a repository of this size. The
-`AGENTS.md` and `CLAUDE.md` files in this repository, including those inside modules, are hand-written.
+Commit the package sources, `.agents/skills/`, `.claude/skills/`, and the refreshed rule trees together.
+A clone then has skills for Claude Code and for harnesses that read `.agents/skills/`, without `apm install`.
+Do not commit `.cursor/skills/`. Cursor reads `.agents/skills/` and `.claude/skills/`.
+Never edit the deployed trees by hand. Do not run `apm compile`: it does not finish on a repository of this
+size. The `AGENTS.md` and `CLAUDE.md` files in this repository, including those inside modules, are hand-written.
 
 Always-on conventions: `development-conventions`, `english-developer-style`, `markdown-line-length-120`. Adding a
 Go service: use the `apihub-add-go-service` skill. See [`agent-packages/README.md`](agent-packages/README.md).

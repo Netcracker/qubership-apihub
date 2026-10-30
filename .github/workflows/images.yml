@@ -9,9 +9,9 @@ name: 'Images: Build'
 # Images go to ghcr.io/<repository owner>/<image>, under the names the product has always used
 # (qubership-apihub-backend, qubership-api-linter-service, and so on).
 #
-# Platforms (release design R3): linux/amd64 and linux/arm64 for `release` and `main`, linux/amd64
-# only for every other ref. A content hash that exists for amd64 only is rebuilt on those two
-# branches, so `:next` and `:latest` never point at a single-architecture image.
+# Platforms: linux/amd64 and linux/arm64 for every ref, so developers on Apple silicon can run the
+# images of any branch. A content hash that exists for amd64 only (built before every ref got arm64)
+# is rebuilt, so no branch tag points at a single-architecture image.
 
 on:
   workflow_call:
@@ -19,9 +19,10 @@ on:
       images:
         description: >-
           JSON array of matrix legs. Each is {project, image, dockerfile, build_projects, deploy,
-          context, dockerignore, workspace_build, outputs}. `outputs` is optional: space-separated
-          paths (globs allowed) that must exist after the Nx build; empty means `<root>/dist` of
-          every build project.
+          context, dockerignore, hash_paths, workspace_build, outputs}. `outputs` is optional:
+          space-separated paths (globs allowed) that must exist after the Nx build; empty means
+          `<root>/dist` of every build project. `hash_paths` is optional: space-separated paths
+          outside those project trees that still change the image. A directory contributes its git tree.
         required: true
         type: string
       push:
@@ -40,7 +41,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     # release-finish.yml leaves main and release at the same commit, and both CI runs build images for
-    # it. The content hash does not depend on the ref and both refs require amd64 and arm64, so the
+    # it. The content hash does not depend on the ref and every ref requires amd64 and arm64, so the
     # second leg finds the first one's src-<hash> and only retags, but only if it checks after the first
     # pushed. This group makes the legs of the same image at the same commit on those two refs wait for
     # each other; not cancelled, so both legs run. Every other ref gets a group of its own run.
@@ -69,37 +70,17 @@ jobs:
         with:
           cache-scope: images-${{ matrix.image }}
 
-      # Refs and names reach the scripts through env, never through `${{ }}` inside the script text:
-      # a branch name may contain quotes.
-      - name: Choose the platforms
-        id: platforms
-        shell: bash
-        env:
-          REF: ${{ github.ref }}
-        run: |
-          set -euo pipefail
-          case "$REF" in
-            refs/heads/release|refs/heads/main)
-              echo "value=linux/amd64,linux/arm64" >> "$GITHUB_OUTPUT"
-              echo "multi=true" >> "$GITHUB_OUTPUT"
-              ;;
-            *)
-              echo "value=linux/amd64" >> "$GITHUB_OUTPUT"
-              echo "multi=false" >> "$GITHUB_OUTPUT"
-              ;;
-          esac
-
       # Emulation for the arm64 stages that run commands. The Go stages cross-compile on the build
       # platform and the JavaScript images copy a prebuilt tree, so the cost is small.
       - uses: docker/setup-qemu-action@v4
-        if: steps.platforms.outputs.multi == 'true'
         with:
           platforms: arm64
 
       - uses: docker/setup-buildx-action@v4
 
       # develop -> dev, release -> next, main -> latest, feature/x -> feature-x, a pull request ->
-      # pull-N-merge (tools/ci/branch-tag.sh).
+      # pull-N-merge (tools/ci/branch-tag.sh). Refs and names reach the scripts through env, never
+      # through `${{ }}` inside the script text: a branch name may contain quotes.
       - name: Compute tags
         id: tags
         shell: bash
@@ -110,15 +91,17 @@ jobs:
           BUILD_PROJECTS: ${{ matrix.build_projects }}
           DOCKERFILE: ${{ matrix.dockerfile }}
           DOCKERIGNORE: ${{ matrix.dockerignore }}
+          HASH_PATHS: ${{ matrix.hash_paths }}
         run: |
           set -euo pipefail
           branch_tag="$(bash tools/ci/branch-tag.sh "$REF")"
 
           pnpm exec nx graph --file=graph.json >/dev/null
           # The ignore files decide what reaches the build context, so they are part of the hash.
-          # `DOCKERIGNORE` is a space-separated list, deliberately unquoted.
+          # `DOCKERIGNORE` and `HASH_PATHS` are space-separated lists, deliberately unquoted.
+          # HASH_PATHS is empty for every image but the UI. A directory is hashed as its git tree.
           # shellcheck disable=SC2086
-          src_hash="$(bash tools/ci/image-input-hash.sh "$BUILD_PROJECTS" graph.json "$DOCKERFILE" $DOCKERIGNORE)"
+          src_hash="$(bash tools/ci/image-input-hash.sh "$BUILD_PROJECTS" graph.json "$DOCKERFILE" $DOCKERIGNORE ${HASH_PATHS-})"
 
           repo_lc="$(echo "$OWNER" | tr '[:upper:]' '[:lower:]')"
           base="ghcr.io/${repo_lc}/${IMAGE}"
@@ -129,30 +112,26 @@ jobs:
           echo "### $IMAGE"                       >> "$GITHUB_STEP_SUMMARY"
           echo "- content tag: \`src-$src_hash\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- branch tag:  \`$branch_tag\`"   >> "$GITHUB_STEP_SUMMARY"
-          echo "- platforms:   \`${{ steps.platforms.outputs.value }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- platforms:   \`linux/amd64,linux/arm64\`" >> "$GITHUB_STEP_SUMMARY"
 
-      # A hit needs the platforms this ref publishes: content built on develop for amd64 only is a
-      # miss on release and main.
+      # A hit needs both platforms: content built for amd64 only, before every ref got arm64, is a miss.
       - name: Has this content already been built?
         id: exists
         shell: bash
         env:
           CONTENT_IMAGE: ${{ steps.tags.outputs.base }}:${{ steps.tags.outputs.src_tag }}
-          MULTI: ${{ steps.platforms.outputs.multi }}
         run: |
           set -euo pipefail
           hit=false
           if raw="$(docker buildx imagetools inspect --raw "$CONTENT_IMAGE" 2>/dev/null)"; then
-            if [ "$MULTI" != 'true' ]; then
-              hit=true
-            elif node -e '
+            if node -e '
               const m = JSON.parse(require("fs").readFileSync(0, "utf8"))
               const archs = (m.manifests || []).map((x) => x.platform && x.platform.architecture)
               process.exit(archs.includes("arm64") && archs.includes("amd64") ? 0 : 1)
             ' <<< "$raw"; then
               hit=true
             else
-              echo "- this content exists without arm64, so it is rebuilt for this ref" >> "$GITHUB_STEP_SUMMARY"
+              echo "- this content exists without arm64, so it is rebuilt" >> "$GITHUB_STEP_SUMMARY"
             fi
           fi
           echo "hit=$hit" >> "$GITHUB_OUTPUT"
@@ -237,21 +216,22 @@ jobs:
         with:
           context: ${{ matrix.context }}
           file: ${{ matrix.dockerfile }}
-          platforms: ${{ steps.platforms.outputs.value }}
+          platforms: linux/amd64,linux/arm64
           push: ${{ inputs.push }}
           provenance: false
           # Only the content tag. Annotations belong to a manifest and every tag on it shares them,
           # so the next step gives each branch tag its own index with its own annotations.
           tags: ${{ steps.tags.outputs.base }}:${{ steps.tags.outputs.src_tag }}
           # No GIT_BRANCH or GIT_HASH build args: they are not in the content hash, so a retagged image
-          # reported the wrong ref. Hashing them would rebuild identical content once per ref.
+          # would report the wrong ref. The branch tag step adds them in a thin layer instead.
           cache-from: type=gha,scope=${{ matrix.image }}
           cache-to: type=gha,mode=max,scope=${{ matrix.image }}
 
       # ---- both paths: publish the branch tag -------------------------------------------
-      # A registry-side operation of about a second, on both paths. `imagetools create` wraps the
-      # content in a new index per tag, which carries this ref's annotations. `index:` is required:
-      # annotations apply to an index or a descriptor, never to a manifest.
+      # A thin layer on top of the content image adds GIT_BRANCH and GIT_HASH (tools/ci/ref-overlay), so
+      # the content image stays ref-free and cached while every branch tag reports its own branch and
+      # commit. It is ENV only, so it builds in seconds. The index also carries the ref as OCI annotations:
+      # they apply to an index or a descriptor, never to a manifest, hence the `index:` prefix.
       - name: Point the branch tag at this content
         if: inputs.push
         shell: bash
@@ -264,23 +244,54 @@ jobs:
           SOURCE_URL: ${{ github.server_url }}/${{ github.repository }}
         run: |
           set -euo pipefail
-          docker buildx imagetools create \
+
+          # The time of the commit, not of this run: a rerun on the same commit builds the same layer and publishes
+          # the same digest. SOURCE_DATE_EPOCH also fixes the `created` field of the image config, the one other place
+          # where the layer would carry the time of the run. A pull request builds its merge commit; the commit is fixed.
+          SOURCE_DATE_EPOCH="$(git show -s --format=%ct "$SHA")"
+          COMMIT_TIME="$(date -u -d "@$SOURCE_DATE_EPOCH" +%Y%m%d%H%M%S)"
+          export SOURCE_DATE_EPOCH
+
+          # The branch image shares only layer blobs with the content image, so nothing in the registry links the two.
+          # The index names the content as its base, and the cleanup (tools/ci/images-gc.js) follows that annotation:
+          # without it, it would delete the content, and the next run on the same content would build it again.
+          CONTENT_DIGEST="$(docker buildx imagetools inspect "$BASE:$SRC_TAG" --format '{{.Manifest.Digest}}')"
+
+          docker buildx build \
+            --platform linux/amd64,linux/arm64 \
+            --provenance=false \
+            --build-arg "BASE=$BASE:$SRC_TAG" \
+            --build-arg "GIT_BRANCH=$REF_NAME" \
+            --build-arg "GIT_HASH=${SHA::7}" \
+            --build-arg "COMMIT_TIME=$COMMIT_TIME" \
+            --build-arg SOURCE_DATE_EPOCH \
             --annotation "index:org.opencontainers.image.revision=$SHA" \
             --annotation "index:org.opencontainers.image.version=$REF_NAME" \
             --annotation "index:org.opencontainers.image.source=$SOURCE_URL" \
+            --annotation "index:org.opencontainers.image.base.name=$BASE:$SRC_TAG" \
+            --annotation "index:org.opencontainers.image.base.digest=$CONTENT_DIGEST" \
             -t "$BASE:$BRANCH_TAG" \
-            "$BASE:$SRC_TAG"
+            --push \
+            tools/ci/ref-overlay
 
-          # Read the annotation back: an unprefixed or misspelled --annotation level is not an
-          # error, and the tag would be published without provenance.
+          # Read the annotations back: an unprefixed or misspelled --annotation level is not an
+          # error, and the tag would be published without provenance, or without the link to its content.
           raw="$(docker buildx imagetools inspect --raw "$BASE:$BRANCH_TAG")"
-          got="$(node -e '
-            const m = JSON.parse(require("fs").readFileSync(0, "utf8"))
-            const a = m.annotations || {}
-            process.stdout.write(a["org.opencontainers.image.version"] || "")
-          ' <<< "$raw")"
+          annotation() {
+            node -e '
+              const m = JSON.parse(require("fs").readFileSync(0, "utf8"))
+              process.stdout.write((m.annotations || {})[process.argv[1]] || "")
+            ' "$1" <<< "$raw"
+          }
+          got="$(annotation org.opencontainers.image.version)"
+          got_base="$(annotation org.opencontainers.image.base.digest)"
           if [ "$got" != "$REF_NAME" ]; then
             echo "::error::branch tag published without its provenance — expected version='$REF_NAME', read '$got'"
+            echo "$raw" | head -40
+            exit 1
+          fi
+          if [ "$got_base" != "$CONTENT_DIGEST" ]; then
+            echo "::error::branch tag published without the link to its content — expected base.digest='$CONTENT_DIGEST', read '$got_base'"
             echo "$raw" | head -40
             exit 1
           fi

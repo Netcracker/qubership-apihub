@@ -13,7 +13,7 @@ Use this file verbatim when constructing the PRE-FLIGHT block. Combine the **Glo
 - [ ] **Task type declaration:** state the chosen playbook and why it applies.
 - [ ] **Todo mirror:** create/refresh the todo list so each PRE-FLIGHT item has a matching entry.
 - [ ] **Plan validation commands:** outline which lint/test commands will run (even if some end up `n/a`).
-- [ ] **Formatting, type check & lint plan:** confirm all new files use LF endings and specify the aggregate commands you will run (`npx tsc --noEmit`, `npx dprint fmt <files>`, `npx eslint --fix <files>`).
+- [ ] **Formatting, type check & lint plan:** confirm all new files use LF endings and specify the aggregate commands you will run (`pnpm exec tsc --noEmit`, `dprint fmt <files>`, `pnpm exec eslint --fix <files>`).
 - [ ] **Environment prerequisites:** verify mandatory local folders exist if needed.
 
 ## PRE-FLIGHT — Task-Type Add-ons
@@ -71,7 +71,7 @@ Only include the section that matches the selected playbook.
 ### Documentation
 
 - [ ] List every document/section/table you need to touch so no outdated guidance remains.
-- [ ] Validate fenced code blocks: for TS/JS snippets run a quick lint (e.g., `npx eslint --stdin --ext .ts` via copypaste or temporary file) to ensure they stay error-free.
+- [ ] Validate fenced code blocks: for TS/JS snippets run a quick lint (e.g., `pnpm exec eslint --stdin --ext .ts` via copypaste or temporary file) to ensure they stay error-free.
 - [ ] Check whether diagrams, tables, or external links also need updates and note the plan.
 
 ### Misc / Utility
@@ -81,9 +81,9 @@ Only include the section that matches the selected playbook.
 
 ## POST-FLIGHT — Always Required
 
-- [ ] TypeScript check: `npx tsc --noEmit` ✅/❌ (note any pre-existing errors in unrelated files).
-- [ ] Formatting: `npx dprint fmt <files>` ✅/❌ (note any errors).
-- [ ] Lint command executed: `npx eslint --fix <all-changed-files>` ✅/❌ (quote the exact CLI and attach failure logs if ❌).
+- [ ] TypeScript check: `pnpm exec tsc --noEmit` ✅/❌ (note any pre-existing errors in unrelated files).
+- [ ] Formatting: `dprint fmt <files>` ✅/❌ (note any errors).
+- [ ] Lint command executed: `pnpm exec eslint --fix <all-changed-files>` ✅/❌ (quote the exact CLI and attach failure logs if ❌).
 - [ ] Tests executed (quote CLI + flags or state `n/a` with justification).
 - [ ] Instruction docs updated? list touched paths or `n/a`.
 

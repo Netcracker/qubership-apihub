@@ -1,7 +1,7 @@
 # Postman E2E agent packages
 
 Local APM packages for `tests/postman-collections` of the qubership-apihub monorepo. They are listed in the root
-`apm.yml` and deployed with `apm install --target cursor,claude --legacy-skill-paths` from the repository root.
+`apm.yml` and deployed with `apm install --target cursor,claude` from the repository root.
 
 | Package | Path | Scope |
 |---------|------|-------|

@@ -1,6 +1,6 @@
 import { intersectionBy } from 'lodash-es'
 import type { FC, PropsWithChildren } from 'react'
-import { createContext, memo, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState } from 'react'
+import { createContext, memo, useCallback, useContext, useEffect, useMemo, useReducer, useRef } from 'react'
 import { useParams } from 'react-router-dom'
 
 import { useEventBus } from '@portal/routes/EventBusProvider'
@@ -355,10 +355,17 @@ export const FilesProvider: FC<FilesProviderProps> = memo<FilesProviderProps>(({
   const isEditingVersion = !!versionId && versionId !== SPECIAL_VERSION_KEY
   const [sources, isSourcesLoading] = useVersionSources({ enabled: enabled && isEditingVersion })
   const [config, isConfigLoading] = usePackageVersionConfig(packageId, versionId)
-  const [areFilesProcessing, setAreFilesProcessing] = useState(true)
+  const isSourceDataLoading = isSourcesLoading || isConfigLoading
 
   useEffect(() => {
-    buildInitFileState(sources, config).then(initData =>
+    if (isSourceDataLoading) {
+      return
+    }
+    let isSuperseded = false
+    buildInitFileState(sources, config).then(initData => {
+      if (isSuperseded) {
+        return
+      }
       dispatch({
         type: INIT_FILES_ACTION,
         sources: sources,
@@ -366,9 +373,15 @@ export const FilesProvider: FC<FilesProviderProps> = memo<FilesProviderProps>(({
         filesWithLabels: initData.filesWithLabels,
         mcpStagedFileMetaByName: initData.mcpStagedFileMetaByName,
         mcpEndpoints: initData.mcpEndpoints,
-      }),
-    ).then(() => !isConfigLoading && !isSourcesLoading && setAreFilesProcessing(false))
-  }, [sources, config, isConfigLoading, isSourcesLoading])
+      })
+    })
+    return () => {
+      isSuperseded = true
+    }
+  }, [sources, config, isSourceDataLoading])
+
+  // Until the state is built from the current sources, it holds no files or the files of earlier sources.
+  const isFilesLoading = isSourceDataLoading || !state.isInitialized || state.sources !== sources
 
   const promptMcpEndpoint = useCallback(
     (detail: Omit<ShowMcpEndpointDetail, 'onConfirm' | 'onCancel'>): Promise<string | undefined> => {
@@ -503,9 +516,7 @@ export const FilesProvider: FC<FilesProviderProps> = memo<FilesProviderProps>(({
   return (
     <FilesContext.Provider value={state}>
       <FileActionsContext.Provider value={actions}>
-        <FilesLoadingContext.Provider
-          value={isSourcesLoading || !state.isInitialized || isConfigLoading || areFilesProcessing}
-        >
+        <FilesLoadingContext.Provider value={isFilesLoading}>
           {children}
         </FilesLoadingContext.Provider>
       </FileActionsContext.Provider>

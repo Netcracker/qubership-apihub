@@ -97,8 +97,8 @@ test.describe('Some suite', () => {
 
 ### Phase 4 — Verification
 
-- Run `npx eslint <spec-path>` immediately after edits; fix all errors.
-- Execute the spec with `npx playwright test <spec-path> --headed --trace=on`. Capture artifacts for failures.
+- Run `pnpm exec eslint <spec-path>` immediately after edits; fix all errors.
+- Execute the spec with `pnpm exec playwright test <spec-path> --headed --trace=on`. Capture artifacts for failures.
 - Verify imports are used and paths are correct; remove dead code.
 - Update documentation (this guide, playbooks, etc.) if new lessons were learned.
 

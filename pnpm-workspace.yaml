@@ -2,6 +2,7 @@ packages:
   - 'frontend/*'
   - 'frontend/*/packages/*'
   - 'tests/ui-tests'
+  - 'tools/build-id'
   - 'tools/jest-chrome-in-docker-environment'
   - 'sites/*'
 

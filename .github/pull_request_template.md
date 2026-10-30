@@ -14,6 +14,6 @@
 
 ## Checklist
 
-- [ ] The issue is linked under Development or with "Closes #123".
+- [ ] The issue is linked under Development or with "Closes <ISSUE_ID>".
 - [ ] The documentation is updated in this pull request.
 - [ ] A breaking change has `!` in the title, or a "BREAKING CHANGE:" footer at the start of a line in this description.
