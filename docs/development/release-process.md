@@ -299,14 +299,15 @@ has five parts:
 Old URLs keep working: the root `404.html` redirects `pages/erd/...` to `erd/portal-backend/...` and legacy
 documentation paths to `docs/`.
 
-Everything except the Storybooks comes from one ref. The workflow picks it in this order:
+Everything except the Storybooks comes from `develop`. The workflow picks the ref in this order:
 
 1. The repository variable `SITE_REF`, if set. It can be a branch, a tag, or a commit SHA.
-2. `main`, once `main` has `sites/landing/package.json`.
-3. `develop` otherwise.
+2. `develop`.
 
-The variable `LANDING_REF` overrides the ref of the landing only. The landing and the docs are built from that ref
-and cached by commit. The ERDs are not built by Pages: it pulls the renders for the site's commit from `ghcr.io`.
+The variable `LANDING_REF` overrides the ref of the landing only. The landing is cached by its commit, and the docs
+site is cached by the site ref and commit. The ERDs are not built by Pages: it pulls the renders for the site's
+commit from `ghcr.io`.
+
 The Storybooks are pulled from the Storybook store and get what the rest of the site leaves of the 900 MiB budget
 (the `budget_mib` input of `pages.yml`).
 
@@ -603,25 +604,20 @@ You released without the card, so the landing does not list the version. Do not 
 2. Finish** would fail with "Stale main", because `main` would hold a commit that `release` lacks. CI on `main` would
 also rebuild every image and move `:latest`.
 
-1. Open a pull request into `develop` that adds `sites/landing/src/content/releases/v<X>-<Y>-<Z>.md`.
-2. To publish the card before the next release, point the landing at `develop` and dispatch the Pages workflow.
-   The repository variable `LANDING_REF` overrides the ref of the landing in the Pages assembly and nothing else:
+Pages publishes the landing from `develop`. Open a pull request into `develop` that adds
+`sites/landing/src/content/releases/v<X>-<Y>-<Z>.md`, and dispatch the Pages workflow after it merges:
 
-   ```bash
-   gh variable set LANDING_REF --body develop --repo Netcracker/qubership-apihub
-   gh workflow run pages.yml --repo Netcracker/qubership-apihub --ref develop
-   ```
+```bash
+gh workflow run pages.yml --repo Netcracker/qubership-apihub --ref develop
+```
 
-3. After the next release, remove the variable, so the landing is built from `main` again:
-
-   ```bash
-   gh variable delete LANDING_REF --repo Netcracker/qubership-apihub
-   ```
+`LANDING_REF` overrides the landing ref only. Leave it unset: a set variable keeps the landing on that ref.
 
 ### A hotfix migration and the ERD
 
 A hotfix that adds an SQL migration reaches `main` through `release`. `erd.yml` renders on `main` by itself, because
-the migrations folder has a new key there, and then dispatches `pages.yml`. The site keeps showing `main`.
+the migrations folder has a new key there, and then dispatches `pages.yml`. The site is published from `develop`,
+so the diagram on the site updates when that hotfix is merged back into `develop`.
 
 To render an ERD that `erd.yml` considers done, or to re-render after you change the render tooling by hand, force a
 render of every backend on a branch:

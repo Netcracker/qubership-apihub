@@ -16,6 +16,7 @@ needed a meeting to settle, record it. ADRs are written for maintainers who were
 | [0006](./0006-charts-pinned-at-package-time-published-to-oci.md) | Helm charts pinned at package time and published to OCI | Accepted |
 | [0007](./0007-pages-layout-and-the-storybook-and-erd-stores.md) | GitHub Pages layout, and the Storybook and ERD stores | Accepted |
 | [0008](./0008-documentation-architecture-and-docs-site.md) | Documentation architecture and the docs site | Accepted |
+| [0009](./0009-pages-published-from-develop.md) | Pages, except the Storybooks, are published from `develop` | Accepted |
 
 ## Add an ADR
 

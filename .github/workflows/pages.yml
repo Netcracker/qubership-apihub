@@ -66,9 +66,8 @@ jobs:
           echo "deployable=$deployable" >> "$GITHUB_OUTPUT"
           echo "ref \`$GITHUB_REF\`, default \`$default\`: deploy=$deployable" | tee -a "$GITHUB_STEP_SUMMARY"
 
-      # D16: the site shows main once main has the sites (the first product release from the
-      # monorepo), develop before. The repository variable SITE_REF overrides the ref of the whole
-      # site, LANDING_REF that of the landing only (release-process.md, "Tips and tricks").
+      # The site is published from develop (ADR 0009). SITE_REF overrides the ref of the whole
+      # site, LANDING_REF that of the landing only (release-process.md, "GitHub Pages").
       - name: resolve the refs
         id: refs
         shell: bash
@@ -83,18 +82,7 @@ jobs:
           if [ -n "$SITE_REF" ]; then
             site_ref="$SITE_REF"; site_sha="$(commit_of "$SITE_REF")"; why='the repository variable SITE_REF'
           else
-            # Exit code 2 means "no such branch"; anything else is a failed read, not an answer.
-            rc=0; git ls-remote --exit-code --heads origin refs/heads/main > /dev/null || rc=$?
-            case "$rc" in
-              0) git fetch --no-tags --depth=1 --quiet origin +refs/heads/main:refs/remotes/origin/main ;;
-              2) ;;
-              *) echo "::error::could not list the main branch of origin (git ls-remote exited with $rc)"; exit 1 ;;
-            esac
-            if [ "$rc" = 0 ] && git cat-file -e origin/main:sites/landing/package.json 2> /dev/null; then
-              site_ref=main; why='main has sites/landing'
-            else
-              site_ref=develop; why='main has no sites/landing yet'
-            fi
+            site_ref=develop; why='the site is published from develop'
             site_sha="$(commit_of "$site_ref")"
           fi
 
