@@ -19,7 +19,7 @@ import { memo, useMemo } from 'react'
 
 import { useOperationChangelog } from '../useOperationChangelog'
 import type { SubTableComponentProps } from '@netcracker/qubership-apihub-ui-shared/widgets/ChangesViewWidget'
-import { OperationChangesSubTable } from '@netcracker/qubership-apihub-ui-shared/widgets/ChangesViewWidget'
+import { ChangesSubTable } from '@netcracker/qubership-apihub-ui-shared/widgets/ChangesViewWidget'
 import { usePackageVersionContent } from '@portal/routes/root/usePackageVersionContent'
 import { sortChanges } from '@netcracker/qubership-apihub-ui-shared/utils/api-changes'
 import { DASHBOARD_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
@@ -63,7 +63,7 @@ export const OperationChangesSubTableWrapper: FC<OperationChangesSubTableWrapper
     const sortedChanges = useMemo(() => sortChanges(changes), [changes])
 
     return (
-      <OperationChangesSubTable
+      <ChangesSubTable
         changes={sortedChanges}
         isLoading={isLoading || (!isDashboard && isVersionLoading)}
         columnCount={columnCount}

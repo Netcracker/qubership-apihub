@@ -18,7 +18,7 @@ import type { FC } from 'react'
 import { memo } from 'react'
 import { useOperationChangelog } from './useOperationChangelog'
 import type { SubTableComponentProps } from '@netcracker/qubership-apihub-ui-shared/widgets/ChangesViewWidget'
-import { OperationChangesSubTable } from '@netcracker/qubership-apihub-ui-shared/widgets/ChangesViewWidget'
+import { ChangesSubTable } from '@netcracker/qubership-apihub-ui-shared/widgets/ChangesViewWidget'
 
 // copy-pasted from portal
 export type OperationChangesSubTableWrapper = SubTableComponentProps
@@ -43,7 +43,7 @@ export const OperationChangesSubTableWrapper: FC<OperationChangesSubTableWrapper
   })
 
   return (
-    <OperationChangesSubTable
+    <ChangesSubTable
       changes={changes}
       isLoading={isLoading}
       columnCount={columnCount}

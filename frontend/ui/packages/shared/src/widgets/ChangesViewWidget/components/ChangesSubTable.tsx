@@ -15,19 +15,18 @@
  */
 
 import { Box, Skeleton, styled, TableCell, TableRow, Typography } from '@mui/material'
-import type { FC } from 'react'
-import { memo } from 'react'
+import { type FC, memo } from 'react'
 import { ChangeSeverityIndicator } from '../../../components/ChangeSeverityIndicator'
 import { OverflowTooltip } from '../../../components/OverflowTooltip'
 import type { OperationChanges } from '../../../entities/operation-changelog'
 
-export type OperationChangesSubTableProps = {
+export type ChangesSubTableProps = {
   changes: OperationChanges
   isLoading: boolean
   columnCount: number
 }
 
-export const OperationChangesSubTable: FC<OperationChangesSubTableProps> = memo<OperationChangesSubTableProps>((
+export const ChangesSubTable: FC<ChangesSubTableProps> = memo<ChangesSubTableProps>((
   {
     changes,
     isLoading,
@@ -37,9 +36,9 @@ export const OperationChangesSubTable: FC<OperationChangesSubTableProps> = memo<
   if (isLoading) {
     return (
       <TableRow>
-        <ExpandCell colSpan={columnCount}>
+        <ExpandedRowCell colSpan={columnCount}>
           <Skeleton variant="text" width="100%" />
-        </ExpandCell>
+        </ExpandedRowCell>
       </TableRow>
     )
   }
@@ -48,23 +47,23 @@ export const OperationChangesSubTable: FC<OperationChangesSubTableProps> = memo<
     <>
       {changes.map((change, index) => (
         <TableRow key={`${change.scope}-${index}`}>
-          <ExpandCell colSpan={columnCount}>
+          <ExpandedRowCell colSpan={columnCount}>
             <DescriptionRow data-testid="ChangeDescriptionCell">
               <ChangeSeverityIndicator severity={change.severity} />
               <OverflowTooltip title={change.description}>
                 <DescriptionText noWrap variant="inherit">{change.description}</DescriptionText>
               </OverflowTooltip>
             </DescriptionRow>
-          </ExpandCell>
+          </ExpandedRowCell>
         </TableRow>
       ))}
     </>
   )
 })
 
-OperationChangesSubTable.displayName = 'OperationChangesSubTable'
+ChangesSubTable.displayName = 'ChangesSubTable'
 
-const ExpandCell = styled(TableCell)({
+const ExpandedRowCell = styled(TableCell)({
   padding: 0,
 })
 
