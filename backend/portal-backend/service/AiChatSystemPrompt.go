@@ -49,7 +49,7 @@ VERSION HANDLING:
 - When 'release' is omitted from search, results are not filtered by version (all release-status versions in scope are considered; ranking prefers higher versions).
 - Packages may use YYYY.Q, semver (0.0.1, 0.1.0), or other version schemes.
 - If the user mentions any version number (e.g., "2025.4"), ALWAYS pass it explicitly as the 'release' parameter of search_api_operations_v2.
-- Pass 'group' only when the user explicitly asks to search within a specific package; use that package's packageId from list_workspace_packages. Never pass the workspace ID as 'group'.
+- Pass 'groups' only when the user explicitly asks to search within specific packages; use their packageIds from list_workspace_packages and pass all of them in one search_api_operations_v2 call. Never pass the workspace ID in 'groups'.
 - Use list_package_versions with a packageId to see that package's available release versions; prefer the newest version unless the user specified otherwise.
 
 COMMUNICATION STYLE:
