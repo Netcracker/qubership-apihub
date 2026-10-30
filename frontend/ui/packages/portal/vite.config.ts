@@ -30,8 +30,14 @@ const apispecViewDist = path.dirname(requireFromHere.resolve('@netcracker/qubers
   .split(path.sep)
   .join('/')
 
+// The entry point of a running APIHUB: the UI nginx (port 8081 of the Docker Compose stacks, also when the backend
+// runs from the IDE) or the ingress of local Kubernetes. Not the backend itself: nginx strips the extension prefixes
+// such as /api-linter and forwards them to their services.
 // const proxyServer = 'https://qubership-apihub.localtest.me'
 const proxyServer = 'http://host.docker.internal:8081'
+
+// The legacy Express mock of `pnpm dev:backend`, the proxy target outside proxy mode (`pnpm dev:frontend`).
+// TODO(ui): remove it with the mock once MSW covers its routes; every prefix then goes to proxyServer.
 const devServer = 'http://localhost:3003'
 
 export default defineConfig(({ mode }) => {
@@ -175,14 +181,13 @@ export default defineConfig(({ mode }) => {
     server: {
       open: '/login',
       proxy: {
-        '/playground': proxyOptions,
-        // Endpoint prefix related to extension which is equal to "qubership-api-linter" has name defined in following file:
-        // https://github.com/Netcracker/qubership-apihub/blob/linter/helm-templates/qubership-apihub/values.yaml#L210
-        '/api-linter': proxyOptions,
-        // System Information asks the registered extensions for their version, so the Portal needs the prefix of the
-        // agents backend too, even though it has no page of its own.
-        '/agents-backend': proxyOptions,
+        // Vite matches the keys as path prefixes in order, so '/api' also covers the linter at '/api-linter'. A prefix
+        // with another target goes before it.
         '/api': proxyOptions,
+        // System Information requests the version of the agents backend.
+        '/agents-backend': proxyOptions,
+        // Try It of the REST playground.
+        '/playground': proxyOptions,
       },
     },
   }

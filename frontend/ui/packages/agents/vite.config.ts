@@ -25,8 +25,14 @@ import createVersionJsonFilePlugin from '../../vite-plugins/create-version-json'
 import { appStampedVersion } from '../../vite-plugins/app-version'
 import removeMswFromDistPlugin from '../../vite-plugins/remove-msw-from-dist'
 
+// The entry point of a running APIHUB: the UI nginx (port 8081 of the Docker Compose stacks, also when the backend
+// runs from the IDE) or the ingress of local Kubernetes. Not the backend itself: nginx strips the extension prefixes
+// such as /api-linter and forwards them to their services.
 // const proxyServer = 'https://qubership-apihub.localtest.me'
 const proxyServer = 'http://host.docker.internal:8081'
+
+// The legacy Express mock of `pnpm dev:backend`, the proxy target outside proxy mode (`pnpm dev:frontend`).
+// TODO(ui): remove it with the mock once MSW covers its routes; every prefix then goes to proxyServer.
 const devServer = 'http://localhost:3003'
 
 export default defineConfig(({ mode }) => {
@@ -163,12 +169,10 @@ export default defineConfig(({ mode }) => {
     server: {
       open: '/login',
       proxy: {
+        // Vite matches the keys as path prefixes in order, so '/api' also covers the extensions at '/api-linter' and
+        // '/apihub-nc'. A prefix with another target goes before it.
         '/api': proxyOptions,
         '/agents-backend': proxyOptions,
-        // System Information asks the registered extensions for their version, so the Agents SPA needs the prefix of the
-        // linter too, even though it has no page of its own.
-        '/api-linter': proxyOptions,
-        '/apihub-nc': proxyOptions,
       },
     },
   }
