@@ -174,7 +174,7 @@
     "prettier": "^2.6.2",
     "rimraf": "^3.0.2",
     "ts-jest": "29.4.12",
-    "typescript": "6.0.3",
+    "typescript": "7.0.2",
     "utility-types": "^3.10.0"
   },
   "config": {

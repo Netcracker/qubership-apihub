@@ -74,7 +74,7 @@
     "ts-loader": "^8.0.8",
     "ts-node": "^10.7.0",
     "tslint": "^6.1.2",
-    "typescript": "6.0.3",
+    "typescript": "7.0.2",
     "vite": "^8.2.2",
     "vite-plugin-dts": "^4.5.4",
     "webpack": "5.97.1",

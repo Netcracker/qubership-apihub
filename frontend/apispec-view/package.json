@@ -139,7 +139,7 @@
     "ts-loader": "9.6.2",
     "tsconfig-paths-webpack-plugin": "^3.2.0",
     "tslib": "^2.8.1",
-    "typescript": "6.0.3",
+    "typescript": "7.0.2",
     "urijs": "^1.19.11",
     "util": "^0.12.4",
     "webpack": "5.76.0",
