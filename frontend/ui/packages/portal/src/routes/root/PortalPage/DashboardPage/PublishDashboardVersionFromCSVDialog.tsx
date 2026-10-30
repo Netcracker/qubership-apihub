@@ -36,6 +36,7 @@ import {
   getPackageOptions,
   getVersionOptions,
   replaceEmptyPreviousVersion,
+  toPreviousVersionPackageId,
   VersionDialogForm,
 } from '@netcracker/qubership-apihub-ui-shared/components/VersionDialogForm'
 import { useDashboardVersionFromCSVPublicationStatuses } from '@portal/routes/root/PortalPage/usePublicationStatus'
@@ -127,6 +128,7 @@ const PublishDashboardVersionFromCSVPopup: FC<PopupProps> = memo<PopupProps>(({ 
     status,
     labels,
     previousVersion,
+    previousVersionPackage,
     workspace,
     file,
     apiType,
@@ -142,6 +144,7 @@ const PublishDashboardVersionFromCSVPopup: FC<PopupProps> = memo<PopupProps>(({ 
         version: version,
         status: status,
         previousVersion: replaceEmptyPreviousVersion(previousVersion),
+        previousVersionPackageId: toPreviousVersionPackageId(previousVersionPackage, packageObj?.key),
         apiType: apiType ?? REST_API_TYPE,
       },
     })
@@ -164,6 +167,7 @@ const PublishDashboardVersionFromCSVPopup: FC<PopupProps> = memo<PopupProps>(({ 
       onVersionsFilter={onVersionsFilter}
       areVersionsLoading={areFilteredVersionsLoading}
       previousVersionsPackageKey={currentPackage?.key}
+      packageObj={packageObj ?? undefined}
       getVersionLabels={getVersionLabels}
       onSetTargetVersion={onSetTargetVersion}
       packagePermissions={packagePermissions}
@@ -174,6 +178,7 @@ const PublishDashboardVersionFromCSVPopup: FC<PopupProps> = memo<PopupProps>(({ 
       hideCopyPackageFields
       hideDescriptorVersionField
       hideSaveMessageField
+      hidePreviousVersionPackageField={false}
       publishButtonDisabled={isPackageLoading}
       publishFieldsDisabled={isPackageLoading || isCurrentVersionLoading}
       kind={DASHBOARD_KIND}
@@ -187,6 +192,7 @@ type PublishInfo = Readonly<{
   labels: string[]
   file?: File
   previousVersion: Key
+  previousVersionPackage?: Package | null
   workspace?: Package | null
   apiType?: ApiType | undefined
 }>
