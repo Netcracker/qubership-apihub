@@ -1,6 +1,6 @@
 {
   "name": "@netcracker/qubership-apihub-api-processor",
-  "version": "5.7.2",
+  "version": "5.8.0",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Netcracker/qubership-apihub.git",
@@ -77,7 +77,7 @@
     "@netcracker/qubership-apihub-build-id": "workspace:^",
     "@types/jest": "30.0.0",
     "@types/mime-types": "^3.0.0",
-    "@types/node": "^24.0.0",
+    "@types/node": "^24.19.2",
     "@types/object-hash": "^3.0.2",
     "@types/slug": "^5.0.3",
     "@types/swagger2openapi": "^7.0.0",
