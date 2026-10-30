@@ -1943,7 +1943,7 @@ describe('basic allOf merge cases', function () {
   })
 
   describe('dependencies', function () {
-    it('merges simliar schemas', function () {
+    it('merges similar schemas', function () {
       const result = normalize({
         dependencies: {
           foo: {
@@ -2013,7 +2013,7 @@ describe('basic allOf merge cases', function () {
   })
 
   describe('propertyNames', function () {
-    it('merges simliar schemas', function () {
+    it('merges similar schemas', function () {
       const result = normalize({
         propertyNames: {
           type: 'string',

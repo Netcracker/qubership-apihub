@@ -205,7 +205,7 @@ function simpleRule(classify: ClassifyRule, descriptionTemplate: DescriptionTemp
 const directivesUsagesRules: CompareRules = {
   '/directives': {
     '/*': {
-      '/definition': () => directiveDefinitionRules, //shold make all unclasified
+      '/definition': () => directiveDefinitionRules, //should make all unclassified
       '/meta': {
         '/*': { $: directiveMetaClassifier },
       },

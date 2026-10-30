@@ -52,7 +52,7 @@ jobs:
       dependabot: ${{ steps.can_publish.outputs.dependabot }}
       release_tags: ${{ steps.release_tags.outputs.value }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           # nx affected needs history.
           fetch-depth: 0
@@ -236,7 +236,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -274,7 +274,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       # The one Go version, from backend/.go-version.
       - uses: actions/setup-go@v7
@@ -312,7 +312,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: azure/setup-helm@v5
         with:
@@ -333,7 +333,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -391,7 +391,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: ./.github/actions/setup-workspace
 
@@ -437,7 +437,7 @@ jobs:
       matrix:
         project: ${{ fromJSON(needs.plan.outputs.screenshot_projects) }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       # Each leg caches its own closure; a shared key lets one leg's cache overwrite the others.
       - uses: ./.github/actions/setup-workspace
@@ -612,7 +612,7 @@ jobs:
         # From tools/ci/storybooks.json, which pages.yml also reads.
         include: ${{ fromJSON(needs.plan.outputs.storybooks) }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: ./.github/actions/setup-workspace
         with:
@@ -620,7 +620,7 @@ jobs:
 
       # 1.3.3, not the current 1.3.4: setup-oras verifies against a release table baked into
       # the action, and v2.0.1's ends at 1.3.3.
-      - uses: oras-project/setup-oras@v2.0.1
+      - uses: oras-project/setup-oras@v2.0.2
         with:
           version: 1.3.3
 
@@ -709,7 +709,7 @@ jobs:
     if: always()
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           sparse-checkout: tools/ci
 

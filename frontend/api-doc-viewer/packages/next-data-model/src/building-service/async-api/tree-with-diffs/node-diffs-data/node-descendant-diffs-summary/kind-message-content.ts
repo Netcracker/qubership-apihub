@@ -5,7 +5,7 @@ import { DiffMetaKeys } from "@apihub/next-data-model/building-service/abstract/
 
 /**
  * Forward collecting diffs summary for MESSAGE_CONTENT node.
- * This is necessary because some fields under the node in renderred view are not direct descendants of the node.
+ * This is necessary because some fields under the node in rendered view are not direct descendants of the node.
  * It means that such descendants can't be reached by the backward propagation of diffs summary to parent/container nodes
  * in common mechanism and we have to collect the summary here.
  */

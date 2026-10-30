@@ -754,12 +754,12 @@ func (o operationGroupServiceImpl) publishOperationGroup(ctx context.Context, ve
 	}
 	build, err := o.buildService.PublishVersion(ctx, groupPublishBuildConfig, data, false, "", nil, false, false)
 	if err != nil {
-		o.updatePublishProcess(ctx, publishEnt, string(view.StatusError), fmt.Sprintf("faield to start operation group publish: %v", utils.WrapContextError(ctx, err)))
+		o.updatePublishProcess(ctx, publishEnt, string(view.StatusError), fmt.Sprintf("failed to start operation group publish: %v", utils.WrapContextError(ctx, err)))
 		return
 	}
 	err = o.buildService.AwaitBuildCompletion(ctx, build.PublishId)
 	if err != nil {
-		o.updatePublishProcess(ctx, publishEnt, string(view.StatusError), fmt.Sprintf("faield to publish operation group: %v", utils.WrapContextError(ctx, err)))
+		o.updatePublishProcess(ctx, publishEnt, string(view.StatusError), fmt.Sprintf("failed to publish operation group: %v", utils.WrapContextError(ctx, err)))
 		return
 	}
 	o.updatePublishProcess(ctx, publishEnt, string(view.StatusComplete), "")
