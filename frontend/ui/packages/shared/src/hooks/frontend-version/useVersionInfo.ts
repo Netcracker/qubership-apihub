@@ -15,9 +15,8 @@
  */
 
 import { useQuery } from '@tanstack/react-query'
-import type { AppTypeApiHub, VersionInfo, VersionInfoDto } from '../../utils/version-info'
-import { portal } from '../../utils/version-info'
-import { getVersionInfoOptions } from '../../utils/version-info'
+import type { AppTypeApiHub, BuildInfoDto, VersionInfo, VersionInfoDto } from '../../utils/version-info'
+import { getBuildInfoOptions, getVersionInfoOptions, portal } from '../../utils/version-info'
 
 // `frontendVersion` used to come from `import * as packageJson from
 // '../../../../portal/package.json'`, and both halves of that were wrong.
@@ -39,7 +38,7 @@ import { getVersionInfoOptions } from '../../utils/version-info'
 //
 // The real values come from the version.json that vite-plugins/create-version-json.ts generates per
 // app, fetched by the query below. The fallback is what the hook returns before that resolves,
-// or when the fetch fails. Each app passes its own package.json version as the fallback:
+// or when the fetch fails. Each app passes its own version (`__APP_VERSION__`) as the fallback:
 // BasePage shows the "APIHUB UI is out of date" dialog when its version differs from
 // frontendVersion, so a fallback that differs from the app's version shows that dialog on
 // every page load until version.json arrives.
@@ -64,4 +63,13 @@ export function useAppApiProcessorVersion(appType: AppTypeApiHub = portal): stri
   )
 
   return data?.apiProcessorVersion
+}
+
+// `<branch>.<commit>.<UTC commit time>` of the image the app is served from, or `undefined` when the image carries no build info.
+export function useImageVersion(appType: AppTypeApiHub = portal): string | undefined {
+  const { data } = useQuery<BuildInfoDto | null, Error, string | undefined>(
+    getBuildInfoOptions(appType),
+  )
+
+  return data
 }

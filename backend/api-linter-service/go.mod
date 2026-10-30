@@ -13,8 +13,8 @@ require (
 	github.com/gorilla/handlers v1.5.2
 	github.com/gorilla/mux v1.8.1
 	github.com/invopop/jsonschema v0.14.0
-	github.com/mark3labs/mcp-go v1.3.0
-	github.com/openai/openai-go/v3 v3.85.1
+	github.com/mark3labs/mcp-go v1.4.0
+	github.com/openai/openai-go/v3 v3.86.0
 	github.com/shaj13/go-guardian/v2 v2.11.6
 	github.com/shaj13/libcache v1.0.4
 	github.com/sirupsen/logrus v1.10.2

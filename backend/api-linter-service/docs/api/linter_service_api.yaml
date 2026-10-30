@@ -21,6 +21,8 @@ security:
   - api-key: []
   - PersonalAccessToken: []
 tags:
+  - name: System
+    description: Information about the running service.
   - name: Linters
     description: API for retrieving available linter configurations.
   - name: Ruleset Management
@@ -32,6 +34,29 @@ tags:
   - name: Scoring
     description: API for retrieving version scoring (quality and backwards compatibility).
 paths:
+  /api/v1/system/version:
+    get:
+      tags:
+        - System
+      summary: Get the version of the service
+      description: >
+        Returns the version of the image the service runs from, in the form branch.commit.commitTime
+        (for example, develop.a1b2c3d.20261026104501), or "unknown" when the image carries no build information.
+        System Information in the UI shows this value for the service.
+      operationId: getSystemVersion
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SystemVersion"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /api/v1/linters:
     get:
       tags:
@@ -630,6 +655,18 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 components:
   schemas:
+    SystemVersion:
+      description: Version of the image the service runs from.
+      type: object
+      required:
+        - version
+      properties:
+        version:
+          description: >
+            Image version in the form branch.commit.commitTime (the commit time is UTC, yyyymmddHHMMSS), or "unknown"
+            when the image carries no build information.
+          type: string
+          example: develop.a1b2c3d.20261026104501
     ExternalLinterConfig:
       description: >
         Read-only configuration of an available linter as exposed by the service. Derived from system
