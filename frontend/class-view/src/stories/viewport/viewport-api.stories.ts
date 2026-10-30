@@ -46,12 +46,11 @@ export default {
         step: Math.pow(10, -ROUNDING).toFixed(ROUNDING)
       },
     },
+    // The viewport center is in pixels and can be any number. Storybook 10 clamps a typed value to min and max.
     viewportX: {
       name: 'Viewport X',
       control: {
         type: 'number',
-        min: Math.pow(10, -ROUNDING).toFixed(ROUNDING),
-        max: 5,
         step: Math.pow(10, -ROUNDING).toFixed(ROUNDING)
       },
     },
@@ -59,8 +58,6 @@ export default {
       name: 'Viewport Y',
       control: {
         type: 'number',
-        min: Math.pow(10, -ROUNDING).toFixed(ROUNDING),
-        max: 5,
         step: Math.pow(10, -ROUNDING).toFixed(ROUNDING)
       },
     },

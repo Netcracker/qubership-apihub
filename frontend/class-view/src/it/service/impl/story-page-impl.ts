@@ -52,7 +52,7 @@ export class StoryPageImpl implements StoryPage {
   }
 
   public async embeddedOptionsControl(name: string): Promise<EmbeddedOptionsControl> {
-    const control = (await this._page.waitForSelector(`::-p-xpath(//td[./span[text()='${name}']]/following-sibling::td//div)`)) as ElementHandle
+    const control = (await this._page.waitForSelector(`::-p-xpath(//td[./span[text()='${name}']]/following-sibling::td//fieldset)`)) as ElementHandle
     if (!control) {
       throw new Error(`Unable to find control ${name}`)
     }
@@ -76,7 +76,7 @@ export class StoryPageImpl implements StoryPage {
   }
 
   public async reset(): Promise<void> {
-    const button = await this._page.waitForSelector('::-p-xpath(//button[@title="Reset controls"])', { timeout: 0 }) as ElementHandle<HTMLButtonElement>
+    const button = await this._page.waitForSelector('::-p-xpath(//button[@aria-label="Reset controls"])', { timeout: 0 }) as ElementHandle<HTMLButtonElement>
     if (!button) {
       throw new Error('Unable to find Reset button')
     }

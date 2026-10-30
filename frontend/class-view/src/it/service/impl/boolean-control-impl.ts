@@ -27,7 +27,8 @@ export class BooleanControlImpl implements BooleanControl {
 
   public async click(waitUpdate = true): Promise<void> {
     const promise = waitUpdate ? this._prepareToNextRenderFinish() : new Promise<void>(r => setTimeout(r, 1))
-    await this._domElement.click()
+    // Storybook 10 renders the switch over a 1x1 px checkbox, so a mouse click at its center misses it.
+    await this._domElement.evaluate(input => (input as HTMLInputElement).click())
     return promise
   }
 
