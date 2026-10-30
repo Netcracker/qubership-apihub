@@ -88,6 +88,27 @@ Scripts under **`deploy/docker-compose/apihub-generic/`**:
 
 ---
 
+## Log format
+
+Every service writes log lines in one format. The timestamp is UTC:
+
+```text
+[2026-10-28T14:03:12.345] [INFO] [request_id=7f3c] [tenant_id=] [thread_id=] [class=] Package version published
+```
+
+| Field | Go services | `java-task-consumer` | `build-task-consumer` | UI (nginx access log) |
+|---|---|---|---|---|
+| Level | `TRACE` to `PANIC` | `TRACE` to `ERROR` | `TRACE` to `FATAL` | always `INFO` |
+| `request_id` | `X-Request-Id` of the request, when the log call passes the request context | empty | empty | `X-Request-Id` header |
+| `tenant_id` | empty | empty | empty | empty |
+| `thread_id` | empty | thread name | empty | empty |
+| `class` | empty | logger name | Nest logger context | empty |
+
+A multi-line message, such as a stack trace, keeps its lines; only the first line has the prefix. Go services append
+structured fields after the message as `key=value`. The nginx error log keeps the native nginx format.
+
+---
+
 ## Support data pack (when opening issues)
 
 Gather **chart version/tag**, sanitized **`values.yaml`**, **`kubectl describe`** for failing workloads,

@@ -30,7 +30,6 @@ require (
 	github.com/sirupsen/logrus v1.10.2
 	github.com/spf13/viper v1.20.1
 	github.com/stretchr/testify v1.12.1
-	github.com/x-cray/logrus-prefixed-formatter v0.5.2
 	github.com/xuri/excelize/v2 v2.11.1-0.20260929015830-8ffeb07ec9a3
 	github.com/zeebo/xxh3 v1.1.0
 	go.opentelemetry.io/contrib/bridges/prometheus v0.72.0
@@ -145,9 +144,6 @@ require (
 	github.com/leodido/go-urn v1.5.0 // indirect
 	github.com/linode/linodego v0.21.1 // indirect
 	github.com/mattermost/xml-roundtrip-validator v0.1.0 // indirect
-	github.com/mattn/go-colorable v0.1.15 // indirect
-	github.com/mattn/go-isatty v0.0.22 // indirect
-	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
 	github.com/miekg/dns v1.1.62 // indirect
 	github.com/minio/crc64nvme v1.1.1 // indirect
 	github.com/minio/md5-simd v1.1.2 // indirect

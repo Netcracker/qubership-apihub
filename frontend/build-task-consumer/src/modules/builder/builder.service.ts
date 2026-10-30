@@ -95,7 +95,7 @@ export class BuilderService implements OnModuleInit {
           return this.builder$.next(task)
         }
       } catch (err) {
-        console.log(err)
+        this.logger.error(err)
       }
 
       this.setFinding(true)

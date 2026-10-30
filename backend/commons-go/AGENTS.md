@@ -1,8 +1,8 @@
 # commons-go — Agent Instructions
 
-Shared Go library for the APIHUB services. It currently holds one package, `api-spec-exposer` (discovery and
-exposure of a service's own API specifications). The module path is
-`github.com/Netcracker/qubership-apihub/backend/commons-go`.
+Shared Go library for the APIHUB services. It holds two packages: `api-spec-exposer` (discovery and
+exposure of a service's own API specifications) and `logging` (the log line format of all Go services).
+The module path is `github.com/Netcracker/qubership-apihub/backend/commons-go`.
 Follow the root [`AGENTS.md`](../../AGENTS.md) and [`backend/AGENTS.md`](../AGENTS.md).
 
 ## Where the code is
@@ -10,6 +10,7 @@ Follow the root [`AGENTS.md`](../../AGENTS.md) and [`backend/AGENTS.md`](../AGEN
 | Area | Location |
 |------|----------|
 | API specification exposer | `api-spec-exposer/` (`exposer.go`, `exposer_test.go`, `README.md`) |
+| Log line format and request ID middleware | `logging/` (`formatter.go`, `request_id.go`) |
 ## Build and test
 
 Nx project `commons-go` (library, tag `lang:go`):
@@ -23,9 +24,9 @@ Or `go test ./...` from this directory. The old per-repository build scripts are
 
 ## Traps
 
-- Consumers are `portal-backend`, `api-linter-service`, and `agents-backend`. `agent` and `test-service` do not use
-  it. A change to a public function can break any of them: build the consumers too
-  (`pnpm exec nx run-many -t build -p portal-backend,api-linter-service,agents-backend`).
+- Consumers are `portal-backend`, `api-linter-service`, `agents-backend`, `agent`, and `test-service`. A change
+  to a public function can break any of them: build the consumers too
+  (`pnpm exec nx run-many -t build -p portal-backend,api-linter-service,agents-backend,agent,test-service`).
 - The module path changed in the monorepo. Old `go get` paths of the polyrepo do not resolve.
 - Its `go.mod` must stay in sync with the workspace (`go work sync`).
 - Tags `commons-go/X.Y.Z` are release tags of the component, not Go module versions.
