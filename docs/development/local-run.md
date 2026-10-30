@@ -210,8 +210,8 @@ its README shows the `config.yaml` and the launch configuration. Prefer the step
 
 ## UI proxy mode
 
-Proxy mode runs the Portal from your sources with hot reload and forwards `/api`, `/playground`, and `/ws/v1` to a
-running APIHUB. It is the default setup for UI work. The details are in
+Proxy mode runs the Portal from your sources with hot reload and forwards `/api`, `/api-linter`, `/agents-backend`,
+and `/playground` to a running APIHUB. It is the default setup for UI work. The details are in
 [`frontend/ui/docs/dev/local-development.md`](../../frontend/ui/docs/dev/local-development.md).
 
 1. Build the Portal and its workspace dependencies once. The dev server loads libraries such as `api-processor` from
@@ -222,8 +222,9 @@ running APIHUB. It is the default setup for UI work. The details are in
    ```
 
 2. Set `proxyServer` in `frontend/ui/packages/portal/vite.config.ts` to the APIHUB you want. The default,
-   `http://host.docker.internal:8081`, is the UI of the local Compose stack. `apiLinterProxyServer` (default port
-   8091) serves `/api-linter`.
+   `http://host.docker.internal:8081`, is the UI of the local Compose stack; it stays the same when the backend runs
+   from the IDE as described above. Point it at a UI or an ingress, not at the backend port: the UI nginx forwards
+   the extension prefixes such as `/api-linter` to their services.
 3. Start Vite from the Portal package:
 
    ```bash
