@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Qubership APIHUB</title>
+  <meta name="description" content="Entry point to the Qubership APIHUB landing page, documentation, Storybooks, and database diagrams.">
+  <link rel="icon" href="logo.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="page">
+    <header class="hero">
+      <img src="logo.png" alt="Qubership APIHUB logo">
+      <h1>Qubership APIHUB</h1>
+      <p class="lead">Find the product landing, the documentation, the component Storybooks, and the database diagrams in one place.</p>
+    </header>
+    <section class="cards">
+      <a class="card" href="landing/">
+        <h2>Landing</h2>
+        <p>What APIHUB is, what it does, and what changed in the latest releases.</p>
+      </a>
+      <article class="card">
+        <h2><a href="docs/">Documentation</a></h2>
+        <p>Install, configure, use, and extend APIHUB.</p>
+        <ul>
+          <li><a href="docs/installation-guide/">Get started</a></li>
+          <li><a href="docs/user-guide/">User guide</a></li>
+          <li><a href="docs/reference/api-changes/">Reference</a></li>
+          <li><a href="docs/admin-guide/">Administration</a></li>
+          <li><a href="docs/architecture/overview/">Architecture</a></li>
+          <li><a href="docs/design/">Design items</a></li>
+          <li><a href="docs/development/">Development</a></li>
+        </ul>
+      </article>
+      <article class="card">
+        <h2><a href="storybook/">Storybooks</a></h2>
+        <p>UI components, one Storybook per published branch.</p>
+        <!--@STORYBOOK_COMPONENTS@-->
+      </article>
+      <article class="card">
+        <h2><a href="erd/">Database ERD</a></h2>
+        <p>Entity-relationship diagrams of the backend databases.</p>
+        <!--@ERD_BACKENDS@-->
+      </article>
+      <a class="card" href="https://netcracker.github.io/qubership-apihub-ci/report_prs_latest.html">
+        <h2>Open Pull Requests Cockpit</h2>
+        <p>The latest report on open pull requests across the repositories.</p>
+      </a>
+    </section>
+  </main>
+  <footer class="site-footer">
+    <a href="https://github.com/Netcracker/qubership-apihub">GitHub</a>
+    <a href="https://github.com/Netcracker/qubership-apihub/releases">Releases</a>
+    <span>Built from <!--@BUILD_REF@--></span>
+  </footer>
+</body>
+</html>

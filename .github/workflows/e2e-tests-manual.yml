@@ -1,0 +1,117 @@
+name: 'E2E: Run tests (manual)'
+
+# A full E2E run against images you name; it builds, publishes, and gates nothing. It replaces the two
+# umbrella workflows that called qubership-apihub-ci, and keeps their launch contract in nine inputs.
+# Refs are branches, tags, or commits of this repository.
+#
+#   runtime: kind              e2e-tests-kind.yml, the Helm charts on Kind, with the agent (what CI runs)
+#   runtime: compose           e2e-tests-compose.yml, deploy/docker-compose/apihub-generic, no agent
+#   runtime: compose-keycloak  e2e-tests-compose.yml, deploy/docker-compose/with-keycloak, no agent
+#
+# image-tags is one JSON object with the keys backend, buildTaskConsumer, ui, apiLinterService,
+# agentsBackend, and agent. A missing key means `dev`. A src-<hash> tag pins exact content: the branch
+# tag moves on the next push. Compose ignores `agent` and the agent input, and Newman skips
+# 1_2_Smoke_Agent there.
+#
+# Empty postman-collections and playwright-args mean the defaults of the runtime. The nightly run takes
+# every default: Kind, dev images, deploy/ from develop, the suites from develop.
+
+on:
+  workflow_dispatch:
+    inputs:
+      runtime:
+        description: Where to stand the product up. kind is what CI runs.
+        type: choice
+        options:
+          - kind
+          - compose
+          - compose-keycloak
+        default: kind
+      deploy-ref:
+        description: Ref of deploy/ (Helm charts, compose folders) and of the agent chart
+        type: string
+        default: develop
+      image-tags:
+        description: JSON object with backend, buildTaskConsumer, ui, apiLinterService, agentsBackend, and agent tags; a missing key means dev
+        type: string
+        default: '{"backend":"dev","buildTaskConsumer":"dev","ui":"dev","apiLinterService":"dev","agentsBackend":"dev","agent":"dev"}'
+      suites:
+        description: Which suites to run
+        type: choice
+        options:
+          - all
+          - postman
+          - playwright
+        default: all
+      postman-ref:
+        description: Ref of tests/postman-collections
+        type: string
+        default: develop
+      postman-collections:
+        description: "Collections to execute, comma-separated: ./e2e/1_1_Smoke_Portal.postman_collection.json or 1_1_Smoke_Portal. Empty means the runtime's default list"
+        type: string
+        default: ''
+      playwright-ref:
+        description: Ref of tests/ui-tests
+        type: string
+        default: develop
+      playwright-args:
+        description: "Playwright test command arguments. Empty means the runtime default: Kind with the agent runs Portal and Agent, otherwise Portal. All use 8 workers and exclude @flaky and @specific"
+        type: string
+        default: ''
+      agent:
+        description: Deploy the APIHUB agent and run its Postman collection (Kind only)
+        type: boolean
+        default: true
+  # Midnight UTC. A scheduled run has no inputs, so every expression below falls back to the defaults.
+  schedule:
+    - cron: '0 0 * * *'
+
+permissions:
+  contents: read
+
+jobs:
+  # Exactly one job runs. A scheduled run has no inputs, so `inputs.runtime` is empty and means Kind.
+  kind:
+    if: >-
+      (github.event_name != 'schedule' || github.repository_owner == 'Netcracker')
+      && (github.event_name != 'workflow_dispatch' || inputs.runtime == 'kind')
+    permissions:
+      contents: read
+      packages: read
+    uses: ./.github/workflows/e2e-tests-kind.yml
+    secrets: inherit
+    with:
+      tier: full
+      image_tags: ${{ inputs.image-tags || '{}' }}
+      default_image_tag: dev
+      deploy_ref: ${{ inputs.deploy-ref || 'develop' }}
+      postman_ref: ${{ inputs.postman-ref || 'develop' }}
+      playwright_ref: ${{ inputs.playwright-ref || 'develop' }}
+      suites: ${{ inputs.suites || 'all' }}
+      postman_collections: ${{ inputs.postman-collections || '' }}
+      playwright_args: ${{ inputs.playwright-args || '' }}
+      # Chosen by trigger: Actions compares false == null as true, so an expression that tested the
+      # input for null could never yield false.
+      agent: ${{ github.event_name != 'workflow_dispatch' || inputs.agent }}
+
+  compose:
+    if: >-
+      github.event_name == 'workflow_dispatch'
+      && (inputs.runtime == 'compose' || inputs.runtime == 'compose-keycloak')
+    permissions:
+      contents: read
+      packages: read
+    uses: ./.github/workflows/e2e-tests-compose.yml
+    secrets: inherit
+    with:
+      tier: full
+      compose_folder: ${{ inputs.runtime == 'compose-keycloak' && 'with-keycloak' || 'apihub-generic' }}
+      image_tags: ${{ inputs.image-tags || '{}' }}
+      default_image_tag: dev
+      deploy_ref: ${{ inputs.deploy-ref || 'develop' }}
+      postman_ref: ${{ inputs.postman-ref || 'develop' }}
+      playwright_ref: ${{ inputs.playwright-ref || 'develop' }}
+      suites: ${{ inputs.suites || 'all' }}
+      postman_collections: ${{ inputs.postman-collections || '' }}
+      playwright_args: ${{ inputs.playwright-args || '' }}

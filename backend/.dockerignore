@@ -1,0 +1,13 @@
+# Three Go images build from backend/, so that `replace ../commons-go` resolves inside the context.
+*/dist/
+*/*/dist/
+**/.git
+**/*.exe
+**/node_modules/
+
+# The api-linter-service builder downloads these linters; a host copy must not replace them.
+# api-linter-service/.dockerignore does not apply to a backend/ context.
+api-linter-service/resources/spectral/linux/spectral
+api-linter-service/resources/spectral/windows/spectral.exe
+api-linter-service/resources/vacuum/linux/vacuum
+api-linter-service/resources/vacuum/windows/vacuum.exe

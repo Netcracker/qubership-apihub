@@ -1,0 +1,141 @@
+const { test } = require('node:test')
+const assert = require('node:assert/strict')
+const fs = require('node:fs')
+const path = require('node:path')
+const { DUE_JOBS, verdict } = require('./ci-verdict')
+
+const YAML = require(require.resolve('yaml', { paths: [require.resolve('nx/package.json')] }))
+const ci = YAML.parse(fs.readFileSync(path.join(__dirname, '..', '..', '.github', 'workflows', 'ci.yml'), 'utf8'))
+
+const outputs = {
+  go_projects: '["portal-backend"]',
+  java_projects: '[]',
+  screenshot_projects: '[]',
+  image_projects: '["ui-portal"]',
+  e2e_tier: 'none',
+  can_publish: 'true',
+}
+const needsWith = (results = {}, out = outputs) =>
+  Object.fromEntries(
+    DUE_JOBS.map((name) => [
+      name,
+      { result: results[name] ?? 'success', ...(name === 'plan' ? { outputs: out } : {}) },
+    ]),
+  )
+
+test('a green push passes; skips the plan expects are accepted', () => {
+  const r = verdict(
+    needsWith({ java: 'skipped', 'screenshot-tests': 'skipped', e2e: 'skipped', 'storybook-pages': 'skipped' }),
+    'push',
+    false,
+  )
+  assert.equal(r.ok, true, r.problems.join('; '))
+})
+
+test('a skip of a due job, a failure, and a cancellation fail the verdict', () => {
+  assert.deepEqual(verdict(needsWith({ go: 'skipped' }), 'push', false).problems, [
+    'go=skipped, but the plan requires it',
+  ])
+  assert.deepEqual(verdict(needsWith({ js: 'failure', e2e: 'cancelled' }), 'push', false).problems, [
+    'js=failure',
+    'e2e=cancelled',
+  ])
+})
+
+test('a run that cannot publish may skip the E2E and Storybook jobs', () => {
+  const skipped = ['e2e', 'storybooks', 'storybook-pages', 'java']
+  const r = verdict(
+    needsWith(Object.fromEntries([...skipped, 'screenshot-tests'].map((j) => [j, 'skipped'])), {
+      ...outputs,
+      can_publish: 'false',
+    }),
+    'pull_request',
+    true,
+  )
+  assert.equal(r.ok, true, r.problems.join('; '))
+})
+
+test('a run that cannot publish must still build the images', () => {
+  const r = verdict(
+    needsWith({ 'go-images': 'skipped', e2e: 'skipped', storybooks: 'skipped', 'storybook-pages': 'skipped' }, {
+      ...outputs,
+      can_publish: 'false',
+    }),
+    'pull_request',
+    true,
+  )
+  assert.deepEqual(r.problems, ['go-images=skipped, but the plan requires it'])
+})
+
+test('a Dependabot push may skip the Storybook jobs, but not the images or E2E', () => {
+  const dependabot = { ...outputs, dependabot: 'true', e2e_tier: 'full' }
+  const ok = verdict(
+    needsWith({ java: 'skipped', 'screenshot-tests': 'skipped', storybooks: 'skipped', 'storybook-pages': 'skipped' }, dependabot),
+    'push',
+    true,
+  )
+  assert.equal(ok.ok, true, ok.problems.join('; '))
+  assert.deepEqual(verdict(needsWith({ e2e: 'skipped', storybooks: 'skipped' }, dependabot), 'push', false).problems, [
+    'e2e=skipped, but the plan requires it',
+  ])
+})
+
+test('ci.yml: Dependabot runs publish, and only forks cannot', () => {
+  const step = ci.jobs.plan.steps.find((s) => s.id === 'can_publish')
+  assert.doesNotMatch(step.run, /value=false\n\s*elif/)
+  assert.match(step.run, /dependabot=true/)
+  assert.match(ci.jobs.storybooks.if, /needs\.plan\.outputs\.dependabot != 'true'/)
+})
+
+test('ci.yml: the image jobs push only when the run can publish', () => {
+  for (const job of ['js-images', 'go-images', 'java-images']) {
+    assert.equal(ci.jobs[job].with.push, "${{ needs.plan.outputs.can_publish == 'true' }}")
+    assert.doesNotMatch(ci.jobs[job].if, /can_publish/)
+  }
+})
+
+test('a job missing from the needs fails the verdict, and an unknown job must succeed', () => {
+  const needs = needsWith()
+  delete needs.storybooks
+  needs['new-job'] = { result: 'skipped' }
+  assert.deepEqual(verdict(needs, 'push', false).problems, [
+    'storybooks: not listed in the needs of ci-ok',
+    'new-job=skipped, but the plan requires it',
+  ])
+})
+
+test('ci.yml: ci-ok needs exactly every job that does not run after it, and those are the known jobs', () => {
+  const after = new Set(['ci-ok'])
+  let grew = true
+  while (grew) {
+    grew = false
+    for (const [name, job] of Object.entries(ci.jobs)) {
+      const needs = [].concat(job.needs ?? [])
+      if (!after.has(name) && needs.some((n) => after.has(n))) {
+        after.add(name)
+        grew = true
+      }
+    }
+  }
+  const before = Object.keys(ci.jobs).filter((name) => !after.has(name)).sort()
+  assert.deepEqual([...ci.jobs['ci-ok'].needs].sort(), before)
+  assert.deepEqual([...DUE_JOBS].sort(), before)
+  assert.deepEqual([...after].sort(), ['ci-ok', 'release-artifacts', 'release-artifacts-dry-run'])
+})
+
+test('ci.yml: release-artifacts publishes on main only, and the dry run only when asked for', () => {
+  assert.match(ci.jobs['release-artifacts'].if, /github\.ref == 'refs\/heads\/main'/)
+  assert.match(ci.jobs['release-artifacts'].if, /needs\.ci-ok\.result == 'success'/)
+  assert.match(ci.jobs['release-artifacts-dry-run'].if, /inputs\.release_dry_run == true/)
+  assert.equal(ci.jobs['release-artifacts-dry-run'].with.dry_run, true)
+  assert.equal(ci.jobs['release-artifacts'].with.dry_run, false)
+  assert.deepEqual(ci.jobs['release-artifacts-dry-run'].permissions, {
+    contents: 'read',
+    packages: 'read',
+    'pull-requests': 'read',
+    issues: 'read',
+  })
+  for (const job of ['release-artifacts', 'release-artifacts-dry-run']) {
+    assert.deepEqual(ci.jobs[job].secrets, { PROJECT_READ_TOKEN: '${{ secrets.PROJECT_READ_TOKEN }}' })
+  }
+})

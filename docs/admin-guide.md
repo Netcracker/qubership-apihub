@@ -1,6 +1,7 @@
 # Qubership APIHUB — administrator guide
 
-Audience: **platform owners and SRE/DevOps** wiring APIHUB into an environment. Portal end users should start with the [User guide](./user-guide.md) and the [Portal User Guide upstream](https://github.com/Netcracker/qubership-apihub-ui/blob/develop/docs/Portal%20User%20Guide.md).
+Audience: **platform owners and SRE/DevOps** wiring APIHUB into an environment. Portal end users should start with the
+[User guide](./user-guide.md) and the [Portal user guide](user-guide/portal.md).
 
 ---
 
@@ -10,46 +11,59 @@ Audience: **platform owners and SRE/DevOps** wiring APIHUB into an environment. 
 |------|------------|
 | Who reads YAML vs env at runtime (+ Helm precedence) | [Configuration reference](./configuration-reference.md) — **Source of truth hierarchy** |
 | Install paths, ports | [Installation guide](./installation-guide.md) |
-| Backups, TTL, auth deep links | [Maintenance guide](./maintenance-guide.md) |
-| Architecture/features product context | [Wiki](https://github.com/Netcracker/qubership-apihub/wiki), [root readme](../README.md) |
+| Database backup and restore, TTL cleanup, migration analysis | [Maintenance guide](./maintenance-guide.md) |
+| Security model, data maintenance, business metrics, static resource templates | [Administration topics](#administration-topics) |
+| Architecture/features product context | [Architecture overview](architecture/overview.md), [root readme](../README.md) |
 
 ---
 
 ## Backend configuration file
 
-The registry is configured through **`config.yaml`**, whose annotated super-set is [**`config.template.yaml`**](https://github.com/Netcracker/qubership-apihub-backend/blob/develop/qubership-apihub-service/config.template.yaml) (clone: `../qubership-apihub-backend/qubership-apihub-service/`).
+The registry is configured through **`config.yaml`**, whose annotated super-set is
+[**`config.template.yaml`**](../backend/portal-backend/config.template.yaml) (module: `backend/portal-backend/`).
 
-**Operational routine**
+### Operational routine
 
-1. Maintain a **golden copy** separate from live secrets (Git ignores or sealed secrets), diff against the template when upgrading between product versions.
-2. Keep **`security.apihubExternalUrl`** truthfully matching the hostname users type; mismatches break OAuth/SAML redirects and deep links.
-3. **`extensions`** must list every sidecar the UI should hit (linter, agents-backend); `baseUrl` + `pathPrefix` pair must match what you publish (internal DNS in Kubernetes, `host.docker.internal` patterns in desktop Compose).
-4. **`zeroDayConfiguration.accessToken`** bootstraps privileged automation; pair it with **`APIHUB_API_KEY`** / **`APIHUB_ACCESS_TOKEN`** variables in workers until you adopt service accounts or PAT-based automation from the product.
+1. Maintain a **golden copy** separate from live secrets (Git ignores or sealed secrets), diff against the template when
+   upgrading between product versions.
+2. Keep **`security.apihubExternalUrl`** truthfully matching the hostname users type; mismatches break OAuth/SAML
+   redirects and deep links.
+3. **`extensions`** must list every sidecar the UI should hit (linter, agents-backend); `baseUrl` + `pathPrefix` pair
+   must match what you publish (internal DNS in Kubernetes, `host.docker.internal` patterns in desktop Compose).
+4. **`zeroDayConfiguration.accessToken`** bootstraps privileged automation; pair it with **`APIHUB_API_KEY`** /
+   **`APIHUB_ACCESS_TOKEN`** variables in workers until you adopt service accounts or PAT-based automation from the
+   product.
 
-**Production mode**
+### Production mode
 
-- With **`security.productionMode: true`** local APIHUB accounts cannot authenticate—plan IdP onboarding before flipping the flag.
+- With **`security.productionMode: true`** local APIHUB accounts cannot authenticate—plan IdP onboarding before flipping
+  the flag.
 
 ---
 
 ## Kubernetes Helm operations
 
-Chart: **`helm-templates/qubership-apihub/`**. Values file is self-commented.
+Chart: **`deploy/helm-templates/qubership-apihub/`**. Values file is self-commented.
 
-- **Rolling configuration changes**: prefer `helm upgrade` with declarative **`values.yaml`** revision control; pods pick up regenerated Secrets/ConfigMaps.
-- **Ingress/TLS**: `qubershipApihubUi.tlsIngress` bundles cert material; ACM/Let's Encrypt integrations are customer-specific — wire them into the secret Helm consumes.
+- **Rolling configuration changes**: prefer `helm upgrade` with declarative **`values.yaml`** revision control; pods
+  pick up regenerated Secrets/ConfigMaps.
+- **Ingress/TLS**: `qubershipApihubUi.tlsIngress` bundles cert material; ACM/Let's Encrypt integrations are
+  customer-specific — wire them into the secret Helm consumes.
 - **Scaling builders**: adjust `qubershipApihubBuildTaskConsumer.replicas` alongside PostgreSQL saturation monitoring.
-- **Prometheus**: `qubershipApihubBackend.env.monitoring.enabled` toggles `ServiceMonitor` creation when your Prometheus operator/stack expects that CRD.
+- **Prometheus**: `qubershipApihubBackend.env.monitoring.enabled` toggles `ServiceMonitor` creation when your Prometheus
+  operator/stack expects that CRD.
 
 ---
 
 ## Docker Compose on workstations
 
-Scripts under **`docker-compose/apihub-generic/`**:
+Scripts under **`deploy/docker-compose/apihub-generic/`**:
 
-- **`generate_env_and_up_compose.sh`** randomizes JWT, admin bootstrap, token, substitutes env files, launches Podman Compose. Assume **files mutate** unless you checkpoint them first.
+- **`generate_env_and_up_compose.sh`** randomizes JWT, admin bootstrap, token, substitutes env files, launches Podman
+  Compose. Assume **files mutate** unless you checkpoint them first.
 - **Persistence**: follow readme guidance on **`PGDATA=/pgdata`**, `./data`, and Podman/WSL metadata for Windows mounts.
-- **`host.docker.internal`**: unify browser URL, **`APIHUB_URL`**, **`extensions[].baseUrl`**, and SSO IdP redirects when mixing published ports vs internal DNS names.
+- **`host.docker.internal`**: unify browser URL, **`APIHUB_URL`**, **`extensions[].baseUrl`**, and SSO IdP redirects
+  when mixing published ports vs internal DNS names.
 
 ---
 
@@ -59,7 +73,7 @@ Scripts under **`docker-compose/apihub-generic/`**:
 |-----------|-------------------|
 | **API Linter** | Own PostgreSQL; Olric discovery mode mirrors backend guidelines; Spectral binaries ship in image (`linters.spectral.binPath` in `config.yaml`). Optional AI lint pulls OpenAI keys through `config.yaml` / Helm secret. |
 | **Agents Backend** | Own PostgreSQL; **`cleanup.snapshots.schedule`** (`cron`) + **`cleanup.snapshots.ttlDays`** in `config.yaml` regulate snapshot retention. Align **`businessParameters.defaultWorkspaceId`** with a real workspace slug when cloning package trees after discovery |
-| **K8s Agent** | Installed separately; config file from [`agent config.template.yaml`](https://github.com/Netcracker/qubership-apihub-agent/blob/develop/qubership-apihub-agent/config.template.yaml); requires reachable **`agentUrl`**, **`cloudName`**, **`namespace`**, **`apihub.url`/`accessToken`**. |
+| **K8s Agent** | Installed separately; config file from [`agent config.template.yaml`](../backend/agent/config.template.yaml); requires reachable **`agentUrl`**, **`cloudName`**, **`namespace`**, **`apihub.url`/`accessToken`**. |
 
 ---
 
@@ -67,17 +81,34 @@ Scripts under **`docker-compose/apihub-generic/`**:
 
 | Task | Guidance |
 |------|----------|
-| IdP onboarding | SAML metadata / OIDC client credentials live under **`externalIdentityProviders`**. Detailed flows: [**security_model.md**](https://github.com/Netcracker/qubership-apihub-backend/blob/develop/docs/security/security_model.md). Keycloak Compose recipe: **`docker-compose/with-keycloak/`**. |
+| IdP onboarding | SAML metadata / OIDC client credentials live under **`externalIdentityProviders`**. Detailed flows: [**security-model.md**](administration/security-model.md). Keycloak Compose recipe: **`deploy/docker-compose/with-keycloak/`**. |
 | Rotate JWT signing key | Plan user re-login sessions; coordinate with SSO session lifetime. Replace **`jwt.privateKey`**, bounce backend pods/deployments. |
-| Rotate system token | Change backend **`accessToken`**, the builder **`APIHUB_API_KEY`**, and linter / agents-backend **`technicalParameters.apihub.accessToken`** concurrently; regenerate the Helm config Secrets (`build-task-consumer`, linter, agents-backend). |
+| Rotate system token (the home for token handling; behavior is in [Access Tokens Management](design/package-settings/di-portal-ps-003-access-tokens-management.md)) | Change backend **`accessToken`**, the builder **`APIHUB_API_KEY`**, and linter / agents-backend **`technicalParameters.apihub.accessToken`** concurrently; regenerate the Helm config Secrets (`build-task-consumer`, linter, agents-backend). |
 | Playground proxy hardening | Keep **`security.insecureProxy`** / **`allowedHostsForProxy`** tight; never expose unsafe proxy settings on untrusted networks. |
 
 ---
 
 ## Support data pack (when opening issues)
 
-Gather **chart version/tag**, sanitized **`values.yaml`**, **`kubectl describe`** for failing workloads, **`config.yaml`** with secrets stripped, Compose file set if reproducible desktop case, PostgreSQL logs for migration failures.
+Gather **chart version/tag**, sanitized **`values.yaml`**, **`kubectl describe`** for failing workloads,
+**`config.yaml`** with secrets stripped, Compose file set if reproducible desktop case, PostgreSQL logs for migration
+failures.
 
 ---
 
-See also **[Maintenance guide](./maintenance-guide.md)** for scripted backup tables and housekeeping links into backend documentation.
+## Administration topics
+
+| Topic | Page |
+|-------|------|
+| Authentication, authorization, and roles | [Security model](administration/security-model.md) |
+| Cleanup jobs and data retention | [Data maintenance](administration/data-maintenance.md) |
+| Usage-oriented business metrics | [Business metrics](administration/business-metrics.md) |
+| AI prompt and document templates bundled in the image | [Static resources customization](administration/static-resources-customization.md) |
+| Fixing published sources after the fact | [Modify published sources](administration/modify-published-sources.md) |
+| Stored-spec migration jobs | [Operations migration analysis](administration/operations-migration-analysis.md) |
+| Feature behavior behind the settings | [Design items](design/README.md) |
+
+---
+
+See also the **[Maintenance guide](./maintenance-guide.md)** for database backup and restore, cleanup, and migration
+analysis.

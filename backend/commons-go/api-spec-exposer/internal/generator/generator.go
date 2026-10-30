@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/Netcracker/qubership-apihub-commons-go/api-spec-exposer/config"
+	"github.com/Netcracker/qubership-apihub/backend/commons-go/api-spec-exposer/config"
 )
 
 // Generator generates endpoint configurations (@config.EndpointConfig) based on discovered specs

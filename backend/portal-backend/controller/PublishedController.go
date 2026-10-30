@@ -1,0 +1,148 @@
+package controller
+
+import (
+	"net/http"
+
+	"github.com/Netcracker/qubership-apihub/backend/portal-backend/responder"
+	"github.com/Netcracker/qubership-apihub/backend/portal-backend/secctx"
+	"github.com/Netcracker/qubership-apihub/backend/portal-backend/view"
+
+	"github.com/Netcracker/qubership-apihub/backend/portal-backend/exception"
+	"github.com/Netcracker/qubership-apihub/backend/portal-backend/service"
+)
+
+type PublishedController interface {
+	GetVersionSources(w http.ResponseWriter, r *http.Request)
+	GetPublishedVersionSourceDataConfig(w http.ResponseWriter, r *http.Request)
+	GetPublishedVersionBuildConfig(w http.ResponseWriter, r *http.Request)
+}
+
+func NewPublishedController(versionService service.PublishedService, portalService service.PortalService, roleService service.RoleService, responder responder.Responder) PublishedController {
+	return &publishControllerImpl{
+		publishedService: versionService,
+		portalService:    portalService,
+		roleService:      roleService,
+		responder:        responder,
+	}
+}
+
+type publishControllerImpl struct {
+	publishedService service.PublishedService
+	portalService    service.PortalService
+	roleService      service.RoleService
+	responder        responder.Responder
+}
+
+func (v publishControllerImpl) GetVersionSources(w http.ResponseWriter, r *http.Request) {
+	ctx := secctx.MakeUserContext(r)
+	packageId := getStringParam(r, "packageId")
+	sufficientPrivileges, err := v.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
+	if err != nil {
+		v.responder.RespondWithError(w, r, "Failed to check user privileges", err)
+		return
+	}
+	if !sufficientPrivileges {
+		v.responder.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusForbidden,
+			Code:    exception.InsufficientPrivileges,
+			Message: exception.InsufficientPrivilegesMsg,
+		})
+		return
+	}
+
+	versionName, err := getUnescapedStringParam(r, "version")
+	if err != nil {
+		v.responder.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidURLEscape,
+			Message: exception.InvalidURLEscapeMsg,
+			Params:  map[string]interface{}{"param": "version"},
+			Debug:   err.Error(),
+		})
+		return
+	}
+	srcArchive, err := v.publishedService.GetVersionSources(ctx, packageId, versionName)
+	if err != nil {
+		v.responder.RespondWithError(w, r, "Failed to get package version sources", err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/octet-stream")
+	w.WriteHeader(http.StatusOK)
+	w.Write(srcArchive)
+}
+
+func (v publishControllerImpl) GetPublishedVersionSourceDataConfig(w http.ResponseWriter, r *http.Request) {
+	ctx := secctx.MakeUserContext(r)
+	packageId := getStringParam(r, "packageId")
+	sufficientPrivileges, err := v.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
+	if err != nil {
+		v.responder.RespondWithError(w, r, "Failed to check user privileges", err)
+		return
+	}
+	if !sufficientPrivileges {
+		v.responder.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusForbidden,
+			Code:    exception.InsufficientPrivileges,
+			Message: exception.InsufficientPrivilegesMsg,
+		})
+		return
+	}
+
+	versionName, err := getUnescapedStringParam(r, "version")
+	if err != nil {
+		v.responder.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidURLEscape,
+			Message: exception.InvalidURLEscapeMsg,
+			Params:  map[string]interface{}{"param": "version"},
+			Debug:   err.Error(),
+		})
+		return
+	}
+	publishedVersionSourceDataConfig, err := v.publishedService.GetPublishedVersionSourceDataConfig(ctx, packageId, versionName)
+	if err != nil {
+		v.responder.RespondWithError(w, r, "Failed to get package version sources", err)
+		return
+	}
+
+	v.responder.RespondWithJson(w, http.StatusOK, publishedVersionSourceDataConfig)
+}
+
+func (v publishControllerImpl) GetPublishedVersionBuildConfig(w http.ResponseWriter, r *http.Request) {
+	ctx := secctx.MakeUserContext(r)
+	packageId := getStringParam(r, "packageId")
+	sufficientPrivileges, err := v.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
+	if err != nil {
+		v.responder.RespondWithError(w, r, "Failed to check user privileges", err)
+		return
+	}
+	if !sufficientPrivileges {
+		v.responder.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusForbidden,
+			Code:    exception.InsufficientPrivileges,
+			Message: exception.InsufficientPrivilegesMsg,
+		})
+		return
+	}
+
+	versionName, err := getUnescapedStringParam(r, "version")
+	if err != nil {
+		v.responder.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidURLEscape,
+			Message: exception.InvalidURLEscapeMsg,
+			Params:  map[string]interface{}{"param": "version"},
+			Debug:   err.Error(),
+		})
+		return
+	}
+
+	publishedVersionBuildConfig, err := v.publishedService.GetPublishedVersionBuildConfig(ctx, packageId, versionName)
+	if err != nil {
+		v.responder.RespondWithError(w, r, "Failed to get package version build config", err)
+		return
+	}
+
+	v.responder.RespondWithJson(w, http.StatusOK, publishedVersionBuildConfig)
+}

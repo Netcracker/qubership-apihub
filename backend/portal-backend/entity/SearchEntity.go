@@ -1,0 +1,355 @@
+package entity
+
+import (
+	"time"
+
+	"github.com/Netcracker/qubership-apihub/backend/portal-backend/view"
+)
+
+type VersionStatusSearchWeight struct {
+	VersionReleaseStatus       string  `pg:"version_status_release, type:varchar, use_zero"`
+	VersionReleaseStatusWeight float64 `pg:"version_status_release_weight, type:real, use_zero"`
+	VersionDraftStatus         string  `pg:"version_status_draft, type:varchar, use_zero"`
+	VersionDraftStatusWeight   float64 `pg:"version_status_draft_weight, type:real, use_zero"`
+}
+
+type OperationSearchResult struct {
+	tableName struct{} `pg:",discard_unknown_columns"`
+
+	OperationEntity
+	PackageName   string   `pg:"name, type:varchar"`
+	VersionStatus string   `pg:"status, type:varchar"`
+	ParentNames   []string `pg:"parent_names, type:varchar[]"`
+}
+
+type GlobalContractSearchQuery struct {
+	OriginalTextInput string    `pg:"original_text_input, type:varchar, use_zero"`
+	Kinds             []string  `pg:"kinds, type:varchar[], use_zero"`
+	WorkspaceId       string    `pg:"workspace_id, type:varchar, use_zero"`
+	Packages          []string  `pg:"packages, type:varchar[], use_zero"`
+	VisibleRoots      []string  `pg:"visible_roots, type:varchar[], use_zero"`
+	Versions          []string  `pg:"versions, type:varchar[], use_zero"`
+	Status            string    `pg:"status, type:varchar, use_zero"`
+	StartDate         time.Time `pg:"start_date, type:timestamp without time zone, use_zero"`
+	EndDate           time.Time `pg:"end_date, type:timestamp without time zone, use_zero"`
+	Limit             int       `pg:"limit, type:integer, use_zero"`
+	Offset            int       `pg:"offset, type:integer, use_zero"`
+}
+
+type DDLContractSearchResult struct {
+	tableName struct{} `pg:",discard_unknown_columns"`
+
+	DDLContractEntity
+	// PackageName is tagged package_display_name, not name: DDLContractEntity already has a
+	// "name" column (the DDL entity's own name), and go-pg silently drops one of two fields
+	// mapped to the same column name instead of erroring, so a shared "name" tag here would
+	// make this field come back empty and the ddl entity's own name overwritten by the package's.
+	PackageName   string   `pg:"package_display_name, type:varchar"`
+	VersionStatus string   `pg:"status, type:varchar"`
+	ParentNames   []string `pg:"parent_names, type:varchar[]"`
+}
+
+type MCPContractSearchResult struct {
+	tableName struct{} `pg:",discard_unknown_columns"`
+
+	MCPContractEntity
+	PackageName   string   `pg:"package_name, type:varchar"`
+	VersionStatus string   `pg:"status, type:varchar"`
+	ParentNames   []string `pg:"parent_names, type:varchar[]"`
+}
+
+func MakeGlobalDDLSearchResultView(ent DDLContractSearchResult) view.DdlContractSearchResult {
+	return view.DdlContractSearchResult{
+		PackageId:      ent.PackageId,
+		PackageName:    ent.PackageName,
+		ParentPackages: ent.ParentNames,
+		VersionStatus:  ent.VersionStatus,
+		Version:        view.MakeVersionRefKey(ent.Version, ent.Revision),
+		EntityId:       ent.DdlEntityId,
+		Kind:           ent.Kind,
+		SchemaName:     ent.SchemaName,
+		EntityName:     ent.Name,
+	}
+}
+
+func MakeGlobalMCPSearchResultView(ent MCPContractSearchResult) view.McpEntitySearchResult {
+	return view.McpEntitySearchResult{
+		PackageId:      ent.PackageId,
+		PackageName:    ent.PackageName,
+		ParentPackages: ent.ParentNames,
+		VersionStatus:  ent.VersionStatus,
+		Version:        view.MakeVersionRefKey(ent.Version, ent.Revision),
+		EntityId:       ent.McpEntityId,
+		Kind:           ent.Kind,
+		Name:           ent.Title,
+		McpEndpoint:    ent.McpEndpoint,
+	}
+}
+
+type GlobalOperationSearchQuery struct {
+	OriginalTextInput string    `pg:"original_text_input, type:varchar, use_zero"`
+	ApiType           string    `pg:"api_type, type:varchar, use_zero"`
+	WorkspaceId       string    `pg:"workspace_id, type:varchar, use_zero"`
+	Packages          []string  `pg:"packages, type:varchar[], use_zero"`
+	VisibleRoots      []string  `pg:"visible_roots, type:varchar[], use_zero"`
+	Versions          []string  `pg:"versions, type:varchar[], use_zero"`
+	Status            string    `pg:"status, type:varchar, use_zero"`
+	StartDate         time.Time `pg:"start_date, type:timestamp without time zone, use_zero"`
+	EndDate           time.Time `pg:"end_date, type:timestamp without time zone, use_zero"`
+	Limit             int       `pg:"limit, type:integer, use_zero"`
+	Offset            int       `pg:"offset, type:integer, use_zero"`
+}
+
+func MakeGlobalOperationSearchResultView(ent OperationSearchResult) interface{} {
+	operationSearchResult := view.CommonOperationSearchResult{
+		PackageId:      ent.PackageId,
+		PackageName:    ent.PackageName,
+		ParentPackages: ent.ParentNames,
+		VersionStatus:  ent.VersionStatus,
+		Version:        view.MakeVersionRefKey(ent.Version, ent.Revision),
+		Title:          ent.Title,
+	}
+
+	switch ent.Type {
+	case string(view.RestApiType):
+		return view.RestOperationSearchResult{
+			CommonOperationSearchResult: operationSearchResult,
+			RestOperationView:           MakeRestOperationView(&ent.OperationEntity),
+		}
+	case string(view.GraphqlApiType):
+		return view.GraphQLOperationSearchResult{
+			CommonOperationSearchResult: operationSearchResult,
+			GraphQLOperationView:        MakeGraphQLOperationView(&ent.OperationEntity),
+		}
+	case string(view.AsyncapiApiType):
+		return view.AsyncAPIOperationSearchResult{
+			CommonOperationSearchResult: operationSearchResult,
+			AsyncAPIOperationView:       MakeAsyncAPIOperationView(&ent.OperationEntity),
+		}
+	}
+	return operationSearchResult
+}
+
+type PackageSearchWeight struct {
+	PackageNameWeight        float64 `pg:"pkg_name_weight, type:real, use_zero"`
+	PackageDescriptionWeight float64 `pg:"pkg_description_weight, type:real, use_zero"`
+	PackageIdWeight          float64 `pg:"pkg_id_weight, type:real, use_zero"`
+	PackageServiceNameWeight float64 `pg:"pkg_service_name_weight, type:real, use_zero"`
+	VersionWeight            float64 `pg:"version_weight, type:real, use_zero"`
+	VersionLabelWeight       float64 `pg:"version_label_weight, type:real, use_zero"`
+	DefaultVersionWeight     float64 `pg:"default_version_weight, type:real, use_zero"`
+	OpenCountWeight          float64 `pg:"open_count_weight, type:real, use_zero"`
+}
+
+type PackageSearchQuery struct {
+	PackageSearchWeight
+	VersionStatusSearchWeight
+	ApiType      string    `pg:"api_type, type:varchar, use_zero"`
+	TextFilter   string    `pg:"text_filter, type:varchar, use_zero"` //for varchar
+	Packages     []string  `pg:"packages, type:varchar[], use_zero"`
+	VisibleRoots []string  `pg:"visible_roots, type:varchar[], use_zero"`
+	Versions     []string  `pg:"versions, type:varchar[], use_zero"`
+	Statuses     []string  `pg:"statuses, type:varchar[], use_zero"`
+	StartDate    time.Time `pg:"start_date, type:timestamp without time zone, use_zero"`
+	EndDate      time.Time `pg:"end_date, type:timestamp without time zone, use_zero"`
+	Limit        int       `pg:"limit, type:integer, use_zero"`
+	Offset       int       `pg:"offset, type:integer, use_zero"`
+}
+
+type PackageSearchResult struct {
+	tableName struct{} `pg:",discard_unknown_columns"`
+
+	PackageId          string    `pg:"package_id, type:varchar"`
+	PackageName        string    `pg:"name, type:varchar"`
+	PackageDescription string    `pg:"description, type:varchar"`
+	PackageServiceName string    `pg:"service_name, type:varchar"`
+	Version            string    `pg:"version, type:varchar"`
+	Revision           int       `pg:"revision, type:integer"`
+	VersionStatus      string    `pg:"status, type:varchar"`
+	CreatedAt          time.Time `pg:"created_at, type:timestamp without time zone"`
+	Labels             []string  `pg:"labels, type:varchar[], array"`
+	LatestRevision     bool      `pg:"latest_revision, type:boolean"`
+	ParentNames        []string  `pg:"parent_names, type:varchar[]"`
+
+	//debug
+	PackageIdTf          float64 `pg:"pkg_id_tf, type:real"`
+	PackageNameTf        float64 `pg:"pkg_name_tf, type:real"`
+	PackageDescriptionTf float64 `pg:"pkg_description_tf, type:real"`
+	PackageServiceNameTf float64 `pg:"pkg_service_name_tf, type:real"`
+	VersionTf            float64 `pg:"version_tf, type:real"`
+	VersionLabelsTf      float64 `pg:"version_labels_tf, type:real"`
+	DefaultVersionTf     float64 `pg:"default_version_tf, type:real"`
+	VersionStatusTf      float64 `pg:"version_status_tf, type:real"`
+	OpenCountWeight      float64 `pg:"open_count_weight, type:real"`
+	VersionOpenCount     float64 `pg:"version_open_count, type:real"`
+}
+
+func MakePackageSearchQueryEntity(searchQuery *view.SearchQueryReq_deprecated) (*PackageSearchQuery, error) {
+	searchQueryEntity := &PackageSearchQuery{
+		ApiType:      searchQuery.ApiType,
+		TextFilter:   searchQuery.SearchString,
+		Packages:     searchQuery.PackageIds,
+		VisibleRoots: searchQuery.VisiblePackageRoots,
+		Versions:     searchQuery.Versions,
+		Statuses:     searchQuery.Statuses,
+		StartDate:    searchQuery.PublicationDateInterval.StartDate,
+		EndDate:      searchQuery.PublicationDateInterval.EndDate,
+		Limit:        searchQuery.Limit,
+		Offset:       searchQuery.Limit * searchQuery.Page,
+	}
+	if searchQueryEntity.Packages == nil {
+		searchQueryEntity.Packages = make([]string, 0)
+	}
+	if searchQueryEntity.VisibleRoots == nil {
+		searchQueryEntity.VisibleRoots = make([]string, 0)
+	}
+	if searchQueryEntity.Versions == nil {
+		searchQueryEntity.Versions = make([]string, 0)
+	}
+	if searchQueryEntity.Statuses == nil {
+		searchQueryEntity.Statuses = make([]string, 0)
+	}
+	if searchQueryEntity.StartDate.IsZero() {
+		searchQueryEntity.StartDate = time.Unix(0, 0) //January 1, 1970
+	}
+	if searchQueryEntity.EndDate.IsZero() {
+		searchQueryEntity.EndDate = time.Unix(2556057600, 0) //December 31, 2050
+	}
+	return searchQueryEntity, nil
+}
+
+func MakePackageSearchResultView(ent PackageSearchResult) *view.PackageSearchResult {
+	return &view.PackageSearchResult{
+		PackageId:      ent.PackageId,
+		PackageName:    ent.PackageName,
+		Description:    ent.PackageDescription,
+		ServiceName:    ent.PackageServiceName,
+		ParentPackages: ent.ParentNames,
+		Version:        view.MakeVersionRefKey(ent.Version, ent.Revision),
+		VersionStatus:  ent.VersionStatus,
+		CreatedAt:      ent.CreatedAt,
+		Labels:         ent.Labels,
+		LatestRevision: ent.LatestRevision,
+
+		//debug
+		Debug: view.PackageSearchWeightsDebug{
+			PackageIdTf:            ent.PackageIdTf,
+			PackageNameTf:          ent.PackageNameTf,
+			PackageDescriptionTf:   ent.PackageDescriptionTf,
+			PackageServiceNameTf:   ent.PackageServiceNameTf,
+			VersionTf:              ent.VersionTf,
+			VersionLabelsTf:        ent.VersionLabelsTf,
+			DefaultVersionTf:       ent.DefaultVersionTf,
+			VersionStatusTf:        ent.VersionStatusTf,
+			VersionOpenCountWeight: ent.OpenCountWeight,
+			VersionOpenCount:       ent.VersionOpenCount,
+		},
+	}
+}
+
+type DocumentSearchWeight struct {
+	TitleWeight     float64 `pg:"title_weight, type:real, use_zero"`
+	LabelsWeight    float64 `pg:"labels_weight, type:real, use_zero"`
+	ContentWeight   float64 `pg:"content_weight, type:real, use_zero"`
+	OpenCountWeight float64 `pg:"open_count_weight, type:real, use_zero"`
+}
+
+type DocumentSearchQuery struct {
+	DocumentSearchWeight
+	VersionStatusSearchWeight
+	ApiType      string    `pg:"api_type, type:varchar, use_zero"`
+	TextFilter   string    `pg:"text_filter, type:varchar, use_zero"` //for varchar
+	Packages     []string  `pg:"packages, type:varchar[], use_zero"`
+	VisibleRoots []string  `pg:"visible_roots, type:varchar[], use_zero"`
+	Versions     []string  `pg:"versions, type:varchar[], use_zero"`
+	Statuses     []string  `pg:"statuses, type:varchar[], use_zero"`
+	StartDate    time.Time `pg:"start_date, type:timestamp without time zone, use_zero"`
+	EndDate      time.Time `pg:"end_date, type:timestamp without time zone, use_zero"`
+	Limit        int       `pg:"limit, type:integer, use_zero"`
+	Offset       int       `pg:"offset, type:integer, use_zero"`
+	UnknownTypes []string  `pg:"unknown_types, type:varchar[], use_zero"`
+}
+
+type DocumentSearchResult struct {
+	tableName struct{} `pg:",discard_unknown_columns"`
+
+	PackageId     string    `pg:"package_id, type:varchar"`
+	PackageName   string    `pg:"name, type:varchar"`
+	Version       string    `pg:"version, type:varchar"`
+	Revision      int       `pg:"revision type:integer"`
+	VersionStatus string    `pg:"status, type:varchar"`
+	CreatedAt     time.Time `pg:"created_at, type:timestamp without time zone"`
+	Slug          string    `pg:"slug, type:varchar"`
+	Title         string    `pg:"title, type:varchar"`
+	Type          string    `pg:"type, type:varchar"`
+	Metadata      Metadata  `pg:"metadata, type:jsonb"`
+	ParentNames   []string  `pg:"parent_names, type:varchar[]"`
+
+	//debug
+	TitleTf           float64 `pg:"title_tf, type:real"`
+	LabelsTf          float64 `pg:"labels_tf, type:real"`
+	ContentTf         float64 `pg:"content_tf, type:real"`
+	VersionStatusTf   float64 `pg:"version_status_tf, type:real"`
+	OpenCountWeight   float64 `pg:"open_count_weight, type:real"`
+	DocumentOpenCount float64 `pg:"document_open_count, type:real"`
+}
+
+func MakeDocumentSearchQueryEntity(searchQuery *view.SearchQueryReq_deprecated, unknownTypes []string) (*DocumentSearchQuery, error) {
+	searchQueryEntity := &DocumentSearchQuery{
+		ApiType:      searchQuery.ApiType,
+		TextFilter:   searchQuery.SearchString,
+		Packages:     searchQuery.PackageIds,
+		VisibleRoots: searchQuery.VisiblePackageRoots,
+		Versions:     searchQuery.Versions,
+		Statuses:     searchQuery.Statuses,
+		StartDate:    searchQuery.PublicationDateInterval.StartDate,
+		EndDate:      searchQuery.PublicationDateInterval.EndDate,
+		Limit:        searchQuery.Limit,
+		Offset:       searchQuery.Limit * searchQuery.Page,
+		UnknownTypes: unknownTypes,
+	}
+	if searchQueryEntity.Packages == nil {
+		searchQueryEntity.Packages = make([]string, 0)
+	}
+	if searchQueryEntity.VisibleRoots == nil {
+		searchQueryEntity.VisibleRoots = make([]string, 0)
+	}
+	if searchQueryEntity.Versions == nil {
+		searchQueryEntity.Versions = make([]string, 0)
+	}
+	if searchQueryEntity.Statuses == nil {
+		searchQueryEntity.Statuses = make([]string, 0)
+	}
+	if searchQueryEntity.StartDate.IsZero() {
+		searchQueryEntity.StartDate = time.Unix(0, 0) //January 1, 1970
+	}
+	if searchQueryEntity.EndDate.IsZero() {
+		searchQueryEntity.EndDate = time.Unix(2556057600, 0) //December 31, 2050
+	}
+	return searchQueryEntity, nil
+}
+
+func MakeDocumentSearchResultView(ent DocumentSearchResult, content string) *view.DocumentSearchResult {
+	return &view.DocumentSearchResult{
+		PackageId:      ent.PackageId,
+		PackageName:    ent.PackageName,
+		ParentPackages: ent.ParentNames,
+		Version:        view.MakeVersionRefKey(ent.Version, ent.Revision),
+		VersionStatus:  ent.VersionStatus,
+		CreatedAt:      ent.CreatedAt,
+		Slug:           ent.Slug,
+		Type:           ent.Type,
+		Title:          ent.Title,
+		Content:        content,
+		Labels:         ent.Metadata.GetLabels(),
+		//debug
+		Debug: view.DocumentSearchWeightsDebug{
+			TitleTf:                 ent.TitleTf,
+			LabelsTf:                ent.LabelsTf,
+			ContentTf:               ent.ContentTf,
+			VersionStatusTf:         ent.VersionStatusTf,
+			DocumentOpenCountWeight: ent.OpenCountWeight,
+			DocumentOpenCount:       ent.DocumentOpenCount,
+		},
+	}
+}

@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1190" viewBox="0 0 1600 1190" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif">
+  <defs>
+    <linearGradient id="titleGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#60a5fa"/>
+      <stop offset="1" stop-color="#a78bfa"/>
+    </linearGradient>
+    <linearGradient id="leftCard" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#1a0f1a"/>
+      <stop offset="1" stop-color="#0F172A"/>
+    </linearGradient>
+    <linearGradient id="rightCard" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#0b1f1c"/>
+      <stop offset="1" stop-color="#0F172A"/>
+    </linearGradient>
+    <style>
+      .lbl { font-size: 12px; font-weight: 700; letter-spacing: 2.2px; fill: #64748b; }
+      .txt { font-size: 15px; fill: #cbd5e1; }
+      .out { font-size: 13.5px; fill: #34D399; font-weight: 600; }
+      .outk { font-size: 13.5px; fill: #64748b; font-weight: 600; }
+      .card { stroke: #1E293B; stroke-width: 1; rx: 14; }
+    </style>
+  </defs>
+
+  <rect width="1600" height="1190" fill="#050813"/>
+
+  <!-- title -->
+  <text x="60" y="52" font-size="15" font-weight="600" fill="#60a5fa" letter-spacing="3">WHY APIHUB?</text>
+  <text x="60" y="92" font-size="30" font-weight="800" fill="#f1f5f9">Your business runs on APIs. <tspan fill="url(#titleGrad)">Who is keeping them in order?</tspan></text>
+
+  <!-- column headers -->
+  <g font-size="14" font-weight="800" letter-spacing="2.5">
+    <circle cx="70" cy="146" r="6" fill="#f87171"/>
+    <text x="86" y="151" fill="#fca5a5">WITHOUT GOVERNANCE</text>
+    <circle cx="830" cy="146" r="6" fill="#34D399"/>
+    <text x="846" y="151" fill="#6ee7b7">WITH APIHUB</text>
+  </g>
+
+  <!-- - Row 1 — top=180 -->
+  <g>
+    <text x="60" y="194" class="lbl">01 · KNOWING WHAT YOU HAVE</text>
+    <rect x="60" y="206" width="720" height="96" class="card" fill="url(#leftCard)"/>
+    <rect x="60" y="206" width="4" height="96" rx="2" fill="#f87171"/>
+    <text x="84" y="236" class="txt">Nobody can say how many APIs exist, which version is live, or who depends on them.</text>
+    <text x="84" y="258" class="txt">Knowledge lives in people's heads, spreadsheets and wiki pages that stopped being true.</text>
+    <text x="84" y="280" class="txt">When a key engineer leaves, the map leaves with them.</text>
+
+    <rect x="820" y="206" width="720" height="96" class="card" fill="url(#rightCard)"/>
+    <rect x="820" y="206" width="4" height="96" rx="2" fill="#34D399"/>
+    <text x="844" y="236" class="txt">One searchable catalog of every contract: REST, GraphQL, events, DB schemas, AI tools.</text>
+    <text x="844" y="258" class="txt">Agents in your Kubernetes clusters discover what is actually deployed.</text>
+    <text x="844" y="280" class="txt">The catalog stays current without anyone updating it by hand.</text>
+
+    <text x="60" y="324"><tspan class="outk">OUTCOME  </tspan><tspan class="out">The organization owns its integration landscape — not individual employees. Audit questions are answered in minutes.</tspan></text>
+  </g>
+
+  <!-- - Row 2 — top=344 -->
+  <g>
+    <text x="60" y="358" class="lbl">02 · CHANGES THAT BREAK OTHER SYSTEMS</text>
+    <rect x="60" y="370" width="720" height="96" class="card" fill="url(#leftCard)"/>
+    <rect x="60" y="370" width="4" height="96" rx="2" fill="#f87171"/>
+    <text x="84" y="400" class="txt">A developer renames a field. Nothing in the process catches it.</text>
+    <text x="84" y="422" class="txt">Weeks later a partner integration or the mobile app fails in production.</text>
+    <text x="84" y="444" class="txt">Customers find it first; the fix takes a weekend; the meeting is about blame.</text>
+
+    <rect x="820" y="370" width="720" height="96" class="card" fill="url(#rightCard)"/>
+    <rect x="820" y="370" width="4" height="96" rx="2" fill="#34D399"/>
+    <text x="844" y="400" class="txt">Every new version is compared with the previous one automatically.</text>
+    <text x="844" y="422" class="txt">Each change is classified — breaking, risky, deprecating or safe — before release.</text>
+    <text x="844" y="444" class="txt">CI can block the merge; consumers see exactly what will affect them.</text>
+
+    <text x="60" y="488"><tspan class="outk">OUTCOME  </tspan><tspan class="out">Fewer incidents from integration breaks, predictable releases, lower on-call and support cost.</tspan></text>
+  </g>
+
+  <!-- - Row 3 — top=508 -->
+  <g>
+    <text x="60" y="522" class="lbl">03 · DOCUMENTATION AS A TAX</text>
+    <rect x="60" y="534" width="720" height="96" class="card" fill="url(#leftCard)"/>
+    <rect x="60" y="534" width="4" height="96" rx="2" fill="#f87171"/>
+    <text x="84" y="564" class="txt">Docs are written by hand, after the fact, in a different format per team.</text>
+    <text x="84" y="586" class="txt">They are out of date the day they are published.</text>
+    <text x="84" y="608" class="txt">Analysts spend weeks per release re-describing what the code already says.</text>
+
+    <rect x="820" y="534" width="720" height="96" class="card" fill="url(#rightCard)"/>
+    <rect x="820" y="534" width="4" height="96" rx="2" fill="#34D399"/>
+    <text x="844" y="564" class="txt">Documentation is generated from the contract and versioned with it.</text>
+    <text x="844" y="586" class="txt">One format, one place, one link per version — with an interactive playground.</text>
+    <text x="844" y="608" class="txt">Guides, examples and diagrams live next to the spec.</text>
+
+    <text x="60" y="652"><tspan class="outk">OUTCOME  </tspan><tspan class="out">Documentation becomes a by-product of publishing. Partner integrations start faster with fewer tickets.</tspan></text>
+  </g>
+
+  <!-- - Row 4 — top=672 -->
+  <g>
+    <text x="60" y="686" class="lbl">04 · DESIGN REVIEW BY MEETING</text>
+    <rect x="60" y="698" width="720" height="96" class="card" fill="url(#leftCard)"/>
+    <rect x="60" y="698" width="4" height="96" rx="2" fill="#f87171"/>
+    <text x="84" y="728" class="txt">Standards exist on a wiki page nobody reads.</text>
+    <text x="84" y="750" class="txt">Reviews happen in meetings and email threads, depending on who is available.</text>
+    <text x="84" y="772" class="txt">Inconsistencies surface late, when fixing them means rework across teams.</text>
+
+    <rect x="820" y="698" width="720" height="96" class="card" fill="url(#rightCard)"/>
+    <rect x="820" y="698" width="4" height="96" rx="2" fill="#34D399"/>
+    <text x="844" y="728" class="txt">Standards are encoded as rules and run automatically on every publish.</text>
+    <text x="844" y="750" class="txt">Every version gets a quality score visible to all teams.</text>
+    <text x="844" y="772" class="txt">Architects review exceptions — not every file.</text>
+
+    <text x="60" y="816"><tspan class="outk">OUTCOME  </tspan><tspan class="out">Shorter approval cycles, consistent APIs across teams and vendors, far less late rework.</tspan></text>
+  </g>
+
+  <!-- - Row 5 — top=836 -->
+  <g>
+    <text x="60" y="850" class="lbl">05 · TEAMS WAITING ON EACH OTHER</text>
+    <rect x="60" y="862" width="720" height="96" class="card" fill="url(#leftCard)"/>
+    <rect x="60" y="862" width="4" height="96" rx="2" fill="#f87171"/>
+    <text x="84" y="892" class="txt">"Is it safe to upgrade?" is answered in chat, if at all.</text>
+    <text x="84" y="914" class="txt">Consumers postpone upgrades; producers keep old versions alive forever.</text>
+    <text x="84" y="936" class="txt">Releases need integration freezes and manual regression rounds.</text>
+
+    <rect x="820" y="862" width="720" height="96" class="card" fill="url(#rightCard)"/>
+    <rect x="820" y="862" width="4" height="96" rx="2" fill="#34D399"/>
+    <text x="844" y="892" class="txt">Consumers see, per version, what changed and what is deprecated.</text>
+    <text x="844" y="914" class="txt">Any two versions or revisions can be compared on demand.</text>
+    <text x="844" y="936" class="txt">Producers and consumers work in parallel against a machine-checked contract.</text>
+
+    <text x="60" y="980"><tspan class="outk">OUTCOME  </tspan><tspan class="out">Faster time-to-market for cross-team features; a clean deprecation path instead of growing legacy.</tspan></text>
+  </g>
+
+  <!-- - Row 6 — top=1000 -->
+  <g>
+    <text x="60" y="1014" class="lbl">06 · AI THAT KNOWS YOUR SYSTEMS</text>
+    <rect x="60" y="1026" width="720" height="96" class="card" fill="url(#leftCard)"/>
+    <rect x="60" y="1026" width="4" height="96" rx="2" fill="#f87171"/>
+    <text x="84" y="1056" class="txt">Developers ask AI assistants about internal APIs and get confident, wrong answers.</text>
+    <text x="84" y="1078" class="txt">The assistant has never seen the real contracts.</text>
+    <text x="84" y="1100" class="txt">AI agents are hand-fed documentation that is already stale.</text>
+
+    <rect x="820" y="1026" width="720" height="96" class="card" fill="url(#rightCard)"/>
+    <rect x="820" y="1026" width="4" height="96" rx="2" fill="#34D399"/>
+    <text x="844" y="1056" class="txt">The catalog is exposed through the Model Context Protocol (MCP).</text>
+    <text x="844" y="1078" class="txt">IDE assistants and agents query real, current contracts and their history.</text>
+    <text x="844" y="1100" class="txt">Your own MCP tool surfaces are versioned as contracts too.</text>
+
+    <text x="60" y="1144"><tspan class="outk">OUTCOME  </tspan><tspan class="out">AI adoption grounded in facts. Contract knowledge becomes an asset for people and machines alike.</tspan></text>
+  </g>
+
+  <text x="60" y="1176" font-size="12" fill="#475569">Qubership APIHUB · Apache 2.0 · self-hosted · netcracker.github.io/apihub</text>
+</svg>

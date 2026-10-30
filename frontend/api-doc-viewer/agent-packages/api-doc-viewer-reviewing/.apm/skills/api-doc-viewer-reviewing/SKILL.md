@@ -66,9 +66,9 @@ GraphQL is legacy and is not reviewed.
 ## Constraints
 
 - Never analyze or change samples, stories, or screenshot tests.
-- Never change npm scripts, TypeScript, Vite, ESLint, or other configs — list proposals in a
+- Never change package scripts, TypeScript, Vite, ESLint, or other configs — list proposals in a
   separate report section for approval.
-- Never run npm scripts except the static Storybook server. Type-check and test by invoking
+- Never run package scripts except the static Storybook server. Type-check and test by invoking
   `node_modules/.bin/tsc --noEmit` and `node_modules/.bin/jest` directly.
 - Do not treat other API types as best practice; they may be cited as better solutions.
 

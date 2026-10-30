@@ -1,6 +1,15 @@
 {
   "name": "@netcracker/qubership-apihub-graphapi",
   "version": "1.0.14",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Netcracker/qubership-apihub.git",
+    "directory": "frontend/graphapi"
+  },
+  "bugs": {
+    "url": "https://github.com/Netcracker/qubership-apihub/issues"
+  },
+  "homepage": "https://github.com/Netcracker/qubership-apihub/tree/main/frontend/graphapi#readme",
   "description": "The GraphAPI Specification Repository",
   "module": "./dist/index.es.js",
   "main": "./dist/index.cjs.js",
@@ -21,18 +30,14 @@
     "lint:check": "eslint -c .eslintrc.json . --ext .js,.cjs,.ts,.json --ignore-path .gitignore --max-warnings 0 --report-unused-disable-directives",
     "storybook": "storybook dev -p 6006",
     "build:showcase": "storybook build -o dist-showcase",
-    "lint:fix": "npm run lint:check -- --fix",
+    "lint:fix": "pnpm run lint:check -- --fix",
     "prebuild": "rimraf ./dist",
     "build": "vite build",
-    "development:link": "npm link",
-    "development:unlink": "npm unlink",
     "test": "jest --maxWorkers 3 --verbose",
     "test:coverage": "jest --verbose --coverage",
     "build:web": "webpack",
     "feature-start": "feature-start --featureName",
     "feature-finish": "feature-finish",
-    "release-start": "release-start",
-    "release-finish": "release-finish",
     "build-storybook": "storybook build"
   },
   "keywords": [
@@ -44,18 +49,17 @@
   ],
   "license": "Apache-2.0",
   "devDependencies": {
-    "@netcracker/qubership-apihub-npm-gitflow": "3.1.1",
-    "@storybook/addon-docs": "10.5.10",
-    "@storybook/addon-links": "10.5.10",
-    "@storybook/addon-onboarding": "10.5.10",
-    "@storybook/react-vite": "10.5.10",
+    "@storybook/addon-docs": "10.6.3",
+    "@storybook/addon-links": "10.6.3",
+    "@storybook/addon-onboarding": "10.6.3",
+    "@storybook/react-vite": "10.6.3",
     "@types/jest": "30.0.0",
     "@types/json-schema": "^7.0.11",
-    "@types/node": "^24.0.0",
+    "@types/node": "^24.19.2",
     "@typescript-eslint/eslint-plugin": "6.0.0",
     "@typescript-eslint/parser": "6.0.0",
     "eslint": "8.48.0",
-    "eslint-plugin-storybook": "10.5.10",
+    "eslint-plugin-storybook": "10.6.3",
     "fast-json-patch": "^3.1.1",
     "graphql": "16.12.0",
     "jest": "30.4.2",
@@ -65,7 +69,7 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "rimraf": "3.0.2",
-    "storybook": "10.5.10",
+    "storybook": "10.6.3",
     "ts-jest": "29.4.12",
     "ts-loader": "^8.0.8",
     "ts-node": "^10.7.0",
@@ -98,5 +102,8 @@
   },
   "eslintConfig": {
     "extends": ".eslintrc.json"
+  },
+  "nx": {
+    "name": "graphapi"
   }
 }

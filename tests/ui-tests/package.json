@@ -1,6 +1,16 @@
 {
   "name": "@netcracker/qubership-apihub-ui-tests",
   "version": "2.36.1-dev.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Netcracker/qubership-apihub.git",
+    "directory": "tests/ui-tests"
+  },
+  "bugs": {
+    "url": "https://github.com/Netcracker/qubership-apihub/issues"
+  },
+  "homepage": "https://github.com/Netcracker/qubership-apihub/tree/main/tests/ui-tests#readme",
+  "private": true,
   "license": "Apache-2.0",
   "type": "module",
   "scripts": {
@@ -12,13 +22,13 @@
     "test-unit": "playwright test --project=Unit",
     "cleanup": "playwright test --project=Cleanup",
     "lint:check": "eslint . --ext .ts,.tsx,.json --ignore-path .gitignore --max-warnings 0 --report-unused-disable-directives",
-    "lint:fix": "npm run lint:check -- --fix",
+    "lint:fix": "pnpm run lint:check -- --fix",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "@actions/core": "3.0.1",
     "@playwright/test": "1.62.1",
-    "@types/node": "^24.0.0",
+    "@types/node": "^24.19.2",
     "@typescript-eslint/eslint-plugin": "7.18.0",
     "@typescript-eslint/parser": "7.18.0",
     "@typescript-eslint/types": "7.18.0",
@@ -34,5 +44,8 @@
   },
   "eslintConfig": {
     "extends": ".eslintrc.json"
+  },
+  "nx": {
+    "name": "ui-tests"
   }
 }

@@ -189,6 +189,7 @@ export const VersionConfigurationSubPage: FC = memo(() => {
             acceptableFileTypes={ACCEPTABLE_VERSION_FILE_EXTENSIONS}
             onUpload={handleOnChange}
             variant="contained"
+            disabled={isFilesLoading}
             title="Browse Files"
             data-testid="BrowseFilesButton"
           />

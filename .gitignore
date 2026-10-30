@@ -1,18 +1,48 @@
-docker-compose/apihub-generic/data/**
-docker-compose/apihub-generic/jwt_private_key
-docker-compose/with-keycloak/data/**
-docker-compose/with-keycloak/jwt_private_key
-docker-compose/with-gitlab/gitlab/**
-helm-templates/qubership-apihub/jwt_private_key
-helm-templates/qubership-apihub/local-secrets.yaml
-helm-templates/local-k8s-quickstart/qubership-apihub/local-secrets.yaml
-helm-templates/local-k8s-quickstart/qubership-apihub/with-keycloak-local-secrets.yaml
-helm-templates/local-k8s-quickstart/qubership-apihub/certs/
-helm-templates/local-k8s-quickstart/keycloak/files/realm.json
+deploy/docker-compose/apihub-generic/data/**
+deploy/docker-compose/apihub-generic/jwt_private_key
+deploy/docker-compose/with-keycloak/data/**
+deploy/docker-compose/backend-debug/data/**
+deploy/docker-compose/with-keycloak/jwt_private_key
+deploy/helm-templates/qubership-apihub/jwt_private_key
+deploy/helm-templates/qubership-apihub/local-secrets.yaml
+deploy/helm-templates/local-k8s-quickstart/qubership-apihub/local-secrets.yaml
+deploy/helm-templates/local-k8s-quickstart/qubership-apihub/with-keycloak-local-secrets.yaml
+deploy/helm-templates/local-k8s-quickstart/qubership-apihub/certs/
+deploy/helm-templates/local-k8s-quickstart/keycloak/files/realm.json
 .idea
+.vscode/
+
+# AI assistants: commit rules, subagents, permissions, and the skill trees a clone must have.
+# `.agents/skills/` is the shared tree. `.claude/skills/` is the same install for Claude Code.
+# `.cursor/skills/` stays ignored: Cursor reads the two committed trees.
+.claude/*
+!.claude/rules/
+!.claude/skills/
+!.claude/agents/
+!.claude/settings.json
+.cursor/*
+!.cursor/rules/
+!.cursor/agents/
+!.cursor/permissions.json
 
 # APM cache (installed package sources)
 apm_modules/
 
 # APM pack build artifacts
 agent-packages/**/build/
+
+# Workspace build output
+node_modules/
+dist/
+.astro/
+# The landing copies these from docs/images/architecture/ before each build
+sites/landing/public/images/architecture/
+# The docs site copies these from docs/ before each build (sites/docs/scripts/sync-docs.mjs)
+sites/docs/src/content/docs/
+sites/docs/public/
+build/
+out/
+.nx/
+.deploy/
+*.tsbuildinfo
+.DS_Store

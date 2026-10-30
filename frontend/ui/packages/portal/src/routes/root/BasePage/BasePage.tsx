@@ -23,7 +23,7 @@ import {
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import { useAgentEnabled } from '@netcracker/qubership-apihub-ui-shared/features/system-extensions/useSystemExtensions'
 import { SystemInfoPopup, useSystemInfo } from '@netcracker/qubership-apihub-ui-shared/features/system-info'
-import { useVersionInfo } from '@netcracker/qubership-apihub-ui-shared/hooks/frontend-version/useVersionInfo'
+import { useImageVersion, useVersionInfo } from '@netcracker/qubership-apihub-ui-shared/hooks/frontend-version/useVersionInfo'
 import { useSuperAdminCheck } from '@netcracker/qubership-apihub-ui-shared/hooks/user-roles/useSuperAdminCheck'
 import { LogoIcon } from '@netcracker/qubership-apihub-ui-shared/icons/LogoIcon'
 import { RobotIcon } from '@netcracker/qubership-apihub-ui-shared/icons/RobotIcon'
@@ -33,7 +33,6 @@ import { AiAssistantPanel } from '@portal/components/AiAssistant/AiAssistantPane
 import {
   AiAssistantProvider,
 } from '@portal/components/AiAssistant/state/AiAssistantProvider'
-import * as packageJson from '../../../../package.json'
 import { portal } from '@netcracker/qubership-apihub-ui-shared/utils/version-info'
 import { PORTAL_PATH_PATTERNS } from '../../../routes'
 import { Notification, useShowErrorNotification } from '../BasePage/Notification'
@@ -48,7 +47,8 @@ export const BasePage: FC = memo(() => {
   const { notification: systemNotification, aiChatEnabled } = useSystemInfo()
   const showErrorNotification = useShowErrorNotification()
   const isSuperAdmin = useSuperAdminCheck()
-  const { frontendVersion, apiProcessorVersion } = useVersionInfo(portal, packageJson.version)
+  const { frontendVersion, apiProcessorVersion } = useVersionInfo(portal, __APP_VERSION__)
+  const imageVersion = useImageVersion(portal)
   const agentEnabled = useAgentEnabled()
   const viewPortStyleCalculator = useCallback(
     (theme: Theme): SystemStyleObject<Theme> => {
@@ -89,6 +89,7 @@ export const BasePage: FC = memo(() => {
             <SystemInfoPopup
               frontendVersionKey={frontendVersion}
               apiProcessorVersion={apiProcessorVersion}
+              imageVersion={imageVersion}
             />
             <UserPanel/>
           </>
@@ -113,10 +114,12 @@ export const BasePage: FC = memo(() => {
   return (
     <MainPageProvider>
       <SidePanelManagerProvider>
-        <ModuleFetchingErrorBoundary showReloadPopup={packageJson.version !== frontendVersion}>
-          {aiChatEnabled
-            ? <AiAssistantProvider>{pageContent}</AiAssistantProvider>
-            : pageContent}
+        <ModuleFetchingErrorBoundary showReloadPopup={__APP_VERSION__ !== frontendVersion}>
+          {/* Render the provider unconditionally. A conditional wrapper remounts the page when
+              aiChatEnabled arrives with the system info, and every component on it loses its state. */}
+          <AiAssistantProvider>
+            {pageContent}
+          </AiAssistantProvider>
         </ModuleFetchingErrorBoundary>
       </SidePanelManagerProvider>
     </MainPageProvider>

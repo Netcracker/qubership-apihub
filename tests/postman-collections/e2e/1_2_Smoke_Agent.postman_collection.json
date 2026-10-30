@@ -6,6 +6,54 @@
     },
     "item": [
         {
+            "name": "1.0.0 Get version of agents-backend",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"agents-backend reports its version\" , function () {",
+                            "    const version = pm.response.json().version;",
+                            "    pm.expect(version).to.be.a('string').and.not.empty;",
+                            "});"
+                        ]
+                    }
+                }
+            ],
+            "request": {
+                "url": {
+                    "raw": "{{SERVER_HOST}}/agents-backend/api/v1/system/version",
+                    "host": [
+                        "{{SERVER_HOST}}"
+                    ],
+                    "path": [
+                        "agents-backend",
+                        "api",
+                        "v1",
+                        "system",
+                        "version"
+                    ]
+                },
+                "method": "GET",
+                "header": [
+                    {
+                        "key": "api-key",
+                        "value": "{{at-api-key}}",
+                        "type": "default"
+                    }
+                ],
+                "auth": {
+                    "type": "noauth"
+                }
+            },
+            "response": []
+        },
+        {
             "name": "1.0 Get list of Agents",
             "event": [
                 {

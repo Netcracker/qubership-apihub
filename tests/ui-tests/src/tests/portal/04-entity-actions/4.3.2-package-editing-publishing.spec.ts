@@ -131,6 +131,8 @@ test.describe('4.3.2 Package publishing via Portal', () => {
         await versionPage.toolbar.addNewVersionBtn.click()
       })
 
+      await expect(configureVersionTab.browseFilesBtn).toBeEnabled()
+
       await configureVersionTab.filesUploader.setInputFiles(FILE_P_GQL_SMALL)
 
       await test.step('Publish Release Version', async () => {
@@ -175,6 +177,8 @@ test.describe('4.3.2 Package publishing via Portal', () => {
         })
 
         await test.step('Add new files', async () => {
+          await expect(configureVersionTab.browseFilesBtn).toBeEnabled()
+
           await configureVersionTab.filesUploader.setInputFiles([
             FILE_P_PETSTORE20,
             FILE_P_PETSTORE31,
@@ -371,6 +375,8 @@ test.describe('4.3.2 Package publishing via Portal', () => {
 
         await expect(configureVersionTab.filesUploader).toBeVisible()
       })
+
+      await expect(configureVersionTab.browseFilesBtn).toBeEnabled()
 
       await configureVersionTab.filesUploader.setInputFiles(FILE_P_PETSTORE30_CHANGED)
 

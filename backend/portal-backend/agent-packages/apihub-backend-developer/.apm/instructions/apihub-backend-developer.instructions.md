@@ -1,8 +1,8 @@
 ---
-description: Backend development workflow for qubership-apihub-backend.
-applyTo: "qubership-apihub-service/**/*.go"
+description: Backend development workflow for backend/portal-backend.
+applyTo: "backend/portal-backend/**/*.go"
 ---
 
 When implementing or modifying the APIHub Go backend (controllers, services,
-repositories, migrations, Service.go wiring, ErrorCodes, or OpenAPI specs) in
-`qubership-apihub-backend`, apply the `apihub-backend-developer` skill.
+repositories, migrations, main.go wiring, ErrorCodes, or OpenAPI specs) in
+`backend/portal-backend`, apply the `apihub-backend-developer` skill.

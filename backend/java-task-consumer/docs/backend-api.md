@@ -16,7 +16,7 @@ privileges (same as `POST /api/v2/builders/{builderId}/tasks` today).
 
 ### Poll for a task
 
-```
+```http
 POST /api/v2/java-builders/{builderId}/tasks
 ```
 
@@ -29,7 +29,7 @@ POST /api/v2/java-builders/{builderId}/tasks
 
 ### Post build status
 
-```
+```http
 POST /api/v3/packages/{packageId}/java-publish/{publishId}/status
 Content-Type: multipart/form-data
 ```

@@ -18,7 +18,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite'
 import { DeleteFilePopup } from '../../components/FileTableUpload/DeleteFileDialog'
 
 const meta: Meta<typeof DeleteFilePopup> = {
-  title: '/File Table Upload/Delete File Dialog',
+  title: 'File Table Upload/Delete File Dialog',
   component: DeleteFilePopup,
 }
 

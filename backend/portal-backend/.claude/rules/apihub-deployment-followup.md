@@ -1,9 +1,0 @@
----
-paths:
-  - "qubership-apihub-service/**/*.go"
-  - "docs/api/**"
----
-
-When implementing or modifying backend configuration, env-backed defaults, startup
-wiring, or deployment-facing behaviour in `qubership-apihub-backend`, apply the
-`apihub-deployment-followup` skill before finishing the task.

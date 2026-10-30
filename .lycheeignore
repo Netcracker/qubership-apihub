@@ -2,6 +2,7 @@
 ^.*xmlsoap.org
 host.docker.internal
 ^.*localtest.me
+^.*stoplight.io
 
 # APM-deployed agent harness (upstream package markdown)
 ^\.cursor/
@@ -10,3 +11,8 @@ host.docker.internal
 ^\.github/instructions/
 ^\.github/skills/
 ^\.github/prompts/
+# Reject the CI runner: npm answers 403 (bot protection), the Ubuntu wiki answered 404 in PR 876 although it opens in a browser
+^https://www\.npmjs\.com/package/libpg-query
+^https://help\.ubuntu\.com/community/EnvironmentVariables
+# Internal APIHUB instance cited in a design page; it is not reachable from the CI runner.
+^https://apihub\.netcracker\.com/

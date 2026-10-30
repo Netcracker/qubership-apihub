@@ -1,0 +1,24 @@
+{
+  "action": "opened",
+  "issue": {
+    "number": 200,
+    "state": "open",
+    "title": "Changelog is empty for a package with no operations",
+    "body": "Steps: publish a version without operations, open the changelog.\nExpected: a message. Actual: an error.",
+    "type": {
+      "name": "Bug"
+    },
+    "labels": [],
+    "user": {
+      "login": "alice",
+      "type": "User"
+    }
+  },
+  "repository": {
+    "full_name": "Netcracker/qubership-apihub"
+  },
+  "sender": {
+    "login": "alice",
+    "type": "User"
+  }
+}

@@ -1,43 +1,58 @@
-# qubership-apihub-agents-backend
+# APIHUB agents backend
 
-A Go-based microservice backend that provides management and orchestration capabilities for [Qubership APIHUB agent](https://github.com/Netcracker/qubership-apihub-agent) instances.
-This service handles agent registration, service discovery, snapshot management, and security checks.
+The agents backend is a Go service that manages [APIHUB agent](../agent/README.md) instances: it registers agents,
+runs service discovery, keeps snapshots of what they find, and checks namespace security. It uses PostgreSQL. It is an
+optional plug-in for APIHUB and does nothing without it. The module ships the image
+`qubership-apihub-agents-backend`; its presence enables the **Agents** tab in the web UI.
 
-## High Level architecture
-![APIHUB Architecture](docs/recources/arch_diagram.png)
+It is one of the extension services next to the backend; see the
+[architecture overview](../../docs/architecture/overview.md).
 
-## API Documentation
+## Build, test, and lint
 
-API documentation is available in the [OpenAPI specification](docs/api/Agents-Backend-API.yaml).
+The Nx project is `agents-backend` (tag `lang:go`). Run from the repository root:
 
-## Installation
+```bash
+pnpm exec nx run agents-backend:build
+pnpm exec nx run agents-backend:test
+pnpm exec nx run agents-backend:lint
+```
 
-This service is designed for Kubernetes deployment and uses PostgreSQL as the database.
+To build the image, see [Build and test: Images](../../docs/development/build-and-test.md#images); on Windows,
+`build_docker_image.cmd` does the same.
 
-The service is a plug-in for Qubership-APIHUB and useless without it.
+## Run and debug locally
 
-Being an optional plug-in it is included into default Qubership-APIHUB delivery. Please refer to [Qubership-APIHUB Installation Notes (Helm Chart)](https://github.com/Netcracker/qubership-apihub/blob/main/docs/installation-guide.md).
-
-Corresponding [values.yaml](https://github.com/Netcracker/qubership-apihub/blob/main/helm-templates/qubership-apihub/values.yaml) section is `qubershipApihubAgentsBackend`.
-
-Presence of this plug-in in Qubership-APIHUB deployments enables `Agents` tab in Web UI.
+The generic Compose stack starts the service with the rest of the product; see
+[Run APIHUB locally](../../docs/development/local-run.md). To run it from the IDE, copy
+[`config.template.yaml`](config.template.yaml) to a folder as `config.yaml`, set the database, and start
+`main.go` from this folder. Breakpoints and the config folder variable:
+[Debugging: Go service](../../docs/development/debugging.md#go-service).
 
 ## Configuration
 
-Application parameters are loaded from `config.yaml`. The configuration format,
-defaults, and examples are documented in [the template file](qubership-apihub-agents-backend/config.template.yaml). For local development,
-use that template as a reference and create `qubership-apihub-agents-backend/config.yaml`.
-
-By default, the service looks for `config.yaml` in the current working directory. Set
-`AGENTS_BACKEND_CONFIG_FOLDER` to point to a different directory that contains the file.
+The service loads parameters from `config.yaml`. The format, the defaults, and examples are in
+[`config.template.yaml`](config.template.yaml). By default it looks for `config.yaml` in the working directory; set
+`AGENTS_BACKEND_CONFIG_FOLDER` to use another directory.
 
 The remaining environment-only settings are:
 
-- `AGENTS_BACKEND_CONFIG_FOLDER` - directory containing `config.yaml`; defaults to `.`.
-- `LOG_LEVEL` - initial log level; defaults to `info` when empty or invalid and can be changed at runtime via `/api/v1/debug/logs/setLevel` by a system administrator.
+- `AGENTS_BACKEND_CONFIG_FOLDER`: the directory that contains `config.yaml`; defaults to `.`.
+- `LOG_LEVEL`: the initial log level; defaults to `info` when empty or invalid. A system administrator can change it at
+  runtime with `/api/v1/debug/logs/setLevel`.
 
-## Build
+For a deployment, the Helm values section is `qubershipApihubAgentsBackend`. The
+[installation guide](../../docs/installation-guide.md) and the
+[configuration reference](../../docs/configuration-reference.md) describe it.
 
-Just run `build_golang_binary.cmd` file.
+## API specifications
 
-For Docker builds, use `build_docker_image.cmd`.
+The OpenAPI files are in [`docs/api/`](docs/api/): [`Agents-Backend-API.yaml`](docs/api/Agents-Backend-API.yaml), its
+[internal variant](docs/api/Agents-Backend-API_internal.yaml), and [`Admin-API.yaml`](docs/api/Admin-API.yaml).
+
+## Further reading
+
+![Architecture of the agents backend](docs/images/arch_diagram.png)
+
+- [Agent](../agent/README.md): the service this one manages
+- [Agent user guide](../../docs/user-guide/agent.md)

@@ -1,0 +1,127 @@
+---
+import Layout from './Layout.astro';
+import { docsNav, docsPageOrder } from '../data/docs';
+import { withBase } from '../lib/paths';
+
+export interface Props {
+  title: string;
+  description: string;
+  /** Small label above the page heading, e.g. "Architecture". */
+  eyebrow: string;
+  heading: string;
+  lead: string;
+  /** In-page anchors rendered as a sticky table of contents. */
+  toc?: { id: string; label: string }[];
+}
+
+const { title, description, eyebrow, heading, lead, toc = [] } = Astro.props;
+
+const home = import.meta.env.BASE_URL;
+const norm = (p: string) => p.replace(/\/+$/, '') || '/';
+const current = norm(Astro.url.pathname);
+
+const index = docsPageOrder.findIndex((p) => norm(p.href) === current);
+const prev = index > 0 ? docsPageOrder[index - 1] : null;
+const next = index >= 0 && index < docsPageOrder.length - 1 ? docsPageOrder[index + 1] : null;
+---
+
+<Layout title={title} description={description}>
+  <div class="max-w-7xl mx-auto px-6 lg:flex lg:gap-12">
+
+    <!-- ══ SIDEBAR ══════════════════════════════════════════════════════════ -->
+    <aside class="hidden lg:block w-60 flex-shrink-0 pt-14">
+      <div class="sticky top-24">
+        <a
+          href={withBase('docs/')}
+          class="flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-white uppercase tracking-widest mb-6 transition-colors"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" /></svg>
+          Documentation
+        </a>
+
+        {docsNav.map((section) => (
+          <div class="mb-7">
+            <p class="text-[11px] font-bold text-slate-600 uppercase tracking-widest mb-3">{section.label}</p>
+            {section.upcoming ? (
+              <p class="text-xs text-slate-700 italic leading-relaxed">Not published here yet</p>
+            ) : (
+              <ul class="space-y-0.5 border-l border-slate-800">
+                {section.pages.map((page) => {
+                  const active = norm(page.href) === current;
+                  return (
+                    <li>
+                      <a
+                        href={page.href}
+                        class={`block pl-4 -ml-px py-1.5 text-sm border-l transition-all ${
+                          active
+                            ? 'border-blue-400 text-blue-400 font-medium'
+                            : 'border-transparent text-slate-400 hover:text-white hover:border-slate-600'
+                        }`}
+                      >
+                        {page.label}
+                      </a>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+        ))}
+      </div>
+    </aside>
+
+    <!-- ══ CONTENT ══════════════════════════════════════════════════════════ -->
+    <div class="flex-1 min-w-0 pt-10 pb-16">
+      <nav class="flex items-center gap-2 mb-6 text-sm text-slate-500 flex-wrap">
+        <a href={home} class="hover:text-white transition-colors">Home</a>
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" /></svg>
+        <a href={withBase('docs/')} class="hover:text-white transition-colors">Docs</a>
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" /></svg>
+        <span class="text-slate-300">{heading}</span>
+      </nav>
+
+      <header class="mb-12">
+        <p class="text-sm font-semibold text-blue-400 uppercase tracking-widest mb-3">{eyebrow}</p>
+        <h1 class="text-3xl md:text-4xl font-black text-white mb-4 tracking-tight">{heading}</h1>
+        <p class="text-lg text-slate-400 max-w-3xl leading-relaxed">{lead}</p>
+      </header>
+
+      {toc.length > 0 && (
+        <nav class="mb-14 rounded-xl border border-slate-800 bg-slate-900/40 p-5">
+          <p class="text-[11px] font-bold text-slate-600 uppercase tracking-widest mb-3">On this page</p>
+          <ol class="grid sm:grid-cols-2 gap-x-8 gap-y-1.5">
+            {toc.map((item, i) => (
+              <li class="flex items-baseline gap-2.5">
+                <span class="text-xs font-mono text-slate-700 tabular-nums">{String(i + 1).padStart(2, '0')}</span>
+                <a href={`#${item.id}`} class="text-sm text-slate-400 hover:text-blue-400 transition-colors">{item.label}</a>
+              </li>
+            ))}
+          </ol>
+        </nav>
+      )}
+
+      <slot />
+
+      <!-- ══ PREV / NEXT ════════════════════════════════════════════════════ -->
+      <nav class="mt-20 pt-8 border-t border-slate-800/60 grid sm:grid-cols-2 gap-4">
+        {prev ? (
+          <a href={prev.href} class="group rounded-xl border border-slate-800 p-5 hover:border-slate-700 transition-colors">
+            <p class="text-xs text-slate-600 uppercase tracking-widest mb-1.5">Previous</p>
+            <p class="text-sm font-semibold text-slate-300 group-hover:text-white transition-colors">{prev.label}</p>
+          </a>
+        ) : <div />}
+        {next && (
+          <a href={next.href} class="group rounded-xl border border-slate-800 p-5 hover:border-blue-500/40 transition-colors sm:text-right">
+            <p class="text-xs text-slate-600 uppercase tracking-widest mb-1.5">Next</p>
+            <p class="text-sm font-semibold text-blue-400 group-hover:text-blue-300 transition-colors">{next.label}</p>
+          </a>
+        )}
+      </nav>
+    </div>
+  </div>
+</Layout>
+
+<style is:global>
+  /* Anchored headings should clear the sticky site header. */
+  .doc-section { scroll-margin-top: 6rem; }
+</style>

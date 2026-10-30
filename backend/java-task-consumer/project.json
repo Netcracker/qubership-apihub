@@ -1,0 +1,22 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "java-task-consumer",
+  "projectType": "application",
+  "tags": ["lang:java"],
+  "//": "@nx/maven infers a project per pom.xml, named <groupId>:<artifactId>. This file gives the parent pom the short name and a build target that runs the whole reactor (jdiff-engine and java-task-consumer).",
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "mvn --batch-mode verify",
+        "cwd": "{projectRoot}"
+      },
+      "inputs": ["default"],
+      "outputs": [
+        "{projectRoot}/jdiff-engine/target",
+        "{projectRoot}/java-task-consumer/target"
+      ],
+      "cache": true
+    }
+  }
+}

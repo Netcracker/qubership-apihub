@@ -1,6 +1,6 @@
 name: apihub-deployment-followup
 version: 0.1.0
-description: When backend changes require Helm or Compose updates in qubership-apihub
+description: When portal-backend changes require Helm, Compose, or configuration reference updates
 author: Qubership
 dependencies:
   apm: []

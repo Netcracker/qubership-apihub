@@ -1,0 +1,1188 @@
+package archive
+
+import (
+	"archive/zip"
+	"bytes"
+	"context"
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"strings"
+	"time"
+
+	"github.com/Netcracker/qubership-apihub/backend/portal-backend/entity"
+	"github.com/Netcracker/qubership-apihub/backend/portal-backend/exception"
+	"github.com/Netcracker/qubership-apihub/backend/portal-backend/repository"
+	"github.com/Netcracker/qubership-apihub/backend/portal-backend/utils"
+	"github.com/Netcracker/qubership-apihub/backend/portal-backend/view"
+	log "github.com/sirupsen/logrus"
+)
+
+type BuildResultToEntitiesReader struct {
+	*BuildResultArchive
+}
+
+func NewBuildResultToEntitiesReader(buildArc *BuildResultArchive) *BuildResultToEntitiesReader {
+	return &BuildResultToEntitiesReader{
+		BuildResultArchive: buildArc,
+	}
+}
+
+func (a *BuildResultToEntitiesReader) ReadDocumentsToEntities(buildConfig *view.BuildConfig) ([]*entity.PublishedContentEntity, []*entity.PublishedContentDataEntity, error) {
+	filesFromZipReadStart := time.Now()
+	fileEntities := make([]*entity.PublishedContentEntity, 0)
+	fileDataEntities := make([]*entity.PublishedContentDataEntity, 0)
+	mcpEndpoints := make(map[string]string)
+	if buildConfig != nil {
+		// The endpoint is taken from the config rather than from the built document, because a document that failed to process
+		// can publish no MCP entities and its endpoint would otherwise be lost.
+		for _, file := range buildConfig.Files {
+			if mcpEndpoint, ok := file.Metadata["mcpEndpoint"].(string); ok && mcpEndpoint != "" {
+				mcpEndpoints[file.FileId] = mcpEndpoint
+			}
+		}
+	}
+
+	for i, document := range a.PackageDocuments.Documents {
+		if fileHeader, exists := a.DocumentsHeaders[document.Filename]; exists {
+			fileData, err := ReadZipFile(fileHeader)
+			if err != nil {
+				return nil, nil, &exception.CustomError{
+					Status:  http.StatusBadRequest,
+					Code:    exception.InvalidPackageArchivedFile,
+					Message: exception.InvalidPackageArchivedFileMsg,
+					Params:  map[string]interface{}{"file": document.Slug, "error": err.Error()},
+				}
+			}
+			mediaType := getMediaType(fileData)
+			path, name := utils.SplitFileId(document.FileId)
+			checksum := utils.GetEncodedChecksum(fileData, []byte(document.FileId), []byte(mediaType))
+			fileEntMetadata := entity.Metadata{}
+			var documentMetadata entity.Metadata = document.Metadata
+
+			if document.Description != "" {
+				fileEntMetadata.SetDescription(document.Description)
+			}
+			if document.Version != "" {
+				fileEntMetadata.SetVersion(document.Version)
+			}
+			if len(documentMetadata) > 0 {
+				docLabels := documentMetadata.GetStringArray("labels")
+				if len(docLabels) > 0 {
+					fileEntMetadata.SetLabels(docLabels)
+				}
+				docBlobId := documentMetadata.GetStringValue("blobId")
+				if docBlobId != "" {
+					fileEntMetadata.SetBlobId(docBlobId)
+				}
+				docInfo := documentMetadata.GetObject("info")
+				if docInfo != nil {
+					fileEntMetadata.SetInfo(docInfo)
+				}
+				docExternalDocs := documentMetadata.GetObject("externalDocs")
+				if docExternalDocs != nil {
+					fileEntMetadata.SetExternalDocs(docExternalDocs)
+				}
+
+				tags, err := documentMetadata.GetObjectArray("tags")
+				if err != nil {
+					return nil, nil, &exception.CustomError{
+						Status:  http.StatusBadRequest,
+						Code:    exception.InvalidPackagedFile,
+						Message: exception.InvalidPackagedFileMsg,
+						Params:  map[string]interface{}{"file": document.Slug, "error": err.Error()},
+					}
+				}
+				if tags != nil {
+					fileEntMetadata.SetDocTags(tags)
+				}
+			}
+			if document.HasErrors {
+				fileEntMetadata.SetHasErrors(true)
+			}
+			if mcpEndpoint, exists := mcpEndpoints[document.FileId]; exists {
+				fileEntMetadata.SetMcpEndpoint(mcpEndpoint)
+			}
+			index := i
+			if a.PackageInfo.MigrationBuild {
+				index = documentMetadata.GetIntValue("index")
+			}
+			fileEntities = append(fileEntities, &entity.PublishedContentEntity{
+				PackageId:    a.PackageInfo.PackageId,
+				Version:      a.PackageInfo.Version,
+				Revision:     a.PackageInfo.Revision,
+				FileId:       document.FileId,
+				Checksum:     checksum,
+				Index:        index,
+				Slug:         document.Slug,
+				Name:         name,
+				Path:         path,
+				DataType:     document.Type,
+				Format:       document.Format,
+				Title:        document.Title,
+				Metadata:     fileEntMetadata,
+				OperationIds: document.OperationIds,
+				Filename:     document.Filename,
+				Shareability: view.ShareabilityUnknown,
+				ApiKind:      document.ApiKind,
+			})
+			fileDataEntities = append(fileDataEntities, &entity.PublishedContentDataEntity{
+				PackageId: a.PackageInfo.PackageId,
+				Checksum:  checksum,
+				MediaType: mediaType,
+				Data:      fileData,
+			})
+		}
+	}
+	log.Debugf("Zip documents reading time: %vms", time.Since(filesFromZipReadStart).Milliseconds())
+	return fileEntities, fileDataEntities, nil
+}
+
+func (a *BuildResultToEntitiesReader) ReadTransformedDocumentsToEntity() (*entity.TransformedContentDataEntity, error) {
+	var data []byte
+	if a.PackageInfo.BuildType == view.MergedSpecificationType_deprecated {
+		if len(a.PackageDocuments.Documents) != 1 {
+			return nil, &exception.CustomError{
+				Status:  http.StatusBadRequest,
+				Code:    exception.InvalidPackageArchivedFile,
+				Message: exception.InvalidPackageArchivedFileMsg,
+				Params: map[string]interface{}{
+					"file":  "documents",
+					"error": fmt.Sprintf("expected exactly 1 document for '%v' buildType, documents: %v", a.PackageInfo.BuildType, len(a.PackageDocuments.Documents)),
+				},
+			}
+		}
+		document := a.PackageDocuments.Documents[0]
+		if fileHeader, exists := a.DocumentsHeaders[document.Filename]; exists {
+			fileData, err := ReadZipFile(fileHeader)
+			if err != nil {
+				return nil, &exception.CustomError{
+					Status:  http.StatusBadRequest,
+					Code:    exception.InvalidPackageArchivedFile,
+					Message: exception.InvalidPackageArchivedFileMsg,
+					Params:  map[string]interface{}{"file": document.Slug, "error": err.Error()},
+				}
+			}
+			data = fileData
+		}
+	} else {
+		zipBuf := bytes.Buffer{}
+		zw := zip.NewWriter(&zipBuf)
+		for _, document := range a.PackageDocuments.Documents {
+			if fileHeader, exists := a.DocumentsHeaders[document.Filename]; exists {
+				fileData, err := ReadZipFile(fileHeader)
+				if err != nil {
+					return nil, &exception.CustomError{
+						Status:  http.StatusBadRequest,
+						Code:    exception.InvalidPackageArchivedFile,
+						Message: exception.InvalidPackageArchivedFileMsg,
+						Params:  map[string]interface{}{"file": document.Slug, "error": err.Error()},
+					}
+				}
+				err = AddFileToZip(zw, document.Filename, fileData)
+				if err != nil {
+					return nil, err
+				}
+			}
+		}
+		err := zw.Close()
+		if err != nil {
+			return nil, err
+		}
+		data = zipBuf.Bytes()
+	}
+	format := a.PackageInfo.Format
+	if format == "" {
+		format = string(view.JsonDocumentFormat)
+	}
+	return &entity.TransformedContentDataEntity{
+		PackageId:     a.PackageInfo.PackageId,
+		Version:       a.PackageInfo.Version,
+		Revision:      a.PackageInfo.Revision,
+		ApiType:       a.PackageInfo.ApiType,
+		BuildType:     a.PackageInfo.BuildType,
+		Format:        format,
+		GroupId:       view.MakeOperationGroupId(a.PackageInfo.PackageId, a.PackageInfo.Version, a.PackageInfo.Revision, a.PackageInfo.ApiType, a.PackageInfo.GroupName),
+		Data:          data,
+		DocumentsInfo: a.PackageDocuments.Documents,
+	}, nil
+}
+
+func (a *BuildResultToEntitiesReader) ReadOperationsToEntities() ([]*entity.OperationEntity, []*entity.OperationDataEntity, []*entity.OperationSearchTextEntity, map[string]entity.OperationInfo, error) {
+	operationsFromZipReadStart := time.Now()
+	operationEntities := make([]*entity.OperationEntity, 0)
+	operationDataEntities := make([]*entity.OperationDataEntity, 0)
+	operationSearchTexts := make([]*entity.OperationSearchTextEntity, 0)
+	operationsInfo := make(map[string]entity.OperationInfo)
+	dataHashToOperationId := make(map[string]string)
+	operationsExternalMetadataMap := a.calculateOperationsExternalMetadataMap()
+	for _, operation := range a.PackageOperations.Operations {
+		var fileData []byte
+		var dataHash *string
+		fileHeader, exists := a.OperationFileHeaders[operation.OperationId]
+
+		if exists {
+			var err error
+			fileData, err = ReadZipFile(fileHeader)
+			if err != nil {
+				return nil, nil, nil, nil, &exception.CustomError{
+					Status:  http.StatusBadRequest,
+					Code:    exception.InvalidPackageArchivedFile,
+					Message: exception.InvalidPackageArchivedFileMsg,
+					Params:  map[string]interface{}{"file": operation.OperationId, "error": err.Error()},
+				}
+			}
+			hash := utils.GetEncodedXXHash128(fileData)
+			if existingOpId, exists := dataHashToOperationId[hash]; exists {
+				return nil, nil, nil, nil, &exception.CustomError{
+					Status:  http.StatusBadRequest,
+					Code:    exception.DuplicateOperationData,
+					Message: exception.DuplicateOperationDataMsg,
+					Params: map[string]interface{}{
+						"operationIds": []string{existingOpId, operation.OperationId},
+					},
+				}
+			}
+			dataHashToOperationId[hash] = operation.OperationId
+			dataHash = &hash
+		} else if operation.ApiType == string(view.GraphqlApiType) {
+			dataHash = nil
+		} else {
+			continue
+		}
+
+		metadata := entity.Metadata{}
+		var operationMetadata entity.Metadata = operation.Metadata
+		var customTags map[string]interface{}
+		switch operation.ApiType {
+		case string(view.RestApiType):
+			if len(operation.Tags) > 0 {
+				metadata.SetTags(operation.Tags)
+			}
+			metadata.SetPath(operationMetadata.GetStringValue("path"))
+			metadata.SetMethod(operationMetadata.GetStringValue("method"))
+		case string(view.GraphqlApiType):
+			if len(operation.Tags) > 0 {
+				metadata.SetTags(operation.Tags)
+			}
+			metadata.SetType(operationMetadata.GetStringValue("type"))
+			metadata.SetMethod(operationMetadata.GetStringValue("method"))
+		case string(view.ProtobufApiType):
+			metadata.SetType(operationMetadata.GetStringValue("type"))
+			metadata.SetMethod(operationMetadata.GetStringValue("method"))
+		case string(view.AsyncapiApiType):
+			if len(operation.Tags) > 0 {
+				metadata.SetTags(operation.Tags)
+			}
+			metadata.SetAction(operationMetadata.GetStringValue("action"))
+			metadata.SetChannel(operationMetadata.GetStringValue("channel"))
+			metadata.SetProtocol(operationMetadata.GetStringValue("protocol"))
+			metadata.SetAsyncOperationId(operationMetadata.GetStringValue("asyncOperationId"))
+			metadata.SetMessageId(operationMetadata.GetStringValue("messageId"))
+		}
+
+		if operationMetadata.GetOperationIdV1() != "" {
+			metadata.SetOperationIdV1(operationMetadata.GetOperationIdV1())
+		}
+
+		var err error
+		customTags, err = operationMetadata.GetMapStringToInterface("customTags")
+		if err != nil {
+			return nil, nil, nil, nil, &exception.CustomError{
+				Status:  http.StatusBadRequest,
+				Code:    exception.InvalidPackagedFile,
+				Message: exception.InvalidPackagedFileMsg,
+				Params: map[string]interface{}{"file": "operations.json", "error": fmt.Sprintf("Unable to process field 'customTags' value '%s': %s",
+					operationMetadata.GetObject("customTags"), err.Error())},
+			}
+		}
+		operationExternalMetadataKey := view.OperationExternalMetadataKey{
+			ApiType: operation.ApiType,
+			Method:  strings.ToLower(metadata.GetMethod()),
+			Path:    operationMetadata.GetStringValue("originalPath"),
+		}
+		operationExternalMetadata := operationsExternalMetadataMap[operationExternalMetadataKey]
+
+		if len(operationExternalMetadata) != 0 && customTags == nil {
+			customTags = make(map[string]interface{})
+		}
+
+		for k, v := range operationExternalMetadata {
+			customTags[k] = v
+		}
+
+		operationEntities = append(operationEntities, &entity.OperationEntity{
+			PackageId:                 a.PackageInfo.PackageId,
+			Version:                   a.PackageInfo.Version,
+			Revision:                  a.PackageInfo.Revision,
+			OperationId:               operation.OperationId,
+			DataHash:                  dataHash,
+			Deprecated:                operation.Deprecated,
+			Kind:                      operation.ApiKind,
+			Type:                      operation.ApiType,
+			Title:                     operation.Title,
+			Metadata:                  metadata,
+			DeprecatedItems:           operation.DeprecatedItems,
+			DeprecatedInfo:            operation.DeprecatedInfo,
+			PreviousReleaseVersions:   operation.PreviousReleaseVersions,
+			Models:                    operation.Models,
+			CustomTags:                customTags,
+			ApiAudience:               operation.ApiAudience,
+			DocumentId:                operation.DocumentId,
+			VersionInternalDocumentId: operation.VersionInternalDocumentId,
+		})
+
+		if dataHash != nil {
+			operationDataEntities = append(operationDataEntities, &entity.OperationDataEntity{
+				DataHash: *dataHash,
+				Data:     fileData,
+			})
+		}
+
+		var searchTextData []byte
+		if operation.Search == nil || operation.Search.UseOperationDataAsSearchText {
+			if dataHash != nil {
+				searchTextData = fileData
+			}
+		} else {
+			searchTextFilePath := operation.Search.SearchTextFilePath
+			if searchTextFilePath == "" {
+				return nil, nil, nil, nil, &exception.CustomError{
+					Status:  http.StatusBadRequest,
+					Code:    exception.InvalidPackagedFile,
+					Message: exception.InvalidPackagedFileMsg,
+					Params: map[string]interface{}{"file": "operations.json",
+						"error": fmt.Sprintf("operation %s has search.useOperationDataAsSearchText=false but searchTextFilePath is empty", operation.OperationId)},
+				}
+			}
+			searchTextFileHeader, found := a.UncategorizedFileHeaders[searchTextFilePath]
+			if !found {
+				return nil, nil, nil, nil, &exception.CustomError{
+					Status:  http.StatusBadRequest,
+					Code:    exception.InvalidPackageArchivedFile,
+					Message: exception.InvalidPackageArchivedFileMsg,
+					Params: map[string]interface{}{"file": searchTextFilePath,
+						"error": fmt.Sprintf("search text file not found for operation %s", operation.OperationId)},
+				}
+			}
+			searchTextData, err = ReadZipFile(searchTextFileHeader)
+			if err != nil {
+				return nil, nil, nil, nil, &exception.CustomError{
+					Status:  http.StatusBadRequest,
+					Code:    exception.InvalidPackageArchivedFile,
+					Message: exception.InvalidPackageArchivedFileMsg,
+					Params:  map[string]interface{}{"file": searchTextFilePath, "error": err.Error()},
+				}
+			}
+		}
+
+		if len(searchTextData) > 0 {
+
+			var searchText []byte
+			searchText = append(searchText, searchTextData...)
+
+			searchText, err = enrichSearchTextWithMetadata(searchText, operation.Title, metadata)
+			if err != nil {
+				return nil, nil, nil, nil, &exception.CustomError{
+					Status:  http.StatusBadRequest,
+					Code:    exception.InvalidPackagedFile,
+					Message: exception.InvalidPackagedFileMsg,
+					Params: map[string]interface{}{"file": "operations.json",
+						"error": fmt.Sprintf("Unable to serialize metadata of operation %s: %s", operation.OperationId, err.Error())},
+				}
+			}
+
+			operationSearchTexts = append(operationSearchTexts, &entity.OperationSearchTextEntity{
+				OperationId:    operation.OperationId,
+				ApiType:        operation.ApiType,
+				SearchTextData: searchText,
+				SearchDataHash: utils.GetEncodedXXHash128(searchText),
+			})
+		}
+
+		operationsInfo[operation.OperationId] = entity.OperationInfo{
+			ApiType:  operation.ApiType,
+			DataHash: dataHash,
+		}
+	}
+	log.Debugf("Zip operations reading time: %vms", time.Since(operationsFromZipReadStart).Milliseconds())
+	return operationEntities, operationDataEntities, operationSearchTexts, operationsInfo, nil
+}
+
+func (a *BuildResultToEntitiesReader) ReadOperationComparisonsToEntities(ctx context.Context, publishingOperationsInfo map[string]entity.OperationInfo, operationRepository repository.OperationRepository, cachedComparisonIds map[string]struct{}) ([]*entity.VersionComparisonEntity, []*entity.OperationComparisonEntity, map[string]view.ComparisonKey, error) {
+	versionComparisonEntities := make([]*entity.VersionComparisonEntity, 0)
+	operationComparisonEntities := make([]*entity.OperationComparisonEntity, 0)
+	comparisonFileIdToKeyMap := make(map[string]view.ComparisonKey)
+	var mainVersionComparison *entity.VersionComparisonEntity
+	mainVersionRefs := make([]string, 0)
+	for _, comparison := range a.PackageComparisons.Comparisons {
+		versionComparisonEnt := &entity.VersionComparisonEntity{}
+		comparisonKey, mainVersion := a.comparisonKey(comparison.PackageId, comparison.Version, comparison.Revision,
+			comparison.PreviousVersionPackageId, comparison.PreviousVersion, comparison.PreviousVersionRevision)
+		versionComparisonEnt.PackageId = comparisonKey.PackageId
+		versionComparisonEnt.Version = comparisonKey.Version
+		versionComparisonEnt.Revision = comparisonKey.Revision
+		versionComparisonEnt.PreviousPackageId = comparisonKey.PreviousVersionPackageId
+		versionComparisonEnt.PreviousVersion = comparisonKey.PreviousVersion
+		versionComparisonEnt.PreviousRevision = comparisonKey.PreviousVersionRevision
+		if mainVersion {
+			mainVersionComparison = versionComparisonEnt
+		}
+		versionComparisonEnt.NoContent = false
+		versionComparisonEnt.LastActive = time.Now()
+		versionComparisonEnt.OperationTypes = comparison.OperationTypes
+		versionComparisonEnt.BuilderVersion = a.PackageInfo.BuilderVersion
+		versionComparisonEnt.ComparisonId = view.MakeVersionComparisonId(
+			versionComparisonEnt.PackageId,
+			versionComparisonEnt.Version,
+			versionComparisonEnt.Revision,
+			versionComparisonEnt.PreviousPackageId,
+			versionComparisonEnt.PreviousVersion,
+			versionComparisonEnt.PreviousRevision)
+		versionComparisonEnt.Metadata = entity.Metadata{}
+		if a.PackageInfo.MigrationBuild {
+			versionComparisonEnt.Metadata.SetMigrationId(a.PackageInfo.MigrationId)
+		}
+		if a.PackageInfo.PreviousVersionBuilderVersion != "" {
+			versionComparisonEnt.Metadata.SetPreviousVersionBuilderVersion(a.PackageInfo.PreviousVersionBuilderVersion)
+		}
+		if a.PackageInfo.CurrentVersionBuilderVersion != "" {
+			versionComparisonEnt.Metadata.SetCurrentVersionBuilderVersion(a.PackageInfo.CurrentVersionBuilderVersion)
+		}
+		if comparison.HasErrors {
+			versionComparisonEnt.Metadata.SetHasErrors(true)
+		}
+		if !mainVersion {
+			mainVersionRefs = append(mainVersionRefs, versionComparisonEnt.ComparisonId)
+		}
+		if comparison.ComparisonFileId != "" {
+			comparisonFileIdToKeyMap[comparison.ComparisonFileId] = view.ComparisonKey{
+				PackageId:                versionComparisonEnt.PackageId,
+				Version:                  versionComparisonEnt.Version,
+				Revision:                 versionComparisonEnt.Revision,
+				PreviousVersion:          versionComparisonEnt.PreviousVersion,
+				PreviousVersionRevision:  versionComparisonEnt.PreviousRevision,
+				PreviousVersionPackageId: versionComparisonEnt.PreviousPackageId,
+			}
+		}
+		if _, cached := cachedComparisonIds[versionComparisonEnt.ComparisonId]; cached {
+			continue
+		}
+		versionComparisonEntities = append(versionComparisonEntities, versionComparisonEnt)
+		if comparison.ComparisonFileId == "" {
+			continue
+		}
+		if fileHeader, exists := a.ComparisonsFileHeaders[comparison.ComparisonFileId]; exists {
+			fileData, err := ReadZipFile(fileHeader)
+			if err != nil {
+				return nil, nil, nil, &exception.CustomError{
+					Status:  http.StatusBadRequest,
+					Code:    exception.InvalidPackageArchivedFile,
+					Message: exception.InvalidPackageArchivedFileMsg,
+					Params:  map[string]interface{}{"file": comparison.ComparisonFileId, "error": err.Error()},
+				}
+			}
+			var operationChanges view.PackageOperationChanges
+			err = json.Unmarshal(fileData, &operationChanges)
+			if err != nil {
+				return nil, nil, nil, &exception.CustomError{
+					Status:  http.StatusBadRequest,
+					Code:    exception.InvalidPackageArchivedFile,
+					Message: exception.InvalidPackageArchivedFileMsg,
+					Params:  map[string]interface{}{"file": comparison.ComparisonFileId, "error": "failed to unmarshal operation changes"},
+					Debug:   err.Error(),
+				}
+			}
+			validationErr := utils.ValidateObject(operationChanges)
+			if validationErr != nil {
+				return nil, nil, nil, &exception.CustomError{
+					Status:  http.StatusBadRequest,
+					Code:    exception.InvalidPackagedFile,
+					Message: exception.InvalidPackagedFileMsg,
+					Params:  map[string]interface{}{"file": comparison.ComparisonFileId, "error": validationErr.Error()},
+				}
+			}
+
+			var operationsInfo map[string]entity.OperationInfo
+			if publishingOperationsInfo != nil && mainVersion {
+				operationsInfo = publishingOperationsInfo
+			} else if operationRepository != nil {
+				operationsInfoEntity, err := operationRepository.GetOperationsInfo(
+					ctx,
+					versionComparisonEnt.PackageId,
+					versionComparisonEnt.Version,
+					versionComparisonEnt.Revision,
+				)
+				if err != nil {
+					return nil, nil, nil, &exception.CustomError{
+						Status:  http.StatusInternalServerError,
+						Message: "Failed to get operations info for $packageId-$version-$revision",
+						Debug:   err.Error(),
+						Params:  map[string]interface{}{"packageId": versionComparisonEnt.PackageId, "version": versionComparisonEnt.Version, "revision": versionComparisonEnt.Revision},
+					}
+				}
+				operationsInfo = operationsInfoEntity.OperationsInfo
+			}
+
+			var previousOperationsInfo map[string]entity.OperationInfo
+			if versionComparisonEnt.PreviousPackageId != "" && versionComparisonEnt.PreviousVersion != "" && operationRepository != nil {
+				previousOperationsInfoEntity, err := operationRepository.GetOperationsInfo(
+					ctx,
+					versionComparisonEnt.PreviousPackageId,
+					versionComparisonEnt.PreviousVersion,
+					versionComparisonEnt.PreviousRevision,
+				)
+				if err != nil {
+					return nil, nil, nil, &exception.CustomError{
+						Status:  http.StatusInternalServerError,
+						Message: "Failed to get operations info for $packageId-$version-$revision",
+						Debug:   err.Error(),
+						Params:  map[string]interface{}{"packageId": versionComparisonEnt.PreviousPackageId, "version": versionComparisonEnt.PreviousVersion, "revision": versionComparisonEnt.PreviousRevision},
+					}
+				}
+				previousOperationsInfo = previousOperationsInfoEntity.OperationsInfo
+			}
+
+			for _, operationComparison := range operationChanges.OperationComparisons {
+				operationInfo := operationsInfo[operationComparison.OperationId]
+				previousOperationInfo := previousOperationsInfo[operationComparison.PreviousOperationId]
+
+				isGraphQL := operationInfo.ApiType == string(view.GraphqlApiType) || previousOperationInfo.ApiType == string(view.GraphqlApiType)
+				if !isGraphQL {
+					var dataHashStr, previousDataHashStr string
+					if operationInfo.DataHash != nil {
+						dataHashStr = *operationInfo.DataHash
+					}
+					if previousOperationInfo.DataHash != nil {
+						previousDataHashStr = *previousOperationInfo.DataHash
+					}
+					err = validateOperationComparison(operationComparison, dataHashStr, previousDataHashStr)
+					if err != nil {
+						return nil, nil, nil, &exception.CustomError{
+							Status:  http.StatusBadRequest,
+							Code:    exception.InvalidPackagedFile,
+							Message: exception.InvalidPackagedFileMsg,
+							Params:  map[string]interface{}{"file": comparison.ComparisonFileId, "error": err.Error()},
+						}
+					}
+				}
+				//todo maybe check that changedOperation.OperationId really exists in this package or in our db
+				operationComparisonEntities = append(operationComparisonEntities,
+					&entity.OperationComparisonEntity{
+						PackageId:                    versionComparisonEnt.PackageId,
+						Version:                      versionComparisonEnt.Version,
+						Revision:                     versionComparisonEnt.Revision,
+						OperationId:                  operationComparison.OperationId,
+						PreviousPackageId:            versionComparisonEnt.PreviousPackageId,
+						PreviousVersion:              versionComparisonEnt.PreviousVersion,
+						PreviousRevision:             versionComparisonEnt.PreviousRevision,
+						PreviousOperationId:          operationComparison.PreviousOperationId,
+						ComparisonId:                 versionComparisonEnt.ComparisonId,
+						DataHash:                     operationInfo.DataHash,
+						PreviousDataHash:             previousOperationInfo.DataHash,
+						ChangesSummary:               operationComparison.ChangeSummary,
+						Changes:                      map[string]interface{}{"changes": operationComparison.Changes},
+						ComparisonInternalDocumentId: operationComparison.ComparisonInternalDocumentId,
+					})
+			}
+		}
+	}
+	if len(versionComparisonEntities) > 0 && mainVersionComparison == nil {
+		return nil, nil, nil, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidPackagedFile,
+			Message: exception.InvalidPackagedFileMsg,
+			Params:  map[string]interface{}{"file": "comparisons", "error": "comparison for a version specified in package info not found"},
+		}
+	}
+	if mainVersionComparison != nil {
+		mainVersionComparison.Refs = mainVersionRefs
+	}
+	return versionComparisonEntities, operationComparisonEntities, comparisonFileIdToKeyMap, nil
+}
+
+func (a *BuildResultToEntitiesReader) comparisonKey(packageId string, version string, revision int,
+	previousVersionPackageId string, previousVersion string, previousVersionRevision int) (view.ComparisonKey, bool) {
+	key := view.ComparisonKey{}
+	mainVersion := false
+	if version != "" {
+		//check if comparison's current version is a version that is being published
+		if (a.PackageInfo.Revision == revision || revision == 0) &&
+			a.PackageInfo.Version == version &&
+			a.PackageInfo.PackageId == packageId {
+			mainVersion = true
+			key.PackageId = packageId
+			key.Version = a.PackageInfo.Version
+			key.Revision = a.PackageInfo.Revision
+		} else {
+			key.PackageId = packageId
+			key.Version = version
+			key.Revision = revision
+		}
+	}
+	if previousVersion != "" {
+		key.PreviousVersionPackageId = previousVersionPackageId
+		key.PreviousVersion = previousVersion
+		key.PreviousVersionRevision = previousVersionRevision
+	}
+	return key, mainVersion
+}
+
+func (a *BuildResultToEntitiesReader) ReadCachedComparisonIds() map[string]struct{} {
+	cachedIds := make(map[string]struct{}, len(a.CachedComparisons.CachedComparisons))
+	for _, cached := range a.CachedComparisons.CachedComparisons {
+		cachedIds[view.MakeVersionComparisonId(
+			cached.PackageId,
+			cached.Version,
+			cached.Revision,
+			cached.PreviousVersionPackageId,
+			cached.PreviousVersion,
+			cached.PreviousVersionRevision)] = struct{}{}
+	}
+	return cachedIds
+}
+
+func validateOperationComparison(oc view.OperationComparison, dataHash string, previousDataHash string) error {
+	oidIsEmpty := false
+	if oc.OperationId == "" {
+		if dataHash != "" {
+			return fmt.Errorf("invalid operation comparison: operationId is empty, but dataHash is set to %s", dataHash)
+		}
+		oidIsEmpty = true
+	} else {
+		if dataHash == "" {
+			return fmt.Errorf("invalid operation comparison: operationId is set to %s, but dataHash is empty", oc.OperationId)
+		}
+	}
+	if oc.PreviousOperationId == "" {
+		if previousDataHash != "" {
+			return fmt.Errorf("invalid operation comparison: previousOperationId is empty, but previousDataHash is set to %s", previousDataHash)
+		}
+		if oidIsEmpty {
+			return fmt.Errorf("invalid operation comparison: both operationId and previousOperationId are empty, jsonPath=%+v", oc.JsonPath)
+		}
+	} else {
+		if previousDataHash == "" {
+			return fmt.Errorf("invalid operation comparison: previousOperationId is set to %s, but previousDataHash is empty", oc.PreviousOperationId)
+		}
+	}
+	return nil
+}
+
+func (a *BuildResultToEntitiesReader) ReadBuildNotificationsToEntities() ([]*entity.PublishedVersionNotificationEntity, error) {
+	notificationEntities := make([]*entity.PublishedVersionNotificationEntity, 0)
+	for _, notification := range a.BuildNotifications.Notifications {
+		severity, err := view.NotificationSeverityFromBuilder(notification.Severity)
+		if err != nil {
+			return nil, &exception.CustomError{
+				Status:  http.StatusBadRequest,
+				Code:    exception.InvalidPackagedFile,
+				Message: exception.InvalidPackagedFileMsg,
+				Params:  map[string]interface{}{"file": BuildNotificationsFilePath, "error": err.Error()},
+			}
+		}
+		notificationEntities = append(notificationEntities,
+			&entity.PublishedVersionNotificationEntity{
+				PackageId:  a.PackageInfo.PackageId,
+				Version:    a.PackageInfo.Version,
+				Revision:   a.PackageInfo.Revision,
+				Severity:   severity,
+				Category:   notification.Category,
+				Message:    notification.Message,
+				DocumentId: notification.DocumentId,
+			})
+	}
+	return notificationEntities, nil
+}
+
+func (a *BuildResultToEntitiesReader) ReadComparisonNotificationsToEntities() ([]*entity.VersionComparisonNotificationEntity, error) {
+	notificationEntities := make([]*entity.VersionComparisonNotificationEntity, 0)
+	for _, comparison := range a.ComparisonNotifications.Comparisons {
+		comparisonKey, _ := a.comparisonKey(comparison.PackageId, comparison.Version, comparison.Revision,
+			comparison.PreviousVersionPackageId, comparison.PreviousVersion, comparison.PreviousVersionRevision)
+		comparisonId := view.MakeVersionComparisonId(
+			comparisonKey.PackageId,
+			comparisonKey.Version,
+			comparisonKey.Revision,
+			comparisonKey.PreviousVersionPackageId,
+			comparisonKey.PreviousVersion,
+			comparisonKey.PreviousVersionRevision)
+		for _, notification := range comparison.Notifications {
+			severity, err := view.NotificationSeverityFromBuilder(notification.Severity)
+			if err != nil {
+				return nil, &exception.CustomError{
+					Status:  http.StatusBadRequest,
+					Code:    exception.InvalidPackagedFile,
+					Message: exception.InvalidPackagedFileMsg,
+					Params:  map[string]interface{}{"file": ComparisonNotificationsFilePath, "error": err.Error()},
+				}
+			}
+			notificationEntities = append(notificationEntities,
+				&entity.VersionComparisonNotificationEntity{
+					PackageId:                comparisonKey.PackageId,
+					Version:                  comparisonKey.Version,
+					Revision:                 comparisonKey.Revision,
+					PreviousVersionPackageId: comparisonKey.PreviousVersionPackageId,
+					PreviousVersion:          comparisonKey.PreviousVersion,
+					PreviousVersionRevision:  comparisonKey.PreviousVersionRevision,
+					ComparisonId:             comparisonId,
+					Severity:                 severity,
+					Category:                 notification.Category,
+					Message:                  notification.Message,
+					DocumentId:               notification.DocumentId,
+				})
+		}
+	}
+	return notificationEntities, nil
+}
+
+func (a *BuildResultToEntitiesReader) ReadVersionInternalDocumentsToEntities() ([]*entity.VersionInternalDocumentEntity, []*entity.VersionInternalDocumentDataEntity, error) {
+	filesFromZipReadStart := time.Now()
+	versionInternalDocEntities := make([]*entity.VersionInternalDocumentEntity, 0)
+	versionInternalDocDataEntities := make([]*entity.VersionInternalDocumentDataEntity, 0)
+
+	for _, document := range a.VersionInternalDocuments.Documents {
+		if fileHeader, exists := a.VersionInternalDocumentsHeaders[document.Filename]; exists {
+			fileData, err := ReadZipFile(fileHeader)
+			if err != nil {
+				return nil, nil, &exception.CustomError{
+					Status:  http.StatusBadRequest,
+					Code:    exception.InvalidPackageArchivedFile,
+					Message: exception.InvalidPackageArchivedFileMsg,
+					Params:  map[string]interface{}{"file": document.Filename, "error": err.Error()},
+				}
+			}
+			hash := utils.GetEncodedXXHash128(fileData)
+			versionInternalDocEntities = append(versionInternalDocEntities, &entity.VersionInternalDocumentEntity{
+				PackageId:  a.PackageInfo.PackageId,
+				Version:    a.PackageInfo.Version,
+				Revision:   a.PackageInfo.Revision,
+				DocumentId: document.Id,
+				Filename:   document.Filename,
+				Hash:       hash,
+			})
+			versionInternalDocDataEntities = append(versionInternalDocDataEntities, &entity.VersionInternalDocumentDataEntity{
+				Hash: hash,
+				Data: fileData,
+			})
+		}
+	}
+	log.Debugf("Zip version internal documents reading time: %vms", time.Since(filesFromZipReadStart).Milliseconds())
+	return versionInternalDocEntities, versionInternalDocDataEntities, nil
+}
+
+func (a *BuildResultToEntitiesReader) ReadComparisonInternalDocumentsToEntities(comparisonFileIdToKeyMap map[string]view.ComparisonKey) ([]*entity.ComparisonInternalDocumentEntity, []*entity.ComparisonInternalDocumentDataEntity, error) {
+	filesFromZipReadStart := time.Now()
+	comparisonInternalDocEntities := make([]*entity.ComparisonInternalDocumentEntity, 0)
+	comparisonInternalDocDataEntities := make([]*entity.ComparisonInternalDocumentDataEntity, 0)
+
+	for _, document := range a.ComparisonInternalDocuments.Documents {
+		if fileHeader, exists := a.ComparisonInternalDocumentsHeaders[document.Filename]; exists {
+			comparisonKey, exists := comparisonFileIdToKeyMap[document.ComparisonFileId]
+			if !exists {
+				var previousPackageId string
+				if a.PackageInfo.PreviousVersionPackageId != "" {
+					previousPackageId = a.PackageInfo.PreviousVersionPackageId
+				} else {
+					previousPackageId = a.PackageInfo.PackageId
+				}
+				comparisonKey = view.ComparisonKey{
+					PackageId:                a.PackageInfo.PackageId,
+					Version:                  a.PackageInfo.Version,
+					Revision:                 a.PackageInfo.Revision,
+					PreviousVersionPackageId: previousPackageId,
+					PreviousVersion:          a.PackageInfo.PreviousVersion,
+					PreviousVersionRevision:  a.PackageInfo.PreviousVersionRevision,
+				}
+			}
+
+			fileData, err := ReadZipFile(fileHeader)
+			if err != nil {
+				return nil, nil, &exception.CustomError{
+					Status:  http.StatusBadRequest,
+					Code:    exception.InvalidPackageArchivedFile,
+					Message: exception.InvalidPackageArchivedFileMsg,
+					Params:  map[string]interface{}{"file": document.Filename, "error": err.Error()},
+				}
+			}
+			hash := utils.GetEncodedXXHash128(fileData)
+
+			comparisonInternalDocEntities = append(comparisonInternalDocEntities, &entity.ComparisonInternalDocumentEntity{
+				PackageId:         comparisonKey.PackageId,
+				Version:           comparisonKey.Version,
+				Revision:          comparisonKey.Revision,
+				PreviousPackageId: comparisonKey.PreviousVersionPackageId,
+				PreviousVersion:   comparisonKey.PreviousVersion,
+				PreviousRevision:  comparisonKey.PreviousVersionRevision,
+				DocumentId:        document.Id,
+				Filename:          document.Filename,
+				Hash:              hash,
+			})
+			comparisonInternalDocDataEntities = append(comparisonInternalDocDataEntities, &entity.ComparisonInternalDocumentDataEntity{
+				Hash: hash,
+				Data: fileData,
+			})
+		}
+	}
+	log.Debugf("Zip comparison internal documents reading time: %vms", time.Since(filesFromZipReadStart).Milliseconds())
+	return comparisonInternalDocEntities, comparisonInternalDocDataEntities, nil
+}
+
+func (a *BuildResultToEntitiesReader) ReadDdlContractsToEntities() ([]*entity.DDLContractEntity, []*entity.DDLContractDataEntity, []*entity.DDLContractSearchTextEntity, error) {
+	contractEntities := make([]*entity.DDLContractEntity, 0)
+	dataEntities := make([]*entity.DDLContractDataEntity, 0)
+	searchTextEntities := make([]*entity.DDLContractSearchTextEntity, 0)
+
+	for _, contract := range a.PackageDdlContracts.Tables {
+		var dataHash *string
+		if fileHeader, exists := a.ContractsDdlFileHeaders[contract.DdlEntityId]; exists {
+			fileData, err := ReadZipFile(fileHeader)
+			if err != nil {
+				return nil, nil, nil, &exception.CustomError{
+					Status:  http.StatusBadRequest,
+					Code:    exception.InvalidPackageArchivedFile,
+					Message: exception.InvalidPackageArchivedFileMsg,
+					Params:  map[string]interface{}{"file": contract.DdlEntityId, "error": err.Error()},
+				}
+			}
+			hash := utils.GetEncodedXXHash128(fileData)
+			dataHash = &hash
+			dataEntities = append(dataEntities, &entity.DDLContractDataEntity{
+				DataHash: hash,
+				Data:     fileData,
+			})
+			var searchText string
+			if contract.Search != nil && contract.Search.UseEntityDataAsSearchText {
+				searchText = string(fileData)
+			}
+
+			searchDataHash := utils.GetEncodedXXHash128([]byte(searchText))
+			searchTextEntities = append(searchTextEntities, &entity.DDLContractSearchTextEntity{
+				PackageId:      a.PackageInfo.PackageId,
+				Version:        a.PackageInfo.Version,
+				Revision:       a.PackageInfo.Revision,
+				DdlEntityId:    contract.DdlEntityId,
+				Status:         a.PackageInfo.Status,
+				Kind:           contract.Kind,
+				SearchDataHash: searchDataHash,
+				SearchTextData: []byte(searchText),
+			})
+		} else {
+			return nil, nil, nil, &exception.CustomError{
+				Status:  http.StatusBadRequest,
+				Code:    exception.InvalidPackageArchivedFile,
+				Message: exception.InvalidPackageArchivedFileMsg,
+				Params:  map[string]interface{}{"file": contract.DdlEntityId, "error": "file not found"},
+			}
+		}
+		contractEntities = append(contractEntities, &entity.DDLContractEntity{
+			PackageId:                 a.PackageInfo.PackageId,
+			Version:                   a.PackageInfo.Version,
+			Revision:                  a.PackageInfo.Revision,
+			DdlEntityId:               contract.DdlEntityId,
+			Kind:                      contract.Kind,
+			SchemaName:                contract.SchemaName,
+			Name:                      contract.Name,
+			Description:               contract.Description,
+			Metadata:                  contract.Metadata,
+			DataHash:                  dataHash,
+			DocumentId:                contract.DocumentId,
+			VersionInternalDocumentId: contract.VersionInternalDocumentId,
+		})
+	}
+	return contractEntities, dataEntities, searchTextEntities, nil
+}
+
+// ReadDdlContractComparisonsToEntities reads the two-level DDL comparison structure:
+// the ddl-comparisons.json index (creating version_comparison rows carrying contractTypes) and
+// the per-pair ddl-comparisons/<comparisonFileId> files (creating ddl_comparison rows). It mirrors
+// ReadOperationComparisonsToEntities so DDL-only changelogs still produce their version_comparison row.
+func (a *BuildResultToEntitiesReader) ReadDdlContractComparisonsToEntities(ctx context.Context, publishingDdlDataHashes map[string]string, ddlRepository repository.DDLContractRepository, cachedComparisonIds map[string]struct{}) ([]*entity.VersionComparisonEntity, []*entity.DDLContractComparisonEntity, map[string]view.ComparisonKey, error) {
+	versionComparisonEntities := make([]*entity.VersionComparisonEntity, 0)
+	ddlComparisonEntities := make([]*entity.DDLContractComparisonEntity, 0)
+	comparisonFileIdToKeyMap := make(map[string]view.ComparisonKey)
+	var mainVersionComparison *entity.VersionComparisonEntity
+	mainVersionRefs := make([]string, 0)
+
+	// ddl_entity_id -> data_hash lookups are cached per version triple. The version being published
+	// is not yet persisted, so its current data hashes come from publishingDdlDataHashes; all other
+	// versions (refs and previous versions) are resolved from the database.
+	ddlInfoCache := make(map[string]map[string]string)
+	getDdlInfo := func(packageId, version string, revision int) (map[string]string, error) {
+		if ddlRepository == nil {
+			return nil, nil
+		}
+		key := fmt.Sprintf("%s|%s|%d", packageId, version, revision)
+		if info, ok := ddlInfoCache[key]; ok {
+			return info, nil
+		}
+		info, err := ddlRepository.GetDdlEntitiesInfo(ctx, packageId, version, revision)
+		if err != nil {
+			return nil, err
+		}
+		ddlInfoCache[key] = info
+		return info, nil
+	}
+
+	for _, comparison := range a.PackageDdlComparisons.Comparisons {
+		versionComparisonEnt := &entity.VersionComparisonEntity{}
+		comparisonKey, mainVersion := a.comparisonKey(comparison.PackageId, comparison.Version, comparison.Revision,
+			comparison.PreviousVersionPackageId, comparison.PreviousVersion, comparison.PreviousVersionRevision)
+		versionComparisonEnt.PackageId = comparisonKey.PackageId
+		versionComparisonEnt.Version = comparisonKey.Version
+		versionComparisonEnt.Revision = comparisonKey.Revision
+		versionComparisonEnt.PreviousPackageId = comparisonKey.PreviousVersionPackageId
+		versionComparisonEnt.PreviousVersion = comparisonKey.PreviousVersion
+		versionComparisonEnt.PreviousRevision = comparisonKey.PreviousVersionRevision
+		if mainVersion {
+			mainVersionComparison = versionComparisonEnt
+		}
+		versionComparisonEnt.NoContent = false
+		versionComparisonEnt.LastActive = time.Now()
+		versionComparisonEnt.ContractTypes = comparison.ToContractTypes()
+		versionComparisonEnt.BuilderVersion = a.PackageInfo.BuilderVersion
+		versionComparisonEnt.ComparisonId = view.MakeVersionComparisonId(
+			versionComparisonEnt.PackageId,
+			versionComparisonEnt.Version,
+			versionComparisonEnt.Revision,
+			versionComparisonEnt.PreviousPackageId,
+			versionComparisonEnt.PreviousVersion,
+			versionComparisonEnt.PreviousRevision)
+		versionComparisonEnt.Metadata = entity.Metadata{}
+		if a.PackageInfo.MigrationBuild {
+			versionComparisonEnt.Metadata.SetMigrationId(a.PackageInfo.MigrationId)
+		}
+		if a.PackageInfo.PreviousVersionBuilderVersion != "" {
+			versionComparisonEnt.Metadata.SetPreviousVersionBuilderVersion(a.PackageInfo.PreviousVersionBuilderVersion)
+		}
+		if a.PackageInfo.CurrentVersionBuilderVersion != "" {
+			versionComparisonEnt.Metadata.SetCurrentVersionBuilderVersion(a.PackageInfo.CurrentVersionBuilderVersion)
+		}
+		if comparison.HasErrors {
+			versionComparisonEnt.Metadata.SetHasErrors(true)
+		}
+		if !mainVersion {
+			mainVersionRefs = append(mainVersionRefs, versionComparisonEnt.ComparisonId)
+		}
+		if comparison.ComparisonFileId != "" {
+			comparisonFileIdToKeyMap[comparison.ComparisonFileId] = view.ComparisonKey{
+				PackageId:                versionComparisonEnt.PackageId,
+				Version:                  versionComparisonEnt.Version,
+				Revision:                 versionComparisonEnt.Revision,
+				PreviousVersion:          versionComparisonEnt.PreviousVersion,
+				PreviousVersionRevision:  versionComparisonEnt.PreviousRevision,
+				PreviousVersionPackageId: versionComparisonEnt.PreviousPackageId,
+			}
+		}
+		if _, cached := cachedComparisonIds[versionComparisonEnt.ComparisonId]; cached {
+			continue
+		}
+		versionComparisonEntities = append(versionComparisonEntities, versionComparisonEnt)
+		if comparison.ComparisonFileId == "" {
+			continue
+		}
+		fileHeader, exists := a.ContractsDdlComparisonsFileHeaders[comparison.ComparisonFileId]
+		if !exists {
+			continue
+		}
+		fileData, err := ReadZipFile(fileHeader)
+		if err != nil {
+			return nil, nil, nil, &exception.CustomError{
+				Status:  http.StatusBadRequest,
+				Code:    exception.InvalidPackageArchivedFile,
+				Message: exception.InvalidPackageArchivedFileMsg,
+				Params:  map[string]interface{}{"file": comparison.ComparisonFileId, "error": err.Error()},
+			}
+		}
+		var ddlChanges view.PackageDdlContractChanges
+		err = json.Unmarshal(fileData, &ddlChanges)
+		if err != nil {
+			return nil, nil, nil, &exception.CustomError{
+				Status:  http.StatusBadRequest,
+				Code:    exception.InvalidPackageArchivedFile,
+				Message: exception.InvalidPackageArchivedFileMsg,
+				Params:  map[string]interface{}{"file": comparison.ComparisonFileId, "error": "failed to unmarshal ddl changes"},
+				Debug:   err.Error(),
+			}
+		}
+		for _, dto := range ddlChanges.Entities {
+			ddlComparisonEnt := &entity.DDLContractComparisonEntity{
+				PackageId:                    versionComparisonEnt.PackageId,
+				Version:                      versionComparisonEnt.Version,
+				Revision:                     versionComparisonEnt.Revision,
+				PreviousPackageId:            versionComparisonEnt.PreviousPackageId,
+				PreviousVersion:              versionComparisonEnt.PreviousVersion,
+				PreviousRevision:             versionComparisonEnt.PreviousRevision,
+				ComparisonId:                 versionComparisonEnt.ComparisonId,
+				ChangesSummary:               dto.ChangeSummary,
+				Changes:                      dto.Changes,
+				ComparisonInternalDocumentId: dto.ComparisonInternalDocumentId,
+			}
+			if dto.DdlEntityData != nil {
+				ddlComparisonEnt.DdlEntityId = dto.DdlEntityData.DdlEntityId
+				ddlComparisonEnt.Kind = dto.DdlEntityData.Kind
+				ddlComparisonEnt.Name = dto.DdlEntityData.Name
+				ddlComparisonEnt.SchemaName = dto.DdlEntityData.SchemaName
+				ddlComparisonEnt.Description = dto.DdlEntityData.Description
+			}
+			if dto.PreviousDdlEntityData != nil {
+				ddlComparisonEnt.PreviousDdlEntityId = dto.PreviousDdlEntityData.DdlEntityId
+				ddlComparisonEnt.PreviousKind = dto.PreviousDdlEntityData.Kind
+				ddlComparisonEnt.PreviousName = dto.PreviousDdlEntityData.Name
+				ddlComparisonEnt.PreviousSchemaName = dto.PreviousDdlEntityData.SchemaName
+				ddlComparisonEnt.PreviousDescription = dto.PreviousDdlEntityData.Description
+			}
+
+			// The build result's DDL entity descriptor does not carry the data hash, so resolve it
+			// from the published entities the same way operation comparisons do.
+			if ddlComparisonEnt.DdlEntityId != "" {
+				currentInfo := publishingDdlDataHashes
+				if !mainVersion {
+					currentInfo, err = getDdlInfo(versionComparisonEnt.PackageId, versionComparisonEnt.Version, versionComparisonEnt.Revision)
+					if err != nil {
+						return nil, nil, nil, &exception.CustomError{
+							Status:  http.StatusInternalServerError,
+							Message: "Failed to get ddl entities info for $packageId-$version-$revision",
+							Debug:   err.Error(),
+							Params:  map[string]interface{}{"packageId": versionComparisonEnt.PackageId, "version": versionComparisonEnt.Version, "revision": versionComparisonEnt.Revision},
+						}
+					}
+				}
+				if hash, ok := currentInfo[ddlComparisonEnt.DdlEntityId]; ok && hash != "" {
+					ddlComparisonEnt.DataHash = &hash
+				}
+			}
+			if ddlComparisonEnt.PreviousDdlEntityId != "" {
+				previousInfo, err := getDdlInfo(versionComparisonEnt.PreviousPackageId, versionComparisonEnt.PreviousVersion, versionComparisonEnt.PreviousRevision)
+				if err != nil {
+					return nil, nil, nil, &exception.CustomError{
+						Status:  http.StatusInternalServerError,
+						Message: "Failed to get ddl entities info for $packageId-$version-$revision",
+						Debug:   err.Error(),
+						Params:  map[string]interface{}{"packageId": versionComparisonEnt.PreviousPackageId, "version": versionComparisonEnt.PreviousVersion, "revision": versionComparisonEnt.PreviousRevision},
+					}
+				}
+				if hash, ok := previousInfo[ddlComparisonEnt.PreviousDdlEntityId]; ok && hash != "" {
+					ddlComparisonEnt.PreviousDataHash = &hash
+				}
+			}
+			ddlComparisonEntities = append(ddlComparisonEntities, ddlComparisonEnt)
+		}
+	}
+	if mainVersionComparison != nil {
+		mainVersionComparison.Refs = mainVersionRefs
+	}
+	return versionComparisonEntities, ddlComparisonEntities, comparisonFileIdToKeyMap, nil
+}
+
+func (a *BuildResultToEntitiesReader) ReadMcpContractsToEntities() ([]*entity.MCPContractEntity, []*entity.MCPContractDataEntity, []*entity.MCPContractSearchTextEntity, error) {
+	contractEntities := make([]*entity.MCPContractEntity, 0)
+	dataEntities := make([]*entity.MCPContractDataEntity, 0)
+	searchTextEntities := make([]*entity.MCPContractSearchTextEntity, 0)
+
+	allContracts := make([]view.PackageMcpContract, 0)
+	allContracts = append(allContracts, a.PackageMcpContracts.Inits...)
+	allContracts = append(allContracts, a.PackageMcpContracts.Tools...)
+	allContracts = append(allContracts, a.PackageMcpContracts.Resources...)
+	allContracts = append(allContracts, a.PackageMcpContracts.Prompts...)
+
+	for _, contract := range allContracts {
+		if contract.McpEndpoint == "" {
+			return nil, nil, nil, &exception.CustomError{
+				Status:  http.StatusBadRequest,
+				Code:    exception.InvalidPackageArchivedFile,
+				Message: "MCP contract is missing required mcpEndpoint",
+				Params:  map[string]interface{}{"mcpEntityId": contract.McpEntityId},
+			}
+		}
+		var dataHash *string
+		if fileHeader, exists := a.ContractsMcpFileHeaders[contract.McpEntityId]; exists {
+			fileData, err := ReadZipFile(fileHeader)
+			if err != nil {
+				return nil, nil, nil, &exception.CustomError{
+					Status:  http.StatusBadRequest,
+					Code:    exception.InvalidPackageArchivedFile,
+					Message: exception.InvalidPackageArchivedFileMsg,
+					Params:  map[string]interface{}{"file": contract.McpEntityId, "error": err.Error()},
+				}
+			}
+			hash := utils.GetEncodedXXHash128(fileData)
+			dataHash = &hash
+			dataEntities = append(dataEntities, &entity.MCPContractDataEntity{
+				DataHash: hash,
+				Data:     fileData,
+			})
+			var searchText string
+			if contract.Search != nil && contract.Search.UseEntityDataAsSearchText {
+				searchText = string(fileData)
+			}
+
+			searchDataHash := utils.GetEncodedXXHash128([]byte(searchText))
+			searchTextEntities = append(searchTextEntities, &entity.MCPContractSearchTextEntity{
+				PackageId:      a.PackageInfo.PackageId,
+				Version:        a.PackageInfo.Version,
+				Revision:       a.PackageInfo.Revision,
+				McpEntityId:    contract.McpEntityId,
+				Status:         a.PackageInfo.Status,
+				Kind:           contract.Kind,
+				SearchDataHash: searchDataHash,
+				SearchTextData: []byte(searchText),
+			})
+		} else {
+			return nil, nil, nil, &exception.CustomError{
+				Status:  http.StatusBadRequest,
+				Code:    exception.InvalidPackageArchivedFile,
+				Message: exception.InvalidPackageArchivedFileMsg,
+				Params:  map[string]interface{}{"file": contract.McpEntityId, "error": "file not found"},
+			}
+		}
+		contractEntities = append(contractEntities, &entity.MCPContractEntity{
+			PackageId:                 a.PackageInfo.PackageId,
+			Version:                   a.PackageInfo.Version,
+			Revision:                  a.PackageInfo.Revision,
+			McpEntityId:               contract.McpEntityId,
+			Kind:                      contract.Kind,
+			Title:                     contract.Title,
+			Description:               contract.Description,
+			McpEndpoint:               contract.McpEndpoint,
+			Metadata:                  contract.Metadata,
+			DataHash:                  dataHash,
+			DocumentId:                contract.DocumentId,
+			VersionInternalDocumentId: contract.VersionInternalDocumentId,
+		})
+	}
+	return contractEntities, dataEntities, searchTextEntities, nil
+}
+
+func (a *BuildResultToEntitiesReader) calculateOperationsExternalMetadataMap() map[view.OperationExternalMetadataKey]map[string]interface{} {
+	result := map[view.OperationExternalMetadataKey]map[string]interface{}{}
+	if a.PackageInfo.ExternalMetadata == nil {
+		return result
+	}
+
+	for _, meta := range a.PackageInfo.ExternalMetadata.Operations {
+		result[view.OperationExternalMetadataKey{
+			ApiType: meta.ApiType,
+			Method:  strings.ToLower(meta.Method),
+			Path:    meta.Path,
+		}] = meta.ExternalMetadata
+	}
+
+	return result
+}
+
+func enrichSearchTextWithMetadata(searchText []byte, title string, metadata entity.Metadata) ([]byte, error) {
+	if title != "" {
+		searchText = append(searchText, ' ')
+		searchText = append(searchText, title...)
+	}
+
+	metadataJson, err := json.Marshal(metadata)
+	if err != nil {
+		return nil, fmt.Errorf("failed to serialize metadata %v: %w", metadata, err)
+	}
+	searchText = append(searchText, ' ')
+	searchText = append(searchText, metadataJson...)
+
+	return searchText, nil
+}
