@@ -117,7 +117,9 @@ describe('Selection Test', () => {
     await selectGroupRelation.click()
     expect(await component.captureScreenshot()).toMatchImageSnapshot()
 
-    await page.mouse.click(300, 300)
+    // An empty spot of the canvas at (100, 260) in the story frame, which Storybook 10 places at (300, 40);
+    // the snapshot shows the mouse pointer there.
+    await page.mouse.click(300 + 100, 40 + 260)
     await new Promise(r => setTimeout(r, 1000))
     expect(await component.captureScreenshot()).toMatchImageSnapshot()
 
