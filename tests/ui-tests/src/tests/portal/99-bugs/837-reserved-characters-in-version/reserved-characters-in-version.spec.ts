@@ -32,21 +32,6 @@ test.describe('Version name with reserved URL characters', () => {
     parent: G_RESERVED_CHARS_N,
   }, { kindPrefix: true })
 
-  // Assigned in beforeAll. Each run of the hook publishes versions with new names: the hook runs again in a new
-  // worker after any failure, and publishing an existing version would add revisions instead of failing.
-  // vPercentRev* has a literal '%', as agent snapshot names do; vRev* has no '%' and is used for the comparison.
-  // The names differ in more than '%', so a key decoded once too often cannot open the other version.
-  let vPercentRev1: Version
-  let vPercentRev2: Version
-  let vRev1: Version
-  let vRev2: Version
-
-  // Helper functions - Actions
-  // gotoVersion puts the version into the path as it is, so the reserved characters are encoded here.
-  const gotoEncodedVersion = async (portalPage: PortalPage, version: Version): Promise<void> => {
-    await portalPage.gotoVersion({ ...version, version: encodeURIComponent(version.version) })
-  }
-
   // Helper functions - Data
   const makeRevisions = (versionName: string): [Version, Version] => {
     const rev1: Version = {
@@ -62,22 +47,30 @@ test.describe('Version name with reserved URL characters', () => {
     return [rev1, rev2]
   }
 
+  // vPercentRev* has a literal '%', as agent snapshot names do; vRev* has no '%' and is used for the comparison.
+  // The names differ in more than '%', so a key decoded once too often cannot open the other version.
+  const [vPercentRev1, vPercentRev2] = makeRevisions('ATUI percent%20?#837')
+  const [vRev1, vRev2] = makeRevisions('ATUI snapshot ?#837')
+
+  // Helper functions - Actions
+  // gotoVersion puts the version into the path as it is, so the reserved characters are encoded here.
+  const gotoEncodedVersion = async (portalPage: PortalPage, version: Version): Promise<void> => {
+    await portalPage.gotoVersion({ ...version, version: encodeURIComponent(version.version) })
+  }
+
   test.beforeAll(async ({ apihubTDM }) => {
     test.setTimeout(HOOK_PUBLISH_TIMEOUT)
 
-    const timestamp = Date.now()
-    const percentRevisions = makeRevisions(`ATUI percent%20?#${timestamp}`)
-    const revisions = makeRevisions(`ATUI snapshot ?#${timestamp}`)
-    vPercentRev1 = percentRevisions[0]
-    vPercentRev2 = percentRevisions[1]
-    vRev1 = revisions[0]
-    vRev2 = revisions[1]
-
     await apihubTDM.createPackage([G_RESERVED_CHARS_N, PKG_RESERVED_CHARS_N])
-    await apihubTDM.publishVersion(vPercentRev1)
-    await apihubTDM.publishVersion(vPercentRev2)
-    await apihubTDM.publishVersion(vRev1)
-    await apihubTDM.publishVersion(vRev2)
+    // The package is new in each run (VAR_GR carries TEST_ID_N), but a retry runs this hook again in a new
+    // worker, and a second publish of a version name adds revisions. So both revisions are published only
+    // when the version is missing.
+    for (const [rev1, rev2] of [[vPercentRev1, vPercentRev2], [vRev1, vRev2]]) {
+      if (!(await apihubTDM.isVersionExist({ packageId: PKG_RESERVED_CHARS_N.packageId, version: rev1.version }))) {
+        await apihubTDM.publishVersion(rev1)
+        await apihubTDM.publishVersion(rev2)
+      }
+    }
   })
 
   test.beforeEach(async ({ usedResources }) => {
