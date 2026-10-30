@@ -37,7 +37,7 @@
     "@netcracker/qubership-apihub-api-unifier": "workspace:^",
     "@netcracker/qubership-apihub-ddlapi": "workspace:^",
     "@netcracker/qubership-apihub-json-crawl": "workspace:^",
-    "fast-equals": "^6.0.2"
+    "fast-equals": "^6.2.1"
   },
   "devDependencies": {
     "@asyncapi/parser": "3.6.0",

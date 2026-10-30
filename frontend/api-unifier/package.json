@@ -50,7 +50,7 @@
     "@netcracker/qubership-apihub-ddlapi": "workspace:^",
     "@netcracker/qubership-apihub-graphapi": "workspace:^",
     "@netcracker/qubership-apihub-json-crawl": "workspace:^",
-    "fast-equals": "^6.0.2",
+    "fast-equals": "^6.2.1",
     "flatted": "^3.2.9",
     "object-hash": "3.0.0"
   },
