@@ -45,6 +45,7 @@ type SystemInfoService interface {
 	GetOpenAIRateLimitRPS() float64
 	GetOpenAIRateLimitBurst() int
 	GetOpenAIMaxConcurrentRequests() int
+	GetOpenAIMaxRetries() int
 	GetOpenAIExtraBodyJSON() string
 	IsAiOasLinterEnabled() bool
 	IsAiLinterOptional() bool
@@ -114,6 +115,7 @@ func setDefaults() {
 	viper.SetDefault("linters.ai.openAI.rateLimitRPS", 10.0)
 	viper.SetDefault("linters.ai.openAI.rateLimitBurst", 30)
 	viper.SetDefault("linters.ai.openAI.maxConcurrentRequests", 0)
+	viper.SetDefault("linters.ai.openAI.maxRetries", 5)
 	viper.SetDefault("linters.ai.openAI.extraBodyJSON", "")
 	viper.SetDefault("linters.ai.deduplication.criteriaPrompt", defaultAiDeduplicationCriteriaPrompt)
 	viper.SetDefault("linters.ai.deduplication.requestTokenBudget", 24000)
@@ -221,6 +223,10 @@ func (s *systemInfoServiceImpl) GetOpenAIRateLimitBurst() int {
 
 func (s *systemInfoServiceImpl) GetOpenAIMaxConcurrentRequests() int {
 	return s.config.Linters.AI.OpenAI.MaxConcurrentRequests
+}
+
+func (s *systemInfoServiceImpl) GetOpenAIMaxRetries() int {
+	return s.config.Linters.AI.OpenAI.MaxRetries
 }
 
 func (s *systemInfoServiceImpl) GetOpenAIExtraBodyJSON() string {

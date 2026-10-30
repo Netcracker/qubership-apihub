@@ -17,6 +17,7 @@ import (
 	"github.com/invopop/jsonschema"
 	"github.com/openai/openai-go/v3"
 	"github.com/openai/openai-go/v3/option"
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/sync/semaphore"
 	"golang.org/x/time/rate"
 )
@@ -51,7 +52,7 @@ func dialTimeout(network, addr string) (net.Conn, error) {
 	return net.DialTimeout(network, addr, 1800*time.Second)
 }
 
-func NewOpenaiClient(apiKey string, model string, proxy string, rateLimitRPS float64, rateLimitBurst int, maxConcurrentRequests int, extraBodyJSON string) (LLMClient, error) {
+func NewOpenaiClient(apiKey string, model string, proxy string, rateLimitRPS float64, rateLimitBurst int, maxConcurrentRequests int, maxRetries int, extraBodyJSON string) (LLMClient, error) {
 	var opts []option.RequestOption
 	if apiKey != "" {
 		opts = append(opts, option.WithAPIKey(apiKey))
@@ -98,7 +99,7 @@ func NewOpenaiClient(apiKey string, model string, proxy string, rateLimitRPS flo
 	}
 	cl := http.Client{Transport: &tr, Timeout: time.Second * 1800}
 
-	opts = append(opts, option.WithHTTPClient(&cl))
+	opts = append(opts, option.WithHTTPClient(&cl), option.WithMaxRetries(maxRetries))
 
 	var extraBodyOpts []option.RequestOption
 	if extraBodyJSON != "" {
@@ -199,11 +200,18 @@ func (o OAIClientImpl) complete(ctx context.Context, systemPrompt string, userMe
 		params.MaxCompletionTokens = openai.Int(int64(maxCompletionTokens))
 	}
 
-	// The SDK calls the middleware once per HTTP attempt, including its own retries.
+	// The SDK calls the middleware once per HTTP attempt, including its own retries, before the response body is read.
 	attempts := 0
 	countAttempts := option.WithMiddleware(func(req *http.Request, next option.MiddlewareNext) (*http.Response, error) {
 		attempts++
-		return next(req)
+		attemptStart := time.Now()
+		resp, err := next(req)
+		if err != nil {
+			log.Warnf("AI request %s: attempt %d failed with %v after %s", schemaName, attempts, err, time.Since(attemptStart).Round(time.Millisecond))
+		} else if resp.StatusCode >= http.StatusBadRequest {
+			log.Warnf("AI request %s: attempt %d failed with HTTP %d after %s", schemaName, attempts, resp.StatusCode, time.Since(attemptStart).Round(time.Millisecond))
+		}
+		return resp, err
 	})
 
 	start := time.Now()

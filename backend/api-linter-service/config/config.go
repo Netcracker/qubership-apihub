@@ -73,5 +73,6 @@ type OpenAIConfig struct {
 	RateLimitRPS          float64 `validate:"gt=0"`
 	RateLimitBurst        int     `validate:"gte=1"`
 	MaxConcurrentRequests int     `validate:"gte=0"`
+	MaxRetries            int     `validate:"gte=0"`
 	ExtraBodyJSON         string
 }

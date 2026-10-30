@@ -1,9 +1,11 @@
 package client
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -14,6 +16,7 @@ import (
 
 	"github.com/Netcracker/qubership-apihub/backend/api-linter-service/exception"
 	"github.com/Netcracker/qubership-apihub/backend/api-linter-service/view"
+	"github.com/openai/openai-go/v3"
 )
 
 const (
@@ -22,6 +25,7 @@ const (
 	testRateLimitRPS       = 1000
 	testRateLimitBurst     = 1000
 	testMaxConcurrent      = 10
+	testMaxRetries         = 2
 	queuedRequestTimeout   = 50 * time.Millisecond
 )
 
@@ -67,29 +71,29 @@ func completionBody(finishReason, content, refusal string, usage map[string]any)
 	return string(serialised)
 }
 
-func newTestClient(t *testing.T, handler http.HandlerFunc, maxConcurrent int, extraBodyJSON string) LLMClient {
+func newTestClient(t *testing.T, handler http.HandlerFunc, maxConcurrent int, maxRetries int, extraBodyJSON string) LLMClient {
 	t.Helper()
 	server := httptest.NewServer(handler)
 	t.Cleanup(server.Close)
-	cl, err := NewOpenaiClient("sk-test", testModel, server.URL, testRateLimitRPS, testRateLimitBurst, maxConcurrent, extraBodyJSON)
+	cl, err := NewOpenaiClient("sk-test", testModel, server.URL, testRateLimitRPS, testRateLimitBurst, maxConcurrent, maxRetries, extraBodyJSON)
 	if err != nil {
 		t.Fatalf("failed to create client: %v", err)
 	}
 	return cl
 }
 
-// respond answers the first rateLimited requests with 429 and the rest with status and body; it keeps the last request body.
-func respond(t *testing.T, rateLimited int32, status int, body string, captured *map[string]any) http.HandlerFunc {
+// respond answers the first failing requests with failStatus and the rest with status and body; it keeps the last request body.
+func respond(t *testing.T, failing int32, failStatus int, status int, body string, captured *map[string]any) http.HandlerFunc {
 	var requests atomic.Int32
 	return func(w http.ResponseWriter, r *http.Request) {
 		if err := json.NewDecoder(r.Body).Decode(captured); err != nil {
 			t.Errorf("failed to decode request body: %v", err)
 		}
 		w.Header().Set("Content-Type", "application/json")
-		if requests.Add(1) <= rateLimited {
+		if requests.Add(1) <= failing {
 			w.Header().Set("Retry-After-Ms", "1")
-			w.WriteHeader(http.StatusTooManyRequests)
-			_, _ = io.WriteString(w, `{"error":{"message":"Rate limit reached","type":"requests","param":null,"code":"rate_limit_exceeded"}}`)
+			w.WriteHeader(failStatus)
+			_, _ = fmt.Fprintf(w, `{"error":{"message":%q,"type":null,"param":null,"code":null}}`, http.StatusText(failStatus))
 			return
 		}
 		w.WriteHeader(status)
@@ -98,8 +102,7 @@ func respond(t *testing.T, rateLimited int32, status int, body string, captured 
 }
 
 func TestDeduplicateIssuesResponses(t *testing.T) {
-	// The SDK makes one request and two retries by default.
-	const sdkAttempts = 3
+	const sdkAttempts = testMaxRetries + 1
 	tests := []struct {
 		name         string
 		rateLimited  int32
@@ -160,7 +163,7 @@ func TestDeduplicateIssuesResponses(t *testing.T) {
 				status = http.StatusOK
 			}
 			var captured map[string]any
-			cl := newTestClient(t, respond(t, tt.rateLimited, status, tt.body, &captured), testMaxConcurrent, "")
+			cl := newTestClient(t, respond(t, tt.rateLimited, http.StatusTooManyRequests, status, tt.body, &captured), testMaxConcurrent, testMaxRetries, "")
 
 			pairs, report, err := cl.DeduplicateIssues(context.Background(), "system prompt", testDeduplicationRequest, testMaxCompletionToken)
 
@@ -190,7 +193,7 @@ func TestDeduplicateIssuesResponses(t *testing.T) {
 func TestLintOasDocumentHasNoCompletionLimitAndSendsExtraBody(t *testing.T) {
 	var captured map[string]any
 	body := completionBody("stop", `{"issues":[{"path":["info"],"code":"c","severity":"info","message":"m"}]}`, "", fullUsage)
-	cl := newTestClient(t, respond(t, 0, http.StatusOK, body, &captured), testMaxConcurrent, `{"thinking":{"type":"disabled"}}`)
+	cl := newTestClient(t, respond(t, 0, 0, http.StatusOK, body, &captured), testMaxConcurrent, testMaxRetries, `{"thinking":{"type":"disabled"}}`)
 
 	issues, _, err := cl.LintOasDocument(context.Background(), `{"info":{}}`, "prompt")
 	if err != nil || len(issues) != 1 {
@@ -212,7 +215,7 @@ func TestMaxConcurrentRequestsBoundsInFlightRequests(t *testing.T) {
 		<-release
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = io.WriteString(w, completionBody("stop", `{"duplicates":[]}`, "", fullUsage))
-	}, 1, "")
+	}, 1, testMaxRetries, "")
 	deduplicate := func(ctx context.Context) (RequestReport, error) {
 		_, report, err := cl.DeduplicateIssues(ctx, "system prompt", testDeduplicationRequest, testMaxCompletionToken)
 		return report, err
@@ -252,7 +255,7 @@ func TestZeroMaxConcurrentRequestsIsUnbounded(t *testing.T) {
 		<-release
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = io.WriteString(w, completionBody("stop", `{"duplicates":[]}`, "", fullUsage))
-	}, 0, "")
+	}, 0, testMaxRetries, "")
 
 	done := make(chan error, 2)
 	for range 2 {
@@ -269,5 +272,103 @@ func TestZeroMaxConcurrentRequestsIsUnbounded(t *testing.T) {
 		if err := <-done; err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
+	}
+}
+
+func TestDeduplicateIssuesRetries(t *testing.T) {
+	okBody := completionBody("stop", `{"duplicates":[]}`, "", fullUsage)
+	tests := []struct {
+		name         string
+		maxRetries   int
+		failing      int32
+		wantErr      bool
+		wantAttempts int
+	}{
+		{name: "gateway timeout recovered by a retry", maxRetries: testMaxRetries, failing: 1, wantAttempts: 2},
+		{name: "gateway timeout on every attempt", maxRetries: 5, failing: 6, wantErr: true, wantAttempts: 6},
+		{name: "zero retries", maxRetries: 0, failing: 1, wantErr: true, wantAttempts: 1},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var captured map[string]any
+			var bodies []string
+			handler := respond(t, tt.failing, http.StatusGatewayTimeout, http.StatusOK, okBody, &captured)
+			cl := newTestClient(t, func(w http.ResponseWriter, r *http.Request) {
+				body, err := io.ReadAll(r.Body)
+				if err != nil {
+					t.Errorf("failed to read request body: %v", err)
+				}
+				bodies = append(bodies, string(body))
+				r.Body = io.NopCloser(bytes.NewReader(body))
+				handler(w, r)
+			}, testMaxConcurrent, tt.maxRetries, "")
+
+			pairs, report, err := cl.DeduplicateIssues(context.Background(), "system prompt", testDeduplicationRequest, testMaxCompletionToken)
+
+			var apiErr *openai.Error
+			if tt.wantErr && (!errors.As(err, &apiErr) || apiErr.StatusCode != http.StatusGatewayTimeout) {
+				t.Fatalf("expected the gateway timeout error, got %v", err)
+			}
+			if !tt.wantErr && (err != nil || pairs == nil) {
+				t.Fatalf("expected empty pairs, got %v, %v", pairs, err)
+			}
+			if report.ProviderAttempts != tt.wantAttempts || len(bodies) != tt.wantAttempts {
+				t.Fatalf("expected %d attempts, got %d reported and %d received", tt.wantAttempts, report.ProviderAttempts, len(bodies))
+			}
+			for _, body := range bodies[1:] {
+				if body != bodies[0] {
+					t.Errorf("expected a retry to resend the same body, got %s and %s", bodies[0], body)
+				}
+			}
+		})
+	}
+}
+
+func TestDeduplicateIssuesRetriesTransportFailure(t *testing.T) {
+	var captured map[string]any
+	var requests atomic.Int32
+	handler := respond(t, 0, 0, http.StatusOK, completionBody("stop", `{"duplicates":[]}`, "", fullUsage), &captured)
+	cl := newTestClient(t, func(w http.ResponseWriter, r *http.Request) {
+		if requests.Add(1) == 1 {
+			conn, _, err := w.(http.Hijacker).Hijack()
+			if err != nil {
+				t.Errorf("failed to hijack the connection: %v", err)
+				return
+			}
+			_ = conn.Close()
+			return
+		}
+		handler(w, r)
+	}, testMaxConcurrent, testMaxRetries, "")
+
+	_, report, err := cl.DeduplicateIssues(context.Background(), "system prompt", testDeduplicationRequest, testMaxCompletionToken)
+	if err != nil || report.ProviderAttempts != 2 {
+		t.Fatalf("expected success after 2 attempts, got %+v, %v", report, err)
+	}
+}
+
+func TestDeduplicateIssuesCancelledDuringRetryDelay(t *testing.T) {
+	var requests atomic.Int32
+	responded := make(chan struct{}, 1)
+	cl := newTestClient(t, func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Retry-After-Ms", "10000")
+		w.WriteHeader(http.StatusGatewayTimeout)
+		w.(http.Flusher).Flush()
+		if requests.Add(1) == 1 {
+			responded <- struct{}{}
+		}
+	}, testMaxConcurrent, testMaxRetries, "")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go func() {
+		<-responded
+		cancel()
+	}()
+	_, report, err := cl.DeduplicateIssues(ctx, "system prompt", testDeduplicationRequest, testMaxCompletionToken)
+	if !errors.Is(err, context.Canceled) || report.ProviderAttempts != 1 || requests.Load() != 1 {
+		t.Fatalf("expected the context error after 1 attempt, got %+v, %d received, %v", report, requests.Load(), err)
 	}
 }

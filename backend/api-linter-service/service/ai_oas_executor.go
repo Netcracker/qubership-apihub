@@ -28,6 +28,7 @@ func NewAiOasExecutor(systemInfoService SystemInfoService) (AiOasExecutor, error
 			systemInfoService.GetOpenAIRateLimitRPS(),
 			systemInfoService.GetOpenAIRateLimitBurst(),
 			systemInfoService.GetOpenAIMaxConcurrentRequests(),
+			systemInfoService.GetOpenAIMaxRetries(),
 			systemInfoService.GetOpenAIExtraBodyJSON())
 		if err != nil {
 			return nil, err

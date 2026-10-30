@@ -506,6 +506,8 @@ qubershipApiLinterService:
           rateLimitBurst: 30
           # Optional; Maximum number of LLM requests in flight per service instance, shared by lint and deduplication requests of all AI workers; 0 means unbounded; If not set, default value: 0; Example: 15
           maxConcurrentRequests: 0
+          # Optional; Number of times one LLM request is sent again after a connection failure or an HTTP 408, 409, 429 or 5xx response (the provider's x-should-retry header and Retry-After are honoured); 0 disables retries; If not set, default value: 5; Example: 5
+          maxRetries: 5
           # Optional; JSON object whose top-level keys are added to every LLM request body, for provider-specific parameters; If not set, default value: empty (nothing added); Example: '{"thinking":{"type":"disabled"}}'
           extraBodyJSON: ''
         deduplication:

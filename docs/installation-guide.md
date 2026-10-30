@@ -389,6 +389,7 @@ insufficient.
 | `linters.ai.openAI.rateLimitRPS` | No | `10` | OpenAI requests per second limit |
 | `linters.ai.openAI.rateLimitBurst` | No | `30` | OpenAI burst limit |
 | `linters.ai.openAI.maxConcurrentRequests` | No | `0` | Maximum LLM requests in flight per instance, shared by the lint and deduplication requests of all AI workers; `0` means unbounded |
+| `linters.ai.openAI.maxRetries` | No | `5` | Number of times one LLM request is sent again after a connection failure or an HTTP 408, 409, 429 or 5xx response; the provider's `x-should-retry` and `Retry-After` headers are honoured; `0` disables retries |
 | `linters.ai.openAI.extraBodyJSON` | No | `''` | String that holds a JSON object; its top-level keys are added to every LLM request body, for provider-specific parameters. Must not contain `messages`, `response_format`, `max_completion_tokens`, or `model`. Example: `extraBodyJSON: '{"thinking":{"type":"disabled"}}'` |
 | `linters.ai.deduplication.criteriaPrompt` | No | Built-in criterion | Rule that decides whether two AI linter issues at the same path describe the same problem; appended to the built-in deduplication instructions |
 | `linters.ai.deduplication.requestTokenBudget` | No | `24000` | Estimated input tokens per deduplication request, including the system prompt; minimum `4000`. Larger groups of issues are split into several requests |

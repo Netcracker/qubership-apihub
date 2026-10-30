@@ -7,7 +7,7 @@ import (
 )
 
 func TestValidateConfigAILinter(t *testing.T) {
-	openAI := config.OpenAIConfig{RateLimitRPS: 10, RateLimitBurst: 30, MaxConcurrentRequests: 10}
+	openAI := config.OpenAIConfig{RateLimitRPS: 10, RateLimitBurst: 30, MaxConcurrentRequests: 10, MaxRetries: 5}
 	openAIWithKey := openAI
 	openAIWithKey.APIKey = "sk-test"
 	deduplication := config.AIDeduplicationConfig{CriteriaPrompt: "test criterion", RequestTokenBudget: 24000, MaxCompletionTokens: 4000}
@@ -21,6 +21,8 @@ func TestValidateConfigAILinter(t *testing.T) {
 	withServiceOwnedExtraBodyKey.ExtraBodyJSON = `{"response_format":{}}`
 	withNonObjectExtraBody := openAIWithKey
 	withNonObjectExtraBody.ExtraBodyJSON = `null`
+	withNegativeMaxRetries := openAIWithKey
+	withNegativeMaxRetries.MaxRetries = -1
 
 	tests := []struct {
 		name    string
@@ -60,6 +62,11 @@ func TestValidateConfigAILinter(t *testing.T) {
 		{
 			name:    "extra body that is not a JSON object fails",
 			cfg:     config.AILinterConfig{Enabled: true, Workers: 1, OpenAI: withNonObjectExtraBody, Deduplication: deduplication},
+			wantErr: true,
+		},
+		{
+			name:    "negative max retries fails",
+			cfg:     config.AILinterConfig{Enabled: true, Workers: 1, OpenAI: withNegativeMaxRetries, Deduplication: deduplication},
 			wantErr: true,
 		},
 		{
