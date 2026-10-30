@@ -1,6 +1,6 @@
 {
   "name": "@netcracker/qubership-apihub-api-processor",
-  "version": "5.7.2",
+  "version": "5.8.0",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Netcracker/qubership-apihub.git",

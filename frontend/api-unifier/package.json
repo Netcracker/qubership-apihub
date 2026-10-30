@@ -1,6 +1,6 @@
 {
   "name": "@netcracker/qubership-apihub-api-unifier",
-  "version": "2.9.3",
+  "version": "3.0.0",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Netcracker/qubership-apihub.git",
