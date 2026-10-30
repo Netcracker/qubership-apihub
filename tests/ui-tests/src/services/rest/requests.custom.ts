@@ -5,11 +5,6 @@ export async function rGetSystemInfo(rc: APIRequestContext): Promise<APIResponse
 }
 
 export async function rGetSysConfig(rc: APIRequestContext): Promise<APIResponse> {
-  return await rc.get('/api/v1/system/configuration')
-}
-
-// The configuration that the UI reads before a login, with the registered extensions.
-export async function rGetSystemConfiguration(rc: APIRequestContext): Promise<APIResponse> {
   return await rc.get('/api/v2/system/configuration')
 }
 
