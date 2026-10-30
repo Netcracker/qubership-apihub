@@ -117,12 +117,13 @@ func (c comparisonControllerImpl) CompareTwoVersions(w http.ResponseWriter, r *h
 		return
 	}
 	if err := utils.ValidateObject(compareVersionsReq); err != nil {
-		c.responder.RespondWithError(w, r, "", exception.CustomError{
+		c.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidCompareVersionReq,
 			Message: exception.InvalidCompareVersionReqMsg,
 			Params:  map[string]interface{}{"compareVersionReq": compareVersionsReq, "error": err.Error()},
 		})
+		return
 	}
 
 	sufficientPrivileges, err := c.roleService.HasRequiredPermissions(ctx, compareVersionsReq.PackageId, view.ReadPermission)
