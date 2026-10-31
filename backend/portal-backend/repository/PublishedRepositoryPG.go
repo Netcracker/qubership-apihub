@@ -5251,6 +5251,12 @@ func (p publishedRepositoryImpl) DeleteSoftDeletedPackagesBeforeDate(ctx context
 		if err != nil {
 			return fmt.Errorf("failed to delete ddl_tables: %w", err)
 		}
+		//ddl_table_group cascades from published_version, but member rows of a dashboard group point
+		//at the referenced package and have no foreign key to ddl_tables
+		_, err = tx.ExecContext(ctx, `DELETE FROM grouped_ddl_table WHERE package_id IN (?)`, pg.In(packageIds))
+		if err != nil {
+			return fmt.Errorf("failed to delete grouped_ddl_table: %w", err)
+		}
 
 		logger.Trace(ctx, "Deleting MCP contract data for packages")
 		_, err = tx.ExecContext(ctx, `DELETE FROM fts_mcp_search_text WHERE package_id IN (?)`, pg.In(packageIds))
@@ -5359,6 +5365,12 @@ func (p publishedRepositoryImpl) DeleteSoftDeletedPackageRevisionsBeforeDate(ctx
 		_, err = tx.ExecContext(ctx, `DELETE FROM ddl_tables WHERE (package_id, version, revision) IN (`+valuesClause+`)`, args...)
 		if err != nil {
 			return fmt.Errorf("failed to delete ddl_tables: %w", err)
+		}
+		//ddl_table_group cascades from published_version, but member rows of a dashboard group point
+		//at the referenced package version and have no foreign key to ddl_tables
+		_, err = tx.ExecContext(ctx, `DELETE FROM grouped_ddl_table WHERE (package_id, version, revision) IN (`+valuesClause+`)`, args...)
+		if err != nil {
+			return fmt.Errorf("failed to delete grouped_ddl_table: %w", err)
 		}
 		_, err = tx.ExecContext(ctx, `DELETE FROM fts_mcp_search_text WHERE (package_id, version, revision) IN (`+valuesClause+`)`, args...)
 		if err != nil {
@@ -5482,6 +5494,18 @@ func (p publishedRepositoryImpl) countRelatedDataForPackagesTx(ctx context.Conte
 
 	_, err = tx.QueryOneContext(ctx, pg.Scan(&stats.GroupedOperations),
 		`SELECT COUNT(*) FROM grouped_operation WHERE package_id IN (?)`, pg.In(packageIds))
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.QueryOneContext(ctx, pg.Scan(&stats.DdlTableGroups),
+		`SELECT COUNT(*) FROM ddl_table_group WHERE package_id IN (?)`, pg.In(packageIds))
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.QueryOneContext(ctx, pg.Scan(&stats.GroupedDdlTables),
+		`SELECT COUNT(*) FROM grouped_ddl_table WHERE package_id IN (?)`, pg.In(packageIds))
 	if err != nil {
 		return err
 	}
@@ -5661,6 +5685,18 @@ func (p publishedRepositoryImpl) countRelatedDataForPackageRevisionsTx(ctx conte
 
 	_, err = tx.QueryOneContext(ctx, pg.Scan(&stats.GroupedOperations),
 		`SELECT COUNT(*) FROM grouped_operation WHERE (package_id, version, revision) IN (`+valuesClause+`)`, args...)
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.QueryOneContext(ctx, pg.Scan(&stats.DdlTableGroups),
+		`SELECT COUNT(*) FROM ddl_table_group WHERE (package_id, version, revision) IN (`+valuesClause+`)`, args...)
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.QueryOneContext(ctx, pg.Scan(&stats.GroupedDdlTables),
+		`SELECT COUNT(*) FROM grouped_ddl_table WHERE (package_id, version, revision) IN (`+valuesClause+`)`, args...)
 	if err != nil {
 		return err
 	}
