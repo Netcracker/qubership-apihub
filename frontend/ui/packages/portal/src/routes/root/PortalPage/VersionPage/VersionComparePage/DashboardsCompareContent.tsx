@@ -124,7 +124,7 @@ export const DashboardsCompareContent: FC = memo(() => {
   const handleSwap = useCallback(() => {
     const searchParams = {
       [VERSION_SEARCH_PARAM]: { value: changedVersionKey },
-      [PACKAGE_SEARCH_PARAM]: { value: originPackageKey !== changedPackageKey ? encodeURIComponent(changedPackageKey!) : '' },
+      [PACKAGE_SEARCH_PARAM]: { value: originPackageKey !== changedPackageKey ? changedPackageKey! : '' },
       [REF_SEARCH_PARAM]: { value: isPackageFromDashboard ? refPackageKey : undefined },
       [API_TYPE_SEARCH_PARAM]: { value: apiTypeSearchParam },
       [FILTERS_SEARCH_PARAM]: { value: filters.join() },

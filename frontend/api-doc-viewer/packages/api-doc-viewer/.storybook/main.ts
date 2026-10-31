@@ -33,26 +33,7 @@ const config: StorybookConfig = {
   },
 
   async viteFinal(config) {
-    /* Storybook auto-loads this package's own vite.config.ts and MERGES its plugins.
-       That config is a *library* build: it externalises react and react-dom through
-       rolldown's esmExternalRequirePlugin, so consumers supply their own React rather
-       than receiving a second copy bundled in.
-
-       The showcase is the opposite case. It is loaded straight into a browser, which
-       has no module resolver, so a bare `import ... from "react"` there is
-       `TypeError: Failed to resolve module specifier "react"` - the story tree never
-       mounts and every screenshot then fails with `Node has 0 height`.
-
-       Storybook REPLACES build.rollupOptions but MERGES plugins. While react and
-       react-dom sat in build.rollupOptions.external there was no leak; moving them
-       into a plugin (item 1.11) is precisely what exposed one. So it is stripped here,
-       for the showcase only - the library build keeps it. */
-    const withoutLibraryExternals = {
-      ...config,
-      plugins: stripPluginByName(config.plugins, LIBRARY_EXTERNAL_PLUGIN),
-    };
-
-    return mergeConfig(withoutLibraryExternals, {
+    return mergeConfig(config, {
       optimizeDeps: {
         // ddlapi's '/parser' resolves (browser condition) to a self-contained,
         // WASM-inlined bundle — no libpg-query WASM plugins needed. Keep it out of
@@ -65,20 +46,6 @@ const config: StorybookConfig = {
     });
   }
 };
-
-/** The name rolldown's esmExternalRequirePlugin identifies itself by. */
-const LIBRARY_EXTERNAL_PLUGIN = "builtin:esm-external-require";
-
-/** Vite plugin arrays nest and may contain falsy entries, so this recurses rather
- *  than filtering a single level. */
-function stripPluginByName(plugins: any, name: string): any {
-  if (Array.isArray(plugins)) {
-    return plugins
-      .map(p => stripPluginByName(p, name))
-      .filter(p => !(p && !Array.isArray(p) && p.name === name));
-  }
-  return plugins;
-}
 
 export default config;
 

@@ -23,14 +23,11 @@ export function useNormalizedDdlContract(
 
   const hasVersionInternalDocument = !!ddlContract?.versionInternalDocumentId
 
-  const operationPackageKey = encodeURIComponent(packageId ?? '')
-  const operationPackageVersion = encodeURIComponent(versionId ?? '')
-
   const {
     data: internalDocuments,
     isLoading: isInternalDocumentsLoading,
     error: internalDocumentsError,
-  } = useInternalDocumentsByPackageVersion(operationPackageKey, operationPackageVersion)
+  } = useInternalDocumentsByPackageVersion(packageId, versionId)
 
   const internalDocumentWithDdlContract = useMemo(
     () => internalDocuments?.find(document => document.id === ddlContract?.versionInternalDocumentId),

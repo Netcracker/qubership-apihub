@@ -276,7 +276,7 @@ export const DifferentOperationVersionsComparisonPage: FC = memo(() => {
         const firstOperation = firstOperationPair.currentOperation ?? firstOperationPair.previousOperation!
         const firstOperationId = firstOperation.operationKey
 
-        const newPathName = `/portal/packages/${changedPackageKey}/${changedVersionKey}/compare/${apiTypeParam}/${firstOperationId}`
+        const newPathName = `/portal/packages/${encodeURIComponent(changedPackageKey!)}/${encodeURIComponent(changedVersionKey!)}/compare/${apiTypeParam}/${encodeURIComponent(firstOperationId)}`
         const searchParams = optionalSearchParams({
           [PACKAGE_SEARCH_PARAM]: { value: originPackageKey },
           [VERSION_SEARCH_PARAM]: { value: originVersionKey },

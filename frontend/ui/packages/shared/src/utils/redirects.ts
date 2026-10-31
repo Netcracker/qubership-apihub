@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import type { PathMatch } from 'react-router'
 import { matchPath } from 'react-router-dom'
 import { SEARCH_PARAM_NO_AUTO_LOGIN, SEARCH_PARAM_REDIRECT_URI } from './constants'
 import type { FetchRedirectDetails } from './requests'
@@ -57,13 +56,27 @@ export function getPackageRedirectDetails<P extends PackagePathPattern>(
   pathPattern: P,
 ): FetchRedirectDetails | null {
   const redirectedUrl = new URL(response.url)
-  const match = matchPath(`${API_BASE_PATH_PATTERN}${pathPattern}`, redirectedUrl.pathname) as PathMatch<'packageId'> | null
-  return match && match.params.packageId
+  const pattern = `${API_BASE_PATH_PATTERN}${pathPattern}`
+  if (!matchPath(pattern, redirectedUrl.pathname)) {
+    return null
+  }
+  // The segment is read and decoded here because react-router versions differ in how matchPath decodes parameters.
+  const packageIdSegment = redirectedUrl.pathname.split('/')[pattern.split('/').indexOf(':packageId')]
+  return packageIdSegment
     ? {
       redirectType: FETCH_REDIRECT_TYPE_PACKAGE,
-      id: match.params.packageId,
+      id: decodePathSegment(packageIdSegment),
     }
     : null
+}
+
+// A malformed escape cannot be decoded, so the segment is kept as it is, which is what react-router does too.
+function decodePathSegment(segment: string): string {
+  try {
+    return decodeURIComponent(segment)
+  } catch {
+    return segment
+  }
 }
 
 export function isSameOriginUrl(uri: string): boolean {

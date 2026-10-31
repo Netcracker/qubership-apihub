@@ -43,7 +43,7 @@ import { getSplittedVersionKey } from '@netcracker/qubership-apihub-ui-shared/ut
 import type { FC, ReactNode } from 'react'
 import { memo, useMemo } from 'react'
 import { NavLink, useParams } from 'react-router-dom'
-import { OVERVIEW_PAGE, REVISION_HISTORY_PAGE } from '../../../../../../routes'
+import { REVISION_HISTORY_PAGE } from '../../../../../../routes'
 import { usePackageVersionContent } from '../../../../usePackageVersionContent'
 import { useDocuments } from '../../useDocuments'
 import { ContractsSummary } from './ContractsSummary'
@@ -195,9 +195,7 @@ export const SummaryTab: FC = memo(() => {
           <Typography sx={{ gridArea: 'revisionsCount' }} variant="body2" data-testid="RevisionTypography">
             <Link
               component={NavLink}
-              to={{
-                pathname: `./${OVERVIEW_PAGE}/${REVISION_HISTORY_PAGE}`,
-              }}
+              to={getOverviewPath({ packageKey: packageId!, versionKey: versionId!, tab: REVISION_HISTORY_PAGE })}
             >
               {revisionsCount}
             </Link>

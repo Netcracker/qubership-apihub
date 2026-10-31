@@ -14,7 +14,7 @@ require (
 	github.com/shaj13/libcache v1.0.4
 	github.com/sirupsen/logrus v1.10.2
 	github.com/spf13/viper v1.20.1
-	github.com/xuri/excelize/v2 v2.11.1-0.20260929015830-8ffeb07ec9a3
+	github.com/xuri/excelize/v2 v2.11.1-0.20261003002531-6258dcebc4e2
 	golang.org/x/sync v0.24.0
 	gopkg.in/resty.v1 v1.12.0
 	gopkg.in/square/go-jose.v2 v2.6.0

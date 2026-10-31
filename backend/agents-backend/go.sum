@@ -194,8 +194,8 @@ github.com/vmihailenco/tagparser/v2 v2.0.0 h1:y09buUbR+b5aycVFQs/g70pqKVZNBmxwAh
 github.com/vmihailenco/tagparser/v2 v2.0.0/go.mod h1:Wri+At7QHww0WTrCBeu4J6bNtoV6mEfg5OIWRZA9qds=
 github.com/xuri/efp v0.0.2 h1:74yhBh0nfIWLOrN76wtShYVse94pADGYS0/c86jOp8Q=
 github.com/xuri/efp v0.0.2/go.mod h1:ybY/Jr0T0GTCnYjKqmdwxyxn2BQf2RcQIIvex5QldPI=
-github.com/xuri/excelize/v2 v2.11.1-0.20260929015830-8ffeb07ec9a3 h1:2vxBo4qVavWCi0gQs8XJNby0NJLX9CXDQdwS2TXqYVs=
-github.com/xuri/excelize/v2 v2.11.1-0.20260929015830-8ffeb07ec9a3/go.mod h1:d2KG/tW81cIhSeC3S7wENv3qRnOC3MDcrjDicKuZa6U=
+github.com/xuri/excelize/v2 v2.11.1-0.20261003002531-6258dcebc4e2 h1:YJqtDi2ShO2fh/qMNO0MyPHXiki9h1OH3i3zGRunGRQ=
+github.com/xuri/excelize/v2 v2.11.1-0.20261003002531-6258dcebc4e2/go.mod h1:d2KG/tW81cIhSeC3S7wENv3qRnOC3MDcrjDicKuZa6U=
 github.com/xuri/nfp v0.0.2-0.20250530014748-2ddeb826f9a9 h1:+C0TIdyyYmzadGaL/HBLbf3WdLgC29pgyhTjAT/0nuE=
 github.com/xuri/nfp v0.0.2-0.20250530014748-2ddeb826f9a9/go.mod h1:WwHg+CVyzlv/TX9xqBFXEZAuxOPxn2k1GNHwG41IIUQ=
 github.com/yuin/goldmark v1.2.1/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
