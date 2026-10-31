@@ -68,7 +68,7 @@
     "@types/jest-image-snapshot": "6.1.0",
     "@types/node": "^24.19.2",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
-    "@typescript-eslint/parser": "^6.0.0",
+    "@typescript-eslint/parser": "^8.72.0",
     "eslint": "^8.45.0",
     "eslint-plugin-storybook": "^0.6.15",
     "jest": "30.4.2",
