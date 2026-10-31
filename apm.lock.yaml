@@ -1,5 +1,5 @@
 lockfile_version: '1'
-generated_at: '2026-10-29T15:05:58.072125+00:00'
+generated_at: '2026-10-31T15:03:00.297464+00:00'
 apm_version: 0.35.0
 dependencies:
 - repo_url: _local/advanced-verification
@@ -169,13 +169,13 @@ dependencies:
   - .claude/skills/api-doc-viewer-testing/SKILL.md
   - .cursor/rules/api-doc-viewer-testing.mdc
   deployed_file_hashes:
-    .agents/skills/api-doc-viewer-testing/SKILL.md: sha256:ba9d99dc10533a4d48ff8222b790bb2e7440ff51aea84e7b54f72700b3473040
+    .agents/skills/api-doc-viewer-testing/SKILL.md: sha256:b40288b75dd906cbb270d32d7137c4fb10f2603eac16e9a60e92a3c65b5508d5
     .claude/rules/api-doc-viewer-testing.md: sha256:56dbe13ef83743f14c08c8fbb0852e2764d2f8b03a44b8ae0a94951a4ecfa62f
-    .claude/skills/api-doc-viewer-testing/SKILL.md: sha256:ba9d99dc10533a4d48ff8222b790bb2e7440ff51aea84e7b54f72700b3473040
+    .claude/skills/api-doc-viewer-testing/SKILL.md: sha256:b40288b75dd906cbb270d32d7137c4fb10f2603eac16e9a60e92a3c65b5508d5
     .cursor/rules/api-doc-viewer-testing.mdc: sha256:da6f2bff0ad97eef742cc9ab4a0f3a688a52c114cf179c6272e4355834e7449e
   source: local
   local_path: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-testing
-  content_hash: sha256:6fced94fd61b6eb37eda2474381c919965ad4a0b545079d63059d03217cd27f3
+  content_hash: sha256:f6c7c06f73a82eda1b6b901754c6874bc561225a228afedd61e5118b3eef8d53
 - repo_url: _local/api-doc-viewer-using
   name: api-doc-viewer-using
   version: 1.0.0
@@ -314,13 +314,13 @@ dependencies:
   - .claude/skills/apihub-add-go-service/SKILL.md
   - .cursor/rules/apihub-add-go-service.mdc
   deployed_file_hashes:
-    .agents/skills/apihub-add-go-service/SKILL.md: sha256:aa893e97d44b8e2ecdd9aa0b3cb43229b9a98eeb112b6f3fe4d9260957528ba7
+    .agents/skills/apihub-add-go-service/SKILL.md: sha256:29432ca44dce47ea24d3c6384c9d4db964bcea47964fa6a60f59cec35216aaf1
     .claude/rules/apihub-add-go-service.md: sha256:72440034c1c2be02692006e812c7135640f2c45a2ebe6afd23e3346083bd8975
-    .claude/skills/apihub-add-go-service/SKILL.md: sha256:aa893e97d44b8e2ecdd9aa0b3cb43229b9a98eeb112b6f3fe4d9260957528ba7
+    .claude/skills/apihub-add-go-service/SKILL.md: sha256:29432ca44dce47ea24d3c6384c9d4db964bcea47964fa6a60f59cec35216aaf1
     .cursor/rules/apihub-add-go-service.mdc: sha256:2cd6f5cb746764ff45e938bff87c0af84b6412ad6e615ef2991994525aa81baf
   source: local
   local_path: ./agent-packages/apihub-add-go-service
-  content_hash: sha256:44c5d4570e92565301afabc20ed2d7aa59cf070affd54425679243d7f2135950
+  content_hash: sha256:0d3827c9cf9729793203b46489a05963c45f320de1f18d34bd7e3c608bfe9a3c
 - repo_url: _local/apihub-agent-developer
   name: apihub-agent-developer
   version: 0.1.0
@@ -1783,7 +1783,7 @@ deployments:
   owners:
   - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-testing
   active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-testing
-  content_hash: sha256:ba9d99dc10533a4d48ff8222b790bb2e7440ff51aea84e7b54f72700b3473040
+  content_hash: sha256:b40288b75dd906cbb270d32d7137c4fb10f2603eac16e9a60e92a3c65b5508d5
 - kind: project-relative
   target: claude
   value: .claude/skills/api-doc-viewer-using
@@ -1927,7 +1927,7 @@ deployments:
   owners:
   - ./agent-packages/apihub-add-go-service
   active_owner: ./agent-packages/apihub-add-go-service
-  content_hash: sha256:aa893e97d44b8e2ecdd9aa0b3cb43229b9a98eeb112b6f3fe4d9260957528ba7
+  content_hash: sha256:29432ca44dce47ea24d3c6384c9d4db964bcea47964fa6a60f59cec35216aaf1
 - kind: project-relative
   target: claude
   value: .claude/skills/apihub-agent-developer
@@ -2791,7 +2791,7 @@ deployments:
   owners:
   - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-testing
   active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-testing
-  content_hash: sha256:ba9d99dc10533a4d48ff8222b790bb2e7440ff51aea84e7b54f72700b3473040
+  content_hash: sha256:b40288b75dd906cbb270d32d7137c4fb10f2603eac16e9a60e92a3c65b5508d5
 - kind: project-relative
   target: cursor
   value: .agents/skills/api-doc-viewer-using
@@ -2935,7 +2935,7 @@ deployments:
   owners:
   - ./agent-packages/apihub-add-go-service
   active_owner: ./agent-packages/apihub-add-go-service
-  content_hash: sha256:aa893e97d44b8e2ecdd9aa0b3cb43229b9a98eeb112b6f3fe4d9260957528ba7
+  content_hash: sha256:29432ca44dce47ea24d3c6384c9d4db964bcea47964fa6a60f59cec35216aaf1
 - kind: project-relative
   target: cursor
   value: .agents/skills/apihub-agent-developer

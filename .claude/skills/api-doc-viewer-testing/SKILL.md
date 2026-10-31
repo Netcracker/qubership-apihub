@@ -56,13 +56,14 @@ Chrome). Setup and snapshot tuning are in `.jest/setup.tests.ts`
 `.config/it/it-test.jest.config.cjs` build their Puppeteer connection via
 `prepareJestConfig` from `@netcracker/qubership-apihub-jest-chrome-in-docker-environment` —
 **"legacy" does not mean "no Docker required"**; there is no non-Docker IT config in this repo.
-When Docker isn't available in the current environment, you cannot run the real screenshot
-suite or generate baseline PNGs. Fall back to: `pnpm run build:showcase` (or
+When no container engine is available in the current environment (Podman, Docker, or `wslc`
+on Windows, chosen with `DOCKER_BINARY`), you cannot run the real screenshot suite or generate
+baseline PNGs. Fall back to: `pnpm run build:showcase` (or
 `node bin/generate-json-schema-…` + `storybook build`), serve `dist-showcase/` on port 9009
 (`pnpm exec ws -p 9009 -d ../../dist-showcase --spa index.html`), and visually check the new/changed
 story ids in a browser — this verifies the story renders and the fixture content displays
 correctly, but it is **not** a substitute for the real IT run; say so explicitly and leave
-actual snapshot generation for an environment with Docker.
+actual snapshot generation for an environment with a container engine.
 
 **Targeted single-suite runner:** `node bin/run-screenshot-test-suite.mjs test|regenerate
 [test-run] [suite]` (e.g. `regenerate json-schema-diffs-suite description-changes`) wraps the
