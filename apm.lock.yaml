@@ -1,5 +1,5 @@
 lockfile_version: '1'
-generated_at: '2026-10-31T15:03:00.297464+00:00'
+generated_at: '2026-10-31T18:05:16.778413+00:00'
 apm_version: 0.35.0
 dependencies:
 - repo_url: _local/advanced-verification
@@ -608,13 +608,13 @@ dependencies:
   - .claude/skills/apihub-ui-authoring/SKILL.md
   - .cursor/rules/apihub-ui-authoring.mdc
   deployed_file_hashes:
-    .agents/skills/apihub-ui-authoring/SKILL.md: sha256:15fcd716fcd4de10a801b87078920fea4bd5402bbfd9d08b471b97cc5c253d53
+    .agents/skills/apihub-ui-authoring/SKILL.md: sha256:c3909a794a5f70ae01cf4825197e3b3a2f22ee8f0c41c71fd38f9696dab7b448
     .claude/rules/apihub-ui-authoring.md: sha256:fd9f9a65fc139aec4ac957127173135f8bb4be66ed1d938730c50ec6c8f5ab67
-    .claude/skills/apihub-ui-authoring/SKILL.md: sha256:15fcd716fcd4de10a801b87078920fea4bd5402bbfd9d08b471b97cc5c253d53
+    .claude/skills/apihub-ui-authoring/SKILL.md: sha256:c3909a794a5f70ae01cf4825197e3b3a2f22ee8f0c41c71fd38f9696dab7b448
     .cursor/rules/apihub-ui-authoring.mdc: sha256:32a9c37f0a1f93d474c9c3ce3a4f7297a973a2ee9588815161babccc5bed6604
   source: local
   local_path: ./frontend/ui/agent-packages/apihub-ui-authoring
-  content_hash: sha256:c6ac3c3fb6527c8b839335973e4e23a5833b7e6e08595fc4412394d48b048c7f
+  content_hash: sha256:67a202ce5d53656a37551162b1e38e0afcc9ee51dcabc74e35ff91ecbda02ecc
 - repo_url: _local/apihub-unit-testing
   name: apihub-unit-testing
   version: 1.0.0
@@ -2269,7 +2269,7 @@ deployments:
   owners:
   - ./frontend/ui/agent-packages/apihub-ui-authoring
   active_owner: ./frontend/ui/agent-packages/apihub-ui-authoring
-  content_hash: sha256:15fcd716fcd4de10a801b87078920fea4bd5402bbfd9d08b471b97cc5c253d53
+  content_hash: sha256:c3909a794a5f70ae01cf4825197e3b3a2f22ee8f0c41c71fd38f9696dab7b448
 - kind: project-relative
   target: claude
   value: .claude/skills/apihub-unit-testing
@@ -3277,7 +3277,7 @@ deployments:
   owners:
   - ./frontend/ui/agent-packages/apihub-ui-authoring
   active_owner: ./frontend/ui/agent-packages/apihub-ui-authoring
-  content_hash: sha256:15fcd716fcd4de10a801b87078920fea4bd5402bbfd9d08b471b97cc5c253d53
+  content_hash: sha256:c3909a794a5f70ae01cf4825197e3b3a2f22ee8f0c41c71fd38f9696dab7b448
 - kind: project-relative
   target: cursor
   value: .agents/skills/apihub-unit-testing
