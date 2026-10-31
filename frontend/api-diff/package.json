@@ -40,7 +40,7 @@
     "fast-equals": "^6.0.2"
   },
   "devDependencies": {
-    "@asyncapi/parser": "3.6.0",
+    "@asyncapi/parser": "3.6.6",
     "@netcracker/qubership-apihub-compatibility-suites": "workspace:^",
     "@netcracker/qubership-apihub-graphapi": "workspace:^",
     "@types/jest": "30.0.0",
