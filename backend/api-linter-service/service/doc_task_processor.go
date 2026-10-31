@@ -3,21 +3,22 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strconv"
-	"strings"
-	"sync"
 	"sync/atomic"
 	"time"
 
 	"github.com/Netcracker/qubership-apihub/backend/api-linter-service/client"
 	"github.com/Netcracker/qubership-apihub/backend/api-linter-service/entity"
+	"github.com/Netcracker/qubership-apihub/backend/api-linter-service/exception"
 	"github.com/Netcracker/qubership-apihub/backend/api-linter-service/repository"
 	"github.com/Netcracker/qubership-apihub/backend/api-linter-service/secctx"
 	"github.com/Netcracker/qubership-apihub/backend/api-linter-service/utils"
 	"github.com/Netcracker/qubership-apihub/backend/api-linter-service/view"
+	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 	"gopkg.in/yaml.v3"
@@ -29,15 +30,17 @@ type DocTaskProcessor interface {
 
 func NewDocTaskProcessor(docTaskRepo repository.DocLintTaskRepository, ruleSetRepository repository.RulesetRepository,
 	docResultRepository repository.DocResultRepository, lintResultRepository repository.LintResultRepository,
-	cl client.ApihubClient, spectralExecutor SpectralExecutor, aiOasExecutor AiOasExecutor, executorId string, spectralLinterWorkers, aiLinterWorkers int, docTaskNotify <-chan struct{}) DocTaskProcessor {
+	aiLintStatsRepository repository.AiLintStatsRepository, cl client.ApihubClient, spectralExecutor SpectralExecutor, aiOasExecutor AiOasExecutor, aiModel string, executorId string, spectralLinterWorkers, aiLinterWorkers int, docTaskNotify <-chan struct{}) DocTaskProcessor {
 	return &docTaskProcessorImpl{
 		docTaskRepo:           docTaskRepo,
 		ruleSetRepository:     ruleSetRepository,
 		docResultRepository:   docResultRepository,
 		lintResultRepository:  lintResultRepository,
+		aiLintStatsRepo:       aiLintStatsRepository,
 		cl:                    cl,
 		spectralExecutor:      spectralExecutor,
 		aiOasExecutor:         aiOasExecutor,
+		aiModel:               aiModel,
 		executorId:            executorId,
 		spectralLinterWorkers: spectralLinterWorkers,
 		aiLinterWorkers:       aiLinterWorkers,
@@ -50,9 +53,12 @@ type docTaskProcessorImpl struct {
 	ruleSetRepository    repository.RulesetRepository
 	docResultRepository  repository.DocResultRepository
 	lintResultRepository repository.LintResultRepository
+	aiLintStatsRepo      repository.AiLintStatsRepository
 	cl                   client.ApihubClient
 	spectralExecutor     SpectralExecutor
 	aiOasExecutor        AiOasExecutor
+	// aiModel is the configured LLM model, stored for an AI stage that sent no request.
+	aiModel string
 
 	executorId            string
 	spectralLinterWorkers int
@@ -333,63 +339,13 @@ func (d docTaskProcessorImpl) processDocTask(ctx context.Context, task entity.Do
 		}
 
 		var issues []view.ValidationIssue
-		issueKeys := map[string]struct{}{}
 
 		if status == view.StatusSuccess {
 			log.Infof("Processing by AI linter doc %s (task id = %s) operations count = %d for package %s, version %s@%d. executorId=%s", task.FileId, task.Id, len(doc.Operations), task.PackageId, task.Version, task.Revision, task.ExecutorId)
-
-			var mu sync.Mutex
-			g, gCtx := errgroup.WithContext(ctx)
-			for _, opIt := range doc.Operations {
-				op := opIt
-				g.Go(func() error {
-					operation, err := d.cl.GetOperationWithData(gCtx, task.PackageId, fmt.Sprintf("%s@%d", task.Version, task.Revision), view.RestApiType, op.OperationId)
-					if err != nil {
-						return fmt.Errorf("error getting document details: %w", err)
-					}
-
-					log.Tracef("Linting operation %s via AI for doc %s (task id = %s) for package %s, version %s@%d. executorId=%s", op.OperationId, task.FileId, task.Id, task.PackageId, task.Version, task.Revision, task.ExecutorId)
-					opIssues, opCalcTime, err := d.aiOasExecutor.LintOperationForDoc(gCtx, string(operation.Data), rulesetData)
-					if err != nil {
-						return fmt.Errorf("error linting doc with AI: %w", err)
-					}
-
-					mu.Lock()
-					for _, opIssue := range opIssues {
-						key := strings.Join(opIssue.Path, ".") + "|" + opIssue.Message // TODO any other data?
-						if _, exists := issueKeys[key]; exists {
-							log.Debugf("Excluded as duplicate issue with path %+v and message = '%s' ", opIssue.Path, opIssue.Message)
-							continue
-						}
-						issueKeys[key] = struct{}{}
-						issues = append(issues, opIssue)
-					}
-					calcTimeMs += opCalcTime
-					mu.Unlock()
-					return nil
-				})
-			}
-
-			if err := g.Wait(); err != nil {
+			issues, calcTimeMs, err = d.lintDocumentWithAi(ctx, task, doc.Operations, rulesetData)
+			if err != nil {
 				status = view.StatusError
 				details = err.Error()
-			}
-
-			if status == view.StatusSuccess {
-				var dCalcTime int64
-				issuesCountBefore := len(issues)
-				log.Tracef("Deduplicating %d issues via AI for doc %s (task id = %s) for package %s, version %s@%d. executorId=%s", len(issues), task.FileId, task.Id, task.PackageId, task.Version, task.Revision, task.ExecutorId)
-				issues, dCalcTime, err = d.aiOasExecutor.DeduplicateIssues(ctx, issues)
-				if err != nil {
-					status = view.StatusError
-					details = fmt.Errorf("failed to deduplicate issues: %w", err).Error()
-				} else {
-					issuesCountAfter := len(issues)
-					if issuesCountBefore != issuesCountAfter {
-						log.Infof("Deduplicated AI linter issues from %d to %d", issuesCountBefore, issuesCountAfter)
-					}
-				}
-				calcTimeMs += dCalcTime
 			}
 		}
 
@@ -436,7 +392,11 @@ func (d docTaskProcessorImpl) processDocTask(ctx context.Context, task entity.Do
 	}
 
 	if LinterVersion != "" { // if lint was performed
-		log.Infof("%s lint finished for doc %s (task id = %s), status = %s, %sProcessing time = %+vms", task.Linter, task.FileId, task.Id, status, logDetails, calcTimeMs)
+		logLintFinished := log.Infof
+		if status == view.StatusError {
+			logLintFinished = log.Errorf
+		}
+		logLintFinished("%s lint finished for doc %s (task id = %s), status = %s, %sProcessing time = %+vms", task.Linter, task.FileId, task.Id, status, logDetails, calcTimeMs)
 
 		log.Tracef("%s linter version is %s", task.Linter, LinterVersion)
 
@@ -485,6 +445,111 @@ func (d docTaskProcessorImpl) processDocTask(ctx context.Context, task entity.Do
 	}
 }
 
+func (d docTaskProcessorImpl) lintDocumentWithAi(ctx context.Context, task entity.DocumentLintTask, operations []view.DocumentOperation,
+	rulesetData view.AiRuleset) ([]view.ValidationIssue, int64, error) {
+
+	operationIssues := make([][]issueWithResolvedPath, len(operations))
+	operationStats := make([]entity.AiLintOperationStats, len(operations))
+	lintStart := time.Now()
+	g, gCtx := errgroup.WithContext(ctx)
+	for i, op := range operations {
+		g.Go(func() error {
+			operation, err := d.cl.GetOperationWithData(gCtx, task.PackageId, fmt.Sprintf("%s@%d", task.Version, task.Revision), view.RestApiType, op.OperationId)
+			if err != nil {
+				return fmt.Errorf("error getting operation %s: %w", op.OperationId, err)
+			}
+
+			log.Tracef("Linting operation %s via AI for doc %s (task id = %s) for package %s, version %s@%d. executorId=%s", op.OperationId, task.FileId, task.Id, task.PackageId, task.Version, task.Revision, task.ExecutorId)
+			issues, report, err := d.aiOasExecutor.LintOperationForDoc(gCtx, string(operation.Data), rulesetData)
+			operationIssues[i] = issues
+			operationStats[i] = entity.AiLintOperationStats{
+				OperationId:      op.OperationId,
+				Issues:           len(issues),
+				AiRequestMetrics: newAiRequestMetrics(report, estimateTokens(len(rulesetData.Prompt)+len(operation.Data)), err),
+			}
+			if err != nil {
+				return fmt.Errorf("error linting doc with AI: %w", err)
+			}
+			return nil
+		})
+	}
+	err := g.Wait()
+
+	var calcTimeMs int64
+	lintDetails := entity.AiLintStageDetails{Operations: []entity.AiLintOperationStats{}}
+	var lintRequests []entity.AiRequestMetrics
+	for _, operation := range operationStats {
+		if operation.ProviderAttempts > 0 {
+			lintDetails.Operations = append(lintDetails.Operations, operation)
+			lintRequests = append(lintRequests, operation.AiRequestMetrics)
+			calcTimeMs += operation.DurationMs
+		}
+	}
+	d.saveAiLintStats(task, entity.AiLintStageLint, lintStart, err, lintRequests, lintDetails)
+	if err != nil {
+		return nil, calcTimeMs, err
+	}
+
+	var issues []issueWithResolvedPath
+	for _, opIssues := range operationIssues {
+		issues = append(issues, opIssues...)
+	}
+	dedupStart := time.Now()
+	deduplicated, dedupDetails, err := d.deduplicateDocumentIssues(ctx, task, issues)
+	dedupRequests := make([]entity.AiRequestMetrics, 0, len(dedupDetails.Requests))
+	for _, request := range dedupDetails.Requests {
+		dedupRequests = append(dedupRequests, request.AiRequestMetrics)
+	}
+	d.saveAiLintStats(task, entity.AiLintStageDeduplication, dedupStart, err, dedupRequests, dedupDetails)
+	calcTimeMs += time.Since(dedupStart).Milliseconds()
+	return deduplicated, calcTimeMs, err
+}
+
+func (d docTaskProcessorImpl) saveAiLintStats(task entity.DocumentLintTask, stage entity.AiLintStage, start time.Time, stageErr error,
+	requests []entity.AiRequestMetrics, details any) {
+	stats, err := newAiLintStats(task, stage, d.aiModel, time.Since(start), stageErr, requests, details)
+	if err != nil {
+		log.Errorf("Failed to build AI lint stats for doc task %s: %s", task.Id, err)
+		return
+	}
+	if err = d.aiLintStatsRepo.Save(context.Background(), stats); err != nil {
+		log.Errorf("Failed to save AI lint stats for doc task %s: %s", task.Id, err)
+	}
+}
+
+func (d docTaskProcessorImpl) deduplicateDocumentIssues(ctx context.Context, task entity.DocumentLintTask, issues []issueWithResolvedPath) ([]view.ValidationIssue, entity.AiDeduplicationStageDetails, error) {
+	details := entity.AiDeduplicationStageDetails{Requests: []entity.AiDeduplicationRequestStats{}}
+	unique, err := numberUniqueIssues(issues)
+	if err != nil {
+		return nil, details, err
+	}
+	groups, err := groupIssuesByResolvedPath(unique)
+	if err != nil {
+		return nil, details, err
+	}
+	var multiIssueGroups []issueGroup
+	for _, group := range groups {
+		if len(group.Issues) > 1 {
+			multiIssueGroups = append(multiIssueGroups, group)
+		}
+	}
+	details.IssuesIn, details.Groups, details.MultiIssueGroups = len(unique), len(groups), len(multiIssueGroups)
+
+	log.Infof("AI linter issues for doc %s (task id = %s): %d found, %d after exact pre-deduplication; %d groups, %d of them singletons",
+		task.FileId, task.Id, len(issues), len(unique), len(groups), len(groups)-len(multiIssueGroups))
+
+	duplicates, requests, err := d.aiOasExecutor.DeduplicateIssues(ctx, multiIssueGroups)
+	details.Requests = append(details.Requests, requests...)
+	if err != nil {
+		return nil, details, fmt.Errorf("failed to deduplicate issues: %w", err)
+	}
+	details.DuplicatesRemoved = len(duplicates)
+	log.Infof("AI linter deduplication for doc %s (task id = %s): %d requests removed %d issues",
+		task.FileId, task.Id, len(details.Requests), len(duplicates))
+
+	return withoutDuplicates(unique, duplicates), details, nil
+}
+
 func (d docTaskProcessorImpl) getLinterVersion(linter view.Linter) string {
 	switch linter {
 	case view.SpectralLinter:
@@ -530,5 +595,91 @@ func (d docTaskProcessorImpl) saveLintResultFromCache(ctx context.Context, task 
 	err := d.docResultRepository.SaveLintResult(ctx, task.Id, view.StatusSuccess, "", lintTimeMs, verEnt, docEnt, lintFileResult, task.ExecutorId)
 	if err != nil {
 		log.Errorf("Failed to save cached lint result for task %s: %s", task.Id, err)
+	}
+}
+
+func newAiLintStats(task entity.DocumentLintTask, stage entity.AiLintStage, model string, duration time.Duration, err error,
+	requests []entity.AiRequestMetrics, details any) (entity.AiLintStats, error) {
+	serialised, marshalErr := json.Marshal(details)
+	if marshalErr != nil {
+		return entity.AiLintStats{}, fmt.Errorf("failed to marshal details of AI request stage %s: %w", stage, marshalErr)
+	}
+	status := entity.AiRequestStatusSuccess
+	if err != nil {
+		status = entity.AiRequestStatusError
+	}
+	stats := entity.AiLintStats{
+		Id:                 uuid.NewString(),
+		DocumentLintTaskId: task.Id,
+		PackageId:          task.PackageId,
+		Version:            task.Version,
+		Revision:           task.Revision,
+		FileId:             task.FileId,
+		Stage:              stage,
+		Model:              model,
+		Status:             status,
+		ErrorClass:         classifyAiRequestError(err),
+		Requests:           len(requests),
+		DurationMs:         duration.Milliseconds(),
+		Details:            serialised,
+		CreatedAt:          time.Now(),
+	}
+	if len(requests) > 0 {
+		stats.Model = requests[0].Model
+	}
+	for _, request := range requests {
+		if request.Usage != nil {
+			stats.PromptTokens += request.Usage.PromptTokens
+			stats.CompletionTokens += request.Usage.CompletionTokens
+		}
+	}
+	return stats, nil
+}
+
+func newAiRequestMetrics(report client.RequestReport, estimatedPromptTokens int, err error) entity.AiRequestMetrics {
+	metrics := entity.AiRequestMetrics{
+		Model:                 report.Model,
+		EstimatedPromptTokens: estimatedPromptTokens,
+		FinishReason:          report.FinishReason,
+		ProviderAttempts:      report.ProviderAttempts,
+		Status:                entity.AiRequestStatusSuccess,
+		ErrorClass:            classifyAiRequestError(err),
+		DurationMs:            report.Duration.Milliseconds(),
+	}
+	if err != nil {
+		metrics.Status = entity.AiRequestStatusError
+	}
+	if report.Usage != nil {
+		metrics.Usage = &entity.AiTokenUsage{
+			PromptTokens:       report.Usage.PromptTokens,
+			CompletionTokens:   report.Usage.CompletionTokens,
+			ReasoningTokens:    report.Usage.ReasoningTokens,
+			CachedPromptTokens: report.Usage.CachedPromptTokens,
+		}
+	}
+	return metrics
+}
+
+func classifyAiRequestError(err error) entity.AiRequestErrorClass {
+	if err == nil {
+		return ""
+	}
+	var customError *exception.CustomError
+	if !errors.As(err, &customError) {
+		return entity.AiRequestErrorClassOther
+	}
+	switch customError.Code {
+	case exception.AiContextLengthExceeded:
+		return entity.AiRequestErrorClassContextLength
+	case exception.AiOutputLengthExceeded:
+		return entity.AiRequestErrorClassOutputLength
+	case exception.AiRequestRefused:
+		return entity.AiRequestErrorClassRefusal
+	case exception.AiRateLimitExceeded:
+		return entity.AiRequestErrorClassRateLimit
+	case exception.AiMalformedOutput, exception.AiInvalidDeduplicationResponse:
+		return entity.AiRequestErrorClassValidation
+	default:
+		return entity.AiRequestErrorClassOther
 	}
 }

@@ -22,6 +22,17 @@ func (c CustomError) Error() string {
 	return msg
 }
 
+// Is matches wrapped errors by code, so errors.Is(err, &CustomError{Code: code}) works for AI request errors.
+func (c CustomError) Is(target error) bool {
+	switch t := target.(type) {
+	case CustomError:
+		return t.Code == c.Code
+	case *CustomError:
+		return t.Code == c.Code
+	}
+	return false
+}
+
 const IncorrectParamType = "5"
 const IncorrectParamTypeMsg = "$param parameter should be $type"
 
@@ -67,3 +78,21 @@ const LintResultNotFoundMsg = "Validation result not found for packageId $packag
 
 const LintNotSupported = "2200"
 const LintNotSupportedMsg = "Validation is not supported for kind=$kind (id=%id), only for kind='package'"
+
+const AiContextLengthExceeded = "2300"
+const AiContextLengthExceededMsg = "Request exceeds the model context length"
+
+const AiOutputLengthExceeded = "2301"
+const AiOutputLengthExceededMsg = "Model output reached the completion token limit"
+
+const AiRequestRefused = "2302"
+const AiRequestRefusedMsg = "Model refused the request: $reason"
+
+const AiRateLimitExceeded = "2303"
+const AiRateLimitExceededMsg = "Provider rate limit exceeded"
+
+const AiMalformedOutput = "2304"
+const AiMalformedOutputMsg = "Model output does not match the response schema"
+
+const AiInvalidDeduplicationResponse = "2305"
+const AiInvalidDeduplicationResponseMsg = "Deduplication response is invalid: $reason"

@@ -11,24 +11,48 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Netcracker/qubership-apihub/backend/api-linter-service/exception"
 	"github.com/Netcracker/qubership-apihub/backend/api-linter-service/utils"
 	"github.com/Netcracker/qubership-apihub/backend/api-linter-service/view"
 	"github.com/invopop/jsonschema"
 	"github.com/openai/openai-go/v3"
 	"github.com/openai/openai-go/v3/option"
+	log "github.com/sirupsen/logrus"
+	"golang.org/x/sync/semaphore"
 	"golang.org/x/time/rate"
 )
 
 type LLMClient interface {
-	LintOasDocument(ctx context.Context, docStr string, prompt string) ([]view.AiValidationIssue, error)
-	DeduplicateIssues(ctx context.Context, issues []view.ValidationIssue) ([]view.AiValidationIssue, error)
+	LintOasDocument(ctx context.Context, docStr string, prompt string) ([]view.AiValidationIssue, RequestReport, error)
+	DeduplicateIssues(ctx context.Context, systemPrompt string, request view.AiDeduplicationRequest, maxCompletionTokens int) ([]view.AiDuplicatePair, RequestReport, error)
+}
+
+const (
+	finishReasonStop   = "stop"
+	finishReasonLength = "length"
+)
+
+type TokenUsage struct {
+	PromptTokens       int
+	CompletionTokens   int
+	ReasoningTokens    int
+	CachedPromptTokens int
+}
+
+// RequestReport describes one chat completion request
+type RequestReport struct {
+	Model            string
+	FinishReason     string
+	Usage            *TokenUsage
+	ProviderAttempts int //counts HTTP requests including SDK retries; 0 means the request was never dispatched
+	Duration         time.Duration
 }
 
 func dialTimeout(network, addr string) (net.Conn, error) {
 	return net.DialTimeout(network, addr, 1800*time.Second)
 }
 
-func NewOpenaiClient(apiKey string, model string, proxy string, rateLimitRPS float64, rateLimitBurst int, deduplicationPrompt string) (LLMClient, error) {
+func NewOpenaiClient(apiKey string, model string, proxy string, rateLimitRPS float64, rateLimitBurst int, maxConcurrentRequests int, maxRetries int, extraBodyJSON string) (LLMClient, error) {
 	var opts []option.RequestOption
 	if apiKey != "" {
 		opts = append(opts, option.WithAPIKey(apiKey))
@@ -75,44 +99,81 @@ func NewOpenaiClient(apiKey string, model string, proxy string, rateLimitRPS flo
 	}
 	cl := http.Client{Transport: &tr, Timeout: time.Second * 1800}
 
-	opts = append(opts, option.WithHTTPClient(&cl))
+	opts = append(opts, option.WithHTTPClient(&cl), option.WithMaxRetries(maxRetries))
 
-	limiter := rate.NewLimiter(rate.Limit(rateLimitRPS), rateLimitBurst)
+	var extraBodyOpts []option.RequestOption
+	if extraBodyJSON != "" {
+		var extraBody map[string]any
+		if err := json.Unmarshal([]byte(extraBodyJSON), &extraBody); err != nil {
+			return nil, fmt.Errorf("openai: parse extra body: %w", err)
+		}
+		for key, value := range extraBody {
+			extraBodyOpts = append(extraBodyOpts, option.WithJSONSet(key, value))
+		}
+	}
+
+	var concurrencyLimiter *semaphore.Weighted
+	if maxConcurrentRequests > 0 {
+		concurrencyLimiter = semaphore.NewWeighted(int64(maxConcurrentRequests))
+	}
 
 	return &OAIClientImpl{
 		client:              openai.NewClient(opts...),
 		model:               openAIModel,
-		limiter:             limiter,
-		deduplicationPrompt: deduplicationPrompt,
+		rateLimiter:         rate.NewLimiter(rate.Limit(rateLimitRPS), rateLimitBurst),
+		concurrencyLimiter:  concurrencyLimiter,
+		extraBodyOpts:       extraBodyOpts,
+		lintSchema:          generateSchema[view.AiValidationIssuesOutput](),
+		deduplicationSchema: generateSchema[view.AiDeduplicationOutput](),
 	}, nil
 }
 
 type OAIClientImpl struct {
-	client  openai.Client
-	model   openai.ChatModel
-	limiter *rate.Limiter
+	client             openai.Client
+	model              openai.ChatModel
+	rateLimiter        *rate.Limiter
+	concurrencyLimiter *semaphore.Weighted
+	extraBodyOpts      []option.RequestOption
 
-	generateProblemsPrompt string
-	fixProblemsPrompt      string
-	deduplicationPrompt    string
+	lintSchema          any
+	deduplicationSchema any
 }
 
-var AiValidationIssuesOutputResponseSchema = generateSchema[view.AiValidationIssuesOutput]()
+func (o OAIClientImpl) LintOasDocument(ctx context.Context, docStr string, prompt string) ([]view.AiValidationIssue, RequestReport, error) {
+	var result view.AiValidationIssuesOutput
+	report, err := o.complete(ctx, prompt, docStr, "oas_doc_lint_response", o.lintSchema, 0, &result)
+	if err != nil {
+		return nil, report, err
+	}
+	return result.Issues, report, nil
+}
 
-func (o OAIClientImpl) LintOasDocument(ctx context.Context, docStr string, prompt string) ([]view.AiValidationIssue, error) {
-	if err := o.limiter.Wait(ctx); err != nil {
-		return nil, err
+func (o OAIClientImpl) DeduplicateIssues(ctx context.Context, systemPrompt string, request view.AiDeduplicationRequest, maxCompletionTokens int) ([]view.AiDuplicatePair, RequestReport, error) {
+	report := RequestReport{Model: o.model}
+	requestStr, err := json.Marshal(request)
+	if err != nil {
+		return nil, report, fmt.Errorf("failed to marshal deduplication request: %w", err)
 	}
 
-	messages := []openai.ChatCompletionMessageParamUnion{
-		openai.SystemMessage(prompt),
-		openai.UserMessage(docStr),
+	var result view.AiDeduplicationOutput
+	report, err = o.complete(ctx, systemPrompt, string(requestStr), "oas_issue_deduplication_response", o.deduplicationSchema, maxCompletionTokens, &result)
+	if err != nil {
+		return nil, report, err
 	}
+	return result.Duplicates, report, nil
+}
 
-	schemaParam := openai.ResponseFormatJSONSchemaJSONSchemaParam{
-		Name:   "oas_doc_lint_response",
-		Schema: AiValidationIssuesOutputResponseSchema,
-		Strict: openai.Bool(true),
+// complete sends one chat completion with a strict JSON schema response format and unmarshals the answer into out
+func (o OAIClientImpl) complete(ctx context.Context, systemPrompt string, userMessage string, schemaName string, schema any, maxCompletionTokens int, out any) (RequestReport, error) {
+	report := RequestReport{Model: o.model}
+	if o.concurrencyLimiter != nil {
+		if err := o.concurrencyLimiter.Acquire(ctx, 1); err != nil {
+			return report, err
+		}
+		defer o.concurrencyLimiter.Release(1)
+	}
+	if err := o.rateLimiter.Wait(ctx); err != nil {
+		return report, err
 	}
 
 	reasoningEffort := ""
@@ -120,80 +181,113 @@ func (o OAIClientImpl) LintOasDocument(ctx context.Context, docStr string, promp
 		reasoningEffort = string(openai.ReasoningEffortMinimal)
 	}
 
-	chat, err := o.client.Chat.Completions.New(ctx, openai.ChatCompletionNewParams{
-
-		Messages: messages,
+	params := openai.ChatCompletionNewParams{
+		Messages: []openai.ChatCompletionMessageParamUnion{
+			openai.SystemMessage(systemPrompt),
+			openai.UserMessage(userMessage),
+		},
 		ResponseFormat: openai.ChatCompletionNewParamsResponseFormatUnion{
-			OfJSONSchema: &openai.ResponseFormatJSONSchemaParam{JSONSchema: schemaParam},
+			OfJSONSchema: &openai.ResponseFormatJSONSchemaParam{JSONSchema: openai.ResponseFormatJSONSchemaJSONSchemaParam{
+				Name:   schemaName,
+				Schema: schema,
+				Strict: openai.Bool(true),
+			}},
 		},
 		ReasoningEffort: openai.ReasoningEffort(reasoningEffort),
-		//Verbosity:       openai.ChatCompletionNewParamsVerbosityLow,
-		Model: o.model,
+		Model:           o.model,
+	}
+	if maxCompletionTokens > 0 {
+		params.MaxCompletionTokens = openai.Int(int64(maxCompletionTokens))
+	}
+
+	// The SDK calls the middleware once per HTTP attempt, including its own retries, before the response body is read.
+	attempts := 0
+	countAttempts := option.WithMiddleware(func(req *http.Request, next option.MiddlewareNext) (*http.Response, error) {
+		attempts++
+		attemptStart := time.Now()
+		resp, err := next(req)
+		if err != nil {
+			log.Warnf("AI request %s: attempt %d failed with %v after %s", schemaName, attempts, err, time.Since(attemptStart).Round(time.Millisecond))
+		} else if resp.StatusCode >= http.StatusBadRequest {
+			log.Warnf("AI request %s: attempt %d failed with HTTP %d after %s", schemaName, attempts, resp.StatusCode, time.Since(attemptStart).Round(time.Millisecond))
+		}
+		return resp, err
 	})
 
+	start := time.Now()
+	requestOpts := append([]option.RequestOption{countAttempts}, o.extraBodyOpts...)
+	chat, err := o.client.Chat.Completions.New(ctx, params, requestOpts...)
+	report.Duration = time.Since(start)
+	report.ProviderAttempts = attempts
 	if err != nil {
-		return nil, err
+		return report, classifyProviderError(err)
 	}
 
-	var result view.AiValidationIssuesOutput
-	err = json.Unmarshal([]byte(chat.Choices[0].Message.Content), &result)
-	if err != nil {
-		return nil, err
+	if chat.Model != "" {
+		report.Model = chat.Model
+	}
+	if chat.JSON.Usage.Valid() {
+		report.Usage = &TokenUsage{
+			PromptTokens:       int(chat.Usage.PromptTokens),
+			CompletionTokens:   int(chat.Usage.CompletionTokens),
+			ReasoningTokens:    int(chat.Usage.CompletionTokensDetails.ReasoningTokens),
+			CachedPromptTokens: int(chat.Usage.PromptTokensDetails.CachedTokens),
+		}
+	}
+	if len(chat.Choices) == 0 {
+		return report, fmt.Errorf("%w: response contains no choices", aiError(exception.AiMalformedOutput, exception.AiMalformedOutputMsg))
 	}
 
-	return result.Issues, nil
+	choice := chat.Choices[0]
+	report.FinishReason = choice.FinishReason
+	if choice.Message.Refusal != "" {
+		return report, &exception.CustomError{Status: http.StatusBadGateway, Code: exception.AiRequestRefused, Message: exception.AiRequestRefusedMsg,
+			Params: map[string]interface{}{"reason": choice.Message.Refusal}}
+	}
+	switch choice.FinishReason {
+	// Some OpenAI-compatible gateways omit finish_reason; the response schema then decides whether the content is complete.
+	case finishReasonStop, "":
+	case finishReasonLength:
+		// Reasoning tokens count against the limit too, so the content may be empty.
+		return report, aiError(exception.AiOutputLengthExceeded, exception.AiOutputLengthExceededMsg)
+	default:
+		return report, fmt.Errorf("openai: unexpected finish reason '%s'", choice.FinishReason)
+	}
+
+	if err := json.Unmarshal([]byte(choice.Message.Content), out); err != nil {
+		content := choice.Message.Content
+		content = content[:min(len(content), 200)] // 200 bytes are enough to recognize the kind of malformed output without flooding the logs.
+		return report, fmt.Errorf("%w (finish_reason=%s, content prefix=%q): %w", aiError(exception.AiMalformedOutput, exception.AiMalformedOutputMsg), choice.FinishReason, content, err)
+	}
+	return report, nil
 }
 
-func (o OAIClientImpl) DeduplicateIssues(ctx context.Context, issues []view.ValidationIssue) ([]view.AiValidationIssue, error) {
-	if err := o.limiter.Wait(ctx); err != nil {
-		return nil, err
+func classifyProviderError(err error) error {
+	var apiErr *openai.Error
+	if !errors.As(err, &apiErr) {
+		return err
 	}
-
-	issuesStr, err := json.Marshal(issues)
-	if err != nil {
-		return nil, err
+	switch apiErr.StatusCode {
+	case http.StatusTooManyRequests:
+		return fmt.Errorf("%w: %w", aiError(exception.AiRateLimitExceeded, exception.AiRateLimitExceededMsg), err)
+	case http.StatusBadRequest:
+		// Fragments of the 400 messages that OpenAI ("context_length_exceeded") and LiteLLM ("ContextWindowExceededError") use.
+		contextLengthMarkers := []string{"context_length", "context length", "context window", "contextwindow", "input tokens exceed"}
+		text := strings.ToLower(apiErr.Code + " " + apiErr.Message)
+		for _, marker := range contextLengthMarkers {
+			if strings.Contains(text, marker) {
+				return fmt.Errorf("%w: %w", aiError(exception.AiContextLengthExceeded, exception.AiContextLengthExceededMsg), err)
+			}
+		}
 	}
-
-	messages := []openai.ChatCompletionMessageParamUnion{
-		openai.SystemMessage(o.deduplicationPrompt),
-		openai.UserMessage(string(issuesStr)),
-	}
-
-	schemaParam := openai.ResponseFormatJSONSchemaJSONSchemaParam{
-		Name:   "oas_doc_lint_response",
-		Schema: AiValidationIssuesOutputResponseSchema,
-		Strict: openai.Bool(true),
-	}
-
-	reasoningEffort := ""
-	if o.model == openai.ChatModelGPT5 {
-		reasoningEffort = string(openai.ReasoningEffortMinimal)
-	}
-
-	chat, err := o.client.Chat.Completions.New(ctx, openai.ChatCompletionNewParams{
-		Messages: messages,
-		ResponseFormat: openai.ChatCompletionNewParamsResponseFormatUnion{
-			OfJSONSchema: &openai.ResponseFormatJSONSchemaParam{JSONSchema: schemaParam},
-		},
-		ReasoningEffort: openai.ReasoningEffort(reasoningEffort),
-		//Verbosity:       openai.ChatCompletionNewParamsVerbosityLow,
-		Model: o.model,
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	var result view.AiValidationIssuesOutput
-	err = json.Unmarshal([]byte(chat.Choices[0].Message.Content), &result)
-	if err != nil {
-		return nil, err
-	}
-
-	return result.Issues, nil
+	return err
 }
 
-func generateSchema[T any]() interface{} {
+func aiError(code string, message string) error {
+	return &exception.CustomError{Status: http.StatusBadGateway, Code: code, Message: message}
+}
+
+func generateSchema[T any]() any {
 	reflector := jsonschema.Reflector{
 		AllowAdditionalProperties: false,
 		DoNotReference:            true,
@@ -209,10 +303,12 @@ func NewStubLlmClient() LLMClient {
 
 type stubLlmClient struct{}
 
-func (s stubLlmClient) LintOasDocument(ctx context.Context, docStr string, prompt string) ([]view.AiValidationIssue, error) {
-	return nil, fmt.Errorf("LLM client is not configured, using stub instead of implementation")
+var errLlmClientNotConfigured = errors.New("LLM client is not configured, using stub instead of implementation")
+
+func (s stubLlmClient) LintOasDocument(ctx context.Context, docStr string, prompt string) ([]view.AiValidationIssue, RequestReport, error) {
+	return nil, RequestReport{}, errLlmClientNotConfigured
 }
 
-func (s stubLlmClient) DeduplicateIssues(ctx context.Context, issues []view.ValidationIssue) ([]view.AiValidationIssue, error) {
-	return nil, fmt.Errorf("LLM client is not configured, using stub instead of implementation")
+func (s stubLlmClient) DeduplicateIssues(ctx context.Context, systemPrompt string, request view.AiDeduplicationRequest, maxCompletionTokens int) ([]view.AiDuplicatePair, RequestReport, error) {
+	return nil, RequestReport{}, errLlmClientNotConfigured
 }
