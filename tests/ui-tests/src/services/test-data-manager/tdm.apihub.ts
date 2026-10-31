@@ -410,6 +410,7 @@ export class ApihubTestDataManager {
       packageId: params.pkg.packageId,
       version: params.version,
       previousVersion: params.previousVersion || '',
+      previousVersionPackageId: params.previousVersionPackageId,
       status: params.status,
       refs: params.refs || [],
       files: params.files ? resolveRestPublishFiles(params.files) : [],

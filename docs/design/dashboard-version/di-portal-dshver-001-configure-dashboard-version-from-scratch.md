@@ -95,6 +95,9 @@ After user adds required packages/dashboards, user can publish dashboard version
    - Version - required field.
    - Status - required field. Default value - draft
    - Labels - multiple value can be specified in the field. The user needs to click 'Enter' to finish adding label.
+   - Previous version dashboard - the dashboard that the previous version belongs to. Default value - the current
+     dashboard. When the user selects another dashboard, the system clears Previous release version and lists the
+     versions of the selected dashboard.
    - Previous release version - required field.
 3. The user fills all required fields and clicks Publish.
 4. The system publishes version and opens this dashboard version.

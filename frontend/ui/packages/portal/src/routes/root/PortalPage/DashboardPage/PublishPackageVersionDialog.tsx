@@ -28,6 +28,7 @@ import type { PopupProps } from '@netcracker/qubership-apihub-ui-shared/componen
 import { PopupDelegate } from '@netcracker/qubership-apihub-ui-shared/components/PopupDelegate'
 import { SHOW_PUBLISH_PACKAGE_VERSION_DIALOG } from '@portal/routes/EventBusProvider'
 import { SPECIAL_VERSION_KEY } from '@netcracker/qubership-apihub-ui-shared/entities/versions'
+import type { Package, PackageKind } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
 import { DASHBOARD_KIND, PACKAGE_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
 import { getSplittedVersionKey, getVersionLabelsMap } from '@netcracker/qubership-apihub-ui-shared/utils/versions'
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
@@ -40,6 +41,7 @@ import type { VersionFormData } from '@netcracker/qubership-apihub-ui-shared/com
 import {
   getVersionOptions,
   replaceEmptyPreviousVersion,
+  toPreviousVersionPackageId,
   VersionDialogForm,
 } from '@netcracker/qubership-apihub-ui-shared/components/VersionDialogForm'
 import { takeIf } from '@netcracker/qubership-apihub-ui-shared/utils/objects'
@@ -60,6 +62,13 @@ const PublishPackageVersionPopup: FC<PopupProps> = memo<PopupProps>(({ open, set
   const [currentPackage, isPackageLoading] = usePackage()
 
   const [currentVersionConfig, isCurrentVersionLoading] = usePackageVersionConfig(currentPackage?.key, currentVersionId)
+  const previousVersionPackageKey = currentVersionConfig?.previousVersionPackageKey
+  const [previousVersionPackage, isPreviousVersionPackageLoading] = usePackage({
+    packageKey: previousVersionPackageKey,
+    // Without a key the hook reads the current package, which must keep the default error handling
+    hideError: !!previousVersionPackageKey,
+  })
+  const isPreviousVersionPackageResolving = !!previousVersionPackageKey && isPreviousVersionPackageLoading
 
   const isEditingVersion = !!currentVersionId && currentVersionId !== SPECIAL_VERSION_KEY
   const packageKind = currentPackage?.kind
@@ -109,9 +118,23 @@ const PublishPackageVersionPopup: FC<PopupProps> = memo<PopupProps>(({ open, set
     if (currentVersionConfig) {
       setValue('status', currentVersionConfig.status as VersionStatus || DRAFT_VERSION_STATUS)
       setValue('labels', currentVersionConfig.metaData?.versionLabels ?? [])
-      setValue('previousVersion', currentVersionConfig.previousVersion || NO_PREVIOUS_RELEASE_VERSION_OPTION)
+      if (!currentVersionConfig.previousVersionPackageKey) {
+        setValue('previousVersion', currentVersionConfig.previousVersion || NO_PREVIOUS_RELEASE_VERSION_OPTION)
+      }
     }
   }, [currentVersionConfig, setValue])
+  useEffect(() => {
+    if (!currentVersionConfig || !previousVersionPackageKey || isPreviousVersionPackageLoading) {
+      return
+    }
+    setValue(
+      'previousVersionPackage',
+      previousVersionPackage?.key === previousVersionPackageKey
+        ? previousVersionPackage
+        : toUnresolvedPackage(previousVersionPackageKey, packageKind),
+    )
+    setValue('previousVersion', currentVersionConfig.previousVersion || NO_PREVIOUS_RELEASE_VERSION_OPTION)
+  }, [currentVersionConfig, isPreviousVersionPackageLoading, packageKind, previousVersionPackage, previousVersionPackageKey, setValue])
 
   const onPublish = useCallback(async (data: PublishInfo): Promise<void> => {
     const previousVersion = replaceEmptyPreviousVersion(data.previousVersion)
@@ -121,6 +144,7 @@ const PublishPackageVersionPopup: FC<PopupProps> = memo<PopupProps>(({ open, set
       status: data.status,
       labels: data.labels,
       previousVersion: previousVersion,
+      previousVersionPackageId: toPreviousVersionPackageId(data.previousVersionPackage, currentPackage?.key),
       ...takeIf({
         files: Object.entries(filesWithLabels)?.map(([key, { labels }]) => {
           const mcpMeta = mcpStagedFileMetaByName.get(key)
@@ -141,7 +165,7 @@ const PublishPackageVersionPopup: FC<PopupProps> = memo<PopupProps>(({ open, set
       }, isPackage),
       refs: isDashboard ? dashboardRefs.map(ref => ref.packageReference) : [],
     })
-  }, [dashboardRefs, filesWithLabels, isDashboard, isPackage, mcpStagedFileMetaByName, publishPackage])
+  }, [currentPackage?.key, dashboardRefs, filesWithLabels, isDashboard, isPackage, mcpStagedFileMetaByName, publishPackage])
 
   return (
     <VersionDialogForm
@@ -155,6 +179,7 @@ const PublishPackageVersionPopup: FC<PopupProps> = memo<PopupProps>(({ open, set
       onVersionsFilter={onVersionsFilter}
       areVersionsLoading={areFilteredVersionsLoading}
       previousVersionsPackageKey={currentPackage?.key}
+      packageObj={currentPackage ?? undefined}
       getVersionLabels={getVersionLabels}
       packagePermissions={packagePermissions}
       releaseVersionPattern={releaseVersionPattern}
@@ -164,8 +189,9 @@ const PublishPackageVersionPopup: FC<PopupProps> = memo<PopupProps>(({ open, set
       hideCopyPackageFields
       hideDescriptorVersionField
       hideSaveMessageField
+      hidePreviousVersionPackageField={false}
       publishButtonDisabled={isPackageLoading || hasBlockingIssues}
-      publishFieldsDisabled={isPackageLoading || isCurrentVersionLoading}
+      publishFieldsDisabled={isPackageLoading || isCurrentVersionLoading || isPreviousVersionPackageResolving}
       currentPackageKey={currentPackage?.key}
       kind={packageKind}
     />
@@ -177,4 +203,14 @@ type PublishInfo = Readonly<{
   status: VersionStatus
   labels: string[]
   previousVersion: Key
+  previousVersionPackage?: Package | null
 }>
+
+function toUnresolvedPackage(packageKey: Key, kind: PackageKind | undefined): Package {
+  return {
+    key: packageKey,
+    alias: packageKey,
+    name: packageKey,
+    kind: kind ?? PACKAGE_KIND,
+  }
+}
