@@ -346,8 +346,15 @@ components:
             url:
               type: string
               description: The URL to view this baseline package in APIHUB Portal
+            releaseVersionPattern:
+              type: string
+              description: |
+                Release version pattern (regular expression) of the baseline package, as stored in APIHUB.
+                APIHUB validates the version name against it when a version is published with the release
+                status. `.*` accepts any version name. Absent when the agent predates this field.
+              example: '^[0-9]{4}\.[1-4]$'
             versions:
-              description: Versions of the baseline package that can be selected as previousVersion. Each entry carries the API processor version it was built with. Versions with build or changelog errors stay listed and carry the flags, so the client can mark them and block the selection.
+              description: Release versions of the baseline package that can be selected as previousVersion. Draft versions are not listed, because they cannot be used as previousVersion. Each entry carries the API processor version it was built with. Versions with build or changelog errors stay listed and carry the flags, so the client can mark them and block the selection.
               type: array
               items:
                 type: object
@@ -482,8 +489,15 @@ components:
             url:
               type: string
               description: The URL to view this baseline package in APIHUB Portal
+            releaseVersionPattern:
+              type: string
+              description: |
+                Release version pattern (regular expression) of the baseline package, as stored in APIHUB.
+                APIHUB validates the version name against it when a version is published with the release
+                status. `.*` accepts any version name. Absent when the agent predates this field.
+              example: '^[0-9]{4}\.[1-4]$'
             versions:
-              description: Versions of the baseline package that can be selected as previousVersion. Each entry carries the API processor version it was built with. Versions with build or changelog errors stay listed and carry the flags, so the client can mark them and block the selection.
+              description: Release versions of the baseline package that can be selected as previousVersion. Draft versions are not listed, because they cannot be used as previousVersion. Each entry carries the API processor version it was built with. Versions with build or changelog errors stay listed and carry the flags, so the client can mark them and block the selection.
               type: array
               items:
                 type: object
