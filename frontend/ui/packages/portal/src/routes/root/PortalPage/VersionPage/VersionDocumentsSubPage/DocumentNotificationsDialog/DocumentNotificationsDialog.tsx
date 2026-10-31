@@ -17,26 +17,28 @@ import {
 import { CloseIcon } from '@netcracker/qubership-apihub-ui-shared/icons/CloseIcon'
 import { ExportIcon } from '@netcracker/qubership-apihub-ui-shared/icons/ExportIcon'
 import type { HasNextPage, IsFetchingNextPage } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
-import type { ShowDocumentErrorsDetail } from '@portal/routes/EventBusProvider'
-import { SHOW_DOCUMENT_ERRORS_DIALOG } from '@portal/routes/EventBusProvider'
+import {
+  SHOW_DOCUMENT_NOTIFICATIONS_DIALOG,
+  type ShowDocumentNotificationsDetail,
+} from '@portal/routes/EventBusProvider'
 import { type FC, memo, useCallback, useMemo, useState } from 'react'
 
 import { useDocuments } from '../../useDocuments'
-import { DocumentErrorsTable } from './DocumentErrorsTable'
+import { DocumentNotificationsTable } from './DocumentNotificationsTable'
 import type { DocumentSelection } from './DocumentSelector'
 import { DocumentSelector, EMPTY_DOCUMENT_OPTION } from './DocumentSelector'
-import { useExportDocumentErrors } from './useExportDocumentErrors'
+import { useExportDocumentNotifications } from './useExportDocumentNotifications'
 
-export const DocumentErrorsDialog: FC = memo(() => {
+export const DocumentNotificationsDialog: FC = memo(() => {
   return (
     <PopupDelegate
-      type={SHOW_DOCUMENT_ERRORS_DIALOG}
-      render={props => <DocumentErrorsPopup {...props} />}
+      type={SHOW_DOCUMENT_NOTIFICATIONS_DIALOG}
+      render={props => <DocumentNotificationsPopup {...props} />}
     />
   )
 })
 
-DocumentErrorsDialog.displayName = 'DocumentErrorsDialog'
+DocumentNotificationsDialog.displayName = 'DocumentNotificationsDialog'
 
 const DIALOG_PAPER_STYLE = {
   margin: 3,
@@ -46,13 +48,13 @@ const DIALOG_PAPER_STYLE = {
   maxHeight: 'calc(100% - 48px)',
 } as const
 
-const DocumentErrorsPopup: FC<PopupProps> = memo<PopupProps>(({ open, setOpen, detail }) => {
+const DocumentNotificationsPopup: FC<PopupProps> = memo<PopupProps>(({ open, setOpen, detail }) => {
   const {
     packageKey,
     versionKey,
     documentId,
     documentTitle,
-  } = detail as ShowDocumentErrorsDetail
+  } = detail as ShowDocumentNotificationsDetail
 
   const onClose = useCallback(() => setOpen(false), [setOpen])
 
@@ -84,15 +86,15 @@ const DocumentErrorsPopup: FC<PopupProps> = memo<PopupProps>(({ open, setOpen, d
     ...notificationsScope,
   })
 
-  const [exportDocumentErrors, isExporting] = useExportDocumentErrors()
+  const [exportDocumentNotifications, isExporting] = useExportDocumentNotifications()
 
   const handleExport = useCallback(() => {
-    exportDocumentErrors({
+    exportDocumentNotifications({
       packageKey: packageKey,
       versionKey: versionKey,
       ...notificationsScope,
     })
-  }, [exportDocumentErrors, notificationsScope, packageKey, versionKey])
+  }, [exportDocumentNotifications, notificationsScope, packageKey, versionKey])
 
   return (
     <Dialog
@@ -104,11 +106,11 @@ const DocumentErrorsPopup: FC<PopupProps> = memo<PopupProps>(({ open, setOpen, d
     >
       <StyledDialogTitle>
         <TitleRow>
-          <Typography variant="h5" data-testid="DocumentErrorsTitle">
+          <Typography variant="h5" data-testid="DialogTitle">
             Document Notifications
           </Typography>
           <CloseIconButton
-            data-testid="CloseDocumentErrorsButton"
+            data-testid="CloseButton"
             size="small"
             onClick={onClose}
           >
@@ -123,7 +125,7 @@ const DocumentErrorsPopup: FC<PopupProps> = memo<PopupProps>(({ open, setOpen, d
             onSelect={setPicked}
           />
           <ExportButton
-            data-testid="ExportDocumentErrorsButton"
+            data-testid="ExportButton"
             size="small"
             variant="outlined"
             loading={isExporting}
@@ -138,7 +140,7 @@ const DocumentErrorsPopup: FC<PopupProps> = memo<PopupProps>(({ open, setOpen, d
       <Divider />
 
       <StyledDialogContent>
-        <DocumentErrorsContent
+        <DocumentNotificationsContent
           notifications={notifications}
           isLoading={isLoading}
           error={error}
@@ -151,9 +153,9 @@ const DocumentErrorsPopup: FC<PopupProps> = memo<PopupProps>(({ open, setOpen, d
   )
 })
 
-DocumentErrorsPopup.displayName = 'DocumentErrorsPopup'
+DocumentNotificationsPopup.displayName = 'DocumentNotificationsPopup'
 
-type DocumentErrorsContentProps = {
+type DocumentNotificationsContentProps = {
   notifications: VersionNotifications
   isLoading: boolean
   error: Error | null
@@ -162,7 +164,7 @@ type DocumentErrorsContentProps = {
   hasNextPage: HasNextPage
 }
 
-const DocumentErrorsContent: FC<DocumentErrorsContentProps> = memo<DocumentErrorsContentProps>(({
+const DocumentNotificationsContent: FC<DocumentNotificationsContentProps> = memo<DocumentNotificationsContentProps>(({
   notifications,
   isLoading,
   error,
@@ -177,7 +179,7 @@ const DocumentErrorsContent: FC<DocumentErrorsContentProps> = memo<DocumentError
 
   if (isLoading) {
     return (
-      <PaddedBox data-testid="DocumentErrorsSkeleton">
+      <PaddedBox data-testid="NotificationsSkeleton">
         <Skeleton variant="text" height={20} />
         <Skeleton variant="text" height={20} />
         <Skeleton variant="text" height={20} />
@@ -190,7 +192,7 @@ const DocumentErrorsContent: FC<DocumentErrorsContentProps> = memo<DocumentError
       <Placeholder
         invisible={false}
         area={NAVIGATION_PLACEHOLDER_AREA}
-        message="Failed to load the error details"
+        message="Failed to load the notifications"
       />
     )
   }
@@ -199,11 +201,11 @@ const DocumentErrorsContent: FC<DocumentErrorsContentProps> = memo<DocumentError
     <Placeholder
       invisible={!!selected}
       area={NAVIGATION_PLACEHOLDER_AREA}
-      message="No error details found"
+      message="No notifications found"
     >
       <SplitLayout>
         <TablePane>
-          <DocumentErrorsTable
+          <DocumentNotificationsTable
             data={notifications}
             selectedId={selected?.id}
             onSelectNotification={setSelectedId}
@@ -213,7 +215,7 @@ const DocumentErrorsContent: FC<DocumentErrorsContentProps> = memo<DocumentError
           />
         </TablePane>
 
-        <MessagePane data-testid="DocumentErrorsMessage">
+        <MessagePane data-testid="NotificationMessage">
           <MessageText>{selected?.message}</MessageText>
         </MessagePane>
       </SplitLayout>
@@ -221,7 +223,7 @@ const DocumentErrorsContent: FC<DocumentErrorsContentProps> = memo<DocumentError
   )
 })
 
-DocumentErrorsContent.displayName = 'DocumentErrorsContent'
+DocumentNotificationsContent.displayName = 'DocumentNotificationsContent'
 
 const StyledDialogTitle = styled(DialogTitle)(({ theme }) => ({
   display: 'flex',

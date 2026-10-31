@@ -26,7 +26,7 @@ const EMPTY_ICON_STYLE = { width: 20, height: 20, color: DEFAULT_TEXT_COLOR } as
 
 const DOCUMENT_NAME_STYLE = { fontWeight: 600 } as const
 
-export type DocumentSelectorProps = {
+type DocumentSelectorProps = {
   options: Documents
   selected: DocumentSelection
   fallbackTitle: string
@@ -63,7 +63,7 @@ export const DocumentSelector: FC<DocumentSelectorProps> = memo<DocumentSelector
     <SelectorButton
       variant="text"
       onClick={({ currentTarget }) => setAnchor(currentTarget)}
-      data-testid="DocumentErrorsDocumentSelectorButton"
+      data-testid="DocumentSelectorButton"
     >
       <SelectorContent>
         <CaptionLabel variant="body2">
@@ -76,7 +76,7 @@ export const DocumentSelector: FC<DocumentSelectorProps> = memo<DocumentSelector
           tooltipText={title}
           variant="body2"
           sx={DOCUMENT_NAME_STYLE}
-          data-testid="DocumentErrorsSubtitle"
+          data-testid="SelectedDocumentTitle"
         >
           {title}
         </TextWithOverflowTooltip>
@@ -95,7 +95,7 @@ export const DocumentSelector: FC<DocumentSelectorProps> = memo<DocumentSelector
               <DocumentItemButton
                 selected={isEmptySelected}
                 onClick={event => handleSelect(event, EMPTY_DOCUMENT_OPTION)}
-                data-testid="DocumentErrorsEmptyDocumentButton"
+                data-testid="EmptyDocumentOptionButton"
               >
                 <DocumentItemIcon>
                   <DoNotDisturbAltOutlinedIcon sx={EMPTY_ICON_STYLE} />
@@ -115,7 +115,7 @@ export const DocumentSelector: FC<DocumentSelectorProps> = memo<DocumentSelector
                 <DocumentItemButton
                   selected={slug === selected}
                   onClick={event => handleSelect(event, slug)}
-                  data-testid="DocumentErrorsDocumentButton"
+                  data-testid="DocumentOptionButton"
                 >
                   <DocumentItemIcon>
                     <SpecLogo value={type} />

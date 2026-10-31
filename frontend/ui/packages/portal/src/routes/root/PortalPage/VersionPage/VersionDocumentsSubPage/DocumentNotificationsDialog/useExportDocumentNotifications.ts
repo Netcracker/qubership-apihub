@@ -11,12 +11,21 @@ import { optionalSearchParams } from '@netcracker/qubership-apihub-ui-shared/uti
 import { portalRequestBlob } from '@portal/utils/requests'
 import { useShowErrorNotification } from '../../../../BasePage/Notification'
 
-export function useExportDocumentErrors(): [ExportDocumentErrorsFunction, IsLoading] {
+type ExportDocumentNotificationsFunction = (options: Options) => void
+
+type Options = Readonly<{
+  packageKey: PackageKey
+  versionKey: VersionKey
+  documentId?: Key
+  emptyDocumentId?: boolean
+}>
+
+export function useExportDocumentNotifications(): [ExportDocumentNotificationsFunction, IsLoading] {
   const showErrorNotification = useShowErrorNotification()
 
   const { mutate, isLoading } = useMutation<void, Error, Options>({
     mutationFn: ({ packageKey, versionKey, documentId, emptyDocumentId }) =>
-      exportDocumentErrors(packageKey, versionKey, documentId, emptyDocumentId),
+      exportDocumentNotifications(packageKey, versionKey, documentId, emptyDocumentId),
     onError: (error) => {
       showErrorNotification({ message: error?.message })
     },
@@ -25,7 +34,7 @@ export function useExportDocumentErrors(): [ExportDocumentErrorsFunction, IsLoad
   return [mutate, isLoading]
 }
 
-export async function exportDocumentErrors(
+async function exportDocumentNotifications(
   packageKey: PackageKey,
   versionKey: VersionKey,
   documentId?: Key,
@@ -54,16 +63,7 @@ export async function exportDocumentErrors(
   const contentDisposition = response.headers.get('content-disposition')
   const filename = contentDisposition
     ? contentDisposition.split('filename=')[1]!.split(';')[0]!.replace(/"/g, '')
-    : `document-errors-${documentId ?? 'version'}.xlsx`
+    : `document-notifications-${documentId ?? 'version'}.xlsx`
 
   fileDownload(await response.blob(), filename)
 }
-
-type ExportDocumentErrorsFunction = (options: Options) => void
-
-type Options = Readonly<{
-  packageKey: PackageKey
-  versionKey: VersionKey
-  documentId?: Key
-  emptyDocumentId?: boolean
-}>

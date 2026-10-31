@@ -1,41 +1,21 @@
-import { bypass, http, HttpResponse } from 'msw'
+import { http } from 'msw'
 
-import {
-  getMockVersionFlags,
-  type MockVersionFlags,
-} from '@netcracker/qubership-apihub-ui-shared/mocks/mock-version-flags'
+import { getMockVersionFlags } from '@netcracker/qubership-apihub-ui-shared/mocks/mock-version-flags'
+import { patchJsonResponse } from '@netcracker/qubership-apihub-ui-shared/mocks/patch-json-response'
 
-// An older agent sends plain version names; a newer one sends objects with the flags.
-type MockBaselineVersionDto = string | Readonly<{ version: string } & MockVersionFlags>
-
-type MockServiceDto = Readonly<{
-  baseline?: Readonly<{
-    versions: ReadonlyArray<MockBaselineVersionDto>
-  }>
-}>
-
-type MockServicesDto = Readonly<{
-  services: ReadonlyArray<MockServiceDto>
-}>
+import type { BaselineVersionDto, ServiceDto, ServicesDto } from '@agents/entities/services'
 
 export const serviceHandlers = [
   http.get(
     '*/api/v2/agents/:agentId/namespaces/:namespaceId/workspaces/:workspaceKey/services',
-    async ({ request }) => {
-      const originalResponse = await fetch(bypass(request))
-      if (!originalResponse.ok) {
-        return originalResponse
-      }
-      const realData: MockServicesDto = await originalResponse.json()
-      return HttpResponse.json<MockServicesDto>({
-        ...realData,
-        services: realData.services.map(withMockBaselineFlags),
-      })
-    },
+    ({ request }) => patchJsonResponse<ServicesDto>(request, data => ({
+      ...data,
+      services: data.services.map(withMockBaselineFlags),
+    })),
   ),
 ]
 
-function withMockBaselineFlags(service: MockServiceDto): MockServiceDto {
+function withMockBaselineFlags(service: ServiceDto): ServiceDto {
   if (!service.baseline) {
     return service
   }
@@ -49,7 +29,7 @@ function withMockBaselineFlags(service: MockServiceDto): MockServiceDto {
 }
 
 // A plain version name has no fields to override.
-function withMockVersionFlags(version: MockBaselineVersionDto): MockBaselineVersionDto {
+function withMockVersionFlags(version: BaselineVersionDto): BaselineVersionDto {
   if (typeof version === 'string') {
     return version
   }

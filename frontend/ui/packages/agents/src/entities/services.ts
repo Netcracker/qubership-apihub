@@ -68,7 +68,7 @@ type BaselineDto = Readonly<{
 }>
 
 // The agents-backend sends a plain version key until it passes the error flags from the agent.
-type BaselineVersionDto =
+export type BaselineVersionDto =
   | VersionKey
   | Readonly<{
     version: VersionKey

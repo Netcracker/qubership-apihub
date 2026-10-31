@@ -56,7 +56,7 @@ import { DialogForm } from '@netcracker/qubership-apihub-ui-shared/components/Di
 import { usePagedPackageVersions } from '@netcracker/qubership-apihub-ui-shared/hooks/versions/usePackageVersions'
 import { VersionErrorFormMessage } from '@netcracker/qubership-apihub-ui-shared/components/ErrorIndicators/VersionErrorFormMessage'
 import { VersionSelectorAutocomplete } from '@netcracker/qubership-apihub-ui-shared/components/Autocompletes/VersionSelectorAutocomplete'
-import { VersionErrorIndicator } from '@netcracker/qubership-apihub-ui-shared/components/ErrorIndicators/VersionErrorIndicator'
+import { VersionFieldErrorIndicator } from '@netcracker/qubership-apihub-ui-shared/components/ErrorIndicators/VersionFieldErrorIndicator'
 import { VersionOptionItem } from '@netcracker/qubership-apihub-ui-shared/components/VersionOptionItem'
 import { useVersionProblemDetails } from '@netcracker/qubership-apihub-ui-shared/hooks/versions/useVersionProblemDetails'
 import { VERSION_PROBLEM_DIALOG_SURFACE } from '@netcracker/qubership-apihub-ui-shared/hooks/versions/versionProblemDetails'
@@ -113,11 +113,7 @@ const AddPackagePopup: FC<AddPackagePopupProps> = memo<AddPackagePopupProps>(({ 
   const selectedVersionKey = selectedVersion
     ? getSplittedVersionKey(selectedVersion.key, selectedVersion.latestRevision).versionKey
     : undefined
-  const {
-    hasProblems: selectedVersionHasProblems,
-    isBlocking: isSelectedVersionBlocking,
-    formHelperText: selectedVersionFormHelperText,
-  } = useVersionProblemDetails({
+  const selectedVersionProblem = useVersionProblemDetails({
     packageKey: selectedPackage?.key,
     versionKey: selectedVersionKey,
     hasErrors: selectedVersion?.hasErrors,
@@ -254,21 +250,15 @@ const AddPackagePopup: FC<AddPackagePopupProps> = memo<AddPackagePopupProps>(({ 
         options={flattenVersions}
         getOptionLabel={({ key }: PackageVersion) => getSplittedVersionKey(key).versionKey}
         value={selectedVersion}
-        inputIndicator={selectedVersionHasProblems && selectedVersion && (
-          <VersionErrorIndicator
-            versionKey={selectedVersionKey}
-            hasErrors={selectedVersion.hasErrors}
-            changelogHasErrors={selectedVersion.changelogHasErrors}
-            apiProcessorVersion={selectedVersion.apiProcessorVersion}
-            kind={selectedPackageKind}
-          />
+        inputIndicator={selectedVersionProblem.hasProblems && (
+          <VersionFieldErrorIndicator problem={selectedVersionProblem}/>
         )}
         renderOption={(props, version) => (
           <VersionOptionItem key={version.key} props={props} version={version}/>
         )}
         isOptionEqualToValue={(option, value) => option.key === value?.key}
         renderInput={(params) => (
-          <TextField {...field} {...params} required label="Version" error={isSelectedVersionBlocking}/>
+          <TextField {...field} {...params} required label="Version" error={selectedVersionProblem.isBlocking}/>
         )}
         onChange={(_, value) => {
           setValue(VERSION_KEY, value?.key ?? '')
@@ -278,7 +268,7 @@ const AddPackagePopup: FC<AddPackagePopupProps> = memo<AddPackagePopupProps>(({ 
       />
     ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [versions, selectedVersion, selectedVersionKey, selectedVersionHasProblems, selectedPackageKind, isSelectedVersionBlocking, setValue],
+    [versions, selectedVersion, selectedVersionProblem, setValue],
   )
 
   return (
@@ -307,7 +297,7 @@ const AddPackagePopup: FC<AddPackagePopupProps> = memo<AddPackagePopupProps>(({ 
           control={control}
           render={renderSelectVersion}
         />
-        <VersionErrorFormMessage message={selectedVersionFormHelperText} />
+        <VersionErrorFormMessage message={selectedVersionProblem.formHelperText} />
       </DialogContent>
 
 
@@ -316,7 +306,7 @@ const AddPackagePopup: FC<AddPackagePopupProps> = memo<AddPackagePopupProps>(({ 
                        type="submit"
                        loading={false}
                        data-testid="AddButton"
-                       disabled={isSelectedVersionBlocking}>
+                       disabled={selectedVersionProblem.isBlocking}>
           Add
         </LoadingButton>
         <Button variant="outlined" onClick={() => setOpen(false)} data-testid="CancelButton">

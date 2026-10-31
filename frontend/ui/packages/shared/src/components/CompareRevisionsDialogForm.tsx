@@ -37,6 +37,7 @@ import type { Revision, Revisions } from '../entities/revisions'
 import { REVISION_DELIMITER } from '../entities/versions'
 import { VersionErrorFormMessage } from './ErrorIndicators/VersionErrorFormMessage'
 import { VersionErrorIndicator } from './ErrorIndicators/VersionErrorIndicator'
+import { VersionFieldErrorIndicator } from './ErrorIndicators/VersionFieldErrorIndicator'
 import { VersionSelectorAutocomplete } from './Autocompletes/VersionSelectorAutocomplete'
 import { useVersionProblemDetails } from '../hooks/versions/useVersionProblemDetails'
 import { VERSION_PROBLEM_DIALOG_SURFACE } from '../hooks/versions/versionProblemDetails'
@@ -84,11 +85,7 @@ export const CompareRevisionsDialogForm: FC<CompareRevisionsDialogFormProps> = m
   const originPackageKey = packageSearchParam ?? changedPackageKey
   const previousRevision = useWatch({ control: control, name: 'originalRevision' })
   const currentRevisions = useWatch({ control: control, name: 'changedRevision' })
-  const {
-    isBlocking: isPreviousRevisionBlocking,
-    formHelperText: previousRevisionFormHelperText,
-    hasProblems: previousRevisionHasProblems,
-  } = useVersionProblemDetails({
+  const previousRevisionProblem = useVersionProblemDetails({
     packageKey: originPackageKey,
     versionKey: previousRevision?.version,
     hasErrors: previousRevision?.hasErrors,
@@ -97,11 +94,7 @@ export const CompareRevisionsDialogForm: FC<CompareRevisionsDialogFormProps> = m
     kind: kind,
     surface: VERSION_PROBLEM_DIALOG_SURFACE.COMPARE_PREVIOUS_REVISION,
   })
-  const {
-    isBlocking: isCurrentRevisionBlocking,
-    formHelperText: currentRevisionFormHelperText,
-    hasProblems: currentRevisionHasProblems,
-  } = useVersionProblemDetails({
+  const currentRevisionProblem = useVersionProblemDetails({
     packageKey: originPackageKey,
     versionKey: currentRevisions?.version,
     hasErrors: currentRevisions?.hasErrors,
@@ -140,15 +133,9 @@ export const CompareRevisionsDialogForm: FC<CompareRevisionsDialogFormProps> = m
               controllerName="originalRevision"
               revisions={originalRevisions}
               isLoading={isRevisionsLoading}
-              error={isPreviousRevisionBlocking}
-              indicator={previousRevisionHasProblems && previousRevision && (
-                <VersionErrorIndicator
-                  versionKey={previousRevision.version}
-                  hasErrors={previousRevision.hasErrors}
-                  changelogHasErrors={previousRevision.changelogHasErrors}
-                  apiProcessorVersion={previousRevision.apiProcessorVersion}
-                  kind={kind}
-                />
+              error={previousRevisionProblem.isBlocking}
+              indicator={previousRevisionProblem.hasProblems && (
+                <VersionFieldErrorIndicator problem={previousRevisionProblem}/>
               )}
               data-testid="PreviousRevisionAutocomplete"
             />
@@ -176,15 +163,9 @@ export const CompareRevisionsDialogForm: FC<CompareRevisionsDialogFormProps> = m
               controllerName="changedRevision"
               revisions={changedRevisions}
               isLoading={isRevisionsLoading}
-              error={isCurrentRevisionBlocking}
-              indicator={currentRevisionHasProblems && currentRevisions && (
-                <VersionErrorIndicator
-                  versionKey={currentRevisions.version}
-                  hasErrors={currentRevisions.hasErrors}
-                  changelogHasErrors={currentRevisions.changelogHasErrors}
-                  apiProcessorVersion={currentRevisions.apiProcessorVersion}
-                  kind={kind}
-                />
+              error={currentRevisionProblem.isBlocking}
+              indicator={currentRevisionProblem.hasProblems && (
+                <VersionFieldErrorIndicator problem={currentRevisionProblem}/>
               )}
               data-testid="CurrentRevisionAutocomplete"
             />
@@ -193,14 +174,14 @@ export const CompareRevisionsDialogForm: FC<CompareRevisionsDialogFormProps> = m
       </DialogContent>
       <Box sx={{ maxWidth: '692px', padding: '0 24px' }}>
         <VersionErrorFormMessage
-          message={currentRevisionFormHelperText ?? previousRevisionFormHelperText}
+          message={currentRevisionProblem.formHelperText ?? previousRevisionProblem.formHelperText}
         />
       </Box>
       <DialogActions>
         <LoadingButton
           variant="contained"
           type="submit"
-          disabled={isPreviousRevisionBlocking || isCurrentRevisionBlocking}
+          disabled={previousRevisionProblem.isBlocking || currentRevisionProblem.isBlocking}
           loading={isApiTypeFetching}
           data-testid="CompareButton"
         >

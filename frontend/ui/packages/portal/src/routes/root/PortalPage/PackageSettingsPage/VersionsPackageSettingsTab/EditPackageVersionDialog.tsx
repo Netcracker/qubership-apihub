@@ -27,7 +27,7 @@ import { useEditPackageVersion } from '@portal/routes/root/usePackageVersions'
 import { RELEASE_VERSION_STATUS } from '@netcracker/qubership-apihub-ui-shared/entities/version-status'
 import { useVersionProblemDetails } from '@netcracker/qubership-apihub-ui-shared/hooks/versions/useVersionProblemDetails'
 import { VERSION_PROBLEM_DIALOG_SURFACE } from '@netcracker/qubership-apihub-ui-shared/hooks/versions/versionProblemDetails'
-import { VersionErrorIndicator } from '@netcracker/qubership-apihub-ui-shared/components/ErrorIndicators/VersionErrorIndicator'
+import { VersionFieldErrorIndicator } from '@netcracker/qubership-apihub-ui-shared/components/ErrorIndicators/VersionFieldErrorIndicator'
 
 export const EditPackageVersionDialog: FC = memo(() => {
   return (
@@ -68,11 +68,7 @@ const EditPackageVersionPopup: FC<PopupProps> = memo<PopupProps>(({ open, setOpe
   const currentStatus = useWatch({ control: control, name: 'status' })
   const isReleasePromotion = initialStatus !== RELEASE_VERSION_STATUS && currentStatus === RELEASE_VERSION_STATUS
 
-  const {
-    isBlocking: isReleasePromotionBlocking,
-    formHelperText: releasePromotionFormHelperText,
-    hasProblems,
-  } = useVersionProblemDetails({
+  const releasePromotionProblem = useVersionProblemDetails({
     packageKey: packageKey,
     versionKey: version,
     hasErrors: hasErrors,
@@ -82,15 +78,9 @@ const EditPackageVersionPopup: FC<PopupProps> = memo<PopupProps>(({ open, setOpe
     surface: isReleasePromotion ? VERSION_PROBLEM_DIALOG_SURFACE.EDIT_STATUS : undefined,
   })
 
-  const statusErrorIndicator = isReleasePromotion && hasProblems ? (
-    <VersionErrorIndicator
-      versionKey={version}
-      hasErrors={hasErrors}
-      changelogHasErrors={changelogHasErrors}
-      apiProcessorVersion={apiProcessorVersion}
-      kind={kind}
-    />
-  ) : undefined
+  const statusErrorIndicator = isReleasePromotion && releasePromotionProblem.hasProblems && (
+    <VersionFieldErrorIndicator problem={releasePromotionProblem}/>
+  )
 
   const onPublish = useCallback(({ version, status, labels }: VersionFormData) => {
     editPackageVersion({
@@ -121,8 +111,8 @@ const EditPackageVersionPopup: FC<PopupProps> = memo<PopupProps>(({ open, setOpe
       releaseVersionPattern={releaseVersionPattern}
       isPublishing={isLoading}
       kind={kind}
-      formHelperText={releasePromotionFormHelperText}
-      isBlocking={isReleasePromotionBlocking}
+      formHelperText={releasePromotionProblem.formHelperText}
+      isBlocking={releasePromotionProblem.isBlocking}
       statusErrorIndicator={statusErrorIndicator}
       hideDescriptorField
       hideCopyPackageFields

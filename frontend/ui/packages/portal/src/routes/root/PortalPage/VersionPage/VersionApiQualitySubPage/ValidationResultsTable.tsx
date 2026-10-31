@@ -10,7 +10,7 @@ import type { ColumnDef } from '@tanstack/react-table'
 import { flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table'
 import type { FC } from 'react'
 import { memo, useMemo, useRef } from 'react'
-import { IssueSeverityMarker } from './IssueSeverityMarker'
+import { IssueSeverityMarker } from '@portal/components/IssueSeverityMarker'
 import { issuePathToSpecItemUri, sortIssuesBySeveralFields } from './utilities/transformers'
 import { getLinterName } from '@portal/utils/api-quality/linters'
 

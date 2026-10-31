@@ -10,6 +10,11 @@ type VersionErrorIndicatorProps =
   & UseVersionProblemDetailsParams
   & ErrorIndicatorViewProps
 
+/**
+ * Resolves the problem of a version from its flags and renders its error icon. Use it where nothing else resolves the
+ * version, such as a table row, a toolbar, a header, or a list option. A field that calls `useVersionProblemDetails`
+ * renders `VersionFieldErrorIndicator` instead, so the version is not resolved twice.
+ */
 export const VersionErrorIndicator: FC<VersionErrorIndicatorProps> = memo<VersionErrorIndicatorProps>(({
   tooltip: customTooltip,
   showTooltip = true,
