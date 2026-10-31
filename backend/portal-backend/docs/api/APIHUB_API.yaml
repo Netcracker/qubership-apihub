@@ -7972,6 +7972,11 @@ paths:
       description: |
         Get changes of one operation between current and previous published package version.
         The result depends on the API type.
+        For a dashboard, `packageId` and `version` identify the dashboard version, and changes are searched across its referenced package comparisons.
+        Use `refPackageId` to select a referenced package, including when the same operation identifier exists in several packages.
+        In this context, `previousVersion` and `previousVersionPackageId` identify the previous dashboard version.
+        If either parameter is omitted, both values are resolved from the current dashboard version's previous-version configuration.
+        If that configuration does not specify a previous package, the current dashboard's `packageId` is used.
       operationId: getPackagesIdVersionsApiTypeOperationsIdChanges
       parameters:
         - $ref: "#/components/parameters/apiType"
@@ -7981,6 +7986,12 @@ paths:
         - $ref: "#/components/parameters/severity"
         - $ref: "#/components/parameters/previousVersion"
         - $ref: "#/components/parameters/previousVersionPackageId"
+        - name: refPackageId
+          description: Filter by the referenced package identifier on either the current or previous side of the comparison. If omitted, no package filter is applied.
+          in: query
+          required: false
+          schema:
+            type: string
         - in: query
           name: previousVersionOperationId
           description: Operation unique identifier from previous version (not the same as operationId tag from the OpenAPI file).\
