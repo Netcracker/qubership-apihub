@@ -148,8 +148,8 @@ Nx caches the result of every cacheable target. A second run of the same command
 - **Shell.** The `pnpm`, `nx`, `git`, and `go` commands in these guides work the same in Git Bash and PowerShell. Lines
   that set a variable (`export NAME=value`) are Git Bash; in PowerShell write `$env:NAME = 'value'`.
 - **Containers.** The screenshot tests start Chrome in a container through the `podman` command. Install Podman
-  Desktop with its WSL machine; set `DOCKER_BINARY=docker` to use Docker instead. [Build and test](./build-and-test.md)
-  has the details.
+  Desktop with its WSL machine; set `DOCKER_BINARY=docker` to use Docker instead, or `DOCKER_BINARY=wslc` to use WSL
+  containers. [Build and test](./build-and-test.md) has the details.
 
 ## Nx hangs or times out
 

@@ -16,6 +16,7 @@
 
 import type { ChromeArg } from "../index.types"
 import os from "os"
+import path from "path"
 
 export const DOCKER_CONTAINER_NAME = "jest-chrome-container"
 export const CHROME_PORT = 9222
@@ -43,6 +44,10 @@ export function getConnectToChromeRetryIntervals(){
 
 export function getDockerBinary(){
     return process.env.DOCKER_BINARY ? process.env.DOCKER_BINARY : "podman"
+}
+
+export function isWslcBinary() {
+    return path.basename(getDockerBinary()).toLowerCase().replace(/\.exe$/, "") === "wslc"
 }
 
 export function getDockerBinaryCLIPath() {

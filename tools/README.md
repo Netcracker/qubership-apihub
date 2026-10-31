@@ -66,8 +66,8 @@ Without a ref, it compares `HEAD` with the working tree.
 ## `jest-chrome-in-docker-environment`
 
 A Jest environment that runs Chrome in a container, so screenshot tests give the same pixels on every machine and on
-CI. `api-doc-viewer`, `apispec-view`, and `class-view` use it. It needs Podman or Docker. The API is in its
-[README](jest-chrome-in-docker-environment/README.md).
+CI. `api-doc-viewer`, `apispec-view`, and `class-view` use it. It needs Podman, Docker, or `wslc` on Windows. The API
+is in its [README](jest-chrome-in-docker-environment/README.md).
 
 ## `architecture-model/`
 

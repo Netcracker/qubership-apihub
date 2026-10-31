@@ -31,7 +31,7 @@ pnpm exec nx run api-doc-viewer-root:lint:check
 pnpm exec nx run api-doc-viewer:screenshot-test
 ```
 
-The screenshot tests start Chrome in a container and need Podman; see
+The screenshot tests start Chrome in a container and need Podman, Docker, or `wslc` on Windows; see
 [Build and test: Screenshot tests](../../docs/development/build-and-test.md#screenshot-tests).
 
 ## Run and debug locally

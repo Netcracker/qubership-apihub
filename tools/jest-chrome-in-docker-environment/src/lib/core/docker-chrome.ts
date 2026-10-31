@@ -19,7 +19,7 @@ import { bgYellow, black, green, red, yellow } from "colors"
 import { CHROME_PORT, CONSOLE_PREFIX, DOCKER_CONTAINER_NAME, getConnectToChromeMaxAttempts, getConnectToChromeRetryIntervals, getDockerBinaryCLIPath, getHostCheckPort, workerExternalPort, workerInternalPort } from "./defaults"
 import { runCommand } from "./run-command"
 import { ChromeArg } from "../index.types"
-import { dockerContainerIpAddress, getDockerHostIpAddress, getHostnameIpAddress, ping } from "./utils"
+import { dockerContainerIpAddress, getDockerHostIpAddress, getHostnameIpAddress, inspectContainer, ping } from "./utils"
 
 const fetch = require("fetch-retry")(global.fetch);
 
@@ -40,10 +40,7 @@ const isWindows = os.platform() === "win32"
 
 async function waitForContainerRunning(containerId: string): Promise<void> {
   for (let i = 0; i < CONTAINER_READY_MAX_ATTEMPTS; i++) {
-    const { out } = await runCommand(getDockerBinaryCLIPath(), [
-      "inspect", "-f", `"{{.State.Status}}"`, containerId
-    ])
-    if (out.trim().replace(/"/g, "") === "running") return
+    if ((await inspectContainer(containerId)).State?.Status === "running") return
     await new Promise(r => setTimeout(r, CONTAINER_READY_POLL_MS))
   }
   throw new Error(`${CONSOLE_PREFIX} Container ${containerId} did not reach 'running' state`)
