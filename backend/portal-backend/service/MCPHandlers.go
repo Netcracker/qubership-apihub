@@ -25,6 +25,8 @@ const mcpListDefaultLimit = 100
 // DB pool connection indefinitely.
 const MCPToolCallTimeout = 4 * time.Minute
 
+const mcpSearchGroupsArg = "groups"
+
 func withInjectedMCPArg(req mcp.CallToolRequest, key string, value any) mcp.CallToolRequest {
 	src, _ := req.Params.Arguments.(map[string]any)
 	args := make(map[string]any, len(src)+1)
@@ -57,13 +59,53 @@ func validateMCPGroup(group, workspace string) error {
 	return nil
 }
 
-// resolveMCPSearchPackageIds maps an optional MCP group filter to SearchQueryReq.PackageIds.
-// When group is omitted, scope to the whole workspace (same as REST SearchController).
-func resolveMCPSearchPackageIds(group, workspace string) []string {
-	if group != "" {
-		return []string{group}
+func validateMCPGroups(groups []string, workspace string) error {
+	for _, group := range groups {
+		if err := validateMCPGroup(group, workspace); err != nil {
+			return err
+		}
 	}
-	return []string{workspace}
+	return nil
+}
+
+func getMCPSearchGroups(req mcp.CallToolRequest) ([]string, error) {
+	if value, ok := req.GetArguments()[mcpSearchGroupsArg]; !ok || value == nil {
+		return nil, nil
+	}
+	groups, err := req.RequireStringSlice(mcpSearchGroupsArg)
+	if err != nil {
+		return nil, err
+	}
+	if len(groups) == 0 {
+		return nil, fmt.Errorf("argument %q must contain at least one packageId; omit it to search the whole workspace", mcpSearchGroupsArg)
+	}
+	for i, group := range groups {
+		if group == "" {
+			return nil, fmt.Errorf("item %d in argument %q is empty; pass a packageId", i, mcpSearchGroupsArg)
+		}
+	}
+	return groups, nil
+}
+
+// resolveMCPSearchPackageIds maps optional MCP group filters to SearchQueryReq.PackageIds.
+// When no group is given, scope to the whole workspace (same as REST SearchController).
+func resolveMCPSearchPackageIds(groups []string, workspace string) []string {
+	result := make([]string, 0, len(groups))
+	seen := make(map[string]struct{}, len(groups))
+	for _, group := range groups {
+		if group == "" {
+			continue
+		}
+		if _, ok := seen[group]; ok {
+			continue
+		}
+		seen[group] = struct{}{}
+		result = append(result, group)
+	}
+	if len(result) == 0 {
+		return []string{workspace}
+	}
+	return result
 }
 
 // resolveMCPSearchVersions maps an optional MCP release filter to SearchQueryReq.Versions.
@@ -183,7 +225,12 @@ func (m mcpService) ExecuteGetSpecTool(ctx context.Context, req mcp.CallToolRequ
 
 // ExecuteSearchTool executes the search_api_operations tool (deprecated: uses the configured AI MCP workspace)
 func (m mcpService) ExecuteSearchTool(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	return m.executeSearchCore(ctx, req, m.systemInfoService.GetAiMCPConfig().Workspace, metrics.MCPSearchToolCalled, ToolNameSearchOperations)
+	workspace := m.systemInfoService.GetAiMCPConfig().Workspace
+	group := req.GetString("group", "")
+	if err := validateMCPGroup(group, workspace); err != nil {
+		return mcp.NewToolResultError(err.Error()), nil
+	}
+	return m.executeSearchCore(ctx, req, workspace, resolveMCPSearchPackageIds([]string{group}, workspace), metrics.MCPSearchToolCalled, ToolNameSearchOperations)
 }
 
 // ExecuteSearchToolV2 executes the search_api_operations_v2 tool with a caller-supplied workspace
@@ -192,10 +239,17 @@ func (m mcpService) ExecuteSearchToolV2(ctx context.Context, req mcp.CallToolReq
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
-	return m.executeSearchCore(ctx, req, workspace, metrics.MCPSearchV2ToolCalled, ToolNameSearchOperationsV2)
+	groups, err := getMCPSearchGroups(req)
+	if err != nil {
+		return mcp.NewToolResultError(err.Error()), nil
+	}
+	if err := validateMCPGroups(groups, workspace); err != nil {
+		return mcp.NewToolResultError(err.Error()), nil
+	}
+	return m.executeSearchCore(ctx, req, workspace, resolveMCPSearchPackageIds(groups, workspace), metrics.MCPSearchV2ToolCalled, ToolNameSearchOperationsV2)
 }
 
-func (m mcpService) executeSearchCore(ctx context.Context, req mcp.CallToolRequest, workspace string, metric string, tool string) (*mcp.CallToolResult, error) {
+func (m mcpService) executeSearchCore(ctx context.Context, req mcp.CallToolRequest, workspace string, packageIds []string, metric string, tool string) (*mcp.CallToolResult, error) {
 	ctx, cancel := context.WithTimeout(ctx, MCPToolCallTimeout)
 	defer cancel()
 	apiType, err := requireMCPTypeParam(req, string(view.RestApiType), string(view.GraphqlApiType), string(view.AsyncapiApiType), view.ContractTypeDdl, view.ContractTypeMcp)
@@ -209,22 +263,12 @@ func (m mcpService) executeSearchCore(ctx context.Context, req mcp.CallToolReque
 
 	limit := req.GetInt("limit", 100)
 	page := req.GetInt("page", 0)
-	group := req.GetString("group", "")
 	releaseVersion := req.GetString("release", "")
-	if err := validateMCPGroup(group, workspace); err != nil {
-		return mcp.NewToolResultError(err.Error()), nil
-	}
-
-	packageIds := resolveMCPSearchPackageIds(group, workspace)
 	versions := resolveMCPSearchVersions(releaseVersion)
 
-	log.Debugf("search_api_operations: apiType=%s, query=%s, limit=%d, page=%d, group=%s, releaseVersion=%s, workspace=%s", apiType, q, limit, page, group, releaseVersion, workspace)
+	log.Debugf("search_api_operations: apiType=%s, query=%s, limit=%d, page=%d, packageIds=%s, releaseVersion=%s, workspace=%s", apiType, q, limit, page, packageIds, releaseVersion, workspace)
 
-	metricPackage := group
-	if metricPackage == "" {
-		metricPackage = workspace
-	}
-	m.monitoringService.IncreaseBusinessMetricCounter(secctx.GetUserId(ctx), metric, mcpMetricKey(ctx, apiType, metricPackage))
+	m.monitoringService.IncreaseBusinessMetricCounter(secctx.GetUserId(ctx), metric, mcpMetricKey(ctx, apiType, strings.Join(packageIds, ",")))
 	observeMCPToolCall(ctx, tool, apiType)
 
 	searchReq := view.SearchQueryReq{

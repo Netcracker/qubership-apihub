@@ -336,7 +336,7 @@ WORKSPACE-FIRST FLOW (use this for new integrations):
 1. Resolve the workspace with the user (see WORKSPACE SELECTION above)
 2. Use list_workspace_packages with the confirmed workspaceId to browse its packages (metadata only; no versions)
 3. Use list_package_versions with a packageId to see that package's available release versions
-4. Use search_api_operations_v2 with the confirmed workspace to search for operations, or list_api_operations/list_ddl_entities/list_mcp_contract_entities to browse a version's operations, DDL, or MCP contract entities directly
+4. Use search_api_operations_v2 with the confirmed workspace to search for operations (pass 'groups' to limit the search to packages the user named), or list_api_operations/list_ddl_entities/list_mcp_contract_entities to browse a version's operations, DDL, or MCP contract entities directly
 
 WHEN TO USE THIS SERVER:
 Use apihub-mcp when the user asks about:
@@ -458,7 +458,7 @@ LLM INSTRUCTIONS:
 - DO NOT use get_api_operation_specification in advance - first show a list of operations to choose from, even if only one is found
 - Use get_api_operation_specification only when user explicitly requests details about a REST or AsyncAPI operation
 - VERSION: when 'release' is omitted, search is not filtered by version (all release-status versions in scope are considered; ranking prefers higher versions). Pass 'release' only when the user names a version or you need to narrow to one published version
-- GROUP: pass 'group' only when the user explicitly asks to search within a specific package. Use that package's packageId; never pass the workspaceId as 'group'`
+- GROUPS: pass 'groups' only when the user explicitly asks to search within specific packages or groups. Use their packageIds; each packageId also covers its sub-packages. To search several packages, pass all their packageIds in one call instead of calling this tool once per package. Omit 'groups' to search the whole workspace; never pass the workspaceId in 'groups'`
 
 	ToolDescriptionSearchOperationsV2MCP = `Search for API operations, or DDL/MCP contract entities, by text query within a given workspace.
 
@@ -485,13 +485,13 @@ LLM INSTRUCTIONS:
 - If the first call returned few or no unique operations - make repeated calls:
 	* Increase page number for pagination
 	* Simplify or generalize the search query, or try alternative/synonym terms
-	* Search in a specific package only when the user asked for that package (use 'group' with packageId from list_workspace_packages)
+	* Search in specific packages only when the user asked for them (use 'groups' with packageIds from list_workspace_packages)
 	* If results are too broad, pass 'release' from list_package_versions for the target package (prefer the newest unless the user named one). Packages may use YYYY.Q (e.g., 2024.3), semver (0.0.1, 0.1.0), or other schemes
 - If user asks for more results - increment page, simplify query, or search in other packages/versions
 - DO NOT use get_api_operation_specification in advance - first show a list of operations to choose from, even if only one is found
 - Use get_api_operation_specification only when user explicitly requests details about a REST or AsyncAPI operation
 - VERSION: when 'release' is omitted, search is not filtered by version (all release-status versions in scope are considered; ranking prefers higher versions). Pass 'release' only when the user names a version or you need to narrow to one published version
-- GROUP: pass 'group' only when the user explicitly asks to search within a specific package. Use that package's packageId; never pass the workspaceId as 'group'`
+- GROUPS: pass 'groups' only when the user explicitly asks to search within specific packages or groups. Use their packageIds; each packageId also covers its sub-packages. To search several packages, pass all their packageIds in one call instead of calling this tool once per package. Omit 'groups' to search the whole workspace; never pass the workspaceId in 'groups'`
 
 	ToolDescriptionGetOperationSpecMCP = `Get operation-level specification data extracted from an OpenAPI or AsyncAPI specification.
 
@@ -555,7 +555,7 @@ LLM INSTRUCTIONS:
 - If the user already named a workspace (workspaceId, alias, or name), pass that value as workspace
 - Use textFilter to narrow results by package name or ID substring
 - Use page/limit for pagination when a workspace has many packages
-- Use a package's packageId with list_package_versions to see its release versions, and with search_api_operations_v2's 'group' parameter only when the user asked to search that specific package
+- Use a package's packageId with list_package_versions to see its release versions, and in search_api_operations_v2's 'groups' parameter only when the user asked to search those specific packages
 - Packages the caller cannot read are not returned; an empty result does not necessarily mean the workspace has no packages`
 
 	ToolDescriptionListPackageVersionsMCP = `List release versions available for a specific package.
@@ -682,7 +682,7 @@ LLM INSTRUCTIONS:
 - DO NOT use get_api_operation_specification in advance - first show a list of operations to choose from in markdown format, even if only one is found
 - Use get_api_operation_specification only when user explicitly requests details about a REST or AsyncAPI operation
 - VERSION: when 'release' is omitted, search is not filtered by version (all release-status versions in scope are considered; ranking prefers higher versions). Pass 'release' only when the user names a version or you need to narrow to one published version
-- GROUP: pass 'group' only when the user explicitly asks to search within a specific package. Use that package's packageId; never pass the workspaceId as 'group'
+- GROUPS: pass 'groups' only when the user explicitly asks to search within specific packages or groups. Use their packageIds; each packageId also covers its sub-packages. To search several packages, pass all their packageIds in one call instead of calling this tool once per package. Omit 'groups' to search the whole workspace; never pass the workspaceId in 'groups'
 - REQUIRED: Convert metadata to markdown links (relative, without baseUrl):
 	* packageId -> [packageId](/portal/packages/<packageId>)
 	* operationId -> [operationId](/portal/packages/<packageId>/<version>/operations/<apiType>/<operationId>)
@@ -713,13 +713,13 @@ LLM INSTRUCTIONS:
 - If the first call returned few or no unique operations - make repeated calls:
 	* Increase page number for pagination
 	* Simplify or generalize the search query, or try alternative/synonym terms
-	* Search in a specific package only when the user asked for that package (use 'group' with packageId from list_workspace_packages)
+	* Search in specific packages only when the user asked for them (use 'groups' with packageIds from list_workspace_packages)
 	* If results are too broad, pass 'release' from list_package_versions for the target package (prefer the newest unless the user named one). Packages may use YYYY.Q (e.g., 2024.3), semver (0.0.1, 0.1.0), or other schemes
 - If user asks for more results - increment page, simplify query, or search in other packages/versions
 - DO NOT use get_api_operation_specification in advance - first show a list of operations to choose from in markdown format, even if only one is found
 - Use get_api_operation_specification only when user explicitly requests details about a REST or AsyncAPI operation
 - VERSION: when 'release' is omitted, search is not filtered by version (all release-status versions in scope are considered; ranking prefers higher versions). Pass 'release' only when the user names a version or you need to narrow to one published version
-- GROUP: pass 'group' only when the user explicitly asks to search within a specific package. Use that package's packageId; never pass the workspaceId as 'group'
+- GROUPS: pass 'groups' only when the user explicitly asks to search within specific packages or groups. Use their packageIds; each packageId also covers its sub-packages. To search several packages, pass all their packageIds in one call instead of calling this tool once per package. Omit 'groups' to search the whole workspace; never pass the workspaceId in 'groups'
 - REQUIRED: Convert metadata to markdown links (relative, without baseUrl):
 	* packageId -> [packageId](/portal/packages/<packageId>)
 	* operationId -> [operationId](/portal/packages/<packageId>/<version>/operations/<apiType>/<operationId>)
@@ -743,7 +743,7 @@ LLM INSTRUCTIONS:
 - If the user already named a workspace (workspaceId, alias, or name), pass that value as workspace
 - Use textFilter to narrow results by package name or ID substring
 - Use page/limit for pagination when a workspace has many packages
-- Use a package's packageId with list_package_versions to see its release versions, and with search_api_operations_v2's 'group' parameter only when the user asked to search that specific package
+- Use a package's packageId with list_package_versions to see its release versions, and in search_api_operations_v2's 'groups' parameter only when the user asked to search those specific packages
 - Packages the caller cannot read are not returned; an empty result does not necessarily mean the workspace has no packages
 - Format the package list as a markdown table (name, packageId, kind)
 - Convert packageId to a markdown link: [packageId](/portal/packages/<packageId>)`
@@ -1148,8 +1148,13 @@ var (
 			"release": {
 				"type": "string"
 			},
-			"group": {
-				"type": "string"
+			"groups": {
+				"type": "array",
+				"minItems": 1,
+				"items": {
+					"type": "string",
+					"minLength": 1
+				}
 			}
 		},
 		"required": ["apiType","query","workspace"]
@@ -1429,7 +1434,7 @@ func getParameterDescription(toolName, paramName string) string {
 			"limit":     "Maximum number of results to return (10-100). For the first search, it's recommended to use 100",
 			"page":      "Page number for pagination (starts from 0). Use to get additional results",
 			"release":   "Optional package release version to search in (exact string from list_package_versions, e.g. 2024.3, 0.1.0, v1). When omitted, search is not filtered by version. Pass only when the user names a version or you need to narrow results.",
-			"group":     "Optional package ID (packageId) to filter search to one package. Pass only when the user explicitly asks to search that package. Use packageId from list_workspace_packages, not packageName, and never pass the workspace ID.",
+			"groups":    "Optional list of package IDs (packageId) to limit the search to. Each ID also covers its sub-packages and must belong to the given workspace. Pass only when the user explicitly asks to search specific packages or groups, and pass all of them in one call. Use packageId from list_workspace_packages, not packageName, and never pass the workspace ID. Omit to search the whole workspace.",
 		},
 		ToolNameListWorkspacePackages: {
 			"workspace":  "WorkspaceId to list packages from. Mandatory. If the user has not named a workspace, call list_workspaces first, present the accessible workspaces, and ask which one to use; never invent or silently pick one",
