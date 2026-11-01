@@ -5,7 +5,6 @@ import path, { resolve } from 'path'
 import copy from 'rollup-plugin-copy'
 import Unfonts from 'unplugin-fonts/vite'
 import { visualizer as bundleVisualizer } from 'rollup-plugin-visualizer'
-import inject from '@rollup/plugin-inject'
 import monacoWorkerHashPlugin from '../../vite-plugins/monaco-worker-hash'
 import createVersionJsonFilePlugin from '../../vite-plugins/create-version-json'
 import { appStampedVersion } from '../../vite-plugins/app-version'
@@ -39,6 +38,11 @@ const proxyServer = 'http://host.docker.internal:8081'
 // The legacy Express mock of `pnpm dev:backend`, the proxy target outside proxy mode (`pnpm dev:frontend`).
 // TODO(ui): remove it with the mock once MSW covers its routes; every prefix then goes to proxyServer.
 const devServer = 'http://localhost:3003'
+
+// Node globals that some dependencies read in the browser. Rolldown imports the polyfill into each module that uses
+// one; `process` and `buffer` resolve to the polyfills through resolve.alias. For example, adm-zip 0.6.0 in the build
+// worker reads `process` on load, and without the polyfill publishing fails with "process is not defined".
+const injectNodeGlobals = { Buffer: ['buffer', 'Buffer'] as [string, string], process: 'process' }
 
 export default defineConfig(({ mode }) => {
   const isProxyMode = mode === 'proxy'
@@ -112,16 +116,11 @@ export default defineConfig(({ mode }) => {
         '@netcracker/qubership-apihub-api-processor',
         '@netcracker/qubership-apihub-api-processor/processor',
       ],
-      // Vite 8 pre-bundles with Rolldown, not esbuild. It runs esbuild plugins only through a shim
-      // whose `initialOptions` throws "Not implemented" on any property but `platform` and `plugins`,
-      // so the former @esbuild-plugins polyfills made the dependency scan fail and Vite skipped
-      // pre-bundling altogether. Rolldown's own transform options do the same job: `inject` mirrors
-      // the production build's inject() below, and `define` keeps the `global` alias the esbuild
-      // polyfill used to add. `process` and `buffer` resolve through resolve.alias.
+      // `define` maps `global`, which some dependencies read, to `globalThis`.
       rolldownOptions: {
         transform: {
           define: { global: 'globalThis' },
-          inject: { Buffer: ['buffer', 'Buffer'], process: 'process' },
+          inject: injectNodeGlobals,
         },
       },
     },
@@ -157,6 +156,8 @@ export default defineConfig(({ mode }) => {
     },
     worker: {
       format: 'es',
+      // Worker bundles do not read build.rolldownOptions.
+      rolldownOptions: { transform: { inject: injectNodeGlobals } },
     },
     build: {
       emptyOutDir: true,
@@ -166,16 +167,7 @@ export default defineConfig(({ mode }) => {
         input: {
           app: resolve(__dirname, 'index.html'),
         },
-        // `optimizeDeps.rolldownOptions` above only covers the dev server's dependency pre-bundling,
-        // so the Node globals that browser-unaware dependencies expect have to be injected again
-        // for the production build.
-        //
-        // `process` is needed because adm-zip 0.6.0 reads `process?.versions?.node` at module scope
-        // (methods/inflater.js), and `methods/index.js` requires that file unconditionally. Optional
-        // chaining does not guard an undeclared binding, so merely importing adm-zip throws
-        // `ReferenceError: process is not defined`. It reaches the bundle through api-processor and
-        // lands in the lazily-loaded build-worker chunk, which is why only publishing broke.
-        plugins: [inject({ Buffer: ['buffer', 'Buffer'], process: 'process', exclude: ['**/*.cjs'] })],
+        transform: { inject: injectNodeGlobals },
       },
     },
     server: {
