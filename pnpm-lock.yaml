@@ -182,8 +182,8 @@ importers:
         specifier: 23.2.0
         version: 23.2.0(@babel/traverse@7.29.8(supports-color@9.4.0))(nx@23.2.0)(supports-color@9.4.0)
       '@nx/maven':
-        specifier: 23.3.0
-        version: 23.3.0(nx@23.2.0)
+        specifier: 24.0.2
+        version: 24.0.2(nx@23.2.0)
       '@types/react':
         specifier: ^18.3.31
         version: 18.3.31
@@ -7439,10 +7439,10 @@ packages:
     peerDependencies:
       nx: '>= 22 <= 24 || ^23.0.0-0'
 
-  '@nx/devkit@23.3.0':
-    resolution: {integrity: sha512-xGSV4gCwQsVdt49VRcfxd2L31dAO/9t9Isv2bM5O89vyEzwd/tkW/IQwUzWn3OdhCnHayd37S1tDyJ5DilCv7w==}
+  '@nx/devkit@24.0.2':
+    resolution: {integrity: sha512-G2YWq9/Pj87Y20WCf6Clu1m9sTeoYcXCpivBo/I2foKVG1oOdOzMq966Na3eQ+ZdO0NneyBZvzoDYa6kJIufVw==}
     peerDependencies:
-      nx: '>= 22 <= 24 || ^23.0.0-0'
+      nx: '>= 23 <= 25 || ^24.0.0-0'
 
   '@nx/js@23.2.0':
     resolution: {integrity: sha512-pm3YJK6NO7r8oDLTffV3OBaImaEKdLrGtMM7NjxrS7a0FBS4FQ7k+vPXmV9i/XZIVdC5CBHby5FWJ2SpZxzTag==}
@@ -7455,8 +7455,8 @@ packages:
       verdaccio:
         optional: true
 
-  '@nx/maven@23.3.0':
-    resolution: {integrity: sha512-nmb/EJW31vkGdhNfCsaPUA+dqkBmgywk9dMZpznejdhY8QpoGmwmQdZcdZG3ASQ8sDPt5iqytp8tGrKVXeftEQ==}
+  '@nx/maven@24.0.2':
+    resolution: {integrity: sha512-Ao/y4N73lo2luRsMpBq7yO5uFFHJsWG9pr6RBaTpFZHuY2qc+gDlTzxqbynqqiKGS6Fl1Mb/vdHglH29pDeD4g==}
 
   '@nx/nx-darwin-arm64@23.2.0':
     resolution: {integrity: sha512-nael5WwtqBX/YZDU0iv8M4rJ8auF9kF+sU5pYpronIbvu/LdDptq31vWT06ivW8eXRaLxDqFmpXR8tS5IYDmdw==}
@@ -31935,7 +31935,7 @@ snapshots:
       tslib: 2.8.1
       yargs-parser: 21.1.1
 
-  '@nx/devkit@23.3.0(nx@23.2.0)':
+  '@nx/devkit@24.0.2(nx@23.2.0)':
     dependencies:
       ejs: 5.0.1
       minimatch: 10.2.5
@@ -31982,9 +31982,9 @@ snapshots:
       - nx
       - supports-color
 
-  '@nx/maven@23.3.0(nx@23.2.0)':
+  '@nx/maven@24.0.2(nx@23.2.0)':
     dependencies:
-      '@nx/devkit': 23.3.0(nx@23.2.0)
+      '@nx/devkit': 24.0.2(nx@23.2.0)
       '@xmldom/xmldom': 0.8.15
       tslib: 2.8.1
     transitivePeerDependencies:
