@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"strings"
 	"sync"
+	"sync/atomic"
 
 	"github.com/Netcracker/qubership-apihub/backend/agents-backend/client"
 	"github.com/Netcracker/qubership-apihub/backend/agents-backend/exception"
@@ -314,8 +315,6 @@ func filterService(allService []view.Service, requiredServices []string, promote
 }
 
 func (s *snapshotServiceImpl) startSnapshot(ctx context.Context, namespace string, workspaceId string, version string, services []view.Service, snapshotDTO view.CreateSnapshotDTO) (*view.CreateSnapshotResponse, error) {
-	// TODO: handle errors!
-
 	var packageIds []string
 	var groupId, dashboardId string
 	var err error
@@ -342,6 +341,7 @@ func (s *snapshotServiceImpl) startSnapshot(ctx context.Context, namespace strin
 	}
 
 	configs := make([]view.BuildConfig, len(services))
+	configErrs := make([]error, len(services))
 
 	wg := sync.WaitGroup{}
 	for it, svcIt := range services {
@@ -358,7 +358,7 @@ func (s *snapshotServiceImpl) startSnapshot(ctx context.Context, namespace strin
 				} else {
 					baselinePkgVersionEnt, err := s.apihubClient.GetVersion(ctx, svc.Baseline.PackageId, svcPreviousVersion)
 					if err != nil {
-						log.Errorf("Failed to get previous version %s for package %s", svcPreviousVersion, svc.Baseline.PackageId)
+						configErrs[i] = fmt.Errorf("failed to get previous version %s for package %s: %w", svcPreviousVersion, svc.Baseline.PackageId, err)
 						return
 					}
 					if baselinePkgVersionEnt == nil || baselinePkgVersionEnt.Status == string(view.DraftStatus) {
@@ -468,11 +468,18 @@ func (s *snapshotServiceImpl) startSnapshot(ctx context.Context, namespace strin
 
 	wg.Wait()
 
+	for i, cfgErr := range configErrs {
+		if cfgErr != nil {
+			return nil, fmt.Errorf("snapshot creation failed for service %s: %w", services[i].Id, cfgErr)
+		}
+	}
+
 	utils.SafeAsync(func() {
 		//a new context is required, as the request context will be canceled after the response is sent
 		secCtx := ctx.Value("secCtx")
 		ctx := context.WithValue(context.Background(), "secCtx", secCtx)
 		publishIds := make([]string, len(services))
+		var hasFailedService atomic.Bool
 		wg := sync.WaitGroup{}
 		for svcIndIt, svcIt := range services {
 			svcInd := svcIndIt
@@ -488,24 +495,28 @@ func (s *snapshotServiceImpl) startSnapshot(ctx context.Context, namespace strin
 					specBytes, err := s.agentClient.GetServiceSpecification(ctx, namespace, workspaceId, svc.Id, spec.FileId, snapshotDTO.AgentUrl, snapshotDTO.DiscoveryServices)
 					if err != nil {
 						log.Errorf("error: unable to get specification %s: %s", svc.Id, err.Error())
+						hasFailedService.Store(true)
 						return
 					}
 					fileName := configs[svcInd].Files[specInd].FileId
 					err = addFileToZip(zw, fileName, specBytes)
 					if err != nil {
 						log.Errorf("error: unable to add spec %s to src archive: %s", fileName, err.Error())
+						hasFailedService.Store(true)
 						return
 					}
 				}
 				err = zw.Close()
 				if err != nil {
 					log.Errorf("error: unable to close src archive: %s", err.Error())
+					hasFailedService.Store(true)
 					return
 				}
 
 				_, err = s.apihubClient.Publish(ctx, configs[svcInd], zipBuf.Bytes(), snapshotDTO.ClientBuild, snapshotDTO.BuilderId, false, nil)
 				if err != nil {
 					log.Errorf("Failed to send publish request: %s", err.Error())
+					hasFailedService.Store(true)
 					return
 				}
 				publishIds[svcInd] = configs[svcInd].PublishId
@@ -513,8 +524,12 @@ func (s *snapshotServiceImpl) startSnapshot(ctx context.Context, namespace strin
 		}
 		wg.Wait()
 
+		if hasFailedService.Load() {
+			log.Errorf("snapshot %s publish aborted: one or more services failed, see errors above", version)
+			return
+		}
+
 		if !snapshotDTO.Promote {
-			//TODO this will produce an error if at least one service is not sent to publish
 			_, err = s.apihubClient.Publish(ctx, *groupBuildConfig, nil, false, "", false, publishIds)
 			if err != nil {
 				log.Errorf("Failed to send publish request: %s", err.Error())
