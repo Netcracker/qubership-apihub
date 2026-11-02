@@ -208,7 +208,7 @@ jobs:
 
       # 1.3.3, not the current 1.3.4: setup-oras verifies against a release table baked into the
       # action, and v2.0.1's ends at 1.3.3.
-      - uses: oras-project/setup-oras@v2.0.2
+      - uses: oras-project/setup-oras@v2.0.3
         with:
           version: 1.3.3
 
@@ -312,7 +312,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: oras-project/setup-oras@v2.0.2
+      - uses: oras-project/setup-oras@v2.0.3
         with:
           version: 1.3.3
 
