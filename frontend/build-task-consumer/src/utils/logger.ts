@@ -51,5 +51,5 @@ export function redirectConsoleToLogger(): void {
 
 function formatLogLine(timestamp: Date, logLevel: LogLevel, className: string, message: string): string {
   const time = timestamp.toISOString().slice(0, TIMESTAMP_LENGTH)
-  return `[${time}] [${LEVEL_NAMES[logLevel]}] [request_id=] [tenant_id=] [thread_id=] [class=${className}] ${message}\n`
+  return `[${time}] [${LEVEL_NAMES[logLevel]}] [request_id=] [tenant_id=] [thread=] [class=${className}] ${message}\n`
 }
