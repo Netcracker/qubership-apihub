@@ -41,7 +41,7 @@ func TestFormatWritesUTCLineWithEmptyRequestID(t *testing.T) {
 
 	got := format(t, entry)
 
-	want := "[2026-10-28T11:03:12.345] [INFO] [request_id=] [tenant_id=] [thread_id=] [class=] Package version published\n"
+	want := "[2026-10-28T11:03:12.345] [INFO] [request_id=] [tenant_id=] [thread=] [class=] Package version published\n"
 	if got != want {
 		t.Errorf("got  %q\nwant %q", got, want)
 	}
@@ -53,7 +53,7 @@ func TestFormatTakesRequestIDFromContext(t *testing.T) {
 
 	got := format(t, entry)
 
-	want := "[2026-10-28T11:03:12.345] [WARN] [request_id=abc-123] [tenant_id=] [thread_id=] [class=] slow query\n"
+	want := "[2026-10-28T11:03:12.345] [WARN] [request_id=abc-123] [tenant_id=] [thread=] [class=] slow query\n"
 	if got != want {
 		t.Errorf("got  %q\nwant %q", got, want)
 	}
@@ -69,7 +69,7 @@ func TestFormatAppendsSortedFields(t *testing.T) {
 
 	got := format(t, entry)
 
-	want := "[2026-10-28T11:03:12.345] [ERROR] [request_id=] [tenant_id=] [thread_id=] [class=] build failed" +
+	want := "[2026-10-28T11:03:12.345] [ERROR] [request_id=] [tenant_id=] [thread=] [class=] build failed" +
 		" buildId=b1 error=\"no such file\"\n"
 	if got != want {
 		t.Errorf("got  %q\nwant %q", got, want)
@@ -81,7 +81,7 @@ func TestFormatKeepsMultilineMessage(t *testing.T) {
 
 	got := format(t, entry)
 
-	want := "[2026-10-28T11:03:12.345] [DEBUG] [request_id=] [tenant_id=] [thread_id=] [class=] first\nsecond\n"
+	want := "[2026-10-28T11:03:12.345] [DEBUG] [request_id=] [tenant_id=] [thread=] [class=] first\nsecond\n"
 	if got != want {
 		t.Errorf("got  %q\nwant %q", got, want)
 	}
