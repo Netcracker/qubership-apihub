@@ -9,7 +9,7 @@ import (
 )
 
 // currentSchemaTables are tried in order: error_build_notification is the current name on
-// Netcracker/qubership-apihub-backend@tolerant_publication (commit 035107e renamed it from
+// Netcracker/qubership-apihub backend/portal-backend@tolerant_publication (commit 035107e renamed it from
 // build_notification, same columns: build_id, severity, category, message, document_id). A build
 // pinned to an earlier commit on that branch may still have the pre-rename name.
 var currentSchemaTables = []string{"error_build_notification", "build_notification"}

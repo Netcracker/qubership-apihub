@@ -13,7 +13,7 @@ against a previous migration.
 
 ## GitHub branches are optional in this mode — do not stop without them
 
-`BACKEND_BRANCH_BEFORE/AFTER` and `BUILD_TASK_CONSUMER_BRANCH_BEFORE/AFTER` are **not required** here, unlike in
+`MONOREPO_BRANCH_BEFORE/AFTER` are **not required** here, unlike in
 `full-migration-analysis.md`. Categories A–D below are resolved entirely from the migration report and the database;
 only the optional code-evidence step for category E in section 3 uses them. If these variables are missing, empty, or
 the user says they have no GitHub branches to give: do not ask again, do not block, and do not skip any build. Keep
@@ -106,9 +106,10 @@ backend or consumer code defect.
 
 **Category E.** Use the same archive procedure as `full-migration-analysis.md` section 4.1: download `sources.zip`
 and/or `result.zip` for the specific build, locate the file/line named by the error. When GitHub branches are
-available (see the note above), use [get-release-evidence](../scripts/get-release-evidence/) against the backend
-and/or build-task-consumer repository to check whether the parser/validator path named by the error changed between
-`BACKEND_BRANCH_BEFORE`/`AFTER` or `BUILD_TASK_CONSUMER_BRANCH_BEFORE`/`AFTER`. When they are not available, state
+available (see the note above), use [get-release-evidence](../scripts/get-release-evidence/) against the monorepo
+`Netcracker/qubership-apihub` to check whether the parser/validator path named by the error changed between
+`MONOREPO_BRANCH_BEFORE`/`AFTER`. Focus on `backend/portal-backend` and `frontend/build-task-consumer`
+for backend and consumer changes respectively. When the branches are not available, state
 that this step was skipped for that reason and give the verdict from archive evidence alone. Use **code regression**,
 **pre-existing input issue**, or **insufficient data**, each with its cited evidence.
 

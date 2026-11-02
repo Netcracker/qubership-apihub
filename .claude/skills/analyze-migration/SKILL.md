@@ -66,8 +66,8 @@ If a required value is missing, ask the user to fill it in locally; never ask fo
 
 | File | Required for full comparison | Required for error-builds-only |
 | --- | --- | --- |
-| `.env.before` | `BACKEND_BRANCH_BEFORE`, `BUILD_TASK_CONSUMER_BRANCH_BEFORE` | not required |
-| `.env.after` | `APIHUB_URL`, `APIHUB_API_KEY`, `PREV_MIG_ID`, `MIG_ID`, `BACKEND_BRANCH_AFTER`, `BUILD_TASK_CONSUMER_BRANCH_AFTER` | `APIHUB_URL`, `APIHUB_API_KEY`, `MIG_ID` (`PREV_MIG_ID` only if a persistent/new/resolved comparison is also wanted) |
+| `.env.before` | `MONOREPO_BRANCH_BEFORE` | not required |
+| `.env.after` | `APIHUB_URL`, `APIHUB_API_KEY`, `PREV_MIG_ID`, `MIG_ID`, `MONOREPO_BRANCH_AFTER` | `APIHUB_URL`, `APIHUB_API_KEY`, `MIG_ID` (`PREV_MIG_ID` only if a persistent/new/resolved comparison is also wanted) |
 
 **For error-builds-only analysis, missing GitHub branch variables or failed `gh auth status` do not block the
 analysis.** That branch resolves most causes from the migration report and the database; GitHub evidence is an

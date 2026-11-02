@@ -45,21 +45,20 @@ Keep failed/cancelled outcomes distinct. A running/cancelling migration permits 
 
 ## 2. Review backend and library changes, then pause
 
-Compare each repository using its own before/after branches:
+Compare the monorepo at the before/after branches. Focus on the two paths that previously lived in separate repositories:
 
-| Repository | Branch variables |
-| --- | --- |
-| `Netcracker/qubership-apihub-backend` | `BACKEND_BRANCH_BEFORE`, `BACKEND_BRANCH_AFTER` |
-| `Netcracker/qubership-apihub-build-task-consumer` | `BUILD_TASK_CONSUMER_BRANCH_BEFORE`, `BUILD_TASK_CONSUMER_BRANCH_AFTER` |
+| Repository | Paths | Branch variables |
+| --- | --- | --- |
+| `Netcracker/qubership-apihub` | `backend/portal-backend`, `frontend/build-task-consumer` | `MONOREPO_BRANCH_BEFORE`, `MONOREPO_BRANCH_AFTER` |
 
-Use [get-release-evidence](../scripts/get-release-evidence/) from the repository root. Replace the uppercase placeholders:
+Use [get-release-evidence](../scripts/get-release-evidence/) from the repository root:
 
 ```bash
-go -C .claude/skills/analyze-migration run ./scripts/get-release-evidence/ commit OWNER/REPO BRANCH
-go -C .claude/skills/analyze-migration run ./scripts/get-release-evidence/ compare OWNER/REPO BEFORE_SHA AFTER_SHA
-go -C .claude/skills/analyze-migration run ./scripts/get-release-evidence/ file OWNER/REPO SHA FILE_PATH
-go -C .claude/skills/analyze-migration run ./scripts/get-release-evidence/ pulls OWNER/REPO SHA
-go -C .claude/skills/analyze-migration run ./scripts/get-release-evidence/ pr OWNER/REPO NUMBER
+go -C .claude/skills/analyze-migration run ./scripts/get-release-evidence/ commit Netcracker/qubership-apihub BRANCH
+go -C .claude/skills/analyze-migration run ./scripts/get-release-evidence/ compare Netcracker/qubership-apihub BEFORE_SHA AFTER_SHA
+go -C .claude/skills/analyze-migration run ./scripts/get-release-evidence/ file Netcracker/qubership-apihub SHA FILE_PATH
+go -C .claude/skills/analyze-migration run ./scripts/get-release-evidence/ pulls Netcracker/qubership-apihub SHA
+go -C .claude/skills/analyze-migration run ./scripts/get-release-evidence/ pr Netcracker/qubership-apihub NUMBER
 ```
 
 Resolve branches to full SHAs once and reuse them. A branch's present head does not prove the deployed version; state any unverified mapping.
@@ -67,7 +66,8 @@ A failed compare is missing evidence, not zero changes. Report diverged historie
 The compare helper does not paginate; check returned commit count against `ahead_by`.
 If incomplete, use paginated `gh api --method GET` reads for that comparison; inspect relevant commit details and source separately.
 
-The consumer is mainly a wrapper. Compare its `package.json` and lockfile at both SHAs.
+The build-task-consumer is mainly a wrapper around the shared libraries. Compare its `package.json`
+and lockfile under `frontend/build-task-consumer` at both SHAs.
 Follow changes in resolved library versions, especially `qubership-apihub-api-processor`.
 Find each relevant library's repository and exact version/tag/commit in GitHub; inspect the library diff and affected functions.
 Do not stop at dependency version numbers or consumer commits. If a version cannot be mapped to source, record that evidence gap.

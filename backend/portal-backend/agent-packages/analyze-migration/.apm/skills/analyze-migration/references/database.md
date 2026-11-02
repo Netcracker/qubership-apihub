@@ -75,7 +75,7 @@ with `MIGRATION_ID BUILD_ID`:
 go -C .claude/skills/analyze-migration run ./scripts/query-build-notifications/ "$MIGRATION_ID" "$BUILD_ID"
 ```
 
-This table has had three names so far on `Netcracker/qubership-apihub-backend`, same per-notification shape
+This table has had three names so far on `Netcracker/qubership-apihub` (`backend/portal-backend`), same per-notification shape
 throughout (one row per severity/message/document, keyed by `build_id`):
 
 | Name | Introduced | Columns |
