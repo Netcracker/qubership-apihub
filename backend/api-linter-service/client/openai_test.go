@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"reflect"
+	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -17,6 +18,8 @@ import (
 	"github.com/Netcracker/qubership-apihub/backend/api-linter-service/exception"
 	"github.com/Netcracker/qubership-apihub/backend/api-linter-service/view"
 	"github.com/openai/openai-go/v3"
+	log "github.com/sirupsen/logrus"
+	logtest "github.com/sirupsen/logrus/hooks/test"
 )
 
 const (
@@ -370,5 +373,178 @@ func TestDeduplicateIssuesCancelledDuringRetryDelay(t *testing.T) {
 	_, report, err := cl.DeduplicateIssues(ctx, "system prompt", testDeduplicationRequest, testMaxCompletionToken)
 	if !errors.Is(err, context.Canceled) || report.ProviderAttempts != 1 || requests.Load() != 1 {
 		t.Fatalf("expected the context error after 1 attempt, got %+v, %d received, %v", report, requests.Load(), err)
+	}
+}
+
+func captureLogs(t *testing.T) *logtest.Hook {
+	t.Helper()
+	logger := log.StandardLogger()
+	previous := logger.ReplaceHooks(make(log.LevelHooks))
+	t.Cleanup(func() { logger.ReplaceHooks(previous) })
+	return logtest.NewLocal(logger)
+}
+
+func TestRateLimitedAttemptsLogProviderDiagnostics(t *testing.T) {
+	const providerMessage = "No deployments available for selected model, Try again in 60 seconds"
+	hook := captureLogs(t)
+	var requests atomic.Int32
+	cl := newTestClient(t, func(w http.ResponseWriter, _ *http.Request) {
+		requests.Add(1)
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Retry-After", "60")
+		w.Header().Set("Retry-After-Ms", "1")
+		w.Header().Set("X-Litellm-Call-Id", "call-1")
+		w.Header().Set("X-Litellm-Attempted-Retries", "0")
+		w.Header()["rate_limit_type"] = []string{"requests"}
+		w.Header()["reset_at"] = []string{"2026-11-02T12:00:00Z"}
+		w.Header().Set("X-Litellm-Key-Rpm-Limit", "10")
+		w.WriteHeader(http.StatusTooManyRequests)
+		_, _ = fmt.Fprintf(w, "{\n  \"error\": {\"message\": %q, \"type\": \"None\", \"param\": null, \"code\": \"429\"}\n}", providerMessage)
+	}, testMaxConcurrent, 1, "")
+
+	_, report, err := cl.DeduplicateIssues(context.Background(), "system prompt", testDeduplicationRequest, testMaxCompletionToken)
+
+	var apiErr *openai.Error
+	if !errors.Is(err, aiError(exception.AiRateLimitExceeded, "")) || !errors.As(err, &apiErr) || apiErr.Message != providerMessage {
+		t.Fatalf("expected the parsed rate limit error, got %v", err)
+	}
+	if wantSuffix := ": " + providerMessage + " (code 429)"; !strings.HasSuffix(err.Error(), wantSuffix) {
+		t.Errorf("expected the error to end with %q, got %q", wantSuffix, err.Error())
+	}
+	if report.ProviderAttempts != 2 || requests.Load() != 2 {
+		t.Fatalf("expected 2 attempts, got %d reported and %d received", report.ProviderAttempts, requests.Load())
+	}
+	entries := hook.AllEntries()
+	if len(entries) != 2 {
+		t.Fatalf("expected a warning per attempt, got %d entries", len(entries))
+	}
+	wantDetails := `, Retry-After=60, Retry-After-Ms=1, X-Litellm-Call-Id=call-1, X-Litellm-Attempted-Retries=0, ` +
+		`rate_limit_type=requests, reset_at=2026-11-02T12:00:00Z, X-Litellm-Key-Rpm-Limit=10, ` +
+		`body: { "error": {"message": "` + providerMessage + `", "type": "None", "param": null, "code": "429"} }`
+	for i, entry := range entries {
+		wantPrefix := fmt.Sprintf("AI request oas_issue_deduplication_response: attempt %d failed with HTTP 429 after ", i+1)
+		if entry.Level != log.WarnLevel || !strings.HasPrefix(entry.Message, wantPrefix) || !strings.HasSuffix(entry.Message, wantDetails) {
+			t.Errorf("unexpected log entry %s: %q", entry.Level, entry.Message)
+		}
+	}
+}
+
+type readTrackingBody struct {
+	io.Reader
+	read   bool
+	closed bool
+}
+
+func (b *readTrackingBody) Read(p []byte) (int, error) {
+	b.read = true
+	return b.Reader.Read(p)
+}
+
+func (b *readTrackingBody) Close() error {
+	b.closed = true
+	return nil
+}
+
+type oneOffErrReader struct{ err error }
+
+func (r *oneOffErrReader) Read([]byte) (int, error) {
+	if err := r.err; err != nil {
+		r.err = nil
+		return 0, err
+	}
+	return 0, io.EOF
+}
+
+func TestTrackAttemptsResponseBodies(t *testing.T) {
+	longBody := `{"error":{"message":"` + strings.Repeat("x", 2*maxProviderTextBytes) + `"}}`
+	tests := []struct {
+		name       string
+		status     int
+		wantRead   bool
+		wantLogged string
+	}{
+		{name: "successful response body is not read", status: http.StatusOK},
+		{name: "long failed response body is truncated in the log", status: http.StatusTooManyRequests, wantRead: true, wantLogged: ", body: " + longBody[:maxProviderTextBytes] + "..."},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			hook := captureLogs(t)
+			body := &readTrackingBody{Reader: strings.NewReader(longBody)}
+			attempts := 0
+			middleware := trackAttempts("schema", &attempts)
+
+			resp, err := middleware(httptest.NewRequest(http.MethodPost, "/", nil), func(*http.Request) (*http.Response, error) {
+				return &http.Response{StatusCode: tt.status, Header: http.Header{}, Body: body}, nil
+			})
+
+			if err != nil || attempts != 1 {
+				t.Fatalf("expected 1 attempt without error, got %d, %v", attempts, err)
+			}
+			if body.read != tt.wantRead {
+				t.Errorf("expected body read %t, got %t", tt.wantRead, body.read)
+			}
+			if restored, err := io.ReadAll(resp.Body); err != nil || string(restored) != longBody {
+				t.Errorf("expected the full body to stay readable, got %d bytes, %v", len(restored), err)
+			}
+			entries := hook.AllEntries()
+			if tt.wantLogged == "" && len(entries) != 0 {
+				t.Errorf("expected no log entries, got %q", hook.LastEntry().Message)
+			}
+			if tt.wantLogged != "" && (len(entries) != 1 || !strings.HasSuffix(entries[0].Message, tt.wantLogged)) {
+				t.Errorf("expected one entry ending with %q, got %v", tt.wantLogged, entries)
+			}
+		})
+	}
+}
+
+func TestTrackAttemptsReplaysBodyReadError(t *testing.T) {
+	hook := captureLogs(t)
+	errBodyRead := errors.New("connection reset")
+	body := &readTrackingBody{Reader: io.MultiReader(strings.NewReader("partial"), &oneOffErrReader{err: errBodyRead})}
+	attempts := 0
+
+	resp, err := trackAttempts("schema", &attempts)(httptest.NewRequest(http.MethodPost, "/", nil), func(*http.Request) (*http.Response, error) {
+		return &http.Response{StatusCode: http.StatusTooManyRequests, Header: http.Header{}, Body: body}, nil
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	contents, readErr := io.ReadAll(resp.Body)
+	closeErr := resp.Body.Close()
+
+	if !errors.Is(readErr, errBodyRead) || string(contents) != "partial" {
+		t.Errorf("expected the SDK to read 'partial' and then the read error, got %q, %v", contents, readErr)
+	}
+	if closeErr != nil || !body.closed {
+		t.Errorf("expected the original body to be closed, got closed %t, %v", body.closed, closeErr)
+	}
+	if entry := hook.LastEntry(); entry == nil || !strings.HasSuffix(entry.Message, ", body read error: connection reset") {
+		t.Errorf("expected the read error in the log, got %v", entry)
+	}
+}
+
+func TestProviderSecretsAreRedacted(t *testing.T) {
+	const bearerToken, apiKey = "abc.def", "sk-live-1234567890"
+	hook := captureLogs(t)
+	cl := newTestClient(t, func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnauthorized)
+		_, _ = fmt.Fprintf(w, `{"error":{"message":"Invalid header Authorization: Bearer %s for key %s","type":null,"param":null,"code":"401"}}`, bearerToken, apiKey)
+	}, testMaxConcurrent, 0, "")
+
+	_, _, err := cl.DeduplicateIssues(context.Background(), "system prompt", testDeduplicationRequest, testMaxCompletionToken)
+
+	if err == nil || !strings.HasSuffix(err.Error(), ": Invalid header Authorization: Bearer *** for key *** (code 401)") {
+		t.Fatalf("expected the redacted provider message in the error, got %v", err)
+	}
+	entries := hook.AllEntries()
+	if len(entries) != 1 {
+		t.Fatalf("expected one warning, got %d entries", len(entries))
+	}
+	for _, secret := range []string{bearerToken, apiKey} {
+		if strings.Contains(entries[0].Message, secret) || strings.Contains(err.Error(), secret) {
+			t.Errorf("expected %q to be redacted, got log %q and error %q", secret, entries[0].Message, err.Error())
+		}
 	}
 }

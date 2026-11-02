@@ -1,13 +1,16 @@
 package client
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strings"
 	"time"
 
@@ -30,7 +33,30 @@ type LLMClient interface {
 const (
 	finishReasonStop   = "stop"
 	finishReasonLength = "length"
+
+	maxProviderTextBytes = 512
 )
+
+var (
+	providerDiagnosticHeaders = []string{
+		"Retry-After",
+		"Retry-After-Ms",
+		"X-Litellm-Call-Id",
+		"X-Litellm-Model-Id",
+		"X-Litellm-Attempted-Retries",
+		"rate_limit_type",
+		"reset_at",
+		"X-Litellm-Key-Rpm-Limit",
+		"X-Litellm-Timeout",
+	}
+	secretPattern = regexp.MustCompile(`(?i)(bearer\s+)[A-Za-z0-9._~+/=-]+|sk-[A-Za-z0-9_-]{8,}`)
+)
+
+type errReader struct{ err error }
+
+func (r errReader) Read([]byte) (int, error) {
+	return 0, r.err
+}
 
 type TokenUsage struct {
 	PromptTokens       int
@@ -200,22 +226,9 @@ func (o OAIClientImpl) complete(ctx context.Context, systemPrompt string, userMe
 		params.MaxCompletionTokens = openai.Int(int64(maxCompletionTokens))
 	}
 
-	// The SDK calls the middleware once per HTTP attempt, including its own retries, before the response body is read.
 	attempts := 0
-	countAttempts := option.WithMiddleware(func(req *http.Request, next option.MiddlewareNext) (*http.Response, error) {
-		attempts++
-		attemptStart := time.Now()
-		resp, err := next(req)
-		if err != nil {
-			log.Warnf("AI request %s: attempt %d failed with %v after %s", schemaName, attempts, err, time.Since(attemptStart).Round(time.Millisecond))
-		} else if resp.StatusCode >= http.StatusBadRequest {
-			log.Warnf("AI request %s: attempt %d failed with HTTP %d after %s", schemaName, attempts, resp.StatusCode, time.Since(attemptStart).Round(time.Millisecond))
-		}
-		return resp, err
-	})
-
 	start := time.Now()
-	requestOpts := append([]option.RequestOption{countAttempts}, o.extraBodyOpts...)
+	requestOpts := append([]option.RequestOption{option.WithMiddleware(trackAttempts(schemaName, &attempts))}, o.extraBodyOpts...)
 	chat, err := o.client.Chat.Completions.New(ctx, params, requestOpts...)
 	report.Duration = time.Since(start)
 	report.ProviderAttempts = attempts
@@ -262,10 +275,73 @@ func (o OAIClientImpl) complete(ctx context.Context, systemPrompt string, userMe
 	return report, nil
 }
 
+// trackAttempts counts HTTP attempts and logs the failed ones. The SDK calls the middleware once per attempt,
+// including its own retries, before the response body is read, and discards the bodies of retried responses.
+func trackAttempts(schemaName string, attempts *int) option.Middleware {
+	return func(req *http.Request, next option.MiddlewareNext) (*http.Response, error) {
+		*attempts++
+		attemptStart := time.Now()
+		resp, err := next(req)
+		elapsed := time.Since(attemptStart).Round(time.Millisecond)
+		if err != nil {
+			log.Warnf("AI request %s: attempt %d failed with %v after %s", schemaName, *attempts, err, elapsed)
+		} else if resp.StatusCode >= http.StatusBadRequest {
+			log.Warnf("AI request %s: attempt %d failed with HTTP %d after %s%s", schemaName, *attempts, resp.StatusCode, elapsed, describeFailedResponse(resp))
+		}
+		return resp, err
+	}
+}
+
+// describeFailedResponse puts the body back after reading its excerpt, so that the SDK still parses the whole error.
+func describeFailedResponse(resp *http.Response) string {
+	var details strings.Builder
+	for _, name := range providerDiagnosticHeaders {
+		if value := resp.Header.Get(name); value != "" {
+			fmt.Fprintf(&details, ", %s=%s", name, excerpt(value))
+		}
+	}
+	prefix, readErr := io.ReadAll(io.LimitReader(resp.Body, maxProviderTextBytes+1))
+	rest := io.Reader(resp.Body)
+	if readErr != nil {
+		rest = errReader{readErr}
+	}
+	resp.Body = struct {
+		io.Reader
+		io.Closer
+	}{io.MultiReader(bytes.NewReader(prefix), rest), resp.Body}
+	if readErr != nil {
+		fmt.Fprintf(&details, ", body read error: %v", readErr)
+	} else if len(prefix) > 0 {
+		fmt.Fprintf(&details, ", body: %s", excerpt(string(prefix)))
+	}
+	return details.String()
+}
+
+func excerpt(text string) string {
+	truncated := len(text) > maxProviderTextBytes
+	text = secretPattern.ReplaceAllString(text, "${1}***")
+	if len(text) > maxProviderTextBytes {
+		text = strings.ToValidUTF8(text[:maxProviderTextBytes], "")
+		truncated = true
+	}
+	text = strings.Join(strings.Fields(text), " ")
+	if truncated {
+		text += "..."
+	}
+	return text
+}
+
 func classifyProviderError(err error) error {
 	var apiErr *openai.Error
 	if !errors.As(err, &apiErr) {
 		return err
+	}
+	detail := excerpt(apiErr.Message)
+	if apiErr.Code != "" {
+		detail = strings.TrimSpace(fmt.Sprintf("%s (code %s)", detail, excerpt(apiErr.Code)))
+	}
+	if detail != "" {
+		err = fmt.Errorf("%w: %s", err, detail)
 	}
 	switch apiErr.StatusCode {
 	case http.StatusTooManyRequests:
