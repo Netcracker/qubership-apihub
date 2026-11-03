@@ -59,6 +59,7 @@ import {
   validateGroupPrefix,
 } from './rest.utils'
 import {
+  belongsToPair,
   createComparisonDocument,
   createComparisonInternalDocumentId,
   createOperationChange,
@@ -169,6 +170,10 @@ export const compareDocuments: DocumentsCompare = async (
       if (!current && !previous) {
         const missingOperations = prevNormalizedOperationId === currNormalizedOperationId ? `the ${prevNormalizedOperationId} operation` : `the ${prevNormalizedOperationId} and ${currNormalizedOperationId} operations`
         throw new Error(`Can't find ${missingOperations} from documents pair ${prevDoc?.fileId} and ${currDoc?.fileId}`)
+      }
+      // a document pair that does not own the operation holds a copy of it, which the owner pair already reports
+      if (!belongsToPair({ previous: previous?.documentId, current: current?.documentId }, prevDoc?.slug, currDoc?.slug)) {
+        continue
       }
       const operationPotentiallyChanged = Boolean(current && previous)
       const operationAddedOrRemoved = !operationPotentiallyChanged
