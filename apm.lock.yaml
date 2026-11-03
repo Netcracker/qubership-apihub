@@ -1,5 +1,5 @@
 lockfile_version: '1'
-generated_at: '2026-10-31T11:45:29.996657+00:00'
+generated_at: '2026-10-31T18:05:16.778413+00:00'
 apm_version: 0.35.0
 dependencies:
 - repo_url: _local/advanced-verification
@@ -169,13 +169,13 @@ dependencies:
   - .claude/skills/api-doc-viewer-testing/SKILL.md
   - .cursor/rules/api-doc-viewer-testing.mdc
   deployed_file_hashes:
-    .agents/skills/api-doc-viewer-testing/SKILL.md: sha256:ba9d99dc10533a4d48ff8222b790bb2e7440ff51aea84e7b54f72700b3473040
+    .agents/skills/api-doc-viewer-testing/SKILL.md: sha256:b40288b75dd906cbb270d32d7137c4fb10f2603eac16e9a60e92a3c65b5508d5
     .claude/rules/api-doc-viewer-testing.md: sha256:56dbe13ef83743f14c08c8fbb0852e2764d2f8b03a44b8ae0a94951a4ecfa62f
-    .claude/skills/api-doc-viewer-testing/SKILL.md: sha256:ba9d99dc10533a4d48ff8222b790bb2e7440ff51aea84e7b54f72700b3473040
+    .claude/skills/api-doc-viewer-testing/SKILL.md: sha256:b40288b75dd906cbb270d32d7137c4fb10f2603eac16e9a60e92a3c65b5508d5
     .cursor/rules/api-doc-viewer-testing.mdc: sha256:da6f2bff0ad97eef742cc9ab4a0f3a688a52c114cf179c6272e4355834e7449e
   source: local
   local_path: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-testing
-  content_hash: sha256:6fced94fd61b6eb37eda2474381c919965ad4a0b545079d63059d03217cd27f3
+  content_hash: sha256:f6c7c06f73a82eda1b6b901754c6874bc561225a228afedd61e5118b3eef8d53
 - repo_url: _local/api-doc-viewer-using
   name: api-doc-viewer-using
   version: 1.0.0
@@ -1783,7 +1783,7 @@ deployments:
   owners:
   - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-testing
   active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-testing
-  content_hash: sha256:ba9d99dc10533a4d48ff8222b790bb2e7440ff51aea84e7b54f72700b3473040
+  content_hash: sha256:b40288b75dd906cbb270d32d7137c4fb10f2603eac16e9a60e92a3c65b5508d5
 - kind: project-relative
   target: claude
   value: .claude/skills/api-doc-viewer-using
@@ -2791,7 +2791,7 @@ deployments:
   owners:
   - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-testing
   active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-testing
-  content_hash: sha256:ba9d99dc10533a4d48ff8222b790bb2e7440ff51aea84e7b54f72700b3473040
+  content_hash: sha256:b40288b75dd906cbb270d32d7137c4fb10f2603eac16e9a60e92a3c65b5508d5
 - kind: project-relative
   target: cursor
   value: .agents/skills/api-doc-viewer-using

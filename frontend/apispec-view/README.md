@@ -26,7 +26,7 @@ pnpm exec nx run apispec-view:type-check
 pnpm exec nx run apispec-view:screenshot-test
 ```
 
-The screenshot tests need Podman; see
+The screenshot tests need Podman, Docker, or `wslc` on Windows; see
 [Build and test: Screenshot tests](../../docs/development/build-and-test.md#screenshot-tests). The cases come from
 [`compatibility-suites`](../compatibility-suites/README.md).
 
