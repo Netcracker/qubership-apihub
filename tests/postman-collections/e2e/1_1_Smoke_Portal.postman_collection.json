@@ -9000,7 +9000,7 @@
                             "protocolProfileBehavior": {}
                         },
                         {
-                            "name": "4.4.47 Export API changes with previos release version",
+                            "name": "4.4.47 Export API changes with previous release version",
                             "event": [
                                 {
                                     "listen": "test",

@@ -48,17 +48,6 @@ const CONTENT_MAX_WIDTH = 480
 // the content by that much.
 const CONTENT_MAX_WIDTH_IN_WINDOW = `min(${CONTENT_MAX_WIDTH}px, calc(100vw - 80px))`
 
-function getExtensionVersionText(state: ExtensionVersionState): string {
-  switch (state.status) {
-    case 'success':
-      return state.version
-    case 'error':
-      return VERSION_NO_DATA_TEXT
-    case 'pending':
-      return VERSION_PENDING_TEXT
-  }
-}
-
 export const SystemInfoPopup: FC<SystemInfoPopupProps> = memo(({
   frontendVersionKey,
   apiProcessorVersion,
@@ -194,6 +183,17 @@ const SystemInfoContent = styled(DialogContent)(({ theme }) => ({
   maxWidth: CONTENT_MAX_WIDTH_IN_WINDOW,
   paddingBottom: theme.spacing(2),
 }))
+
+function getExtensionVersionText(state: ExtensionVersionState): string {
+  switch (state.status) {
+    case 'success':
+      return state.version
+    case 'error':
+      return VERSION_NO_DATA_TEXT
+    case 'pending':
+      return VERSION_PENDING_TEXT
+  }
+}
 
 interface Link {
   title: string

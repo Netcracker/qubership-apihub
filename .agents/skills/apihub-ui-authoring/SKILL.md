@@ -23,8 +23,8 @@ commands are in `frontend/ui/AGENTS.md`.
 - A `.tsx` file with a primary React component is PascalCase and named after the component (`ChatScreen.tsx`
   exports `ChatScreen`). A `.ts` file without one (hooks, utils, reducers, constants, types, `/api`) is camelCase.
   Use kebab-case only in a folder that already standardizes on it.
-- Unit tests are `*.unit-test.ts` beside the code, stories are `*.stories.tsx`; the unit-test suite and the Storybook of
-  `ui-shared` collect them from all three packages. `*.unit.test.ts` and `*.story.ts` are never picked up.
+- A unit test is `<name>.unit.test.ts` beside the code; Jest picks up no other name (`*.test.ts`, `*.unit.test.tsx`).
+  `ui-shared:test` runs the unit tests of all three packages; `ui-portal` and `ui-agents` have no `test` target.
 - No new `index.ts` or `index.tsx` barrels (`filenames/no-index`); import from the concrete file.
 
 ## Imports

@@ -83,7 +83,7 @@ here
   ```typescript
   {
     dockerImage?: string; // if it is specified tests will be run under browser inside docker container
-    dockerBinary?:string; // specifies path do Docker binary. For example it can be 'podman' or 'C:\\Program Files\\RedHat\\Podman\\podman.exe'
+    dockerBinary?:string; // specifies path do Docker binary. For example it can be 'podman', 'wslc', or 'C:\\Program Files\\RedHat\\Podman\\podman.exe'
     nodeBinary?:string;   // specifies path do Node.js binary.
   }
   ```
@@ -148,7 +148,7 @@ here
 | Name                             | Default | Description                                                                                                                                                                         |
 |----------------------------------|---------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | HOST_CHECK_PORT                  | 9009    | Port that is used to check localserver (host side) is accessible. If local server uses not default port than it must be specified explicitly using this environment variable name   |
-| DOCKER_BINARY                    | docker  | Name or full path of executable binary for Docker on host machine. For example it can be podman.exe                                                                                 |
+| DOCKER_BINARY                    | podman  | Name or full path of the container engine executable on the host machine: `podman`, `docker`, or `wslc` (see [WSL containers](#wsl-containers-wslc)) |
 | NODE_BINARY                      | node    | Name or full path of executable binary for Node.js on host machine.                                                                                                                 |
 | CONNECT_TO_CHROME_MAX_ATTEMPTS   | 10      | How many attempts will be used to connect to Chrome while waiting the start                                                                                                         |
 | CONNECT_TO_CHROME_RETRY_INTERVAL | 2000    | Interval between attempts of connecting to Chrome while it is starting                                                                                                              |
@@ -159,3 +159,17 @@ here
 | Name         | Description                                                                                                                                                                                                                                                                                    |
 |--------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | HOST_ADDRESS | The host address associated with the interface known to Chrome which is run in this environment. It can be safely used to open pages from a server deployed on the host machine. Example: ```await page.goto(`http://${process.env.HOST_ADDRESS}:9009?path=/story/xyz`, ...);```    |
+
+## WSL containers (`wslc`)
+
+On Windows with WSL 3.0 or later, set `DOCKER_BINARY=wslc` to start Chrome with `wslc.exe`. The environment
+connects to Chrome through the port that `wslc` publishes on `127.0.0.1`. `wslc` names the Windows host
+`host.wslc.internal` and does not define `host.docker.internal`, so the environment starts Chrome with
+`--host-resolver-rules` that map `host.docker.internal` to `host.wslc.internal`. Tests that open
+`http://host.docker.internal:<port>` therefore run unchanged, and a page origin shown in a snapshot stays the same on
+every engine.
+
+* Run Jest from PowerShell or Git Bash. `wslc` cannot be called from inside a WSL distribution.
+* Use headless mode. Headful mode starts the container with `--network=host`, which `wslc` rejects.
+* Keep the `session.hostLoopback` setting of `wslc` at its default. With another name or `none`, the environment does
+  not find the host and stops with `Could not resolve IP address of host machine`.

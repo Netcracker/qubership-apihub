@@ -163,5 +163,5 @@ When the turn ends, the same message renders in **full** mode (highlighting, cop
 
 | Area                             | Files                                                                       |
 | -------------------------------- | --------------------------------------------------------------------------- |
-| SSE framing                      | `sseFramer.unit-test.ts`, `sseFrameParser.unit-test.ts`                     |
-| Turn reducer / post-stream guard | `streamingTurnReducer.unit-test.ts`, `streamingTurnPostStream.unit-test.ts` |
+| SSE framing                      | `sseFramer.unit.test.ts`, `sseFrameParser.unit.test.ts`                     |
+| Turn reducer / post-stream guard | `streamingTurnReducer.unit.test.ts`, `streamingTurnPostStream.unit.test.ts` |

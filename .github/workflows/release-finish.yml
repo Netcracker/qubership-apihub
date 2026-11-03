@@ -92,7 +92,7 @@ jobs:
             exit 1
           fi
 
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           # No key in a dry run, so nothing in it can push.
           ssh-key: ${{ !inputs.dry_run && secrets.RELEASE_BOT_SSH_KEY || '' }}
@@ -248,7 +248,7 @@ jobs:
       contents: read # checkout; the push uses the deploy key
       actions: write # find or dispatch the CI run on develop
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           ssh-key: ${{ secrets.RELEASE_BOT_SSH_KEY }}
           fetch-depth: 0

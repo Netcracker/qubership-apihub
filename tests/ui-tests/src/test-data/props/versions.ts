@@ -2,7 +2,7 @@ import { createRestWithCredentials, createRestWithToken, rGetAppFile, rGetExtens
 import { BASE_URL } from '@test-setup'
 import { getRestFailMsg } from '@services/utils'
 import { SYSADMIN } from '@test-data'
-import { getSysExtensions } from './sys-config'
+import { getSysConfig } from './sys-config'
 
 // The extensions that report a version, by the name they are registered under.
 export type VersionedExtensionName = 'api-linter' | 'agents-backend'
@@ -14,7 +14,7 @@ export const VERSIONED_EXTENSION_NAMES: readonly VersionedExtensionName[] = ['ap
 // The version of each registered extension, from the extension itself. An extension that this stand does not register
 // has no entry. The URL comes from the `pathPrefix` of the registration, which is not always the name.
 export async function getExtensionVersions(): Promise<Partial<Record<VersionedExtensionName, string>>> {
-  const extensions = await getSysExtensions()
+  const { extensions } = await getSysConfig()
   const rest = await createRestWithCredentials(BASE_URL, SYSADMIN)
   const versions: Partial<Record<VersionedExtensionName, string>> = {}
 

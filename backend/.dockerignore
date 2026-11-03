@@ -1,4 +1,4 @@
-# Three Go images build from backend/, so that `replace ../commons-go` resolves inside the context.
+# The Go images build from backend/, so that `replace ../commons-go` resolves inside the context.
 */dist/
 */*/dist/
 **/.git

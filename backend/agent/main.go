@@ -21,10 +21,10 @@ import (
 
 	"github.com/Netcracker/qubership-apihub/backend/agent/controller"
 	"github.com/Netcracker/qubership-apihub/backend/agent/service"
+	"github.com/Netcracker/qubership-apihub/backend/commons-go/logging"
 	"github.com/gorilla/mux"
 	paasService "github.com/netcracker/qubership-core-lib-go-paas-mediation-client/v8/service"
 	log "github.com/sirupsen/logrus"
-	prefixed "github.com/x-cray/logrus-prefixed-formatter"
 )
 
 func init() {
@@ -41,18 +41,14 @@ func init() {
 	} else {
 		mw = os.Stdout
 	}
-	log.SetFormatter(&prefixed.TextFormatter{
-		DisableColors:   true,
-		TimestampFormat: "2006-01-02 15:04:05",
-		FullTimestamp:   true,
-		ForceFormatting: true,
-	})
+	log.SetFormatter(logging.NewFormatter())
 	logLevel, err := log.ParseLevel(os.Getenv("LOG_LEVEL"))
 	if err != nil {
 		logLevel = log.InfoLevel
 	}
 	log.SetLevel(logLevel)
 	log.SetOutput(mw)
+	logging.RedirectStandardLog()
 }
 
 func main() {
@@ -118,6 +114,7 @@ func main() {
 
 	disablingMiddleware := controller.NewDisabledServicesMiddleware(disablingSerivce, resp)
 	r := mux.NewRouter().SkipClean(true).UseEncodedPath()
+	r.Use(logging.RequestIDMiddleware)
 	r.Use(disablingMiddleware.HandleRequest)
 	r.Use(midldleware.WriteDeadlineMiddleware)
 

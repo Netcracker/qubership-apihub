@@ -1,6 +1,6 @@
 {
   "name": "@netcracker/qubership-apihub-compatibility-suites",
-  "version": "2.6.2",
+  "version": "2.7.0",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Netcracker/qubership-apihub.git",

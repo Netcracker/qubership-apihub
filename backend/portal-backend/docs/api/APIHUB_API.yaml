@@ -1079,7 +1079,7 @@ paths:
                               properties:
                                 hasReadPermission:
                                   type: boolean
-                                  description: true - if current user has read permission fot this package
+                                  description: true - if current user has read permission for this package
                       defaultReleaseVersion:
                         description: |
                           Default release version for the package.
@@ -1107,7 +1107,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -1183,7 +1183,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -1255,7 +1255,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -1327,7 +1327,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -1389,7 +1389,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -1789,7 +1789,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -1938,7 +1938,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -1995,7 +1995,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -2076,7 +2076,7 @@ paths:
                     properties:
                       token:
                         description: >
-                          Generated personall acess token.
+                          Generated personal access token.
                         type: string
               examples: {}
         '400':
@@ -2233,7 +2233,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -2285,7 +2285,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -2417,7 +2417,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -2520,7 +2520,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -2615,7 +2615,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -2716,7 +2716,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -2930,7 +2930,7 @@ paths:
                     description: |
                       * The message for **error** status.
                       * The message for **complete** status with the following
-                      information (if applicalbe):
+                      information (if applicable):
                         * N services were not included into dashboard version.
                         * N operations were not included into \<operation group name\> operation group.
                         If all services and operations were included into dashboard and group, then message shall be empty.
@@ -2991,7 +2991,7 @@ paths:
               schema:
                 type: string
                 format: binary
-                description: CSV file which contains initial (input) content and supplemented with information about status and details info if any problems occured (package version was not found, operation was not found, insufficient information provided).
+                description: CSV file which contains initial (input) content and supplemented with information about status and details info if any problems occurred (package version was not found, operation was not found, insufficient information provided).
         '401':
           description: Unauthorized
           content:
@@ -3253,7 +3253,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -3339,7 +3339,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -3420,7 +3420,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -3624,7 +3624,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -3788,7 +3788,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -3977,7 +3977,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -4093,7 +4093,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -4177,7 +4177,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -4240,7 +4240,7 @@ paths:
               schema:
                 type: string
                 format: binary
-                description: ZIP file with pacakge version sources to download
+                description: ZIP file with package version sources to download
         "401":
           description: Unauthorized
           content:
@@ -4388,7 +4388,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -4610,8 +4610,8 @@ paths:
             - rest
       - name: buildType
         description: |
-          Type of the build process for OpeanAPI specification tranformation. Available options are:
-          - **reducedSourceSpecifications** - proccess that finds source specifications for all operations from operation group and removes from these specifications operations other than those that are included into operation group.
+          Type of the build process for OpenAPI specification transformation. Available options are:
+          - **reducedSourceSpecifications** - process that finds source specifications for all operations from operation group and removes from these specifications operations other than those that are included into operation group.
           - **mergedSpecification** - process the merges all operations from an operation group into one specification.
         in: path
         required: true
@@ -4707,8 +4707,8 @@ paths:
                     example: v1
                   buildType:
                     description: |
-                      Type of the build process for OpeanAPI specification tranformation. Available options are:
-                      - **reducedSourceSpecifications** - proccess that finds source specifications for all operations from operation group and removes from these specifications operations other than those that are included into operation group.
+                      Type of the build process for OpenAPI specification transformation. Available options are:
+                      - **reducedSourceSpecifications** - process that finds source specifications for all operations from operation group and removes from these specifications operations other than those that are included into operation group.
                       - **mergedSpecification** - process the merges all operations from an operation group into one specification.
                     type: string
                     enum:
@@ -4748,7 +4748,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -4793,8 +4793,8 @@ paths:
             - rest
       - name: buildType
         description: |
-          Type of the build process for OpeanAPI specification tranformation. Available options are:
-          - **reducedSourceSpecifications** - proccess that finds source specifications for all operations from operation group and removes from these specifications operations other than those that are included into operation group.
+          Type of the build process for OpenAPI specification transformation. Available options are:
+          - **reducedSourceSpecifications** - process that finds source specifications for all operations from operation group and removes from these specifications operations other than those that are included into operation group.
           - **mergedSpecification** - process the merges all operations from an operation group into one specification.
         in: path
         required: true
@@ -4865,7 +4865,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -4939,7 +4939,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -5014,7 +5014,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -5172,7 +5172,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -5492,7 +5492,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -5560,7 +5560,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -5632,7 +5632,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -5717,7 +5717,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -5792,7 +5792,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -6315,7 +6315,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -6403,7 +6403,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -6473,7 +6473,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -6551,7 +6551,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -6659,7 +6659,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -6726,7 +6726,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -6799,7 +6799,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -6883,7 +6883,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -6983,7 +6983,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -7054,7 +7054,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -7126,7 +7126,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -7245,7 +7245,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -7440,7 +7440,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -7501,7 +7501,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -7575,7 +7575,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -7704,7 +7704,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -7838,7 +7838,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -7925,7 +7925,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -8007,7 +8007,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -8073,7 +8073,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -8180,7 +8180,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -8264,7 +8264,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -8431,7 +8431,7 @@ paths:
               Location:
                 schema:
                   type: string
-                description: Current ednpoint with new packageId of moved package
+                description: Current endpoint with new packageId of moved package
               X-New-Package-Id:
                 schema:
                   type: string
@@ -8492,7 +8492,7 @@ paths:
               Location:
                 schema:
                   type: string
-                description: Current ednpoint with new packageId of moved package
+                description: Current endpoint with new packageId of moved package
               X-New-Package-Id:
                 schema:
                   type: string
@@ -8603,7 +8603,7 @@ paths:
               Location:
                 schema:
                   type: string
-                description: Current ednpoint with new packageId of moved package
+                description: Current endpoint with new packageId of moved package
               X-New-Package-Id:
                 schema:
                   type: string
@@ -8685,7 +8685,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -8761,7 +8761,7 @@ paths:
               Location:
                 schema:
                   type: string
-                description: Current ednpoint with new packageId of moved package
+                description: Current endpoint with new packageId of moved package
               X-New-Package-Id:
                 schema:
                   type: string
@@ -8810,7 +8810,7 @@ paths:
               Location:
                 schema:
                   type: string
-                description: Current ednpoint with new packageId of moved package
+                description: Current endpoint with new packageId of moved package
               X-New-Package-Id:
                 schema:
                   type: string
@@ -8911,7 +8911,7 @@ paths:
               Location:
                 schema:
                   type: string
-                description: Current ednpoint with new packageId of moved package
+                description: Current endpoint with new packageId of moved package
               X-New-Package-Id:
                 schema:
                   type: string
@@ -8989,7 +8989,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -9414,7 +9414,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -9701,7 +9701,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -9774,7 +9774,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -9847,7 +9847,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -10128,7 +10128,7 @@ paths:
               description: A base64 encoded userView cookie, containing the user data and access token.
               schema:
                 type: string
-                example: "userView=eyJ0b2tlbiI6ImV5SmhiR2NpT2lKSVV6STFOaUlzSW10cFpDSTZJbk5sWTNKbGRDMXBaQ0lzSW5SNWNDSTZJa3BYVkNKOS5leUpGZUhSbGJuTnBiMjV6SWpwN2ZTd2lSM0p2ZFhCeklqcGJYU3dpU1VRaU9pSmxkbVZzTURJeE9TSXNJazVoYldVaU9pSmxkbVZzTURJeE9TSXNJbUYxWkNJNld5SWlYU3dpWlhod0lqb3hOamMwTURZNU1UVTRMQ0pwWVhRaU9qRTJOelF3TWpVNU5UZ3NJbTVpWmlJNk1UWTNOREF5TlRrMU9Dd2ljM1ZpSWpvaVpYWmxiREF5TVRraWZRLk45d2poeGhLRkoyTlEzNXpCaGw0VEs4VFBOS3RoeDE5czNQQnNheTNkclEiLCJyZW5ld1Rva2VuIjoiZXlKaGJHY2lPaUpJVXpJMU5pSXNJbXRwWkNJNkluTmxZM0psZEMxcFpDSXNJblI1Y0NJNklrcFhWQ0o5LmV5SkZlSFJsYm5OcGIyNXpJanA3ZlN3aVIzSnZkWEJ6SWpwYlhTd2lTVVFpT2lKbGRtVnNNREl4T1NJc0lrNWhiV1VpT2lKbGRtVnNNREl4T1NJc0ltRjFaQ0k2V3lJaVhTd2laWGh3SWpveE5qYzJOakUzT1RVNExDSnBZWFFpT2pFMk56UXdNalU1TlRnc0ltNWlaaUk2TVRZM05EQXlOVGsxT0N3aWMzVmlJam9pWlhabGJEQXlNVGtpZlEuUnRyZEEwNkJrN2lIQnA1bVRYUE1PSnVJdmhtQ0FudHRnVlBqNGZicXN6WSIsInVzZXIiOnsiaWQiOiJldmVsMDIxOSIsImVtYWlsIjoiZXZnZW5paS5lbGl6YXJvdkBuZXRjcmFja2VyLmNvbSIsIm5hbWUiOiJFdmdlbmlpIEVsaXphcm92IiwiYXZhdGFyVXJsIjoiL2FwaS92Mi91c2Vycy9ldmVsMDIxOS9wcm9maWxlL2F2YXRhciJ9fQ==;"
+                example: "userView=eyJ0b2tlbiI6ImV5SmhiR2NpT2lKSVV6STFOaUlzSW10cFpDSTZJbk5sWTNKbGRDMXBaQ0lzSW5SNWNDSTZJa3BYVkNKOS5leUpGZUhSbGJuTnBiMjV6SWpwN2ZTd2lSM0p2ZFhCeklqcGJYU3dpU1VRaU9pSmxkbVZzTURJeE9TSXNJazVoYldVaU9pSmxkbVZzTURJeE9TSXNJbUYxWkNJNld5SWlYU3dpWlhod0lqb3hOamMwTURZNU1UVTRMQ0pwWVhRaU9qRTJOelF3TWpVNU5UZ3NJbTVpWmlJNk1UWTNOREF5TlRrMU9Dd2ljM1ZpSWpvaVpYWmxiREF5TVRraWZRLk45d2poeGhLRkoyTlEzNXpCaGw0VEs4VFBOS3RoeDE5czNQQnNheTNkclEiLCJyZW5ld1Rva2VuIjoiZXlKaGJHY2lPaUpJVXpJMU5pSXNJbXRwWkNJNkluTmxZM0psZEMxcFpDSXNJblI1Y0NJNklrcFhWQ0o5LmV5SkZlSFJsYm5OcGIyNXpJanA3ZlN3aVIzSnZkWEJ6SWpwYlhTd2lTVVFpT2lKbGRtVnNNREl4T1NJc0lrNWhiV1VpT2lKbGRtVnNNREl4T1NJc0ltRjFaQ0k2V3lJaVhTd2laWGh3SWpveE5qYzJOakUzT1RVNExDSnBZWFFpT2pFMk56UXdNalU1TlRnc0ltNWlaaUk2TVRZM05EQXlOVGsxT0N3aWMzVmlJam9pWlhabGJEQXlNVGtpZlEuUnRyZEEwNkJrN2lIQnA1bVRYUE1PSnVJdmhtQ0FudHRnVlBqNGZicXN6WSIsInVzZXIiOnsiaWQiOiJldmVsMDIxOSIsImVtYWlsIjoiZXZnZW5paS5lbGl6YXJvdkBuZXRjcmFja2VyLmNvbSIsIm5hbWUiOiJFdmdlbmlpIEVsaXphcm92IiwiYXZhdGFyVXJsIjoiL2FwaS92Mi91c2Vycy9ldmVsMDIxOS9wcm9maWxlL2F2YXRhciJ9fQ==;" # gitleaks:allow sample cookie with a fake JWT
         "400":
           description: Bad request
           content:
@@ -10997,7 +10997,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -11098,7 +11098,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -11210,7 +11210,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -12754,8 +12754,8 @@ components:
           type: string
         operationsSpecTransformation:
           description: |
-            Type of OpeanAPI specification tranformation. Available options are:
-            - **reducedSourceSpecifications** - proccess that finds source specifications for all operations from operation group and removes from these specifications operations other than those that are included into operation group.
+            Type of OpenAPI specification transformation. Available options are:
+            - **reducedSourceSpecifications** - process that finds source specifications for all operations from operation group and removes from these specifications operations other than those that are included into operation group.
             - **mergedSpecification** - process the merges all operations from an operation group into one specification.
           type: string
           enum:
@@ -14413,7 +14413,7 @@ components:
         currentDeclarationJsonPaths:
           description: |
             (below, a document is not considered to be an original document, but a document with one specific operation)\
-            When comparing two documents (origin and changed; difference from changed document apended to the original document), a declarative jsonPath is calculated for each change.
+            When comparing two documents (origin and changed; difference from changed document appended to the original document), a declarative jsonPath is calculated for each change.
           type: array
           items:
             type: array
@@ -14426,7 +14426,7 @@ components:
           type: string
           description: |
             Hash of the added entity.\
-            Hash is needed to identify that the same enitity was changed in other operations, that allows calculating declarative number of changes in package version.
+            Hash is needed to identify that the same entity was changed in other operations, that allows calculating declarative number of changes in package version.
     ChangeRemove:
       type: object
       description: Data of single operation change when change action = remove.
@@ -14434,7 +14434,7 @@ components:
         previousDeclarationJsonPaths:
           description: |
             (below, a document is not considered to be an original document, but a document with one specific operation)\
-            When comparing two documents (origin and changed; difference from changed document apended to the original document), a declarative jsonPath is calculated for each change.
+            When comparing two documents (origin and changed; difference from changed document appended to the original document), a declarative jsonPath is calculated for each change.
           type: array
           items:
             type: array
@@ -14447,7 +14447,7 @@ components:
           type: string
           description: |
             Hash of the removed entity.\
-            Hash is needed to identify that the same enitity was changed in other operations, that allows calculating declarative number of changes in package version.
+            Hash is needed to identify that the same entity was changed in other operations, that allows calculating declarative number of changes in package version.
     ChangeReplace:
       type: object
       description: Data of single operation change when change action = replace
@@ -14455,7 +14455,7 @@ components:
         currentDeclarationJsonPaths:
           description: |
             (below, a document is not considered to be an original document, but a document with one specific operation)\
-            When comparing two documents (origin and changed; difference from changed document apended to the original document), a declarative jsonPath is calculated for each change.
+            When comparing two documents (origin and changed; difference from changed document appended to the original document), a declarative jsonPath is calculated for each change.
           type: array
           items:
             type: array
@@ -14467,7 +14467,7 @@ components:
         previousDeclarationJsonPaths:
           description: |
             (below, a document is not considered to be an original document, but a document with one specific operation)\
-            When comparing two documents (origin and changed; difference from changed document apended to the original document), a declarative jsonPath is calculated for each change.
+            When comparing two documents (origin and changed; difference from changed document appended to the original document), a declarative jsonPath is calculated for each change.
           type: array
           items:
             type: array
@@ -14480,12 +14480,12 @@ components:
           type: string
           description: |
             Previous hash of the changed entity.\
-            Hash is needed to identify that the same enitity was changed in other operations, that allows calculating declarative number of changes in package version.
+            Hash is needed to identify that the same entity was changed in other operations, that allows calculating declarative number of changes in package version.
         currentValueHash:
           type: string
           description: |
             Current hash of the changed entity.\
-            Hash is needed to identify that the same enitity was changed in other operations, that allows calculating declarative number of changes in package version.
+            Hash is needed to identify that the same entity was changed in other operations, that allows calculating declarative number of changes in package version.
     ChangeRename:
       type: object
       description: Data of single operation change when change action = rename.
@@ -14493,7 +14493,7 @@ components:
         currentDeclarationJsonPaths:
           description: |
             (below, a document is not considered to be an original document, but a document with one specific operation)\
-            When comparing two documents (origin and changed; difference from changed document apended to the original document), a declarative jsonPath is calculated for each change.
+            When comparing two documents (origin and changed; difference from changed document appended to the original document), a declarative jsonPath is calculated for each change.
           type: array
           items:
             type: array
@@ -14505,7 +14505,7 @@ components:
         previousDeclarationJsonPaths:
           description: |
             (below, a document is not considered to be an original document, but a document with one specific operation)\
-            When comparing two documents (origin and changed; difference from changed document apended to the original document), a declarative jsonPath is calculated for each change.
+            When comparing two documents (origin and changed; difference from changed document appended to the original document), a declarative jsonPath is calculated for each change.
           type: array
           items:
             type: array
@@ -14543,7 +14543,7 @@ components:
         previousVersionPackageId:
           description: |
             Required in case of snapshot when publishing version should be compared to different package.
-            Do not set anything if the package sould be compared to itself. Value equals to packageId is forbidden.
+            Do not set anything if the package should be compared to itself. Value equals to packageId is forbidden.
           type: string
           example: "QS.CloudOSS.PL.MC"
         status:

@@ -7,8 +7,7 @@ description: "Adds a Go backend service to the qubership-apihub monorepo and wir
 
 Follow `AGENTS.md`. This skill is the checklist of every file that names a Go service. The references are
 `backend/api-linter-service` (service with config file and extension role) and `backend/agents-backend`
-(same shape). `backend/commons-go` is the shared library; `backend/agent` and `backend/test-service` build
-from their own directory because they do not use it.
+(same shape). `backend/commons-go` is the shared library; every Go service imports it and builds from `backend/`.
 
 ## Before you start
 

@@ -169,5 +169,6 @@
   },
   "nx": {
     "name": "apispec-view-root"
-  }
+  },
+  "version": "2.2.0"
 }

@@ -1,6 +1,6 @@
 # Decisions and assumptions
 
-Decisions are numbered D1 to D19 and assumptions A1 to A9, as in the plan that guided the work. D1 to D10 and A1 to A9
+Decisions are numbered D1 to D20 and assumptions A1 to A9, as in the plan that guided the work. D1 to D10 and A1 to A9
 were agreed on or before 2026-10-18, before the import push. Later decisions carry their date. The durable ones are
 also written up as [architecture decision records](../adr/README.md).
 
@@ -23,10 +23,11 @@ also written up as [architecture decision records](../adr/README.md).
 | D13 | 2026-10-20 | No wiki is disabled. In the main wiki only Home and the sidebar change, and both link to stable entry points of the Pages site. The UI and compatibility-suites wikis are not edited. |
 | D14 | 2026-10-20 | Wiki and landing histories are not imported. Their content arrives in plain commits that name the source. |
 | D15 | 2026-10-20 | Pages layout: a navigation page at `/qubership-apihub/`, the landing at `/landing/`, the docs at `/docs/`, the Storybooks at `/storybook/`, and the ERDs at `/erd/`. |
-| D16 | 2026-10-20 | Everything on Pages except the Storybooks shows `main`. Before the first product release from the monorepo it shows `develop`. `SITE_REF` and `LANDING_REF` override it. |
+| D16 | 2026-10-20 | Everything on Pages except the Storybooks shows `main`. Before the first product release from the monorepo it shows `develop`. `SITE_REF` and `LANDING_REF` override it. Revised 2026-10-30 by D20: the site stays on `develop`. |
 | D17 | 2026-10-20 | Each backend with a database gets an ERD rendered in CI from its migrations, only when the migrations tree is new. The committed ERD leaves Git. |
 | D18 | 2026-10-20 | `docs/internal/` (ADRs, project history, team process, this record) stays in the repository and is not published on the docs site. |
 | D19 | 2026-10-20 | Every image hosted on `github.com/user-attachments` is copied into the repository. |
+| D20 | 2026-10-30 | Pages, except the Storybooks, are published from `develop`. `SITE_REF` and `LANDING_REF` still override that ref ([ADR 0009](../adr/0009-pages-published-from-develop.md)). |
 
 ## Assumptions
 

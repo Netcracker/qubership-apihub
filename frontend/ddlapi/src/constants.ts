@@ -103,7 +103,7 @@ export type ExprKind = typeof ExprKind[keyof typeof ExprKind]
 /** Discriminants for the Attr union. Mirrors Go's Attr marker interface (attr()). */
 export const AttrKind = {
   Comment:       'Comment',
-  // Charset is MySQL specific, never emmited by PG parser, left here for consistency with Atlas Go
+  // Charset is MySQL specific, never emitted by PG parser, left here for consistency with Atlas Go
   Charset:       'Charset',
   Collation:     'Collation',
   Check:         'Check',        // also in ObjectKind

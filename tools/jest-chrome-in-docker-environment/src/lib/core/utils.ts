@@ -23,6 +23,24 @@ const net = require("net");
 
 const isWindows = os.platform() === "win32"
 
+type ContainerInspection = {
+    State?: { Status?: string }
+    NetworkSettings?: { Networks?: Record<string, { IPAddress?: string, Gateway?: string }> }
+}
+
+/**
+ * Runs `inspect` without `--format` and parses its JSON. Docker, Podman, and wslc print a JSON array by default, and
+ * wslc rejects a Go template in `--format`.
+ */
+export async function inspectContainer(containerId: string): Promise<ContainerInspection> {
+    const {out} = await runCommand(getDockerBinaryCLIPath(), ["inspect", containerId], {printStdout: false})
+    return JSON.parse(out)[0] ?? {}
+}
+
+function firstNetworkValue(inspection: ContainerInspection, key: "IPAddress" | "Gateway"): string {
+    return Object.values(inspection.NetworkSettings?.Networks ?? {}).map(network => network[key]).find(Boolean) ?? ""
+}
+
 export async function getDockerHostIpAddress(containerId: string, portToPing: number, pingTimeout: number) {
     let address = ""
     address = (await runCommand(getDockerBinaryCLIPath(), [
@@ -68,11 +86,19 @@ export async function getDockerHostIpAddress(containerId: string, portToPing: nu
     }
 
     // sometimes it is not accessible directly, e. g. in rancher-desktop
+    address = firstNetworkValue(await inspectContainer(containerId), "Gateway")
+    address = await validateHostAddress(address, portToPing, pingTimeout, containerId, true)
+    if (address) {
+        return address
+    }
+
+    // wslc resolves host.wslc.internal to the Windows host (setting session.hostLoopback); its gateway is a VM bridge
     address = (await runCommand(getDockerBinaryCLIPath(), [
-        "inspect",
-        "-f",
-        "'{{range.NetworkSettings.Networks}}{{.Gateway}}{{end}}'",
-        containerId
+        "exec",
+        containerId,
+        "sh",
+        "-c",
+        `"(getent hosts host.wslc.internal | awk ${isWindows ? `'{print $1}'` : `'"'{print $1}'"'`}) 2> /dev/null || :"`
     ])).out.trim()
     address = await validateHostAddress(address, portToPing, pingTimeout, containerId, true)
     if (address) {
@@ -90,12 +116,7 @@ export async function getDockerHostIpAddress(containerId: string, portToPing: nu
 export async function dockerContainerIpAddress(containerId: string, portToPing: number, pingTimeout: number) {
     let address
 
-    address = (await runCommand(getDockerBinaryCLIPath(), [
-        "inspect",
-        "-f",
-        `"{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}"`,
-        containerId
-    ])).out.trim()
+    address = firstNetworkValue(await inspectContainer(containerId), "IPAddress")
     address = await validateContainerAddress(address, portToPing, pingTimeout, true)
     if (address) {
         return address
