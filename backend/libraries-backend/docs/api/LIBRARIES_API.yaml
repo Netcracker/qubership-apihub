@@ -1,0 +1,1393 @@
+openapi: 3.0.3
+info:
+  title: APIHUB Libraries Backend API
+  description: |
+    Proposed API for `libraries-backend`, the planned service that tracks external library registries (Maven, npm,
+    Go modules), ingests parsed build output for each tracked library version, and serves Java build tasks to
+    [java-task-consumer](../../../java-task-consumer/README.md).
+
+    **Status: proposed, not yet implemented.** `backend/libraries-backend/` has no `go.mod`, no controllers, and is
+    not wired into `go.work`, Nx, or CI. This document is the HTTP-contract counterpart to
+    [data-model.md](../data-model.md) (the proposed PostgreSQL schema) and follows the same conventions already
+    used by `portal-backend` (see `APIHUB_API.yaml`) wherever the two services' concepts line up: `library` mirrors
+    `package_group`, `library_version` mirrors `published_version`, roles and permissions are read from
+    `portal-backend`'s own catalogue rather than redefined here.
+
+    ## Design notes on the open items in the original endpoint sketch
+
+    - **Comparison.** `library_version_comparison` / `library_version_changes` (see data model) back a `changes`
+      sub-resource under a version, mirroring `portal-backend`'s `GET /packages/{packageId}/versions/{version}/changes`
+      and `.../changes/summary`. Unlike `portal-backend`, the comparison key also carries a `previousLibraryId`, so
+      a comparison can cross libraries (an upgrade-impact style diff), not only compare a version against its own
+      predecessor. A comparison is **not** created by a direct POST — it is produced as a side effect of a
+      `java-api-diff` build (see [`Build` queue](../data-model.md#build-queue)); the `changes` endpoints are
+      read-only and return `404` until that build completes.
+    - **`POST /api/v3/packages/{packageId}/java-publish/{publishId}/status` rename.** Renamed to
+      `POST /api/v3/libraries/{libraryId}/java-publish/{publishId}/status` — `packageId` does not exist as a
+      concept in this service's own database; the path parameter it actually resolves against is `library.id`.
+      **This is a breaking rename against the existing contract documents**
+      (`java-task-consumer/docs/backend-api.md`, `java-task-consumer/pacts/java-task-consumer-libraries-backend.json`),
+      which currently hardcode the `packageId` segment. Update those two artifacts and regenerate the Pact file
+      in the same change that implements this rename; do not ship the rename unilaterally on the backend side.
+    - **Favorites and members use a resource style, not `portal-backend`'s action style.** `portal-backend` favors
+      a package via `POST /packages/{packageId}/favor` / `.../disfavor` and surfaces the result as an `isFavorite`
+      flag; the sketch for this service used a `favorites/libraries` collection with `PUT`/`DELETE` instead. Kept
+      as sketched — it is a valid, slightly more RESTful alternative — but it is a deliberate convention
+      divergence worth knowing about, not an oversight.
+    - **Members use `PUT` for a single upsert**, not `portal-backend`'s `POST` (bulk create) + `PATCH`
+      (add/remove one role) split. Simpler surface, sufficient for what the sketch asked for; revisit if bulk
+      member management turns out to be needed.
+    - **Promoting a version from `draft` to `release` has no endpoint yet.** `library_version.status` has both
+      values, but nothing in the original sketch requested the transition. Left out deliberately; add a `PATCH`
+      on the version resource when that workflow is defined, rather than guessing its shape now.
+    - **Registries and repositories are read-only here.** `data-model.md` states registry credentials live in
+      config/secret store, not the database — these two endpoints expose what is already configured; they are
+      not a registry-management CRUD API.
+  contact:
+    name: Netcracker Opensource Group
+    email: opensourcegroup@netcracker.com
+  license:
+    name: Apache-2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0
+  version: "0.1"
+  x-api-kind: no-BWC
+externalDocs:
+  description: Find out more about this project and repository documentation
+  url: https://github.com/Netcracker/qubership-apihub
+servers:
+  - url: https://{apihub}.qubership.org
+    description: Primary APIHUB server endpoint (use the apihub variable to select production, development, or staging).
+    variables:
+      apihub:
+        description: APIHUB subdomain/environment selector (apihub=production, dev.apihub=development, staging.apihub=staging).
+        enum:
+          - apihub
+          - dev.apihub
+          - staging.apihub
+        default: apihub
+security:
+  - BearerAuth: []
+  - CookieAuth: []
+  - api-key: []
+  - PersonalAccessToken: []
+tags:
+  - name: Registries
+    description: Configured external registries (Maven, npm, Go module hosts).
+  - name: Repositories
+    description: Repositories grouping libraries within a registry.
+  - name: Libraries
+    description: Tracked library management.
+  - name: Versions
+    description: Library version management.
+  - name: Changes
+    description: Version comparison results.
+  - name: Builders
+    description: Java build worker poll/status endpoints (api-key only, used by java-task-consumer).
+  - name: Favorites
+    description: Per-user favorite libraries.
+  - name: Roles
+    description: Library member and role management.
+  - name: Search
+    description: Search across libraries, classes, and methods.
+  - name: Admin
+    description: APIs for technical administration.
+paths:
+  "/api/v1/registries":
+    get:
+      tags:
+        - Registries
+        - Admin
+      summary: Get configured registries
+      description: |
+        List the external registries (Maven, npm, Go module hosts) this service is configured to track.
+        Credentials are never returned; they live in the service's config/secret store, keyed by `registryId`.
+      operationId: getRegistries
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  registries:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Registry"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/api/v1/repositories":
+    get:
+      tags:
+        - Repositories
+        - Admin
+      summary: Get repositories
+      description: |
+        List repositories known to this service. A repository groups libraries within one registry — a distinct
+        Maven repository, a Go module host path, or an npm registry scope.
+      operationId: getRepositories
+      parameters:
+        - name: registryId
+          in: query
+          description: Filter repositories belonging to a single registry.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  repositories:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Repository"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/api/v1/libraries":
+    get:
+      tags:
+        - Libraries
+      summary: Get libraries list
+      description: |
+        Retrieve the libraries list. Only libraries the caller may read are returned, and paging is applied after
+        that filter, matching `portal-backend`'s `GET /packages` behavior.
+      operationId: getLibraries
+      parameters:
+        - name: repository
+          in: query
+          description: Filter by repository.
+          schema:
+            type: string
+        - name: language
+          in: query
+          description: Filter by language.
+          schema:
+            $ref: "#/components/schemas/LanguageEnum"
+        - name: parentPackageId
+          in: query
+          description: Filter by the `portal-backend` package group a library's docs surface under.
+          schema:
+            type: string
+        - name: textFilter
+          in: query
+          description: Filter by name/alias/description/coordinates.
+          schema:
+            type: string
+        - name: onlyFavorite
+          in: query
+          description: Filter to only favorite libraries for the caller.
+          schema:
+            type: boolean
+            default: false
+        - $ref: "#/components/parameters/limit"
+        - $ref: "#/components/parameters/page"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  libraries:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Library"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    post:
+      tags:
+        - Libraries
+      summary: Create a library
+      description: Start tracking a new library in APIHUB.
+      operationId: postLibraries
+      requestBody:
+        description: Library for creation
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LibraryCreate"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Library"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                LibraryAlreadyExists:
+                  value:
+                    status: 409
+                    code: "LIBRARY_ALREADY_EXISTS"
+                    message: "A library with the same repository and coordinates is already tracked"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/api/v1/libraries/{libraryId}":
+    parameters:
+      - $ref: "#/components/parameters/libraryId"
+    get:
+      tags:
+        - Libraries
+      summary: Get library
+      operationId: getLibrary
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Library"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/LibraryNotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    patch:
+      tags:
+        - Libraries
+      summary: Update library
+      description: Partially update a library's metadata. Coordinates, repository, and language are immutable after creation.
+      operationId: patchLibrary
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LibraryUpdate"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Library"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/LibraryNotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    delete:
+      tags:
+        - Libraries
+      summary: Delete library
+      description: Soft-delete a library and, by cascade, its versions, members, and favorites.
+      operationId: deleteLibrary
+      responses:
+        "204":
+          description: No content
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/LibraryNotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/api/v1/libraries/{libraryId}/versions":
+    parameters:
+      - $ref: "#/components/parameters/libraryId"
+    get:
+      tags:
+        - Versions
+      summary: Get library versions list
+      operationId: getLibraryVersions
+      parameters:
+        - name: status
+          in: query
+          description: Filter by version status.
+          schema:
+            type: array
+            items:
+              $ref: "#/components/schemas/VersionStatusEnum"
+        - name: textFilter
+          in: query
+          description: Filter by version string or label.
+          schema:
+            type: string
+        - $ref: "#/components/parameters/limit"
+        - $ref: "#/components/parameters/page"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  versions:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/LibraryVersion"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/LibraryNotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    post:
+      tags:
+        - Versions
+      summary: Import a library version
+      description: |
+        Register a new version for an already-tracked library and enqueue a `java-api-report` build to populate it.
+        The library's existing `repository` and `coordinates` resolve the artifact to pull; this request supplies
+        only the version string to import. The response is `202 Accepted` because population happens asynchronously
+        through the [java build worker loop](#tag/Builders) — poll `GET .../versions/{version}` until
+        `status` leaves `draft` with content, or build errors surface as `library_version.metadata`.
+      operationId: postLibraryVersion
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LibraryVersionImport"
+      responses:
+        "202":
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LibraryVersion"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/LibraryNotFound"
+        "409":
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                VersionAlreadyExists:
+                  value:
+                    status: 409
+                    code: "LIBRARY_VERSION_ALREADY_EXISTS"
+                    message: "This version is already imported for the library"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/api/v1/libraries/{libraryId}/versions/{version}":
+    parameters:
+      - $ref: "#/components/parameters/libraryId"
+      - $ref: "#/components/parameters/version"
+    get:
+      tags:
+        - Versions
+      summary: Get library version
+      operationId: getLibraryVersion
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LibraryVersion"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/LibraryVersionNotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    delete:
+      tags:
+        - Versions
+      summary: Delete library version
+      operationId: deleteLibraryVersion
+      responses:
+        "204":
+          description: No content
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/LibraryVersionNotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/api/v1/libraries/{libraryId}/versions/{version}/changes/summary":
+    parameters:
+      - $ref: "#/components/parameters/libraryId"
+      - $ref: "#/components/parameters/version"
+    get:
+      tags:
+        - Changes
+      summary: Get version comparison summary
+      description: |
+        Counts of changes by severity and change type between this version and a previous one. If
+        `previousLibraryId`/`previousVersion` are not specified, the previous **release** version of this library
+        is used, matching `portal-backend`'s `previousVersion`/`previousVersionPackageId` convention. Returns `404`
+        if no comparison has been computed yet for the resolved pair — see [design notes](#description) on how a
+        comparison is produced.
+      operationId: getLibraryVersionChangesSummary
+      parameters:
+        - $ref: "#/components/parameters/previousLibraryId"
+        - $ref: "#/components/parameters/previousVersion"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChangeSummary"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/ComparisonNotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/api/v1/libraries/{libraryId}/versions/{version}/changes":
+    parameters:
+      - $ref: "#/components/parameters/libraryId"
+      - $ref: "#/components/parameters/version"
+    get:
+      tags:
+        - Changes
+      summary: Get version changes
+      description: Paginated list of individual class/method-level changes for a version comparison.
+      operationId: getLibraryVersionChanges
+      parameters:
+        - $ref: "#/components/parameters/previousLibraryId"
+        - $ref: "#/components/parameters/previousVersion"
+        - $ref: "#/components/parameters/severity"
+        - name: changeType
+          in: query
+          description: Filter by change type.
+          schema:
+            type: array
+            items:
+              $ref: "#/components/schemas/ChangeTypeEnum"
+        - name: classId
+          in: query
+          description: Filter to changes on one class (and, optionally, its methods).
+          schema:
+            type: string
+        - $ref: "#/components/parameters/limit"
+        - $ref: "#/components/parameters/page"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  comparison:
+                    $ref: "#/components/schemas/ChangeSummary"
+                  changes:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Change"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/ComparisonNotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/api/v2/java-builders/{builderId}/tasks":
+    post:
+      tags:
+        - Builders
+      summary: Poll for a Java build task
+      description: |
+        Pull-worker poll used by `java-task-consumer`. Mirrors `portal-backend`'s
+        `POST /api/v2/builders/{builderId}/tasks`. Task polling requires sysadmin privileges.
+        See [java-task-consumer/docs/backend-api.md](../../../java-task-consumer/docs/backend-api.md) for the
+        `config.json` schema inside the returned ZIP.
+      operationId: pollJavaBuilderTasks
+      security:
+        - api-key: []
+      parameters:
+        - $ref: "#/components/parameters/builderId"
+      responses:
+        "200":
+          description: Task assigned.
+          content:
+            application/zip:
+              schema:
+                type: string
+                format: binary
+        "204":
+          description: No free tasks.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/api/v3/libraries/{libraryId}/java-publish/{publishId}/status":
+    post:
+      tags:
+        - Builders
+      summary: Post Java build status
+      description: |
+        Renamed from `POST /api/v3/packages/{packageId}/java-publish/{publishId}/status` in the original
+        `java-task-consumer` contract — `libraryId` is this service's own resource, not a `portal-backend`
+        `packageId`. See the [design notes](#description) at the top of this document; this rename must land
+        together with an update to `java-task-consumer/docs/backend-api.md` and its Pact file.
+      operationId: postJavaPublishStatus
+      security:
+        - api-key: []
+      parameters:
+        - $ref: "#/components/parameters/libraryId"
+        - $ref: "#/components/parameters/publishId"
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - status
+                - builderId
+              properties:
+                status:
+                  $ref: "#/components/schemas/BuildStatusEnum"
+                builderId:
+                  type: string
+                  description: Worker identity from the poll step.
+                data:
+                  type: string
+                  format: binary
+                  description: Required when `status=complete`. ZIP containing `report.json`.
+                errors:
+                  type: string
+                  description: Required when `status=error`. Human-readable error text.
+      responses:
+        "204":
+          description: No content
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                PublishNotFound:
+                  value:
+                    status: 404
+                    code: "JAVA_PUBLISH_NOT_FOUND"
+                    message: "No matching build for this libraryId/publishId"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/api/v1/favorites/libraries":
+    get:
+      tags:
+        - Favorites
+      summary: Get favorite libraries
+      description: List libraries favorited by the caller (the user is taken from the token info).
+      operationId: getFavoriteLibraries
+      parameters:
+        - $ref: "#/components/parameters/limit"
+        - $ref: "#/components/parameters/page"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  libraries:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Library"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/api/v1/favorites/libraries/{libraryId}":
+    parameters:
+      - $ref: "#/components/parameters/libraryId"
+    put:
+      tags:
+        - Favorites
+      summary: Favorite a library
+      description: Idempotent. Adds the library to the caller's favorites.
+      operationId: putFavoriteLibrary
+      responses:
+        "204":
+          description: No content
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/LibraryNotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    delete:
+      tags:
+        - Favorites
+      summary: Unfavorite a library
+      description: Idempotent. Removes the library from the caller's favorites.
+      operationId: deleteFavoriteLibrary
+      responses:
+        "204":
+          description: No content
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/LibraryNotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/api/v1/libraries/{libraryId}/members":
+    parameters:
+      - $ref: "#/components/parameters/libraryId"
+    get:
+      tags:
+        - Roles
+      summary: Get the library's members list
+      operationId: getLibraryMembers
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  members:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Member"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/LibraryNotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/api/v1/libraries/{libraryId}/members/{userId}":
+    parameters:
+      - $ref: "#/components/parameters/libraryId"
+      - $ref: "#/components/parameters/userId"
+    put:
+      tags:
+        - Roles
+      summary: Set a member's roles
+      description: |
+        Upsert a user's role assignment on the library. Replaces the user's full role set on this library with
+        `roleIds`; send an empty array to clear direct roles (the user may still inherit a role from a parent
+        package group). Role identifiers are slugs from `portal-backend`'s own role catalogue — this service does
+        not define its own roles.
+      operationId: putLibraryMember
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - roleIds
+              properties:
+                roleIds:
+                  type: array
+                  items:
+                    type: string
+                  example: ["editor"]
+      responses:
+        "204":
+          description: No content
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/LibraryNotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    delete:
+      tags:
+        - Roles
+      summary: Remove a member
+      description: Removes the user's direct role assignment on the library.
+      operationId: deleteLibraryMember
+      responses:
+        "204":
+          description: No content
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/LibraryNotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/api/v1/search/libraries":
+    get:
+      tags:
+        - Search
+      summary: Search libraries
+      description: Full-text search over library name, alias, description, and coordinates.
+      operationId: searchLibraries
+      parameters:
+        - name: textFilter
+          in: query
+          required: true
+          schema:
+            type: string
+          example: "jackson-databind"
+        - name: language
+          in: query
+          schema:
+            $ref: "#/components/schemas/LanguageEnum"
+        - name: repository
+          in: query
+          schema:
+            type: string
+        - $ref: "#/components/parameters/limit"
+        - $ref: "#/components/parameters/page"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  libraries:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/SearchResultLibrary"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/api/v1/search/classes":
+    get:
+      tags:
+        - Search
+      summary: Search classes and methods
+      description: |
+        Full-text search over `library_class_search` / `library_method_search` (see data model). Scoped to this
+        service; it does not federate with `portal-backend`'s operation search.
+      operationId: searchClasses
+      parameters:
+        - name: textFilter
+          in: query
+          required: true
+          schema:
+            type: string
+          example: "ObjectMapper"
+        - name: libraryId
+          in: query
+          description: Restrict the search to one library.
+          schema:
+            type: string
+        - name: version
+          in: query
+          description: Restrict the search to one library version. Requires `libraryId`.
+          schema:
+            type: string
+        - name: kind
+          in: query
+          description: Filter by class kind.
+          schema:
+            type: array
+            items:
+              $ref: "#/components/schemas/ClassKindEnum"
+        - $ref: "#/components/parameters/limit"
+        - $ref: "#/components/parameters/page"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  classes:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/SearchResultClass"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+components:
+  parameters:
+    libraryId:
+      name: libraryId
+      in: path
+      required: true
+      description: Library unique identifier.
+      schema:
+        type: string
+    version:
+      name: version
+      in: path
+      required: true
+      description: Library version string.
+      schema:
+        type: string
+        example: "2.17.1"
+    previousLibraryId:
+      name: previousLibraryId
+      in: query
+      description: |
+        Library to compare against, for a cross-library (upgrade-impact style) comparison. Defaults to this
+        library when not specified.
+      schema:
+        type: string
+    previousVersion:
+      name: previousVersion
+      in: query
+      description: |
+        Previous version to compare against. If neither `previousLibraryId` nor `previousVersion` is specified,
+        the previous **release** version of this library is used.
+      schema:
+        type: string
+    severity:
+      name: severity
+      in: query
+      description: Filter changes by severity.
+      schema:
+        type: array
+        items:
+          $ref: "#/components/schemas/ChangeSeverityEnum"
+    builderId:
+      name: builderId
+      in: path
+      required: true
+      description: Worker identity, generated by `java-task-consumer` on startup (or read from `JAVA_BUILDER_ID`).
+      schema:
+        type: string
+    publishId:
+      name: publishId
+      in: path
+      required: true
+      description: Identifier the worker received from the queued task's `config.json`. Doubles as `build.build_id`.
+      schema:
+        type: string
+    userId:
+      name: userId
+      in: path
+      required: true
+      description: Login of the user.
+      schema:
+        type: string
+        example: user1221
+    limit:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        default: 100
+        maximum: 100
+        minimum: 1
+    page:
+      name: page
+      in: query
+      schema:
+        type: integer
+        default: 0
+        minimum: 0
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    InternalServerError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    LibraryNotFound:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          examples:
+            LibraryNotFound:
+              value:
+                status: 404
+                code: "LIBRARY_NOT_FOUND"
+                message: "Library not found"
+    LibraryVersionNotFound:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          examples:
+            LibraryVersionNotFound:
+              value:
+                status: 404
+                code: "LIBRARY_VERSION_NOT_FOUND"
+                message: "Library version not found"
+    ComparisonNotFound:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          examples:
+            ComparisonNotFound:
+              value:
+                status: 404
+                code: "LIBRARY_COMPARISON_NOT_FOUND"
+                message: "No comparison has been computed yet for this version pair"
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    CookieAuth:
+      type: apiKey
+      in: cookie
+      name: apihub-access-token
+    api-key:
+      type: apiKey
+      in: header
+      name: api-key
+    PersonalAccessToken:
+      type: apiKey
+      in: header
+      name: X-Personal-Access-Token
+  schemas:
+    ErrorResponse:
+      type: object
+      required:
+        - status
+        - code
+        - message
+      properties:
+        status:
+          type: number
+        code:
+          type: string
+        message:
+          type: string
+        params:
+          type: object
+        debug:
+          type: string
+    LanguageEnum:
+      type: string
+      enum:
+        - java
+        - go
+        - js
+    RegistryTypeEnum:
+      type: string
+      enum:
+        - artifactory
+        - nexus
+    VersionStatusEnum:
+      type: string
+      enum:
+        - draft
+        - release
+    BuildStatusEnum:
+      type: string
+      enum:
+        - running
+        - complete
+        - error
+    BuildTypeEnum:
+      type: string
+      enum:
+        - java-api-report
+        - java-api-diff
+        - java-upgrade-impact
+    ChangeSeverityEnum:
+      type: string
+      enum:
+        - breaking
+        - non-breaking
+        - annotation
+    ChangeTypeEnum:
+      type: string
+      enum:
+        - added
+        - removed
+        - changed
+        - deprecated
+    ClassKindEnum:
+      type: string
+      enum:
+        - class
+        - interface
+        - enum
+        - annotation
+        - record
+    Registry:
+      type: object
+      required:
+        - registryId
+        - type
+        - baseUrl
+      properties:
+        registryId:
+          type: string
+        type:
+          $ref: "#/components/schemas/RegistryTypeEnum"
+        baseUrl:
+          type: string
+          format: uri
+        name:
+          type: string
+    Repository:
+      type: object
+      required:
+        - repository
+        - registryId
+      properties:
+        repository:
+          type: string
+        registryId:
+          type: string
+    MavenCoordinates:
+      type: object
+      title: MavenCoordinates
+      required:
+        - groupId
+        - artifactId
+      properties:
+        groupId:
+          type: string
+          example: "com.fasterxml.jackson.core"
+        artifactId:
+          type: string
+          example: "jackson-databind"
+        classifier:
+          type: string
+    GoModuleCoordinates:
+      type: object
+      title: GoModuleCoordinates
+      required:
+        - modulePath
+      properties:
+        modulePath:
+          type: string
+          example: "github.com/spf13/cobra"
+    NpmCoordinates:
+      type: object
+      title: NpmCoordinates
+      required:
+        - packageName
+      properties:
+        packageName:
+          type: string
+          example: "lodash"
+        scope:
+          type: string
+          example: "@types"
+    LibraryCoordinates:
+      description: |
+        Shape depends on the sibling `language` field of the enclosing `Library`/`LibraryCreate` object: `maven`
+        for `java`, `modulePath` for `go`, `packageName`/`scope` for `js`.
+      oneOf:
+        - $ref: "#/components/schemas/MavenCoordinates"
+        - $ref: "#/components/schemas/GoModuleCoordinates"
+        - $ref: "#/components/schemas/NpmCoordinates"
+    LibraryCreate:
+      type: object
+      required:
+        - alias
+        - name
+        - language
+        - repository
+        - coordinates
+      properties:
+        alias:
+          type: string
+          description: Library short alias (abbreviation).
+          maxLength: 10
+          pattern: "^[a-zA-Z0-9-_]"
+        name:
+          type: string
+        description:
+          type: string
+        language:
+          $ref: "#/components/schemas/LanguageEnum"
+        repository:
+          type: string
+        parentPackageId:
+          description: |
+            `portal-backend` `package_group.id` this library's docs surface under. Cross-service reference,
+            resolved against `portal-backend`, not validated against this service's own database.
+          type: string
+        coordinates:
+          $ref: "#/components/schemas/LibraryCoordinates"
+        defaultRole:
+          type: string
+          default: "Viewer"
+    LibraryUpdate:
+      type: object
+      properties:
+        alias:
+          type: string
+          maxLength: 10
+          pattern: "^[a-zA-Z0-9-_]"
+        name:
+          type: string
+        description:
+          type: string
+        parentPackageId:
+          type: string
+        defaultRole:
+          type: string
+    Library:
+      allOf:
+        - $ref: "#/components/schemas/LibraryCreate"
+        - type: object
+          required:
+            - libraryId
+            - coordinatesKey
+            - isFavorite
+          properties:
+            libraryId:
+              type: string
+            coordinatesKey:
+              description: Normalized coordinates string the service computes on write, e.g. `groupId:artifactId`.
+              type: string
+              readOnly: true
+            isFavorite:
+              type: boolean
+              default: false
+            createdAt:
+              type: string
+              format: date-time
+            createdBy:
+              type: string
+    LibraryVersionImport:
+      type: object
+      required:
+        - version
+      properties:
+        version:
+          type: string
+          example: "2.17.1"
+        labels:
+          type: array
+          items:
+            type: string
+    LibraryVersion:
+      type: object
+      required:
+        - libraryId
+        - version
+        - status
+      properties:
+        libraryId:
+          type: string
+        version:
+          type: string
+        previousVersion:
+          type: string
+        status:
+          $ref: "#/components/schemas/VersionStatusEnum"
+        labels:
+          type: array
+          items:
+            type: string
+        metadata:
+          type: object
+        createdAt:
+          type: string
+          format: date-time
+        createdBy:
+          type: string
+    ChangeSummary:
+      type: object
+      required:
+        - comparisonId
+        - libraryId
+        - version
+        - previousLibraryId
+        - previousVersion
+      properties:
+        comparisonId:
+          type: string
+        libraryId:
+          type: string
+        version:
+          type: string
+        previousLibraryId:
+          type: string
+        previousVersion:
+          type: string
+        changeCounts:
+          description: Counts per `changeType`/`severity`.
+          type: object
+        openCount:
+          type: integer
+        noContent:
+          type: boolean
+        builderVersion:
+          type: string
+        lastActive:
+          type: string
+          format: date-time
+    Change:
+      type: object
+      required:
+        - changeId
+        - classId
+        - changeType
+        - severity
+      properties:
+        changeId:
+          type: string
+        classId:
+          type: string
+        methodId:
+          description: Omitted for a class-level change.
+          type: string
+        changeType:
+          $ref: "#/components/schemas/ChangeTypeEnum"
+        severity:
+          $ref: "#/components/schemas/ChangeSeverityEnum"
+        description:
+          type: string
+        details:
+          description: Raw japicmp/jdeps entry — old/new signature, etc.
+          type: object
+    Member:
+      type: object
+      required:
+        - user
+        - roles
+      properties:
+        user:
+          type: object
+          properties:
+            userId:
+              type: string
+            name:
+              type: string
+        roles:
+          type: array
+          items:
+            type: object
+            properties:
+              roleId:
+                type: string
+              role:
+                type: string
+              inheritedFrom:
+                description: Present when the role is inherited from a parent `portal-backend` package group, not assigned directly.
+                type: object
+                properties:
+                  packageId:
+                    type: string
+                  kind:
+                    type: string
+                  name:
+                    type: string
+    SearchResultLibrary:
+      type: object
+      required:
+        - libraryId
+        - name
+      properties:
+        libraryId:
+          type: string
+        name:
+          type: string
+        alias:
+          type: string
+        language:
+          $ref: "#/components/schemas/LanguageEnum"
+        repository:
+          type: string
+        coordinatesKey:
+          type: string
+    SearchResultClass:
+      type: object
+      required:
+        - libraryId
+        - version
+        - classId
+        - qualifiedName
+      properties:
+        libraryId:
+          type: string
+        version:
+          type: string
+        classId:
+          type: string
+        qualifiedName:
+          type: string
+        packageName:
+          type: string
+        kind:
+          $ref: "#/components/schemas/ClassKindEnum"
+        methodId:
+          description: Present when the match is on a method rather than the class itself.
+          type: string
+        signature:
+          description: Present together with `methodId`.
+          type: string
