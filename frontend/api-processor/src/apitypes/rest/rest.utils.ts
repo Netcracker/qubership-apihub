@@ -19,8 +19,25 @@ import {
   WithAggregatedDiffs,
   WithDiffMetaRecord,
 } from '../../types'
-import { Diff, DIFF_META_KEY, DIFFS_AGGREGATED_META_KEY, extractOperationBasePath } from '@netcracker/qubership-apihub-api-diff'
-import { isPathParamRenameDiff } from '../../utils'
+import {
+  aggregateDiffsWithRollup,
+  apiDiff,
+  type CompareOptions,
+  Diff,
+  DIFF_META_KEY,
+  DIFFS_AGGREGATED_META_KEY,
+  extractOperationBasePath,
+} from '@netcracker/qubership-apihub-api-diff'
+import { isEmpty, isObject, isPathParamRenameDiff, isValidHttpMethod } from '../../utils'
+import {
+  AFTER_VALUE_NORMALIZED_PROPERTY,
+  ApihubApiCompatibilityKind,
+  BEFORE_VALUE_NORMALIZED_PROPERTY,
+  NORMALIZE_OPTIONS,
+  ORIGINS_SYMBOL,
+} from '../../consts'
+import { createRestApiKindValueAt } from '../../components/compare/rest.api-kind'
+import { apiKindReclassificationRule, CUSTOM_SCOPE_ELEMENT_API_KIND } from '../../components/compare/custom-scope'
 
 import { dump, getCustomTags, resolveApiAudience } from '../../utils/apihubSpecificationExtensions'
 
@@ -47,6 +64,24 @@ export const extractOpenapiVersionDiff = (doc: OpenAPIV3.Document): Diff[] => {
 export const extractPathParamRenameDiff = (doc: OpenAPIV3.Document, path: string): Diff[] => {
   const diff = (doc.paths as WithDiffMetaRecord<OpenAPIV3.PathsObject>)[DIFF_META_KEY]?.[path]
   return diff && isPathParamRenameDiff(diff) ? [diff] : []
+}
+
+/**
+ * Collect an operation's path diffs, out of the roll-up's reach: the path item's record of the method and
+ * `paths`'s record of the path. Both are returned, since both can be filled at once. A rename of the path is also
+ * returned by `extractPathParamRenameDiff`, so callers deduplicate.
+ */
+const extractPathDiffs = (
+  doc: OpenAPIV3.Document,
+  path: string,
+  method: OpenAPIV3.HttpMethods,
+): Diff[] => {
+  const pathItemDiff = (doc.paths[path] as WithDiffMetaRecord<OpenAPIV3.PathItemObject>)[DIFF_META_KEY]?.[method]
+  const pathsDiff = (doc.paths as WithDiffMetaRecord<OpenAPIV3.PathsObject>)[DIFF_META_KEY]?.[path]
+  return [
+    ...pathItemDiff ? [pathItemDiff] : [],
+    ...pathsDiff ? [pathsDiff] : [],
+  ]
 }
 
 export const extractRootServersDiffs = (doc: OpenAPIV3.Document): Diff[] => {
@@ -120,3 +155,172 @@ export function validateGroupPrefix(group: unknown, paramName: string): void {
     throw new Error(`${paramName} must begin and end with a "/" character and contain at least one meaningful character, received: "${group}"`)
   }
 }
+
+/** The apiDiff options for two REST documents, shared by the changelog and the duplicate check. */
+const REST_DIFF_OPTIONS = {
+  ...NORMALIZE_OPTIONS,
+  metaKey: DIFF_META_KEY,
+  originsFlag: ORIGINS_SYMBOL,
+  // the changelog stores the merged document in the shape of its sources; `true` would skip that extra pass
+  normalizedResult: false,
+  afterValueNormalizedProperty: AFTER_VALUE_NORMALIZED_PROPERTY,
+  beforeValueNormalizedProperty: BEFORE_VALUE_NORMALIZED_PROPERTY,
+  openApiPathItemPerOperationDiffs: true,
+} as const
+
+/** Classification rules a caller adds on top of the api kind ones. */
+export type RestDiffClassification = Pick<CompareOptions, 'customScopeElementProviders' | 'reclassificationRules'>
+
+/** One operation of a merged document, with the base path each compared side resolves for it. */
+export interface MergedOperation {
+  path: string
+  method: OpenAPIV3.HttpMethods
+  operation: OpenAPIV3.OperationObject
+  previousBasePath: string
+  currentBasePath: string
+}
+
+/** Two REST documents diffed, and the operations of their merged document. */
+export interface RestDocumentsDiff {
+  merged: OpenAPIV3.Document
+  operations: MergedOperation[]
+}
+
+/**
+ * Diff two REST documents and list the operations to walk, with the roll-up already stamped on them. Two
+ * identical documents have nothing to walk.
+ *
+ * Every comparison classifies by api kind; `classification` adds rules only some callers need, such as the
+ * changelog's deprecated-removal rules.
+ */
+export function diffRestDocuments(
+  previous: OpenAPIV3.Document,
+  current: OpenAPIV3.Document,
+  previousApiKind: ApihubApiCompatibilityKind | undefined,
+  currentApiKind: ApihubApiCompatibilityKind | undefined,
+  classification: RestDiffClassification = {},
+): RestDocumentsDiff {
+  const { merged, diffs } = apiDiff(previous, current, {
+    ...REST_DIFF_OPTIONS,
+    customScopeElementProviders: [
+      { name: CUSTOM_SCOPE_ELEMENT_API_KIND, valueAt: createRestApiKindValueAt(previousApiKind, currentApiKind) },
+      ...classification.customScopeElementProviders ?? [],
+    ],
+    reclassificationRules: [apiKindReclassificationRule, ...classification.reclassificationRules ?? []],
+  }) as { merged: OpenAPIV3.Document; diffs: Diff[] }
+
+  if (isEmpty(diffs)) { return { merged, operations: [] } }
+
+  aggregateDiffsWithRollup(merged, DIFF_META_KEY, DIFFS_AGGREGATED_META_KEY)
+  return { merged, operations: mergedOperations(merged, previous, current) }
+}
+
+/**
+ * List every operation a merged document holds, in document order.
+ *
+ * The base path is resolved per operation and per side: an operation can declare `servers` of its own, and the
+ * two documents may place one base path differently. apiDiff's path mapping ignores operation-level `servers`,
+ * so two documents that differ only there reach this function as two unrelated paths.
+ */
+function mergedOperations(
+  merged: OpenAPIV3.Document,
+  previous: OpenAPIV3.Document,
+  current: OpenAPIV3.Document,
+): MergedOperation[] {
+  const operations: MergedOperation[] = []
+
+  for (const path of Object.keys(merged.paths)) {
+    const pathItem = merged.paths[path]
+    if (!isObject(pathItem)) { continue }
+
+    for (const key of Object.keys(pathItem)) {
+      if (!isValidHttpMethod(key)) { continue }
+      const operation = pathItem[key] as OpenAPIV3.OperationObject
+
+      operations.push({
+        path,
+        method: key,
+        operation,
+        previousBasePath: resolveOperationBasePath(operation, pathItem, previous),
+        currentBasePath: resolveOperationBasePath(operation, pathItem, current),
+      })
+    }
+  }
+
+  return operations
+}
+
+/**
+ * Collect every diff an operation both compared documents have; `aggregateDiffsWithRollup` must have run.
+ *
+ * Besides the operation's own subtree, that covers what it depends on at the document level: the root `security`
+ * when it declares none, the schemes its requirements name, a renamed path parameter, and the root `servers`.
+ */
+const collectOperationDiffs = (
+  merged: OpenAPIV3.Document,
+  path: string,
+  operation: OpenAPIV3.OperationObject,
+): Diff[] => {
+  const operationSecurityDiffs = extractOperationSecurityDiffs(operation)
+  const shouldTakeRootSecurityDiffs = isEmpty(operationSecurityDiffs) && !operation.security
+  const relevantSecuritySchemesNames = shouldTakeRootSecurityDiffs
+    ? extractSecuritySchemesNames(merged.security ?? [])
+    : extractSecuritySchemesNames(operation.security ?? [])
+
+  return [
+    // apiDiff moves path item parameters, servers, summary, description and extensions onto the method, so the
+    // roll-up already holds them, along with the operation's own security diffs
+    ...(operation as WithAggregatedDiffs<OpenAPIV3.OperationObject>)[DIFFS_AGGREGATED_META_KEY] ?? [],
+    ...extractRootServersDiffs(merged),
+    ...shouldTakeRootSecurityDiffs ? extractRootSecurityDiffs(merged) : [],
+    ...extractSecuritySchemesDiffs(merged.components, relevantSecuritySchemesNames),
+    ...extractPathParamRenameDiff(merged, path),
+  ]
+}
+
+/**
+ * Collect the diffs a changelog reports for an operation both versions have: its own diffs, the document's OpenAPI
+ * version, and its path diffs when the pair holds the operation's own documents.
+ *
+ * In any other pair the path diffs describe a move between documents. In the operation's own pair they describe a
+ * path respelled to one that derives the same operationId, such as `/res/data` becoming `/res-data`.
+ */
+export const changelogOperationDiffs = (
+  merged: OpenAPIV3.Document,
+  path: string,
+  method: OpenAPIV3.HttpMethods,
+  operation: OpenAPIV3.OperationObject,
+  operationBelongsToPair: boolean,
+): Diff[] => [...new Set([
+  ...collectOperationDiffs(merged, path, operation),
+  ...operationBelongsToPair ? extractPathDiffs(merged, path, method) : [],
+  ...extractOpenapiVersionDiff(merged),
+])]
+
+/**
+ * Collect the diff a changelog reports for an operation only one version has. The nearer record only: `paths` can
+ * also hold a rename of the path, which belongs to the methods it keeps.
+ */
+export const addedOrRemovedOperationDiffs = (
+  merged: OpenAPIV3.Document,
+  path: string,
+  method: OpenAPIV3.HttpMethods,
+): Diff[] => {
+  const diff = (merged.paths[path] as WithDiffMetaRecord<OpenAPIV3.PathItemObject>)[DIFF_META_KEY]?.[method] ??
+    (merged.paths as WithDiffMetaRecord<OpenAPIV3.PathsObject>)[DIFF_META_KEY]?.[path]
+  return diff ? [diff] : []
+}
+
+/**
+ * Collect the diffs a duplicate check reads for an operation: its own diffs and its path diffs. The OpenAPI version
+ * is left out, because two documents of one version may use different dialects.
+ */
+export const contestedOperationDiffs = (
+  merged: OpenAPIV3.Document,
+  path: string,
+  method: OpenAPIV3.HttpMethods,
+  operation: OpenAPIV3.OperationObject,
+): Diff[] => [...new Set([
+  ...collectOperationDiffs(merged, path, operation),
+  ...extractPathDiffs(merged, path, method),
+])]

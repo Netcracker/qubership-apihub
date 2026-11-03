@@ -16,6 +16,7 @@
 
 import { FileId, KeyOfConstType, OperationId } from '../external'
 import { McpEntityId } from '../package'
+import { OperationClaim } from './operation'
 import { ApihubApiCompatibilityKind, FILE_FORMAT } from '../../consts'
 
 export interface VersionDocuments {
@@ -53,12 +54,10 @@ export interface VersionDocument<T = any> extends ZippableDocument<T> {
   dependencies: string[]
   operationIds: OperationId[]
   /**
-   * Every operation this document derived, winner or not, with the api type each was derived by.
-   *
-   * `reconcileOwnedIds` shrinks `operationIds` to what the document kept; this list is left whole, and is
-   * what `reportOperationCollisionsOf` grades a collision from.
+   * Every operation this document derived, winner or not. `reconcileOwnedIds` shrinks `operationIds`; this list
+   * stays whole and is what `reportOperationCollisionsOf` grades collisions from.
    */
-  operationClaims?: Array<{ operationId: OperationId; apiType: string }>
+  operationClaims?: OperationClaim[]
   /** Every MCP entity this document derived, winner or not — the `operationClaims` twin. */
   mcpEntityClaims?: McpEntityId[]
   //TODO: split typing, document can't have both operationIds and mcpEntityIds

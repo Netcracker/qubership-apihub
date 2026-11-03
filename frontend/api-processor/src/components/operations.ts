@@ -14,17 +14,24 @@
  * limitations under the License.
  */
 
-import type { ApiBuilder, ApiOperation, BuilderContext, BuildResult, VersionDocument } from '../types'
+import type {
+  ApiBuilder,
+  ApiOperation,
+  BuilderContext,
+  BuildResult,
+  OperationClaim,
+  VersionDocument,
+} from '../types'
 import { setReportingDuplicate } from '../utils'
 import { ASYNCAPI_API_TYPE, MESSAGE_CATEGORY, MESSAGE_SEVERITY } from '../consts'
 import { Claims, collectClaim, listDocuments, reportCollisions } from './duplicate-resolution'
 import { NotificationMessage } from '../types/package/notifications'
-
-/** All a collision needs to know about a claimant: who derived the id, and by which api type. */
-export interface OperationClaim {
-  documentId: string
-  apiType: string
-}
+import {
+  ContestedOperationsCompare,
+  describeConflict,
+  DocumentClaim,
+  findContestedOperationConflicts,
+} from './contested-operations'
 
 /**
  * The index key of an operation: the api type, then the id.
@@ -40,43 +47,87 @@ export const operationKey = ({ apiType, operationId }: { apiType: string; operat
 const operationIdOf = (key: string): string => key.slice(key.indexOf(':') + 1)
 
 /**
- * Grade every operationId two or more documents derived, reading `operationClaims` off the documents.
+ * Record that `document` derived `operation`. A publication and the editor's rebuild both collect through here,
+ * so both reach `reportOperationCollisions` with the same claims.
+ */
+export function collectOperationClaim(
+  claims: Claims<DocumentClaim>,
+  document: VersionDocument,
+  operation: OperationClaim,
+): void {
+  collectClaim(claims, operationKey(operation), { document, documentId: document.slug, operation })
+}
+
+/** Reduce an operation to what its document keeps once the operation itself is gone. */
+export const toOperationClaim = (
+  { operationId, apiType, apiKind, apiAudience }: ApiOperation,
+): OperationClaim => ({ operationId, apiType, apiKind, apiAudience })
+
+/**
+ * Report the operationIds two or more documents of a version derived, one message per document. Claims are keyed
+ * by `operationKey`, so a collision never crosses api types.
  *
- * Used by the editor's incremental rebuild, which has no built content of its own to collect from. A
- * publication collects the same claims from what it just built and calls `reportOperationCollisions`; both
- * key by `operationKey`, so both reach the same verdict for the same documents.
+ * An api type whose builder declares `compareContestedOperations` reports only a conflict, as an `Error`: documents
+ * that describe an id identically publish one operation either way. Any other api type reports every collision,
+ * as an `Error` for AsyncAPI and a `Warning` otherwise. A reported id names every claimant, even when only one of
+ * them disagrees.
+ */
+export function reportOperationCollisions(
+  claims: Claims<DocumentClaim>,
+  notifications: NotificationMessage[],
+  apiBuilders: ApiBuilder[],
+): void {
+  const comparisons = new Map<string, ContestedOperationsCompare>()
+  for (const { apiType, compareContestedOperations } of apiBuilders) {
+    if (compareContestedOperations) { comparisons.set(apiType, compareContestedOperations) }
+  }
+
+  // every claimant of a key shares its api type
+  const apiTypeOf = (claimants: DocumentClaim[]): string => claimants[0].operation.apiType
+
+  // what differs, by the key of every contested id whose documents disagree
+  const conflictDescriptions = new Map<string, string>()
+  for (const [apiType, compare] of comparisons) {
+    const claimsOfApiType = new Map([...claims].filter(([, claimants]) => apiTypeOf(claimants) === apiType))
+    const operationConflicts = findContestedOperationConflicts(claimsOfApiType, compare)
+    for (const conflict of operationConflicts) {
+      conflictDescriptions.set(operationKey({ apiType, operationId: conflict.operationId }), describeConflict(conflict))
+    }
+  }
+
+  const isReported = ([key, claimants]: [string, DocumentClaim[]]): boolean =>
+    !comparisons.has(apiTypeOf(claimants)) || conflictDescriptions.has(key)
+
+  reportCollisions(
+    new Map([...claims].filter(isReported)),
+    notifications,
+    MESSAGE_CATEGORY.DuplicateOperationId,
+    ({ operation: { apiType } }) =>
+      (comparisons.has(apiType) || apiType === ASYNCAPI_API_TYPE ? MESSAGE_SEVERITY.Error : MESSAGE_SEVERITY.Warning),
+    (key, documentIds) => {
+      const collisionMessage = `Duplicated operationId '${operationIdOf(key)}' found in different documents: ${listDocuments(documentIds)}`
+      const conflictDescription = conflictDescriptions.get(key)
+      return conflictDescription ? `${collisionMessage}. ${conflictDescription}` : collisionMessage
+    },
+  )
+}
+
+/**
+ * Report operationId collisions from the claims the documents remember, for the editor's rebuild: the index keeps
+ * only the winner of each id, so what a document remembers is the only claim left.
  */
 export function reportOperationCollisionsOf(
   documents: Iterable<VersionDocument>,
   notifications: NotificationMessage[],
+  apiBuilders: ApiBuilder[],
 ): void {
-  const claims: Claims<OperationClaim> = new Map()
+  const claims: Claims<DocumentClaim> = new Map()
   for (const document of documents) {
-    for (const { operationId, apiType } of document.operationClaims ?? []) {
-      collectClaim(claims, operationKey({ apiType, operationId }), { documentId: document.slug, apiType })
+    for (const operation of document.operationClaims ?? []) {
+      collectOperationClaim(claims, document, operation)
     }
   }
-  reportOperationCollisions(claims, notifications)
-}
-
-/**
- * Cross-document operationId collisions, within one api type — the claims are keyed by `operationKey`.
- *
- * Every claimant of a key shares its api type, so one of them answers for the whole collision: AsyncAPI
- * grades it an `Error`, REST and GraphQL a `Warning`.
- */
-export function reportOperationCollisions(
-  claims: Claims<OperationClaim>,
-  notifications: NotificationMessage[],
-): void {
-  reportCollisions(
-    claims,
-    notifications,
-    MESSAGE_CATEGORY.DuplicateOperationId,
-    ({ apiType }) => (apiType === ASYNCAPI_API_TYPE ? MESSAGE_SEVERITY.Error : MESSAGE_SEVERITY.Warning),
-    (key, documentIds) =>
-      `Duplicated operationId '${operationIdOf(key)}' found in different documents: ${listDocuments(documentIds)}`,
-  )
+  reportOperationCollisions(claims, notifications, apiBuilders)
 }
 
 export async function buildDocumentOperations(
@@ -102,7 +153,7 @@ export function indexOperations(
   document.operationIds = operations.map(({ operationId }) => operationId)
   // kept whole: `reconcileOwnedIds`, `rebuildFiles` and `removeOutdatedCaches` look an entry up by the claim
   // that made it, and a document that lost an id still has to name it to find what it once owned
-  document.operationClaims = operations.map(({ operationId, apiType }) => ({ operationId, apiType }))
+  document.operationClaims = operations.map(toOperationClaim)
   for (const operation of operations) {
     setReportingDuplicate(buildResult.operations, operationKey(operation), operation)
   }
