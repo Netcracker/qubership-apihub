@@ -21,6 +21,13 @@ type TechnicalParameters struct {
 	ListenAddress    string `validate:"required"`
 	Apihub           ApihubConfig
 	ApiSpecDirectory string
+	HttpClientRetry  HttpClientRetryConfig
+}
+
+type HttpClientRetryConfig struct {
+	Count         int `validate:"gte=0"`
+	WaitTimeMs    int `validate:"gte=0"`
+	MaxWaitTimeMs int `validate:"gte=0"`
 }
 
 type ApihubConfig struct {

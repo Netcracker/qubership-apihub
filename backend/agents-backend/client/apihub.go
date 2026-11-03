@@ -41,7 +41,7 @@ type ApihubClient interface {
 	GetSystemInfo(ctx context.Context) (*view.ApihubSystemInfo, error)
 }
 
-func NewApihubClient(apihubUrl string, accessToken string) (ApihubClient, error) {
+func NewApihubClient(apihubUrl string, accessToken string, retryCfg RetryConfig) (ApihubClient, error) {
 	tlsConfig, err := utils.BuildSecureTLSConfig(nil)
 	if err != nil {
 		return nil, fmt.Errorf("build TLS config: %w", err)
@@ -49,17 +49,20 @@ func NewApihubClient(apihubUrl string, accessToken string) (ApihubClient, error)
 	tr := http.Transport{TLSClientConfig: tlsConfig}
 	cl := http.Client{Transport: &tr, Timeout: time.Second * 60}
 	client := resty.NewWithClient(&cl)
-	return &apihubClientImpl{client: client, apihubUrl: apihubUrl, accessToken: accessToken}, nil
+	retryClient := resty.NewWithClient(&cl)
+	configureRetry(retryClient, retryCfg)
+	return &apihubClientImpl{client: client, retryClient: retryClient, apihubUrl: apihubUrl, accessToken: accessToken}, nil
 }
 
 type apihubClientImpl struct {
 	client      *resty.Client
+	retryClient *resty.Client
 	apihubUrl   string
 	accessToken string
 }
 
 func (a apihubClientImpl) CheckAuthToken(ctx context.Context, token string) (bool, error) {
-	req := a.client.R()
+	req := a.retryClient.R()
 	req.SetContext(ctx)
 	req.SetHeader("Cookie", fmt.Sprintf("%s=%s", view.AccessTokenCookieName, token))
 
@@ -74,7 +77,7 @@ func (a apihubClientImpl) CheckAuthToken(ctx context.Context, token string) (boo
 }
 
 func (a apihubClientImpl) GetApiKeyByKey(ctx context.Context, apiKey string) (*view.ApihubApiKeyView, error) {
-	req := a.client.R()
+	req := a.retryClient.R()
 	req.SetContext(ctx)
 	req.SetHeader("api-key", apiKey)
 
@@ -96,7 +99,7 @@ func (a apihubClientImpl) GetApiKeyByKey(ctx context.Context, apiKey string) (*v
 }
 
 func (a apihubClientImpl) GetPatByPAT(ctx context.Context, token string) (*view.PersonalAccessTokenExtAuthView, error) {
-	req := a.client.R()
+	req := a.retryClient.R()
 	req.SetContext(ctx)
 	req.SetHeader("X-Personal-Access-Token", token)
 
@@ -118,7 +121,7 @@ func (a apihubClientImpl) GetPatByPAT(ctx context.Context, token string) (*view.
 }
 
 func (a apihubClientImpl) GetPackageById(ctx context.Context, id string) (*view.SimplePackage, error) {
-	req := a.makeRequest(ctx)
+	req := a.makeRequest(ctx, true)
 
 	resp, err := req.Get(fmt.Sprintf("%s/api/v2/packages/%s", a.apihubUrl, url.PathEscape(id)))
 
@@ -145,7 +148,7 @@ func (a apihubClientImpl) GetPackageById(ctx context.Context, id string) (*view.
 }
 
 func (a apihubClientImpl) GetPackageByServiceName(ctx context.Context, workspaceId string, serviceName string) (*view.PackagesInfo, error) {
-	req := a.makeRequest(ctx)
+	req := a.makeRequest(ctx, true)
 
 	resp, err := req.Get(fmt.Sprintf("%s/api/v2/packages?kind=package&serviceName=%s&parentId=%s&showAllDescendants=true", a.apihubUrl, url.PathEscape(serviceName), workspaceId))
 	if err != nil {
@@ -180,7 +183,7 @@ func (a apihubClientImpl) GetPackageByServiceName(ctx context.Context, workspace
 }
 
 func (a apihubClientImpl) CreatePackage(ctx context.Context, pkg view.PackageCreateRequest) (string, error) {
-	req := a.makeRequest(ctx)
+	req := a.makeRequest(ctx, false)
 	req.SetBody(pkg)
 
 	resp, err := req.Post(fmt.Sprintf("%s/api/v2/packages", a.apihubUrl))
@@ -202,7 +205,7 @@ func (a apihubClientImpl) CreatePackage(ctx context.Context, pkg view.PackageCre
 }
 
 func (a apihubClientImpl) GetPackages(ctx context.Context, searchReq view.PackagesSearchReq) (*view.Packages, error) {
-	req := a.makeRequest(ctx)
+	req := a.makeRequest(ctx, true)
 
 	base, err := url.Parse(fmt.Sprintf("%s/api/v2/packages", a.apihubUrl))
 	if err != nil {
@@ -265,7 +268,7 @@ func (a apihubClientImpl) GetPackages(ctx context.Context, searchReq view.Packag
 }
 
 func (a apihubClientImpl) GetUserPackagesPromoteStatuses(ctx context.Context, packagesReq view.PackagesReq) (view.AvailablePackagePromoteStatuses, error) {
-	req := a.makeRequest(ctx)
+	req := a.makeRequest(ctx, true)
 	req.SetBody(packagesReq)
 
 	resp, err := req.Post(fmt.Sprintf("%s/api/v2/users/%s/availablePackagePromoteStatuses", a.apihubUrl, url.QueryEscape(secctx.GetUserId(ctx))))
@@ -291,7 +294,7 @@ func (a apihubClientImpl) GetUserPackagesPromoteStatuses(ctx context.Context, pa
 }
 
 func (a apihubClientImpl) GetVersion(ctx context.Context, id, version string) (*view.VersionContent, error) {
-	req := a.makeRequest(ctx)
+	req := a.makeRequest(ctx, true)
 	resp, err := req.Get(fmt.Sprintf("%s/api/v3/packages/%s/versions/%s?includeSummary=true&includeOperations=true", a.apihubUrl, url.PathEscape(id), url.PathEscape(version)))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get version %s for id %s: %s", version, id, err.Error())
@@ -331,7 +334,7 @@ func (a apihubClientImpl) GetVersion(ctx context.Context, id, version string) (*
 }
 
 func (a apihubClientImpl) Publish(ctx context.Context, config view.BuildConfig, src []byte, clientBuild bool, builderId string, saveSources bool, dependencies []string) (string, error) {
-	req := a.makeRequest(ctx)
+	req := a.makeRequest(ctx, false)
 
 	confBytes, err := json.Marshal(config)
 	if err != nil {
@@ -391,7 +394,7 @@ func (a apihubClientImpl) Publish(ctx context.Context, config view.BuildConfig, 
 }
 
 func (a apihubClientImpl) GetVersions(ctx context.Context, packageId string, searchReq view.VersionSearchRequest) (*view.PublishedVersionsView, error) {
-	req := a.makeRequest(ctx)
+	req := a.makeRequest(ctx, true)
 	base, err := url.Parse(fmt.Sprintf("%s/api/v3/packages/%s/versions", a.apihubUrl, url.PathEscape(packageId)))
 	if err != nil {
 		return nil, err
@@ -452,7 +455,7 @@ func (a apihubClientImpl) GetVersions(ctx context.Context, packageId string, sea
 }
 
 func (a apihubClientImpl) DeleteVersionsRecursively(ctx context.Context, packageId string, parameters view.DeleteVersionsRecursivelyReq) (string, error) {
-	req := a.makeRequest(ctx)
+	req := a.makeRequest(ctx, false)
 
 	req.SetBody(parameters)
 	resp, err := req.Post(fmt.Sprintf("%s/api/v2/packages/%s/versions/recursiveDelete", a.apihubUrl, packageId))
@@ -477,7 +480,7 @@ func (a apihubClientImpl) DeleteVersionsRecursively(ctx context.Context, package
 }
 
 func (a apihubClientImpl) GetVersionReferences(ctx context.Context, id, version string) (*view.VersionReferences, error) {
-	req := a.makeRequest(ctx)
+	req := a.makeRequest(ctx, true)
 	resp, err := req.Get(fmt.Sprintf("%s/api/v3/packages/%s/versions/%s/references", a.apihubUrl, url.PathEscape(id), url.PathEscape(version)))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get version %s for id %s: %s", version, id, err.Error())
@@ -501,7 +504,7 @@ func (a apihubClientImpl) GetVersionReferences(ctx context.Context, id, version 
 }
 
 func (a apihubClientImpl) GetVersionRestOperationsWithData(ctx context.Context, packageId string, version string, limit int, page int) (*view.RestOperations, error) {
-	req := a.makeRequest(ctx)
+	req := a.makeRequest(ctx, true)
 	resp, err := req.Get(fmt.Sprintf("%s/api/v2/packages/%s/versions/%s/rest/operations?includeData=true&limit=%d&page=%d", a.apihubUrl, url.PathEscape(packageId), url.PathEscape(version), limit, page))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get version rest operations. Error - %s", err.Error())
@@ -526,7 +529,7 @@ func (a apihubClientImpl) GetVersionRestOperationsWithData(ctx context.Context, 
 }
 
 func (a apihubClientImpl) GetPublishStatuses(ctx context.Context, packageId string, publishIds []string) ([]view.PublishStatusResponse, error) {
-	req := a.makeRequest(ctx)
+	req := a.makeRequest(ctx, true)
 	req.SetBody(map[string]interface{}{
 		"publishIds": publishIds,
 	})
@@ -549,7 +552,7 @@ func (a apihubClientImpl) GetPublishStatuses(ctx context.Context, packageId stri
 }
 
 func (a apihubClientImpl) GetApiKeyById(ctx context.Context, apiKeyId string) (*view.ApihubApiKeyView, error) {
-	req := a.makeRequest(ctx)
+	req := a.makeRequest(ctx, true)
 	resp, err := req.Get(fmt.Sprintf("%s/api/v1/auth/apiKey/%s", a.apihubUrl, apiKeyId))
 	if err != nil {
 		return nil, err
@@ -572,7 +575,7 @@ func (a apihubClientImpl) GetApiKeyById(ctx context.Context, apiKeyId string) (*
 }
 
 func (a apihubClientImpl) GetUserById(ctx context.Context, userId string) (*view.User, error) {
-	req := a.makeRequest(ctx)
+	req := a.makeRequest(ctx, true)
 	resp, err := req.Get(fmt.Sprintf("%s/api/v2/users/%s", a.apihubUrl, userId))
 	if err != nil {
 		return nil, err
@@ -595,7 +598,7 @@ func (a apihubClientImpl) GetUserById(ctx context.Context, userId string) (*view
 }
 
 func (a apihubClientImpl) GetSystemInfo(ctx context.Context) (*view.ApihubSystemInfo, error) {
-	req := a.makeRequest(ctx)
+	req := a.makeRequest(ctx, true)
 	resp, err := req.Get(fmt.Sprintf("%s/api/v1/system/info", a.apihubUrl))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get APIHUB system info: %s", err.Error())
@@ -624,8 +627,13 @@ func checkUnauthorized(resp *resty.Response) error {
 	return nil
 }
 
-func (a apihubClientImpl) makeRequest(ctx context.Context) *resty.Request {
-	req := a.client.R()
+func (a apihubClientImpl) makeRequest(ctx context.Context, retryable bool) *resty.Request {
+	var req *resty.Request
+	if retryable {
+		req = a.retryClient.R()
+	} else {
+		req = a.client.R()
+	}
 	req.SetContext(ctx)
 
 	if secctx.IsSystem(ctx) {

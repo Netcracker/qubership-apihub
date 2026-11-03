@@ -21,6 +21,13 @@ type TechnicalParameters struct {
 	DebugEnabled                 bool
 	AgentStatusReportEnabled     bool
 	AgentStatusReportIntervalMin int
+	HttpClientRetry              HttpClientRetryConfig
+}
+
+type HttpClientRetryConfig struct {
+	Count         int `validate:"gte=0"`
+	WaitTimeMs    int `validate:"gte=0"`
+	MaxWaitTimeMs int `validate:"gte=0"`
 }
 
 type ApihubConfig struct {

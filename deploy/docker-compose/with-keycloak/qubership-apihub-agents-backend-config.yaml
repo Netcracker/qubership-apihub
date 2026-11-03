@@ -11,5 +11,9 @@ technicalParameters:
     url: 'http://host.docker.internal:8081'
     # Must be the same as APIHUB_ACCESS_TOKEN in BE>
     accessToken: ${APIHUB_ACCESS_TOKEN}
+  httpClientRetry:
+    count: 3
+    waitTimeMs: 100
+    maxWaitTimeMs: 2000
 security:
   insecureProxy: true

@@ -16,15 +16,17 @@ type AgentsBackendClient interface {
 	SendKeepaliveMessage(pathPrefix string, msg view.AgentKeepaliveMessage) (string, error)
 }
 
-func NewAgentsBackendClient(apihubUrl string, accessToken string) (AgentsBackendClient, error) {
+func NewAgentsBackendClient(apihubUrl string, accessToken string, retryCfg RetryConfig) (AgentsBackendClient, error) {
 	httpClient, err := utils.CreateSecureHTTPClient(time.Second*60, "agents-backend")
 	if err != nil {
 		return nil, err
 	}
+	restyClient := resty.NewWithClient(httpClient)
+	configureRetry(restyClient, retryCfg)
 	return &agentsBackendClientImpl{
 		apihubUrl:   apihubUrl,
 		accessToken: accessToken,
-		restyClient: resty.NewWithClient(httpClient),
+		restyClient: restyClient,
 	}, nil
 }
 

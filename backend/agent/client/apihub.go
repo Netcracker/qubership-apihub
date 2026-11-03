@@ -36,16 +36,18 @@ type ApihubClient interface {
 	GetPatByPAT(ctx context.Context, pat string) (*view.PersonalAccessTokenExtAuthView, error)
 }
 
-func NewApihubClient(apihubUrl string, accessToken string, cloudName string) (ApihubClient, error) {
+func NewApihubClient(apihubUrl string, accessToken string, cloudName string, retryCfg RetryConfig) (ApihubClient, error) {
 	httpClient, err := utils.CreateSecureHTTPClient(time.Second*60, "apihub")
 	if err != nil {
 		return nil, err
 	}
+	restyClient := resty.NewWithClient(httpClient)
+	configureRetry(restyClient, retryCfg)
 	return &apihubClientImpl{
 		apihubUrl:   apihubUrl,
 		accessToken: accessToken,
 		cloudName:   cloudName,
-		restyClient: resty.NewWithClient(httpClient),
+		restyClient: restyClient,
 	}, nil
 }
 

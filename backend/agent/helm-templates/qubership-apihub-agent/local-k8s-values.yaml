@@ -25,6 +25,10 @@ qubershipApihubAgent:
         url: 'http://qubership-apihub-ui.qubership-apihub.svc.cluster.local:8080'
         # Mandatory; Provide admin access token for your Qubership APIHUB; If not set, default value: ""; Example: access-token-12345
         accessToken: '' # set access token from qubership-apihub
+      httpClientRetry:
+        count: 3
+        waitTimeMs: 100
+        maxWaitTimeMs: 2000
       # Mandatory; Hostname for Qubership APIHUB Agent (used in Ingress and to construct agentUrl); If not set, default value: ""; Example: apihub-agent.k8s.example.com
       agentHost: 'qubership-apihub-agent.qubership-apihub-agent.svc.cluster.local'
       # Optional; Protocol for agentUrl construction; If not set, default value: http; Example: https

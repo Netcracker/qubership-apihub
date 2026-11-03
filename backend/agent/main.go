@@ -78,11 +78,16 @@ func main() {
 		}
 	}
 
-	apihubClient, err := client.NewApihubClient(systemInfoService.GetApihubUrl(), systemInfoService.GetAccessToken(), systemInfoService.GetCloudName())
+	retryCfg := client.RetryConfig{
+		Count:       systemInfoService.GetHttpClientRetryCount(),
+		WaitTime:    time.Duration(systemInfoService.GetHttpClientRetryWaitTimeMs()) * time.Millisecond,
+		MaxWaitTime: time.Duration(systemInfoService.GetHttpClientRetryMaxWaitTimeMs()) * time.Millisecond,
+	}
+	apihubClient, err := client.NewApihubClient(systemInfoService.GetApihubUrl(), systemInfoService.GetAccessToken(), systemInfoService.GetCloudName(), retryCfg)
 	if err != nil {
 		panic(fmt.Sprintf("Can't create APIHUB client: %s", err.Error()))
 	}
-	agentsBackendClient, err := client.NewAgentsBackendClient(systemInfoService.GetApihubUrl(), systemInfoService.GetAccessToken())
+	agentsBackendClient, err := client.NewAgentsBackendClient(systemInfoService.GetApihubUrl(), systemInfoService.GetAccessToken(), retryCfg)
 	if err != nil {
 		panic(fmt.Sprintf("Can't create agents-backend client: %s", err.Error()))
 	}

@@ -32,6 +32,9 @@ type SystemInfoService interface {
 	GetServicesCacheTTL() time.Duration
 	AgentStatusReportEnabled() bool
 	GetAgentStatusReportInterval() time.Duration
+	GetHttpClientRetryCount() int
+	GetHttpClientRetryWaitTimeMs() int
+	GetHttpClientRetryMaxWaitTimeMs() int
 }
 
 func NewSystemInfoService() (SystemInfoService, error) {
@@ -76,6 +79,9 @@ func setDefaults() {
 	viper.SetDefault("discovery.urls.openapi.config-urls", []string{"/v3/api-docs/swagger-config", "/swagger-resources"})
 	viper.SetDefault("discovery.urls.openapi.doc-urls", []string{"/q/openapi?format=json", "/v3/api-docs?format=json", "/v2/api-docs", "/swagger-ui/swagger.json"})
 	viper.SetDefault("discovery.urls.apihub-config.config-urls", []string{"/v3/api-docs/apihub-swagger-config"})
+	viper.SetDefault("technicalParameters.httpClientRetry.count", 3)
+	viper.SetDefault("technicalParameters.httpClientRetry.waitTimeMs", 100)
+	viper.SetDefault("technicalParameters.httpClientRetry.maxWaitTimeMs", 2000)
 }
 
 func getConfigFolder() string {
@@ -169,4 +175,16 @@ func (g systemInfoServiceImpl) GetPaasPlatform() string {
 
 func (g systemInfoServiceImpl) GetDiscoveryUrls() config.ApiTypeUrlsConfig {
 	return g.config.Discovery.Urls
+}
+
+func (g systemInfoServiceImpl) GetHttpClientRetryCount() int {
+	return g.config.TechnicalParameters.HttpClientRetry.Count
+}
+
+func (g systemInfoServiceImpl) GetHttpClientRetryWaitTimeMs() int {
+	return g.config.TechnicalParameters.HttpClientRetry.WaitTimeMs
+}
+
+func (g systemInfoServiceImpl) GetHttpClientRetryMaxWaitTimeMs() int {
+	return g.config.TechnicalParameters.HttpClientRetry.MaxWaitTimeMs
 }

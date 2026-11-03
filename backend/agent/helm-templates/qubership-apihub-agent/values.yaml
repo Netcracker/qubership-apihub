@@ -42,6 +42,13 @@ qubershipApihubAgent:
         url: ''
         # Mandatory; Provide admin access token for your Qubership APIHUB; If not set, default value: ""; Example: access-token-12345
         accessToken: ''
+      httpClientRetry:
+        # Optional; Number of retry attempts for transient APIHUB/agent HTTP failures (network errors or 5xx responses); If not set, default value: 3; Example: 3
+        count: 3
+        # Optional; Base wait time in milliseconds between retry attempts (exponential backoff with jitter); If not set, default value: 100; Example: 100
+        waitTimeMs: 100
+        # Optional; Maximum wait time in milliseconds between retry attempts; If not set, default value: 2000; Example: 2000
+        maxWaitTimeMs: 2000
       # Mandatory; Hostname for Qubership APIHUB Agent (used in Ingress and to construct agentUrl); If not set, default value: ""; Example: apihub-agent.k8s.example.com
       agentHost: ''
       # Optional; Protocol for agentUrl construction; If not set, default value: http; Example: https

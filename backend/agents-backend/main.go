@@ -105,11 +105,16 @@ func main() {
 	_ = <-initSrvStoppedChan // wait for the init srv to stop to avoid multiple servers started race condition
 	log.Infof("Migration step passed, continue initialization")
 
-	agentClient, err := client.NewAgentClient(systemInfoService.GetApihubAccessToken())
+	retryCfg := client.RetryConfig{
+		Count:       systemInfoService.GetHttpClientRetryCount(),
+		WaitTime:    time.Duration(systemInfoService.GetHttpClientRetryWaitTimeMs()) * time.Millisecond,
+		MaxWaitTime: time.Duration(systemInfoService.GetHttpClientRetryMaxWaitTimeMs()) * time.Millisecond,
+	}
+	agentClient, err := client.NewAgentClient(systemInfoService.GetApihubAccessToken(), retryCfg)
 	if err != nil {
 		log.Fatalf("Failed to create AgentClient: %v", err)
 	}
-	apihubClient, err := client.NewApihubClient(systemInfoService.GetApihubUrl(), systemInfoService.GetApihubAccessToken())
+	apihubClient, err := client.NewApihubClient(systemInfoService.GetApihubUrl(), systemInfoService.GetApihubAccessToken(), retryCfg)
 	if err != nil {
 		log.Fatalf("Failed to create ApihubClient: %v", err)
 	}

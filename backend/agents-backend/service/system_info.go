@@ -22,6 +22,9 @@ type SystemInfoService interface {
 	GetDBCreds() *view.DbCredentials
 	GetApihubUrl() string
 	GetApihubAccessToken() string
+	GetHttpClientRetryCount() int
+	GetHttpClientRetryWaitTimeMs() int
+	GetHttpClientRetryMaxWaitTimeMs() int
 	GetDefaultWorkspaceId() string
 	GetSnapshotsCleanupSchedule() string
 	GetSnapshotsTTLDays() int
@@ -73,6 +76,9 @@ func setDefaults() {
 	viper.SetDefault("security.showDebugInResponse", false)
 	viper.SetDefault("cleanup.snapshots.schedule", "0 22 * * 0") // at 10:00 PM on Sunday
 	viper.SetDefault("cleanup.snapshots.ttlDays", 30)
+	viper.SetDefault("technicalParameters.httpClientRetry.count", 3)
+	viper.SetDefault("technicalParameters.httpClientRetry.waitTimeMs", 100)
+	viper.SetDefault("technicalParameters.httpClientRetry.maxWaitTimeMs", 2000)
 }
 
 type systemInfoServiceImpl struct {
@@ -126,6 +132,18 @@ func (s systemInfoServiceImpl) GetApihubUrl() string {
 
 func (s systemInfoServiceImpl) GetApihubAccessToken() string {
 	return s.config.TechnicalParameters.Apihub.AccessToken
+}
+
+func (s systemInfoServiceImpl) GetHttpClientRetryCount() int {
+	return s.config.TechnicalParameters.HttpClientRetry.Count
+}
+
+func (s systemInfoServiceImpl) GetHttpClientRetryWaitTimeMs() int {
+	return s.config.TechnicalParameters.HttpClientRetry.WaitTimeMs
+}
+
+func (s systemInfoServiceImpl) GetHttpClientRetryMaxWaitTimeMs() int {
+	return s.config.TechnicalParameters.HttpClientRetry.MaxWaitTimeMs
 }
 
 func (s systemInfoServiceImpl) GetDefaultWorkspaceId() string {

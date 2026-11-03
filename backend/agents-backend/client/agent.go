@@ -27,7 +27,7 @@ type AgentClient interface {
 	SendEmptyServiceRequest(namespace string, serviceId string, agentUrl string, requestMethod string, requestPath string) (int, error)
 }
 
-func NewAgentClient(accessToken string) (AgentClient, error) {
+func NewAgentClient(accessToken string, retryCfg RetryConfig) (AgentClient, error) {
 	tlsConfig, err := utils.BuildSecureTLSConfig(nil)
 	if err != nil {
 		return nil, fmt.Errorf("build TLS config: %w", err)
@@ -35,7 +35,9 @@ func NewAgentClient(accessToken string) (AgentClient, error) {
 	tr := http.Transport{TLSClientConfig: tlsConfig}
 	cl := http.Client{Transport: &tr, Timeout: time.Second * 60}
 	client := resty.NewWithClient(&cl)
-	return &agentClientImpl{client: client, accessToken: accessToken}, nil
+	retryClient := resty.NewWithClient(&cl)
+	configureRetry(retryClient, retryCfg)
+	return &agentClientImpl{client: client, retryClient: retryClient, accessToken: accessToken}, nil
 }
 
 const CustomApiKeyHeader = "X-Apihub-ApiKey"
@@ -43,11 +45,12 @@ const CustomProxyErrorHeader = "X-Apihub-Proxy-Error"
 
 type agentClientImpl struct {
 	client      *resty.Client
+	retryClient *resty.Client
 	accessToken string
 }
 
 func (a agentClientImpl) GetNamespaces(ctx context.Context, agentUrl string) (*view.AgentNamespaces, error) {
-	req := a.makeRequest(ctx)
+	req := a.makeRequest(ctx, true)
 	resp, err := req.Get(fmt.Sprintf("%s/api/v1/namespaces", agentUrl))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get namespaces: %w", err)
@@ -70,7 +73,7 @@ func (a agentClientImpl) GetNamespaces(ctx context.Context, agentUrl string) (*v
 }
 
 func (a agentClientImpl) ListServiceNames(ctx context.Context, agentUrl string, namespace string) (*view.ServiceNamesResponse, error) {
-	req := a.makeRequest(ctx)
+	req := a.makeRequest(ctx, true)
 
 	resp, err := req.Get(fmt.Sprintf("%s/api/v1/namespaces/%s/serviceNames", agentUrl, namespace))
 	if err != nil {
@@ -99,7 +102,7 @@ func (a agentClientImpl) ListServiceNames(ctx context.Context, agentUrl string, 
 }
 
 func (a agentClientImpl) StartDiscovery(ctx context.Context, namespace string, workspaceId string, agentUrl string, failOnError bool, discoveryReq view.DiscoveryRequest) error {
-	req := a.makeRequest(ctx)
+	req := a.makeRequest(ctx, false)
 	if len(discoveryReq.Services) > 0 {
 		req.SetBody(discoveryReq)
 	}
@@ -127,7 +130,7 @@ func (a agentClientImpl) StartDiscovery(ctx context.Context, namespace string, w
 }
 
 func (a agentClientImpl) ListServices_deprecated(ctx context.Context, namespace string, workspaceId string, agentUrl string) (*view.ServiceListResponse_deprecated, error) {
-	req := a.makeRequest(ctx)
+	req := a.makeRequest(ctx, true)
 	resp, err := req.Get(fmt.Sprintf("%s/api/v2/namespaces/%s/workspaces/%s/services", agentUrl, namespace, workspaceId))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get service for namespace - %s. Error - %s", namespace, err.Error())
@@ -158,7 +161,7 @@ func discoveryScopeQuery(discoveryServices string) string {
 }
 
 func (a agentClientImpl) ListServices(ctx context.Context, namespace string, workspaceId string, agentUrl string, discoveryServices string) (*view.ServiceListResponse, error) {
-	req := a.makeRequest(ctx)
+	req := a.makeRequest(ctx, true)
 	resp, err := req.Get(fmt.Sprintf("%s/api/v3/namespaces/%s/workspaces/%s/services%s", agentUrl, namespace, workspaceId, discoveryScopeQuery(discoveryServices)))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get service for namespace - %s. Error - %s", namespace, err.Error())
@@ -182,7 +185,7 @@ func (a agentClientImpl) ListServices(ctx context.Context, namespace string, wor
 }
 
 func (a agentClientImpl) GetServiceSpecification(ctx context.Context, namespace string, workspaceId string, serviceId string, fileId string, agentUrl string, discoveryServices string) ([]byte, error) {
-	req := a.makeRequest(ctx)
+	req := a.makeRequest(ctx, true)
 	resp, err := req.Get(fmt.Sprintf("%s/api/v2/namespaces/%s/workspaces/%s/services/%s/specs/%s%s", agentUrl, namespace, workspaceId, url.PathEscape(serviceId), url.PathEscape(fileId), discoveryScopeQuery(discoveryServices)))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get service specification. Error - %s", err.Error())
@@ -221,8 +224,13 @@ func (a agentClientImpl) SendEmptyServiceRequest(namespace string, serviceId str
 	return resp.StatusCode(), nil
 }
 
-func (a agentClientImpl) makeRequest(ctx context.Context) *resty.Request {
-	req := a.client.R()
+func (a agentClientImpl) makeRequest(ctx context.Context, retryable bool) *resty.Request {
+	var req *resty.Request
+	if retryable {
+		req = a.retryClient.R()
+	} else {
+		req = a.client.R()
+	}
 	req.SetContext(ctx)
 
 	if secctx.IsSystem(ctx) {
