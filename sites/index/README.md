@@ -5,7 +5,9 @@ static HTML and CSS. There is no build, no framework, and no package manifest, s
 
 ## Files
 
-- `index.html`: the navigation page with four cards (Landing, Documentation, Storybooks, Database ERD) and a footer.
+- `index.html`: the navigation page with five cards (Landing, Documentation, Storybooks, Database ERD,
+  Open Pull Requests Cockpit) and a footer. The last card links to the external report of the `qubership-apihub-ci`
+  site.
 - `404.html`: the root 404 page. GitHub Pages serves only this one, at any depth, so its links are absolute paths
   under `/qubership-apihub/`.
 - `style.css`: the dark theme of the landing in plain CSS. The generated ERD index page (`/erd/index.html`) links it

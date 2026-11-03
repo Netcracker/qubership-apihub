@@ -1,0 +1,36 @@
+{
+  "action": "created",
+  "issue": {
+    "number": 200,
+    "state": "open",
+    "title": "Changelog is empty for a package with no operations",
+    "type": {
+      "name": "Bug"
+    },
+    "labels": [
+      {
+        "name": "agent:needs-human"
+      }
+    ],
+    "user": {
+      "login": "alice",
+      "type": "User"
+    }
+  },
+  "comment": {
+    "id": 9100,
+    "body": "It happens on version 2026.3, with the REST API only.",
+    "user": {
+      "login": "alice",
+      "type": "User"
+    },
+    "author_association": "NONE"
+  },
+  "repository": {
+    "full_name": "Netcracker/qubership-apihub"
+  },
+  "sender": {
+    "login": "alice",
+    "type": "User"
+  }
+}

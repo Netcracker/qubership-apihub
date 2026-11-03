@@ -19,11 +19,12 @@
 
 name: CI
 
-# One run per ref; a newer push cancels the older run, except on main and release: a run there publishes
-# images, and on main the release artifacts, so it is never cancelled half-way. Those runs queue instead.
+# One run per ref; a newer push cancels the older run, except on develop, main, and release: a run there
+# publishes images, and on main the release artifacts, so it is never cancelled half-way. Those runs queue
+# instead.
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/release' }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/develop' && github.ref != 'refs/heads/main' && github.ref != 'refs/heads/release' }}
 
 permissions:
   contents: read
@@ -497,6 +498,7 @@ jobs:
       images: >-
         [{"project":"ui-portal","image":"qubership-apihub-ui","dockerfile":"frontend/ui/Dockerfile",
           "build_projects":"ui-portal,ui-agents","deploy":"","context":".","dockerignore":".dockerignore",
+          "hash_paths":"frontend/ui/nginx frontend/ui/vite-plugins",
           "workspace_build":"true","outputs":""},
          {"project":"build-task-consumer","image":"qubership-apihub-build-task-consumer",
           "dockerfile":"frontend/build-task-consumer/Dockerfile",

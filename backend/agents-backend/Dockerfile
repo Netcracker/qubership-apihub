@@ -32,13 +32,9 @@ WORKDIR /workspace/agents-backend
 RUN GOWORK=off GOSUMDB=off CGO_ENABLED=0 GOFLAGS=-mod=readonly go mod download && GOWORK=off GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -o qubership-apihub-agents-backend .
 
 
-FROM ghcr.io/netcracker/qubership-core-base:2.5.8@sha256:0c2c9e4b49e73efffb30edf8d3de8b3eb43194a6c4f688da08ec3236b570b486
+FROM ghcr.io/netcracker/qubership-core-base:2.5.9@sha256:ab860790e4ecce56f8df673495cd5745ce587fffa7d7eb210d6d098563ccb26d
 
-ARG GIT_BRANCH=unknown
-ARG GIT_HASH=unknown
-
-ENV GIT_BRANCH=$GIT_BRANCH
-ENV GIT_HASH=$GIT_HASH
+# GIT_BRANCH, GIT_HASH, and COMMIT_TIME are added to the branch tag by tools/ci/ref-overlay, not to this image.
 
 WORKDIR /app/qubership-apihub-agents-backend
 

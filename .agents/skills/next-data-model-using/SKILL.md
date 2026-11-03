@@ -1,4 +1,5 @@
 ---
+name: next-data-model-using
 description: Consume next-data-model inside api-doc-viewer — tree builders, node traversal, diff fields, and row-level diff props. Use when importing @netcracker/qubership-apihub-next-data-model in api-doc-viewer code.
 ---
 

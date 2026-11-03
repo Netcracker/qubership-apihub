@@ -112,18 +112,16 @@ branch on which nothing changed would otherwise keep a stale pointer forever.
 
 ## Where the provenance lives
 
-Not in the image. `GIT_BRANCH` and `GIT_HASH` used to be baked in as environment variables and
-were removed, because a ref is not a property of the content. Two branches at one commit hash
-identically, so they share a `src-` tag, and the branch tag is published by retagging rather
-than rebuilding — which meant the image serving `:dev` reported `GIT_BRANCH=main`.
+Not in the content image. `GIT_BRANCH` and `GIT_HASH` used to be baked in at build time, which made the image
+serving `:dev` report `GIT_BRANCH=main`: a ref is not a property of the content. Two branches at one commit hash
+identically and share a `src-` tag.
 
-The ref and commit are now OCI annotations on the index that each branch tag points at, which
-is per-tag and can therefore be true for every tag at once:
+The branch tag adds them in a thin layer on top of the content image (`tools/ci/ref-overlay`, environment variables
+only), so every tag reports its own branch and short commit. The full commit and the ref are also OCI annotations on
+the index that each branch tag points at:
 
 ```bash
 docker buildx imagetools inspect ghcr.io/netcracker/apihub-build-task-consumer:dev
 ```
 
-`org.opencontainers.image.version` is the ref and `org.opencontainers.image.revision` the
-commit. The trade is that `echo $GIT_BRANCH` inside a running container no longer answers the
-question; the command above does, and it answers for the tag you actually pulled.
+`org.opencontainers.image.version` is the ref and `org.opencontainers.image.revision` the commit.

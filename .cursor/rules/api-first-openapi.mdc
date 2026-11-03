@@ -1,8 +1,6 @@
 ---
 description: API-first OpenAPI sync principle for REST changes
-globs:
-  - "docs/api/**"
-  - "**/controller/**"
+globs: docs/api/**, **/controller/**
 ---
 
 # API-First OpenAPI

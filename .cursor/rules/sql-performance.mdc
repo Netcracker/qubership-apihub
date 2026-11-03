@@ -1,6 +1,6 @@
 ---
 description: SQL performance review for repository changes
-globs: "**/repository/**"
+globs: **/repository/**
 ---
 
 # SQL Performance

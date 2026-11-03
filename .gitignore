@@ -3,7 +3,6 @@ deploy/docker-compose/apihub-generic/jwt_private_key
 deploy/docker-compose/with-keycloak/data/**
 deploy/docker-compose/backend-debug/data/**
 deploy/docker-compose/with-keycloak/jwt_private_key
-deploy/docker-compose/with-gitlab/gitlab/**
 deploy/helm-templates/qubership-apihub/jwt_private_key
 deploy/helm-templates/qubership-apihub/local-secrets.yaml
 deploy/helm-templates/local-k8s-quickstart/qubership-apihub/local-secrets.yaml
@@ -11,6 +10,20 @@ deploy/helm-templates/local-k8s-quickstart/qubership-apihub/with-keycloak-local-
 deploy/helm-templates/local-k8s-quickstart/qubership-apihub/certs/
 deploy/helm-templates/local-k8s-quickstart/keycloak/files/realm.json
 .idea
+.vscode/
+
+# AI assistants: commit rules, subagents, permissions, and the skill trees a clone must have.
+# `.agents/skills/` is the shared tree. `.claude/skills/` is the same install for Claude Code.
+# `.cursor/skills/` stays ignored: Cursor reads the two committed trees.
+.claude/*
+!.claude/rules/
+!.claude/skills/
+!.claude/agents/
+!.claude/settings.json
+.cursor/*
+!.cursor/rules/
+!.cursor/agents/
+!.cursor/permissions.json
 
 # APM cache (installed package sources)
 apm_modules/

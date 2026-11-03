@@ -1006,6 +1006,7 @@ paths:
                               type: object
                               description: |
                                 Details about the last release version and it's changes with previous version.
+                                The `summary` counts both operation changes and contract changes against the previous version.
                                 * Returns only if the lastReleaseVersionDetails:true and the lastReleaseVersion is explicitly filled in on a package.
                                 * Otherwise - will be omitted in the answer.
                               properties:
@@ -12186,6 +12187,26 @@ components:
               description: When true, previous version status validation is enforced on publish and patch endpoints. When false, the system runs with the legacy behaviour.
               type: boolean
               default: true
+        validationRulesSeverity:
+          allOf:
+            - $ref: "#/components/schemas/ValidationRulesSeverity"
+          readOnly: true
+    ValidationRulesSeverity:
+      description: |
+        Severity levels that portal-backend applies to validation rules in every build it registers.
+        Mirrors the failBuildOnBrokenRefs business parameter.
+      type: object
+      required:
+        - brokenRefs
+      properties:
+        brokenRefs:
+          description: |
+            Severity level for unresolved references.
+            "error" when failBuildOnBrokenRefs is true, "warning" when it is false.
+          type: string
+          enum:
+            - "error"
+            - "warning"
     ApiKey:
       title: ApiKey
       type: object
@@ -14528,17 +14549,9 @@ components:
         status:
           $ref: "#/components/schemas/VersionStatusEnum"
         validationRulesSeverity:
-          type: object
-          description: Configuration for validation rules severity levels
+          allOf:
+            - $ref: "#/components/schemas/ValidationRulesSeverity"
           readOnly: true
-          properties:
-            brokenRefs:
-              type: string
-              enum:
-                - "error"
-                - "warning"
-              default: "warning"
-              description: Severity level for broken references validation
         groupName:
           description: |
             Operation group name. groupName is required if buildType = documentGroup.
@@ -15213,6 +15226,8 @@ components:
         featureFlags:
           useV3Search: false
           previousVersionStatusValidation: true
+        validationRulesSeverity:
+          brokenRefs: error
     Package:
       description: Example of the package params
       value:

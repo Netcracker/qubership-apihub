@@ -1,0 +1,33 @@
+{
+  "action": "edited",
+  "issue": {
+    "number": 200,
+    "state": "open",
+    "title": "Changelog is empty for a package with no operations",
+    "body": "Steps: publish a version without operations, open the changelog.\nVersion 2026.3. Expected: a message.",
+    "type": {
+      "name": "Bug"
+    },
+    "labels": [
+      {
+        "name": "agent:needs-human"
+      }
+    ],
+    "user": {
+      "login": "alice",
+      "type": "User"
+    }
+  },
+  "changes": {
+    "body": {
+      "from": "Steps: publish a version without operations, open the changelog."
+    }
+  },
+  "repository": {
+    "full_name": "Netcracker/qubership-apihub"
+  },
+  "sender": {
+    "login": "alice",
+    "type": "User"
+  }
+}

@@ -1,0 +1,6 @@
+name: apihub-react-coding
+version: 1.0.0
+description: React 18 conventions for the React modules of the qubership-apihub monorepo (ui, api-doc-viewer, apispec-view, rest-playground, graphapi)
+author: Qubership
+dependencies:
+  apm: []

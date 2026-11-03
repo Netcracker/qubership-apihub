@@ -30,6 +30,8 @@ Then, when you need them:
 - [API guidelines](./api-guidelines.md): designing, changing, deprecating, and reviewing the REST APIs.
 - [Documentation](./documentation.md): where each kind of document lives, the documentation site, and the linters.
 - [AI assistants](./ai-assistants.md): the agent packages, `apm install`, and the `AGENTS.md` files.
+- [AI Autonomous agent](./autonomous-agent.md): the AI agent in GitHub Actions, its `/agent` commands, and its
+  settings.
 
 ## By role
 

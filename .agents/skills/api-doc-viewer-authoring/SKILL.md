@@ -1,4 +1,5 @@
 ---
+name: api-doc-viewer-authoring
 description: Extend api-doc-viewer React viewers — components, layout modes, diff rendering, and Storybook stories. Use when adding or changing viewer components, rows, layout modes, or diff rendering in frontend/api-doc-viewer.
 ---
 

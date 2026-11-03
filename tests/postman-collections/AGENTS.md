@@ -72,5 +72,5 @@ Other packages: `advanced-verification` (skill, `backend/portal-backend`) builds
 backend change end-to-end. Store packages: `development-conventions`, `github-ticket-implementation-planner`,
 `english-developer-style`, `markdown-line-length-120`.
 
-Deploy local packages with `apm install --target cursor,claude --legacy-skill-paths` from the repository root
+Deploy local packages with `apm install --target cursor,claude` from the repository root
 (never `apm compile`).

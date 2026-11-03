@@ -1325,7 +1325,7 @@ flowchart LR
     style compose fill:#f8fafc,stroke:#94a3b8
 ```
 
-Variants: `with-keycloak` (OIDC SSO testing), `with-gitlab` (backend config sample);
+Variant: `with-keycloak` (OIDC SSO testing);
 `java-task-consumer/docker-compose.yml` runs JTC standalone (host port 3001 → 3000).
 
 ---

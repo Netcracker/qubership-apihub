@@ -1,0 +1,61 @@
+# Copies the execution level (`ai:l0-assistant` ... `ai:l3-autonomous`) of a merged pull request to the issues it
+# closes, because the team counts work by issue. It uses no model. Design: docs/internal/autonomous-agent/design.md,
+# section "Execution labels on issues".
+#
+# Repository variables: AGENT_ENABLED (`true` to act), AGENT_DRY_RUN (`false` to write to GitHub; otherwise the
+# results go to the job summary), AGENT_ALLOWED_ACTORS (comma-separated logins of pull request authors; empty means
+# everyone).
+name: 'AI Autonomous: Execution levels'
+
+# `pull_request_target` gives a write token also for a pull request from a fork. That is safe here because the job
+# checks out the base branch only and never runs code of the pull request.
+on:
+  pull_request_target:
+    types: [closed, labeled]
+
+permissions:
+  contents: read
+
+env:
+  AGENT_ENABLED: ${{ vars.AGENT_ENABLED }}
+  AGENT_DRY_RUN: ${{ vars.AGENT_DRY_RUN }}
+  # A variable is the intended home; a secret of the same name works too.
+  AGENT_ALLOWED_ACTORS: ${{ vars.AGENT_ALLOWED_ACTORS || secrets.AGENT_ALLOWED_ACTORS }}
+
+jobs:
+  levels:
+    # Only merged pull requests count. A `labeled` event matters only for a level label, which is how a person sets a
+    # level after the merge; every other label would start a runner for nothing.
+    if: >-
+      vars.AGENT_ENABLED == 'true' &&
+      github.event.pull_request.merged == true &&
+      (github.event.action == 'closed' || startsWith(github.event.label.name, 'ai:l'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    # The job recomputes the level of each issue from GitHub, so a rerun for the same pull request is harmless; one
+    # job per pull request at a time keeps its comments from doubling.
+    concurrency:
+      group: ai-autonomous-levels-${{ github.event.pull_request.number }}
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+    env:
+      AGENT_NUMBER: ${{ github.event.pull_request.number }}
+    steps:
+      # The default checkout of `pull_request_target` is the base branch, which is the code we trust.
+      - uses: actions/checkout@v6
+        with:
+          sparse-checkout: tools/agent
+          persist-credentials: false
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      - name: Copy the level to the issues
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          AGENT_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: node tools/agent/levels.js

@@ -57,14 +57,14 @@ Coding conventions are defined globally:
 
 - Prefer MCP tooling (Playwright browser automation, code search, lint/test helpers) for inspection and evidence gathering.
 - Use Playwright MCP snapshot/screenshot utilities when debugging UI issues; avoid speculative explanations.
-- Run lint checks immediately after modifications; always start with `npx eslint --fix <all-modified-files>` using a single command that lists every touched file instead of running file-by-file.
+- Run lint checks immediately after modifications; always start with `pnpm exec eslint --fix <all-modified-files>` using a single command that lists every touched file instead of running file-by-file.
 - Run any newly added/modified tests with `--headed --trace=on` unless the playbook marks them as `n/a`.
 
 ## 8. Linting, Formatting & Type Checking
 
-- **TypeScript check:** run `npx tsc --noEmit` to verify there are no type errors before formatting and linting. Pre-existing errors in unrelated files can be noted but should not block the task.
-- **dprint formatting:** run `npx dprint fmt <file1> <file2> ...` on all changed files before the final ESLint pass. If the command fails due to missing `dprint` or config, note the error and continue.
-- **Primary lint command:** after finishing edits (and again after formatting), run `npx eslint --fix <file1> <file2> ...` covering every created/modified file in one go. Capture the exact CLI and result in POST-FLIGHT.
+- **TypeScript check:** run `pnpm exec tsc --noEmit` to verify there are no type errors before formatting and linting. Pre-existing errors in unrelated files can be noted but should not block the task.
+- **dprint formatting:** run `dprint fmt <file1> <file2> ...` on all changed files before the final ESLint pass. If the command fails due to missing `dprint` or config, note the error and continue.
+- **Primary lint command:** after finishing edits (and again after formatting), run `pnpm exec eslint --fix <file1> <file2> ...` covering every created/modified file in one go. Capture the exact CLI and result in POST-FLIGHT.
 - **LF endings:** save every new file with Unix line endings (LF). When copying content from Windows tools, normalize it before committing (most editors expose this in the status bar).
 
 ## 9. Workspace Detection
@@ -81,11 +81,11 @@ Print `Detected project root: <abs path>` in the first response.
 - Nx project `ui-tests`. Install once at the repository root with `pnpm install` (the module is a pnpm workspace
   member; do not run `npm ci` here). Install the browsers with `pnpm exec playwright install`.
 - Lint and type check: `pnpm exec nx run ui-tests:lint:check` and `pnpm exec nx run ui-tests:typecheck`.
-- Run suites from this directory: `pnpm run test-e2e-portal`, `pnpm run test-component`, `pnpm run test-unit`,
+- Run suites from this directory: `pnpm run test-e2e-portal`, `pnpm run test-component`, `ppnpm run test-unit`,
   `pnpm run cleanup`. The `Agent` and `ADV-*` projects run with `pnpm exec playwright test --project=<name>`.
-- Environment: `BASE_URL` and the variables in `README.md`. A running APIHUB stack (Compose or Kind) is required;
-  CI runs the Portal project through `.github/workflows/e2e-tests-compose.yml`.
-- Replace `npx` with `pnpm exec` in the commands of the sections above (`eslint`, `tsc`, `dprint`, `playwright`).
+- Environment: `BASE_URL` and the variables in `README.md`. A running APIHUB stack (Compose or Kind) is required.
+  CI on Kind runs the Portal and Agent projects through `.github/workflows/e2e-tests-kind.yml`. Compose runs
+  the Portal project only.
 
 ## Agent packages
 

@@ -1,0 +1,11 @@
+name: apihub-agents-claude
+version: 1.0.0
+description: "Claude Code subagents pinned to a cheaper model: the verifier on haiku"
+author: Qubership
+# APM copies an agent file verbatim to every target, so one file cannot carry a model per harness. This package and
+# apihub-agents-cursor each ship the verifier for one target with an identical body: the instructions live once,
+# in the apihub-validate skill.
+targets:
+  - claude
+dependencies:
+  apm: []

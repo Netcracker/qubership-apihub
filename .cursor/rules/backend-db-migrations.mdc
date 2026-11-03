@@ -1,6 +1,6 @@
 ---
 description: Backend SQL migration path and validation script
-globs: "backend/portal-backend/**/resources/migrations/**"
+globs: backend/portal-backend/**/resources/migrations/**
 ---
 
 # Backend Database Migrations
@@ -10,5 +10,5 @@ globs: "backend/portal-backend/**/resources/migrations/**"
 - **Never** reuse or duplicate migration numbers.
 - Provide paired `.up.sql` and `.down.sql` files when rollback is required.
 - After adding migrations, run from repo root:
-  - Linux / WSL / Git Bash: `bash .cursor/skills/apihub-backend-developer/scripts/check_migration_numbers.sh`
-  - Windows PowerShell: `powershell -File .cursor/skills/apihub-backend-developer/scripts/check_migration_numbers.ps1`
+  - Linux / WSL / Git Bash: `bash .agents/skills/apihub-backend-developer/scripts/check_migration_numbers.sh`
+  - Windows PowerShell: `powershell -File .agents/skills/apihub-backend-developer/scripts/check_migration_numbers.ps1`

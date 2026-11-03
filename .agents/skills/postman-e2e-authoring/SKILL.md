@@ -86,7 +86,7 @@ Before changing requests or assertions:
 
 1. Read the canonical OpenAPI specs in `backend/portal-backend/docs/api/` (`APIHUB_API.yaml`, `Admin API.yaml`, `APIHUB_API_internal.yaml` as applicable).
 2. Match method, path, query, headers, and status codes to the spec; update request bodies when schemas change.
-3. See backend docs: `backend/portal-backend/docs/postman_collections.md`.
+3. See backend docs: `tests/README.md`.
 
 ## Checklist for a new or updated request
 

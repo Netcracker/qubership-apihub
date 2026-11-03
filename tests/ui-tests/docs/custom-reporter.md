@@ -47,7 +47,7 @@ Reporter options are passed from `playwright.config.ts`:
 
 When every test in the run belongs to a `*.unit.test.ts` file (the `Unit` project), HTML generation is skipped even if `html: true`. `ApihubStyledHtmlReport` calls the backend for environment metadata, which unit tests must not trigger.
 
-Detection is based on the actual Playwright suite at runtime, so it works for `npm run test-unit`, `npx playwright test --project=Unit`, and any other invocation path.
+Detection is based on the actual Playwright suite at runtime, so it works for `pnpm run test-unit`, `pnpm exec playwright test --project=Unit`, and any other invocation path.
 
 The `status` file is still written for unit runs.
 

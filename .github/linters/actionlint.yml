@@ -11,6 +11,8 @@ paths:
       - 'shellcheck reported issue in this script: SC2153:info.+'
       - 'shellcheck reported issue in this script: SC2001:style.+'
       - 'shellcheck reported issue in this script: SC2016:info.+'
+      # GitHub sends `issues` `typed` when an issue gets its type; actionlint 1.7.7 of super-linter does not know it.
+      - 'invalid activity type "typed" for "issues" Webhook event.+'
   workflows-templates/**/*.{yml,yaml}:
     ignore:
       - 'shellcheck reported issue in this script: SC2086:info.+'

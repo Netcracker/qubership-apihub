@@ -1,6 +1,6 @@
 ---
 description: Backend API error code conventions in ErrorCodes.go
-globs: "backend/portal-backend/**/*.go"
+globs: backend/portal-backend/**/*.go
 ---
 
 # Backend API Errors

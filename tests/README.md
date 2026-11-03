@@ -70,7 +70,7 @@ E2E: Run tests (manual) > Run workflow** or with `gh workflow run`.
 | `postman-ref` | `develop` | Ref of `tests/postman-collections` |
 | `postman-collections` | empty | Comma-separated collections; empty means the default list of the runtime |
 | `playwright-ref` | `develop` | Ref of `tests/ui-tests` |
-| `playwright-args` | empty | Arguments of `playwright test`; empty means `--project=Portal --grep-invert=@flaky` |
+| `playwright-args` | empty | Arguments of `playwright test`. Empty on Kind with the agent means Portal and Agent; otherwise Portal. Both exclude `@flaky` |
 | `agent` | `true` | Deploy the agent and run its collection (Kind only) |
 
 [CI](../docs/development/ci.md#manual-e2e) has the details and examples.

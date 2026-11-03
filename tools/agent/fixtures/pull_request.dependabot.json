@@ -1,0 +1,35 @@
+{
+  "action": "opened",
+  "number": 123,
+  "pull_request": {
+    "number": 123,
+    "state": "open",
+    "draft": false,
+    "title": "chore(deps): bump yaml from 2.8.0 to 2.8.1",
+    "body": "Bumps yaml.",
+    "user": {
+      "login": "dependabot[bot]",
+      "type": "Bot"
+    },
+    "head": {
+      "ref": "dependabot/npm_and_yarn/yaml-2.8.1",
+      "sha": "0102030405060708090a0b0c0d0e0f1011121314",
+      "repo": {
+        "full_name": "Netcracker/qubership-apihub"
+      }
+    },
+    "base": {
+      "ref": "develop",
+      "repo": {
+        "full_name": "Netcracker/qubership-apihub"
+      }
+    }
+  },
+  "repository": {
+    "full_name": "Netcracker/qubership-apihub"
+  },
+  "sender": {
+    "login": "dependabot[bot]",
+    "type": "Bot"
+  }
+}

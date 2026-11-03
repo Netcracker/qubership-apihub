@@ -1,6 +1,6 @@
 ---
 description: Go backend development workflow for APIHub services.
-globs: "**/*.go"
+globs: **/*.go
 ---
 
 When implementing or modifying Go backend code (controllers, services, repositories,

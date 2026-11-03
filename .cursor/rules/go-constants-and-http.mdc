@@ -1,6 +1,6 @@
 ---
 description: Go constants, literals, and HTTP status code conventions
-globs: "**/*.go"
+globs: **/*.go
 ---
 
 # Go Constants and HTTP Status

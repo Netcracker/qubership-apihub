@@ -9,7 +9,7 @@ Read this file when you need backend-specific examples or doc-routing detail. Ke
 | New or changed REST contract | `docs/api/APIHUB_API.yaml` (+ Admin/Internal specs if applicable) |
 | New feature with design notes | `docs/design/<area>/` in the repository root (see `docs/design/README.md`) |
 | Operational / migration analysis | `docs/administration/operations-migration-analysis.md` (repository root `docs/`) |
-| Local dev setup change | `docs/local_development/` |
+| Local dev setup change | `docs/development/local-run.md` (repository root `docs/`) |
 | AI assistant behavior | `docs/design/ai-assistant/` (repository root) or `docs/administration/static-resources-customization.md` (repository root `docs/`) |
 | Minor implementation detail | Relevant existing guide only — **not** root `README.md` |
 
@@ -17,7 +17,7 @@ Full index: `docs/README.md`.
 
 ## Related repositories (Helm, E2E)
 
-See [`docs/agent/related-repositories.md`](../../../docs/agent/related-repositories.md). Agents cannot edit those repos unless they are in the workspace; **remind** the developer with links when:
+See `backend/README.md`, section "Follow-up in other modules". Agents cannot edit those repos unless they are in the workspace; **remind** the developer with links when:
 
 | Backend change | Likely follow-up |
 |----------------|------------------|
@@ -25,8 +25,6 @@ See [`docs/agent/related-repositories.md`](../../../docs/agent/related-repositor
 | New cron, probe, port, volume | Helm chart templates |
 | New/changed REST API | Postman collection repo + `docs/api/*.yaml` |
 | New auth or error contract | Postman assertions |
-
-Update placeholder Helm URL in `related-repositories.md` when your team's chart repo is known.
 
 ## Error codes (`exception/ErrorCodes.go`)
 
@@ -56,11 +54,11 @@ Directory: `resources/migrations/`
 Validate (from repository root):
 
 ```bash
-bash .cursor/skills/apihub-backend-developer/scripts/check_migration_numbers.sh
+bash .agents/skills/apihub-backend-developer/scripts/check_migration_numbers.sh
 ```
 
 ```powershell
-powershell -File .cursor/skills/apihub-backend-developer/scripts/check_migration_numbers.ps1
+powershell -File .agents/skills/apihub-backend-developer/scripts/check_migration_numbers.ps1
 ```
 
 ## Further reading

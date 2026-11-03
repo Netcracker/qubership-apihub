@@ -138,7 +138,7 @@ Check: `docker compose -f <file> config`.
 - `docs/installation-guide.md` and `docs/admin-guide.md` when the install steps or operations change.
 - If the module needs its own agent rules, add a package `backend/<name>/agent-packages/<pkg>/` with every
   instruction `applyTo` prefixed `backend/<name>/`, list it as `./backend/<name>/agent-packages/<pkg>` in the
-  root `apm.yml`, and run `apm install --target cursor,claude --legacy-skill-paths` at the root.
+  root `apm.yml`, and run `apm install --target cursor,claude` at the root.
   Skip `apm compile`; see `agent-packages/README.md`.
 
 ## Final check

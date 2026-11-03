@@ -28,16 +28,14 @@ updates:
           - "*"
 
   # The pnpm workspace: one pnpm-lock.yaml (lockfileVersion 9.0) at the root, one package.json per workspace
-  # project. The directories repeat the packages in pnpm-workspace.yaml. `group-by: dependency-name` makes one pull
-  # request per dependency for all projects, so a version never differs between two projects of one lockfile.
+  # project. Only the root is listed: the root job reads the projects from pnpm-workspace.yaml and updates their
+  # package.json files together with the lockfile. A job for a project directory drops the root lockfile and opens a
+  # pull request that changes package.json alone (dependabot/dependabot-core#16680). `group-by: dependency-name`
+  # makes one pull request per dependency for all projects, so a version never differs between two projects of one
+  # lockfile.
   - package-ecosystem: "npm"
     directories:
       - "/"
-      - "/frontend/*"
-      - "/frontend/*/packages/*"
-      - "/sites/*"
-      - "/tests/ui-tests"
-      - "/tools/jest-chrome-in-docker-environment"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10
@@ -132,7 +130,7 @@ updates:
         patterns:
           - "*"
 
-  # Images in the Docker Compose stacks for users. with-gitlab has no compose file.
+  # Images in the Docker Compose stacks for users.
   - package-ecosystem: "docker-compose"
     directories:
       - "/deploy/docker-compose/apihub-generic"

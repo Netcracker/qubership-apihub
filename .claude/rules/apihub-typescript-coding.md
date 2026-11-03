@@ -1,0 +1,8 @@
+---
+paths:
+  - "frontend/**/*.{ts,tsx,mts,cts}"
+  - "tests/ui-tests/**/*.{ts,tsx}"
+---
+
+When writing or changing TypeScript in `frontend/` or `tests/ui-tests/` (`*.ts`, `*.tsx`), apply the
+`apihub-typescript-coding` skill.

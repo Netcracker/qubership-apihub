@@ -1,0 +1,27 @@
+{
+  "action": "typed",
+  "issue": {
+    "number": 202,
+    "state": "open",
+    "title": "Rename the publish timeout setting",
+    "body": "Rename PUBLISH_TIMEOUT to BUILD_TIMEOUT in the configuration reference.",
+    "type": {
+      "name": "Task"
+    },
+    "labels": [],
+    "user": {
+      "login": "alice",
+      "type": "User"
+    }
+  },
+  "type": {
+    "name": "Task"
+  },
+  "repository": {
+    "full_name": "Netcracker/qubership-apihub"
+  },
+  "sender": {
+    "login": "carol",
+    "type": "User"
+  }
+}

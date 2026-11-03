@@ -1,4 +1,5 @@
 ---
+name: api-diff-authoring
 description: How to add or modify classify rules, classifiers, response-scope handling, and adapters in the api-diff library. Use when changing how api-diff classifies a change as breaking, non-breaking, or annotation.
 ---
 

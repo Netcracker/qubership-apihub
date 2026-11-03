@@ -1,0 +1,28 @@
+{
+  "action": "created",
+  "issue": {
+    "number": 123,
+    "state": "open",
+    "title": "feat(ui): add search box",
+    "user": {
+      "login": "alice",
+      "type": "User"
+    }
+  },
+  "comment": {
+    "id": 9001,
+    "body": "/agent review",
+    "user": {
+      "login": "carol",
+      "type": "User"
+    },
+    "author_association": "MEMBER"
+  },
+  "repository": {
+    "full_name": "Netcracker/qubership-apihub"
+  },
+  "sender": {
+    "login": "carol",
+    "type": "User"
+  }
+}

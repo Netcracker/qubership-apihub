@@ -1,8 +1,8 @@
 ---
 description: APIHUB UI TypeScript coding conventions.
-globs: "frontend/ui/**/*.{ts,tsx}"
+globs: frontend/ui/**/*.{ts,tsx}
 ---
 
 # APIHUB UI authoring
 
-When adding or changing TypeScript source in `frontend/ui` (`**/*.{ts,tsx}`), follow `docs/dev/CODING_GUIDELINES.md`.
+When adding or changing TypeScript source in `frontend/ui` (`**/*.{ts,tsx}`), apply the `apihub-ui-authoring` skill.

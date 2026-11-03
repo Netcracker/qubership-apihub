@@ -1,10 +1,17 @@
 import { test } from '@fixtures'
-import { expect } from '@services/expect-decorator'
-import { getSysInfo } from '@test-data/props'
+import { expect, expectText } from '@services/expect-decorator'
+import type { VersionedExtensionName } from '@test-data/props'
+import { getExtensionVersions, getPortalVersionInfo, getSysInfo } from '@test-data/props'
 import { PortalPage } from '@portal/pages'
 import { TICKET_BASE_URL } from '@test-setup'
 import { VS_CODE_EXTENSION_TOOLTIP } from '@test-data/portal'
 import { SYSADMIN } from '@test-data'
+
+// The titles that System Information gives the extensions that report a version.
+const EXTENSION_TITLES: Record<VersionedExtensionName, string> = {
+  'api-linter': 'API Linter',
+  'agents-backend': 'Agents Backend',
+}
 
 test.describe('General', () => {
 
@@ -62,14 +69,43 @@ test.describe('General', () => {
       const portalPage = new PortalPage(page)
       const { sysInfoPopup } = portalPage.header
       const { build } = await getSysInfo()
+      const extensionVersions = await getExtensionVersions()
+      const { frontendVersion, apiProcessorVersion, buildInfo } = await getPortalVersionInfo()
 
       await portalPage.goto()
       await portalPage.header.sysInfoBtn.click()
 
       await expect.soft(sysInfoPopup.content).toBeVisible()
       await expect.soft(sysInfoPopup.closeBtn).toBeVisible()
-      await expect.soft(sysInfoPopup.content).toContainText(build.backendVersion)
-      await expect.soft(sysInfoPopup.content).toContainText(/Frontend\sv.\s\S+/)
+      await expect.soft(sysInfoPopup.backendVersion).toHaveText(`Backend v. ${build.backendVersion}`)
+
+      // A registered extension has a row with its own answer; one that this stand does not register has no row.
+      for (const [name, title] of Object.entries(EXTENSION_TITLES) as [VersionedExtensionName, string][]) {
+        const version = extensionVersions[name]
+        if (version) {
+          await expect.soft(sysInfoPopup.extensionVersion(name)).toHaveText(`${title} v. ${version}`)
+        } else {
+          await expect.soft(sysInfoPopup.extensionVersion(name)).toBeHidden()
+        }
+      }
+
+      // Both versions carry the build id: `<version>+<10 hex digits>`.
+      await expectText.soft(frontendVersion).toMatch(/^\d+\.\d+\.\d+\+[0-9a-f]{10}$/)
+      await expectText.soft(apiProcessorVersion).toMatch(/^\d+\.\d+\.\d+\+[0-9a-f]{10}$/)
+      await expect.soft(sysInfoPopup.frontendVersion).toHaveText(`Frontend v. ${frontendVersion}`)
+      await expect.soft(sysInfoPopup.apiProcessorVersion).toHaveText(`API Processor v. ${apiProcessorVersion}`)
+
+      // `build-info.json` exists only in a branch-tagged image, and the entrypoint leaves the time empty when it has none.
+      // A stack on a `src-<hash>` image or on a dev server has no image version under the app versions.
+      if (buildInfo) {
+        const { branch, commit, committedAt } = buildInfo
+        const imageVersion = committedAt ? `${branch}.${commit}.${committedAt}` : `${branch}.${commit}`
+        await expect.soft(sysInfoPopup.frontendImageVersion).toHaveText(imageVersion)
+        await expect.soft(sysInfoPopup.apiProcessorImageVersion).toHaveText(imageVersion)
+      } else {
+        await expect.soft(sysInfoPopup.frontendImageVersion).toBeHidden()
+        await expect.soft(sysInfoPopup.apiProcessorImageVersion).toBeHidden()
+      }
       // TODO: Add checking api/v1/system/info "externalLinks": []
     })
 

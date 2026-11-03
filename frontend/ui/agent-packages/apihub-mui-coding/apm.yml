@@ -1,0 +1,6 @@
+name: apihub-mui-coding
+version: 1.0.0
+description: MUI 5 styling and component conventions for the MUI modules of the qubership-apihub monorepo (ui, rest-playground)
+author: Qubership
+dependencies:
+  apm: []

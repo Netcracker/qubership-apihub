@@ -1,0 +1,11 @@
+// Guidance for the Auto-review classifier of the Cursor agent; it steers, it does not enforce.
+// Claude Code enforces the same rules through permissions.deny and permissions.ask in .claude/settings.json.
+{
+  "autoRun": {
+    "block_instructions": [
+      "Do not run npm install, npm ci, npm run, or npx: this is one pnpm workspace, so use pnpm install at the repository root, pnpm run, pnpm exec for a workspace tool, and pnpm dlx for a one-off tool.",
+      "Do not run apm compile: it overwrites the hand-written AGENTS.md files.",
+      "Ask before deleting directories (rm -rf, Remove-Item -Recurse), git reset --hard, force pushes, git clean, git checkout -- or git restore of working files, deleting branches, or dropping stashes."
+    ]
+  }
+}

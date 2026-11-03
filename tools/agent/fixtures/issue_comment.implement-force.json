@@ -1,0 +1,36 @@
+{
+  "action": "created",
+  "issue": {
+    "number": 202,
+    "state": "open",
+    "title": "Move the release scripts to a shared folder",
+    "type": {
+      "name": "Task"
+    },
+    "labels": [
+      {
+        "name": "ai:unsuitable"
+      }
+    ],
+    "user": {
+      "login": "alice",
+      "type": "User"
+    }
+  },
+  "comment": {
+    "id": 9202,
+    "body": "/agent fix force\nKeep the old paths working for one release.",
+    "user": {
+      "login": "carol",
+      "type": "User"
+    },
+    "author_association": "MEMBER"
+  },
+  "repository": {
+    "full_name": "Netcracker/qubership-apihub"
+  },
+  "sender": {
+    "login": "carol",
+    "type": "User"
+  }
+}

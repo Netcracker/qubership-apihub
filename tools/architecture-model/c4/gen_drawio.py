@@ -1678,7 +1678,7 @@ p.text(
     1030,
     660,
     180,
-    'Sizing (values.yaml): Backend CPU 3 / 3 Gi in production (GOMEMLIMIT ≈ 80% of limit); Build Task Consumer 3–6 replicas; Linter 1000 Mi default; Agents Backend 256 Mi default. Probes: /live, /ready (Go services); /live (consumers); nginx /probes/live, /probes/ready.<br><br>Docker Compose (apihub-generic): ui, backend, build-task-consumer, api-linter-service, agents-backend, postgres. Variants: with-keycloak, with-gitlab; java-task-consumer/docker-compose.yml standalone.',
+    'Sizing (values.yaml): Backend CPU 3 / 3 Gi in production (GOMEMLIMIT ≈ 80% of limit); Build Task Consumer 3–6 replicas; Linter 1000 Mi default; Agents Backend 256 Mi default. Probes: /live, /ready (Go services); /live (consumers); nginx /probes/live, /probes/ready.<br><br>Docker Compose (apihub-generic): ui, backend, build-task-consumer, api-linter-service, agents-backend, postgres. Variant: with-keycloak; java-task-consumer/docker-compose.yml standalone.',
     10,
 )
 

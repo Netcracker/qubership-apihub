@@ -67,7 +67,9 @@ on:
         type: string
         default: ''
       playwright_args:
-        description: Arguments of `playwright test`. Empty means the default.
+        description: >-
+          Arguments of `playwright test`. Empty means Portal with 8 workers, excluding @flaky and
+          @specific.
         required: false
         type: string
         default: ''
@@ -382,11 +384,14 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          # --grep does not filter the setup projects, so a smoke run still creates its test data.
-          # Tests that fail for unrelated reasons are skipped in their spec, not excluded here. The
-          # arguments are split like a shell would, quotes included, without evaluating them.
+          # The same defaults as e2e-tests-kind.yml. playwright.config.ts sets 10 workers under CI;
+          # this job uses 8, as the previous repository's workflows did. @specific tests need a stand
+          # set up for them (SSO, creating a Gateway Routing report), so they are skipped together
+          # with @flaky. --grep does not filter the setup projects, so a smoke run still creates its
+          # test data. Tests that fail for unrelated reasons are skipped in their spec, not excluded
+          # here. The arguments are split like a shell would, quotes included, without evaluating them.
           args="$PLAYWRIGHT_ARGS"
-          [ -n "${args//[[:space:]]/}" ] || args='--project=Portal --grep-invert=@flaky'
+          [ -n "${args//[[:space:]]/}" ] || args='--project=Portal --workers=8 --grep-invert=@flaky|@specific'
           mapfile -t argv < <(xargs -n1 <<< "$args")
           if [ "$TIER" = 'smoke' ]; then argv+=(--grep=@smoke); fi
           echo "playwright ${argv[*]}"
@@ -433,10 +438,9 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: playwright-reports
-          # temp/test-results holds the screenshot, trace, and error-context.md of each failure.
-          path: |
-            tests/ui-tests/reports
-            tests/ui-tests/temp/test-results
+          # The HTML report keeps a copy of the screenshot, trace, and error-context.md of each
+          # failure in reports/playwright/data, so temp/test-results is not uploaded.
+          path: tests/ui-tests/reports
           if-no-files-found: warn
           retention-days: 7
 

@@ -1,0 +1,58 @@
+# The weekly report of the AI Autonomous agent: issues assessed, merged pull requests by execution level, pull requests
+# of the agent, attempts, and the cost of the AI calls. It uses no model. Design:
+# docs/internal/autonomous-agent/design.md.
+#
+# Repository variables: AGENT_ENABLED (`true` to act), AGENT_DRY_RUN (`false` to post the report to an issue; otherwise
+# the report goes to the job summary only), AGENT_REPORT_ISSUE (the issue that gets the report as a comment; optional),
+# AGENT_REPORT_DAYS (the length of the period in days; 7 when empty). The `days` input of a manual run overrides the
+# variable.
+name: 'AI Autonomous: Weekly report'
+
+on:
+  schedule:
+    # Monday, 06:00 UTC.
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+    inputs:
+      days:
+        description: 'Length of the period in days (empty means AGENT_REPORT_DAYS, then 7)'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+env:
+  AGENT_ENABLED: ${{ vars.AGENT_ENABLED }}
+  AGENT_DRY_RUN: ${{ vars.AGENT_DRY_RUN }}
+  AGENT_REPORT_ISSUE: ${{ vars.AGENT_REPORT_ISSUE }}
+  AGENT_REPORT_DAYS: ${{ inputs.days || vars.AGENT_REPORT_DAYS }}
+
+jobs:
+  report:
+    if: vars.AGENT_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    concurrency:
+      group: ai-autonomous-report
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: read
+    steps:
+      # The code of the default branch is the code we trust, also for a manual run from another branch.
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          sparse-checkout: tools/agent
+          persist-credentials: false
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      - name: Build the report
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node tools/agent/report.js

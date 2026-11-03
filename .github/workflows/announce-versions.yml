@@ -1,0 +1,67 @@
+name: 'PR: Available in versions'
+
+# After CI succeeds on a push to develop, comments on every issue that the merged pull request closes:
+# "Available in the following versions" with the version of each component, as System Information shows it
+# (tools/ci/announce-versions.js). CI has published the `dev` images by then, which is why this waits for it.
+#
+# The script reads the pushed commit from the workflow run. The run is the push of this repository: `workflow_run`
+# executes the file on the default branch, and the checkout below is the pushed commit of develop, never a fork.
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [develop]
+  workflow_dispatch:
+    inputs:
+      sha:
+        description: 'Commit of develop whose merged pull request to announce. Empty: the head of develop.'
+        type: string
+        required: false
+        default: ''
+      dry_run:
+        description: 'Print the comments in the job summary and post nothing.'
+        type: boolean
+        default: true
+
+# One run per commit; a later push does not cancel the announcement of an earlier merge.
+concurrency:
+  group: announce-versions-${{ github.event.workflow_run.head_sha || inputs.sha || github.sha }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: read
+  packages: read
+
+jobs:
+  announce:
+    name: announce
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_repository.full_name == github.repository)
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || inputs.sha || 'develop' }}
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Comment on the closed issues
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          OWNER: ${{ github.repository_owner }}
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
+        run: |
+          set -euo pipefail
+          HEAD_SHA="$(git rev-parse HEAD)"
+          export HEAD_SHA
+          node tools/ci/announce-versions.js

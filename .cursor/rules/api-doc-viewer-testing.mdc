@@ -1,6 +1,6 @@
 ---
 description: Conventions for api-doc-viewer screenshot integration tests.
-globs: "frontend/api-doc-viewer/packages/api-doc-viewer/src/it/**/*.ts"
+globs: frontend/api-doc-viewer/packages/api-doc-viewer/src/it/**/*.ts
 ---
 
 When writing or editing screenshot integration tests under

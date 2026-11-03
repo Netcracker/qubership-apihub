@@ -1,6 +1,6 @@
 ---
 description: Go error handling — fail fast and fix root cause
-globs: "**/*.go"
+globs: **/*.go
 ---
 
 # Go Error Handling

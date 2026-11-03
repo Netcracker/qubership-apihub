@@ -1,0 +1,32 @@
+{
+  "action": "created",
+  "issue": {
+    "number": 200,
+    "state": "open",
+    "title": "Changelog is empty for a package with no operations",
+    "body": "Steps: publish a package without operations, open the changelog.",
+    "type": {
+      "name": "Bug"
+    },
+    "user": {
+      "login": "alice",
+      "type": "User"
+    }
+  },
+  "comment": {
+    "id": 9101,
+    "body": "/agent why does the changelog builder return null here?",
+    "user": {
+      "login": "carol",
+      "type": "User"
+    },
+    "author_association": "MEMBER"
+  },
+  "repository": {
+    "full_name": "Netcracker/qubership-apihub"
+  },
+  "sender": {
+    "login": "carol",
+    "type": "User"
+  }
+}

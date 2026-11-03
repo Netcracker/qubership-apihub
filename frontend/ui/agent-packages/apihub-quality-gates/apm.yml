@@ -1,0 +1,6 @@
+name: apihub-quality-gates
+version: 1.0.0
+description: "Quality gates for frontend changes: dprint for new files, ESLint, type check, and the related unit tests of the touched files through the apihub-validate skill and the verifier subagent"
+author: Qubership
+dependencies:
+  apm: []

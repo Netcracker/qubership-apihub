@@ -41,7 +41,7 @@ Pick exactly one playbook that best matches the incoming request. Use it togethe
 
 - **PRE-FLIGHT:** read the functional spec/story plus `docs/ai-instructions/test-implementation-guide.md`. Confirm availability of referenced POM components and test data.
 - **Implementation:** follow the guide’s phase breakdown, use `test.step()` for contextual grouping, add annotations/tags, and mock backend state when required.
-- **Verification:** lint each touched spec and run the spec with `npx playwright test <spec> --headed --trace=on`. Capture artifacts if failures occur.
+- **Verification:** lint each touched spec and run the spec with `pnpm exec playwright test <spec> --headed --trace=on`. Capture artifacts if failures occur.
 
 ### POM
 
@@ -66,15 +66,15 @@ Pick exactly one playbook that best matches the incoming request. Use it togethe
 - **PRE-FLIGHT:** load the failure evidence (trace, logs). Identify the failing test and the commit where it last passed (if known).
 - **Implementation:**
   1. **Analyze**: Look at the trace/screenshot. Is it a locator issue? Timing? Backend error?
-  2. **Reproduce**: Run the test locally (`npx playwright test ...`).
+  2. **Reproduce**: Run the test locally (`pnpm exec playwright test ...`).
   3. **Fix**: Apply the fix. If it's a "wait", use proper assertions (auto-retrying), never hard sleeps.
 - **Verification:** Run the test 2-3 times locally to ensure stability (`--repeat-each=3`). Update "Common Errors" if it was a new pattern.
 
 ### Documentation
 
 - **PRE-FLIGHT:** list every document/section/table you are about to change so nothing remains outdated.
-- **Implementation:** update the content in small, focused chunks, and keep fenced TS/JS code in sync with project conventions. Run a quick lint (e.g., `npx eslint --stdin --ext .ts`) over snippets to catch syntax issues before publishing.
-- **Verification:** format via `npx dprint fmt ...`, then run the aggregate `npx eslint --fix ...`. Manually try embedded commands/scripts when relevant and summarize the outcome in POST-FLIGHT.
+- **Implementation:** update the content in small, focused chunks, and keep fenced TS/JS code in sync with project conventions. Run a quick lint (e.g., `pnpm exec eslint --stdin --ext .ts`) over snippets to catch syntax issues before publishing.
+- **Verification:** format via `dprint fmt ...`, then run the aggregate `pnpm exec eslint --fix ...`. Manually try embedded commands/scripts when relevant and summarize the outcome in POST-FLIGHT.
 
 ### Misc / Utility
 
