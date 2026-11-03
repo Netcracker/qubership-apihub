@@ -80,66 +80,68 @@ export const Responses = (props: ResponsesProps) => {
     <VStack spacing={8} as={Tabs} selectedId={activeResponseId} onChange={setActiveResponseId} appearance="pill">
       <DiffContainer>
         <SectionTitle title="Responses">
-          <TabList density="compact">
-            {responses.map(response => {
-              const changesSummary = extractAmountOfDiffs(response, diffsMetaKey)
-              // changed something inside content
-              const summaryAction =
-                keys(changesSummary).some(changeType => changesSummary?.[changeType] > 0)
-                  ? 'replace'
-                  : undefined
-              // changed response code
-              const selfAction = response?.[selfDiffMetaKey]?.action
+          <Box className="http-operation-responses-tab-list">
+            <TabList density="compact">
+              {responses.map(response => {
+                const changesSummary = extractAmountOfDiffs(response, diffsMetaKey)
+                // changed something inside content
+                const summaryAction =
+                  keys(changesSummary).some(changeType => changesSummary?.[changeType] > 0)
+                    ? 'replace'
+                    : undefined
+                // changed response code
+                const selfAction = response?.[selfDiffMetaKey]?.action
 
-              // changed CONTENT media type
-              let contentMediaTypeAction: unknown = null
-              const contentMediaTypes = response.contents ?? []
-              for (const contentMediaType of contentMediaTypes) {
-                const contentMediaTypeDiffMeta = contentMediaType[diffsMetaKey]
-                if (isObject(contentMediaTypeDiffMeta)) {
-                  if (contentMediaTypeAction === null) {
-                    contentMediaTypeAction = contentMediaTypeDiffMeta.action
-                  } else {
-                    contentMediaTypeAction = 'replace'
-                    break
+                // changed CONTENT media type
+                let contentMediaTypeAction: unknown = null
+                const contentMediaTypes = response.contents ?? []
+                for (const contentMediaType of contentMediaTypes) {
+                  const contentMediaTypeDiffMeta = contentMediaType[diffsMetaKey]
+                  if (isObject(contentMediaTypeDiffMeta)) {
+                    if (contentMediaTypeAction === null) {
+                      contentMediaTypeAction = contentMediaTypeDiffMeta.action
+                    } else {
+                      contentMediaTypeAction = 'replace'
+                      break
+                    }
                   }
                 }
-              }
 
-              // changed HEADERS
-              let headersAction: unknown = null
-              const headers = response.headers ?? []
-              for (const header of headers) {
-                const headerSelfDiffMetaKey = Reflect.ownKeys(header)
-                  .find(key => (
-                    typeof key === 'symbol' &&
-                    key.toString() === selfDiffMetaKey.toString()
-                  ))
-                if (!headerSelfDiffMetaKey) { continue }
+                // changed HEADERS
+                let headersAction: unknown = null
+                const headers = response.headers ?? []
+                for (const header of headers) {
+                  const headerSelfDiffMetaKey = Reflect.ownKeys(header)
+                    .find(key => (
+                      typeof key === 'symbol' &&
+                      key.toString() === selfDiffMetaKey.toString()
+                    ))
+                  if (!headerSelfDiffMetaKey) { continue }
 
-                const headerSelfDiffMeta = header[headerSelfDiffMetaKey]
-                if (isObject(headerSelfDiffMeta)) {
-                  if (headersAction === null) {
-                    headersAction = headerSelfDiffMeta.action
-                  } else {
-                    headersAction = 'replace'
-                    break
+                  const headerSelfDiffMeta = header[headerSelfDiffMetaKey]
+                  if (isObject(headerSelfDiffMeta)) {
+                    if (headersAction === null) {
+                      headersAction = headerSelfDiffMeta.action
+                    } else {
+                      headersAction = 'replace'
+                      break
+                    }
                   }
                 }
-              }
 
-              // calculate resulting diff action type
-              const action = selfAction || headersAction || contentMediaTypeAction || summaryAction
+                // calculate resulting diff action type
+                const action = selfAction || headersAction || contentMediaTypeAction || summaryAction
 
-              return (
-                <Tab key={response.code} id={response.code} intent={codeToIntentVal(response.code)}>
-                  <Box p={1}>
-                    <ResponseCodeItem response={response} action={action} />
-                  </Box>
-                </Tab>
-              )
-            })}
-          </TabList>
+                return (
+                  <Tab key={response.code} id={response.code} intent={codeToIntentVal(response.code)}>
+                    <Box p={1}>
+                      <ResponseCodeItem response={response} action={action} />
+                    </Box>
+                  </Tab>
+                )
+              })}
+            </TabList>
+          </Box>
         </SectionTitle>
       </DiffContainer>
 

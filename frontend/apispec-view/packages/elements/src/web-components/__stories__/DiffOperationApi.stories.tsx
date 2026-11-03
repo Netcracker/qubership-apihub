@@ -1,3 +1,5 @@
+import manyResponseCodesAfter from '@netcracker/qubership-apihub-apispec-view-samples/response-samples/many-response-codes/after.yaml'
+import manyResponseCodesBefore from '@netcracker/qubership-apihub-apispec-view-samples/response-samples/many-response-codes/before.yaml'
 import renameMediaTypeAndADeeperChangeInRequestBodyAfter from '@netcracker/qubership-apihub-apispec-view-samples/media-type-samples/rename-media-type-and-a-deeper-change-in-request-body/after.yaml'
 import renameMediaTypeAndADeeperChangeInRequestBodyBefore from '@netcracker/qubership-apihub-apispec-view-samples/media-type-samples/rename-media-type-and-a-deeper-change-in-request-body/before.yaml'
 import renameMediaTypeAndADeeperChangeInResponseAfter from '@netcracker/qubership-apihub-apispec-view-samples/media-type-samples/rename-media-type-and-a-deeper-change-in-response/after.yaml'
@@ -715,5 +717,15 @@ export const case31: Story = {
     beforeBugCrashInfiniteAdditionalPropsInDiffs,
     afterBugCrashInfiniteAdditionalPropsInDiffs,
     { componentProps: EMPTY_FILTERS },
+  ),
+}
+
+// Response codes that do not fit the compare column scroll horizontally instead of overlapping the other side
+export const case34: Story = {
+  name: '[GET /customers/{customerId}/billingAccounts] Many response codes in compare mode',
+  ...createLegacyDiffOperationStory(
+    manyResponseCodesBefore,
+    manyResponseCodesAfter,
+    { componentProps: { displayMode: COMPARE_DISPLAY_MODE } },
   ),
 }

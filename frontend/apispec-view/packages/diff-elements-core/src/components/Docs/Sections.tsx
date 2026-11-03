@@ -15,7 +15,8 @@ export const SectionTitle: React.FC<React.PropsWithChildren<ISectionTitle>> = ({
       <Box py={1} pr={6} as={Heading} size={size} aria-label={title} id={id || slugify(title)}>
         {title}
       </Box>
-      <Box alignSelf={'center'} py={1}>
+      {/* maxW="full" keeps wide content, such as response code tabs, within the available width */}
+      <Box alignSelf={'center'} py={1} maxW="full">
         {children}
       </Box>
     </Flex>

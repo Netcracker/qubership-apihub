@@ -97,6 +97,16 @@
     justify-self: flex-end;
 }
 
+/* Response codes scroll horizontally when they do not fit the column */
+.http-operation-responses-tab-list > [role='tablist'] {
+    /* The tab list hides vertical overflow, so reserve room for the diff dot above a tab without shifting the layout */
+    padding-top: 8px;
+    margin-top: -8px;
+    /* The diff dot sticks out past the last tab and would show a scrollbar even when all tabs fit */
+    padding-right: 4px;
+    scrollbar-width: thin;
+}
+
 .border-diff-circle {
     border-radius: 6px;
     width: 10px;
