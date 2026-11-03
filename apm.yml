@@ -19,12 +19,12 @@ dependencies:
     - ./agent-packages/apihub-add-go-service
     - ./agent-packages/apihub-landing-refresh
     - ./agent-packages/apihub-autonomous-agent
+    - ./agent-packages/analyze-migration
     # backend/agent
     - ./backend/agent/agent-packages/agent-conventions
     - ./backend/agent/agent-packages/apihub-agent-developer
     # backend/portal-backend
     - ./backend/portal-backend/agent-packages/advanced-verification
-    - ./backend/portal-backend/agent-packages/analyze-migration
     - ./backend/portal-backend/agent-packages/apihub-backend-developer
     - ./backend/portal-backend/agent-packages/apihub-backend-self-review
     - ./backend/portal-backend/agent-packages/backend-conventions
