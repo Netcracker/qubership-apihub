@@ -88,6 +88,9 @@ const HELP = {
   agentPull: [
     ['`/agent review [notes]`', REVIEW_WHAT],
     ['`/agent retry [notes]`', 'Try again after a hand-off, with a fresh attempt budget. The notes are guidance.'],
+    ['`/agent update [notes]`',
+      'Merge the latest `develop` into this pull request; on conflicts, the agent resolves them. ' +
+        'The notes are guidance.'],
     ['`/agent rerun`', "Rerun the failed CI checks of the agent's pull request; no new attempt, no model."],
     ['`/agent ci_check [notes]`', CI_CHECK_WHAT],
     ['`/agent stop`', 'Stop the work of the agent on this pull request and its issue.'],

@@ -307,7 +307,7 @@ calls for them. A decision that does nothing has the action `skip` (there is no 
   | `pr` | Only when set: `ci-gate`, a `rerun` decision on a pull request of the agent, and an `implement` decision that a person asked for on a pull request. |
   | `issue` | Only for `ci-check` on a pull request of the agent: the issue its marker names. |
   | `head_sha` | Only for `ci-gate`: the head commit of the pull request. |
-  | `kind` | Only for `implement` through `humanAttempt`: `human`, or `review` (a change request in a review). |
+  | `kind` | Only for `implement` through `humanAttempt`: `human`, `review` (a change request in a review), or `update` (`/agent update`). |
 
   The `route` job exports `action`, `number`, `numbers`, `command`, `trigger`, `pr`, `head_sha`, `kind`, and `issue`
   as job outputs. An output that was not written reaches the later jobs as an empty string.
@@ -919,15 +919,18 @@ and adds the `confused` reaction.
 | `refuse-busy` | all but `ci-fix` | State phase is `implementing` and `implementing.at` is at most 120 minutes old (`BUSY_MS`); an older attempt counts as dead | `an implementation is already running: <run URL>.` |
 | `refuse-unsuitable` | `initial` | Label `ai:unsuitable` and no `force` | `I did not start.` plus the analysis reason (when the agent set the label) or `A person marked this issue ai:unsuitable.`, then ``If you want me to try anyway, comment `/agent implement force`.`` |
 | `refuse-needs-info` | `initial` | Fresh analysis has verdict `needs-info` | The numbered questions, ``Answer them, or edit the issue, then comment `/agent implement` again.``; mentions the issue author too, when the author is not the asker |
-| `refuse-no-branch` | `human` with `changes`, `review` | State has no `branch` or `pr`, or `pr` differs from `AGENT_PR` | `I can change a branch only after an attempt of mine pushed it ...` |
-| `refuse-pr-closed` | `human` with `changes`, `review` | Pull request of the state is not open | ``the pull request is closed ... comment `/agent retry` with guidance to start a new pull request.`` |
+| `refuse-no-branch` | `human` with `changes`, `review`, `update` | State has no `branch` or `pr`, or `pr` differs from `AGENT_PR` | `I can change a branch only after an attempt of mine pushed it ...` |
+| `refuse-pr-closed` | `human` with `changes`, `review`, `update` | Pull request of the state is not open | ``the pull request is closed ... comment `/agent retry` with guidance to start a new pull request.`` |
+| `refuse-up-to-date` | `update` | GitHub compare of `develop...<head sha>` gives `behind_by` 0 | ``pull request #<pr> already contains the latest `develop`, so there is nothing to update.`` |
 
-`changes` is true for kind `review` and for the command name `chat`. The checks run in the order of the table rows
-within a kind. `preflightDecision` order: closed, type, busy, `ai:unsuitable` without `force`, stale analysis
-(`analyze-first`), `needs-info`, `proceed`. `force` makes the result `forced: true` and keeps the label. An
-analysis counts as stale when none exists, or the issue `updated_at` is later than `analysis.issueUpdatedAt`, or
-either time is unreadable. A refusal for the command name `answer` with `refuse-busy` posts nothing (the answer
-resumes the flow once), but it still sets `proceed=false` and the `confused` reaction.
+`changes` is true for the kinds `review` and `update` and for the command name `chat`. The checks run in the order
+of the table rows within a kind. An `update` asks GitHub for `behind_by` only when the pull request of the state is
+open, and `refuse-up-to-date` comes after the `changes` checks. `preflightDecision` order: closed, type, busy,
+`ai:unsuitable` without `force`, stale analysis (`analyze-first`), `needs-info`, `proceed`. `force` makes the result
+`forced: true` and keeps the label. An analysis counts as stale when none exists, or the issue `updated_at` is later
+than `analysis.issueUpdatedAt`, or either time is unreadable. A refusal for the command name `answer` with
+`refuse-busy` posts nothing (the answer resumes the flow once), but it still sets `proceed=false` and the `confused`
+reaction.
 
 **Decisions on `proceed`:**
 
@@ -948,7 +951,7 @@ one with `phase: 'implementing'` and:
 }
 ```
 
-For `human` and `review` (`markedPersonState`) the object also gets `kind` (`human` or `review`), `pr` (when
+For `human`, `review`, and `update` (`markedPersonState`) the object also gets `kind`, `pr` (when
 `AGENT_PR` is set), and `threads` (`[{ id, commentId }]`, only the unresolved threads that the implementer will see,
 at most 30, `commentId` is the `databaseId` of the first comment), and `analyzeFirst` is `false`. The state also gets
 `budgetFrom` (the number of earlier attempts, so the CI loop starts a fresh count) and loses `stoppedBy` and
@@ -963,7 +966,7 @@ appends
 | `version` | `1` |
 | `number` | The issue number |
 | `ciFix` | `true` for `ci-fix` |
-| `kind` | The env kind (`initial`, `ci-fix`, `human`, `review`) |
+| `kind` | The env kind (`initial`, `ci-fix`, `human`, `review`, `update`) |
 | `actor` | The person who asked |
 | `command` | The parsed `AGENT_COMMAND` |
 | `runUrl` | `AGENT_RUN_URL` |
@@ -1283,7 +1286,7 @@ Other phases come from other scripts. This script also leaves `analyzed` or `nee
 | Field | Content |
 |-------|---------|
 | `n` | Attempt number |
-| `kind` | `initial`, `ci-fix`, `human`, or `review` (`attemptKindOf`) |
+| `kind` | `initial`, `ci-fix`, `human`, `review`, or `update` (`attemptKindOf`) |
 | `actor` | The person who asked (when known) |
 | `run` | `AGENT_RUN_URL` |
 | `result` | `pr-opened`, `draft`, `blocked`, `unrelated`, `error`, or `stopped` |
