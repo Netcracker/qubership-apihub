@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Meta, StoryFn } from '@storybook/html'
+import { Meta, StoryFn } from '@storybook/html-vite'
 import { generateContentByPrefix, storyArgsFunc } from 'stories/common'
 import { HasProperties } from 'main/domain/object/base'
 import { DefaultDomainMeta, LeafPropertyObject, PropertiesGroupObject, PropertyObject } from 'main/domain'

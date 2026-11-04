@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Meta, StoryFn } from '@storybook/html'
+import { Meta, StoryFn } from '@storybook/html-vite'
 import {
   ClassObject,
   ContentObject,

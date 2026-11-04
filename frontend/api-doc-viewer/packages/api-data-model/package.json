@@ -21,9 +21,9 @@
   "devDependencies": {
     "@types/json-schema": "^7.0.15",
     "@types/treeify": "^1.0.0",
-    "jest": "30.4.2",
+    "jest": "catalog:",
     "treeify": "^1.1.0",
-    "ts-jest": "29.4.12",
+    "ts-jest": "catalog:",
     "ts-node": "10.7.0"
   },
   "dependencies": {
