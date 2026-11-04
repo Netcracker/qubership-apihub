@@ -42,19 +42,33 @@ You cannot edit files or run anything but the read-only Git commands above. Do n
 ## Your output
 
 End your answer with exactly one fenced `json` block and nothing after it. Every key is required, and no other key is
-allowed:
+allowed.
+
+For a `suitable` verdict, `questions` is an empty list and `plan` is an object with every field filled:
 
 ```json
 {
-  "verdict": "suitable | unsuitable | needs-info",
+  "verdict": "suitable",
   "reason": "One to three sentences: why this verdict.",
-  "questions": ["Only for needs-info: one question per item; otherwise an empty list."],
+  "questions": [],
   "plan": {
     "modules": ["portal-backend"],
-    "approach": "Only for suitable: what to change and where; otherwise plan is null.",
+    "approach": "What to change and where.",
     "tests": "The test that proves the change, and the module checks to run.",
     "risk": "low | medium | high"
   }
+}
+```
+
+For a `needs-info` or `unsuitable` verdict, `plan` is `null` as a whole, not an object with `null` fields. A
+`needs-info` verdict asks one question per item; an `unsuitable` verdict leaves `questions` empty:
+
+```json
+{
+  "verdict": "needs-info | unsuitable",
+  "reason": "One to three sentences: why this verdict.",
+  "questions": ["Only for needs-info: one question per item."],
+  "plan": null
 }
 ```
 
