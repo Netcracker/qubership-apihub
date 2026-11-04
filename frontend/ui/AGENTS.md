@@ -29,13 +29,21 @@ pnpm exec nx run ui-portal:lint:check
 ```
 
 Dev servers: `pnpm --filter @netcracker/qubership-apihub-ui-portal run dev:proxy` (Vite against a running
-backend) or `dev:proxy:msw` (mock service worker). Run `pnpm --filter @netcracker/qubership-apihub-ui run
-msw:init` once to create the mock worker files. Portal `build` runs `tsc` and `vite build` with a large heap.
+backend) or `dev:proxy:msw` (the same with the MSW mocks, `docs/dev/msw-mocks.md`). MSW is the main way to mock the
+backend: add new mocks there, not to the deprecated Express servers in `server/`. The mock worker files are committed;
+after an upgrade of `msw`, refresh them with `pnpm --filter @netcracker/qubership-apihub-ui run msw:init`. Portal
+`build` runs `tsc` and `vite build` with a large heap.
 
 ## Traps
 
 - It uses nearly every TypeScript library of the monorepo (`api-processor`, `api-diff`, `api-doc-viewer`,
   `apispec-view`, `class-view`, `rest-playground`, and others); `nx` builds them first, so a cold build is long.
+- Each app reports `<package.json version>+<build id>`: the id hashes the sources of the app, the workspace
+  packages it bundles, and `frontend/ui/vite-plugins` ([`tools/build-id`](../../tools/build-id/README.md), through
+  `vite-plugins/app-version.ts`).
+  The bundle reads it as the global `__APP_VERSION__` (Vite `define`) and `version.json` carries the same string, so
+  BasePage asks for a reload when they differ. Do not import the app's own `package.json` for its version.
+  `version.json` also carries the stamped api-processor version.
 - Do not run `npm install` here. Install once at the workspace root with `pnpm install`.
 - The ports and proxy targets of the dev servers must match your backend (`docs/dev/local-development.md`).
 - UI end-to-end tests live in `tests/ui-tests`; a change to visible behaviour usually needs them updated.

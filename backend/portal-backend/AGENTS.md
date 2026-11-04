@@ -96,7 +96,8 @@ Briefly state: **root cause**, **why the change fixes it**, and confirm you did 
 
 - Team members use **Linux** and **Windows (often with WSL)**.
 - Prefer **portable** commands: `bash` scripts with forward slashes, run from the **repository root**.
-- On **Windows without WSL** in the active shell: use **WSL** (`wsl bash .cursor/skills/.../script.sh`), **Git Bash**, or **PowerShell** (`powershell -File .cursor/skills/.../script.ps1`).
+- On **Windows without WSL** in the active shell: use **WSL** (`wsl bash .agents/skills/.../script.sh`), **Git Bash**,
+  or **PowerShell** (`powershell -File .agents/skills/.../script.ps1`).
 - Do not assume Unix-only tools beyond `git`, `go`, `gh`, and `bash` unless the user confirms they are available.
 - Avoid OS-specific path separators in instructions; use repo-relative paths like `service/...`.
 
@@ -184,7 +185,7 @@ Full checklist: deployed CI linter rules (`.cursor/rules/ci-super-linter.mdc` af
 
 ## Agent packages
 
-One root `apm.yml` covers the repository; deploy with `apm install --target cursor,claude --legacy-skill-paths`
+One root `apm.yml` covers the repository; deploy with `apm install --target cursor,claude`
 from the root (never `apm compile`). Sources of the local packages are in [`agent-packages/`](agent-packages/).
 
 - `apihub-backend-developer` (skill and rule, local): use for any change to controllers, services, repositories,

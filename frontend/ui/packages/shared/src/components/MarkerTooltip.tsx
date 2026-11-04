@@ -24,7 +24,7 @@ export type MarkerTooltipProps<V extends string = string, C extends string = str
   variantToColor: Record<V, string>
   disableHoverListener?: boolean
   category?: C
-  categoryToTooltipTitle?: Partial<Record<C, string>> // should be garanteed when category is provided
+  categoryToTooltipTitle?: Partial<Record<C, string>> // should be guaranteed when category is provided
 }>
 
 export const MarkerTooltip = <

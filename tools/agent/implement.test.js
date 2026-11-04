@@ -33,6 +33,7 @@ const {
   pushBranch,
   resolveIdentity,
 } = require('./implement')
+const { buildReport } = require('./ci-gate')
 
 log.setWriter(() => {})
 
@@ -323,6 +324,26 @@ test('checkImplementation: a bug-fix is a fix, and a blocked answer says why', (
   )
 })
 
+test('checkImplementation: unrelated needs a reason and is allowed only on a CI fix', () => {
+  const unrelated = { ...implementation, status: 'unrelated', blockedReason: 'Flaky E2E request.' }
+  assert.equal(checkImplementation(unrelated, 'bug-fix', 'ci-fix').status, 'unrelated')
+  assert.equal(checkImplementation(unrelated, 'task', 'ci-fix').status, 'unrelated')
+  for (const kind of ['initial', 'human', 'review', undefined]) {
+    assert.throws(() => checkImplementation(unrelated, 'task', kind), (e) => {
+      assert.ok(e instanceof ContractError)
+      assert.deepEqual(e.problems, ["status: 'unrelated' is allowed only on a CI fix"])
+      return true
+    })
+  }
+  assert.throws(
+    () => checkImplementation({ ...unrelated, blockedReason: ' ' }, 'task', 'ci-fix'),
+    /an unrelated answer needs a reason/,
+  )
+  // A blocked answer stays possible on every kind.
+  const blocked = { ...implementation, status: 'blocked', blockedReason: 'Unclear.' }
+  assert.equal(checkImplementation(blocked, 'task', 'ci-fix').status, 'blocked')
+})
+
 test('checkSelfReview: changes need findings, and an approval cannot carry a blocker', () => {
   assert.equal(checkSelfReview(approve), approve)
   assert.throws(() => checkSelfReview({ verdict: 'changes', findings: [] }), /needs at least one finding/)
@@ -554,7 +575,7 @@ test('prBody follows the template and ends with the actor line and the marker on
         '\\nCloses #200\\.\\n\\n## What\\n\\nGuards the nil changelog in the builder\\. A test covers it\\.\\n',
         '\\n## How to verify\\n\\nAdded TestBuildNilChangelog\\.\\n\\n',
         'Local checks passed, as reported by the work job: `pnpm exec nx affected`\\.\\n',
-        '\\n## Checklist\\n\\n- \\[x\\] The issue is linked under Development or with "Closes #123"\\.\\n',
+        '\\n## Checklist\\n\\n- \\[x\\] The issue is linked under Development or with "Closes #XXX"\\.\\n',
         '- \\[ \\] The documentation is updated',
       ].join(''),
     ),
@@ -862,13 +883,13 @@ test('noreplyEmail is the private commit address of an account', () => {
 
 const { attemptKind, requireCiFixState, outcomeProblems } = require('./implement')
 
-test('attemptKind: initial by default, then ci-fix, human, and review on request, nothing else', () => {
+test('attemptKind: initial by default, then ci-fix, human, review, and update on request, nothing else', () => {
   assert.equal(attemptKind({}), 'initial')
   assert.equal(attemptKind({ AGENT_KIND: '' }), 'initial')
-  for (const kind of ['ci-fix', 'human', 'review']) assert.equal(attemptKind({ AGENT_KIND: kind }), kind)
+  for (const kind of ['ci-fix', 'human', 'review', 'update']) assert.equal(attemptKind({ AGENT_KIND: kind }), kind)
   assert.throws(
     () => attemptKind({ AGENT_KIND: 'later' }),
-    /AGENT_KIND must be initial, ci-fix, human, or review, got 'later'/,
+    /AGENT_KIND must be initial, ci-fix, human, review, or update, got 'later'/,
   )
 })
 
@@ -953,6 +974,69 @@ test('renderOutcome and actorComment: a CI fix talks about the fix, not about a 
   )
 })
 
+test('renderOutcome and actorComment: unrelated says what failed, why, and that the checks ran again', () => {
+  const text = renderOutcome({
+    result: 'unrelated',
+    number: 200,
+    pr: 70,
+    runUrl: 'u',
+    totalUsd: 1,
+    kind: 'ci-fix',
+    reason: 'Two requests timed out.\nThe change touches no auth.',
+    rerun: { names: '`E2E tests (kind)`, `ci-ok`', counted: 2, max: 3 },
+  })
+  assert.match(text, /^### AI implementation: CI failed, but not because of this change\n\nFailed on pull request #70: /)
+  assert.match(text, /Failed on pull request #70: `E2E tests \(kind\)`, `ci-ok`\./)
+  assert.match(text, /Why I think the change does not cause it: Two requests timed out\. The change touches no auth\./)
+  assert.match(text, /I reran the failed checks \(attempt 2 of 3\)\. No code changed; the CI gate decides again\./)
+  assert.match(text, /the result of the rerun decides<\/sub>$/)
+  assert.equal(
+    actorComment({ result: 'unrelated', actor: 'dave', pr: 70, reason: 'Flaky.\n@bob knows.', kind: 'ci-fix' }),
+    '@dave, CI failed on #70, but I think this change does not cause it: Flaky. @​bob knows. I reran the failed ' +
+      'checks; the CI gate decides again.',
+  )
+})
+
+test('renderOutcome and actorComment: a blocked CI fix lists the failed checks, the error, the reason, the two ways', () => {
+  const report = buildReport({
+    pr: 70,
+    headSha: 'a'.repeat(40),
+    failed: ['b', 'a', 'c', 'd', 'e', 'f', 'g'].sort().map((name) => ({ name, conclusion: 'failure', url: null })),
+    errorsByJob: { c: ['Error: boom'] },
+    signature: 'abc',
+  })
+  const common = {
+    number: 200, pr: 70, runUrl: 'u', totalUsd: 1, kind: 'ci-fix', attempt: { rounds: 1, notes: 'Tried it.' },
+    reason: 'I cannot reach the service.', ciReport: report,
+  }
+  const text = renderOutcome({ ...common, result: 'blocked' })
+  assert.match(text, /^### AI implementation needs a person: CI is red\n\nI stopped without changing pull request #70\.\n/)
+  assert.match(text, /\n- Failed checks: `a`, `b`, `c`, `d`, `e`, and 2 more\.\n- First error, in `c`: `Error: boom`\.\n/)
+  assert.match(text, /\n- Why I stopped: I cannot reach the service\.\n\n\*\*What I tried\*\*\n\nTried it\.\n\nWhat you can do:\n\n/)
+  assert.match(text, /\n- To try another fix, comment `\/agent retry` with guidance\.\n\n<sub>/)
+  const note = actorComment({ result: 'blocked', actor: 'dave', ...common })
+  assert.match(note, /^@dave, I could not fix CI on #70\.\n\n- Failed checks: /)
+  assert.match(note, /comment `\/agent rerun`: it reruns the failed checks, with no new attempt and no model cost\.\n/)
+  // Without a readable report only the reason is left; an initial attempt keeps the old texts.
+  const bare = actorComment({ result: 'blocked', actor: 'dave', ...common, ciReport: '' })
+  assert.match(bare, /\n\n- Why I stopped: I cannot reach the service\.\n\nWhat you can do:/)
+  assert.match(
+    actorComment({ result: 'blocked', actor: 'dave', reason: 'Unclear.', kind: 'initial' }),
+    /^@dave, I could not implement this issue: Unclear\./,
+  )
+})
+
+test('renderImplementInput: a CI fix may answer unrelated; the other kinds are not told', () => {
+  const base = {
+    playbook: 'bug-fix', issue, comments: [], plan: null, analysis: null, notes: '', attempts: [], round: 1,
+    previous: null,
+  }
+  const text = renderImplementInput({ ...base, kind: 'ci-fix', ciReport: '# CI report' })
+  assert.match(text, /did not cause the failure \(a flaky or infrastructure failure, a test the change does not touch\)/)
+  assert.match(text, /answer with `"status": "unrelated"`\. Put the evidence in `blockedReason`/)
+  assert.doesNotMatch(renderImplementInput({ ...base, kind: 'initial' }), /unrelated/)
+})
+
 test('attemptRecord: the actor is kept when given', () => {
   const base = { n: 2, kind: 'ci-fix', run: 'r', result: 'pr-opened', rounds: 1, notes: 'n', at: 't' }
   assert.equal(attemptRecord(base).actor, undefined)
@@ -1014,6 +1098,33 @@ test('outcomeProblems: a good outcome has none; a foreign branch, bad ids, and m
     branchInfo: { branch: 'bugfix/200-changelog-is-empty-for-a', head: null },
   }
   assert.deepEqual(outcomeProblems({ ...input, outcome: blocked }), [])
+  // An unrelated outcome is a CI fix without code: no bundle, no checks, no head commit.
+  const unrelated = {
+    kind: 'ci-fix',
+    result: 'unrelated',
+    blockedReason: 'Flaky E2E request.',
+    stopped: null,
+    implementation,
+    review: null,
+    checks: null,
+    bundle: false,
+    branchInfo: { branch: 'bugfix/200-changelog-is-empty-for-a', head: null },
+  }
+  assert.deepEqual(outcomeProblems({ ...input, outcome: unrelated }), [])
+  assert.deepEqual(outcomeProblems({ ...input, outcome: unrelated, kind: 'ci-fix' }), [])
+  assert.deepEqual(outcomeProblems({ ...input, outcome: { ...unrelated, kind: 'initial' } }), [
+    "result 'unrelated' is allowed only on a CI fix",
+  ])
+  // The kind that publish derives itself wins over what the outcome claims.
+  assert.deepEqual(outcomeProblems({ ...input, outcome: unrelated, kind: 'human' }), [
+    "result 'unrelated' is allowed only on a CI fix",
+  ])
+  assert.deepEqual(outcomeProblems({ ...input, outcome: { ...unrelated, blockedReason: ' ' } }), [
+    'an unrelated result needs a reason',
+  ])
+  assert.deepEqual(outcomeProblems({ ...input, outcome: { ...unrelated, bundle: true } }), [
+    'an unrelated result carries no code',
+  ])
   const analysis = { verdict: 'suitable', reason: 'r', questions: [], plan, issueUpdatedAt: 't' }
   assert.deepEqual(outcomeProblems({ ...input, outcome: { result: null, stopped: null, analysis } }), [])
   assert.ok(has({ result: null, stopped: null, analysis: { ...analysis, verdict: 'great' } }, /analysis: /))
@@ -1022,6 +1133,7 @@ test('outcomeProblems: a good outcome has none; a foreign branch, bad ids, and m
 test('touchedAgentFiles lists changes to the agent instructions and tools, at any depth for AGENTS.md', () => {
   const { touchedAgentFiles } = require('./implement')
   const out = [
+    '.agents/skills/x/SKILL.md',
     '.claude/skills/x/SKILL.md',
     '.cursor/rules/y.mdc',
     'tools/agent/opencode/agents/implementer.md',
@@ -1031,5 +1143,278 @@ test('touchedAgentFiles lists changes to the agent instructions and tools, at an
     'backend/portal-backend/service/x.go',
     'tools/ci/ci-verdict.js',
   ].join('\n')
-  assert.deepEqual(touchedAgentFiles(out), out.split('\n').slice(0, 6))
+  assert.deepEqual(touchedAgentFiles(out), out.split('\n').slice(0, 7))
+})
+
+// ---------------------------------------------------------------------------------------------- /agent update
+
+const { mergeMessage, changesOpenPull } = require('./implement')
+
+/** Asserts that `text` holds the parts one after the other; a part may hold `\n`. */
+const hasText = (text, ...parts) => assert.ok(text.includes(parts.join('')), `missing: ${parts.join('')}`)
+
+test('changesOpenPull: a review, an update, and a change request change the open pull request', () => {
+  assert.equal(changesOpenPull('review', { name: 'review-changes' }), true)
+  assert.equal(changesOpenPull('update', { name: 'update' }), true)
+  assert.equal(changesOpenPull('human', { name: 'chat' }), true)
+  assert.equal(changesOpenPull('human', { name: 'retry' }), false)
+  assert.equal(changesOpenPull('human', null), false)
+  assert.equal(changesOpenPull('initial', { name: 'implement' }), false)
+})
+
+test('mergeMessage: the merge of develop, the issue, and the Agent-Run trailer', () => {
+  assert.equal(
+    mergeMessage({ branch: 'bugfix/200-x', number: 200, runUrl: 'https://x/runs/1' }),
+    "Merge branch 'develop' into bugfix/200-x\n\nPart of #200.\n\nAgent-Run: https://x/runs/1",
+  )
+})
+
+test('checkImplementation: an update commits a merge, so the commit type of the playbook does not apply', () => {
+  const feat = { ...implementation, commitType: 'feat' }
+  assert.equal(checkImplementation(feat, 'bug-fix', 'update').commitType, 'feat')
+  assert.throws(() => checkImplementation(feat, 'bug-fix', 'human'), /a bug-fix must use 'fix'/)
+  const unrelated = { ...implementation, status: 'unrelated', blockedReason: 'Flaky.' }
+  assert.throws(() => checkImplementation(unrelated, 'bug-fix', 'update'), /allowed only on a CI fix/)
+})
+
+test('renderImplementInput: an update puts the files with conflicts in one untrusted block, with no playbook', () => {
+  const text = renderImplementInput({
+    ...baseInput,
+    kind: 'update',
+    attempts: [{ n: 1, kind: 'initial', result: 'draft', notes: 'n' }],
+    notes: 'Prefer the develop side.',
+    conflicts: ['a/b.go', 'odd`</untrusted>.go'],
+  })
+  hasText(
+    text,
+    '# Implementation of issue #200\n\n- Playbook: none (this attempt merges develop)\n',
+    '- Issue type: Bug\n- Attempt: 2 (update)\n- Round: 1\n\n',
+  )
+  hasText(
+    text,
+    'The pull request of this issue is open, and a maintainer asked to merge the latest `develop` into its branch. ',
+    'The merge has started and stopped on conflicts. Resolve the conflicts in the files below and nothing else: ',
+    'keep the change of the pull request and the change of `develop` in each file. ',
+    'Fix only what the merge breaks.\n\n',
+    '## Files with conflicts\n\n<untrusted>\n- `a/b.go`\n- `odd`[/untrusted].go`\n</untrusted>\n\n',
+    '## Title and description\n',
+  )
+  hasText(text, "## The maintainer's guidance\n\n<untrusted>\nPrefer the develop side.\n</untrusted>")
+  assert.equal(text.match(/<untrusted>/g).length, text.match(/<\/untrusted>/g).length)
+  // The other kinds keep the playbook and have no conflict section.
+  const plain = renderImplementInput({ ...baseInput, conflicts: ['a/b.go'] })
+  assert.match(plain, /- Playbook: bug-fix\n/)
+  assert.doesNotMatch(plain, /Files with conflicts|merge the latest/)
+})
+
+test('renderSelfReviewInput: an update points at the merge commit and lists the files with conflicts', () => {
+  const input = {
+    issue, plan, analysis: null, notes: '', summary: 'Resolved.', base: 'aaa', head: 'bbb', conflicts: ['a/b.go'],
+  }
+  hasText(
+    renderSelfReviewInput({ ...input, kind: 'update' }),
+    '- Compare with: `git diff aaa bbb`\n',
+    '- This attempt merges `develop` into the branch: the head commit is the merge commit. ',
+    'Check that the conflicts in\n',
+    '  the files below keep both the change of the pull request and the change of `develop`, and that the comparison\n',
+    '  above still holds only the change of the pull request.\n\n',
+    '## Files with conflicts\n\n<untrusted>\n- `a/b.go`\n</untrusted>\n\n## The issue\n',
+  )
+  assert.doesNotMatch(renderSelfReviewInput({ ...input, kind: 'human' }), /merge commit|Files with conflicts/)
+})
+
+test('conflictMarkers: real git finds every marker line and nothing that only looks like one', async () => {
+  const fs = require('node:fs')
+  const os = require('node:os')
+  const path = require('node:path')
+  const { conflictMarkers } = require('./implement')
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'implement-markers-'))
+  try {
+    const exec = (file, args, options) => defaultExec(file, args, { ...options, cwd: dir })
+    const files = {
+      'open.go': 'a\n<<<<<<< HEAD\nb\n',
+      'base.go': 'a\n||||||| base\nb\n',
+      'separator.go': 'a\n=======\nb\n',
+      'close.go': 'a\n>>>>>>> develop\nb\n',
+      'clean.md': 'Title\n========\n\n<<<<<<<< not a marker\n x <<<<<<< \n',
+    }
+    for (const [name, text] of Object.entries(files)) fs.writeFileSync(path.join(dir, name), text)
+    await exec('git', ['init', '-q'])
+    await exec('git', ['add', '-A'])
+    const found = await conflictMarkers({ exec, files: Object.keys(files) })
+    assert.deepEqual(found.sort(), ['base.go', 'close.go', 'open.go', 'separator.go'])
+    assert.deepEqual(await conflictMarkers({ exec, files: ['clean.md'] }), [])
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true })
+  }
+})
+
+test('outcomeProblems: an update without conflicts has code without implementation, review, and checks', () => {
+  const head = 'a'.repeat(40)
+  const branch = 'bugfix/200-changelog-is-empty-for-a'
+  const clean = {
+    kind: 'update', result: 'pr-opened', stopped: null, rounds: 0, implementation: null, review: null, checks: null,
+    merge: { conflicts: [] }, branchInfo: { branch, head, previousSha: head },
+  }
+  const input = { outcome: clean, st: { branch }, issue, number: 200, kind: 'update' }
+  const problemsOf = (changes, extra = {}) => outcomeProblems({ ...input, ...extra, outcome: { ...clean, ...changes } })
+  const noMerge = ['an update needs the merge facts']
+  assert.deepEqual(outcomeProblems(input), [])
+  // The branch is still needed, and so are the merge facts.
+  assert.deepEqual(problemsOf({ branchInfo: null }), [
+    'a result with code lacks the implementation, the review, the checks, or the branch',
+  ])
+  assert.deepEqual(problemsOf({ merge: null }), noMerge)
+  assert.deepEqual(problemsOf({ merge: { conflicts: 'a' } }), noMerge)
+  assert.deepEqual(problemsOf({ merge: { conflicts: [1] } }), noMerge)
+  // Without rounds no model ran: the merge was clean, and the result is green or nothing.
+  assert.deepEqual(problemsOf({ merge: { conflicts: ['a/b.go'] } }), [
+    'an update without rounds cannot have conflicts',
+  ])
+  assert.deepEqual(problemsOf({ result: 'draft' }), ["a clean update cannot have the result 'draft'"])
+  // After conflicts the rounds ran, so the usual rule holds.
+  const resolved = { rounds: 1, merge: { conflicts: ['a/b.go'] } }
+  assert.deepEqual(problemsOf(resolved), [
+    'a result with code lacks the implementation, the review, the checks, or the branch',
+  ])
+  assert.deepEqual(problemsOf({ ...resolved, implementation, review: approve, checks: greenChecks }), [])
+  // A result without code needs no merge facts, and another kind never gets the shortcut of rounds: 0.
+  const blocked = { result: 'blocked', blockedReason: 'Markers.', merge: null, branchInfo: { branch, head: null } }
+  assert.deepEqual(problemsOf(blocked), [])
+  assert.deepEqual(problemsOf({ kind: 'initial' }, { kind: 'initial' }), [
+    'a result with code lacks the implementation, the review, the checks, or the branch',
+  ])
+})
+
+test('renderOutcome: an update that merged without conflicts says that no model ran', () => {
+  const text = renderOutcome({
+    result: 'pr-opened', kind: 'update', number: 200, pr: 70, branch: 'b', attempt: { rounds: 0, notes: null },
+    implementation: null, checks: null, review: null, runUrl: 'https://x/runs/1', totalUsd: 1.234, conflicts: [],
+  })
+  assert.equal(text, [
+    '### AI update: develop merged into pull request #70',
+    '',
+    'Branch `b`. The merge had no conflicts, so no model ran. CI runs again on the pull request.',
+    '',
+    '<sub>[Run](https://x/runs/1) · AI cost of this issue so far: $1.23 · closes #200 when merged</sub>',
+  ].join('\n'))
+})
+
+test('renderOutcome: an update that resolved conflicts counts the files and shows the checks and the review', () => {
+  const text = renderOutcome({
+    result: 'pr-opened', kind: 'update', number: 200, pr: 70, branch: 'b', attempt: { rounds: 2, notes: 'n' },
+    implementation, checks: greenChecks, review: approve, runUrl: 'u', totalUsd: 0,
+    conflicts: ['a.go', 'b.go', 'c.go'],
+  })
+  hasText(
+    text,
+    '### AI update: develop merged into pull request #70\n\n',
+    'Branch `b`. I resolved the conflicts in 3 file(s) in 2 round(s). CI runs again on the pull request.\n\n',
+    '- Local checks (reported by the work job): green\n',
+    '- Self-review (reported by the work job): approved\n',
+    '- Summary: Guards the nil changelog',
+  )
+  assert.match(text, /closes #200 when merged<\/sub>$/)
+})
+
+test('renderOutcome: an update that is not green is a hand-off with what is open', () => {
+  const text = renderOutcome({
+    result: 'draft', kind: 'update', number: 200, pr: 70, branch: 'b', attempt: { rounds: 3, notes: 'Kept both.' },
+    implementation, checks: redChecks, review: { verdict: 'changes', findings: [major, minor] }, runUrl: 'u',
+    totalUsd: 0, conflicts: ['a.go'],
+  })
+  hasText(
+    text,
+    '### AI update needs a person: pull request #70\n\n',
+    'Branch `b`. I merged develop and resolved the conflicts, but stopped after 3 round(s) without a green result.\n\n',
+    '- Local checks',
+  )
+  hasText(
+    text,
+    '**What I tried**\n\nKept both.\n\n**What is open**\n\n',
+    '- Failing check: `pnpm exec nx affected` (exit code 1).\n',
+  )
+  hasText(text, '- major at `a/b.go:7`: The error is swallowed.\n')
+  assert.doesNotMatch(text, /Rename x/)
+  hasText(
+    text,
+    '\n\n**What I need from you:** review the pull request, push a fix to the branch, or comment `/agent update` ',
+    'with guidance for another attempt.\n\n<sub>',
+  )
+})
+
+test('renderOutcome: a blocked update did not change the pull request; an error suggests /agent update', () => {
+  const blocked = renderOutcome({
+    result: 'blocked', kind: 'update', number: 200, pr: 70, branch: 'b', totalUsd: 0, runUrl: 'u',
+    attempt: { rounds: 1, notes: 'Tried both sides.' },
+    reason: 'Conflict markers are left in a.go.\n@bob knows.',
+  })
+  hasText(
+    blocked,
+    '### AI update is blocked\n\n',
+    'I did not change pull request #70: Conflict markers are left in a.go. @​bob knows.\n\n',
+    '**What I tried**\n\nTried both sides.\n\n',
+    '**What I need from you:** resolve the conflicts by hand, or comment `/agent update` with guidance.\n\n<sub>',
+  )
+  assert.match(blocked, /· comment `\/agent update` on the pull request to try again<\/sub>$/)
+  const bare = { result: 'blocked', kind: 'update', number: 200, pr: 70, reason: 'r', runUrl: 'u', totalUsd: 0 }
+  assert.doesNotMatch(renderOutcome({ ...bare, attempt: {} }), /What I tried/)
+  const failed = renderOutcome({
+    result: 'error', kind: 'update', number: 200, pr: 70, message: 'git push failed', runUrl: 'u', totalUsd: 0,
+  })
+  assert.match(failed, /^### AI implementation failed\n\nThe implementation did not finish: git push failed\n/)
+  assert.match(failed, /· comment `\/agent update` on the pull request to try again<\/sub>$/)
+})
+
+test('actorComment: an update that is not green or is blocked mentions the person', () => {
+  assert.equal(
+    actorComment({ result: 'draft', actor: 'carol', pr: 70, kind: 'update' }),
+    '@carol, I merged develop into #70 and resolved the conflicts, but the result is not green yet. ' +
+      'The AI implementation comment on this issue says what is open.',
+  )
+  const reason = 'Markers in a.go.\n@bob knows.'
+  assert.equal(
+    actorComment({ result: 'blocked', actor: 'carol', pr: 70, reason, kind: 'update' }),
+    '@carol, I could not update #70: Markers in a.go. @​bob knows.',
+  )
+  assert.equal(
+    actorComment({ result: 'error', actor: 'carol', message: 'boom', kind: 'update' }),
+    '@carol, the implementation failed: boom',
+  )
+})
+
+test('pushBranch: a refusal for workflow files says that AGENT_PAT has no Workflows permission', async () => {
+  const PAT = 'fake-pat'
+  const raw = (url) => [
+    'remote: Resolving deltas: 100% (3/3), completed with 3 local objects.',
+    `To ${url}`,
+    ' ! [remote rejected] HEAD -> bugfix/1-x (refusing to allow a Personal Access Token to create or update ' +
+      'workflow `.github/workflows/ci.yml` without `workflow` scope)',
+    `error: failed to push some refs to '${PAT}'`,
+  ].join('\n')
+  const refused = async (file, args) => ({
+    exitCode: 1, stdout: '', stderr: raw(args.find((a) => a.startsWith('https://'))), timedOut: false,
+  })
+  await assert.rejects(
+    pushBranch({ env: { AGENT_PAT: PAT }, repo: 'o/r', branch: 'bugfix/1-x', previousSha: 'abc', exec: refused }),
+    (err) => {
+      hasText(
+        err.message,
+        'GitHub refused the push to bugfix/1-x: the commits change files under .github/workflows/, and AGENT_PAT ',
+        'has no Workflows permission. For /agent update this means that develop changed workflow files since the ',
+        'branch point. Update the branch by hand (the Update branch button of the pull request), or give the token ',
+        'the Workflows permission and comment /agent update again. Git said: ',
+      )
+      assert.ok(err.message.startsWith('GitHub refused the push'))
+      assert.match(err.message, /Git said: .*refusing to allow a Personal Access Token/s)
+      assert.ok(!err.message.includes(PAT))
+      return true
+    },
+  )
+  // Any other refusal keeps the plain message.
+  const denied = async () => ({ exitCode: 1, stdout: '', stderr: 'remote: Permission denied', timedOut: false })
+  await assert.rejects(
+    pushBranch({ env: { AGENT_PAT: PAT }, repo: 'o/r', branch: 'b', previousSha: null, exec: denied }),
+    /git push to b failed with 1: remote: Permission denied$/,
+  )
 })

@@ -93,21 +93,28 @@ test('a null body is fine', () => {
   assert.equal(route('pull_request', payload).action, 'review')
 })
 
-test('author outside AGENT_ALLOWED_ACTORS is skipped, case-insensitively allowed otherwise', () => {
-  const payload = fixture('pull_request.opened')
-  const denied = decide({
+test('the review of a new pull request does not depend on AGENT_ALLOWED_ACTORS', () => {
+  for (const [name, actors] of [['pull_request.opened', 'bob, carol'], ['pull_request.opened', 'Alice']]) {
+    const result = decide({
+      eventName: 'pull_request',
+      payload: fixture(name),
+      config: enabled({ AGENT_ALLOWED_ACTORS: actors }),
+    })
+    assert.deepEqual([result.action, result.number], ['review', 123], actors)
+  }
+  // The same for a pull request that leaves the draft state.
+  const ready = decide({
     eventName: 'pull_request',
-    payload,
-    config: enabled({ AGENT_ALLOWED_ACTORS: 'bob, carol' }),
+    payload: fixture('pull_request.ready_for_review'),
+    config: enabled({ AGENT_ALLOWED_ACTORS: 'bob' }),
   })
-  assert.equal(denied.action, 'skip')
-  assert.match(denied.reason, /alice.*AGENT_ALLOWED_ACTORS/)
-  const allowed = decide({
-    eventName: 'pull_request',
-    payload,
-    config: enabled({ AGENT_ALLOWED_ACTORS: 'Alice' }),
-  })
-  assert.equal(allowed.action, 'review')
+  assert.equal(ready.action, 'review')
+})
+
+test('a pull request that was skipped for its size counts as reviewed on ready_for_review', () => {
+  const skipped = { ...state.emptyPullState(123), reviews: [{ sha: 'abc', skipped: 'size', lines: 9000, files: 3 }] }
+  const result = route('pull_request', fixture('pull_request.ready_for_review'), { pullState: skipped })
+  assert.deepEqual([result.action, result.reason], ['skip', 'already reviewed; use /agent review'])
 })
 
 test('ready_for_review: reviewed pull request is skipped, fresh one is reviewed', () => {
@@ -249,6 +256,8 @@ function fakeClient({ permission = 'write', comments = [] } = {}) {
     calls,
     getPermission: async (login) => (calls.push(['getPermission', login]), permission),
     listIssueComments: async (n) => (calls.push(['listIssueComments', n]), comments),
+    // The daily count of a new pull request searches; this fake finds nothing.
+    searchIssues: async (query) => (calls.push(['searchIssues', query]), []),
   }
 }
 
@@ -278,6 +287,7 @@ test('gather resolves the pull request state on ready_for_review', async () => {
     getClient: () => client,
   })
   assert.deepEqual(result.pullState, saved)
+  // The pull request has a review already, so no daily count is needed.
   assert.deepEqual(client.calls, [['listIssueComments', 123]])
 
   const empty = fakeClient({ comments: [] })
@@ -286,8 +296,10 @@ test('gather resolves the pull request state on ready_for_review', async () => {
     payload: fixture('pull_request.ready_for_review'),
     config: enabled(),
     getClient: () => empty,
+    repository: 'o/r',
   })
   assert.equal(none.pullState, null)
+  assert.deepEqual(none.dailyUsage, { reviews: 0 })
 })
 
 test('gather propagates a damaged state block', async () => {
@@ -307,10 +319,14 @@ test('gather propagates a damaged state block', async () => {
 test('gather makes no API call when nothing is needed or the agent is disabled', async () => {
   const getClient = () => assert.fail('the client must not be created')
   const neutral = { actorPermission: 'none', pullState: null }
-  assert.deepEqual(
-    await gather({ eventName: 'pull_request', payload: fixture('pull_request.opened'), config: enabled(), getClient }),
-    neutral,
-  )
+  // A draft, a fork, and a pull request of the agent are never reviewed on their own, so they need no count.
+  for (const name of ['pull_request.draft', 'pull_request.fork', 'pull_request.agent-marker', 'pull_request.dependabot']) {
+    assert.deepEqual(
+      await gather({ eventName: 'pull_request', payload: fixture(name), config: enabled(), getClient }),
+      neutral,
+      name,
+    )
+  }
   assert.deepEqual(
     await gather({ eventName: 'issue_comment', payload: comment('hi'), config: enabled(), getClient }),
     neutral,
@@ -353,7 +369,7 @@ test('formatSummary is one Markdown line', () => {
   )
 })
 
-async function runMain(fixtureName, envExtra = {}) {
+async function runMain(fixtureName, envExtra = {}, deps = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'route-test-'))
   try {
     const eventPath = path.join(dir, 'event.json')
@@ -365,7 +381,7 @@ async function runMain(fixtureName, envExtra = {}) {
       GITHUB_STEP_SUMMARY: path.join(dir, 'summary'),
       ...envExtra,
     }
-    const decision = await main(env)
+    const decision = await main(env, deps)
     return {
       decision,
       output: fs.readFileSync(env.GITHUB_OUTPUT, 'utf8'),
@@ -376,8 +392,13 @@ async function runMain(fixtureName, envExtra = {}) {
   }
 }
 
-test('main writes the outputs and the summary without any token for a pull_request opened event', async () => {
-  const { decision, output, summary } = await runMain('pull_request.opened', { AGENT_ENABLED: 'true' })
+test('main writes the outputs and the summary for a pull_request opened event', async () => {
+  const getClient = () => fakeClient()
+  const { decision, output, summary } = await runMain(
+    'pull_request.opened',
+    { AGENT_ENABLED: 'true', GITHUB_REPOSITORY: 'o/r' },
+    { getClient },
+  )
   assert.equal(decision.action, 'review')
   assert.equal(output, 'action=review\nnumber=123\nreason=pull request opened\ncommand=\n')
   assert.match(summary, /chose `review` for #123/)

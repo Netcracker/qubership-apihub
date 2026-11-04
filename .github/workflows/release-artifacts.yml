@@ -44,7 +44,7 @@ jobs:
       SHA: ${{ github.sha }}
       SOURCE_URL: ${{ github.server_url }}/${{ github.repository }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           # The tags and their history: the notes list the commits since each previous tag.
           fetch-depth: 0

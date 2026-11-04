@@ -52,9 +52,10 @@ cd frontend/ui/packages/portal
 pnpm dev:proxy
 ```
 
-Set `proxyServer` in `packages/portal/vite.config.ts` first. The steps, the Agents app, the mock server, and the
-mixed mode are in [Run APIHUB locally: UI proxy mode](../../docs/development/local-run.md#ui-proxy-mode),
-[`docs/dev/local-development.md`](docs/dev/local-development.md), and
+Set `proxyServer` in `packages/portal/vite.config.ts` first. The steps, the Agents app, the MSW mocks, and the
+deprecated Express mock server are in
+[Run APIHUB locally: UI proxy mode](../../docs/development/local-run.md#ui-proxy-mode),
+[`docs/dev/local-development.md`](docs/dev/local-development.md), [`docs/dev/msw-mocks.md`](docs/dev/msw-mocks.md), and
 [Debugging: UI against a backend](../../docs/development/debugging.md#ui-against-a-backend). The Storybook of the shared
 components starts with `pnpm exec nx run ui-shared:storybook`.
 

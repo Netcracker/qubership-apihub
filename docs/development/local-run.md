@@ -80,7 +80,7 @@ Build the image you changed, tag it, and point the stack at the tag. Build from 
 podman build -f backend/portal-backend/Dockerfile -t localhost/qubership-apihub-backend:local backend
 podman build -f backend/api-linter-service/Dockerfile -t localhost/qubership-api-linter-service:local backend
 podman build -f backend/agents-backend/Dockerfile -t localhost/qubership-apihub-agents-backend:local backend
-podman build -f backend/agent/Dockerfile -t localhost/qubership-apihub-agent:local backend/agent
+podman build -f backend/agent/Dockerfile -t localhost/qubership-apihub-agent:local backend
 
 # UI: the image copies the dist folders of both apps.
 pnpm exec nx run-many -t build -p ui-portal,ui-agents
@@ -210,8 +210,8 @@ its README shows the `config.yaml` and the launch configuration. Prefer the step
 
 ## UI proxy mode
 
-Proxy mode runs the Portal from your sources with hot reload and forwards `/api`, `/playground`, and `/ws/v1` to a
-running APIHUB. It is the default setup for UI work. The details are in
+Proxy mode runs the Portal from your sources with hot reload and forwards `/api`, `/api-linter`, `/agents-backend`,
+and `/playground` to a running APIHUB. It is the default setup for UI work. The details are in
 [`frontend/ui/docs/dev/local-development.md`](../../frontend/ui/docs/dev/local-development.md).
 
 1. Build the Portal and its workspace dependencies once. The dev server loads libraries such as `api-processor` from
@@ -222,8 +222,9 @@ running APIHUB. It is the default setup for UI work. The details are in
    ```
 
 2. Set `proxyServer` in `frontend/ui/packages/portal/vite.config.ts` to the APIHUB you want. The default,
-   `http://host.docker.internal:8081`, is the UI of the local Compose stack. `apiLinterProxyServer` (default port
-   8091) serves `/api-linter`.
+   `http://host.docker.internal:8081`, is the UI of the local Compose stack; it stays the same when the backend runs
+   from the IDE as described above. Point it at a UI or an ingress, not at the backend port: the UI nginx forwards
+   the extension prefixes such as `/api-linter` to their services.
 3. Start Vite from the Portal package:
 
    ```bash
@@ -237,8 +238,11 @@ running APIHUB. It is the default setup for UI work. The details are in
 After you change a library, rebuild it (`pnpm exec nx build <library>`) and restart `pnpm dev:proxy`. The Agents UI
 has the same script in `frontend/ui/packages/agents`, with its own `proxyServer` constant.
 
-`pnpm dev:proxy:msw` adds the Mock Service Worker handlers. The mixed mode, a local mock server for selected `/api`
-prefixes, is described in [`portal-mock-server.md`](../../frontend/ui/docs/dev/portal-mock-server.md).
+`pnpm dev:proxy:msw` starts the same proxy mode with the MSW mocks, which change or replace selected backend
+responses in the browser. MSW is the main way to mock the backend in the UI; see
+[MSW mocks](../../frontend/ui/docs/dev/msw-mocks.md). The Express mock server for selected `/api` prefixes, the mixed
+mode, is deprecated and will move to MSW; it is described in
+[`portal-mock-server.md`](../../frontend/ui/docs/dev/portal-mock-server.md).
 
 ### No replacement for `dev:portal` and `dev:agents` yet
 
@@ -253,7 +257,8 @@ pnpm dev:frontend    # terminal 2: Vite
 ```
 
 The same pair exists in `frontend/ui/packages/portal`, but the Portal does not work against the mock alone: most
-Portal flows need a real backend. For the Portal, use proxy mode.
+Portal flows need a real backend. For the Portal, use proxy mode. Both Express mock backends are deprecated: new
+mocks go to [MSW](../../frontend/ui/docs/dev/msw-mocks.md).
 
 ## Builder and Java worker
 

@@ -3,11 +3,10 @@
 #
 #   docker build -f frontend/ui/Dockerfile .
 
-FROM docker.io/nginx:1.31.7-alpine3.24
+FROM docker.io/nginx:1.31.8-alpine3.24
 
-# No GIT_BRANCH or GIT_HASH build args: the content hash cannot see them, so a retagged image
-# reported the ref that built it first. The commit and branch are OCI annotations on each branch
-# tag instead (`docker buildx imagetools inspect <image>:<tag>`).
+# No GIT_BRANCH or GIT_HASH build args: the content hash cannot see them. The branch tag adds them as
+# environment variables in a thin layer (tools/ci/ref-overlay), and entrypoint.sh turns them into build-info.json.
 
 COPY frontend/ui/nginx/errors              /var/www/error
 COPY frontend/ui/nginx/nginx.conf.template /app/nginx.conf.template

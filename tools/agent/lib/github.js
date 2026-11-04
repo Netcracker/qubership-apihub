@@ -193,6 +193,8 @@ function createClient({
   }
 
   const getPull = (n) => request('GET', `/repos/{repo}/pulls/${n}`)
+  /** The comparison of two commits: `behind_by` is the number of commits `base` has that `head` lacks. */
+  const compareCommits = (base, head) => request('GET', `/repos/{repo}/compare/${base}...${head}`)
   const listPullFiles = (n) => paginate(`/repos/{repo}/pulls/${n}/files`)
   const listPullCommits = (n) => paginate(`/repos/{repo}/pulls/${n}/commits`)
   const getIssue = (n) => request('GET', `/repos/{repo}/issues/${n}`)
@@ -279,6 +281,25 @@ function createClient({
   }
 
   /**
+   * The runs of one workflow file (`ai-autonomous-agent.yml`), newest first. `status` (`queued`, `in_progress`, ...)
+   * and `created` (a GitHub date filter such as `>=2026-01-01T00:00:00Z`) are optional. The endpoint wraps its list,
+   * so `paginate` does not fit.
+   */
+  async function listWorkflowRuns(workflowFile, { status, created } = {}) {
+    const runs = []
+    for (let page = 1; ; page += 1) {
+      const result = await request('GET', `/repos/{repo}/actions/workflows/${encodeURIComponent(workflowFile)}/runs`, {
+        query: { status, created, per_page: PAGE_SIZE, page },
+      })
+      if (!Array.isArray(result?.workflow_runs)) {
+        throw new GitHubError(`GitHub GET runs of ${workflowFile} did not return a list`, { status: 200, body: result })
+      }
+      runs.push(...result.workflow_runs)
+      if (result.workflow_runs.length < PAGE_SIZE) return runs
+    }
+  }
+
+  /**
    * The commit statuses of a commit (the CLA check reports here), newest per context. `state` is the combined state of
    * GitHub, which is `pending` also when there are no statuses at all: judge `statuses`, not `state`.
    */
@@ -360,6 +381,7 @@ function createClient({
     searchIssues,
     graphql,
     getPull,
+    compareCommits,
     listPullFiles,
     listPullCommits,
     getIssue,
@@ -377,6 +399,7 @@ function createClient({
     convertPullToDraft,
     markPullReady,
     listCheckRuns,
+    listWorkflowRuns,
     getCombinedStatus,
     getJobLog,
     rerunFailedJobs,

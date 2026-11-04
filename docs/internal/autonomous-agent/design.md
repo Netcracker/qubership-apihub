@@ -68,8 +68,9 @@ pull request from a fork.
 5. **State lives in GitHub:** labels for the phase, one comment per issue and per pull request with a hidden JSON block
    for the details, and run artifacts for the transcripts. No external storage.
 6. **Every run rebuilds its context from GitHub.** No opencode session is carried between runs.
-7. **Knowledge comes from the repository:** `AGENTS.md` files, the skills in `.claude/skills/`, the rules in
-   `.claude/rules/`, and a new APM package with the agent's own skills. The stale `.agents/` tree goes away.
+7. **Knowledge comes from the repository:** `AGENTS.md` files, the skills in `.agents/skills/` and
+   `.claude/skills/`, the rules in `.claude/rules/`, and the APM package with the agent's own skills. The two
+   skill trees are one install. `.cursor/skills/` is not committed.
 
 ## Engine
 
@@ -78,7 +79,7 @@ pull request from a fork.
 | Option | Fit | Verdict |
 |---|---|---|
 | opencode, `opencode github run` (the official action) | Comment chat, issue and PR context, branch and PR creation out of the box | Rejected as the core; see below |
-| opencode, `opencode run` with a thin orchestrator | Any OpenAI model, custom agents with their own model and permissions, reads `.claude/skills` and `AGENTS.md` | **Chosen** |
+| opencode, `opencode run` with a thin orchestrator | Any OpenAI model, custom agents with their own model and permissions, reads `.agents/skills` and `AGENTS.md` | **Chosen** |
 | `openai/codex-action` (Codex CLI) | OpenAI's own agent, `AGENTS.md`, Apache-2.0; no comment chat, no PR creation | Fallback engine |
 | OpenHands resolver | Label-driven issue fixing with iterations | Heavy Docker runtime; its own skill format |
 | PR-Agent (Qodo) | Mature PR review with OpenAI | Review only; ignores our skills and rules |
@@ -105,7 +106,7 @@ data the model must not act on. That costs about a hundred lines of script.
 
 ### Why opencode over Codex
 
-opencode reads `.claude/skills/*/SKILL.md` and `AGENTS.md` natively, attaches the nested `AGENTS.md` of a module when
+opencode reads `.agents/skills/*/SKILL.md` and `AGENTS.md` natively, attaches the nested `AGENTS.md` of a module when
 the agent reads a file in it, and lets each custom agent set its own model, reasoning effort, step limit, and tool
 permissions. The roles of this design map onto that directly. The engine-specific part is small: one config directory
 and one `opencode run` call in a script. The prompts and skills are plain Markdown, so a move to Codex or to opencode
@@ -356,6 +357,7 @@ repository. It ignores every other comment and every comment of a bot, its own i
 | `/agent implement [notes]`, `/agent fix [notes]` | `Bug` or `Task` issue | Starts Flow C; the notes become hints. On an `ai:unsuitable` issue, replies with the reasons instead |
 | `/agent implement force [notes]` | `ai:unsuitable` issue | Starts Flow C despite the label |
 | `/agent retry [notes]` | issue or agent PR in `agent:needs-human` | Resumes Flow C with a fresh attempt budget |
+| `/agent update [notes]` | agent PR | Merges the latest `develop` into the branch; on conflicts, `implementer` resolves them, see [Updating the branch](#updating-the-branch) |
 | `/agent stop` | issue or agent PR | Stops the flow; the phase becomes `stopped`; no further runs until `/agent implement` or `/agent retry` |
 | `/agent review` | pull request | Runs Flow A |
 | `/agent cost` | issue or pull request | Replies with the cost table, see [Cost reporting](#cost-reporting) |
@@ -369,6 +371,30 @@ but a label and a comment. A review with change requests on the agent's pull req
 gets every unresolved thread, and the publish step replies in each thread with what it changed.
 
 The agent never pushes to a branch of a person. On those pull requests it reviews and answers.
+
+### Updating the branch
+
+`/agent update` brings a pull request of the agent up to date with `develop` when it has fallen behind or has
+conflicts. Conflicts stop CI from running on the pull request at all, so the CI gate never sees them and a person must
+ask. The attempt has the kind `update` and gives the CI loop a fresh budget, like `/agent retry`.
+
+- **Merge, not rebase.** The script runs `git merge --no-ff origin/develop` and pushes the merge commit on top of the
+  branch, with the lease of any person's attempt. A rebase would need a force push, which could drop a commit that a
+  person pushed to the branch and would detach the review comments. Pull requests are squash-merged, so the merge
+  commit does not reach `develop`.
+- **Already up to date.** The preflight asks GitHub how far the head is behind `develop`. At zero it replies that
+  there is nothing to update and changes no state.
+- **A clean merge runs no model.** The script commits the merge, and the publish job pushes it. The run ends in
+  `waiting-ci`, and the CI gate takes over: a red CI starts the usual CI fix.
+- **Conflicts go to the implementer.** The working tree stays in the merge, and the input lists the files with
+  conflict markers; the notes after the command are guidance. The rounds, the local checks, and the self-review run as
+  in Flow C, and every round commits the merge commit (later rounds amend it). A file that still has a conflict marker
+  blocks the attempt.
+- **The diff limits measure the pull request only.** After the merge, the branch point is the merged `develop`, so the
+  diff from it holds the change of the pull request and not the commits of `develop`.
+- **Workflow files.** `AGENT_PAT` has no Workflows permission, and GitHub refuses a push whose commits change
+  `.github/workflows/`, even when the change comes from `develop`. The agent still tries. On that refusal, the attempt
+  fails with a message that says why: update the branch by hand, or give the token the Workflows permission.
 
 ## Budgets and the stop rule
 
@@ -505,16 +531,18 @@ issue when the work lands. It uses no model and costs nothing.
 | Root `AGENTS.md` | opencode loads it at start |
 | Module `AGENTS.md` | opencode 1.x attaches the nearest `AGENTS.md` above a file when the agent reads that file |
 | `CLAUDE.md` | ignored where an `AGENTS.md` exists; ours only import `AGENTS.md` |
-| Skills in `.claude/skills/` | opencode discovers them and loads one on demand through its `skill` tool |
+| Skills in `.agents/skills/` and `.claude/skills/` | opencode discovers them and loads one on demand. On a name clash it keeps the `.claude/skills/` copy |
 | Rules in `.claude/rules/` | listed in `instructions` of `opencode.json`; see below |
 | The agent's playbooks | new skills in `agent-packages/apihub-autonomous-agent/`, deployed by `apm install` like any other |
 
 Points to settle:
 
-- **`.agents/` is deleted.** opencode reads skills from `.agents/skills/` as well as from `.claude/skills/`. The
-  `.agents/` copy is stale: four files differ from `.claude/skills/`, and `apm.lock.yaml` lists no file under it.
-  Without it, the agent sees one version of each skill. Codex also reads `.agents/skills/`, so a person who uses Codex
-  locally loses the skills; `apm install --target codex` brings them back if needed.
+- **Two committed skill trees, one install.** `apm install --target cursor,claude` writes the same skills to
+  `.agents/skills/` and `.claude/skills/`. Both are committed, so a clone works for Claude Code and for harnesses
+  that read `.agents/skills/` without running APM. `.cursor/skills/` is gitignored. OpenCode scans
+  `.claude/skills/` first and keeps that copy when the same name also exists under `.agents/skills/`, so the two
+  trees have to stay identical and land in the same commit. The review job replaces both `.agents/` and
+  `.claude/` from the workflow ref, so a pull request cannot change the skills or rules that review it.
 - **Rules are path-scoped; opencode does not read `paths:`.** The 54 rules in `.claude/rules/` are 25 KB together, and
   each one names its scope in its text. Loading them all costs about 7,000 tokens per run and is the default. If that
   confuses the model, the alternatives are the APM `opencode` target, if it keeps the scope, or a small opencode

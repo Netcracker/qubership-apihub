@@ -193,7 +193,7 @@ paths:
             default: 0
         - name: limit
           in: query
-          description: Maximun items in response
+          description: Maximum items in response
           schema:
             type: number
             default: 100

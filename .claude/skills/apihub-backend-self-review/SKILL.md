@@ -26,7 +26,7 @@ In addition to `apihub-go-self-review`:
 
 ### Migrations
 
-- [ ] Run: `bash .cursor/skills/apihub-backend-developer/scripts/check_migration_numbers.sh`
+- [ ] Run: `bash .agents/skills/apihub-backend-developer/scripts/check_migration_numbers.sh`
 
 ### Documentation
 

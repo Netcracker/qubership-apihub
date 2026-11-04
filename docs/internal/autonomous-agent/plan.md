@@ -2,6 +2,11 @@
 
 Status: draft for review, revision 3 of October 23, 2026. The design is in [design.md](./design.md).
 
+Update, 26 October 2026: skills are committed under `.agents/skills/` and `.claude/skills/`, the same install in
+both places, so a clone needs no `apm install`. `.cursor/skills/` is gitignored. Phase 0.4 below records the
+earlier deletion of a stale `.agents/` tree; that deletion is superseded for the skill tree. Rules stay in
+`.claude/rules/` and `.cursor/rules/`.
+
 Six phases, each one a pull request or a few, each one useful on its own. Flow A goes first: it writes nothing to
 the code, so it tests the platform (the tokens, opencode in CI, skills, state, cost records) at the lowest risk. Every
 phase starts behind the repository variable `AGENT_ENABLED` and with `AGENT_DRY_RUN=true`, which writes the would-be

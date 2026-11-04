@@ -8,7 +8,6 @@ demos, and tests. For production, use the Helm chart in [`../helm-templates`](..
 - [`with-keycloak`](with-keycloak/README.md): the generic stack plus Keycloak with SAML and OIDC integration.
 - [`backend-debug`](backend-debug/README.md): everything except the backend (UI, builder, PostgreSQL), so you run and
   debug the backend from your IDE.
-- `with-gitlab`: only a backend `config.yaml` example for the GitLab integration. It has no Compose file.
 
 Every file the scripts and the services read is explained in the
 [configuration reference](../../docs/configuration-reference.md). The

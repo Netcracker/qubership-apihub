@@ -6,13 +6,13 @@
 **Related API**:
 
 - GET /api/v1/packages/{packageId}/exportConfig
-- PACTH /api/v1/packages/{packageId}/exportConfig
+- PATCH /api/v1/packages/{packageId}/exportConfig
 
 **Revision History:**  
 
-| Date           | Description                         |
-| -------------- | ----------------------------------- |
-|08-03-2025      |initial version. <https://github.com/Netcracker/qubership-apihub/issues/64>, <https://github.com/Netcracker/qubership-apihub/issues/71>|
+| Date       | Description                                                                                                                             |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| 08-03-2025 | initial version. <https://github.com/Netcracker/qubership-apihub/issues/64>, <https://github.com/Netcracker/qubership-apihub/issues/71> |
 
 ***
 

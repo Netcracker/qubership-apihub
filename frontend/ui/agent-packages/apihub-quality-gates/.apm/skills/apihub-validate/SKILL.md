@@ -10,13 +10,11 @@ whole-module `lint:check` or `nx affected`: they are slow and report problems th
 
 ## Command
 
-The script is `scripts/validate.mjs` in this skill's directory. APM deploys the skill per harness:
-`.claude/skills/apihub-validate/` for Claude Code, `.cursor/skills/apihub-validate/` for Cursor while the repository
-installs with `--legacy-skill-paths`, `.agents/skills/apihub-validate/` without it. Run it from the repository root
-with the files you created or changed, for example in Claude Code:
+The script is `scripts/validate.mjs` in this skill's directory. The committed copy is
+`.agents/skills/apihub-validate/`. Run it from the repository root with the files you created or changed:
 
 ```bash
-node .claude/skills/apihub-validate/scripts/validate.mjs --files <path> <path> ...
+node .agents/skills/apihub-validate/scripts/validate.mjs --files <path> <path> ...
 ```
 
 - Run it as one command: do not prefix it with `cd`, and do not run `git status` or Nx yourself.
@@ -43,6 +41,9 @@ dprint is expected on `PATH` with a configuration it finds above the repository 
 `ui-portal:test:server`. A package without ESLint, or whose `test` script cannot select related tests, is reported
 as `SKIP` with the reason; Playwright specs in `tests/ui-tests` run as its `AGENTS.md` says.
 
+`pnpm-lock.yaml` is an Nx shared global, so after it changes the test gate rebuilds every workspace dependency of the
+suite before the tests run. That takes minutes, once; let it finish.
+
 ## Report
 
 One block per package:
@@ -58,5 +59,6 @@ remaining:
   frontend/ui/packages/portal/src/App.tsx(12,3): error TS2322: ...
 ```
 
-As the `verifier` subagent, return these blocks unchanged. Otherwise fix what `remaining` lists and run the command
+Before each gate the script prints `<project>: <gate>...` to stderr; the report goes to stdout. As the `verifier`
+subagent, return these blocks unchanged. Otherwise fix what `remaining` lists and run the command
 again. The exit code is 1 when a gate failed and 2 when there was nothing to check.

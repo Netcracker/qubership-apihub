@@ -1,6 +1,6 @@
 {
   "name": "@netcracker/qubership-apihub-ui-shared",
-  "version": "0.0.0",
+  "version": "3.11.0",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Netcracker/qubership-apihub.git",

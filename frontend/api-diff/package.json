@@ -1,6 +1,6 @@
 {
   "name": "@netcracker/qubership-apihub-api-diff",
-  "version": "4.0.1",
+  "version": "5.0.0",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Netcracker/qubership-apihub.git",
@@ -44,7 +44,7 @@
     "@netcracker/qubership-apihub-compatibility-suites": "workspace:^",
     "@netcracker/qubership-apihub-graphapi": "workspace:^",
     "@types/jest": "30.0.0",
-    "@types/node": "^24.0.0",
+    "@types/node": "^24.19.2",
     "@typescript-eslint/eslint-plugin": "7.18.0",
     "@typescript-eslint/parser": "7.18.0",
     "eslint": "8.57.1",

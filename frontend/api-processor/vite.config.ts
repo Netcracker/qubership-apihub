@@ -15,11 +15,15 @@
  */
 
 import * as path from 'path'
+import { stampedVersionPlugin } from '@netcracker/qubership-apihub-build-id/vite-plugin'
 import { defineConfig } from 'vite'
 import dts from 'vite-plugin-dts'
 
 export default defineConfig({
   plugins: [
+    // The sources import `version` from package.json; the ES build reports the stamped one, as the CommonJS build
+    // does (scripts/stamp-cjs-version.mjs).
+    stampedVersionPlugin(__dirname),
     dts({
       insertTypesEntry: true,
     }),

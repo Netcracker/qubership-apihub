@@ -68,6 +68,7 @@ export type SubTableComponentProps = {
   versionKey: Key | undefined
   apiType?: ApiType | ContractType
   packageKind?: PackageKind
+  columnCount: number
 }
 
 export type ChangeViewTableProps = {
@@ -299,6 +300,7 @@ export const ChangesViewTable: FC<ChangeViewTableProps> = memo<ChangeViewTablePr
                   versionKey={isDashboardType ? row.original.change.currentOperation?.packageRef?.version : versionKey}
                   apiType={apiType}
                   packageKind={packageObject?.kind}
+                  columnCount={row.getVisibleCells().length}
                 />
               )}
             </Fragment>

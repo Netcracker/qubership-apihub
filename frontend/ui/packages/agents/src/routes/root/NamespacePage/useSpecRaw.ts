@@ -27,7 +27,10 @@ import { WORKSPACE_SEARCH_PARAM } from '@netcracker/qubership-apihub-ui-shared/u
 import { useMemo } from 'react'
 import { API_V2, requestBlob } from '@netcracker/qubership-apihub-ui-shared/utils/requests'
 import { systemConfiguration } from '@netcracker/qubership-apihub-ui-shared/hooks/authorization/useSystemConfiguration'
-import { findExtensions } from '@netcracker/qubership-apihub-ui-shared/features/system-extensions/useSystemExtensions'
+import {
+  findExtensions,
+  SystemExtensionNames,
+} from '@netcracker/qubership-apihub-ui-shared/features/system-extensions/useSystemExtensions'
 
 const SPEC_RAW_QUERY_KEY = 'spec-raw-query-key'
 const EMPTY_SPECS_RESULT: Map<SpecKey, SpecRaw> = new Map()
@@ -126,7 +129,7 @@ export async function getSpecBlob(
   ignoreErrors?: boolean,
 ): Promise<Blob> {
   const { extensions } = await systemConfiguration()
-  const prefix = findExtensions(extensions, 'agents-backend')?.pathPrefix || ''
+  const prefix = findExtensions(extensions, SystemExtensionNames.agentsBackend)?.pathPrefix || ''
   return (await requestBlob(
     `/agents/${agentId}/namespaces/${namespaceKey}/workspaces/${workspaceKey}/services/${serviceKey}/specs/${encodeURIComponent(specKey)}`,
     { method: 'get' },

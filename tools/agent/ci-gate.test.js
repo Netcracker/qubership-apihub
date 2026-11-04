@@ -11,12 +11,20 @@ const {
   failedChecks,
   allGreen,
   isE2eOnly,
+  isCancelledOnly,
+  stillRunning,
+  e2eRerunLeft,
   isErrorLine,
   extractErrors,
   capTotalLines,
   normalizeLine,
   failureSignature,
   firstError,
+  checkNames,
+  failureLines,
+  reportFacts,
+  rerunRefusal,
+  rerunRequestState,
   buildReport,
   lastSignature,
   countedAttempts,
@@ -75,7 +83,7 @@ test('actionsIds: run and job from a link, nulls from anything else', () => {
   assert.deepEqual(actionsIds(undefined), { runId: null, jobId: null })
 })
 
-test('pendingChecks: unfinished check runs and pending statuses, by their own state', () => {
+test('pendingChecks: unfinished check runs and pending statuses; a cancelled check is finished', () => {
   const runs = [
     run('ci-ok', 'success'),
     run('a', 'success'),
@@ -87,14 +95,21 @@ test('pendingChecks: unfinished check runs and pending statuses, by their own st
   assert.deepEqual(pendingChecks(runs, statuses), [
     { name: 'b', state: 'in_progress' },
     { name: 'c', state: 'queued' },
-    { name: 'd', state: 'cancelled' },
     { name: 'x', state: 'pending' },
   ])
   // CI's verdict job has to exist before the gate decides: the first workflow to finish may come before it.
   assert.deepEqual(pendingChecks([], []), [{ name: 'ci-ok', state: 'missing' }])
+  // Only cancelled checks are no waiting: the verdict exists, and nothing runs.
+  assert.deepEqual(pendingChecks([run('ci-ok', 'failure'), run('run-lint', 'cancelled')], []), [])
 })
 
-test('failedChecks: every conclusion but success, neutral, skipped, and cancelled; failed statuses; by name', () => {
+test('stillRunning: a running check or a pending status, never a cancelled check or a missing verdict', () => {
+  const pending = pendingChecks([run('run-lint', 'cancelled'), { ...run('b', null), status: 'queued' }], [])
+  assert.deepEqual(stillRunning(pending), [{ name: 'b', state: 'queued' }])
+  assert.deepEqual(stillRunning(pendingChecks([run('run-lint', 'cancelled')], [])), [])
+})
+
+test('failedChecks: every conclusion but success, neutral, and skipped; failed statuses; by name', () => {
   const runs = [
     run('z-build', 'failure'),
     run('a-lint', 'cancelled'),
@@ -113,13 +128,14 @@ test('failedChecks: every conclusion but success, neutral, skipped, and cancelle
   ]
   const failed = failedChecks(runs, statuses)
   assert.deepEqual(failed.map((f) => [f.kind, f.name, f.conclusion]), [
+    ['check', 'a-lint', 'cancelled'],
     ['status', 'cla', 'failure'],
     ['check', 'manual', 'action_required'],
     ['status', 'old', 'error'],
     ['check', 'timeout', 'timed_out'],
     ['check', 'z-build', 'failure'],
   ])
-  assert.deepEqual(failed[0], {
+  assert.deepEqual(failed[1], {
     kind: 'status', name: 'cla', conclusion: 'failure', url: 'https://cla.test/1', jobId: null, runId: null,
   })
 })
@@ -132,6 +148,24 @@ test('failedChecks: the job id of an Actions check run is in its link, else its 
   const codeql = run('CodeQL', 'failure', { id: 6, app: { slug: 'codeql' }, details_url: 'https://c/1' })
   const [other] = failedChecks([codeql], [])
   assert.deepEqual([other.jobId, other.runId], [null, null])
+})
+
+test('isCancelledOnly: every failed check is a cancelled check run, the verdict check ci-ok aside', () => {
+  const check = (name, conclusion) => ({ kind: 'check', name, conclusion })
+  assert.equal(isCancelledOnly([check('run-lint', 'cancelled')]), true)
+  assert.equal(isCancelledOnly([check('ci-ok', 'failure'), check('run-lint', 'cancelled')]), true)
+  assert.equal(isCancelledOnly([check('ci-ok', 'cancelled'), check('a', 'cancelled'), check('b', 'cancelled')]), true)
+  // A cancelled check with a really failed one is a normal red result.
+  assert.equal(isCancelledOnly([check('run-lint', 'cancelled'), check('js', 'failure')]), false)
+  const status = { kind: 'status', name: 'cla', conclusion: 'failure' }
+  assert.equal(isCancelledOnly([check('run-lint', 'cancelled'), status]), false)
+  assert.equal(isCancelledOnly([check('ci-ok', 'failure')]), false)
+  // The workflow was stopped after its other jobs passed: the cancelled verdict alone counts.
+  assert.equal(isCancelledOnly([check('ci-ok', 'cancelled')]), true)
+  assert.equal(isCancelledOnly([]), false)
+  // A cancelled E2E job is both; the gate reruns it once either way, from the same budget.
+  assert.equal(isE2eOnly([check('E2E tests', 'cancelled')]), true)
+  assert.equal(isCancelledOnly([check('E2E tests', 'cancelled')]), true)
 })
 
 test('allGreen: needs a check, and no pending or failed one', () => {
@@ -152,6 +186,18 @@ test('isE2eOnly: every failed check is an E2E check run', () => {
   assert.equal(isE2eOnly([check('E2E tests'), check('build')]), false)
   assert.equal(isE2eOnly([{ kind: 'status', name: 'e2e' }]), false)
   assert.equal(isE2eOnly([]), false)
+})
+
+test('isE2eOnly: the verdict check ci-ok fails together with E2E and does not count', () => {
+  const check = (name) => ({ kind: 'check', name })
+  assert.equal(isE2eOnly([check('ci-ok'), check('E2E tests (kind)')]), true)
+  assert.equal(isE2eOnly([check('ci-ok'), check('e2e-compose'), check('E2E tests (kind)')]), true)
+  // Nothing remains without the verdict check, so the failure is not an E2E one.
+  assert.equal(isE2eOnly([check('ci-ok')]), false)
+  assert.equal(isE2eOnly([check('ci-ok'), check('build'), check('E2E tests')]), false)
+  assert.equal(isE2eOnly([check('ci-ok'), { kind: 'status', name: 'E2E' }]), false)
+  // A status that happens to be named like the verdict check is not the verdict check run.
+  assert.equal(isE2eOnly([{ kind: 'status', name: 'ci-ok' }, check('E2E tests')]), false)
 })
 
 // ------------------------------------------------------------------------------------------------ logs
@@ -196,6 +242,33 @@ test('extractErrors: error lines with context, no ANSI, no timestamps, no blank 
     'more noise 9',
     '##[error]Process completed with exit code 1.',
   ])
+})
+
+test('extractErrors: the echo of a step script is no output; a real failure next to it is kept', () => {
+  const echo = '\u001b[36;1m'
+  const reset = '\u001b[0m'
+  const lines = [
+    stamp('##[group]Run set -euo pipefail'),
+    stamp(`${echo}set -euo pipefail${reset}`),
+    stamp(`${echo}echo "::error::E2E failed, see the newman report"${reset}`),
+    stamp(`${echo}if [ -n "$FAILED" ]; then echo "error: failed jobs"; fi${reset}`),
+    stamp('shell: /usr/bin/bash -e {0}'),
+    stamp('\u001b[36;1m'),
+    stamp('##[endgroup]'),
+    stamp('┌─────────┬──────────┬──────────┐'),
+    stamp('│         │ executed │   failed │'),
+    stamp('│ assertions │ 40    │        2 │'),
+    stamp('  1. AssertionError  Status code is 200'),
+    stamp('                     expected response to have status code 200 but got 401'),
+    stamp('##[error]Process completed with exit code 1.'),
+  ]
+  const result = extractErrors(lines.join('\n'))
+  assert.ok(result.every((l) => !l.includes('::error::') && !l.includes('failed jobs')), result.join('\n'))
+  assert.ok(result.includes('  1. AssertionError  Status code is 200'))
+  assert.ok(result.includes('##[error]Process completed with exit code 1.'))
+  // Only the echo is dropped: the same text printed as output stays an error line.
+  assert.deepEqual(extractErrors(stamp('::error::E2E failed')), ['::error::E2E failed'])
+  assert.deepEqual(extractErrors(stamp(`${echo}echo "::error::E2E failed"${reset}`)), [])
 })
 
 test('extractErrors: an Nx "Failed tasks" block is kept whole; a clean log gives nothing', () => {
@@ -272,6 +345,22 @@ test('failureSignature: 12 hex characters; the same failure gives the same signa
   assert.match(a, /^[0-9a-f]{12}$/)
   assert.equal(failureSignature(failed, second), a)
   assert.equal(failureSignature(failedSet('e2e', 'build'), second), a, 'the order of the checks does not matter')
+})
+
+test('failureSignature: cancelled checks are left out when a real failure exists, and make it when alone', () => {
+  const real = { name: 'js', conclusion: 'failure' }
+  const lint = { name: 'run-lint', conclusion: 'cancelled' }
+  const other = { name: 'storybooks', conclusion: 'cancelled' }
+  const errors = { js: ['FAIL a.test.ts', 'Error: boom'], 'run-lint': ['stopped'], storybooks: ['also stopped'] }
+  const plain = failureSignature([real], errors)
+  assert.equal(failureSignature([real, lint], errors), plain)
+  assert.equal(failureSignature([lint, real, other], errors), plain, 'a changing set of cancelled checks')
+  assert.equal(failureSignature([real, { ...lint, conclusion: 'timed_out' }], errors) === plain, false)
+  // Alone, the cancelled checks are the failure.
+  const alone = failureSignature([lint], errors)
+  assert.notEqual(alone, plain)
+  assert.notEqual(failureSignature([lint, other], errors), alone)
+  assert.equal(failureSignature([other, lint], errors), failureSignature([lint, other], errors))
 })
 
 test('failureSignature: another failing test, another failing check, or another message changes it', () => {
@@ -467,10 +556,37 @@ test('stoppedState and nextAttemptState: the signature on the last attempt, the 
   )
 })
 
-test('rerunState counts the free rerun and decides nothing', () => {
-  assert.equal(rerunState({}).e2eReruns, 1)
-  assert.equal(rerunState({ e2eReruns: 1 }).e2eReruns, 2)
-  assert.equal(rerunState({}).ciGate, undefined)
+test('an unrelated attempt keeps unrelated: true when the CI verdict replaces its result', () => {
+  const unrelated = () => ({ ...waiting(), attempts: [attempt(1, 'ci-fix', { result: 'unrelated' })] })
+  const green = greenState(unrelated(), { sha: 'abc', at, run: 'r' })
+  assert.deepEqual([green.attempts[0].result, green.attempts[0].unrelated], ['ci-green', true])
+  const stopped = stoppedState(unrelated(), { signature: 's1', report: 'R', sha: 'abc', at, run: 'r' })
+  assert.deepEqual([stopped.attempts[0].result, stopped.attempts[0].unrelated], ['ci-red', true])
+  const next = nextAttemptState(unrelated(), { signature: 's1', report: 'R', sha: 'abc', at, run: 'r', actor: 'carol' })
+  assert.deepEqual([next.attempts[0].result, next.attempts[0].unrelated], ['ci-red', true])
+  // The flag stays on a later patch, and another attempt never gets it.
+  const again = greenState(stoppedState(unrelated(), { signature: 's', report: 'R', sha: 'a', at, run: 'r' }), { sha: 'b', at, run: 'r' })
+  assert.equal(again.attempts[0].unrelated, true)
+  assert.equal(greenState(waiting(), { sha: 'abc', at, run: 'r' }).attempts[0].unrelated, undefined)
+})
+
+test('rerunState counts the free rerun per commit and decides nothing', () => {
+  assert.deepEqual(rerunState({}, 'aaa').e2eRerun, { sha: 'aaa', count: 1 })
+  assert.deepEqual(rerunState({ e2eRerun: { sha: 'aaa', count: 1 } }, 'aaa').e2eRerun, { sha: 'aaa', count: 2 })
+  // A new commit starts from zero.
+  assert.deepEqual(rerunState({ e2eRerun: { sha: 'aaa', count: 1 } }, 'bbb').e2eRerun, { sha: 'bbb', count: 1 })
+  assert.equal(rerunState({}, 'aaa').ciGate, undefined)
+  // The old per-pull-request counter is dropped; the input is not changed.
+  const old = { e2eReruns: 1 }
+  assert.equal(rerunState(old, 'aaa').e2eReruns, undefined)
+  assert.equal(old.e2eReruns, 1)
+})
+
+test('e2eRerunLeft: one free rerun for each head commit', () => {
+  assert.equal(e2eRerunLeft({}, 'aaa'), true)
+  assert.equal(e2eRerunLeft({ e2eReruns: 1 }, 'aaa'), true)
+  assert.equal(e2eRerunLeft({ e2eRerun: { sha: 'aaa', count: 1 } }, 'aaa'), false)
+  assert.equal(e2eRerunLeft({ e2eRerun: { sha: 'aaa', count: 1 } }, 'bbb'), true)
 })
 
 test('gateGuard: the phase, the pull request, and the commit must be the ones the router saw', () => {
@@ -528,6 +644,10 @@ test('renderGreen, renderNextAttempt, and renderRerun say what happened and what
   )
   assert.match(next, /- `build`: failure \(\[log\]\(https:\/\/x\/job\/1\)\)/)
   assert.match(renderRerun({ pr: 70, failed, runUrl: 'u', totalUsd: 0 }), /Only E2E jobs failed\. I reran them once/)
+  const cancelled = [{ kind: 'check', name: 'run-lint', conclusion: 'cancelled', url: null }]
+  const rerunText = renderRerun({ pr: 70, failed: cancelled, runUrl: 'u', totalUsd: 0, kind: 'cancelled' })
+  assert.match(rerunText, /The failed checks were cancelled, so nothing really failed\. I reran them once/)
+  assert.match(rerunText, /- `run-lint`: cancelled/)
 })
 
 test('renderStopped: the reason, every attempt, the current failure, and one request', () => {
@@ -541,17 +661,17 @@ test('renderStopped: the reason, every attempt, the current failure, and one req
   })
   assert.match(
     text,
-    /^### AI implementation needs a person: CI is red on pull request #70\n\nI stopped\. The last attempt failed/,
+    /^### AI implementation needs a person: CI is red on pull request #70\n\n- Failed checks: `build`\.\n/,
   )
+  assert.match(text, /\n- `build` has no error line I could read\.\n- Why I stopped: The last attempt failed/)
   assert.match(text, /\| 2 \| ci-fix \| ci-red \| `aaa` \| Tried a test\. \|/)
   assert.match(
     text,
     /<details><summary>CI report<\/summary>\n\nR+\n\[cut: the text is longer than 3000 characters\]\n\n<\/details>/,
   )
-  assert.match(
-    text,
-    /\*\*What I need from you:\*\* look at the failure, push a fix to the branch, or comment `\/agent retry`/,
-  )
+  assert.match(text, /\nWhat you can do:\n\n- If the failure is not caused by the change \(a flaky test, an outage\), /)
+  assert.match(text, /comment `\/agent rerun`: it reruns the failed checks, with no new attempt and no model cost\.\n/)
+  assert.match(text, /\n- To try another fix, comment `\/agent retry` with guidance\.\n/)
   assert.match(
     renderStopped({ pr: 70, reason: 'budget', max: 3, attempts, failed, report: 'R', runUrl: 'u', totalUsd: 0 }),
     /I used all 3 attempts, and CI is still red\./,
@@ -569,13 +689,12 @@ test('greenComment and stopComment mention the person, name the check and its er
     failed,
     errorsByJob: { 'build `x`': ['noise', 'Error: boom `now` @bob'] },
   })
-  assert.match(text, /^@carol, I stopped on #70\. I used all 3 attempts, and CI is still red\.\n\n/)
-  assert.match(
-    text,
-    /Look at `build 'x'`: `Error: boom 'now' @​bob`\. Comment `\/agent retry` with guidance to let me try again\.$/,
-  )
+  assert.match(text, /^@carol, I stopped on #70: CI is red\.\n\n- Failed checks: `build 'x'`\.\n/)
+  assert.match(text, /\n- First error, in `build 'x'`: `Error: boom 'now' @​bob`\.\n/)
+  assert.match(text, /\n- Why I stopped: I used all 3 attempts, and CI is still red\.\n\nWhat you can do:\n\n/)
+  assert.match(text, /\n- If the failure is not caused by the change .*`\/agent rerun`.*\n- To try another fix, comment `\/agent retry` with guidance\.$/)
   const quiet = stopComment({ actor: 'carol', pr: 70, reason: 'same-failure', max: 3, failed, errorsByJob: {} })
-  assert.match(quiet, /Look at `build 'x'`; its log has no error line I could read\. Comment `\/agent retry`/)
+  assert.match(quiet, /\n- `build 'x'` has no error line I could read\.\n/)
 })
 
 test('countedAttempts counts only from the budget index: a person who steers the agent gives a fresh budget', () => {
@@ -605,4 +724,67 @@ test('stopDecision: attempts before budgetFrom do not count against the budget; 
   // The same failure as the last recorded one still stops at once, across the boundary.
   const same = { attempts: [...before.attempts, attempt(4, 'human', { signature: 'c' })], budgetFrom: 3 }
   assert.equal(stopDecision({ state: same, signature: 'c', config: config() }).reason, 'same-failure')
+})
+
+test('checkNames lists at most five checks, then says how many more; the names are safe in a code span', () => {
+  const failed = ['a', 'b', 'c', 'd', 'e', 'f', 'g'].map((name) => ({ name }))
+  assert.equal(checkNames(failed), '`a`, `b`, `c`, `d`, `e`, and 2 more')
+  assert.equal(checkNames(failed.slice(0, 2)), '`a`, `b`')
+  assert.equal(checkNames(failed.slice(0, 5)), '`a`, `b`, `c`, `d`, `e`')
+  assert.equal(checkNames(failed.slice(0, 5), 8), '`a`, `b`, `c`, `d`, `e`, and 3 more')
+  assert.equal(checkNames([{ name: 'build `x` @bob' }]), "`build 'x' @​bob`")
+  // A cancelled check keeps its conclusion in the text.
+  assert.equal(
+    checkNames([{ name: 'js', conclusion: 'failure' }, { name: 'run-lint', conclusion: 'cancelled' }]),
+    '`js`, `run-lint` (cancelled)',
+  )
+})
+
+test('failureLines: the failed checks, then the first error line of the first check that has one', () => {
+  const failed = failedSet('build', 'lint')
+  assert.deepEqual(failureLines(failed, { build: ['noise'], lint: ['x', 'Error: boom'] }), [
+    'Failed checks: `build`, `lint`.',
+    "First error, in `lint`: `Error: boom`.",
+  ])
+  assert.deepEqual(failureLines(failed, {}), [
+    'Failed checks: `build`, `lint`.',
+    '`build` has no error line I could read.',
+  ])
+})
+
+test('reportFacts reads the failed checks and their error lines back from a report', () => {
+  const failed = Array.from({ length: 22 }, (_, i) => ({ name: `job ${String(i).padStart(2, '0')}`, conclusion: 'failure' }))
+  const errorsByJob = { 'job 00': ['FAIL a', 'Error: boom'], 'job 01': ['```', 'Error: in a fence'] }
+  const report = buildReport({ pr: 70, headSha: 'a'.repeat(40), failed, errorsByJob, signature: 'abc', max: 100000 })
+  const facts = reportFacts(report)
+  assert.equal(facts.failed.length, 20)
+  assert.equal(facts.total, 22)
+  assert.deepEqual(facts.errorsByJob['job 00'], ['FAIL a', 'Error: boom'])
+  assert.deepEqual(facts.errorsByJob['job 01'], ['```', 'Error: in a fence'])
+  assert.deepEqual(failureLines(facts.failed, facts.errorsByJob, facts.total), [
+    'Failed checks: `job 00`, `job 01`, `job 02`, `job 03`, `job 04`, and 17 more.',
+    'First error, in `job 00`: `FAIL a`.',
+  ])
+  assert.deepEqual(reportFacts(''), { failed: [], errorsByJob: {}, total: 0 })
+  assert.deepEqual(reportFacts(undefined), { failed: [], errorsByJob: {}, total: 0 })
+})
+
+test('rerunRefusal and rerunRequestState', () => {
+  const st = { phase: 'needs-human', pr: 70, branch: 'b', ciGate: { sha: 'a' }, implementing: { run: 'r' } }
+  assert.equal(rerunRefusal({ st, actor: 'erin', issue: {}, prHint: null }), null)
+  assert.equal(rerunRefusal({ st, actor: 'erin', issue: {}, prHint: 70 }), null)
+  assert.match(rerunRefusal({ st: {}, actor: 'erin', issue: {} }), /^@erin, there is no pull request of the agent/)
+  assert.match(rerunRefusal({ st, actor: 'erin', issue: {}, prHint: 71 }), /no pull request of the agent/)
+  const now = Date.parse('2026-10-24T12:00:00Z')
+  const busy = { ...st, phase: 'implementing', implementing: { run: 'u', at: '2026-10-24T11:00:00Z' } }
+  assert.equal(rerunRefusal({ st: busy, actor: 'erin', issue: {}, now }), '@erin, an implementation is already running: u.')
+  const stale = { ...busy, implementing: { run: 'u', at: '2026-10-24T09:00:00Z' } }
+  assert.equal(rerunRefusal({ st: stale, actor: 'erin', issue: {}, now }), null)
+  assert.match(rerunRefusal({ st: { ...st, phase: 'stopped' }, actor: 'erin', issue: {} }), /the work is stopped/)
+
+  const next = rerunRequestState(st, { sha: 'abc', runs: [1], actor: 'erin', at: 't', run: 'u' })
+  assert.deepEqual(next, {
+    phase: 'waiting-ci', pr: 70, branch: 'b', reruns: [{ at: 't', actor: 'erin', sha: 'abc', runs: [1], run: 'u' }],
+  })
+  assert.equal(st.ciGate.sha, 'a')
 })

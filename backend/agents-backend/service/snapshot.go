@@ -236,6 +236,38 @@ func (s *snapshotServiceImpl) CreateSnapshot(ctx context.Context, namespace stri
 	return s.startSnapshot(ctx, namespace, workspaceId, version, serviceListResponse.Services, snapshotDTO)
 }
 
+func (s *snapshotServiceImpl) getValidationRulesSeverity(ctx context.Context, clientBuild bool) (*view.ValidationRulesSeverity, error) {
+	if !clientBuild {
+		// portal-backend sets the severity itself for the builds it runs
+		return nil, nil
+	}
+	info, err := s.apihubClient.GetSystemInfo(ctx)
+	if err != nil {
+		return nil, &exception.CustomError{
+			Status:  http.StatusFailedDependency,
+			Code:    exception.ApihubSystemInfoUnavailable,
+			Message: exception.ApihubSystemInfoUnavailableMsg,
+			Params:  map[string]interface{}{"error": err.Error()},
+			Debug:   err.Error(),
+		}
+	}
+	// Anything but the two known values is rejected: the builder treats any other value, including an absent one,
+	// as a warning, which would let specs with broken refs reach Release.
+	brokenRefs := ""
+	if info != nil && info.ValidationRulesSeverity != nil {
+		brokenRefs = info.ValidationRulesSeverity.BrokenRefs
+	}
+	if brokenRefs != view.BrokenRefsSeverityError && brokenRefs != view.BrokenRefsSeverityWarning {
+		return nil, &exception.CustomError{
+			Status:  http.StatusFailedDependency,
+			Code:    exception.InvalidValidationRulesSeverity,
+			Message: exception.InvalidValidationRulesSeverityMsg,
+			Params:  map[string]interface{}{"brokenRefs": brokenRefs},
+		}
+	}
+	return &view.ValidationRulesSeverity{BrokenRefs: brokenRefs}, nil
+}
+
 func validateVersionName(versionName string) error {
 	if strings.Contains(versionName, "@") {
 		return &exception.CustomError{
@@ -287,6 +319,11 @@ func (s *snapshotServiceImpl) startSnapshot(ctx context.Context, namespace strin
 	var packageIds []string
 	var groupId, dashboardId string
 	var err error
+
+	validationRulesSeverity, err := s.getValidationRulesSeverity(ctx, snapshotDTO.ClientBuild)
+	if err != nil {
+		return nil, err
+	}
 
 	if !snapshotDTO.Promote {
 		sysCtx := secctx.MakeSysadminContext(context.Background()) // Create groups using api-key since user may not have enough privileges
@@ -353,6 +390,7 @@ func (s *snapshotServiceImpl) startSnapshot(ctx context.Context, namespace strin
 					ApihubPackageUrl:         fmt.Sprintf("%s/portal/packages/%s/%s/overview/summary", s.systemInfoService.GetApihubUrl(), svc.Baseline.PackageId, url.PathEscape(version)),
 					Metadata:                 map[string]interface{}{},
 					BuildType:                view.BuildType,
+					ValidationRulesSeverity:  validationRulesSeverity,
 				}
 			} else {
 				previousVersionPackageId := ""
@@ -375,6 +413,7 @@ func (s *snapshotServiceImpl) startSnapshot(ctx context.Context, namespace strin
 					CreatedBy:                secctx.GetUserId(ctx),
 					Metadata:                 map[string]interface{}{},
 					BuildType:                view.BuildType,
+					ValidationRulesSeverity:  validationRulesSeverity,
 				}
 			}
 

@@ -1,6 +1,6 @@
 {
   "name": "@netcracker/qubership-apihub-compatibility-suites",
-  "version": "2.6.2",
+  "version": "2.7.0",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Netcracker/qubership-apihub.git",
@@ -34,7 +34,7 @@
     "type-check": "pnpm run generate && tsc -p tsconfig.json --noEmit"
   },
   "devDependencies": {
-    "@types/node": "^24.0.0",
+    "@types/node": "^24.19.2",
     "tslib": "^2.8.1",
     "tsx": "4.8.1",
     "typescript": "6.0.3",

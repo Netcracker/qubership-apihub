@@ -37,15 +37,22 @@ Go service, use the `apihub-add-go-service` skill: it lists every place that nam
 2. From the repository root, run:
 
    ```bash
-   apm install --target cursor,claude --legacy-skill-paths
+   apm install --target cursor,claude
    ```
 
-3. Commit the package sources together with the refreshed `.cursor/` and `.claude/` trees. The deployed trees are
-   committed so that an assistant works in a fresh clone without running APM.
+3. Commit the package sources together with `.agents/skills/`, `.claude/skills/`, and the refreshed `.cursor/`
+   and `.claude/` rule trees. A fresh clone then has the skills and rules without running APM.
 
-Never edit `.cursor/` or `.claude/` by hand: the next `apm install` overwrites the change. To add a package to the
-manifest, list it in `apm.yml` and run the same command. Do not commit `apm_modules/` or `agent-packages/**/build/`;
-both are ignored. To author a package, use the `apm-authoring` skill.
+`apm install` writes the same skills to `.agents/skills/` and `.claude/skills/`. Commit both, so a clone works
+without `apm install`. Claude Code reads `.claude/skills/`. Cursor reads that directory and `.agents/skills/`.
+OpenCode keeps the `.claude/skills/` copy when the same skill name exists in both trees, so the two trees have
+to stay identical and land in the same commit. `.cursor/skills/` stays gitignored. Rules stay in
+`.cursor/rules/` and `.claude/rules/`. The AI Autonomous agent loads the Claude rules through
+`tools/agent/opencode/opencode.json`.
+
+Never edit `.agents/`, `.cursor/`, or `.claude/` by hand: the next `apm install` overwrites the change. To add a
+package to the manifest, list it in `apm.yml` and run the same command. Do not commit `apm_modules/` or
+`agent-packages/**/build/`; both are ignored. To author a package, use the `apm-authoring` skill.
 
 ## Do not run `apm compile`
 

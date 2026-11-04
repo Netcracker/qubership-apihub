@@ -15,7 +15,7 @@ security:
   allowedHostsForProxy:
     - 'host.docker.internal'
     - 'localhost'
-  # Enables auto-login with the only EXTERNAL identity provider. If there are more than 2 provider OR the only provider is INERNAL, backend won't raise up
+  # Enables auto-login with the only EXTERNAL identity provider. If there are more than 2 provider OR the only provider is INTERNAL, backend won't raise up
   autoLogin: false
   # TODO: temporary, will be removed
   legacySaml: false

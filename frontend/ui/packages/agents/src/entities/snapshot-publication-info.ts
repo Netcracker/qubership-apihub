@@ -49,7 +49,7 @@ export async function getSnapshotPublicationInfo(
   promote = false,
   prefix: string,
 ): Promise<SnapshotPublicationInfoDto> {
-  return await requestJson<SnapshotPublicationInfoDto>(`/agents/${agentId}/namespaces/${namespaceKey}/workspaces/${workspaceKey}/snapshots/${snapshotKey}?promote=${promote}`, {
+  return await requestJson<SnapshotPublicationInfoDto>(`/agents/${agentId}/namespaces/${namespaceKey}/workspaces/${workspaceKey}/snapshots/${encodeURIComponent(snapshotKey)}?promote=${promote}`, {
       method: 'get',
     },
     {

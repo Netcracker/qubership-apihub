@@ -188,7 +188,7 @@ Debug a story in the browser developer tools. The Storybook of every branch that
 Pages under `storybook/<component>/<branch>/`, so you can compare with `develop` without building it.
 
 A failed screenshot test in CI uploads the diffs as `screenshot-diffs-<project>`; see [CI](./ci.md#read-a-red-run).
-Running the screenshot tests locally needs Podman for the Chrome container; see
+Running the screenshot tests locally needs a container engine for Chrome: Podman, Docker, or `wslc` on Windows; see
 [Build and test](./build-and-test.md).
 
 ## Playwright UI mode
@@ -215,8 +215,8 @@ The Playwright suite lives in [`tests/ui-tests`](../../tests/ui-tests/README.md)
    ```
 
 `--debug` opens the Playwright Inspector instead and stops before each action. A test that failed and was retried
-in CI has a trace: download the `playwright-reports` artifact and open the trace with
-`pnpm exec playwright show-trace <file>.zip`.
+in CI has a trace: download the `playwright-reports` artifact and open the report with
+`pnpm exec playwright show-report <artifact>/playwright`. The report links the trace of each retried test.
 
 ## One Newman collection
 

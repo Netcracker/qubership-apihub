@@ -87,12 +87,17 @@ disagrees with the code is worse than none. The agent's own review (Flow A) on t
    job can read it.
 4. Dry run, in this order, and read the job summary and the log of each run:
    - open a pull request outside draft: review;
-   - open a `Bug` and a `Task` issue: analysis;
+   - open a `Bug` and a `Task` issue, then comment `/agent analyze` on each: analysis (the sweep of new issues does
+     nothing in dry run, because a dry-run analysis writes no state and the same issues would come up every 10
+     minutes);
    - comment `/agent help`, `/agent cost`, then `/agent implement` on a suitable issue: preflight, work, publish (dry
      run pushes nothing);
    - check `AI Autonomous: Execution levels` on a merged pull request with an `ai:l*` label.
-5. Set `AGENT_DRY_RUN=false` and repeat on one small, real bug. Watch the draft pull request, the CI gate, and the
-   state comment of the issue.
+   Automatic analysis and review run for every author, not only for `AGENT_ALLOWED_ACTORS`, so a dry run still costs
+   model calls: a review of every new pull request outside draft. Dry-run reviews write no state and are not counted
+   toward `AGENT_DAILY_REVIEWS`, so the daily cap does not limit them; watch the OpenAI budget.
+5. Set `AGENT_DRY_RUN=false` and repeat on one small, real bug. The sweep of new issues starts working now. Watch
+   the draft pull request, the CI gate, and the state comment of the issue.
 6. Widen `AGENT_ALLOWED_ACTORS`, then remove it, when the results hold up.
 
 ## Known gaps and risks

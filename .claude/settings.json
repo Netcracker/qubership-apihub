@@ -9,7 +9,7 @@
       "Bash(gofmt *)",
       "Bash(golangci-lint *)",
       "Bash(go tool *)",
-      "Bash(node .claude/skills/apihub-validate/scripts/validate.mjs *)"
+      "Bash(node .agents/skills/apihub-validate/scripts/validate.mjs *)"
     ],
     "ask": [
       "Bash(rm -rf *)",

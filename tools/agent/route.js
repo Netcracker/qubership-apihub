@@ -2,33 +2,49 @@
 /**
  * Router of the AI Autonomous agent: turns a GitHub event into one decision for the workflow.
  *
- * `decide` is pure. It looks at the event, the configuration, the permission of the person behind the event, and the
- * state of the pull request or issue, and returns
- * `{ action, number, reason, command?, trigger?, pr?, headSha?, kind? }`. The actions are `review` (phase 1), `analyze`
- * (phase 2), `implement` (phase 3; phase 5 adds `kind`: `human` or `review`), `ci-gate` (phase 4), `chat` (phase 5),
- * `stop` (a `/agent stop` command; the `stop` job has no concurrency group), and `skip`. Later phases add actions by
- * registering more rules in EVENT_HANDLERS and COMMAND_HANDLERS; `decide` itself does not change.
+ * `decide` is pure. It looks at the event, the configuration, the permission of the person behind the event, the
+ * state of the pull request or issue, and the count of automatic work in the last 24 hours, and returns
+ * `{ action, number, reason, command?, trigger?, pr?, headSha?, kind?, numbers? }`. The actions are `review` (phase 1),
+ * `analyze` (phase 2), `implement` (phase 3; phase 5 adds `kind`: `human`, `review`, or `update`), `ci-gate` (phase 4),
+ * `chat` (phase 5), `stop` (a `/agent stop` command; the `stop` job has no concurrency group), `rerun` (a
+ * `/agent rerun` command: the failed CI checks of the agent's pull request run again, no model), `ci-check` (a
+ * `/agent ci_check` command: the root cause of a red CI on any pull request), and `skip`. Later phases add actions
+ * by registering more rules in EVENT_HANDLERS and COMMAND_HANDLERS; `decide` itself does not change.
  *
  * The CLI (`node tools/agent/route.js`) gathers the facts that need the GitHub API, but only when the event calls
  * for them: the permission of a commenter who wrote a command, the state comment of a pull request that became
  * ready for review, the state comment of an issue that may be waiting for information or for a person, the issue state
  * of a pull request of the agent that got a comment or a review, and, for a finished workflow run, the open pull
- * request of its branch with the state of the issue it names. It then writes `action`, `number`, `reason`, and
- * `command` (JSON, or empty) to `$GITHUB_OUTPUT`, plus `trigger` for an `analyze` decision, `pr` and `head_sha` for a
- * `ci-gate` decision, `pr` and `kind` for an `implement` decision that a person asked for, and one line to
+ * request of its branch with the state of the issue it names. An event that may start an automatic analysis or review
+ * also gets the count of such work in the last 24 hours (the daily caps), and the `schedule` event, the sweep, gets the
+ * new issues past the grace period that no analysis has seen (the usage is counted only when there is one; in dry run
+ * the sweep searches for nothing and the decision is a skip). It then writes `action`, `number`, `reason`, and
+ * `command` (JSON, or empty) to `$GITHUB_OUTPUT`, plus `trigger` and `numbers` (a JSON array of the issues to analyze:
+ * one for an event, up to five for the sweep) for an `analyze` decision, `pr` and `head_sha` for a
+ * `ci-gate` decision, `pr` and `kind` for an `implement` decision that a person asked for, `pr` for a `rerun`
+ * decision on a pull request, `issue` for a `ci-check` decision on a pull request of the agent, and one line to
  * `$GITHUB_STEP_SUMMARY`. It logs the event, the gathered facts,
  * and the decision.
  *
- * Environment: GITHUB_EVENT_NAME, GITHUB_EVENT_PATH, GITHUB_REPOSITORY, GITHUB_TOKEN, GITHUB_OUTPUT,
- * GITHUB_STEP_SUMMARY, and the AGENT_* variables of lib/config.js.
+ * One command at a time: when a person's command would start a worker job (`review`, `analyze`, `implement`, `rerun`,
+ * `ci-check`, or a `chat` question; also the answer to a hand-off and a change request in a review), the router looks
+ * for an older run of this workflow that is still active on the same issue or pull request (the title of a run ends
+ * with `#<number>`, see `run-name` in the workflow). When there is one, the decision becomes a `skip` with the reason
+ * `busy: ...`, the router answers on the issue or pull request with one comment, and reacts with `confused`. `stop`,
+ * `help`, `cost`, and the automatic events are never declined.
+ *
+ * Environment: GITHUB_EVENT_NAME, GITHUB_EVENT_PATH, GITHUB_REPOSITORY, GITHUB_TOKEN, GITHUB_RUN_ID (for a command
+ * that starts a worker job), GITHUB_OUTPUT, GITHUB_STEP_SUMMARY, and the AGENT_* variables of lib/config.js.
  */
 'use strict'
 
 const fs = require('node:fs')
 const { loadConfig, isActorAllowed } = require('./lib/config')
+const daily = require('./lib/daily-usage')
 const { parseCommand } = require('./lib/commands')
 const { createClient, hasWriteAccess } = require('./lib/github')
 const { findStateComment, parse: parseState, actorOf } = require('./lib/state')
+const { react, commentIdOf } = require('./lib/reactions')
 const log = require('./lib/log')
 
 /** The agent writes this at the top of the body of every pull request it opens. */
@@ -44,6 +60,13 @@ const sameRepo = (a, b) => typeof a === 'string' && typeof b === 'string' && a.t
 const sameLogin = (a, b) => typeof a === 'string' && typeof b === 'string' && a.toLowerCase() === b.toLowerCase()
 
 const skip = (number, reason) => ({ action: 'skip', number, reason })
+
+/** Days back the sweep looks for new issues; an older issue that no analysis saw is left alone. */
+const SWEEP_LOOKBACK_DAYS = 7
+/** The most issues one sweep run analyzes; the rest wait for the next run. */
+const MAX_SWEEP = 5
+/** The triggers of an analysis that nobody asked for, so the daily cap applies. */
+const AUTOMATIC_TRIGGERS = new Set(['opened', 'typed'])
 
 /** Issue types the analysis covers. */
 const ANALYZED_TYPES = new Set(['Bug', 'Task'])
@@ -106,8 +129,24 @@ function isForkRun(run, repository) {
   return !sameRepo(run?.head_repository?.full_name, base)
 }
 
+/**
+ * Why a pull request is not reviewed automatically, or `null`. The author may be anyone, not only a listed actor:
+ * the review writes a comment and a label, nothing else.
+ */
+function pullRequestSkipReason(pr) {
+  if (pr.draft) return 'draft pull request'
+  // A fork cannot be reviewed on its own: the job would run with the token of the base repository.
+  if (!sameRepo(pr.head?.repo?.full_name, pr.base?.repo?.full_name)) {
+    return 'fork pull requests run only on /agent review'
+  }
+  const author = pr.user?.login
+  if (isBot(author)) return `pull request author '${author}' is a bot`
+  if (typeof pr.body === 'string' && pr.body.includes(AGENT_PR_MARKER)) return 'pull request was opened by the agent'
+  return null
+}
+
 /** `pull_request` events: review a new pull request that the agent should look at without being asked. */
-function decidePullRequest({ payload, config, pullState }) {
+function decidePullRequest({ payload, config, pullState, dailyUsage }) {
   const pr = payload.pull_request
   if (!pr) throw new TypeError('A pull_request event must carry a pull_request payload')
   const number = pr.number
@@ -115,19 +154,15 @@ function decidePullRequest({ payload, config, pullState }) {
   if (payload.action !== 'opened' && payload.action !== 'ready_for_review') {
     return skip(number, `pull_request action '${payload.action}' is not handled`)
   }
-  if (pr.draft) return skip(number, 'draft pull request')
-  // A fork cannot be reviewed on its own: the job would run with the token of the base repository.
-  if (!sameRepo(pr.head?.repo?.full_name, pr.base?.repo?.full_name)) {
-    return skip(number, 'fork pull requests run only on /agent review')
-  }
-  const author = pr.user?.login
-  if (isBot(author)) return skip(number, `pull request author '${author}' is a bot`)
-  if (typeof pr.body === 'string' && pr.body.includes(AGENT_PR_MARKER)) {
-    return skip(number, 'pull request was opened by the agent')
-  }
-  if (!isActorAllowed(config, author)) return skip(number, `author '${author}' is not in AGENT_ALLOWED_ACTORS`)
+  const why = pullRequestSkipReason(pr)
+  if (why) return skip(number, why)
+  // A review skipped for the size of the diff is a review entry too: only `/agent review` asks again.
   if (payload.action === 'ready_for_review' && pullState?.reviews?.length > 0) {
     return skip(number, 'already reviewed; use /agent review')
+  }
+  const cap = config.limits.dailyReviews
+  if ((dailyUsage?.reviews ?? 0) >= cap) {
+    return skip(number, `daily limit of ${cap} automatic reviews reached; comment /agent review`)
   }
   return { action: 'review', number, reason: `pull request ${payload.action}` }
 }
@@ -166,6 +201,38 @@ const COMMAND_HANDLERS = {
     const agent = agentPullOf(agentFacts, number)
     if (!agent) return skip(number, 'retry works on issues and on pull requests of the agent')
     return humanAttempt({ number: agent.issueNumber, pr: number, reason: '/agent retry', command })
+  },
+  // Merge the latest develop into the branch of the pull request of the agent: an attempt of `kind: 'update'`.
+  update: ({ number, isPull, command, issue, agentFacts }) => {
+    if (!isPull) return skip(number, 'update works on a pull request of the agent')
+    if (isDependabot(issue?.user?.login)) return skip(number, NO_DEPENDABOT)
+    const agent = agentPullOf(agentFacts, number)
+    if (!agent) return skip(number, 'update works on a pull request of the agent')
+    return humanAttempt({
+      number: agent.issueNumber, pr: number, kind: 'update', reason: '/agent update', command,
+    })
+  },
+  // Rerun the failed checks of the pull request of the agent and let the CI gate decide; no attempt, no model.
+  rerun: ({ number, isPull, command, issue, agentFacts }) => {
+    if (!isPull) return { action: 'rerun', number, reason: '/agent rerun', command }
+    if (isDependabot(issue?.user?.login)) return skip(number, NO_DEPENDABOT)
+    const agent = agentPullOf(agentFacts, number)
+    if (!agent) return skip(number, 'rerun works on an issue or a pull request of the agent')
+    return { action: 'rerun', number: agent.issueNumber, pr: number, reason: '/agent rerun', command }
+  },
+  // Read the CI of the head commit of a pull request, find the root cause of a red result, and rerun a flaky one. It
+  // works on any pull request, also a Dependabot one (a red dependency bump is what people ask it about); `issue` is
+  // set when the pull request is the agent's, so the job can hand the decision back to the CI gate.
+  'ci-check': ({ number, isPull, command, agentFacts }) => {
+    if (!isPull) return skip(number, 'ci_check works on a pull request')
+    const agent = agentPullOf(agentFacts, number)
+    return {
+      action: 'ci-check',
+      number,
+      ...(agent ? { issue: agent.issueNumber } : {}),
+      reason: '/agent ci_check',
+      command,
+    }
   },
   stop: ({ number, isPull, command, issue, agentFacts }) => {
     if (isPull && isDependabot(issue?.user?.login)) return skip(number, NO_DEPENDABOT)
@@ -206,17 +273,30 @@ function checkAnalysisLimit({ number, config, issueState, trigger }) {
   return skip(number, 'analysis limit reached; comment /agent analyze')
 }
 
+/** A skip decision when the automatic analyses of the last 24 hours reached the cap, else `null`. */
+function checkDailyAnalyses({ number, config, dailyUsage }) {
+  const cap = config.limits.dailyAnalyses
+  if ((dailyUsage?.analyses ?? 0) < cap) return null
+  return skip(number, `daily limit of ${cap} automatic analyses reached`)
+}
+
 /**
- * The analysis is read-only (it writes a label and comments), so it needs no write access. During the proof of
- * concept it still answers only the listed users: the issue author must pass `isActorAllowed`.
+ * The analysis is read-only (it writes a label and comments), so it needs no write access, and it runs for the author
+ * of any issue: AGENT_ALLOWED_ACTORS limits commands and implementation, not this. A new issue (`opened`, `typed`) also
+ * counts toward the daily cap of automatic analyses; the sweep picks it up later.
  */
-function analyzeIssue({ number, author, config, issueState, trigger, reason }) {
-  if (!isActorAllowed(config, author)) return skip(number, `author '${author}' is not in AGENT_ALLOWED_ACTORS`)
-  return checkAnalysisLimit({ number, config, issueState, trigger }) ?? { action: 'analyze', number, reason, trigger }
+function analyzeIssue({ number, config, issueState, trigger, reason, dailyUsage }) {
+  const limited = checkAnalysisLimit({ number, config, issueState, trigger })
+  if (limited) return limited
+  if (AUTOMATIC_TRIGGERS.has(trigger)) {
+    const capped = checkDailyAnalyses({ number, config, dailyUsage })
+    if (capped) return capped
+  }
+  return { action: 'analyze', number, reason, trigger }
 }
 
 /** `issues` events: analyze a new Bug or Task, or an issue whose author edited it after the agent asked questions. */
-function decideIssues({ payload, config, issueState }) {
+function decideIssues({ payload, config, issueState, dailyUsage }) {
   const issue = payload.issue
   if (!issue) throw new TypeError('An issues event must carry an issue payload')
   const number = issue.number
@@ -236,7 +316,7 @@ function decideIssues({ payload, config, issueState }) {
     if (issueState?.phase !== 'needs-info') return skip(number, 'issue is not waiting for information')
     const editor = payload.sender?.login
     if (!sameLogin(editor, author)) return skip(number, `'${editor}' edited the issue, not its author`)
-    return analyzeIssue({ number, author, config, issueState, trigger: 'edited', reason: 'author edited the issue' })
+    return analyzeIssue({ number, config, issueState, trigger: 'edited', reason: 'author edited the issue' })
   }
 
   const wrongType = checkAnalyzedType(number, issue.type?.name)
@@ -244,7 +324,45 @@ function decideIssues({ payload, config, issueState }) {
   if (labelNames(issue).some((name) => DECISION_LABELS.includes(name))) {
     return skip(number, 'a person already set ai:suitable or ai:unsuitable')
   }
-  return analyzeIssue({ number, author, config, issueState, trigger: action, reason: `issue ${action}` })
+  // People keep editing a new issue for a while: the sweep analyzes it once the grace period is over.
+  const grace = config.limits.analysisGraceMinutes
+  if (grace > 0) return skip(number, `the sweep analyzes it after the grace period of ${grace} minutes`)
+  return analyzeIssue({ number, config, issueState, trigger: action, reason: `issue ${action}`, dailyUsage })
+}
+
+/**
+ * How many issues one sweep run may take: at most `MAX_SWEEP`, and not more than the daily cap of automatic analyses
+ * leaves. Zero or less means none.
+ */
+function sweepBudget(config, dailyUsage) {
+  return Math.min(MAX_SWEEP, config.limits.dailyAnalyses - (dailyUsage?.analyses ?? 0))
+}
+
+/**
+ * `schedule` events: the sweep. `sweep.numbers` are the new Bug and Task issues past the grace period that no analysis
+ * has seen, oldest first (the facts gathered for this event). In dry run the sweep does nothing: an analysis writes no
+ * state, so the next run would pick the same issues again and the daily cap would never fill.
+ */
+function decideSchedule({ config, dailyUsage, sweep }) {
+  if (config.dryRun) {
+    return skip(
+      null,
+      'the sweep needs AGENT_DRY_RUN=false: a dry-run analysis writes no state, so the same issues would be ' +
+        'analyzed again and again; use /agent analyze',
+    )
+  }
+  if (sweepBudget(config, dailyUsage) <= 0) {
+    return skip(null, `daily limit of ${config.limits.dailyAnalyses} automatic analyses reached`)
+  }
+  const numbers = (sweep?.numbers ?? []).slice(0, sweepBudget(config, dailyUsage))
+  if (numbers.length === 0) return skip(null, 'no new issue is past the grace period')
+  return {
+    action: 'analyze',
+    number: numbers[0],
+    numbers,
+    reason: `the grace period is over for ${numbers.length} new issue(s): ${numbers.map((n) => `#${n}`).join(', ')}`,
+    trigger: 'sweep',
+  }
 }
 
 /**
@@ -285,10 +403,8 @@ function decideCommentWithoutCommand({ payload, config, actorPermission, issueSt
   }
   const wrongType = checkAnalyzedType(number, issue.type?.name)
   if (wrongType) return wrongType
-  const author = issue.user.login
   return analyzeIssue({
     number,
-    author,
     config,
     issueState,
     trigger: 'author-reply',
@@ -394,13 +510,15 @@ const EVENT_HANDLERS = {
   issues: decideIssues,
   workflow_run: decideWorkflowRun,
   pull_request_review: decidePullRequestReview,
+  schedule: decideSchedule,
 }
 
 /**
  * @param {{ eventName: string, payload: object, config: object, actorPermission?: string,
- *   pullState?: object|null, issueState?: object|null, ciFacts?: object|null, agentFacts?: object|null }} input
+ *   pullState?: object|null, issueState?: object|null, ciFacts?: object|null, agentFacts?: object|null,
+ *   dailyUsage?: { analyses?: number, reviews?: number }|null, sweep?: { numbers: number[] }|null }} input
  * @returns {{ action: string, number: number|null, reason: string, command?: object, trigger?: string,
- *   pr?: number, headSha?: string, kind?: string }}
+ *   pr?: number, headSha?: string, kind?: string, issue?: number, numbers?: number[] }}
  */
 function decide(input) {
   const { eventName, payload, config } = input
@@ -408,7 +526,14 @@ function decide(input) {
   const handler = EVENT_HANDLERS[eventName]
   if (!handler) return skip(numberOf(payload), `event '${eventName}' is not handled`)
   return handler({
-    actorPermission: 'none', pullState: null, issueState: null, ciFacts: null, agentFacts: null, ...input,
+    actorPermission: 'none',
+    pullState: null,
+    issueState: null,
+    ciFacts: null,
+    agentFacts: null,
+    dailyUsage: null,
+    sweep: null,
+    ...input,
   })
 }
 
@@ -459,7 +584,7 @@ function needsIssueState(eventName, payload) {
 }
 
 /** The commands that read the issue state of an agent pull request. */
-const AGENT_PULL_COMMANDS = new Set(['retry', 'stop', 'chat'])
+const AGENT_PULL_COMMANDS = new Set(['retry', 'update', 'rerun', 'ci-check', 'stop', 'chat'])
 
 /**
  * True when `decide` needs the issue that a pull request of the agent names, with its state: a change request in a
@@ -541,10 +666,127 @@ function isHandOffAnswer(eventName, payload, { issueState, agentFacts }) {
 }
 
 /**
- * Resolves the inputs of `decide` that need the GitHub API. `getClient` is called only when a call is needed, so an
- * event that needs nothing works without a token.
+ * Which daily count `decide` needs, `'analyses'` or `'reviews'`, or `null`. Only an event that would start an
+ * automatic analysis or review needs one, so no other event spends the searches. `extra` holds the facts gathered so
+ * far (the state of a pull request that left the draft).
  */
-async function gather({ eventName, payload, config, getClient }) {
+function dailyCountNeeded(eventName, payload, config, extra) {
+  // The sweep counts for itself, and only when it found a candidate (see `gatherSweep`).
+  if (eventName === 'schedule') return null
+  if (eventName === 'pull_request') {
+    const pr = payload?.pull_request
+    if (!pr || (payload.action !== 'opened' && payload.action !== 'ready_for_review')) return null
+    if (pullRequestSkipReason(pr) !== null) return null
+    if (payload.action === 'ready_for_review' && extra.pullState?.reviews?.length > 0) return null
+    return 'reviews'
+  }
+  const issue = payload?.issue
+  // With a grace period above 0 the event is skipped, and the sweep counts for itself.
+  if (eventName !== 'issues' || !issue || config.limits.analysisGraceMinutes > 0) return null
+  if (payload.action !== 'opened' && payload.action !== 'typed') return null
+  if (issue.pull_request || isBot(issue.user?.login) || !ANALYZED_TYPES.has(issue.type?.name)) return null
+  if (labelNames(issue).some((name) => DECISION_LABELS.includes(name))) return null
+  return 'analyses'
+}
+
+/**
+ * The automatic analyses or reviews of the last 24 hours, counted from the state comments of the issues or pull
+ * requests that were updated in that time and carry a label the agent leaves behind: `agent:pr-reviewed` for a review,
+ * `ai:suitable`, `ai:unsuitable`, or `agent:needs-human` for an analysis (a comma list is an OR in a search). A failed
+ * review sets no label, so it is found only on a pull request that an earlier review labeled; the count may miss the
+ * others. The newest come first (`sort:updated-desc`). At most `MAX_STATES_READ` of them are read; the log says when
+ * that cap cuts the list.
+ *
+ * @returns {Promise<number>}
+ */
+async function countDaily({ kind, repository, now, getClient }) {
+  const gh = getClient()
+  const since = daily.windowStart(now)
+  const scope = kind === 'analyses'
+    ? 'is:issue label:"ai:suitable","ai:unsuitable","agent:needs-human"'
+    : 'is:pr label:"agent:pr-reviewed"'
+  const found = await gh.searchIssues(
+    `repo:${repository} ${scope} updated:>=${daily.toSearchTime(since)} sort:updated-desc`,
+  )
+  const read = found.slice(0, daily.MAX_STATES_READ)
+  if (found.length > read.length) {
+    log.warn(`${found.length} ${kind === 'analyses' ? 'issues' : 'pull requests'} were updated in the last 24 hours; ` +
+      `only ${read.length} state comments are read, so the count may be too low`)
+  }
+  const states = []
+  for (const item of read) {
+    const stateComment = findStateComment(await gh.listIssueComments(item.number))
+    if (!stateComment) continue
+    try {
+      const parsed = parseState(stateComment.body)
+      if (parsed) states.push(parsed)
+    } catch (error) {
+      log.warn(`The state comment of #${item.number} is unreadable and not counted: ${error.message}`)
+    }
+  }
+  const count = kind === 'analyses' ? daily.countAnalyses(states, since) : daily.countReviews(states, since)
+  log.info('daily count', { kind, count, searched: found.length, read: read.length, since: daily.toSearchTime(since) })
+  return count
+}
+
+/**
+ * The new Bug and Task issues past the grace period that no analysis has seen: created between `SWEEP_LOOKBACK_DAYS`
+ * ago and the grace period ago, without a decision label, opened by a person, and without an entry in the `analyses` of
+ * their state comment. Oldest first, at most the budget that the daily cap leaves.
+ *
+ * The candidates are searched first and the daily usage is counted only when there is at least one, so a sweep with
+ * nothing to do spends no state reads. A state comment that cannot be read leaves that candidate out.
+ *
+ * @returns {Promise<{ numbers: number[], found: number, left: number, dailyUsage?: { analyses: number } }>} `left`
+ *   counts the candidates not looked at; `dailyUsage` is set when the usage was counted
+ */
+async function gatherSweep({ config, repository, now, getClient }) {
+  const gh = getClient()
+  const day = 24 * 60 * 60 * 1000
+  const to = daily.toSearchTime(new Date(now.getTime() - config.limits.analysisGraceMinutes * 60 * 1000))
+  const from = daily.toSearchTime(new Date(now.getTime() - SWEEP_LOOKBACK_DAYS * day))
+  const found = new Map()
+  for (const type of ['Bug', 'Task']) {
+    const query = `repo:${repository} is:issue is:open type:${type} -label:"ai:suitable" -label:"ai:unsuitable" ` +
+      `created:${from}..${to}`
+    for (const item of await gh.searchIssues(query)) found.set(item.number, item)
+  }
+  const candidates = [...found.values()]
+    .filter((item) => !item.pull_request && !isBot(item.user?.login))
+    .sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)) || a.number - b.number)
+  if (candidates.length === 0) {
+    log.info('sweep candidates', { from, to, candidates: 0, picked: 'none', left: 0 })
+    return { numbers: [], found: 0, left: 0 }
+  }
+  const dailyUsage = { analyses: await countDaily({ kind: 'analyses', repository, now, getClient }) }
+  const budget = sweepBudget(config, dailyUsage)
+  const numbers = []
+  let looked = 0
+  for (const item of candidates) {
+    if (numbers.length >= budget) break
+    looked += 1
+    const stateComment = findStateComment(await gh.listIssueComments(item.number))
+    let st = null
+    try {
+      st = stateComment ? parseState(stateComment.body) : null
+    } catch (error) {
+      log.warn(`The state comment of #${item.number} is unreadable and the issue is left out of the sweep: ${error.message}`)
+      continue
+    }
+    if ((st?.analyses?.length ?? 0) > 0) continue
+    numbers.push(item.number)
+  }
+  const left = candidates.length - looked
+  log.info('sweep candidates', { from, to, candidates: candidates.length, picked: numbers.join(',') || 'none', left, budget })
+  return { numbers, found: candidates.length, left, dailyUsage }
+}
+
+/**
+ * Resolves the inputs of `decide` that need the GitHub API. `getClient` is called only when a call is needed, so an
+ * event that needs nothing works without a token. `repository` (`owner/name`) and `now` are for the searches of the
+ * daily caps and of the sweep; `now` is injectable so that a test fixes the clock.
+ */
+async function gather({ eventName, payload, config, getClient, repository, now = new Date() }) {
   const extra = { actorPermission: 'none', pullState: null }
   if (!config.enabled) return extra
   if (needsActorPermission(eventName, payload)) {
@@ -578,7 +820,166 @@ async function gather({ eventName, payload, config, getClient }) {
     extra.actorPermission = await getClient().getPermission(login)
     log.info('permission resolved', { login, permission: extra.actorPermission })
   }
+  const kind = dailyCountNeeded(eventName, payload, config, extra)
+  if (kind !== null) {
+    if (!repository) throw new Error('GITHUB_REPOSITORY is not set')
+    extra.dailyUsage = { [kind]: await countDaily({ kind, repository, now, getClient }) }
+  }
+  // In dry run the decision is a skip, so the sweep searches for nothing.
+  if (eventName === 'schedule' && !config.dryRun) {
+    if (!repository) throw new Error('GITHUB_REPOSITORY is not set')
+    const { dailyUsage, ...sweep } = await gatherSweep({ config, repository, now, getClient })
+    extra.sweep = sweep
+    if (dailyUsage) extra.dailyUsage = dailyUsage
+  }
   return extra
+}
+
+/** The workflow file whose runs the busy check lists. */
+const WORKFLOW_FILE = 'ai-autonomous-agent.yml'
+/** How far back the busy check looks for runs; an older run is long dead or stuck, not working. */
+const BUSY_WINDOW_MS = 6 * 60 * 60 * 1000
+/** The statuses of a run that has not finished. */
+const ACTIVE_RUN_STATUSES = new Set(['queued', 'in_progress', 'waiting', 'pending', 'requested'])
+/** The actions that start a worker job and can be declined. `stop`, `ci-gate`, and `skip` never are. */
+const WORKER_ACTIONS = new Set(['review', 'analyze', 'implement', 'rerun', 'ci-check', 'chat'])
+
+/**
+ * True for a decision about a command of a person that starts a worker job: a comment with a parsed command, the
+ * answer to a hand-off, or a change request in a review. `chat` counts only for a question; `help` and `cost` are
+ * answered at once. The automatic events carry no command.
+ */
+function isWorkerCommand(eventName, decision) {
+  if (eventName !== 'issue_comment' && eventName !== 'pull_request_review') return false
+  if (!decision.command || !WORKER_ACTIONS.has(decision.action)) return false
+  return decision.action !== 'chat' || decision.command.name === 'chat'
+}
+
+/**
+ * The issue and pull request numbers that one piece of work covers: where the command was written, the number of the
+ * decision, and the pull request or issue it is linked to when the router knows it. `linked` holds numbers found by
+ * other means (the pull request that the state of an issue names).
+ *
+ * @returns {Set<number>}
+ */
+function workNumbers(decision, payload, linked = []) {
+  const all = [numberOf(payload), decision.number, decision.pr, decision.issue, ...linked]
+  return new Set(all.map(Number).filter((n) => Number.isSafeInteger(n) && n > 0))
+}
+
+/** The number a run works on: the `#<number>` that ends its title (`run-name`), or `null`. */
+function runNumberOf(run) {
+  const match = /#(\d+)$/.exec(String(run?.display_title ?? '').trim())
+  return match ? Number(match[1]) : null
+}
+
+/**
+ * The oldest run that is still active, was created inside the window, works on one of `numbers`, and is older than
+ * this run (a smaller id). A newer run is ignored: it declines itself, so the first comment wins. This run is ignored.
+ *
+ * @returns {{ run: object, number: number }|null}
+ */
+function findBusyRun(runs, { numbers, ownRunId, now }) {
+  const since = now.getTime() - BUSY_WINDOW_MS
+  const busy = []
+  for (const run of runs) {
+    const id = Number(run.id)
+    if (!ACTIVE_RUN_STATUSES.has(run.status) || !Number.isFinite(id) || id >= ownRunId) continue
+    if (!(Date.parse(run.created_at) >= since)) continue
+    const number = runNumberOf(run)
+    if (number !== null && numbers.has(number)) busy.push({ run, number })
+  }
+  return busy.sort((a, b) => a.run.id - b.run.id)[0] ?? null
+}
+
+/**
+ * What the agent did not do, as the end of "so I did not ...". `/agent <text>` on a pull request of the agent keeps the
+ * command name `chat` but is a change request (an `implement` decision), not a question.
+ */
+function declinedAction(command, action) {
+  if (command.name === 'ci-check') return 'start `/agent ci_check`'
+  if (command.name === 'chat') return action === 'implement' ? 'act on your change request' : 'answer your question'
+  if (command.name === 'answer') return 'act on your answer'
+  if (command.name === 'review-changes') return 'act on your change request'
+  return `start \`/agent ${command.name}\``
+}
+
+/** The comment of the router that declines a command because a run already works on the issue or pull request. */
+function declineComment({ actor, number, runId, runUrl, command, action }) {
+  return `@${actor}, I am already working on #${number} ([run ${runId}](${runUrl})), so I did not ` +
+    `${declinedAction(command, action)}. Comment it again when that run ends.`
+}
+
+/**
+ * The pull request that the state comment of the issue names, for a command written on an issue, else `[]`. A run on
+ * that pull request (titled with its number) is work on the issue too. The read is guarded: an unreadable state or a
+ * failed call leaves the issue alone, as if it had no pull request, and the log says so.
+ *
+ * @returns {Promise<number[]>}
+ */
+async function linkedPullOf({ eventName, payload, gh }) {
+  const issue = payload?.issue
+  if (eventName !== 'issue_comment' || !issue || issue.pull_request) return []
+  try {
+    const stateComment = findStateComment(await gh.listIssueComments(issue.number))
+    const pr = Number((stateComment ? parseState(stateComment.body) : null)?.pr)
+    log.info('pull request of the issue state', { issue: issue.number, pr: pr > 0 ? pr : 'none' })
+    return pr > 0 ? [pr] : []
+  } catch (error) {
+    log.warn(`The state of #${issue.number} could not be read, so its pull request is not checked: ${error.message}`)
+    return []
+  }
+}
+
+/**
+ * One command at a time per issue or pull request. Returns `decision` unchanged, or a `skip` when an older run of the
+ * workflow still works on the same piece of work (for a command on an issue, also on the pull request that the state of
+ * the issue names); then it comments where the command was written and reacts with
+ * `confused` (in dry run it only says in the job summary what it would post). A failed listing or comment throws, so
+ * the job fails and no worker starts: a command is never run on a guess.
+ *
+ * @param {{ eventName: string, payload: object, decision: object, config: object, env: object,
+ *   getClient: Function, now: Date }} input
+ */
+async function declineIfBusy({ eventName, payload, decision, config, env, getClient, now }) {
+  if (!isWorkerCommand(eventName, decision)) return decision
+  const ownRunId = Number(requireVariable(env, 'GITHUB_RUN_ID'))
+  const gh = getClient()
+  const numbers = workNumbers(decision, payload, await linkedPullOf({ eventName, payload, gh }))
+  const created = `>=${daily.toSearchTime(new Date(now.getTime() - BUSY_WINDOW_MS))}`
+  const runs = await gh.listWorkflowRuns(WORKFLOW_FILE, { created })
+  const busy = findBusyRun(runs, { numbers, ownRunId, now })
+  log.info('busy check', {
+    numbers: [...numbers].join(','),
+    runs: runs.length,
+    own: ownRunId,
+    busy: busy ? `${busy.run.id} on #${busy.number}` : 'none',
+  })
+  if (!busy) return decision
+
+  const reason = `busy: run ${busy.run.id} works on #${busy.number}`
+  const actor = payload.comment?.user?.login ?? payload.review?.user?.login
+  const target = numberOf(payload)
+  const runUrl = busy.run.html_url ?? `https://github.com/${env.GITHUB_REPOSITORY}/actions/runs/${busy.run.id}`
+  const text = declineComment({
+    actor, number: busy.number, runId: busy.run.id, runUrl, command: decision.command, action: decision.action,
+  })
+  if (config.dryRun) {
+    if (env.GITHUB_STEP_SUMMARY) {
+      const quote = text.split('\n').map((line) => `> ${line}`).join('\n')
+      fs.appendFileSync(
+        env.GITHUB_STEP_SUMMARY,
+        `## Dry run: decline on #${target}\n\nWould post this comment and react with confused:\n\n${quote}\n\n`,
+      )
+    }
+    log.info('dry run: the decline is in the job summary', { on: `#${target}` })
+  } else {
+    await gh.createIssueComment(target, text)
+    log.info('decline posted', { mention: actor, on: `#${target}`, run: busy.run.id })
+  }
+  // A review has no comment to react to.
+  await react({ gh, commentId: commentIdOf(payload.comment?.id), content: 'confused', dryRun: config.dryRun })
+  return skip(decision.number, reason)
 }
 
 /** Output values must stay on one line; GitHub reads `key=value` per line. */
@@ -586,8 +987,9 @@ const oneLine = (value) => String(value).replace(/[\r\n]+/g, ' ')
 
 /**
  * The `key=value` lines for `$GITHUB_OUTPUT`. `command` is JSON on one line, or empty. `trigger` is written only for
- * a decision that has one, `pr` and `head_sha` for a `ci-gate` decision, and `kind` for an attempt that a person asked
- * for, so the outputs of the earlier actions stay as they were.
+ * a decision that has one, `numbers` for every `analyze` decision, `pr` and `head_sha` for a `ci-gate` decision, `issue` for a `ci-check` decision on a pull
+ * request of the agent, and `kind` for an attempt that a person asked for, so the outputs of the earlier actions stay
+ * as they were.
  */
 function formatOutputs(decision) {
   return [
@@ -596,7 +998,10 @@ function formatOutputs(decision) {
     `reason=${oneLine(decision.reason)}`,
     `command=${decision.command ? JSON.stringify(decision.command) : ''}`,
     ...(decision.trigger ? [`trigger=${decision.trigger}`] : []),
+    // The job that analyzes runs once per number, so it always gets a list.
+    ...(decision.action === 'analyze' ? [`numbers=${JSON.stringify(decision.numbers ?? [decision.number])}`] : []),
     ...(decision.pr ? [`pr=${decision.pr}`] : []),
+    ...(decision.issue ? [`issue=${decision.issue}`] : []),
     ...(decision.headSha ? [`head_sha=${decision.headSha}`] : []),
     ...(decision.kind ? [`kind=${decision.kind}`] : []),
     '',
@@ -614,19 +1019,22 @@ function requireVariable(env, name) {
   return env[name]
 }
 
-/** Reads the event, decides, and writes the outputs. Returns the decision. Throws on bad config or payload. */
-async function main(env = process.env) {
+/**
+ * Reads the event, decides, and writes the outputs. Returns the decision. Throws on bad config or payload.
+ * `deps.getClient` and `deps.now` are injectable so that a test uses no network and fixes the clock.
+ */
+async function main(env = process.env, deps = {}) {
   const eventName = requireVariable(env, 'GITHUB_EVENT_NAME')
   const payload = JSON.parse(fs.readFileSync(requireVariable(env, 'GITHUB_EVENT_PATH'), 'utf8'))
   const config = loadConfig(env)
   let client = null
-  const getClient = () => {
+  const getClient = deps.getClient ?? (() => {
     client ??= createClient({
       token: requireVariable(env, 'GITHUB_TOKEN'),
       repo: requireVariable(env, 'GITHUB_REPOSITORY'),
     })
     return client
-  }
+  })
   log.info('event', {
     name: eventName,
     action: payload.action,
@@ -636,8 +1044,12 @@ async function main(env = process.env) {
     dryRun: config.dryRun,
     allowedActors: config.allowedActors ? config.allowedActors.join(',') : 'everyone',
   })
-  const extra = await log.group('Gather facts', () => gather({ eventName, payload, config, getClient }))
-  const decision = decide({ eventName, payload, config, ...extra })
+  const now = deps.now ?? new Date()
+  const extra = await log.group('Gather facts', () =>
+    gather({ eventName, payload, config, getClient, repository: env.GITHUB_REPOSITORY, now }))
+  const decided = decide({ eventName, payload, config, ...extra })
+  const decision = await log.group('Check for a busy run', () =>
+    declineIfBusy({ eventName, payload, decision: decided, config, env, getClient, now }))
   log.info('decision', {
     action: decision.action,
     number: decision.number,
@@ -645,6 +1057,14 @@ async function main(env = process.env) {
     trigger: decision.trigger,
     kind: decision.kind,
     command: decision.command?.name,
+    numbers: decision.numbers?.join(','),
+    // The daily caps count only automatic work; they are shown when this event needed a count.
+    dailyAnalyses: extra.dailyUsage?.analyses === undefined
+      ? undefined
+      : `${extra.dailyUsage.analyses}/${config.limits.dailyAnalyses}`,
+    dailyReviews: extra.dailyUsage?.reviews === undefined
+      ? undefined
+      : `${extra.dailyUsage.reviews}/${config.limits.dailyReviews}`,
   })
 
   if (env.GITHUB_OUTPUT) fs.appendFileSync(env.GITHUB_OUTPUT, formatOutputs(decision))
@@ -668,9 +1088,21 @@ module.exports = {
   needsIssueState,
   needsAgentFacts,
   needsCiFacts,
+  dailyCountNeeded,
+  countDaily,
+  gatherSweep,
+  sweepBudget,
+  SWEEP_LOOKBACK_DAYS,
+  MAX_SWEEP,
   isHandOffAnswer,
   agentIssueOf,
   formatOutputs,
   formatSummary,
   main,
+  declineIfBusy,
+  isWorkerCommand,
+  workNumbers,
+  findBusyRun,
+  WORKFLOW_FILE,
+  BUSY_WINDOW_MS,
 }

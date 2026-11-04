@@ -492,14 +492,14 @@ func (v *validationServiceImpl) GetValidationResult(ctx context.Context, package
 		}
 
 		if doc.LintStatus == view.StatusError {
-			// TODO
-			/*result := view.DocumentResult{
-				Ruleset:           entity.MakeRulesetView(*ruleset),
-				Issues:            nil,
-				ValidatedDocument: entity.MakeValidatedDocumentView(*lintedDocument),
-			}*/
-			//return &result, nil
-			continue // TODO: or error???
+			result.Results = append(result.Results, view.LinterResult{
+				Linter:  ruleset.Linter,
+				Ruleset: entity.MakeRulesetView(*ruleset),
+				Issues:  make([]view.ValidationIssue, 0),
+				Status:  view.StatusError,
+				Details: doc.LintDetails,
+			})
+			continue
 		}
 
 		lintResult, err := v.lintResultRepository.GetLintResult(ctx, doc.DataHash, doc.RulesetId)
@@ -507,7 +507,14 @@ func (v *validationServiceImpl) GetValidationResult(ctx context.Context, package
 			return nil, err
 		}
 		if lintResult == nil {
-			return nil, nil
+			result.Results = append(result.Results, view.LinterResult{
+				Linter:  ruleset.Linter,
+				Ruleset: entity.MakeRulesetView(*ruleset),
+				Issues:  make([]view.ValidationIssue, 0),
+				Status:  view.StatusError,
+				Details: "lint result is missing",
+			})
+			continue
 		}
 
 		issues := make([]view.ValidationIssue, 0)
@@ -537,12 +544,15 @@ func (v *validationServiceImpl) GetValidationResult(ctx context.Context, package
 			if err != nil {
 				return nil, err
 			}
+		default:
+			return nil, fmt.Errorf("unknown linter %s", ruleset.Linter)
 		}
 
 		result.Results = append(result.Results, view.LinterResult{
 			Linter:  ruleset.Linter,
 			Ruleset: entity.MakeRulesetView(*ruleset),
 			Issues:  issues,
+			Status:  view.StatusSuccess,
 		})
 	}
 

@@ -27,5 +27,5 @@ the type check, and the related unit tests. `dprint` is expected on `PATH` with 
 The root `apm.yml` lists these packages. After edits, run from the repository root:
 
 ```bash
-apm install --target cursor,claude --legacy-skill-paths
+apm install --target cursor,claude
 ```

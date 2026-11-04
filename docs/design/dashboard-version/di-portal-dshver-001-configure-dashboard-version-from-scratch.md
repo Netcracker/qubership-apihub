@@ -32,7 +32,7 @@ streamlined and organized view of APIs within the portal.
 
 ## Execution
 
-1. User opens empty dashboard and clicks **[Create Version]**; or user opens dashboard version and cliks + button in the
+1. User opens empty dashboard and clicks **[Create Version]**; or user opens dashboard version and clicks + button in the
    subheader
 2. The system opens Configure Dashboard page and shows 'No included packages or dashboards'.
 3. User clicks **[Add Package]**.

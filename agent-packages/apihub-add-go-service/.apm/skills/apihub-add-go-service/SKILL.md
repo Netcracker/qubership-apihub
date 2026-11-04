@@ -7,8 +7,7 @@ description: "Adds a Go backend service to the qubership-apihub monorepo and wir
 
 Follow `AGENTS.md`. This skill is the checklist of every file that names a Go service. The references are
 `backend/api-linter-service` (service with config file and extension role) and `backend/agents-backend`
-(same shape). `backend/commons-go` is the shared library; `backend/agent` and `backend/test-service` build
-from their own directory because they do not use it.
+(same shape). `backend/commons-go` is the shared library; every Go service imports it and builds from `backend/`.
 
 ## Before you start
 
@@ -138,7 +137,7 @@ Check: `docker compose -f <file> config`.
 - `docs/installation-guide.md` and `docs/admin-guide.md` when the install steps or operations change.
 - If the module needs its own agent rules, add a package `backend/<name>/agent-packages/<pkg>/` with every
   instruction `applyTo` prefixed `backend/<name>/`, list it as `./backend/<name>/agent-packages/<pkg>` in the
-  root `apm.yml`, and run `apm install --target cursor,claude --legacy-skill-paths` at the root.
+  root `apm.yml`, and run `apm install --target cursor,claude` at the root.
   Skip `apm compile`; see `agent-packages/README.md`.
 
 ## Final check
