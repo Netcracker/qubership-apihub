@@ -445,7 +445,7 @@ flowchart TB
         spectral["<b>SpectralExecutor</b><br/>bundled Spectral CLI + rulesets<br/>(OpenAPI, AsyncAPI)"]:::comp_teal
         aiexec["<b>AIOasExecutor</b><br/>OpenAI-compatible LLM,<br/>rate-limited, include/exclude packages"]:::comp_teal
         vacuum["<b>Vacuum</b><br/>bundled binary &amp; rules<br/><i>(not active in code)</i>"]:::comp_gray
-        scoring["<b>ScoringService</b><br/>version quality score after lint"]:::comp
+        scoring["<b>ScoringTaskProcessor + ScoringService</b><br/>processor: scoring task per validation,<br/>integrity · BWC · quality<br/>service: reads the score for the API"]:::comp
         rulesets["<b>RulesetService</b><br/>ruleset CRUD, activation, data"]:::comp
         cleanup["<b>Cleanup / DB migration</b>"]:::comp_gray
         repo["<b>Repositories</b> [go-pg]<br/>tasks · results · rulesets · scoring"]:::comp
@@ -460,7 +460,7 @@ flowchart TB
     dtask ==> spectral
     dtask -.-> aiexec -.-> llm
     dtask -.-> vacuum
-    dtask --> scoring
+    listener -- "ValidateVersion creates lint and scoring tasks" --> scoring
     ctl --> rulesets & scoring
     listener & vtask & dtask & scoring & rulesets --> repo --> pgl
     ctl --> mcp
@@ -988,8 +988,12 @@ classDiagram
         OpenAI client
         rate limit RPS/burst
     }
+    class ScoringTaskProcessor {
+        acquire · heartbeat · work loops
+        integrity · BWC · quality parts
+    }
     class ScoringService {
-        +computeVersionScore()
+        +GetScoringForVersion()
     }
     class RulesetService {
         CRUD · activation · data
@@ -1006,6 +1010,7 @@ classDiagram
     class OlricClient
     class Repositories {
         doc_lint_task · version_lint_task
+        version_scoring_task
         lint_result · ruleset · scoring
     }
 
@@ -1015,7 +1020,10 @@ classDiagram
     DocTaskProcessor --> LinterSelector
     LinterSelector --> SpectralExecutor
     LinterSelector --> AIOasExecutor
-    DocTaskProcessor --> ScoringService
+    PublishEventListener --> ScoringTaskProcessor
+    ScoringTaskProcessor --> ApihubClient
+    ScoringTaskProcessor --> Repositories
+    ScoringService --> Repositories
     DocTaskProcessor --> Repositories
     ValidationService --> Repositories
     RulesetService --> Repositories
@@ -1371,10 +1379,10 @@ sequenceDiagram
     LS->>BE: GET version documents (access token)
     LS->>LS: LinterSelector → SpectralExecutor
     LS-->>LLM: AIOasExecutor (optional)
-    LS->>LS: ScoringService → version score
-    LS->>PG: store lint results + score (apihub_linter)
+    LS->>BE: GET version and changes (scoring task: integrity, BWC)
+    LS->>PG: store lint results + score parts (apihub_linter)
     UI->>BE: poll GET /publish/{publishId}/status
-    UI->>LS: GET /api-linter/api/v1/…/validation/summary, /scoring
+    UI->>LS: GET /api-linter/api/v1/…/validation/summary
 ```
 
 ### 7.2 Agent discovery and snapshot promotion

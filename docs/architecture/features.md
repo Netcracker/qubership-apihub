@@ -116,10 +116,13 @@
 
 ### 3.4 Version quality scoring
 
-- **Aggregated score**: After Spectral/AI lint completes, the service can compute a **version-level quality score**
-  (validation + backward-compatibility signals) and persist it (`GET
-  /api/v1/packages/{packageId}/versions/{version}/scoring`)
-- **Database**: Scoring results stored via dedicated migration (`version_score` table)
+- **Separate process**: Every validation creates a lint task and a scoring task in one transaction. The scoring
+  task processor computes publication integrity and backwards compatibility as soon as APIHUB returns the version,
+  and builds the quality part from the document lint results while they finish
+- **Progress**: `GET /api/v2/packages/{packageId}/versions/{version}/scoring` returns the score at any time with the
+  state of each part; the deprecated v1 operation returns the score only when it is complete
+- **Database**: `version_score` holds one row per revision with the state of each part; `version_scoring_task`
+  holds the scoring tasks (lease, heartbeat, retries)
 
 ## 4. Web User Interface
 

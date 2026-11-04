@@ -141,14 +141,17 @@ func main() {
 	versionResultRepository := repository.NewVersionResultRepository(cp)
 	lintResultRepository := repository.NewLintResultRepository(cp)
 	scoringRepository := repository.NewScoringRepository(cp)
+	scoringTaskRepository := repository.NewScoringTaskRepository(cp)
 
 	linterConfigService := service.NewLinterConfigService(systemInfoService)
 	linterSelectorService := service.NewLinterSelectorService(ruleSetRepository, linterConfigService)
-	scoringService := service.NewScoringService(versionResultRepository, lintResultRepository, ruleSetRepository, scoringRepository, linterConfigService, apihubClient)
+	scoringService := service.NewScoringService(scoringRepository, apihubClient)
 
 	docTaskNotify := make(chan struct{}, 1)
 	versionTaskNotify := make(chan struct{}, 1)
-	versionTaskProcessor := service.NewVersionTaskProcessor(versionLintTaskRepository, docLintTaskRepository, versionResultRepository, apihubClient, linterSelectorService, linterConfigService, scoringService, executorId, docTaskNotify, versionTaskNotify)
+	scoringTaskNotify := make(chan struct{}, 1)
+	service.NewVersionTaskProcessor(versionLintTaskRepository, docLintTaskRepository, versionResultRepository, apihubClient, linterSelectorService, linterConfigService, executorId, docTaskNotify, versionTaskNotify)
+	service.NewScoringTaskProcessor(scoringTaskRepository, scoringRepository, versionLintTaskRepository, docLintTaskRepository, versionResultRepository, lintResultRepository, ruleSetRepository, linterConfigService, apihubClient, executorId, scoringTaskNotify)
 	spectralExecutor, err := service.NewSpectralExecutor(systemInfoService.GetSpectralBinPath()) // TODO: use linters config
 	if err != nil {
 		log.Fatalf("Failed to create Spectral executor: %s", err.Error())
@@ -161,7 +164,7 @@ func main() {
 
 	docTaskProcessor := service.NewDocTaskProcessor(docLintTaskRepository, ruleSetRepository, docResultRepository, lintResultRepository, apihubClient, spectralExecutor, aiOasExecutor, executorId, systemInfoService.GetSpectralLinterWorkers(), systemInfoService.GetAiLinterWorkers(), docTaskNotify)
 
-	validationService := service.NewValidationService(versionLintTaskRepository, versionResultRepository, lintResultRepository, ruleSetRepository, docLintTaskRepository, versionTaskProcessor, apihubClient, executorId, versionTaskNotify)
+	validationService := service.NewValidationService(versionLintTaskRepository, versionResultRepository, lintResultRepository, ruleSetRepository, docLintTaskRepository, apihubClient, executorId, versionTaskNotify, scoringTaskNotify)
 	publishEventListener := service.NewPublishEventListener(olricProvider, validationService)
 	rulesetService := service.NewRulesetService(ruleSetRepository)
 	cleanupService := service.NewCleanupService(cp)
@@ -193,7 +196,8 @@ func main() {
 	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/validation/documents/{slug}/details", authenticator.Secure(validationResultController.GetValidationResultForDocument)).Methods(http.MethodGet)
 
 	// Scoring
-	r.HandleFunc("/api/v1/packages/{packageId}/versions/{version}/scoring", authenticator.Secure(scoringController.GetScoringForVersion)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v1/packages/{packageId}/versions/{version}/scoring", authenticator.Secure(scoringController.GetScoringForVersion_deprecated)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/scoring", authenticator.Secure(scoringController.GetScoringForVersion)).Methods(http.MethodGet)
 
 	// Linters
 	r.HandleFunc("/api/v1/linters", authenticator.Secure(linterController.ListLinters)).Methods(http.MethodGet)

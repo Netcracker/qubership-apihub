@@ -67,3 +67,6 @@ const LintResultNotFoundMsg = "Validation result not found for packageId $packag
 
 const LintNotSupported = "2200"
 const LintNotSupportedMsg = "Validation is not supported for kind=$kind (id=%id), only for kind='package'"
+
+const VersionScoreNotFound = "2300"
+const VersionScoreNotFoundMsg = "Score not found for packageId $packageId and version $version: the version has never been validated"

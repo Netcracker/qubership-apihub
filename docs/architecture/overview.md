@@ -34,7 +34,7 @@ the registry stores their results in PostgreSQL.
 | **API Registry** | [`backend/portal-backend`](../../backend/portal-backend/) | Go | 8080 | Central micro-monolith: REST API, authentication, RBAC, packages and versions, build orchestration, MCP server, AI chat, cleanup jobs. |
 | **Builder** | [`frontend/build-task-consumer`](../../frontend/build-task-consumer/) | TypeScript, NestJS | 3000 | Stateless workers that run the TypeScript processing stack: normalize, diff, changelog, export. |
 | **Java task consumer** | [`backend/java-task-consumer`](../../backend/java-task-consumer/) | Java | none | Stateless workers that take the Java build tasks (jar-to-jar API diff and dependency-upgrade impact analysis) that `backend/libraries-backend` queues. |
-| **Extension: API Linter** | [`backend/api-linter-service`](../../backend/api-linter-service/) | Go | 8080 | Lints API specifications with Spectral and AI engines; optional version quality scoring after a lint run. |
+| **Extension: API Linter** | [`backend/api-linter-service`](../../backend/api-linter-service/) | Go | 8080 | Lints API specifications with Spectral and AI engines; scores versions (integrity, backwards compatibility, quality) in a separate background process. |
 | **Extension: Agents backend** | [`backend/agents-backend`](../../backend/agents-backend/) | Go | 8080 | Manages agent instances, snapshots, and namespace security. |
 | **Agent** | [`backend/agent`](../../backend/agent/) | Go | 8080 | Runs in a customer cluster, discovers APIs through pluggable runners, and reports them to the Agents backend. |
 

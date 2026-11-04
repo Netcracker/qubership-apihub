@@ -82,6 +82,32 @@ func (s *cleanupServiceImpl) ClearTestData(ctx context.Context, testId string) e
 		}
 
 		if len(versionLintTaskIds) > 0 {
+			// Scoring tasks go before score rows, the lock order of the scoring writers.
+			var scoringTaskIds []string
+			err = tx.Model((*entity.VersionScoringTask)(nil)).
+				Column("id").
+				Where("version_lint_task_id IN (?)", pg.In(versionLintTaskIds)).
+				Select(&scoringTaskIds)
+			if err != nil {
+				return fmt.Errorf("failed to get version_scoring_task records: %w", err)
+			}
+
+			if len(scoringTaskIds) > 0 {
+				_, err = tx.Model((*entity.VersionScoringTask)(nil)).
+					Where("id IN (?)", pg.In(scoringTaskIds)).
+					Delete()
+				if err != nil {
+					return fmt.Errorf("failed to delete version_scoring_task records: %w", err)
+				}
+
+				_, err = tx.Model((*entity.VersionScore)(nil)).
+					Where("scoring_task_id IN (?)", pg.In(scoringTaskIds)).
+					Delete()
+				if err != nil {
+					return fmt.Errorf("failed to delete version_score records: %w", err)
+				}
+			}
+
 			_, err = tx.Model((*entity.DocumentLintTask)(nil)).
 				Where("version_lint_task_id IN (?)", pg.In(versionLintTaskIds)).
 				Delete()
