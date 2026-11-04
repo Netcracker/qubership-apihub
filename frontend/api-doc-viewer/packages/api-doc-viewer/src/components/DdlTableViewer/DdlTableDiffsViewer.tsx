@@ -1,3 +1,4 @@
+import { cn } from '@apihub/utils/common/cn'
 import { DEFAULT_DISPLAY_MODE } from "@apihub/constants/configuration"
 import { DiffMetaKeysContext } from "@apihub/contexts/DiffMetaKeysContext"
 import { DiffTypesContext } from "@apihub/contexts/DiffTypesContext"
@@ -96,7 +97,7 @@ const DdlTableDiffsViewerInner: FC<DdlTableDiffsViewerProps> =
             <DisplayModeContext.Provider value={displayMode}>
               <LayoutModeContext.Provider value={SIDE_BY_SIDE_DIFFS_LAYOUT_MODE}>
                 <LevelContext.Provider value={0}>
-                  <div data-testid="ddl-table-diffs-viewer">
+                  <div className={cn('root')} data-testid="ddl-table-diffs-viewer">
                     <TableNodeViewerWithDiffs
                       node={tableNode}
                       noHeading={noHeading}

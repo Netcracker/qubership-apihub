@@ -1,3 +1,4 @@
+import { cn } from "@apihub/utils/common/cn"
 import { LevelContext, useLevelContext } from "@apihub/contexts/LevelContext"
 import { buildRowDiffProps, toNodeDiffState } from "@apihub/components/shared-components/diffs/node-diff-props"
 import { getIndexChildNodes, isIndexNodeWithDiffs, isIndexesNodeWithDiffs } from "@apihub/utils/ddlapi/node-type-checkers"
@@ -76,7 +77,7 @@ const IndexesNodePlainViewer: FC<IndexesNodePlainViewerProps> = (props) => {
   }
 
   return (
-    <div data-testid="ddl-indexes-node-viewer" className="flex flex-col">
+    <div data-testid="ddl-indexes-node-viewer" className={cn("flex flex-col")}>
       <TitleRow
         data-precededby={precededBy}
         value={value?.title ?? 'Indexes'}
@@ -130,7 +131,7 @@ const IndexesNodeWithDiffsViewer: FC<IndexesNodeWithDiffsViewerProps> = (props) 
   }
 
   return (
-    <div data-testid="ddl-indexes-node-viewer" className="flex flex-col">
+    <div data-testid="ddl-indexes-node-viewer" className={cn("flex flex-col")}>
       <TitleRow
         data-precededby={precededBy}
         value={value?.title ?? 'Indexes'}

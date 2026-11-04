@@ -20,7 +20,11 @@ readability, not completeness. The full list of what is and is not shown is in
 4. **Reuse JSON Schema components.** Descriptions, default values, and value lists use the same row
    components as the JSON Schema viewer.
 5. **Details live in detailed mode.** Descriptions and additional-info rows (`Values`, `Default`,
-   `As`) appear only in `DETAILED_DISPLAY_MODE`; simple mode shows title rows only.
+   `As`) appear only in `DETAILED_DISPLAY_MODE`; simple mode shows title rows only. Covered once per
+   hidden row (table, column, and index description; `Values`, `Default`, `As`) by
+   `DDL API Suite (Display Mode = simple)` and `DDL API Diffs Suite (Display Mode = simple)`
+   (`packages/samples/ddlapi[-diffs]-display-mode-simple/`); the other DDL suites capture
+   `detailed` only.
 
 ## Prevalence scale
 

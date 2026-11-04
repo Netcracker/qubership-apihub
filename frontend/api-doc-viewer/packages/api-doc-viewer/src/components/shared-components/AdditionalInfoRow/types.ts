@@ -5,6 +5,7 @@ import type {
   NodeDiffsSeverityPlacemennt,
 } from "@netcracker/qubership-apihub-next-data-model/model/abstract/tree-with-diffs/tree-node.interface"
 import type { ReactElement } from "react"
+import { WithFramePositionProps } from "../Frame/types"
 import { WithListLastRowProps, WithPrecededByProps } from "../WithPrecededByProps"
 
 export enum AdditionalInfoRowUsage {
@@ -19,7 +20,7 @@ export type AdditionalInfoRowLayoutOverrides = {
   minHeightClass?: string
 }
 
-export type AdditionalInfoRowProps = WithPrecededByProps & WithListLastRowProps & AdditionalInfoRowLayoutOverrides & {
+export type AdditionalInfoRowProps = WithPrecededByProps & WithListLastRowProps & WithFramePositionProps & AdditionalInfoRowLayoutOverrides & {
   label: string
   subheader?: (layoutSide: LayoutSide) => ReactElement
   diff?: ChangedPropertyMetaData

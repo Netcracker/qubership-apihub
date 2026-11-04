@@ -1,3 +1,4 @@
+import { cn } from "@apihub/utils/common/cn"
 import { CHANGED_LAYOUT_SIDE, LayoutSide, ORIGIN_LAYOUT_SIDE } from "@apihub/types/internal/LayoutSide"
 import { maxDiffType } from "@apihub/utils/common/changes"
 import { DiffAction, DiffType } from "@netcracker/qubership-apihub-api-diff"
@@ -18,6 +19,11 @@ export type SelectorOption<
   title: ReactNode | ((layoutSide: LayoutSide) => ReactNode)
   node: N
   testId?: string
+  /**
+   * Option color class from the caller's color config (`components/shared-styles/colors/`, e.g.
+   * `openapi-response-code_2xx`); omitted = the neutral grey look (unchanged markup).
+   */
+  toneClass?: string
   diffs?: NodeDiffs<V>
   diffsSummary?: NodeDiffsSummary
   descendantDiffsSummary?: NodeDescendantDiffsSummary
@@ -32,20 +38,25 @@ type SelectorProps<
   onSelectOption: (option: SelectorOption<N, V>) => void
   variant: SelectorVariant
   layoutSide?: LayoutSide
+  /**
+   * One non-wrapping line of options for an `ArrowScrollStrip` (security toolbar, response codes); each option is
+   * cropped with an ellipsis down to one character. Omitted = today's wrapping layout.
+   */
+  noWrap?: boolean
 }
 
 export function Selector<
   N extends ITreeNode,
   V extends object | null = object | null,
 >(props: SelectorProps<N, V>): JSX.Element | null {
-  const { options, selectedOption, onSelectOption, variant, layoutSide = CHANGED_LAYOUT_SIDE } = props
+  const { options, selectedOption, onSelectOption, variant, layoutSide = CHANGED_LAYOUT_SIDE, noWrap = false } = props
 
   if (options.length === 0) {
     return null
   }
 
   return (
-    <div className='flex flex-row flex-wrap gap-2'>
+    <div className={cn(noWrap ? 'flex flex-row flex-nowrap gap-2' : 'flex flex-row flex-wrap gap-2')}>
       {options.map((option) => {
         const { diffsRelatedClassesList, isInvisible } = resolveOptionDiffPresentation({
           diffs: option.diffs,
@@ -58,18 +69,21 @@ export function Selector<
         }
         const diffsRelatedClasses = diffsRelatedClassesList.join(' ')
         const resolvedTitle = typeof option.title === "function" ? option.title(layoutSide) : option.title
+        // Neutral options keep their markup byte-identical (no tone class), so existing selectors do not move.
+        const toneClass = option.toneClass ? ` ${option.toneClass}` : ''
+        const croppedClass = noWrap ? ' button-selector-option_cropped' : ''
         return (
           <button
             key={option.node.id}
             data-testid={option.testId}
-            className={`button-selector-option button-selector-option_${variant} ${selectedOption === option ? 'selected' : ''} ${diffsRelatedClasses}`}
+            className={cn(`button-selector-option button-selector-option_${variant}${toneClass}${croppedClass} ${selectedOption === option ? 'selected' : ''} ${diffsRelatedClasses}`)}
             onClick={(event) => {
               event.preventDefault()
               event.stopPropagation()
               onSelectOption(option)
             }}
           >
-            {resolvedTitle}
+            {noWrap ? <span className={cn("button-selector-option-label")}>{resolvedTitle}</span> : resolvedTitle}
           </button>
         )
       })}

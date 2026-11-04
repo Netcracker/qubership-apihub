@@ -17,6 +17,7 @@ Before/after YAML pairs for `AsyncApiOperationDiffsViewer`:
 | `channel-parameters/` | 8 | address parameters added, removed, renamed, fields changed |
 | `operation/` | 36 | operation title, description, summary, extensions, bindings |
 | `whole-apihub-operation/` | 2 | a whole operation document |
+| `security/` | 33 | operation (1.x) and server (2.x) Security sections — generated, catalogue in [security/README.md](security/README.md) |
 
 Case ids use `<group>.<n>-<change>` (for example `1.3-channel-title-added`).
 
@@ -33,11 +34,12 @@ Plain AsyncAPI stories (`Async API Suite`, 66 stories) use inline data in
 | `channel-parameters/` | `Async API Diffs Suite/Channel Parameters Samples` | `channel-parameters.*` |
 | `operation/` | `Async API Diffs Suite/Operation Samples` | `operation.*` |
 | `whole-apihub-operation/` | `Async API Diffs Suite/Whole Apihub Operation Samples` | `whole-apihub-operation.*` |
+| `security/` | `Async API Diffs Suite/Security Samples` | `security.*` |
 
 Stories: `packages/api-doc-viewer/src/stories/async-api-diffs-suite/`; ITs:
-`src/it/async-api-diffs-suite.*.it-test.ts`.
+`src/it/async-api-diffs-suite/*.it-test.ts`.
 
 ## Regenerate
 
 Hand-written fixtures; there is no generator. After visual changes run
-`npm run regenerate-screenshots` in `packages/api-doc-viewer/`.
+`pnpm run regenerate-screenshots` in `packages/api-doc-viewer/`.

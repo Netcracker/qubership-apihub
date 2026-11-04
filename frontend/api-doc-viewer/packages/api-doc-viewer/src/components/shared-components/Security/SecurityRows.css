@@ -1,0 +1,49 @@
+/* Security scheme card rows. Spacing is padding inside each row only (no margins, no gaps between
+   rows, no min-height): the OpenAPI data-precededby rule (preceded-by.css) sets it, so neighbouring
+   highlighted rows form one continuous colored block. */
+
+/* Labels and scope names use the JSON Schema property-title text (NODE_TITLE_TEXT_CLASSES). The
+   cells keep its 16px line: an inherited taller line box would add an offset of its own around the
+   12px values, outside the row padding. */
+.security-prop,
+.security-scope {
+  line-height: 1rem;
+}
+
+/* Values: secondary gray (the subheader / type-label gray), title-sized. Links stay link-blue. */
+.security-prop-text {
+  font-size: 12px;
+  font-weight: 400;
+  color: rgb(100 116 139);
+}
+
+a.security-prop-link {
+  font-size: 12px;
+  color: #0068FF;
+  word-break: break-all;
+}
+
+a.security-prop-link:hover {
+  text-decoration: underline;
+}
+
+.security-flow-header {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 4px;
+  background-color: #EDF1F5;
+  font-size: 13px;
+  color: #353C4E;
+}
+
+/* The static `Inter` face has one weight and `font-synthesis` is off, so 500 needs the variable face. */
+.security-flow-header-name {
+  font-family: 'Inter Variable', sans-serif;
+  font-weight: 500;
+}
+
+/* Card opening / closing rows: content-less, a fixed height from the layout data. Always the card's
+   first / last row, so toggling `Scopes` never moves the border onto a content row. */
+.security-frame-row {
+  flex-shrink: 0;
+}

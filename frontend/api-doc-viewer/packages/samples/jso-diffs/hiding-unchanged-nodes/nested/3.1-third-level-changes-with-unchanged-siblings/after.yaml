@@ -1,0 +1,15 @@
+id: 1
+customer:
+  name: Ann
+  email: b@x
+  phone: "123"
+  address:
+    city: Rome
+    zip: "002"
+    country: IT
+status: new
+meta:
+  source: web
+  tags:
+    - a
+    - b

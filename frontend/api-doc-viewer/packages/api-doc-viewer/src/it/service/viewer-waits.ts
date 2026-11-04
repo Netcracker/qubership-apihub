@@ -16,6 +16,7 @@
 
 import { Page } from 'puppeteer'
 import { switchCombinerNodesToChangedVariant } from '../../utils/combiner-changed-variant'
+import { switchOpenApiOptions } from '../../utils/openapi/switch-openapi-options'
 
 /**
  * Shared "ready for screenshot" waits for screenshot ITs. Hand-written and generated ITs import
@@ -93,5 +94,29 @@ export async function waitForVisibleSelector(page: Page, selector: string | unde
   }
 
   await page.waitForSelector(selector, { visible: true })
+  await waitForRenderingComplete(page)
+}
+
+export type OpenApiOperationViewerWaitOptions = {
+  /** Selector options to select before capture, in order (`switchOpenApiOptions`). */
+  switchTo?: readonly string[]
+}
+
+/** `OpenApiOperationViewer` root visible and painted (nested JSON Schema viewers render synchronously). */
+export async function waitForOpenApiOperationViewer(
+  page: Page,
+  options: OpenApiOperationViewerWaitOptions = {},
+): Promise<void> {
+  await page.waitForSelector('[data-testid="openapi-operation-viewer"]', { visible: true })
+  await waitForRenderingComplete(page)
+  if (options.switchTo && options.switchTo.length > 0) {
+    await page.evaluate(switchOpenApiOptions, options.switchTo)
+    await waitForRenderingComplete(page)
+  }
+}
+
+/** `OpenApiOperationDiffsViewer` root visible and painted. */
+export async function waitForOpenApiOperationDiffsViewer(page: Page): Promise<void> {
+  await page.waitForSelector('[data-testid="openapi-operation-diffs-viewer"]', { visible: true })
   await waitForRenderingComplete(page)
 }

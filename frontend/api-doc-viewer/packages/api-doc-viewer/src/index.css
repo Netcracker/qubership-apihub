@@ -1,3 +1,6 @@
+/* Viewer color config (badges, selector tones); @import must precede every other statement. */
+@import "./components/shared-styles/colors/index.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -88,9 +91,10 @@ button:hover {
 }
 
 @media (prefers-color-scheme: light) {
+    /* Scoped to the viewer root (CSS isolation), so no background: a viewer must not paint a box
+       over the host's background. Design: docs/design/shared/features/css-isolation.md */
     :root {
         color: #213547;
-        background-color: #ffffff;
     }
 
     a:hover {

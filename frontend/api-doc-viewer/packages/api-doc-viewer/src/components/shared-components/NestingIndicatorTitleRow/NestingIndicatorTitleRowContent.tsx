@@ -1,4 +1,5 @@
-import { X_AXIS_PADDING_ROWS_ASYNC_API, X_AXIS_PADDING_ROWS_JSO } from "@apihub/components/shared-styles/tailwind-classnames"
+import { cn } from "@apihub/utils/common/cn"
+import { X_AXIS_PADDING_ROWS, X_AXIS_PADDING_ROWS_JSO } from "@apihub/components/shared-styles/tailwind-classnames"
 import { useEffectiveLevel } from "@apihub/contexts/AsyncLevelContext/useEffectiveLevel"
 import { applyLevelReduction } from "@apihub/contexts/AsyncLevelContext/applyLevelReduction"
 import { CHANGED_LAYOUT_SIDE, ORIGIN_LAYOUT_SIDE } from "@apihub/types/internal/LayoutSide"
@@ -16,7 +17,7 @@ const NESTING_INDICATOR_TITLE_ROW_X_AXIS_PADDING_BY_USAGE: Partial<Record<Nestin
 }
 
 function getNestingIndicatorTitleRowClassesByUsage(usage: NestingIndicatorTitleRowUsage): string {
-  return NESTING_INDICATOR_TITLE_ROW_X_AXIS_PADDING_BY_USAGE[usage] ?? X_AXIS_PADDING_ROWS_ASYNC_API
+  return NESTING_INDICATOR_TITLE_ROW_X_AXIS_PADDING_BY_USAGE[usage] ?? X_AXIS_PADDING_ROWS
 }
 
 export const NestingIndicatorTitleRowContent: FC<NestingIndicatorTitleRowContentProps> = memo<NestingIndicatorTitleRowContentProps>((props) => {
@@ -75,14 +76,14 @@ export const NestingIndicatorTitleRowContent: FC<NestingIndicatorTitleRowContent
     <div
       data-testid="nesting-indicator-title-row-content"
       data-precededby={precededBy}
-      className={[
+      className={cn([
         "nesting-indicator-title-row-content flex w-full h-full",
         isJsonSchemaUsage ? "items-stretch" : "",
         usageDrivenClasses,
         ...diffsStyleClasses,
-      ].filter(Boolean).join(" ")}
+      ].filter(Boolean).join(" "))}
     >
-      <div data-precededby={precededBy} className="level-indicator-column flex items-stretch self-stretch">
+      <div data-precededby={precededBy} className={cn("level-indicator-column flex items-stretch self-stretch")}>
         <LevelIndicator level={level} lastInvisible={lastInvisible && isLabelVisible} />
       </div>
       {isTitleVisible && <NestingIndicatorTitleLabel title={resolvedTitle} />}

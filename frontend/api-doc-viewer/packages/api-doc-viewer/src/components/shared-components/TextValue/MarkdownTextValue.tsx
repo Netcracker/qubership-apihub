@@ -1,3 +1,4 @@
+import { cn } from "@apihub/utils/common/cn"
 import { LayoutSide, ORIGIN_LAYOUT_SIDE } from "@apihub/types/internal/LayoutSide"
 import { isDiffAdd, isDiffRemove, isDiffReplace } from "@netcracker/qubership-apihub-api-diff"
 import { DiffsClassesBuilder } from "@netcracker/qubership-apihub-next-data-model/building-service/abstract/tree-with-diffs/node-diffs-data/utilities"
@@ -36,9 +37,9 @@ const MarkdownExpander: FC<MarkdownExpanderProps> = (props) => {
   }
 
   return (
-    <div className="mt-1">
+    <div className={cn("mt-1")}>
       <a
-        className={`${expanderClassName} text-blue-600 hover:text-blue-500 hover:cursor-pointer`.trim()}
+        className={cn(`${expanderClassName} text-blue-600 hover:text-blue-500 hover:cursor-pointer`.trim())}
         onClick={onToggle}
       >
         {!expanded ? "Show more" : "Show less"}
@@ -207,8 +208,8 @@ export const MarkdownTextValue: FC<MarkdownTextValueProps> = memo<MarkdownTextVa
   }
 
   return (
-    <div className={`markdown-text-row flex min-w-0 flex-col items-start gap-1 ${diffsStyleClasses.join(" ")}`}>
-      <ReactMarkdown className={markdownClassName} remarkPlugins={[remarkGfm]} components={markdownComponents}>
+    <div className={cn(`markdown-text-row flex min-w-0 flex-col items-start gap-1 ${diffsStyleClasses.join(" ")}`)}>
+      <ReactMarkdown className={cn(markdownClassName)} remarkPlugins={[remarkGfm]} components={markdownComponents}>
         {displayValue}
       </ReactMarkdown>
       <MarkdownExpander

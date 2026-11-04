@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { cn } from '@apihub/utils/common/cn'
 import '../../index.css'
 import '../shared-styles/diffs/index.css'
 
@@ -113,7 +114,7 @@ const GraphQLOperationDiffViewerInner: FC<GraphQLOperationDiffViewerProps> = (pr
         <LayoutModeContext.Provider value={layoutMode}>
           <LevelContext.Provider value={0}>
             {/* Styles are WA due to several samples in compatibility suites */}
-            <div style={{
+            <div className={cn('root')} style={{
               marginLeft: 0,
               width: root.children.length ? undefined : '100%',
               height: root.children.length ? undefined : 1,

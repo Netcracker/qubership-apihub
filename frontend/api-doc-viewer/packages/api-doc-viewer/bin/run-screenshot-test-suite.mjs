@@ -9,10 +9,16 @@
  *   node bin/run-screenshot-test-suite.mjs regenerate json-schema-diffs-suite combiners
  *   node bin/run-screenshot-test-suite.mjs regenerate --ui=select
  *   node bin/run-screenshot-test-suite.mjs regenerate ddlapi-compatibility-suite column-type
+ *   node bin/run-screenshot-test-suite.mjs regenerate openapi-compatibility-suite-30-31 request-body
+ *   node bin/run-screenshot-test-suite.mjs list
+ *
+ * Test runs are listed in Storybook's order (`.storybook/preview.ts`): API type blocks from the core
+ * to the overall specifications. The order lives in `bin/screenshot-test-run-order.json`
+ * (`tests/storybook-order.test.ts` keeps it in sync with preview.ts); unknown test runs come last.
  *
  * Compatibility-suite test runs (e.g. `ddlapi-compatibility-suite`) select their spec type's
  * `*.generated.it-test.ts` files inside `src/it/compatibility-suite/`. Those files are gitignored
- * and produced by `npm run generate-tests`, which this runner calls first for such runs in both
+ * and produced by `pnpm run generate-tests`, which this runner calls first for such runs in both
  * modes (and up front when the files are missing, so their suites can be listed).
  *
  * The test-run argument also accepts a name prefix that matches several test runs at once,
@@ -48,9 +54,12 @@ const SAMPLES_DIR_IGNORE = new Set(['fixtures', 'src']);
 const IT_TEST_SUFFIX_RE = /(-samples)?\.it-test\.ts$/;
 const GENERATED_IT_TEST_SUFFIX = '.generated.it-test.ts';
 const COMPATIBILITY_SUITE_DIR = 'compatibility-suite';
-// One test run per compatibility-suite spec type, named after the generator's file prefix
-// (`makeFilePrefix` in bin/compatibility-suite-generation-utils.mjs).
-const COMPATIBILITY_TEST_RUN_IDS = ['ddlapi-compatibility-suite'];
+/** @type {Array<{ testRun: string, storybookTitle: string, compatibility?: boolean }>} */
+const TEST_RUN_ORDER = JSON.parse(fs.readFileSync(path.join(__dirname, 'screenshot-test-run-order.json'), 'utf8'));
+// Compatibility-suite test runs, named after the generator's file prefix (`makeFilePrefix` /
+// `makeOpenApiFilePrefix` in bin/compatibility-suite-generation-utils.mjs): one per spec type, one
+// per OAS version pair for OpenAPI.
+const COMPATIBILITY_TEST_RUN_IDS = TEST_RUN_ORDER.filter((entry) => entry.compatibility).map((entry) => entry.testRun);
 
 /**
  * Finds the on-disk IT test filename for a suite id, trying the plain name first and
@@ -81,15 +90,15 @@ for (const arg of process.argv.slice(2)) {
 }
 
 const mode = positionalArgs[0];
-if (mode !== 'test' && mode !== 'regenerate') {
-  console.error('Usage: node bin/run-screenshot-test-suite.mjs <test|regenerate> [test-run] [suite] [--ui=listed|select]');
+if (mode !== 'test' && mode !== 'regenerate' && mode !== 'list') {
+  console.error('Usage: node bin/run-screenshot-test-suite.mjs <test|regenerate|list> [test-run] [suite] [--ui=listed|select]');
   process.exit(1);
 }
 
 const cliTestRunId = positionalArgs[1];
 const cliSuite = positionalArgs[2];
 
-if (!cliTestRunId && !process.stdin.isTTY) {
+if (!cliTestRunId && !process.stdin.isTTY && mode !== 'list') {
   console.error('Interactive screenshot suite runner requires a TTY.');
   console.error('Pass a test-run name, or run Jest directly from packages/api-doc-viewer/.');
   process.exit(1);
@@ -115,7 +124,10 @@ function resolveUiMode() {
 const uiMode = resolveUiMode();
 
 /**
- * @returns {Array<{ samplesDir: string, itSuiteId: string, layout: 'folder' | 'flat' | 'compatibility', itDir?: string, prefix?: string }>}
+ * Every hand-written test run is one folder `src/it/<test-run>/`: its `*.it-test.ts` files and
+ * their baselines (`__image_snapshots__/`, the jest-image-snapshot default next to the test file).
+ *
+ * @returns {Array<{ samplesDir: string, itSuiteId: string, layout: 'folder' | 'compatibility', itDir: string, prefix?: string }>}
  */
 function discoverTestRuns() {
   if (!fs.existsSync(samplesRoot)) {
@@ -134,17 +146,7 @@ function discoverTestRuns() {
       if (fs.existsSync(itDir) && fs.statSync(itDir).isDirectory()) {
         return { samplesDir, itSuiteId, layout: 'folder', itDir };
       }
-
-      const prefix = `${itSuiteId}.`;
-      const hasFlatTests = itEntries.some(
-        (file) => file.isFile() && file.name.startsWith(prefix) && file.name.endsWith('.it-test.ts'),
-      );
-
-      if (!hasFlatTests) {
-        return null;
-      }
-
-      return { samplesDir, itSuiteId, layout: 'flat', prefix };
+      return null;
     })
     .filter(Boolean);
 
@@ -155,7 +157,8 @@ function discoverTestRuns() {
       entry.isDirectory()
       && !knownIds.has(entry.name)
       && entry.name !== 'service'
-      && entry.name !== '__image_snapshots__'
+      // Generated compatibility ITs are listed per spec type below, not as one aggregate test run.
+      && entry.name !== COMPATIBILITY_SUITE_DIR
     ) {
       const itDir = path.join(itRoot, entry.name);
       const hasSamples = fs.readdirSync(itDir).some((file) => file.endsWith('.it-test.ts'));
@@ -169,27 +172,6 @@ function discoverTestRuns() {
         knownIds.add(entry.name);
       }
     }
-  }
-
-  for (const entry of itEntries) {
-    if (!entry.isFile() || !entry.name.endsWith('.it-test.ts')) {
-      continue;
-    }
-    const separatorIndex = entry.name.indexOf('.');
-    if (separatorIndex <= 0) {
-      continue;
-    }
-    const itSuiteId = entry.name.slice(0, separatorIndex);
-    if (knownIds.has(itSuiteId)) {
-      continue;
-    }
-    testRuns.push({
-      samplesDir: itSuiteId.replace(/-suite$/, ''),
-      itSuiteId,
-      layout: 'flat',
-      prefix: `${itSuiteId}.`,
-    });
-    knownIds.add(itSuiteId);
   }
 
   // Listed even when the generated files are absent (gitignored); see ensureCompatibilityTests().
@@ -207,7 +189,16 @@ function discoverTestRuns() {
     knownIds.add(itSuiteId);
   }
 
-  return testRuns.sort((a, b) => a.itSuiteId.localeCompare(b.itSuiteId));
+  return testRuns.sort(compareTestRuns);
+}
+
+/** Storybook order (`TEST_RUN_ORDER`), then unknown test runs alphabetically. */
+function compareTestRuns(a, b) {
+  const rank = (testRun) => {
+    const index = TEST_RUN_ORDER.findIndex((entry) => entry.testRun === testRun.itSuiteId);
+    return index < 0 ? TEST_RUN_ORDER.length : index;
+  };
+  return rank(a) - rank(b) || a.itSuiteId.localeCompare(b.itSuiteId);
 }
 
 /**
@@ -232,8 +223,8 @@ function ensureCompatibilityTests(testRun) {
   if (testRun.layout !== 'compatibility' || listCompatibilityTestFiles(testRun).length > 0) {
     return;
   }
-  console.log(`No generated ITs found for ${testRun.itSuiteId} — running "npm run generate-tests".`);
-  const result = spawnSync('npm run generate-tests', {
+  console.log(`No generated ITs found for ${testRun.itSuiteId} — running "pnpm run generate-tests".`);
+  const result = spawnSync('pnpm run generate-tests', {
     cwd: packageRoot,
     stdio: 'inherit',
     shell: true,
@@ -245,7 +236,7 @@ function ensureCompatibilityTests(testRun) {
 }
 
 /**
- * @param {{ layout: 'folder' | 'flat', itDir?: string, prefix?: string }} testRun
+ * @param {{ layout: 'folder' | 'compatibility', itDir: string, prefix?: string }} testRun
  * @returns {string[]}
  */
 function discoverSuites(testRun) {
@@ -255,33 +246,24 @@ function discoverSuites(testRun) {
       .sort();
   }
 
-  if (testRun.layout === 'folder') {
-    return fs.readdirSync(testRun.itDir)
-      .filter((file) => file.endsWith('.it-test.ts'))
-      .map((file) => file.replace(IT_TEST_SUFFIX_RE, ''))
-      .sort();
-  }
-
-  return fs.readdirSync(itRoot)
-    .filter((file) => file.startsWith(testRun.prefix) && file.endsWith('.it-test.ts'))
-    .map((file) => file.slice(testRun.prefix.length).replace(IT_TEST_SUFFIX_RE, ''))
+  return fs.readdirSync(testRun.itDir)
+    .filter((file) => file.endsWith('.it-test.ts'))
+    .map((file) => file.replace(IT_TEST_SUFFIX_RE, ''))
     .sort();
 }
 
 /**
  * Regex path segment that Jest's `--testPathPatterns` needs to select every IT file
- * belonging to one test run, regardless of its on-disk layout.
+ * belonging to one test run.
  *
- * @param {{ layout: 'folder' | 'flat', itSuiteId: string, prefix?: string }} testRun
+ * @param {{ layout: 'folder' | 'compatibility', itSuiteId: string, prefix?: string }} testRun
  * @returns {string}
  */
 function testRunPatternSegment(testRun) {
   if (testRun.layout === 'compatibility') {
     return `src/it/${COMPATIBILITY_SUITE_DIR}/${testRun.prefix}`;
   }
-  return testRun.layout === 'folder'
-    ? `src/it/${testRun.itSuiteId}/`
-    : `src/it/${testRun.prefix.replace('.', '\\.')}`;
+  return `src/it/${testRun.itSuiteId}/`;
 }
 
 /**
@@ -322,7 +304,7 @@ function resolveTestRunSelection(raw, testRuns) {
 }
 
 /**
- * @param {{ layout: 'folder' | 'flat', itSuiteId: string, prefix?: string }} testRun
+ * @param {{ layout: 'folder' | 'compatibility', itSuiteId: string, itDir: string, prefix?: string }} testRun
  * @param {string} suiteChoice
  * @returns {string}
  */
@@ -334,17 +316,10 @@ function resolveJestTarget(testRun, suiteChoice) {
   }
 
   if (suiteChoice === WHOLE_SUITE_VALUE) {
-    if (testRun.layout === 'folder') {
-      return `src/it/${testRun.itSuiteId}`;
-    }
-    return `--testPathPatterns=${testRun.prefix.replace('.', '\\.')}.+\\.it-test\\.ts$`;
+    return `src/it/${testRun.itSuiteId}`;
   }
 
-  if (testRun.layout === 'folder') {
-    return `src/it/${testRun.itSuiteId}/${resolveItTestFileName(testRun.itDir, suiteChoice)}`;
-  }
-
-  return `src/it/${resolveItTestFileName(itRoot, `${testRun.prefix}${suiteChoice}`)}`;
+  return `src/it/${testRun.itSuiteId}/${resolveItTestFileName(testRun.itDir, suiteChoice)}`;
 }
 
 /**
@@ -355,10 +330,10 @@ function resolveJestTarget(testRun, suiteChoice) {
  */
 function runScreenshotCommand(jestTarget, includesCompatibilityRun = false) {
   const jestCommand = mode === 'test'
-    ? `npm run generate-tests && jest --maxWorkers 1 --verbose -c .config/it/it-test-docker.jest.config.cjs ${jestTarget}`
-    : `${includesCompatibilityRun ? 'npm run generate-tests && ' : ''}jest --maxWorkers 1 --verbose --updateSnapshot -c .config/it/it-test-docker.jest.config.cjs ${jestTarget}`;
+    ? `pnpm run generate-tests && jest --maxWorkers 1 --verbose -c .config/it/it-test-docker.jest.config.cjs ${jestTarget}`
+    : `${includesCompatibilityRun ? 'pnpm run generate-tests && ' : ''}jest --maxWorkers 1 --verbose --updateSnapshot -c .config/it/it-test-docker.jest.config.cjs ${jestTarget}`;
 
-  const command = `npx start-server-and-test development:local-server:static http://localhost:9009 "${jestCommand}"`;
+  const command = `pnpm exec start-server-and-test development:local-server:static http://localhost:9009 "${jestCommand}"`;
   const actionLabel = mode === 'test' ? 'Running screenshot test suite' : 'Regenerating screenshots';
 
   console.log('');
@@ -608,6 +583,11 @@ const testRuns = discoverTestRuns();
 if (testRuns.length === 0) {
   console.error('No screenshot test runs found under packages/samples/.');
   process.exit(1);
+}
+
+if (mode === 'list') {
+  testRuns.forEach((testRun, index) => console.log(`${index + 1}. ${testRun.itSuiteId}  samples/${testRun.samplesDir}`));
+  process.exit(0);
 }
 
 intro(mode === 'test' ? 'Screenshot test — single suite' : 'Regenerate screenshots — single suite');

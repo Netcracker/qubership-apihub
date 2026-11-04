@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { cn } from "@apihub/utils/common/cn"
 import type { FC } from 'react'
 import { ExpandingCaret } from './ExpandingCaret'
 import { NestingHorizontalIndicator } from "../../NestingHorizontalIndicator"
@@ -36,13 +37,13 @@ export const Expander: FC<ExpanderProps> = (props) => {
   let expanderElement = null
   if (isExpandable) {
     expanderElement = (
-      <div data-name="Expander" className="flex flex-row items-center gap-0.5 w-full">
+      <div data-name="Expander" className={cn("flex flex-row items-center gap-0.5 w-full")}>
         {!isRoot && <NestingHorizontalIndicator short />}
         <ExpandingCaret onToggle={onToggleExpander} expanded={expanded} testId={testId} />
       </div>
     )
   } else if (isRoot) {
-    expanderElement = <div className="w-5" />
+    expanderElement = <div className={cn("w-5")} />
   } else if (!isRoot && !isOperation) {
     expanderElement = <NestingHorizontalIndicator />
   }
@@ -52,7 +53,7 @@ export const Expander: FC<ExpanderProps> = (props) => {
       {expanderElement && (
         <div
           data-name="ExpanderContainer"
-          className='flex flex-row items-center pt-1.5'
+          className={cn('flex flex-row items-center pt-1.5')}
           // onContextMenu={defaultOnContextMenu(isExpandable, onToggleContextMenu)}
         >
           {expanderElement}

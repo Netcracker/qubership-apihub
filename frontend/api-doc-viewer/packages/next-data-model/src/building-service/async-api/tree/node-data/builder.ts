@@ -4,6 +4,8 @@ import { AsyncApiTreeNodeValue, AsyncApiTreeNodeValueBase } from "@apihub/next-d
 import { JSON_SCHEMA_PROPERTY_REF } from "@netcracker/qubership-apihub-api-unifier";
 import { isObject, isObjectWithStringKeys } from "../../../../utilities";
 import { AbstractNodeDataBuilder, NodeDataPickFunction } from "../../../abstract/tree/node-data/builder";
+import { SecurityTreeNodeKind, SecurityTreeNodeKindsList } from "../../../../model/security/types/node-kind";
+import { SECURITY_NODE_VALUE_PROPS } from "../../../../model/security/types/node-value";
 
 const ASYNC_API_NODE_KINDS_WITH_NODE_VALUE: ReadonlySet<string> = new Set([
   AsyncApiTreeNodeKinds.BINDING,
@@ -15,6 +17,7 @@ const ASYNC_API_NODE_KINDS_WITH_NODE_VALUE: ReadonlySet<string> = new Set([
   AsyncApiTreeNodeKinds.MESSAGE_OPERATION,
   AsyncApiTreeNodeKinds.MESSAGE_PAYLOAD,
   AsyncApiTreeNodeKinds.SERVER,
+  ...SecurityTreeNodeKindsList,
 ]);
 const ASYNC_API_TREE_NODE_VALUE_COMMON_PROPS: (keyof AsyncApiTreeNodeValueBase)[] = [
   'title', 'description', 'summary'
@@ -28,7 +31,8 @@ type AnyAsyncApiNodeValueKey =
   keyof AsyncApiTreeNodeValue<typeof AsyncApiTreeNodeKinds.MESSAGE_HEADERS> |
   keyof AsyncApiTreeNodeValue<typeof AsyncApiTreeNodeKinds.MESSAGE_OPERATION> |
   keyof AsyncApiTreeNodeValue<typeof AsyncApiTreeNodeKinds.MESSAGE_PAYLOAD> |
-  keyof AsyncApiTreeNodeValue<typeof AsyncApiTreeNodeKinds.SERVER>;
+  keyof AsyncApiTreeNodeValue<typeof AsyncApiTreeNodeKinds.SERVER> |
+  keyof AsyncApiTreeNodeValue<SecurityTreeNodeKind>;
 
 export class AsyncApiNodeDataBuilder extends AbstractNodeDataBuilder<
   AsyncApiTreeNodeValue<AsyncApiTreeNodeKind> | null, AsyncApiTreeNodeMeta
@@ -114,6 +118,12 @@ export class AsyncApiNodeDataBuilder extends AbstractNodeDataBuilder<
           'host',
           'protocol',
         ]satisfies (keyof AsyncApiTreeNodeValue<typeof AsyncApiTreeNodeKinds.SERVER>)[];
+      case AsyncApiTreeNodeKinds.SECURITY:
+      case AsyncApiTreeNodeKinds.SECURITY_REQUIREMENT:
+      case AsyncApiTreeNodeKinds.SECURITY_SCHEME:
+      case AsyncApiTreeNodeKinds.OAUTH_FLOW:
+        // Keys of the shared security values (one list per security kind).
+        return SECURITY_NODE_VALUE_PROPS[type] as AnyAsyncApiNodeValueKey[];
       default:
         return [];
     }

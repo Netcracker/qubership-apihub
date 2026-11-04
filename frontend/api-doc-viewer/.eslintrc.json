@@ -26,5 +26,27 @@
       }
     ],
     "@typescript-eslint/no-explicit-any": "off"
-  }
+  },
+  "overrides": [
+    {
+      "files": ["packages/api-doc-viewer/src/**/*.tsx"],
+      "rules": {
+        "no-restricted-syntax": [
+          "error",
+          {
+            "selector": "JSXAttribute[name.name='className'][value.type='Literal']",
+            "message": "Wrap class names in cn() so they get the api-doc-viewer- prefix (docs/design/shared/features/css-isolation.md)."
+          },
+          {
+            "selector": "JSXAttribute[name.name='className'] > JSXExpressionContainer > :not(CallExpression[callee.name='cn'])",
+            "message": "Wrap class names in cn() so they get the api-doc-viewer- prefix (docs/design/shared/features/css-isolation.md)."
+          },
+          {
+            "selector": "ObjectExpression > Property[key.name='className']:not([value.type='CallExpression'][value.callee.name='cn'])",
+            "message": "A className spread onto an element must be cn(...) (docs/design/shared/features/css-isolation.md)."
+          }
+        ]
+      }
+    }
+  ]
 }

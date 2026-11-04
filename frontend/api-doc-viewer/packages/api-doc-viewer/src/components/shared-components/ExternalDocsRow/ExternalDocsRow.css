@@ -1,0 +1,9 @@
+.external-docs-row-link {
+  font-size: 14px;
+  color: #0068FF;
+  text-decoration: none;
+}
+
+.external-docs-row-link:hover {
+  text-decoration: underline;
+}

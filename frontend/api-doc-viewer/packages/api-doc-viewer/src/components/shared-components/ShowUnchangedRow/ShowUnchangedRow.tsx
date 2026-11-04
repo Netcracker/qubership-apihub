@@ -1,3 +1,4 @@
+import { useAsyncLevelContext } from "@apihub/contexts/AsyncLevelContext/AsyncLevelContext"
 import { useLayoutMode } from "@apihub/contexts/LayoutModeContext"
 import { useLevelContext } from "@apihub/contexts/LevelContext"
 import { DOCUMENT_LAYOUT_MODE, SIDE_BY_SIDE_DIFFS_LAYOUT_MODE } from "@apihub/types/LayoutMode"
@@ -17,13 +18,17 @@ export type ShowUnchangedRowProps = WithPrecededByProps & {
 export const ShowUnchangedRow: FC<ShowUnchangedRowProps> = memo((props) => {
   const layoutMode = useLayoutMode()
   const level = useLevelContext()
+  // Per-side levels win, as in `TitleRowContent`, so the row lines up with its sibling title rows.
+  const asyncLevel = useAsyncLevelContext()
+  const beforeLevel = asyncLevel?.beforeLevel ?? level
+  const afterLevel = asyncLevel?.afterLevel ?? level
 
   switch (layoutMode) {
     case SIDE_BY_SIDE_DIFFS_LAYOUT_MODE:
       return (
         <SideBySideLayout
-          left={<ShowUnchangedRowContent {...props} layoutSide="before" level={level} />}
-          right={<ShowUnchangedRowContent {...props} layoutSide="after" level={level} />}
+          left={<ShowUnchangedRowContent {...props} layoutSide="before" level={beforeLevel} />}
+          right={<ShowUnchangedRowContent {...props} layoutSide="after" level={afterLevel} />}
         />
       )
     case DOCUMENT_LAYOUT_MODE:

@@ -8,7 +8,7 @@ import { ViewComponent } from "../service/view-component";
 import { storyPage } from "../service/storybook-service";
 import { waitForDdlTableDiffsViewer } from "../service/viewer-waits";
 
-const SNAPSHOTS_DIR = path.resolve(__dirname, "..", "__image_snapshots__");
+const SNAPSHOTS_DIR = path.resolve(__dirname, "__image_snapshots__");
 
 describe('DDL API Diffs Suite - Column Changes Except Types Samples', () => {
   let story: StoryPage;

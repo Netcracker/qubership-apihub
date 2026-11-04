@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { cn } from "@apihub/utils/common/cn"
 import { DiffRecord, isDiff } from "@netcracker/qubership-apihub-api-data-model"
 import { Diff, DiffAction } from "@netcracker/qubership-apihub-api-diff"
 import { FC, ReactNode } from "react"
@@ -51,7 +52,7 @@ export const RequiredStar: FC<RequiredStarProps> = (props) => {
     isSideBySideDiffsLayoutMode && shouldDisplayInSideBySide ||
     !isSideBySideDiffsLayoutMode && value === true
   ) {
-    requiredNode = <sup className="ml-0.5 text-red-500">*</sup>
+    requiredNode = <sup className={cn("ml-0.5 text-red-500")}>*</sup>
   }
   return requiredNode
 }

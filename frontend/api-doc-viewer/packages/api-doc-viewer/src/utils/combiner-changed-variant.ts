@@ -16,7 +16,7 @@
 
 /**
  * Clicks the oneOf/anyOf combiner variant option that actually contains the diff (detected via
- * the `diffs-border-shadow_*` / `diffs-round-marker_*` classes `CombinerSelectorRow`'s underlying
+ * the `api-doc-viewer-diffs-border-shadow_*` / `api-doc-viewer-diffs-round-marker_*` classes `CombinerSelectorRow`'s underlying
  * `Selector` component applies to changed options), instead of leaving the default first-option
  * selection. Recurses into nested combiners revealed by each click until no changed-but-unselected
  * option remains (leaf state). Option buttons carry `data-testid="json-schema-combiner-option-
@@ -40,8 +40,10 @@ export async function switchCombinerNodesToChangedVariant(
   maxIterations = 50,
 ): Promise<void> {
   const COMBINER_OPTION_SELECTOR = '[data-testid^="json-schema-combiner-option-"]';
-  const CHANGED_INDICATOR_PATTERN = /(?:^|\s)diffs-(?:border-shadow|round-marker)_\S+/;
-  const SELECTED_CLASS_PATTERN = /(?:^|\s)selected(?:\s|$)/;
+  // Class names are prefixed by cn() (CSS isolation); the prefix is spelled out because this body
+  // runs through page.evaluate() and cannot import it.
+  const CHANGED_INDICATOR_PATTERN = /(?:^|\s)api-doc-viewer-diffs-(?:border-shadow|round-marker)_\S+/;
+  const SELECTED_CLASS_PATTERN = /(?:^|\s)api-doc-viewer-selected(?:\s|$)/;
 
   // Fallback for `waitForNextRender`: `requestAnimationFrame` only fires once the browser
   // actually composites the tab, which it may not do promptly (or at all) for a tab that isn't

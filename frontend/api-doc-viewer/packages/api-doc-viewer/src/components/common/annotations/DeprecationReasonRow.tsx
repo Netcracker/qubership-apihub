@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { cn } from '@apihub/utils/common/cn'
 import { LevelIndicator } from "@apihub/components/shared-components/LevelIndicator"
 import { isDiff, isObject } from "@netcracker/qubership-apihub-api-data-model"
 import { Diff, DiffAction, DiffMetaRecord } from "@netcracker/qubership-apihub-api-diff"
@@ -100,10 +101,10 @@ export const DeprecationReasonRow: FC<DeprecationReasonRowProps> = (props) => {
     // FIXME 28.11.23 // Fix this component when it's clear how $changes for deprecation reason are provided not in enum
 
     return (
-      <div className={rowClasses}>
+      <div className={cn(rowClasses)}>
         <LevelIndicator level={level} />
-        {shift && <div className="w-5" />}
-        <div className="inline-block py-1">
+        {shift && <div className={cn("w-5")} />}
+        <div className={cn("inline-block py-1")}>
           <Value
             value={value}
             enableDiffs={diffTypeIncluded}
@@ -127,7 +128,7 @@ export const DeprecationReasonRow: FC<DeprecationReasonRowProps> = (props) => {
 
   if (isDocumentLayoutMode) {
     return (
-      <div className="flex flex-row">
+      <div className={cn("flex flex-row")}>
         <Content layoutSide={CHANGED_LAYOUT_SIDE} />
       </div>
     )
@@ -135,7 +136,7 @@ export const DeprecationReasonRow: FC<DeprecationReasonRowProps> = (props) => {
 
   if (isInlineDiffsLayoutMode) {
     return (
-      <div className={`flex flex-row ${diffTypeIncluded ? diffBackground : ''}`}>
+      <div className={cn(`flex flex-row ${diffTypeIncluded ? diffBackground : ''}`)}>
         {diffTypeIncluded && <UxDiffFloatingBadge variant={diffType} message={diffTypeCause} />}
         <Content layoutSide={ORIGIN_LAYOUT_SIDE} />
       </div>
@@ -145,7 +146,7 @@ export const DeprecationReasonRow: FC<DeprecationReasonRowProps> = (props) => {
   if (isSideBySideDiffsLayoutMode) {
     if (!$nodeChange && !$metaChanges) {
       return (
-        <div className="flex flex-row">
+        <div className={cn("flex flex-row")}>
           <Content layoutSide={ORIGIN_LAYOUT_SIDE} />
           <Content layoutSide={CHANGED_LAYOUT_SIDE} />
         </div>
@@ -153,7 +154,7 @@ export const DeprecationReasonRow: FC<DeprecationReasonRowProps> = (props) => {
     }
 
     return (
-      <div className={`flex flex-row relative ${diffTypeIncluded ? diffBackground : ''}`}>
+      <div className={cn(`flex flex-row relative ${diffTypeIncluded ? diffBackground : ''}`)}>
         {diffTypeIncluded && <UxDiffFloatingBadge variant={diffType} message={diffTypeCause} />}
         {!isContentChanged || (itemRemoved || itemReplaced)
           ? <Content layoutSide={ORIGIN_LAYOUT_SIDE} />
@@ -254,9 +255,9 @@ const Value: FC<ValueProps> = props => {
   }
 
   return (
-    <div className={`text-xs text-slate-700`}>
-      <b className="font-Inter-Bolder mr-1">Deprecation reason:</b>
-      <span className={`${enableDiffs ? diffColorSchema ?? '' : ''}`}>
+    <div className={cn(`text-xs text-slate-700`)}>
+      <b className={cn("font-Inter-Bolder mr-1")}>Deprecation reason:</b>
+      <span className={cn(`${enableDiffs ? diffColorSchema ?? '' : ''}`)}>
         {value}
       </span>
     </div>

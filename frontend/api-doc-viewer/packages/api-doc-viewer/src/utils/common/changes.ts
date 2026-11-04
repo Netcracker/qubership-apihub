@@ -29,7 +29,7 @@ import {
 } from '@netcracker/qubership-apihub-api-diff'
 import { IModelStateNode } from '@netcracker/qubership-apihub-api-state-model'
 import { startFromOpenApiComponents } from '@netcracker/qubership-apihub-api-unifier'
-import { CHANGE_SEVERITIES } from '../../consts/changes'
+import { DiffTypeOrder } from '@netcracker/qubership-apihub-next-data-model/model/abstract/tree-with-diffs/diff-type-order'
 import { CHANGED_LAYOUT_SIDE, LayoutSide, ORIGIN_LAYOUT_SIDE } from '../../types/internal/LayoutSide'
 import {
   DOCUMENT_LAYOUT_MODE,
@@ -127,17 +127,9 @@ export function maxDiffTypeFromNestedNodesSummary(summaries?: Record<string, Nod
   return diffType
 }
 
+/** Diff-type order of the data layer (`DiffTypeOrder`); every caller passes a defined `a`. */
 export function compareDiffTypes(a: DiffType | undefined, b: DiffType | undefined): number {
-  if (!a && !b) {
-    return 0
-  }
-  if (!a && b) {
-    return CHANGE_SEVERITIES[b]
-  }
-  if (a && !b) {
-    return CHANGE_SEVERITIES[a]
-  }
-  return CHANGE_SEVERITIES[a!] - CHANGE_SEVERITIES[b!]
+  return DiffTypeOrder.compare(a, b)
 }
 
 export const DEFAULT_DIFF_TYPE_AND_CAUSE_PAIR: [DiffType | undefined, string | undefined] = [undefined, undefined]

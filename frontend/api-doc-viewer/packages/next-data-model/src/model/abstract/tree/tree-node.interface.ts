@@ -68,4 +68,7 @@ export interface ITreeNode<
   addChildNode(node: ITreeNode): void
 
   addNestedNode(node: ITreeNode): void
+
+  /** Reorders the nested nodes (the options of a complex container) in place. */
+  sortNestedNodes(compare: (a: ITreeNode<V, K, M>, b: ITreeNode<V, K, M>) => number): void
 }

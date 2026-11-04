@@ -1,3 +1,4 @@
+import { cn } from "@apihub/utils/common/cn"
 import { resolveJsonSchemaTypeLabel } from "@netcracker/qubership-apihub-next-data-model/model/json-schema/type-label"
 import {
   resolvePlainPropertyExpanderExpanded,
@@ -178,7 +179,7 @@ export const CombinerNodeViewer: FC<CombinerNodeViewerProps> = (props) => {
   return (
     <div
       data-testid="json-schema-combiner-node-viewer"
-      className="json-schema-property flex flex-col"
+      className={cn("json-schema-property flex flex-col")}
     >
       <SchemaNodeTitleRow
         data-precededby={precededBy}

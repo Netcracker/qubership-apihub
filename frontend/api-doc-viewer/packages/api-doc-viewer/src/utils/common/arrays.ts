@@ -24,6 +24,11 @@ export class ArrayUtils {
     return value.length === 0
   }
 
+  /** A typed list with at least one item (for APIs that take a non-empty tuple). */
+  public static isNonEmptyList<T>(value: readonly T[]): value is readonly [T, ...T[]] {
+    return value.length > 0
+  }
+
   public static isNotEmpty(value: unknown): value is [unknown, ...unknown[]] {
     if (!Array.isArray(value)) {
       return false

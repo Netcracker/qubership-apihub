@@ -8,7 +8,7 @@ import { ViewComponent } from "../service/view-component";
 import { storyPage } from "../service/storybook-service";
 import { waitForDdlTableDiffsViewer } from "../service/viewer-waits";
 
-const SNAPSHOTS_DIR = path.resolve(__dirname, "..", "__image_snapshots__");
+const SNAPSHOTS_DIR = path.resolve(__dirname, "__image_snapshots__");
 const STORY_ID_PREFIX = "ddl-api-diffs-suite-foreign-key-reference-changes-samples--case-";
 const SNAPSHOT_ID_PREFIX = "ddl-api-diffs-suite-foreign-key-reference-changes-samples-";
 

@@ -18,6 +18,7 @@ import {
   JsonSchemaValidationRowKeys,
 } from "@apihub/next-data-model/model/json-schema/tree-with-diffs/validation-row-source-keys"
 import { isDiffAdd, isDiffRemove, isDiffRename, isDiffReplace } from "@netcracker/qubership-apihub-api-diff"
+import { DiffTypeOrder } from "@apihub/next-data-model/model/abstract/tree-with-diffs/diff-type-order"
 
 export class JsonSchemaNodeDiffsSeveritiesAggregatorKindAny
   extends AbstractNodeDiffsSeveritiesAggregator<JsonSchemaTreeNodeStoredValue | null> {
@@ -75,7 +76,7 @@ export class JsonSchemaNodeDiffsSeveritiesAggregatorKindAny
   ): void {
     const validationDiffs = nodeDiffs as JsonSchemaKindAnyNodeDiffs
     for (const rowKey of Object.values(JsonSchemaValidationRowKeys)) {
-      const maxRowDiff = AbstractNodeDiffsSeveritiesAggregator.maxChangedPropertyMetaDataByDiffType(
+      const maxRowDiff = DiffTypeOrder.strongestChangedPropertyMetaData(
         validationDiffs.validationRowDiffs?.[rowKey],
         validationDiffs.validationRowColorizingDiffs?.[rowKey],
         ...Object.values(validationDiffs.validationRowValueDiffs?.[rowKey] ?? {}),
@@ -99,7 +100,7 @@ export class JsonSchemaNodeDiffsSeveritiesAggregatorKindAny
     diffsSeverities: NodeDiffsSeverities,
   ): void {
     const customAnnotationDiffs = nodeDiffs as JsonSchemaKindAnyNodeDiffs
-    const maxRowDiff = AbstractNodeDiffsSeveritiesAggregator.maxChangedPropertyMetaDataByDiffType(
+    const maxRowDiff = DiffTypeOrder.strongestChangedPropertyMetaData(
       ...Object.values(customAnnotationDiffs.customAnnotationDiffs ?? {}),
       ...Object.values(customAnnotationDiffs.customAnnotationRowColorizingDiffs ?? {}),
     )
@@ -119,7 +120,7 @@ export class JsonSchemaNodeDiffsSeveritiesAggregatorKindAny
       ...Object.values(sharedDiffs.typeLabelFieldDiffs ?? {}),
     ]
 
-    const maxPropertyDiff = AbstractNodeDiffsSeveritiesAggregator.maxChangedPropertyMetaDataByDiffType(
+    const maxPropertyDiff = DiffTypeOrder.strongestChangedPropertyMetaData(
       ...titleRowDiffs,
     )
     if (!maxPropertyDiff) {

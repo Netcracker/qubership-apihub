@@ -36,7 +36,6 @@ import type {
 } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
 import { isGraphQlOperation } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
 import { DASHBOARD_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
-import { useSystemInfo } from '@netcracker/qubership-apihub-ui-shared/features/system-info'
 import { usePublishedDocumentRaw } from '@netcracker/qubership-apihub-ui-shared/hooks/documents/usePublishedDocumentRaw'
 import {
   useOperationsPairStringified,
@@ -85,7 +84,6 @@ export const OperationListWithPreview: FC<OperationListWithPreviewProps> = memo<
 
   const operationSearchParams = useOperationSearchParams()
   const [kind] = usePackageKind()
-  const { productionMode } = useSystemInfo()
 
   const { mode, schemaViewMode } = useOperationViewMode()
 
@@ -192,7 +190,6 @@ export const OperationListWithPreview: FC<OperationListWithPreviewProps> = memo<
           isLoading={isInitialLoading || isNormalizedChangedOperationLoading}
           mode={mode}
           schemaViewMode={schemaViewMode}
-          productionMode={productionMode}
           maxWidthHeaderToolbar={initialSize}
         />
       }

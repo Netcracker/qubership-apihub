@@ -1,0 +1,27 @@
+openapi: 3.0.3
+info:
+  title: Orders
+  version: 1.0.0
+paths:
+  /orders:
+    post:
+      security:
+        - stub_key: []
+        - oauth2-implicit:
+            - orders:read
+      responses:
+        "200":
+          description: ""
+components:
+  securitySchemes:
+    stub_key:
+      type: apiKey
+      in: header
+      name: X-Stub-Key
+    oauth2-implicit:
+      type: oauth2
+      flows:
+        implicit:
+          authorizationUrl: https://auth.example.com/authorize
+          scopes:
+            orders:read: Read orders

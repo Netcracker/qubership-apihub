@@ -2,7 +2,7 @@ import type { VersionKey } from '@portal/entities/keys'
 import { INTERNAL_DOCUMENT_STRING_SYMBOL_MAPPING } from '@portal/utils/internal-documents/constants'
 import { isAsyncApiSpecification, isGraphApiSpecification, isOpenApiSpecification } from '@portal/utils/internal-documents/type-guards'
 import { extractOperationBasePath } from '@netcracker/qubership-apihub-api-diff'
-import { calculateNormalizedRestOperationId, removeComponents } from '@netcracker/qubership-apihub-api-processor'
+import { calculateNormalizedRestOperationId } from '@netcracker/qubership-apihub-api-processor'
 import { deserialize } from '@netcracker/qubership-apihub-api-unifier'
 import { isRestOperation, type OperationData } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
 import type { PackageKey } from '@netcracker/qubership-apihub-ui-shared/utils/types'
@@ -52,7 +52,8 @@ export function useNormalizedOperation(options: Options): QueryResultWithNoInter
   const filteredInternalDocumentForOperation = useMemo(
     () => {
       if (isOpenApiSpecification(deserializedInternalDocument)) {
-        // Truncate REST specification and leave the only necessary path
+        // Truncate REST specification and leave the only necessary path + method,
+        // so the operation viewer can resolve its keys from the document (see `resolveOpenApiOperationKeys`)
         const operationPath = operation && isRestOperation(operation) ? operation.path : undefined
         const operationMethod = operation && isRestOperation(operation) ? operation.method : undefined
         if (!operationPath || !operationMethod) {
@@ -76,14 +77,15 @@ export function useNormalizedOperation(options: Options): QueryResultWithNoInter
         if (!foundPath) {
           return undefined
         }
-        return removeComponents({
+        // `components` are kept: the operation viewer reads security scheme definitions from them
+        return {
           ...internalDocument,
           paths: {
             [foundPath]: {
               [operationMethod]: paths![foundPath]![operationMethod],
             },
           },
-        })
+        }
       }
       // GraphQL operations should be returned as is, because truncating is on ADV layer
       if (isGraphApiSpecification(deserializedInternalDocument)) {

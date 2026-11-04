@@ -3,6 +3,7 @@ import { NODE_LEVEL_DIFF_KEY, NodeDiffs, NodeDiffsSeverities, NodeDiffsSeverity,
 import { AsyncApiTreeNodeKind } from "@apihub/next-data-model/model/async-api/types/node-kind";
 import { AsyncApiTreeNodeValue } from "@apihub/next-data-model/model/async-api/types/node-value";
 import { isDiffAdd, isDiffRemove, isDiffReplace } from "@netcracker/qubership-apihub-api-diff";
+import { DiffTypeOrder } from "@apihub/next-data-model/model/abstract/tree-with-diffs/diff-type-order";
 
 export class AsyncApiNodeDiffsSeveritiesAggregatorKindAny
   extends AbstractNodeDiffsSeveritiesAggregator<AsyncApiTreeNodeValue<AsyncApiTreeNodeKind> | null> {
@@ -132,7 +133,7 @@ export class AsyncApiNodeDiffsSeveritiesAggregatorKindAny
       const diffServerHostData = diffServerHost?.data
       const diffServerProtocolData = diffServerProtocol?.data
 
-      const maxDiff = AbstractNodeDiffsSeveritiesAggregator.maxDiffByDiffType(diffServerHostData, diffServerProtocolData)
+      const maxDiff = DiffTypeOrder.strongestDiff(diffServerHostData, diffServerProtocolData)
       if (maxDiff) {
         const nodeDiffsSeverity: NodeDiffsSeverity = {
           type: maxDiff.type,

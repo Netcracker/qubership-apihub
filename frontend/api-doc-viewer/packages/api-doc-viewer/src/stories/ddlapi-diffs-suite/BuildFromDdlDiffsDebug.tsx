@@ -1,3 +1,4 @@
+import { cn } from "@apihub/utils/common/cn";
 import { DdlTableDiffsViewer } from "@apihub/components/DdlTableViewer/DdlTableDiffsViewer";
 import { DisplayMode } from "@apihub/types/DisplayMode";
 import { apiDiff } from "@netcracker/qubership-apihub-api-diff";
@@ -197,7 +198,9 @@ export const BuildFromDdlDiffsDebug: FC<BuildFromDdlDiffsDebugProps> = ({
   }
 
   return (
-    <>
+    // The debug controls sit outside the viewer: the viewer root gives them its font and reset
+    // (CSS isolation scopes those to roots, docs/design/shared/features/css-isolation.md).
+    <div className={cn("root")}>
       <label style={{ display: "inline-flex", gap: 8, alignItems: "center", marginBottom: 12 }}>
         Table
         <select
@@ -222,6 +225,6 @@ export const BuildFromDdlDiffsDebug: FC<BuildFromDdlDiffsDebugProps> = ({
         displayMode={displayMode}
         devMode={true}
       />
-    </>
+    </div>
   );
 };

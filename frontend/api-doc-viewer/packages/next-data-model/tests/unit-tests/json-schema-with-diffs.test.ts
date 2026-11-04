@@ -2154,6 +2154,18 @@ describe("JsonSchema customAnnotations (generic extension point) diffs", () => {
     expect(rowDiff?.styles.after.backgroundColor).toBe(HighlightVariant.Yellow)
   })
 
+  it.each([
+    ["added", { a: { label: "A", value: "a" } }, { a: { label: "A", value: "a" }, location: { label: "Location", value: "$message.header#/id" } }, DiffAction.add, "afterValue"],
+    ["removed", { a: { label: "A", value: "a" }, location: { label: "Location", value: "$message.header#/id" } }, { a: { label: "A", value: "a" } }, DiffAction.remove, "beforeValue"],
+  ] as const)("unwraps the entry value when one custom annotation key is %s next to an unchanged one", (_, before, after, action, side) => {
+    const tree = buildTree({ type: "string", customAnnotations: before }, { type: "string", customAnnotations: after })
+
+    const chipDiff = JsonSchemaRowDiffs.CustomAnnotations.takeDiff(tree.root!, "location")
+    expect(chipDiff?.data.action).toBe(action)
+    expect(Reflect.get(chipDiff!.data, side)).toBe("$message.header#/id")
+    expect(JsonSchemaRowDiffs.CustomAnnotations.takeDiff(tree.root!, "a")).toBeUndefined()
+  })
+
   it("colors a wholly-added property's custom annotation, even though it has no diff of its own", () => {
     const tree = buildTree(
       { type: "object", properties: { prop0: { type: "string" } } },

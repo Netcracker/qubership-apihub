@@ -24,6 +24,8 @@ import {
   JsonSchemaDiffsViewer,
   GraphQLOperationViewer,
   GraphQLOperationDiffViewer,
+  OpenApiOperationViewer,
+  OpenApiOperationDiffsViewer,
   AsyncApiOperationViewer,
   AsyncApiOperationDiffsViewer,
   DdlTableViewer,
@@ -34,16 +36,41 @@ import {
   type DisplayMode,
   type LayoutMode,
   type DiffMetaKeys,
+  type CustomizationOptions,
+  type TopLevelPropsMediaTypesMap,
+  type OpenApiOperationKeys,
+  type AsyncApiOperationKeys,
+  type TableKey,
   type NavigationLinkBuilder,
   type NavigationLinkProps,
   type NavigationLinkComponent,
-  buildOpenApiDiffCause,
+  buildDiffCauseByPathCausedAt,
+  buildOpenApiDiffCause, // deprecated
 } from '@netcracker/qubership-apihub-api-doc-viewer'
 import '@netcracker/qubership-apihub-api-doc-viewer/dist/style.css'
 ```
 
 Styles are **not** bundled into components — import the CSS once at the
 application entry (root layout or app shell).
+
+**CSS isolation:** every class the viewers render is prefixed `api-doc-viewer-`, and the stylesheet's
+reset and element rules (`ul`, `a`, `button`, `:root` variables) apply only inside a viewer root
+(`.api-doc-viewer-root`) — the host page is not restyled, and host classes with common names do not
+reach the viewers. Bundled fonts are registered as `"api-doc-viewer Inter"` etc. Host overrides
+target prefixed classes inside `.api-doc-viewer-root` and are not a stable API. A host
+`navigationLinkComponent` receives an already prefixed `className` — apply it unchanged. Design:
+`docs/design/shared/features/css-isolation.md`.
+
+**Peer dependencies:** `react` and `react-dom` `^18.2.0` — the host provides
+them; the bundle keeps them external.
+
+**Key and option types** are exported from the package root — type props with
+them instead of re-declaring shapes: `OpenApiOperationKeys` (`{ path, method }`),
+`AsyncApiOperationKeys` (`{ operationKey, messageKey }`; named `OperationKeys` inside
+next-data-model), `TableKey` (`{ schemaName, name }`), `CustomizationOptions`, and
+`TopLevelPropsMediaTypesMap`. `firstRowPrecededBy` (JSON Schema viewers) is an internal
+spacing hook for viewers that embed other viewers; its `PrecededBy` enum is not
+exported, and hosts omit the prop.
 
 ## Plain vs diffs viewers
 
@@ -55,15 +82,20 @@ build/normalisation pipeline — do not hand-merge before/after specs in UI code
 | --- | --- | --- | --- |
 | JSON Schema | `JsonSchemaViewer` | `JsonSchemaDiffsViewer` | `schema` (merged document for diffs) |
 | GraphQL operation (legacy) | `GraphQLOperationViewer` | `GraphQLOperationDiffViewer` | `source` |
+| OpenAPI operation | `OpenApiOperationViewer` | `OpenApiOperationDiffsViewer` | `source` / `mergedSource` |
 | AsyncAPI operation | `AsyncApiOperationViewer` | `AsyncApiOperationDiffsViewer` | `source` / `mergedSource` |
 | DDL table | `DdlTableViewer` | `DdlTableDiffsViewer` | `source` / `mergedSource` |
 
 Shared optional props: `displayMode` (`'simple' | 'detailed'`, default
-`'detailed'`); `expandedDepth` on JSON Schema and GraphQL viewers.
+`'detailed'`); `expandedDepth` on JSON Schema, OpenAPI, and GraphQL viewers
+(default `2`); `noHeading` and `devMode` on OpenAPI, AsyncAPI, and DDL viewers.
 
 Layout: the legacy `GraphQLOperationDiffViewer` accepts `layoutMode` and severity
-`filters`; JSON Schema, AsyncAPI, and DDL diffs viewers always render side by
-side and accept `diffTypes`.
+`filters`; JSON Schema, OpenAPI, AsyncAPI, and DDL diffs viewers always render side by
+side and accept `diffTypes` (placeholder — accepted, not applied yet).
+
+Every viewer renders nothing for a `null` document and catches its own render
+errors with an inline fallback message.
 
 ## Diff meta keys
 
@@ -80,10 +112,40 @@ const diffMetaKeys: DiffMetaKeys = {
 ```
 
 - **GraphQL diffs (legacy)** — prop name `metaKeys`.
-- **JSON Schema, AsyncAPI, and DDL diffs** — prop name `diffMetaKeys`.
+- **JSON Schema, OpenAPI, AsyncAPI, and DDL diffs** — prop name `diffMetaKeys`.
 
 Mismatch between merged-document keys and viewer props produces empty diff
 highlights with no runtime error.
+
+## OpenAPI-specific wiring
+
+`OpenApiOperationViewer` renders one OpenAPI 3.0.x / 3.1.x operation — security,
+parameters, request body, responses (with response-code and media-type selectors),
+extensions; nested schemas go through the JSON Schema viewers.
+
+- **`source`** (plain) — whole OpenAPI document after api-unifier `normalize` +
+  `denormalize`, **`components` kept**.
+- **`mergedSource`** (diffs) — `apiDiff` merged document of the two **whole** documents
+  (`components` kept).
+- **`operationKeys`** (optional, `OpenApiOperationKeys`) — `{ path, method }`; `path` is
+  the `paths` key exactly as written (e.g. `/pets/{petId}`), `method` is case-insensitive.
+  In a merged document a renamed path is addressed by its **after** key. Omitted → the
+  first operation of the document.
+- **`expandedDepth`** — forwarded to the nested JSON Schema viewers.
+- **`hideUnchangedNodes`** (diffs, default `true`) — forwarded to the nested
+  `JsonSchemaDiffsViewer`s; a security scheme card without content changes shows only
+  its title row plus a "three dots" row.
+
+```typescript
+<OpenApiOperationDiffsViewer
+  mergedSource={mergedOpenApiDocument}
+  operationKeys={{ path: '/pets/{petId}', method: 'get' }}
+  diffMetaKeys={diffMetaKeys}
+/>
+```
+
+Design: `docs/design/openapi/features/operation-viewer.md`,
+`docs/design/openapi/features/diffs.md`.
 
 ## AsyncAPI-specific wiring
 
@@ -117,7 +179,9 @@ before passing it as `source`. Select the operation with `operationType`
 top-level list). `JsonSchemaDiffsViewer` takes the merged document as `schema`,
 plus `diffMetaKeys`, optional `diffTypes` (placeholder: accepted but ignored — no diff-type
 filtering yet), and `hideUnchangedNodes` (default `true`:
-runs of unchanged nodes collapse behind a "Show N unchanged nodes" row).
+runs of unchanged nodes collapse behind a "Show N unchanged nodes" row). The `x-*` extension values
+(JSO trees) follow the same setting, in `JsonSchemaDiffsViewer` and in `OpenApiOperationDiffsViewer`;
+AsyncAPI bindings and extensions always show every row.
 
 **Synthesized schemas — renamed keys.** When the host builds a schema itself (for example one
 property per API parameter) and a property's key changed between versions, it can express the
@@ -185,7 +249,8 @@ Replace `RouterLink` with whatever link primitive the host router exposes
   routing — return a pathname and optional search string the host router
   understands. The **`column`** argument identifies the referenced column;
   table-level navigation may ignore it when building the link.
-- **`navigationLinkComponent`** — receives `{ href, className?, children }`
+- **`navigationLinkComponent`** — receives `{ href, className?, children }` (`className` is
+  already prefixed — apply it unchanged)
   where `href` comes from `navigationLinkBuilder`. Omit for static hosts and
   Storybook that rely on plain anchors (`DefaultNavigationLink`).
 
@@ -202,6 +267,9 @@ Viewers expect documents already normalised/merged before they reach the UI:
 - **Plain AsyncAPI** — normalised AsyncAPI object (often passed as
   `mergedDocument` even when not comparing versions).
 - **AsyncAPI diffs** — output of `apiDiff(before, after, { metaKey, firstReferenceKeyProperty, unify, … }).merged`.
+- **Plain OpenAPI** — `denormalize(normalize(document, options), options)`, `components` kept.
+- **OpenAPI diffs** — `apiDiff(beforeDocument, afterDocument, { beforeSource, afterSource, metaKey, unify, … }).merged`
+  of the whole documents.
 - **JSON Schema diffs** — `apiDiff` merged document of the schemas (or of their
   enclosing OpenAPI documents), with diff meta properties attached.
 - **DDL diffs** — merged ddlapi `Realm` produced by the ddlapi diff pipeline.
@@ -213,11 +281,17 @@ Replicate Storybook helpers (`prepareAsyncApiDocument`,
 in tests — production UI receives prepared documents from the host backend or
 build pipeline.
 
-## Helper export
+## Helper exports
 
-`buildOpenApiDiffCause` formats human-readable diff cause strings for OpenAPI
-diff tooltips. Prefer it over ad-hoc diff message formatting when displaying
-OpenAPI change annotations.
+Use these over ad-hoc formatting when a host shows "caused by" annotations next to
+change severities:
+
+- **`buildDiffCauseByPathCausedAt(path)`** — `caused by <path joined by '.'> change`
+  for the JSON path a change was caused at; `undefined` for an empty or missing path.
+- **`buildOpenApiDiffCause(diff)`** — *deprecated*, kept for existing hosts: derives the
+  path from an `apiDiff` `Diff`'s first after (else before) declaration path, only when it
+  starts at `components`, and returns `''` when there is none. Migrate to
+  `buildDiffCauseByPathCausedAt`.
 
 ## Scope note
 

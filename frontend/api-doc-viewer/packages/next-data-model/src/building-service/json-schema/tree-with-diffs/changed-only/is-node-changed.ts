@@ -1,7 +1,7 @@
 import { TreeNodeComplexityTypes } from "@apihub/next-data-model/model/abstract/tree/tree-node.interface"
 import { JsonSchemaTreeNodeWithDiffs } from "@apihub/next-data-model/model/json-schema/types/aliases"
 import { NodeId } from "@apihub/next-data-model/utility-types"
-import { hasOwnChangeSignals } from "./has-own-change-signals"
+import { hasOwnChangeSignals } from "@apihub/next-data-model/model/abstract/tree-with-diffs/changed-only/has-own-change-signals"
 
 type VisitState = {
   visiting: Set<NodeId>

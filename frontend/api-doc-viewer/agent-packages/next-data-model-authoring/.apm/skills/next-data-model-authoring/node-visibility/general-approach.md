@@ -13,6 +13,7 @@ to show):
 packages/next-data-model/src/
 ├── model/abstract/
 │   ├── display-mode.ts              # simple | detailed (cross-spec)
+│   ├── display-mode-rows.ts         # DisplayModeRows.apply: the display-mode rule (annotations)
 │   └── guards/display-mode.ts       # isSimpleDisplayMode, isDetailedDisplayMode
 ├── building-service/<spec>/
 │   ├── node-visibility-data/
@@ -56,6 +57,24 @@ Conventions:
 | Module wrappers | Optional `resolvePlain<Kind>NodeVisibility(...)` functions delegating to a default instance — stable functional API for viewers |
 | Export `hasDefinedValue` | Only from the kind module that owns it (e.g. column); with-diffs imports from **plain** kind file |
 | No factory yet | Skip `<Spec>NodeVisibilityManagerFactory` until a shared viewer layout or multi-kind orchestrator needs dispatch |
+
+## Display mode: category tables, not `detailed &&` (OpenAPI, AsyncAPI, JSON Schema, Security)
+
+`simple` hides **annotations** (descriptions, summaries, scope descriptions, JSON Schema deprecation
+reason and validation rows) and nothing else. Design:
+`docs/design/shared/features/display-mode-annotations.md`.
+
+- Compute **mode-agnostic presence** per row (`Record<Row, boolean>`: "the row has content", diff-only
+  presence included in with-diffs), then return `DisplayModeRows.apply(presence, <FAMILY>_ROW_CATEGORIES, displayMode)`.
+  One `DisplayModeRowCategories<Row>` table per row family, next to its resolver
+  (`OPENAPI_OPERATION_HEADER_ROW_CATEGORIES`, `SECURITY_SCHEME_ROW_CATEGORIES`,
+  `ASYNC_API_TEXT_ROW_CATEGORIES`, `JSON_SCHEMA_PROPERTY_CONTENT_ROW_CATEGORIES`).
+- Do **not** write `isDetailedDisplayMode(mode) && …` per row in these API types, and never compare
+  display modes in viewers. A new annotation is one table entry; pin it in
+  `tests/unit-tests/display-mode-annotations.test.ts`.
+- With-diffs managers extend the plain **presence** (`resolveRowPresence`) and reuse the plain
+  presence → visibility step (`resolveVisibilityFromPresence`), so the rule is applied once.
+- DDL API still uses per-row `isDetailedDisplayMode` checks (not in the scope of the annotation rule).
 
 ## Plain → with-diffs inheritance direction
 

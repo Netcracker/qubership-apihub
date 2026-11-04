@@ -33,11 +33,12 @@ docs/design/
 
 | Area | Coverage | Architecture | Entities | Features | Notes |
 | --- | --- | --- | --- | --- | --- |
-| Shared | — | [architecture/](shared/architecture/) | — | [lazy materialization](shared/features/lazy-materialization.md), [hiding unchanged nodes](shared/features/hiding-unchanged-nodes.md), [section header colorizing](shared/features/section-header-colorizing.md) | — |
-| AsyncAPI | [display-coverage.md](async-api/display-coverage.md) | [architecture/](async-api/architecture/) | — | — | — |
-| DDL API | [display-coverage.md](ddlapi/display-coverage.md) | [architecture/](ddlapi/architecture/) | [entities/](ddlapi/entities/) | [doc view](ddlapi/features/doc-view.md) | — |
-| JSO | — | — | — | [diffs specification](jso/features/diffs.md) | — |
+| Shared | — | [architecture/](shared/architecture/) | — | [lazy materialization](shared/features/lazy-materialization.md), [hiding unchanged nodes](shared/features/hiding-unchanged-nodes.md), [section header colorizing](shared/features/section-header-colorizing.md), [color config](shared/features/color-config.md), [arrow scroll strip](shared/features/arrow-scroll-strip.md), [selector options are nested nodes](shared/features/selector-options.md), [CSS isolation](shared/features/css-isolation.md), [display mode: annotations](shared/features/display-mode-annotations.md) | — |
+| JSO | — | — | — | [diffs specification](jso/features/diffs.md), [hiding unchanged nodes](jso/features/hiding-unchanged-nodes.md) | — |
 | JSON Schema | [display-coverage.md](json-schema/display-coverage.md) | [architecture/](json-schema/architecture/) | — | [validation rows](json-schema/features/validation-rows.md), [meta flags and required](json-schema/features/meta-flags-and-required.md), [nesting-indicator row diffs](json-schema/features/nesting-indicator-row-diffs.md), [hiding unchanged nodes](json-schema/features/hiding-unchanged-nodes.md), [node key rename](json-schema/features/node-key-rename.md) | [2026-09 review](json-schema/notes/2026-09-architecture-review.md) |
+| AsyncAPI | [display-coverage.md](async-api/display-coverage.md) | [architecture/](async-api/architecture/) | — | — | — |
+| OpenAPI — start at [openapi/README.md](openapi/README.md) | [display-coverage.md](openapi/display-coverage.md) | [architecture/](openapi/architecture/) | [operation](openapi/entities/operation.md), [security](openapi/entities/security.md), [parameters](openapi/entities/parameters.md), [request body](openapi/entities/request-body.md), [responses](openapi/entities/responses.md) | [operation viewer](openapi/features/operation-viewer.md), [diffs](openapi/features/diffs.md), [OAS 3.0 / 3.1](openapi/features/oas-versions.md), [response-code selector](openapi/features/response-code-selector.md), [plain case matrix](openapi/features/plain-case-matrix.md), [diffs case matrix](openapi/features/diffs-case-matrix.md), [compatibility suite](openapi/features/compatibility-suite.md) | [2026-10 design analysis](openapi/notes/2026-10-design-analysis.md), [2026-10 implementation decisions](openapi/notes/2026-10-implementation-decisions.md), [2026-10 compatibility-suite port TODO](openapi/notes/2026-10-compatibility-suite-port-todo.md) |
+| DDL API | [display-coverage.md](ddlapi/display-coverage.md) | [architecture/](ddlapi/architecture/) | [entities/](ddlapi/entities/) | [doc view](ddlapi/features/doc-view.md) | — |
 | GraphQL (legacy) | — | [architecture/](graphql/architecture/) | — | — | — |
 
 ## Conventions
@@ -55,6 +56,22 @@ docs/design/
 - Test-fixture catalogues are not design: they live next to the fixtures, see
   [packages/samples/README.md](../../packages/samples/README.md).
 - Agent-only material (traps, session lessons, review briefs) lives in `agent-packages/`.
+- **API type order.** Lists of API types — this index, Storybook, the single-suite screenshot
+  runner, Debug stories — go from the core to the overall specifications: JSO, JSON Schema,
+  AsyncAPI, OpenAPI (both built on JSO and JSON Schema), DDL API, GraphQL (neither is). See
+  [Storybook and runner order](#storybook-and-runner-order).
+
+## Storybook and runner order
+
+`packages/api-doc-viewer/.storybook/preview.ts` (`storySort.order`) is the source of truth: `Debug`
+first (one entry per viewer, in API type order), then one block per API type — plain suites, diffs
+suites, feature suites, compatibility suites — with explicit sub-orders where alphabetical order
+would mislead (OpenAPI compatibility suites: version pairs, then suites operation top-down). The
+single-suite runner (`pnpm run screenshot-test-single-suite` / `regenerate-screenshots-single-suite`,
+`bin/run-screenshot-test-suite.mjs`) lists its test runs from
+`packages/api-doc-viewer/bin/screenshot-test-run-order.json`; `tests/storybook-order.test.ts` checks
+that file against `preview.ts` and that every hand-written IT test run is listed. Storybook parses
+`storySort` statically, so `preview.ts` cannot import the order.
 
 ## Workflow
 

@@ -1,0 +1,35 @@
+openapi: 3.0.3
+info:
+  title: Orders
+  version: 1.0.0
+paths:
+  /orders/{orderId}:
+    post:
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          description: Order identifier.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""
+          headers:
+            ETag:
+              schema:
+                type: string
+            X-Rate-Limit-Remaining:
+              description: Requests left in the window.
+              schema:
+                type: integer
+        "400":
+          description: ""
+          headers:
+            ETag:
+              schema:
+                type: string
+            X-Rate-Limit-Remaining:
+              description: Requests left in the window.
+              schema:
+                type: integer

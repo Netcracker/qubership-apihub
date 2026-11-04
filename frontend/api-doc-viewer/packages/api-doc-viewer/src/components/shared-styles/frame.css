@@ -1,0 +1,74 @@
+/* =============================================================================
+   Framed row groups (OpenAPI security cards).
+
+   A card is NOT a block: it is a stack of full-width rows. Every row of a card carries
+   data-frame-position on its per-side content element. That element stays as wide as its side, so a
+   diff background (row highlight, wholly added / removed card) fills the whole side up to the
+   side-by-side separator. The card itself is an illusion: each row draws its own frame segment as an
+   absolutely positioned ::before box (left / right border; top on the first row, bottom on the last),
+   and pads its content into that box. Segments of consecutive rows line up into one card.
+
+   The first and last rows are content-less frame rows (SecurityFrameRow): their height and the
+   border's offset come from the layout data (next-data-model LayoutPlanner.frameRow), passed
+   as --frame-border-top (first row: border this far below the row top) and --frame-border-bottom
+   (last row: border this far above the row bottom). The space outside the border is part of those
+   rows, so neighbouring cards and rows need no separator next to them.
+
+   Vertical spacing inside a frame must be padding (data-precededby rules), never margin - a margin
+   would cut the side borders.
+   ============================================================================= */
+
+/* `div[…]` outranks the rows' own `w-full` / `px-4` utilities. */
+div[data-frame-position] {
+  /* Frame box: starts 16px in (= px-4, X_AXIS_PADDING_ROWS), under the section title text.
+     Plain mode: 40% of the side, at most 500px, at least 320px - but never wider than the side
+     allows (100% minus the 16px indents on both sides). */
+  --frame-left: 16px;
+  --frame-width: min(calc(100% - 32px), max(320px, min(40%, 500px)));
+  --frame-inner-padding: 16px;
+  --frame-radius: 6px;
+
+  position: relative;
+  flex: 1 1 0%;
+  min-width: 0;
+  width: auto;
+  /* Content inside the frame box: frame offset + inner padding on the left; on the right everything
+     outside the frame box + inner padding. Percentages resolve against the side width. */
+  padding-left: calc(var(--frame-left) + var(--frame-inner-padding));
+  padding-right: calc(100% - var(--frame-left) - var(--frame-width) + var(--frame-inner-padding));
+}
+
+/* Diffs mode (side-by-side): the frame box is 80% of its side (at least 320px, never past the
+   separator); no 500px cap - it would push the card below 80% on wide screens. */
+.side-by-side-layout div[data-frame-position] {
+  --frame-width: min(calc(100% - 32px), max(320px, 80%));
+}
+
+div[data-frame-position]::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--frame-left);
+  width: var(--frame-width);
+  box-sizing: border-box;
+  border-left: 1px solid #D5DCE3;
+  border-right: 1px solid #D5DCE3;
+  pointer-events: none;
+}
+
+div[data-frame-position="first"]::before,
+div[data-frame-position="single"]::before {
+  top: var(--frame-border-top, 0px);
+  border-top: 1px solid #D5DCE3;
+  border-top-left-radius: var(--frame-radius);
+  border-top-right-radius: var(--frame-radius);
+}
+
+div[data-frame-position="last"]::before,
+div[data-frame-position="single"]::before {
+  bottom: var(--frame-border-bottom, 0px);
+  border-bottom: 1px solid #D5DCE3;
+  border-bottom-left-radius: var(--frame-radius);
+  border-bottom-right-radius: var(--frame-radius);
+}

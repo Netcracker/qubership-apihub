@@ -1,0 +1,316 @@
+/**
+ * Generates the plain OpenAPI Operation Suite from `bin/openapi-plain-case-definitions.mjs`:
+ *
+ * - fixtures and catalogues: `packages/samples/openapi/` (recreated as a whole); a group with a
+ *   `template` writes only `template/sample.yaml`, and its cases render it with their own method;
+ * - stories: `src/stories/openapi-suite/<dialect>-<group>.stories.tsx`;
+ * - screenshot ITs: `src/it/openapi-suite/<dialect>-<group>.it-test.ts` (every case in display
+ *   mode `detailed`, the default; `switchTo` options selected before the capture; display mode
+ *   `simple` is covered by `OpenAPI Operation Suite (Display Mode = simple)`);
+ * - the case matrix block of `docs/design/openapi/features/plain-case-matrix.md`.
+ *
+ * Usage (from packages/api-doc-viewer): node bin/generate-openapi-suite.mjs
+ */
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+import { stringify } from "yaml";
+import { collectGroups, E2E_SECTION_IDS } from "./openapi-plain-case-definitions.mjs";
+import { toStorybookMetaId, toStorybookStorySlug } from "./storybook-story-id-utils.mjs";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const packageRoot = path.resolve(__dirname, "..");
+const samplesRoot = path.resolve(packageRoot, "../samples/openapi");
+const storiesDir = path.resolve(packageRoot, "src/stories/openapi-suite");
+const itDir = path.resolve(packageRoot, "src/it/openapi-suite");
+const matrixDoc = path.resolve(packageRoot, "../../docs/design/openapi/features/plain-case-matrix.md");
+
+const SUITE_TITLE = "OpenAPI Operation Suite";
+const MATRIX_BEGIN = "<!-- BEGIN generated: node packages/api-doc-viewer/bin/generate-openapi-suite.mjs -->";
+const MATRIX_END = "<!-- END generated -->";
+
+/** Short column headers of the E2E grid. */
+const SECTION_COLUMNS = {
+  "summary": "Sum",
+  "operation-id": "ID",
+  "address": "Addr",
+  "description": "Desc",
+  "security": "Sec",
+  "operation-extensions": "Ext",
+  "path-parameters": "Path",
+  "query-parameters": "Query",
+  "headers": "Hdr",
+  "cookies": "Cook",
+  "body": "Body",
+  "responses-1-code-headers": "R1 hdr",
+  "responses-1-code-body": "R1 body",
+  "responses-2-codes-headers": "R2 hdr",
+  "responses-2-codes-body": "R2 body",
+};
+
+const toExportName = (caseId) => `Case_${caseId.replace(/[^A-Za-z0-9]/g, "_")}`;
+const escapeCell = (text) => text.replaceAll("|", "\\|");
+const groupKey = (group) => `${group.dialect}-${group.group.replaceAll("/", "-")}`;
+/** Display title: `Fields/Security` -> `Fields / Security`. */
+const displayTitle = (group) => group.title.replaceAll("/", " / ");
+const groupFolder = (group) => path.join(samplesRoot, group.dialect, group.group);
+const quote = (text) => JSON.stringify(text);
+
+function numberCases(group) {
+  return group.cases.map((sampleCase, index) => ({
+    ...sampleCase,
+    caseId: `${String(index + 1).padStart(group.digits, "0")}-${sampleCase.slug}`,
+    switchTo: sampleCase.switchTo ?? [],
+    argVariants: sampleCase.argVariants ?? [],
+  }));
+}
+
+function reset() {
+  fs.rmSync(samplesRoot, { recursive: true, force: true });
+  fs.mkdirSync(samplesRoot, { recursive: true });
+  for (const file of fs.readdirSync(storiesDir)) {
+    if (file.endsWith(".stories.tsx")) {
+      fs.rmSync(path.join(storiesDir, file));
+    }
+  }
+  // Only the ITs: the folder also holds the committed baselines (`__image_snapshots__/`).
+  fs.mkdirSync(itDir, { recursive: true });
+  for (const file of fs.readdirSync(itDir)) {
+    if (file.endsWith(".it-test.ts")) {
+      fs.rmSync(path.join(itDir, file));
+    }
+  }
+}
+
+const TEMPLATE_HEADER = "# Method template: stories serve the only operation of this document as the case's HTTP method.\n";
+
+function writeFixtures(group, cases) {
+  const fixtures = group.template
+    ? [{ dir: group.template.slug, document: group.template.document, header: TEMPLATE_HEADER }]
+    : cases.map(sampleCase => ({ dir: sampleCase.caseId, document: sampleCase.document, header: "" }));
+  for (const { dir, document, header } of fixtures) {
+    const folder = path.join(groupFolder(group), dir);
+    fs.mkdirSync(folder, { recursive: true });
+    fs.writeFileSync(path.join(folder, "sample.yaml"), header + stringify(document, { lineWidth: 0 }), "utf8");
+  }
+}
+
+const templateNote = (group) => (group.template
+  ? `
+One fixture, \`${group.template.slug}/sample.yaml\` (\`${group.template.method.toUpperCase()} ${group.template.path}\` as written);
+every case serves its only operation as the case's method (story arg \`method\`, control in Storybook).
+`
+  : "");
+
+const switchCell = (sampleCase) => (sampleCase.switchTo.length > 0 ? sampleCase.switchTo.map(id => `\`${id}\``).join(", ") : "—");
+
+function writeGroupCatalogue(group, cases) {
+  const rows = cases.map(c => `| \`${c.caseId}\` | \`${c.method.toUpperCase()} ${c.path}\` | ${escapeCell(c.title)} | ${switchCell(c)} |`);
+  const text = `# OpenAPI fixtures — ${group.dialectTitle} ${displayTitle(group)}
+
+Generated by \`node bin/generate-openapi-suite.mjs\` (packages/api-doc-viewer) from
+\`bin/openapi-plain-case-definitions.mjs\`. Do not edit by hand.
+${templateNote(group)}
+## Cases
+
+| Case | Operation | Covers | Auto-switch |
+| --- | --- | --- | --- |
+${rows.join("\n")}
+
+## Storybook and screenshot tests
+
+Storybook: \`${SUITE_TITLE}/${group.dialectTitle}/${group.title}\`
+(\`src/stories/openapi-suite/${groupKey(group)}.stories.tsx\`). ITs:
+\`src/it/openapi-suite/${groupKey(group)}.it-test.ts\`, every case in display mode \`detailed\`,
+auto-switch options selected first (\`simple\`: \`${SUITE_TITLE} (Display Mode = simple)\`).
+
+## Regenerate
+
+\`node bin/generate-openapi-suite.mjs\` in \`packages/api-doc-viewer/\`, then
+\`pnpm run regenerate-screenshots-single-suite\`.
+`;
+  fs.writeFileSync(path.join(groupFolder(group), "README.md"), text, "utf8");
+}
+
+function writeRootCatalogue(expanded) {
+  const rows = expanded.map(({ group, cases }) =>
+    `| [\`${group.dialect}/${group.group}/\`](${group.dialect}/${group.group}/README.md) | ${group.dialectTitle} / ${displayTitle(group)} | ${cases.length} |`);
+  const total = expanded.reduce((sum, { cases }) => sum + cases.length, 0);
+  const text = `# OpenAPI fixtures
+
+Plain OpenAPI documents for \`OpenApiOperationViewer\`: \`<dialect>/<group>/<case-id>/sample.yaml\`,
+one operation per case (catalogues name it). Stories normalize them (\`normalize\` + \`denormalize\`).
+Groups: **E2E** (section combinations), **Minimal**, **HTTP Methods** (one template served as every
+method), **Fields** (required fields + the covered one),
+**Document Structure** (path items, \`$ref\`, ordering); OAS 3.1 covers only what displays
+differently from 3.0. Matrix and rules:
+[docs/design/openapi/features/plain-case-matrix.md](../../../docs/design/openapi/features/plain-case-matrix.md).
+
+Generated by \`node bin/generate-openapi-suite.mjs\` (packages/api-doc-viewer) from
+\`bin/openapi-plain-case-definitions.mjs\`; the whole folder is recreated. Do not edit by hand.
+
+## Categories
+
+| Group | Storybook | Cases |
+| --- | --- | ---: |
+${rows.join("\n")}
+
+Total: ${total} cases.
+
+## Storybook and screenshot tests
+
+\`${SUITE_TITLE}/<OAS version>/<Group>\` stories under \`packages/api-doc-viewer/src/stories/openapi-suite/\`
+(controls: display mode, default \`detailed\`; auto-switch, default on; no heading); ITs
+\`packages/api-doc-viewer/src/it/openapi-suite/<dialect>-<group>.it-test.ts\` capture every case in
+\`detailed\`, after selecting the case's options (\`switchOpenApiOptions\`). Display mode \`simple\`
+is covered by \`${SUITE_TITLE} (Display Mode = simple)\` (\`packages/samples/openapi-display-mode-simple/\`).
+
+## Regenerate
+
+\`node bin/generate-openapi-suite.mjs\` in \`packages/api-doc-viewer/\`, then
+\`pnpm run regenerate-screenshots-single-suite\`.
+`;
+  fs.writeFileSync(path.join(samplesRoot, "README.md"), text, "utf8");
+}
+
+function writeStories(group, cases) {
+  const exports = cases.map(c =>
+    `export const ${toExportName(c.caseId)}: Story = createCaseStory(${quote(c.caseId)}, ${quote(c.path)}, ${quote(c.method)}, [${c.switchTo.map(quote).join(", ")}]);`);
+  // A template group: every story renders the one template, served as its `method` (a control).
+  const argTypes = group.template ? "OPENAPI_METHOD_TEMPLATE_STORY_ARG_TYPES" : "OPENAPI_PLAIN_STORY_ARG_TYPES";
+  const sampleArgs = group.template
+    ? `sampleYaml: takeOpenApiSample(samples, ${quote(group.template.slug)}), methodTemplate: true`
+    : "sampleYaml: takeOpenApiSample(samples, caseId)";
+  const text = `// Generated by bin/generate-openapi-suite.mjs - do not edit by hand.
+import type { Meta, StoryObj } from "@storybook/react-vite";
+import { ${argTypes}, OPENAPI_PLAIN_STORY_DEFAULT_ARGS, playOpenApiAutoSwitch } from "./openapi-story-args";
+import { collectOpenApiSamples, takeOpenApiSample } from "./openapi-suite-utils";
+import { OpenApiSampleStory } from "./OpenApiSampleStory";
+
+const sampleFiles = import.meta.glob(
+  "../../../../samples/openapi/${group.dialect}/${group.group}/*/sample.yaml",
+  { query: "?raw", import: "default", eager: true },
+) as Record<string, string>;
+
+const samples = collectOpenApiSamples(sampleFiles);
+
+// eslint-disable-next-line storybook/story-exports
+const meta = {
+  title: "${SUITE_TITLE}/${group.dialectTitle}/${group.title}",
+  component: OpenApiSampleStory,
+  argTypes: ${argTypes},
+  args: OPENAPI_PLAIN_STORY_DEFAULT_ARGS,
+  play: playOpenApiAutoSwitch,
+} satisfies Meta<typeof OpenApiSampleStory>;
+
+export default meta;
+
+type Story = StoryObj<typeof meta>;
+
+const createCaseStory = (caseId: string, path: string, method: string, switchTo: string[]): Story => ({
+  name: caseId,
+  args: { caseId, ${sampleArgs}, path, method, switchTo },
+});
+
+${exports.join("\n")}
+`;
+  fs.writeFileSync(path.join(storiesDir, `${groupKey(group)}.stories.tsx`), text, "utf8");
+}
+
+function writeTests(group, cases) {
+  const metaId = toStorybookMetaId(`${SUITE_TITLE}/${group.dialectTitle}/${group.title}`);
+  const rows = cases.flatMap(c => {
+    const storyId = `${metaId}--${toStorybookStorySlug(toExportName(c.caseId))}`;
+    const switchTo = `[${c.switchTo.map(id => `'${id}'`).join(", ")}]`;
+    return [{}, ...c.argVariants].map(args => {
+      const suffix = Object.keys(args).length > 0 ? ` (${Object.entries(args).map(([key, value]) => `${key}=${value.replace(/^!/, "")}`).join(", ")})` : "";
+      const argsLiteral = `{ ${Object.entries(args).map(([key, value]) => `${key}: '${value}'`).join(", ")} }`.replace("{  }", "{}");
+      return `  ['${c.caseId}${suffix}', '${storyId}', ${switchTo}, ${argsLiteral}],`;
+    });
+  });
+  const text = `// Generated by bin/generate-openapi-suite.mjs - do not edit by hand.
+/**
+ * Screenshot tests for ${SUITE_TITLE} - ${group.dialectTitle} ${displayTitle(group)}: every case in display
+ * mode \`detailed\` (the default), after selecting the case's options.
+ */
+import { storyPageWithArgs } from '../service/storybook-service'
+import { waitForOpenApiOperationViewer } from '../service/viewer-waits'
+
+/** [test name, story id, options selected before the capture, extra story args]. */
+const CASES: ReadonlyArray<readonly [string, string, readonly string[], Readonly<Record<string, string>>]> = [
+${rows.join("\n")}
+]
+
+describe('${SUITE_TITLE} - ${group.dialectTitle} ${displayTitle(group)}', () => {
+  beforeEach(async () => {
+    await jestPuppeteer.resetPage()
+  })
+
+  it.each(CASES)('%s', async (_name, storyId, switchTo, args) => {
+    // \`autoSwitch: false\`: the IT selects the options itself (the story \`play\` may not run in iframe.html).
+    const story = await storyPageWithArgs(page, storyId, { ...args, autoSwitch: '!false' })
+    const component = await story.viewComponent()
+    await waitForOpenApiOperationViewer(page, { switchTo })
+    expect(await component.captureScreenshot()).toMatchImageSnapshot()
+  })
+})
+`;
+  fs.writeFileSync(path.join(itDir, `${groupKey(group)}.it-test.ts`), text, "utf8");
+}
+
+function renderE2eGrid(cases) {
+  const header = `| Case | ${E2E_SECTION_IDS.map(id => SECTION_COLUMNS[id]).join(" | ")} |`;
+  const divider = `| --- | ${E2E_SECTION_IDS.map(() => ":---:").join(" | ")} |`;
+  const rows = cases.map(c => `| \`${c.caseId}\` | ${E2E_SECTION_IDS.map(id => (c.sections.includes(id) ? "✓" : "")).join(" | ")} |`);
+  return [header, divider, ...rows].join("\n");
+}
+
+function renderList(cases) {
+  return ["| Case | Operation | Covers | Auto-switch |", "| --- | --- | --- | --- |",
+    ...cases.map(c => `| \`${c.caseId}\` | \`${c.method.toUpperCase()} ${c.path}\` | ${escapeCell(c.title)} | ${switchCell(c)} |`)].join("\n");
+}
+
+function writeMatrix(expanded) {
+  const total = expanded.reduce((sum, { cases }) => sum + cases.length, 0);
+  const sections = expanded.flatMap(({ group, cases }) => {
+    const heading = `### ${group.dialectTitle} — ${displayTitle(group)} (\`${group.dialect}/${group.group}/\`, ${cases.length})`;
+    if (group.group === "e2e") {
+      const pairs = cases.filter(c => c.slug.startsWith("pair--")).length;
+      const windows = cases.filter(c => c.slug.startsWith("window-")).length;
+      return [heading, "", `${pairs} pairs, ${windows} windows, 1 all-sections case. Columns: ${E2E_SECTION_IDS.map(id => `${SECTION_COLUMNS[id]} = \`${id}\``).join(", ")}.`, "", renderE2eGrid(cases), ""];
+    }
+    return [heading, "", renderList(cases), ""];
+  });
+  const block = [
+    MATRIX_BEGIN,
+    "",
+    `${total} cases; ITs capture each in \`detailed\` (${total} screenshots, plus the \`noHeading\` variant of the all-sections case). Display mode \`simple\` is covered by \`${SUITE_TITLE} (Display Mode = simple)\`.`,
+    "",
+    ...sections,
+    MATRIX_END,
+  ].join("\n");
+  const current = fs.readFileSync(matrixDoc, "utf8");
+  const begin = current.indexOf(MATRIX_BEGIN);
+  const end = current.indexOf(MATRIX_END);
+  if (begin < 0 || end < 0) {
+    throw new Error(`Matrix markers not found in ${matrixDoc}`);
+  }
+  fs.writeFileSync(matrixDoc, current.slice(0, begin) + block + current.slice(end + MATRIX_END.length), "utf8");
+}
+
+function main() {
+  const expanded = collectGroups().map(group => ({ group, cases: numberCases(group) }));
+  reset();
+  for (const { group, cases } of expanded) {
+    writeFixtures(group, cases);
+    writeGroupCatalogue(group, cases);
+    writeStories(group, cases);
+    writeTests(group, cases);
+  }
+  writeRootCatalogue(expanded);
+  writeMatrix(expanded);
+  const summary = expanded.map(({ group, cases }) => `${group.dialect}/${group.group}: ${cases.length}`).join(", ");
+  console.log(`OpenAPI suite: ${summary}.`);
+}
+
+main();

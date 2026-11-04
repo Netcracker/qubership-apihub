@@ -1,0 +1,8 @@
+/* Viewer color config: one file per API type (plus the shared icon buttons), the single place to change a badge or selector color.
+   TS code only maps values to the class names defined here. Imported once by `src/index.css`, which
+   every viewer root loads, so the classes are available wherever a badge renders. */
+@import "./openapi.css";
+@import "./async-api.css";
+@import "./ddlapi.css";
+@import "./json-schema.css";
+@import "./icon-buttons.css";

@@ -1,0 +1,140 @@
+asyncapi: 3.0.0
+info:
+  title: Sample AsyncAPI
+  version: 1.0.0
+servers:
+  server0:
+    host: broker-0.example.com:9092
+    protocol: kafka
+    description: Main Kafka broker
+channels:
+  testChannel:
+    address: events.default
+    messages:
+      TestMessage:
+        $ref: "#/components/messages/TestMessage"
+    servers:
+      - $ref: "#/servers/server0"
+operations:
+  sendOperation:
+    action: send
+    channel:
+      $ref: "#/channels/testChannel"
+    messages:
+      - $ref: "#/components/messages/TestMessage"
+    security:
+      - $ref: "#/components/securitySchemes/oidc"
+components:
+  messages:
+    TestMessage:
+      name: TestMessage
+      payload:
+        type: object
+        properties:
+          id:
+            type: string
+        required:
+          - id
+  securitySchemes:
+    userPassword:
+      type: userPassword
+    apiKeyUser:
+      type: apiKey
+      in: user
+    apiKeyPassword:
+      type: apiKey
+      in: password
+    x509:
+      type: X509
+    symmetric:
+      type: symmetricEncryption
+    asymmetric:
+      type: asymmetricEncryption
+    headerKey:
+      type: httpApiKey
+      name: X-API-Key
+      in: header
+    queryKey:
+      type: httpApiKey
+      name: api_key
+      in: query
+    cookieKey:
+      type: httpApiKey
+      name: session
+      in: cookie
+    basic:
+      type: http
+      scheme: basic
+    bearer:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    oauthImplicit:
+      type: oauth2
+      flows:
+        implicit:
+          authorizationUrl: https://auth.example.com/authorize
+          availableScopes:
+            events:read: Read events
+            events:write: Publish events
+      scopes:
+        - events:read
+    oauthPassword:
+      type: oauth2
+      flows:
+        password:
+          tokenUrl: https://auth.example.com/token
+          availableScopes:
+            events:read: Read events
+      scopes: []
+    oauth:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: https://auth.example.com/token
+          availableScopes:
+            events:read: Read events
+            events:write: Publish events
+      scopes:
+        - events:write
+    oauthCode:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://auth.example.com/authorize
+          tokenUrl: https://auth.example.com/token
+          refreshUrl: https://auth.example.com/refresh
+          availableScopes:
+            events:read: Read events
+      scopes:
+        - events:read
+    oauthSeveralFlows:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: https://auth.example.com/token
+          availableScopes:
+            events:read: Read events
+        authorizationCode:
+          authorizationUrl: https://auth.example.com/authorize
+          tokenUrl: https://auth.example.com/token
+          availableScopes:
+            events:read: Read events
+            events:admin: Administer events
+      scopes:
+        - events:read
+        - events:audit
+    oidc:
+      type: openIdConnect
+      openIdConnectUrl: https://login.example.com/.well-known/openid-configuration
+      scopes:
+        - openid
+        - events:read
+    plain:
+      type: plain
+    scram256:
+      type: scramSha256
+    scram512:
+      type: scramSha512
+    gssapi:
+      type: gssapi

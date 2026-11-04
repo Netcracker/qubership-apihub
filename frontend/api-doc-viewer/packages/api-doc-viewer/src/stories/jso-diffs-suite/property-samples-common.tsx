@@ -25,8 +25,9 @@ const sampleById = createSampleById(sampleCases);
 export const JsoPropertySamplesStory = ({
   beforeYaml,
   afterYaml,
+  hideUnchangedNodes,
 }: JsoCaseStoryComponentProps) => (
-  <JsoDiffsViewer {...createJsoViewerArgs(beforeYaml, afterYaml)} />
+  <JsoDiffsViewer {...createJsoViewerArgs(beforeYaml, afterYaml, hideUnchangedNodes)} />
 );
 
 export type JsoPropertySamplesStoryMeta = Meta<typeof JsoPropertySamplesStory>;

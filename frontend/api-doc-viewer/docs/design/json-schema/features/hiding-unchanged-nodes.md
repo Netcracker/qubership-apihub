@@ -7,11 +7,11 @@ Applies only to the with-diffs data model and `JsonSchemaDiffsViewer`
 
 | Piece | Location |
 | --- | --- |
-| Own change signals | `next-data-model/src/building-service/json-schema/tree-with-diffs/changed-only/has-own-change-signals.ts` |
+| Own change signals | `next-data-model/src/model/abstract/tree-with-diffs/changed-only/has-own-change-signals.ts` (shared with JSO) |
 | "Is changed" predicate | `.../changed-only/is-node-changed.ts` (`isJsonSchemaNodeChanged`) |
 | Grouping wrapper | `.../changed-only/resolve-json-schema-unchanged-blocks.ts` |
 | Initial expansion | `.../node-visibility-data/kind-property-expand.ts` |
-| Viewer | `SchemaNodeChildrenListWithDiffs`, `UnchangedBlocksContext`, `JsonSchemaDiffsNodesVisibilityMode` |
+| Viewer | `SchemaNodeChildrenListWithDiffs`; shared `UnchangedBlocksContext`, `DiffsNodesVisibilityMode` (`shared-components/ShowUnchangedRow/`) |
 | Fixtures | `packages/samples/json-schema-diffs/hiding-unchanged-rows/` |
 
 ## When a node is changed

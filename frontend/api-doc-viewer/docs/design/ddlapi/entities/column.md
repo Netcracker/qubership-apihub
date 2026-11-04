@@ -17,7 +17,7 @@ Table and column names come from the fixture in the **Fixture** column (relative
 | Nullable optional columns (`users.email`, `projects.description`) | Common | Nothing — nullable is the SQL default | `e2e-scenarios/users`, `e2e-scenarios/projects` |
 | Default value: literal (`users.enabled` = `true`) or function call (`petstore.animals.id` = `gen_random_uuid()`) | Common | `Default` row (detailed mode) | `e2e-scenarios/users`, `e2e-scenarios/petstore` |
 | UUID type (`petstore.animals.id`) | Common | Type label `uuid` | `e2e-scenarios/petstore`, `column-types/uuid` |
-| Enum type (`t.feeling` of type `mood`) | Occasional | Enum type name as the label, `Values` row (detailed mode) | `display-mode-simple/enum-values`, `column-types/enum` |
+| Enum type (`t.feeling` of type `mood`) | Occasional | Enum type name as the label, `Values` row (detailed mode) | `ddlapi-display-mode-simple/04-column-enum-values`, `column-types/enum` |
 | JSON / JSONB column | Occasional | Type label only; the content is opaque | `column-types/json`, `column-types/jsonb` |
 | Identity column (`users.id`) | Occasional | **generated** badge | `e2e-scenarios/users`, `column-constraints/generated-identity` |
 | Expression-generated column (`t.label`) | Occasional | **generated** badge, `As` row (detailed mode) | `column-constraints/generated-expression` |

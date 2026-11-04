@@ -1,3 +1,4 @@
+import { cn } from "@apihub/utils/common/cn"
 import { resolveDiffSideStyle } from "@apihub/utils/diffs/resolve-diff-side-style"
 import { LayoutSide } from "@apihub/types/internal/LayoutSide"
 import { ListSideItem } from "@netcracker/qubership-apihub-next-data-model/model/abstract/tree-with-diffs/list-side-display"
@@ -19,7 +20,7 @@ export const JsonSchemaValidationChips: FC<JsonSchemaValidationChipsProps> = mem
   }
 
   return (
-    <div className="flex flex-wrap items-start gap-2">
+    <div className={cn("flex flex-wrap items-start gap-2")}>
       {sideItems.map((sideItem, index) => {
         const style = resolveDiffSideStyle(sideItem.diff, layoutSide)
         return (

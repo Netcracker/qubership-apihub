@@ -1,3 +1,4 @@
+import { cn } from "@apihub/utils/common/cn"
 import { FC, memo } from "react"
 import { SubheaderValueBase } from "./SubheaderValueBase"
 import './SubheaderValue.css'
@@ -22,7 +23,7 @@ export const SubheaderValue: FC<SubheaderValueProps> = memo<SubheaderValueProps>
     <SubheaderValueBase
       isVisible={isVisible}
       value={value}
-      className={className}
+      className={cn(className)}
     />
   )
 })

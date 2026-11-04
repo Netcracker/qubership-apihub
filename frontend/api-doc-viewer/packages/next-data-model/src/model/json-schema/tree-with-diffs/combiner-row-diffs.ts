@@ -1,7 +1,4 @@
 import {
-  AbstractNodeDiffsSeveritiesAggregator,
-} from '@apihub/next-data-model/building-service/abstract/tree-with-diffs/node-diffs-data/node-diffs-severities-aggregator'
-import {
   ChangedPropertyMetaData,
   DIFF_HIGHLIGHTING_MODES_DEFAULT,
   HighlightVariant,
@@ -28,6 +25,7 @@ import {
   isDiffReplace,
 } from '@netcracker/qubership-apihub-api-diff'
 import { JsonSchemaRowDiffs } from './property-row-diffs'
+import { DiffTypeOrder } from '@apihub/next-data-model/model/abstract/tree-with-diffs/diff-type-order'
 
 export type CombinerSelectorRowPresentation = {
   selectorRowDiff?: ChangedPropertyMetaData
@@ -159,7 +157,7 @@ export class JsonSchemaCombinerSelectorRowResolver {
       }
       if (
         !maxSeverity
-        || AbstractNodeDiffsSeveritiesAggregator.compareDiffTypes(severity.type, maxSeverity.type) > 0
+        || DiffTypeOrder.compare(severity.type, maxSeverity.type) > 0
       ) {
         maxSeverity = severity
       }
@@ -369,7 +367,7 @@ export class JsonSchemaCombinerSelectorRowResolver {
   private static maxDiffType(types: Iterable<DiffType>): DiffType | undefined {
     let max: DiffType | undefined
     for (const type of types) {
-      if (!max || AbstractNodeDiffsSeveritiesAggregator.compareDiffTypes(type, max) > 0) {
+      if (!max || DiffTypeOrder.compare(type, max) > 0) {
         max = type
       }
     }

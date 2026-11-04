@@ -1,3 +1,4 @@
+import { cn } from "@apihub/utils/common/cn"
 import { HighlightVariant } from "@netcracker/qubership-apihub-next-data-model/model/abstract/tree-with-diffs/tree-node.interface"
 import { FC, memo } from "react"
 import { SubheaderValueBase } from "./SubheaderValueBase"
@@ -32,7 +33,7 @@ export const SubheaderValueWithDiffs: FC<SubheaderValueWithDiffsProps> = memo<Su
     <SubheaderValueBase
       isVisible={isVisible}
       value={value}
-      className={className}
+      className={cn(className)}
     />
   )
 })

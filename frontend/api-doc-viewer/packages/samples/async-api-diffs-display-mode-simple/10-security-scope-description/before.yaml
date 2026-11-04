@@ -1,0 +1,33 @@
+asyncapi: 3.0.0
+info:
+  title: Display mode
+  version: 1.0.0
+channels:
+  testChannel:
+    address: events.default
+    messages:
+      TestMessage:
+        $ref: "#/components/messages/TestMessage"
+operations:
+  sendOperation:
+    action: send
+    channel:
+      $ref: "#/channels/testChannel"
+    messages:
+      - $ref: "#/components/messages/TestMessage"
+    security:
+      - $ref: "#/components/securitySchemes/oauth"
+components:
+  messages:
+    TestMessage:
+      name: TestMessage
+  securitySchemes:
+    oauth:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: https://auth.example.com/token
+          availableScopes:
+            events:read: Read events
+      scopes:
+        - events:read

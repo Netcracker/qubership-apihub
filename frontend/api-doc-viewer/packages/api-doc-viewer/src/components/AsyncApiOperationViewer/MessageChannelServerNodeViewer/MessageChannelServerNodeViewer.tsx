@@ -1,15 +1,18 @@
+import { cn } from '@apihub/utils/common/cn'
 import { AsyncApiTreeNode, AsyncApiTreeNodeWithDiffs } from "@netcracker/qubership-apihub-next-data-model/model/async-api/types/aliases"
 import { AsyncApiTreeNodeKinds } from "@netcracker/qubership-apihub-next-data-model/model/async-api/types/node-kind"
 import { FC, memo, useCallback, useMemo } from "react"
 
 import { DEFAULT_LONG_TEXT_COLOR } from "@apihub/components/shared-components/TextRow/consts"
 import { ATTRIBUTE_PRECEDED_BY, PrecededBy, WithPrecededByProps } from "@apihub/components/shared-components/WithPrecededByProps"
-import { X_AXIS_PADDING_ROWS_ASYNC_API } from "@apihub/components/shared-styles/tailwind-classnames"
+import { X_AXIS_PADDING_ROWS } from "@apihub/components/shared-styles/tailwind-classnames"
 import { CHANGED_LAYOUT_SIDE, LayoutSide, ORIGIN_LAYOUT_SIDE } from "@apihub/types/internal/LayoutSide"
 import { isBindingsNode } from "@apihub/utils/async-api/node-type-checkers"
-import { shouldBeDisplayed } from "@apihub/utils/async-api/visibility-checkers"
+import { getSecurityChildren, isSecuritySectionNode } from "@apihub/utils/security/node-type-checkers"
+import { resolveAsyncApiTextRowVisibility, shouldBeDisplayed } from "@apihub/utils/async-api/visibility-checkers"
+import { useDisplayMode } from "@apihub/contexts/DisplayModeContext"
 import { isDiffAdd, isDiffRemove, isDiffRename, isDiffReplace } from "@netcracker/qubership-apihub-api-diff"
-import { AbstractNodeDiffsSeveritiesAggregator } from "@netcracker/qubership-apihub-next-data-model/building-service/abstract/tree-with-diffs/node-diffs-data/node-diffs-severities-aggregator"
+
 import { DiffsClassesBuilder } from "@netcracker/qubership-apihub-next-data-model/building-service/abstract/tree-with-diffs/node-diffs-data/utilities"
 import { HighlightVariant, NODE_LEVEL_DIFF_KEY, NodeDiffsSeverityPlacemennt } from "@netcracker/qubership-apihub-next-data-model/model/abstract/tree-with-diffs/tree-node.interface"
 import { AsyncApiTreeNodeValueTypeServer } from "@netcracker/qubership-apihub-next-data-model/model/async-api/types/node-value"
@@ -20,9 +23,11 @@ import { TextValueVariant } from "../../shared-components/TextValue/types"
 import { TitleRow } from "../../shared-components/TitleRow/TitleRow"
 import { TitleRowProps } from "../../shared-components/TitleRow/types"
 import { isServerNodeWithDiffs } from "../../shared-utilities/tree-node-guards"
+import { AsyncApiSecuritySection } from "../AsyncApiSecuritySection"
 import { BindingsNodeViewer } from "../BindingsNodeViewer"
 import { ServerAddressRow, ServerAddressRowProps } from "../ServerAddressRow"
 import { SizeVariant } from "../types/SizeVariant"
+import { DiffTypeOrder } from "@netcracker/qubership-apihub-next-data-model/model/abstract/tree-with-diffs/diff-type-order"
 import './MessageChannelServerNodeViewer.css'
 
 type MessageChannelServerNodeViewerProps = WithPrecededByProps & {
@@ -38,6 +43,8 @@ export const MessageChannelServerNodeViewer: FC<MessageChannelServerNodeViewerPr
 
   const children: AsyncApiTreeNode[] | AsyncApiTreeNodeWithDiffs[] = node.childrenNodes()
   const bindingsChild = children.find(isBindingsNode)
+  // The server's Security section, before its bindings.
+  const security = useMemo(() => getSecurityChildren(node, isSecuritySectionNode).at(0), [node])
 
   const nodeDiffState = useNodeDiffState<AsyncApiTreeNodeValueTypeServer, AsyncApiTreeNode | AsyncApiTreeNodeWithDiffs>(node, isServerNodeWithDiffs)
   const { nodeDiffs } = nodeDiffState
@@ -66,7 +73,7 @@ export const MessageChannelServerNodeViewer: FC<MessageChannelServerNodeViewerPr
   const serverAddressRowDiffsProps: Pick<ServerAddressRowProps, 'diff' | 'descendantDiffs' | 'diffsSeverities'> = useMemo(() => {
     return buildRowDiffProps<AsyncApiTreeNodeValueTypeServer>(nodeDiffState, {
       resolveDiff: (diffs, getDiffByKey) => {
-        const maxDiff = AbstractNodeDiffsSeveritiesAggregator.maxChangedPropertyMetaDataByDiffType(getDiffByKey('protocol'), getDiffByKey('host'))
+        const maxDiff = DiffTypeOrder.strongestChangedPropertyMetaData(getDiffByKey('protocol'), getDiffByKey('host'))
         return diffs[NODE_LEVEL_DIFF_KEY] ?? maxDiff
       },
     })
@@ -113,7 +120,7 @@ export const MessageChannelServerNodeViewer: FC<MessageChannelServerNodeViewerPr
       return null
     }
     return (
-      <span className={Array.from(diffsClasses).join(' ')}>
+      <span className={cn(Array.from(diffsClasses).join(' '))}>
         {resolvedValue}
       </span>
     )
@@ -160,7 +167,7 @@ export const MessageChannelServerNodeViewer: FC<MessageChannelServerNodeViewerPr
       return null
     }
     return (
-      <span className={Array.from(diffsClasses).join(' ')}>
+      <span className={cn(Array.from(diffsClasses).join(' '))}>
         {resolvedValue}
       </span>
     )
@@ -171,10 +178,10 @@ export const MessageChannelServerNodeViewer: FC<MessageChannelServerNodeViewerPr
       return (
         <div
           data-precededby={PrecededBy.MESSAGE_SECTION_HEADER_HIGH_LEVEL}
-          className={`${X_AXIS_PADDING_ROWS_ASYNC_API} py-2 flex flex-row w-full h-full ${diffClasses.join(' ')}`}
+          className={cn(`${X_AXIS_PADDING_ROWS} py-2 flex flex-row w-full h-full ${diffClasses.join(' ')}`)}
         >
           {!isInvisible && (
-            <div className="server-address-container server-address server-subheader">
+            <div className={cn("server-address-container server-address server-subheader")}>
               {renderProtocol(layoutSide)}
               ://
               {renderHost(layoutSide)}
@@ -213,15 +220,25 @@ export const MessageChannelServerNodeViewer: FC<MessageChannelServerNodeViewerPr
   }, [node, renderHost, renderProtocol, serverAddressRowDiffsProps.diff])
 
   const isTitleDisplayed = useMemo(() => shouldBeDisplayed<AsyncApiTreeNodeValueTypeServer>(value, nodeDiffs, 'title'), [value, nodeDiffs])
-  const isDescriptionDisplayed = useMemo(() => shouldBeDisplayed<AsyncApiTreeNodeValueTypeServer>(value, nodeDiffs, 'description'), [value, nodeDiffs])
-  const isSummaryDisplayed = useMemo(() => shouldBeDisplayed<AsyncApiTreeNodeValueTypeServer>(value, nodeDiffs, 'summary'), [value, nodeDiffs])
+  const displayMode = useDisplayMode()
+  const { showDescription: isDescriptionDisplayed, showSummary: isSummaryDisplayed } = useMemo(
+    () => resolveAsyncApiTextRowVisibility<AsyncApiTreeNodeValueTypeServer>(value, nodeDiffs, displayMode),
+    [value, nodeDiffs, displayMode],
+  )
 
   if (!value) {
     return null
   }
 
+  // What the first element after the server header (Security, else the bindings) follows.
+  const headerPrecededBy = isSummaryDisplayed
+    ? PrecededBy.SUMMARY_ROW
+    : isDescriptionDisplayed
+      ? PrecededBy.DESCRIPTION_ROW
+      : PrecededBy.SERVER_ADDRESS_ROW
+
   return (
-    <div className='flex flex-col'>
+    <div className={cn('flex flex-col')}>
       {isTitleDisplayed && (
         <TitleRow
           data-precededby={precededBy}
@@ -275,15 +292,16 @@ export const MessageChannelServerNodeViewer: FC<MessageChannelServerNodeViewerPr
           {...summaryRowDiffProps}
         />
       )}
+      {security && (
+        <AsyncApiSecuritySection
+          data-precededby={headerPrecededBy}
+          node={security}
+          variant={SizeVariant.SECONDARY}
+        />
+      )}
       {bindingsChild && (
         <BindingsNodeViewer
-          data-precededby={
-            isSummaryDisplayed
-              ? PrecededBy.SUMMARY_ROW
-              : isDescriptionDisplayed
-                ? PrecededBy.DESCRIPTION_ROW
-                : PrecededBy.SERVER_ADDRESS_ROW
-          }
+          data-precededby={security ? PrecededBy.SECURITY_SECTION : headerPrecededBy}
           node={bindingsChild}
           variant={SizeVariant.SECONDARY}
         />

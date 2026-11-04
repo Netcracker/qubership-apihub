@@ -84,6 +84,16 @@
   border-bottom-right-radius: 5px;
 }
 
+/* `TextValueVariant` sizes (MarkdownTextValue `getMarkdownFontSizeClass`): the `text-value-body*`
+   rules of TextValue.css match `span.text-value` only, never this `.markdown` div. */
+.markdown-text-row .markdown.text-value-body1 {
+  font-size: 12px;
+}
+
+.markdown-text-row .markdown.text-value-body2 {
+  font-size: 13px;
+}
+
 /* JsonSchemaViewer description / deprecation-reason rows */
 .markdown-text-row .markdown.markdown-text-row__json-schema-description {
   font-size: 12px;

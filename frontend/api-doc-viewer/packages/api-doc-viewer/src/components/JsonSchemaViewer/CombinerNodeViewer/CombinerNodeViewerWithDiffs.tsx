@@ -1,3 +1,4 @@
+import { cn } from "@apihub/utils/common/cn"
 import { resolveJsonSchemaTypeLabel } from "@netcracker/qubership-apihub-next-data-model/model/json-schema/type-label"
 import {
   resolvePlainPropertyExpanderExpanded,
@@ -31,7 +32,7 @@ import { useJsonSchemaViewerContext } from "../JsonSchemaViewerContext"
 import { CombinerSelections, JsonSchemaCombiner } from "../utils/resolve-combiner"
 import { JsonSchemaNestingLevel } from "../utils/resolve-nesting-level"
 import { JsonSchemaNodeViewerWithDiffs } from "../JsonSchemaNodeViewerWithDiffs"
-import { useOptionalUnchangedBlocksContext } from "../UnchangedBlocksContext"
+import { useOptionalUnchangedBlocksContext } from "@apihub/components/shared-components/ShowUnchangedRow/UnchangedBlocksContext"
 import { SchemaNodeChildrenListWithDiffs } from "../SchemaNodeViewer/SchemaNodeChildrenListWithDiffs"
 import { SchemaNodePlainContent } from "../SchemaNodeViewer/SchemaNodePlainContent"
 import { SchemaNodeTitleRowWithDiffs } from "../SchemaNodeViewer/SchemaNodeTitleRowWithDiffs"
@@ -226,7 +227,7 @@ export const CombinerNodeViewerWithDiffs: FC<CombinerNodeViewerWithDiffsProps> =
   return (
     <div
       data-testid="json-schema-combiner-node-viewer"
-      className="json-schema-property flex flex-col"
+      className={cn("json-schema-property flex flex-col")}
     >
       <SchemaNodeTitleRowWithDiffs
         data-precededby={precededBy}

@@ -1,6 +1,6 @@
 import { DiffMetaKeys } from "@apihub/next-data-model/building-service/abstract/tree-with-diffs/node-diffs-data/diff-meta-keys"
 import { AbstractNodeDiffsAggregator } from "@apihub/next-data-model/building-service/abstract/tree-with-diffs/node-diffs-data/node-diffs-aggregator"
-import { AbstractNodeDiffsSeveritiesAggregator } from "@apihub/next-data-model/building-service/abstract/tree-with-diffs/node-diffs-data/node-diffs-severities-aggregator"
+
 import { takeAggregatedDiffs } from "@apihub/next-data-model/building-service/abstract/tree-with-diffs/node-diffs-data/aggregated-diff-types"
 import {
   ChangedPropertyKey,
@@ -62,6 +62,7 @@ import {
   isDiffRename,
   isDiffReplace,
 } from "@netcracker/qubership-apihub-api-diff"
+import { DiffTypeOrder } from "@apihub/next-data-model/model/abstract/tree-with-diffs/diff-type-order"
 
 export class JsonSchemaNodeDiffsAggregatorKindAny
   extends AbstractNodeDiffsAggregator<
@@ -276,7 +277,7 @@ export class JsonSchemaNodeDiffsAggregatorKindAny
     }
     // Only assign when non-empty: an always-present key (even with an empty Set) would make
     // `Object.keys(node.diffs).length > 0` true for every node, breaking "changed only" filtering
-    // (`hasOwnChangeSignals` in changed-only/has-own-change-signals.ts treats any key on
+    // (`hasOwnChangeSignals` in model/abstract/tree-with-diffs/changed-only/ treats any key on
     // `node.diffs` as a change signal).
     if (summary.size > 0) {
       nodeDiffs.nodeChangesSummary = summary
@@ -315,7 +316,7 @@ export class JsonSchemaNodeDiffsAggregatorKindAny
 
     const typeLabelFieldDiffs = nodeDiffs.typeLabelFieldDiffs
     if (typeLabelFieldDiffs && Object.keys(typeLabelFieldDiffs).length > 0) {
-      const representativeDiff = AbstractNodeDiffsSeveritiesAggregator.maxChangedPropertyMetaDataByDiffType(
+      const representativeDiff = DiffTypeOrder.strongestChangedPropertyMetaData(
         ...Object.values(typeLabelFieldDiffs),
       )
       if (representativeDiff) {
@@ -704,7 +705,7 @@ export class JsonSchemaNodeDiffsAggregatorKindAny
       return
     }
 
-    const representativeDiff = AbstractNodeDiffsSeveritiesAggregator.maxChangedPropertyMetaDataByDiffType(
+    const representativeDiff = DiffTypeOrder.strongestChangedPropertyMetaData(
       ...Object.values(typeLabelFieldDiffs),
     )
     if (!representativeDiff) {
@@ -1276,7 +1277,14 @@ export class JsonSchemaNodeDiffsAggregatorKindAny
     for (const key of Object.keys(customAnnotations)) {
       const keyDiff = perKeyDiffsRecord[key]
       if (AbstractNodeDiffsAggregator.isDiff(keyDiff)) {
-        setEntry(key, keyDiff)
+        // A per-key add/remove carries the whole `{ label, value }` entry: unwrap it like Tier 1.
+        if (isDiffAdd(keyDiff) && isObject(keyDiff.afterValue)) {
+          setEntry(key, { ...keyDiff, afterValue: Reflect.get(keyDiff.afterValue, "value") })
+        } else if (isDiffRemove(keyDiff) && isObject(keyDiff.beforeValue)) {
+          setEntry(key, { ...keyDiff, beforeValue: Reflect.get(keyDiff.beforeValue, "value") })
+        } else {
+          setEntry(key, keyDiff)
+        }
         continue
       }
 
@@ -1516,7 +1524,7 @@ export class JsonSchemaNodeDiffsAggregatorKindAny
         .map((sourceKey) => crawlDiffs[sourceKey])
         .filter((diff): diff is Diff<DiffType> => AbstractNodeDiffsAggregator.isDiff(diff))
         .map((diff) => this.buildChangedPropertyMetaDataFromDiff(diff))
-      const representativeDiff = AbstractNodeDiffsSeveritiesAggregator.maxChangedPropertyMetaDataByDiffType(
+      const representativeDiff = DiffTypeOrder.strongestChangedPropertyMetaData(
         ...metadatas,
       )
       if (!representativeDiff) {
@@ -1592,7 +1600,7 @@ export class JsonSchemaNodeDiffsAggregatorKindAny
     }
 
     const metadatas = crawlDiffList.map((diff) => this.buildChangedPropertyMetaDataFromDiff(diff))
-    const representativeDiff = AbstractNodeDiffsSeveritiesAggregator.maxChangedPropertyMetaDataByDiffType(
+    const representativeDiff = DiffTypeOrder.strongestChangedPropertyMetaData(
       ...metadatas,
     )
     if (!representativeDiff) {
@@ -1665,7 +1673,7 @@ export class JsonSchemaNodeDiffsAggregatorKindAny
         continue
       }
       const metadata = this.buildListValueDiffMetadata(diff)
-      itemDiffs[sourceKey] = AbstractNodeDiffsSeveritiesAggregator.maxChangedPropertyMetaDataByDiffType(
+      itemDiffs[sourceKey] = DiffTypeOrder.strongestChangedPropertyMetaData(
         itemDiffs[sourceKey],
         metadata,
       ) ?? metadata

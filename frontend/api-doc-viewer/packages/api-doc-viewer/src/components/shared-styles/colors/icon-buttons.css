@@ -1,0 +1,39 @@
+/* ─── Icon buttons of every viewer: the scroll-strip arrows (‹ ›, `ArrowScrollStrip`) and the "three
+   dots" reveal trigger (`ShowUnchangedTrigger`). The values are the variables below: change one here
+   to restyle both buttons. Icons paint in `currentColor`. Padding stays per button (its own CSS).
+   Design: docs/design/shared/features/arrow-scroll-strip.md -> "Arrow button styles". ── */
+
+.icon-button {
+  --icon-button-color: #0068FF;
+  --icon-button-hover-background: #ECEDEF;
+  --icon-button-hover-color: #0068FF;
+  --icon-button-disabled-color: #353C4E;
+  --icon-button-radius: 6px;
+}
+
+/* `button.icon-button` outranks the package-wide `button` rule of `index.css` (padding aside). */
+button.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: var(--icon-button-radius);
+  background-color: transparent;
+  color: var(--icon-button-color);
+  cursor: pointer;
+}
+
+button.icon-button:hover:enabled {
+  background-color: var(--icon-button-hover-background);
+  color: var(--icon-button-hover-color);
+}
+
+button.icon-button:disabled {
+  color: var(--icon-button-disabled-color);
+  cursor: default;
+  pointer-events: none;
+}
+
+button.icon-button:focus {
+  outline: none;
+}

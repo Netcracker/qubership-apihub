@@ -41,9 +41,9 @@ Regenerate stories and ITs from `packages/api-doc-viewer/` with
 | Story root | Story folder (`packages/api-doc-viewer/src/stories/`) | IT files (`src/it/`) |
 | --- | --- | --- |
 | `JSON Schema Diffs Suite` | `json-schema-diffs-suite/` | `json-schema-diffs-suite/` |
-| `JSON Schema Diffs Suite (Extensions)` | `json-schema-diffs-extensions-suite/` | `json-schema-diffs-extensions-suite.*.it-test.ts` |
-| `JSON Schema Diffs Suite (Hiding Unchanged Nodes)` | `json-schema-diffs-hiding-unchanged-nodes-suite/` | `json-schema-diffs-hiding-unchanged-nodes-suite.*.it-test.ts` |
-| `JSON Schema Diffs Suite (Node Changes Summary)` | `json-schema-diffs-node-changes-summary-suite/` | `json-schema-diffs-node-changes-summary-suite.*.it-test.ts` |
+| `JSON Schema Diffs Suite (Extensions)` | `json-schema-diffs-extensions-suite/` | `json-schema-diffs-extensions-suite/*.it-test.ts` |
+| `JSON Schema Diffs Suite (Hiding Unchanged Nodes)` | `json-schema-diffs-hiding-unchanged-nodes-suite/` | `json-schema-diffs-hiding-unchanged-nodes-suite/*.it-test.ts` |
+| `JSON Schema Diffs Suite (Node Changes Summary)` | `json-schema-diffs-node-changes-summary-suite/` | `json-schema-diffs-node-changes-summary-suite/*.it-test.ts` |
 
 ## Regenerate
 

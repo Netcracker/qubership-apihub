@@ -12,7 +12,6 @@ Plain SQL fixtures for `DdlTableViewer`: `<category>/<case-id>/sample.sql`, pars
 | `indexes/` | 10 | one / two columns, unique, unnamed, expression, partial, covering (`INCLUDE`), `NULLS NOT DISTINCT` |
 | `escaping-spec-chars/` | 10 | special characters in default values and generated expressions |
 | `e2e-scenarios/` | 7 | realistic tables (employees, projects, petstore, users, …) |
-| `display-mode-simple/` | 4 | simple display mode hides default, enum values, generated expression, long description |
 | `table-descriptions/` | 2 | table comments |
 
 ## Storybook and screenshot tests
@@ -24,10 +23,10 @@ Plain SQL fixtures for `DdlTableViewer`: `<category>/<case-id>/sample.sql`, pars
 | `indexes/` | `DDL API Suite/Indexes` | `indexes.stories.tsx` |
 | `escaping-spec-chars/` | `DDL API Suite/Escaping Spec Chars` | `escaping-spec-chars.stories.tsx` |
 | `e2e-scenarios/` | `DDL API Suite/E2E Scenarios` | `e2e-scenarios.stories.tsx` |
-| `display-mode-simple/` | `DDL API Suite/Display Mode Simple` | `display-mode-simple.stories.tsx` |
 | `table-descriptions/` | `DDL API Suite/Table Descriptions` | `table-descriptions.stories.tsx` |
 
-ITs: `packages/api-doc-viewer/src/it/ddlapi-suite/`. `DDL API Suite/Bugs` and
+ITs: `packages/api-doc-viewer/src/it/ddlapi-suite/` (display mode `detailed`; `simple` is covered by
+`DDL API Suite (Display Mode = simple)`, fixtures in [`../ddlapi-display-mode-simple/`](../ddlapi-display-mode-simple/README.md)). `DDL API Suite/Bugs` and
 `Debug/DDL API from DDL SQL` are hand-written stories without fixtures here.
 
 ## Regenerate

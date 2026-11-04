@@ -1,0 +1,21 @@
+first:
+  node1: alpha
+  node2: 10
+  node3: true
+  node4: null
+  node5: beta
+  node6: 20
+second:
+  node1: gamma
+  node2: 11
+  node3: true
+  node4: null
+  node5: beta
+  node6: 21
+third:
+  node1: alpha
+  node2: 10
+  node3: true
+  node4: null
+  node5: beta
+  node6: 20

@@ -17,6 +17,7 @@
 import type { CompareResult, Diff } from '@netcracker/qubership-apihub-api-diff'
 import { apiDiff, COMPARE_MODE_OPERATION } from '@netcracker/qubership-apihub-api-diff'
 import { removeComponents } from '@netcracker/qubership-apihub-api-processor'
+import { isGraphApi } from '@netcracker/qubership-apihub-graphapi'
 import { isObject } from 'lodash-es'
 import type { Dispatch, SetStateAction } from 'react'
 import type { OperationChange } from '../entities/operation-changelog'
@@ -43,8 +44,8 @@ export const getApiDiffResult = (options: DiffResultOptions): CompareResult | un
     setApiDiffLoading?.(false)
     return undefined
   }
-  let beforeOperation = removeComponents(beforeData)
-  let afterOperation = removeComponents(afterData)
+  let beforeOperation = removeGraphApiComponents(beforeData)
+  let afterOperation = removeGraphApiComponents(afterData)
 
   if (!beforeData && afterData) {
     beforeOperation = getCopyWithEmptyPath(afterOperation)
@@ -71,6 +72,11 @@ export const getApiDiffResult = (options: DiffResultOptions): CompareResult | un
   // but BE has not yet sent semi-breaking changes
   setTimeout(() => setApiDiffLoading?.(false), 50)
   return diffResult
+}
+
+// OpenAPI / AsyncAPI keep `components`: operation viewers read security scheme definitions (and their diffs) from them
+function removeGraphApiComponents(data: object | undefined): unknown {
+  return isGraphApi(data) ? removeComponents(data) : data
 }
 
 function getCopyWithEmptyPath(template: unknown): unknown {

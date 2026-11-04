@@ -42,9 +42,9 @@ schema shape rather than a generic "Case N":
 | 6 | `case-6-one-level-object-with-object-combiner-variant.stories.tsx` | Case 6 — One Level Object With Object Combiner Variant | expanded root with `object` variant chosen, collapsed root |
 | 7 | `case-7-one-level-object-with-array-combiner-variant.stories.tsx` | Case 7 — One Level Object With Array Combiner Variant | expanded root + chosen `array` + expanded items, expanded root + chosen `array` + collapsed items, expanded root with default choice, collapsed root |
 
-IT tests mirror the same per-case split, flat under `packages/api-doc-viewer/src/it/` with a
-dotted suite prefix (matching `json-schema-diffs-hiding-unchanged-nodes-suite.*.it-test.ts`):
-`json-schema-diffs-node-changes-summary-suite.case-N-<slug>.it-test.ts`.
+IT tests mirror the same per-case split in the test-run folder
+`packages/api-doc-viewer/src/it/json-schema-diffs-node-changes-summary-suite/`:
+`case-N-<slug>.it-test.ts` (baselines in its `__image_snapshots__/`).
 
 **Combiner variant selection is scripted in the paired IT test, not baked into the fixture.**
 Cases 6-7's stories render through `JsonSchemaDiffsViewer`
@@ -57,7 +57,7 @@ diff side (`SideBySideLayout` renders both sides from one shared selection state
 button works). Storybook `play` functions do not fire when these stories are loaded directly via
 `iframe.html` in the screenshot-test harness, so the case 6/7 IT test files click these testids
 directly with Puppeteer (mirroring `switchToChannelSection()` in
-`async-api-diffs-suite.channel.it-test.ts`), scoped to the right property via its enclosing
+`async-api-diffs-suite/channel.it-test.ts`), scoped to the right property via its enclosing
 `json-schema-combiner-node-viewer` container (see the IT test files' `selectCombinerOption()`
 helper). Cases 6-7's "chosen variant" stories all use the same string-first fixture as their
 sibling stories; the IT test clicks the `object`/`array` option to select it.
@@ -80,5 +80,5 @@ From `packages/api-doc-viewer/`, then commit the output:
 
 ```bash
 node bin/generate-node-changes-summary-samples.mjs
-npm run regenerate-screenshots
+pnpm run regenerate-screenshots
 ```

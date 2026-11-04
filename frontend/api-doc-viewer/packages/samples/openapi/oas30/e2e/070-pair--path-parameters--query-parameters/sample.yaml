@@ -1,0 +1,32 @@
+openapi: 3.0.3
+info:
+  title: Orders
+  version: 1.0.0
+paths:
+  /orders/{orderId}:
+    post:
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          description: Order identifier.
+          schema:
+            type: string
+        - name: dryRun
+          in: query
+          description: Validate without storing.
+          schema:
+            type: boolean
+            default: false
+        - name: expand
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - lines
+                - customer
+      responses:
+        "200":
+          description: ""

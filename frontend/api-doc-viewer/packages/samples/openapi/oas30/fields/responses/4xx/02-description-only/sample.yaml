@@ -1,0 +1,12 @@
+openapi: 3.0.3
+info:
+  title: Orders
+  version: 1.0.0
+paths:
+  /orders:
+    post:
+      responses:
+        "404":
+          description: The result of the request.
+        default:
+          description: ""

@@ -1,0 +1,13 @@
+/* Collapsible 2nd-level OpenAPI sections (parameter groups, Body, response Headers / Extensions,
+   Responses Object Extensions). Numbers come from OpenApiSpacingConfig.sectionExpander, written as
+   custom properties on the viewer root (the title row's fixed expander column: TitleRow.css,
+   `TitleRowUsage.CollapsibleSection`). Design: docs/design/openapi/features/collapsible-sections.md */
+
+/* Content under the title text: every per-side row element (OpenAPI rows and the nested JSON Schema /
+   JSO rows alike) is shifted by the expander column + the title row's gap. A transparent left border,
+   not a padding or a wrapper inset: the row's own padding stays as it is, and its diff background is
+   painted under the border, so a highlighted row still fills its whole side. */
+.openapi-section-content .one-side-layout > *,
+.openapi-section-content .side-by-side-layout > div > * {
+  border-left: var(--openapi-section-content-indent) solid transparent;
+}
