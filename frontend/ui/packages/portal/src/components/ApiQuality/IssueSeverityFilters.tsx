@@ -1,7 +1,7 @@
 import type { IssueSeverity } from '@portal/entities/api-quality/issue-severities'
 import { ISSUE_SEVERITIES_LIST } from '@portal/entities/api-quality/issue-severities'
 import type { Issue } from '@portal/entities/api-quality/issues'
-import { IssueSeverityMarker } from '@portal/routes/root/PortalPage/VersionPage/VersionApiQualitySubPage/IssueSeverityMarker'
+import { IssueSeverityMarker } from '@portal/components/IssueSeverityMarker'
 import { Box, ToggleButton, Typography } from '@mui/material'
 import { CustomToggleButtonGroup } from '@netcracker/qubership-apihub-ui-shared/components/Buttons/CustomToggleButtonGroup'
 import { memo, useMemo, type FC } from 'react'

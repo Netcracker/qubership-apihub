@@ -1,4 +1,4 @@
-# Applications to install fo newcomer GO developer
+# Applications to install for a newcomer Go developer
 
 ## 1) Install Git
 

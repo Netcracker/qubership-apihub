@@ -43,47 +43,48 @@ import { useCallback } from 'react'
 import { useParams } from 'react-router-dom'
 import { useNavigation } from '../../NavigationProvider'
 import { useEventBus } from '../../EventBusProvider'
-import { useCurrentPackage } from '@portal/components/CurrentPackageProvider'
+import { usePackage } from '../usePackage'
 import { useAsyncInvalidateVersionContent } from '../usePackageVersionContent'
 import { useAsyncInvalidateVersionSources } from '../useVersionSources'
 import { getPackageVersionBuilder } from './package-version-builder'
+
+const PUBLICATION_ERROR_TITLE = 'Publication error'
 
 export function usePublishPackageVersion(): [PublishPackageVersion, IsLoading, IsSuccess] {
   const { packageId } = useParams()
   const [user] = useUser()
   const { navigateToVersion, navigateToDocuments } = useNavigation()
 
-  const currentPackage = useCurrentPackage()
+  const [currentPackage] = usePackage()
   const isPackage = currentPackage?.kind === PACKAGE_KIND
+  const packageName = currentPackage?.name ?? packageId ?? ''
   const { showErrorNotification, showPublicationErrorReportDialog } = useEventBus()
 
   const invalidateVersionContent = useAsyncInvalidateVersionContent()
   const invalidatePackageVersions = useAsyncInvalidatePackageVersions()
   const invalidateVersionSources = useAsyncInvalidateVersionSources()
 
-  const handlePublicationError = useCallback((
-    errorMessage: string | undefined,
-    files: BuildConfigFile[] | undefined,
-  ) => {
-    const filesListLength = files?.length
-    if (filesListLength) {
-      const packageName = currentPackage?.name ?? packageId ?? ''
-      const errors = errorMessage ?? ''
+  const showPublicationError = useCallback((errorMessage: string | undefined): void => {
+    if (isPackage) {
       showErrorNotification({
-        title: 'Publication error',
+        title: PUBLICATION_ERROR_TITLE,
         message: `There was an error while publishing package ${packageName}`,
         button: {
           title: 'View details',
           onClick: () => showPublicationErrorReportDialog({
             downloadFilename: `Error report for the package ${packageName}`,
-            errors: errors,
+            errors: errorMessage ?? '',
           }),
         },
       })
-    } else {
-      showErrorNotification({ message: errorMessage! })
+      return
     }
-  }, [currentPackage?.name, packageId, showErrorNotification, showPublicationErrorReportDialog])
+    // The backend stores no build messages for a dashboard, so the snackbar shows the message instead of View details
+    showErrorNotification({
+      title: PUBLICATION_ERROR_TITLE,
+      message: errorMessage || `There was an error while publishing dashboard ${packageName}`,
+    })
+  }, [isPackage, packageName, showErrorNotification, showPublicationErrorReportDialog])
 
   const { mutate, isLoading, isSuccess } = useMutation<PublishDetails, Error, Options>({
     mutationFn: async options => {
@@ -92,7 +93,7 @@ export function usePublishPackageVersion(): [PublishPackageVersion, IsLoading, I
         toPublishOptions(packageId!, options, user!.key),
       )
     },
-    onSuccess: async ({ status, message, hasErrors }, { version, sources, files, status: versionStatus }) => {
+    onSuccess: async ({ status, message, hasErrors }, { version, sources, refs, status: versionStatus }) => {
       await invalidatePackageVersions()
       await invalidateVersionContent({
         packageKey: packageId!,
@@ -107,7 +108,8 @@ export function usePublishPackageVersion(): [PublishPackageVersion, IsLoading, I
 
       if (status === COMPLETE_PUBLISH_STATUS) {
         navigateToVersion({ packageKey: packageId!, versionKey: version })
-        if (hasErrors) {
+        // A package has no references and a dashboard has no documents of its own
+        if (hasErrors || refs.some(reference => reference.hasErrors)) {
           showErrorNotification({
             title: PUBLICATION_ERROR_MESSAGES.snackbar.draftPublishWithErrors.title,
             message: PUBLICATION_ERROR_MESSAGES.snackbar.draftPublishWithErrors.body,
@@ -128,21 +130,20 @@ export function usePublishPackageVersion(): [PublishPackageVersion, IsLoading, I
               title: PUBLICATION_ERROR_MESSAGES.snackbar.releasePublishRefused.action,
               // TODO: integrate build error report dialog from branch feature/document-errors-dialog-718
               onClick: () => showPublicationErrorReportDialog({
-                downloadFilename: `Error report for the package ${currentPackage?.name ?? packageId ?? ''}`,
+                downloadFilename: `Error report for the package ${packageName}`,
                 errors: message ?? '',
               }),
             },
           })
         } else {
-          handlePublicationError(message, files)
+          showPublicationError(message)
         }
       }
     },
     onError: async (error, variables, context) => {
       const tokenRefreshResult = await onMutationUnauthorized<PublishDetails, Error, Options>(mutate)(error, variables, context)
       if (!isTokenRefreshed(tokenRefreshResult)) {
-        const { message } = error
-        showErrorNotification({ message: message })
+        showErrorNotification({ title: PUBLICATION_ERROR_TITLE, message: error.message })
       }
     },
   })

@@ -13,8 +13,8 @@ export const USER_GUIDE_URL = `${SITE_ROOT}docs/user-guide/`;
 export const STORYBOOK_URL = `${SITE_ROOT}storybook/`;
 export const ERD_URL = `${SITE_ROOT}erd/`;
 export const REPO_URL = 'https://github.com/Netcracker/qubership-apihub';
-/** Source tree links point at `develop`: `main` gets the monorepo tree at the first release from it. */
-export const REPO_TREE_URL = `${REPO_URL}/tree/develop`;
+/** Source links open `main`. Product release 2.16.0 put the monorepo tree there. */
+export const REPO_TREE_URL = `${REPO_URL}/tree/main`;
 export const RELEASES_URL = `${REPO_URL}/releases`;
 
 /** Images that the pages show beyond the feature cards. */

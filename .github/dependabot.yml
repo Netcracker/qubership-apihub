@@ -49,6 +49,9 @@ updates:
     ignore:
       - dependency-name: "@types/node"
         versions: [">= 25"]
+      - dependency-name: "typescript"
+        # TypeScript 7.0 is intentionally deferred; resume updates with 7.1 and later.
+        versions: ["7.0.x"]
     groups:
       npm:
         patterns:

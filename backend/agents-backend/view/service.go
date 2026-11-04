@@ -1,5 +1,7 @@
 package view
 
+import "encoding/json"
+
 type Service_deprecated struct {
 	Id                       string            `json:"id"`
 	Name                     string            `json:"serviceName"`
@@ -79,4 +81,15 @@ type BaselineVersion struct {
 	ApiProcessorVersion string `json:"apiProcessorVersion"`
 	HasErrors           bool   `json:"hasErrors"`
 	ChangelogHasErrors  bool   `json:"changelogHasErrors"`
+}
+
+// UnmarshalJSON also accepts a plain version string, which agents up to 2.1.5 send instead of an object.
+func (b *BaselineVersion) UnmarshalJSON(data []byte) error {
+	var version string
+	if err := json.Unmarshal(data, &version); err == nil {
+		*b = BaselineVersion{Version: version}
+		return nil
+	}
+	type plain BaselineVersion
+	return json.Unmarshal(data, (*plain)(b))
 }

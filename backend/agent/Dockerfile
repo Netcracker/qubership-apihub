@@ -18,15 +18,20 @@ ARG BUILDPLATFORM
 ARG TARGETOS
 ARG TARGETARCH
 
-WORKDIR /workspace/qubership-apihub-agent
+WORKDIR /workspace
 
-COPY . .
+# Built from backend/, so that `replace ... => ../commons-go` in go.mod resolves to
+# /workspace/commons-go.
+COPY commons-go ./commons-go
+COPY agent ./agent
+
+WORKDIR /workspace/agent
 
 # GOWORK=off: the image builds this module alone, so go.mod must hold the versions
 # `go work sync` writes; CI checks that.
 RUN GOWORK=off GOSUMDB=off CGO_ENABLED=0 GOFLAGS=-mod=readonly go mod download && GOWORK=off GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -o qubership-apihub-agent .
 
-FROM ghcr.io/netcracker/qubership-core-base:2.5.9@sha256:ab860790e4ecce56f8df673495cd5745ce587fffa7d7eb210d6d098563ccb26d
+FROM ghcr.io/netcracker/qubership-core-base:2.5.10@sha256:51173b982248bb866b236f504579b71c0a9c4a41975b957595f9faa9ab3fb5d6
 
 ARG GIT_BRANCH=unknown
 ARG GIT_HASH=unknown
@@ -36,7 +41,7 @@ ENV GIT_HASH=$GIT_HASH
 
 WORKDIR /app/qubership-apihub-agent
 
-COPY --chown=10001:0 --chmod=555 --from=builder /workspace/qubership-apihub-agent/qubership-apihub-agent ./qubership-apihub-agent
+COPY --chown=10001:0 --chmod=555 --from=builder /workspace/agent/qubership-apihub-agent ./qubership-apihub-agent
 
 USER 10001:10001
 

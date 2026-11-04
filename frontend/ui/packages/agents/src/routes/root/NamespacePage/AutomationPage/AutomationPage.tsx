@@ -48,6 +48,7 @@ import { RadioCustom } from '@netcracker/qubership-apihub-ui-shared/components/R
 import { VersionSelectorAutocomplete } from '@netcracker/qubership-apihub-ui-shared/components/Autocompletes/VersionSelectorAutocomplete'
 import { VersionErrorFormMessage } from '@netcracker/qubership-apihub-ui-shared/components/ErrorIndicators/VersionErrorFormMessage'
 import { VersionErrorIndicator } from '@netcracker/qubership-apihub-ui-shared/components/ErrorIndicators/VersionErrorIndicator'
+import { VersionFieldErrorIndicator } from '@netcracker/qubership-apihub-ui-shared/components/ErrorIndicators/VersionFieldErrorIndicator'
 import { agent } from '@netcracker/qubership-apihub-ui-shared/utils/version-info'
 import { OptionItem } from '@netcracker/qubership-apihub-ui-shared/components/OptionItem'
 import { useVersionProblemDetails } from '@netcracker/qubership-apihub-ui-shared/hooks/versions/useVersionProblemDetails'
@@ -80,22 +81,19 @@ export const AutomationPage: FC = memo(() => {
   ] = useDialogData(updateSettings)
 
   const previousVersionFlags = previousVersionKey ? previousVersionOptions.flagsByVersionKey.get(previousVersionKey) : undefined
-  const {
-    hasProblems: previousVersionHasProblems,
-    isBlocking: isPreviousVersionProblemBlocking,
-    formHelperText: previousVersionErrorMessage,
-  } = useVersionProblemDetails({
+  const previousVersionProblem = useVersionProblemDetails({
     versionKey: previousVersionKey ?? undefined,
     hasErrors: previousVersionFlags?.hasErrors,
     changelogHasErrors: previousVersionFlags?.changelogHasErrors,
     apiProcessorVersion: previousVersionFlags?.apiProcessorVersion,
     surface: VERSION_PROBLEM_DIALOG_SURFACE.PUBLISH_PREVIOUS_VERSION,
+    app: agent,
   })
 
   const isLoading = isSettingsLoading || areUpdateSettingsLoading
   const isFormDisabled = isLoading || autoDiscoveryStatus !== SCHEDULE_AUTODISCOVERY_STATUS
   // The baseline is used only by scheduled runs, so a version with problems must not stop switching the schedule off.
-  const isPreviousVersionBlocking = isPreviousVersionProblemBlocking && autoDiscoveryStatus === SCHEDULE_AUTODISCOVERY_STATUS
+  const isPreviousVersionBlocking = previousVersionProblem.isBlocking && autoDiscoveryStatus === SCHEDULE_AUTODISCOVERY_STATUS
   const isSaveAvailable = formChanges.autodiscoveryStatus || autoDiscoveryStatus === SCHEDULE_AUTODISCOVERY_STATUS &&
     (formChanges.previousVersionKey || formChanges.versionKey || formChanges.discoveryTime || formChanges.emailNotificationsEnabled || formChanges.emailNotificationList)
 
@@ -176,14 +174,8 @@ export const AutomationPage: FC = memo(() => {
                     disabled={isFormDisabled}
                     value={value}
                     options={previousVersionOptions.versionKeys}
-                    inputIndicator={previousVersionHasProblems && previousVersionFlags && (
-                      <VersionErrorIndicator
-                        app={agent}
-                        versionKey={previousVersionKey ?? undefined}
-                        hasErrors={previousVersionFlags.hasErrors}
-                        changelogHasErrors={previousVersionFlags.changelogHasErrors}
-                        apiProcessorVersion={previousVersionFlags.apiProcessorVersion}
-                      />
+                    inputIndicator={previousVersionProblem.hasProblems && (
+                      <VersionFieldErrorIndicator problem={previousVersionProblem}/>
                     )}
                     renderOption={(props, versionKey) => {
                       const flags = previousVersionOptions.flagsByVersionKey.get(versionKey)
@@ -219,7 +211,7 @@ export const AutomationPage: FC = memo(() => {
               />
             </Box>
             <VersionErrorFormMessage
-              message={isPreviousVersionBlocking ? previousVersionErrorMessage : undefined}
+              message={isPreviousVersionBlocking ? previousVersionProblem.formHelperText : undefined}
               data-testid="BaselineErrorMessage"
             />
             <Box width="300px">

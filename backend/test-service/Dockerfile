@@ -18,9 +18,14 @@ ARG BUILDPLATFORM
 ARG TARGETOS
 ARG TARGETARCH
 
-WORKDIR /workspace/qubership-apihub-test-service
+WORKDIR /workspace
 
-COPY . .
+# Built from backend/, so that `replace ... => ../commons-go` in go.mod resolves to
+# /workspace/commons-go.
+COPY commons-go ./commons-go
+COPY test-service ./test-service
+
+WORKDIR /workspace/test-service
 
 # GOWORK=off: the image builds this module alone, so go.mod must hold the versions
 # `go work sync` writes; CI checks that.
@@ -36,8 +41,8 @@ ENV GIT_HASH=$GIT_HASH
 
 WORKDIR /app/qubership-apihub-test-service
 
-COPY --from=builder /workspace/qubership-apihub-test-service/qubership-apihub-test-service ./qubership-apihub-test-service
-COPY static ./static
+COPY --from=builder /workspace/test-service/qubership-apihub-test-service ./qubership-apihub-test-service
+COPY test-service/static ./static
 
 RUN chmod -R a+rwx /app
 

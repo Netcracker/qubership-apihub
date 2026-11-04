@@ -66,7 +66,7 @@ export const itemsMergeResolver: MergeResolver<RawJsonSchema | RawJsonSchema[]> 
       }
 
       if (j < item.length) {
-        // merge existing items with additionals schemas if needed
+        // merge existing items with additional schemas if needed
         items[j].allOf.push(allOf.length ? { ...item[j], allOf } : item[j])
       } else {
         // add new schemas to "items" if itemsLimit > items.length

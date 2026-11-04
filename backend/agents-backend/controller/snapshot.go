@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -227,7 +228,17 @@ func (s snapshotControllerImpl) GetSnapshot(w http.ResponseWriter, r *http.Reque
 	namespace := getStringParam(r, "namespace")
 	agentId := getStringParam(r, "agentId")
 	workspaceId := getStringParam(r, "workspaceId")
-	version := getStringParam(r, "version")
+	version, err := url.PathUnescape(getStringParam(r, "version"))
+	if err != nil {
+		s.responder.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidParameter,
+			Message: exception.InvalidParameterMsg,
+			Params:  map[string]interface{}{"param": "version"},
+			Debug:   err.Error(),
+		})
+		return
+	}
 	agent, err := s.agentService.GetAgent(agentId)
 	if err != nil {
 		if customError, ok := err.(*exception.CustomError); ok {

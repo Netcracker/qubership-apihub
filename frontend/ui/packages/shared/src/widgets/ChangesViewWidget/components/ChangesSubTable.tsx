@@ -1,28 +1,44 @@
+/**
+ * Copyright 2024-2025 NetCracker Technology Corporation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import { Box, Skeleton, styled, TableCell, TableRow, Typography } from '@mui/material'
 import { type FC, memo } from 'react'
-
 import { ChangeSeverityIndicator } from '../../../components/ChangeSeverityIndicator'
 import { OverflowTooltip } from '../../../components/OverflowTooltip'
-import type { ChangeSeverity } from '../../../entities/change-severities'
 import type { OperationChanges } from '../../../entities/operation-changelog'
 
-export type DdlEntityChangesSubTableProps = {
+export type ChangesSubTableProps = {
   changes: OperationChanges
   isLoading: boolean
   columnCount: number
 }
 
-export const DdlEntityChangesSubTable: FC<DdlEntityChangesSubTableProps> = memo<DdlEntityChangesSubTableProps>(({
-  changes,
-  isLoading,
-  columnCount,
-}) => {
+export const ChangesSubTable: FC<ChangesSubTableProps> = memo<ChangesSubTableProps>((
+  {
+    changes,
+    isLoading,
+    columnCount,
+  },
+) => {
   if (isLoading) {
     return (
       <TableRow>
-        <ExpandCell colSpan={columnCount}>
+        <ExpandedRowCell colSpan={columnCount}>
           <Skeleton variant="text" width="100%" />
-        </ExpandCell>
+        </ExpandedRowCell>
       </TableRow>
     )
   }
@@ -31,23 +47,23 @@ export const DdlEntityChangesSubTable: FC<DdlEntityChangesSubTableProps> = memo<
     <>
       {changes.map((change, index) => (
         <TableRow key={`${change.scope}-${index}`}>
-          <ExpandCell colSpan={columnCount}>
+          <ExpandedRowCell colSpan={columnCount}>
             <DescriptionRow data-testid="ChangeDescriptionCell">
-              <ChangeSeverityIndicator severity={change.severity as ChangeSeverity} />
+              <ChangeSeverityIndicator severity={change.severity} />
               <OverflowTooltip title={change.description}>
                 <DescriptionText noWrap variant="inherit">{change.description}</DescriptionText>
               </OverflowTooltip>
             </DescriptionRow>
-          </ExpandCell>
+          </ExpandedRowCell>
         </TableRow>
       ))}
     </>
   )
 })
 
-DdlEntityChangesSubTable.displayName = 'DdlEntityChangesSubTable'
+ChangesSubTable.displayName = 'ChangesSubTable'
 
-const ExpandCell = styled(TableCell)({
+const ExpandedRowCell = styled(TableCell)({
   padding: 0,
 })
 

@@ -33,10 +33,10 @@ const FailedToDownloadDocument = "510"
 const FailedToDownloadDocumentMsg = "Failed to download document. Response code: $code."
 
 const PaasOperationFailed = "600"
-const PaasOperationFailedMsg = "Paas operation forbiden"
+const PaasOperationFailedMsg = "Paas operation forbidden"
 
 const PaasOperationFailedForbiden = "601"
-const PaasOperationFailedForbidenMsg = "Paas operation forbiden"
+const PaasOperationFailedForbidenMsg = "Paas operation forbidden"
 
 const AgentVersionMismatch = "700"
 const AgentVersionMismatchMsg = "Current version $version of Agent not supported by APIHUB. Please, update this instance to version $recommended."

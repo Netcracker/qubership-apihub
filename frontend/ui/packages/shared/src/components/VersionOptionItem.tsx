@@ -6,9 +6,10 @@ import { NON_LATEST_REVISION_TEXT_COLOR } from '../themes/colors'
 import { getSplittedVersionKey } from '../utils/versions'
 import { VersionErrorIndicator } from './ErrorIndicators/VersionErrorIndicator'
 import { OptionItem } from './OptionItem'
+import type { TestableProps } from './Testable'
 import { VersionStatusChip } from './VersionStatusChip'
 
-type VersionOptionItemProps = {
+type VersionOptionItemProps = TestableProps & {
   props: HTMLAttributes<HTMLLIElement>
   version: PackageVersion
 }
@@ -16,6 +17,7 @@ type VersionOptionItemProps = {
 export const VersionOptionItem: FC<VersionOptionItemProps> = memo<VersionOptionItemProps>(({
   props,
   version,
+  'data-testid': dataTestId,
 }) => {
   const { key, status, latestRevision, hasErrors, changelogHasErrors, apiProcessorVersion } = version
   const { versionKey, revisionKey } = getSplittedVersionKey(key)
@@ -50,6 +52,7 @@ export const VersionOptionItem: FC<VersionOptionItemProps> = memo<VersionOptionI
         />
       }
       chip={<VersionStatusChip status={status} />}
+      data-testid={dataTestId}
     />
   )
 })

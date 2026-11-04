@@ -81,7 +81,7 @@ describe('OAS Reference Object', () => {
     })
   })
 
-  const VALUE_OVERRIDEN = 'overriden value'
+  const VALUE_OVERRIDEN = 'overridden value'
   const VALUE_BASE = 'base value'
   const VALUE_SECOND = 'second value'
   const APPLICATION_JSON = 'application/json'
@@ -484,15 +484,15 @@ describe('OAS Reference Object', () => {
                   : expect(refSummary).toBe(componentsSummary)
               })
 
-              it(`description is ${allowDescriptionOverride ? '' : 'not '} overriden on each level of a chain of reference objects`, () => {
+              it(`description is ${allowDescriptionOverride ? '' : 'not '} overridden on each level of a chain of reference objects`, () => {
                 checkChainReferenceObjects(title, baseSpec, refPath, componentsPath, componentObject, OPEN_API_PROPERTY_DESCRIPTION, allowDescriptionOverride)
               })
 
-              it(`summary is ${allowSummaryOverride ? '' : 'not '} overriden on each level of a chain of reference objects`, () => {
+              it(`summary is ${allowSummaryOverride ? '' : 'not '} overridden on each level of a chain of reference objects`, () => {
                 checkChainReferenceObjects(title, baseSpec, refPath, componentsPath, componentObject, OPEN_API_PROPERTY_SUMMARY, allowSummaryOverride)
               })
 
-              it(`properties other than description and summary could not be overriden via reference object`, () => {
+              it(`properties other than description and summary could not be overridden via reference object`, () => {
                 additionalValues.forEach(additionalData => {
                   const path = additionalData.path
                   const values = additionalData.values
@@ -519,7 +519,7 @@ describe('OAS Reference Object', () => {
   })
 
   describe('OAS 3.1. Reference Object. Validate origins', () => {
-    it('origin is calculated correctly for field overriden using reference object', () => {
+    it('origin is calculated correctly for field overridden using reference object', () => {
       const source = {
         openapi: '3.1.0',
         paths: {

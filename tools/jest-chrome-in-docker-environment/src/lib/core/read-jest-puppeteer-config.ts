@@ -21,7 +21,7 @@ import findNodeModules from "find-node-modules"
 
 import colors from "colors";
 import type { ChromeArg, JestPuppeteerConfig } from "../index.types"
-import { CHROME_INTERNAL_PORT, CONSOLE_PREFIX, DEFAULT_CHROME_FLAGS, DEFAULT_PROTOCOL_TIMEOUT } from "./defaults"
+import { CHROME_INTERNAL_PORT, CONSOLE_PREFIX, DEFAULT_CHROME_FLAGS, DEFAULT_PROTOCOL_TIMEOUT, isWslcBinary } from "./defaults"
 
 const {bgYellow, black, yellow} = colors;
 
@@ -159,6 +159,11 @@ export async function initPuppeteerWithChromeInDockerConfig(): Promise<JestPuppe
     }
     setChromeArgs(mergedConfig, "connect")
     mergedConfig.connect.args.push(`--remote-debugging-port=${CHROME_INTERNAL_PORT}`)
+    if (isWslcBinary()) {
+        // Tests open pages on host.docker.internal, and some snapshots show the page origin (a request sample URL).
+        // wslc does not define that name, so Chrome resolves it as host.wslc.internal, the Windows host under wslc.
+        mergedConfig.connect.args.push(`--host-resolver-rules="MAP host.docker.internal host.wslc.internal"`)
+    }
     setAutoOpenDevtoolsForTabsFromLaunch(mergedConfig)
     setSowMoFromLaunch(mergedConfig)
     setProtocolTimeout(mergedConfig)

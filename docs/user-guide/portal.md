@@ -225,13 +225,13 @@ Version summary:
 - Publication date - date when current version was published.
 - Published by - user who published current version.
 
-REST API Operations and GraphQL API Operations sections are displayed only if current package version has at least one REST or GraphQL respectively. The sections shows the following informations:
+REST API Operations and GraphQL API Operations sections are displayed only if current package version has at least one REST or GraphQL respectively. The section shows the following information:
 
 - Total number of operations - number of operations of current API type.
 - Number of deprecated operations - number of deprecated operations of current API type.
 - Number of no-BWC operations - number of operations of current API type, which are marked as no-BWC.
 
-REST API API Validation and GraphQL API Validation sections are displayed only if current package version has at least one REST or GraphQL respectively. The sections shows the following informations:
+REST API API Validation and GraphQL API Validation sections are displayed only if current package version has at least one REST or GraphQL respectively. The section shows the following information:
 
 - Number of BWC errors - number of breaking changes compared to specified previous version.
 - Changes - number of changes of each severity type.
@@ -286,7 +286,7 @@ You can publish operations group which contains REST API operations as a package
 2. Fill the required fields in the opened popup:
    - Workspace - allows you to select workspace where target package is located. By default, the current workspace is selected.
    - Package - allows you to select target package (package where you need to publish the selected operations group) within the selected workspace.
-   - Version, Status, Labels, and Previous Release Version - target version info, for details see _Publish Package Version_ setion.
+   - Version, Status, Labels, and Previous Release Version - target version info, for details see _Publish Package Version_ section.
 3. Click the **Publish** button. The system publishes version and will display the notification once version will be published.
 
 The published package version will contain reduced source specifications for operations from the selected operations group. See details about reduced source specifications in _Download operations group_ section.
@@ -467,7 +467,7 @@ components:
           example: doggie
 ```
 
-Operaion 2:
+Operation 2:
 
 ```yaml
 openapi: 3.0.3
@@ -1329,7 +1329,7 @@ To add a new member to the package:
 
 To update the role of an existing member:
 
-1. Check or uncheck checkbox at the intersection of the desired user and role. You can alway undo the current action by clicking **Undo** button in the notification.
+1. Check or uncheck checkbox at the intersection of the desired user and role. You can always undo the current action by clicking **Undo** button in the notification.
 
 To remove a member from the package/dashboard/group:
 

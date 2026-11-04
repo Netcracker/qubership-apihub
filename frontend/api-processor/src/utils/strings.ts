@@ -24,7 +24,7 @@ export function toTitleCase(str: string): string {
     'on', 'by', 'like', 'over', 'plus', 'but', 'up', 'down', 'off', 'near',
   ]
 
-  // The list of spacial characters can be tweaked here
+  // The list of special characters can be tweaked here
   const replaceCharsWithSpace = (str: string): string => str.replace(/[^0-9a-z&/\\]/gi, ' ').replace(/(\s\s+)/gi, ' ')
   const capitalizeFirstLetter = (str: string): string => str.charAt(0).toUpperCase() + str.substr(1)
   const normalizeStr = (str: string): string => str.trim()

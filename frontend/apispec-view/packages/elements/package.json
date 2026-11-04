@@ -1,6 +1,6 @@
 {
   "name": "@netcracker/qubership-apihub-apispec-view",
-  "version": "2.1.4",
+  "version": "2.2.0",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Netcracker/qubership-apihub.git",
