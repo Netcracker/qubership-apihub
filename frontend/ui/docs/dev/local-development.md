@@ -16,19 +16,26 @@ Node.js **>= 24** is required (`engines` in the repository root `package.json`).
 
 No local mock server is required for this workflow.
 
-## Optional: mixed mode (proxy + local mock)
+## Proxy mode with MSW mocks
 
-Use when you develop or test **mock-only** API routes while the rest of the Portal talks to the real backend.
+`pnpm dev:proxy:msw` starts proxy mode with the [MSW mocks](./msw-mocks.md): handlers in the browser change or
+replace selected backend responses, and every other request reaches the real APIHUB. MSW is the main way to mock the
+backend; add new mocks there.
+
+## Deprecated: mixed mode (proxy + Express mock)
+
+The Express mock server is deprecated, and its routes will move to [MSW](./msw-mocks.md). Use it only for a route
+that MSW does not mock yet, while the rest of the Portal talks to the real backend.
 
 1. Configure `proxyServer` as in proxy mode.
 2. `pnpm dev:backend` (mock on `http://localhost:3003`; override port with `NODEJS_PORT`).
 3. `pnpm dev:proxy` in a second terminal.
 4. For each prefix that should hit the mock, add a `server.proxy` entry with `target: devServer` **before** the catch-all `/api` rule. See [portal-mock-server.md](./portal-mock-server.md#vite-proxy-viteconfigts) for the Vite example and mock API reference.
 
-## Full mock mode (not supported for Portal today)
+## Deprecated: full mock mode (not supported for Portal)
 
-`dev:backend` + `dev:frontend` with all `/api` traffic pointed at the mock **does not yield a working Portal** at the
-moment. Most product flows need a real APIHUB backend.
+`dev:backend` + `dev:frontend` with all `/api` traffic pointed at the Express mock **does not yield a working Portal**.
+Most product flows need a real APIHUB backend.
 
 ## Preview mode (production build + proxy)
 
@@ -46,14 +53,18 @@ Builds the Portal and serves the production bundle via `vite preview` in proxy m
 | Script (in `packages/portal`)  | Typical use                                                         |
 | ------------------------------ | ------------------------------------------------------------------- |
 | `dev:proxy`                    | **Recommended** - real APIHUB (incl. AI Assistant)                  |
-| `dev:backend` + `dev:proxy`    | Mixed mode - mock for selected `/api` prefixes only                 |
-| `dev:backend` + `dev:frontend` | Full mock - **not supported** for Portal                            |
+| `dev:proxy:msw`                | Proxy mode with the [MSW mocks](./msw-mocks.md)                     |
+| `dev:backend` + `dev:proxy`    | Deprecated mixed mode - Express mock for selected `/api` prefixes   |
+| `dev:backend` + `dev:frontend` | Deprecated full Express mock - **not supported** for Portal         |
 | `preview`                      | Production build + proxy                                            |
 | `test:server`                  | Jest + supertest against in-process `createApp()` (no running mock) |
 
 ## Agent UI
 
-From `packages/agents`, start the mock backend and the frontend in two terminals:
+From `packages/agents`, `pnpm dev:proxy` and `pnpm dev:proxy:msw` work as in the Portal, with the `proxyServer` of
+`packages/agents/vite.config.ts`.
+
+The deprecated Express mock backend of the Agent UI runs in two terminals:
 
 ```bash
 pnpm dev:backend

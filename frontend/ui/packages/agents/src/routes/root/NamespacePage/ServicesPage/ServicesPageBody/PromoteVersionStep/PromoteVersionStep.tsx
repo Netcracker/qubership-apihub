@@ -46,7 +46,7 @@ import {
 import { SearchBar } from '@netcracker/qubership-apihub-ui-shared/components/SearchBar'
 import { VersionSelectorAutocomplete } from '@netcracker/qubership-apihub-ui-shared/components/Autocompletes/VersionSelectorAutocomplete'
 import { VersionErrorFormMessage } from '@netcracker/qubership-apihub-ui-shared/components/ErrorIndicators/VersionErrorFormMessage'
-import { VersionErrorIndicator } from '@netcracker/qubership-apihub-ui-shared/components/ErrorIndicators/VersionErrorIndicator'
+import { VersionFieldErrorIndicator } from '@netcracker/qubership-apihub-ui-shared/components/ErrorIndicators/VersionFieldErrorIndicator'
 import { agent } from '@netcracker/qubership-apihub-ui-shared/utils/version-info'
 import { ErrorIndicator } from '@netcracker/qubership-apihub-ui-shared/components/ErrorIndicators/ErrorIndicator'
 import { PUBLICATION_ERROR_MESSAGES } from '@netcracker/qubership-apihub-ui-shared/utils/publicationErrorMessages'
@@ -87,16 +87,13 @@ export const PromoteVersionStep: FC = memo(() => {
   ] = useToolbarData(promoteVersion)
 
   const previousVersionFlags = baselineOptions.flagsByVersionKey.get(previousVersion)
-  const {
-    hasProblems: previousVersionHasProblems,
-    isBlocking: isPreviousVersionBlocking,
-    formHelperText: previousVersionErrorMessage,
-  } = useVersionProblemDetails({
+  const previousVersionProblem = useVersionProblemDetails({
     versionKey: previousVersion,
     hasErrors: previousVersionFlags?.hasErrors,
     changelogHasErrors: previousVersionFlags?.changelogHasErrors,
     apiProcessorVersion: previousVersionFlags?.apiProcessorVersion,
     surface: VERSION_PROBLEM_DIALOG_SURFACE.PUBLISH_PREVIOUS_VERSION,
+    app: agent,
   })
 
   const areControlsDisabled = isLoading || isCreateSnapshotRunning
@@ -184,14 +181,8 @@ export const PromoteVersionStep: FC = memo(() => {
               disabled
               value={value}
               options={baselineOptions.versionKeys}
-              inputIndicator={previousVersionHasProblems && previousVersionFlags && (
-                <VersionErrorIndicator
-                  app={agent}
-                  versionKey={previousVersion}
-                  hasErrors={previousVersionFlags.hasErrors}
-                  changelogHasErrors={previousVersionFlags.changelogHasErrors}
-                  apiProcessorVersion={previousVersionFlags.apiProcessorVersion}
-                />
+              inputIndicator={previousVersionProblem.hasProblems && (
+                <VersionFieldErrorIndicator problem={previousVersionProblem}/>
               )}
               renderInput={(params) => (
                 <TextField
@@ -200,7 +191,7 @@ export const PromoteVersionStep: FC = memo(() => {
                   required
                   label="Previous Version"
                   variant="outlined"
-                  error={isPreviousVersionBlocking}
+                  error={previousVersionProblem.isBlocking}
                   onChange={onChange}
                 />
               )}
@@ -235,7 +226,7 @@ export const PromoteVersionStep: FC = memo(() => {
           <LoadingButton
             data-testid={repromoteEnabled ? 'RePromoteVersionButton' : 'PromoteVersionButton'}
             sx={{ width: repromoteEnabled ? 180 : 160 }}
-            disabled={areControlsDisabled || !isPromoteAvailable || isPreviousVersionBlocking || isReleaseRefused}
+            disabled={areControlsDisabled || !isPromoteAvailable || previousVersionProblem.isBlocking || isReleaseRefused}
             variant={repromoteEnabled ? 'outlined' : 'contained'}
             loading={isLoading || isCreateSnapshotRunning}
             type="submit"
@@ -263,7 +254,7 @@ export const PromoteVersionStep: FC = memo(() => {
         </Typography>
 
         <VersionErrorFormMessage
-          message={previousVersionErrorMessage}
+          message={previousVersionProblem.formHelperText}
           data-testid="PreviousVersionErrorMessage"
         />
 

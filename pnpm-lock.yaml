@@ -182,8 +182,8 @@ importers:
         specifier: 23.2.0
         version: 23.2.0(@babel/traverse@7.29.8(supports-color@9.4.0))(nx@23.2.0)(supports-color@9.4.0)
       '@nx/maven':
-        specifier: 23.3.0
-        version: 23.3.0(nx@23.2.0)
+        specifier: 24.0.2
+        version: 24.0.2(nx@23.2.0)
       '@types/react':
         specifier: ^18.3.31
         version: 18.3.31
@@ -2886,9 +2886,6 @@ importers:
       '@netcracker/qubership-apihub-build-id':
         specifier: workspace:^
         version: link:../../tools/build-id
-      '@rollup/plugin-inject':
-        specifier: 5.0.5
-        version: 5.0.5(rollup@3.30.0)
       '@storybook/addon-docs':
         specifier: 10.6.3
         version: 10.6.3(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(storybook@10.6.3(@types/react@18.3.31)(prettier@3.9.6)(react@18.3.1))
@@ -3133,9 +3130,6 @@ importers:
       '@netcracker/qubership-apihub-ui-shared':
         specifier: workspace:*
         version: link:../shared
-      '@rollup/plugin-inject':
-        specifier: 5.0.5
-        version: 5.0.5(rollup@3.30.0)
       '@types/cors':
         specifier: 2.8.13
         version: 2.8.13
@@ -3359,9 +3353,6 @@ importers:
       '@netcracker/qubership-apihub-ui-shared':
         specifier: workspace:*
         version: link:../shared
-      '@rollup/plugin-inject':
-        specifier: 5.0.5
-        version: 5.0.5(rollup@3.30.0)
       '@storybook/react-vite':
         specifier: 10.6.3
         version: 10.6.3(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(rollup@3.30.0)(storybook@10.6.3(@types/react@18.3.31)(prettier@3.9.6)(react@18.3.1))(supports-color@9.4.0)(typescript@6.0.3)(vite@8.3.4(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.8.1)(yaml@2.9.0))
@@ -7430,10 +7421,10 @@ packages:
     peerDependencies:
       nx: '>= 22 <= 24 || ^23.0.0-0'
 
-  '@nx/devkit@23.3.0':
-    resolution: {integrity: sha512-xGSV4gCwQsVdt49VRcfxd2L31dAO/9t9Isv2bM5O89vyEzwd/tkW/IQwUzWn3OdhCnHayd37S1tDyJ5DilCv7w==}
+  '@nx/devkit@24.0.2':
+    resolution: {integrity: sha512-G2YWq9/Pj87Y20WCf6Clu1m9sTeoYcXCpivBo/I2foKVG1oOdOzMq966Na3eQ+ZdO0NneyBZvzoDYa6kJIufVw==}
     peerDependencies:
-      nx: '>= 22 <= 24 || ^23.0.0-0'
+      nx: '>= 23 <= 25 || ^24.0.0-0'
 
   '@nx/js@23.2.0':
     resolution: {integrity: sha512-pm3YJK6NO7r8oDLTffV3OBaImaEKdLrGtMM7NjxrS7a0FBS4FQ7k+vPXmV9i/XZIVdC5CBHby5FWJ2SpZxzTag==}
@@ -7446,8 +7437,8 @@ packages:
       verdaccio:
         optional: true
 
-  '@nx/maven@23.3.0':
-    resolution: {integrity: sha512-nmb/EJW31vkGdhNfCsaPUA+dqkBmgywk9dMZpznejdhY8QpoGmwmQdZcdZG3ASQ8sDPt5iqytp8tGrKVXeftEQ==}
+  '@nx/maven@24.0.2':
+    resolution: {integrity: sha512-Ao/y4N73lo2luRsMpBq7yO5uFFHJsWG9pr6RBaTpFZHuY2qc+gDlTzxqbynqqiKGS6Fl1Mb/vdHglH29pDeD4g==}
 
   '@nx/nx-darwin-arm64@23.2.0':
     resolution: {integrity: sha512-nael5WwtqBX/YZDU0iv8M4rJ8auF9kF+sU5pYpronIbvu/LdDptq31vWT06ivW8eXRaLxDqFmpXR8tS5IYDmdw==}
@@ -8954,15 +8945,6 @@ packages:
     engines: {node: '>=16.0.0 || 14 >= 14.17'}
     peerDependencies:
       rollup: ^2.68.0||^3.0.0||^4.0.0
-    peerDependenciesMeta:
-      rollup:
-        optional: true
-
-  '@rollup/plugin-inject@5.0.5':
-    resolution: {integrity: sha512-2+DEJbNBoPROPkgTDNe8/1YXWcqxbN5DTjASVIOx8HS+pITXushyNiBV56RB08zuptzz8gT3YfkqriTBVycepg==}
-    engines: {node: '>=14.0.0'}
-    peerDependencies:
-      rollup: ^1.20.0||^2.0.0||^3.0.0||^4.0.0
     peerDependenciesMeta:
       rollup:
         optional: true
@@ -31945,7 +31927,7 @@ snapshots:
       tslib: 2.8.1
       yargs-parser: 21.1.1
 
-  '@nx/devkit@23.3.0(nx@23.2.0)':
+  '@nx/devkit@24.0.2(nx@23.2.0)':
     dependencies:
       ejs: 5.0.1
       minimatch: 10.2.5
@@ -31992,9 +31974,9 @@ snapshots:
       - nx
       - supports-color
 
-  '@nx/maven@23.3.0(nx@23.2.0)':
+  '@nx/maven@24.0.2(nx@23.2.0)':
     dependencies:
-      '@nx/devkit': 23.3.0(nx@23.2.0)
+      '@nx/devkit': 24.0.2(nx@23.2.0)
       '@xmldom/xmldom': 0.8.15
       tslib: 2.8.1
     transitivePeerDependencies:
@@ -33577,14 +33559,6 @@ snapshots:
       magic-string: 0.30.21
     optionalDependencies:
       rollup: 4.63.1
-
-  '@rollup/plugin-inject@5.0.5(rollup@3.30.0)':
-    dependencies:
-      '@rollup/pluginutils': 5.4.0(rollup@3.30.0)
-      estree-walker: 2.0.2
-      magic-string: 0.30.21
-    optionalDependencies:
-      rollup: 3.30.0
 
   '@rollup/plugin-json@4.1.0(rollup@2.80.0)':
     dependencies:

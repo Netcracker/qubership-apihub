@@ -30,7 +30,7 @@ const TimestampFormat = "2006-01-02T15:04:05.000"
 
 // Formatter writes a logrus entry as one line of the APIHUB log format:
 //
-//	[2006-01-02T15:04:05.000] [INFO] [request_id=<id>] [tenant_id=] [thread_id=] [class=] <message>
+//	[2006-01-02T15:04:05.000] [INFO] [request_id=<id>] [tenant_id=] [thread=] [class=] <message>
 //
 // The request ID comes from the entry context (see RequestIDMiddleware). Go has no thread or class
 // to report, so those fields stay empty. Entry fields follow the message as key=value pairs.
@@ -47,7 +47,7 @@ func (f *Formatter) Format(entry *log.Entry) ([]byte, error) {
 	if b == nil {
 		b = &bytes.Buffer{}
 	}
-	fmt.Fprintf(b, "[%s] [%s] [request_id=%s] [tenant_id=] [thread_id=] [class=] %s",
+	fmt.Fprintf(b, "[%s] [%s] [request_id=%s] [tenant_id=] [thread=] [class=] %s",
 		entry.Time.UTC().Format(TimestampFormat),
 		levelName(entry.Level),
 		RequestIDFromContext(entry.Context),

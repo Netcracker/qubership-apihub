@@ -39,6 +39,8 @@ import type {
   TdmPublishVersion,
 } from './tdm.entities'
 
+const PACKAGES_PAGE_LIMIT = 100
+
 export const createApihubTDM = async (
   credentials: Credentials,
   requestTimeout?: number,
@@ -349,9 +351,7 @@ export class ApihubTestDataManager {
     }, { box: true })
 
     await test.step(`Checking ${message}`, async () => {
-      const response = await this.getWorkspaces()
-      const groups = await response.text()
-      expect(groups).not.toContain(testId)
+      expect(await this.getTestIds(testId)).not.toContain(testId)
     }, { box: true })
   }
 
@@ -362,30 +362,10 @@ export class ApihubTestDataManager {
     }
     console.log('Ids for exclude: ', exclude)
 
-    const testIds: string[] = []
-    let getWorkspacesResponse!: APIResponse
-    let getGroupsResponse!: APIResponse
-
-    await test.step('Get Groups', async () => {
-      getWorkspacesResponse = await this.getWorkspaces(TEST_PREFIX)
-      getGroupsResponse = await this.getGroups(TEST_PREFIX)
-    }, { box: true })
+    let testIds: string[] = []
 
     await test.step('Get Test IDs', async () => {
-      const { packages: workspaces } = await getWorkspacesResponse.json()
-      const { packages: groups } = await getGroupsResponse.json()
-      workspaces.forEach((workspace: { name: string }) => {
-        const id = getTestIdFromName(workspace.name)
-        if (id && !exclude.includes(id) && !testIds.includes(id)) {
-          testIds.push(id)
-        }
-      })
-      groups.forEach((group: { name: string }) => {
-        const id = getTestIdFromName(group.name)
-        if (id && !exclude.includes(id) && !testIds.includes(id)) {
-          testIds.push(id)
-        }
-      })
+      testIds = (await this.getTestIds(TEST_PREFIX)).filter((id) => !exclude.includes(id))
       console.log('IDs for deletion: ', testIds)
     }, { box: true })
 
@@ -426,20 +406,33 @@ export class ApihubTestDataManager {
     return response
   }
 
-  private async getWorkspaces(textFilter?: string): Promise<APIResponse> {
-    const response = await this.rest.send(rGetPackagesList, [200], { kind: 'workspace', textFilter: textFilter })
-    if (response.status() !== 200) {
-      throw Error(await getRestFailMsg('Getting Workspaces list', response))
+  /**
+   * Returns the test IDs of the workspaces and groups that match `textFilter`.
+   * Reads every page of the list, so the result does not stop at the page limit.
+   */
+  private async getTestIds(textFilter: string): Promise<string[]> {
+    const testIds = new Set<string>()
+    for (let page = 0; ; page++) {
+      const response = await this.rest.send(rGetPackagesList, [200], {
+        kind: 'workspace,group',
+        textFilter: textFilter,
+        limit: PACKAGES_PAGE_LIMIT,
+        page: page,
+      })
+      if (response.status() !== 200) {
+        throw Error(await getRestFailMsg('Getting Workspaces and Groups list', response))
+      }
+      const { packages } = await response.json()
+      packages.forEach((pkg: { name: string }) => {
+        const id = getTestIdFromName(pkg.name)
+        if (id) {
+          testIds.add(id)
+        }
+      })
+      if (packages.length < PACKAGES_PAGE_LIMIT) {
+        return [...testIds]
+      }
     }
-    return response
-  }
-
-  private async getGroups(textFilter?: string): Promise<APIResponse> {
-    const response = await this.rest.send(rGetPackagesList, [200], { kind: 'group', textFilter: textFilter })
-    if (response.status() !== 200) {
-      throw Error(await getRestFailMsg('Getting Groups list', response))
-    }
-    return response
   }
 
   private async getPackageById(packageId: string): Promise<APIResponse> {

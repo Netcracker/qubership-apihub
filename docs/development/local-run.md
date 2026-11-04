@@ -238,8 +238,11 @@ and `/playground` to a running APIHUB. It is the default setup for UI work. The 
 After you change a library, rebuild it (`pnpm exec nx build <library>`) and restart `pnpm dev:proxy`. The Agents UI
 has the same script in `frontend/ui/packages/agents`, with its own `proxyServer` constant.
 
-`pnpm dev:proxy:msw` adds the Mock Service Worker handlers. The mixed mode, a local mock server for selected `/api`
-prefixes, is described in [`portal-mock-server.md`](../../frontend/ui/docs/dev/portal-mock-server.md).
+`pnpm dev:proxy:msw` starts the same proxy mode with the MSW mocks, which change or replace selected backend
+responses in the browser. MSW is the main way to mock the backend in the UI; see
+[MSW mocks](../../frontend/ui/docs/dev/msw-mocks.md). The Express mock server for selected `/api` prefixes, the mixed
+mode, is deprecated and will move to MSW; it is described in
+[`portal-mock-server.md`](../../frontend/ui/docs/dev/portal-mock-server.md).
 
 ### No replacement for `dev:portal` and `dev:agents` yet
 
@@ -254,7 +257,8 @@ pnpm dev:frontend    # terminal 2: Vite
 ```
 
 The same pair exists in `frontend/ui/packages/portal`, but the Portal does not work against the mock alone: most
-Portal flows need a real backend. For the Portal, use proxy mode.
+Portal flows need a real backend. For the Portal, use proxy mode. Both Express mock backends are deprecated: new
+mocks go to [MSW](../../frontend/ui/docs/dev/msw-mocks.md).
 
 ## Builder and Java worker
 

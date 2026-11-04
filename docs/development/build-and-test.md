@@ -165,9 +165,13 @@ pnpm exec nx run class-view:screenshot-test
   ([`tools/jest-chrome-in-docker-environment`](../../tools/jest-chrome-in-docker-environment/)) starts Chrome with the
   `podman` command. Set `DOCKER_BINARY=docker` to use Docker instead. On Windows, run Podman Desktop with its WSL
   machine.
+- **WSL containers work on Windows too.** Set `DOCKER_BINARY=wslc` to start Chrome with `wslc.exe`, which WSL 3.0
+  and later include. Run the tests from PowerShell or Git Bash: `wslc` cannot be called from inside a WSL
+  distribution. `wslc` keeps its own images, so the first run pulls the test image again. Headful runs need host
+  networking, which `wslc` does not support, so keep `headless: true` in the Puppeteer config.
 - **Chrome in the container must reach the host.** The environment looks up the host address from inside the
-  container (`host.docker.internal`, then the container gateway) and checks it on the Storybook port. When none
-  answers, the run stops in `globalSetup` with `Could not resolve IP address of host machine`.
+  container (`host.docker.internal`, the container gateway, then `host.wslc.internal`) and checks it on the Storybook
+  port. When none answers, the run stops in `globalSetup` with `Could not resolve IP address of host machine`.
 - **Update the reference images** after an intended visual change with the `regenerate-screenshots` script, for
   example `pnpm --filter @netcracker/qubership-apihub-class-view run regenerate-screenshots`. Commit the new images
   with the change and look at each one before you do.

@@ -43,7 +43,7 @@ http {
         ""      "[request_id=]";
         default "[request_id=$http_x_request_id]";
     }
-    log_format main '[$log_time.$log_millis] [INFO] $log_request_id [tenant_id=] [thread_id=] [class=] '
+    log_format main '[$log_time.$log_millis] [INFO] $log_request_id [tenant_id=] [thread=] [class=] '
                     '$remote_addr - $remote_user ($request_time) "$request" '
                     '$status $body_bytes_sent "$http_referer" '
                     '"$http_user_agent" "$http_x_forwarded_for"';
