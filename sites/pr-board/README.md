@@ -1,8 +1,8 @@
 # APIHub PR board
 
-The contributor board for Netcracker APIHUB repositories, served at
-[the official PR board](https://netcracker.github.io/qubership-apihub/pr-board/). It shows CI, reviews, conflicts,
-and attention rules. Each viewer loads live data with a personal GitHub token.
+The contributor board for Netcracker APIHUB repositories shows CI, reviews, conflicts, and attention rules.
+Each viewer loads live data with a personal GitHub token. The common Pages workflow publishes the board at
+`/qubership-apihub/pr-board/`.
 
 Imported from [apihub-pr-board](https://github.com/makeev-pavel/apihub-pr-board) at commit
 `ebe8936c9eadbbababb6f7cb9aa5f5c3574502c4`. This private workspace package is the Nx project `pr-board`;

@@ -7,7 +7,7 @@ with the code, and the site shows the same files.
 ## Who reads what
 
 | You want to | Start with |
-|-------------|------------|
+| --- | --- |
 | Try APIHUB or bring up an environment | [Installation guide](./installation-guide.md) |
 | Operate an installation | [Admin guide](./admin-guide.md) and [Maintenance guide](./maintenance-guide.md) |
 | Publish, browse, and compare APIs | [User guide](./user-guide.md) |
@@ -68,7 +68,7 @@ with the code, and the site shows the same files.
 The deployment assets live outside this folder, in [`deploy/`](../deploy/README.md):
 
 | Path | Role |
-|------|------|
+| --- | --- |
 | [`deploy/docker-compose/apihub-generic/`](../deploy/docker-compose/apihub-generic/README.md) | Reference Compose stack with `generate_env_and_up_compose.sh` |
 | [`deploy/docker-compose/with-keycloak/`](../deploy/docker-compose/with-keycloak/README.md) | Compose stack with a Keycloak SSO recipe |
 | [`deploy/helm-templates/`](../deploy/helm-templates/README.md) | The Helm chart and its commented production `values.yaml` |

@@ -1,6 +1,9 @@
 /* Element defaults and the one-screen page layout. */
 
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+}
+
 body {
   background: var(--bg);
   color: var(--fg);
@@ -8,28 +11,87 @@ body {
   margin: 0;
   padding: 16px 16px 0;
 }
-a { color: var(--accent); text-decoration: none; }
-a:hover { text-decoration: underline; }
-:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
-button { font: inherit; color: inherit; }
-.mono { font-family: var(--font-mono); }
-.num { font-variant-numeric: tabular-nums; }
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+}
+
+.mono {
+  font-family: var(--font-mono);
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+}
 
 /* One screen: header, tiles and toolbar stay put; only the table scrolls; the legend bar sits at the bottom. */
-html, body { height: 100%; }
-#app { height: 100%; display: flex; flex-direction: column; gap: 14px; }
-#app > * { flex: none; }
+html,
+body {
+  height: 100%;
+}
+
+#app {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+#app > * {
+  flex: none;
+}
 
 /* Muted text; containers set its size. */
-.muted { color: var(--muted); }
+.muted {
+  color: var(--muted);
+}
+
 /* Every animation and transition stops when the system asks for reduced motion (QUAL-5). */
 @media (prefers-reduced-motion: reduce) {
-  *, ::before, ::after { animation: none !important; transition: none !important; }
+  *,
+  ::before,
+  ::after {
+    animation: none !important;
+    transition: none !important;
+  }
 }
-.sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; border: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
 
 /* On small screens a one-screen layout leaves no room for rows; let the page scroll instead. */
-@media (max-width: 700px), (max-height: 520px) {
-  html, body { height: auto; }
-  #app { height: auto; }
+@media (width <= 700px), (height <= 520px) {
+  html,
+  body {
+    height: auto;
+  }
+
+  #app {
+    height: auto;
+  }
 }

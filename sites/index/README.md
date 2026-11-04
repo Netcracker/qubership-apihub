@@ -18,7 +18,7 @@ static HTML and CSS. There is no build, no framework, and no package manifest, s
 The Pages assembly (`tools/ci/pages-site.js`) copies the files to the site root and replaces these HTML comments:
 
 | Placeholder | File | Replaced with |
-|-------------|------|---------------|
+| --- | --- | --- |
 | `<!--@STORYBOOK_COMPONENTS@-->` | `index.html` | a `<ul>` of links to the Storybook components |
 | `<!--@ERD_BACKENDS@-->` | `index.html` | a `<ul>` of links to the ERD of each backend |
 | `<!--@BUILD_REF@-->` | `index.html` | the ref the site was built from |

@@ -29,12 +29,12 @@ gh workflow run release-finish.yml --ref develop -f dry_run=false -f sprint=APIH
 ## Roles and secrets
 
 | Role | Does | Needs |
-|------|------|-------|
+| --- | --- | --- |
 | Release manager | Runs `release-start` and `release-finish`, reads the summaries, fixes conflicts | Write access |
 | Repository admin | Owns the deploy key, secrets, variables, and rulesets; pushes what rulesets block | Admin |
 
 | Name | What it is | Used by | State |
-|------|------------|---------|-------|
+| --- | --- | --- | --- |
 | `RELEASE_BOT_SSH_KEY` | Actions secret: private half of deploy key `apihub-release-bot` | Every bot push | In use |
 | `GITHUB_TOKEN` | Token GitHub creates for each run | CI, `release-artifacts` | In use |
 | `PROJECT_READ_TOKEN` | Actions secret with `read:project`, for Project 9 | Product notes (sprint items) | In use |
@@ -66,7 +66,7 @@ The workflows rely on these repository settings. They are not checkable from cod
 ## Branches and merge rules
 
 | Branch | Updated by | Merge method |
-|--------|------------|--------------|
+| --- | --- | --- |
 | `develop` | Feature pull requests; bot merges from `release` and `main` | Squash for pull requests |
 | `release` | `release-start` (fast-forward to `develop`); hotfix pull requests | Squash for pull requests |
 | `main` | `release-finish` only: fast-forward to `release`, then the version commit | None |
@@ -387,7 +387,7 @@ closing issues, and a card at most ten pull requests, as in the old scripts.
 Two charts are released, each as its own artifact:
 
 | Chart | Sources | Released with | Published as |
-|-------|---------|---------------|--------------|
+| --- | --- | --- | --- |
 | `qubership-apihub` | `deploy/helm-templates/qubership-apihub` | the product tag `X.Y.Z` | `oci://ghcr.io/netcracker/charts/qubership-apihub` |
 | `qubership-apihub-agent` | `backend/agent/helm-templates/qubership-apihub-agent` | the agent tag `agent/X.Y.Z` | `oci://ghcr.io/netcracker/charts/qubership-apihub-agent` |
 
@@ -454,7 +454,7 @@ the monorepo and of that repository.
 ### Bump per commit type
 
 | Commit | Bump |
-|--------|------|
+| --- | --- |
 | `feat` | minor |
 | `fix`, `perf`, `revert`, `refactor`, `build`, `chore`, `style` | patch |
 | `docs`, `test`, `ci` | none |
@@ -497,7 +497,7 @@ product continues from `2.15.0`.
 ## Tag prefixes
 
 | Tag | Meaning | Example |
-|-----|---------|---------|
+| --- | --- | --- |
 | `<component>/<version>` | A released component | `portal-backend/1.21.1` |
 | `X.Y.Z` | The product release | `2.16.0` |
 

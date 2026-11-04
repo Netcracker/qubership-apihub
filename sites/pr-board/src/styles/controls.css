@@ -1,35 +1,146 @@
 /* Buttons, segmented controls, and drop-down menus. */
 .btn {
-  display: inline-flex; align-items: center; gap: 6px; padding: 7px 11px; border-radius: 6px;
-  border: 1px solid var(--line-strong); background: var(--surface); cursor: pointer; white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 11px;
+  border-radius: 6px;
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  cursor: pointer;
+  white-space: nowrap;
 }
-.btn:hover { border-color: var(--muted); }
-.btn.ghost { border-color: transparent; background: transparent; color: var(--accent); }
-.btn.ghost:hover { background: var(--accent-soft); }
-.segmented { display: inline-flex; border: 1px solid var(--line-strong); border-radius: 6px; overflow: hidden; background: var(--surface); }
-.segmented button { border: 0; background: transparent; padding: 7px 11px; cursor: pointer; }
-.segmented button + button { border-left: 1px solid var(--line); }
-.segmented button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
 
-.menu-wrap { position: relative; }
+.btn:hover {
+  border-color: var(--muted);
+}
+
+.btn.ghost {
+  border-color: transparent;
+  background: transparent;
+  color: var(--accent);
+}
+
+.btn.ghost:hover {
+  background: var(--accent-soft);
+}
+
+.segmented {
+  display: inline-flex;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.segmented button {
+  border: 0;
+  background: transparent;
+  padding: 7px 11px;
+  cursor: pointer;
+}
+
+.segmented button + button {
+  border-left: 1px solid var(--line);
+}
+
+.segmented button[aria-pressed="true"] {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.menu-wrap {
+  position: relative;
+}
+
 .menu {
-  position: absolute; z-index: 30; top: calc(100% + 4px); left: 0; width: 280px; max-width: calc(100vw - 32px);
-  background: var(--surface); border: 1px solid var(--line-strong); border-radius: 8px; box-shadow: var(--shadow);
-  padding: 8px; display: grid; gap: 4px; max-height: 420px; overflow: auto;
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 4px);
+  left: 0;
+  width: 280px;
+  max-width: calc(100vw - 32px);
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  padding: 8px;
+  display: grid;
+  gap: 4px;
+  max-height: 420px;
+  overflow: auto;
 }
-.menu .group { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); padding: 6px 6px 2px; }
-.menu label { display: flex; align-items: center; gap: 8px; padding: 4px 6px; border-radius: 4px; cursor: pointer; }
-.menu label:hover { background: var(--surface-2); }
+
+.menu .group {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  padding: 6px 6px 2px;
+}
+
+.menu label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.menu label:hover {
+  background: var(--surface-2);
+}
+
 /* A repository group in the Repositories menu has its tint inline, as var(--group-N) (TABLE-31). */
-.menu label.tinted + label { margin-top: 2px; }
-.menu label .n { margin-left: auto; color: var(--muted); font-variant-numeric: tabular-nums; font-size: 12px; }
-.menu .actions { display: flex; gap: 4px; border-bottom: 1px solid var(--line); padding-bottom: 6px; margin-bottom: 2px; flex-wrap: wrap; }
-.menu .actions button { font-size: 12px; padding: 3px 8px; }
+.menu label.tinted + label {
+  margin-top: 2px;
+}
 
-.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--surface); font-weight: 600; }
-.btn.primary:hover { filter: brightness(1.08); border-color: var(--accent); }
-.btn:disabled { opacity: 0.6; cursor: default; }
+.menu label .n {
+  margin-left: auto;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+}
 
-.btn.icon { position: relative; }
+.menu .actions {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 6px;
+  margin-bottom: 2px;
+  flex-wrap: wrap;
+}
 
-.btn.icon-only { padding: 7px 10px; font-weight: 600; }
+.menu .actions button {
+  font-size: 12px;
+  padding: 3px 8px;
+}
+
+.btn.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--surface);
+  font-weight: 600;
+}
+
+.btn.primary:hover {
+  filter: brightness(1.08);
+  border-color: var(--accent);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.btn.icon {
+  position: relative;
+}
+
+.btn.icon-only {
+  padding: 7px 10px;
+  font-weight: 600;
+}

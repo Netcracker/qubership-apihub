@@ -1,43 +1,256 @@
 /* Settings: one panel under the gear, sections stacked, scrolls when the window is short. */
-.refresh .settings-panel { width: 380px; max-height: calc(100vh - 120px); padding: 0; gap: 0; }
-.settings-panel section { display: grid; gap: 6px; padding: 12px 14px; border-bottom: 1px solid var(--line); }
-.settings-panel h2 { margin: 0 0 2px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
-.settings-panel .section-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.settings-panel .section-head .btn { padding: 2px 8px; font-size: 12px; }
-.settings-panel .inline-field input { width: 64px; padding: 4px 6px; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--surface); color: var(--fg); font: inherit; }
-.settings-panel .stacked-field { padding: 4px 6px 0; cursor: default; }
-.settings-panel .stacked-field:hover { background: none; }
-.settings-panel .text-field { padding: 6px 8px; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--surface); color: var(--fg); font: inherit; }
-.settings-panel .hint { margin: 0; padding: 0 6px; font-size: 12px; color: var(--muted); }
-.setting-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 2px 6px; }
-.setting-row .segmented button { padding: 5px 10px; }
-.settings-panel .hint code { font-family: var(--font-mono); font-size: 11px; }
-.area-field { display: grid; gap: 4px; }
-#repos-input, #groups-input, .area-field textarea { resize: vertical; font-family: var(--font-mono); font-size: 12px; }
-#repos-input[aria-invalid="true"], #groups-input[aria-invalid="true"] { border-color: var(--bad); }
-.settings-panel .field-error { margin: 0; padding: 0 6px; font-size: 12px; color: var(--bad); }
-.column-options { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; }
-.column-options li { display: flex; align-items: center; gap: 4px; }
-.column-options li label, .column-options .order-label { flex: 1; }
-.column-options .order-label { padding: 4px 6px; }
-.column-options .btn.icon-only { padding: 0 6px; min-height: 22px; line-height: 20px; }
-.column-options + .btn { justify-self: start; }
-.settings-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 14px; font-size: 12px; }
-.token-form { display: grid; gap: 8px; }
-.token-form p { margin: 0; color: var(--muted); font-size: 13px; }
-.token-form label { font-size: 12px; font-weight: 600; }
-.token-form input { padding: 7px 10px; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--surface); color: var(--fg); font: inherit; }
-.token-form .actions { border: 0; padding: 0; margin: 4px 0 0; }
+
+.token-form {
+  display: grid;
+  gap: 8px;
+}
+
+.token-form p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.token-form label {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.token-form input {
+  padding: 7px 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--fg);
+  font: inherit;
+}
+
+.token-form .actions {
+  border: 0;
+  padding: 0;
+  margin: 4px 0 0;
+}
 
 /* The token dialog (SET-18): centered over a dimmed page. */
-.dialog-backdrop { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 16px; background: var(--backdrop); }
-.token-dialog { width: min(460px, 100%); display: grid; gap: 10px; padding: 18px 20px; border: 1px solid var(--line-strong); border-radius: 10px; background: var(--surface); color: var(--fg); box-shadow: var(--shadow); }
-.token-dialog h2 { margin: 0; font-size: 16px; }
-.token-dialog p, .token-dialog ol { margin: 0; font-size: 13px; }
-.token-dialog ol { padding-left: 20px; display: grid; gap: 4px; }
-.token-dialog code { font-family: var(--font-mono); font-size: 12px; }
-.token-dialog input { padding: 6px 8px; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--surface); color: var(--fg); font: inherit; }
-.token-dialog .actions { display: flex; gap: 8px; }
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: var(--backdrop);
+}
+
+.token-dialog {
+  width: min(460px, 100%);
+  display: grid;
+  gap: 10px;
+  padding: 18px 20px;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--fg);
+  box-shadow: var(--shadow);
+}
+
+.token-dialog h2 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.token-dialog p,
+.token-dialog ol {
+  margin: 0;
+  font-size: 13px;
+}
+
+.token-dialog ol {
+  padding-left: 20px;
+  display: grid;
+  gap: 4px;
+}
+
+.token-dialog code {
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.token-dialog input {
+  padding: 6px 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--fg);
+  font: inherit;
+}
+
+.token-dialog .actions {
+  display: flex;
+  gap: 8px;
+}
+
+.refresh .settings-panel {
+  width: 380px;
+  max-height: calc(100vh - 120px);
+  padding: 0;
+  gap: 0;
+}
+
+.settings-panel section {
+  display: grid;
+  gap: 6px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.settings-panel h2 {
+  margin: 0 0 2px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.settings-panel .section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.column-options + .btn {
+  justify-self: start;
+}
+
+.settings-panel .section-head .btn {
+  padding: 2px 8px;
+  font-size: 12px;
+}
+
+.settings-panel .inline-field input {
+  width: 64px;
+  padding: 4px 6px;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--fg);
+  font: inherit;
+}
+
+.settings-panel .stacked-field {
+  padding: 4px 6px 0;
+  cursor: default;
+}
+
+.settings-panel .stacked-field:hover {
+  background: none;
+}
+
+.settings-panel .text-field {
+  padding: 6px 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--fg);
+  font: inherit;
+}
+
+.settings-panel .hint {
+  margin: 0;
+  padding: 0 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 2px 6px;
+}
+
+.setting-row .segmented button {
+  padding: 5px 10px;
+}
+
+.settings-panel .hint code {
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.area-field {
+  display: grid;
+  gap: 4px;
+}
+
+#repos-input,
+#groups-input,
+.area-field textarea {
+  resize: vertical;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+#repos-input[aria-invalid="true"],
+#groups-input[aria-invalid="true"] {
+  border-color: var(--bad);
+}
+
+.settings-panel .field-error {
+  margin: 0;
+  padding: 0 6px;
+  font-size: 12px;
+  color: var(--bad);
+}
+
+.column-options {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.column-options li {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.column-options li label,
+.column-options .order-label {
+  flex: 1;
+}
+
+.column-options .order-label {
+  padding: 4px 6px;
+}
+
+.column-options .btn.icon-only {
+  padding: 0 6px;
+  min-height: 22px;
+  line-height: 20px;
+}
+
+.settings-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 14px;
+  font-size: 12px;
+}
+
 /* The banner is a grid, so the button keeps its own width instead of the banner's. */
-.banner-action { justify-self: start; }
-.area-criteria { border: 1px solid var(--line); margin: 12px 0; padding: 8px 12px; }
+.banner-action {
+  justify-self: start;
+}
+
+.area-criteria {
+  border: 1px solid var(--line);
+  margin: 12px 0;
+  padding: 8px 12px;
+}

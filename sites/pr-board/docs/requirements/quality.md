@@ -19,7 +19,7 @@
 
 ## Look
 
-- **QUAL-6** Light and dark themes share one set of color tokens. Colors in the stylesheet come only from these
+- **QUAL-6** Light and dark themes share one set of color tokens. Colors in the style sheet come only from these
   tokens (`src/styles/tokens.css`).
 - **QUAL-7** Text and code use IBM Plex Sans and IBM Plex Mono, served with the page (**SEC-8**), with system fonts
   as the fallback.
