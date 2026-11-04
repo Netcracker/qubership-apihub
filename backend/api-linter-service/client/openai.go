@@ -26,7 +26,7 @@ import (
 )
 
 type LLMClient interface {
-	LintOasDocument(ctx context.Context, docStr string, prompt string) ([]view.AiValidationIssue, RequestReport, error)
+	LintOasDocument(ctx context.Context, docStr string, prompt string, maxCompletionTokens int) ([]view.AiValidationIssue, RequestReport, error)
 	DeduplicateIssues(ctx context.Context, systemPrompt string, request view.AiDeduplicationRequest, maxCompletionTokens int) ([]view.AiDuplicatePair, RequestReport, error)
 }
 
@@ -34,7 +34,8 @@ const (
 	finishReasonStop   = "stop"
 	finishReasonLength = "length"
 
-	maxProviderTextBytes = 512
+	maxProviderTextBytes    = 512
+	maxStoredErrorTextBytes = 1000
 )
 
 var (
@@ -165,11 +166,14 @@ type OAIClientImpl struct {
 	deduplicationSchema any
 }
 
-func (o OAIClientImpl) LintOasDocument(ctx context.Context, docStr string, prompt string) ([]view.AiValidationIssue, RequestReport, error) {
+func (o OAIClientImpl) LintOasDocument(ctx context.Context, docStr string, prompt string, maxCompletionTokens int) ([]view.AiValidationIssue, RequestReport, error) {
 	var result view.AiValidationIssuesOutput
-	report, err := o.complete(ctx, prompt, docStr, "oas_doc_lint_response", o.lintSchema, 0, &result)
+	report, err := o.complete(ctx, prompt, docStr, "oas_doc_lint_response", o.lintSchema, maxCompletionTokens, &result)
 	if err != nil {
 		return nil, report, err
+	}
+	if result.Issues == nil {
+		return nil, report, fmt.Errorf("%w: the 'issues' field is missing or null", aiError(exception.AiMalformedOutput, exception.AiMalformedOutputMsg))
 	}
 	return result.Issues, report, nil
 }
@@ -233,6 +237,13 @@ func (o OAIClientImpl) complete(ctx context.Context, systemPrompt string, userMe
 	report.Duration = time.Since(start)
 	report.ProviderAttempts = attempts
 	if err != nil {
+		if ctx.Err() != nil {
+			// The SDK returns the bare context error and drops the cancellation cause, which names the request that failed first.
+			if cause := context.Cause(ctx); !errors.Is(err, cause) {
+				err = fmt.Errorf("%w: %v", err, cause)
+			}
+			return report, err
+		}
 		return report, classifyProviderError(err)
 	}
 
@@ -283,7 +294,9 @@ func trackAttempts(schemaName string, attempts *int) option.Middleware {
 		attemptStart := time.Now()
 		resp, err := next(req)
 		elapsed := time.Since(attemptStart).Round(time.Millisecond)
-		if err != nil {
+		if err != nil && req.Context().Err() != nil {
+			log.Debugf("AI request %s: attempt %d cancelled after %s", schemaName, *attempts, elapsed)
+		} else if err != nil {
 			log.Warnf("AI request %s: attempt %d failed with %v after %s", schemaName, *attempts, err, elapsed)
 		} else if resp.StatusCode >= http.StatusBadRequest {
 			log.Warnf("AI request %s: attempt %d failed with HTTP %d after %s%s", schemaName, *attempts, resp.StatusCode, elapsed, describeFailedResponse(resp))
@@ -329,6 +342,14 @@ func excerpt(text string) string {
 		text += "..."
 	}
 	return text
+}
+
+func SanitiseErrorText(text string) string {
+	text = secretPattern.ReplaceAllString(text, "${1}***")
+	if len(text) <= maxStoredErrorTextBytes {
+		return text
+	}
+	return strings.ToValidUTF8(text[:maxStoredErrorTextBytes], "") + "..."
 }
 
 func classifyProviderError(err error) error {
@@ -381,7 +402,7 @@ type stubLlmClient struct{}
 
 var errLlmClientNotConfigured = errors.New("LLM client is not configured, using stub instead of implementation")
 
-func (s stubLlmClient) LintOasDocument(ctx context.Context, docStr string, prompt string) ([]view.AiValidationIssue, RequestReport, error) {
+func (s stubLlmClient) LintOasDocument(ctx context.Context, docStr string, prompt string, maxCompletionTokens int) ([]view.AiValidationIssue, RequestReport, error) {
 	return nil, RequestReport{}, errLlmClientNotConfigured
 }
 

@@ -52,6 +52,7 @@ type SystemInfoService interface {
 	GetAiLinterWorkers() int
 	GetAiLinterExcludedPackages() []string
 	GetAiLinterIncludedPackages() []string
+	GetAiLinterLintConfig() config.AILintConfig
 	GetAiLinterDeduplicationConfig() config.AIDeduplicationConfig
 	GetSpectralLinterWorkers() int
 	IsSpectralLinterOptional() bool
@@ -117,6 +118,8 @@ func setDefaults() {
 	viper.SetDefault("linters.ai.openAI.maxConcurrentRequests", 0)
 	viper.SetDefault("linters.ai.openAI.maxRetries", 5)
 	viper.SetDefault("linters.ai.openAI.extraBodyJSON", "")
+	viper.SetDefault("linters.ai.lint.maxCompletionTokens", 12000)
+	viper.SetDefault("linters.ai.lint.maxRetriesOnInvalidOutput", 2)
 	viper.SetDefault("linters.ai.deduplication.criteriaPrompt", defaultAiDeduplicationCriteriaPrompt)
 	viper.SetDefault("linters.ai.deduplication.requestTokenBudget", 24000)
 	viper.SetDefault("linters.ai.deduplication.maxCompletionTokens", 12000)
@@ -251,6 +254,10 @@ func (s *systemInfoServiceImpl) GetAiLinterExcludedPackages() []string {
 
 func (s *systemInfoServiceImpl) GetAiLinterIncludedPackages() []string {
 	return s.config.Linters.AI.IncludedPackages
+}
+
+func (s *systemInfoServiceImpl) GetAiLinterLintConfig() config.AILintConfig {
+	return s.config.Linters.AI.Lint
 }
 
 func (s *systemInfoServiceImpl) GetAiLinterDeduplicationConfig() config.AIDeduplicationConfig {

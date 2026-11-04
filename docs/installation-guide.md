@@ -391,6 +391,8 @@ insufficient.
 | `linters.ai.openAI.maxConcurrentRequests` | No | `0` | Maximum LLM requests in flight per instance, shared by the lint and deduplication requests of all AI workers; `0` means unbounded |
 | `linters.ai.openAI.maxRetries` | No | `5` | Number of times one LLM request is sent again after a connection failure or an HTTP 408, 409, 429 or 5xx response; the provider's `x-should-retry` and `Retry-After` headers are honoured; `0` disables retries |
 | `linters.ai.openAI.extraBodyJSON` | No | `''` | String that holds a JSON object; its top-level keys are added to every LLM request body, for provider-specific parameters. Must not contain `messages`, `response_format`, `max_completion_tokens`, or `model`. Example: `extraBodyJSON: '{"thinking":{"type":"disabled"}}'` |
+| `linters.ai.lint.maxCompletionTokens` | No | `12000` | Maximum completion tokens for one lint request of an operation (`max_completion_tokens`); minimum `1000` |
+| `linters.ai.lint.maxRetriesOnInvalidOutput` | No | `2` | Number of times the lint of an operation is sent again after the model output reaches the completion token limit or does not match the response schema; `0` disables these retries. When the retries are exhausted, the document lint fails |
 | `linters.ai.deduplication.criteriaPrompt` | No | Built-in criterion | Rule that decides whether two AI linter issues at the same path describe the same problem; appended to the built-in deduplication instructions |
 | `linters.ai.deduplication.requestTokenBudget` | No | `24000` | Estimated input tokens per deduplication request, including the system prompt; minimum `4000`. Larger groups of issues are split into several requests |
 | `linters.ai.deduplication.maxCompletionTokens` | No | `12000` | Maximum completion tokens for one deduplication request (`max_completion_tokens`); minimum `1000` |
@@ -584,7 +586,7 @@ see the [agent chart guide](../backend/agent/helm-templates/README.md).
 | `qubershipApiLinterService.env.technicalParameters.apihub.url` | No | Default `http://localhost:8090`; in-cluster set to `http://qubership-apihub-ui:8080` |
 | `qubershipApiLinterService.goMemLimit` | No | → `GOMEMLIMIT` (default `800MiB`, ~80% of default `memory.limit` `1000Mi`) |
 | `qubershipApiLinterService.env.linters.spectral.*` | No | Spectral binary path and worker count |
-| `qubershipApiLinterService.env.linters.ai.*` | No | AI linter (OpenAI key, workers, include/exclude lists, LLM request concurrency, deduplication token budgets) |
+| `qubershipApiLinterService.env.linters.ai.*` | No | AI linter (OpenAI key, workers, include/exclude lists, LLM request concurrency, lint token limit and retries, deduplication token budgets) |
 | `qubershipApiLinterService.env.olric.*` | No | Olric discovery mode / replicas (namespace set by Helm) |
 | `qubershipApiLinterService.customCa` | No | Optional Secret mounted at `/tmp/cert` for corporate HTTPS outbound |
 | `qubershipApihubAgentsBackend.env.database.*` | Yes | Agents-backend `config.yaml` `database.*` |

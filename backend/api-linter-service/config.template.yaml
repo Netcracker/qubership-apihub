@@ -78,6 +78,11 @@ linters:
       maxRetries: 5
       # Optional; JSON object whose top-level keys are added to every LLM request body, for provider-specific parameters; If not set, default value: empty (nothing added); Example: '{"thinking":{"type":"disabled"}}'
       extraBodyJSON: ''
+    lint:
+      # Optional; Maximum number of completion tokens for one lint request of an operation (max_completion_tokens); Minimum: 1000; If not set, default value: 12000; Example: 16000
+      maxCompletionTokens: 12000
+      # Optional; Number of times the lint of an operation is sent again after the model output reaches the completion token limit or does not match the response schema; 0 disables these retries; If not set, default value: 2; Example: 1
+      maxRetriesOnInvalidOutput: 2
     deduplication:
       # Optional; Criterion that decides whether two AI linter issues at the same path describe the same problem, appended to the built-in deduplication instructions; If not set, default value: the built-in criterion shown below; Example: Two issues describe the same problem if their messages report the same defect.
       criteriaPrompt: |-

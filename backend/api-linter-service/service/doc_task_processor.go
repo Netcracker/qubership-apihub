@@ -449,7 +449,7 @@ func (d docTaskProcessorImpl) lintDocumentWithAi(ctx context.Context, task entit
 	rulesetData view.AiRuleset) ([]view.ValidationIssue, int64, error) {
 
 	operationIssues := make([][]issueWithResolvedPath, len(operations))
-	operationStats := make([]entity.AiLintOperationStats, len(operations))
+	operationStats := make([][]entity.AiLintOperationStats, len(operations))
 	lintStart := time.Now()
 	g, gCtx := errgroup.WithContext(ctx)
 	for i, op := range operations {
@@ -460,12 +460,14 @@ func (d docTaskProcessorImpl) lintDocumentWithAi(ctx context.Context, task entit
 			}
 
 			log.Tracef("Linting operation %s via AI for doc %s (task id = %s) for package %s, version %s@%d. executorId=%s", op.OperationId, task.FileId, task.Id, task.PackageId, task.Version, task.Revision, task.ExecutorId)
-			issues, report, err := d.aiOasExecutor.LintOperationForDoc(gCtx, string(operation.Data), rulesetData)
+			issues, requests, err := d.aiOasExecutor.LintOperationForDoc(gCtx, op.OperationId, string(operation.Data), rulesetData)
 			operationIssues[i] = issues
-			operationStats[i] = entity.AiLintOperationStats{
-				OperationId:      op.OperationId,
-				Issues:           len(issues),
-				AiRequestMetrics: newAiRequestMetrics(report, estimateTokens(len(rulesetData.Prompt)+len(operation.Data)), err),
+			for attempt, request := range requests {
+				stats := entity.AiLintOperationStats{OperationId: op.OperationId, Attempt: attempt + 1, AiRequestMetrics: request}
+				if request.Status == entity.AiRequestStatusSuccess {
+					stats.Issues = len(issues)
+				}
+				operationStats[i] = append(operationStats[i], stats)
 			}
 			if err != nil {
 				return fmt.Errorf("error linting doc with AI: %w", err)
@@ -478,11 +480,13 @@ func (d docTaskProcessorImpl) lintDocumentWithAi(ctx context.Context, task entit
 	var calcTimeMs int64
 	lintDetails := entity.AiLintStageDetails{Operations: []entity.AiLintOperationStats{}}
 	var lintRequests []entity.AiRequestMetrics
-	for _, operation := range operationStats {
-		if operation.ProviderAttempts > 0 {
-			lintDetails.Operations = append(lintDetails.Operations, operation)
-			lintRequests = append(lintRequests, operation.AiRequestMetrics)
-			calcTimeMs += operation.DurationMs
+	for _, requests := range operationStats {
+		for _, request := range requests {
+			if request.ProviderAttempts > 0 {
+				lintDetails.Operations = append(lintDetails.Operations, request)
+				lintRequests = append(lintRequests, request.AiRequestMetrics)
+				calcTimeMs += request.DurationMs
+			}
 		}
 	}
 	d.saveAiLintStats(task, entity.AiLintStageLint, lintStart, err, lintRequests, lintDetails)
@@ -604,9 +608,9 @@ func newAiLintStats(task entity.DocumentLintTask, stage entity.AiLintStage, mode
 	if marshalErr != nil {
 		return entity.AiLintStats{}, fmt.Errorf("failed to marshal details of AI request stage %s: %w", stage, marshalErr)
 	}
-	status := entity.AiRequestStatusSuccess
+	status, errorMessage := entity.AiRequestStatusSuccess, ""
 	if err != nil {
-		status = entity.AiRequestStatusError
+		status, errorMessage = entity.AiRequestStatusError, client.SanitiseErrorText(err.Error())
 	}
 	stats := entity.AiLintStats{
 		Id:                 uuid.NewString(),
@@ -619,6 +623,7 @@ func newAiLintStats(task entity.DocumentLintTask, stage entity.AiLintStage, mode
 		Model:              model,
 		Status:             status,
 		ErrorClass:         classifyAiRequestError(err),
+		ErrorMessage:       errorMessage,
 		Requests:           len(requests),
 		DurationMs:         duration.Milliseconds(),
 		Details:            serialised,
@@ -648,6 +653,7 @@ func newAiRequestMetrics(report client.RequestReport, estimatedPromptTokens int,
 	}
 	if err != nil {
 		metrics.Status = entity.AiRequestStatusError
+		metrics.ErrorMessage = client.SanitiseErrorText(err.Error())
 	}
 	if report.Usage != nil {
 		metrics.Usage = &entity.AiTokenUsage{
@@ -663,6 +669,9 @@ func newAiRequestMetrics(report client.RequestReport, estimatedPromptTokens int,
 func classifyAiRequestError(err error) entity.AiRequestErrorClass {
 	if err == nil {
 		return ""
+	}
+	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+		return entity.AiRequestErrorClassCancelled
 	}
 	var customError *exception.CustomError
 	if !errors.As(err, &customError) {

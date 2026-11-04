@@ -27,11 +27,12 @@ const (
 	AiRequestErrorClassRefusal       AiRequestErrorClass = "refusal"
 	AiRequestErrorClassValidation    AiRequestErrorClass = "validation"
 	AiRequestErrorClassRateLimit     AiRequestErrorClass = "rate_limit"
+	AiRequestErrorClassCancelled     AiRequestErrorClass = "cancelled"
 	AiRequestErrorClassOther         AiRequestErrorClass = "other"
 )
 
 // AiLintStats is one stage (lint or deduplication) of a document lint task. Details holds the marshalled
-// AiLintStageDetails or AiDeduplicationStageDetails. ErrorClass is empty for a successful stage.
+// AiLintStageDetails or AiDeduplicationStageDetails. ErrorClass and ErrorMessage are empty for a successful stage.
 type AiLintStats struct {
 	tableName struct{} `pg:"ai_lint_stats"`
 
@@ -45,6 +46,7 @@ type AiLintStats struct {
 	Model              string              `pg:"model,type:varchar,notnull,use_zero"`
 	Status             AiRequestStatus     `pg:"status,type:varchar,notnull,use_zero"`
 	ErrorClass         AiRequestErrorClass `pg:"error_class,type:varchar,notnull,use_zero"`
+	ErrorMessage       string              `pg:"error_message,type:varchar,notnull,use_zero"`
 	Requests           int                 `pg:"requests,type:integer,notnull,use_zero"`
 	PromptTokens       int                 `pg:"prompt_tokens,type:integer,notnull,use_zero"`
 	CompletionTokens   int                 `pg:"completion_tokens,type:integer,notnull,use_zero"`
@@ -68,11 +70,13 @@ type AiRequestMetrics struct {
 	ProviderAttempts      int                 `json:"provider_attempts"`
 	Status                AiRequestStatus     `json:"status"`
 	ErrorClass            AiRequestErrorClass `json:"error_class,omitempty"`
+	ErrorMessage          string              `json:"error_message,omitempty"`
 	DurationMs            int64               `json:"duration_ms"`
 }
 
 type AiLintOperationStats struct {
 	OperationId string `json:"operation_id"`
+	Attempt     int    `json:"attempt"`
 	Issues      int    `json:"issues"`
 	AiRequestMetrics
 }

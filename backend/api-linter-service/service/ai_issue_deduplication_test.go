@@ -23,6 +23,8 @@ const (
 	testCompletionSize = 100
 )
 
+var testLintUsage = client.TokenUsage{PromptTokens: 200, CompletionTokens: 20}
+
 // aiError stands for an AI request error of the given code; the test only needs the code to match.
 func aiError(code string) error {
 	return &exception.CustomError{Code: code}
@@ -31,19 +33,23 @@ func aiError(code string) error {
 // fakeLlmClient records deduplication requests and answers them with dedup, or with sameCodeOracle when dedup is nil.
 // Like the real client, it does not dispatch a request whose context is already cancelled.
 type fakeLlmClient struct {
-	lint  func(docStr string) ([]view.AiValidationIssue, error)
+	lint  func(ctx context.Context, docStr string) ([]view.AiValidationIssue, error)
 	dedup func(call int, request view.AiDeduplicationRequest) ([]view.AiDuplicatePair, error)
 
-	mu       sync.Mutex
-	requests []view.AiDeduplicationRequest
+	mu         sync.Mutex
+	requests   []view.AiDeduplicationRequest
+	lintLimits []int
 }
 
-func (f *fakeLlmClient) LintOasDocument(ctx context.Context, docStr string, _ string) ([]view.AiValidationIssue, client.RequestReport, error) {
+func (f *fakeLlmClient) LintOasDocument(ctx context.Context, docStr string, _ string, maxCompletionTokens int) ([]view.AiValidationIssue, client.RequestReport, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, client.RequestReport{Model: testModelName}, err
 	}
-	issues, err := f.lint(docStr)
-	return issues, client.RequestReport{Model: testModelName, ProviderAttempts: 1}, err
+	f.mu.Lock()
+	f.lintLimits = append(f.lintLimits, maxCompletionTokens)
+	f.mu.Unlock()
+	issues, err := f.lint(ctx, docStr)
+	return issues, client.RequestReport{Model: testModelName, ProviderAttempts: 1, Usage: &testLintUsage}, err
 }
 
 func (f *fakeLlmClient) DeduplicateIssues(ctx context.Context, _ string, request view.AiDeduplicationRequest, _ int) ([]view.AiDuplicatePair, client.RequestReport, error) {

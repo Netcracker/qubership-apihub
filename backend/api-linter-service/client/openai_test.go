@@ -193,20 +193,86 @@ func TestDeduplicateIssuesResponses(t *testing.T) {
 	}
 }
 
-func TestLintOasDocumentHasNoCompletionLimitAndSendsExtraBody(t *testing.T) {
+func TestLintOasDocumentSendsCompletionLimitAndExtraBody(t *testing.T) {
 	var captured map[string]any
 	body := completionBody("stop", `{"issues":[{"path":["info"],"code":"c","severity":"info","message":"m"}]}`, "", fullUsage)
 	cl := newTestClient(t, respond(t, 0, 0, http.StatusOK, body, &captured), testMaxConcurrent, testMaxRetries, `{"thinking":{"type":"disabled"}}`)
 
-	issues, _, err := cl.LintOasDocument(context.Background(), `{"info":{}}`, "prompt")
+	issues, _, err := cl.LintOasDocument(context.Background(), `{"info":{}}`, "prompt", testMaxCompletionToken)
 	if err != nil || len(issues) != 1 {
 		t.Fatalf("expected one issue, got %v, %v", issues, err)
 	}
-	if _, exists := captured["max_completion_tokens"]; exists {
-		t.Errorf("lint request must not set max_completion_tokens, got %v", captured["max_completion_tokens"])
+	if got := captured["max_completion_tokens"]; got != float64(testMaxCompletionToken) {
+		t.Errorf("expected max_completion_tokens %d, got %v", testMaxCompletionToken, got)
 	}
 	if thinking, ok := captured["thinking"].(map[string]any); !ok || thinking["type"] != "disabled" {
 		t.Errorf("expected thinking.type=disabled in request body, got %v", captured["thinking"])
+	}
+}
+
+func TestLintOasDocumentRejectsMissingIssues(t *testing.T) {
+	tests := []struct {
+		name    string
+		content string
+		wantErr bool
+	}{
+		{name: "missing issues field", content: `{}`, wantErr: true},
+		{name: "null issues", content: `{"issues":null}`, wantErr: true},
+		{name: "empty issues", content: `{"issues":[]}`},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var captured map[string]any
+			cl := newTestClient(t, respond(t, 0, 0, http.StatusOK, completionBody("stop", tt.content, "", fullUsage), &captured), testMaxConcurrent, testMaxRetries, "")
+
+			issues, _, err := cl.LintOasDocument(context.Background(), `{"info":{}}`, "prompt", testMaxCompletionToken)
+
+			if tt.wantErr && !errors.Is(err, aiError(exception.AiMalformedOutput, "")) {
+				t.Fatalf("expected a malformed output error, got %v, %v", issues, err)
+			}
+			if !tt.wantErr && (err != nil || issues == nil || len(issues) != 0) {
+				t.Fatalf("expected an empty issue list, got %#v, %v", issues, err)
+			}
+		})
+	}
+}
+
+func TestTrackAttemptsLogsCancelledAttemptAtDebug(t *testing.T) {
+	hook := captureLogs(t)
+	logger := log.StandardLogger()
+	previousLevel := logger.GetLevel()
+	logger.SetLevel(log.DebugLevel)
+	t.Cleanup(func() { logger.SetLevel(previousLevel) })
+	errSibling := errors.New("sibling request failed")
+	ctx, cancel := context.WithCancelCause(context.Background())
+	cancel(errSibling)
+	attempts := 0
+
+	_, err := trackAttempts("schema", &attempts)(httptest.NewRequestWithContext(ctx, http.MethodPost, "/", nil), func(*http.Request) (*http.Response, error) {
+		return nil, errSibling
+	})
+
+	if !errors.Is(err, errSibling) {
+		t.Fatalf("expected the transport error, got %v", err)
+	}
+	entries := hook.AllEntries()
+	if len(entries) != 1 || entries[0].Level != log.DebugLevel || !strings.HasPrefix(entries[0].Message, "AI request schema: attempt 1 cancelled after ") {
+		t.Fatalf("expected one debug entry for the cancelled attempt, got %v", entries)
+	}
+}
+
+func TestSanitiseErrorText(t *testing.T) {
+	const apiKey = "sk-live-1234567890"
+	if got := SanitiseErrorText("Bearer abc.def rejected for key " + apiKey); got != "Bearer *** rejected for key ***" {
+		t.Errorf("expected the secrets to be redacted, got %q", got)
+	}
+	if text := strings.Repeat("x", maxStoredErrorTextBytes); SanitiseErrorText(text) != text {
+		t.Errorf("expected a text of the maximum length to stay unchanged")
+	}
+	// A two-byte rune across the limit is dropped whole.
+	long := strings.Repeat("x", maxStoredErrorTextBytes-1) + "é" + strings.Repeat("y", maxStoredErrorTextBytes)
+	if got := SanitiseErrorText(long); got != strings.Repeat("x", maxStoredErrorTextBytes-1)+"..." {
+		t.Errorf("expected the text cut at a rune boundary and marked, got %d bytes ending with %q", len(got), got[len(got)-10:])
 	}
 }
 
@@ -373,6 +439,61 @@ func TestDeduplicateIssuesCancelledDuringRetryDelay(t *testing.T) {
 	_, report, err := cl.DeduplicateIssues(ctx, "system prompt", testDeduplicationRequest, testMaxCompletionToken)
 	if !errors.Is(err, context.Canceled) || report.ProviderAttempts != 1 || requests.Load() != 1 {
 		t.Fatalf("expected the context error after 1 attempt, got %+v, %d received, %v", report, requests.Load(), err)
+	}
+}
+
+func TestCancelledRequestKeepsTheContextErrorAndTheCause(t *testing.T) {
+	errCause := errors.New("sibling request failed")
+	tests := []struct {
+		name       string
+		newContext func(t *testing.T, dispatched <-chan struct{}) context.Context
+		wantErr    error
+	}{
+		{
+			name: "cancelled with a cause",
+			newContext: func(t *testing.T, dispatched <-chan struct{}) context.Context {
+				ctx, cancel := context.WithCancelCause(context.Background())
+				t.Cleanup(func() { cancel(nil) })
+				go func() {
+					<-dispatched
+					cancel(errCause)
+				}()
+				return ctx
+			},
+			wantErr: context.Canceled,
+		},
+		{
+			name: "deadline with a cause",
+			newContext: func(t *testing.T, _ <-chan struct{}) context.Context {
+				ctx, cancel := context.WithTimeoutCause(context.Background(), queuedRequestTimeout, errCause)
+				t.Cleanup(cancel)
+				return ctx
+			},
+			wantErr: context.DeadlineExceeded,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var requests atomic.Int32
+			dispatched := make(chan struct{}, 1)
+			cl := newTestClient(t, func(_ http.ResponseWriter, r *http.Request) {
+				// The server notices the closed connection only once the request body is read.
+				_, _ = io.Copy(io.Discard, r.Body)
+				if requests.Add(1) == 1 {
+					dispatched <- struct{}{}
+				}
+				<-r.Context().Done()
+			}, testMaxConcurrent, testMaxRetries, "")
+
+			_, report, err := cl.LintOasDocument(tt.newContext(t, dispatched), `{"info":{}}`, "prompt", testMaxCompletionToken)
+
+			if !errors.Is(err, tt.wantErr) || !strings.Contains(err.Error(), errCause.Error()) {
+				t.Fatalf("expected %v with the cause %q, got %v", tt.wantErr, errCause, err)
+			}
+			if report.ProviderAttempts != 1 || requests.Load() != 1 {
+				t.Fatalf("expected 1 attempt, got %d reported and %d received", report.ProviderAttempts, requests.Load())
+			}
+		})
 	}
 }
 

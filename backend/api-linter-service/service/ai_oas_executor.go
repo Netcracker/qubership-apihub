@@ -3,16 +3,19 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strconv"
 
 	"github.com/Netcracker/qubership-apihub/backend/api-linter-service/client"
+	"github.com/Netcracker/qubership-apihub/backend/api-linter-service/config"
 	"github.com/Netcracker/qubership-apihub/backend/api-linter-service/entity"
+	"github.com/Netcracker/qubership-apihub/backend/api-linter-service/exception"
 	"github.com/Netcracker/qubership-apihub/backend/api-linter-service/view"
 	log "github.com/sirupsen/logrus"
 )
 
 type AiOasExecutor interface {
-	LintOperationForDoc(ctx context.Context, operationData string, rulesetData view.AiRuleset) ([]issueWithResolvedPath, client.RequestReport, error)
+	LintOperationForDoc(ctx context.Context, operationId string, operationData string, rulesetData view.AiRuleset) ([]issueWithResolvedPath, []entity.AiRequestMetrics, error)
 	DeduplicateIssues(ctx context.Context, groups []issueGroup) (map[int]int, []entity.AiDeduplicationRequestStats, error)
 	GetLinterVersion() string
 }
@@ -39,24 +42,49 @@ func NewAiOasExecutor(systemInfoService SystemInfoService) (AiOasExecutor, error
 
 	return &aiOasExecutor{
 		llmClient:         llmCl,
+		lintConfig:        systemInfoService.GetAiLinterLintConfig(),
 		issueDeduplicator: newAiIssueDeduplicator(llmCl, systemInfoService.GetAiLinterDeduplicationConfig()),
 	}, nil
 }
 
 type aiOasExecutor struct {
 	llmClient         client.LLMClient
+	lintConfig        config.AILintConfig
 	issueDeduplicator *aiIssueDeduplicator
 }
 
-func (s *aiOasExecutor) LintOperationForDoc(ctx context.Context, operationData string, rulesetData view.AiRuleset) ([]issueWithResolvedPath, client.RequestReport, error) {
-	issues, report, err := s.llmClient.LintOasDocument(ctx, operationData, rulesetData.Prompt)
-	if err != nil {
-		return nil, report, err
-	}
-
+func (s *aiOasExecutor) LintOperationForDoc(ctx context.Context, operationId string, operationData string, rulesetData view.AiRuleset) ([]issueWithResolvedPath, []entity.AiRequestMetrics, error) {
 	var src any
 	if err := json.Unmarshal([]byte(operationData), &src); err != nil {
-		return nil, report, err
+		return nil, nil, fmt.Errorf("AI lint of operation %s: %w", operationId, err)
+	}
+
+	estimatedPromptTokens := estimateTokens(len(rulesetData.Prompt) + len(operationData))
+	maxAttempts := 1 + s.lintConfig.MaxRetriesOnInvalidOutput
+	var requests []entity.AiRequestMetrics
+	var issues []view.AiValidationIssue
+	for attempt := 1; ; attempt++ {
+		attemptIssues, report, err := s.llmClient.LintOasDocument(ctx, operationData, rulesetData.Prompt, s.lintConfig.MaxCompletionTokens)
+		requests = append(requests, newAiRequestMetrics(report, estimatedPromptTokens, err))
+		if err == nil {
+			issues = attemptIssues
+			break
+		}
+		// A cancelled request may carry the error of the sibling request that caused the cancellation, so the
+		// context is checked before the error code.
+		code := aiErrorCode(err)
+		retryable := code == exception.AiOutputLengthExceeded || code == exception.AiMalformedOutput
+		if ctx.Err() != nil || !retryable {
+			return nil, requests, fmt.Errorf("AI lint of operation %s: %w", operationId, err)
+		}
+		warning := fmt.Sprintf("AI lint of operation %s: attempt %d of %d failed with %s", operationId, attempt, maxAttempts, client.SanitiseErrorText(err.Error()))
+		if report.Usage != nil {
+			warning += fmt.Sprintf(", finish_reason=%s, completion tokens %d", report.FinishReason, report.Usage.CompletionTokens)
+		}
+		log.Warn(warning)
+		if attempt == maxAttempts {
+			return nil, requests, fmt.Errorf("AI lint of operation %s still fails after %d retries: %w", operationId, s.lintConfig.MaxRetriesOnInvalidOutput, err)
+		}
 	}
 
 	var result []issueWithResolvedPath
@@ -76,7 +104,7 @@ func (s *aiOasExecutor) LintOperationForDoc(ctx context.Context, operationData s
 			ResolvedPath: resolvedPath,
 		})
 	}
-	return result, report, nil
+	return result, requests, nil
 }
 
 const (

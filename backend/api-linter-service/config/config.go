@@ -57,7 +57,13 @@ type AILinterConfig struct {
 	ExcludedPackages []string
 	IncludedPackages []string
 	OpenAI           OpenAIConfig
+	Lint             AILintConfig
 	Deduplication    AIDeduplicationConfig
+}
+
+type AILintConfig struct {
+	MaxCompletionTokens       int `validate:"gte=1000"`
+	MaxRetriesOnInvalidOutput int `validate:"gte=0"`
 }
 
 type AIDeduplicationConfig struct {

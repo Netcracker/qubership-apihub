@@ -10,6 +10,7 @@ create table ai_lint_stats
     model                 varchar                     not null,
     status                varchar                     not null,
     error_class           varchar                     not null,
+    error_message         varchar                     not null,
     requests              integer                     not null,
     prompt_tokens         integer                     not null,
     completion_tokens     integer                     not null,

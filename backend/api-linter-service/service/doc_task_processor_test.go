@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 
 	"github.com/Netcracker/qubership-apihub/backend/api-linter-service/client"
@@ -56,6 +57,20 @@ func (noOperationsApihubClient) GetDocumentDetails(context.Context, string, stri
 	return &view.PublishedDocument{}, nil
 }
 
+// blockingApihubClient returns the data of blockedOperationId only after the context is cancelled, so the lint
+// request of that operation is never dispatched.
+type blockingApihubClient struct {
+	fakeApihubClient
+	blockedOperationId string
+}
+
+func (b blockingApihubClient) GetOperationWithData(ctx context.Context, packageId, version string, apiType view.OpApiType, operationId string) (*view.Operation, error) {
+	if operationId == b.blockedOperationId {
+		<-ctx.Done()
+	}
+	return b.fakeApihubClient.GetOperationWithData(ctx, packageId, version, apiType, operationId)
+}
+
 func testOperations() []view.DocumentOperation {
 	operations := make([]view.DocumentOperation, 0, testOperationCount)
 	for i := range testOperationCount {
@@ -80,7 +95,7 @@ func operationPath(docStr string) (string, error) {
 
 // lintByOperation returns, for every operation, an issue on the shared info description (an exact repeat
 // across operations) and two issues with the same code on the operation description (model duplicates).
-func lintByOperation(docStr string) ([]view.AiValidationIssue, error) {
+func lintByOperation(_ context.Context, docStr string) ([]view.AiValidationIssue, error) {
 	path, err := operationPath(docStr)
 	if err != nil {
 		return nil, err
@@ -98,7 +113,7 @@ func newTestProcessor(llm client.LLMClient, apihub client.ApihubClient, docResul
 		docResultRepository: docResults,
 		aiLintStatsRepo:     statsRepo,
 		cl:                  apihub,
-		aiOasExecutor:       &aiOasExecutor{llmClient: llm, issueDeduplicator: newTestIssueDeduplicator(llm, largeTestBudget)},
+		aiOasExecutor:       &aiOasExecutor{llmClient: llm, lintConfig: testLintConfig, issueDeduplicator: newTestIssueDeduplicator(llm, largeTestBudget)},
 		aiModel:             testModelName,
 		executorId:          "executor-1",
 		aiLinterWorkers:     1,
@@ -113,13 +128,13 @@ var testTask = entity.DocumentLintTask{
 // lintInOrder lints like lintByOperation, but the lint of each operation completes only after the lint of the
 // operation before it in completionOrder has completed. The order in which lints actually completed is appended
 // to observed.
-func lintInOrder(completionOrder []int, observed *[]int) func(string) ([]view.AiValidationIssue, error) {
+func lintInOrder(completionOrder []int, observed *[]int) func(context.Context, string) ([]view.AiValidationIssue, error) {
 	completed := make([]chan struct{}, testOperationCount)
 	for i := range completed {
 		completed[i] = make(chan struct{})
 	}
 	var mu sync.Mutex
-	return func(docStr string) ([]view.AiValidationIssue, error) {
+	return func(ctx context.Context, docStr string) ([]view.AiValidationIssue, error) {
 		path, err := operationPath(docStr)
 		if err != nil {
 			return nil, err
@@ -131,7 +146,7 @@ func lintInOrder(completionOrder []int, observed *[]int) func(string) ([]view.Ai
 		if position := slices.Index(completionOrder, index); position > 0 {
 			<-completed[completionOrder[position-1]]
 		}
-		issues, err := lintByOperation(docStr)
+		issues, err := lintByOperation(ctx, docStr)
 		mu.Lock()
 		*observed = append(*observed, index)
 		mu.Unlock()
@@ -187,7 +202,7 @@ func TestLintDocumentWithAiIsDeterministic(t *testing.T) {
 }
 
 func TestSingletonGroupsNeverReachTheClient(t *testing.T) {
-	lintDistinctResolvedPaths := func(docStr string) ([]view.AiValidationIssue, error) {
+	lintDistinctResolvedPaths := func(_ context.Context, docStr string) ([]view.AiValidationIssue, error) {
 		path, err := operationPath(docStr)
 		if err != nil {
 			return nil, err
@@ -226,7 +241,7 @@ func TestSingletonGroupsNeverReachTheClient(t *testing.T) {
 	}
 	var want []view.ValidationIssue
 	for i := range testOperationCount {
-		modelIssues, err := lintDistinctResolvedPaths(fmt.Sprintf(`{"paths":{"/%s":{}}}`, testOperationId(i)))
+		modelIssues, err := lintDistinctResolvedPaths(context.Background(), fmt.Sprintf(`{"paths":{"/%s":{}}}`, testOperationId(i)))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -282,24 +297,85 @@ func TestProcessDocTaskSavesAiLintStats(t *testing.T) {
 		return &entity.AiDeduplicationStageDetails{IssuesIn: 1 + 2*testOperationCount, Groups: 1 + testOperationCount,
 			MultiIssueGroups: testOperationCount, DuplicatesRemoved: duplicatesRemoved}
 	}
+	lastOperationId := testOperationId(testOperationCount - 1)
 	failLastOperation := lintInOrder([]int{0, 1, 2, 3}, &[]int{})
+
+	// The first two operations are dispatched and wait for the cancellation, the third is cancelled before dispatch,
+	// and the last one fails once the first two are dispatched.
+	var siblingsDispatched sync.WaitGroup
+	siblingsDispatched.Add(2)
+	lintCancelledSiblings := func(ctx context.Context, docStr string) ([]view.AiValidationIssue, error) {
+		if strings.Contains(docStr, lastOperationId) {
+			siblingsDispatched.Wait()
+			return nil, aiError(exception.AiRequestRefused)
+		}
+		siblingsDispatched.Done()
+		<-ctx.Done()
+		// Like the real client, return the context error with the cancellation cause.
+		return nil, fmt.Errorf("%w: %v", ctx.Err(), context.Cause(ctx))
+	}
+
+	var retriedOperationFailures atomic.Int32
+	const (
+		modelOutputKey = "sk-abcdefghij0123456789"
+		// storedErrorTextLimit is the length limit of client.SanitiseErrorText.
+		storedErrorTextLimit = 1000
+	)
+	var errRefusedWithKey error = &exception.CustomError{Code: exception.AiRequestRefused, Message: exception.AiRequestRefusedMsg,
+		Params: map[string]interface{}{"reason": "I cannot use the key " + modelOutputKey}}
+	errLongMalformedOutput := fmt.Errorf("%w (content prefix=%q)", errMalformedOutput, strings.Repeat("loop ", storedErrorTextLimit))
+	failLastOperationAfterOthers := func(err error) func(context.Context, string) ([]view.AiValidationIssue, error) {
+		var others sync.WaitGroup
+		others.Add(testOperationCount - 1)
+		return func(ctx context.Context, docStr string) ([]view.AiValidationIssue, error) {
+			if strings.Contains(docStr, lastOperationId) {
+				others.Wait()
+				return nil, err
+			}
+			defer others.Done()
+			return lintByOperation(ctx, docStr)
+		}
+	}
+
 	tests := []struct {
 		name              string
 		apihub            client.ApihubClient
-		lint              func(string) ([]view.AiValidationIssue, error)
+		lint              func(context.Context, string) ([]view.AiValidationIssue, error)
 		dedup             func(int, view.AiDeduplicationRequest) ([]view.AiDuplicatePair, error)
 		statsErr          error
 		wantStatus        view.LintedDocumentStatus
 		wantLintRequests  int
+		wantOperationIds  []string
+		wantEntryClasses  []entity.AiRequestErrorClass
 		wantLintClass     entity.AiRequestErrorClass
+		wantLintMessage   string
 		wantDedupClass    entity.AiRequestErrorClass
 		wantDedupRequests int
 		wantDedup         *entity.AiDeduplicationStageDetails
+		// redactedKey must be replaced by *** in every stored error text, and wantCut means that the error texts of
+		// the failed stage and its failed requests are cut.
+		redactedKey string
+		wantCut     bool
 	}{
 		{
 			name:              "success",
 			wantStatus:        view.StatusSuccess,
 			wantLintRequests:  testOperationCount,
+			wantDedupRequests: 1,
+			wantDedup:         lintByOperationDedup(testOperationCount),
+		},
+		{
+			name: "retried operation records every attempt",
+			lint: func(ctx context.Context, docStr string) ([]view.AiValidationIssue, error) {
+				if strings.Contains(docStr, `"/`+testOperationId(1)+`"`) && retriedOperationFailures.Add(1) == 1 {
+					return nil, errOutputLength
+				}
+				return lintByOperation(ctx, docStr)
+			},
+			wantStatus:        view.StatusSuccess,
+			wantLintRequests:  testOperationCount + 1,
+			wantOperationIds:  []string{testOperationId(0), testOperationId(1), testOperationId(1), testOperationId(2), testOperationId(3)},
+			wantEntryClasses:  []entity.AiRequestErrorClass{"", entity.AiRequestErrorClassOutputLength, "", "", ""},
 			wantDedupRequests: 1,
 			wantDedup:         lintByOperationDedup(testOperationCount),
 		},
@@ -316,16 +392,62 @@ func TestProcessDocTaskSavesAiLintStats(t *testing.T) {
 		},
 		{
 			name: "one failed operation keeps the completed reports and publishes no result",
-			lint: func(docStr string) ([]view.AiValidationIssue, error) {
-				issues, err := failLastOperation(docStr)
-				if strings.Contains(docStr, testOperationId(testOperationCount-1)) {
+			lint: func(ctx context.Context, docStr string) ([]view.AiValidationIssue, error) {
+				issues, err := failLastOperation(ctx, docStr)
+				if strings.Contains(docStr, lastOperationId) {
 					return nil, aiError(exception.AiRequestRefused)
 				}
 				return issues, err
 			},
 			wantStatus:       view.StatusError,
 			wantLintRequests: testOperationCount,
+			wantEntryClasses: []entity.AiRequestErrorClass{"", "", "", entity.AiRequestErrorClassRefusal},
 			wantLintClass:    entity.AiRequestErrorClassRefusal,
+			wantLintMessage:  "AI lint of operation " + lastOperationId,
+		},
+		{
+			name:             "refused operation stores a redacted error text",
+			lint:             failLastOperationAfterOthers(errRefusedWithKey),
+			wantStatus:       view.StatusError,
+			wantLintRequests: testOperationCount,
+			wantEntryClasses: []entity.AiRequestErrorClass{"", "", "", entity.AiRequestErrorClassRefusal},
+			wantLintClass:    entity.AiRequestErrorClassRefusal,
+			wantLintMessage:  "AI lint of operation " + lastOperationId,
+			redactedKey:      modelOutputKey,
+		},
+		{
+			name:             "long malformed output is stored cut",
+			lint:             failLastOperationAfterOthers(errLongMalformedOutput),
+			wantStatus:       view.StatusError,
+			wantLintRequests: testOperationCount + testLintConfig.MaxRetriesOnInvalidOutput,
+			wantOperationIds: []string{testOperationId(0), testOperationId(1), testOperationId(2), lastOperationId, lastOperationId, lastOperationId},
+			wantEntryClasses: []entity.AiRequestErrorClass{"", "", "", entity.AiRequestErrorClassValidation, entity.AiRequestErrorClassValidation, entity.AiRequestErrorClassValidation},
+			wantLintClass:    entity.AiRequestErrorClassValidation,
+			wantLintMessage:  "AI lint of operation " + lastOperationId + " still fails after 2 retries",
+			wantCut:          true,
+		},
+		{
+			name: "refused deduplication stores a redacted error text",
+			dedup: func(int, view.AiDeduplicationRequest) ([]view.AiDuplicatePair, error) {
+				return nil, errRefusedWithKey
+			},
+			wantStatus:        view.StatusError,
+			wantLintRequests:  testOperationCount,
+			wantDedupClass:    entity.AiRequestErrorClassRefusal,
+			wantDedupRequests: 1,
+			wantDedup:         lintByOperationDedup(0),
+			redactedKey:       modelOutputKey,
+		},
+		{
+			name:             "cancelled siblings are classified as cancelled and an undispatched request is not counted",
+			apihub:           blockingApihubClient{blockedOperationId: testOperationId(2)},
+			lint:             lintCancelledSiblings,
+			wantStatus:       view.StatusError,
+			wantLintRequests: 3,
+			wantOperationIds: []string{testOperationId(0), testOperationId(1), lastOperationId},
+			wantEntryClasses: []entity.AiRequestErrorClass{entity.AiRequestErrorClassCancelled, entity.AiRequestErrorClassCancelled, entity.AiRequestErrorClassRefusal},
+			wantLintClass:    entity.AiRequestErrorClassRefusal,
+			wantLintMessage:  "AI lint of operation " + lastOperationId,
 		},
 		{
 			name:              "failed stats insert does not change the status",
@@ -337,7 +459,7 @@ func TestProcessDocTaskSavesAiLintStats(t *testing.T) {
 		},
 		{
 			name: "no issues records a deduplication stage without requests",
-			lint: func(string) ([]view.AiValidationIssue, error) {
+			lint: func(context.Context, string) ([]view.AiValidationIssue, error) {
 				return []view.AiValidationIssue{}, nil
 			},
 			wantStatus:       view.StatusSuccess,
@@ -394,15 +516,59 @@ func TestProcessDocTaskSavesAiLintStats(t *testing.T) {
 				lintDetails.Operations == nil || len(lintDetails.Operations) != tt.wantLintRequests {
 				t.Fatalf("unexpected lint row %+v with details %s", lintRow, lintRow.Details)
 			}
-			if tt.wantLintRequests == 0 && (lintRow.PromptTokens != 0 || lintRow.CompletionTokens != 0) {
-				t.Fatalf("expected no tokens in a request-free lint row, got %+v", lintRow)
+			if lintRow.PromptTokens != tt.wantLintRequests*testLintUsage.PromptTokens || lintRow.CompletionTokens != tt.wantLintRequests*testLintUsage.CompletionTokens {
+				t.Fatalf("expected the tokens of %d requests, got %+v", tt.wantLintRequests, lintRow)
 			}
-			for i, operation := range lintDetails.Operations {
-				if operation.OperationId != testOperationId(i) {
-					t.Fatalf("expected operations in document order, got %s at %d", operation.OperationId, i)
+			if (tt.wantLintMessage == "") != (lintRow.ErrorMessage == "") || !strings.Contains(lintRow.ErrorMessage, tt.wantLintMessage) {
+				t.Fatalf("expected a lint error message with %q, got %q", tt.wantLintMessage, lintRow.ErrorMessage)
+			}
+
+			wantOperationIds := tt.wantOperationIds
+			if wantOperationIds == nil {
+				for i := range tt.wantLintRequests {
+					wantOperationIds = append(wantOperationIds, testOperationId(i))
 				}
 			}
+			// failedTexts are the stored error texts of a failed stage and of its failed requests that were not cancelled.
+			var failedTexts []string
+			checkFailedTexts := func() {
+				if (tt.redactedKey != "" || tt.wantCut) && len(failedTexts) == 0 {
+					t.Fatal("expected stored error texts to check")
+				}
+				for _, text := range failedTexts {
+					if len(text) > storedErrorTextLimit+len("...") || (tt.redactedKey != "" && (strings.Contains(text, tt.redactedKey) || !strings.Contains(text, "***"))) ||
+						tt.wantCut != strings.HasSuffix(text, "...") {
+						t.Fatalf("expected a stored error text that is bounded, redacted (%t) and cut (%t), got %d bytes: %q", tt.redactedKey != "", tt.wantCut, len(text), text)
+					}
+				}
+			}
+			if lintRow.Status == entity.AiRequestStatusError {
+				failedTexts = append(failedTexts, lintRow.ErrorMessage)
+			}
+			var operationIds []string
+			var entryClasses []entity.AiRequestErrorClass
+			for i, operation := range lintDetails.Operations {
+				operationIds = append(operationIds, operation.OperationId)
+				entryClasses = append(entryClasses, operation.ErrorClass)
+				if operation.Status == entity.AiRequestStatusError && operation.ErrorClass != entity.AiRequestErrorClassCancelled {
+					failedTexts = append(failedTexts, operation.ErrorMessage)
+				}
+				wantAttempt := 1
+				if i > 0 && lintDetails.Operations[i-1].OperationId == operation.OperationId {
+					wantAttempt = lintDetails.Operations[i-1].Attempt + 1
+				}
+				if operation.Attempt != wantAttempt || (operation.Status == entity.AiRequestStatusError && operation.Issues != 0) {
+					t.Fatalf("expected attempt %d and no issues for a failed attempt, got %+v at %d", wantAttempt, operation, i)
+				}
+			}
+			if !slices.Equal(operationIds, wantOperationIds) {
+				t.Fatalf("expected operations %v, got %v", wantOperationIds, operationIds)
+			}
+			if tt.wantEntryClasses != nil && !slices.Equal(entryClasses, tt.wantEntryClasses) {
+				t.Fatalf("expected request error classes %q, got %q", tt.wantEntryClasses, entryClasses)
+			}
 			if tt.wantDedup == nil {
+				checkFailedTexts()
 				return
 			}
 
@@ -418,6 +584,15 @@ func TestProcessDocTaskSavesAiLintStats(t *testing.T) {
 				!reflect.DeepEqual(dedupDetails, want) {
 				t.Fatalf("expected deduplication details %+v, got %+v", want, dedupDetails)
 			}
+			if dedupRow.Status == entity.AiRequestStatusError {
+				failedTexts = append(failedTexts, dedupRow.ErrorMessage)
+			}
+			for _, request := range dedupDetails.Requests {
+				if request.Status == entity.AiRequestStatusError {
+					failedTexts = append(failedTexts, request.ErrorMessage)
+				}
+			}
+			checkFailedTexts()
 			if tt.wantDedupRequests == 0 && (dedupRow.Status != entity.AiRequestStatusSuccess || dedupRow.PromptTokens != 0 || dedupRow.CompletionTokens != 0) {
 				t.Fatalf("expected a successful request-free deduplication row, got %+v", dedupRow)
 			}
