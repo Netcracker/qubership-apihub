@@ -24,7 +24,7 @@ contract), see [Configuration reference](./configuration-reference.md).
 ## Third-party dependencies
 
 | Name | Version | Required | Notes |
-|------|---------|----------|-------|
+| ---- | ------- | -------- | ----- |
 | **PostgreSQL** | 14+ | Yes | Three logical databases required: `apihub_backend`, `api_linter`, `agents_backend` (names are configurable). Pre-create them before first start — see `scripts/init-db/init.sql` in the Compose folder. |
 | **S3-compatible storage** | Any | Optional | Offloads build artefacts; reduces PG growth. Configure under `s3Storage` in backend `config.yaml` / Helm values. |
 | **SAML / OIDC identity provider** | Any | Optional | Required when `security.productionMode: true`. Keycloak example: [`deploy/docker-compose/with-keycloak/`](../deploy/docker-compose/with-keycloak/). |
@@ -36,8 +36,8 @@ contract), see [Configuration reference](./configuration-reference.md).
 
 Defaults in `values.yaml` and `docker-compose.yml` are enough for sandboxes. For production:
 
-|     | CPU request / limit | RAM request / limit |
-|-----|---------------------|---------------------|
+| Component | CPU request / limit | RAM request / limit |
+| --- | --- | --- |
 | **Backend** (dev/sandbox) | 100m / 1 | — / 512Mi |
 | **Backend** (production) | ~3 / up to ~11 | ~3Gi / 3Gi |
 | **Builder** (any) | 100m / 1.25 | 750Mi / 4200Mi; scale with replicas (3–6 for load) |
@@ -51,7 +51,7 @@ Defaults in `values.yaml` and `docker-compose.yml` are enough for sandboxes. For
 ## Configuration model per service
 
 | Service | Boot configuration | Key env var(s) |
-|---------|-------------------|----------------|
+| ------- | ----------------- | -------------- |
 | **qubership-apihub-backend** | **`config.yaml`** (path set by `APIHUB_CONFIG_FOLDER`, default `./`), same schema as [`config.template.yaml`](../backend/portal-backend/config.template.yaml) | `APIHUB_CONFIG_FOLDER`, `LOG_LEVEL`, `GOMEMLIMIT` |
 | **qubership-apihub-ui** | Env vars only | `APIHUB_BACKEND_ADDRESS`, `APIHUB_NC_SERVICE_ADDRESS`, `API_LINTER_SERVICE_ADDRESS`, `APIHUB_AGENTS_BACKEND_ADDRESS` |
 | **qubership-apihub-build-task-consumer** | Env vars only | `APIHUB_BACKEND_ADDRESS`, `APIHUB_API_KEY`, `LOG_LEVEL`, `FOLDER_STORE`, `OPERATIONS_BUILD_BATCH` |
@@ -70,7 +70,7 @@ The UI and builder receive env vars injected directly by Deployment templates.
 ### Layout
 
 | Folder | Use case |
-|--------|----------|
+| ------ | -------- |
 | [`deploy/docker-compose/apihub-generic/`](../deploy/docker-compose/apihub-generic/) | Full stack + bundled PostgreSQL. Recommended for local development and demos. |
 | [`deploy/docker-compose/with-keycloak/`](../deploy/docker-compose/with-keycloak/) | Same stack + Keycloak pre-configured for SAML and OIDC. |
 
@@ -101,7 +101,7 @@ After start: <http://localhost:8081/login> — Portal UI.
 ### Published ports (generic compose)
 
 | Host port | Service | Purpose |
-|-----------|---------|---------|
+| --------- | ------- | ------- |
 | **8081** | `qubership-apihub-ui` | Portal (browser entry point) |
 | **8090** | `qubership-apihub-backend` | Backend REST API (builder reaches it via `host.docker.internal:8090`) |
 | **8091** | `qubership-api-linter-service` | Linter API |
@@ -219,7 +219,7 @@ Configuration is via **`config.yaml`** (path: `APIHUB_CONFIG_FOLDER`). The annot
 Process-level env vars (the only ones the backend binary reads directly):
 
 | Env var | Mandatory | Default | Description |
-|---------|-----------|---------|-------------|
+| ------- | --------- | ------- | ----------- |
 | `APIHUB_CONFIG_FOLDER` | No | `./` | Directory where the process looks for `config.yaml` |
 | `LOG_LEVEL` | No | `INFO` | Bootstrap log level. Values: `DEBUG`, `INFO`, `WARN`, `ERROR` |
 | `GOMEMLIMIT` | No | `410MiB` (Helm default); `800MiB` (Compose) | Go runtime memory soft limit. Keep below the container memory limit (~80% of limit in chart/Compose defaults). Helm: `qubershipApihubBackend.goMemLimit`. Compose: `docker-compose.yml` `environment`. |
@@ -234,7 +234,7 @@ See [Configuration reference — custom CA Secret](./configuration-reference.md#
 All other parameters are `config.yaml` keys. Most important:
 
 | `config.yaml` key | Mandatory | Default | Description |
-|-------------------|-----------|---------|-------------|
+| ----------------- | --------- | ------- | ----------- |
 | `database.host` | Yes | `localhost` | PostgreSQL host |
 | `database.port` | Yes | `5432` | PostgreSQL port |
 | `database.name` | Yes | `apihub` | Database name (must be pre-created) |
@@ -325,7 +325,7 @@ All other parameters are `config.yaml` keys. Most important:
 All configuration via **environment variables** (nginx config template is populated at container start).
 
 | Env var | Mandatory | Default | Description |
-|---------|-----------|---------|-------------|
+| ------- | --------- | ------- | ----------- |
 | `APIHUB_BACKEND_ADDRESS` | Yes | `apihub-backend:8080` | Internal address of the backend service |
 | `APIHUB_NC_SERVICE_ADDRESS` | Yes | `apihub-backend:8080` | Internal address of the custom add-on service (same pod as backend in typical deployments) |
 | `API_LINTER_SERVICE_ADDRESS` | No | `apihub-backend:8080` | Internal address of the linter service |
@@ -341,7 +341,7 @@ All configuration via **environment variables** (nginx config template is popula
 All configuration via **environment variables**.
 
 | Env var | Mandatory | Default | Description |
-|---------|-----------|---------|-------------|
+| ------- | --------- | ------- | ----------- |
 | `APIHUB_BACKEND_ADDRESS` | Yes | `apihub-backend:8080` | Internal address of the backend service |
 | `APIHUB_API_KEY` | Yes | — | System API token. Must match `zeroDayConfiguration.accessToken` in backend config on initial install |
 | `LOG_LEVEL` | No | `INFO` | Log level: `DEBUG`, `INFO`, `WARN`, `ERROR` |
@@ -364,7 +364,7 @@ All configuration via **`config.yaml`** (path: `LINTER_CONFIG_FOLDER`). Helm ren
 insufficient.
 
 | Config key | Mandatory | Default | Description |
-|------------|-----------|---------|-------------|
+| ---------- | --------- | ------- | ----------- |
 | `database.host` | Yes | `localhost` | PostgreSQL host |
 | `database.port` | Yes | `5432` | PostgreSQL port |
 | `database.name` | Yes | `apihub_linter` | Database name (must be pre-created) |
@@ -415,7 +415,7 @@ All configuration via **`config.yaml`** (path: `AGENTS_BACKEND_CONFIG_FOLDER`). 
 `qubershipApihubAgentsBackend.goMemLimit`).
 
 | Config key | Mandatory | Default | Description |
-|------------|-----------|---------|-------------|
+| ---------- | --------- | ------- | ----------- |
 | `database.host` | Yes | `localhost` | PostgreSQL host |
 | `database.port` | Yes | `5432` | PostgreSQL port |
 | `database.name` | Yes | `apihub_agents_backend` | Database name (must be pre-created) |
@@ -558,7 +558,7 @@ see the [agent chart guide](../backend/agent/helm-templates/README.md).
 `olric.replicaCount` from the release namespace and `replicas` value.
 
 | `values.yaml` section | Mandatory to fill | Maps to |
-|----------------------|-------------------|---------|
+| -------------------- | ----------------- | ------- |
 | `qubershipApihubBackend.env.database.*` | Yes | Backend `config.yaml` `database.*` |
 | `qubershipApihubBackend.env.security.jwt.privateKey` | Yes | Backend `config.yaml` `security.jwt.privateKey` |
 | `qubershipApihubBackend.env.security.apihubExternalUrl` | Yes | Backend `config.yaml` `security.apihubExternalUrl` |

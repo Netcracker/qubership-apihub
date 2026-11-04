@@ -3,11 +3,11 @@ create table ai_lint_stats
     id                    varchar                     not null,
     document_lint_task_id varchar                     not null,
     package_id            varchar                     not null,
-    version               varchar                     not null,
+    version               varchar                     not null, -- noqa: RF04
     revision              integer                     not null,
     file_id               varchar                     not null,
-    stage                 varchar                     not null,
-    model                 varchar                     not null,
+    stage                 varchar                     not null, -- noqa: RF04
+    model                 varchar                     not null, -- noqa: RF04
     status                varchar                     not null,
     error_class           varchar                     not null,
     error_message         varchar                     not null,
