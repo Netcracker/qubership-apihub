@@ -317,7 +317,7 @@ func TestProcessDocTaskSavesAiLintStats(t *testing.T) {
 
 	var retriedOperationFailures atomic.Int32
 	const (
-		modelOutputKey = "sk-abcdefghij0123456789"
+		modelOutputKey = "sk-0000000000000000"
 		// storedErrorTextLimit is the length limit of client.SanitiseErrorText.
 		storedErrorTextLimit = 1000
 	)

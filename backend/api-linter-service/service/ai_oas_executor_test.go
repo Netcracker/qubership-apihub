@@ -112,7 +112,7 @@ func TestLintOperationForDoc(t *testing.T) {
 func TestLintOperationForDocRetries(t *testing.T) {
 	const operationData = `{"paths":{"/pets":{"get":{"description":"List pets"}}}}`
 	issue := view.AiValidationIssue{Path: []string{"paths", "/pets", "get", "description"}, Code: "vague", Severity: "warning", Message: "m"}
-	const modelOutputKey = "sk-abcdefghij0123456789"
+	const modelOutputKey = "sk-0000000000000000"
 	tests := []struct {
 		name         string
 		retries      int

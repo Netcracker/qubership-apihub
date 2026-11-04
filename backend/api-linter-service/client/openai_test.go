@@ -262,7 +262,7 @@ func TestTrackAttemptsLogsCancelledAttemptAtDebug(t *testing.T) {
 }
 
 func TestSanitiseErrorText(t *testing.T) {
-	const apiKey = "sk-live-1234567890"
+	const apiKey = "sk-0000000000000000"
 	if got := SanitiseErrorText("Bearer abc.def rejected for key " + apiKey); got != "Bearer *** rejected for key ***" {
 		t.Errorf("expected the secrets to be redacted, got %q", got)
 	}
