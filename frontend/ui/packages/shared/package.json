@@ -34,7 +34,7 @@
     "jszip": "3.10.1"
   },
   "devDependencies": {
-    "@storybook/react": "10.6.3",
+    "@storybook/react": "catalog:",
     "@storybook/react-vite": "catalog:",
     "@types/react": "^18.3.31",
     "cross-env": "7.0.3",

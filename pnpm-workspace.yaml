@@ -15,6 +15,7 @@ catalog:
   '@storybook/addon-docs': 10.6.3
   '@storybook/addon-links': 10.6.3
   '@storybook/html-vite': 10.6.3
+  '@storybook/react': 10.6.3
   '@storybook/react-vite': 10.6.3
   '@types/jest': 30.0.0
   '@types/node': 24.19.2
@@ -27,7 +28,6 @@ catalog:
   typescript: 6.0.3
   vite: 8.2.2
   vite-plugin-dts: 4.5.4
-  vite-tsconfig-paths: 4.3.2
 
 # Settings other than auth and registry live here, not in .npmrc: pnpm 12 ignores them there without a
 # warning. An unknown key here fails with ERR_PNPM_UNRECOGNIZED_WORKSPACE_SETTINGS.

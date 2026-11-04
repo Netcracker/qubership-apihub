@@ -173,6 +173,9 @@ catalogs:
     '@storybook/html-vite':
       specifier: 10.6.3
       version: 10.6.3
+    '@storybook/react':
+      specifier: 10.6.3
+      version: 10.6.3
     '@storybook/react-vite':
       specifier: 10.6.3
       version: 10.6.3
@@ -2103,9 +2106,6 @@ importers:
       '@storybook/addon-links':
         specifier: 'catalog:'
         version: 10.6.3(@types/react@18.3.31)(react@18.3.1)(storybook@10.6.3(@types/react@18.3.31)(prettier@3.9.6)(react@18.3.1))
-      '@storybook/addon-onboarding':
-        specifier: 10.6.3
-        version: 10.6.3(storybook@10.6.3(@types/react@18.3.31)(prettier@3.9.6)(react@18.3.1))
       '@storybook/react-vite':
         specifier: 'catalog:'
         version: 10.6.3(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(rollup@4.63.1)(storybook@10.6.3(@types/react@18.3.31)(prettier@3.9.6)(react@18.3.1))(supports-color@9.4.0)(typescript@6.0.3)(vite@8.2.2(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.8.1)(yaml@2.9.0))
@@ -2922,9 +2922,6 @@ importers:
       '@storybook/addon-links':
         specifier: 'catalog:'
         version: 10.6.3(@types/react@18.3.31)(react@18.3.1)(storybook@10.6.3(@types/react@18.3.31)(prettier@3.9.6)(react@18.3.1))
-      '@storybook/addon-onboarding':
-        specifier: 10.6.3
-        version: 10.6.3(storybook@10.6.3(@types/react@18.3.31)(prettier@3.9.6)(react@18.3.1))
       '@storybook/react-vite':
         specifier: 'catalog:'
         version: 10.6.3(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(rollup@3.30.0)(storybook@10.6.3(@types/react@18.3.31)(prettier@3.9.6)(react@18.3.1))(supports-color@5.5.0)(typescript@6.0.3)(vite@8.2.2(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.8.1)(yaml@2.9.0))
@@ -3637,7 +3634,7 @@ importers:
         version: 2.9.0
     devDependencies:
       '@storybook/react':
-        specifier: 10.6.3
+        specifier: 'catalog:'
         version: 10.6.3(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(storybook@10.6.3(@types/react@18.3.31)(prettier@3.9.6)(react@18.3.1))(supports-color@9.4.0)(typescript@6.0.3)
       '@storybook/react-vite':
         specifier: 'catalog:'
@@ -9236,11 +9233,6 @@ packages:
         optional: true
       react:
         optional: true
-
-  '@storybook/addon-onboarding@10.6.3':
-    resolution: {integrity: sha512-C/7AspvhzErXFOR4VHGBW/+G3gej9Lwr8dqH1oIaf0oi2qlhQB9ZBDe6Ds/u+EnW0C74aPlMwXFjSXk02ycfrg==}
-    peerDependencies:
-      storybook: ^10.6.3
 
   '@storybook/addon-postcss@2.0.0':
     resolution: {integrity: sha512-Nt82A7e9zJH4+A+VzLKKswUfru+T6FJTakj4dccP0i8DSn7a0CkzRPrLuZBq8tg4voV6gD74bcDf3gViCVBGtA==}
@@ -33555,10 +33547,6 @@ snapshots:
     optionalDependencies:
       '@types/react': 18.3.31
       react: 18.3.1
-
-  '@storybook/addon-onboarding@10.6.3(storybook@10.6.3(@types/react@18.3.31)(prettier@3.9.6)(react@18.3.1))':
-    dependencies:
-      storybook: 10.6.3(@types/react@18.3.31)(prettier@3.9.6)(react@18.3.1)
 
   '@storybook/addon-postcss@2.0.0(webpack@5.101.3)':
     dependencies:

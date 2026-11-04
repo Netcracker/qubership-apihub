@@ -51,7 +51,6 @@
   "devDependencies": {
     "@storybook/addon-docs": "catalog:",
     "@storybook/addon-links": "catalog:",
-    "@storybook/addon-onboarding": "10.6.3",
     "@storybook/react-vite": "catalog:",
     "@types/jest": "catalog:",
     "@types/json-schema": "^7.0.11",

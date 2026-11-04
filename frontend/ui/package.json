@@ -96,7 +96,6 @@
     "@netcracker/qubership-apihub-build-id": "workspace:^",
     "@storybook/addon-docs": "catalog:",
     "@storybook/addon-links": "catalog:",
-    "@storybook/addon-onboarding": "10.6.3",
     "@storybook/react-vite": "catalog:",
     "@tanstack/eslint-plugin-query": "4.24.8",
     "@types/cors": "2.8.13",
