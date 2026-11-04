@@ -26,6 +26,9 @@ Group of the TypeScript modules: the SPAs, the builder service, and the librarie
 
 - Install once at the repository root with `pnpm install`. Never run `npm install` in a module: it writes a second
   lock file and resolves `workspace:` ranges from the registry. Scripts run with `pnpm run`, not `npm run`.
+- Build and test tools (vite, typescript, jest, `@types/node`, Storybook 10, and others) take their version from
+  the `catalog:` in `pnpm-workspace.yaml`. A module declares them with `"catalog:"`; change a version there, never
+  in a module's `package.json`, so every module keeps the same copy (#943).
 - Nx project names are the directory names, except `ui` (`ui-root`, `ui-portal`, `ui-agents`, `ui-shared`),
   `api-doc-viewer` (`api-doc-viewer-root` and `api-doc-viewer-<package>`), and `apispec-view` (`apispec-view` is
   `packages/elements`, the rest are `apispec-view-<package>`). The names are set by `nx.name` in `package.json`.

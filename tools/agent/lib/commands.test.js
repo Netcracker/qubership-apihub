@@ -51,6 +51,22 @@ test('rerun takes notes like the other commands', () => {
   })
 })
 
+test('update takes notes on the same line and on the next lines, and has no force', () => {
+  assert.deepEqual(parseCommand('/agent update'), { name: 'update', force: false, notes: '' })
+  assert.deepEqual(parseCommand('/agent update keep the new config key'), {
+    name: 'update',
+    force: false,
+    notes: 'keep the new config key',
+  })
+  assert.deepEqual(parseCommand('/agent update\nprefer the develop side\nof the Helm values'), {
+    name: 'update',
+    force: false,
+    notes: 'prefer the develop side\nof the Helm values',
+  })
+  assert.deepEqual(parseCommand('/agent update force'), { name: 'update', force: false, notes: 'force' })
+  assert.equal(parseCommand('/agent updates').name, 'chat')
+})
+
 test('fix is normalized to implement', () => {
   assert.deepEqual(parseCommand('/agent fix'), { name: 'implement', force: false, notes: '' })
 })

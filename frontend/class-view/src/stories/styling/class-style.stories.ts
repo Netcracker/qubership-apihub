@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Meta, StoryFn } from '@storybook/html'
+import { Meta, StoryFn } from '@storybook/html-vite'
 import { SHAPE_RECTANGLE, SHAPE_ROUND_RECTANGLE } from 'main/domain'
 import { CLASS_SUFFIX, generateClassObject, generateContent, storyArgsFunc } from 'stories/common'
 

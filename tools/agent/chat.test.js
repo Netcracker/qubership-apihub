@@ -56,6 +56,8 @@ test('helpReply lists the commands of the place and mentions the asker', () => {
   assert.ok(agentPull.includes('`/agent <text>`') && agentPull.includes('`/agent stop`'))
   const rerunRow = "| `/agent rerun` | Rerun the failed CI checks of the agent's pull request; no new attempt, no model. |"
   assert.ok(agentPull.includes(rerunRow) && issue.includes(rerunRow))
+  assert.ok(agentPull.includes('| `/agent update [notes]` | Merge the latest `develop` into this pull request;'))
+  assert.ok(!issue.includes('/agent update') && !pull.includes('/agent update'))
   assert.match(agentPull, /A review with change requests/)
   assert.ok(!agentPull.includes('/agent <question>'))
 

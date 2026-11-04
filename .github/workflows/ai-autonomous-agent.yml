@@ -486,7 +486,7 @@ jobs:
       AGENT_COMMAND: ${{ needs.route.outputs.command }}
       # The person who commented or reviewed. Empty for a CI fix: the state knows who asked.
       AGENT_ACTOR: ${{ github.event.comment.user.login || github.event.review.user.login }}
-      # `human` or `review` when a person steers the agent (the router decides), else `ci-fix` or `initial`.
+      # `human`, `review`, or `update` when a person steers the agent (the router decides), else `ci-fix` or `initial`.
       AGENT_KIND: >-
         ${{ needs.route.outputs.kind || (needs.ci-gate.outputs.next == 'implement' && 'ci-fix' || 'initial') }}
       AGENT_PR: ${{ needs.route.outputs.pr }}
