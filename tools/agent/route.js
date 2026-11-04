@@ -5,12 +5,11 @@
  * `decide` is pure. It looks at the event, the configuration, the permission of the person behind the event, the
  * state of the pull request or issue, and the count of automatic work in the last 24 hours, and returns
  * `{ action, number, reason, command?, trigger?, pr?, headSha?, kind?, numbers? }`. The actions are `review` (phase 1),
- * `analyze`
- * (phase 2), `implement` (phase 3; phase 5 adds `kind`: `human` or `review`), `ci-gate` (phase 4), `chat` (phase 5),
- * `stop` (a `/agent stop` command; the `stop` job has no concurrency group), `rerun` (a `/agent rerun` command: the
- * failed CI checks of the agent's pull request run again, no model), `ci-check` (a `/agent ci_check` command: the
- * root cause of a red CI on any pull request), and `skip`. Later phases add actions by
- * registering more rules in EVENT_HANDLERS and COMMAND_HANDLERS; `decide` itself does not change.
+ * `analyze` (phase 2), `implement` (phase 3; phase 5 adds `kind`: `human`, `review`, or `update`), `ci-gate` (phase 4),
+ * `chat` (phase 5), `stop` (a `/agent stop` command; the `stop` job has no concurrency group), `rerun` (a
+ * `/agent rerun` command: the failed CI checks of the agent's pull request run again, no model), `ci-check` (a
+ * `/agent ci_check` command: the root cause of a red CI on any pull request), and `skip`. Later phases add actions
+ * by registering more rules in EVENT_HANDLERS and COMMAND_HANDLERS; `decide` itself does not change.
  *
  * The CLI (`node tools/agent/route.js`) gathers the facts that need the GitHub API, but only when the event calls
  * for them: the permission of a commenter who wrote a command, the state comment of a pull request that became
@@ -202,6 +201,16 @@ const COMMAND_HANDLERS = {
     const agent = agentPullOf(agentFacts, number)
     if (!agent) return skip(number, 'retry works on issues and on pull requests of the agent')
     return humanAttempt({ number: agent.issueNumber, pr: number, reason: '/agent retry', command })
+  },
+  // Merge the latest develop into the branch of the pull request of the agent: an attempt of `kind: 'update'`.
+  update: ({ number, isPull, command, issue, agentFacts }) => {
+    if (!isPull) return skip(number, 'update works on a pull request of the agent')
+    if (isDependabot(issue?.user?.login)) return skip(number, NO_DEPENDABOT)
+    const agent = agentPullOf(agentFacts, number)
+    if (!agent) return skip(number, 'update works on a pull request of the agent')
+    return humanAttempt({
+      number: agent.issueNumber, pr: number, kind: 'update', reason: '/agent update', command,
+    })
   },
   // Rerun the failed checks of the pull request of the agent and let the CI gate decide; no attempt, no model.
   rerun: ({ number, isPull, command, issue, agentFacts }) => {
@@ -575,7 +584,7 @@ function needsIssueState(eventName, payload) {
 }
 
 /** The commands that read the issue state of an agent pull request. */
-const AGENT_PULL_COMMANDS = new Set(['retry', 'rerun', 'ci-check', 'stop', 'chat'])
+const AGENT_PULL_COMMANDS = new Set(['retry', 'update', 'rerun', 'ci-check', 'stop', 'chat'])
 
 /**
  * True when `decide` needs the issue that a pull request of the agent names, with its state: a change request in a

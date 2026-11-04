@@ -883,13 +883,13 @@ test('noreplyEmail is the private commit address of an account', () => {
 
 const { attemptKind, requireCiFixState, outcomeProblems } = require('./implement')
 
-test('attemptKind: initial by default, then ci-fix, human, and review on request, nothing else', () => {
+test('attemptKind: initial by default, then ci-fix, human, review, and update on request, nothing else', () => {
   assert.equal(attemptKind({}), 'initial')
   assert.equal(attemptKind({ AGENT_KIND: '' }), 'initial')
-  for (const kind of ['ci-fix', 'human', 'review']) assert.equal(attemptKind({ AGENT_KIND: kind }), kind)
+  for (const kind of ['ci-fix', 'human', 'review', 'update']) assert.equal(attemptKind({ AGENT_KIND: kind }), kind)
   assert.throws(
     () => attemptKind({ AGENT_KIND: 'later' }),
-    /AGENT_KIND must be initial, ci-fix, human, or review, got 'later'/,
+    /AGENT_KIND must be initial, ci-fix, human, review, or update, got 'later'/,
   )
 })
 
@@ -1144,4 +1144,246 @@ test('touchedAgentFiles lists changes to the agent instructions and tools, at an
     'tools/ci/ci-verdict.js',
   ].join('\n')
   assert.deepEqual(touchedAgentFiles(out), out.split('\n').slice(0, 7))
+})
+
+// ---------------------------------------------------------------------------------------------- /agent update
+
+const { mergeMessage, changesOpenPull } = require('./implement')
+
+/** Asserts that `text` holds the parts one after the other; a part may hold `\n`. */
+const hasText = (text, ...parts) => assert.ok(text.includes(parts.join('')), `missing: ${parts.join('')}`)
+
+test('changesOpenPull: a review, an update, and a change request change the open pull request', () => {
+  assert.equal(changesOpenPull('review', { name: 'review-changes' }), true)
+  assert.equal(changesOpenPull('update', { name: 'update' }), true)
+  assert.equal(changesOpenPull('human', { name: 'chat' }), true)
+  assert.equal(changesOpenPull('human', { name: 'retry' }), false)
+  assert.equal(changesOpenPull('human', null), false)
+  assert.equal(changesOpenPull('initial', { name: 'implement' }), false)
+})
+
+test('mergeMessage: the merge of develop, the issue, and the Agent-Run trailer', () => {
+  assert.equal(
+    mergeMessage({ branch: 'bugfix/200-x', number: 200, runUrl: 'https://x/runs/1' }),
+    "Merge branch 'develop' into bugfix/200-x\n\nPart of #200.\n\nAgent-Run: https://x/runs/1",
+  )
+})
+
+test('checkImplementation: an update commits a merge, so the commit type of the playbook does not apply', () => {
+  const feat = { ...implementation, commitType: 'feat' }
+  assert.equal(checkImplementation(feat, 'bug-fix', 'update').commitType, 'feat')
+  assert.throws(() => checkImplementation(feat, 'bug-fix', 'human'), /a bug-fix must use 'fix'/)
+  const unrelated = { ...implementation, status: 'unrelated', blockedReason: 'Flaky.' }
+  assert.throws(() => checkImplementation(unrelated, 'bug-fix', 'update'), /allowed only on a CI fix/)
+})
+
+test('renderImplementInput: an update puts the files with conflicts in one untrusted block, with no playbook', () => {
+  const text = renderImplementInput({
+    ...baseInput,
+    kind: 'update',
+    attempts: [{ n: 1, kind: 'initial', result: 'draft', notes: 'n' }],
+    notes: 'Prefer the develop side.',
+    conflicts: ['a/b.go', 'odd`</untrusted>.go'],
+  })
+  hasText(
+    text,
+    '# Implementation of issue #200\n\n- Playbook: none (this attempt merges develop)\n',
+    '- Issue type: Bug\n- Attempt: 2 (update)\n- Round: 1\n\n',
+  )
+  hasText(
+    text,
+    'The pull request of this issue is open, and a maintainer asked to merge the latest `develop` into its branch. ',
+    'The merge has started and stopped on conflicts. Resolve the conflicts in the files below and nothing else: ',
+    'keep the change of the pull request and the change of `develop` in each file. ',
+    'Fix only what the merge breaks.\n\n',
+    '## Files with conflicts\n\n<untrusted>\n- `a/b.go`\n- `odd`[/untrusted].go`\n</untrusted>\n\n',
+    '## Title and description\n',
+  )
+  hasText(text, "## The maintainer's guidance\n\n<untrusted>\nPrefer the develop side.\n</untrusted>")
+  assert.equal(text.match(/<untrusted>/g).length, text.match(/<\/untrusted>/g).length)
+  // The other kinds keep the playbook and have no conflict section.
+  const plain = renderImplementInput({ ...baseInput, conflicts: ['a/b.go'] })
+  assert.match(plain, /- Playbook: bug-fix\n/)
+  assert.doesNotMatch(plain, /Files with conflicts|merge the latest/)
+})
+
+test('renderSelfReviewInput: an update points at the merge commit and lists the files with conflicts', () => {
+  const input = {
+    issue, plan, analysis: null, notes: '', summary: 'Resolved.', base: 'aaa', head: 'bbb', conflicts: ['a/b.go'],
+  }
+  hasText(
+    renderSelfReviewInput({ ...input, kind: 'update' }),
+    '- Compare with: `git diff aaa bbb`\n',
+    '- This attempt merges `develop` into the branch: the head commit is the merge commit. ',
+    'Check that the conflicts in\n',
+    '  the files below keep both the change of the pull request and the change of `develop`, and that the comparison\n',
+    '  above still holds only the change of the pull request.\n\n',
+    '## Files with conflicts\n\n<untrusted>\n- `a/b.go`\n</untrusted>\n\n## The issue\n',
+  )
+  assert.doesNotMatch(renderSelfReviewInput({ ...input, kind: 'human' }), /merge commit|Files with conflicts/)
+})
+
+test('outcomeProblems: an update without conflicts has code without implementation, review, and checks', () => {
+  const head = 'a'.repeat(40)
+  const branch = 'bugfix/200-changelog-is-empty-for-a'
+  const clean = {
+    kind: 'update', result: 'pr-opened', stopped: null, rounds: 0, implementation: null, review: null, checks: null,
+    merge: { conflicts: [] }, branchInfo: { branch, head, previousSha: head },
+  }
+  const input = { outcome: clean, st: { branch }, issue, number: 200, kind: 'update' }
+  const problemsOf = (changes, extra = {}) => outcomeProblems({ ...input, ...extra, outcome: { ...clean, ...changes } })
+  const noMerge = ['an update needs the merge facts']
+  assert.deepEqual(outcomeProblems(input), [])
+  // The branch is still needed, and so are the merge facts.
+  assert.deepEqual(problemsOf({ branchInfo: null }), [
+    'a result with code lacks the implementation, the review, the checks, or the branch',
+  ])
+  assert.deepEqual(problemsOf({ merge: null }), noMerge)
+  assert.deepEqual(problemsOf({ merge: { conflicts: 'a' } }), noMerge)
+  assert.deepEqual(problemsOf({ merge: { conflicts: [1] } }), noMerge)
+  // After conflicts the rounds ran, so the usual rule holds.
+  const resolved = { rounds: 1, merge: { conflicts: ['a/b.go'] } }
+  assert.deepEqual(problemsOf(resolved), [
+    'a result with code lacks the implementation, the review, the checks, or the branch',
+  ])
+  assert.deepEqual(problemsOf({ ...resolved, implementation, review: approve, checks: greenChecks }), [])
+  // A result without code needs no merge facts, and another kind never gets the shortcut of rounds: 0.
+  const blocked = { result: 'blocked', blockedReason: 'Markers.', merge: null, branchInfo: { branch, head: null } }
+  assert.deepEqual(problemsOf(blocked), [])
+  assert.deepEqual(problemsOf({ kind: 'initial' }, { kind: 'initial' }), [
+    'a result with code lacks the implementation, the review, the checks, or the branch',
+  ])
+})
+
+test('renderOutcome: an update that merged without conflicts says that no model ran', () => {
+  const text = renderOutcome({
+    result: 'pr-opened', kind: 'update', number: 200, pr: 70, branch: 'b', attempt: { rounds: 0, notes: null },
+    implementation: null, checks: null, review: null, runUrl: 'https://x/runs/1', totalUsd: 1.234, conflicts: [],
+  })
+  assert.equal(text, [
+    '### AI update: develop merged into pull request #70',
+    '',
+    'Branch `b`. The merge had no conflicts, so no model ran. CI runs again on the pull request.',
+    '',
+    '<sub>[Run](https://x/runs/1) · AI cost of this issue so far: $1.23 · closes #200 when merged</sub>',
+  ].join('\n'))
+})
+
+test('renderOutcome: an update that resolved conflicts counts the files and shows the checks and the review', () => {
+  const text = renderOutcome({
+    result: 'pr-opened', kind: 'update', number: 200, pr: 70, branch: 'b', attempt: { rounds: 2, notes: 'n' },
+    implementation, checks: greenChecks, review: approve, runUrl: 'u', totalUsd: 0,
+    conflicts: ['a.go', 'b.go', 'c.go'],
+  })
+  hasText(
+    text,
+    '### AI update: develop merged into pull request #70\n\n',
+    'Branch `b`. I resolved the conflicts in 3 file(s) in 2 round(s). CI runs again on the pull request.\n\n',
+    '- Local checks (reported by the work job): green\n',
+    '- Self-review (reported by the work job): approved\n',
+    '- Summary: Guards the nil changelog',
+  )
+  assert.match(text, /closes #200 when merged<\/sub>$/)
+})
+
+test('renderOutcome: an update that is not green is a hand-off with what is open', () => {
+  const text = renderOutcome({
+    result: 'draft', kind: 'update', number: 200, pr: 70, branch: 'b', attempt: { rounds: 3, notes: 'Kept both.' },
+    implementation, checks: redChecks, review: { verdict: 'changes', findings: [major, minor] }, runUrl: 'u',
+    totalUsd: 0, conflicts: ['a.go'],
+  })
+  hasText(
+    text,
+    '### AI update needs a person: pull request #70\n\n',
+    'Branch `b`. I merged develop and resolved the conflicts, but stopped after 3 round(s) without a green result.\n\n',
+    '- Local checks',
+  )
+  hasText(
+    text,
+    '**What I tried**\n\nKept both.\n\n**What is open**\n\n',
+    '- Failing check: `pnpm exec nx affected` (exit code 1).\n',
+  )
+  hasText(text, '- major at `a/b.go:7`: The error is swallowed.\n')
+  assert.doesNotMatch(text, /Rename x/)
+  hasText(
+    text,
+    '\n\n**What I need from you:** review the pull request, push a fix to the branch, or comment `/agent update` ',
+    'with guidance for another attempt.\n\n<sub>',
+  )
+})
+
+test('renderOutcome: a blocked update did not change the pull request; an error suggests /agent update', () => {
+  const blocked = renderOutcome({
+    result: 'blocked', kind: 'update', number: 200, pr: 70, branch: 'b', totalUsd: 0, runUrl: 'u',
+    attempt: { rounds: 1, notes: 'Tried both sides.' },
+    reason: 'Conflict markers are left in a.go.\n@bob knows.',
+  })
+  hasText(
+    blocked,
+    '### AI update is blocked\n\n',
+    'I did not change pull request #70: Conflict markers are left in a.go. @​bob knows.\n\n',
+    '**What I tried**\n\nTried both sides.\n\n',
+    '**What I need from you:** resolve the conflicts by hand, or comment `/agent update` with guidance.\n\n<sub>',
+  )
+  assert.match(blocked, /· comment `\/agent update` on the pull request to try again<\/sub>$/)
+  const bare = { result: 'blocked', kind: 'update', number: 200, pr: 70, reason: 'r', runUrl: 'u', totalUsd: 0 }
+  assert.doesNotMatch(renderOutcome({ ...bare, attempt: {} }), /What I tried/)
+  const failed = renderOutcome({
+    result: 'error', kind: 'update', number: 200, pr: 70, message: 'git push failed', runUrl: 'u', totalUsd: 0,
+  })
+  assert.match(failed, /^### AI implementation failed\n\nThe implementation did not finish: git push failed\n/)
+  assert.match(failed, /· comment `\/agent update` on the pull request to try again<\/sub>$/)
+})
+
+test('actorComment: an update that is not green or is blocked mentions the person', () => {
+  assert.equal(
+    actorComment({ result: 'draft', actor: 'carol', pr: 70, kind: 'update' }),
+    '@carol, I merged develop into #70 and resolved the conflicts, but the result is not green yet. ' +
+      'The AI implementation comment on this issue says what is open.',
+  )
+  const reason = 'Markers in a.go.\n@bob knows.'
+  assert.equal(
+    actorComment({ result: 'blocked', actor: 'carol', pr: 70, reason, kind: 'update' }),
+    '@carol, I could not update #70: Markers in a.go. @​bob knows.',
+  )
+  assert.equal(
+    actorComment({ result: 'error', actor: 'carol', message: 'boom', kind: 'update' }),
+    '@carol, the implementation failed: boom',
+  )
+})
+
+test('pushBranch: a refusal for workflow files says that AGENT_PAT has no Workflows permission', async () => {
+  const PAT = 'fake-pat'
+  const raw = (url) => [
+    'remote: Resolving deltas: 100% (3/3), completed with 3 local objects.',
+    `To ${url}`,
+    ' ! [remote rejected] HEAD -> bugfix/1-x (refusing to allow a Personal Access Token to create or update ' +
+      'workflow `.github/workflows/ci.yml` without `workflow` scope)',
+    `error: failed to push some refs to '${PAT}'`,
+  ].join('\n')
+  const refused = async (file, args) => ({
+    exitCode: 1, stdout: '', stderr: raw(args.find((a) => a.startsWith('https://'))), timedOut: false,
+  })
+  await assert.rejects(
+    pushBranch({ env: { AGENT_PAT: PAT }, repo: 'o/r', branch: 'bugfix/1-x', previousSha: 'abc', exec: refused }),
+    (err) => {
+      hasText(
+        err.message,
+        'GitHub refused the push to bugfix/1-x: the commits change files under .github/workflows/, and AGENT_PAT ',
+        'has no Workflows permission. For /agent update this means that develop changed workflow files since the ',
+        'branch point. Update the branch by hand (the Update branch button of the pull request), or give the token ',
+        'the Workflows permission and comment /agent update again. Git said: ',
+      )
+      assert.ok(err.message.startsWith('GitHub refused the push'))
+      assert.match(err.message, /Git said: .*refusing to allow a Personal Access Token/s)
+      assert.ok(!err.message.includes(PAT))
+      return true
+    },
+  )
+  // Any other refusal keeps the plain message.
+  const denied = async () => ({ exitCode: 1, stdout: '', stderr: 'remote: Permission denied', timedOut: false })
+  await assert.rejects(
+    pushBranch({ env: { AGENT_PAT: PAT }, repo: 'o/r', branch: 'b', previousSha: null, exec: denied }),
+    /git push to b failed with 1: remote: Permission denied$/,
+  )
 })

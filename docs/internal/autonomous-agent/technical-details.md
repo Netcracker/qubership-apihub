@@ -948,7 +948,7 @@ one with `phase: 'implementing'` and:
 }
 ```
 
-For `human` and `review` (`markedPersonState`) the object also gets `kind` (`human` or `review`), `pr` (when
+For `human`, `review`, and `update` (`markedPersonState`) the object also gets `kind`, `pr` (when
 `AGENT_PR` is set), and `threads` (`[{ id, commentId }]`, only the unresolved threads that the implementer will see,
 at most 30, `commentId` is the `databaseId` of the first comment), and `analyzeFirst` is `false`. The state also gets
 `budgetFrom` (the number of earlier attempts, so the CI loop starts a fresh count) and loses `stoppedBy` and
