@@ -128,6 +128,7 @@ export type VersionDialogFormProps<T extends VersionFormData = VersionFormData> 
   previousVersionsPackageKey?: Key
   previousVersions?: PackageVersions
   previousVersionPackages?: Packages
+  unresolvedPreviousVersionPackageKey?: Key
   getVersionLabels?: (version: Key) => string[]
   isPublishing?: boolean
   extraValidationMassage?: string | null
@@ -185,6 +186,7 @@ export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogF
     previousVersionsPackageKey,
     previousVersions,
     previousVersionPackages,
+    unresolvedPreviousVersionPackageKey,
     getVersionLabels,
     packagePermissions,
     releaseVersionPattern,
@@ -241,6 +243,8 @@ export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogF
 
   const showPreviousVersionPackageField = !hidePreviousVersionField && !hidePreviousVersionPackageField
   const selectedPreviousVersionPackageKey = previousVersionPackage?.key ?? previousVersionsPackageKey
+  const isPreviousVersionPackageUnresolved =
+    !!unresolvedPreviousVersionPackageKey && selectedPreviousVersionPackageKey === unresolvedPreviousVersionPackageKey
   const isForeignPreviousVersionPackage =
     !!toPreviousVersionPackageId(previousVersionPackage, packageObj?.key ?? currentPackageKey)
   const previousVersionPackageKind = previousVersionPackage?.kind ?? kind
@@ -289,7 +293,10 @@ export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogF
     packageKey: selectedPreviousVersionPackageKey,
     status: previousVersionStatuses,
     textFilter: previousVersionSearch,
-    enabled: !hidePreviousVersionField && previousVersions === undefined && !!selectedPreviousVersionPackageKey,
+    enabled: !hidePreviousVersionField &&
+      previousVersions === undefined &&
+      !!selectedPreviousVersionPackageKey &&
+      !isPreviousVersionPackageUnresolved,
   })
 
   const normalizedPreviousVersions = useMemo(
@@ -345,7 +352,8 @@ export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogF
     hasProblems: previousVersionHasProblems,
   } = useVersionProblemDetails({
     packageKey: selectedPreviousVersionPackageKey || targetPackage?.key || currentPackageKey,
-    versionKey: previousVersionKey,
+    // Not the package key: without it the hook falls back to the current package and requests the version there
+    versionKey: isPreviousVersionPackageUnresolved ? undefined : previousVersionKey,
     hasErrors: selectedPreviousVersion?.hasErrors,
     changelogHasErrors: selectedPreviousVersion?.changelogHasErrors,
     apiProcessorVersion: selectedPreviousVersion?.apiProcessorVersion,

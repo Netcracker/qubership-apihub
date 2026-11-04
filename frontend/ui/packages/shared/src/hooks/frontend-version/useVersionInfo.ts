@@ -52,8 +52,7 @@ export function useVersionInfo(
     getVersionInfoOptions(appType),
   )
 
-  return { frontendVersion: fallbackFrontendVersion, apiProcessorVersion: '5.7.2+52d6cbc62b\n' +
-      'develop.d1f87b2.20261029150648' }
+  return data ?? { frontendVersion: fallbackFrontendVersion, apiProcessorVersion: UNKNOWN_VERSION }
 }
 
 // Returns `undefined` until version.json loads, or when the fetch fails. A version comparison has to skip that case,

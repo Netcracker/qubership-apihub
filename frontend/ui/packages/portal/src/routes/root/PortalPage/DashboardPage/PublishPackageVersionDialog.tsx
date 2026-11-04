@@ -69,6 +69,10 @@ const PublishPackageVersionPopup: FC<PopupProps> = memo<PopupProps>(({ open, set
     hideError: !!previousVersionPackageKey,
   })
   const isPreviousVersionPackageResolving = !!previousVersionPackageKey && isPreviousVersionPackageLoading
+  const unresolvedPreviousVersionPackageKey =
+    previousVersionPackageKey && !isPreviousVersionPackageLoading && previousVersionPackage?.key !== previousVersionPackageKey
+      ? previousVersionPackageKey
+      : undefined
 
   const isEditingVersion = !!currentVersionId && currentVersionId !== SPECIAL_VERSION_KEY
   const packageKind = currentPackage?.kind
@@ -180,6 +184,7 @@ const PublishPackageVersionPopup: FC<PopupProps> = memo<PopupProps>(({ open, set
       areVersionsLoading={areFilteredVersionsLoading}
       previousVersionsPackageKey={currentPackage?.key}
       packageObj={currentPackage ?? undefined}
+      unresolvedPreviousVersionPackageKey={unresolvedPreviousVersionPackageKey}
       getVersionLabels={getVersionLabels}
       packagePermissions={packagePermissions}
       releaseVersionPattern={releaseVersionPattern}
