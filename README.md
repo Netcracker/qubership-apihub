@@ -17,6 +17,7 @@ This repository holds the source of every component, its deployment assets, and 
 | Releases | [GitHub releases](https://github.com/Netcracker/qubership-apihub/releases) |
 | Storybooks | [Component stories](https://netcracker.github.io/qubership-apihub/storybook/) |
 | ERD | [Database diagram](https://netcracker.github.io/qubership-apihub/erd/) |
+| PR board | [Live pull requests and reviews](https://netcracker.github.io/qubership-apihub/pr-board/) |
 
 APIHUB normalizes, diffs, and classifies API changes (breaking or safe), publishes from CI/CD, lints on publish, and
 supports SAML, OIDC, LDAP, RBAC, and API keys. The [landing](https://netcracker.github.io/qubership-apihub/landing/)
@@ -62,7 +63,7 @@ Read the [architecture overview](docs/architecture/overview.md) for the full pic
 | [`deploy/`](deploy/README.md) | The Helm chart, the local Kubernetes quickstart, and the Docker Compose stacks |
 | [`docs/`](docs/README.md) | Installation, administration, user guide, architecture, design items, and the developer guide |
 | [`tools/`](tools/README.md) | Release scripts, CI helpers, and Nx plugins |
-| `sites/` | Sources of the landing, the documentation site, and the navigation page (`sites/index/`) |
+| `sites/` | Sources of the landing, docs, PR board, and navigation page (`sites/index/`) |
 | `.github/` | Workflows, CODEOWNERS, and Dependabot configuration |
 
 ## Where the repositories went

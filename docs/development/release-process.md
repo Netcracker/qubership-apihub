@@ -293,6 +293,7 @@ has five parts:
 - the navigation page at the root, which links to the other four;
 - the product landing at `landing/`;
 - the documentation site at `docs/` (a placeholder until the docs site exists at the ref);
+- the contributor pull request board at `pr-board/`, with live data loaded using each viewer's personal token;
 - the Storybooks at `storybook/<component>/<branch>/`;
 - the database ERDs at `erd/<backend>/` for `portal-backend`, `api-linter-service`, and `agents-backend`.
 

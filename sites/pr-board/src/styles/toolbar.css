@@ -1,0 +1,20 @@
+/* Search, the search syntax help, and the result count. */
+.toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
+.search {
+  flex: 1 1 240px; min-width: 0; max-width: 380px; padding: 7px 10px; border: 1px solid var(--line-strong);
+  border-radius: 6px; background: var(--surface); color: var(--fg); font: inherit;
+}
+
+.result-count { color: var(--muted); margin-left: auto; font-variant-numeric: tabular-nums; }
+
+.search-box { display: flex; gap: 4px; flex: 1 1 320px; min-width: 0; max-width: 520px; }
+.search-box .search { flex: 1 1 auto; max-width: none; }
+
+.search-help { width: 400px; left: auto; right: 0; gap: 8px; padding: 12px 14px; }
+.search-help p { margin: 0; color: var(--muted); font-size: 13px; }
+.search-help dl { margin: 0; display: grid; gap: 3px; font-size: 12.5px; }
+.search-help dl div { display: grid; grid-template-columns: 76px 1fr; gap: 8px; }
+.search-help dt code, .search-help .examples code { font-family: var(--font-mono); font-size: 12px; }
+.search-help dd { margin: 0; color: var(--muted); }
+.search-help .examples { display: flex; flex-wrap: wrap; gap: 4px; }
+.search-help .examples .btn { padding: 3px 8px; }

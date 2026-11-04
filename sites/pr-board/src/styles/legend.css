@@ -1,0 +1,17 @@
+/* The legend bar at the bottom. */
+.legend-bar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 4px 18px; padding: 6px 2px 10px;
+  font-size: 12px; color: var(--muted); border-top: 1px solid var(--line); margin-top: -6px;
+}
+.legend-group { display: inline-flex; align-items: center; gap: 4px 10px; flex-wrap: wrap; }
+.legend-name { color: var(--fg); font-weight: 600; }
+.legend-item { display: inline-flex; align-items: center; gap: 4px; }
+.legend-bar .pill.short { min-width: 22px; line-height: 16px; font-size: 11px; padding: 0 5px; animation: none; }
+.stripe { display: inline-block; width: 3px; height: 12px; border-radius: 1px; }
+.stripe.ci-failing { background: var(--bad); }
+.stripe.ci-running { background: var(--running); }
+.stripe.ci-passing { background: var(--good); }
+.legend-rules { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; }
+.chip.custom { background: var(--warn-soft); color: var(--warn); }
+.legend-link { border: 0; background: transparent; color: var(--accent); cursor: pointer; font: inherit; padding: 2px 4px; }
+.legend-link:hover { text-decoration: underline; }

@@ -5,6 +5,7 @@
 //   pages-site.js <site-dir> --landing <dist> --ref <name> --commit <sha> [options]
 //
 //   --landing <dist>           the landing's build (sites/landing/dist); required
+//   --pr-board <dist>          the PR board build (sites/pr-board/dist)
 //   --docs <dist>              the docs site's build, which must exist; without it, docs/ gets a
 //                              page saying the documentation site is coming
 //   --ref <name>, --commit <sha>
@@ -25,6 +26,7 @@
 //   /404.html          the template with the Storybook text; /404-map.js routes the legacy URLs
 //   /landing/          the landing
 //   /docs/             the docs site
+//   /pr-board/         the pull request board
 //   /erd/              tools/ci/erd.js assemble, which handles a missing render itself (an older
 //                      render or a "not rendered yet" card), so its failure fails the run
 //   /pages/erd/        a redirect to /erd/portal-backend/, the legacy ERD
@@ -56,7 +58,7 @@ const TEMPLATES = {
 }
 const REQUIRED_INDEX_FILES = ['index.html', '404.html', '404-map.js']
 // Folders the sections own. A file of sites/index with one of these names would be overwritten.
-const SECTIONS = ['landing', 'docs', 'erd', 'pages', STORYBOOK]
+const SECTIONS = ['landing', 'docs', 'pr-board', 'erd', 'pages', STORYBOOK]
 
 const html = (s) =>
   String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c])
@@ -96,7 +98,7 @@ function storybookBudget(restBytes, { budgetBytes = DEFAULT_BUDGET_MIB * MIB, re
 
 // What goes where. `indexFiles` are the entries of sites/index. Returns the copies (site-relative
 // `to`), the templates to fill, and whether docs/ is the docs site or the placeholder.
-function layoutPlan({ indexFiles, landingDist, docsDist }) {
+function layoutPlan({ indexFiles, landingDist, docsDist, prBoardDist }) {
   const missing = REQUIRED_INDEX_FILES.filter((f) => !indexFiles.includes(f))
   if (missing.length) throw new Error(`sites/index lacks ${missing.join(', ')}`)
   const clash = indexFiles.filter((f) => SECTIONS.includes(f))
@@ -109,6 +111,7 @@ function layoutPlan({ indexFiles, landingDist, docsDist }) {
     .map((f) => ({ from: `index/${f}`, to: f }))
   copies.push({ from: 'landing', to: 'landing' })
   if (docsDist) copies.push({ from: 'docs', to: 'docs' })
+  if (prBoardDist) copies.push({ from: 'pr-board', to: 'pr-board' })
   return { copies, templates: Object.keys(TEMPLATES), docs: docsDist ? 'site' : 'placeholder' }
 }
 
@@ -201,7 +204,7 @@ function legacyErdStub(hasPortalBackend = true) {
 function parseArgs(argv) {
   const opts = { flags: new Set() }
   const valued = new Set([
-    '--landing', '--docs', '--ref', '--commit', '--landing-ref', '--landing-commit', '--index', '--repo-url',
+    '--pr-board', '--landing', '--docs', '--ref', '--commit', '--landing-ref', '--landing-commit', '--index', '--repo-url',
     '--budget-mib', '--erd-script', '--storybook-script',
   ])
   const boolean = new Set()
@@ -267,6 +270,7 @@ function main(argv) {
   const indexDir = path.resolve(opts.index || path.join(REPO_ROOT, 'sites', 'index'))
   const landingDist = path.resolve(opts.landing)
   const docsDist = opts.docs ? path.resolve(opts.docs) : null
+  const prBoardDist = opts['pr-board'] ? path.resolve(opts['pr-board']) : null
   const repoUrl =
     opts['repo-url'] ||
     (process.env.GITHUB_REPOSITORY
@@ -281,8 +285,9 @@ function main(argv) {
   if (!fs.existsSync(path.join(landingDist, 'index.html'))) throw new Error(`the landing build ${landingDist} has no index.html`)
   if (docsDist && !fs.existsSync(docsDist)) throw new Error(`the docs build ${docsDist} does not exist`)
 
-  const plan = layoutPlan({ indexFiles: fs.readdirSync(indexDir), landingDist, docsDist })
-  const sources = { index: indexDir, landing: landingDist, docs: docsDist }
+  if (prBoardDist && !fs.existsSync(path.join(prBoardDist, 'index.html'))) throw new Error('the PR board build has no index.html')
+  const plan = layoutPlan({ indexFiles: fs.readdirSync(indexDir), landingDist, docsDist, prBoardDist })
+  const sources = { index: indexDir, landing: landingDist, docs: docsDist, 'pr-board': prBoardDist }
 
   fs.rmSync(site, { recursive: true, force: true })
   fs.mkdirSync(site, { recursive: true })
@@ -295,6 +300,13 @@ function main(argv) {
   if (plan.docs === 'placeholder') {
     fs.mkdirSync(path.join(site, 'docs'), { recursive: true })
     fs.writeFileSync(path.join(site, 'docs', 'index.html'), docsPlaceholder({ repoUrl, commit: opts.commit }))
+  }
+  if (!prBoardDist) {
+    fs.mkdirSync(path.join(site, 'pr-board'), { recursive: true })
+    fs.writeFileSync(path.join(site, 'pr-board', 'index.html'), page({
+      title: 'Pull request board', depth: 1,
+      body: '<p>The board is unavailable at this site ref. Open the <a href="https://netcracker.github.io/qubership-apihub-ci/report_prs_latest.html">legacy report</a>.</p>',
+    }))
   }
   const erd = erdSection({ site, ref: opts.ref, commit: opts.commit, script: erdScript })
   fs.mkdirSync(path.join(site, 'pages', 'erd'), { recursive: true })
@@ -318,7 +330,7 @@ function main(argv) {
   fs.writeFileSync(path.join(site, 'index.html'), indexHtml(COMPONENTS))
 
   const sizes = Object.fromEntries(
-    ['landing', 'docs', 'erd'].map((s) => [s, walkSize(path.join(site, s))]),
+    ['landing', 'docs', 'pr-board', 'erd'].map((s) => [s, walkSize(path.join(site, s))]),
   )
   const rest = walkSize(site)
   sizes.root = {
@@ -350,6 +362,7 @@ function summarize({ sizes, total, budgetBytes, storybookBytes, opts, docs, erd,
     ['/', 'the navigation page, the 404 page, and the legacy ERD redirect', sizes.root],
     ['landing/', `the landing, from ${landingFrom}`, sizes.landing],
     ['docs/', docs === 'site' ? 'the docs site' : 'a placeholder: no docs site at the ref', sizes.docs],
+    ['pr-board/', 'the pull request board', sizes['pr-board']],
     ['erd/', `${erd.rendered.length} of ${erd.backends.length} ERDs`, sizes.erd],
     [`${STORYBOOK}/`, `${published.length} components, within ${mib(storybookBytes)}`, sizes[STORYBOOK]],
   ]

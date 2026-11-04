@@ -56,6 +56,7 @@ with the code, and the site shows the same files.
 
 - [Developer guide](./development/README.md): workstation setup, workflow, build and test, local run, debugging, CI,
   API guidelines, and the release process.
+- [PR board](../sites/pr-board/README.md): local development, official filter defaults, and personal-token access.
 
 ## Internal records
 

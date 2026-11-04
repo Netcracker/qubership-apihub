@@ -1,0 +1,38 @@
+/* Popovers and the comments panel. */
+.popover {
+  /* --popover-room is the height left on the side it opens to (PANEL-1); a popover with its own cap takes the smaller. */
+  position: fixed; z-index: 40; max-width: calc(100vw - 32px); max-height: var(--popover-room, none); overflow: auto; text-align: left;
+  background: var(--surface); border: 1px solid var(--line-strong); border-radius: 8px; box-shadow: var(--shadow);
+  padding: 10px 12px; display: grid; gap: 6px; font-size: 13px; color: var(--fg);
+}
+.popover-title { font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+.attn-popover .popover-title { color: var(--bad); }
+.attn-popover ul, .rules-popover ul { margin: 0; padding-left: 16px; display: grid; gap: 4px; }
+.comments-popover { overflow: auto; gap: 10px; align-content: start; }
+.panel-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.comment-full { display: grid; gap: 6px; }
+.comment-full + .comment-full { border-top: 1px solid var(--line); padding-top: 10px; }
+.comment-full header { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
+.comment-full .who { color: var(--fg); font-weight: 600; }
+.comment-full header a { margin-left: auto; }
+.comment-text { min-width: 0; overflow-wrap: anywhere; font-size: 13px; line-height: 1.5; }
+
+.comment-cut { font-size: 12px; color: var(--muted); font-style: italic; }
+.rules-popover code { font-family: var(--font-mono); font-size: 12px; }
+
+.checks-popover { max-height: min(420px, 70vh, var(--popover-room, 100vh)); }
+.check-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.check-list li { display: grid; gap: 2px; padding-left: 14px; position: relative; }
+.check-list li::before { content: ""; position: absolute; left: 0; top: 7px; width: 7px; height: 7px; border-radius: 50%; background: var(--bad); }
+.check-name { font-weight: 500; overflow-wrap: anywhere; }
+.check-meta { display: flex; flex-wrap: wrap; gap: 4px 8px; font-size: 12px; color: var(--muted); align-items: center; }
+.popover .muted { margin: 0; }
+.popover-footer { font-size: 12.5px; border-top: 1px solid var(--line); padding-top: 8px; }
+.check-count { color: var(--muted); font-weight: 400; font-size: 12px; }
+
+.review-popover section { display: grid; gap: 6px; }
+.people { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.people li { display: flex; align-items: center; gap: 7px; }
+.people .who { font-weight: 500; overflow-wrap: anywhere; }
+.people .when { margin-left: auto; color: var(--muted); font-size: 12px; white-space: nowrap; }
+

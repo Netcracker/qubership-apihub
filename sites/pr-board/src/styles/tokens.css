@@ -1,0 +1,63 @@
+/* Color and font tokens. Light theme in :root; dark theme for the system setting and for data-theme="dark".
+   .theme-light and .theme-dark draw a part of the page, such as a wizard preview, in that theme. */
+:root, .theme-light {
+  color-scheme: light;
+  --bg: #f3f5f7;
+  --surface: #ffffff;
+  --surface-2: #f7f9fa;
+  --fg: #172026;
+  --muted: #5a6872;
+  --line: #dbe1e5;
+  --line-strong: #c3ccd2;
+  --accent: #0a6c74;
+  --accent-soft: #e0f0f1;
+  --bad: #b42318;
+  --bad-soft: #fde8e6;
+  --warn: #935f00;
+  --warn-soft: #fdf1d6;
+  --running: #f5b800;
+  --running-soft: #fff1b8;
+  --running-ink: #6e5200;
+  --good: #18753c;
+  --good-soft: #e1f3e7;
+  --idle: #5a6872;
+  --idle-soft: #eceff1;
+  --example-ink: #5b4a91;
+  /* Label text on GitHub's own label colors, so it does not change with the theme. */
+  --label-ink-dark: #1f2328;
+  --label-ink-light: #ffffff;
+  /* A neutral edge that shows on light and dark label colors in both themes. */
+  --label-edge: rgba(127, 127, 127, 0.25);
+  --shadow: 0 6px 24px rgba(23, 32, 38, 0.12);
+  /* GitHub's issue type colors, shown as a dot that reads on both themes. */
+  --issue-type-gray: #8c959f; --issue-type-blue: #218bff; --issue-type-green: #2da44e; --issue-type-yellow: #d4a72c;
+  --issue-type-orange: #e16f24; --issue-type-red: #e5534b; --issue-type-pink: #e85aad; --issue-type-purple: #a475f9;
+  /* The page behind a dialog, dimmed in both themes (SET-18, SET-21). */
+  --backdrop: rgba(23, 32, 38, 0.35);
+  /* Tints of the repository groups (TABLE-31), one per group in turn. */
+  --group-0: #e8f1fc; --group-1: #fcf3dc; --group-2: #e4f3e8; --group-3: #fbe8ec; --group-4: #efeafb; --group-5: #def2f2;
+  --font-sans: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1316; --surface: #151c20; --surface-2: #1a2227; --fg: #e3e9ec; --muted: #93a2ab;
+    --line: #263238; --line-strong: #34434b; --accent: #5cc3cb; --accent-soft: #143338;
+    --bad: #ff8a7a; --bad-soft: #3a1c19; --warn: #f2c063; --warn-soft: #36290f; --running: #ffd21f; --running-soft: #3d3205; --running-ink: #ffd21f;
+    --good: #6fd58f; --good-soft: #15301f; --idle: #93a2ab; --idle-soft: #212b30;
+    --example-ink: #b9a9f0; --shadow: 0 6px 24px rgba(0, 0, 0, 0.5);
+    --backdrop: rgba(0, 0, 0, 0.55);
+    --group-0: #172538; --group-1: #2f2812; --group-2: #16301f; --group-3: #361e25; --group-4: #262140; --group-5: #13302f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"], .theme-dark {
+  --bg: #0e1316; --surface: #151c20; --surface-2: #1a2227; --fg: #e3e9ec; --muted: #93a2ab;
+  --line: #263238; --line-strong: #34434b; --accent: #5cc3cb; --accent-soft: #143338;
+  --bad: #ff8a7a; --bad-soft: #3a1c19; --warn: #f2c063; --warn-soft: #36290f; --running: #ffd21f; --running-soft: #3d3205; --running-ink: #ffd21f;
+  --good: #6fd58f; --good-soft: #15301f; --idle: #93a2ab; --idle-soft: #212b30;
+  --example-ink: #b9a9f0; --shadow: 0 6px 24px rgba(0, 0, 0, 0.5);
+  --backdrop: rgba(0, 0, 0, 0.55);
+  --group-0: #172538; --group-1: #2f2812; --group-2: #16301f; --group-3: #361e25; --group-4: #262140; --group-5: #13302f;
+  color-scheme: dark;
+}

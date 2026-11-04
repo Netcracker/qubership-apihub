@@ -1,0 +1,44 @@
+/* The masthead: title, quick filter tiles, data source, Refresh, and banners. */
+.masthead { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 8px 24px; }
+.masthead h1 { margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -0.01em; text-wrap: balance; }
+.masthead h1 .repo { font-family: var(--font-mono); font-weight: 500; font-size: 15px; color: var(--muted); display: block; margin-bottom: 2px; letter-spacing: 0; }
+
+.tiles { display: flex; flex-wrap: wrap; gap: 6px; }
+/* The tiles sit on the right of the masthead, next to the data source and the Refresh and Settings buttons. */
+.masthead .tiles { justify-content: flex-end; }
+.tile {
+  display: inline-flex; align-items: baseline; gap: 6px; padding: 4px 10px; min-width: 0;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 6px; cursor: pointer;
+  transition: border-color 0.12s, background 0.12s;
+}
+.tile:hover { border-color: var(--line-strong); }
+.tile .count { font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.tile .label { color: var(--muted); font-size: 12.5px; }
+.tile.tone-bad .count { color: var(--bad); }
+.tile.tone-warn .count { color: var(--warn); }
+.tile.tone-accent .count { color: var(--accent); }
+.tile.zero .count { color: var(--muted); }
+.tile[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); box-shadow: inset 0 0 0 1px var(--accent); }
+
+.masthead-side { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px 10px; }
+.source-button { display: inline-flex; align-items: center; gap: 6px; padding-inline: 8px; color: var(--muted); font-size: 12.5px; }
+.source-button .source-age { white-space: nowrap; }
+.source-dot { display: block; width: 9px; height: 9px; border-radius: 50%; background: var(--idle); }
+.source-button.live .source-dot { background: var(--good); }
+.refresh-buttons { display: inline-flex; }
+.refresh-buttons .btn:first-child { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+.refresh-buttons .btn.icon { border-top-left-radius: 0; border-bottom-left-radius: 0; border-left: 0; padding-inline: 9px; }
+
+.refresh .menu { left: auto; right: 0; }
+
+.btn.icon .dot { position: absolute; top: 4px; right: 4px; width: 7px; height: 7px; border-radius: 50%; background: var(--warn); }
+
+.banner { border-radius: 8px; padding: 10px 14px; font-size: 13px; display: grid; gap: 4px; border: 1px solid var(--line); }
+.banner.bad { background: var(--bad-soft); color: var(--bad); }
+.banner.warn { background: var(--warn-soft); color: var(--warn); }
+.tile .again { color: var(--accent); font-weight: 600; }
+
+/* The token owner (DATA-26), as GitHub shows the signed-in user. */
+.viewer-badge { display: inline-flex; align-items: center; gap: 6px; color: var(--fg); text-decoration: none; font-size: 13px; font-weight: 600; }
+.viewer-badge:hover { text-decoration: none; }
+.viewer-badge:hover .who { text-decoration: underline; }

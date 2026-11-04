@@ -1,0 +1,22 @@
+// Code that Node runs directly with type stripping: tests, scripts, the Vite config, and the dev mocks.
+// Imports keep their .ts extensions, and only erasable syntax is allowed (no enums or parameter properties).
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "lib": ["ES2023", "DOM"],
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "types": ["node"],
+    "strict": true,
+    "noUnusedLocals": true,
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "erasableSyntaxOnly": true,
+    "verbatimModuleSyntax": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "skipLibCheck": true
+  },
+  "include": ["dev", "scripts", "test", "e2e", "vite.config.ts", "playwright.config.ts"],
+  "exclude": ["dev/panel.ts"]
+}
