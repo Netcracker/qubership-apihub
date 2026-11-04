@@ -1561,11 +1561,12 @@ async function commitMerge({ exec, message }) {
 }
 
 /**
- * The files among `files` that still hold a conflict marker. `git add -A` would commit the markers as if they were
- * code, so the rounds of an update look first.
+ * The files among `files` that still hold a conflict marker: the opening, the base of the diff3 style, the separator,
+ * or the closing line. `git add -A` would commit the markers as if they were code, so the rounds of an update look
+ * first.
  */
 async function conflictMarkers({ exec, files }) {
-  const args = ['grep', '-n', '-E', '^(<<<<<<<|>>>>>>>)( |$)', '--', ...files]
+  const args = ['grep', '-n', '-E', '^((<<<<<<<|\\|\\|\\|\\|\\|\\|\\||>>>>>>>)( |$)|=======$)', '--', ...files]
   const r = await exec('git', args, { timeoutMs: GIT_TIMEOUT_MS })
   if (r.exitCode === 1) return []
   if (r.exitCode !== 0) throw new Error(`git grep failed with ${r.exitCode}: ${tailLines(r.stderr, 10)}`)
@@ -2144,13 +2145,19 @@ function outcomeProblems({ outcome, st, issue, number, kind = outcome.kind }) {
   if (outcome.checks && !(Array.isArray(outcome.checks.results) && typeof outcome.checks.passed === 'boolean')) {
     problems.push('checks have no results')
   }
+  // A clean merge is the only code result without the rounds: it ran no model, so it can only claim a green result.
+  const mergedCleanly = kind === 'update' && outcome.rounds === 0
   if (kind === 'update' && hasCode) {
     const conflicts = outcome.merge?.conflicts
     if (!(Array.isArray(conflicts) && conflicts.every((file) => typeof file === 'string'))) {
       problems.push('an update needs the merge facts')
+    } else if (mergedCleanly && conflicts.length > 0) {
+      problems.push('an update without rounds cannot have conflicts')
+    }
+    if (mergedCleanly && outcome.result !== 'pr-opened') {
+      problems.push(`a clean update cannot have the result '${outcome.result}'`)
     }
   }
-  const mergedCleanly = kind === 'update' && outcome.rounds === 0
   const complete = mergedCleanly
     ? Boolean(outcome.branchInfo)
     : Boolean(outcome.implementation && outcome.review && outcome.checks && outcome.branchInfo)
@@ -2745,6 +2752,7 @@ module.exports = {
   prepareBranch,
   mergeDevelop,
   mergeMessage,
+  conflictMarkers,
   branchAllowed,
   renderReviewThreads,
   limitThreads,

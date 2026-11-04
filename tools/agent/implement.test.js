@@ -1223,6 +1223,32 @@ test('renderSelfReviewInput: an update points at the merge commit and lists the 
   assert.doesNotMatch(renderSelfReviewInput({ ...input, kind: 'human' }), /merge commit|Files with conflicts/)
 })
 
+test('conflictMarkers: real git finds every marker line and nothing that only looks like one', async () => {
+  const fs = require('node:fs')
+  const os = require('node:os')
+  const path = require('node:path')
+  const { conflictMarkers } = require('./implement')
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'implement-markers-'))
+  try {
+    const exec = (file, args, options) => defaultExec(file, args, { ...options, cwd: dir })
+    const files = {
+      'open.go': 'a\n<<<<<<< HEAD\nb\n',
+      'base.go': 'a\n||||||| base\nb\n',
+      'separator.go': 'a\n=======\nb\n',
+      'close.go': 'a\n>>>>>>> develop\nb\n',
+      'clean.md': 'Title\n========\n\n<<<<<<<< not a marker\n x <<<<<<< \n',
+    }
+    for (const [name, text] of Object.entries(files)) fs.writeFileSync(path.join(dir, name), text)
+    await exec('git', ['init', '-q'])
+    await exec('git', ['add', '-A'])
+    const found = await conflictMarkers({ exec, files: Object.keys(files) })
+    assert.deepEqual(found.sort(), ['base.go', 'close.go', 'open.go', 'separator.go'])
+    assert.deepEqual(await conflictMarkers({ exec, files: ['clean.md'] }), [])
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true })
+  }
+})
+
 test('outcomeProblems: an update without conflicts has code without implementation, review, and checks', () => {
   const head = 'a'.repeat(40)
   const branch = 'bugfix/200-changelog-is-empty-for-a'
@@ -1241,6 +1267,11 @@ test('outcomeProblems: an update without conflicts has code without implementati
   assert.deepEqual(problemsOf({ merge: null }), noMerge)
   assert.deepEqual(problemsOf({ merge: { conflicts: 'a' } }), noMerge)
   assert.deepEqual(problemsOf({ merge: { conflicts: [1] } }), noMerge)
+  // Without rounds no model ran: the merge was clean, and the result is green or nothing.
+  assert.deepEqual(problemsOf({ merge: { conflicts: ['a/b.go'] } }), [
+    'an update without rounds cannot have conflicts',
+  ])
+  assert.deepEqual(problemsOf({ result: 'draft' }), ["a clean update cannot have the result 'draft'"])
   // After conflicts the rounds ran, so the usual rule holds.
   const resolved = { rounds: 1, merge: { conflicts: ['a/b.go'] } }
   assert.deepEqual(problemsOf(resolved), [
