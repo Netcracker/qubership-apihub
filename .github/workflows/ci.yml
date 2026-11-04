@@ -262,6 +262,31 @@ jobs:
             --exclude='tag:lang:go,tag:maven:com.netcracker.qubership.apihub' --verbose 2>&1 \
             | tee "$RUNNER_TEMP/nx.log"
 
+      - name: test the PR board in Chromium when affected
+        shell: bash
+        run: |
+          set -euo pipefail
+          affected="$(pnpm exec nx show projects --affected --json)"
+          pr_board="$(AFFECTED="$affected" node -e 'console.log(JSON.parse(process.env.AFFECTED).includes("pr-board"))')"
+          if [ "$pr_board" = true ]; then
+            pnpm --filter @netcracker/qubership-apihub-pr-board exec playwright install --with-deps chromium
+            pnpm exec nx run pr-board:test:e2e
+            pnpm --filter @netcracker/qubership-apihub-pr-board run test:linux --project=screenshots
+          fi
+
+      - name: PR board browser failure reports
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: pr-board-browser-reports
+          include-hidden-files: true
+          path: |
+            sites/pr-board/test-results/
+            sites/pr-board/playwright-report/
+            sites/pr-board/.logs/linux/
+          if-no-files-found: ignore
+          retention-days: 7
+
       - name: cache summary
         if: always()
         run: bash tools/ci/cache-summary.sh 'js' "$RUNNER_TEMP/nx.log" >> "$GITHUB_STEP_SUMMARY"

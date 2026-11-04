@@ -1,0 +1,3 @@
+# Keep LF everywhere: CI builds on Linux, and diffs stay clean on Windows.
+* text=auto eol=lf
+*.png binary

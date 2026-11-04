@@ -1,0 +1,910 @@
+/* The board table: layout, columns, rows, and the cells. */
+.table-wrap {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: auto;
+  min-width: 0;
+  min-height: 160px;
+}
+
+/* #app > * holds every other part at its size; the table takes the rest. */
+#app > .table-wrap {
+  flex: 1 1 auto;
+}
+
+/* Column widths come from <colgroup>; the table grows past the viewport and scrolls inside .table-wrap. */
+.board {
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+}
+
+.board > thead > tr > th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--surface-2);
+  text-align: left;
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid var(--line-strong);
+  padding: 0;
+  white-space: nowrap;
+}
+
+.board > thead > tr > th > span:not(.col-resizer),
+.board > thead > tr > th > button {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 9px 10px;
+  width: 100%;
+  overflow: hidden;
+}
+
+.board > thead > tr > th > button {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  text-align: left;
+}
+
+.board > thead > tr > th > button:hover {
+  color: var(--fg);
+}
+
+.board > thead > tr > th[aria-sort="ascending"] > button,
+.board > thead > tr > th[aria-sort="descending"] > button {
+  color: var(--accent);
+}
+
+.arrow {
+  font-size: 10px;
+  opacity: 0.9;
+}
+
+/* The column divider is the right border of each cell. The handle is centered on it and reaches into the next
+   header cell, which is why header cells stack from left to right (z-index is set inline). */
+.col-resizer {
+  position: absolute;
+  top: 0;
+  right: -5px;
+  width: 9px;
+  height: 100%;
+  cursor: col-resize;
+  z-index: 3;
+  touch-action: none;
+}
+
+.col-resizer::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 3px;
+  width: 3px;
+}
+
+.col-resizer:hover::after,
+.col-resizer:focus-visible::after {
+  background: var(--accent);
+}
+
+.board > thead > tr > th:last-child .col-resizer {
+  right: 0;
+}
+
+.board > thead > tr > th:not(:last-child) {
+  border-right: 1px solid var(--line);
+}
+
+/* position: relative keeps hidden screen reader text inside its cell, so it never stretches the page (TABLE-21). */
+.board > tbody > tr > td {
+  position: relative;
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+  overflow: hidden;
+}
+
+.board > tbody > tr > td:not(:last-child) {
+  border-right: 1px solid var(--line);
+}
+
+.board > tbody > tr:hover > td {
+  background: var(--surface-2);
+}
+
+/* Left stripe mirrors CI: red when checks failed, yellow while they run, green when they passed. */
+.board > tbody > tr.ci-failing > td:first-child {
+  box-shadow: inset 3px 0 0 var(--bad);
+}
+
+.board > tbody > tr.ci-running > td:first-child {
+  box-shadow: inset 3px 0 0 var(--running);
+}
+
+.board > tbody > tr.ci-passing > td:first-child {
+  box-shadow: inset 3px 0 0 var(--good);
+}
+
+.c-attn {
+  text-align: center;
+}
+
+.board > thead > tr > th.c-attn > button,
+.board > thead > tr > th.c-attn > span:not(.col-resizer) {
+  justify-content: center;
+}
+
+.pr-title {
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.pr-title a {
+  color: var(--fg);
+}
+
+.sub {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 6px;
+  margin-top: 4px;
+  align-items: center;
+}
+
+.example-note {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--example-ink);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11.5px;
+  line-height: 18px;
+  padding: 0 7px;
+  border-radius: 9px;
+  background: var(--idle-soft);
+  color: var(--idle);
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.chip.branch {
+  font-family: var(--font-mono);
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.chip.example {
+  background: transparent;
+  border: 1px dashed var(--example-ink);
+  color: var(--example-ink);
+}
+
+.chip.draft {
+  background: transparent;
+  border: 1px solid var(--line-strong);
+}
+
+.chip.bot {
+  font-size: 10.5px;
+  padding: 0 5px;
+}
+
+.label-chip,
+.label-more {
+  font: 500 11px/16px var(--font-sans);
+  padding: 0 6px;
+  border-radius: 8px;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+  border: 1px solid var(--label-edge);
+  background: var(--idle-soft);
+  color: var(--idle);
+}
+
+.label-chip:hover {
+  filter: brightness(0.95);
+}
+
+.label-chip.active {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.label-more {
+  background: transparent;
+  color: var(--muted);
+  border-style: dashed;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 20px;
+  padding: 0 8px;
+  border-radius: 10px;
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.pill.bad {
+  background: var(--bad-soft);
+  color: var(--bad);
+}
+
+.pill.warn {
+  background: var(--warn-soft);
+  color: var(--warn);
+}
+
+.pill.good {
+  background: var(--good-soft);
+  color: var(--good);
+}
+
+.pill.idle {
+  background: var(--idle-soft);
+  color: var(--idle);
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+.dash {
+  color: var(--muted);
+}
+
+/* When the login does not fit beside the avatar, it moves to the next line, and breaks only if it is still too long. */
+.person {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  min-width: 0;
+}
+
+.person + .person {
+  margin-top: 6px;
+}
+
+.person .login {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  font-size: 13px;
+}
+
+.person.ghost .login {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  flex: none;
+  object-fit: cover;
+  background: var(--idle-soft);
+  display: inline-grid;
+  place-items: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  border: 1px solid var(--line);
+}
+
+.avatar.sm {
+  width: 16px;
+  height: 16px;
+  font-size: 8px;
+}
+
+.age {
+  font-variant-numeric: tabular-nums;
+}
+
+.age.over {
+  color: var(--bad);
+  font-weight: 600;
+}
+
+.activity {
+  color: var(--muted);
+  font-size: 12.5px;
+  margin-top: 2px;
+}
+
+.comment-preview {
+  display: grid;
+  gap: 2px;
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  padding: 2px 4px;
+  margin: -2px -4px;
+  border-radius: 4px;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+}
+
+.comment-preview:hover,
+.comment-preview[aria-expanded="true"] {
+  background: var(--accent-soft);
+}
+
+.comment-head {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--muted);
+  flex-wrap: wrap;
+}
+
+.comment-more {
+  margin-left: auto;
+  font-size: 11px;
+  padding: 0 5px;
+  border-radius: 8px;
+  background: var(--idle-soft);
+}
+
+.comment-body {
+  font-size: 13px;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.attn {
+  display: inline-block;
+}
+
+.attn-icon {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 0;
+  cursor: pointer;
+  background: var(--bad-soft);
+  color: var(--bad);
+  font-weight: 600;
+  font-size: 13px;
+  display: inline-grid;
+  place-items: center;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--bad) 45%, transparent);
+}
+
+.attn-icon:hover,
+.attn-icon[aria-expanded="true"] {
+  background: var(--bad);
+  color: var(--surface);
+}
+
+.attn-count {
+  position: absolute;
+  top: -5px;
+  right: -7px;
+  min-width: 15px;
+  height: 15px;
+  padding: 0 3px;
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--bad);
+  border: 1px solid var(--bad);
+  font-size: 10px;
+  line-height: 13px;
+}
+
+.empty {
+  text-align: center;
+  padding: 48px 16px;
+  color: var(--muted);
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+}
+
+.empty strong {
+  color: var(--fg);
+  font-size: 15px;
+}
+
+.loading {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--line-strong);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.pill.short {
+  justify-content: center;
+  min-width: 30px;
+  padding: 0 7px;
+  gap: 0;
+  font-weight: 600;
+}
+
+.pill.short.running {
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+.c-state {
+  text-align: center;
+}
+
+.c-repo {
+  font-size: 12px;
+}
+
+/* A long name is cut at its start, so the distinctive end shows, such as "…gadgets-ui" (TABLE-26). The name itself
+   stays left to right inside its bdi. */
+.c-repo a {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  direction: rtl;
+  text-align: left;
+  color: var(--muted);
+}
+
+/* The name of a repository in a group sits on the group's tint (TABLE-31). */
+.c-repo a.tinted {
+  display: inline-block;
+  max-width: 100%;
+  vertical-align: top;
+  padding: 1px 6px;
+  border-radius: 4px;
+  color: var(--fg);
+}
+
+.c-repo a:hover {
+  color: var(--fg);
+}
+
+.pr-title a:hover {
+  color: var(--accent);
+}
+
+.board > thead > tr > th.c-state > button,
+.board > thead > tr > th.c-state > span:not(.col-resizer) {
+  justify-content: center;
+}
+
+/* QUAL-11: a code that opens a popover shows an outline and a ▾ at rest, so it reads as a button before hover. */
+.pill.as-button {
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 20px;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, currentcolor 45%, transparent);
+}
+
+.pill.as-button::after {
+  content: "▾";
+  margin-left: 2px;
+  font-size: 9px;
+  opacity: 0.75;
+}
+
+.pill.as-button:hover,
+.pill.as-button[aria-expanded="true"] {
+  box-shadow: inset 0 0 0 1.5px currentcolor;
+}
+
+.pill.as-button sup {
+  font-size: 9px;
+  margin-left: 1px;
+  line-height: 0;
+}
+
+.ci-wrap {
+  display: inline-block;
+}
+
+.pill.running {
+  background: var(--running-soft);
+  color: var(--running-ink);
+}
+
+.review-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Reviewers who were asked but have not answered yet. */
+
+/* The ◷N count after the Review code, and its sample in the legend; a line of the Reviewers list with status pending
+   is styled on its own. */
+.review-wrap > .pending,
+.legend-item > .pending {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted);
+  white-space: nowrap;
+  cursor: help;
+}
+
+/* The Issue column (TABLE-8): the type, the number, then the title on up to two lines, and the issue's labels. */
+.issue-list {
+  display: grid;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.issue-item {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.issue-type {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-right: 6px;
+  padding: 0 6px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  font-size: 11px;
+  line-height: 16px;
+  color: var(--fg);
+  vertical-align: 1px;
+}
+
+.issue-type-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: none;
+}
+
+.issue-labels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+
+.issue-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.field-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 6px;
+  border: 1px solid var(--line-strong);
+  border-radius: 4px;
+  font-size: 11px;
+  line-height: 16px;
+  color: var(--muted);
+}
+
+.field-chip.current {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.label-chip.static,
+.label-more.static {
+  cursor: default;
+}
+
+.issue-ref {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+.issue-number {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--muted);
+  margin-right: 5px;
+}
+
+.issue-ref:hover .issue-number {
+  color: inherit;
+}
+
+/* Notes (NOTE-3, NOTE-4): an icon after the title, shown on row hover and always once the PR has a note. */
+.note-wrap {
+  display: inline;
+}
+
+.note-icon {
+  margin-left: 6px;
+  padding: 0 4px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 13px;
+  line-height: 18px;
+  cursor: pointer;
+  opacity: 0;
+}
+
+.note-icon:focus-visible,
+.note-icon[aria-expanded="true"],
+.note-icon.has-note {
+  opacity: 1;
+}
+
+.note-icon.has-note {
+  color: var(--accent);
+}
+
+.note-icon:hover {
+  border-color: var(--line-strong);
+  background: var(--surface-2);
+}
+
+.board > tbody > tr:hover .note-icon {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .note-icon {
+    opacity: 1;
+  }
+}
+
+.note-panel {
+  gap: 10px;
+  grid-template-rows: auto 1fr auto;
+}
+
+.note-panel .panel-head .segmented {
+  margin-left: auto;
+}
+
+.note-editor {
+  width: 100%;
+  min-height: 240px;
+  resize: none;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  padding: 8px 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--fg);
+  box-sizing: border-box;
+}
+
+.note-preview {
+  overflow: auto;
+}
+
+.note-foot {
+  font-size: 12px;
+}
+
+.note-error {
+  margin: 0;
+  color: var(--bad);
+}
+
+/* Your reviews (TABLE-29): GitHub's icon after the Review code, the dot in its attention color. */
+.review-wrap .mine {
+  display: inline-flex;
+  color: var(--accent);
+}
+
+.review-wrap .mine.requested {
+  color: var(--warn);
+}
+
+/* The Review column as GitHub's Reviewers list (TABLE-30). */
+.reviewers {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.reviewer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 1px 4px;
+  margin: 0 -4px;
+  border-radius: 4px;
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.reviewer .who {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reviewer .who.me {
+  font-weight: 600;
+}
+
+.reviewer .state {
+  display: inline-flex;
+  flex: none;
+}
+
+.reviewer.pending .state {
+  color: var(--warn);
+}
+
+.reviewer.again .state {
+  color: var(--accent);
+}
+
+.reviewer.approved .state {
+  color: var(--good);
+}
+
+.reviewer.changes .state {
+  color: var(--bad);
+}
+
+.reviewer.commented .state,
+.reviewer.dismissed .state {
+  color: var(--muted);
+}
+
+/* The viewer's own review is due: the line stands out as a call to act. */
+.reviewer.due {
+  background: var(--warn-soft);
+  box-shadow: inset 2px 0 0 var(--warn);
+}
+
+.reviewers-wrap {
+  text-align: left;
+}
+
+.reviewers-wrap .more {
+  margin-top: 2px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 12px;
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.reviewers-wrap .more:hover {
+  text-decoration: underline;
+}
+
+.reviewers-popover .reviewers {
+  padding: 4px 0;
+}
+
+/* What a live load is doing (DATA-27): in the empty table, or in a corner over the rows. */
+.load-status {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 10px;
+  text-align: left;
+}
+
+.load-status .spinner {
+  flex: none;
+  margin-top: 1px;
+}
+
+.load-status .load-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.load-status .elapsed {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.load-status .load-lines {
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.load-status.floating {
+  position: fixed;
+  right: 24px;
+  bottom: 44px;
+  z-index: 30;
+  max-width: min(520px, calc(100vw - 48px));
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.load-status.finished {
+  align-items: center;
+}
+
+.load-status .done-mark {
+  color: var(--good);
+  font-weight: 600;
+}
+
+/* Compact density (Settings): tighter rows and smaller avatars. */
+:root[data-density="compact"] .board > tbody > tr > td {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+:root[data-density="compact"] .person .avatar:not(.sm) {
+  width: 22px;
+  height: 22px;
+  font-size: 10px;
+}
+
+:root[data-density="compact"] .person + .person {
+  margin-top: 2px;
+}

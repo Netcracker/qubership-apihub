@@ -13,7 +13,7 @@ of this repository now.
 | Go services | `backend/` | `portal-backend` (API Registry), `api-linter-service`, `agents-backend`, `agent`, `test-service`, shared `commons-go`; one `go.work` and one `backend/.go-version` |
 | Java | `backend/java-task-consumer`, `backend/libraries-backend` | Maven build under Nx |
 | TypeScript | `frontend/` | `ui` (Portal and Agents SPAs), `build-task-consumer` (NestJS builder), and the libraries `api-processor`, `api-diff`, `api-unifier`, `api-doc-viewer`, `ddlapi`, `json-crawl`, and others; one pnpm workspace |
-| Sites | `sites/landing/` | Astro product landing, published at `/qubership-apihub/landing/`; see its `README.md` |
+| Sites | `sites/` | Product landing, docs, navigation, and the contributor PR board; see each module's `README.md` |
 | Tests | `tests/` | `postman-collections` (Newman E2E), `ui-tests` (Playwright) |
 | Deployment | `deploy/helm-templates/`, `deploy/docker-compose/` | Helm chart, local Kubernetes quickstart, Compose stacks |
 | Documentation | `docs/` | Installation, admin, configuration map, release process |
@@ -59,6 +59,11 @@ mounted files, update the deployment assets and `docs/configuration-reference.md
   behavior, or acceptance criteria are ambiguous.
 - For bug reports, find the root cause first; do not swallow errors or add silent fallbacks.
 - State assumptions explicitly when greenfield and upgrade paths differ.
+
+## Code language
+
+- Use **English** for identifiers, comments, UI strings, log and error messages, test names, examples, and fixtures.
+- Do not introduce Russian text in source code, scripts, configuration, or test data.
 
 ## Cross-platform development
 

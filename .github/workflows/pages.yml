@@ -97,6 +97,7 @@ jobs:
           }
           # The docs site arrives with step 10; until the ref has it, docs/ gets a placeholder page.
           if git cat-file -e "$site_sha:sites/docs/package.json" 2> /dev/null; then docs=true; else docs=false; fi
+          if git cat-file -e "$site_sha:sites/pr-board/package.json" 2> /dev/null; then pr_board=true; else pr_board=false; fi
 
           {
             echo "site_ref=$site_ref"
@@ -104,6 +105,7 @@ jobs:
             echo "landing_ref=$landing_ref"
             echo "landing_sha=$landing_sha"
             echo "docs=$docs"
+            echo "pr_board=$pr_board"
           } >> "$GITHUB_OUTPUT"
           {
             echo "### Refs"
@@ -131,6 +133,14 @@ jobs:
           path: ${{ runner.temp }}/pages-dist/docs
           key: pages-docs-v2-${{ steps.refs.outputs.site_ref }}-${{ steps.refs.outputs.site_sha }}
 
+      - name: restore the PR board build
+        id: pr-board-cache
+        if: steps.refs.outputs.pr_board == 'true'
+        uses: actions/cache@v6
+        with:
+          path: ${{ runner.temp }}/pages-dist/pr-board
+          key: pages-pr-board-v1-${{ steps.refs.outputs.site_sha }}
+
       - name: what to build
         id: need
         shell: bash
@@ -138,13 +148,16 @@ jobs:
           LANDING_HIT: ${{ steps.landing-cache.outputs.cache-hit }}
           DOCS: ${{ steps.refs.outputs.docs }}
           DOCS_HIT: ${{ steps.docs-cache.outputs.cache-hit }}
+          PR_BOARD: ${{ steps.refs.outputs.pr_board }}
+          PR_BOARD_HIT: ${{ steps.pr-board-cache.outputs.cache-hit }}
         run: |
           set -euo pipefail
-          landing=false; docs=false
+          landing=false; docs=false; pr_board=false
           [ "$LANDING_HIT" = true ] || landing=true
           [ "$DOCS" != true ] || [ "$DOCS_HIT" = true ] || docs=true
-          if [ "$landing" = true ] || [ "$docs" = true ]; then any=true; else any=false; fi
-          printf 'landing=%s\ndocs=%s\nany=%s\n' "$landing" "$docs" "$any" | tee -a "$GITHUB_OUTPUT"
+          [ "$PR_BOARD" != true ] || [ "$PR_BOARD_HIT" = true ] || pr_board=true
+          if [ "$landing" = true ] || [ "$docs" = true ] || [ "$pr_board" = true ]; then any=true; else any=false; fi
+          printf 'landing=%s\ndocs=%s\npr_board=%s\nany=%s\n' "$landing" "$docs" "$pr_board" "$any" | tee -a "$GITHUB_OUTPUT"
 
       # The toolchain of setup-workspace without its full install: the sites need only their own
       # dependencies. Nx loads the @nx/maven plugin for every command, so Java 21 and Maven are
@@ -166,7 +179,7 @@ jobs:
           java-version: '21'
 
       # A worktree per commit: the landing may come from another ref than the docs (LANDING_REF).
-      - name: build the landing and the docs site
+      - name: build the landing, docs, and PR board
         if: steps.need.outputs.any == 'true'
         shell: bash
         env:
@@ -174,6 +187,7 @@ jobs:
           LANDING_SHA: ${{ steps.refs.outputs.landing_sha }}
           NEED_LANDING: ${{ steps.need.outputs.landing }}
           NEED_DOCS: ${{ steps.need.outputs.docs }}
+          NEED_PR_BOARD: ${{ steps.need.outputs.pr_board }}
           # The docs site's links to GitHub files show the site's ref (sites/docs/README.md).
           DOCS_GITHUB_REF: ${{ steps.refs.outputs.site_ref }}
           # The analysis of a cold Maven cache exceeds the plugin's 120 s default.
@@ -196,15 +210,20 @@ jobs:
             projects=""
             [ "$NEED_LANDING" != true ] || projects="landing"
             [ "$NEED_DOCS" != true ] || projects="${projects:+$projects,}docs-site"
+            [ "$NEED_PR_BOARD" != true ] || projects="${projects:+$projects,}pr-board"
             build "$SITE_SHA" "$projects"
           else
             [ "$NEED_LANDING" != true ] || build "$LANDING_SHA" landing
-            [ "$NEED_DOCS" != true ] || build "$SITE_SHA" docs-site
+            projects=""
+            [ "$NEED_DOCS" != true ] || projects="docs-site"
+            [ "$NEED_PR_BOARD" != true ] || projects="${projects:+$projects,}pr-board"
+            [ -z "$projects" ] || build "$SITE_SHA" "$projects"
           fi
           dist="$RUNNER_TEMP/pages-dist"
           mkdir -p "$dist"
           [ "$NEED_LANDING" != true ] || cp -R "$(worktree "$LANDING_SHA")/sites/landing/dist" "$dist/landing"
           [ "$NEED_DOCS" != true ] || cp -R "$(worktree "$SITE_SHA")/sites/docs/dist" "$dist/docs"
+          [ "$NEED_PR_BOARD" != true ] || cp -R "$(worktree "$SITE_SHA")/sites/pr-board/dist" "$dist/pr-board"
 
       # 1.3.3, not the current 1.3.4: setup-oras verifies against a release table baked into the
       # action, and v2.0.1's ends at 1.3.3.
@@ -230,13 +249,16 @@ jobs:
           LANDING_REF: ${{ steps.refs.outputs.landing_ref }}
           LANDING_SHA: ${{ steps.refs.outputs.landing_sha }}
           DOCS: ${{ steps.refs.outputs.docs }}
+          PR_BOARD: ${{ steps.refs.outputs.pr_board }}
         run: |
           set -euo pipefail
           echo "reason: $EVENT $REASON"
           docs=()
           [ "$DOCS" != true ] || docs=(--docs "$RUNNER_TEMP/pages-dist/docs")
+          pr_board=()
+          [ "$PR_BOARD" != true ] || pr_board=(--pr-board "$RUNNER_TEMP/pages-dist/pr-board")
           node tools/ci/pages-site.js "$RUNNER_TEMP/site" \
-            --landing "$RUNNER_TEMP/pages-dist/landing" "${docs[@]}" \
+            --landing "$RUNNER_TEMP/pages-dist/landing" "${docs[@]}" "${pr_board[@]}" \
             --ref "$SITE_REF" --commit "$SITE_SHA" \
             --landing-ref "$LANDING_REF" --landing-commit "$LANDING_SHA" \
             --budget-mib "$BUDGET_MIB"
