@@ -55,6 +55,8 @@ export default defineConfig(() => {
         name: 'web-components',
         formats: ['es', 'cjs'],
         fileName: (format) => `index.${format}.js`,
+        // Vite 6+ names the stylesheet after the package; "./class-view.css" in package.json exports dist/style.css.
+        cssFileName: 'style',
       },
     },
     plugins: [dts({

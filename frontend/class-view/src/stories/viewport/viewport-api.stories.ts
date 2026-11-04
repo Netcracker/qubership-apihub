@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Meta, StoryFn } from '@storybook/html'
+import { Meta, StoryFn } from '@storybook/html-vite'
 import {
   ClassObject,
   DefaultDomainMeta,
@@ -29,7 +29,7 @@ import {
 import { generateClassObject, generateContent, generatePropertiesGroupObject, storyArgsFunc } from 'stories/common'
 import { ClassViewComponent, EVENT_VIEWPORT_CENTER_CHANGE, EVENT_ZOOM_CHANGE } from 'main/component'
 import { isDefine } from 'main/core/utils'
-import { useArgs } from '@storybook/client-api'
+import { useArgs } from 'storybook/preview-api'
 
 const ROUNDING = 4
 let updateArgsCapture: Optional<(arg: Partial<StoryArgs>) => void>
@@ -46,12 +46,11 @@ export default {
         step: Math.pow(10, -ROUNDING).toFixed(ROUNDING)
       },
     },
+    // The viewport center is in pixels and can be any number. Storybook 10 clamps a typed value to min and max.
     viewportX: {
       name: 'Viewport X',
       control: {
         type: 'number',
-        min: Math.pow(10, -ROUNDING).toFixed(ROUNDING),
-        max: 5,
         step: Math.pow(10, -ROUNDING).toFixed(ROUNDING)
       },
     },
@@ -59,8 +58,6 @@ export default {
       name: 'Viewport Y',
       control: {
         type: 'number',
-        min: Math.pow(10, -ROUNDING).toFixed(ROUNDING),
-        max: 5,
         step: Math.pow(10, -ROUNDING).toFixed(ROUNDING)
       },
     },
