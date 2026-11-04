@@ -43,7 +43,7 @@ export const DocumentList: FC<DocumentListProps> = memo<DocumentListProps>(({ do
     navigate(pathToNavigate)
   }, [navigate])
 
-  const { showDocumentErrorsDialog } = useEventBus()
+  const { showDocumentNotificationsDialog } = useEventBus()
   const [documentsPackageKey, documentsPackageVersion] = usePackageParamsWithRef()
   const { fullVersion } = useVersionWithRevision(documentsPackageVersion, documentsPackageKey)
 
@@ -65,13 +65,13 @@ export const DocumentList: FC<DocumentListProps> = memo<DocumentListProps>(({ do
     if (!documentsPackageKey || !fullVersion) {
       return
     }
-    showDocumentErrorsDialog({
+    showDocumentNotificationsDialog({
       packageKey: documentsPackageKey,
       versionKey: fullVersion,
       documentId: slug,
       documentTitle: title,
     })
-  }, [documentsPackageKey, fullVersion, showDocumentErrorsDialog])
+  }, [documentsPackageKey, fullVersion, showDocumentNotificationsDialog])
 
   const renderDocumentRow = useCallback((document: Document) => {
     const { key, type, title, version, slug, format, shareabilityStatus, hasErrors } = document
