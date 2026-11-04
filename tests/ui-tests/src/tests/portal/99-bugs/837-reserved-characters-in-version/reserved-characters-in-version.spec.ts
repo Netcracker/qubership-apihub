@@ -20,6 +20,8 @@ import { HOOK_PUBLISH_TIMEOUT, LONG_EXPECT } from '@test-setup'
  */
 
 test.describe('Version name with reserved URL characters', () => {
+  const ISSUE_ANNOTATION = { type: 'URL', description: 'https://github.com/Netcracker/qubership-apihub/issues/837' }
+
   const G_RESERVED_CHARS_N = new Group({
     name: '837-Reserved-Chars',
     alias: 'GRESCHARS',
@@ -32,25 +34,27 @@ test.describe('Version name with reserved URL characters', () => {
     parent: G_RESERVED_CHARS_N,
   }, { kindPrefix: true })
 
+  // V_PERCENT_N has a literal '%', as agent snapshot names do; V_SNAPSHOT_N has no '%' and is used for the
+  // comparison. The names differ in more than '%', so a key decoded once too often cannot open the other version.
+  const V_PERCENT_N: Version = {
+    pkg: PKG_RESERVED_CHARS_N,
+    version: 'ATUI percent%20?#837',
+    status: 'draft',
+    files: [{ file: FILE_P_PETSTORE30_CHANGELOG_BASE }],
+  }
+  const V_SNAPSHOT_N: Version = { ...V_PERCENT_N, version: 'ATUI snapshot ?#837' }
+
   // Helper functions - Data
-  const makeRevisions = (versionName: string): [Version, Version] => {
-    const rev1: Version = {
-      pkg: PKG_RESERVED_CHARS_N,
-      version: versionName,
-      status: 'draft',
-      files: [{ file: FILE_P_PETSTORE30_CHANGELOG_BASE }],
-    }
+  // Each test publishes its own version with two revisions. The retry index is unique for each attempt of a test,
+  // so a retry does not add revisions to the version of an earlier attempt.
+  const makeRevisions = (version: Version): [Version, Version] => {
+    const rev1: Version = { ...version, version: `${version.version}-${test.info().retry}` }
     const rev2: Version = {
       ...rev1,
       files: [{ file: FILE_P_PETSTORE30_CHANGELOG_CHANGED, fileId: FILE_P_PETSTORE30_CHANGELOG_BASE.name }],
     }
     return [rev1, rev2]
   }
-
-  // vPercentRev* has a literal '%', as agent snapshot names do; vRev* has no '%' and is used for the comparison.
-  // The names differ in more than '%', so a key decoded once too often cannot open the other version.
-  const [vPercentRev1, vPercentRev2] = makeRevisions('ATUI percent%20?#837')
-  const [vRev1, vRev2] = makeRevisions('ATUI snapshot ?#837')
 
   // Helper functions - Actions
   // gotoVersion puts the version into the path as it is, so the reserved characters are encoded here.
@@ -59,71 +63,74 @@ test.describe('Version name with reserved URL characters', () => {
   }
 
   test.beforeAll(async ({ apihubTDM }) => {
-    test.setTimeout(HOOK_PUBLISH_TIMEOUT)
-
     await apihubTDM.createPackage([G_RESERVED_CHARS_N, PKG_RESERVED_CHARS_N])
-    // The package is new in each run (VAR_GR carries TEST_ID_N), but a retry runs this hook again in a new
-    // worker, and a second publish of a version name adds revisions. So both revisions are published only
-    // when the version is missing.
-    for (const [rev1, rev2] of [[vPercentRev1, vPercentRev2], [vRev1, vRev2]]) {
-      if (!(await apihubTDM.isVersionExist({ packageId: PKG_RESERVED_CHARS_N.packageId, version: rev1.version }))) {
+  })
+
+  test('P-BUG-837.1 Open the version and its revision history', { annotation: ISSUE_ANNOTATION },
+    async ({ sysadminPage: page, apihubTDM, usedResources }) => {
+      test.setTimeout(HOOK_PUBLISH_TIMEOUT)
+      const portalPage = new PortalPage(page)
+      const { versionPackagePage: versionPage } = portalPage
+      const { overviewTab } = versionPage
+      const { summary } = overviewTab.summaryTab.body
+      const [rev1, rev2] = makeRevisions(V_PERCENT_N)
+      registerVersionFiles(usedResources, [rev1, rev2])
+
+      await test.step('Publish two revisions of the version', async () => {
         await apihubTDM.publishVersion(rev1)
         await apihubTDM.publishVersion(rev2)
-      }
-    }
-  })
+      })
 
-  test.beforeEach(async ({ usedResources }) => {
-    registerVersionFiles(usedResources, [vPercentRev1, vPercentRev2, vRev1, vRev2])
-  })
+      await gotoEncodedVersion(portalPage, rev2)
 
-  test('P-BUG-837.1 Open the version and its revision history', async ({ sysadminPage: page }) => {
-    const portalPage = new PortalPage(page)
-    const { versionPackagePage: versionPage } = portalPage
-    const { overviewTab } = versionPage
-    const { summary } = overviewTab.summaryTab.body
+      await test.step('Verify the overview of the version is open', async () => {
+        await expect(summary.currentVersion).toHaveText(rev2.version)
+        await expect.soft(versionPage.toolbar.versionSlt).toHaveText(rev2.version)
+        await expect.soft(summary.revision).toHaveText('2')
+      })
 
-    await gotoEncodedVersion(portalPage, vPercentRev2)
+      await summary.revisionLink.click()
 
-    await test.step('Verify the overview of the version is open', async () => {
-      await expect(summary.currentVersion).toHaveText(vPercentRev2.version)
-      await expect.soft(versionPage.toolbar.versionSlt).toHaveText(vPercentRev2.version)
-      await expect.soft(summary.revision).toHaveText('2')
+      await test.step('Verify the revision history of the version is open', async () => {
+        await expect(overviewTab.revisionsTab.getRevisionRow('@2').revisionCell).toContainText('(latest)')
+        await expect.soft(overviewTab.revisionsTab.getRevisionRow()).toHaveCount(2)
+      })
     })
 
-    await summary.revisionLink.click()
+  test('P-BUG-837.2 Compare revisions of the version and open a changed operation', { annotation: ISSUE_ANNOTATION },
+    async ({ sysadminPage: page, apihubTDM, usedResources }) => {
+      test.setTimeout(HOOK_PUBLISH_TIMEOUT)
+      const portalPage = new PortalPage(page)
+      const { versionPackagePage: versionPage } = portalPage
+      const { compareSelectDialog, comparePackagesPage, compareOperationsPage } = versionPage
+      const [rev1, rev2] = makeRevisions(V_SNAPSHOT_N)
+      registerVersionFiles(usedResources, [rev1, rev2])
 
-    await test.step('Verify the revision history of the version is open', async () => {
-      await expect(overviewTab.revisionsTab.getRevisionRow('@2').revisionCell).toContainText('(latest)')
-      await expect.soft(overviewTab.revisionsTab.getRevisionRow()).toHaveCount(2)
+      await test.step('Publish the base and the changed revision', async () => {
+        await apihubTDM.publishVersion(rev1)
+        await apihubTDM.publishVersion(rev2)
+      })
+
+      await gotoEncodedVersion(portalPage, rev2)
+
+      await test.step('Open the comparison of the previous and the latest revisions', async () => {
+        await versionPage.toolbar.compareMenu.click()
+        await versionPage.toolbar.compareMenu.revisionsItm.click()
+        await compareSelectDialog.fillForm({ previousRevision: '@1' })
+        await compareSelectDialog.compareBtn.click()
+      })
+
+      await test.step('Verify both revisions of the version are compared', async () => {
+        await expect(comparePackagesPage.swapper.leftTitle).toHaveText('@1', { timeout: LONG_EXPECT })
+        await expect(comparePackagesPage.swapper.rightTitle).toHaveText('@2(latest)')
+      })
+
+      await comparePackagesPage.compareContent.getOperationRow(CREATE_LIST_OF_USERS_V1_UPDATED).click()
+
+      await test.step('Verify the operation is compared between both revisions', async () => {
+        await expect(compareOperationsPage.swapper.leftTitle).toHaveText('@1', { timeout: LONG_EXPECT })
+        await expect(compareOperationsPage.swapper.rightTitle).toHaveText('@2(latest)')
+        await expect.soft(compareOperationsPage.docView).toBeVisible()
+      })
     })
-  })
-
-  test('P-BUG-837.2 Compare revisions of the version and open a changed operation', async ({ sysadminPage: page }) => {
-    const portalPage = new PortalPage(page)
-    const { versionPackagePage: versionPage } = portalPage
-    const { compareSelectDialog, comparePackagesPage, compareOperationsPage } = versionPage
-
-    await gotoEncodedVersion(portalPage, vRev2)
-
-    await test.step('Open the comparison of the previous and the latest revisions', async () => {
-      await versionPage.toolbar.compareMenu.click()
-      await versionPage.toolbar.compareMenu.revisionsItm.click()
-      await compareSelectDialog.fillForm({ previousRevision: '@1' })
-      await compareSelectDialog.compareBtn.click()
-    })
-
-    await test.step('Verify both revisions of the version are compared', async () => {
-      await expect(comparePackagesPage.swapper.leftTitle).toHaveText('@1', { timeout: LONG_EXPECT })
-      await expect(comparePackagesPage.swapper.rightTitle).toHaveText('@2(latest)')
-    })
-
-    await comparePackagesPage.compareContent.getOperationRow(CREATE_LIST_OF_USERS_V1_UPDATED).click()
-
-    await test.step('Verify the operation is compared between both revisions', async () => {
-      await expect(compareOperationsPage.swapper.leftTitle).toHaveText('@1', { timeout: LONG_EXPECT })
-      await expect(compareOperationsPage.swapper.rightTitle).toHaveText('@2(latest)')
-      await expect.soft(compareOperationsPage.docView).toBeVisible()
-    })
-  })
 })
