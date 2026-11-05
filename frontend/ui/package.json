@@ -17,7 +17,7 @@
     "lint:fix": "pnpm run lint:check -- --fix"
   },
   "dependencies": {
-    "@asyncapi/parser": "3.6.0",
+    "@asyncapi/parser": "3.6.6",
     "@emotion/react": "11.10.6",
     "@emotion/styled": "11.10.6",
     "@graphiql/plugin-explorer": "1.0.3",
