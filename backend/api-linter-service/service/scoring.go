@@ -41,6 +41,7 @@ func (s *scoringServiceImpl) GetScoringForVersion_deprecated(ctx context.Context
 	if err != nil {
 		return nil, err
 	}
+	// TODO: the 404 during a re-validation is a behaviour change of v1, to discuss during review.
 	if ent == nil || ent.ProcessStatus == view.ScoringProcessInProgress {
 		return nil, nil
 	}

@@ -350,7 +350,7 @@ paths:
         failed to calculate backwards compatibility details.") and one more debug line than before.
         Use GET /api/v2/packages/{packageId}/versions/{version}/scoring to read a score while it is being
         built.
-      operationId: getScoringForVersion_deprecated
+      operationId: getScoringForVersion
       deprecated: true
       parameters:
         - name: packageId
@@ -406,8 +406,9 @@ paths:
         Returns the score of the specified package version at any time after a validation has started,
         together with the process state of each part in process. Publication integrity and backwards
         compatibility are computed as soon as APIHUB returns the version; quality grows while the
-        document lint tasks finish and becomes final when the lint of the version is final. While
-        process.status is in_progress, status is absent and reason is an empty array; both are set when
+        document lint tasks finish and becomes final when the lint of the version is final. Quality is
+        sampled once per scoring attempt, so an update can wait for the backwards compatibility attempt
+        in flight. While process.status is in_progress, status is absent and reason is an empty array; both are set when
         the score is complete. A part that failed for good has the state error; its error text is in
         debug, and a complete score with a failed part has status not_passed.
         The version parameter may include revision (e.g., 1.0.0@1) or omit it to resolve the latest revision.
@@ -434,18 +435,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/VersionScore"
               examples:
-                allPending:
-                  summary: Validation has just started; no part is known yet
-                  value:
-                    reason: []
-                    debug: []
-                    backwardsCompatibilityDetails: null
-                    qualityCheckDetails: null
-                    process:
-                      status: in_progress
-                      publicationIntegrity: pending
-                      backwardsCompatibility: pending
-                      qualityCheck: pending
                 bwcDoneQualityRunning:
                   summary: Integrity and backwards compatibility are known; the lint is still running
                   value:
@@ -520,37 +509,6 @@ paths:
                       status: completed
                       publicationIntegrity: completed
                       backwardsCompatibility: completed
-                      qualityCheck: completed
-                completedWithBwcError:
-                  summary: Complete, but backwards compatibility failed after every retry
-                  value:
-                    status: not_passed
-                    reason:
-                      - "Internal error: failed to calculate backwards compatibility details."
-                    debug:
-                      - >-
-                        scoring task failed: restart count exceeded limit, last error: failed to get the
-                        changes for package SD.TL.TLQSS version 2.0@1 : unexpected status code 503
-                    publicationIntegrityDetails:
-                      status: passed
-                      hasErrors: false
-                      changelogHasErrors: false
-                      apiTypes:
-                        rest:
-                          hasErrors: false
-                    backwardsCompatibilityDetails: null
-                    qualityCheckDetails:
-                      rest:
-                        - linter: spectral
-                          status: passed
-                          optional: false
-                          reason: ""
-                          errorsCount: 0
-                          warningsCount: 0
-                    process:
-                      status: completed
-                      publicationIntegrity: completed
-                      backwardsCompatibility: error
                       qualityCheck: completed
         "401":
           description: Unauthorized

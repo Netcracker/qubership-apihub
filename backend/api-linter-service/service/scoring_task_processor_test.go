@@ -7,6 +7,9 @@ import (
 	"reflect"
 	"slices"
 	"sort"
+	"strings"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -35,6 +38,11 @@ const (
 
 	testSupersedingTaskId = "scoring-2"
 	testSupersededDetails = "superseded by scoring task " + testSupersedingTaskId
+
+	testWaitTimeout               = 5 * time.Second
+	testPollInterval              = time.Millisecond
+	testSettleDelay               = 20 * time.Millisecond
+	testRestartCountRetryInterval = time.Millisecond
 )
 
 var testVersionWithRevision = fmt.Sprintf("%s@%d", testVersion, testRevision)
@@ -51,8 +59,10 @@ type processorFixture struct {
 	verResults  *versionResultRepoStub
 	rulesets    *rulesetRepoStub
 	linters     *linterConfigServiceStub
+	scoreReads  *scoringRepoStub
 
 	previousVersionErr error
+	beforeBwc          func() error
 }
 
 func newProcessorFixture() *processorFixture {
@@ -83,6 +93,7 @@ func newProcessorFixture() *processorFixture {
 		linters: &linterConfigServiceStub{optional: map[view.Linter]bool{view.AiLinter: true}},
 	}
 	scores := map[int]*inMemoryScore{testRevision: f.score}
+	f.scoreReads = &scoringRepoStub{scores: scores}
 	f.tasks = &scoringTaskRepoStub{
 		scores: scores,
 		tasks: map[string]*entity.VersionScoringTask{
@@ -104,6 +115,11 @@ func newProcessorFixture() *processorFixture {
 			}
 			return &view.VersionContent{PackageId: packageId, Version: version}, nil
 		}
+		if version == testVersionWithRevision && f.beforeBwc != nil {
+			if err := f.beforeBwc(); err != nil {
+				return nil, err
+			}
+		}
 		return &view.VersionContent{
 			PackageId:       packageId,
 			Version:         version,
@@ -112,18 +128,19 @@ func newProcessorFixture() *processorFixture {
 		}, nil
 	}}
 	f.processor = &scoringTaskProcessorImpl{
-		scoringTaskRepo:     f.tasks,
-		scoringRepo:         &scoringRepoStub{scores: scores},
-		verTaskRepo:         f.lintTasks,
-		docTaskRepo:         f.docTasks,
-		versionResultRepo:   f.verResults,
-		lintResultRepo:      f.lintResults,
-		rulesetRepo:         f.rulesets,
-		linterConfigService: f.linters,
-		apihubClient:        f.apihub,
-		executorId:          testExecutorId,
-		runningBwc:          make(map[string]bool),
-		startBwcRun:         func(run func()) { run() },
+		scoringTaskRepo:           f.tasks,
+		scoringRepo:               f.scoreReads,
+		verTaskRepo:               f.lintTasks,
+		docTaskRepo:               f.docTasks,
+		versionResultRepo:         f.verResults,
+		lintResultRepo:            f.lintResults,
+		rulesetRepo:               f.rulesets,
+		linterConfigService:       f.linters,
+		apihubClient:              f.apihub,
+		executorId:                testExecutorId,
+		runningTasks:              make(map[string]bool),
+		startRun:                  func(run func()) { run() },
+		restartCountRetryInterval: testRestartCountRetryInterval,
 	}
 	return f
 }
@@ -278,24 +295,27 @@ func TestRunIntegrityAndBwc_FetchErrorWritesNothing(t *testing.T) {
 	f := newProcessorFixture()
 	f.apihub.getVersion = func(string, string) (*view.VersionContent, error) { return nil, nil }
 
-	f.processor.runIntegrityAndBwcChecks(context.Background(), f.task(), *f.score.get())
+	refused, err := f.processor.runIntegrityAndBwcChecks(context.Background(), f.task(), *f.score.get())
 
+	if refused || err == nil {
+		t.Fatalf("refused = %t, err = %v, want an error", refused, err)
+	}
 	if f.score.writes != 0 {
 		t.Fatalf("score written %d times, want 0", f.score.writes)
 	}
-	if f.task().RestartCount != 1 {
-		t.Fatalf("restart count = %d, want 1", f.task().RestartCount)
-	}
 }
 
-func TestRunIntegrityAndBwc_PanicCountsAsFailedAttempt(t *testing.T) {
+func TestRunIntegrityAndBwc_PanicIsReturnedAsAnError(t *testing.T) {
 	f := newProcessorFixture()
 	f.apihub.getVersion = func(string, string) (*view.VersionContent, error) { panic("unexpected response") }
 
-	f.processor.runIntegrityAndBwcChecks(context.Background(), f.task(), *f.score.get())
+	refused, err := f.processor.runIntegrityAndBwcChecks(context.Background(), f.task(), *f.score.get())
 
-	if f.task().RestartCount != 1 {
-		t.Fatalf("restart count = %d, want 1", f.task().RestartCount)
+	if refused || err == nil || err.Error() != "panic: unexpected response" {
+		t.Fatalf("refused = %t, err = %v, want the panic as an error", refused, err)
+	}
+	if f.task().RestartCount != 0 {
+		t.Fatalf("restart count = %d, want 0: only the attempt increments it", f.task().RestartCount)
 	}
 }
 
@@ -494,8 +514,11 @@ func TestRunIntegrityAndBwc_RefusedIntegrityWriteStopsAndTheNextTickClosesTheTas
 	snapshot := *f.score.get()
 	f.score.row.ScoringTaskId = testSupersedingTaskId
 
-	f.processor.runIntegrityAndBwcChecks(context.Background(), f.task(), snapshot)
+	refused, err := f.processor.runIntegrityAndBwcChecks(context.Background(), f.task(), snapshot)
 
+	if !refused || err != nil {
+		t.Fatalf("refused = %t, err = %v, want a refusal", refused, err)
+	}
 	task := f.task()
 	if f.score.writes != 0 || bwcStarted {
 		t.Fatalf("score written %d times, BWC started = %t, want neither", f.score.writes, bwcStarted)
@@ -519,8 +542,11 @@ func TestRunIntegrityAndBwc_RefusedBwcWriteIsNotCounted(t *testing.T) {
 		return &view.VersionChangesView{}, nil
 	}
 
-	f.processor.runIntegrityAndBwcChecks(context.Background(), f.task(), *f.score.get())
+	refused, err := f.processor.runIntegrityAndBwcChecks(context.Background(), f.task(), *f.score.get())
 
+	if !refused || err != nil {
+		t.Fatalf("refused = %t, err = %v, want a refusal", refused, err)
+	}
 	row := f.score.get()
 	if f.score.writes != 1 || row.BackwardCompatibilityStatus != view.ScoringProcessPending {
 		t.Fatalf("score written %d times with BWC %s, want only the integrity write", f.score.writes, row.BackwardCompatibilityStatus)
@@ -535,8 +561,11 @@ func TestRunIntegrityAndBwc_LostOwnershipWritesNothing(t *testing.T) {
 	task := f.task()
 	f.tasks.tasks[testScoringTaskId].ExecutorId = testOtherExecutorId
 
-	f.processor.runIntegrityAndBwcChecks(context.Background(), task, *f.score.get())
+	refused, err := f.processor.runIntegrityAndBwcChecks(context.Background(), task, *f.score.get())
 
+	if !refused || err != nil {
+		t.Fatalf("refused = %t, err = %v, want a refusal", refused, err)
+	}
 	if f.score.writes != 0 {
 		t.Fatalf("score written %d times, want 0", f.score.writes)
 	}
@@ -553,9 +582,11 @@ func TestRunIntegrityAndBwc_TerminalPartIsNeverRewritten(t *testing.T) {
 	f.score.row.PublicationIntegrityStatus = view.ScoringProcessCompleted
 	f.score.row.PublicationIntegrityDetails = written
 
-	f.processor.runIntegrityAndBwcChecks(context.Background(), f.task(), stale)
+	if _, err := f.processor.runIntegrityAndBwcChecks(context.Background(), f.task(), stale); err != nil {
+		t.Fatalf("unexpected error: %s", err)
+	}
 
-	if f.score.get().PublicationIntegrityDetails != written {
+	if f.score.get().PublicationIntegrityDetails.Reason != written.Reason {
 		t.Fatalf("a terminal integrity part was rewritten: %#v", f.score.get().PublicationIntegrityDetails)
 	}
 }
@@ -979,32 +1010,7 @@ func TestProcessTick_TaskPanicIsCountedAndOtherTasksContinue(t *testing.T) {
 	f := newProcessorFixture()
 	f.processor.versionResultRepo = &panickingVersionResultRepoStub{versionResultRepoStub: f.verResults, panicRevision: testRevision}
 	f.docTasks.tasks = append(f.docTasks.tasks, docTask("d1", "a.yaml", view.SpectralLinter, testSpectralRuleset, view.TaskStatusSuccess))
-	otherLintTask := lintTask(view.TaskStatusWaitingForDocs, "")
-	otherLintTask.Id = testOtherLintTaskId
-	otherLintTask.Revision = testOtherRevision
-	f.lintTasks.tasks[testOtherLintTaskId] = otherLintTask
-	f.tasks.tasks[testOtherScoringTaskId] = &entity.VersionScoringTask{
-		Id:                testOtherScoringTaskId,
-		VersionLintTaskId: testOtherLintTaskId,
-		PackageId:         testPackageId,
-		Version:           testVersion,
-		Revision:          testOtherRevision,
-		Status:            view.TaskStatusProcessing,
-		ExecutorId:        testExecutorId,
-	}
-	otherScore := &inMemoryScore{row: &entity.VersionScore{
-		PackageId:                   testPackageId,
-		Version:                     testVersion,
-		Revision:                    testOtherRevision,
-		Reasons:                     []string{},
-		Debug:                       []string{},
-		ScoringTaskId:               testOtherScoringTaskId,
-		ProcessStatus:               view.ScoringProcessInProgress,
-		PublicationIntegrityStatus:  view.ScoringProcessPending,
-		BackwardCompatibilityStatus: view.ScoringProcessPending,
-		QualityCheckStatus:          view.ScoringProcessPending,
-	}}
-	f.tasks.scores[testOtherRevision] = otherScore
+	otherScore := f.addOtherTask()
 
 	for tick := 1; tick <= repository.MaxScoringTaskRestarts+1; tick++ {
 		otherWrites := otherScore.writes
@@ -1411,5 +1417,883 @@ func TestOverallStatus_IntegrityErrorKeepsComputedSection(t *testing.T) {
 
 	if score.PublicationIntegrityDetails != section {
 		t.Fatalf("an existing integrity section must not be replaced, got %#v", score.PublicationIntegrityDetails)
+	}
+}
+
+func (f *processorFixture) addOtherTask() *inMemoryScore {
+	otherLintTask := lintTask(view.TaskStatusWaitingForDocs, "")
+	otherLintTask.Id = testOtherLintTaskId
+	otherLintTask.Revision = testOtherRevision
+	f.lintTasks.tasks[testOtherLintTaskId] = otherLintTask
+	f.tasks.tasks[testOtherScoringTaskId] = &entity.VersionScoringTask{
+		Id:                testOtherScoringTaskId,
+		VersionLintTaskId: testOtherLintTaskId,
+		PackageId:         testPackageId,
+		Version:           testVersion,
+		Revision:          testOtherRevision,
+		Status:            view.TaskStatusProcessing,
+		ExecutorId:        testExecutorId,
+	}
+	otherScore := &inMemoryScore{row: &entity.VersionScore{
+		PackageId:                   testPackageId,
+		Version:                     testVersion,
+		Revision:                    testOtherRevision,
+		Reasons:                     []string{},
+		Debug:                       []string{},
+		ScoringTaskId:               testOtherScoringTaskId,
+		ProcessStatus:               view.ScoringProcessInProgress,
+		PublicationIntegrityStatus:  view.ScoringProcessPending,
+		BackwardCompatibilityStatus: view.ScoringProcessPending,
+		QualityCheckStatus:          view.ScoringProcessPending,
+	}}
+	f.tasks.scores[testOtherRevision] = otherScore
+	return otherScore
+}
+
+func (f *processorFixture) startRunsInBackground() (join func()) {
+	var runs sync.WaitGroup
+	f.processor.startRun = func(run func()) {
+		runs.Add(1)
+		go func() {
+			defer runs.Done()
+			run()
+		}()
+	}
+	return runs.Wait
+}
+
+func (f *processorFixture) slotTaken(taskId string) bool {
+	f.processor.runningTasksMu.Lock()
+	defer f.processor.runningTasksMu.Unlock()
+	return f.processor.runningTasks[taskId]
+}
+
+// waitFor reports a timeout with Errorf because the part goroutines call it too.
+func waitFor(t *testing.T, what string, condition func() bool) {
+	t.Helper()
+	deadline := time.Now().Add(testWaitTimeout)
+	for !condition() {
+		if time.Now().After(deadline) {
+			t.Errorf("timed out waiting for %s", what)
+			return
+		}
+		time.Sleep(testPollInterval)
+	}
+}
+
+func assertAttemptEnded(t *testing.T, f *processorFixture, wantStatus view.TaskStatus, wantRestarts int) {
+	t.Helper()
+	task := f.task()
+	if task.Status != wantStatus || task.RestartCount != wantRestarts {
+		t.Fatalf("task = %s with %d restarts (%q), want %s with %d", task.Status, task.RestartCount, task.Details, wantStatus, wantRestarts)
+	}
+	if f.slotTaken(testScoringTaskId) {
+		t.Fatal("the slot of the task must be free after the attempt")
+	}
+}
+
+func returning(err error) func() error { return func() error { return err } }
+
+func panicking(message string) func() error { return func() error { panic(message) } }
+
+func TestAttempt_TwoPartFailuresCountOnceAndTheNextAttemptRetriesBoth(t *testing.T) {
+	const bwcFailure = "APIHUB unavailable"
+	const qualityFailure = "connection reset"
+	failures := []struct {
+		name         string
+		bwcFails     func() error
+		qualityFails func() error
+		wantDetails  []string
+	}{
+		{"two errors", returning(errors.New(bwcFailure)), returning(errors.New(qualityFailure)), []string{bwcFailure, qualityFailure}},
+		{"child panic and quality error", panicking(bwcFailure), returning(errors.New(qualityFailure)), []string{"panic: " + bwcFailure, qualityFailure}},
+		{"child error and quality panic", returning(errors.New(bwcFailure)), panicking(qualityFailure), []string{bwcFailure, "panic: " + qualityFailure}},
+		{"both panics", panicking(bwcFailure), panicking(qualityFailure), []string{"panic: " + bwcFailure, "panic: " + qualityFailure}},
+	}
+	for _, failure := range failures {
+		for _, bwcFirst := range []bool{true, false} {
+			t.Run(fmt.Sprintf("%s, BWC first %t", failure.name, bwcFirst), func(t *testing.T) {
+				f := newProcessorFixture()
+				bwcFailed := make(chan struct{})
+				qualityFailed := make(chan struct{})
+				f.beforeBwc = func() error {
+					defer close(bwcFailed)
+					if !bwcFirst {
+						<-qualityFailed
+					}
+					return failure.bwcFails()
+				}
+				f.lintTasks.beforeRead = func() error {
+					defer close(qualityFailed)
+					if bwcFirst {
+						<-bwcFailed
+					}
+					return failure.qualityFails()
+				}
+
+				f.processor.processTick(context.Background())
+
+				assertAttemptEnded(t, f, view.TaskStatusProcessing, 1)
+				for _, want := range failure.wantDetails {
+					if !strings.Contains(f.task().Details, want) {
+						t.Fatalf("details = %q, want %q in them", f.task().Details, want)
+					}
+				}
+				if f.score.writes != 0 {
+					t.Fatalf("score written %d times, want 0", f.score.writes)
+				}
+
+				f.beforeBwc = nil
+				f.lintTasks.beforeRead = nil
+				f.lintTasks.tasks[testLintTaskId].Status = view.TaskStatusSuccess
+				f.processor.processTick(context.Background())
+
+				assertAttemptEnded(t, f, view.TaskStatusSuccess, 1)
+				if row := f.score.get(); !row.PartsFinished() || row.ProcessStatus != view.ScoringProcessCompleted {
+					t.Fatalf("both parts must be retried, got %#v", row)
+				}
+			})
+		}
+	}
+}
+
+func TestAttempt_BlockedBwcHoldsNeitherQualityNorOtherTasks(t *testing.T) {
+	f := newProcessorFixture()
+	otherScore := f.addOtherTask()
+	f.addLintedDocument("a.yaml", testSpectralRuleset, "hash-a", 0, 0)
+	release := make(chan struct{})
+	var bwcStarts atomic.Int32
+	f.beforeBwc = func() error {
+		bwcStarts.Add(1)
+		<-release
+		return nil
+	}
+	join := f.startRunsInBackground()
+	ctx := context.Background()
+
+	f.processor.processTick(ctx)
+
+	waitFor(t, "the quality snapshot behind a blocked BWC", func() bool {
+		return f.score.get().QualityCheckStatus == view.ScoringProcessInProgress
+	})
+	waitFor(t, "the other task", func() bool {
+		return otherScore.get().BackwardCompatibilityStatus == view.ScoringProcessCompleted && !f.slotTaken(testOtherScoringTaskId)
+	})
+	if row := f.score.get(); row.BackwardCompatibilityStatus != view.ScoringProcessPending {
+		t.Fatalf("BWC = %s, want pending while it is blocked", row.BackwardCompatibilityStatus)
+	}
+	qualityReads := f.lintTasks.readCount(testLintTaskId)
+
+	f.processor.processTick(ctx)
+	time.Sleep(testSettleDelay)
+
+	if bwcStarts.Load() != 1 || f.lintTasks.readCount(testLintTaskId) != qualityReads {
+		t.Fatalf("BWC started %d times, quality reads %d, want one start and %d reads: a second attempt ran", bwcStarts.Load(), f.lintTasks.readCount(testLintTaskId), qualityReads)
+	}
+
+	f.docTasks.setTasks([]entity.DocumentLintTask{docTask("d1", "a.yaml", view.SpectralLinter, testSpectralRuleset, view.TaskStatusSuccess)})
+	close(release)
+	join()
+	assertAttemptEnded(t, f, view.TaskStatusProcessing, 0)
+	assertHandledIds(t, f)
+
+	for range 2 {
+		f.processor.processTick(ctx)
+		join()
+		if entries := f.score.get().QualityCheckDetails[view.RestApiType]; len(entries) != 1 {
+			t.Fatalf("got %d entries, want the finished document once: %#v", len(entries), entries)
+		}
+		assertHandledIds(t, f, "d1")
+	}
+}
+
+func TestAttempt_BlockedQualityHoldsCompletionAndTheSlot(t *testing.T) {
+	f := newProcessorFixture()
+	f.lintTasks.tasks[testLintTaskId].Status = view.TaskStatusSuccess
+	release := make(chan struct{})
+	f.lintTasks.beforeRead = func() error {
+		<-release
+		return nil
+	}
+	join := f.startRunsInBackground()
+
+	f.processor.processTick(context.Background())
+
+	waitFor(t, "BWC", func() bool {
+		return f.score.get().BackwardCompatibilityStatus == view.ScoringProcessCompleted
+	})
+	time.Sleep(testSettleDelay)
+	if task := f.task(); task.Status != view.TaskStatusProcessing || task.RestartCount != 0 || !f.slotTaken(testScoringTaskId) {
+		t.Fatalf("task = %s with %d restarts, slot taken %t; want no decision before quality ends", task.Status, task.RestartCount, f.slotTaken(testScoringTaskId))
+	}
+
+	close(release)
+	join()
+	assertAttemptEnded(t, f, view.TaskStatusSuccess, 0)
+}
+
+func TestAttempt_EarlyQualityFailureWaitsForTheBlockedBwc(t *testing.T) {
+	tests := []struct {
+		name  string
+		fails func() error
+	}{
+		{"error", returning(errors.New("connection reset"))},
+		{"panic", panicking(testQualityPanic)},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			f := newProcessorFixture()
+			release := make(chan struct{})
+			qualityFailed := make(chan struct{})
+			f.beforeBwc = func() error {
+				<-release
+				return nil
+			}
+			f.lintTasks.beforeRead = func() error {
+				defer close(qualityFailed)
+				return tt.fails()
+			}
+			join := f.startRunsInBackground()
+
+			f.processor.processTick(context.Background())
+
+			<-qualityFailed
+			time.Sleep(testSettleDelay)
+			if task := f.task(); task.RestartCount != 0 || !f.slotTaken(testScoringTaskId) {
+				t.Fatalf("%d restarts, slot taken %t; want no restart before the child is joined", task.RestartCount, f.slotTaken(testScoringTaskId))
+			}
+
+			close(release)
+			join()
+			assertAttemptEnded(t, f, view.TaskStatusProcessing, 1)
+			if row := f.score.get(); row.BackwardCompatibilityStatus != view.ScoringProcessCompleted {
+				t.Fatalf("BWC = %s, want the part of the child kept", row.BackwardCompatibilityStatus)
+			}
+		})
+	}
+}
+
+func TestAttempt_EveryPartWriteOrderKeepsAllPartsAndCompletes(t *testing.T) {
+	tests := []struct {
+		name    string
+		arrange func(t *testing.T, f *processorFixture, qualityWritten, bwcWritten func() bool)
+	}{
+		{
+			name: "quality before integrity",
+			arrange: func(t *testing.T, f *processorFixture, qualityWritten, _ func() bool) {
+				f.beforeBwc = func() error {
+					waitFor(t, "the quality write", qualityWritten)
+					return nil
+				}
+			},
+		},
+		{
+			name: "quality between integrity and BWC",
+			arrange: func(t *testing.T, f *processorFixture, qualityWritten, _ func() bool) {
+				f.apihub.getVersionChanges = func(int) (*view.VersionChangesView, error) {
+					waitFor(t, "the quality write", qualityWritten)
+					return &view.VersionChangesView{}, nil
+				}
+			},
+		},
+		{
+			name: "quality after BWC",
+			arrange: func(t *testing.T, f *processorFixture, _, bwcWritten func() bool) {
+				f.lintTasks.beforeRead = func() error {
+					waitFor(t, "the BWC write", bwcWritten)
+					return nil
+				}
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			f := newProcessorFixture()
+			f.lintTasks.tasks[testLintTaskId].Status = view.TaskStatusSuccess
+			f.docTasks.tasks = []entity.DocumentLintTask{docTask("d1", "a.yaml", view.SpectralLinter, testSpectralRuleset, view.TaskStatusSuccess)}
+			f.addLintedDocument("a.yaml", testSpectralRuleset, "hash-a", 0, 1)
+			tt.arrange(t, f,
+				func() bool { return f.score.get().QualityCheckStatus.IsTerminal() },
+				func() bool { return f.score.get().BackwardCompatibilityStatus.IsTerminal() })
+
+			f.processor.processTick(context.Background())
+
+			assertAttemptEnded(t, f, view.TaskStatusSuccess, 0)
+			assertHandledIds(t, f, "d1")
+			row := f.score.get()
+			if row.PublicationIntegrityDetails == nil || row.BackwardCompatibilityDetails == nil || len(row.QualityCheckDetails[view.RestApiType]) != 1 {
+				t.Fatalf("a part was overwritten: %#v", row)
+			}
+			if row.ProcessStatus != view.ScoringProcessCompleted || row.Status != view.ScoringPassedWithDefects {
+				t.Fatalf("score = %s %q, want completed and passed_with_defects", row.ProcessStatus, row.Status)
+			}
+			if !reflect.DeepEqual(row.Reasons, []string{"Version contain 1 warnings for linter spectral."}) || len(row.Debug) != 0 {
+				t.Fatalf("reasons = %#v, debug = %#v", row.Reasons, row.Debug)
+			}
+		})
+	}
+}
+
+func TestAttempt_ATickWithAStaleListReadsTheFreshRow(t *testing.T) {
+	f := newQualityFixture()
+	ctx := context.Background()
+	f.docTasks.tasks = []entity.DocumentLintTask{docTask("d1", "a.yaml", view.SpectralLinter, testSpectralRuleset, view.TaskStatusSuccess)}
+	f.addLintedDocument("a.yaml", testSpectralRuleset, "hash-a", 0, 0)
+	f.tasks.listedTasks = []entity.VersionScoringTask{f.task()}
+
+	f.processor.processTick(ctx)
+	f.processor.processTick(ctx)
+
+	if entries := f.score.get().QualityCheckDetails[view.RestApiType]; len(entries) != 1 {
+		t.Fatalf("got %d entries, want the document once: %#v", len(entries), entries)
+	}
+	assertHandledIds(t, f, "d1")
+
+	f.tasks.tasks[testScoringTaskId].RestartCount = repository.MaxScoringTaskRestarts
+	reads := f.lintTasks.readCount(testLintTaskId)
+
+	f.processor.processTick(ctx)
+
+	assertAttemptEnded(t, f, view.TaskStatusError, repository.MaxScoringTaskRestarts)
+	if f.lintTasks.readCount(testLintTaskId) != reads {
+		t.Fatal("an exhausted task must be failed, not worked on")
+	}
+}
+
+func TestAttempt_FailedReadsCountOnceAndRunNoPart(t *testing.T) {
+	tests := []struct {
+		name    string
+		arrange func(f *processorFixture)
+	}{
+		{"task read error", func(f *processorFixture) { f.tasks.beforeGetTask = returning(errors.New("connection reset")) }},
+		{"task read panic", func(f *processorFixture) { f.tasks.beforeGetTask = panicking("unexpected row") }},
+		{"score read error", func(f *processorFixture) { f.scoreReads.err = errors.New("connection reset") }},
+		{"score read panic", func(f *processorFixture) {
+			f.scoreReads.beforeRead = func(int) error { panic("unexpected row") }
+		}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			f := newProcessorFixture()
+			bwcStarted := false
+			f.beforeBwc = func() error {
+				bwcStarted = true
+				return nil
+			}
+			tt.arrange(f)
+
+			f.processor.processTick(context.Background())
+
+			assertAttemptEnded(t, f, view.TaskStatusProcessing, 1)
+			if bwcStarted || f.lintTasks.readCount(testLintTaskId) != 0 || f.score.writes != 0 {
+				t.Fatalf("a part ran: BWC %t, quality reads %d, writes %d", bwcStarted, f.lintTasks.readCount(testLintTaskId), f.score.writes)
+			}
+		})
+	}
+}
+
+func TestAttempt_TaskNoLongerOwnedEndsWithoutARestart(t *testing.T) {
+	f := newProcessorFixture()
+	f.tasks.listedTasks = []entity.VersionScoringTask{f.task()}
+	f.tasks.setOwner(testScoringTaskId, testOtherExecutorId)
+
+	f.processor.processTick(context.Background())
+
+	assertAttemptEnded(t, f, view.TaskStatusProcessing, 0)
+	if f.scoreReads.reads != 0 || f.score.writes != 0 {
+		t.Fatalf("score reads %d, writes %d, want none", f.scoreReads.reads, f.score.writes)
+	}
+}
+
+func TestAttempt_CompletionFailureIsCountedAndTheNextAttemptCompletes(t *testing.T) {
+	tests := []struct {
+		name  string
+		fails func() error
+	}{
+		{"error", returning(errors.New("connection reset"))},
+		{"panic", panicking("unexpected row")},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			f := newProcessorFixture()
+			f.lintTasks.tasks[testLintTaskId].Status = view.TaskStatusSuccess
+			f.tasks.beforeComplete = tt.fails
+
+			f.processor.processTick(context.Background())
+
+			assertAttemptEnded(t, f, view.TaskStatusProcessing, 1)
+
+			f.tasks.beforeComplete = nil
+			f.processor.processTick(context.Background())
+
+			assertAttemptEnded(t, f, view.TaskStatusSuccess, 1)
+		})
+	}
+}
+
+func TestAttempt_FailedIncrementHoldsTheSlotUntilItIsWritten(t *testing.T) {
+	f := newProcessorFixture()
+	f.beforeBwc = returning(errors.New("APIHUB unavailable"))
+	release := make(chan struct{})
+	var increments atomic.Int32
+	f.tasks.beforeInc = func() error {
+		if increments.Add(1) == 1 {
+			return errors.New("connection reset")
+		}
+		<-release
+		return nil
+	}
+	join := f.startRunsInBackground()
+
+	f.processor.processTick(context.Background())
+
+	waitFor(t, "the retry of the increment", func() bool { return increments.Load() == 2 })
+	reads := f.lintTasks.readCount(testLintTaskId)
+	f.processor.processTick(context.Background())
+	time.Sleep(testSettleDelay)
+	if f.lintTasks.readCount(testLintTaskId) != reads || !f.slotTaken(testScoringTaskId) || f.task().RestartCount != 0 {
+		t.Fatalf("quality reads %d (want %d), slot taken %t, %d restarts: an attempt started while a failure was unrecorded",
+			f.lintTasks.readCount(testLintTaskId), reads, f.slotTaken(testScoringTaskId), f.task().RestartCount)
+	}
+
+	close(release)
+	join()
+	assertAttemptEnded(t, f, view.TaskStatusProcessing, 1)
+}
+
+func TestAttempt_RefusedIncrementEndsTheAttempt(t *testing.T) {
+	tests := []struct {
+		name           string
+		arrange        func(f *processorFixture)
+		wantIncrements int32
+	}{
+		{
+			name: "ownership lost during the attempt",
+			arrange: func(f *processorFixture) {
+				f.beforeBwc = func() error {
+					f.tasks.setOwner(testScoringTaskId, testOtherExecutorId)
+					return errors.New("APIHUB unavailable")
+				}
+			},
+			wantIncrements: 1,
+		},
+		{
+			name: "ownership lost while the restart count update is pending",
+			arrange: func(f *processorFixture) {
+				f.beforeBwc = returning(errors.New("APIHUB unavailable"))
+				countIncrement := f.tasks.beforeInc
+				failed := false
+				f.tasks.beforeInc = func() error {
+					if err := countIncrement(); err != nil {
+						return err
+					}
+					if failed {
+						return nil
+					}
+					failed = true
+					f.tasks.setOwner(testScoringTaskId, testOtherExecutorId)
+					return errors.New("connection reset")
+				}
+			},
+			wantIncrements: 2,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			f := newProcessorFixture()
+			f.score.row.QualityCheckStatus = view.ScoringProcessCompleted
+			var increments atomic.Int32
+			f.tasks.beforeInc = func() error {
+				increments.Add(1)
+				return nil
+			}
+			tt.arrange(f)
+
+			f.processor.processTick(context.Background())
+
+			assertAttemptEnded(t, f, view.TaskStatusProcessing, 0)
+			if increments.Load() != tt.wantIncrements {
+				t.Fatalf("%d increments, want %d", increments.Load(), tt.wantIncrements)
+			}
+			if f.task().ExecutorId != testOtherExecutorId {
+				t.Fatalf("executor = %s, want the new owner", f.task().ExecutorId)
+			}
+		})
+	}
+}
+
+func TestAttempt_RefusedWriteIsNeverCounted(t *testing.T) {
+	tests := []struct {
+		name           string
+		bwcRefused     bool
+		refusalArrives bool
+	}{
+		{name: "BWC refused first, quality fails", bwcRefused: true, refusalArrives: true},
+		{name: "quality fails first, BWC refused", bwcRefused: true},
+		{name: "quality refused first, BWC fails", refusalArrives: true},
+		{name: "BWC fails first, quality refused"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			f := newProcessorFixture()
+			first := make(chan struct{})
+			refusal := func() (bool, error) {
+				if tt.refusalArrives {
+					defer close(first)
+				} else {
+					<-first
+				}
+				return true, nil
+			}
+			failure := func() error {
+				if tt.refusalArrives {
+					<-first
+				} else {
+					defer close(first)
+				}
+				return errors.New("part failed")
+			}
+			if tt.bwcRefused {
+				f.tasks.updateScoreFault = refusal
+				f.lintTasks.beforeRead = failure
+			} else {
+				f.tasks.updateQualityFault = refusal
+				f.beforeBwc = failure
+			}
+			var increments atomic.Int32
+			f.tasks.beforeInc = func() error {
+				increments.Add(1)
+				return nil
+			}
+
+			f.processor.processTick(context.Background())
+
+			assertAttemptEnded(t, f, view.TaskStatusProcessing, 0)
+			if increments.Load() != 0 {
+				t.Fatalf("%d increments, want none", increments.Load())
+			}
+		})
+	}
+}
+
+func TestAttempt_PartDatabaseErrorIsNotARefusal(t *testing.T) {
+	tests := []struct {
+		name    string
+		arrange func(f *processorFixture)
+	}{
+		{"integrity or BWC write", func(f *processorFixture) {
+			f.tasks.updateScoreFault = func() (bool, error) { return false, errors.New("connection reset") }
+		}},
+		{"quality write", func(f *processorFixture) {
+			f.tasks.updateQualityFault = func() (bool, error) { return false, errors.New("connection reset") }
+		}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			f := newProcessorFixture()
+			tt.arrange(f)
+
+			f.processor.processTick(context.Background())
+
+			assertAttemptEnded(t, f, view.TaskStatusProcessing, 1)
+		})
+	}
+}
+
+func TestAttempt_QualityWithNothingNewKeepsTheScoreAndTheAttemptContinues(t *testing.T) {
+	f := newProcessorFixture()
+	f.score.row.QualityCheckStatus = view.ScoringProcessInProgress
+	f.score.row.QualityCheckDetails = map[view.OpApiType][]view.QualityCheckDetails{view.RestApiType: {{Linter: view.SpectralLinter, Status: view.ScoringPassed}}}
+
+	f.processor.processTick(context.Background())
+
+	assertAttemptEnded(t, f, view.TaskStatusProcessing, 0)
+	row := f.score.get()
+	if row.BackwardCompatibilityStatus != view.ScoringProcessCompleted || len(row.QualityCheckDetails[view.RestApiType]) != 1 {
+		t.Fatalf("score = %#v, want BWC written and the quality entry kept", row)
+	}
+	if f.scoreReads.reads != 2 {
+		t.Fatalf("%d score reads, want 2: the attempt must reach the read after the parts", f.scoreReads.reads)
+	}
+}
+
+func TestAttempt_ScoreReadAfterTheParts(t *testing.T) {
+	tests := []struct {
+		name            string
+		arrange         func(f *processorFixture)
+		wantStatus      view.TaskStatus
+		wantRestarts    int
+		wantNextDetails string
+	}{
+		{
+			name:       "both parts terminal",
+			arrange:    func(f *processorFixture) { f.lintTasks.tasks[testLintTaskId].Status = view.TaskStatusSuccess },
+			wantStatus: view.TaskStatusSuccess,
+		},
+		{
+			name:       "quality unfinished",
+			arrange:    func(f *processorFixture) {},
+			wantStatus: view.TaskStatusProcessing,
+		},
+		{
+			name: "read error",
+			arrange: func(f *processorFixture) {
+				f.lintTasks.tasks[testLintTaskId].Status = view.TaskStatusSuccess
+				f.scoreReads.beforeRead = func(read int) error {
+					if read == 2 {
+						return errors.New("connection reset")
+					}
+					return nil
+				}
+			},
+			wantStatus:   view.TaskStatusProcessing,
+			wantRestarts: 1,
+		},
+		{
+			name: "row deleted",
+			arrange: func(f *processorFixture) {
+				f.lintTasks.tasks[testLintTaskId].Status = view.TaskStatusSuccess
+				f.scoreReads.beforeRead = func(read int) error {
+					if read == 2 {
+						f.score.delete()
+					}
+					return nil
+				}
+			},
+			wantStatus:      view.TaskStatusProcessing,
+			wantNextDetails: "score row missing",
+		},
+		{
+			name: "row replaced",
+			arrange: func(f *processorFixture) {
+				f.lintTasks.tasks[testLintTaskId].Status = view.TaskStatusSuccess
+				f.scoreReads.beforeRead = func(read int) error {
+					if read == 2 {
+						f.score.replaceTaskId(testSupersedingTaskId)
+					}
+					return nil
+				}
+			},
+			wantStatus:      view.TaskStatusProcessing,
+			wantNextDetails: testSupersededDetails,
+		},
+		{
+			name: "reset after the read",
+			arrange: func(f *processorFixture) {
+				f.lintTasks.tasks[testLintTaskId].Status = view.TaskStatusSuccess
+				f.tasks.beforeComplete = func() error {
+					f.score.replaceTaskId(testSupersedingTaskId)
+					return nil
+				}
+			},
+			wantStatus:      view.TaskStatusProcessing,
+			wantNextDetails: testSupersededDetails,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			f := newProcessorFixture()
+			tt.arrange(f)
+
+			f.processor.processTick(context.Background())
+
+			assertAttemptEnded(t, f, tt.wantStatus, tt.wantRestarts)
+			if tt.wantNextDetails == "" {
+				return
+			}
+			f.processor.processTick(context.Background())
+			assertAttemptEnded(t, f, view.TaskStatusError, tt.wantRestarts)
+			if f.task().Details != tt.wantNextDetails {
+				t.Fatalf("details = %q, want %q", f.task().Details, tt.wantNextDetails)
+			}
+		})
+	}
+}
+
+func TestAttempt_SupersededWhileRunningIsCountedAndClosedByTheNextAttempt(t *testing.T) {
+	f := newProcessorFixture()
+	f.score.row.QualityCheckStatus = view.ScoringProcessCompleted
+	f.beforeBwc = func() error {
+		f.score.replaceTaskId(testSupersedingTaskId)
+		return errors.New("APIHUB unavailable")
+	}
+
+	f.processor.processTick(context.Background())
+
+	assertAttemptEnded(t, f, view.TaskStatusProcessing, 1)
+
+	f.processor.processTick(context.Background())
+
+	assertAttemptEnded(t, f, view.TaskStatusError, 1)
+	if f.task().Details != testSupersededDetails {
+		t.Fatalf("details = %q, want %q", f.task().Details, testSupersededDetails)
+	}
+}
+
+func TestAttempt_TaskExhaustedByATakeoverWhileAlive(t *testing.T) {
+	blockChild := func(f *processorFixture, release <-chan struct{}) func() bool {
+		f.beforeBwc = func() error {
+			<-release
+			return nil
+		}
+		return func() bool { return f.score.get().QualityCheckStatus.IsTerminal() }
+	}
+	blockQuality := func(f *processorFixture, release <-chan struct{}) func() bool {
+		f.lintTasks.beforeRead = func() error {
+			<-release
+			return nil
+		}
+		return func() bool { return f.score.get().BackwardCompatibilityStatus.IsTerminal() }
+	}
+	tests := []struct {
+		name         string
+		block        func(f *processorFixture, release <-chan struct{}) func() bool
+		terminalPart func(row *entity.VersionScore) view.ScoringProcessStatus
+		blockedPart  func(row *entity.VersionScore) view.ScoringProcessStatus
+	}{
+		{
+			name:         "child blocked",
+			block:        blockChild,
+			terminalPart: func(row *entity.VersionScore) view.ScoringProcessStatus { return row.QualityCheckStatus },
+			blockedPart:  func(row *entity.VersionScore) view.ScoringProcessStatus { return row.BackwardCompatibilityStatus },
+		},
+		{
+			name:         "quality blocked",
+			block:        blockQuality,
+			terminalPart: func(row *entity.VersionScore) view.ScoringProcessStatus { return row.BackwardCompatibilityStatus },
+			blockedPart:  func(row *entity.VersionScore) view.ScoringProcessStatus { return row.QualityCheckStatus },
+		},
+	}
+	arrange := func(block func(f *processorFixture, release <-chan struct{}) func() bool) (*processorFixture, chan struct{}, func()) {
+		f := newProcessorFixture()
+		f.lintTasks.tasks[testLintTaskId].Status = view.TaskStatusSuccess
+		f.tasks.tasks[testScoringTaskId].RestartCount = repository.MaxScoringTaskRestarts - 1
+		f.tasks.free = []string{testScoringTaskId}
+		release := make(chan struct{})
+		terminalWritten := block(f, release)
+		join := f.startRunsInBackground()
+		f.processor.processTick(context.Background())
+		waitFor(t, "the part that is not blocked", terminalWritten)
+		return f, release, join
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name+", failure committed", func(t *testing.T) {
+			f, release, join := arrange(tt.block)
+
+			f.processor.acquireTasks(context.Background())
+
+			row := f.score.get()
+			if tt.terminalPart(row) != view.ScoringProcessCompleted || tt.blockedPart(row) != view.ScoringProcessError {
+				t.Fatalf("terminal part = %s, blocked part = %s, want completed and error", tt.terminalPart(row), tt.blockedPart(row))
+			}
+			writes := f.score.writeCount()
+
+			close(release)
+			join()
+
+			assertAttemptEnded(t, f, view.TaskStatusError, repository.MaxScoringTaskRestarts)
+			if f.score.writeCount() != writes || !reflect.DeepEqual(f.score.get(), row) {
+				t.Fatalf("the committed failure must fence later writes, got %#v", f.score.get())
+			}
+		})
+
+		t.Run(tt.name+", failure write fails and the attempt completes", func(t *testing.T) {
+			f, release, join := arrange(tt.block)
+			f.tasks.scoringFailedErrs = []error{errors.New("connection reset")}
+
+			f.processor.acquireTasks(context.Background())
+
+			if f.task().Status != view.TaskStatusProcessing {
+				t.Fatalf("task status = %s, want processing after a failed failure write", f.task().Status)
+			}
+
+			close(release)
+			join()
+
+			assertAttemptEnded(t, f, view.TaskStatusSuccess, repository.MaxScoringTaskRestarts)
+			if row := f.score.get(); tt.terminalPart(row) != view.ScoringProcessCompleted || tt.blockedPart(row) != view.ScoringProcessCompleted {
+				t.Fatalf("terminal part = %s, blocked part = %s, want both completed", tt.terminalPart(row), tt.blockedPart(row))
+			}
+		})
+	}
+
+	t.Run("failure write fails and the next attempt retries it", func(t *testing.T) {
+		f, release, join := arrange(blockChild)
+		f.lintTasks.mu.Lock()
+		f.lintTasks.tasks[testLintTaskId].Status = view.TaskStatusWaitingForDocs
+		f.lintTasks.mu.Unlock()
+		f.score.mu.Lock()
+		f.score.row.QualityCheckStatus = view.ScoringProcessInProgress
+		f.score.mu.Unlock()
+		f.tasks.scoringFailedErrs = []error{errors.New("connection reset")}
+
+		f.processor.acquireTasks(context.Background())
+
+		close(release)
+		join()
+		assertAttemptEnded(t, f, view.TaskStatusProcessing, repository.MaxScoringTaskRestarts)
+		if row := f.score.get(); row.BackwardCompatibilityStatus != view.ScoringProcessCompleted {
+			t.Fatalf("BWC = %s, want the surviving attempt to write it", row.BackwardCompatibilityStatus)
+		}
+
+		f.processor.processTick(context.Background())
+		join()
+
+		assertAttemptEnded(t, f, view.TaskStatusError, repository.MaxScoringTaskRestarts)
+	})
+}
+
+func TestAcquireTasks_ExpiredLeaseCountsAsAnAttempt(t *testing.T) {
+	const lastError = "failed to get version content: timeout"
+	tests := []struct {
+		name         string
+		status       view.TaskStatus
+		restartCount int
+		wantStatus   view.TaskStatus
+		wantRestarts int
+		wantDetails  string
+	}{
+		{
+			name:        "first claim",
+			status:      view.TaskStatusNotStarted,
+			wantStatus:  view.TaskStatusProcessing,
+			wantDetails: lastError,
+		},
+		{
+			name:         "first takeover",
+			status:       view.TaskStatusProcessing,
+			wantStatus:   view.TaskStatusProcessing,
+			wantRestarts: 1,
+			wantDetails:  lastError,
+		},
+		{
+			name:         "second takeover gives the task up",
+			status:       view.TaskStatusProcessing,
+			restartCount: repository.MaxScoringTaskRestarts - 1,
+			wantStatus:   view.TaskStatusError,
+			wantRestarts: repository.MaxScoringTaskRestarts,
+			wantDetails:  "restart count exceeded limit, last error: " + lastError,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			f := newProcessorFixture()
+			task := f.tasks.tasks[testScoringTaskId]
+			task.Status = tt.status
+			task.RestartCount = tt.restartCount
+			task.Details = lastError
+			f.tasks.free = []string{testScoringTaskId}
+
+			f.processor.acquireTasks(context.Background())
+
+			assertAttemptEnded(t, f, tt.wantStatus, tt.wantRestarts)
+			if f.task().Details != tt.wantDetails {
+				t.Fatalf("details = %q, want %q", f.task().Details, tt.wantDetails)
+			}
+			if f.lintTasks.readCount(testLintTaskId) != 0 {
+				t.Fatal("the acquire loop must start no attempt")
+			}
+		})
 	}
 }

@@ -2,6 +2,8 @@ package service
 
 import (
 	"context"
+	"maps"
+	"slices"
 	"sort"
 	"sync"
 
@@ -23,16 +25,63 @@ func (s *inMemoryScore) get() *entity.VersionScore {
 	if s.row == nil {
 		return nil
 	}
-	row := *s.row
-	return &row
+	return detachedScore(s.row)
+}
+
+func (s *inMemoryScore) replaceTaskId(taskId string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.row.ScoringTaskId = taskId
+}
+
+func (s *inMemoryScore) delete() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.row = nil
+}
+
+func (s *inMemoryScore) writeCount() int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.writes
+}
+
+// A database read returns independent rows, so no map or slice is shared between the stored and the returned row.
+func detachedScore(row *entity.VersionScore) *entity.VersionScore {
+	detached := *row
+	detached.Reasons = slices.Clone(row.Reasons)
+	detached.Debug = slices.Clone(row.Debug)
+	detached.BackwardCompatibilityDetails = maps.Clone(row.BackwardCompatibilityDetails)
+	detached.QualityCheckDetails = maps.Clone(row.QualityCheckDetails)
+	for apiType, entries := range detached.QualityCheckDetails {
+		detached.QualityCheckDetails[apiType] = slices.Clone(entries)
+	}
+	if row.PublicationIntegrityDetails != nil {
+		integrity := *row.PublicationIntegrityDetails
+		detached.PublicationIntegrityDetails = &integrity
+	}
+	return &detached
 }
 
 type scoringRepoStub struct {
-	scores map[int]*inMemoryScore
-	err    error
+	scores     map[int]*inMemoryScore
+	err        error
+	beforeRead func(read int) error
+
+	mu    sync.Mutex
+	reads int
 }
 
 func (r *scoringRepoStub) GetScoringForVersion(_ context.Context, _ string, _ string, revision int) (*entity.VersionScore, error) {
+	r.mu.Lock()
+	r.reads++
+	read := r.reads
+	r.mu.Unlock()
+	if r.beforeRead != nil {
+		if err := r.beforeRead(read); err != nil {
+			return nil, err
+		}
+	}
 	if r.err != nil {
 		return nil, r.err
 	}
@@ -51,12 +100,31 @@ type scoringTaskRepoStub struct {
 	free  []string
 
 	scoringFailedErrs []error
+
+	listedTasks        []entity.VersionScoringTask
+	beforeGetTask      func() error
+	beforeInc          func() error
+	beforeComplete     func() error
+	updateScoreFault   func() (refused bool, err error)
+	updateQualityFault func() (refused bool, err error)
+}
+
+func detachedTask(task *entity.VersionScoringTask) entity.VersionScoringTask {
+	detached := *task
+	detached.HandledDocTaskIds = slices.Clone(task.HandledDocTaskIds)
+	return detached
+}
+
+func (r *scoringTaskRepoStub) setOwner(taskId string, executorId string) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.tasks[taskId].ExecutorId = executorId
 }
 
 func (r *scoringTaskRepoStub) task(id string) entity.VersionScoringTask {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	return *r.tasks[id]
+	return detachedTask(r.tasks[id])
 }
 
 func (r *scoringTaskRepoStub) ClaimFreeScoringTask(_ context.Context, executorId string) (*entity.VersionScoringTask, bool, error) {
@@ -67,23 +135,45 @@ func (r *scoringTaskRepoStub) ClaimFreeScoringTask(_ context.Context, executorId
 	}
 	task := r.tasks[r.free[0]]
 	r.free = r.free[1:]
+	if task.Status == view.TaskStatusProcessing {
+		task.RestartCount++
+	}
 	task.Status = view.TaskStatusProcessing
 	task.ExecutorId = executorId
-	claimed := *task
+	claimed := detachedTask(task)
 	return &claimed, claimed.RestartCount >= repository.MaxScoringTaskRestarts, nil
 }
 
 func (r *scoringTaskRepoStub) GetProcessingTasks(_ context.Context, executorId string) ([]entity.VersionScoringTask, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+	if r.listedTasks != nil {
+		return r.listedTasks, nil
+	}
 	var result []entity.VersionScoringTask
 	for _, task := range r.tasks {
 		if task.ExecutorId == executorId && task.Status == view.TaskStatusProcessing {
-			result = append(result, *task)
+			result = append(result, detachedTask(task))
 		}
 	}
 	sort.Slice(result, func(i, j int) bool { return result[i].Id < result[j].Id })
 	return result, nil
+}
+
+func (r *scoringTaskRepoStub) GetProcessingTask(_ context.Context, taskId string, executorId string) (*entity.VersionScoringTask, error) {
+	if r.beforeGetTask != nil {
+		if err := r.beforeGetTask(); err != nil {
+			return nil, err
+		}
+	}
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	task := r.ownedLocked(taskId, executorId)
+	if task == nil {
+		return nil, nil
+	}
+	found := detachedTask(task)
+	return &found, nil
 }
 
 func (r *scoringTaskRepoStub) RefreshLeases(_ context.Context, _ string) error {
@@ -99,6 +189,11 @@ func (r *scoringTaskRepoStub) ownedLocked(taskId string, executorId string) *ent
 }
 
 func (r *scoringTaskRepoStub) IncRestartCount(_ context.Context, taskId string, executorId string, details string) (bool, error) {
+	if r.beforeInc != nil {
+		if err := r.beforeInc(); err != nil {
+			return false, err
+		}
+	}
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	task := r.ownedLocked(taskId, executorId)
@@ -136,17 +231,21 @@ func (r *scoringTaskRepoStub) withOwnedScore(task entity.VersionScoringTask, wri
 	if score.row == nil || score.row.ScoringTaskId != task.Id {
 		return nil, nil
 	}
-	row := *score.row
-	if err := write(&row, owned); err != nil {
+	row := detachedScore(score.row)
+	if err := write(row, owned); err != nil {
 		return nil, err
 	}
-	score.row = &row
+	score.row = row
 	score.writes++
-	written := row
-	return &written, nil
+	return detachedScore(row), nil
 }
 
 func (r *scoringTaskRepoStub) UpdateScore(_ context.Context, task entity.VersionScoringTask, apply func(score *entity.VersionScore)) (*entity.VersionScore, error) {
+	if r.updateScoreFault != nil {
+		if refused, err := r.updateScoreFault(); refused || err != nil {
+			return nil, err
+		}
+	}
 	return r.withOwnedScore(task, func(row *entity.VersionScore, _ *entity.VersionScoringTask) error {
 		apply(row)
 		return nil
@@ -154,14 +253,24 @@ func (r *scoringTaskRepoStub) UpdateScore(_ context.Context, task entity.Version
 }
 
 func (r *scoringTaskRepoStub) UpdateQualityCheck(_ context.Context, task entity.VersionScoringTask, handledDocTaskIds []string, apply func(score *entity.VersionScore)) (*entity.VersionScore, error) {
+	if r.updateQualityFault != nil {
+		if refused, err := r.updateQualityFault(); refused || err != nil {
+			return nil, err
+		}
+	}
 	return r.withOwnedScore(task, func(row *entity.VersionScore, owned *entity.VersionScoringTask) error {
 		apply(row)
-		owned.HandledDocTaskIds = handledDocTaskIds
+		owned.HandledDocTaskIds = slices.Clone(handledDocTaskIds)
 		return nil
 	})
 }
 
 func (r *scoringTaskRepoStub) CompleteScoring(_ context.Context, task entity.VersionScoringTask, recompute func(score *entity.VersionScore)) (bool, error) {
+	if r.beforeComplete != nil {
+		if err := r.beforeComplete(); err != nil {
+			return false, err
+		}
+	}
 	completed := false
 	_, err := r.withOwnedScore(task, func(row *entity.VersionScore, owned *entity.VersionScoringTask) error {
 		if !row.PartsFinished() {
@@ -220,10 +329,33 @@ func (c *apihubClientStub) GetOperationsList(_ context.Context, _ string, versio
 type versionLintTaskRepoStub struct {
 	repository.VersionLintTaskRepository
 
-	tasks map[string]*entity.VersionLintTask
+	tasks      map[string]*entity.VersionLintTask
+	beforeRead func() error
+
+	mu    sync.Mutex
+	reads map[string]int
+}
+
+func (r *versionLintTaskRepoStub) readCount(taskId string) int {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return r.reads[taskId]
 }
 
 func (r *versionLintTaskRepoStub) GetTaskById(_ context.Context, taskId string) (*entity.VersionLintTask, error) {
+	r.mu.Lock()
+	if r.reads == nil {
+		r.reads = map[string]int{}
+	}
+	r.reads[taskId]++
+	r.mu.Unlock()
+	if taskId == testLintTaskId && r.beforeRead != nil {
+		if err := r.beforeRead(); err != nil {
+			return nil, err
+		}
+	}
+	r.mu.Lock()
+	defer r.mu.Unlock()
 	task, ok := r.tasks[taskId]
 	if !ok {
 		return nil, nil
@@ -236,9 +368,19 @@ type docLintTaskRepoStub struct {
 	repository.DocLintTaskRepository
 
 	tasks []entity.DocumentLintTask
+
+	mu sync.Mutex
+}
+
+func (r *docLintTaskRepoStub) setTasks(tasks []entity.DocumentLintTask) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.tasks = tasks
 }
 
 func (r *docLintTaskRepoStub) GetDocTasksForVersionTasks(_ context.Context, verTaskIds []string) ([]entity.DocumentLintTask, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
 	var result []entity.DocumentLintTask
 	for _, task := range r.tasks {
 		for _, id := range verTaskIds {

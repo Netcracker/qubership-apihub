@@ -17,6 +17,7 @@ const MaxScoringTaskRestarts = 2
 type ScoringTaskRepository interface {
 	ClaimFreeScoringTask(ctx context.Context, executorId string) (task *entity.VersionScoringTask, exhausted bool, err error)
 	GetProcessingTasks(ctx context.Context, executorId string) ([]entity.VersionScoringTask, error)
+	GetProcessingTask(ctx context.Context, taskId string, executorId string) (*entity.VersionScoringTask, error)
 	RefreshLeases(ctx context.Context, executorId string) error
 	IncRestartCount(ctx context.Context, taskId string, executorId string, details string) (owned bool, err error)
 	CloseLostTask(ctx context.Context, taskId string, executorId string, details string) error
@@ -49,13 +50,17 @@ func (r *scoringTaskRepositoryImpl) ClaimFreeScoringTask(ctx context.Context, ex
 		if len(ents) == 0 {
 			return nil
 		}
-		if _, err := tx.Exec("update version_scoring_task set status = ?, executor_id = ?, last_active = now() where id = ?",
-			view.TaskStatusProcessing, executorId, ents[0].Id); err != nil {
+		// A claim of a task that is still processing takes over an expired lease, which counts as an attempt. The status
+		// on the right-hand side is the old value.
+		var claimed entity.VersionScoringTask
+		if _, err := tx.QueryOne(&claimed, `update version_scoring_task
+			set status = ?, executor_id = ?, last_active = now(),
+				restart_count = restart_count + case when status = ? then 1 else 0 end
+			where id = ? returning *`,
+			view.TaskStatusProcessing, executorId, view.TaskStatusProcessing, ents[0].Id); err != nil {
 			return fmt.Errorf("failed to claim scoring task %s: %w", ents[0].Id, err)
 		}
-		result = &ents[0]
-		result.Status = view.TaskStatusProcessing
-		result.ExecutorId = executorId
+		result = &claimed
 		return nil
 	})
 	if err != nil || result == nil {
@@ -75,6 +80,22 @@ func (r *scoringTaskRepositoryImpl) GetProcessingTasks(ctx context.Context, exec
 		return nil, err
 	}
 	return result, nil
+}
+
+func (r *scoringTaskRepositoryImpl) GetProcessingTask(ctx context.Context, taskId string, executorId string) (*entity.VersionScoringTask, error) {
+	var result entity.VersionScoringTask
+	err := r.cp.GetConnection().ModelContext(ctx, &result).
+		Where("id = ?", taskId).
+		Where("executor_id = ?", executorId).
+		Where("status = ?", view.TaskStatusProcessing).
+		Select()
+	if err != nil {
+		if errors.Is(err, pg.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &result, nil
 }
 
 func (r *scoringTaskRepositoryImpl) RefreshLeases(ctx context.Context, executorId string) error {

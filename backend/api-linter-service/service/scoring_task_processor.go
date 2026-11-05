@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"runtime/debug"
 	"slices"
@@ -55,19 +56,20 @@ func NewScoringTaskProcessor(
 	scoringTaskNotify <-chan struct{},
 ) {
 	p := &scoringTaskProcessorImpl{
-		scoringTaskRepo:     scoringTaskRepo,
-		scoringRepo:         scoringRepo,
-		verTaskRepo:         verTaskRepo,
-		docTaskRepo:         docTaskRepo,
-		versionResultRepo:   versionResultRepo,
-		lintResultRepo:      lintResultRepo,
-		rulesetRepo:         rulesetRepo,
-		linterConfigService: linterConfigService,
-		apihubClient:        apihubClient,
-		executorId:          executorId,
-		runningBwc:          make(map[string]bool),
-		startBwcRun:         func(run func()) { utils.SafeAsync(run) },
-		scoringTaskNotify:   scoringTaskNotify,
+		scoringTaskRepo:           scoringTaskRepo,
+		scoringRepo:               scoringRepo,
+		verTaskRepo:               verTaskRepo,
+		docTaskRepo:               docTaskRepo,
+		versionResultRepo:         versionResultRepo,
+		lintResultRepo:            lintResultRepo,
+		rulesetRepo:               rulesetRepo,
+		linterConfigService:       linterConfigService,
+		apihubClient:              apihubClient,
+		executorId:                executorId,
+		runningTasks:              make(map[string]bool),
+		startRun:                  func(run func()) { utils.SafeAsync(run) },
+		restartCountRetryInterval: scoringTaskWorkInterval,
+		scoringTaskNotify:         scoringTaskNotify,
 	}
 	ctx := secctx.MakeSysadminContext(context.Background())
 
@@ -100,8 +102,8 @@ func NewScoringTaskProcessor(
 	})
 }
 
-// workLoop recovers every tick on its own, for a panic before any task is at hand; processTick recovers each task
-// itself. The loop must keep running while the heartbeat keeps the leases alive.
+// workLoop recovers every tick on its own, for a panic before any attempt starts; each attempt recovers itself. The
+// loop must keep running while the heartbeat keeps the leases alive.
 func (p *scoringTaskProcessorImpl) workLoop(ctx context.Context, ticks <-chan time.Time) {
 	for range ticks {
 		func() {
@@ -127,9 +129,10 @@ type scoringTaskProcessorImpl struct {
 	apihubClient        client.ApihubClient
 	executorId          string
 
-	runningBwcMu sync.Mutex
-	runningBwc   map[string]bool
-	startBwcRun  func(run func())
+	runningTasksMu            sync.Mutex
+	runningTasks              map[string]bool
+	startRun                  func(run func())
+	restartCountRetryInterval time.Duration
 
 	scoringTaskNotify <-chan struct{}
 }
@@ -159,142 +162,176 @@ func (p *scoringTaskProcessorImpl) processTick(ctx context.Context) {
 		return
 	}
 	for _, task := range tasks {
-		func() {
+		p.runningTasksMu.Lock()
+		running := p.runningTasks[task.Id]
+		p.runningTasks[task.Id] = true
+		p.runningTasksMu.Unlock()
+		if running {
+			continue
+		}
+		p.startRun(func() {
+			// The slot stays taken until the restart count is updated, so no attempt of this task starts while a failure is unrecorded.
 			defer func() {
-				if r := recover(); r != nil {
-					log.Errorf("Scoring task %s failed with panic: %v\n%s", task.Id, r, debug.Stack())
-					// Counted like any failed attempt, so a task that always panics reaches the restart limit.
-					p.attemptFailed(ctx, task, fmt.Errorf("panic: %v", r))
-				}
+				p.runningTasksMu.Lock()
+				delete(p.runningTasks, task.Id)
+				p.runningTasksMu.Unlock()
 			}()
-
-			score, err := p.scoringRepo.GetScoringForVersion(ctx, task.PackageId, task.Version, task.Revision)
-			if err != nil {
-				p.attemptFailed(ctx, task, fmt.Errorf("failed to get score: %w", err))
-				return
+			if err := p.runAttempt(ctx, task.Id); err != nil {
+				p.attemptFailed(ctx, task.Id, err)
 			}
-			// Before the restart limit: a refused write leaves the task open, so only this check closes a lost task,
-			// including exhausted tasks.
-			var lost string
-			if score == nil {
-				lost = "score row missing"
-			} else if score.ScoringTaskId != task.Id {
-				lost = fmt.Sprintf("superseded by scoring task %s", score.ScoringTaskId)
-			}
-			if lost != "" {
-				if err := p.scoringTaskRepo.CloseLostTask(ctx, task.Id, p.executorId, lost); err != nil {
-					log.Errorf("Failed to close scoring task %s (%s): %s", task.Id, lost, err)
-				} else {
-					log.Infof("Scoring task %s is closed: %s", task.Id, lost)
-				}
-				return
-			}
-
-			if task.RestartCount >= repository.MaxScoringTaskRestarts {
-				p.failScoringTask(ctx, task, fmt.Sprintf("restart count exceeded limit, last error: %s", task.Details))
-				return
-			}
-
-			if !score.PublicationIntegrityStatus.IsTerminal() || !score.BackwardCompatibilityStatus.IsTerminal() {
-				p.runningBwcMu.Lock()
-				alreadyRunning := p.runningBwc[task.Id]
-				p.runningBwc[task.Id] = true
-				p.runningBwcMu.Unlock()
-				if !alreadyRunning {
-					partsSnapshot := *score
-					p.startBwcRun(func() {
-						defer func() {
-							p.runningBwcMu.Lock()
-							delete(p.runningBwc, task.Id)
-							p.runningBwcMu.Unlock()
-						}()
-						p.runIntegrityAndBwcChecks(ctx, task, partsSnapshot)
-					})
-				}
-			}
-
-			if !score.QualityCheckStatus.IsTerminal() {
-				lintTask, err := p.verTaskRepo.GetTaskById(ctx, task.VersionLintTaskId)
-				if err != nil {
-					p.attemptFailed(ctx, task, fmt.Errorf("failed to get lint task %s: %w", task.VersionLintTaskId, err))
-					return
-				}
-				var docTasks []entity.DocumentLintTask
-				if lintTask != nil {
-					docTasks, err = p.docTaskRepo.GetDocTasksForVersionTasks(ctx, []string{lintTask.Id})
-					if err != nil {
-						p.attemptFailed(ctx, task, fmt.Errorf("failed to get document tasks of lint task %s: %w", lintTask.Id, err))
-						return
-					}
-				}
-				var newTasks []entity.DocumentLintTask
-				handledIds := task.HandledDocTaskIds
-				for _, docTask := range docTasks {
-					if docTask.Status != view.TaskStatusSuccess && docTask.Status != view.TaskStatusError {
-						continue
-					}
-					if slices.Contains(task.HandledDocTaskIds, docTask.Id) {
-						continue
-					}
-					newTasks = append(newTasks, docTask)
-					handledIds = append(handledIds, docTask.Id)
-				}
-				details, status, partErr, err := p.calculateQualityCheck(ctx, lintTask, newTasks)
-				if err != nil {
-					p.attemptFailed(ctx, task, fmt.Errorf("failed to calculate quality check: %w", err))
-					return
-				}
-				if len(newTasks) > 0 || status != score.QualityCheckStatus {
-					score, err = p.scoringTaskRepo.UpdateQualityCheck(ctx, task, handledIds, func(row *entity.VersionScore) {
-						if !row.QualityCheckStatus.IsTerminal() {
-							if row.QualityCheckDetails == nil {
-								row.QualityCheckDetails = map[view.OpApiType][]view.QualityCheckDetails{}
-							}
-							for apiType, entries := range details {
-								row.QualityCheckDetails[apiType] = append(row.QualityCheckDetails[apiType], entries...)
-							}
-							if status == view.ScoringProcessError && len(row.QualityCheckDetails) == 0 {
-								row.QualityCheckDetails = nil
-							}
-							row.QualityCheckStatus = status
-							row.QualityCheckError = partErr
-						}
-						recomputeOverallStatus(row)
-					})
-					if err != nil {
-						p.attemptFailed(ctx, task, err)
-						return
-					}
-					if score == nil {
-						log.Infof("Scoring task %s: quality check write refused; task ownership was lost or the score row was replaced or deleted", task.Id)
-						return
-					}
-				}
-			}
-
-			if !score.PartsFinished() {
-				return
-			}
-			completed, err := p.scoringTaskRepo.CompleteScoring(ctx, task, recomputeOverallStatus)
-			if err != nil {
-				p.attemptFailed(ctx, task, err)
-				return
-			}
-			if completed {
-				log.Infof("Scoring task %s for [ %s | %s@%d ] is completed", task.Id, task.PackageId, task.Version, task.Revision)
-			}
-		}()
+		})
 	}
 }
 
-func (p *scoringTaskProcessorImpl) runIntegrityAndBwcChecks(ctx context.Context, task entity.VersionScoringTask, score entity.VersionScore) {
-	// A panic counts as a failed attempt, so a part that always panics reaches the restart limit instead of being
-	// retried forever.
-	defer func() {
-		if r := recover(); r != nil {
-			p.attemptFailed(ctx, task, fmt.Errorf("panic: %v", r))
+// runAttempt returns the one error that counts as a failed attempt. Integrity and BWC run in a child goroutine next to the quality step and
+// both go through withOwnedScoreTx, whose callbacks edit the freshly locked row, so neither overwrites the other part.
+func (p *scoringTaskProcessorImpl) runAttempt(ctx context.Context, taskId string) (err error) {
+	defer recoverPanicAsError(taskId, &err)
+
+	task, err := p.scoringTaskRepo.GetProcessingTask(ctx, taskId, p.executorId)
+	if err != nil {
+		return fmt.Errorf("failed to get scoring task: %w", err)
+	}
+	if task == nil {
+		return nil
+	}
+	score, err := p.scoringRepo.GetScoringForVersion(ctx, task.PackageId, task.Version, task.Revision)
+	if err != nil {
+		return fmt.Errorf("failed to get score: %w", err)
+	}
+	// Before the restart limit: a refused write leaves the task open, so only this check closes a lost task, including
+	// exhausted tasks.
+	var lost string
+	if score == nil {
+		lost = "score row missing"
+	} else if score.ScoringTaskId != task.Id {
+		lost = fmt.Sprintf("superseded by scoring task %s", score.ScoringTaskId)
+	}
+	if lost != "" {
+		if err := p.scoringTaskRepo.CloseLostTask(ctx, task.Id, p.executorId, lost); err != nil {
+			log.Errorf("Failed to close scoring task %s (%s): %s", task.Id, lost, err)
+		} else {
+			log.Infof("Scoring task %s is closed: %s", task.Id, lost)
 		}
-	}()
+		return nil
+	}
+	if task.RestartCount >= repository.MaxScoringTaskRestarts {
+		p.failScoringTask(ctx, *task, fmt.Sprintf("restart count exceeded limit, last error: %s", task.Details))
+		return nil
+	}
+
+	var bwcRun sync.WaitGroup
+	var bwcRefused, qualityRefused bool
+	var bwcErr, qualityErr error
+	if !score.PublicationIntegrityStatus.IsTerminal() || !score.BackwardCompatibilityStatus.IsTerminal() {
+		bwcRun.Add(1)
+		go func() {
+			defer bwcRun.Done()
+			bwcRefused, bwcErr = p.runIntegrityAndBwcChecks(ctx, *task, *score)
+		}()
+	}
+	if !score.QualityCheckStatus.IsTerminal() {
+		qualityRefused, qualityErr = p.runQualityCheck(ctx, *task, *score)
+	}
+	bwcRun.Wait()
+
+	partsErr := errors.Join(bwcErr, qualityErr)
+	if bwcRefused || qualityRefused {
+		if partsErr != nil {
+			log.Infof("Scoring task %s: a part write was refused, so this part failure is not counted: %s", task.Id, partsErr)
+		}
+		return nil
+	}
+	if partsErr != nil {
+		return partsErr
+	}
+
+	score, err = p.scoringRepo.GetScoringForVersion(ctx, task.PackageId, task.Version, task.Revision)
+	if err != nil {
+		return fmt.Errorf("failed to get score after the parts: %w", err)
+	}
+	// A lost row is left to the lost check of the next attempt.
+	if score == nil || score.ScoringTaskId != task.Id || !score.PartsFinished() {
+		return nil
+	}
+	completed, err := p.scoringTaskRepo.CompleteScoring(ctx, *task, recomputeOverallStatus)
+	if err != nil {
+		return err
+	}
+	if completed {
+		log.Infof("Scoring task %s for [ %s | %s@%d ] is completed", task.Id, task.PackageId, task.Version, task.Revision)
+	}
+	return nil
+}
+
+func recoverPanicAsError(taskId string, err *error) {
+	if r := recover(); r != nil {
+		log.Errorf("Scoring task %s failed with panic: %v\n%s", taskId, r, debug.Stack())
+		*err = fmt.Errorf("panic: %v", r)
+	}
+}
+
+func (p *scoringTaskProcessorImpl) runQualityCheck(ctx context.Context, task entity.VersionScoringTask, score entity.VersionScore) (refused bool, err error) {
+	defer recoverPanicAsError(task.Id, &err)
+
+	lintTask, err := p.verTaskRepo.GetTaskById(ctx, task.VersionLintTaskId)
+	if err != nil {
+		return false, fmt.Errorf("failed to get lint task %s: %w", task.VersionLintTaskId, err)
+	}
+	var docTasks []entity.DocumentLintTask
+	if lintTask != nil {
+		docTasks, err = p.docTaskRepo.GetDocTasksForVersionTasks(ctx, []string{lintTask.Id})
+		if err != nil {
+			return false, fmt.Errorf("failed to get document tasks of lint task %s: %w", lintTask.Id, err)
+		}
+	}
+	var newTasks []entity.DocumentLintTask
+	handledIds := slices.Clone(task.HandledDocTaskIds)
+	for _, docTask := range docTasks {
+		if docTask.Status != view.TaskStatusSuccess && docTask.Status != view.TaskStatusError {
+			continue
+		}
+		if slices.Contains(task.HandledDocTaskIds, docTask.Id) {
+			continue
+		}
+		newTasks = append(newTasks, docTask)
+		handledIds = append(handledIds, docTask.Id)
+	}
+	details, status, partErr, err := p.calculateQualityCheck(ctx, lintTask, newTasks)
+	if err != nil {
+		return false, fmt.Errorf("failed to calculate quality check: %w", err)
+	}
+	if len(newTasks) == 0 && status == score.QualityCheckStatus {
+		return false, nil
+	}
+	written, err := p.scoringTaskRepo.UpdateQualityCheck(ctx, task, handledIds, func(row *entity.VersionScore) {
+		if !row.QualityCheckStatus.IsTerminal() {
+			if row.QualityCheckDetails == nil {
+				row.QualityCheckDetails = map[view.OpApiType][]view.QualityCheckDetails{}
+			}
+			for apiType, entries := range details {
+				row.QualityCheckDetails[apiType] = append(row.QualityCheckDetails[apiType], entries...)
+			}
+			if status == view.ScoringProcessError && len(row.QualityCheckDetails) == 0 {
+				row.QualityCheckDetails = nil
+			}
+			row.QualityCheckStatus = status
+			row.QualityCheckError = partErr
+		}
+		recomputeOverallStatus(row)
+	})
+	if err != nil {
+		return false, err
+	}
+	if written == nil {
+		log.Infof("Scoring task %s: quality check write refused; task ownership was lost or the score row was replaced or deleted", task.Id)
+		return true, nil
+	}
+	return false, nil
+}
+
+func (p *scoringTaskProcessorImpl) runIntegrityAndBwcChecks(ctx context.Context, task entity.VersionScoringTask, score entity.VersionScore) (refused bool, err error) {
+	defer recoverPanicAsError(task.Id, &err)
 
 	version := fmt.Sprintf("%s@%d", task.Version, task.Revision)
 	versionContent, err := p.apihubClient.GetVersion(ctx, task.PackageId, version, true, true)
@@ -302,8 +339,7 @@ func (p *scoringTaskProcessorImpl) runIntegrityAndBwcChecks(ctx context.Context,
 		err = fmt.Errorf("version %s not found for package %s", version, task.PackageId)
 	}
 	if err != nil {
-		p.attemptFailed(ctx, task, fmt.Errorf("failed to get version content: %w", err))
-		return
+		return false, fmt.Errorf("failed to get version content: %w", err)
 	}
 
 	if !score.PublicationIntegrityStatus.IsTerminal() {
@@ -316,22 +352,20 @@ func (p *scoringTaskProcessorImpl) runIntegrityAndBwcChecks(ctx context.Context,
 			recomputeOverallStatus(row)
 		})
 		if err != nil {
-			p.attemptFailed(ctx, task, err)
-			return
+			return false, err
 		}
 		if written == nil {
 			log.Infof("Scoring task %s: publication integrity write refused; task ownership was lost or the score row was replaced or deleted", task.Id)
-			return
+			return true, nil
 		}
 	}
 
 	if score.BackwardCompatibilityStatus.IsTerminal() {
-		return
+		return false, nil
 	}
 	bwc, err := p.calculateBackwardsCompatibility(ctx, task.PackageId, version, versionContent)
 	if err != nil {
-		p.attemptFailed(ctx, task, err)
-		return
+		return false, err
 	}
 	written, err := p.scoringTaskRepo.UpdateScore(ctx, task, func(row *entity.VersionScore) {
 		if !row.BackwardCompatibilityStatus.IsTerminal() {
@@ -341,12 +375,13 @@ func (p *scoringTaskProcessorImpl) runIntegrityAndBwcChecks(ctx context.Context,
 		recomputeOverallStatus(row)
 	})
 	if err != nil {
-		p.attemptFailed(ctx, task, err)
-		return
+		return false, err
 	}
 	if written == nil {
 		log.Infof("Scoring task %s: backwards compatibility write refused; task ownership was lost or the score row was replaced or deleted", task.Id)
+		return true, nil
 	}
+	return false, nil
 }
 
 func (p *scoringTaskProcessorImpl) failScoringTask(ctx context.Context, task entity.VersionScoringTask, details string) {
@@ -382,15 +417,18 @@ func (p *scoringTaskProcessorImpl) failScoringTask(ctx context.Context, task ent
 	log.Errorf("Scoring task %s for [ %s | %s@%d ] failed: %s", task.Id, task.PackageId, task.Version, task.Revision, details)
 }
 
-func (p *scoringTaskProcessorImpl) attemptFailed(ctx context.Context, task entity.VersionScoringTask, err error) {
-	log.Errorf("Scoring task %s attempt failed: %s", task.Id, err)
-	owned, incErr := p.scoringTaskRepo.IncRestartCount(ctx, task.Id, p.executorId, err.Error())
-	if incErr != nil {
-		log.Errorf("Failed to increment the restart count of scoring task %s: %s", task.Id, incErr)
-		return
-	}
-	if !owned {
-		log.Infof("Scoring task %s is no longer owned by executor %s", task.Id, p.executorId)
+func (p *scoringTaskProcessorImpl) attemptFailed(ctx context.Context, taskId string, err error) {
+	log.Errorf("Scoring task %s attempt failed: %s", taskId, err)
+	for {
+		owned, incErr := p.scoringTaskRepo.IncRestartCount(ctx, taskId, p.executorId, err.Error())
+		if incErr == nil {
+			if !owned {
+				log.Infof("Scoring task %s is no longer owned by executor %s", taskId, p.executorId)
+			}
+			return
+		}
+		log.Errorf("Failed to increment the restart count of scoring task %s, retrying in %s: %s", taskId, p.restartCountRetryInterval, incErr)
+		time.Sleep(p.restartCountRetryInterval)
 	}
 }
 

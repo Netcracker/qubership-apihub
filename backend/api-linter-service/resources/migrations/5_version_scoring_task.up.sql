@@ -6,7 +6,7 @@ create table version_scoring_task
         constraint version_scoring_task_version_lint_task_id_unique unique
         constraint version_scoring_task_version_lint_task_id_fk references version_lint_task (id),
     package_id           varchar                     not null,
-    version              varchar                     not null,
+    version              varchar                     not null, -- noqa: RF04
     revision             integer                     not null,
     created_at           timestamp without time zone not null,
     created_by           varchar                     not null,
@@ -18,6 +18,12 @@ create table version_scoring_task
     priority             integer default 0           not null,
     handled_doc_task_ids varchar[]
 );
+
+create index version_scoring_task_claim_index on version_scoring_task (created_at)
+where status in ('not_started', 'processing');
+
+create index version_scoring_task_executor_index on version_scoring_task (executor_id)
+where status = 'processing';
 
 alter table version_score
     add column scoring_task_id               varchar,

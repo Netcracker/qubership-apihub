@@ -95,11 +95,19 @@ When a change affects REST contracts or integration behaviour, update the neighb
 3. **Document task** — `DocTaskProcessor` worker pool downloads raw spec, runs Spectral and/or AI linter, caches by content hash + ruleset, persists results.
 4. **Scoring** — `ScoringTaskProcessor` (`service/scoring_task_processor.go`) runs the `version_scoring_task` rows
    next to the lint, with a lease and a heartbeat, and gives a task up after two failed attempts, as for the lint
-   tasks. It writes three parts of the `version_score` row: publication integrity and backwards compatibility as soon
-   as APIHUB returns the version, and quality from the finished document tasks of the linked lint task (final when
-   the lint task is). Each finished document task is scored once: the task row keeps the ids of the document tasks
-   whose entries are committed, and a tick writes the quality part only when it scores new document tasks or the
-   status of the part changes. `recomputeOverallStatus` (`service/scoring_task_processor.go`) recomputes `status`,
+   tasks; a claim of a task whose lease expired counts as a failed attempt. It writes three parts of the `version_score` row: publication integrity
+   and backwards compatibility as soon as APIHUB returns the version, and quality from the finished document tasks of
+   the linked lint task (final when the lint task is). Each finished document task is scored once: the task row keeps
+   the ids of the document tasks whose entries are committed, and an attempt writes the quality part only when it
+   scores new document tasks or the status of the part changes.
+
+   A task runs one attempt at a time on an executor (`runAttempt`). The attempt re-reads the task and the score, runs
+   integrity and BWC in a child goroutine and quality in its own, joins them, and increments the restart count once
+   when either failed. Quality is sampled once per attempt, so a document that finishes during a slow BWC call is
+   scored by the next attempt. The slot of the task stays taken until the restart count is updated or the update is
+   refused.
+
+   `recomputeOverallStatus` (`service/scoring_task_processor.go`) recomputes `status`,
    `reasons`, and `debug` from the parts on every write; the row keeps an empty `status` until every part is
    terminal, and the v2 body omits the field until then. `GET /api/v2/.../scoring` returns the row at any time with
    the state of each part; the deprecated `GET /api/v1/.../scoring` returns 404 until the score is complete.
@@ -107,9 +115,9 @@ When a change affects REST contracts or integration behaviour, update the neighb
    Part updates and the completion or failure of the score go through `withOwnedScoreTx` (`repository/scoring_task.go`):
    it updates the task only while `executor_id` is this executor and the status is `processing`, then locks the score
    row and checks that `scoring_task_id` still names the task. A refused write returns no score and does not count as
-   a failed attempt; a later tick of `processTick` closes a task whose score row was replaced or deleted. The claim,
-   the lease refresh, the retry increment, and `CloseLostTask` are separate statements, each fenced by its own
-   condition on the task row. `SaveVersionTask` writes the initial reset together with the lint task.
+   a failed attempt; a later attempt closes a task whose score row was replaced or deleted. The claim, the lease
+   refresh, the retry increment, and `CloseLostTask` are separate statements, each fenced by its own condition on the
+   task row. `SaveVersionTask` writes the initial reset together with the lint task.
 
 ### Linter engines
 

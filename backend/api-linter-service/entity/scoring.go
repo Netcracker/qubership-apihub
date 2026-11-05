@@ -15,7 +15,7 @@ type VersionScore struct {
 
 	ScoredAt time.Time `pg:"scored_at,type:timestamp without time zone,notnull"`
 
-	Status  view.ScoringStatus `pg:"status,type:varchar,notnull"`
+	Status  view.ScoringStatus `pg:"status,type:varchar,notnull,use_zero"`
 	Reasons []string           `pg:"reasons,type:character varying ARRAY,array"`
 	Debug   []string           `pg:"debug,type:character varying ARRAY,array"`
 
