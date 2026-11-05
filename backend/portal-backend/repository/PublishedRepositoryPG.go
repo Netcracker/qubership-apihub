@@ -1900,7 +1900,7 @@ func (p publishedRepositoryImpl) CreateVersionWithData(ctx context.Context, pack
 		}
 		utils.PerfLog(time.Since(start).Milliseconds(), 200, "CreateVersionWithData: version internal documents insert")
 		start = time.Now()
-		err = p.saveComparisonInternalDocumentsTx(tx, comparisonInternalDocEntities, comparisonInternalDocDataEntities, versionComparisons, cachedComparisonIds)
+		err = p.saveComparisonInternalDocumentsTx(tx, comparisonInternalDocEntities, comparisonInternalDocDataEntities, versionComparisons)
 		if err != nil {
 			return err
 		}
@@ -2518,7 +2518,7 @@ func (p publishedRepositoryImpl) SaveVersionChanges(ctx context.Context, package
 			return err
 		}
 
-		err = p.saveComparisonInternalDocumentsTx(tx, comparisonInternalDocEntities, comparisonInternalDocDataEntities, versionComparisons, cachedComparisonIds)
+		err = p.saveComparisonInternalDocumentsTx(tx, comparisonInternalDocEntities, comparisonInternalDocDataEntities, versionComparisons)
 		if err != nil {
 			return err
 		}
@@ -2639,7 +2639,7 @@ func (p publishedRepositoryImpl) saveComparisonNotificationsTx(tx *pg.Tx, compar
 	return nil
 }
 
-func (p publishedRepositoryImpl) saveComparisonInternalDocumentsTx(tx *pg.Tx, comparisonInternalDocEntities []*entity.ComparisonInternalDocumentEntity, comparisonInternalDocDataEntities []*entity.ComparisonInternalDocumentDataEntity, versionComparisons []*entity.VersionComparisonEntity, cachedComparisonIds map[string]struct{}) error {
+func (p publishedRepositoryImpl) saveComparisonInternalDocumentsTx(tx *pg.Tx, comparisonInternalDocEntities []*entity.ComparisonInternalDocumentEntity, comparisonInternalDocDataEntities []*entity.ComparisonInternalDocumentDataEntity, versionComparisons []*entity.VersionComparisonEntity) error {
 	for _, d := range comparisonInternalDocDataEntities {
 		exists, err := p.comparisonInternalDocumentDataExists(tx, d.Hash) // TODO: could be bulk select
 		if err != nil {
@@ -2656,10 +2656,6 @@ func (p publishedRepositoryImpl) saveComparisonInternalDocumentsTx(tx *pg.Tx, co
 	// that comparisons producing zero internal documents also get their stale rows deleted.
 	deletedComparisons := make(map[string]struct{})
 	for _, vc := range versionComparisons {
-		comparisonId := view.MakeVersionComparisonId(vc.PackageId, vc.Version, vc.Revision, vc.PreviousPackageId, vc.PreviousVersion, vc.PreviousRevision)
-		if _, cached := cachedComparisonIds[comparisonId]; cached {
-			continue
-		}
 		// Multiple internal documents may share the same comparison key, so dedup
 		// to avoid redundant DELETE queries for the same comparison.
 		key := fmt.Sprintf("%s|%s|%d|%s|%s|%d", vc.PackageId, vc.Version, vc.Revision, vc.PreviousPackageId, vc.PreviousVersion, vc.PreviousRevision)
