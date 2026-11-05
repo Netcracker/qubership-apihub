@@ -150,8 +150,8 @@ github.com/sagikazarmark/locafero v0.7.0/go.mod h1:2za3Cg5rMaTMoG/2Ulr9AwtFaIppK
 github.com/shaj13/go-guardian/v2 v2.11.6 h1:N0UgnL+AI0IH59eii0H0QnQEesyPPmGFB1h9g1MkZ8g=
 github.com/shaj13/go-guardian/v2 v2.11.6/go.mod h1:rSe5VLuWu9EyUT68Xi6qxb/DJc+ajiqPAq+VKhEUKkE=
 github.com/shaj13/libcache v1.0.0/go.mod h1:YCq92Zosqj4erhlLdm2Mu1cX2FDAxjfFOxTphzN7S9U=
-github.com/shaj13/libcache v1.0.4 h1:ZtcWgKngg+AcVOey23nOvhSmfi6Js61m07SYNGtggWU=
-github.com/shaj13/libcache v1.0.4/go.mod h1:YCq92Zosqj4erhlLdm2Mu1cX2FDAxjfFOxTphzN7S9U=
+github.com/shaj13/libcache v1.2.1 h1:ET4FBxwUJhNVDD/EMOUIG97AQVktlkc//SPAga5JF4c=
+github.com/shaj13/libcache v1.2.1/go.mod h1:YCq92Zosqj4erhlLdm2Mu1cX2FDAxjfFOxTphzN7S9U=
 github.com/sirupsen/logrus v1.10.2 h1:G2SED73/qrAu6YwbdxOD6peLkCBI3z7L+ykJFTXJBBo=
 github.com/sirupsen/logrus v1.10.2/go.mod h1:SLEg8TqYulVKKfIGHldVp2K2aYz2DKSVBq4g/H5bR7Q=
 github.com/sourcegraph/conc v0.3.0 h1:OQTbbt6P72L20UqAkXXuLOj79LfEanQ+YQFNpLA9ySo=
