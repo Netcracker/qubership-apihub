@@ -158,6 +158,8 @@ Use `-` after `Related Design Items:` and `Related API:` when there is nothing t
   ([PKGVER-023](./package-version/di-portal-pkgver-023-export-document-from-package-version.md))
 - Export List of Deprecated Operations in Excel
   ([PKGVER-024](./package-version/di-portal-pkgver-024-export-list-of-deprecated-operations-in-excel.md))
+- Version List Sorting in Version Selector
+  ([PKGVER-025](./package-version/di-portal-pkgver-025-version-list-sorting-in-version-selector.md))
 - [Document Shareability](./package-version/document-shareability.md)
 
 ### Package settings
