@@ -38,3 +38,4 @@ export const Case_06_parameter_description: Story = createCaseStory("06-paramete
 export const Case_07_parameter_media_type: Story = createCaseStory("07-parameter-media-type");
 export const Case_08_body_schema_description: Story = createCaseStory("08-body-schema-description");
 export const Case_09_response_header_description: Story = createCaseStory("09-response-header-description");
+export const Case_10_external_docs: Story = createCaseStory("10-external-docs");

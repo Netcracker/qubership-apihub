@@ -20,13 +20,13 @@ export type OpenApiOperationRowVisibility = {
   readonly deprecatedTagRow: OpenApiDeprecatedTagRow
 }
 
-/** Operation header rows by display-mode category: only the description is an annotation. */
+/** Operation header rows by display-mode category: the description and the external docs link are annotations. */
 export const OPENAPI_OPERATION_HEADER_ROW_CATEGORIES: DisplayModeRowCategories<OpenApiOperationHeaderRow> = {
   title: 'structure',
   operationId: 'structure',
   address: 'structure',
   description: 'annotation',
-  externalDocs: 'structure',
+  externalDocs: 'annotation',
 }
 
 /** Request body and response rows of the OpenAPI layer by display-mode category. */

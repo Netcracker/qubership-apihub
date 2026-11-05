@@ -65,7 +65,7 @@ JSO viewers. Diagrams: [architecture/](architecture/).
 | Header | **deprecated** tag | `deprecated: true`; in the title subheader; without a title on the operation ID row, else on the address row | [entities/operation.md](entities/operation.md#deprecated-tag) |
 | Header | `<operationId>` (secondary text, no label) | `operationId` | [entities/operation.md](entities/operation.md#operation-id-row) |
 | Header | Address row: method badge + path | always | [entities/operation.md](entities/operation.md#address-row) |
-| Header | External docs link: static `View external documentation ↗`; `externalDocs.description` in a hover `UxTooltip` | `externalDocs.url` | [entities/operation.md](entities/operation.md#external-docs-row) |
+| Header | External docs link: static `View external documentation ↗`; `externalDocs.description` in a hover `UxTooltip` | `externalDocs.url`; `detailed` mode only | [entities/operation.md](entities/operation.md#external-docs-row) |
 | Header | Description (markdown) | `description`; `detailed` mode only | [entities/operation.md](entities/operation.md#description-row) |
 | Security | Section (h2) | ≥1 effective list item (`[{}]` included) | [entities/security.md](entities/security.md) |
 | Security | Security toolbar: `‹` options strip `›` (scrolls one option per arrow click, cropped titles) | ≥1 non-anonymous alternative | [entities/security.md](entities/security.md#security-toolbar), [shared/features/arrow-scroll-strip.md](../shared/features/arrow-scroll-strip.md) |

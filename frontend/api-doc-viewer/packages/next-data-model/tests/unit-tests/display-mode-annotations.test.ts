@@ -35,7 +35,7 @@ describe('Category tables: the annotations of each API type', () => {
     Object.entries(table).filter(([, category]) => category === 'annotation').map(([row]) => row).sort()
 
   it.each([
-    ['OpenAPI operation header', OPENAPI_OPERATION_HEADER_ROW_CATEGORIES, ['description']],
+    ['OpenAPI operation header', OPENAPI_OPERATION_HEADER_ROW_CATEGORIES, ['description', 'externalDocs']],
     ['OpenAPI request body / response', OPENAPI_DESCRIPTION_ROW_CATEGORIES, ['description']],
     ['AsyncAPI text rows', ASYNC_API_TEXT_ROW_CATEGORIES, ['description', 'summary']],
     ['security scheme card', SECURITY_SCHEME_ROW_CATEGORIES, ['description', 'scopeDescriptions']],
@@ -49,7 +49,7 @@ describe('Category tables: the annotations of each API type', () => {
   })
 })
 
-describe('OpenAPI: descriptions are annotations', () => {
+describe('OpenAPI: descriptions and external docs are annotations', () => {
   const operation = {
     method: 'post',
     path: '/orders',
@@ -59,13 +59,13 @@ describe('OpenAPI: descriptions are annotations', () => {
     externalDocs: { url: 'https://docs.example.com', description: 'Guide' },
   }
 
-  it('simple: the operation description row is hidden; title, operation ID, external docs stay', () => {
+  it('simple: the operation description and external docs rows are hidden; title and operation ID stay', () => {
     const visibility = OpenApiNodeVisibility.resolveOperation(operation, false, SIMPLE_DISPLAY_MODE)
-    expect(visibility).toMatchObject({ showTitle: true, showOperationId: true, showExternalDocs: true, showDescription: false, deprecatedTagRow: 'title' })
-    expect(OpenApiNodeVisibility.resolveOperationHeaderRows(visibility)).toEqual(['title', 'operationId', 'address', 'externalDocs'])
+    expect(visibility).toMatchObject({ showTitle: true, showOperationId: true, showExternalDocs: false, showDescription: false, deprecatedTagRow: 'title' })
+    expect(OpenApiNodeVisibility.resolveOperationHeaderRows(visibility)).toEqual(['title', 'operationId', 'address'])
   })
 
-  it('detailed: the operation description row shows', () => {
+  it('detailed: the operation description and external docs rows show', () => {
     const visibility = OpenApiNodeVisibility.resolveOperation(operation, false, DETAILED_DISPLAY_MODE)
     expect(OpenApiNodeVisibility.resolveOperationHeaderRows(visibility)).toEqual(['title', 'operationId', 'address', 'description', 'externalDocs'])
   })

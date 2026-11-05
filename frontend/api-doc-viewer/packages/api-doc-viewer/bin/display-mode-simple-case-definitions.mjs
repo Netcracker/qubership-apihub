@@ -271,6 +271,12 @@ export const OPENAPI_CASES = [
       operation.responses["200"].headers = { "X-Rate-Limit": { description: v, schema: { type: "integer" } } };
     }),
   },
+  {
+    slug: "external-docs",
+    title: "Operation `externalDocs` (the external docs link)",
+    values: ["https://docs.example.com/orders", "https://docs.example.com/orders/v2"],
+    build: withOpenApi((operation, v) => { operation.externalDocs = { url: v, description: "Orders guide" }; }),
+  },
 ];
 
 // ─── JSON Schema ─────────────────────────────────────────────────────────────────────────────

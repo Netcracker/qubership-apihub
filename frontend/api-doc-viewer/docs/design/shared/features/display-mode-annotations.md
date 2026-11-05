@@ -16,6 +16,7 @@ contract:
 | API type | Annotation | Where it renders |
 | --- | --- | --- |
 | OpenAPI | operation `description` | operation header row (`OperationNodeViewer`, header row `description`) |
+| OpenAPI | operation `externalDocs` (the link and its `description` tooltip) | operation header row (`OperationNodeViewer`, header row `externalDocs`, `ExternalDocsRow`) |
 | OpenAPI | request body `description` | Body description row (`request-blocks.tsx`) |
 | OpenAPI | response `description` | response description row (`response-blocks.tsx`) |
 | OpenAPI, AsyncAPI | security scheme `description` | security card description row (`SecuritySchemeCardBase`) |
@@ -27,8 +28,7 @@ contract:
 Parameter, header, and schema descriptions inside OpenAPI / AsyncAPI are JSON Schema descriptions:
 they follow the JSON Schema rule through the forwarded display mode.
 
-**Not annotations** (shown in both modes): titles and section headers, operation ID, address, the
-external-docs link (its description is the link text), type texts, `deprecated` tags, required marks,
+**Not annotations** (shown in both modes): titles and section headers, operation ID, address, type texts, `deprecated` tags, required marks,
 selectors and toolbars, security card titles with the scheme type, security props (parameter name,
 API key location, HTTP scheme, bearer format, OpenID Connect URL), OAuth flow headers and URLs, the
 `Scopes ▾` / `Roles ▾` lists with scope / role **names**, JSON Schema **Extensions**.
@@ -38,6 +38,7 @@ API key location, HTTP scheme, bearer format, OpenID Connect URL), OAuth flow he
 | Element | `simple` before | `simple` now |
 | --- | --- | --- |
 | OpenAPI operation / request body / response description | shown | **hidden** |
+| OpenAPI operation external docs link (2026-11-05) | shown | **hidden** |
 | AsyncAPI summary / description (operation, message, channel, server) | shown | **hidden** |
 | Security scheme description | hidden | hidden |
 | Security props, OAuth flow parts, scope / role names | hidden | **shown** |

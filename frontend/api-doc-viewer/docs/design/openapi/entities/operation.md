@@ -162,7 +162,7 @@ means "no external docs on this side" (nothing rendered on that side).
 
 | Item | Rule |
 | --- | --- |
-| Shown when | `externalDocs.url` is a non-empty string |
+| Shown when | `externalDocs.url` is a non-empty string, in `detailed` mode only: `simple` hides the row as an annotation ([display-mode-annotations.md](../../shared/features/display-mode-annotations.md)) |
 | Element | `<a href={url} target="_blank" rel="noopener noreferrer">` — a real link, keyboard-focusable |
 | Link text | static **`View external documentation`** (constant `EXTERNAL_DOCS_LINK_TEXT` in the component), never the URL or the description |
 | Arrow | an up-right arrow icon **after** the text, inside the link (so it is clickable too): new `kit/icons/ArrowUpRightIcon.tsx`, same shape as the existing `ArrowRightIcon` / `ArrowUpIcon` (inline SVG, `currentColor`, ~12px, `aria-hidden="true"`), small gap before it |

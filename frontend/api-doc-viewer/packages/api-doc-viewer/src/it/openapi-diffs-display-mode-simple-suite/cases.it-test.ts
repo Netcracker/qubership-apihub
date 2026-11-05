@@ -18,6 +18,7 @@ const CASES: ReadonlyArray<readonly [string, string]> = [
   ['07-parameter-media-type', 'openapi-operation-diffs-suite-display-mode-simple--case-07-parameter-media-type'],
   ['08-body-schema-description', 'openapi-operation-diffs-suite-display-mode-simple--case-08-body-schema-description'],
   ['09-response-header-description', 'openapi-operation-diffs-suite-display-mode-simple--case-09-response-header-description'],
+  ['10-external-docs', 'openapi-operation-diffs-suite-display-mode-simple--case-10-external-docs'],
 ]
 
 describe('OpenAPI Operation Diffs Suite (Display Mode = simple)', () => {
