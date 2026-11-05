@@ -14,6 +14,11 @@ nested-viewer inset (4px), `cardInnerInset` (8px) and the expander column. Async
 keep the shared 4px defaults (§7). All numbers below are the doubled ones; where a comparison column
 says "4px baseline" it gives the numbers approved on 2026-10-16.
 
+**Level gap colouring changed 2026-11-05.** A level gap takes a tone (and a badge stub) on a side
+only when the elements above and below share it there; otherwise it stays white with no stub
+(OpenAPI `splitBands` / `splitBadge`, §7). A row that changed alone is now coloured 8 / 8 at a
+top-level block edge too, the same as inside a block. Sizes are unchanged.
+
 ## 1. Requirements
 
 | # | Element(s) | Spacing |
@@ -47,8 +52,8 @@ stacks: a row, a security card (seen from outside), a nested JSON Schema / JSO v
 | Nested JSON Schema / JSO viewer | **0px** | its first / last row already insets its text by ≥ 4px (JSON Schema: 4px row body, overridden for OpenAPI; JSO: 26px min-height centring); the OpenAPI half next to it supplies the rest |
 
 **R3 — a level gap between top-level blocks.** Between two blocks of the **operation level**
-(blocks 1–5 above) the gap gets an extra **8px**, always split into **two 4px halves**: the upper
-half continues the element above, the lower half the element below (§3). Inside a block (rows of
+(blocks 1–5 above) the gap gets an extra **8px**. It takes the neighbours' tone only when both
+share it, and stays white otherwise (§3). Inside a block (rows of
 block 1, sub-blocks of Request / Responses, cards) the level gap is **0**.
 
 **R4 — gap = owned half of the element above + level gap + owned half of the element below.**
@@ -68,24 +73,25 @@ Each band of a separator takes a tone **per side**, as in block-separators §2:
 
 | Band | Tone on a side |
 | --- | --- |
-| owned half of an element | that element's own background on that side (the row diff that paints the row; a card: its whole-card diff; a nested viewer has a 0px half, but its tone — the whole add / remove of the block that owns it, as block-separators §2.6 — feeds the level half next to it) |
-| upper level half (4px) | the tone of the element **above** (the same as its owned half) |
-| lower level half (4px) | the tone of the element **below** |
+| owned half of an element | that element's own background on that side (the row diff that paints the row; a card: its whole-card diff; a nested viewer has a 0px half, but its tone — the whole add / remove of the block that owns it, as block-separators §2.6 — feeds the level gap next to it) |
+| level gap (8px) | the shared tone when the elements above and below have the same tone on that side; otherwise **white** |
 
-So a gap between top-level blocks is, per side, `8 + 4` in the tone of the element above and
-`4 + 8` in the tone of the element below — two 12px halves. Neighbouring bands with the same tone
-render as one band (rendering only). Badge stubs follow the same bands: an owned half and the level
-half next to it carry their element's badge.
+So a gap between top-level blocks is, per side, `8` in the tone of the element above, `8` white, and
+`8` in the tone of the element below; when both neighbours share a tone, all 24px take it.
+Neighbouring bands with the same tone render as one band (rendering only). Badge stubs follow the
+same rule: an owned half carries its element's badge, and the level gap carries a stub only when
+both neighbours have the same badge type.
 
 **Consequence:**
 
 | Row that changed alone | Band above / below |
 | --- | --- |
 | inside a block (every gap 8 + 8) | **8 / 8** |
-| at the edge of a top-level block (the last row of block 1, a block's h2 title, the last row before the next block) | **8 / 12** or **12 / 8** — 4px more on the side of the 24px gap |
+| at the edge of a top-level block (the last row of block 1, a block's h2 title, the last row before the next block) | **8 / 8** — the level gap next to it stays white (before 2026-11-05: 8 / 12) |
 
-A wholly added / removed block is coloured through its elements and their halves; at the operation
-level its colour reaches 12px beyond its edge rows' content.
+A wholly added / removed block is coloured through its elements and their halves: its colour reaches
+8px beyond its edge rows' content, and fills the whole 24px only towards a neighbour block with the
+same tone.
 
 ## 4. Visual examples
 
@@ -148,7 +154,7 @@ Body  [application/json]
 · Type object                              viewer bottom: nested viewer's own inset
 ```
 
-### 4.2 A row that changed alone — 8 / 8 inside a block, 8 / 12 at a top-level edge
+### 4.2 A row that changed alone — 8 / 8 inside a block and at a top-level edge
 
 `operation/09-description-changed` (description replaced, annotation; the description is the last
 row of block 1, so the 24px gap to Security is below it):
@@ -159,13 +165,12 @@ row of block 1, so the 24px gap to Security is below it):
 ▌a ▒Y (8)                            │ ▒Y (8)                       description's half
 ▌a ▒Y Replaces the order.            │ ▒Y Replaces the whole order.
 ▌a ▒Y (8)                            │ ▒Y (8)                       description's half
-▌a ▒Y (4)                            │ ▒Y (4)                       upper level half: continues the description
-      (4)                            │    (4)                       lower level half: continues Security
+      (8)                            │    (8)                       level gap: neighbours differ, white
       (8)                            │    (8)                       Security's half
       Security                       │    Security
 ```
 
-Band: 8 above, 12 below (a middle row such as the address would be 8 / 8).
+Band: 8 above, 8 below, as for a middle row such as the address.
 
 `operation/05-operation-id-removed` (a middle row of block 1):
 
@@ -194,8 +199,7 @@ Band: 8 above, 12 below (a middle row such as the address would be 8 / 8).
 
 ```text
       · Type object                  │    · Type object             Request's last nested row (half 0)
-      (4)                            │    (4)                       upper level half: continues the nested viewer (Request unchanged)
-▌  ▒Y (4)                            │ ▒Y (4)                       lower level half: continues the Responses title
+      (8)                            │    (8)                       level gap: neighbours differ (Request unchanged), white
 ▌  ▒Y (8)                            │ ▒Y (8)                       Responses title's half
 ▌  ▒Y Responses [200] [400] [4xx]    │ ▒Y Responses [200] [400] [4XX]
 ▌  ▒Y (8)                            │ ▒Y (8)
@@ -223,15 +227,13 @@ A top-level block wholly added — the Security section added between block 1 an
 ```text
       Replaces the order.            │    Replaces the order.
       (8)                            │    (8)                       description's half
-      (4)                            │    (4)                       upper level half: continues the description
-▌n ░░ (4)                            │ ▒G (4)                       lower level half: continues the Security title
+      (8)                            │    (8)                       level gap: neighbours differ, white
 ▌n ░░ (8)                            │ ▒G (8)                       Security title's half
 ▌n ░░                                │ ▒G Security
    …                                 │    …
 ▌n ░░ └ card ┘                       │ ▒G └ card ┘
 ▌n ░░ (8)                            │ ▒G (8)                       card's half
-▌n ░░ (4)                            │ ▒G (4)                       upper level half: continues the card
-      (4)                            │    (4)                       lower level half: continues the Extensions title
+      (8)                            │    (8)                       level gap: neighbours differ, white
       (8)                            │    (8)
       Extensions                     │    Extensions
 ```
@@ -240,8 +242,7 @@ A removed block directly above an added one (both at the operation level):
 
 ```text
 ▌  ▒R (8)                            │ ░░ (8)                       last element's half of the removed block
-▌  ▒R (4)                            │ ░░ (4)                       upper level half
-▌n ░░ (4)                            │ ▒G (4)                       lower level half
+      (8)                            │    (8)                       level gap: red / gray and gray / green differ, white
 ▌n ░░ (8)                            │ ▒G (8)
 ▌n ░░                                │ ▒G Extensions
 ```
@@ -260,8 +261,8 @@ A card wholly added after an unchanged one:
 ## 5. What this does to the open questions
 
 - **block-separators §10 (asymmetric band of a row that changed alone):** gone inside a block
-  (8 / 8); at a top-level block edge it is 8 / 12 by choice — each 24px gap splits into two halves
-  that continue their neighbours (§3) — instead of the pre-2026-10-16 4 / 10.
+  (8 / 8), and since 2026-11-05 also at a top-level block edge: the level gap stays white unless both
+  neighbours share a tone (§3). Earlier models gave 4 / 10 (before 2026-10-16) and 8 / 12.
 - **Your earlier request (separators between the block-1 rows, then 8 = 4 + 4, now 16 = 8 + 8):**
   this is R4 for block 1.
 - **Operation ID padding (§9.1):** gone — the row is 16px from its neighbours like every row.
@@ -294,7 +295,7 @@ sections are unchanged. Together (OpenAPI defaults):
 type OpenApiSpacingConfig = {
   /** R2: owned half-gap above and below, per element kind (px). */
   readonly halfGap: { readonly row: number, readonly card: number, readonly nested: number }   // 8 / 8 / 0 (shared default 4 / 4 / 0)
-  /** R3: extra gap between two siblings, per container level (px); split in two halves that continue the neighbours. */
+  /** R3: extra gap between two siblings, per container level (px); coloured only when both neighbours match (§3). */
   readonly levelGap: {
     readonly operation: number          // 8  — blocks 1–5
     readonly operationHeader: number    // 0  — rows of block 1
@@ -312,9 +313,9 @@ type OpenApiSpacingConfig = {
   readonly viewerEdges: boolean         // true (D5)
   /** Collapsible sections: expander column width and the gap after it (px; collapsible-sections.md). */
   readonly sectionExpander: { readonly width: number, readonly gap: number }   // 16 / 8
-  /** Unchanged rules (block-separators §7.3): */
-  readonly splitBands: (above, below, height) => LayoutBand[]
-  readonly splitBadge: (above, below, height) => LayoutBadgeSegment[]
+  /** Level gap colouring (§3): OpenAPI overrides the shared default (two halves in the neighbours' looks). */
+  readonly splitBands: (above, below, height) => LayoutBand[]          // the shared tone, else white
+  readonly splitBadge: (above, below, height) => LayoutBadgeSegment[]  // the shared badge type, else no stub
   readonly frameRowBadge: boolean
 }
 // Shared part (LayoutSpacingConfig): halfGap, levelGap (security / section / card), cardInnerInset,
@@ -335,7 +336,7 @@ Data layer (`model/abstract/layout/`, OpenAPI part in `model/openapi/layout/`):
 | `BlockEdges` (generic) | `row(painted)`, `card(card)`, `nested(owner)`, `single(edge)`, `container(children)`, `sectionTitleRow` |
 | `SecurityBlockEdges extends BlockEdges` | `toolbarRow`, `titleRow` (`model/security/block-edges.ts`) |
 | `OpenApiBlockEdges extends BlockEdges` | `bodyElements(title, description, selectedMediaType, state)` (the Body's elements, decided once for the parent and the Body) and `body(elements)` (their outer edges); painted-row accessors per OpenAPI row kind (`operationHeaderRow`, `responsesTitleRow`, `requestBodyTitleRow`, `responseBodyTitleRow`, `descriptionRow`) |
-| Planner `plan(blocks, level, config, { outerHalves })` | between two siblings, per side: `[ owned(above.tail), splitBands(above, below, levelGap[level]), owned(below.head) ]` — the default `splitBands` gives two halves in the neighbours' tones (one piece when equal); empty bands dropped, equal neighbours merged; the badge stub the same way (`splitBadge`). `outerHalves` (the root with `viewerEdges`, the inside of a card) adds the first element's upper half and the last element's lower half |
+| Planner `plan(blocks, level, config, { outerHalves })` | between two siblings, per side: `[ owned(above.tail), splitBands(above, below, levelGap[level]), owned(below.head) ]` — the shared default `splitBands` gives two halves in the neighbours' tones (one piece when equal), the OpenAPI one a single band in the shared tone, else white; empty bands dropped, equal neighbours merged; the badge stub the same way (`splitBadge`). `outerHalves` (the root with `viewerEdges`, the inside of a card) adds the first element's upper half and the last element's lower half |
 | Frame rows | `cardInnerInset` high, border at the outer edge; outside space comes from the card's half in the separator |
 
 Viewer (`OpenApiOperationViewer/`):

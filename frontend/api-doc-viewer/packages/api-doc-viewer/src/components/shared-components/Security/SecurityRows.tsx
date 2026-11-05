@@ -132,15 +132,15 @@ type SecurityPropContentProps = {
 }
 
 /**
- * Grid of every security prop (1st and 2nd level): label column = 40% of the card, then a 20px gap
+ * Grid of every security prop (1st and 2nd level): label column = 30% of the card, then a 20px gap
  * and the value. Cells align to the top. One template for both levels, so all values of a card
  * start at the same x.
  */
-const SECURITY_PROP_GRID_CLASSES = 'grid w-full grid-cols-[40%_minmax(0,1fr)] items-start gap-x-5'
+const SECURITY_PROP_GRID_CLASSES = 'grid w-full grid-cols-[30%_minmax(0,1fr)] items-start gap-x-5'
 
 /**
  * 1st-level security prop: `label <20px> value`. The label uses the JSON Schema property-title text
- * (`NODE_TITLE_TEXT_CLASSES`) and wraps inside its column when longer than 40% of the card.
+ * (`NODE_TITLE_TEXT_CLASSES`) and wraps inside its column when longer than 30% of the card.
  */
 export const SecurityPropContent: FC<SecurityPropContentProps> = ({ label, value }) => (
   <div className={cn(`security-prop ${SECURITY_PROP_GRID_CLASSES}`)}>
@@ -212,7 +212,7 @@ type SecurityScopeContentProps = {
 
 /**
  * 2nd-level security prop (one scope): `<20px offset> name * <20px> description [required]`. Same
- * grid as 1st-level props; the 20px offset is padding inside the first cell, so the name gets 40% of
+ * grid as 1st-level props; the 20px offset is padding inside the first cell, so the name gets 30% of
  * the card minus the offset and the description starts where 1st-level values start.
  */
 export const SecurityScopeContent: FC<SecurityScopeContentProps> = (props) => {

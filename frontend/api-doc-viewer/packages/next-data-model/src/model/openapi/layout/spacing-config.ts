@@ -29,6 +29,10 @@ export const DEFAULT_OPENAPI_SPACING_CONFIG: OpenApiSpacingConfig = {
   nestedViewerInset: 4,
   viewerEdges: true,
   sectionExpander: { width: 16, gap: 8 },
+  // A level gap takes the neighbours' tone / badge only when both match; otherwise it stays white with
+  // no badge stub, so a changed row at a block edge is coloured 8 / 8 like a row inside a block.
+  splitBands: (above, below, height) => [{ height, tone: above === below ? above : undefined }],
+  splitBadge: (above, below, height) => [{ height, type: above === below ? above : undefined }],
 }
 
 export class OpenApiSpacing {

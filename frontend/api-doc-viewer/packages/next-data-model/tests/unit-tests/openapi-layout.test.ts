@@ -83,11 +83,13 @@ describe('OpenAPI layout: spacing config', () => {
     expect(OpenApiSpacing.sectionContentIndent(OpenApiSpacing.withOverrides({ sectionExpander: { width: 20, gap: 8 } }))).toBe(28)
   })
 
-  it('splits a level gap into halves for different neighbours, one piece for equal ones', () => {
+  it('colours a level gap only when both neighbours match, else leaves it white without a badge stub', () => {
     const { splitBands, splitBadge } = DEFAULT_OPENAPI_SPACING_CONFIG
     expect(splitBands(undefined, undefined, 4)).toEqual([{ height: 4, tone: undefined }])
-    expect(splitBands(Red, Green, 4)).toEqual([{ height: 2, tone: Red }, { height: 2, tone: Green }])
-    expect(splitBadge('annotation', undefined, 4)).toEqual([{ height: 2, type: 'annotation' }, { height: 2, type: undefined }])
+    expect(splitBands(Green, Green, 4)).toEqual([{ height: 4, tone: Green }])
+    expect(splitBands(Red, Green, 4)).toEqual([{ height: 4, tone: undefined }])
+    expect(splitBadge('annotation', 'annotation', 4)).toEqual([{ height: 4, type: 'annotation' }])
+    expect(splitBadge('annotation', undefined, 4)).toEqual([{ height: 4, type: undefined }])
   })
 })
 
@@ -104,25 +106,32 @@ describe('OpenAPI layout: separators', () => {
     expect(separator?.badge).toEqual([{ height: 4, type: 'breaking' }, { height: 4, type: undefined }])
   })
 
-  it('a changed row at a top-level edge continues 2px into the level gap (operation/09: 4 + 2 | 2 + 4)', () => {
+  it('a changed row at a top-level edge keeps its own 4px, the level gap stays white (operation/09: 4 | 4 + 4)', () => {
     const separator = between(row(Yellow, Yellow, 'annotation'), row(), 'operation')
-    expect(separator?.before).toEqual([{ height: 6, tone: Yellow }, { height: 6, tone: undefined }])
-    expect(separator?.after).toEqual([{ height: 6, tone: Yellow }, { height: 6, tone: undefined }])
-    expect(separator?.badge).toEqual([{ height: 6, type: 'annotation' }, { height: 6, type: undefined }])
+    expect(separator?.before).toEqual([{ height: 4, tone: Yellow }, { height: 8, tone: undefined }])
+    expect(separator?.after).toEqual([{ height: 4, tone: Yellow }, { height: 8, tone: undefined }])
+    expect(separator?.badge).toEqual([{ height: 4, type: 'annotation' }, { height: 8, type: undefined }])
   })
 
-  it('after a nested viewer only the level half and the next row\'s half (0 + 2 | 2 + 4)', () => {
-    expect(between(nested(), row(Yellow, Yellow), 'operation')?.before).toEqual([{ height: 2, tone: undefined }, { height: 6, tone: Yellow }])
+  it('two top-level blocks changed alike: the level gap continues their tone and badge', () => {
+    const separator = between(row(Gray, Green, 'non-breaking'), row(Gray, Green, 'non-breaking'), 'operation')
+    expect(separator?.before).toEqual([{ height: 12, tone: Gray }])
+    expect(separator?.after).toEqual([{ height: 12, tone: Green }])
+    expect(separator?.badge).toEqual([{ height: 12, type: 'non-breaking' }])
+  })
+
+  it('after a nested viewer only the level gap and the next row\'s half (0 + 4 | 4)', () => {
+    expect(between(nested(), row(Yellow, Yellow), 'operation')?.before).toEqual([{ height: 4, tone: undefined }, { height: 4, tone: Yellow }])
     expect(between(nested(), row(), 'request')).toMatchObject({ height: 4, before: [{ height: 4, tone: undefined }] })
     expect(between(row(), nested(), 'section')).toMatchObject({ height: 4 })
     expect(between(nested(), nested(), 'section')).toBeUndefined()
   })
 
-  it('a removed block above an added one: each side splits by its own tones', () => {
+  it('a removed block above an added one: each keeps its own half, a white level gap between them', () => {
     const separator = between(row(Red, Gray, 'breaking'), row(Gray, Green, 'non-breaking'), 'operation')
-    expect(separator?.before).toEqual([{ height: 6, tone: Red }, { height: 6, tone: Gray }])
-    expect(separator?.after).toEqual([{ height: 6, tone: Gray }, { height: 6, tone: Green }])
-    expect(separator?.badge).toEqual([{ height: 6, type: 'breaking' }, { height: 6, type: 'non-breaking' }])
+    expect(separator?.before).toEqual([{ height: 4, tone: Red }, { height: 4, tone: undefined }, { height: 4, tone: Gray }])
+    expect(separator?.after).toEqual([{ height: 4, tone: Gray }, { height: 4, tone: undefined }, { height: 4, tone: Green }])
+    expect(separator?.badge).toEqual([{ height: 4, type: 'breaking' }, { height: 4, type: undefined }, { height: 4, type: 'non-breaking' }])
   })
 
   it('cards own 4px outside their border: toolbar -> card, card -> added card', () => {
@@ -134,7 +143,7 @@ describe('OpenAPI layout: separators', () => {
     const a = between(row(Yellow, Yellow), row(), 'operation')
     const b = between(row(Yellow, Yellow), row(), 'operation')
     expect(a).toEqual(b)
-    expect(a?.signature).toBe('6yellow,6-/6yellow,6-/12-')
+    expect(a?.signature).toBe('4yellow,8-/4yellow,8-/12-')
     expect(between(row(), row(), 'operationHeader')?.signature).not.toBe(a?.signature)
   })
 })

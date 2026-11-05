@@ -20,11 +20,10 @@
 
 /* `div[…]` outranks the rows' own `w-full` / `px-4` utilities. */
 div[data-frame-position] {
-  /* Frame box: starts 16px in (= px-4, X_AXIS_PADDING_ROWS), under the section title text.
-     Plain mode: 40% of the side, at most 500px, at least 320px - but never wider than the side
-     allows (100% minus the 16px indents on both sides). */
+  /* Frame box: starts 16px in (= px-4, X_AXIS_PADDING_ROWS), under the section title text, and
+     spans the whole side minus the 16px insets on both sides, in plain and diffs mode. */
   --frame-left: 16px;
-  --frame-width: min(calc(100% - 32px), max(320px, min(40%, 500px)));
+  --frame-width: calc(100% - 32px);
   --frame-inner-padding: 16px;
   --frame-radius: 6px;
 
@@ -36,12 +35,6 @@ div[data-frame-position] {
      outside the frame box + inner padding. Percentages resolve against the side width. */
   padding-left: calc(var(--frame-left) + var(--frame-inner-padding));
   padding-right: calc(100% - var(--frame-left) - var(--frame-width) + var(--frame-inner-padding));
-}
-
-/* Diffs mode (side-by-side): the frame box is 80% of its side (at least 320px, never past the
-   separator); no 500px cap - it would push the card below 80% on wide screens. */
-.side-by-side-layout div[data-frame-position] {
-  --frame-width: min(calc(100% - 32px), max(320px, 80%));
 }
 
 div[data-frame-position]::before {

@@ -124,9 +124,9 @@ Sketches: [../features/security-redesign.md](../features/security-redesign.md) �
 ## Scheme card
 
 One card per `securityScheme` child of the selected alternative, in requirement order: a
-**framed box** (Q8, [Card frame](#card-frame)). Card width (`shared-styles/frame.css`): **not full width** — plain
-`min(40%, 500px)`, diffs (side-by-side) `80%` of the side (no 500px cap, which would push it below 80%), at least 320px,
-never crossing the vertical separator. The rows themselves stay full width; see [Card frame](#card-frame). The frame
+**framed box** (Q8, [Card frame](#card-frame)). Card width (`shared-styles/frame.css`): **full width** of the side minus
+the 16px insets on both sides, in plain and diffs mode alike (2026-11-05; the earlier plain `min(40%, 500px)` / diffs
+`80%` rule was dropped). The rows themselves stay full width; see [Card frame](#card-frame). The frame
 starts 16px in (= `px-4`), its border under the `Security` title text. The card starts and ends with content-less
 **frame rows** (`SecurityFrameRow`, 24px): the horizontal border runs through the middle of each (12px outside, 12px
 inside), so the content starts 16px below the border (12 + the title row's 4px), as horizontally. Frame rows are painted
@@ -152,10 +152,10 @@ Sketches: [../features/security-redesign.md](../features/security-redesign.md) �
 `mutualTLS` cards have title, type, and description only.
 
 **Security props** (label / value rows, 1st and 2nd level) share one grid: `grid-template-columns:
-40% minmax(0, 1fr)` with a 20px column gap, cells aligned to the top (`items-start`). The label column
-is therefore 40% of the card plus 20px before the value, the same in every prop of every card; a
+30% minmax(0, 1fr)` with a 20px column gap, cells aligned to the top (`items-start`). The label column
+is therefore 30% of the card plus 20px before the value, the same in every prop of every card; a
 longer label wraps inside its column. 2nd-level scope rows keep their 20px left offset as padding in
-the first cell, so the scope name gets 40% of the card minus the offset and the description starts
+the first cell, so the scope name gets 30% of the card minus the offset and the description starts
 where 1st-level values start. Labels, the `Scopes` text, and scope names use exactly the JSON Schema
 property-title text, `NODE_TITLE_TEXT_CLASSES` (`text-xs text-black font-Inter-Medium`: the medium
 look comes from the static "Inter Medium" family at weight 400, not from `font-weight`); values are
@@ -177,7 +177,7 @@ row, the flow headers included, is one element of the card's `StackLayout` (leve
 | Flow header | always (`detailed`) | `Flow type **Authorization Code**` on a `#EDF1F5` plate: plain prefix `Flow type`, flow name (`SecurityDisplayLabels.oauthFlowName`) at `font-weight: 500` | `TitleRow` of the flow (not when the whole diff is inherited from the card) |
 | `Authorization URL` / `Token URL` / `Refresh URL` | the field exists | link | `OAuthFlow*UrlRow` |
 | `Scopes ▾` | non-empty `scopes` | JSON Schema title pattern: clickable text + clickable `Expander` **after** the text, no value; expanded by default; collapsing hides the scope rows | the block's severity when the flow / card is wholly added / removed |
-| Scope (2nd level) | expanded | `<20px offset> name <* if required> <20px> <gray description> [required badge in diffs]`, same 40% grid as 1st-level props | strongest of the scope's own diffs (added / removed / description, required); the block's severity when painted by a whole block |
+| Scope (2nd level) | expanded | `<20px offset> name <* if required> <20px> <gray description> [required badge in diffs]`, same 30% grid as 1st-level props | strongest of the scope's own diffs (added / removed / description, required); the block's severity when painted by a whole block |
 
 A scope is **required** when the selected requirement lists it (Q-S2). Required scopes are shown
 **only** as `*` on scope rows — there is no `Required scopes` / `Required roles` prop row for any
@@ -211,7 +211,7 @@ element wraps "the card" on one side. The frame is therefore drawn **per row and
 | --- | --- |
 | Row API | `TitleRow`, `TextRow`, `MarkdownTextRow`, `AdditionalInfoRow` get an optional prop `framePosition?: (layoutSide: LayoutSide) => FramePosition \| undefined`, `FramePosition = 'single' \| 'first' \| 'middle' \| 'last'` (type in `shared-components/Frame/types.ts`). Undefined = no frame; existing callers are unaffected. |
 | DOM | the row's per-side content div gets `data-frame-position="<position>"`. That div stays **full side width**: the card is not a block but a stack of full-width rows, and the frame is an illusion drawn by each row (2026-10-14). |
-| CSS | `shared-styles/frame.css`: each framed row draws its frame segment as an absolutely positioned `::before` box — 16px from the left (under the section title text), width `--frame-width` (plain `min(40%, 500px)`, diffs `80%` of the side; at least 320px; never past the side / separator) — with left / right borders (`1px solid #D5DCE3`); `first` adds the top border and radius (6px, `--frame-radius`), `last` the bottom, `single` both. The row pads its content into that box (16px inner padding on every side of the card). |
+| CSS | `shared-styles/frame.css`: each framed row draws its frame segment as an absolutely positioned `::before` box — 16px from the left (under the section title text), width `--frame-width` (the side minus 32px: 16px insets on both sides, in plain and diffs mode) — with left / right borders (`1px solid #D5DCE3`); `first` adds the top border and radius (6px, `--frame-radius`), `last` the bottom, `single` both. The row pads its content into that box (16px inner padding on every side of the card). |
 | Positions | fixed by role, not by row order: the opening / closing `SecurityFrameRow` (`SecurityRows.tsx`, height `cardInnerInset`, `LayoutPlanner.frameRow`) are `first` / `last`; every content row and every separator inside the card is `middle` (`SecuritySchemeCardBase` passes one resolver and `separatorFramePositions` to `StackLayout`) |
 | Per side | a card absent on one side (scheme wholly added / removed) gets **no** frame on that side: `SecurityRowDiffs.Scheme.isCardPresentOnSide(node, side)`; rows there keep their whole-node diff styles (grey, hidden content). |
 | Diff backgrounds | the row diff background is on the full-width row div, so a highlighted row — and a wholly added / removed card — is colored across the **whole side** up to the separator, inside and outside the frame; the space between two cards is the closing row of one and the opening row of the next, each painted with its own whole-card diff. |
