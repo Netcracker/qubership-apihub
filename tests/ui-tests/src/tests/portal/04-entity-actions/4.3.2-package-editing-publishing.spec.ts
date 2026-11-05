@@ -466,7 +466,7 @@ test.describe('4.3.2 Package publishing via Portal', () => {
           await expect.soft(previousVersionAc.getListItem(MSG_OPTION_SAME_PACKAGE_RELEASE)).toBeHidden()
         })
 
-        await publishVersionDialog.clickEmptySpace()
+        await previousVersionAc.dropdownBtn.click()
         await publishVersionDialog.fillForm({ status: 'release' })
         await previousVersionAc.click()
 
