@@ -21,3 +21,6 @@ create table ai_lint_stats
     constraint ai_lint_stats_pk
         primary key (id)
 );
+
+create index ai_lint_stats_document_lint_task_id_index
+    on ai_lint_stats (document_lint_task_id);

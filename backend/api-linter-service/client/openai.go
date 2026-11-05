@@ -202,9 +202,6 @@ func (o OAIClientImpl) complete(ctx context.Context, systemPrompt string, userMe
 		}
 		defer o.concurrencyLimiter.Release(1)
 	}
-	if err := o.rateLimiter.Wait(ctx); err != nil {
-		return report, err
-	}
 
 	reasoningEffort := ""
 	if o.model == openai.ChatModelGPT5 {
@@ -232,19 +229,19 @@ func (o OAIClientImpl) complete(ctx context.Context, systemPrompt string, userMe
 
 	attempts := 0
 	start := time.Now()
-	requestOpts := append([]option.RequestOption{option.WithMiddleware(trackAttempts(schemaName, &attempts))}, o.extraBodyOpts...)
+	requestOpts := append([]option.RequestOption{option.WithMiddleware(trackAttempts(schemaName, o.rateLimiter, &attempts))}, o.extraBodyOpts...)
 	chat, err := o.client.Chat.Completions.New(ctx, params, requestOpts...)
 	report.Duration = time.Since(start)
 	report.ProviderAttempts = attempts
 	if err != nil {
+		err = classifyProviderError(err)
 		if ctx.Err() != nil {
 			// The SDK returns the bare context error and drops the cancellation cause, which names the request that failed first.
 			if cause := context.Cause(ctx); !errors.Is(err, cause) {
 				err = fmt.Errorf("%w: %v", err, cause)
 			}
-			return report, err
 		}
-		return report, classifyProviderError(err)
+		return report, err
 	}
 
 	if chat.Model != "" {
@@ -286,10 +283,13 @@ func (o OAIClientImpl) complete(ctx context.Context, systemPrompt string, userMe
 	return report, nil
 }
 
-// trackAttempts counts HTTP attempts and logs the failed ones. The SDK calls the middleware once per attempt,
-// including its own retries, before the response body is read, and discards the bodies of retried responses.
-func trackAttempts(schemaName string, attempts *int) option.Middleware {
+// trackAttempts applies the rate limit to HTTP attempts, counts them, and logs the failed ones. The SDK calls the middleware
+// once per attempt, including its own retries, before the response body is read, and discards the bodies of retried responses.
+func trackAttempts(schemaName string, limiter *rate.Limiter, attempts *int) option.Middleware {
 	return func(req *http.Request, next option.MiddlewareNext) (*http.Response, error) {
+		if err := limiter.Wait(req.Context()); err != nil {
+			return nil, err
+		}
 		*attempts++
 		attemptStart := time.Now()
 		resp, err := next(req)
@@ -361,9 +361,12 @@ func classifyProviderError(err error) error {
 	if apiErr.Code != "" {
 		detail = strings.TrimSpace(fmt.Sprintf("%s (code %s)", detail, excerpt(apiErr.Code)))
 	}
+	// The SDK error is not wrapped: it holds the raw provider response and the request with its Authorization header.
+	summary := strings.TrimSpace(fmt.Sprintf("OpenAI API error: %d %s", apiErr.StatusCode, http.StatusText(apiErr.StatusCode)))
 	if detail != "" {
-		err = fmt.Errorf("%w: %s", err, detail)
+		summary += ": " + detail
 	}
+	err = errors.New(summary)
 	switch apiErr.StatusCode {
 	case http.StatusTooManyRequests:
 		return fmt.Errorf("%w: %w", aiError(exception.AiRateLimitExceeded, exception.AiRateLimitExceededMsg), err)

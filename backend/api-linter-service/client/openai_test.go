@@ -18,8 +18,10 @@ import (
 	"github.com/Netcracker/qubership-apihub/backend/api-linter-service/exception"
 	"github.com/Netcracker/qubership-apihub/backend/api-linter-service/view"
 	"github.com/openai/openai-go/v3"
+	"github.com/openai/openai-go/v3/option"
 	log "github.com/sirupsen/logrus"
 	logtest "github.com/sirupsen/logrus/hooks/test"
+	"golang.org/x/time/rate"
 )
 
 const (
@@ -30,6 +32,7 @@ const (
 	testMaxConcurrent      = 10
 	testMaxRetries         = 2
 	queuedRequestTimeout   = 50 * time.Millisecond
+	boundedTestTimeout     = 10 * time.Second
 )
 
 var (
@@ -49,6 +52,8 @@ var (
 	}}}
 
 	errUntyped = errors.New("any untyped error")
+
+	unlimitedRate = rate.NewLimiter(rate.Inf, 0)
 )
 
 // completionBody builds a chat completion response; a nil usage omits the field.
@@ -245,10 +250,11 @@ func TestTrackAttemptsLogsCancelledAttemptAtDebug(t *testing.T) {
 	t.Cleanup(func() { logger.SetLevel(previousLevel) })
 	errSibling := errors.New("sibling request failed")
 	ctx, cancel := context.WithCancelCause(context.Background())
-	cancel(errSibling)
+	defer cancel(nil)
 	attempts := 0
 
-	_, err := trackAttempts("schema", &attempts)(httptest.NewRequestWithContext(ctx, http.MethodPost, "/", nil), func(*http.Request) (*http.Response, error) {
+	_, err := trackAttempts("schema", unlimitedRate, &attempts)(httptest.NewRequestWithContext(ctx, http.MethodPost, "/", nil), func(*http.Request) (*http.Response, error) {
+		cancel(errSibling)
 		return nil, errSibling
 	})
 
@@ -258,6 +264,56 @@ func TestTrackAttemptsLogsCancelledAttemptAtDebug(t *testing.T) {
 	entries := hook.AllEntries()
 	if len(entries) != 1 || entries[0].Level != log.DebugLevel || !strings.HasPrefix(entries[0].Message, "AI request schema: attempt 1 cancelled after ") {
 		t.Fatalf("expected one debug entry for the cancelled attempt, got %v", entries)
+	}
+}
+
+func TestTrackAttemptsDoesNotDispatchCancelledAttempt(t *testing.T) {
+	exhausted := rate.NewLimiter(0, 1)
+	exhausted.Allow()
+	tests := []struct {
+		name       string
+		limiter    *rate.Limiter
+		newContext func(t *testing.T) context.Context
+	}{
+		{
+			name:    "context cancelled before the attempt",
+			limiter: unlimitedRate,
+			newContext: func(*testing.T) context.Context {
+				ctx, cancel := context.WithCancel(context.Background())
+				cancel()
+				return ctx
+			},
+		},
+		{
+			name:    "context cancelled while waiting for a token",
+			limiter: exhausted,
+			newContext: func(t *testing.T) context.Context {
+				ctx, cancel := context.WithCancel(context.Background())
+				t.Cleanup(cancel)
+				go func() {
+					// The token count goes negative once Wait has reserved a token and is about to block.
+					for exhausted.Tokens() >= 0 && ctx.Err() == nil {
+						time.Sleep(time.Millisecond)
+					}
+					cancel()
+				}()
+				return ctx
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			attempts := 0
+
+			_, err := trackAttempts("schema", tt.limiter, &attempts)(httptest.NewRequestWithContext(tt.newContext(t), http.MethodPost, "/", nil), func(*http.Request) (*http.Response, error) {
+				t.Error("expected the attempt not to be dispatched")
+				return nil, nil
+			})
+
+			if !errors.Is(err, context.Canceled) || attempts != 0 {
+				t.Fatalf("expected the context error and no attempts, got %d, %v", attempts, err)
+			}
+		})
 	}
 }
 
@@ -375,8 +431,7 @@ func TestDeduplicateIssuesRetries(t *testing.T) {
 
 			pairs, report, err := cl.DeduplicateIssues(context.Background(), "system prompt", testDeduplicationRequest, testMaxCompletionToken)
 
-			var apiErr *openai.Error
-			if tt.wantErr && (!errors.As(err, &apiErr) || apiErr.StatusCode != http.StatusGatewayTimeout) {
+			if tt.wantErr && (err == nil || !strings.Contains(err.Error(), "504 Gateway Timeout")) {
 				t.Fatalf("expected the gateway timeout error, got %v", err)
 			}
 			if !tt.wantErr && (err != nil || pairs == nil) {
@@ -391,6 +446,33 @@ func TestDeduplicateIssuesRetries(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestRateLimitAppliesToEveryAttempt(t *testing.T) {
+	const maxRetries, sdkAttempts = 3, 4
+	var captured map[string]any
+	var requests atomic.Int32
+	handler := respond(t, sdkAttempts, http.StatusTooManyRequests, http.StatusOK, "", &captured)
+	cl := newTestClient(t, func(w http.ResponseWriter, r *http.Request) {
+		requests.Add(1)
+		handler(w, r)
+	}, testMaxConcurrent, maxRetries, "")
+	limiter := rate.NewLimiter(0, sdkAttempts)
+	cl.(*OAIClientImpl).rateLimiter = limiter
+	ctx, cancel := context.WithTimeout(context.Background(), boundedTestTimeout)
+	defer cancel()
+
+	_, report, err := cl.DeduplicateIssues(ctx, "system prompt", testDeduplicationRequest, testMaxCompletionToken)
+
+	if !errors.Is(err, aiError(exception.AiRateLimitExceeded, "")) {
+		t.Fatalf("expected the rate limit error, got %v", err)
+	}
+	if report.ProviderAttempts != sdkAttempts || requests.Load() != sdkAttempts {
+		t.Errorf("expected %d attempts, got %d reported and %d received", sdkAttempts, report.ProviderAttempts, requests.Load())
+	}
+	if tokens := limiter.Tokens(); tokens != 0 {
+		t.Errorf("expected every attempt to take a token, %v left", tokens)
 	}
 }
 
@@ -525,9 +607,8 @@ func TestRateLimitedAttemptsLogProviderDiagnostics(t *testing.T) {
 
 	_, report, err := cl.DeduplicateIssues(context.Background(), "system prompt", testDeduplicationRequest, testMaxCompletionToken)
 
-	var apiErr *openai.Error
-	if !errors.Is(err, aiError(exception.AiRateLimitExceeded, "")) || !errors.As(err, &apiErr) || apiErr.Message != providerMessage {
-		t.Fatalf("expected the parsed rate limit error, got %v", err)
+	if !errors.Is(err, aiError(exception.AiRateLimitExceeded, "")) {
+		t.Fatalf("expected the rate limit error, got %v", err)
 	}
 	if wantSuffix := ": " + providerMessage + " (code 429)"; !strings.HasSuffix(err.Error(), wantSuffix) {
 		t.Errorf("expected the error to end with %q, got %q", wantSuffix, err.Error())
@@ -593,7 +674,7 @@ func TestTrackAttemptsResponseBodies(t *testing.T) {
 			hook := captureLogs(t)
 			body := &readTrackingBody{Reader: strings.NewReader(longBody)}
 			attempts := 0
-			middleware := trackAttempts("schema", &attempts)
+			middleware := trackAttempts("schema", unlimitedRate, &attempts)
 
 			resp, err := middleware(httptest.NewRequest(http.MethodPost, "/", nil), func(*http.Request) (*http.Response, error) {
 				return &http.Response{StatusCode: tt.status, Header: http.Header{}, Body: body}, nil
@@ -625,7 +706,7 @@ func TestTrackAttemptsReplaysBodyReadError(t *testing.T) {
 	body := &readTrackingBody{Reader: io.MultiReader(strings.NewReader("partial"), &oneOffErrReader{err: errBodyRead})}
 	attempts := 0
 
-	resp, err := trackAttempts("schema", &attempts)(httptest.NewRequest(http.MethodPost, "/", nil), func(*http.Request) (*http.Response, error) {
+	resp, err := trackAttempts("schema", unlimitedRate, &attempts)(httptest.NewRequest(http.MethodPost, "/", nil), func(*http.Request) (*http.Response, error) {
 		return &http.Response{StatusCode: http.StatusTooManyRequests, Header: http.Header{}, Body: body}, nil
 	})
 	if err != nil {
@@ -645,6 +726,45 @@ func TestTrackAttemptsReplaysBodyReadError(t *testing.T) {
 	}
 }
 
+type cancellingReader struct{ cancel func() }
+
+func (r cancellingReader) Read([]byte) (int, error) {
+	r.cancel()
+	return 0, io.EOF
+}
+
+func TestProviderErrorParsedAfterCancellationLeavesTheChain(t *testing.T) {
+	errCause := errors.New("sibling request failed")
+	ctx, cancel := context.WithCancelCause(context.Background())
+	defer cancel(nil)
+	// The middleware reads only the excerpt of a long body, so the SDK reaches the cancelling reader after its per-attempt context check.
+	body := `{"error":{"message":"` + strings.Repeat("x", 2*maxProviderTextBytes) + `"}}`
+	cl := newTestClient(t, func(http.ResponseWriter, *http.Request) {
+		t.Error("expected the stubbed response to replace the request")
+	}, testMaxConcurrent, 0, "")
+	cl.(*OAIClientImpl).extraBodyOpts = []option.RequestOption{option.WithMiddleware(func(*http.Request, option.MiddlewareNext) (*http.Response, error) {
+		return &http.Response{StatusCode: http.StatusUnauthorized, Header: http.Header{}, Body: io.NopCloser(io.MultiReader(
+			strings.NewReader(body),
+			cancellingReader{cancel: func() { cancel(errCause) }},
+		))}, nil
+	})}
+
+	_, report, err := cl.DeduplicateIssues(ctx, "system prompt", testDeduplicationRequest, testMaxCompletionToken)
+
+	if err == nil || ctx.Err() == nil {
+		t.Fatalf("expected an error from a cancelled request, got %v with context error %v", err, ctx.Err())
+	}
+	if errors.As(err, new(*openai.Error)) {
+		t.Errorf("expected the SDK error, which holds the raw response, to be out of the chain, got %v", err)
+	}
+	if !strings.Contains(err.Error(), "401 Unauthorized") || !strings.HasSuffix(err.Error(), errCause.Error()) {
+		t.Errorf("expected the provider status and the cancellation cause, got %v", err)
+	}
+	if report.ProviderAttempts != 1 {
+		t.Errorf("expected 1 attempt, got %d", report.ProviderAttempts)
+	}
+}
+
 func TestProviderSecretsAreRedacted(t *testing.T) {
 	const bearerToken, apiKey = "abc.def", "sk-live-1234567890"
 	hook := captureLogs(t)
@@ -659,6 +779,9 @@ func TestProviderSecretsAreRedacted(t *testing.T) {
 	if err == nil || !strings.HasSuffix(err.Error(), ": Invalid header Authorization: Bearer *** for key *** (code 401)") {
 		t.Fatalf("expected the redacted provider message in the error, got %v", err)
 	}
+	if errors.As(err, new(*openai.Error)) {
+		t.Errorf("expected the SDK error, which holds the raw response, to be out of the chain, got %v", err)
+	}
 	entries := hook.AllEntries()
 	if len(entries) != 1 {
 		t.Fatalf("expected one warning, got %d entries", len(entries))
@@ -667,5 +790,33 @@ func TestProviderSecretsAreRedacted(t *testing.T) {
 		if strings.Contains(entries[0].Message, secret) || strings.Contains(err.Error(), secret) {
 			t.Errorf("expected %q to be redacted, got log %q and error %q", secret, entries[0].Message, err.Error())
 		}
+	}
+}
+
+func TestProviderErrorWithoutDetailKeepsStatus(t *testing.T) {
+	const statusWithoutText = 522
+	tests := []struct {
+		name    string
+		status  int
+		body    string
+		wantErr string
+	}{
+		{name: "empty error object", status: http.StatusBadGateway, body: `{"error":{}}`, wantErr: "OpenAI API error: 502 Bad Gateway"},
+		{name: "non-JSON body", status: http.StatusBadGateway, body: "<html>upstream failed</html>", wantErr: "OpenAI API error: 502 Bad Gateway"},
+		{name: "status without text", status: statusWithoutText, body: `{"error":{}}`, wantErr: "OpenAI API error: 522"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cl := newTestClient(t, func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(tt.status)
+				_, _ = io.WriteString(w, tt.body)
+			}, testMaxConcurrent, 0, "")
+
+			_, _, err := cl.DeduplicateIssues(context.Background(), "system prompt", testDeduplicationRequest, testMaxCompletionToken)
+
+			if err == nil || err.Error() != tt.wantErr || errors.As(err, new(*openai.Error)) {
+				t.Fatalf("expected a plain error %q, got %v", tt.wantErr, err)
+			}
+		})
 	}
 }
