@@ -60,7 +60,7 @@
     "@netcracker/qubership-apihub-ddlapi": "workspace:^",
     "@netcracker/qubership-apihub-graphapi": "workspace:^",
     "@netcracker/qubership-apihub-json-crawl": "workspace:^",
-    "adm-zip": "0.6.0",
+    "adm-zip": "0.6.1",
     "ajv": "^8.12.0",
     "ajv-formats": "^2.1.1",
     "api-ref-bundler": "^0.4.3",
