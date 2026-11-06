@@ -32,7 +32,10 @@ tags:
   - name: Validation Operations
     description: API operations for managing validation processes.
   - name: Scoring
-    description: API for retrieving version scoring (quality and backwards compatibility).
+    description: >
+      API for retrieving version scoring (publication integrity, backwards compatibility, and quality).
+      Every validation of a version starts a scoring process next to the lint; the score is built part by
+      part, and the v2 operation returns the progress of each part.
 paths:
   /api/v1/system/version:
     get:
@@ -331,7 +334,7 @@ paths:
     get:
       tags:
         - Scoring
-      summary: Get scoring for a package version
+      summary: Get scoring for a package version (v1)
       description: >
         Returns the scoring result for the specified package version: overall status, human-readable
         reasons and optional debug messages, publicationIntegrityDetails, backwardsCompatibilityDetails
@@ -340,7 +343,76 @@ paths:
         overall status is the worst of the three. An unsound published version (APIHUB hasErrors or
         changelogHasErrors) cannot have overall status passed or passed_with_defects.
         The version parameter may include revision (e.g., 1.0.0@1) or omit it to resolve the latest revision.
+
+        Returns 404 until the score is complete. A new validation of a version that already has a score
+        resets the score, so this operation returns 404 again until the new score is complete. When the
+        version content cannot be read from APIHUB, the response has one more reason ("Internal error:
+        failed to calculate backwards compatibility details.") and one more debug line than before.
+        Use GET /api/v2/packages/{packageId}/versions/{version}/scoring to read a score while it is being
+        built.
       operationId: getScoringForVersion
+      deprecated: true
+      parameters:
+        - name: packageId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: >
+            Unique APIHUB package identifier (for example, a dot-separated hierarchical ID such as SD.TL.TLQSS).
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Package version (optionally with revision, e.g. 1.0.0@1)
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VersionScore_deprecated"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: The package version has no score, or its score is not complete yet (error code 2100)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/v2/packages/{packageId}/versions/{version}/scoring:
+    get:
+      tags:
+        - Scoring
+      summary: Get scoring for a package version
+      description: >
+        Returns the score of the specified package version at any time after a validation has started,
+        together with the process state of each part in process. Publication integrity and backwards
+        compatibility are computed as soon as APIHUB returns the version; quality grows while the
+        document lint tasks finish and becomes final when the lint of the version is final. Quality is
+        sampled once per scoring attempt, so an update can wait for the backwards compatibility attempt
+        in flight. While process.status is in_progress, status is absent and reason is an empty array; both are set when
+        the score is complete. A part that failed for good has the state error; its error text is in
+        debug, and a complete score with a failed part has status not_passed.
+        The version parameter may include revision (e.g., 1.0.0@1) or omit it to resolve the latest revision.
+      operationId: getScoringForVersionV2
       parameters:
         - name: packageId
           in: path
@@ -362,6 +434,82 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/VersionScore"
+              examples:
+                bwcDoneQualityRunning:
+                  summary: Integrity and backwards compatibility are known; the lint is still running
+                  value:
+                    reason: []
+                    debug: []
+                    publicationIntegrityDetails:
+                      status: passed
+                      hasErrors: false
+                      changelogHasErrors: false
+                      apiTypes:
+                        rest:
+                          hasErrors: false
+                    backwardsCompatibilityDetails:
+                      rest:
+                        status: passed
+                        reason: ""
+                        breaking: 0
+                        breakingInternal: 0
+                        breakingExternal: 0
+                        breakingUnknown: 0
+                        internal2Unknown: 0
+                        external2Internal: 0
+                        external2Unknown: 0
+                    qualityCheckDetails:
+                      rest:
+                        - linter: spectral
+                          status: passed_with_defects
+                          optional: false
+                          reason: Version contain 3 warnings for linter spectral.
+                          errorsCount: 0
+                          warningsCount: 3
+                    process:
+                      status: in_progress
+                      publicationIntegrity: completed
+                      backwardsCompatibility: completed
+                      qualityCheck: in_progress
+                completed:
+                  summary: Every part is complete
+                  value:
+                    status: passed_with_defects
+                    reason:
+                      - Version contains breaking change(s) in internal(2) operation(s).
+                      - Version contain 3 warnings for linter spectral.
+                    debug: []
+                    publicationIntegrityDetails:
+                      status: passed
+                      hasErrors: false
+                      changelogHasErrors: false
+                      apiTypes:
+                        rest:
+                          hasErrors: false
+                    backwardsCompatibilityDetails:
+                      rest:
+                        status: passed_with_defects
+                        reason: Version contains breaking change(s) in internal(2) operation(s).
+                        breaking: 2
+                        breakingInternal: 2
+                        breakingExternal: 0
+                        breakingUnknown: 0
+                        internal2Unknown: 0
+                        external2Internal: 0
+                        external2Unknown: 0
+                    qualityCheckDetails:
+                      rest:
+                        - linter: spectral
+                          status: passed_with_defects
+                          optional: false
+                          reason: Version contain 3 warnings for linter spectral.
+                          errorsCount: 0
+                          warningsCount: 3
+                    process:
+                      status: completed
+                      publicationIntegrity: completed
+                      backwardsCompatibility: completed
+                      qualityCheck: completed
         "401":
           description: Unauthorized
           content:
@@ -375,7 +523,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
         "404":
-          description: Scoring not found for the package version
+          description: >
+            The package version has never been validated, so it has no score (error code 2300). A version whose
+            score is still being built is returned with 200 and process.status in_progress.
           content:
             application/json:
               schema:
@@ -1062,7 +1212,7 @@ components:
         message:
           description: Description of the validation issue.
           type: string
-    VersionScore:
+    VersionScore_deprecated:
       description: Scoring result for a package version.
       type: object
       required:
@@ -1127,6 +1277,126 @@ components:
               type: array
               items:
                 $ref: "#/components/schemas/QualityCheckDetails"
+    VersionScore:
+      description: >
+        Score of a package version together with the process state of each part. The body of a complete
+        score has the same fields and values as the v1 body, plus process.
+      type: object
+      required:
+        - reason
+        - debug
+        - backwardsCompatibilityDetails
+        - qualityCheckDetails
+        - process
+      properties:
+        status:
+          description: >
+            Overall scoring status derived from publication integrity, backwards-compatibility, and
+            quality-check results; the worst of the three. Absent while process.status is in_progress;
+            one of the three values once process.status is completed. passed — no blocking issues;
+            passed_with_defects — non-blocking warnings or minor defects; not_passed — blocking errors,
+            breaking changes, unsound publication (hasErrors or changelogHasErrors), or a part in error.
+          type: string
+          enum:
+            - passed
+            - passed_with_defects
+            - not_passed
+        reason:
+          description: >
+            Human-readable reasons for the overall status. An empty array while process.status is
+            in_progress.
+          type: array
+          items:
+            type: string
+        debug:
+          description: >
+            Diagnostic messages for troubleshooting: the error text of every part in error, in the order
+            publication integrity, backwards compatibility, quality. Filled as soon as a part fails.
+          type: array
+          items:
+            type: string
+        publicationIntegrityDetails:
+          $ref: "#/components/schemas/PublicationIntegrityDetails"
+        backwardsCompatibilityDetails:
+          description: >
+            Backwards compatibility breakdown per API kind. A property is present only when that API type
+            exists for the version. Supported kinds are rest, graphql, protobuf, and asyncapi. Null while
+            process.backwardsCompatibility is pending or error.
+          type: object
+          nullable: true
+          properties:
+            rest:
+              $ref: "#/components/schemas/BackwardsCompatibilityDetails"
+            graphql:
+              $ref: "#/components/schemas/BackwardsCompatibilityDetails"
+            protobuf:
+              $ref: "#/components/schemas/BackwardsCompatibilityDetails"
+            asyncapi:
+              $ref: "#/components/schemas/BackwardsCompatibilityDetails"
+        qualityCheckDetails:
+          description: >
+            Quality check results from each linter, grouped by API kind. While process.qualityCheck is
+            in_progress, it lists the documents whose lint has finished; an empty object when none has. Null
+            while process.qualityCheck is pending, and when the lint of the version failed before any document
+            lint finished.
+          type: object
+          nullable: true
+          properties:
+            rest:
+              type: array
+              items:
+                $ref: "#/components/schemas/QualityCheckDetails"
+            graphql:
+              type: array
+              items:
+                $ref: "#/components/schemas/QualityCheckDetails"
+            protobuf:
+              type: array
+              items:
+                $ref: "#/components/schemas/QualityCheckDetails"
+            asyncapi:
+              type: array
+              items:
+                $ref: "#/components/schemas/QualityCheckDetails"
+        process:
+          $ref: "#/components/schemas/ScoringProcess"
+    ScoringProcess:
+      description: >
+        Process state of a score. publicationIntegrityDetails is absent while publicationIntegrity is
+        pending. A part in error failed for good; its error text is in debug.
+      type: object
+      required:
+        - status
+        - publicationIntegrity
+        - backwardsCompatibility
+        - qualityCheck
+      properties:
+        status:
+          description: completed when every part is completed or error; status is then present and reason is set.
+          type: string
+          enum:
+            - in_progress
+            - completed
+        publicationIntegrity:
+          type: string
+          enum:
+            - pending
+            - completed
+            - error
+        backwardsCompatibility:
+          type: string
+          enum:
+            - pending
+            - completed
+            - error
+        qualityCheck:
+          description: in_progress while the lint of the version is running.
+          type: string
+          enum:
+            - pending
+            - in_progress
+            - completed
+            - error
     PublicationIntegrityDetails:
       description: >
         Publication integrity for a package version, derived from APIHUB version flags

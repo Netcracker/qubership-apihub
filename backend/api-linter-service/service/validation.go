@@ -39,20 +39,20 @@ func NewValidationService(
 	lintResultRepository repository.LintResultRepository,
 	rulesetRepository repository.RulesetRepository,
 	docLintTaskRepository repository.DocLintTaskRepository,
-	versionTaskProcessor VersionTaskProcessor,
 	apihubClient client.ApihubClient,
 	executorId string,
-	versionTaskNotify chan<- struct{}) ValidationService {
+	versionTaskNotify chan<- struct{},
+	scoringTaskNotify chan<- struct{}) ValidationService {
 	return &validationServiceImpl{
 		verTaskRepo:             verTaskRepo,
 		versionResultRepository: versionResultRepository,
 		lintResultRepository:    lintResultRepository,
 		rulesetRepository:       rulesetRepository,
 		docLintTaskRepository:   docLintTaskRepository,
-		versionTaskProcessor:    versionTaskProcessor,
 		apihubClient:            apihubClient,
 		executorId:              executorId,
 		versionTaskNotify:       versionTaskNotify,
+		scoringTaskNotify:       scoringTaskNotify,
 		bulkJobs:                make(map[string]*bulkValidationJob),
 	}
 }
@@ -68,6 +68,7 @@ type validationServiceImpl struct {
 	apihubClient         client.ApihubClient
 	executorId           string
 	versionTaskNotify    chan<- struct{}
+	scoringTaskNotify    chan<- struct{}
 
 	bulkJobs      map[string]*bulkValidationJob
 	bulkJobsMutex sync.RWMutex
@@ -639,23 +640,49 @@ func (v *validationServiceImpl) ValidateVersion(ctx context.Context, packageId s
 	}
 
 	userId := secctx.GetUserId(ctx)
+	now := time.Now()
 
-	ent := entity.VersionLintTask{
+	lintTask := entity.VersionLintTask{
 		Id:           uuid.NewString(),
 		PackageId:    packageId,
 		Version:      ver,
 		Revision:     rev,
 		Status:       view.TaskStatusNotStarted,
 		Details:      "",
-		CreatedAt:    time.Now(),
+		CreatedAt:    now,
 		CreatedBy:    userId,
-		LastActive:   time.Now(),
+		LastActive:   now,
 		EventId:      eventId, // optional
 		RestartCount: 0,
 		Priority:     0,
 		Recalculate:  recalculate,
 	}
-	err = v.verTaskRepo.SaveVersionTask(context.Background(), ent)
+	scoringTask := entity.VersionScoringTask{
+		Id:                uuid.NewString(),
+		VersionLintTaskId: lintTask.Id,
+		PackageId:         packageId,
+		Version:           ver,
+		Revision:          rev,
+		CreatedAt:         now,
+		CreatedBy:         userId,
+		Status:            view.TaskStatusNotStarted,
+		LastActive:        now,
+	}
+	score := entity.VersionScore{
+		PackageId:                   packageId,
+		Version:                     ver,
+		Revision:                    rev,
+		ScoredAt:                    now,
+		Status:                      "",
+		Reasons:                     []string{},
+		Debug:                       []string{},
+		ScoringTaskId:               scoringTask.Id,
+		ProcessStatus:               view.ScoringProcessInProgress,
+		PublicationIntegrityStatus:  view.ScoringProcessPending,
+		BackwardCompatibilityStatus: view.ScoringProcessPending,
+		QualityCheckStatus:          view.ScoringProcessPending,
+	}
+	err = v.verTaskRepo.SaveVersionTask(context.Background(), lintTask, scoringTask, score)
 	if err != nil {
 		return "", err
 	}
@@ -664,10 +691,13 @@ func (v *validationServiceImpl) ValidateVersion(ctx context.Context, packageId s
 	select {
 	case v.versionTaskNotify <- struct{}{}:
 	default:
-		// channel full or no receiver - worker will pick up on next tick
+	}
+	select {
+	case v.scoringTaskNotify <- struct{}{}:
+	default:
 	}
 
-	return ent.Id, nil
+	return lintTask.Id, nil
 }
 
 const tempFolder = "tmp"

@@ -16,11 +16,13 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const versionTaskHeartbeatInterval = 5 * time.Second
+
 type VersionTaskProcessor interface {
 	StartVersionLintTask(taskId string) error
 }
 
-func NewVersionTaskProcessor(verRepo repository.VersionLintTaskRepository, docRepo repository.DocLintTaskRepository, verResRepo repository.VersionResultRepository, cl client.ApihubClient, linterSelectorService LinterSelectorService, linterConfigService LinterConfigService, scoringService ScoringService, executorId string, docTaskNotify chan<- struct{}, versionTaskNotify <-chan struct{}) VersionTaskProcessor {
+func NewVersionTaskProcessor(verRepo repository.VersionLintTaskRepository, docRepo repository.DocLintTaskRepository, verResRepo repository.VersionResultRepository, cl client.ApihubClient, linterSelectorService LinterSelectorService, linterConfigService LinterConfigService, executorId string, docTaskNotify chan<- struct{}, versionTaskNotify <-chan struct{}) VersionTaskProcessor {
 	svc := &versionTaskProcessorImpl{
 		verRepo:               verRepo,
 		docRepo:               docRepo,
@@ -28,7 +30,6 @@ func NewVersionTaskProcessor(verRepo repository.VersionLintTaskRepository, docRe
 		cl:                    cl,
 		linterSelectorService: linterSelectorService,
 		linterConfigService:   linterConfigService,
-		scoringService:        scoringService,
 		executorId:            executorId,
 		docTaskNotify:         docTaskNotify,
 		versionTaskNotify:     versionTaskNotify,
@@ -52,7 +53,6 @@ type versionTaskProcessorImpl struct {
 	cl                    client.ApihubClient
 	linterSelectorService LinterSelectorService
 	linterConfigService   LinterConfigService
-	scoringService        ScoringService
 	executorId            string
 	docTaskNotify         chan<- struct{}
 	versionTaskNotify     <-chan struct{}
@@ -81,7 +81,24 @@ func (v versionTaskProcessorImpl) processVersionLintTask(taskId string) {
 		return
 	}
 
-	// TODO: update last_active for version task periodically in goroutine?
+	// Keeps the lease while the documents are loaded, so another executor does not claim the task and fan out
+	// a second set of document tasks.
+	stopHeartbeat := make(chan struct{})
+	defer close(stopHeartbeat)
+	utils.SafeAsync(func() {
+		t := time.NewTicker(versionTaskHeartbeatInterval)
+		defer t.Stop()
+		for {
+			select {
+			case <-stopHeartbeat:
+				return
+			case <-t.C:
+				if err := v.verRepo.UpdateLastActive(ctx, taskId, v.executorId); err != nil {
+					log.Errorf("Failed to update last_active of version lint task %s: %s", taskId, err)
+				}
+			}
+		}
+	})
 
 	version := fmt.Sprintf("%s@%d", task.Version, task.Revision)
 
@@ -176,23 +193,7 @@ func (v versionTaskProcessorImpl) processVersionLintTask(taskId string) {
 			LintedAt:    time.Now(),
 		}
 
-		score, err := v.scoringService.CalculateScore(ctx, task.PackageId, task.Version, task.Revision)
-		if err != nil {
-			log.Errorf("Version scoring failed: %s. (task = %s)", err, taskId)
-			lintedVerEnt.LintStatus = view.VersionStatusError
-			lintedVerEnt.LintDetails = fmt.Sprintf("scoring failed: %s", err)
-		}
-		log.Infof("Version scoring status=%s. (task = %s)", score.Status, taskId)
-
-		scoreEnt := entity.NewVersionScore(
-			task.PackageId,
-			task.Version,
-			task.Revision,
-			time.Now(),
-			score,
-		)
-
-		err = v.verRepo.VersionLintCompleted(ctx, task.Id, &lintedVerEnt, &scoreEnt)
+		err = v.verRepo.VersionLintCompleted(ctx, task.Id, &lintedVerEnt)
 		if err != nil {
 			v.handleProcessingFailed(ctx, *task, err)
 			return
@@ -336,12 +337,19 @@ func (v versionTaskProcessorImpl) checkDocReady() {
 					v.handleProcessingFailed(ctx, verLintTask, err)
 					continue
 				}
+				if lintedVerEnt == nil {
+					// No document task wrote a result, for example when every one was given up after its restarts.
+					lintedVerEnt = &entity.LintedVersion{
+						PackageId: verLintTask.PackageId,
+						Version:   verLintTask.Version,
+						Revision:  verLintTask.Revision,
+					}
+				}
 
 				if numFailedOptional > 0 {
 					log.Infof("Version lint (task = %s) has %d optional linter doc task(s) failed; not affecting validation result", verLintTask.Id, numFailedOptional)
 				}
 
-				var score view.VersionScore
 				if numFailed > 0 {
 					log.Infof("Version lint (task = %s) is failed because of failed doc tasks", verLintTask.Id)
 					lintedVerEnt.LintStatus = view.VersionStatusError
@@ -352,26 +360,9 @@ func (v versionTaskProcessorImpl) checkDocReady() {
 					lintedVerEnt.LintDetails = ""
 				}
 
-				// calculate even for failed lint
-				score, err = v.scoringService.CalculateScore(ctx, verLintTask.PackageId, verLintTask.Version, verLintTask.Revision)
-				if err != nil {
-					log.Errorf("Version scoring failed: %s. (task = %s)", err, verLintTask.Id)
-					lintedVerEnt.LintStatus = view.VersionStatusError
-					lintedVerEnt.LintDetails = fmt.Sprintf("scoring failed: %s", err)
-				}
-				log.Infof("Version scoring status=%s. (task = %s)", score.Status, verLintTask.Id)
-
 				lintedVerEnt.LintedAt = time.Now()
 
-				scoreEnt := entity.NewVersionScore(
-					lintedVerEnt.PackageId,
-					lintedVerEnt.Version,
-					lintedVerEnt.Revision,
-					time.Now(),
-					score,
-				)
-
-				err = v.verRepo.VersionLintCompleted(ctx, verLintTask.Id, lintedVerEnt, &scoreEnt)
+				err = v.verRepo.VersionLintCompleted(ctx, verLintTask.Id, lintedVerEnt)
 				if err != nil {
 					v.handleProcessingFailed(ctx, verLintTask, err)
 					continue

@@ -47,3 +47,22 @@ type DocumentLintTask struct {
 	LintTimeMs        int64           `pg:"lint_time_ms,type:integer,notnull,use_zero"`
 	Recalculate       bool            `pg:"recalculate,type:boolean,notnull,use_zero"`
 }
+
+type VersionScoringTask struct {
+	tableName struct{} `pg:"version_scoring_task"`
+
+	Id                string          `pg:"id,pk,type:varchar"`
+	VersionLintTaskId string          `pg:"version_lint_task_id,type:varchar,notnull"`
+	PackageId         string          `pg:"package_id,type:varchar,notnull"`
+	Version           string          `pg:"version,type:varchar,notnull"`
+	Revision          int             `pg:"revision,type:integer,notnull"`
+	CreatedAt         time.Time       `pg:"created_at,type:timestamp without time zone,notnull"`
+	CreatedBy         string          `pg:"created_by,type:varchar,notnull"`
+	Status            view.TaskStatus `pg:"status,type:varchar,notnull"`
+	Details           string          `pg:"details,type:varchar"`
+	ExecutorId        string          `pg:"executor_id,type:varchar"`
+	LastActive        time.Time       `pg:"last_active,type:timestamp without time zone,notnull"`
+	RestartCount      int             `pg:"restart_count,type:integer,notnull,use_zero"`
+	Priority          int             `pg:"priority,type:integer,notnull,use_zero"`
+	HandledDocTaskIds []string        `pg:"handled_doc_task_ids,type:character varying ARRAY,array"`
+}

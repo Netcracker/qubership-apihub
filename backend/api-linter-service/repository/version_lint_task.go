@@ -17,13 +17,13 @@ import (
 )
 
 type VersionLintTaskRepository interface {
-	SaveVersionTask(ctx context.Context, ent entity.VersionLintTask) error
+	SaveVersionTask(ctx context.Context, lintTask entity.VersionLintTask, scoringTask entity.VersionScoringTask, score entity.VersionScore) error
 	GetTaskById(ctx context.Context, taskId string) (*entity.VersionLintTask, error)
 	GetRunningTaskForVersion(ctx context.Context, packageId, version string, revision int) ([]entity.VersionLintTask, error)
 	IncRestartCount(ctx context.Context, taskId string) error
 	FindFreeVersionTask(ctx context.Context, executorId string) (*entity.VersionLintTask, error)
 	GetWaitingForDocTasks(ctx context.Context, executorId string) ([]entity.VersionLintTask, error)
-	VersionLintCompleted(ctx context.Context, taskId string, ver *entity.LintedVersion, score *entity.VersionScore) error
+	VersionLintCompleted(ctx context.Context, taskId string, ver *entity.LintedVersion) error
 	VersionLintFailed(ctx context.Context, taskId string, details string) error
 	UpdateLastActive(ctx context.Context, taskId string, executorId string) error
 }
@@ -86,26 +86,37 @@ func (r *versionLintTaskRepositoryImpl) GetWaitingForDocTasks(ctx context.Contex
 	return result, nil
 }
 
-func (r *versionLintTaskRepositoryImpl) SaveVersionTask(ctx context.Context, ent entity.VersionLintTask) error {
-	_, err := r.cp.GetConnection().ModelContext(ctx, &ent).Insert()
-	if err != nil {
-		var pgerr pg.Error
-		if errors.As(err, &pgerr) {
-			if pgerr.Field('C') == "23505" && strings.Contains(err.Error(), "version_lint_task_event_id_unique") { // ERROR #23505 duplicate key value violates unique constraint "version_lint_task_event_id_unique"
-				return &exception.CustomError{
-					Status:  http.StatusInternalServerError,
-					Code:    exception.DuplicateEvent,
-					Message: exception.DuplicateEventMsg,
-					Params:  map[string]interface{}{"event_id": ent.EventId},
+func (r *versionLintTaskRepositoryImpl) SaveVersionTask(ctx context.Context, lintTask entity.VersionLintTask, scoringTask entity.VersionScoringTask, score entity.VersionScore) error {
+	return r.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
+		// The lint task goes first: a replayed event fails here and leaves the existing score untouched.
+		_, err := tx.Model(&lintTask).Insert()
+		if err != nil {
+			var pgerr pg.Error
+			if errors.As(err, &pgerr) {
+				if pgerr.Field('C') == "23505" && strings.Contains(err.Error(), "version_lint_task_event_id_unique") { // ERROR #23505 duplicate key value violates unique constraint "version_lint_task_event_id_unique"
+					return &exception.CustomError{
+						Status:  http.StatusInternalServerError,
+						Code:    exception.DuplicateEvent,
+						Message: exception.DuplicateEventMsg,
+						Params:  map[string]interface{}{"event_id": lintTask.EventId},
+					}
 				}
 			}
+			return err
 		}
-		return err
-	}
-	return nil
+
+		if _, err = tx.Model(&scoringTask).Insert(); err != nil {
+			return fmt.Errorf("failed to insert scoring task: %w", err)
+		}
+
+		if _, err = tx.Model(&score).OnConflict("(package_id, version, revision) do update").Insert(); err != nil {
+			return fmt.Errorf("failed to reset score: %w", err)
+		}
+		return nil
+	})
 }
 
-func (r *versionLintTaskRepositoryImpl) VersionLintCompleted(ctx context.Context, taskId string, ver *entity.LintedVersion, score *entity.VersionScore) error {
+func (r *versionLintTaskRepositoryImpl) VersionLintCompleted(ctx context.Context, taskId string, ver *entity.LintedVersion) error {
 	return r.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
 		var taskEnt entity.VersionLintTask
 		_, err := tx.Model(&taskEnt).
@@ -122,53 +133,41 @@ func (r *versionLintTaskRepositoryImpl) VersionLintCompleted(ctx context.Context
 		if err != nil {
 			return err
 		}
-
-		_, err = tx.Model(score).OnConflict("(package_id, version, revision) do update").Insert()
-		if err != nil {
-			return fmt.Errorf("failed to insert scoring data: %w", err)
-		}
-
 		return nil
 	})
-
 }
 
 func (r *versionLintTaskRepositoryImpl) VersionLintFailed(ctx context.Context, taskId string, details string) error {
 	return r.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
 		var taskEnt entity.VersionLintTask
-		_, err := tx.Model(&taskEnt).
-			Set("status = ?", view.StatusError).
+		err := tx.Model(&taskEnt).Where("id = ?", taskId).Select()
+		if err != nil {
+			return fmt.Errorf("failed to get version lint task %s: %w", taskId, err)
+		}
+
+		_, err = tx.Model(&taskEnt).
+			Set("status = ?", view.TaskStatusError).
 			Set("details = ?", details).
 			Set("last_active = ?", time.Now()).
-			Where("id = ?", taskId).
+			WherePK().
 			Update()
 		if err != nil {
 			return err
 		}
 
-		lintedVersionExists := true
-		var ver entity.LintedVersion
-		err = tx.Model(&ver).
-			Where("package_id = ?", taskEnt.PackageId).
-			Where("version = ?", taskEnt.Version).
-			Where("revision = ?", taskEnt.Revision).
-			Select()
-		if err != nil {
-			if errors.Is(err, pg.ErrNoRows) {
-				lintedVersionExists = false
-			}
-			return err
+		ver := entity.LintedVersion{
+			PackageId:   taskEnt.PackageId,
+			Version:     taskEnt.Version,
+			Revision:    taskEnt.Revision,
+			LintStatus:  view.VersionStatusError,
+			LintDetails: details,
+			LintedAt:    time.Now(),
 		}
-		if lintedVersionExists {
-			ver.LintStatus = view.VersionStatusError
-			ver.LintDetails = details
-			_, err = tx.Model(&ver).WherePK().Update()
-			if err != nil {
-				return err
-			}
-		}
-
-		return nil
+		_, err = tx.Model(&ver).OnConflict("(package_id, version, revision) do update").
+			Set("lint_status = EXCLUDED.lint_status").
+			Set("lint_details = EXCLUDED.lint_details").
+			Insert()
+		return err
 	})
 }
 
@@ -215,9 +214,11 @@ func applyRunningTaskFilter(q *orm.Query, packageId, version string, revision in
 		})
 }
 
+// Tasks in waiting_for_docs are never reclaimed: checkDocReady finishes them on every executor, and a reclaim
+// would fan out a second set of document tasks.
 var queryVersionTask = fmt.Sprintf("select * from version_lint_task b where "+
-	"(b.status='%s' or ((b.status='%s' or b.status='%s') and b.last_active < (now() - interval '%d seconds'))) "+
-	"order by b.created_at ASC limit 1 for no key update skip locked", view.TaskStatusNotStarted, view.TaskStatusProcessing, view.TaskStatusWaitingForDocs, buildKeepaliveTimeoutSec)
+	"(b.status='%s' or (b.status='%s' and b.last_active < (now() - interval '%d seconds'))) "+
+	"order by b.created_at ASC limit 1 for no key update skip locked", view.TaskStatusNotStarted, view.TaskStatusProcessing, buildKeepaliveTimeoutSec)
 
 func (r *versionLintTaskRepositoryImpl) FindFreeVersionTask(ctx context.Context, executorId string) (*entity.VersionLintTask, error) {
 	var result *entity.VersionLintTask
@@ -225,7 +226,6 @@ func (r *versionLintTaskRepositoryImpl) FindFreeVersionTask(ctx context.Context,
 
 	for {
 		taskFailed := false
-		taskWaiting := false
 		err = r.cp.GetConnection().RunInTransaction(context.Background(), func(tx *pg.Tx) error {
 			var ents []entity.VersionLintTask
 
@@ -238,22 +238,6 @@ func (r *versionLintTaskRepositoryImpl) FindFreeVersionTask(ctx context.Context,
 			}
 			if len(ents) > 0 {
 				result = &ents[0]
-
-				if result.Status == view.TaskStatusWaitingForDocs {
-					// just update executor id
-					_, err = tx.Model(result).
-						Set("executor_id = ?", executorId).
-						Set("last_active = ?", time.Now()).
-						Set("status = ?", view.TaskStatusProcessing).
-						Where("id = ?", result.Id).
-						Update()
-					if err != nil {
-						return err
-					}
-					taskWaiting = true
-					result = nil
-					return nil
-				}
 
 				if result.RestartCount >= 2 {
 					query := tx.Model(result).
@@ -295,7 +279,7 @@ func (r *versionLintTaskRepositoryImpl) FindFreeVersionTask(ctx context.Context,
 			}
 			return nil
 		})
-		if taskFailed || taskWaiting {
+		if taskFailed {
 			continue
 		}
 		break
