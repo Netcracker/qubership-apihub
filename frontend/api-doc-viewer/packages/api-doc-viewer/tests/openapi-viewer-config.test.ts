@@ -56,11 +56,11 @@ describe("OpenAPI viewer config", () => {
 
     // [code class, selected background, selected text, hovered background, text of untouched / hovered]
     it.each<[OpenApiResponseCodeClass, string, string, string, string]>([
-      [OpenApiResponseCodeClasses.INFORMATIONAL, "#9B7BF7", "#FFFFFF", "#ECE6FE", "#9B7BF7"],
-      [OpenApiResponseCodeClasses.SUCCESS, "#00BB5B", "#FFFFFF", "#D0FAD4", "#00BB5B"],
-      [OpenApiResponseCodeClasses.REDIRECTION, "#4FC0F8", "#FFFFFF", "#D6F2FE", "#4FC0F8"],
-      [OpenApiResponseCodeClasses.CLIENT_ERROR, "#FFB02E", "#FFFFFF", "#FFF4CC", "#FFB02E"],
-      [OpenApiResponseCodeClasses.SERVER_ERROR, "#FF636F", "#FFFFFF", "#FFC8C1", "#FF5260"],
+      [OpenApiResponseCodeClasses.INFORMATIONAL, "#9B7BF7", "#FFF", "#ECE6FE", "#9B7BF7"],
+      [OpenApiResponseCodeClasses.SUCCESS, "#00BB5B", "#FFF", "#D0FAD4", "#00BB5B"],
+      [OpenApiResponseCodeClasses.REDIRECTION, "#4FC0F8", "#FFF", "#D6F2FE", "#4FC0F8"],
+      [OpenApiResponseCodeClasses.CLIENT_ERROR, "#FFB02E", "#FFF", "#FFF4CC", "#FFB02E"],
+      [OpenApiResponseCodeClasses.SERVER_ERROR, "#FF636F", "#FFF", "#FFC8C1", "#FF5260"],
     ])("%s colors", (codeClass, selectedBackground, selectedText, hoveredBackground, text) => {
       const option = `button.button-selector-option.${OPENAPI_RESPONSE_CODE_TONE_CLASSES[codeClass]}`
       expect(takeDeclarations("openapi.css", option)).toMatchObject({ "background-color": "TRANSPARENT", color: text })

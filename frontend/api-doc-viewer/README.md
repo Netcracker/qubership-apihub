@@ -394,6 +394,11 @@ pnpm exec nx run api-doc-viewer-root:lint:check
 pnpm exec nx run api-doc-viewer:screenshot-test
 ```
 
+From `frontend/api-doc-viewer`, short aliases run the same: `pnpm build`, `pnpm test`, `pnpm build:showcase`,
+`pnpm screenshot-test`, `pnpm screenshot-test-single-suite`, `pnpm regenerate-screenshots`,
+`pnpm regenerate-screenshots-single-suite`, `pnpm development:storybook`, and `pnpm generate-compatibility-suite`.
+They are not Nx targets of `api-doc-viewer-root` (`nx.includedScripts` in its `package.json`), so CI never runs them.
+
 The screenshot tests start Chrome in a container and need Podman, Docker, or `wslc` on Windows; see
 [Build and test: Screenshot tests](../../docs/development/build-and-test.md#screenshot-tests).
 

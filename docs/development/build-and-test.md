@@ -25,8 +25,9 @@ pnpm exec nx affected -t build test
 - **Project names.** TypeScript projects are named in the `nx.name` field of their `package.json`, for example
   `ui-portal` for `frontend/ui/packages/portal`. Go projects take the module directory name (`portal-backend`). The
   Maven plugin names Java projects `<groupId>:<artifactId>`; the parent project is renamed `java-task-consumer`.
-- **Targets.** A TypeScript project's targets are the scripts of its `package.json`. Go targets come from the
-  `@nx-go/nx-go` plugin, Java targets from `@nx/maven`.
+- **Targets.** A TypeScript project's targets are the scripts of its `package.json`, or only those listed in its
+  `nx.includedScripts`: `api-doc-viewer-root` keeps its convenience aliases out of the graph that way. Go targets
+  come from the `@nx-go/nx-go` plugin, Java targets from `@nx/maven`.
 - **Dependencies.** `build` and `test` build the in-repo dependencies first (`dependsOn: ["^build"]` in
   [`nx.json`](../../nx.json)), so `nx run api-processor:test` builds `api-unifier`, `api-diff`, and the rest before it
   runs the tests.
