@@ -1,8 +1,10 @@
 package utils
 
 import (
+	"encoding/json"
 	"fmt"
 	"reflect"
+	"slices"
 	"strings"
 	"unicode"
 
@@ -12,6 +14,8 @@ import (
 )
 
 var v *validator.Validate
+
+var openAIServiceOwnedBodyKeys = []string{"messages", "response_format", "max_completion_tokens", "model"}
 
 func getValidator() *validator.Validate {
 	if v == nil {
@@ -26,8 +30,20 @@ func validateAILinterConfig(sl validator.StructLevel) {
 	if ai.Enabled && ai.OpenAI.APIKey == "" {
 		sl.ReportError(ai.OpenAI.APIKey, "OpenAI.APIKey", "APIKey", "required_if_enabled", "")
 	}
-	if ai.Enabled && ai.DeduplicationPrompt == "" {
-		sl.ReportError(ai.DeduplicationPrompt, "DeduplicationPrompt", "DeduplicationPrompt", "required_if_enabled", "")
+	if ai.Enabled && ai.Deduplication.CriteriaPrompt == "" {
+		sl.ReportError(ai.Deduplication.CriteriaPrompt, "Deduplication.CriteriaPrompt", "CriteriaPrompt", "required_if_enabled", "")
+	}
+	if ai.Enabled && ai.OpenAI.ExtraBodyJSON != "" {
+		var extraBody map[string]any
+		if err := json.Unmarshal([]byte(ai.OpenAI.ExtraBodyJSON), &extraBody); err != nil || extraBody == nil {
+			sl.ReportError(ai.OpenAI.ExtraBodyJSON, "OpenAI.ExtraBodyJSON", "ExtraBodyJSON", "json_object", "")
+			return
+		}
+		for key := range extraBody {
+			if slices.Contains(openAIServiceOwnedBodyKeys, key) {
+				sl.ReportError(ai.OpenAI.ExtraBodyJSON, "OpenAI.ExtraBodyJSON", "ExtraBodyJSON", "excludes_service_owned_keys", key)
+			}
+		}
 	}
 }
 

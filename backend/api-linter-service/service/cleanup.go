@@ -82,6 +82,17 @@ func (s *cleanupServiceImpl) ClearTestData(ctx context.Context, testId string) e
 		}
 
 		if len(versionLintTaskIds) > 0 {
+			_, err = tx.Exec(`
+				DELETE FROM ai_lint_stats
+				WHERE document_lint_task_id IN (
+					SELECT id
+					FROM document_lint_task
+					WHERE version_lint_task_id IN (?)
+				)`, pg.In(versionLintTaskIds))
+			if err != nil {
+				return fmt.Errorf("failed to delete ai_lint_stats records: %w", err)
+			}
+
 			_, err = tx.Model((*entity.DocumentLintTask)(nil)).
 				Where("version_lint_task_id IN (?)", pg.In(versionLintTaskIds)).
 				Delete()
