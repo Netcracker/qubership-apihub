@@ -141,10 +141,10 @@ Sketches: [../features/security-redesign.md](../features/security-redesign.md) �
 | --- | --- | --- | --- |
 | Title (h4) | always | scheme name; subheader: **gray type text** (JSON Schema / DDL type-label look), not a badge | `TitleRow` |
 | Unresolved | `!isResolved` | muted `Security scheme is not defined in components.` | — |
-| Description | `description` | markdown, right after the title | `DescriptionRow` |
+| Description | `description` | Markdown, right after the title | `DescriptionRow` |
 | `<Place> parameter name` | apiKey, `name` | value `name`; the label prefix comes from `in` per side: `Header` / `Query` / `Cookie` / `Path` (`OpenApiDisplayLabels.apiKeyParameterNameLabel`) — the former `In` and `Name` rows merged. An `in` replace paints the row yellow and puts the yellow text highlighter on the place word only (`Header` / `Query` …), never on the `parameter name` part | `SecuritySchemeParameterNameRow` (an `in` change counts here) |
-| `HTTP Authorization Scheme` | http, `scheme` | `basic`, `bearer`, … from the scheme, never hard-coded | `SecuritySchemeHttpSchemeRow` |
-| `Bearer Format` | http, `bearerFormat` | `JWT`, `PAT`, … | `SecuritySchemeBearerFormatRow` |
+| `HTTP Authorization Scheme` | HTTP, `scheme` | `basic`, `bearer`, … from the scheme, never hardcoded | `SecuritySchemeHttpSchemeRow` |
+| `Bearer Format` | HTTP, `bearerFormat` | `JWT`, `PAT`, … | `SecuritySchemeBearerFormatRow` |
 | `OpenID Connect URL` | openIdConnect | link | `SecuritySchemeOpenIdConnectUrlRow` |
 | `Scopes ▾` / `Roles ▾` (own list) | required scopes no flow declares — all of them for openIdConnect and OAS 3.1 roles; kind not `ignored` | 2nd-level scope rows, each with `*` (same rows as in flow parts) | the scope row's own diff |
 | Flow parts | oauth2 | [OAuth flow parts](#oauth-flow-parts) | per flow node |

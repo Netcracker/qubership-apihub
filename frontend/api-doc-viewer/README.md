@@ -58,7 +58,7 @@ you render:
 
 ## Quick start
 
-Import the stylesheet **once** at the application entry, then render a viewer:
+Import the style sheet **once** at the application entry, then render a viewer:
 
 ```tsx
 import { JsonSchemaViewer } from '@netcracker/qubership-apihub-api-doc-viewer'
@@ -140,7 +140,7 @@ instead of crashing the host page when rendering fails.
 
 ## Styling
 
-The stylesheet is isolated from the host application:
+The style sheet is isolated from the host application:
 
 - **Every class is prefixed.** The viewers render classes such as `api-doc-viewer-flex` and
   `api-doc-viewer-selected`, and `dist/style.css` only contains selectors for those names, so it

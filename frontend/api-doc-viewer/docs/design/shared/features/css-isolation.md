@@ -76,7 +76,7 @@ element rules by specificity as before.
   CSS (the `font` shorthand is not rewritten; the stylesheets do not use it with a family). `src: local('Inter')` keeps the
   system-installed font name. Inline styles use the constants in `src/consts/fonts.ts`.
 - `@keyframes` names are prefixed, and so are references to them in `animation` / `animation-name`
-  of the same stylesheet.
+  of the same style sheet.
 
 ## Rules for code
 

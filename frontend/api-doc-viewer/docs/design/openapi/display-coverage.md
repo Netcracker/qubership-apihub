@@ -66,7 +66,7 @@ JSO viewers. Diagrams: [architecture/](architecture/).
 | Header | `<operationId>` (secondary text, no label) | `operationId` | [entities/operation.md](entities/operation.md#operation-id-row) |
 | Header | Address row: method badge + path | always | [entities/operation.md](entities/operation.md#address-row) |
 | Header | External docs link: static `View external documentation ↗`; `externalDocs.description` in a hover `UxTooltip` | `externalDocs.url`; `detailed` mode only | [entities/operation.md](entities/operation.md#external-docs-row) |
-| Header | Description (markdown) | `description`; `detailed` mode only | [entities/operation.md](entities/operation.md#description-row) |
+| Header | Description (Markdown) | `description`; `detailed` mode only | [entities/operation.md](entities/operation.md#description-row) |
 | Security | Section (h2) | ≥1 effective list item (`[{}]` included) | [entities/security.md](entities/security.md) |
 | Security | Security toolbar: `‹` options strip `›` (scrolls one option per arrow click, cropped titles) | ≥1 non-anonymous alternative | [entities/security.md](entities/security.md#security-toolbar), [shared/features/arrow-scroll-strip.md](../shared/features/arrow-scroll-strip.md) |
 | Security | Framed scheme card: title (h4) + gray type text, description, security props (`<Place> parameter name`, `HTTP Authorization Scheme`, `Bearer Format`, `OpenID Connect URL`, `Required scopes` / `Required roles`) | per scheme of the selected alternative; description and scope descriptions in `detailed` mode only | [entities/security.md](entities/security.md#scheme-card) |
@@ -83,10 +83,10 @@ JSO viewers. Diagrams: [architecture/](architecture/).
 | All | Section order from one config map | — | [features/operation-viewer.md](features/operation-viewer.md#section-order) |
 | Request | Body (h3) + media-type selector | Body present: `description` or ≥1 media type with `schema` | [entities/request-body.md](entities/request-body.md) |
 | Request | Required `*` on the Body title | `requestBody.required: true` | [entities/request-body.md](entities/request-body.md#required-marker) |
-| Request | Body description (markdown) | `requestBody.description`; `detailed` mode only | [entities/request-body.md](entities/request-body.md#description-row) |
+| Request | Body description (Markdown) | `requestBody.description`; `detailed` mode only | [entities/request-body.md](entities/request-body.md#description-row) |
 | Request | Body schema (wrapped root `Type`) | selected media type has `schema` | [entities/request-body.md](entities/request-body.md#schema) |
 | Responses | Section (h2) + toned code selector: `‹` codes strip `›` in the subheader (one line, scrolls one code per arrow click) | `responses` | [entities/responses.md](entities/responses.md), [features/response-code-selector.md](features/response-code-selector.md), [shared/features/arrow-scroll-strip.md](../shared/features/arrow-scroll-strip.md) |
-| Responses | Response description (markdown) | `description`; `detailed` mode only | [entities/responses.md](entities/responses.md#description-row) |
+| Responses | Response description (Markdown) | `description`; `detailed` mode only | [entities/responses.md](entities/responses.md#description-row) |
 | Responses | Headers (h3) + synthesized schema | ≥1 header | [entities/responses.md](entities/responses.md#headers) |
 | Responses | Body (h3) + media-type selector in the subheader + schema | the selected response has ≥1 media type with `schema` | [entities/responses.md](entities/responses.md#body) |
 

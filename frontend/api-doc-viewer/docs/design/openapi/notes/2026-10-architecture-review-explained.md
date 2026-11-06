@@ -684,7 +684,7 @@ Security), F16 + F17 + F18 (viewer tidy-ups). Full text: notes → "F12, F14–F
 | F15 | *(after F25: the complex path is used and the tree sort uses `sortNestedNodes`)* The transformer still sorts codes into an object that cannot keep the order. | Delete that sort and the then-unused `OpenApiResponseCode.sort`; the test checks `compare`. |
 | F16 | "Default response = first 2XX" is a domain rule written as a viewer free function; the badge helper returns an inline type. | `OpenApiResponseCode.pickDefault` in next-data-model, an `OpenApiViewSelection` class, an `HttpMethodBadge` type. |
 | F17 | Six section titles and the `Show N unchanged …` wording are literals in components, the plural rule twice. | Titles to the display-label classes; one `ShowUnchangedLabels` helper. |
-| F18 | Two text colours and the red required star are hard-coded in components. | A `TextColors` module and a `RequiredMark` component for the OpenAPI / Security copies. |
+| F18 | Two text colours and the red required star are hardcoded in components. | A `TextColors` module and a `RequiredMark` component for the OpenAPI / Security copies. |
 
 ### What was done (2026-10-30)
 

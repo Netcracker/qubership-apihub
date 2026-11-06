@@ -174,14 +174,14 @@ One case list for the request body and the body of the initially selected respon
 | `13-scheme-description-added` | scheme description added | `14-scheme-description-removed` |
 | `14-scheme-description-removed` | scheme description removed | `13-scheme-description-added` |
 | `15-scheme-description-changed` | scheme description replaced | — |
-| `16-scheme-type-changed` | scheme type replaced: apiKey -> http bearer (type badge only) | — |
+| `16-scheme-type-changed` | scheme type replaced: apiKey -> HTTP bearer (type badge only) | — |
 | `17-scheme-definition-added` | missing scheme definition added to components | `18-scheme-definition-removed` |
 | `18-scheme-definition-removed` | scheme definition removed (unresolved card) | `17-scheme-definition-added` |
 | `19-api-key-location-changed` | apiKey `in` replaced: header -> query | — |
 | `20-api-key-name-changed` | apiKey `name` replaced | — |
-| `21-http-scheme-changed` | http `scheme` replaced: basic -> digest | — |
-| `22-bearer-format-added` | http `bearerFormat` added | `23-bearer-format-removed` |
-| `23-bearer-format-removed` | http `bearerFormat` removed | `22-bearer-format-added` |
+| `21-http-scheme-changed` | HTTP `scheme` replaced: basic -> digest | — |
+| `22-bearer-format-added` | HTTP `bearerFormat` added | `23-bearer-format-removed` |
+| `23-bearer-format-removed` | HTTP `bearerFormat` removed | `22-bearer-format-added` |
 | `24-openid-connect-url-changed` | `openIdConnectUrl` replaced | — |
 | `25-oauth-flow-added` | OAuth flow added | `26-oauth-flow-removed` |
 | `26-oauth-flow-removed` | one of two OAuth flows removed | `25-oauth-flow-added` |

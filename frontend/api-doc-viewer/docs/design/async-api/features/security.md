@@ -55,7 +55,7 @@ merged item is not the `components` object itself.
 | list item (one scheme) | Security Requirement (map of schemes → scopes) | toolbar option = one scheme; its content = one card |
 | scheme name: the `components.securitySchemes` key | requirement key | resolved: reference-name symbol, else the `components.securitySchemes` entry with the same content, else `Security scheme <n>` |
 | `type` (13 values) | `type` (5 values) | gray type text after the name; own label set per spec |
-| `description` | `description` | same (markdown row) |
+| `description` | `description` | same (Markdown row) |
 | `httpApiKey` `name` + `in` (`query` / `header` / `cookie`) | `apiKey` `name` + `in` | **1:1**: `<Place> parameter name  <name>` |
 | `apiKey` `in` (`user` / `password`) | — | new prop row `API key location  User / Password` |
 | `http` `scheme`, `bearerFormat` | same | **1:1** |

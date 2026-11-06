@@ -80,7 +80,7 @@ Header parameter name     X-API-Key          ← label from `in`: Header / Query
 The former `In` and `Name` rows merge into this single prop. The label prefix follows `in`
 (`Header`, `Query`, `Cookie`; `Path` only if a document ever uses it); the value is `name`.
 
-### http basic / http bearer (JWT, PAT, …)
+### HTTP basic / HTTP bearer (JWT, PAT, …)
 
 ```text
 basic_auth                (gray HTTP)
@@ -240,5 +240,5 @@ Servers
 | Q-S5 | Toolbar arrows when all options fit | Arrows shown and disabled (no layout jump). Alternative: hide both arrows. |
 | Q-S6 | Card frame | Kept (per-row frame segments); the new rows keep drawing their segment. |
 | Q-S7 | Unresolved scheme (no definition in `components`) | Title + muted text row as today, no props. |
-| Q-S8 | Scheme type changed (e.g. apiKey → http) | The gray type text gets a value highlighter on both sides, the props follow the per-row rules (old ones removed, new ones added); the title row is not painted. |
+| Q-S8 | Scheme type changed (e.g. apiKey → HTTP) | The gray type text gets a value highlighter on both sides, the props follow the per-row rules (old ones removed, new ones added); the title row is not painted. |
 | Q-S9 | AsyncAPI reuse | Shared components now, AsyncAPI data layer and wiring as a separate later step (§5). |

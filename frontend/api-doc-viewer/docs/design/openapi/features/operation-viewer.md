@@ -110,7 +110,7 @@ titles, **h5** OAuth flow titles.
 | 23 | Response body schema (incl. cloned media-type `x-*` in its Extensions sub-tree) | `JsonSchemaViewer` | `mediaType` (selected) | an option is selected | same |
 | 24 | **Extensions** (h3) of the Responses Object (code-independent) + JSO tree | shared `ExtensionsSection` | `extensions`, key `responsesExtensions` (child of `operation`, **not** of the complex `responses` node) | ≥1 `x-*` on the Responses Object | [responses](../entities/responses.md#responses-extensions) |
 
-The order of the sections in this table is not hard-coded in containers: it comes from one config
+The order of the sections in this table is not hardcoded in containers: it comes from one config
 map ([Section order](#section-order)). The row numbers above follow the default config.
 
 In the diffs viewer every row is rendered when it has content on **either** side or carries a diff
@@ -222,10 +222,10 @@ export const OPENAPI_SECTION_ORDER = {
 | Rule | Detail |
 | --- | --- |
 | Scope | one list per container level: `OperationNodeViewer` (`operation`), `RequestNodeViewer` (`request`), `ResponsesNodeViewer` (`responses`), `buildResponseBlocks` (`response-blocks.tsx`, `response`) |
-| Containers | iterate their list and render the section whose id they meet, skipping sections that are not visible; no container has a hard-coded sequence of sections |
+| Containers | iterate their list and render the section whose id they meet, skipping sections that are not visible; no container has a hardcoded sequence of sections |
 | Fixed, not configurable | the operation header rows (title, operation ID, address, description, external docs) and the rows **inside** a section (e.g. Body header → description → schema; Security header → selector → cards). The Responses header with its code selector always comes first in the Responses section — it is the section header, not a section of the list. |
 | Moving between levels | not supported: a section id stays in its own list (a response section cannot move into `request`) |
-| Spacing | separators are planned over the visible sections in the **configured** order (`LayoutPlanner.plan`), never from a hard-coded predecessor — changing the order needs no CSS change ([Spacing](#spacing-data-precededby)) |
+| Spacing | separators are planned over the visible sections in the **configured** order (`LayoutPlanner.plan`), never from a hardcoded predecessor — changing the order needs no CSS change ([Spacing](#spacing-data-precededby)) |
 | Test ids, change markers, diffs | independent of the order |
 | Unit test | each list contains exactly its allowed ids, each once (a reordered list is valid, a missing or foreign id fails) |
 | Public API | not exposed to hosts in v1; the map is the extension point |
