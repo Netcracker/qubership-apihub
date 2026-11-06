@@ -9631,7 +9631,7 @@
                             "protocolProfileBehavior": {}
                         },
                         {
-                            "name": "8.20.13 Copy package 2 version 1 without necessary paramter",
+                            "name": "8.20.13 Copy package 2 version 1 without necessary parameter",
                             "event": [
                                 {
                                     "listen": "test",
@@ -13933,7 +13933,7 @@
                             "protocolProfileBehavior": {}
                         },
                         {
-                            "name": "8.25.4 Publish new verision",
+                            "name": "8.25.4 Publish new version",
                             "event": [
                                 {
                                     "listen": "test",
@@ -31244,7 +31244,7 @@
                             "protocolProfileBehavior": {}
                         },
                         {
-                            "name": "9.2.5 Publish verion with '?????' name",
+                            "name": "9.2.5 Publish version with '?????' name",
                             "event": [
                                 {
                                     "listen": "test",
@@ -31318,7 +31318,7 @@
                             "protocolProfileBehavior": {}
                         },
                         {
-                            "name": "9.2.6 Publish verion with '/////' name",
+                            "name": "9.2.6 Publish version with '/////' name",
                             "event": [
                                 {
                                     "listen": "test",

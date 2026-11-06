@@ -359,12 +359,17 @@ await lintRulesetTdm.createRuleset({
 **Prevention (pick one):**
 
 - **Idempotent create (recommended):** check existence by `name + apiType` and reuse it (or implement “create-or-get-existing” in the TDM).
-- **Fresh per retry/run:** make the name unique **before** the testId suffix so cleanup still works:
+- **Fresh per test attempt:** create the resource in the test that uses it, not in `beforeAll`, and make the name
+  unique **before** the testId suffix so cleanup still works:
 
 ```typescript
 const retryIndex = test.info().retry + 1
 const rulesetName = `${ALIAS_PREFIX}-Quality-Tab-OAS30-${retryIndex}-${testIdN}`
 ```
+
+In a `beforeAll`, the retry index is not unique: after a failure, the tests that have not run yet run the hook again
+in a new worker with retry 0. Publishing an existing version does not fail with 409; it adds a revision. Choose
+between reused and fresh data as "Placement & Hooks" in `docs/CODING_GUIDELINES.md` describes.
 
 ### Preparing tests for retry verification
 

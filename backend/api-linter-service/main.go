@@ -17,6 +17,7 @@ import (
 	"github.com/Netcracker/qubership-apihub/backend/api-linter-service/security"
 	exposer "github.com/Netcracker/qubership-apihub/backend/commons-go/api-spec-exposer"
 	"github.com/Netcracker/qubership-apihub/backend/commons-go/api-spec-exposer/config"
+	"github.com/Netcracker/qubership-apihub/backend/commons-go/logging"
 	"github.com/google/uuid"
 
 	"github.com/Netcracker/qubership-apihub/backend/api-linter-service/controller"
@@ -30,6 +31,8 @@ import (
 )
 
 func init() {
+	log.SetFormatter(logging.NewFormatter())
+	logging.RedirectStandardLog()
 	logLevel, err := log.ParseLevel(os.Getenv("LOG_LEVEL"))
 	if err != nil {
 		logLevel = log.InfoLevel
@@ -49,6 +52,7 @@ func main() {
 
 	basePath := systemInfoService.GetBasePath()
 	r := mux.NewRouter().SkipClean(true).UseEncodedPath()
+	r.Use(logging.RequestIDMiddleware)
 	r.Use(midldleware.WriteDeadlineMiddleware)
 
 	creds := systemInfoService.GetCreds()

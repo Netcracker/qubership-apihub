@@ -124,7 +124,7 @@ export class JsoTreeBuilder extends TreeBuilder<
         if (!nodeValue) { // just a type guard
           return false
         }
-        // we should not build-in nodes for json schema or multi-schema values into JSO Tree
+        // we should not build in nodes for json schema or multi-schema values into JSO Tree
         // they will be processed by separate data models
         return this.supportJsonSchema && (
           nodeValue.valueType === JsoPropertyValueTypes.JSON_SCHEMA ||

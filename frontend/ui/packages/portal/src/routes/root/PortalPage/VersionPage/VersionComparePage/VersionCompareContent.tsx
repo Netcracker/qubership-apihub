@@ -195,7 +195,7 @@ export const VersionCompareContent: FC = memo(() => {
   const handleSwap = useCallback(() => {
     const searchParams = {
       [VERSION_SEARCH_PARAM]: { value: changedVersionKey },
-      [PACKAGE_SEARCH_PARAM]: { value: originPackageKey !== changedPackageKey ? encodeURIComponent(changedPackageKey!) : '' },
+      [PACKAGE_SEARCH_PARAM]: { value: originPackageKey !== changedPackageKey ? changedPackageKey! : '' },
       [REF_SEARCH_PARAM]: { value: isPackageFromDashboard ? refPackageKey : undefined },
       [API_TYPE_SEARCH_PARAM]: { value: apiType },
       [TAG_SEARCH_PARAM]: { value: tag },
@@ -296,7 +296,7 @@ function renderOperationComparisonRow(
   } = operationChange
 
   const comparingSearchParams = optionalSearchParams({
-    [PACKAGE_SEARCH_PARAM]: { value: changedPackageKey === originPackageKey ? '' : encodeURIComponent(originPackageKey) },
+    [PACKAGE_SEARCH_PARAM]: { value: changedPackageKey === originPackageKey ? '' : originPackageKey },
     [VERSION_SEARCH_PARAM]: { value: originVersionKey },
     [REF_SEARCH_PARAM]: { value: refPackageKey },
     [OPERATION_SEARCH_PARAM]: {
@@ -364,7 +364,7 @@ function renderDdlComparisonRow(
   const entityId = getDdlChangeEntityId(ddlChange)
 
   const comparingSearchParams = optionalSearchParams({
-    [PACKAGE_SEARCH_PARAM]: { value: changedPackageKey === originPackageKey ? '' : encodeURIComponent(originPackageKey) },
+    [PACKAGE_SEARCH_PARAM]: { value: changedPackageKey === originPackageKey ? '' : originPackageKey },
     [VERSION_SEARCH_PARAM]: { value: originVersionKey },
     [REF_SEARCH_PARAM]: { value: refPackageKey },
   })

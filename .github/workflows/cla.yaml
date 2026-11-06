@@ -33,3 +33,5 @@ jobs:
           allowlist: NetcrackerCLPLCI,web-flow,bot*
           remote-repository-name: cla-storage
           remote-organization-name: Netcracker
+          # A locked pull request rejects comments from GITHUB_TOKEN, and other workflows comment after the merge.
+          lock-pullrequest-aftermerge: false

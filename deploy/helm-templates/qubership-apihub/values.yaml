@@ -71,7 +71,7 @@ qubershipApihubBackend:
       allowedOrigins: []
       # Optional; Enables automatic login with the configured identity provider instead of showing the APIHUB login page; If not set, default value: false; Example: true
       autoLogin: false
-      # Optional; To be deleted, WA for smooth upgrade of exisiting deployments; If not set, default value: true; Example: false
+      # Optional; To be deleted, WA for smooth upgrade of existing deployments; If not set, default value: true; Example: false
       legacySaml: true
       # Optional; List of external identity providers to use for authentication; OIDC and SAML types are supported. If not set, default value: []; Example:
       #   # Mandatory; ID for external identity provider; If not set, default value: ""; Example: external-saml-idp
@@ -220,7 +220,7 @@ qubershipApihubBackend:
       crt: ''
       # Optional; Bucket name in S3 storage; If not set, default value: ""; Example: apihub-bucket
       bucketName: ''
-      # Optional; Set to true to store only build results (less data amout) in S3 storage; If not set, default value: false; Example: true
+      # Optional; Set to true to store only build results (less data amount) in S3 storage; If not set, default value: false; Example: true
       storeOnlyBuildResult: false
       # Timeouts for the individual steps of the data migration between S3 storage and the database. There is no timeout for a migration run as a whole, because its duration depends on the number of objects to transfer.
       migrationTimeouts:

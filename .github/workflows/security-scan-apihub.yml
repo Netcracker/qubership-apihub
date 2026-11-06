@@ -8,7 +8,8 @@ run-name: >-
 # that had one.
 #
 # Manual and weekly, not part of ci-ok: a new CVE in a base image must not block a pull request. The tags are the
-# ones tools/ci/branch-tag.sh gives: develop -> dev, release -> next, main -> latest.
+# ones tools/ci/branch-tag.sh gives: develop -> dev, release -> next, main -> latest. The default is dev, the
+# images of the default branch.
 
 'on':
   workflow_dispatch:
@@ -29,7 +30,7 @@ run-name: >-
       tag:
         description: 'Tag of the repository images to scan (develop is dev, release is next, main is latest).'
         required: false
-        default: latest
+        default: dev
         type: string
       only-high-critical:
         description: 'Report only HIGH and CRITICAL findings.'
@@ -82,7 +83,7 @@ jobs:
           # A scheduled run has no inputs, so every default is set here.
           TARGET: ${{ inputs.target || 'docker' }}
           IMAGE: ${{ inputs.image }}
-          TAG: ${{ inputs.tag || 'latest' }}
+          TAG: ${{ inputs.tag || 'dev' }}
         run: |
           set -euo pipefail
           owner="$(echo "$OWNER" | tr '[:upper:]' '[:lower:]')"
@@ -119,7 +120,7 @@ jobs:
       contents: read
       security-events: write
       packages: read
-    uses: Netcracker/qubership-workflow-hub/.github/workflows/re-security-scan.yml@396774180000abdb825cbf150b56cc59c6913db8 # v2.0.5
+    uses: Netcracker/qubership-workflow-hub/.github/workflows/re-security-scan.yml@e6afd0a6bcc4f24d73e3e4d5fb9a31ada009e3f1 # v2.8.2
     with:
       target: docker
       image: ${{ matrix.image }}
@@ -138,7 +139,7 @@ jobs:
       contents: read
       security-events: write
       packages: read
-    uses: Netcracker/qubership-workflow-hub/.github/workflows/re-security-scan.yml@396774180000abdb825cbf150b56cc59c6913db8 # v2.0.5
+    uses: Netcracker/qubership-workflow-hub/.github/workflows/re-security-scan.yml@e6afd0a6bcc4f24d73e3e4d5fb9a31ada009e3f1 # v2.8.2
     with:
       target: source
       only-high-critical: ${{ inputs.only-high-critical }}

@@ -8,7 +8,7 @@ const EXTENSION_VERSION_QUERY_KEY = 'extension-version'
 const EXTENSION_VERSION_STALE_TIME = 30 * 1000
 
 // The extensions that report a version, in the order System Information lists them.
-export const VERSIONED_EXTENSION_NAMES = [
+const VERSIONED_EXTENSION_NAMES = [
   SystemExtensionNames.apiLinter,
   SystemExtensionNames.agentsBackend,
 ] as const

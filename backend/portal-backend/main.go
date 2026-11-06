@@ -11,10 +11,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Netcracker/qubership-apihub/backend/commons-go/api-spec-exposer/config"
 	"github.com/Netcracker/qubership-apihub/backend/portal-backend/responder"
 	"github.com/Netcracker/qubership-apihub/backend/portal-backend/security/idp/providers"
 	"github.com/Netcracker/qubership-apihub/backend/portal-backend/service/cleanup"
-	"github.com/Netcracker/qubership-apihub/backend/commons-go/api-spec-exposer/config"
 
 	"gopkg.in/natefinch/lumberjack.v2"
 
@@ -40,10 +40,10 @@ import (
 	"github.com/Netcracker/qubership-apihub/backend/portal-backend/service"
 
 	exposer "github.com/Netcracker/qubership-apihub/backend/commons-go/api-spec-exposer"
+	"github.com/Netcracker/qubership-apihub/backend/commons-go/logging"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
-	prefixed "github.com/x-cray/logrus-prefixed-formatter"
 )
 
 const startupOperationTimeout = 60 * time.Second
@@ -62,18 +62,14 @@ func init() {
 	} else {
 		mw = os.Stdout
 	}
-	log.SetFormatter(&prefixed.TextFormatter{
-		DisableColors:   true,
-		TimestampFormat: "2006-01-02 15:04:05",
-		FullTimestamp:   true,
-		ForceFormatting: true,
-	})
+	log.SetFormatter(logging.NewFormatter())
 	logLevel, err := log.ParseLevel(os.Getenv("LOG_LEVEL"))
 	if err != nil {
 		logLevel = log.InfoLevel
 	}
 	log.SetLevel(logLevel)
 	log.SetOutput(mw)
+	logging.RedirectStandardLog()
 }
 
 func main() {
@@ -92,6 +88,7 @@ func main() {
 	migrationPassedChan := make(chan bool)
 	initSrvStoppedChan := make(chan bool)
 	r := mux.NewRouter()
+	r.Use(logging.RequestIDMiddleware)
 	if systemInfoService.MonitoringEnabled() {
 		r.Use(midldleware.PrometheusMiddleware)
 	}

@@ -52,6 +52,10 @@ export class ViewComponentImpl implements ViewComponent {
     await renderFinish
   }
 
+  public async clickOnCanvas(x: number, y: number): Promise<void> {
+    await this._domElement.click({ offset: { x, y } })
+  }
+
   private async findTextElement(text: string): Promise<ElementHandle> {
     let elements: ElementHandle[] = await this._domElement.$$(`::-p-xpath(.//*[name()='text'][text()='${text}'])`)
     if (elements.length === 0) {

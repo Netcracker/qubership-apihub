@@ -89,7 +89,7 @@ export const ComparisonOperationChangeSeverityFilters: FC<ComparisonOperationCha
   }, [operationChangesSummary, loadingOperationChangesSummary])
 
   const apiDiffResult = useMemo(() => {
-    // prefix groups operations OR arbitary operations comparison
+    // prefix groups operations OR arbitrary operations comparison
     if (!comparisonAlreadyDone) {
       return getApiDiffResult({
         beforeData: originOperation?.data,
