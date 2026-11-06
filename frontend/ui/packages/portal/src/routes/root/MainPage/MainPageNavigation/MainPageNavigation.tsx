@@ -31,6 +31,7 @@ import type { MainPageRoute } from '../../../../routes'
 import { FAVORITE_PAGE, PRIVATE_PAGE, SHARED_PAGE, WORKSPACES_PAGE } from '../../../../routes'
 import { useParams } from 'react-router'
 import { WORKSPACE_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
+import { useOptionalUser } from '@netcracker/qubership-apihub-ui-shared/hooks/authorization'
 import { WORKSPACES_PAGE_REFERER } from '@portal/entities/referer-pages-names'
 
 const DIVIDER_STYLES = {
@@ -49,6 +50,9 @@ const LABEL_STYLES = {
 
 export const MainPageNavigation: FC = memo(() => {
   const { workspaceKey } = useParams()
+  const [user] = useOptionalUser()
+  // Favorite / Shared / Private are bound to a user account
+  const navigationItems = user ? MAIN_PAGE_NAVIGATION_ITEMS : MAIN_PAGE_NAVIGATION_ITEMS.filter(({ id }) => id === WORKSPACES_PAGE)
 
   const [workspaces] = usePackages({
     kind: WORKSPACE_KIND,
@@ -66,7 +70,7 @@ export const MainPageNavigation: FC = memo(() => {
   return (
     <Box sx={{ width: '20%', maxWidth: '180px' }} data-testid="PortalSidebar">
       <List>
-        {MAIN_PAGE_NAVIGATION_ITEMS.map(({ id, label, to, icon, 'data-testid': dataTestId }) => (
+        {navigationItems.map(({ id, label, to, icon, 'data-testid': dataTestId }) => (
           <NavigationItem
             key={id}
             to={to}

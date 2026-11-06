@@ -25,7 +25,7 @@ contract), see [Configuration reference](./configuration-reference.md).
 
 | Name | Version | Required | Notes |
 |------|---------|----------|-------|
-| **PostgreSQL** | 14+ | Yes | Three logical databases required: `apihub_backend`, `api_linter`, `agents_backend` (names are configurable). Pre-create them before first start — see `scripts/init-db/init.sql` in the Compose folder. |
+| **PostgreSQL** | 14+ | Yes | Four logical databases required: `apihub_backend`, `api_linter`, `agents_backend`, `documents_backend` (names are configurable). Pre-create them before first start — see `scripts/init-db/init.sql` in the Compose folder. |
 | **S3-compatible storage** | Any | Optional | Offloads build artefacts; reduces PG growth. Configure under `s3Storage` in backend `config.yaml` / Helm values. |
 | **SAML / OIDC identity provider** | Any | Optional | Required when `security.productionMode: true`. Keycloak example: [`deploy/docker-compose/with-keycloak/`](../deploy/docker-compose/with-keycloak/). |
 | **LDAP** | Any | Optional | User directory sync when federated login is active (`security.ldap` in backend config). |
@@ -44,6 +44,7 @@ Defaults in `values.yaml` and `docker-compose.yml` are enough for sandboxes. For
 | **UI** | 30m / 1 | 64Mi / 256Mi |
 | **Linter** | 30m / 1.25 | 150Mi / 1000Mi |
 | **Agents backend** | 30m / 1 | 256Mi / 256Mi |
+| **Documents backend** | 30m / 1 | 256Mi / 256Mi |
 | **PostgreSQL** (Compose) | 1 | 3GB (tuned in `docker-compose.yml`) |
 
 ---
@@ -53,13 +54,15 @@ Defaults in `values.yaml` and `docker-compose.yml` are enough for sandboxes. For
 | Service | Boot configuration | Key env var(s) |
 |---------|-------------------|----------------|
 | **qubership-apihub-backend** | **`config.yaml`** (path set by `APIHUB_CONFIG_FOLDER`, default `./`), same schema as [`config.template.yaml`](../backend/portal-backend/config.template.yaml) | `APIHUB_CONFIG_FOLDER`, `LOG_LEVEL`, `GOMEMLIMIT` |
-| **qubership-apihub-ui** | Env vars only | `APIHUB_BACKEND_ADDRESS`, `APIHUB_NC_SERVICE_ADDRESS`, `API_LINTER_SERVICE_ADDRESS`, `APIHUB_AGENTS_BACKEND_ADDRESS` |
+| **qubership-apihub-ui** | Env vars only | `APIHUB_BACKEND_ADDRESS`, `APIHUB_NC_SERVICE_ADDRESS`, `API_LINTER_SERVICE_ADDRESS`, `APIHUB_AGENTS_BACKEND_ADDRESS`, `APIHUB_DOCS_BACKEND_ADDRESS` |
 | **qubership-apihub-build-task-consumer** | Env vars only | `APIHUB_BACKEND_ADDRESS`, `APIHUB_API_KEY`, `LOG_LEVEL`, `FOLDER_STORE`, `OPERATIONS_BUILD_BATCH` |
 | **qubership-api-linter-service** | **`config.yaml`** (path set by `LINTER_CONFIG_FOLDER`), same schema as [`config.template.yaml`](../backend/api-linter-service/config.template.yaml) | `LINTER_CONFIG_FOLDER`, `LOG_LEVEL`, `GOMEMLIMIT` |
 | **qubership-apihub-agents-backend** | **`config.yaml`** (path set by `AGENTS_BACKEND_CONFIG_FOLDER`), same schema as [`config.template.yaml`](../backend/agents-backend/config.template.yaml) | `AGENTS_BACKEND_CONFIG_FOLDER`, `LOG_LEVEL`, `GOMEMLIMIT` |
+| **qubership-apihub-documents-backend** | **`config.yaml`** (path set by `DOCS_CONFIG_FOLDER`), same schema as [`config.template.yaml`](../backend/documents-backend/config.template.yaml) | `DOCS_CONFIG_FOLDER`, `GOMEMLIMIT`, `DOCS_<SECTION>_<KEY>` |
 | **qubership-apihub-agent** *(K8s, optional)* | **`config.yaml`** (path set by `AGENT_CONFIG_FOLDER`), same schema as [`config.template.yaml`](../backend/agent/config.template.yaml) | `APIHUB_CONFIG_FOLDER` |
 
-**Helm:** `qubershipApihubBackend.env`, `qubershipApiLinterService.env`, and `qubershipApihubAgentsBackend.env` in
+**Helm:** `qubershipApihubBackend.env`, `qubershipApiLinterService.env`, `qubershipApihubAgentsBackend.env`, and
+`qubershipApihubDocumentsBackend.env` in
 `values.yaml` are each serialised as YAML into a per-service Secret `config.yaml`, mounted under `/app/<service>/etc/`.
 The UI and builder receive env vars injected directly by Deployment templates.
 
@@ -106,6 +109,7 @@ After start: <http://localhost:8081/login> — Portal UI.
 | **8090** | `qubership-apihub-backend` | Backend REST API (builder reaches it via `host.docker.internal:8090`) |
 | **8091** | `qubership-api-linter-service` | Linter API |
 | **8092** | `qubership-apihub-agents-backend` | Agents backend API |
+| **8093** | `qubership-apihub-documents-backend` | Documents backend API |
 | 5432 | `postgres` | PostgreSQL |
 | 47375–47376 | `qubership-apihub-backend` | Prometheus metrics / Olric cluster ports |
 
@@ -143,6 +147,9 @@ extensions:
   - name: agents-backend
     baseUrl: 'http://host.docker.internal:8092'
     pathPrefix: agents-backend
+  - name: docs-backend
+    baseUrl: 'http://host.docker.internal:8093'
+    pathPrefix: docs-backend
 ```
 
 > **JWT key generation:**
@@ -202,6 +209,7 @@ APIHUB_BACKEND_ADDRESS=qubership-apihub-backend:8080
 APIHUB_NC_SERVICE_ADDRESS=qubership-apihub-backend:8080
 API_LINTER_SERVICE_ADDRESS=qubership-api-linter-service:8080
 APIHUB_AGENTS_BACKEND_ADDRESS=qubership-apihub-agents-backend:8080
+APIHUB_DOCS_BACKEND_ADDRESS=qubership-apihub-documents-backend:8080
 ```
 
 > There is **no `APIHUB_URL` in the UI env file** — the public URL is `security.apihubExternalUrl` in the backend
@@ -226,7 +234,8 @@ Process-level env vars (the only ones the backend binary reads directly):
 
 **Custom CA certificates (HTTPS outbound):** from backend and linter releases with
 [qubership-core-base](https://github.com/Netcracker/qubership-core-base-images), mount PEM files at **`/tmp/cert`**
-(Compose: **`./certs:/tmp/cert:ro`** on backend, linter, and agents-backend; Helm: **`*.customCa`** values).
+(Compose: **`./certs:/tmp/cert:ro`** on backend, linter, agents-backend, and documents-backend; Helm:
+**`*.customCa`** values).
 The base image entrypoint imports them into the system trust store before the process starts.
 MinIO/S3 endpoint CA stays in **`s3Storage.crt`** in `config.yaml`.
 See [Configuration reference — custom CA Secret](./configuration-reference.md#custom-ca-kubernetes-secret-helm).
@@ -249,6 +258,7 @@ All other parameters are `config.yaml` keys. Most important:
 | `security.allowedOrigins` | No | `[]` | Extra CORS origins (dev only; empty on prod) |
 | `security.autoLogin` | No | `false` | Auto-redirect to IdP, skip APIHUB login page |
 | `security.legacySaml` | No | `true` | Backward-compat workaround for SAML upgrade path; scheduled for removal |
+| `security.anonymousAccess` | No | `false` | Allows read-only access without credentials to packages whose default role grants read; see [Security model](administration/security-model.md#anonymous-access) |
 | `security.externalIdentityProviders[]` | No | `[]` | SAML / OIDC provider list (see template for full structure) |
 | `security.ldap.server` | No | — | LDAP URL for user sync (e.g. `ldap://ldap.example.com:389`) |
 | `security.ldap.user` | No | — | LDAP bind user |
@@ -314,7 +324,7 @@ All other parameters are `config.yaml` keys. Most important:
 | `ai.chat.openAI.temperature` | No | `1.0` | Model temperature (0.0–2.0) |
 | `ai.chat.openAI.reasoningEffort` | No | `medium` | Reasoning depth for o-series / gpt-5: `minimal` / `low` / `medium` / `high` |
 | `ai.chat.openAI.verbosity` | No | `medium` | Response verbosity: `low` / `medium` / `high` |
-| `extensions[]` | No | see values | List of sidecar extensions. Each entry: `name`, `baseUrl`, `pathPrefix`. Defaults wire linter + agents-backend. |
+| `extensions[]` | No | see values | List of sidecar extensions. Each entry: `name`, `baseUrl`, `pathPrefix`. Defaults wire linter, agents-backend, and documents-backend. |
 | `featureFlags.useV3Search` | No | `false` | Use v3 search API instead of v4 |
 | `featureFlags.previousVersionStatusValidation` | No | `true` | Disables previous version status validation on publish and patch endpoints and restores the legacy check on the publish from CSV endpoint. |
 
@@ -330,6 +340,7 @@ All configuration via **environment variables** (nginx config template is popula
 | `APIHUB_NC_SERVICE_ADDRESS` | Yes | `apihub-backend:8080` | Internal address of the custom add-on service (same pod as backend in typical deployments) |
 | `API_LINTER_SERVICE_ADDRESS` | No | `apihub-backend:8080` | Internal address of the linter service |
 | `APIHUB_AGENTS_BACKEND_ADDRESS` | No | `apihub-backend:8080` | Internal address of the agents backend service |
+| `APIHUB_DOCS_BACKEND_ADDRESS` | Yes | — | Internal address of the documents backend service; the nginx location `/docs-backend` uses it |
 
 > The **browser-facing public URL** is **not** configured here. It is `security.apihubExternalUrl` in the backend
 > `config.yaml`.
@@ -426,6 +437,33 @@ are insufficient.
 
 ---
 
+#### qubership-apihub-documents-backend
+
+All configuration via **`config.yaml`** (path: `DOCS_CONFIG_FOLDER`). Helm renders
+`qubershipApihubDocumentsBackend.env` into this file; Compose mounts `qubership-apihub-documents-backend-config.yaml`.
+Every key can be overridden with `DOCS_<SECTION>_<KEY>`. `GOMEMLIMIT` stays a container environment variable (default
+`205MiB`; Helm key `qubershipApihubDocumentsBackend.goMemLimit`). The service is always deployed, so every installation
+and upgrade needs its database.
+
+| Config key | Mandatory | Default | Description |
+|------------|-----------|---------|-------------|
+| `server.listenAddress` | Yes | `0.0.0.0:8080` | Listen address of the HTTP server |
+| `server.allowedOrigins` | No | `[]` | Extra CORS origins (dev debugging only) |
+| `server.showDebugInResponse` | No | `true` | Includes `debug` in error bodies. Set `false` on prod |
+| `database.host` | Yes | `localhost` | PostgreSQL host |
+| `database.port` | Yes | `5432` | PostgreSQL port |
+| `database.name` | Yes | `documents` | Database name (must be pre-created) |
+| `database.username` | Yes | `documents` | Database user |
+| `database.password` | Yes | — | Database password |
+| `apihub.url` | Yes | `http://apihub-backend:8080` | Internal URL of the APIHUB backend |
+| `apihub.timeout` | No | `10s` | Timeout of one call to APIHUB |
+| `apihub.configurationCacheTtl` | No | `60s` | How often the anonymous access flag is read from APIHUB |
+| `apihub.packageAccessCacheTtl` | No | `60s` | Per-principal cache of version access checks and package bodies |
+| `static.maxUploadSizeBytes` | No | `5242880` | Upload limit, also applied to import |
+| `log.level` | No | `info` | Log level |
+
+---
+
 ## Helm (Kubernetes)
 
 Chart: `oci://ghcr.io/netcracker/charts/qubership-apihub`, one version per product release. A released chart pins
@@ -506,6 +544,15 @@ qubershipApihubAgentsBackend:
       apihub:
         url: 'http://qubership-apihub-ui:8080'
         accessToken: '<same value as zeroDayConfiguration.accessToken>'
+
+qubershipApihubDocumentsBackend:
+  env:
+    database:
+      host: 'pg.example.com'
+      port: 5432
+      name: 'documents_backend'
+      username: 'documents_backend_user'
+      password: 'changeme'
 ```
 
 ### Install / upgrade / uninstall
@@ -584,6 +631,11 @@ see the [agent chart guide](../backend/agent/helm-templates/README.md).
 | `qubershipApihubAgentsBackend.env.cleanup.snapshots.schedule` | No | Snapshots cleanup cron (default `0 22 * * 0`) |
 | `qubershipApihubAgentsBackend.env.cleanup.snapshots.ttlDays` | No | Snapshots retention in days (default `30`) |
 | `qubershipApihubAgentsBackend.customCa` | No | Optional Secret mounted at `/tmp/cert` for corporate HTTPS outbound |
+| `qubershipApihubDocumentsBackend.env.database.*` | Yes | Documents-backend `config.yaml` `database.*` |
+| `qubershipApihubDocumentsBackend.env.apihub.url` | No | Internal backend URL (default in the chart: `http://qubership-apihub-backend:8080`) |
+| `qubershipApihubDocumentsBackend.goMemLimit` | No | → `GOMEMLIMIT` (default `205MiB`, ~80% of default `memory.limit` `256Mi`) |
+| `qubershipApihubDocumentsBackend.customCa` | No | Optional Secret mounted at `/tmp/cert` for corporate HTTPS outbound |
+| `qubershipApihubBackend.env.security.anonymousAccess` | No | Read-only access without credentials (default `false`); see [Security model](administration/security-model.md#anonymous-access) |
 
 For secrets management on production clusters use Kubernetes **ExternalSecrets**, CSI driver, or sealed-secrets — do not
 commit plaintext credentials in `values.yaml`.

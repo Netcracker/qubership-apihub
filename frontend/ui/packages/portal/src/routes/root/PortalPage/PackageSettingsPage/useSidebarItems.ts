@@ -21,6 +21,7 @@ import {
   API_SPECIFIC_CONFIGURATION_PAGE,
   EXPORT_SETTINGS_PAGE,
   GENERAL_PAGE,
+  GUIDES_SETTINGS_PAGE,
   USER_ACCESS_CONTROLS_PAGE,
   VERSIONS_PAGE,
 } from '../../../../routes'
@@ -30,19 +31,25 @@ import { DASHBOARD_KIND, GROUP_KIND, WORKSPACE_KIND } from '@netcracker/qubershi
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import {
   ACCESS_TOKEN_MANAGEMENT_PERMISSION,
+  CREATE_AND_UPDATE_PACKAGE_PERMISSION,
   type PackagePermissions,
   USER_ACCESS_MANAGEMENT_PERMISSION,
 } from '@netcracker/qubership-apihub-ui-shared/entities/package-permissions'
+import { useDocsBackendEnabled } from '@netcracker/qubership-apihub-ui-shared/features/system-extensions/useSystemExtensions'
 
 const PACKAGE_KINDS_WITHOUT_VERSIONS = [GROUP_KIND, WORKSPACE_KIND]
 const PACKAGE_KINDS_WITHOUT_API_SPECIFIC_CONFIGURATION = [GROUP_KIND, WORKSPACE_KIND, DASHBOARD_KIND]
 
 export function useSidebarItems(packageObject: Package): PackageSettingsNavItemProps[] {
   const { key, kind } = packageObject
+  const docsBackendEnabled = useDocsBackendEnabled()
   const filters: ((item: PackageSettingsNavItemProps) => boolean)[] = []
 
   if (PACKAGE_KINDS_WITHOUT_VERSIONS.includes(kind)) {
-    filters.push(({ value }) => value !== VERSIONS_PAGE)
+    filters.push(({ value }) => value !== VERSIONS_PAGE && value !== GUIDES_SETTINGS_PAGE)
+  }
+  if (!docsBackendEnabled) {
+    filters.push(({ value }) => value !== GUIDES_SETTINGS_PAGE)
   }
   if (PACKAGE_KINDS_WITHOUT_API_SPECIFIC_CONFIGURATION.includes(kind)) {
     filters.push(({ value }) => value !== API_SPECIFIC_CONFIGURATION_PAGE)
@@ -86,6 +93,13 @@ const SETTINGS_SIDEBAR_ITEM = (
     description: 'Edit version information',
     value: VERSIONS_PAGE,
     url: getPackageSettingsPath({ packageKey: packageKey, tab: VERSIONS_PAGE }),
+  },
+  {
+    label: 'Guides',
+    description: `Manage ${packageKind} guides and their navigation`,
+    value: GUIDES_SETTINGS_PAGE,
+    permissions: [CREATE_AND_UPDATE_PACKAGE_PERMISSION],
+    url: getPackageSettingsPath({ packageKey: packageKey, tab: GUIDES_SETTINGS_PAGE }),
   },
   {
     label: 'Access Tokens',

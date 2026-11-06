@@ -5,6 +5,7 @@ use (
 	./backend/agents-backend
 	./backend/api-linter-service
 	./backend/commons-go
+	./backend/documents-backend
 	./backend/portal-backend
 	./backend/test-service
 )

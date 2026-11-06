@@ -27,6 +27,12 @@ export const API_V4 = '/api/v4'
 
 export const API_BASE_PATH_PATTERN = '/api/:apiVersion'
 
+export const UNAUTHORIZED_STATUS = 401
+
+export function isUnauthorizedError(error: unknown): boolean {
+  return error instanceof HttpError && error.status === UNAUTHORIZED_STATUS
+}
+
 export const STATUS_REFETCH_INTERVAL = 3 * 1000 // three seconds
 export const DEFAULT_REFETCH_INTERVAL = 5 * (60 * 1000) // five minutes
 
@@ -38,6 +44,12 @@ export type RequestJsonExtraOptions = {
   customErrorHandler?: CustomErrorHandler
   customRedirectHandler?: CustomRedirectHandler
   ignoreNotFound?: boolean
+  /**
+   * When true, a 401 response is NOT handled by the token refresh / login redirect flow.
+   * Instead an {@link HttpError} with status 401 is thrown, so the caller can treat
+   * the request as made by an anonymous (unauthenticated) user.
+   */
+  skipAuthHandling?: boolean
 }
 
 export async function requestJson<T extends object | null>(
@@ -46,7 +58,7 @@ export async function requestJson<T extends object | null>(
   options: RequestJsonExtraOptions = {},
   signal?: AbortSignal,
 ): Promise<T> {
-  const { basePath = '', customErrorHandler, customRedirectHandler, ignoreNotFound = false } = options
+  const { basePath = '', customErrorHandler, customRedirectHandler, ignoreNotFound = false, skipAuthHandling = false } = options
 
   const response = await fetch(`${basePath}${input}`, {
     ...init,
@@ -55,6 +67,10 @@ export async function requestJson<T extends object | null>(
   })
 
   if (!response.ok) {
+    if (skipAuthHandling && response.status === UNAUTHORIZED_STATUS) {
+      throw new HttpError('Unauthorized', '', UNAUTHORIZED_STATUS)
+    }
+
     const tokenRefreshResult = await handleAuthentication(response.status)
     if (isTokenRefreshed(tokenRefreshResult)) {
       return requestJson(input, init, options, signal)

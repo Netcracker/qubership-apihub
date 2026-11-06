@@ -64,6 +64,7 @@ export function toSystemConfiguration(value: SystemConfigurationDto): SystemConf
       ],
     },
     extensions: value.extensions,
+    anonymousAccess: value.anonymousAccess,
   }
 }
 

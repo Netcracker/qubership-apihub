@@ -24,6 +24,27 @@ import type { PackageKind } from '@netcracker/qubership-apihub-ui-shared/entitie
 import { PACKAGE_KIND, PACKAGE_KIND_MAP } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
 import { useBackwardLocationContext, useSetBackwardLocationContext } from '../routes/BackwardLocationProvider'
 import { SettingIcon } from '@netcracker/qubership-apihub-ui-shared/icons/SettingIcon'
+import { useIsAnonymous } from '@netcracker/qubership-apihub-ui-shared/hooks/authorization'
+import type { PackagePermissions } from '@netcracker/qubership-apihub-ui-shared/entities/package-permissions'
+import {
+  ACCESS_TOKEN_MANAGEMENT_PERMISSION,
+  CREATE_AND_UPDATE_PACKAGE_PERMISSION,
+  DELETE_PACKAGE_PERMISSION,
+  MANAGE_DEPRECATED_VERSION_PERMISSION,
+  MANAGE_DRAFT_VERSION_PERMISSION,
+  MANAGE_RELEASE_VERSION_PERMISSION,
+  USER_ACCESS_MANAGEMENT_PERMISSION,
+} from '@netcracker/qubership-apihub-ui-shared/entities/package-permissions'
+
+const PACKAGE_SETTINGS_PERMISSIONS: PackagePermissions = [
+  CREATE_AND_UPDATE_PACKAGE_PERMISSION,
+  DELETE_PACKAGE_PERMISSION,
+  USER_ACCESS_MANAGEMENT_PERMISSION,
+  ACCESS_TOKEN_MANAGEMENT_PERMISSION,
+  MANAGE_DRAFT_VERSION_PERMISSION,
+  MANAGE_RELEASE_VERSION_PERMISSION,
+  MANAGE_DEPRECATED_VERSION_PERMISSION,
+]
 
 export type PackageSettingsButtonProps = {
   packageKey: string
@@ -31,6 +52,11 @@ export type PackageSettingsButtonProps = {
   isIconButton?: boolean
   visible?: boolean
   marginLeft?: string
+  /**
+   * Package permissions of the current user. When provided, the button is hidden
+   * unless at least one settings-related permission is present.
+   */
+  permissions?: PackagePermissions
 }
 
 export const PackageSettingsButton: FC<PackageSettingsButtonProps> = memo<PackageSettingsButtonProps>(({
@@ -39,7 +65,9 @@ export const PackageSettingsButton: FC<PackageSettingsButtonProps> = memo<Packag
   isIconButton,
   visible,
   marginLeft,
+  permissions,
 }) => {
+  const isAnonymous = useIsAnonymous()
   const location = useLocation()
   const backwardLocation = useBackwardLocationContext()
   const setBackwardLocation = useSetBackwardLocationContext()
@@ -52,6 +80,10 @@ export const PackageSettingsButton: FC<PackageSettingsButtonProps> = memo<Packag
         search: location.search!,
       },
     })
+  }
+
+  if (isAnonymous || (permissions && !permissions.some(permission => PACKAGE_SETTINGS_PERMISSIONS.includes(permission)))) {
+    return null
   }
 
   return (

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/Netcracker/qubership-apihub/backend/portal-backend/exception"
+	"github.com/Netcracker/qubership-apihub/backend/portal-backend/secctx"
 	"github.com/Netcracker/qubership-apihub/backend/portal-backend/utils"
 	"github.com/shaj13/go-guardian/v2/auth"
 	"github.com/shaj13/go-guardian/v2/auth/strategies/union"
@@ -62,6 +63,36 @@ func (a Authenticator) Secure(next http.HandlerFunc) http.HandlerFunc {
 		r = auth.RequestWithUser(user, r)
 		next.ServeHTTP(w, r)
 	}
+}
+
+func (a Authenticator) SecureOrAnonymous(next http.HandlerFunc) http.HandlerFunc {
+	secure := a.Secure(next)
+	if !a.anonymousAccess {
+		return secure
+	}
+	anonymous := a.NoSecure(func(w http.ResponseWriter, r *http.Request) {
+		user := auth.NewUserInfo(secctx.AnonymousPrincipalName, "", nil, auth.Extensions{secctx.AnonymousExt: []string{"true"}})
+		next.ServeHTTP(w, auth.RequestWithUser(user, r))
+	})
+	return func(w http.ResponseWriter, r *http.Request) {
+		if hasCredentials(r) {
+			secure(w, r)
+		} else {
+			anonymous(w, r)
+		}
+	}
+}
+
+func hasCredentials(r *http.Request) bool {
+	if _, err := r.Cookie(AccessTokenCookieName); err == nil {
+		return true
+	}
+	for _, header := range []string{"Authorization", CustomJwtAuthHeader, ApiKeyHeader, PATHeader} {
+		if r.Header.Get(header) != "" {
+			return true
+		}
+	}
+	return false
 }
 
 func (a Authenticator) SecureUser(next http.HandlerFunc) http.HandlerFunc {

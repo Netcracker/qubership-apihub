@@ -14,6 +14,10 @@
   - changed-files:
       - any-glob-to-any-file: 'backend/agents-backend/**'
 
+'module:documents-backend':
+  - changed-files:
+      - any-glob-to-any-file: 'backend/documents-backend/**'
+
 'module:ui':
   - changed-files:
       - any-glob-to-any-file: 'frontend/ui/**'

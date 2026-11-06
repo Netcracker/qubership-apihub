@@ -23,7 +23,8 @@ system from other angles:
 ![APIHUB containers in four tiers](../images/architecture/container-tiers.svg)
 
 The Portal UI is the single entry point. Its nginx proxy routes `/api/*` to the API Registry, `/api-linter/*` to the
-API Linter service, and `/agents-backend/*` to the Agents backend. Workers poll the API Registry for build tasks, and
+API Linter service, `/agents-backend/*` to the Agents backend, and `/docs-backend/*` to the Documents backend. Workers
+poll the API Registry for build tasks, and
 the registry stores their results in PostgreSQL.
 
 ### 2.1 Layers
@@ -36,6 +37,7 @@ the registry stores their results in PostgreSQL.
 | **Java task consumer** | [`backend/java-task-consumer`](../../backend/java-task-consumer/) | Java | none | Stateless workers that take the Java build tasks (jar-to-jar API diff and dependency-upgrade impact analysis) that `backend/libraries-backend` queues. |
 | **Extension: API Linter** | [`backend/api-linter-service`](../../backend/api-linter-service/) | Go | 8080 | Lints API specifications with Spectral and AI engines; optional version quality scoring after a lint run. |
 | **Extension: Agents backend** | [`backend/agents-backend`](../../backend/agents-backend/) | Go | 8080 | Manages agent instances, snapshots, and namespace security. |
+| **Extension: Documents backend** | [`backend/documents-backend`](../../backend/documents-backend/) | Go | 8080 | Stores and serves Markdown articles with their attached files, plus metadata of package articles. |
 | **Agent** | [`backend/agent`](../../backend/agent/) | Go | 8080 | Runs in a customer cluster, discovers APIs through pluggable runners, and reports them to the Agents backend. |
 
 The shared infrastructure is PostgreSQL (separate databases per service), optional S3 or MinIO cold storage, and Olric

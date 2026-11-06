@@ -5,6 +5,7 @@ import (
 
 	"github.com/Netcracker/qubership-apihub/backend/portal-backend/entity"
 	"github.com/Netcracker/qubership-apihub/backend/portal-backend/repository"
+	"github.com/Netcracker/qubership-apihub/backend/portal-backend/secctx"
 	"github.com/Netcracker/qubership-apihub/backend/portal-backend/view"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
@@ -12,14 +13,16 @@ import (
 
 type SystemStatsService interface {
 	GetSystemStats(ctx context.Context) (*view.SystemStats, error)
+	GetPublicStats(ctx context.Context) (*view.PublicSystemStats, error)
 }
 
-func NewSystemStatsService(statsRepository repository.SystemStatsRepository) SystemStatsService {
-	return &systemStatsServiceImpl{statsRepository: statsRepository}
+func NewSystemStatsService(statsRepository repository.SystemStatsRepository, roleService RoleService) SystemStatsService {
+	return &systemStatsServiceImpl{statsRepository: statsRepository, roleService: roleService}
 }
 
 type systemStatsServiceImpl struct {
 	statsRepository repository.SystemStatsRepository
+	roleService     RoleService
 }
 
 func (s *systemStatsServiceImpl) GetSystemStats(ctx context.Context) (*view.SystemStats, error) {
@@ -131,4 +134,17 @@ func (s *systemStatsServiceImpl) GetSystemStats(ctx context.Context) (*view.Syst
 		Builds:           builds,
 		DatabaseSize:     databaseSize,
 	}, nil
+}
+
+func (s *systemStatsServiceImpl) GetPublicStats(ctx context.Context) (*view.PublicSystemStats, error) {
+	scope, err := s.roleService.GetPackageReadScope(ctx)
+	if err != nil {
+		return nil, err
+	}
+	stats, err := s.statsRepository.GetPublicStats(ctx, scope, secctx.GetUserId(ctx))
+	if err != nil {
+		log.Errorf("Failed to get public system stats: %v", err)
+		return nil, err
+	}
+	return &view.PublicSystemStats{Versions: stats.Versions, Operations: stats.Operations}, nil
 }

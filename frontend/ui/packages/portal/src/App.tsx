@@ -19,7 +19,11 @@ import { EventBusProvider } from '@portal/routes/EventBusProvider'
 import { router } from '@portal/routes/Router'
 import { CssBaseline, ThemeProvider } from '@mui/material'
 import { AppPlaceholder } from '@netcracker/qubership-apihub-ui-shared/components/AppPlaceholder'
-import { useUser } from '@netcracker/qubership-apihub-ui-shared/hooks/authorization'
+import {
+  useAnonymousAccessEnabled,
+  useOptionalUser,
+  useUser,
+} from '@netcracker/qubership-apihub-ui-shared/hooks/authorization'
 import { useSystemConfiguration } from '@netcracker/qubership-apihub-ui-shared/hooks/authorization/useSystemConfiguration'
 import { theme } from '@netcracker/qubership-apihub-ui-shared/themes/theme'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -42,14 +46,24 @@ const client = new QueryClient({
 const AppInner: FC = memo(() => {
   const [systemConfiguration] = useSystemConfiguration()
   const isLoginPage = location.pathname === '/login'
-  const [user] = useUser(!!systemConfiguration)
+  // When the backend allows anonymous access every page renders without a user: protected data is simply
+  // absent and the header offers a Login button. Otherwise an unauthenticated user is redirected to login.
+  const anonymousAccessEnabled = useAnonymousAccessEnabled()
+  const [user] = useUser(!!systemConfiguration && !anonymousAccessEnabled)
+  const [optionalUser, isOptionalUserLoading] = useOptionalUser(!!systemConfiguration && anonymousAccessEnabled)
+
+  const isReady = !!systemConfiguration && (
+    isLoginPage ||
+    !!user ||
+    (anonymousAccessEnabled && (!!optionalUser || !isOptionalUserLoading))
+  )
 
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <ErrorHandler>
         <EventBusProvider>
-          {systemConfiguration && (isLoginPage || user)
+          {isReady
             ? <RouterProvider router={router} />
             : <AppPlaceholder />}
         </EventBusProvider>

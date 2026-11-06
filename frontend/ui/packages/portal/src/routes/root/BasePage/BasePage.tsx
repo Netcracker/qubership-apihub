@@ -34,7 +34,7 @@ import {
   AiAssistantProvider,
 } from '@portal/components/AiAssistant/state/AiAssistantProvider'
 import { portal } from '@netcracker/qubership-apihub-ui-shared/utils/version-info'
-import { PORTAL_PATH_PATTERNS } from '../../../routes'
+import { GUIDES_PAGE_PATH, HOME_PAGE_PATH, PORTAL_PATH_PATTERNS } from '../../../routes'
 import { Notification, useShowErrorNotification } from '../BasePage/Notification'
 import { MainPageProvider } from '../MainPage/MainPageProvider'
 import { GlobalSearchPanel } from './GlobalSearchPanel/GlobalSearchPanel'
@@ -58,14 +58,12 @@ export const BasePage: FC = memo(() => {
   )
 
   const links = useMemo(
-    () => (agentEnabled
-      ? [
-        { name: 'Portal', pathname: '/portal', active: true, 'data-testid': 'PortalHeaderButton' },
-        { name: 'Agent', pathname: '/agents', 'data-testid': 'AgentHeaderButton' },
-      ]
-      : [
-        { name: 'Portal', pathname: '/portal', active: true, 'data-testid': 'PortalHeaderButton' },
-      ]),
+    () => [
+      { name: 'Home', pathname: HOME_PAGE_PATH, 'data-testid': 'HomeHeaderButton' },
+      { name: 'Guides', pathname: GUIDES_PAGE_PATH, 'data-testid': 'GuidesHeaderButton' },
+      { name: 'API portal', pathname: '/portal', active: true, 'data-testid': 'PortalHeaderButton' },
+      ...(agentEnabled ? [{ name: 'Agent', pathname: '/agents', 'data-testid': 'AgentHeaderButton' }] : []),
+    ],
     [agentEnabled],
   )
 

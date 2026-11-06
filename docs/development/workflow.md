@@ -157,7 +157,8 @@ gh workflow run e2e-tests-manual.yml --ref develop \
   -f deploy-ref=develop
 ```
 
-The `image-tags` keys are `backend`, `buildTaskConsumer`, `ui`, `apiLinterService`, `agentsBackend`, and `agent`. Name
+The `image-tags` keys are `backend`, `buildTaskConsumer`, `ui`, `apiLinterService`, `agentsBackend`, `documentsBackend`,
+and `agent`. Name
 every image the backend branch changed. [CI](./ci.md) describes the other inputs.
 
 Merge the backward-compatible half first, usually the backend. The E2E run of the other pull request then runs against

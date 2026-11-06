@@ -38,7 +38,9 @@ The `generate_env_and_up_compose.sh` script of a stack rewrites its `.env` and `
 ## Rules for changes
 
 - Helm `values.yaml` and templates are the canonical Kubernetes contract. Compose reproduces the same logical split.
-- Keep tokens and URLs aligned across the backend, linter, and agents-backend configs and the builder environment.
-- The `extensions` URLs of the backend must match how each stack reaches the linter and agents-backend: cluster DNS
+- Keep tokens and URLs aligned across the backend, linter, agents-backend, and documents-backend configs and the
+  builder environment.
+- The `extensions` URLs of the backend must match how each stack reaches the linter, agents-backend, and
+  documents-backend: cluster DNS
   on Kubernetes, `host.docker.internal` in Compose.
 - Check changes with `helm lint` and `helm template`, or run the Compose scripts.

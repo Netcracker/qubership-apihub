@@ -563,7 +563,32 @@ func (r roleServiceImpl) GetPermissionsForPackage(ctx context.Context, packageId
 		}
 		return apikeyPermissions, nil
 	}
+	if secctx.IsAnonymous(ctx) {
+		return r.getAnonymousPermissionsForPackage(ctx, packageId)
+	}
 	return r.getUserPermissionsForPackage(ctx, packageId, secctx.GetUserId(ctx))
+}
+
+func (r roleServiceImpl) getAnonymousPermissionsForPackage(ctx context.Context, packageId string) ([]string, error) {
+	defaultRolePermissions, err := r.roleRepository.GetDefaultRolePermissions(ctx, packageId)
+	if err != nil {
+		return nil, err
+	}
+	if utils.SliceContains(defaultRolePermissions, string(view.ReadPermission)) {
+		return []string{string(view.ReadPermission)}, nil //read-only access is provided to the anonymous user
+	}
+	return make([]string, 0), nil
+}
+
+func (r roleServiceImpl) getAnonymousPermissionsAcrossAllPackages(ctx context.Context) ([]string, error) {
+	anyReadable, err := r.roleRepository.AnyPackageDefaultRoleGrantsRead(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if anyReadable {
+		return []string{string(view.ReadPermission)}, nil //read-only access is provided to the anonymous user
+	}
+	return make([]string, 0), nil
 }
 
 // GetPermissionsForReadScope returns the permissions the caller holds on every package in scope alike. It is
@@ -578,6 +603,9 @@ func (r roleServiceImpl) GetPermissionsForReadScope(ctx context.Context, scope v
 	}
 	if scope.Kind == view.PackageReadScopeNone {
 		return make([]string, 0), nil
+	}
+	if scope.Kind == view.PackageReadScopeAnonymous {
+		return []string{string(view.ReadPermission)}, nil
 	}
 	if secctx.IsSysadm(ctx) {
 		allPermissions := make([]string, 0)
@@ -613,6 +641,9 @@ func (r roleServiceImpl) GetPackageReadScope(ctx context.Context) (view.PackageR
 			return view.PackageReadScope{Kind: view.PackageReadScopeAll}, nil
 		}
 		return view.PackageReadScope{Kind: view.PackageReadScopeSubtree, SubtreeRoot: apikeyPackageId}, nil
+	}
+	if secctx.IsAnonymous(ctx) {
+		return view.PackageReadScope{Kind: view.PackageReadScopeAnonymous}, nil
 	}
 	if secctx.GetUserId(ctx) == "" {
 		return view.PackageReadScope{Kind: view.PackageReadScopeNone}, nil
@@ -787,6 +818,9 @@ func (r roleServiceImpl) resolveVisibilityPrincipal(ctx context.Context, workspa
 			ApiKeyRoleIds: secctx.GetApiKeyRoles(ctx),
 		}, nil
 	}
+	if secctx.IsAnonymous(ctx) {
+		return entity.VisibilityPrincipal{Anonymous: true}, nil
+	}
 	return entity.VisibilityPrincipal{
 		UserId: secctx.GetUserId(ctx),
 	}, nil
@@ -820,7 +854,13 @@ func (r roleServiceImpl) HasRequiredPermissions(ctx context.Context, packageId s
 		return true, nil
 	}
 
-	userPermissions, err := r.getUserPermissionsForPackage(ctx, packageId, secctx.GetUserId(ctx))
+	var userPermissions []string
+	var err error
+	if secctx.IsAnonymous(ctx) {
+		userPermissions, err = r.getAnonymousPermissionsForPackage(ctx, packageId)
+	} else {
+		userPermissions, err = r.getUserPermissionsForPackage(ctx, packageId, secctx.GetUserId(ctx))
+	}
 	if err != nil {
 		return false, err
 	}
@@ -859,7 +899,13 @@ func (r roleServiceImpl) HasRequiredPermissionsAcrossAllPackages(ctx context.Con
 		return true, nil
 	}
 
-	userPermissions, err := r.roleRepository.GetAllUserPermissions(ctx, secctx.GetUserId(ctx))
+	var userPermissions []string
+	var err error
+	if secctx.IsAnonymous(ctx) {
+		userPermissions, err = r.getAnonymousPermissionsAcrossAllPackages(ctx)
+	} else {
+		userPermissions, err = r.roleRepository.GetAllUserPermissions(ctx, secctx.GetUserId(ctx))
+	}
 	if err != nil {
 		return false, err
 	}
@@ -1043,6 +1089,12 @@ func (r roleServiceImpl) GetAvailablePackageRoles(ctx context.Context, packageId
 	}
 	if secctx.IsSysadm(ctx) {
 		availableRoles = allRoles
+	} else if secctx.IsAnonymous(ctx) {
+		for _, role := range allRoles {
+			if role.Id == view.ViewerRoleId {
+				availableRoles = append(availableRoles, role)
+			}
+		}
 	} else if secctx.GetApiKeyPackageId(ctx) == packageId || strings.HasPrefix(packageId, secctx.GetApiKeyPackageId(ctx)+".") || secctx.GetApiKeyPackageId(ctx) == view.AllPackagesApikeyScope {
 		maxRoleRank := -1
 		for _, apikeyRoleId := range secctx.GetApiKeyRoles(ctx) {

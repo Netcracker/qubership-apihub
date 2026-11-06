@@ -65,8 +65,9 @@ builder (`build-task-consumer`), the Playwright tests, the screenshot test envir
 
 ## Go
 
-The six Go modules under `backend/` form one workspace in [`go.work`](../../go.work): `portal-backend`,
-`api-linter-service`, `agents-backend`, `agent`, `test-service`, and the shared library `commons-go`. All of them use
+The seven Go modules under `backend/` form one workspace in [`go.work`](../../go.work): `portal-backend`,
+`api-linter-service`, `agents-backend`, `documents-backend`, `agent`, `test-service`, and the shared library
+`commons-go`. All of them use
 the Go version in [`backend/.go-version`](../../backend/.go-version).
 
 ```bash
@@ -120,6 +121,7 @@ They use `podman`; `docker` takes the same arguments.
 | `qubership-apihub-backend` | nothing | `podman build -f backend/portal-backend/Dockerfile backend` |
 | `qubership-api-linter-service` | nothing | `podman build -f backend/api-linter-service/Dockerfile backend` |
 | `qubership-apihub-agents-backend` | nothing | `podman build -f backend/agents-backend/Dockerfile backend` |
+| `qubership-apihub-documents-backend` | nothing | `podman build -f backend/documents-backend/Dockerfile backend/documents-backend` |
 | `qubership-apihub-agent` | nothing | `podman build -f backend/agent/Dockerfile backend` |
 | `qubership-apihub-test-service` | nothing | `podman build -f backend/test-service/Dockerfile backend` |
 | `qubership-apihub-ui` | `pnpm exec nx run-many -t build -p ui-portal,ui-agents` | `podman build -f frontend/ui/Dockerfile .` |

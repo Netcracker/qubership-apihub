@@ -48,6 +48,26 @@ func convertPackageReadScopeToSQL(scope view.PackageReadScope, userId string, id
 			)
 		end`, alias)
 		return []string{readGrantingRolesCTE}, userCondition, nil
+	case view.PackageReadScopeAnonymous:
+		if alias == "" {
+			return nil, "", fmt.Errorf("package read scope of kind %v has no package row to read default_role from", scope.Kind)
+		}
+		readGrantingRolesCTE := `read_granting_roles as materialized (
+			select coalesce(array_agg(id), array[]::character varying[]) as ids
+			from role
+			where coalesce('read' = any(permissions), false)
+		)`
+		anonymousCondition := fmt.Sprintf(`case
+			when %[1]s.default_role = any((select ids from read_granting_roles)::character varying[]) then true
+			else exists (
+				select 1
+				from package_group anc
+				where anc.id = any(package_ancestor_ids(%[1]s.id))
+				  and anc.id != %[1]s.id
+				  and anc.default_role = any((select ids from read_granting_roles)::character varying[])
+			)
+		end`, alias)
+		return []string{readGrantingRolesCTE}, anonymousCondition, nil
 	default:
 		return nil, "", fmt.Errorf("unsupported package read scope kind %v", scope.Kind)
 	}

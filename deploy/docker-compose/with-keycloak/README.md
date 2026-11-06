@@ -89,8 +89,9 @@ For database access connect to localhost:5432 postgres/postgres
 
 If the backend image is based on [qubership-core-base](https://github.com/Netcracker/qubership-core-base-images),
 place corporate CA files (`.crt`, `.cer`, or `.pem`) in **`certs/`** and uncomment **`./certs:/tmp/cert:ro`** in
-**`docker-compose.yml`** for **`qubership-apihub-backend`**, **`qubership-api-linter-service`**, and
-**`qubership-apihub-agents-backend`**. MinIO/S3 CA stays in **`s3Storage.crt`** in the backend config YAML.
+**`docker-compose.yml`** for **`qubership-apihub-backend`**, **`qubership-api-linter-service`**,
+**`qubership-apihub-agents-backend`**, and **`qubership-apihub-documents-backend`**. MinIO/S3 CA stays in
+**`s3Storage.crt`** in the backend config YAML.
 
 ## Start
 

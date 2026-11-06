@@ -15,7 +15,7 @@
  */
 
 import type { ReactNode } from 'react'
-import { type RouteObject, createBrowserRouter, createRoutesFromElements, Navigate, Route } from 'react-router-dom'
+import { type RouteObject, createBrowserRouter, createRoutesFromElements, Navigate, Outlet, Route } from 'react-router-dom'
 
 import { ErrorPage, NOT_FOUND_TITLE } from '@netcracker/qubership-apihub-ui-shared/components/ErrorPage'
 import { SPECIAL_VERSION_KEY } from '@netcracker/qubership-apihub-ui-shared/entities/versions'
@@ -25,6 +25,8 @@ import {
   API_CHANGES_PAGE,
   COMPARE_PAGE,
   CONFIGURATION_PAGE,
+  GUIDES_PAGE,
+  PACKAGE_GUIDES_PAGE,
   DEPRECATED_PAGE,
   DOCUMENTS_PAGE,
   FAVORITE_PAGE,
@@ -64,74 +66,96 @@ import {
   DifferentOperationGroupsComparisonPage,
 } from '@portal/routes/root/PortalPage/VersionPage/OperationsComparisonPage/DifferentOperationGroupsComparisonPage'
 import { ProfilePage } from './root/ProfilePage/ProfilePage'
+import { HomeLayout } from './root/HomePage/HomeLayout'
+import { HomePage } from './root/HomePage/HomePage'
+import { GuidesPage } from './root/GuidesPage/GuidesPage'
+import { GuidePage } from './root/GuidesPage/GuidePage'
+import { RequireUser } from './RequireUser'
 
 export const router = createBrowserRouter(
   createRoutes([
     <Route path="/" element={
       <NavigationProvider>
-          <BasePage/>
+        <Outlet/>
       </NavigationProvider>
     }>
-      <Route index element={<Navigate to="portal" replace/>}/>
-      <Route path="portal">
-        <Route element={<MainPage/>}>
-          <Route index element={<Navigate to={FAVORITE_PAGE} replace/>}/>
-          <Route path={FAVORITE_PAGE} element={<FavoritePage/>}/>
-          <Route path={SHARED_PAGE} element={<SharedPage/>}/>
-          <Route path={PRIVATE_PAGE} element={<PrivatePage/>}/>
-          <Route path={WORKSPACES_PAGE} element={<WorkspacesPage/>}/>
-          <Route path={`${WORKSPACES_PAGE}/:workspaceKey`} element={<WorkspacePage/>}/>
-          <Route path={`${GROUPS_PAGE}/:groupId`} element={<GroupPage/>}/>
-        </Route>
-        <Route path="settings/*" element={<SettingsPage/>}/>
-        <Route path="profile/*" element={<ProfilePage/>}/>
-        <Route path="packages/:packageId">
-          <Route index element={<PackagePage/>}/>
-          <Route path={`${SPECIAL_VERSION_KEY}/${PACKAGE_SETTINGS_PAGE}/*`} element={<PackageSettingsPage/>}/>
-          <Route path={`:${VERSION_ID}/*`}>
-            <Route element={<VersionPage/>}/>
-            <Route index element={<Navigate to={SUMMARY_ROUTE} replace/>}/>
-            <Route path="*" element={<VersionPage/>}/>
-            <Route path={`${API_CHANGES_PAGE}/:apiType`} element={<VersionPage/>}/>
-            <Route path={`${CONTRACTS_PAGE}/:apiType`}>
-              <Route index element={<VersionPage/>}/>
-              <Route path=":operationId/*" element={<ContractDetailPage/>}/>
+      {/* Developer portal home page: has its own layout, available to anonymous users */}
+      <Route index element={<HomeLayout><HomePage/></HomeLayout>}/>
+      <Route path={GUIDES_PAGE} element={<HomeLayout><Outlet/></HomeLayout>}>
+        <Route index element={<GuidesPage/>}/>
+        <Route path=":slug" element={<GuidePage/>}/>
+      </Route>
+      <Route element={<BasePage/>}>
+        <Route path="portal">
+          <Route element={<MainPage/>}>
+            <Route index element={<Navigate to={FAVORITE_PAGE} replace/>}/>
+            <Route path={FAVORITE_PAGE} element={<FavoritePage/>}/>
+            <Route path={SHARED_PAGE} element={<SharedPage/>}/>
+            <Route path={PRIVATE_PAGE} element={<PrivatePage/>}/>
+            <Route path={WORKSPACES_PAGE} element={<WorkspacesPage/>}/>
+            <Route path={`${WORKSPACES_PAGE}/:workspaceKey`} element={<WorkspacePage/>}/>
+            <Route path={`${GROUPS_PAGE}/:groupId`} element={<GroupPage/>}/>
+          </Route>
+          <Route element={<RequireUser/>}>
+            <Route path="settings/*" element={<SettingsPage/>}/>
+            <Route path="profile/*" element={<ProfilePage/>}/>
+          </Route>
+          <Route path="packages/:packageId">
+            <Route index element={<PackagePage/>}/>
+            <Route element={<RequireUser/>}>
+              <Route path={`${SPECIAL_VERSION_KEY}/${PACKAGE_SETTINGS_PAGE}/*`} element={<PackageSettingsPage/>}/>
             </Route>
-            <Route path={`${DEPRECATED_PAGE}/:apiType`} element={<VersionPage/>}/>
-            <Route path={DOCUMENTS_PAGE}>
-              <Route index element={<VersionPage/>}/>
-              <Route path=":documentId">
+            <Route path={`:${VERSION_ID}/*`}>
+              <Route element={<VersionPage/>}/>
+              <Route index element={<Navigate to={SUMMARY_ROUTE} replace/>}/>
+              <Route path="*" element={<VersionPage/>}/>
+              <Route path={`${API_CHANGES_PAGE}/:apiType`} element={<VersionPage/>}/>
+              <Route path={`${CONTRACTS_PAGE}/:apiType`}>
                 <Route index element={<VersionPage/>}/>
-                <Route path={PREVIEW_PAGE} element={<DocumentPreviewPage/>}/>
+                <Route path=":operationId/*" element={<ContractDetailPage/>}/>
+              </Route>
+              <Route path={`${DEPRECATED_PAGE}/:apiType`} element={<VersionPage/>}/>
+              <Route path={DOCUMENTS_PAGE}>
+                <Route index element={<VersionPage/>}/>
+                <Route path=":documentId">
+                  <Route index element={<VersionPage/>}/>
+                  <Route path={PREVIEW_PAGE} element={<DocumentPreviewPage/>}/>
+                </Route>
+              </Route>
+              <Route path={PACKAGE_GUIDES_PAGE}>
+                <Route index element={<VersionPage/>}/>
+                <Route path=":guideSlug" element={<VersionPage/>}/>
+              </Route>
+              <Route path={`${COMPARE_PAGE}/*`}>
+                <Route index element={(
+                  <ChangesSummaryProvider>
+                    <VersionComparePage/>
+                  </ChangesSummaryProvider>
+                )}/>
+                <Route path=":apiType/:operationId" element={<OperationsComparisonPage/>}/>
+              </Route>
+              <Route path="groups/:group/compare">
+                <Route index element={(
+                  <ChangesSummaryProvider>
+                    <GroupComparePage/>
+                  </ChangesSummaryProvider>
+                )}/>
+                <Route path=":apiType/:operationId" element={
+                  <ChangesSummaryProvider>
+                    <DifferentOperationGroupsComparisonPage/>
+                  </ChangesSummaryProvider>}/>
+              </Route>
+              <Route element={<RequireUser/>}>
+                <Route
+                  path={CONFIGURATION_PAGE}
+                  element={<ConfigurePage/>}
+                />
               </Route>
             </Route>
-            <Route path={`${COMPARE_PAGE}/*`}>
-              <Route index element={(
-                <ChangesSummaryProvider>
-                  <VersionComparePage/>
-                </ChangesSummaryProvider>
-              )}/>
-              <Route path=":apiType/:operationId" element={<OperationsComparisonPage/>}/>
-            </Route>
-            <Route path="groups/:group/compare">
-              <Route index element={(
-                <ChangesSummaryProvider>
-                  <GroupComparePage/>
-                </ChangesSummaryProvider>
-              )}/>
-              <Route path=":apiType/:operationId" element={
-                <ChangesSummaryProvider>
-                  <DifferentOperationGroupsComparisonPage/>
-                </ChangesSummaryProvider>}/>
-            </Route>
-            <Route
-              path={CONFIGURATION_PAGE}
-              element={<ConfigurePage/>}
-            />
           </Route>
         </Route>
+        <Route path="*" element={<ErrorPage title={NOT_FOUND_TITLE} homePath="/portal"/>}/>
       </Route>
-      <Route path="*" element={<ErrorPage title={NOT_FOUND_TITLE} homePath="/portal"/>}/>
     </Route>,
     <Route path="/login" element={<LoginPage applicationName={'APIHUB Portal'}/>}/>,
   ]),

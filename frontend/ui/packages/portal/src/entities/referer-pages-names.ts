@@ -16,6 +16,8 @@
 
 export const EMPTY_PAGE_REFERER = ''
 export const MAIN_PAGE_REFERER = 'MainPage'
+export const HOME_PAGE_REFERER = 'HomePage'
+export const GUIDES_PAGE_REFERER = 'GuidesPage'
 export const SHARED_PAGE_REFERER = 'SharedPage'
 export const WORKSPACES_PAGE_REFERER = 'WorkspacesPage'
 export const FAVORITE_PAGE_REFERER = 'FavoritePage'

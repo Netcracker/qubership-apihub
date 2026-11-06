@@ -10,7 +10,7 @@ of this repository now.
 
 | Area | Path | Notes |
 |------|------|-------|
-| Go services | `backend/` | `portal-backend` (API Registry), `api-linter-service`, `agents-backend`, `agent`, `test-service`, shared `commons-go`; one `go.work` and one `backend/.go-version` |
+| Go services | `backend/` | `portal-backend` (API Registry), `api-linter-service`, `agents-backend`, `documents-backend`, `agent`, `test-service`, shared `commons-go`; one `go.work` and one `backend/.go-version` |
 | Java | `backend/java-task-consumer`, `backend/libraries-backend` | Maven build under Nx |
 | TypeScript | `frontend/` | `ui` (Portal and Agents SPAs), `build-task-consumer` (NestJS builder), and the libraries `api-processor`, `api-diff`, `api-unifier`, `api-doc-viewer`, `ddlapi`, `json-crawl`, and others; one pnpm workspace |
 | Sites | `sites/landing/` | Astro product landing, published at `/qubership-apihub/landing/`; see its `README.md` |
@@ -46,12 +46,13 @@ mounted files, update the deployment assets and `docs/configuration-reference.md
 
 - **Helm `values.yaml` and templates** are the canonical Kubernetes contract.
 - **`docs/configuration-reference.md`** must stay in sync when knobs, env names, or mount paths change.
-- **Compose** reproduces the same logical split; keep tokens and URLs aligned across the backend, linter, and
-  agents-backend `config.yaml` files and the builder env (configuration reference, section 4).
-- **Extensions**: linter and agents-backend URLs in the backend `extensions` must match how each stack reaches
+- **Compose** reproduces the same logical split; keep tokens and URLs aligned across the backend, linter,
+  agents-backend, and documents-backend `config.yaml` files and the builder env (configuration reference, section 4).
+- **Extensions**: linter, agents-backend, and documents-backend URLs in the backend `extensions` must match how each
+  stack reaches
   those services (cluster DNS or `host.docker.internal`).
-- Runtime config authority: `config.template.yaml` mounted as `config.yaml` for the backend, linter, and
-  agents-backend; `config.yaml` for the agent; environment only for the builder and the UI.
+- Runtime config authority: `config.template.yaml` mounted as `config.yaml` for the backend, linter,
+  agents-backend, and documents-backend; `config.yaml` for the agent; environment only for the builder and the UI.
 
 ## Clarification before coding
 

@@ -21,6 +21,7 @@
     "build:vite": "cross-env NODE_OPTIONS=--max-old-space-size=8192 vite build",
     "build:analyze": "pnpm run build:tsc && pnpm run build:vite -- --mode analyze",
     "dev:backend": "nodemon --watch server --ext ts,json server/index.ts",
+    "dev:backend:anonymous": "MOCK_ANONYMOUS=true nodemon --watch server --ext ts,json server/index.ts",
     "dev:frontend": "vite --host --force",
     "dev:proxy": "vite --host --mode=proxy --force",
     "dev:proxy:msw": "cross-env VITE_ENABLE_MSW=true vite --host --mode=proxy --force",

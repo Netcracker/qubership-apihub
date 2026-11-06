@@ -51,6 +51,9 @@ import {
   CONFIGURATION_PAGE,
   DEPRECATED_PAGE_PATH_PATTERN,
   DOCUMENTS_PAGE_PATH_PATTERN,
+  GUIDE_PAGE_PATH_PATTERN,
+  PACKAGE_GUIDES_PAGE,
+  PACKAGE_GUIDES_PAGE_PATH_PATTERN,
   GENERAL_PAGE,
   GROUPS_COMPARE_PAGE_PATH_PATTERN,
   GROUPS_OPERATIONS_COMPARE_PAGE_PATH_PATTERN,
@@ -771,6 +774,32 @@ export function getProfilePath({
 }): Partial<Path> {
   return {
     pathname: `${PROFILE_PAGE_PATH_PATTERN}${tab}`,
+  }
+}
+
+export function getGuidePath({
+  slug,
+}: { slug: string }): Partial<Path> {
+  return {
+    pathname: generatePath(GUIDE_PAGE_PATH_PATTERN, { slug: encodeURIComponent(slug) }),
+  }
+}
+
+export function getPackageGuidesPath({
+  packageKey,
+  versionKey,
+  guideSlug,
+  search,
+}: { packageKey: Key; versionKey: Key; guideSlug?: string; search?: Parameters<typeof optionalSearchParams>[0] }): Partial<Path> {
+  const packageId = encodeURIComponent(packageKey)
+  const versionId = encodeURIComponent(versionKey)
+  // generatePath drops the trailing slash of VERSION_PAGE_PATH_PATTERN, so the tab segment is joined explicitly
+  const pathname = guideSlug
+    ? generatePath(PACKAGE_GUIDES_PAGE_PATH_PATTERN, { packageId: packageId, versionId: versionId, guideSlug: encodeURIComponent(guideSlug) })
+    : `${generatePath(VERSION_PAGE_PATH_PATTERN, { packageId: packageId, versionId: versionId }).replace(/\/$/, '')}/${PACKAGE_GUIDES_PAGE}`
+  return {
+    pathname: pathname,
+    search: search ? `${optionalSearchParams(search)}` : undefined,
   }
 }
 

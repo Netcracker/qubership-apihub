@@ -33,7 +33,13 @@ const apispecViewDist = path.dirname(requireFromHere.resolve('@netcracker/qubers
 // runs from the IDE) or the ingress of local Kubernetes. Not the backend itself: nginx strips the extension prefixes
 // such as /api-linter and forwards them to their services.
 // const proxyServer = 'https://qubership-apihub.localtest.me'
-const proxyServer = 'http://host.docker.internal:8081'
+// Targets for "pnpm dev:proxy" can be overridden via environment, e.g. to point at locally running services:
+//   APIHUB_PROXY_SERVER=http://localhost:8081 DOCS_BACKEND_PROXY_SERVER=http://localhost:8085 pnpm dev:proxy
+const proxyServer = process.env.APIHUB_PROXY_SERVER ?? 'http://host.docker.internal:8081'
+// Without an override, '/api' below covers the linter through the nginx of proxyServer.
+const apiLinterProxyServer = process.env.API_LINTER_PROXY_SERVER
+// Docs extension: by default reached through the target environment's nginx (prefix stripped there)
+const docsBackendProxyServer = process.env.DOCS_BACKEND_PROXY_SERVER ?? `${proxyServer}/docs-backend`
 
 // The legacy Express mock of `pnpm dev:backend`, the proxy target outside proxy mode (`pnpm dev:frontend`).
 // TODO(ui): remove it with the mock once MSW covers its routes; every prefix then goes to proxyServer.
@@ -175,9 +181,27 @@ export default defineConfig(({ mode }) => {
       proxy: {
         // Vite matches the keys as path prefixes in order, so '/api' also covers the linter at '/api-linter'. A prefix
         // with another target goes before it.
+        ...(apiLinterProxyServer
+          ? {
+            '/api-linter': {
+              target: apiLinterProxyServer,
+              rewrite: (path: string) => path.replace(/^\/api-linter/, ''),
+              changeOrigin: true,
+              secure: false,
+            },
+          }
+          : {}),
         '/api': proxyOptions,
         // System Information requests the version of the agents backend.
         '/agents-backend': proxyOptions,
+        // Docs extension (documents-backend). In dev mode the mock server serves it under the same prefix;
+        // in proxy mode nginx of the target environment strips the prefix itself.
+        '/docs-backend': {
+          target: isProxyMode ? docsBackendProxyServer : devServer,
+          rewrite: isProxyMode ? (path: string) => path.replace(/^\/docs-backend/, '') : undefined,
+          changeOrigin: true,
+          secure: false,
+        },
         // Try It of the REST playground.
         '/playground': proxyOptions,
       },

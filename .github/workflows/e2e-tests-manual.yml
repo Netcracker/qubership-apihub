@@ -9,7 +9,7 @@ name: 'E2E: Run tests (manual)'
 #   runtime: compose-keycloak  e2e-tests-compose.yml, deploy/docker-compose/with-keycloak, no agent
 #
 # image-tags is one JSON object with the keys backend, buildTaskConsumer, ui, apiLinterService,
-# agentsBackend, and agent. A missing key means `dev`. A src-<hash> tag pins exact content: the branch
+# agentsBackend, documentsBackend, and agent. A missing key means `dev`. A src-<hash> tag pins exact content: the branch
 # tag moves on the next push. Compose ignores `agent` and the agent input, and Newman skips
 # 1_2_Smoke_Agent there.
 #
@@ -32,9 +32,9 @@ on:
         type: string
         default: develop
       image-tags:
-        description: JSON object with backend, buildTaskConsumer, ui, apiLinterService, agentsBackend, and agent tags; a missing key means dev
+        description: JSON object with backend, buildTaskConsumer, ui, apiLinterService, agentsBackend, documentsBackend, and agent tags; a missing key means dev
         type: string
-        default: '{"backend":"dev","buildTaskConsumer":"dev","ui":"dev","apiLinterService":"dev","agentsBackend":"dev","agent":"dev"}'
+        default: '{"backend":"dev","buildTaskConsumer":"dev","ui":"dev","apiLinterService":"dev","agentsBackend":"dev","documentsBackend":"dev","agent":"dev"}'
       suites:
         description: Which suites to run
         type: choice

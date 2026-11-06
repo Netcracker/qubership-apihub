@@ -22,6 +22,7 @@ type PackageService interface {
 	CreatePackage(ctx context.Context, packg view.SimplePackage) (*view.SimplePackage, error)
 	GetPackage(ctx context.Context, id string, withParents bool) (*view.SimplePackage, error)
 	GetPackagesList(ctx context.Context, req view.PackageListReq) (*view.Packages, error)
+	GetPopularPackages(ctx context.Context, req view.PackageListReq) (*view.Packages, error)
 	GetDeletedPackagesList(ctx context.Context, req view.PackageListReq) (*view.Packages, error)
 	UpdatePackage(ctx context.Context, packg *view.PatchPackageReq, packageId string) (*view.SimplePackage, error)
 	DeletePackage(ctx context.Context, id string) error
@@ -348,6 +349,10 @@ func (p packageServiceImpl) GetPackagesList(ctx context.Context, searchReq view.
 	if scope.Kind == view.PackageReadScopeNone {
 		return &view.Packages{Packages: make([]view.PackagesInfo, 0)}, nil
 	}
+	// Favourites and memberships belong to a user; the anonymous principal has neither.
+	if scope.Kind == view.PackageReadScopeAnonymous && (searchReq.OnlyFavorite || searchReq.OnlyShared) {
+		return &view.Packages{Packages: make([]view.PackagesInfo, 0)}, nil
+	}
 	packages, err := p.publishedRepo.GetReadablePackages(ctx, searchReq, scope, secctx.GetUserId(ctx))
 	if err != nil {
 		log.Error("Failed to get packages: ", err.Error())
@@ -382,6 +387,63 @@ func (p packageServiceImpl) GetPackagesList(ctx context.Context, searchReq view.
 		packageEntity := pkg.PackageEntity
 		result = append(result, *entity.MakePackagesInfo(&packageEntity, lastReleaseVersionDetails,
 			parents[pkg.Id], pkg.IsFavorite, permissions, false))
+	}
+	return &view.Packages{Packages: result}, nil
+}
+
+// GetPopularPackages lists the packages readable by the caller that at least one user favourited,
+// ordered by the number of users who favourited them.
+func (p packageServiceImpl) GetPopularPackages(ctx context.Context, searchReq view.PackageListReq) (*view.Packages, error) {
+	// Favourites are about packages and dashboards; workspaces are the default of the generic listing only.
+	if len(searchReq.Kind) == 0 {
+		searchReq.Kind = []string{entity.KIND_PACKAGE, entity.KIND_DASHBOARD}
+	}
+
+	scope, err := p.roleService.GetPackageReadScope(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to resolve package read scope: %w", err)
+	}
+	if scope.Kind == view.PackageReadScopeNone {
+		return &view.Packages{Packages: make([]view.PackagesInfo, 0)}, nil
+	}
+	packages, err := p.publishedRepo.GetPopularPackages(ctx, searchReq, scope, secctx.GetUserId(ctx))
+	if err != nil {
+		log.Error("Failed to get popular packages: ", err.Error())
+		return nil, err
+	}
+
+	var scopePermissions []string
+	if scope.Kind != view.PackageReadScopeUser {
+		scopePermissions, err = p.roleService.GetPermissionsForReadScope(ctx, scope)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	ids := make([]string, 0, len(packages))
+	for _, pkg := range packages {
+		ids = append(ids, pkg.Id)
+	}
+	parents, err := p.parentsByPackage(ctx, searchReq, ids, false)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]view.PackagesInfo, 0, len(packages))
+	for _, pkg := range packages {
+		permissions := scopePermissions
+		if scope.Kind == view.PackageReadScopeUser {
+			permissions = pkg.Permissions
+		}
+		lastReleaseVersionDetails, err := p.lastReleaseVersionDetails(ctx, searchReq, pkg.PackageEntity)
+		if err != nil {
+			return nil, err
+		}
+		packageEntity := pkg.PackageEntity
+		info := entity.MakePackagesInfo(&packageEntity, lastReleaseVersionDetails,
+			parents[pkg.Id], pkg.IsFavorite, permissions, false)
+		info.FavoritesCount = pkg.FavoritesCount
+		result = append(result, *info)
 	}
 	return &view.Packages{Packages: result}, nil
 }

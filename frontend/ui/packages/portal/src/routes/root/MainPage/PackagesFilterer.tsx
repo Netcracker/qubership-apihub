@@ -30,6 +30,7 @@ import { useSuperAdminCheck } from '@netcracker/qubership-apihub-ui-shared/hooks
 import { useSetSearchParams } from '@netcracker/qubership-apihub-ui-shared/hooks/searchparams/useSetSearchParams'
 import { useEventBus } from '@portal/routes/EventBusProvider'
 import { DASHBOARD_KIND, GROUP_KIND, PACKAGE_KIND, WORKSPACE_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
+import { useIsAnonymous } from '@netcracker/qubership-apihub-ui-shared/hooks/authorization'
 import { CREATE_AND_UPDATE_PACKAGE_PERMISSION } from '@netcracker/qubership-apihub-ui-shared/entities/package-permissions'
 import { SearchBar } from '@netcracker/qubership-apihub-ui-shared/components/SearchBar'
 import { PackageSettingsButton } from '@portal/components/PackageSettingsButton'
@@ -55,6 +56,7 @@ export const PackagesFilterer: FC<PackagesFiltererProps> = memo<PackagesFilterer
   const [textFilter] = useTextSearchParam()
 
   const [packageObject] = usePackage({ packageKey: rootPackageKey })
+  const isAnonymous = useIsAnonymous()
   const { showCreatePackageDialog } = useEventBus()
   const isWorkspace = packageObject?.kind === WORKSPACE_KIND
   const isGroup = packageObject?.kind === GROUP_KIND
@@ -111,10 +113,14 @@ export const PackagesFilterer: FC<PackagesFiltererProps> = memo<PackagesFilterer
       {!hideViewSelector && <TableViewSelector/>}
       {(isWorkspace || isGroup) && (!isPrivateWorkspace || isSuperAdmin) && rootPackageKey && (
         <Box>
-          <PackageSettingsButton packageKey={rootPackageKey} packageKind={packageObject?.kind}/>
+          <PackageSettingsButton
+            packageKey={rootPackageKey}
+            packageKind={packageObject?.kind}
+            permissions={packageObject?.permissions}
+          />
         </Box>
       )}
-      {rootPackageKey && (
+      {!isAnonymous && rootPackageKey && (
         <DropdownButton
           disabled={!hasCreatePackagePermission}
           disableHint={hasCreatePackagePermission}
@@ -124,7 +130,7 @@ export const PackagesFilterer: FC<PackagesFiltererProps> = memo<PackagesFilterer
           data-testid="CreatePackageMenuButton"
         />
       )}
-      {isWorkspacesPage && isSuperAdmin && (
+      {!isAnonymous && isWorkspacesPage && isSuperAdmin && (
         <Button variant="contained" onClick={showCreateWorkspaceDialogHandle} data-testid="CreateWorkspaceButton">
           Create
         </Button>

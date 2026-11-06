@@ -22,6 +22,7 @@ import type { To } from 'react-router-dom'
 import { useNavigate } from 'react-router-dom'
 import type { SettingsPageRoute } from '../../../routes'
 import {
+  ARTICLES_PAGE,
   ROLES_HIERARCHY_PAGE,
   RULESET_MANAGEMENT_PAGE,
   SYSTEM_ADMINISTRATORS_PAGE,
@@ -30,13 +31,17 @@ import {
 } from '../../../routes'
 import { getSettingsPath } from '../../NavigationProvider'
 import type { TestableProps } from '@netcracker/qubership-apihub-ui-shared/components/Testable'
-import { useLinterEnabled } from '@netcracker/qubership-apihub-ui-shared/features/system-extensions/useSystemExtensions'
+import {
+  useDocsBackendEnabled,
+  useLinterEnabled,
+} from '@netcracker/qubership-apihub-ui-shared/features/system-extensions/useSystemExtensions'
 
 export const SettingsNavigation: FC = memo(() => {
   const activeTab = useActiveTabContentContext()
   const setActiveTab = useSetActiveTabContentContext()
   const navigate = useNavigate()
   const linterEnabled = useLinterEnabled()
+  const docsBackendEnabled = useDocsBackendEnabled()
 
   const navigateAndSelect = useCallback((pathToNavigate: To): void => {
     navigate(pathToNavigate)
@@ -60,6 +65,9 @@ export const SettingsNavigation: FC = memo(() => {
       <List>
         {SETTINGS_SIDEBAR_ITEMS.map(({ value, url, label, description, 'data-testid': dataTestId }) => {
           if (value === RULESET_MANAGEMENT_PAGE && !linterEnabled) {
+            return null
+          }
+          if (value === ARTICLES_PAGE && !docsBackendEnabled) {
             return null
           }
 
@@ -130,5 +138,12 @@ const SETTINGS_SIDEBAR_ITEMS: SettingsNavItemProps[] = [
     value: RULESET_MANAGEMENT_PAGE,
     url: getSettingsPath({ tab: RULESET_MANAGEMENT_PAGE }),
     'data-testid': 'RulesetManagementTabButton',
+  },
+  {
+    label: 'Articles',
+    description: 'Manage developer portal guides and articles',
+    value: ARTICLES_PAGE,
+    url: getSettingsPath({ tab: ARTICLES_PAGE }),
+    'data-testid': 'ArticlesTabButton',
   },
 ]

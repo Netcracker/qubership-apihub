@@ -1,0 +1,19 @@
+server:
+  listenAddress: 0.0.0.0:8095
+  allowedOrigins: []                  # CORS; empty = same-origin only (nginx proxies under the UI origin)
+  showDebugInResponse: true           # include "debug" in error bodies
+database:
+  host: localhost
+  port: 5432
+  name: documents
+  username: documents
+  password: documents
+apihub:
+  url: http://localhost:8090     # internal URL for publicKey / apiKey / packages / system configuration
+  timeout: 10s
+  configurationCacheTtl: 60s          # how often anonymousAccess.enabled is re-read from APIHUB
+  packageAccessCacheTtl: 60s          # per-principal cache for version access checks and package bodies
+static:
+  maxUploadSizeBytes: 5242880
+log:
+  level: info

@@ -285,6 +285,41 @@ In UI it's managed by a "Private" checkbox:
 
 In this case any user which have no granted roles for the entity, will not be able to see/retrieve it. It's managed on the API level.
 
+## Anonymous access
+
+With `security.anonymousAccess: true` (default `false`), a request that carries no credentials at all is evaluated as
+the `anonymous` principal on a fixed set of read-only endpoints:
+package list and details, versions, documents and raw files, operations, changelog summaries and changes, dashboard
+references, global search, and `GET /api/v1/system/info`.
+`GET /api/v2/system/configuration` reports the flag as `anonymousAccess.enabled`, so the UI can decide whether to show
+the public home page.
+Every other endpoint, including `GET /api/v1/user`, favourites, activity, publishing and administration, keeps returning
+`401` without credentials.
+
+The anonymous principal is stateless: no user row, no cookie, no session.
+It is granted the `read` permission, and nothing else, on a package whose own default role or an ancestor's default role
+carries `read`.
+A package whose default role chain contains no read-granting role (a private workspace with `none`) is hidden from lists
+and search and answers `404` on direct access, exactly as for a user without a role.
+A request that presents any credential (bearer token, access-token cookie, API key or personal access token) is
+authenticated as before; an invalid credential is rejected and never falls back to anonymous.
+
+Before enabling the flag, review the default role of every root workspace, because the default for new packages is
+`viewer`:
+
+```sql
+select id, name, default_role from package_group where parent_id is null and deleted_at is null;
+```
+
+Set `default_role` to `none` (the "Private" checkbox in the UI) for every workspace that must stay invisible to
+anonymous visitors. The service logs a warning at startup while the flag is on.
+Anonymous endpoints are reachable without any authentication, so apply rate limiting on the ingress in front of the
+service when the portal is exposed to the Internet.
+
+Note: the initial schema seeds `default_role` with the capitalised value `Viewer`, which matches no role id and
+therefore grants nothing; the application writes the lowercase `viewer` for packages it creates. Rows that still hold
+`Viewer` are not readable by anonymous visitors.
+
 Global search enforces the same read permission via on-demand package visibility and invisibility root lists joined into search queries against `global_search.fts_*` (workspace-partitioned indexes). Legacy `public.fts_*` tables remain dual-written and are deprecated for search reads.
 
 Personal private workspaces (`defaultRole: none`) are indexed for search. Authorised principals can find content there through the visibility roots; users without `read` do not. The separate `excludeFromSearch` flag still omits a workspace (and its children) from the search index when set, but personal private workspaces no longer default to that flag.

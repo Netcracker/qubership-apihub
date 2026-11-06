@@ -6,6 +6,7 @@ import (
 	"github.com/Netcracker/qubership-apihub/backend/portal-backend/db"
 	"github.com/Netcracker/qubership-apihub/backend/portal-backend/entity"
 	"github.com/Netcracker/qubership-apihub/backend/portal-backend/utils"
+	"github.com/Netcracker/qubership-apihub/backend/portal-backend/view"
 	"github.com/go-pg/pg/v10"
 )
 
@@ -28,7 +29,9 @@ type RoleRepository interface {
 	GetRole(ctx context.Context, roleId string) (*entity.RoleEntity, error)
 	GetPermissionsForRoles(ctx context.Context, roles []string) ([]string, error)
 	GetUserPermissions(ctx context.Context, packageId string, userId string) ([]string, error)
+	GetDefaultRolePermissions(ctx context.Context, packageId string) ([]string, error)
 	GetAllUserPermissions(ctx context.Context, userId string) ([]string, error)
+	AnyPackageDefaultRoleGrantsRead(ctx context.Context) (bool, error)
 	GetWorkspacePackageReadAccess(ctx context.Context, workspaceId string, principal entity.VisibilityPrincipal) ([]entity.PackageReadAccessEntity, error)
 	SetRoleRanks(ctx context.Context, entities []entity.RoleEntity) error
 	GetUsersBySystemRole(ctx context.Context, systemRole string) ([]entity.UserEntity, error)
@@ -405,6 +408,31 @@ func (r roleRepositoryImpl) GetUserPermissions(ctx context.Context, packageId st
 	return result, nil
 }
 
+func (r roleRepositoryImpl) GetDefaultRolePermissions(ctx context.Context, packageId string) ([]string, error) {
+	var permissions []Permission
+	if packageId == "" {
+		return make([]string, 0), nil
+	}
+	packageIds := utils.GetPackageHierarchy(packageId)
+	query := `
+	select distinct unnest(permissions) as permission
+	from role
+	where id in(
+		select default_role as role
+		from package_group
+		where id in (?)
+	);`
+	_, err := r.cp.GetConnection().WithContext(ctx).Query(&permissions, query, pg.In(packageIds))
+	if err != nil {
+		return nil, err
+	}
+	result := make([]string, 0)
+	for _, p := range permissions {
+		result = append(result, p.Permission)
+	}
+	return result, nil
+}
+
 func (r roleRepositoryImpl) GetAllUserPermissions(ctx context.Context, userId string) ([]string, error) {
 	var permissions []Permission
 	query := `
@@ -431,6 +459,22 @@ func (r roleRepositoryImpl) GetAllUserPermissions(ctx context.Context, userId st
 		result = append(result, p.Permission)
 	}
 	return result, nil
+}
+
+func (r roleRepositoryImpl) AnyPackageDefaultRoleGrantsRead(ctx context.Context) (bool, error) {
+	query := `
+	select exists (
+		select 1
+		from package_group pkg
+		join role on role.id = pkg.default_role
+		where ? = any(role.permissions)
+	);`
+	var exists bool
+	_, err := r.cp.GetConnection().WithContext(ctx).QueryOne(pg.Scan(&exists), query, string(view.ReadPermission))
+	if err != nil {
+		return false, err
+	}
+	return exists, nil
 }
 
 func (r roleRepositoryImpl) SetRoleRanks(ctx context.Context, entities []entity.RoleEntity) error {
@@ -490,6 +534,28 @@ func (r roleRepositoryImpl) GetWorkspacePackageReadAccess(ctx context.Context, w
 			principal.ApiKeyScopeId, principal.ApiKeyScopeId, principal.ApiKeyScopeId, principal.ApiKeyScopeId,
 			pg.Array(principal.ApiKeyRoleIds),
 			workspaceId, workspaceId, workspaceId)
+	} else if principal.Anonymous {
+		query = `
+		SELECT wp.id, wp.parent_id,
+			EXISTS (
+				SELECT 1 FROM role r
+				WHERE 'read' = ANY(r.permissions)
+				  AND r.id IN (
+					SELECT pg2.default_role
+					FROM package_group pg2
+					WHERE pg2.deleted_at IS NULL
+					  AND (
+						pg2.id = wp.id
+						OR (wp.id ~>=~ (pg2.id || '.') AND wp.id ~<~ (pg2.id || '/'))
+					  )
+				  )
+			) AS can_read,
+			wp.exclude_from_search
+		FROM package_group wp
+		WHERE wp.deleted_at IS NULL
+		  AND (wp.id = ? OR (wp.id ~>=~ (? || '.') AND wp.id ~<~ (? || '/')))
+		`
+		_, err = r.cp.GetConnection().WithContext(ctx).Query(&result, query, workspaceId, workspaceId, workspaceId)
 	} else {
 		query = `
 		SELECT wp.id, wp.parent_id,

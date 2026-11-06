@@ -17,6 +17,7 @@ It is not a production ready deployment schema.
 - [APIHUB installation via Helm](#apihub-installation-via-helm)
   - [Helm prerequisites](#helm-prerequisites)
   - [Deployment](#deployment)
+  - [Existing cluster](#existing-cluster)
   - [Verify Installation](#verify-installation)
   - [Uninstallation](#uninstallation)
   - [Apache Superset (optional)](#apache-superset-optional)
@@ -153,6 +154,27 @@ One-liners:
 1. `apihub-quickstart.sh` - PostgreSQL + Pure APIHUB. Basic option
 1. `apihub-with-keycloak-quickstart.sh` - APIHUB with SAML and OIDC integration via Keycloak
 
+## Existing cluster
+
+The chart always deploys documents-backend, which needs the `documents_backend` database. `postgres-db/values.yaml`
+creates it only on a fresh PostgreSQL volume. On a cluster that has the volume already, create the user and the database
+yourself, then upgrade the release from this folder:
+
+```bash
+kubectl exec -n postgres-db pg-common-0 -- psql -U postgres \
+  -c "CREATE USER documents_backend_user WITH PASSWORD 'documents_backend_password' CREATEDB INHERIT;"
+kubectl exec -n postgres-db pg-common-0 -- psql -U postgres \
+  -c "CREATE DATABASE documents_backend OWNER documents_backend_user;"
+kubectl exec -n postgres-db pg-common-0 -- psql -U postgres \
+  -c "GRANT ALL PRIVILEGES ON DATABASE documents_backend TO documents_backend_user;"
+helm upgrade apihub -n qubership-apihub \
+  -f ./qubership-apihub/local-k8s-values.yaml -f ./qubership-apihub/local-secrets.yaml ../qubership-apihub
+```
+
+The quickstart values set `security.anonymousAccess: true`. Anonymous visitors still see only the packages whose default
+role, own or inherited from an ancestor, grants read: see
+[Security model](../../../docs/administration/security-model.md#anonymous-access).
+
 ## Verify Installation
 
 Check running pods: `kubectl get pods -n qubership-apihub`
@@ -171,7 +193,7 @@ Qubership APIHUB will be accessible on [https://qubership-apihub.localtest.me](h
 Credentials for login can be found in `./qubership-apihub/local-secrets.yaml` file
 
 The browser may warn about the self-signed certificate. That is expected for local Kind.
-Outbound HTTPS from backend / linter / agents-backend trusts the same local CA via
+Outbound HTTPS from backend / linter / agents-backend / documents-backend trusts the same local CA via
 `customCa` (Secret `apihub-local-custom-ca` mounted at `/tmp/cert`).
 
 ## Local TLS for Kind (automatic)
@@ -184,7 +206,7 @@ Outbound HTTPS from backend / linter / agents-backend trusts the same local CA v
 | `qubership-apihub/certs/tls.crt` / `tls.key` | Server cert for `qubership-apihub.localtest.me` / `*.localtest.me` |
 
 Deploy scripts create Secret `apihub-local-custom-ca` and Helm values enable `customCa` for
-backend, linter, and agents-backend. Ingress TLS material is injected via `local-secrets.yaml`
+backend, linter, agents-backend, and documents-backend. Ingress TLS material is injected via `local-secrets.yaml`
 (`APIHUB_TLS_CRT` / `APIHUB_TLS_KEY`).
 
 ## Optional: corporate custom CA for backend HTTPS outbound calls
@@ -200,7 +222,7 @@ kubectl create secret generic apihub-local-custom-ca \
   --dry-run=client -o yaml | kubectl apply -f -
 ```
 
-Then restart backend / linter / agents-backend pods so the base image reloads `/tmp/cert`.
+Then restart backend / linter / agents-backend / documents-backend pods so the base image reloads `/tmp/cert`.
 
 MinIO/S3 custom CA remains in **`s3Storage.crt`** inside the backend config Secret, not in `/tmp/cert`.
 
@@ -271,7 +293,7 @@ Connect to PG via pgAdmin and execute the following SQL:
 
 Or you can do the same (create user, create db) via pgAdmin UI.
 
-*Note:* do the same for each backend microservice (api-linter, agents-backend, etc)
+*Note:* do the same for each backend microservice (api-linter, agents-backend, documents-backend, etc)
 
 ### Step 2 - prepare helm chart
 
@@ -292,6 +314,7 @@ apihubUrl: 'qubership-apihub-2.localtest.me'
     apihubNcServiceAddress: 'qubership-apihub-backend.qubership-apihub-2.svc.cluster.local.:8080'
     apiLinterServiceAddress: 'qubership-api-linter-service.qubership-apihub-2.svc.cluster.local.:8080'
     apihubAgentsBackendAddress: 'qubership-apihub-agents-backend.qubership-apihub-2.svc.cluster.local.:8080'
+    apihubDocsBackendAddress: 'qubership-apihub-documents-backend.qubership-apihub-2.svc.cluster.local.:8080'
 ```
 
 In order to change APIHUB release modify `tag: 'dev'` for services to desired docker images tags.

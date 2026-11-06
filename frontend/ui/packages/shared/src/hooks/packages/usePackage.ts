@@ -130,6 +130,7 @@ export function toPackage(value: PackageDto): Package {
     description: value.description,
     serviceName: value.serviceName,
     isFavorite: value.isFavorite,
+    favoritesCount: value?.favoritesCount,
     defaultRole: value?.defaultRole,
     defaultReleaseVersion: value?.defaultReleaseVersion,
     releaseVersionPattern: value?.releaseVersionPattern,

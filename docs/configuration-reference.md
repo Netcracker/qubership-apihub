@@ -28,6 +28,7 @@ Annotated **YAML schemas** used by file-backed binaries live only where the load
 | Kubernetes Agent | [`config.template.yaml`](../backend/agent/config.template.yaml) | Agent image (file-based like backend). |
 | **API Linter** | [`config.template.yaml`](../backend/api-linter-service/config.template.yaml) | **`LINTER_CONFIG_FOLDER`** → `config.yaml`. Spectral rulesets stay **data** managed through the linter API/database, separate from this boot config. |
 | **Agents-backend** | [`config.template.yaml`](../backend/agents-backend/config.template.yaml) | **`AGENTS_BACKEND_CONFIG_FOLDER`** → `config.yaml`. |
+| **Documents backend** | [`config.template.yaml`](../backend/documents-backend/config.template.yaml) | **`DOCS_CONFIG_FOLDER`** → `config.yaml`. |
 | Builders / UI | *(none)* | Env only (builder env / UI nginx wrapper). |
 
 **Golden path for admins:** derive intent from Helm values → rendered manifests → confirm against the Go/TS loaders
@@ -44,6 +45,7 @@ above when in doubt.
 | **qubership-apihub-build-task-consumer** | Environment variables only | **`APIHUB_BACKEND_ADDRESS`** + **`APIHUB_API_KEY`** (aligned with backend **`zeroDayConfiguration.accessToken`** on bootstrap). |
 | **qubership-api-linter-service** | **`config.yaml` on disk** | **`LINTER_CONFIG_FOLDER`**; optional **`LOG_LEVEL`**, **`GOMEMLIMIT`**. File-backed: DB, `technicalParameters.apihub.*`, `linters.*`, `olric.*`. Helm: **`qubershipApiLinterService.env`** → `qubership-api-linter-service-config-secret.yaml`. |
 | **qubership-apihub-agents-backend** | **`config.yaml` on disk** | **`AGENTS_BACKEND_CONFIG_FOLDER`**; optional **`LOG_LEVEL`**, **`GOMEMLIMIT`**. File-backed: DB, `technicalParameters.apihub.*`, `businessParameters.*`, `security.*`, `cleanup.snapshots.*`. Helm: **`qubershipApihubAgentsBackend.env`** → `qubership-apihub-agents-backend-config-secret.yaml`. |
+| **qubership-apihub-documents-backend** | **`config.yaml` on disk** | **`DOCS_CONFIG_FOLDER`**; optional **`GOMEMLIMIT`** and **`DOCS_<SECTION>_<KEY>`** overrides. File-backed: `server.*`, `database.*`, `apihub.*`, `static.*`, `log.level`. The service forwards the credentials of the caller to APIHUB and needs no access token. Helm: **`qubershipApihubDocumentsBackend.env`** → `qubership-apihub-documents-backend-config-secret.yaml`. |
 
 **Kubernetes agent** (optional extension, not started by default Compose bundle): configured like the backend pattern —
 **`config.yaml`** from [`config.template.yaml`](../backend/agent/config.template.yaml), plus Ingress for **`agentUrl`**.
@@ -68,6 +70,11 @@ Chart: **[`deploy/helm-templates/qubership-apihub/`](../deploy/helm-templates/qu
 | `qubershipApihubAgentsBackend.env` | Rendered **as YAML** into Secret `config.yaml`, mounted under **`/app/qubership-apihub-agents-backend/etc/`** with **`AGENTS_BACKEND_CONFIG_FOLDER`** (`qubership-apihub-agents-backend-config-secret.yaml`). |
 | `qubershipApihubAgentsBackend.customCa` | Optional Kubernetes Secret mounted at **`/tmp/cert`** on the agents-backend pod. Same [qubership-core-base](https://github.com/Netcracker/qubership-core-base-images) contract for HTTPS outbound calls to APIHUB and remote agents. Set **`enabled: true`** and **`secretName`**. |
 | `qubershipApihubAgentsBackend.goMemLimit` | Pod env **`GOMEMLIMIT`**. Default **`205MiB`** (~80% of default **`resource.memory.limit`** `256Mi`). |
+| `qubershipApihubDocumentsBackend.env` | Rendered **as YAML** into Secret `config.yaml`, mounted under **`/app/qubership-apihub-documents-backend/etc/`** with **`DOCS_CONFIG_FOLDER`** (`qubership-apihub-documents-backend-config-secret.yaml`). The service is always deployed, so every installation and upgrade needs its database (`documents_backend` on the quickstart and Compose stacks). |
+| `qubershipApihubDocumentsBackend.customCa` | Optional Kubernetes Secret mounted at **`/tmp/cert`** on the documents-backend pod. Same [qubership-core-base](https://github.com/Netcracker/qubership-core-base-images) contract for HTTPS outbound calls to APIHUB. Set **`enabled: true`** and **`secretName`**. |
+| `qubershipApihubDocumentsBackend.goMemLimit` | Pod env **`GOMEMLIMIT`**. Default **`205MiB`** (~80% of default **`resource.memory.limit`** `256Mi`). |
+| `qubershipApihubBackend.env.security.anonymousAccess` | Boolean, default **`false`**. Allows read-only access without credentials to packages whose default role, own or inherited from an ancestor, grants read. Review the default role of every workspace before you enable it; see [Security model](administration/security-model.md#anonymous-access). The quickstart values set **`true`**. |
+| `qubershipApihubUi.env.apihubDocsBackendAddress` | UI pod env **`APIHUB_DOCS_BACKEND_ADDRESS`**: the upstream of the nginx location `/docs-backend`. |
 
 Default **`extensions`** URLs use cluster DNS (`http://qubership-api-linter-service:8080`, …); Compose substitutes
 **`host.docker.internal`** — keep both sides coherent.
@@ -79,7 +86,8 @@ Commands: [Installation guide — Helm](./installation-guide.md#helm-kubernetes)
 
 When **`customCa.enabled: true`**, create the Secret **before** `helm install` / `helm upgrade`. Each key under
 **`data`** or **`stringData`** becomes a filename under **`/tmp/cert`** (use **`.crt`**, **`.cer`**, or **`.pem`**
-suffixes). One Secret per service is typical; PEM contents may be identical across backend, linter, and agents-backend.
+suffixes). One Secret per service is typical; PEM contents may be identical across backend, linter, agents-backend, and
+documents-backend.
 
 **Backend** — save as `apihub-backend-custom-ca-secret.yaml`, set **`namespace`** to your APIHUB release namespace, then
 `kubectl apply -f apihub-backend-custom-ca-secret.yaml`:
@@ -103,6 +111,9 @@ example `apihub-linter-custom-ca`).
 
 **Agents-backend** — same shape; change **`metadata.name`** to match
 **`qubershipApihubAgentsBackend.customCa.secretName`** (for example `apihub-agents-backend-custom-ca`).
+
+**Documents-backend** — same shape; change **`metadata.name`** to match
+**`qubershipApihubDocumentsBackend.customCa.secretName`** (for example `apihub-documents-backend-custom-ca`).
 
 Enable the mount in **`values.yaml`** (defaults keep **`enabled: false`**):
 
@@ -130,13 +141,14 @@ runs everything except the backend, so that you can debug the backend from an ID
 | File | Service | Role |
 |------|---------|------|
 | `qubership-apihub-backend-config.yaml` | Backend | Mounted as `config.yaml`. Uses **`${JWT_PRIVATE_KEY}`**, **`${APIHUB_ACCESS_TOKEN}`**, **`${APIHUB_ADMIN_EMAIL}`**, **`${APIHUB_ADMIN_PASSWORD}`** for `generate_env_and_up_compose.sh`. **`extensions[].baseUrl`** must be reachable from browsers and backend (see Compose readme — often `host.docker.internal`). |
-| `certs/` (optional) | Backend, linter, agents-backend | Corporate CA **`.crt`/`.cer`/`.pem`** in **`certs/`**; uncomment **`./certs:/tmp/cert:ro`** in **`docker-compose.yml`**. [qubership-core-base](https://github.com/Netcracker/qubership-core-base-images) **`/tmp/cert`** contract. MinIO/S3 CA stays in backend **`s3Storage.crt`**. |
+| `certs/` (optional) | Backend, linter, agents-backend, documents-backend | Corporate CA **`.crt`/`.cer`/`.pem`** in **`certs/`**; uncomment **`./certs:/tmp/cert:ro`** in **`docker-compose.yml`**. [qubership-core-base](https://github.com/Netcracker/qubership-core-base-images) **`/tmp/cert`** contract. MinIO/S3 CA stays in backend **`s3Storage.crt`**. |
 | `docker-compose.yml` (`qubership-apihub-backend` `environment`) | Backend | **`APIHUB_CONFIG_FOLDER`**, **`GOMEMLIMIT`** (Go runtime soft limit; default **`800MiB`** for Compose **`memory: 1G`** limit). |
-| `qubership-apihub-ui.env` | Portal UI | Internal upstream addresses (`APIHUB_BACKEND_ADDRESS`, `API_LINTER_SERVICE_ADDRESS`, …). |
+| `qubership-apihub-ui.env` | Portal UI | Internal upstream addresses (`APIHUB_BACKEND_ADDRESS`, `API_LINTER_SERVICE_ADDRESS`, `APIHUB_DOCS_BACKEND_ADDRESS`, …). |
 | `qubership-apihub-build-task-consumer.env` | Builder | **`APIHUB_API_KEY`**, **`APIHUB_BACKEND_ADDRESS`**. Compose uses **`host.docker.internal:8090`** so the worker reaches the backend through the published host port. |
 | `qubership-api-linter-service-config.yaml` | Linter | Mounted as `config.yaml`: DB, **`technicalParameters.apihub.{url,accessToken}`** (`${APIHUB_ACCESS_TOKEN}`), **`linters.spectral.*`**, **`linters.ai.*`**. Compose sets **`LINTER_CONFIG_FOLDER`**, **`GOMEMLIMIT`** (default **`1600MiB`** for **`memory: 2G`**). |
 | `qubership-apihub-agents-backend-config.yaml` | Agents backend | Mounted as `config.yaml`: DB, **`technicalParameters.apihub.{url,accessToken}`**, **`businessParameters.defaultWorkspaceId`**, **`security.*`**, **`cleanup.snapshots.*`**. Compose sets **`AGENTS_BACKEND_CONFIG_FOLDER`**, **`GOMEMLIMIT`** (default **`205MiB`** for **`memory: 256M`**). |
-| `scripts/init-db/init.sql` | PostgreSQL init | Creates users/DBs: `apihub_backend`, `api_linter`, `agents_backend`. |
+| `qubership-apihub-documents-backend-config.yaml` | Documents backend | Mounted as `config.yaml`: **`server.listenAddress`**, DB, **`apihub.url`**. Compose sets **`DOCS_CONFIG_FOLDER`**, **`GOMEMLIMIT`** (default **`205MiB`** for **`memory: 256M`**). |
+| `scripts/init-db/init.sql` | PostgreSQL init | Creates users/DBs: `apihub_backend`, `api_linter`, `agents_backend`, `documents_backend`. |
 
 Secrets helper: **`generate_jwt_pkey.sh`** (JWT private key PEM → base64 for YAML), **`generate_env_and_up_compose.sh`**
 (random token/admin + `envsubst`). **Important:** running `generate_env_and_up_compose.sh` **overwrites** the processed
@@ -156,10 +168,15 @@ These must stay **aligned across files/env**:
 3. **`technicalParameters.apihub.url`** for linter and agents backend is **the Portal base URL reachable from inside
    their containers** (`http://qubership-apihub-ui:8080` in-cluster; `http://host.docker.internal:8081`-style patterns
    on Compose with published UI port).
-4. **`GOMEMLIMIT`** on Go backends (backend, linter, agents-backend) should stay **below the container memory limit** —
+4. **`GOMEMLIMIT`** on Go backends (backend, linter, agents-backend, documents-backend) should stay **below the
+   container memory limit** —
    chart and Compose defaults use ~80% of the paired **`resource.memory.limit`** / Compose
    **`deploy.resources.limits.memory`**. When you raise memory limits, update **`goMemLimit`** (Helm) or
    **`GOMEMLIMIT`** (Compose) in the same change.
+5. **`apihub.url`** of documents-backend is the **internal backend URL**, not the Portal
+   (`http://qubership-apihub-backend:8080` on Helm and Compose). The service sets no token of its own: it forwards the
+   credentials of the caller. The **`docs-backend`** entry of **`extensions`** and **`APIHUB_DOCS_BACKEND_ADDRESS`**
+   of the UI must reach the same service.
 
 ### MinIO (S3 storage)
 

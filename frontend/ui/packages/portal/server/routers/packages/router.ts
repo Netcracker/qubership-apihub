@@ -40,6 +40,7 @@ import {
   getPackageActivity,
   getPackageMembers,
   getPackages,
+  getPopularPackages,
   getPublishedSpecRaw,
   getRevisions,
   getTags,
@@ -77,6 +78,7 @@ export function PackagesRouter(): PackagesRouter {
   getDocuments(router)
 
   getPackages(router)
+  getPopularPackages(router)
   getPackage(router)
 
   favorPackage(router)

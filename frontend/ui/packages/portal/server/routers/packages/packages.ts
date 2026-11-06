@@ -50,6 +50,7 @@ import {
 } from '../../mocks/packages/types'
 import { REVISIONS } from '../../mocks/packages/revisions'
 import { ROLES_LIST } from '../../mocks/roles/roles'
+import { CURRENT_USER_ID, disfavor, favor, getFavoritesCount, isFavorite } from '../../mocks/packages/favorites'
 
 export function deletePackage(router: Router): void {
   router.delete('/:packageKey/', (req, res) => {
@@ -257,9 +258,33 @@ export function getPackages(router: Router): void {
       preparedData = preparedData?.filter((item) => item?.parentId === parentId)
     }
     if (onlyFavorite === 'true') {
-      preparedData = preparedData?.filter((item) => item?.isFavorite === true)
+      preparedData = preparedData?.filter((item) => isFavorite(CURRENT_USER_ID, item.packageId))
     }
-    res.status(200).json({ packages: preparedData })
+    res.status(200).json({
+      packages: preparedData.map(item => ({ ...item, isFavorite: isFavorite(CURRENT_USER_ID, item.packageId) })),
+    })
+  })
+}
+
+export function getPopularPackages(router: Router): void {
+  router.get('/popular/', (req, res) => {
+    const { kind, limit } = req.query
+    const kinds = typeof kind === 'string' && kind !== '' ? kind.split(',') : ['package', 'dashboard']
+    const parsedLimit = Number(limit)
+    const maxItems = Number.isInteger(parsedLimit) && parsedLimit > 0 ? parsedLimit : 12
+
+    const popular = (PACKAGES.packages ?? [])
+      .filter(item => kinds.includes(item.kind))
+      .map(item => ({
+        ...item,
+        favoritesCount: getFavoritesCount(item.packageId),
+        isFavorite: isFavorite(CURRENT_USER_ID, item.packageId),
+      }))
+      .filter(item => item.favoritesCount > 0)
+      .sort((a, b) => b.favoritesCount - a.favoritesCount || a.name.localeCompare(b.name))
+      .slice(0, maxItems)
+
+    res.status(200).json({ packages: popular })
   })
 }
 
@@ -280,22 +305,14 @@ export function recalculatePackageVersionGroups(router: Router): void {
 
 export function favorPackage(router: Router): void {
   router.post('/:id/favor/', (req, res) => {
-    PACKAGES.packages = PACKAGES.packages.map(pack => {
-      return pack.packageId === req.params.id
-        ? { ...pack, isFavorite: true }
-        : pack
-    })
+    favor(CURRENT_USER_ID, req.params.id)
     res.status(200).json()
   })
 }
 
 export function disfavorPackage(router: Router): void {
   router.post('/:id/disfavor/', (req, res) => {
-    PACKAGES.packages = PACKAGES.packages.map(pack => {
-      return pack.packageId === req.params.id
-        ? { ...pack, isFavorite: false }
-        : pack
-    })
+    disfavor(CURRENT_USER_ID, req.params.id)
     res.status(200).json()
   })
 }

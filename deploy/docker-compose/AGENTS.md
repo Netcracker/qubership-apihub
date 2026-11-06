@@ -11,9 +11,10 @@ chart; they do not replace it for production. Follow the root [`AGENTS.md`](../.
 | Generic | `apihub-generic/` | Postgres only, no integrations; the default local rig |
 | Keycloak | `with-keycloak/` | SAML SSO with Keycloak; the same file layout as the generic stack |
 
-Each full stack has `docker-compose.yml`, `generate_env_and_up_compose.sh`, `generate_jwt_pkey.sh`, the three
+Each full stack has `docker-compose.yml`, `generate_env_and_up_compose.sh`, `generate_jwt_pkey.sh`, the four
 `config.yaml` sources (`qubership-apihub-backend-config.yaml`, `qubership-api-linter-service-config.yaml`,
-`qubership-apihub-agents-backend-config.yaml`), and the env files `qubership-apihub-ui.env` and
+`qubership-apihub-agents-backend-config.yaml`, `qubership-apihub-documents-backend-config.yaml`), and the env files
+`qubership-apihub-ui.env` and
 `qubership-apihub-build-task-consumer.env`.
 
 ## Build and test

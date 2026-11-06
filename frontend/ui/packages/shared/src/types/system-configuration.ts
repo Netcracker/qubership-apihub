@@ -47,6 +47,8 @@ export type SystemConfigurationDto = Readonly<{
     autoLogin?: boolean
   }
   extensions: Array<SystemExtension>
+  // Optional: absent on backends that do not support anonymous (unauthenticated) read access yet
+  anonymousAccess?: boolean
 }>
 
 export type SystemConfiguration = SystemConfigurationDto

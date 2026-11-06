@@ -64,6 +64,7 @@ export type PackageDto = Readonly<{
   kind: PackageKind
   description?: string
   isFavorite?: boolean
+  favoritesCount?: number
   serviceName?: string
   userRole?: UserRole
   permissions?: PackagePermissions
@@ -88,6 +89,7 @@ export type Package = Readonly<{
   kind: PackageKind
   description?: string
   isFavorite?: boolean
+  favoritesCount?: number
   serviceName?: string
   // todo remove userRole after full transition to permissions
   userRole?: UserRole

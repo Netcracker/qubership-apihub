@@ -5,7 +5,7 @@ Node.js **>= 24** is required (`engines` in the repository root `package.json`).
 ## Recommended: proxy mode (real APIHUB)
 
 **Default setup for Portal UI work.** Vite serves the frontend with HMR and forwards `/api`, `/api-linter`,
-`/agents-backend`, and `/playground` to a real APIHUB instance.
+`/agents-backend`, `/docs-backend`, and `/playground` to a real APIHUB instance.
 
 1. Set `proxyServer` in `packages/portal/vite.config.ts` to your APIHUB URL (default:
    `http://host.docker.internal:8081`).

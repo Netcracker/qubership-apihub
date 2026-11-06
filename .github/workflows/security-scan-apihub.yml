@@ -93,7 +93,8 @@ jobs:
             # The image names of the legs in ci.yml; add a new image here as well.
             images="$(jq -cn --arg prefix "ghcr.io/$owner/" --arg tag "$TAG" '
               ["qubership-apihub-ui", "qubership-apihub-build-task-consumer", "qubership-apihub-backend",
-               "qubership-api-linter-service", "qubership-apihub-agents-backend", "qubership-apihub-agent",
+               "qubership-api-linter-service", "qubership-apihub-agents-backend", "qubership-apihub-documents-backend",
+               "qubership-apihub-agent",
                "qubership-apihub-test-service", "qubership-apihub-java-task-consumer"]
               | map($prefix + . + ":" + $tag)')"
           fi

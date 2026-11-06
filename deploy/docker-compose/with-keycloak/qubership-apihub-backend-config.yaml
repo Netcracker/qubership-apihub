@@ -12,6 +12,8 @@ security:
     accessTokenDurationSec: 1800
     refreshTokenDurationSec: 43200
   apihubExternalUrl: 'http://host.docker.internal:8081'
+  # read-only access without credentials for packages whose default role grants read
+  anonymousAccess: false
   allowedHostsForProxy:
     - 'host.docker.internal'
     - 'localhost'
@@ -53,3 +55,6 @@ extensions:
   - name: agents-backend
     baseUrl: http://host.docker.internal:8092
     pathPrefix: agents-backend
+  - name: docs-backend
+    baseUrl: http://host.docker.internal:8093
+    pathPrefix: docs-backend

@@ -4,6 +4,7 @@ type VisibilityPrincipal struct {
 	UserId        string
 	ApiKeyScopeId string
 	ApiKeyRoleIds []string
+	Anonymous     bool
 }
 
 type PackageReadAccessEntity struct {

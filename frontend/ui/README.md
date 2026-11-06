@@ -61,7 +61,8 @@ components starts with `pnpm exec nx run ui-shared:storybook`.
 ## Configuration
 
 The image reads environment variables, not a config file. nginx proxies to `APIHUB_BACKEND_ADDRESS`,
-`APIHUB_NC_SERVICE_ADDRESS`, `API_LINTER_SERVICE_ADDRESS`, and `APIHUB_AGENTS_BACKEND_ADDRESS`, and uses
+`APIHUB_NC_SERVICE_ADDRESS`, `API_LINTER_SERVICE_ADDRESS`, `APIHUB_AGENTS_BACKEND_ADDRESS`, and
+`APIHUB_DOCS_BACKEND_ADDRESS`, and uses
 `DNS_RESOLVERS`; [`nginx/nginx.conf.template`](nginx/nginx.conf.template) is the template. The
 [configuration reference](../../docs/configuration-reference.md) describes the values per deployment. The proxy targets
 of the dev servers are constants in `vite.config.ts`.

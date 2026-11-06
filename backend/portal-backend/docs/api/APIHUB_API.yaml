@@ -164,11 +164,21 @@ paths:
                 type: object
                 required:
                   - authConfig
+                  - anonymousAccess
                 properties:
                   defaultWorkspaceId:
                     description: Id of the workspace, which is used by default while working with the system.
                     type: string
                     example: WSPACE1
+                  anonymousAccess:
+                    description: Whether read-only endpoints accept requests without credentials.
+                    type: object
+                    required:
+                      - enabled
+                    properties:
+                      enabled:
+                        type: boolean
+                        example: false
                   authConfig:
                     type: object
                     required:
@@ -220,6 +230,48 @@ paths:
                           description: path for routing
                           type: string
                           example: api-linter
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
+  "/api/v2/system/stats":
+    get:
+      tags:
+        - Auth
+      summary: Public system statistics
+      description: |
+        Aggregated public statistics for the developer portal home page.
+        Available to any principal, including anonymous (when anonymous access is enabled).
+        `versions` - number of non-deleted published versions (latest revision only) in non-deleted packages.
+        `operations` - number of operations in those versions.
+      operationId: getPublicSystemStats
+      security:
+        - {}
+        - BearerAuth: []
+        - CookieAuth: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicSystemStats"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                Unauthorized:
+                  $ref: "#/components/examples/Unauthorized"
         "500":
           description: Internal Server Error
           content:
@@ -1048,6 +1100,122 @@ paths:
                   $ref: "#/components/examples/InternalServerError"
                 RequestTimeout:
                   $ref: "#/components/examples/RequestTimeout"
+  "/api/v2/packages/popular":
+    get:
+      tags:
+        - Packages
+      summary: Get popular packages
+      description: |
+        Retrieve the packages readable by the caller, ranked by the number of users who added them to favorites.
+
+        The same read-scope rules as for `GET /api/v2/packages` apply. Packages that no user added to favorites
+        are not returned. Order: `favoritesCount` descending, then package name and package Id ascending.
+        For an anonymous caller `isFavorite` is always false.
+      operationId: getPopularPackages
+      parameters:
+        - name: kind
+          in: query
+          description: |
+            Filter the packages by kind.
+
+            The list of values is acceptable. In this case, the following pattern will be used: ```?kind=group,package,dashboard```.
+
+            If not transmitted, the default value will be used.
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - workspace
+                - group
+                - package
+                - dashboard
+            default: [package, dashboard]
+            example: [package, dashboard]
+        - name: lastReleaseVersionDetails
+          in: query
+          description: |
+            Show/hide the detailed info about the last release version and it's changes, comparing with the previous one.
+          schema:
+            type: boolean
+            default: false
+        - $ref: "#/components/parameters/showParents"
+        - name: limit
+          in: query
+          description: Items count for paging.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 12
+        - $ref: "#/components/parameters/page"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  packages:
+                    type: array
+                    items:
+                      required:
+                        - packageId
+                        - alias
+                        - name
+                        - favoritesCount
+                      allOf:
+                        - $ref: "#/components/schemas/Package"
+                        - type: object
+                          properties:
+                            favoritesCount:
+                              description: Number of users who added the package to favorites.
+                              type: integer
+                              minimum: 1
+                              example: 5
+                            parents:
+                              description: List of all parent packages
+                              type: array
+                              items:
+                                $ref: "#/components/schemas/PackageList"
+                            lastReleaseVersionDetails:
+                              type: object
+                              description: |
+                                Details about the last release version. Returned only if lastReleaseVersionDetails:true and the lastReleaseVersion is filled in on a package.
+                              properties:
+                                version:
+                                  type: string
+                                  example: "2022.4@2"
+                                notLatestRevision:
+                                  type: boolean
+                                  default: false
+                                summary:
+                                  $ref: "#/components/schemas/ChangeSummary"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                IncorrectInputParams:
+                  $ref: "#/components/examples/IncorrectInputParameters"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
   "/api/v2/packages/{packageId}":
     parameters:
       - $ref: "#/components/parameters/packageId"
@@ -12147,6 +12315,21 @@ components:
       explode: false
       example: ["build-document", "version-not-resolved"]
   schemas:
+    PublicSystemStats:
+      description: Public aggregated statistics of the APIHUB instance
+      type: object
+      required:
+        - versions
+        - operations
+      properties:
+        versions:
+          description: Number of published (non-deleted, latest revision) versions in non-deleted packages
+          type: integer
+          example: 120
+        operations:
+          description: Number of operations in those versions
+          type: integer
+          example: 4500
     SystemInfo:
       description: Information about the APIHUB product
       type: object

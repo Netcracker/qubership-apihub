@@ -2,9 +2,12 @@ package repository
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/Netcracker/qubership-apihub/backend/portal-backend/db"
 	"github.com/Netcracker/qubership-apihub/backend/portal-backend/entity"
+	"github.com/Netcracker/qubership-apihub/backend/portal-backend/utils"
+	"github.com/Netcracker/qubership-apihub/backend/portal-backend/view"
 	"github.com/go-pg/pg/v10"
 )
 
@@ -16,6 +19,7 @@ type SystemStatsRepository interface {
 	GetVersionComparisonsCount(ctx context.Context) (int, error)
 	GetBuildsCountByType(ctx context.Context) ([]entity.BuildsCountEntity, error)
 	GetDatabaseSizePerTable(ctx context.Context) ([]entity.TableSizeEntity, error)
+	GetPublicStats(ctx context.Context, scope view.PackageReadScope, userId string) (*entity.PublicStatsEntity, error)
 }
 
 func NewSystemStatsRepository(cp db.ConnectionProvider) SystemStatsRepository {
@@ -190,4 +194,48 @@ func (s *systemStatsRepositoryImpl) GetDatabaseSizePerTable(ctx context.Context)
 	}
 
 	return result, nil
+}
+
+func (s *systemStatsRepositoryImpl) GetPublicStats(ctx context.Context, scope view.PackageReadScope, userId string) (*entity.PublicStatsEntity, error) {
+	var result entity.PublicStatsEntity
+	if scope.Kind == view.PackageReadScopeNone {
+		return &result, nil
+	}
+
+	ctes, condition, err := convertPackageReadScopeToSQL(scope, userId, "pkg.id", "pkg")
+	if err != nil {
+		return nil, err
+	}
+	conditions := []string{"l.deleted_at is null", "pkg.deleted_at is null"}
+	if condition != "" {
+		conditions = append(conditions, condition)
+	}
+
+	latest := `latest as (
+		select distinct on (pv.package_id, pv.version)
+			pv.package_id, pv.version, pv.revision, pv.deleted_at
+		from published_version pv
+		order by pv.package_id, pv.version, pv.revision desc
+	)`
+	active := fmt.Sprintf(`active as (
+		select l.package_id, l.version, l.revision
+		from latest l
+		join package_group pkg on pkg.id = l.package_id
+		%s
+	)`, utils.WhereClause(conditions))
+
+	query := fmt.Sprintf(`
+	%s
+	select
+		(select count(*) from active) as versions,
+		(select count(*) from operation o
+			join active a on a.package_id = o.package_id and a.version = o.version and a.revision = o.revision) as operations`,
+		utils.WithClause(append(ctes, latest, active)))
+
+	params := entity.PackagesQueryParams{UserId: userId, SubtreeRoot: scope.SubtreeRoot}
+	if _, err := s.cp.GetConnection().ModelContext(ctx, &params).QueryOne(pg.Scan(&result.Versions, &result.Operations), query); err != nil {
+		return nil, err
+	}
+
+	return &result, nil
 }

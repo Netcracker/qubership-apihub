@@ -11,6 +11,7 @@ import (
 
 type SystemStatsController interface {
 	GetSystemStats(w http.ResponseWriter, r *http.Request)
+	GetPublicStats(w http.ResponseWriter, r *http.Request)
 }
 
 func NewSystemStatsController(statsService service.SystemStatsService, responder responder.Responder) SystemStatsController {
@@ -39,6 +40,16 @@ func (s systemStatsControllerImpl) GetSystemStats(w http.ResponseWriter, r *http
 	stats, err := s.statsService.GetSystemStats(ctx)
 	if err != nil {
 		s.responder.RespondWithError(w, r, "Failed to get system statistics", err)
+		return
+	}
+	s.responder.RespondWithJson(w, http.StatusOK, stats)
+}
+
+func (s systemStatsControllerImpl) GetPublicStats(w http.ResponseWriter, r *http.Request) {
+	ctx := secctx.MakeUserContext(r)
+	stats, err := s.statsService.GetPublicStats(ctx)
+	if err != nil {
+		s.responder.RespondWithError(w, r, "Failed to get public system statistics", err)
 		return
 	}
 	s.responder.RespondWithJson(w, http.StatusOK, stats)

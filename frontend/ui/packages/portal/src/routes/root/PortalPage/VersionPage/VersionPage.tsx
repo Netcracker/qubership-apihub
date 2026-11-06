@@ -29,7 +29,7 @@ import type { FC, ReactNode } from 'react'
 import { memo, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import type { VersionPageRoute } from '../../../../routes'
-import { API_CHANGES_PAGE, API_QUALITY_PAGE, CONTRACTS_PAGE, DEPRECATED_PAGE, DOCUMENTS_PAGE, OVERVIEW_PAGE } from '../../../../routes'
+import { API_CHANGES_PAGE, API_QUALITY_PAGE, CONTRACTS_PAGE, DEPRECATED_PAGE, DOCUMENTS_PAGE, OVERVIEW_PAGE, PACKAGE_GUIDES_PAGE } from '../../../../routes'
 import { ActivityHistoryFiltersProvider } from '../../MainPage/ActivityHistoryFiltersProvider'
 import { NoPackagePlaceholder } from '../../NoPackagePlaceholder'
 import { NoPackageVersionPlaceholder } from '../../NoPackageVersionPlaceholder'
@@ -47,6 +47,7 @@ import { RulesetInfoDialog } from './VersionApiQualitySubPage/components/Ruleset
 import { VersionApiQualitySubPage } from './VersionApiQualitySubPage/VersionApiQualitySubPage'
 import { VersionDeprecatedOperationsSubPage } from './VersionDeprecatedOperationsSubPage/VersionDeprecatedOperationsSubPage'
 import { VersionDocumentsSubPage } from './VersionDocumentsSubPage/VersionDocumentsSubPage'
+import { VersionGuidesSubPage } from './VersionGuidesSubPage/VersionGuidesSubPage'
 import { VersionContractsSubPage } from './VersionContractsSubPage/VersionContractsSubPage'
 import { VersionOverviewSubPage } from './VersionOverviewSubPage/VersionOverviewSubPage'
 import { VersionPageToolbar } from './VersionPageToolbar'
@@ -117,6 +118,7 @@ const PATH_PARAM_TO_SUB_PAGE_MAP: Record<VersionPageRoute, ReactNode> = {
   ),
   [API_QUALITY_PAGE]: <VersionApiQualitySubPage />,
   [DOCUMENTS_PAGE]: <VersionDocumentsSubPage />,
+  [PACKAGE_GUIDES_PAGE]: <VersionGuidesSubPage />,
 }
 
 const VERSION_PAGE_MENU_ITEMS = [
@@ -126,6 +128,7 @@ const VERSION_PAGE_MENU_ITEMS = [
   DEPRECATED_PAGE,
   API_QUALITY_PAGE,
   DOCUMENTS_PAGE,
+  PACKAGE_GUIDES_PAGE,
   TOGGLE_SIDEBAR_BUTTON,
 ]
 

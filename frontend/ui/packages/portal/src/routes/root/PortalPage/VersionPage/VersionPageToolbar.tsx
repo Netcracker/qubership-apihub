@@ -45,6 +45,7 @@ import { AddIcon } from '@netcracker/qubership-apihub-ui-shared/icons/AddIcon'
 import type { FC } from 'react'
 import { memo, useCallback, useEffect, useMemo } from 'react'
 import { useParams } from 'react-router-dom'
+import { useIsAnonymous } from '@netcracker/qubership-apihub-ui-shared/hooks/authorization'
 
 import { useNavigation } from '../../../NavigationProvider'
 import { PackageBreadcrumbs } from '../../PackageBreadcrumbs'
@@ -68,6 +69,7 @@ export const VersionPageToolbar: FC = memo(() => {
   const { showExportSettingsDialog } = useEventBus()
 
   const currentPackage = useCurrentPackage()
+  const isAnonymous = useIsAnonymous()
   const isDashboard: boolean = useMemo(() => currentPackage?.kind === DASHBOARD_KIND, [currentPackage?.kind])
   const isPackage: boolean = useMemo(() => currentPackage?.kind === PACKAGE_KIND, [currentPackage?.kind])
 
@@ -160,12 +162,12 @@ export const VersionPageToolbar: FC = memo(() => {
               </>
             )}
             <Divider orientation="vertical" sx={{ height: '20px', mt: '6px' }}/>
-            {isDashboard && <CreateDashboardVersionButton
+            {!isAnonymous && isDashboard && <CreateDashboardVersionButton
               variant="text"
               disabled={!hasCreateVersionPermissions}
               primaryButtonProps={{ sx: { borderRight: 'none !important', px: 0 } }}
             />}
-            {isPackage && <ButtonWithHint
+            {!isAnonymous && isPackage && <ButtonWithHint
               disabled={!hasCreateVersionPermissions}
               disableHint={hasCreateVersionPermissions}
               hint="You do not have permission to edit the version"
@@ -178,7 +180,7 @@ export const VersionPageToolbar: FC = memo(() => {
         }
         action={
           <Box display="flex" gap={2}>
-            <CopyPackageVersionButton />
+            {!isAnonymous && <CopyPackageVersionButton />}
             {!isDashboard && fullVersion && (
               <Button
                 variant="outlined"
@@ -191,12 +193,14 @@ export const VersionPageToolbar: FC = memo(() => {
 
             <ComparisonSelectorButton showCompareGroups={showCompareGroups} />
 
-            <EditButton
-              disabled={!hasEditPermission || filesHaveFolders}
-              hint={getEditButtonHint(hasEditPermission, filesHaveFolders, latestRevision)}
-              isDashboard={isDashboard}
-            />
-            <PackageSettingsButton packageKey={packageId!} />
+            {!isAnonymous && (
+              <EditButton
+                disabled={!hasEditPermission || filesHaveFolders}
+                hint={getEditButtonHint(hasEditPermission, filesHaveFolders, latestRevision)}
+                isDashboard={isDashboard}
+              />
+            )}
+            <PackageSettingsButton packageKey={packageId!} permissions={permissions} />
           </Box>
         }
       />

@@ -14,9 +14,17 @@
  * limitations under the License.
  */
 
-// Main tabs
-
 import { SPECIAL_VERSION_KEY } from '@netcracker/qubership-apihub-ui-shared/entities/versions'
+
+// Home page (developer portal landing, available to anonymous users when anonymous access is enabled)
+export const HOME_PAGE_PATH = '/'
+
+// Guides (articles served by the docs backend extension); public like the home page
+export const GUIDES_PAGE = 'guides'
+export const GUIDES_PAGE_PATH = `/${GUIDES_PAGE}`
+export const GUIDE_PAGE_PATH_PATTERN = `/${GUIDES_PAGE}/:slug`
+
+// Main tabs
 
 export const FAVORITE_PAGE = 'favorite'
 export const SHARED_PAGE = 'shared'
@@ -34,6 +42,7 @@ export const CONTRACTS_PAGE = 'operations'
 export const DEPRECATED_PAGE = 'deprecated'
 export const API_QUALITY_PAGE = 'api-quality'
 export const DOCUMENTS_PAGE = 'documents'
+export const PACKAGE_GUIDES_PAGE = 'guides'
 export const VERSION_PAGE_PATH_PATTERN = '/portal/packages/:packageId/:versionId/'
 export const OVERVIEW_PATH_PATTERN = `/portal/packages/:packageId/:versionId/${OVERVIEW_PAGE}/`
 export const API_CHANGES_PAGE_PATH_PATTERN = `/portal/packages/:packageId/:versionId/${API_CHANGES_PAGE}/:apiType/`
@@ -42,6 +51,7 @@ export const OPERATION_PAGE_PATH_PATTERN = `/portal/packages/:packageId/:version
 export const DEPRECATED_PAGE_PATH_PATTERN = `/portal/packages/:packageId/:versionId/${DEPRECATED_PAGE}/:apiType`
 export const API_QUALITY_PAGE_PATH_PATTERN = `/portal/packages/:packageId/:versionId/${API_QUALITY_PAGE}/:apiType`
 export const DOCUMENTS_PAGE_PATH_PATTERN = `/portal/packages/:packageId/:versionId/${DOCUMENTS_PAGE}/:documentId`
+export const PACKAGE_GUIDES_PAGE_PATH_PATTERN = `/portal/packages/:packageId/:versionId/${PACKAGE_GUIDES_PAGE}/:guideSlug`
 
 export const CONFIGURATION_PAGE = 'edit'
 
@@ -71,6 +81,7 @@ export const EXPORT_SETTINGS_PAGE = 'export'
 export const VERSIONS_PAGE = 'versions'
 export const ACCESS_TOKENS_PAGE = 'tokens'
 export const USER_ACCESS_CONTROLS_PAGE = 'members'
+export const GUIDES_SETTINGS_PAGE = 'guides'
 
 // Portal settings tabs
 // Portal settings tabs have not self path patterns because they have not specific parameters
@@ -78,6 +89,7 @@ export const USER_ROLES_PAGE = 'roles'
 export const ROLES_HIERARCHY_PAGE = 'hierarchy'
 export const SYSTEM_ADMINISTRATORS_PAGE = 'sysadms'
 export const SYSTEM_TOKENS_PAGE = 'tokens'
+export const ARTICLES_PAGE = 'articles'
 export const RULESET_MANAGEMENT_PAGE = 'rulesets'
 
 // Profile page tabs
@@ -115,6 +127,7 @@ export type VersionPageRoute =
   | typeof DEPRECATED_PAGE
   | typeof API_QUALITY_PAGE
   | typeof DOCUMENTS_PAGE
+  | typeof PACKAGE_GUIDES_PAGE
 
 export type PackageVersionPageRoute =
   | typeof CONFIGURATION_PAGE
@@ -135,6 +148,7 @@ export type PackageSettingsPageRoute =
   | typeof VERSIONS_PAGE
   | typeof ACCESS_TOKENS_PAGE
   | typeof USER_ACCESS_CONTROLS_PAGE
+  | typeof GUIDES_SETTINGS_PAGE
 
 export type SettingsPageRoute =
   | typeof USER_ROLES_PAGE
@@ -142,6 +156,7 @@ export type SettingsPageRoute =
   | typeof SYSTEM_ADMINISTRATORS_PAGE
   | typeof SYSTEM_TOKENS_PAGE
   | typeof RULESET_MANAGEMENT_PAGE
+  | typeof ARTICLES_PAGE
 
 export type ProfilePageRoute =
   | typeof PERSONAL_ACCESS_TOKENS_PAGE

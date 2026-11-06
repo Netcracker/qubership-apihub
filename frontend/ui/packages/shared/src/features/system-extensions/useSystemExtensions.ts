@@ -7,6 +7,7 @@ export const SystemExtensionNames = {
   apiLinter: 'api-linter',
   agentsBackend: 'agents-backend',
   ncService: 'nc-service',
+  docsBackend: 'docs-backend',
 } as const
 
 export type SystemExtensionName = typeof SystemExtensionNames[keyof typeof SystemExtensionNames]
@@ -29,6 +30,19 @@ export function useAgentEnabled(): boolean {
 
 export function useNcServiceEnabled(): boolean {
   return useExtensionNameEnabled(SystemExtensionNames.ncService)
+}
+
+export const DOCS_BACKEND_EXTENSION_NAME = SystemExtensionNames.docsBackend
+
+export function useDocsBackendEnabled(): boolean {
+  return useExtensionNameEnabled(DOCS_BACKEND_EXTENSION_NAME)
+}
+
+export function useGetDocsBackendPrefix(): string {
+  const extensions = useSystemExtensions()
+  const docsBackendEnabled = useDocsBackendEnabled()
+
+  return useMemo(() => (docsBackendEnabled ? `/${findExtensions(extensions, DOCS_BACKEND_EXTENSION_NAME)?.pathPrefix}` : ''), [extensions, docsBackendEnabled])
 }
 
 export function useGetAgentPrefix(): string {

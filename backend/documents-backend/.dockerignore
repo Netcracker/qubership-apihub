@@ -1,0 +1,10 @@
+# The image builds from this directory: the module does not use commons-go.
+.git
+.idea
+.vscode
+.DS_Store
+**/*.exe
+**/*_test.go
+/qubership-apihub-documents-backend
+/config.yaml
+/logs/

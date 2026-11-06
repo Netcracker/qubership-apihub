@@ -28,7 +28,7 @@ on:
       image_tags:
         description: >-
           JSON object with the keys backend, buildTaskConsumer, ui, apiLinterService, agentsBackend,
-          and agent. A missing key takes default_image_tag. A src-<hash> tag pins exact content.
+          documentsBackend, and agent. A missing key takes default_image_tag. A src-<hash> tag pins exact content.
         required: false
         type: string
         default: '{}'
@@ -183,6 +183,10 @@ jobs:
             image:
               repository: 'ghcr.io/$owner/qubership-apihub-agents-backend'
               tag: '$agentsBackend'
+          qubershipApihubDocumentsBackend:
+            image:
+              repository: 'ghcr.io/$owner/qubership-apihub-documents-backend'
+              tag: '$documentsBackend'
           EOF
           {
             echo "owner=$owner"
@@ -197,6 +201,7 @@ jobs:
             echo "ghcr.io/$owner/qubership-apihub-ui:$ui"
             echo "ghcr.io/$owner/qubership-api-linter-service:$apiLinterService"
             echo "ghcr.io/$owner/qubership-apihub-agents-backend:$agentsBackend"
+            echo "ghcr.io/$owner/qubership-apihub-documents-backend:$documentsBackend"
             if [ '${{ inputs.agent }}' = 'true' ]; then
               echo "ghcr.io/$owner/qubership-apihub-agent:$agent"
             fi
@@ -387,7 +392,7 @@ jobs:
           #   under discovery, and [A-DRP-1] expects that copy as the baseline.
           # - nc-service: the Agent UI shows the Automation and Gateway Routing Report tabs only
           #   when this extension is registered. The stack has no nc-service, so the entry points
-          #   at the backend. Helm replaces a list as a whole, so the two quickstart extensions are
+          #   at the backend. Helm replaces a list as a whole, so the three quickstart extensions are
           #   repeated here.
           # - The public URL for agents-backend: it puts this URL into portal links, and the
           #   browser cannot open the in-cluster one from the quickstart.
@@ -405,6 +410,9 @@ jobs:
                 - name: agents-backend
                   baseUrl: http://qubership-apihub-agents-backend:8080
                   pathPrefix: agents-backend
+                - name: docs-backend
+                  baseUrl: http://qubership-apihub-documents-backend:8080
+                  pathPrefix: docs-backend
                 - name: nc-service
                   baseUrl: http://qubership-apihub-backend:8080
                   pathPrefix: apihub-nc

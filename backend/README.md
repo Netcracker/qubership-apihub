@@ -11,6 +11,7 @@ the [overview](../docs/architecture/overview.md).
 | [`portal-backend`](portal-backend/README.md) | Image `qubership-apihub-backend`: the API Registry, the REST API, and the PostgreSQL schema | `qubership-apihub-backend` |
 | [`api-linter-service`](api-linter-service/README.md) | Image: lints API specifications with Spectral, optionally with AI | `qubership-api-linter-service` |
 | [`agents-backend`](agents-backend/README.md) | Image: manages the discovery agents | `qubership-apihub-agents-backend` |
+| [`documents-backend`](documents-backend/README.md) | Image: stores and serves Markdown articles and attached files | `qubership-apihub-documents-backend` |
 | [`agent`](agent/README.md) | Image and the `qubership-apihub-agent` Helm chart: the Kubernetes discovery sidecar | `qubership-apihub-agent` |
 | [`test-service`](test-service/README.md) | Image: a mock service that exposes sample specifications | `qubership-apihub-test-service` |
 | [`commons-go`](commons-go/README.md) | Go library `api-spec-exposer`; no image or package; releases are tags only | `qubership-apihub-commons-go` |
@@ -24,7 +25,7 @@ Tags and release rules are in the [release process](../docs/development/release-
 All Go modules share one workspace.
 
 - `go.work` at the repository root lists `agent`, `agents-backend`, `api-linter-service`, `commons-go`,
-  `portal-backend`, and `test-service`.
+  `documents-backend`, `portal-backend`, and `test-service`.
 - `backend/.go-version` holds the Go version of every module. The `go` line of `go.work` and CI use the same value.
 - `portal-backend`, `api-linter-service`, and `agents-backend` import `commons-go` through
   `replace github.com/Netcracker/qubership-apihub/backend/commons-go => ../commons-go` in their `go.mod`.
@@ -55,7 +56,8 @@ These rules apply to every Go module. The rest is in the guide of the module, su
 - Log the start of an asynchronous operation at INFO with the request data and the generated ID. Prefix every log line
   of that operation with the ID, and log its end at INFO.
 - Keep runtime configuration in `config.template.yaml`, mounted as `config.yaml`, in `portal-backend`,
-  `api-linter-service`, and `agents-backend`. The `agent` reads `config.yaml`. When you change a knob, update
+  `api-linter-service`, `agents-backend`, and `documents-backend`. The `agent` reads `config.yaml`. When you change a
+  knob, update
   `deploy/` and the [configuration reference](../docs/configuration-reference.md) in the same change.
 - Name commits with Conventional Commits and squash on merge; see the [workflow](../docs/development/workflow.md).
 
@@ -69,7 +71,7 @@ A backend change often needs a matching change elsewhere. Make it in the same pu
 | REST endpoints, request or response shapes, status codes, auth rules, error codes | the Newman collections in [`tests/postman-collections/`](../tests/postman-collections/), and the OpenAPI specification of the module |
 | Visible behavior of the REST API that the SPAs call | [`frontend/ui/`](../frontend/ui/) and [`tests/ui-tests/`](../tests/ui-tests/) |
 | Build tasks that the builder reads | [`frontend/build-task-consumer/`](../frontend/build-task-consumer/) |
-| The `extensions` that call the linter or agents-backend | `api-linter-service`, `agents-backend`, and the URLs in every stack |
+| The `extensions` that call the linter, agents-backend, or documents-backend | `api-linter-service`, `agents-backend`, `documents-backend`, and the URLs in every stack |
 
 ## Build, test, and debug
 

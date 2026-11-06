@@ -8,6 +8,7 @@ Group of the server-side modules: Go services, a shared Go library, and the Java
 | `portal-backend` | API Registry: the main Go service and its PostgreSQL schema | [AGENTS.md](portal-backend/AGENTS.md) |
 | `api-linter-service` | Go service that lints API specifications (Spectral, optional AI) | [AGENTS.md](api-linter-service/AGENTS.md) |
 | `agents-backend` | Go service that manages discovery agents | [AGENTS.md](agents-backend/AGENTS.md) |
+| `documents-backend` | Go service that stores and serves Markdown articles | [README.md](documents-backend/README.md) |
 | `agent` | Go Kubernetes discovery sidecar | [AGENTS.md](agent/AGENTS.md) |
 | `test-service` | Mock service that exposes sample specifications | [AGENTS.md](test-service/AGENTS.md) |
 | `commons-go` | Shared Go library (`api-spec-exposer`) | [AGENTS.md](commons-go/AGENTS.md) |
@@ -21,7 +22,8 @@ Group of the server-side modules: Go services, a shared Go library, and the Java
 - Nx infers Go projects (`@nx-go/nx-go`) and tags them `lang:go`; project names are the directory names. Run
   `pnpm exec nx run <module>:build` and `pnpm exec nx run <module>:test` from the repository root.
 - Runtime config comes from `config.template.yaml` mounted as `config.yaml` in `portal-backend`,
-  `api-linter-service`, and `agents-backend`, and from `config.yaml` in `agent`. When you change a knob, update
+  `api-linter-service`, `agents-backend`, and `documents-backend`, and from `config.yaml` in `agent`. When you change a
+  knob, update
   `deploy/` and `docs/configuration-reference.md` in the same change.
 - Adding a Go service: use the `apihub-add-go-service` skill.
 

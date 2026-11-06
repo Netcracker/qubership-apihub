@@ -30,7 +30,7 @@ on:
       image_tags:
         description: >-
           JSON object with the keys backend, buildTaskConsumer, ui, apiLinterService, agentsBackend,
-          and agent. A missing key takes default_image_tag. A src-<hash> tag pins exact content.
+          documentsBackend, and agent. A missing key takes default_image_tag. A src-<hash> tag pins exact content.
         required: false
         type: string
         default: '{}'
@@ -274,6 +274,7 @@ jobs:
           repoint qubership-apihub-ui                   "$ui"
           repoint qubership-api-linter-service          "$apiLinterService"
           repoint qubership-apihub-agents-backend       "$agentsBackend"
+          repoint qubership-apihub-documents-backend    "$documentsBackend"
 
           # sed exits 0 whether it matched or not, so check that each image is what was asked for.
           grep -E '^\s*image:' docker-compose.yml | sed 's/^/  /'
@@ -283,7 +284,8 @@ jobs:
             "ghcr.io/$owner/qubership-apihub-build-task-consumer:$buildTaskConsumer" \
             "ghcr.io/$owner/qubership-apihub-ui:$ui" \
             "ghcr.io/$owner/qubership-api-linter-service:$apiLinterService" \
-            "ghcr.io/$owner/qubership-apihub-agents-backend:$agentsBackend"; do
+            "ghcr.io/$owner/qubership-apihub-agents-backend:$agentsBackend" \
+            "ghcr.io/$owner/qubership-apihub-documents-backend:$documentsBackend"; do
             grep -Eq "^\s*image:\s*$want\s*$" docker-compose.yml || { echo "::error::not in the compose file: $want"; bad=1; }
           done
           [ "$bad" = 0 ] || exit 1
@@ -296,7 +298,7 @@ jobs:
       - name: Start collecting container logs
         run: |
           cd "$RUNNER_TEMP/compose"
-          containers="qubership-apihub-backend postgres qubership-apihub-ui qubership-apihub-build-task-consumer qubership-api-linter-service qubership-apihub-agents-backend"
+          containers="qubership-apihub-backend postgres qubership-apihub-ui qubership-apihub-build-task-consumer qubership-api-linter-service qubership-apihub-agents-backend qubership-apihub-documents-backend"
           [ "$KEYCLOAK" = 'true' ] && containers="$containers keycloak"
           for c in $containers; do
             podman logs -f "$c" > "$RUNNER_TEMP/compose/$c.log" 2>&1 &

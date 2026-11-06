@@ -1,6 +1,6 @@
 import KeyboardArrowDownOutlinedIcon from '@mui/icons-material/KeyboardArrowDownOutlined'
 import KeyboardArrowUpOutlinedIcon from '@mui/icons-material/KeyboardArrowUpOutlined'
-import { Avatar, Box, MenuItem } from '@mui/material'
+import { Avatar, Box, Button, MenuItem } from '@mui/material'
 import { styled } from '@mui/material/styles'
 import { type FC, memo, useCallback, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -9,7 +9,7 @@ import { MenuButton } from '@netcracker/qubership-apihub-ui-shared/components/Bu
 import { TextWithOverflowTooltip } from '@netcracker/qubership-apihub-ui-shared/components/TextWithOverflowTooltip'
 import { UserAvatar } from '@netcracker/qubership-apihub-ui-shared/components/Users/UserAvatar'
 import { useLogoutUser } from '@netcracker/qubership-apihub-ui-shared/hooks/authorization'
-import { useUser } from '@netcracker/qubership-apihub-ui-shared/hooks/authorization/useUser'
+import { useOptionalUser } from '@netcracker/qubership-apihub-ui-shared/hooks/authorization/useUser'
 import { redirectToLogin } from '@netcracker/qubership-apihub-ui-shared/utils/redirects'
 
 import { useSetBackwardLocationContext } from '@portal/routes/BackwardLocationProvider'
@@ -21,7 +21,7 @@ export const UserPanel: FC = memo(() => {
   const setBackwardLocation = useSetBackwardLocationContext()
 
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [user] = useUser()
+  const [user] = useOptionalUser()
   const [logout] = useLogoutUser()
   const { closeAll } = useSidePanelManager()
 
@@ -48,6 +48,21 @@ export const UserPanel: FC = memo(() => {
     logout()
     redirectToLogin()
   }, [logout])
+
+  if (!user) {
+    // Anonymous visitor (anonymous access enabled on the backend)
+    return (
+      <Button
+        variant="text"
+        color="inherit"
+        size="large"
+        onClick={redirectToLogin}
+        data-testid="LoginHeaderButton"
+      >
+        Login
+      </Button>
+    )
+  }
 
   return (
     <>

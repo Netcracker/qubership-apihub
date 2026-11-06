@@ -296,7 +296,7 @@ func main() {
 	personalAccessTokenService := service.NewPersonalAccessTokenService(personalAccessTokenRepository, userService, roleService)
 
 	tokenRevocationService := service.NewTokenRevocationService(olricProvider, systemInfoService.GetRefreshTokenDurationSec())
-	systemStatsService := service.NewSystemStatsService(systemStatsRepository)
+	systemStatsService := service.NewSystemStatsService(systemStatsRepository, roleService)
 
 	ddlContractService := ddlContractServiceForVersion
 	mcpContractService := mcpContractServiceForVersion
@@ -390,9 +390,10 @@ func main() {
 	buildController := controller.NewBuildController(buildResultService, buildService, responder)
 	adminPublishedController := controller.NewAdminPublishedController(publishedService, systemInfoService.GetPublishArchiveSizeLimitMB(), responder)
 
-	r.HandleFunc("/api/v1/system/info", authenticator.Secure(systemInfoController.GetSystemInfo)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v1/system/info", authenticator.SecureOrAnonymous(systemInfoController.GetSystemInfo)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v1/system/configuration", samlAuthController.GetSystemSSOInfo_deprecated).Methods(http.MethodGet) //deprecated
 	r.HandleFunc("/api/v2/system/configuration", authenticator.NoSecure(authController.GetSystemConfigurationInfo)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v2/system/stats", authenticator.SecureOrAnonymous(systemStatsController.GetPublicStats)).Methods(http.MethodGet)
 
 	r.HandleFunc("/api/v1/debug/logs", authenticator.SecureUser(logsController.StoreLogs)).Methods(http.MethodPut)
 	r.HandleFunc("/api/v1/debug/logs/setLevel", authenticator.Secure(logsController.SetLogLevel)).Methods(http.MethodPost)
@@ -400,7 +401,7 @@ func main() {
 
 	//Search
 	r.HandleFunc("/api/v3/search/{searchLevel}", authenticator.Secure(searchController.Search_deprecated)).Methods(http.MethodPost)
-	r.HandleFunc("/api/v4/search/{searchLevel}", authenticator.Secure(searchController.Search)).Methods(http.MethodPost)
+	r.HandleFunc("/api/v4/search/{searchLevel}", authenticator.SecureOrAnonymous(searchController.Search)).Methods(http.MethodPost)
 
 	r.HandleFunc("/api/v2/builders/{builderId}/tasks", authenticator.Secure(publishV2Controller.GetFreeBuild)).Methods(http.MethodPost)
 
@@ -409,9 +410,10 @@ func main() {
 	r.HandleFunc("/api/v2/packages/{packageId}", authenticator.Secure(packageController.DeletePackage)).Methods(http.MethodDelete)
 	r.HandleFunc("/api/v2/packages/{packageId}/favor", authenticator.Secure(packageController.FavorPackage)).Methods(http.MethodPost)
 	r.HandleFunc("/api/v2/packages/{packageId}/disfavor", authenticator.Secure(packageController.DisfavorPackage)).Methods(http.MethodPost)
-	r.HandleFunc("/api/v2/packages/{packageId}", authenticator.Secure(packageController.GetPackage)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v2/packages/popular", authenticator.SecureOrAnonymous(packageController.GetPopularPackages)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v2/packages/{packageId}", authenticator.SecureOrAnonymous(packageController.GetPackage)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v2/packages/{packageId}/status", authenticator.Secure(packageController.GetPackageStatus)).Methods(http.MethodGet)
-	r.HandleFunc("/api/v2/packages", authenticator.Secure(packageController.GetPackagesList)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v2/packages", authenticator.SecureOrAnonymous(packageController.GetPackagesList)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v2/packages/{packageId}/publish/availableStatuses", authenticator.Secure(packageController.GetAvailableVersionStatusesForPublish_deprecated)).Methods(http.MethodGet) // deprecated
 
 	r.HandleFunc("/api/v4/packages/{packageId}/apiKeys", authenticator.Secure(apihubApiKeyController.GetApiKeys)).Methods(http.MethodGet)
@@ -440,13 +442,13 @@ func main() {
 	r.HandleFunc("/api/v1/packages/{packageId}/publish/{publishId}/withOperationsGroup/status", authenticator.Secure(versionController.GetCSVDashboardPublishStatus)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v1/packages/{packageId}/publish/{publishId}/withOperationsGroup/report", authenticator.Secure(versionController.GetCSVDashboardPublishReport)).Methods(http.MethodGet)
 
-	r.HandleFunc("/api/v3/packages/{packageId}/versions/{version}", authenticator.Secure(versionController.GetPackageVersionContent)).Methods(http.MethodGet)
-	r.HandleFunc("/api/v3/packages/{packageId}/versions", authenticator.Secure(versionController.GetPackageVersionsList)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v3/packages/{packageId}/versions/{version}", authenticator.SecureOrAnonymous(versionController.GetPackageVersionContent)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v3/packages/{packageId}/versions", authenticator.SecureOrAnonymous(versionController.GetPackageVersionsList)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}", authenticator.Secure(versionController.DeleteVersion)).Methods(http.MethodDelete)
 	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}", authenticator.Secure(versionController.PatchVersion)).Methods(http.MethodPatch)
 	r.HandleFunc("/api/v2/packages/{packageId}/versions/recursiveDelete", authenticator.Secure(versionController.DeleteVersionsRecursively)).Methods(http.MethodPost)
 
-	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/files/{slug}/raw", authenticator.Secure(versionController.GetVersionedContentFileRaw)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/files/{slug}/raw", authenticator.SecureOrAnonymous(versionController.GetVersionedContentFileRaw)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v2/sharedFiles/{sharedFileId}", authenticator.NoSecure(versionController.GetSharedContentFile)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/changes", authenticator.Secure(versionController.GetVersionChanges_deprecated)).Methods(http.MethodGet)   // deprecated
 	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/problems", authenticator.Secure(versionController.GetVersionProblems_deprecated)).Methods(http.MethodGet) // deprecated
@@ -486,29 +488,29 @@ func main() {
 	r.HandleFunc("/api/v1/user", authenticator.SecureUser(userController.GetExtendedUser_deprecated)).Methods(http.MethodGet) //deprecated
 	r.HandleFunc("/api/v2/user", authenticator.SecureUser(userController.GetExtendedUser)).Methods(http.MethodGet)
 
-	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/changes/summary", authenticator.Secure(comparisonController.GetComparisonChangesSummary)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/changes/summary", authenticator.SecureOrAnonymous(comparisonController.GetComparisonChangesSummary)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/changes/notifications", authenticator.Secure(versionController.GetComparisonNotifications)).Methods(http.MethodGet)
-	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/{apiType}/operations", authenticator.Secure(operationController.GetOperationList)).Methods(http.MethodGet)
-	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/{apiType}/operations/{operationId}", authenticator.Secure(operationController.GetOperation)).Methods(http.MethodGet)
-	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/{apiType}/operations/{operationId}/changes", authenticator.Secure(operationController.GetOperationChanges)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/{apiType}/operations", authenticator.SecureOrAnonymous(operationController.GetOperationList)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/{apiType}/operations/{operationId}", authenticator.SecureOrAnonymous(operationController.GetOperation)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/{apiType}/operations/{operationId}/changes", authenticator.SecureOrAnonymous(operationController.GetOperationChanges)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/{apiType}/operations/{operationId}/models/{modelName}/usages", authenticator.Secure(operationController.GetOperationModelUsages)).Methods(http.MethodGet)
-	r.HandleFunc("/api/v4/packages/{packageId}/versions/{version}/{apiType}/changes", authenticator.Secure(operationController.GetOperationsChanges)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v4/packages/{packageId}/versions/{version}/{apiType}/changes", authenticator.SecureOrAnonymous(operationController.GetOperationsChanges)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/{apiType}/tags", authenticator.Secure(operationController.GetOperationsTags)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/{apiType}/deprecated", authenticator.Secure(operationController.GetDeprecatedOperationsList)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/{apiType}/operations/{operationId}/deprecatedItems", authenticator.Secure(operationController.GetOperationDeprecatedItems)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/deprecated/summary", authenticator.Secure(operationController.GetDeprecatedOperationsSummary)).Methods(http.MethodGet)
-	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/{apiType}/operations/{operationId}/changes/summary", authenticator.Secure(operationController.GetOperationChangesSummary)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/{apiType}/operations/{operationId}/changes/summary", authenticator.SecureOrAnonymous(operationController.GetOperationChangesSummary)).Methods(http.MethodGet)
 
 	// DDL Contract routes.
 	// Static sub-routes (changes, export/*) are registered before the {ddlEntityId} wildcard
 	// so gorilla/mux does not shadow them.
 	r.HandleFunc("/api/v1/packages/{packageId}/versions/{version}/ddl/entities", authenticator.Secure(ddlContractController.ListDdlEntities)).Methods(http.MethodGet)
-	r.HandleFunc("/api/v1/packages/{packageId}/versions/{version}/ddl/changes", authenticator.Secure(ddlContractController.GetChangedDdlEntities)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v1/packages/{packageId}/versions/{version}/ddl/changes", authenticator.SecureOrAnonymous(ddlContractController.GetChangedDdlEntities)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v1/packages/{packageId}/versions/{version}/ddl/export/entities", authenticator.Secure(exportController.GenerateDdlEntitiesExcelReport)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v1/packages/{packageId}/versions/{version}/ddl/export/changes", authenticator.Secure(exportController.GenerateDdlChangesExcelReport)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v1/packages/{packageId}/versions/{version}/ddl/entities/{ddlEntityId}", authenticator.Secure(ddlContractController.GetDdlEntity)).Methods(http.MethodGet)
-	r.HandleFunc("/api/v1/packages/{packageId}/versions/{version}/ddl/entities/{ddlEntityId}/changes", authenticator.Secure(ddlContractController.GetDdlEntityChanges)).Methods(http.MethodGet)
-	r.HandleFunc("/api/v1/packages/{packageId}/versions/{version}/ddl/entities/{ddlEntityId}/changes/summary", authenticator.Secure(ddlContractController.GetDdlEntityChangesSummary)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v1/packages/{packageId}/versions/{version}/ddl/entities/{ddlEntityId}/changes", authenticator.SecureOrAnonymous(ddlContractController.GetDdlEntityChanges)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v1/packages/{packageId}/versions/{version}/ddl/entities/{ddlEntityId}/changes/summary", authenticator.SecureOrAnonymous(ddlContractController.GetDdlEntityChangesSummary)).Methods(http.MethodGet)
 
 	// MCP Contract routes ({entity} ∈ {inits, tools, prompts, resources}).
 	// mcp/export/{entity} is registered before mcp/{entity}/{mcpEntityId} so it is not shadowed.
@@ -516,10 +518,10 @@ func main() {
 	r.HandleFunc("/api/v1/packages/{packageId}/versions/{version}/mcp/{entity}", authenticator.Secure(mcpContractController.ListMcpEntities)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v1/packages/{packageId}/versions/{version}/mcp/{entity}/{mcpEntityId}", authenticator.Secure(mcpContractController.GetMcpEntity)).Methods(http.MethodGet)
 
-	r.HandleFunc("/api/v3/packages/{packageId}/versions/{version}/documents/{slug}", authenticator.Secure(versionController.GetVersionedDocument)).Methods(http.MethodGet)
-	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/documents", authenticator.Secure(versionController.GetVersionDocuments)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v3/packages/{packageId}/versions/{version}/documents/{slug}", authenticator.SecureOrAnonymous(versionController.GetVersionedDocument)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/documents", authenticator.SecureOrAnonymous(versionController.GetVersionDocuments)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/documents/{slug}/shareability", authenticator.Secure(versionController.UpdateDocumentShareability)).Methods(http.MethodPatch)
-	r.HandleFunc("/api/v3/packages/{packageId}/versions/{version}/references", authenticator.Secure(versionController.GetVersionReferencesV3)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v3/packages/{packageId}/versions/{version}/references", authenticator.SecureOrAnonymous(versionController.GetVersionReferencesV3)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/sources", authenticator.Secure(publishedController.GetVersionSources)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v3/packages/{packageId}/versions/{version}/revisions", authenticator.Secure(versionController.GetVersionRevisionsList)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/sourceData", authenticator.Secure(publishedController.GetPublishedVersionSourceDataConfig)).Methods(http.MethodGet)

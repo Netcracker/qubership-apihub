@@ -3967,6 +3967,82 @@ func readablePackagesSQL(searchReq view.PackageListReq, scope view.PackageReadSc
 		utils.WithClause(append(ctes, page)), permissionsColumn, userPermissionsLateral), nil
 }
 
+// GetPopularPackages lists the readable packages that at least one user favourited, most favourited first.
+func (p publishedRepositoryImpl) GetPopularPackages(ctx context.Context, searchReq view.PackageListReq, scope view.PackageReadScope, userId string) ([]entity.PopularPackageEntity, error) {
+	result := make([]entity.PopularPackageEntity, 0)
+
+	query, err := popularPackagesSQL(searchReq, scope, userId)
+	if err != nil {
+		return nil, err
+	}
+	params := packagesQueryParams(searchReq, scope, userId)
+	if _, err := p.cp.GetConnection().ModelContext(ctx, &params).Query(&result, query); err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+// popularPackagesSQL mirrors readablePackagesSQL, but the page keeps only favourited packages and ranks them
+// by the number of users who favourited them.
+func popularPackagesSQL(searchReq view.PackageListReq, scope view.PackageReadScope, userId string) (string, error) {
+	ctes, condition, err := convertPackageReadScopeToSQL(scope, userId, "pkg.id", "pkg")
+	if err != nil {
+		return "", err
+	}
+
+	livePackagesCondition := "pkg.deleted_at is null"
+	conditions := append([]string{livePackagesCondition}, packageFilters(searchReq)...)
+	if condition != "" {
+		conditions = append(conditions, condition)
+	}
+	page := fmt.Sprintf(`page as (
+	select pkg.id, count(fav.user_id) as favorites_count
+	from package_group pkg
+	join favorite_packages fav on fav.package_id = pkg.id
+	%s
+	group by pkg.id
+	order by favorites_count desc, pkg.name asc, pkg.id asc
+	%s
+	)`, utils.WhereClause(conditions), utils.PagingClause(searchReq.Limit))
+
+	permissionsColumn := ""
+	userPermissionsLateral := ""
+	if scope.Kind == view.PackageReadScopeUser {
+		permissionsColumn = `,
+		perms.permissions as permissions`
+		rolesAtAncestor := `
+		select unnest(m.roles) as role_id
+		from package_member_role m
+		where m.package_id = anc.id and m.user_id = ?user_id
+		union all
+		select g.default_role as role_id
+		from package_group g
+		where g.id = anc.id`
+		userPermissionsLateral = fmt.Sprintf(`cross join lateral (
+		select coalesce(array_agg(distinct perm), array[]::character varying[]) as permissions
+		from unnest(package_ancestor_ids(%s)) as anc(id)
+		join lateral (%s
+		) rl on true
+		join role r on r.id = rl.role_id
+		cross join lateral unnest(r.permissions) as perm
+	) perms`, "pkg.id", rolesAtAncestor)
+	}
+
+	return fmt.Sprintf(`
+	%s
+	select pkg.*,
+		exists (
+			select 1 from favorite_packages fav
+			where fav.user_id = ?user_id and fav.package_id = pkg.id
+		) as is_favorite,
+		page.favorites_count%s
+	from page
+	join package_group pkg on pkg.id = page.id
+	%s
+	order by page.favorites_count desc, pkg.name asc, pkg.id asc`,
+		utils.WithClause(append(ctes, page)), permissionsColumn, userPermissionsLateral), nil
+}
+
 // packageFilters renders the conditions every package listing shares
 func packageFilters(searchReq view.PackageListReq) []string {
 	conditions := make([]string, 0)

@@ -14,5 +14,7 @@
  * limitations under the License.
  */
 // eslint-disable-next-line filenames/no-index
+export { useAnonymousAccessEnabled } from './useAnonymousAccess'
+export { useIsAnonymous, useIsAnonymousState } from './useIsAnonymous'
 export { useLogoutUser } from './useLogoutUser'
-export { useUser } from './useUser'
+export { useOptionalUser, useUser } from './useUser'

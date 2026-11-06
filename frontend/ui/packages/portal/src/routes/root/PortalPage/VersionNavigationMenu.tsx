@@ -33,6 +33,7 @@ import {
   CONTRACTS_PAGE,
   DEPRECATED_PAGE,
   DOCUMENTS_PAGE,
+  PACKAGE_GUIDES_PAGE,
   OVERVIEW_PAGE,
   PACKAGE_SETTINGS_PAGE,
 } from '../../../routes'
@@ -41,11 +42,14 @@ import {
   getApiQualityPath,
   getDeprecatedPath,
   getDocumentPath,
+  getPackageGuidesPath,
   getOperationsPath,
   getOverviewPath,
   getPackageSettingsPath,
 } from '../../NavigationProvider'
 import { useApiQualityLinterEnabled } from './VersionPage/ApiQualityValidationSummaryProvider'
+import { useDocsBackendEnabled } from '@netcracker/qubership-apihub-ui-shared/features/system-extensions/useSystemExtensions'
+import { GuideIcon } from '@netcracker/qubership-apihub-ui-shared/icons/GuideIcon'
 import { useOperationsView } from './VersionPage/useOperationsView'
 import { useVersionTabApiTypes } from './VersionPage/useVersionTabApiTypes'
 
@@ -61,6 +65,7 @@ export const VersionNavigationMenu: FC<VersionNavigationMenuProps> = memo<Versio
   const navigate = useNavigate()
   const { packageId, versionId } = useParams()
   const linterEnabled = useApiQualityLinterEnabled()
+  const docsBackendEnabled = useDocsBackendEnabled()
   const versionTabApiTypes = useVersionTabApiTypes()
   const { expandMainMenu, toggleExpandMainMenu, operationsViewMode } = usePortalPageSettingsContext()
   const [operationsView] = useOperationsView(operationsViewMode)
@@ -68,9 +73,9 @@ export const VersionNavigationMenu: FC<VersionNavigationMenuProps> = memo<Versio
 
   const sidebarMenuItems = useMemo(
     () =>
-      getAvailableSidebarMenuItems(versionTabApiTypes.tabs, linterEnabled)
+      getAvailableSidebarMenuItems(versionTabApiTypes.tabs, linterEnabled, docsBackendEnabled)
         .filter(({ id }) => menuItems.includes(id)),
-    [linterEnabled, menuItems, versionTabApiTypes.tabs],
+    [docsBackendEnabled, linterEnabled, menuItems, versionTabApiTypes.tabs],
   )
   const sidebarServiceMenuItems = useMemo(
     () => getAvailableSidebarServiceMenuItems(showSettings).filter(({ id }) => menuItems.includes(id)),
@@ -137,6 +142,7 @@ const getPagePathsMap = ({
       search: commonSearchParams,
     }),
     [DOCUMENTS_PAGE]: getDocumentPath({ packageKey: packageKey, versionKey: versionKey, search: commonSearchParams }),
+    [PACKAGE_GUIDES_PAGE]: getPackageGuidesPath({ packageKey: packageKey, versionKey: versionKey, search: commonSearchParams }),
     [PACKAGE_SETTINGS_PAGE]: getPackageSettingsPath({ packageKey }),
   }
 
@@ -195,6 +201,7 @@ const getPagePathsMap = ({
 const getAvailableSidebarMenuItems = (
   tabs: VersionTabsApiTypesState['tabs'],
   linterEnabled: boolean,
+  docsBackendEnabled: boolean,
 ): SidebarMenu[] => {
   const contractsTab = tabs[VERSION_TAB_IDS.contracts]
   const apiChangesTab = tabs[VERSION_TAB_IDS.apiChanges]
@@ -241,6 +248,16 @@ const getAvailableSidebarMenuItems = (
       'data-testid': 'DocumentsButton',
     },
   ]
+
+  if (docsBackendEnabled) {
+    insertMenuItemAfter(menuItems, DOCUMENTS_PAGE, {
+      id: PACKAGE_GUIDES_PAGE,
+      title: 'Guides',
+      tooltip: 'Guides',
+      icon: <GuideIcon />,
+      'data-testid': 'GuidesButton',
+    })
+  }
 
   if (linterEnabled) {
     insertMenuItemAfter(menuItems, DEPRECATED_PAGE, {

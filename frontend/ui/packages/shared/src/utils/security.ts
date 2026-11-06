@@ -6,6 +6,7 @@ import {
   SESSION_STORAGE_KEY_LAST_IDENTITY_PROVIDER_ID,
   SESSION_STORAGE_KEY_SYSTEM_CONFIGURATION,
 } from './constants'
+import { isAnonymousSession } from './anonymous-session'
 import { getRedirectUri, redirectTo, redirectToLogin } from './redirects'
 import { optionalSearchParams } from './search-params'
 import { stopThread } from './threads'
@@ -47,6 +48,12 @@ export async function handleAuthentication(responseStatus: number): Promise<Toke
   const allowedAutoLogin = !searchParams.get(SEARCH_PARAM_NO_AUTO_LOGIN)
 
   let tokenRefreshResult: TokenRefreshResult | undefined
+
+  // Anonymous visitor on an instance with anonymous access: protected endpoints answer 401 by design,
+  // the visitor logs in explicitly via the Login button when they want more.
+  if (responseStatus === 401 && isAnonymousSession()) {
+    return undefined
+  }
 
   if (responseStatus === 401 && allowedAutoLogin) {
     let lastProviderId: string | null | undefined
@@ -147,6 +154,33 @@ async function handleUnauthorizedByProvider(identityProvider: IdentityProviderDt
   }
   console.error('Can\'t refresh token. Response:', response)
   return TokenRefreshResults.UNKNOWN
+}
+
+/**
+ * Silently tries to refresh the access token with the internal identity provider.
+ * Unlike handleAuthentication it never redirects: on failure the caller decides what to do
+ * (e.g. continue as an anonymous visitor). External providers cannot be refreshed silently.
+ */
+export async function tryRefreshToken(): Promise<boolean> {
+  const raw = sessionStorage.getItem(SESSION_STORAGE_KEY_SYSTEM_CONFIGURATION)
+  if (!raw) {
+    return false
+  }
+  const { authConfig } = JSON.parse(raw) as SystemConfigurationDto
+  const lastProviderId = localStorage.getItem(SESSION_STORAGE_KEY_LAST_IDENTITY_PROVIDER_ID)
+  const provider = authConfig.identityProviders.find(idp => idp.id === lastProviderId) ??
+    authConfig.identityProviders.find(isInternalIdentityProvider)
+  if (!provider || !isInternalIdentityProvider(provider)) {
+    return false
+  }
+  try {
+    // redirectUri is mandatory for the endpoint; with redirect: 'manual' a failed refresh never navigates
+    const searchParams = optionalSearchParams({ redirectUri: { value: location.href } })
+    const response = await fetch(`${API_V3}/auth/local/refresh?${searchParams}`, { method: 'GET', redirect: 'manual', credentials: 'include' })
+    return response.ok
+  } catch {
+    return false
+  }
 }
 
 function isWorkerUnauthorizedError(error: unknown): error is WorkerUnauthorizedError {

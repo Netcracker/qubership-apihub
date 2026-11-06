@@ -58,6 +58,8 @@ spec:
                 value: '{{ .Values.qubershipApihubUi.env.apiLinterServiceAddress }}'
               - name: APIHUB_AGENTS_BACKEND_ADDRESS
                 value: '{{ .Values.qubershipApihubUi.env.apihubAgentsBackendAddress }}'
+              - name: APIHUB_DOCS_BACKEND_ADDRESS
+                value: '{{ .Values.qubershipApihubUi.env.apihubDocsBackendAddress }}'
               resources:
                   requests:
                       cpu: '{{ .Values.qubershipApihubUi.resource.cpu.request }}'

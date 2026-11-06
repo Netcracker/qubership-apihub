@@ -30,6 +30,7 @@ type SystemConfigurationInfo struct {
 	DefaultWorkspaceId string         `json:"defaultWorkspaceId"`
 	AuthConfig         idp.AuthConfig `json:"authConfig"`
 	Extensions         []Extension    `json:"extensions"`
+	AnonymousAccess    bool           `json:"anonymousAccess"`
 }
 
 type Extension struct {

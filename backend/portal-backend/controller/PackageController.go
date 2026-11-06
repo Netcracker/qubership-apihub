@@ -27,6 +27,7 @@ type PackageController interface {
 	GetPackage(w http.ResponseWriter, r *http.Request)
 	GetPackageStatus(w http.ResponseWriter, r *http.Request)
 	GetPackagesList(w http.ResponseWriter, r *http.Request)
+	GetPopularPackages(w http.ResponseWriter, r *http.Request)
 	GetDeletedPackagesList(w http.ResponseWriter, r *http.Request)
 	GetAvailableVersionStatusesForPublish_deprecated(w http.ResponseWriter, r *http.Request)
 	RecalculateOperationGroups(w http.ResponseWriter, r *http.Request)
@@ -309,6 +310,74 @@ func (p packageControllerImpl) GetPackagesList(w http.ResponseWriter, r *http.Re
 
 	if err != nil {
 		p.responder.RespondWithError(w, r, "Failed to get packages", err)
+		return
+	}
+	p.responder.RespondWithJson(w, http.StatusOK, packages)
+}
+
+func (p packageControllerImpl) GetPopularPackages(w http.ResponseWriter, r *http.Request) {
+	kind, customErr := getListFromParam(r, "kind")
+	if customErr != nil {
+		p.responder.RespondWithCustomError(w, customErr)
+		return
+	}
+	boolParam := func(name string) (bool, bool) {
+		value := r.URL.Query().Get(name)
+		if value == "" {
+			return false, true
+		}
+		parsed, err := strconv.ParseBool(value)
+		if err != nil {
+			p.responder.RespondWithCustomError(w, &exception.CustomError{
+				Status:  http.StatusBadRequest,
+				Code:    exception.IncorrectParamType,
+				Message: exception.IncorrectParamTypeMsg,
+				Params:  map[string]interface{}{"param": name, "type": "boolean"},
+				Debug:   err.Error(),
+			})
+			return false, false
+		}
+		return parsed, true
+	}
+	showParents, ok := boolParam("showParents")
+	if !ok {
+		return
+	}
+	lastReleaseVersionDetails, ok := boolParam("lastReleaseVersionDetails")
+	if !ok {
+		return
+	}
+	limit, customErr := getLimitQueryParamBase(r, 12, 100)
+	if customErr != nil {
+		p.responder.RespondWithCustomError(w, customErr)
+		return
+	}
+	page := 0
+	if r.URL.Query().Get("page") != "" {
+		var err error
+		page, err = strconv.Atoi(r.URL.Query().Get("page"))
+		if err != nil {
+			p.responder.RespondWithCustomError(w, &exception.CustomError{
+				Status:  http.StatusBadRequest,
+				Code:    exception.IncorrectParamType,
+				Message: exception.IncorrectParamTypeMsg,
+				Params:  map[string]interface{}{"param": "page", "type": "int"},
+				Debug:   err.Error(),
+			})
+			return
+		}
+	}
+
+	packageListReq := view.PackageListReq{
+		Kind:                      kind,
+		Limit:                     limit,
+		Offset:                    limit * page,
+		ShowParents:               showParents,
+		LastReleaseVersionDetails: lastReleaseVersionDetails,
+	}
+	packages, err := p.packageService.GetPopularPackages(secctx.MakeUserContext(r), packageListReq)
+	if err != nil {
+		p.responder.RespondWithError(w, r, "Failed to get popular packages", err)
 		return
 	}
 	p.responder.RespondWithJson(w, http.StatusOK, packages)

@@ -38,6 +38,8 @@ security:
   autoLogin: false
   # Optional; To be deleted, WA for smooth upgrade of existing deployments; If not set, default value: true; Example: false
   legacySaml: true
+  # Optional; Allows read-only access without credentials to packages whose default role (own or inherited from an ancestor) grants read; review the default role of every workspace before enabling. If not set, default value: false; Example: true
+  anonymousAccess: false
   # Optional; List of external identity providers to use for authentication; OIDC and SAML types are supported. If not set, default value: ""; Example: external-idp
   externalIdentityProviders:
     # Mandatory; ID for external identity provider; If not set, default value: ""; Example: external-saml-idp

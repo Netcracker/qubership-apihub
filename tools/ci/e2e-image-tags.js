@@ -4,7 +4,7 @@
  *
  * `IMAGE_TAGS` is a JSON object with the keys of the launch contract:
  *
- *   backend, buildTaskConsumer, ui, apiLinterService, agentsBackend, agent
+ *   backend, buildTaskConsumer, ui, apiLinterService, agentsBackend, documentsBackend, agent
  *
  * A missing or empty key takes `DEFAULT_TAG`. A key outside the list, a non-string value, or a tag
  * that is not a valid image tag is an error, so a typo such as `agentBackend` cannot silently run
@@ -15,7 +15,7 @@
  * Environment: IMAGE_TAGS (default `{}`), DEFAULT_TAG (default `dev`).
  */
 
-const KEYS = ['backend', 'buildTaskConsumer', 'ui', 'apiLinterService', 'agentsBackend', 'agent']
+const KEYS = ['backend', 'buildTaskConsumer', 'ui', 'apiLinterService', 'agentsBackend', 'documentsBackend', 'agent']
 const TAG = /^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$/
 
 const fail = (message) => {

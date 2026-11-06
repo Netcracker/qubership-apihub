@@ -105,5 +105,6 @@ func (a *authControllerImpl) GetSystemConfigurationInfo(w http.ResponseWriter, r
 			DefaultWorkspaceId: a.systemInfoService.GetDefaultWorkspaceId(),
 			AuthConfig:         a.systemInfoService.GetAuthConfig(),
 			Extensions:         a.systemInfoService.GetExtensions(),
+			AnonymousAccess:    a.systemInfoService.IsAnonymousAccessEnabled(),
 		})
 }

@@ -37,6 +37,7 @@ const IMAGES = {
   'portal-backend': 'qubership-apihub-backend',
   'api-linter-service': 'qubership-api-linter-service',
   'agents-backend': 'qubership-apihub-agents-backend',
+  'documents-backend': 'qubership-apihub-documents-backend',
   agent: 'qubership-apihub-agent',
   'test-service': 'qubership-apihub-test-service',
   'java-task-consumer': 'qubership-apihub-java-task-consumer',
@@ -57,6 +58,7 @@ const CHARTS = {
       ui: ['qubershipApihubUi.image.tag'],
       'api-linter-service': ['qubershipApiLinterService.image.tag'],
       'agents-backend': ['qubershipApihubAgentsBackend.image.tag', 'qubershipApihubAgentsBackend.version'],
+      'documents-backend': ['qubershipApihubDocumentsBackend.image.tag', 'qubershipApihubDocumentsBackend.version'],
     },
   },
   agent: {

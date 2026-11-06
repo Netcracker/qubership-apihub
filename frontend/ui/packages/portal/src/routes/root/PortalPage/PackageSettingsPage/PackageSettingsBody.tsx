@@ -20,12 +20,14 @@ import { AccessTokensPackageSettingsTab } from './AccessTokensPackageSettingsTab
 import { GeneralPackageSettingsTab } from './GeneralPackageSettingsTab/GeneralPackageSettingsTab'
 import { useActiveTabContentContext } from './PackageSettingsPage'
 import type { PackageSettingsTabProps } from './package-settings'
+import { GuidesPackageSettingsTab } from './GuidesPackageSettingsTab/GuidesPackageSettingsTab'
 import { VersionsPackageSettingsTab } from './VersionsPackageSettingsTab/VersionsPackageSettingsTab'
 import {
   ACCESS_TOKENS_PAGE,
   API_SPECIFIC_CONFIGURATION_PAGE,
   EXPORT_SETTINGS_PAGE,
   GENERAL_PAGE,
+  GUIDES_SETTINGS_PAGE,
   USER_ACCESS_CONTROLS_PAGE,
   VERSIONS_PAGE,
 } from '../../../../routes'
@@ -45,6 +47,7 @@ import {
 } from '@netcracker/qubership-apihub-ui-shared/components/Placeholder'
 import {
   ACCESS_TOKEN_MANAGEMENT_PERMISSION,
+  CREATE_AND_UPDATE_PACKAGE_PERMISSION,
   USER_ACCESS_MANAGEMENT_PERMISSION,
 } from '@netcracker/qubership-apihub-ui-shared/entities/package-permissions'
 
@@ -59,6 +62,10 @@ export const PackageSettingsBody: FC<PackageSettingsTabProps> = memo<PackageSett
   )
   const hasUserAccessManagementPermission = useMemo(
     () => !!packageObject.permissions?.includes(USER_ACCESS_MANAGEMENT_PERMISSION),
+    [packageObject],
+  )
+  const hasPackageEditPermission = useMemo(
+    () => !!packageObject.permissions?.includes(CREATE_AND_UPDATE_PACKAGE_PERMISSION),
     [packageObject],
   )
   return (
@@ -88,6 +95,13 @@ export const PackageSettingsBody: FC<PackageSettingsTabProps> = memo<PackageSett
             message={NO_PERMISSION}
             data-testid={'NoPermissionPlaceholder'}
           ><UserPackageAccessControlSettingsTab packageObject={packageObject}/>
+          </Placeholder>,
+          [GUIDES_SETTINGS_PAGE]: <Placeholder
+            invisible={hasPackageEditPermission}
+            area={CONTENT_PLACEHOLDER_AREA}
+            message={NO_PERMISSION}
+            data-testid={'NoPermissionPlaceholder'}
+          ><GuidesPackageSettingsTab packageObject={packageObject} isPackageLoading={isPackageLoading}/>
           </Placeholder>,
         }[activeTab]
       }

@@ -41,6 +41,7 @@ type Authenticator struct {
 	accessTokenDuration  time.Duration
 	refreshTokenDuration time.Duration
 	productionMode       bool
+	anonymousAccess      bool
 	jwtValidator         JWTValidator
 	refreshTokenStrategy auth.Strategy
 	fullAuthStrategy     union.Union
@@ -58,6 +59,7 @@ func NewAuthenticator(userService service.UserService, roleService service.RoleS
 	accessTokenDuration := time.Second * time.Duration(systemInfoService.GetAccessTokenDurationSec())
 	refreshTokenDuration := time.Second * time.Duration(systemInfoService.GetRefreshTokenDurationSec())
 	productionMode := systemInfoService.IsProductionMode()
+	anonymousAccess := systemInfoService.IsAnonymousAccessEnabled()
 
 	block, _ := pem.Decode(systemInfoService.GetJwtPrivateKey())
 	pkcs8PrivateKey, err := x509.ParsePKCS8PrivateKey(block.Bytes)
@@ -101,6 +103,7 @@ func NewAuthenticator(userService service.UserService, roleService service.RoleS
 		accessTokenDuration:  accessTokenDuration,
 		refreshTokenDuration: refreshTokenDuration,
 		productionMode:       productionMode,
+		anonymousAccess:      anonymousAccess,
 		jwtValidator:         jwtValidator,
 		refreshTokenStrategy: refreshTokenStrategy,
 		fullAuthStrategy:     fullAuthStrategy,

@@ -1,0 +1,614 @@
+openapi: 3.0.3
+info:
+  title: APIHUB documents-backend
+  version: 1.0.0
+  description: |
+    Stores and serves generic Markdown articles with their attached files, and exposes metadata of package articles whose
+    body is a Markdown document published in an APIHUB package version. Authentication is delegated to APIHUB.
+
+    **Principals**: `anonymous` (no credentials; only when APIHUB `anonymousAccess.enabled` is true), `user`
+    (valid APIHUB access token), `admin` (token with `System administrator` role, or an APIHUB api-key with that role),
+    `pkg-admin` (a non-sysadmin `user` whose permissions on a package, read from APIHUB `GET /api/v2/packages/{packageId}`
+    with the caller's own credentials, include `create_and_update_package` — the permission APIHUB requires to edit
+    package settings).
+    Invalid or expired credentials always yield 401.
+
+    **Admin endpoints** require `admin`, except that package-scoped ones are also open to the `pkg-admin` of the target
+    package: the package is taken from `scope=package&packageId=` (query or request body) or from the stored article /
+    navigation section. Generic articles and navigation, home articles, import and export stay `admin`-only. An
+    authenticated caller without the required role/permission gets 403 (`DOCS-1002`); APIHUB rejecting the caller's
+    credentials during the permission check yields 401, APIHUB being unreachable yields 502.
+servers:
+  - url: /docs-backend/api/v1
+    description: through the APIHUB UI nginx (prefix stripped)
+  - url: /api/v1
+    description: direct
+security:
+  - cookieAuth: []
+  - bearerAuth: []
+  - apiKey: []
+  - {}
+tags:
+  - name: Articles
+  - name: Navigation
+  - name: Admin
+    description: '`admin`; package-scoped operations also `pkg-admin` of that package (see the API description).'
+  - name: System
+paths:
+  /live:
+    get:
+      tags: [System]
+      security: []
+      servers: [{ url: / }]
+      responses:
+        '200': { description: process is alive }
+  /ready:
+    get:
+      tags: [System]
+      security: []
+      servers: [{ url: / }]
+      responses:
+        '200': { description: migrations finished }
+        '404': { description: still starting }
+  /articles:
+    get:
+      tags: [Articles]
+      summary: List published articles visible to the caller
+      parameters:
+        - { name: scope, in: query, schema: { type: string, enum: [generic, package], default: generic } }
+        - { name: visibility, in: query, description: Narrows the result; never widens it., schema: { type: string, enum: [public, corporate] } }
+        - { name: packageId, in: query, description: Required for scope=package., schema: { type: string } }
+        - { name: version, in: query, description: Required for scope=package. Returns articles bound to this version or to every version., schema: { type: string } }
+        - { name: limit, in: query, schema: { type: integer, default: 100, maximum: 500 } }
+        - { name: page, in: query, schema: { type: integer, default: 0 } }
+      responses:
+        '200':
+          description: Articles ordered by displayOrder, title
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Articles' }
+        '400': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/Error' }
+        '404': { description: Package version not found or not accessible to the caller (APIHUB answered non-200), content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+  /articles/{slug}:
+    get:
+      tags: [Articles]
+      summary: Get one article with its Markdown body
+      description: |
+        Generic articles: 404 when unpublished (unless admin) or corporate for an anonymous caller.
+        Package articles: the body is fetched from APIHUB with the caller's credentials; APIHUB 401/403/404 → 404.
+      parameters:
+        - { name: slug, in: path, required: true, schema: { type: string } }
+        - { name: version, in: query, required: false, schema: { type: string } }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Article' }
+        '400': { description: 'DOCS-3008: the article applies to every version, ?version= is required', content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '401': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+  /articles/{slug}/files/{path}:
+    get:
+      tags: [Articles]
+      summary: Download a file attached to an article
+      description: |
+        Also answers HEAD. The article's access rules apply: a missing or unpublished article (unless the caller is an
+        admin), a corporate article for an anonymous caller, or an unknown path within the article all yield 404.
+        Identical bytes attached to several articles are stored once; `ETag` is the content checksum.
+      parameters:
+        - { name: slug, in: path, required: true, schema: { type: string } }
+        - { name: path, in: path, required: true, schema: { type: string }, description: 'Path relative to the article, e.g. images/auth-flow.png', example: images/auth-flow.png }
+        - { name: If-None-Match, in: header, schema: { type: string } }
+      responses:
+        '200':
+          description: File bytes with Content-Type, Content-Length, ETag (sha256) and Cache-Control (public, max-age=3600 for generic public articles | private, no-cache otherwise)
+        '304': { description: Not modified }
+        '401': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+  /admin/articles:
+    get:
+      tags: [Admin]
+      summary: List all articles including unpublished
+      description: '`admin`, or `pkg-admin` of `packageId` when `scope=package&packageId=` is given.'
+      parameters:
+        - { name: scope, in: query, schema: { type: string, enum: [generic, package] } }
+        - { name: visibility, in: query, schema: { type: string, enum: [public, corporate] } }
+        - { name: packageId, in: query, schema: { type: string } }
+        - { name: limit, in: query, schema: { type: integer } }
+        - { name: page, in: query, schema: { type: integer } }
+      responses:
+        '200': { content: { application/json: { schema: { $ref: '#/components/schemas/Articles' } } } }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+    post:
+      tags: [Admin]
+      summary: Create an article
+      description: |
+        `admin`; `pkg-admin` of `packageId` for scope=package.
+        For scope=package the version and document slug are validated in APIHUB with the caller's credentials (400 otherwise).
+        The multipart form creates the article together with its attachments: `article` is the JSON request, `markdown` the
+        body of a generic article, `file` parts are attached to the new article. When the JSON omits them, `title`
+        and `subtitle` are derived from the Markdown (first `#` heading, first paragraph) and `slug` from the title
+        (NFKD, accents stripped, lowercase, non-[a-z0-9] runs to `-`, max 128 chars).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ArticleRequest' }
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                article: { type: string, description: JSON-encoded ArticleRequest }
+                markdown: { type: string, format: binary }
+                file: { type: array, items: { type: string, format: binary } }
+      responses:
+        '201': { content: { application/json: { schema: { $ref: '#/components/schemas/Article' } } } }
+        '400': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '409': { description: 'DOCS-3006 slug already exists', content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+  /admin/articles/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    put:
+      tags: [Admin]
+      summary: Replace an article
+      description: '`admin`, or `pkg-admin` of the stored article''s package (and of the package in the request body).'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ArticleRequest' }
+      responses:
+        '200': { content: { application/json: { schema: { $ref: '#/components/schemas/Article' } } } }
+        '400': { description: 'Validation error, or DOCS-3013 when the slug differs from the stored one (slugs are immutable)', content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '404': { $ref: '#/components/responses/Error' }
+        '409': { $ref: '#/components/responses/Error' }
+    delete:
+      tags: [Admin]
+      description: '`admin`, or `pkg-admin` of the article''s package. Also deletes the files attached to the article (and their contents once nothing else references them).'
+      responses:
+        '204': { description: Deleted }
+        '404': { $ref: '#/components/responses/Error' }
+  /admin/articles/{id}/publish:
+    post:
+      tags: [Admin]
+      description: '`admin`, or `pkg-admin` of the article''s package.'
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        '200': { content: { application/json: { schema: { $ref: '#/components/schemas/Article' } } } }
+        '404': { $ref: '#/components/responses/Error' }
+  /admin/articles/{id}/unpublish:
+    post:
+      tags: [Admin]
+      description: '`admin`, or `pkg-admin` of the article''s package.'
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        '200': { content: { application/json: { schema: { $ref: '#/components/schemas/Article' } } } }
+        '404': { $ref: '#/components/responses/Error' }
+  /admin/articles/{id}/files:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [Admin]
+      summary: List the files attached to an article
+      description: '`admin`, or `pkg-admin` of the article''s package.'
+      responses:
+        '200': { content: { application/json: { schema: { $ref: '#/components/schemas/ArticleFiles' } } } }
+        '404': { $ref: '#/components/responses/Error' }
+    post:
+      tags: [Admin]
+      summary: Attach files to an article
+      description: |
+        `admin`, or `pkg-admin` of the article's package.
+        A file path is relative to the article and unique only within it; other articles may use the same path.
+        Files are served at `GET /articles/{slug}/files/{path}` with the article's audience: `public` only for generic
+        public articles, `corporate` otherwise (package articles are always corporate). The audience is derived from
+        the article at request time; deleting the article deletes its files. Identical bytes are stored once.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file: { type: array, items: { type: string, format: binary }, description: repeatable }
+                path: { type: string, description: 'Path relative to the article (single file only). Default: file name.' }
+      responses:
+        '201': { content: { application/json: { schema: { $ref: '#/components/schemas/ArticleFiles' } } } }
+        '400': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+        '409': { description: 'DOCS-3012 the article already has a file at that path', content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '413': { description: 'DOCS-3009 over static.maxUploadSizeBytes', content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+  /admin/articles/{id}/files/{path}:
+    delete:
+      tags: [Admin]
+      summary: Detach and delete one file of an article
+      description: '`admin`, or `pkg-admin` of the article''s package.'
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: path, in: path, required: true, schema: { type: string }, description: 'Path relative to the article' }
+      responses:
+        '204': { description: Deleted }
+        '404': { $ref: '#/components/responses/Error' }
+  /admin/apihub/packages/{packageId}/versions:
+    get:
+      tags: [Admin]
+      summary: Relay of APIHUB package versions (caller credentials forwarded)
+      description: '`admin` or `pkg-admin` of `packageId`.'
+      parameters:
+        - { name: packageId, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  versions:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        version: { type: string }
+                        status: { type: string }
+                        createdAt: { type: string }
+        '404': { $ref: '#/components/responses/Error' }
+  /admin/apihub/packages/{packageId}/versions/{version}/documents:
+    get:
+      tags: [Admin]
+      summary: Relay of APIHUB Markdown documents of a version
+      description: '`admin` or `pkg-admin` of `packageId`; caller credentials forwarded.'
+      parameters:
+        - { name: packageId, in: path, required: true, schema: { type: string } }
+        - { name: version, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  documents:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        slug: { type: string }
+                        title: { type: string }
+                        type: { type: string, example: markdown }
+                        filename: { type: string }
+        '404': { $ref: '#/components/responses/Error' }
+  /navigation:
+    get:
+      tags: [Navigation]
+      summary: Guides navigation tree for the caller
+      description: |
+        Sections ordered by `displayOrder, title`, each with nested `guide`/`group` items (max depth 3). Guide items
+        whose article the caller may not list (same rules as `GET /articles`: published, visibility, package version)
+        are dropped, groups left empty are dropped, sections left empty are omitted. Visible articles placed in no
+        kept item are appended in a trailing synthetic section `{ id: "", title: "Other", synthetic: true }`; without
+        real sections the response is that single section.
+      parameters:
+        - { name: scope, in: query, required: true, schema: { type: string, enum: [generic, package] } }
+        - { name: packageId, in: query, description: required for scope=package, schema: { type: string } }
+        - { name: version, in: query, description: required for scope=package; items bound to another version are dropped, schema: { type: string } }
+      responses:
+        '200': { content: { application/json: { schema: { $ref: '#/components/schemas/Navigation' } } } }
+        '400': { description: 'DOCS-3002 / DOCS-3003 missing or invalid parameters', content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '404': { description: 'DOCS-2004 package version not found or not accessible', content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+  /home-articles:
+    get:
+      tags: [Navigation]
+      summary: Home page guides ("Things worth reading first") for the caller
+      description: |
+        The admin-curated ordered list of generic articles, in configured order, filtered to those the caller may
+        list (same rules as `GET /articles?scope=generic`: published, visibility). Unpublished or invisible entries
+        are silently skipped. An empty list means nothing is configured: the UI falls back to the first generic guides.
+      responses:
+        '200': { content: { application/json: { schema: { $ref: '#/components/schemas/HomeArticles' } } } }
+  /admin/home-articles:
+    get:
+      tags: [Admin]
+      summary: Full home page list, including unpublished articles
+      responses:
+        '200': { content: { application/json: { schema: { $ref: '#/components/schemas/AdminHomeArticles' } } } }
+    put:
+      tags: [Admin]
+      summary: Replace the home page list atomically (array position = order; empty array clears)
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/HomeArticlesRequest' } } } }
+      responses:
+        '200': { content: { application/json: { schema: { $ref: '#/components/schemas/AdminHomeArticles' } } } }
+        '400': { description: 'DOCS-3016 article is not generic · DOCS-3017 article listed more than once · DOCS-3004 bad body', content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '404': { description: 'DOCS-2002 article id not found', content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+  /admin/navigation:
+    get:
+      tags: [Admin]
+      summary: Full navigation tree of a scope (nothing dropped, no synthetic section)
+      description: '`admin`, or `pkg-admin` of `packageId` for scope=package.'
+      parameters:
+        - { name: scope, in: query, required: true, schema: { type: string, enum: [generic, package] } }
+        - { name: packageId, in: query, description: required for scope=package, schema: { type: string } }
+      responses:
+        '200': { content: { application/json: { schema: { $ref: '#/components/schemas/Navigation' } } } }
+        '400': { $ref: '#/components/responses/Error' }
+  /admin/navigation/sections:
+    post:
+      tags: [Admin]
+      summary: Create a navigation section
+      description: '`admin`; `pkg-admin` of `packageId` for scope=package.'
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/NavSectionRequest' } } } }
+      responses:
+        '201': { content: { application/json: { schema: { $ref: '#/components/schemas/NavSection' } } } }
+        '400': { description: 'DOCS-3014 validation failed', content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+  /admin/navigation/sections/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    put:
+      tags: [Admin]
+      summary: Update a section (scope/packageId cannot change while it has items)
+      description: '`admin`, or `pkg-admin` of the stored section''s package (and of the package in the request body).'
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/NavSectionRequest' } } } }
+      responses:
+        '200': { content: { application/json: { schema: { $ref: '#/components/schemas/NavSection' } } } }
+        '400': { description: 'DOCS-3014 validation failed', content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '404': { description: 'DOCS-2006 section not found', content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    delete:
+      tags: [Admin]
+      summary: Delete a section and its items
+      description: '`admin`, or `pkg-admin` of the section''s package.'
+      responses:
+        '204': { description: Deleted }
+        '404': { description: 'DOCS-2006 section not found', content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+  /admin/navigation/items:
+    post:
+      tags: [Admin]
+      summary: Create a navigation item
+      description: |
+        `admin`, or `pkg-admin` of the package of the target section.
+        `guide` requires `articleId` (article of the section's scope and packageId; one placement per article);
+        `group` requires `title` and forbids `articleId`. `parentId` must be a group of the same section; the resulting
+        depth must not exceed 3.
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/NavItemRequest' } } } }
+      responses:
+        '201': { content: { application/json: { schema: { $ref: '#/components/schemas/NavItem' } } } }
+        '400': { description: 'DOCS-3014 validation failed', content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '409': { description: 'DOCS-3015 article already placed in navigation', content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+  /admin/navigation/items/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    put:
+      tags: [Admin]
+      summary: Update or move an item (same section only; no cycles; depth including descendants ≤ 3)
+      description: '`admin`, or `pkg-admin` of the package of the item''s section.'
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/NavItemRequest' } } } }
+      responses:
+        '200': { content: { application/json: { schema: { $ref: '#/components/schemas/NavItem' } } } }
+        '400': { description: 'DOCS-3014 validation failed', content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '404': { description: 'DOCS-2007 item not found', content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '409': { description: 'DOCS-3015 article already placed in navigation', content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    delete:
+      tags: [Admin]
+      summary: Delete an item and its descendants
+      description: '`admin`, or `pkg-admin` of the package of the item''s section.'
+      responses:
+        '204': { description: Deleted }
+        '404': { description: 'DOCS-2007 item not found', content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+  /admin/import:
+    post:
+      tags: [Admin]
+      summary: Import a zip (articles.yaml + *.md + articles/<slug>/**); upserts articles by slug and files by (article, path), replaces navigation per (scope, packageId) and the home list when `home` is present
+      parameters:
+        - { name: validate, in: query, description: Set to false to skip APIHUB validation of package articles., schema: { type: boolean, default: true } }
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                archive: { type: string, format: binary }
+          application/zip:
+            schema: { type: string, format: binary }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  articles: { type: integer }
+                  files: { type: integer, description: files attached to articles }
+                  sections: { type: integer }
+                  items: { type: integer }
+        '400': { description: 'DOCS-3011 invalid archive or manifest', content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+  /admin/export:
+    get:
+      tags: [Admin]
+      summary: Export everything as a zip in the import layout
+      responses:
+        '200':
+          content:
+            application/zip:
+              schema: { type: string, format: binary }
+components:
+  securitySchemes:
+    cookieAuth: { type: apiKey, in: cookie, name: apihub-access-token }
+    bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
+    apiKey: { type: apiKey, in: header, name: api-key }
+  responses:
+    Error:
+      description: Error
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+  schemas:
+    Error:
+      type: object
+      required: [status, code, message]
+      properties:
+        status: { type: integer }
+        code:
+          type: string
+          description: |
+            DOCS-1001 unauthorized · DOCS-1002 insufficient privileges · DOCS-2001 article not found ·
+            DOCS-2002 article id not found · DOCS-2003 file not found · DOCS-2004 package version not accessible ·
+            DOCS-2005 package document not accessible · DOCS-2006 navigation section not found ·
+            DOCS-2007 navigation item not found · DOCS-3001 incorrect param type · DOCS-3002 invalid parameter ·
+            DOCS-3003 required params missing · DOCS-3004 bad request body · DOCS-3005 article validation failed ·
+            DOCS-3006 slug already exists · DOCS-3007 package ref not found in APIHUB · DOCS-3008 version query required ·
+            DOCS-3009 file too large · DOCS-3010 invalid file path · DOCS-3011 import archive invalid ·
+            DOCS-3012 file path already used in the article · DOCS-3013 article slug is immutable ·
+            DOCS-3014 navigation validation failed · DOCS-3015 article already placed in navigation (409) ·
+            DOCS-3016 home article is not generic · DOCS-3017 home article listed more than once ·
+            DOCS-5001 APIHUB unavailable · DOCS-9001 unknown endpoint (421)
+        message: { type: string }
+        debug: { type: string }
+    Article:
+      type: object
+      required: [slug, title, scope, labels, displayOrder, updatedAt]
+      properties:
+        id: { type: string, format: uuid, description: admin responses only }
+        slug: { type: string }
+        title: { type: string }
+        subtitle: { type: string }
+        scope: { type: string, enum: [generic, package] }
+        visibility: { type: string, enum: [public, corporate], description: generic only }
+        packageId: { type: string, description: package only }
+        version: { type: string, description: 'package only; effective version in list/get responses' }
+        documentSlug: { type: string, description: package only }
+        labels: { type: array, items: { type: string } }
+        displayOrder: { type: integer }
+        files:
+          type: array
+          description: Files attached to the article, served at GET /articles/{slug}/files/{path} (readable whenever the article itself is readable)
+          items: { $ref: '#/components/schemas/ArticleFile' }
+        published: { type: boolean, description: admin responses only }
+        bodyMd: { type: string, description: 'GET /articles/{slug} only' }
+        updatedAt: { type: string, format: date-time }
+        createdAt: { type: string, format: date-time }
+        createdBy: { type: string }
+        updatedBy: { type: string }
+    Articles:
+      type: object
+      properties:
+        articles:
+          type: array
+          items: { $ref: '#/components/schemas/Article' }
+    HomeArticles:
+      type: object
+      required: [articles]
+      properties:
+        articles: { type: array, items: { $ref: '#/components/schemas/Article' }, description: configured order }
+    AdminHomeArticles:
+      type: object
+      required: [articles]
+      properties:
+        articles: { type: array, items: { $ref: '#/components/schemas/AdminHomeArticle' } }
+    AdminHomeArticle:
+      type: object
+      required: [articleId, slug, title, published, displayOrder]
+      properties:
+        articleId: { type: string, format: uuid }
+        slug: { type: string }
+        title: { type: string }
+        published: { type: boolean }
+        displayOrder: { type: integer, description: zero-based position in the list }
+    HomeArticlesRequest:
+      type: object
+      required: [articleIds]
+      properties:
+        articleIds: { type: array, items: { type: string, format: uuid }, description: 'generic article ids, no duplicates; position is the order' }
+    Navigation:
+      type: object
+      required: [sections]
+      properties:
+        sections: { type: array, items: { $ref: '#/components/schemas/NavSection' } }
+    NavSection:
+      type: object
+      required: [id, scope, title, displayOrder, items]
+      properties:
+        id: { type: string, description: 'uuid; empty for the synthetic section' }
+        scope: { type: string, enum: [generic, package] }
+        packageId: { type: string, description: package only }
+        title: { type: string }
+        displayOrder: { type: integer }
+        synthetic: { type: boolean, description: 'true only on the trailing "Other" section of the public tree' }
+        items: { type: array, items: { $ref: '#/components/schemas/NavItem' } }
+        createdAt: { type: string, format: date-time, description: admin responses only }
+        updatedAt: { type: string, format: date-time, description: admin responses only }
+        createdBy: { type: string, description: admin responses only }
+        updatedBy: { type: string, description: admin responses only }
+    NavItem:
+      type: object
+      required: [id, sectionId, kind, title, displayOrder, children]
+      properties:
+        id: { type: string, format: uuid }
+        sectionId: { type: string }
+        parentId: { type: string, format: uuid }
+        kind: { type: string, enum: [guide, group] }
+        title: { type: string, description: 'effective title: override when set, otherwise the article title' }
+        slug: { type: string, description: guide only }
+        packageId: { type: string, description: guide only, package articles }
+        version: { type: string, description: 'guide only; effective version' }
+        displayOrder: { type: integer }
+        children: { type: array, items: { $ref: '#/components/schemas/NavItem' } }
+        articleId: { type: string, format: uuid, description: admin responses only }
+        titleOverride: { type: string, description: 'admin responses only; raw stored title' }
+        published: { type: boolean, description: admin responses only }
+        dangling: { type: boolean, description: 'admin responses only; article row missing' }
+    NavSectionRequest:
+      type: object
+      required: [scope, title]
+      properties:
+        scope: { type: string, enum: [generic, package] }
+        packageId: { type: string, description: required for package, forbidden for generic }
+        title: { type: string }
+        displayOrder: { type: integer, default: 0 }
+    NavItemRequest:
+      type: object
+      required: [sectionId, kind]
+      properties:
+        sectionId: { type: string, format: uuid, description: ignored on update (items cannot change section) }
+        parentId: { type: string, format: uuid, description: a group item of the same section }
+        kind: { type: string, enum: [guide, group] }
+        title: { type: string, description: 'required for group; optional override for guide' }
+        articleId: { type: string, format: uuid, description: required for guide, forbidden for group }
+        displayOrder: { type: integer, default: 0 }
+    ArticleRequest:
+      type: object
+      required: [slug, title, scope]
+      properties:
+        slug: { type: string, pattern: '^[a-z0-9][a-z0-9-]{0,127}$' }
+        title: { type: string }
+        subtitle: { type: string }
+        scope: { type: string, enum: [generic, package] }
+        bodyMd: { type: string, description: required for generic, forbidden for package }
+        visibility: { type: string, enum: [public, corporate], description: required for generic, forbidden for package }
+        packageId: { type: string, description: required for package }
+        version: { type: string, description: 'package only; omit to apply to every version' }
+        documentSlug: { type: string, description: required for package }
+        labels: { type: array, items: { type: string } }
+        displayOrder: { type: integer, default: 0 }
+        published: { type: boolean, default: false }
+    ArticleFile:
+      type: object
+      required: [path, contentType, size]
+      properties:
+        path: { type: string, description: relative to the article, example: images/environments.png }
+        contentType: { type: string }
+        size: { type: integer, format: int64 }
+        checksum: { type: string, description: 'admin responses only; sha256 hex of the content, also the ETag' }
+        createdAt: { type: string, format: date-time, description: admin responses only }
+        createdBy: { type: string, description: admin responses only }
+    ArticleFiles:
+      type: object
+      properties:
+        files:
+          type: array
+          items: { $ref: '#/components/schemas/ArticleFile' }

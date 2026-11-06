@@ -28,7 +28,8 @@ The registry is configured through **`config.yaml`**, whose annotated super-set 
    upgrading between product versions.
 2. Keep **`security.apihubExternalUrl`** truthfully matching the hostname users type; mismatches break OAuth/SAML
    redirects and deep links.
-3. **`extensions`** must list every sidecar the UI should hit (linter, agents-backend); `baseUrl` + `pathPrefix` pair
+3. **`extensions`** must list every sidecar the UI should hit (linter, agents-backend, documents-backend); `baseUrl` +
+   `pathPrefix` pair
    must match what you publish (internal DNS in Kubernetes, `host.docker.internal` patterns in desktop Compose).
 4. **`zeroDayConfiguration.accessToken`** bootstraps privileged automation; pair it with **`APIHUB_API_KEY`** /
    **`APIHUB_ACCESS_TOKEN`** variables in workers until you adopt service accounts or PAT-based automation from the
@@ -73,6 +74,7 @@ Scripts under **`deploy/docker-compose/apihub-generic/`**:
 |-----------|-------------------|
 | **API Linter** | Own PostgreSQL; Olric discovery mode mirrors backend guidelines; Spectral binaries ship in image (`linters.spectral.binPath` in `config.yaml`). Optional AI lint pulls OpenAI keys through `config.yaml` / Helm secret. |
 | **Agents Backend** | Own PostgreSQL; **`cleanup.snapshots.schedule`** (`cron`) + **`cleanup.snapshots.ttlDays`** in `config.yaml` regulate snapshot retention. Align **`businessParameters.defaultWorkspaceId`** with a real workspace slug when cloning package trees after discovery |
+| **Documents Backend** | Own PostgreSQL; always deployed. Stores articles and attached files. Writes need an APIHUB system administrator or, for package-scoped content, a package admin. |
 | **K8s Agent** | Installed separately; config file from [`agent config.template.yaml`](../backend/agent/config.template.yaml); requires reachable **`agentUrl`**, **`cloudName`**, **`namespace`**, **`apihub.url`/`accessToken`**. |
 
 ---

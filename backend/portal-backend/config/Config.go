@@ -43,6 +43,7 @@ type SecurityConfig struct {
 	LegacySaml                bool
 	ExternalIdentityProviders []ExternalIdentityProviderConfig `validate:"dive"`
 	Ldap                      LdapConfig
+	AnonymousAccess           bool
 }
 
 type JwtConfig struct {

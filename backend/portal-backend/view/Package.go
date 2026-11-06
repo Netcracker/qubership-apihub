@@ -43,6 +43,7 @@ type PackagesInfo struct {
 	Name                      string              `json:"name"`
 	Description               string              `json:"description"`
 	IsFavorite                bool                `json:"isFavorite,omitempty"`
+	FavoritesCount            int                 `json:"favoritesCount,omitempty"`
 	ServiceName               string              `json:"serviceName,omitempty"`
 	Parents                   []ParentPackageInfo `json:"parents"`
 	DefaultRole               string              `json:"defaultRole"`

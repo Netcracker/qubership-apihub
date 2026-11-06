@@ -73,6 +73,8 @@ qubershipApihubBackend:
       autoLogin: false
       # Optional; To be deleted, WA for smooth upgrade of existing deployments; If not set, default value: true; Example: false
       legacySaml: true
+      # Optional; Allows read-only access without credentials to packages whose default role (own or inherited from an ancestor) grants read. Review the default role of every workspace before enabling; If not set, default value: false; Example: true
+      anonymousAccess: false
       # Optional; List of external identity providers to use for authentication; OIDC and SAML types are supported. If not set, default value: []; Example:
       #   # Mandatory; ID for external identity provider; If not set, default value: ""; Example: external-saml-idp
       # - id: 'external-saml-idp'
@@ -338,6 +340,10 @@ qubershipApihubBackend:
       - name: agents-backend
         baseUrl: http://qubership-apihub-agents-backend:8080
         pathPrefix: agents-backend
+      # APIHUB Documents Backend enabled by default. See section qubershipApihubDocumentsBackend below for configuration
+      - name: docs-backend
+        baseUrl: http://qubership-apihub-documents-backend:8080
+        pathPrefix: docs-backend
 
 # Section with APIHUB Build Task Consumer configuration
 qubershipApihubBuildTaskConsumer:
@@ -390,6 +396,7 @@ qubershipApihubUi:
     apihubNcServiceAddress: 'qubership-apihub-backend:8080' # k8s local address of apihub custom service. Do not change it unless you know what you are doing
     apiLinterServiceAddress: 'qubership-api-linter-service:8080' # k8s local address of api linter service. Do not change it unless you know what you are doing
     apihubAgentsBackendAddress: 'qubership-apihub-agents-backend:8080' # k8s local address of apihub agents backend service. Do not change it unless you know what you are doing
+    apihubDocsBackendAddress: 'qubership-apihub-documents-backend:8080' # k8s local address of apihub documents backend service. Do not change it unless you know what you are doing
 
   # Mandatory; Factual APIHUB server URL in your environment.; If not set, default value: ""; Example: https://apihub.example.com
   apihubUrl: ''
@@ -595,3 +602,73 @@ qubershipApihubAgentsBackend:
         schedule: '0 22 * * 0'
         # Optional; Retention period in days for snapshots; snapshots older than this are removed by the cleanup job. WARNING: a value of 0 removes ALL snapshots; If not set, default value: 30; Example: 30
         ttlDays: 30
+
+# Section with Qubership APIHUB Documents Backend deployment configuration
+qubershipApihubDocumentsBackend:
+  # Optional; Qubership APIHUB Documents Backend release version; If not set, default value: unknown; Example: 1.0.0
+  version: ''
+  image:
+    repository: 'ghcr.io/netcracker/qubership-apihub-documents-backend'
+    # Pin tags from the latest product release: https://github.com/Netcracker/qubership-apihub/releases/latest
+    tag: 'dev'
+
+  customCa:
+    # Optional; mount custom CA Secret when true; If not set, default value: false; Example: true
+    enabled: false
+    # Optional; Kubernetes Secret name with one or more PEM certificate files (.crt, .cer, or .pem keys); If not set, default value: ""; Example: apihub-documents-backend-custom-ca
+    secretName: ''
+
+  # Section with resource limits
+  # Mandatory
+  # Below are the default values which are good enough for any cases including production
+  resource:
+    memory:
+      request: "256Mi"
+      limit: "256Mi"
+    cpu:
+      request: "30m"
+      limit: "1"
+
+  # Optional; Go runtime memory soft limit passed as GOMEMLIMIT (container env). Keep below resource.memory.limit; If not set, default value: 205MiB (~80% of default memory.limit 256Mi); Example: 2400MiB
+  goMemLimit: '205MiB'
+
+  # Section with business and technical parameters for Qubership APIHUB Documents Backend. Rendered as config.yaml; DOCS_<SECTION>_<KEY> env variables override it.
+  env:
+    # Section with HTTP server parameters
+    server:
+      # Mandatory; Listen address of the service. The Service and the probes use port 8080; If not set, default value: 0.0.0.0:8080; Example: 0.0.0.0:8080
+      listenAddress: '0.0.0.0:8080'
+      # Optional; Allows to set extra allowed origins to CORS header. Used for FE debugging. Should be empty on prod envs.; If not set, default value: []; Example: [https://localhost:5137]
+      allowedOrigins: []
+      # Optional; Enables the 'debug' field with internal error details in API error responses. Should be disabled on prod envs; If not set, default value: true; Example: false
+      showDebugInResponse: false
+    # Section with PostgreSQL database connection parameters
+    database:
+      # Mandatory; PostgreSQL database host ; If not set, default value: localhost; Example: postgres.example.com
+      host: ''
+      # Mandatory; PostgreSQL database port; If not set, default value: 5432; Example: 5432
+      port: null
+      # Mandatory; Logical database in PostgreSQL cluster for APIHUB Documents Backend. Manual pre-creation required; If not set, default value: documents; Example: apihub_documents_backend_prod_db
+      name: ''
+      # Mandatory; User for database.name database; If not set, default value: documents; Example: apihub_documents_backend_prod_admin
+      username: ''
+      # Mandatory; Password for database.username user.; If not set, default value: ""; Example: apihub_documents_backend_prod_password
+      password: ''
+    # Section with parameters of the calls to APIHUB. The service forwards the credentials of the caller and needs no access token.
+    apihub:
+      # Mandatory; Internal URL of the APIHUB backend. Do not change it unless you know what you are doing; If not set, default value: http://apihub-backend:8080; Example: http://qubership-apihub-backend:8080
+      url: 'http://qubership-apihub-backend:8080'
+      # Optional; Timeout of one call to APIHUB; If not set, default value: 10s; Example: 10s
+      timeout: 10s
+      # Optional; How often the anonymous access flag is read again from APIHUB; If not set, default value: 60s; Example: 60s
+      configurationCacheTtl: 60s
+      # Optional; Per-principal cache of version access checks and package bodies; If not set, default value: 60s; Example: 60s
+      packageAccessCacheTtl: 60s
+    # Section with attached file parameters
+    static:
+      # Optional; Upload limit in bytes, also applied to import; If not set, default value: 5242880; Example: 5242880
+      maxUploadSizeBytes: 5242880
+    # Section with logging parameters
+    log:
+      # Optional; Log level. Values: info, warn, error, etc; If not set, default value: info; Example: debug
+      level: info

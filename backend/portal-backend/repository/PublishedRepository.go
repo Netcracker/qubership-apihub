@@ -76,6 +76,7 @@ type PublishedRepository interface {
 	GetPackages(ctx context.Context, searchReq view.PackageListReq, userId string) ([]entity.PackageEntity, error)
 	GetDeletedPackages(ctx context.Context, searchReq view.PackageListReq, userId string) ([]entity.PackageEntity, error)
 	GetReadablePackages(ctx context.Context, searchReq view.PackageListReq, scope view.PackageReadScope, userId string) ([]entity.ReadablePackageEntity, error)
+	GetPopularPackages(ctx context.Context, searchReq view.PackageListReq, scope view.PackageReadScope, userId string) ([]entity.PopularPackageEntity, error)
 	GetVersionValidationChanges_deprecated(ctx context.Context, packageId string, versionName string, revision int) (*entity.PublishedVersionValidationEntity_deprecated, error)
 	GetVersionValidationProblems_deprecated(ctx context.Context, packageId string, versionName string, revision int) (*entity.PublishedVersionValidationEntity_deprecated, error)
 	SearchForVersions(ctx context.Context, searchQuery *entity.PackageSearchQuery) ([]entity.PackageSearchResult, error)

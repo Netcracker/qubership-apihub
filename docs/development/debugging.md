@@ -6,8 +6,9 @@ stack you need with [Run APIHUB locally](./local-run.md); the build and test tar
 
 ## Go service
 
-The Go services are `portal-backend`, `api-linter-service`, `agents-backend`, `agent`, and `test-service`, all in
-one Go workspace (`go.work` at the repository root). The first four read `config.yaml` from a folder named by an
+The Go services are `portal-backend`, `api-linter-service`, `agents-backend`, `documents-backend`, `agent`, and
+`test-service`, all in one Go workspace (`go.work` at the repository root). The first five read `config.yaml` from a
+folder named by an
 environment variable, and from the working directory when it is not set:
 
 | Service | Folder variable | Config template |
@@ -15,6 +16,7 @@ environment variable, and from the working directory when it is not set:
 | `portal-backend` | `APIHUB_CONFIG_FOLDER` | [`config.template.yaml`](../../backend/portal-backend/config.template.yaml) |
 | `api-linter-service` | `LINTER_CONFIG_FOLDER` | [`config.template.yaml`](../../backend/api-linter-service/config.template.yaml) |
 | `agents-backend` | `AGENTS_BACKEND_CONFIG_FOLDER` | [`config.template.yaml`](../../backend/agents-backend/config.template.yaml) |
+| `documents-backend` | `DOCS_CONFIG_FOLDER` | [`config.template.yaml`](../../backend/documents-backend/config.template.yaml) |
 | `agent` | `AGENT_CONFIG_FOLDER` | [`config.template.yaml`](../../backend/agent/config.template.yaml) |
 
 `LOG_LEVEL` sets the initial log level (`debug`, `info`, and so on). The services read it from the environment, not

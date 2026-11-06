@@ -1,0 +1,10 @@
+server:
+  listenAddress: '0.0.0.0:8080'
+database:
+  host: 'host.docker.internal'
+  port: 5432
+  name: 'documents_backend'
+  username: 'documents_backend_user'
+  password: 'documents_backend_password'
+apihub:
+  url: 'http://qubership-apihub-backend:8080'

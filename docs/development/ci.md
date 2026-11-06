@@ -153,7 +153,7 @@ from `develop`. It has nine inputs:
 |---|---|---|
 | `runtime` | `kind` | `kind` (the Helm charts, with the agent, as in CI), `compose` (`deploy/docker-compose/apihub-generic`), or `compose-keycloak` (`deploy/docker-compose/with-keycloak`); Compose runs no agent |
 | `deploy-ref` | `main` | branch, tag, or commit of `deploy/` and of the agent chart |
-| `image-tags` | every key `dev` | JSON object with the keys `backend`, `buildTaskConsumer`, `ui`, `apiLinterService`, `agentsBackend`, and `agent`; a missing key means `dev` |
+| `image-tags` | every key `dev` | JSON object with the keys `backend`, `buildTaskConsumer`, `ui`, `apiLinterService`, `agentsBackend`, `documentsBackend`, and `agent`; a missing key means `dev` |
 | `suites` | `all` | `all`, `postman`, or `playwright` |
 | `postman-ref` | `develop` | ref of `tests/postman-collections` |
 | `postman-collections` | empty | comma-separated collections, as `1_1_Smoke_Portal` or `./e2e/1_1_Smoke_Portal.postman_collection.json`; empty means the default list |

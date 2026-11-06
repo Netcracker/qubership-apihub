@@ -1,0 +1,100 @@
+# yamllint disable-file
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: qubership-apihub-documents-backend
+  labels:
+    name: qubership-apihub-documents-backend
+    app.kubernetes.io/version: '{{.Values.qubershipApihubDocumentsBackend.version}}'
+    app.kubernetes.io/component: 'backend'
+    app.kubernetes.io/technology: 'go'
+    app.kubernetes.io/part-of: qubership-apihub-documents-backend
+    app.kubernetes.io/managed-by: helm
+spec:
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+  template:
+    metadata:
+      labels:
+        name: qubership-apihub-documents-backend
+        app.kubernetes.io/version: '{{.Values.qubershipApihubDocumentsBackend.version}}'
+        app.kubernetes.io/component: 'backend'
+        app.kubernetes.io/part-of: qubership-apihub-documents-backend
+        app.kubernetes.io/managed-by: helm
+        app.kubernetes.io/technology: 'go'
+    spec:
+      hostPID: false
+      hostIPC: false
+      volumes:
+      - name: qubership-apihub-documents-backend-config
+        secret:
+            defaultMode: 420
+            secretName: qubership-apihub-documents-backend-config-secret
+      - name: tmp-volume
+        emptyDir: {}
+      {{- if and .Values.qubershipApihubDocumentsBackend.customCa.enabled .Values.qubershipApihubDocumentsBackend.customCa.secretName }}
+      - name: qubership-apihub-documents-backend-custom-ca
+        secret:
+            defaultMode: 420
+            secretName: {{ .Values.qubershipApihubDocumentsBackend.customCa.secretName | quote }}
+      {{- end }}
+      containers:
+      - name: qubership-apihub-documents-backend
+        image: '{{.Values.qubershipApihubDocumentsBackend.image.repository}}:{{.Values.qubershipApihubDocumentsBackend.image.tag}}'
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+          - name: qubership-apihub-documents-backend-config
+            mountPath: /app/qubership-apihub-documents-backend/etc/
+          - name: tmp-volume
+            mountPath: /tmp
+          {{- if and .Values.qubershipApihubDocumentsBackend.customCa.enabled .Values.qubershipApihubDocumentsBackend.customCa.secretName }}
+          - name: qubership-apihub-documents-backend-custom-ca
+            mountPath: /tmp/cert
+            readOnly: true
+          {{- end }}
+        ports:
+          - name: web
+            containerPort: 8080
+            protocol: TCP
+        env:
+          - name: GOMEMLIMIT
+            value: '{{.Values.qubershipApihubDocumentsBackend.goMemLimit | default "205MiB"}}'
+          - name: DOCS_CONFIG_FOLDER
+            value: '/app/qubership-apihub-documents-backend/etc/'
+        resources:
+          requests:
+            cpu: '{{.Values.qubershipApihubDocumentsBackend.resource.cpu.request}}'
+            memory: '{{.Values.qubershipApihubDocumentsBackend.resource.memory.request}}'
+          limits:
+            cpu: '{{.Values.qubershipApihubDocumentsBackend.resource.cpu.limit}}'
+            memory: '{{.Values.qubershipApihubDocumentsBackend.resource.memory.limit}}'
+        livenessProbe:
+          httpGet:
+            path: /live
+            port: web
+          initialDelaySeconds: 5
+          timeoutSeconds: 2
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: web
+          initialDelaySeconds: 5
+          timeoutSeconds: 2
+        securityContext:
+          runAsUser: 10001
+          runAsGroup: 10001
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          seccompProfile:
+            type: RuntimeDefault
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+  selector:
+    matchLabels:
+      name: qubership-apihub-documents-backend

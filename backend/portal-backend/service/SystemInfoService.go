@@ -34,6 +34,7 @@ type SystemInfoService interface {
 	GetBasePath() string
 	GetJwtPrivateKey() []byte
 	IsProductionMode() bool
+	IsAnonymousAccessEnabled() bool
 	ShowDebugInResponse() bool
 	GetBackendVersion() string
 	GetListenAddress() string
@@ -229,6 +230,7 @@ func (g *systemInfoServiceImpl) setDefaults() {
 	viper.SetDefault("security.allowedOrigins", []string{})
 	viper.SetDefault("security.legacySaml", true)
 	viper.SetDefault("security.autoLogin", false)
+	viper.SetDefault("security.anonymousAccess", false)
 	viper.SetDefault("technicalParameters.migrationLockMaxWaitMinutes", 30)
 	viper.SetDefault("technicalParameters.requestTimeoutSec", 570) // nginx generic tier is 600s; 570 leaves a ~30s margin so the app's own error response wins
 	viper.SetDefault("technicalParameters.transitionMoveTimeoutMinutes", 30)
@@ -358,6 +360,10 @@ func (g *systemInfoServiceImpl) GetApiSpecDirectory() string {
 
 func (g *systemInfoServiceImpl) GetJwtPrivateKey() []byte {
 	return g.config.Security.Jwt.PrivateKey
+}
+
+func (g *systemInfoServiceImpl) IsAnonymousAccessEnabled() bool {
+	return g.config.Security.AnonymousAccess
 }
 
 func (g *systemInfoServiceImpl) IsProductionMode() bool {

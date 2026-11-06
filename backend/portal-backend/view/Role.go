@@ -23,6 +23,8 @@ const (
 	PackageReadScopeSubtree
 	// PackageReadScopeUser limits reading to the packages a user may read via role and default role inheritance.
 	PackageReadScopeUser
+	// PackageReadScopeAnonymous limits reading to the packages whose own or inherited default role grants read.
+	PackageReadScopeAnonymous
 )
 
 func (k PackageReadScopeKind) String() string {
@@ -35,6 +37,8 @@ func (k PackageReadScopeKind) String() string {
 		return "subtree"
 	case PackageReadScopeUser:
 		return "user"
+	case PackageReadScopeAnonymous:
+		return "anonymous"
 	default:
 		return fmt.Sprintf("unknown(%d)", int(k))
 	}

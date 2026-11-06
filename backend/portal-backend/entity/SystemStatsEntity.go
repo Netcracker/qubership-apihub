@@ -58,3 +58,8 @@ func (e *TableSizeEntity) MakeTableSizeInfoView() view.TableSizeInfo {
 		TotalSizeShare: e.TotalSizeShare,
 	}
 }
+
+type PublicStatsEntity struct {
+	Versions   int `pg:"versions"`
+	Operations int `pg:"operations"`
+}

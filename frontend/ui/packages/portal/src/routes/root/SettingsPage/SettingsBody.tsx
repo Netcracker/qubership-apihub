@@ -17,6 +17,7 @@
 import type { FC } from 'react'
 import { memo } from 'react'
 import {
+  ARTICLES_PAGE,
   ROLES_HIERARCHY_PAGE,
   RULESET_MANAGEMENT_PAGE,
   SYSTEM_ADMINISTRATORS_PAGE,
@@ -33,6 +34,7 @@ import {
   SystemAdministratorsTab,
 } from '@portal/routes/root/SettingsPage/SystemAdministratorsTab/SystemAdministratorsTab'
 import { RulesetManagementTab } from './RulesetManagementTab/RulesetManagementTab'
+import { ArticlesTab } from './ArticlesTab/ArticlesTab'
 
 export const SettingsBody: FC = memo(() => {
   const activeTab = useActiveTabContentContext()
@@ -48,6 +50,7 @@ export const SettingsBody: FC = memo(() => {
               [SYSTEM_ADMINISTRATORS_PAGE]: <SystemAdministratorsTab/>,
               [SYSTEM_TOKENS_PAGE]: <SystemTokensTab/>,
               [RULESET_MANAGEMENT_PAGE]: <RulesetManagementTab/>,
+              [ARTICLES_PAGE]: <ArticlesTab/>,
             }[activeTab]
           }
         </>

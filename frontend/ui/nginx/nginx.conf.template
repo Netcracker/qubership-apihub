@@ -206,6 +206,24 @@ http {
             proxy_intercept_errors off;
         }
 
+         # Docs extension (documents-backend). Same pattern as agents-backend: prefix is stripped.
+         location ^~ /docs-backend {
+            set $docs_backend_upstream http://${APIHUB_DOCS_BACKEND_ADDRESS};
+
+            add_header X-Content-Type-Options  "nosniff"                         always;
+            add_header X-XSS-Protection        "0"                               always;
+            add_header Referrer-Policy         "strict-origin-when-cross-origin" always;
+            add_header X-Frame-Options         "DENY"                            always;
+            add_header Content-Security-Policy "frame-ancestors 'none'"          always;
+            rewrite ^/docs-backend/(.*)$ /$1 break;
+
+            proxy_pass $docs_backend_upstream;
+
+            proxy_connect_timeout 1s;
+            proxy_next_upstream off;
+            proxy_intercept_errors off;
+        }
+
         location ~ ^/(portal|agents)/version\.json$ {
             root /usr/share/nginx/html;
             add_header Cache-Control "no-store" always;

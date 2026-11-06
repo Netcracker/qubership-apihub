@@ -65,7 +65,7 @@ E2E: Run tests (manual) > Run workflow** or with `gh workflow run`.
 |-------|---------|---------|
 | `runtime` | `kind` | `kind`, `compose` (`apihub-generic`), or `compose-keycloak` (`with-keycloak`); Compose runs no agent |
 | `deploy-ref` | `main` | Ref of `deploy/` and of the agent chart |
-| `image-tags` | every key `dev` | JSON object with `backend`, `buildTaskConsumer`, `ui`, `apiLinterService`, `agentsBackend`, and `agent` |
+| `image-tags` | every key `dev` | JSON object with `backend`, `buildTaskConsumer`, `ui`, `apiLinterService`, `agentsBackend`, `documentsBackend`, and `agent` |
 | `suites` | `all` | `all`, `postman`, or `playwright` |
 | `postman-ref` | `develop` | Ref of `tests/postman-collections` |
 | `postman-collections` | empty | Comma-separated collections; empty means the default list of the runtime |

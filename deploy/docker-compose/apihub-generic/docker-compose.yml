@@ -157,6 +157,39 @@ services:
             qubership-apihub-ui:
                 condition: service_healthy
 
+    qubership-apihub-documents-backend:
+        image: ghcr.io/netcracker/qubership-apihub-documents-backend:dev
+        container_name: qubership-apihub-documents-backend
+        ports:
+        - "8093:8080"
+        environment:
+            - GOMEMLIMIT=205MiB
+            - DOCS_CONFIG_FOLDER=/app/qubership-apihub-documents-backend/
+        volumes:
+            - ./qubership-apihub-documents-backend-config.yaml:/app/qubership-apihub-documents-backend/config.yaml
+        # Optional: corporate CA for HTTPS outbound (APIHUB). Requires core-base image.
+        # Uncomment and place .crt/.cer/.pem files in ./certs/
+        #     - ./certs:/tmp/cert:ro
+        healthcheck:
+            test: [ "CMD-SHELL", "curl --silent --fail localhost:8080/ready || exit 1" ]
+            interval: 10s
+            timeout: 10s
+            retries: 10
+            start_period: 5s
+        restart: unless-stopped
+        deploy:
+            resources:
+                limits:
+                    cpus: '0.25'
+                    memory: 256M
+        networks:
+            default:
+                aliases:
+                - qubership-apihub-documents-backend
+        depends_on:
+            qubership-apihub-ui:
+                condition: service_healthy
+
     ###### 3rd party services
 
     postgres:

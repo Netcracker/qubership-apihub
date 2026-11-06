@@ -106,6 +106,24 @@ export async function getPackages(
   }))
 }
 
+export async function getPopularPackages(
+  kind: PackageKind | PackageKind[],
+  limit: number,
+  showParents: boolean,
+  lastReleaseVersionDetails: boolean,
+): Promise<Packages> {
+  const searchParam = optionalSearchParams({
+    kind: { value: kind.toString() },
+    limit: { value: limit },
+    showParents: { value: showParents },
+    lastReleaseVersionDetails: { value: lastReleaseVersionDetails },
+  })
+
+  return toPackages(await requestJson<PackagesDto>(`/api/v2/packages/popular?${searchParam}`, {
+    method: 'GET',
+  }))
+}
+
 export function toPackages(value: PackagesDto): Packages {
   return value?.packages.map((pack) => toPackage(pack))
 }

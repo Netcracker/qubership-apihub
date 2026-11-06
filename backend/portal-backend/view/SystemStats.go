@@ -39,3 +39,8 @@ type TableSizeInfo struct {
 	TableSize      string  `json:"tableSize"`
 	TotalSizeShare float64 `json:"totalSizeShare"`
 }
+
+type PublicSystemStats struct {
+	Versions   int `json:"versions"`
+	Operations int `json:"operations"`
+}

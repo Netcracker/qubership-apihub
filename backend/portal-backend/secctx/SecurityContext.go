@@ -18,6 +18,9 @@ const (
 	ApikeyRoleExt      = "apikeyRole"
 	ApikeyPackageIdExt = "apikeyPackageId"
 	TokenExpiresAtExt  = "expiresAt"
+	AnonymousExt       = "anonymous"
+
+	AnonymousPrincipalName = "anonymous"
 )
 
 func MakeUserContext(r *http.Request) context.Context {
@@ -32,6 +35,7 @@ func MakeUserContextFrom(ctx context.Context, r *http.Request) context.Context {
 	apiKeyRoles := user.GetExtensions().Values(ApikeyRoleExt)
 	apiKeyPackageId := user.GetExtensions().Get(ApikeyPackageIdExt)
 	tokenExpirationTimestamp, _ := strconv.ParseInt(user.GetExtensions().Get(TokenExpiresAtExt), 0, 64)
+	anonymousAccess := user.GetExtensions().Has(AnonymousExt)
 
 	token := getAccessToken(r)
 	apiKey := getApihubApiKey(r)
@@ -47,6 +51,7 @@ func MakeUserContextFrom(ctx context.Context, r *http.Request) context.Context {
 		apiKeyRoles:              apiKeyRoles,
 		systemRole:               systemRole,
 		isSystem:                 false,
+		isAnonymous:              anonymousAccess,
 	})
 }
 
@@ -76,6 +81,7 @@ type securityContextImpl struct {
 	apiKeyRoles              []string
 	systemRole               string
 	isSystem                 bool
+	isAnonymous              bool
 }
 
 func getAccessToken(r *http.Request) string {
@@ -176,6 +182,14 @@ func GetUserSystemRole(ctx context.Context) string {
 		return ""
 	}
 	return val.(securityContextImpl).systemRole
+}
+
+func IsAnonymous(ctx context.Context) bool {
+	val := ctx.Value("secCtx")
+	if val == nil {
+		return false
+	}
+	return val.(securityContextImpl).isAnonymous
 }
 
 func IsSysadm(ctx context.Context) bool {

@@ -22,3 +22,24 @@ export function getUsersByFilter(router: Router): void {
     res.status(200).json(USERS_LIST)
   })
 }
+
+// Set MOCK_ANONYMOUS=true to emulate an anonymous (not logged in) visitor
+function isAnonymous(): boolean {
+  return process.env.MOCK_ANONYMOUS === 'true'
+}
+
+export function getCurrentUser(router: Router): void {
+  router.get('/', (req, res) => {
+    if (isAnonymous()) {
+      res.status(401).json({ status: 401, code: 'UNAUTHORIZED', message: 'Unauthorized' })
+      return
+    }
+    const [user] = USERS_LIST.users
+    res.status(200).json({
+      ...user,
+      gitIntegrationStatus: false,
+      systemRole: 'System administrator',
+      accessTokenTTLSeconds: null,
+    })
+  })
+}

@@ -29,7 +29,8 @@ Set up the workstation first with [Getting started](./getting-started.md). Break
 ## Compose with published images
 
 The stack in [`deploy/docker-compose/apihub-generic/`](../../deploy/docker-compose/apihub-generic/) runs the
-backend, the builder, the UI, the linter, the agents backend, and PostgreSQL. It has no agent: the agent needs a
+backend, the builder, the UI, the linter, the agents backend, the documents backend, and PostgreSQL. It has no agent:
+the agent needs a
 Kubernetes API.
 
 Its images use the tag `dev`, which follows `develop`. Change the tag to the one you need:
@@ -58,6 +59,7 @@ with them. Open <http://localhost:8081/login>.
 | 8090 | backend REST API |
 | 8091 | linter |
 | 8092 | agents backend |
+| 8093 | documents backend |
 | 3000 | builder |
 | 5432 | PostgreSQL (`postgres` / `postgres`) |
 | 47375, 47376 | backend cache cluster ports |
@@ -80,6 +82,7 @@ Build the image you changed, tag it, and point the stack at the tag. Build from 
 podman build -f backend/portal-backend/Dockerfile -t localhost/qubership-apihub-backend:local backend
 podman build -f backend/api-linter-service/Dockerfile -t localhost/qubership-api-linter-service:local backend
 podman build -f backend/agents-backend/Dockerfile -t localhost/qubership-apihub-agents-backend:local backend
+podman build -f backend/documents-backend/Dockerfile -t localhost/qubership-apihub-documents-backend:local backend/documents-backend
 podman build -f backend/agent/Dockerfile -t localhost/qubership-apihub-agent:local backend
 
 # UI: the image copies the dist folders of both apps.
@@ -155,7 +158,8 @@ helm upgrade apihub ../qubership-apihub -n qubership-apihub \
 ```
 
 The value keys of the other images are `qubershipApihubUi`, `qubershipApihubBuildTaskConsumer`,
-`qubershipApiLinterService`, and `qubershipApihubAgentsBackend`. After you load a rebuilt image under the same tag,
+`qubershipApiLinterService`, `qubershipApihubAgentsBackend`, and `qubershipApihubDocumentsBackend`. After you load a
+rebuilt image under the same tag,
 restart the deployment: `kubectl rollout restart deployment/qubership-apihub-backend -n qubership-apihub`.
 
 The agent has its own chart in [`backend/agent/helm-templates/`](../../backend/agent/helm-templates/). Remove the
@@ -164,7 +168,7 @@ cluster with `kind delete cluster`.
 ## Backend from the IDE, the rest in Compose
 
 Run `portal-backend` from the IDE with breakpoints while the generic stack provides PostgreSQL, the UI, the builder,
-the linter, and the agents backend.
+the linter, the agents backend, and the documents backend.
 
 1. Start the generic stack as in [Compose with published images](#compose-with-published-images), then stop its
    backend. The ports 8090, 47375, and 47376 must be free for your process.
@@ -189,7 +193,8 @@ the linter, and the agents backend.
      apiSpecDirectory: './docs/api'
    ```
 
-   The `extensions` entries call the linter and the agents backend at `host.docker.internal:8091` and `:8092`. That
+   The `extensions` entries call the linter, the agents backend, and the documents backend at
+   `host.docker.internal:8091`, `:8092`, and `:8093`. That
    name resolves on the host only through the Windows `hosts` entry from [What you need](#what-you-need); on Linux,
    change it to `localhost`.
 
@@ -211,7 +216,7 @@ its README shows the `config.yaml` and the launch configuration. Prefer the step
 ## UI proxy mode
 
 Proxy mode runs the Portal from your sources with hot reload and forwards `/api`, `/api-linter`, `/agents-backend`,
-and `/playground` to a running APIHUB. It is the default setup for UI work. The details are in
+`/docs-backend`, and `/playground` to a running APIHUB. It is the default setup for UI work. The details are in
 [`frontend/ui/docs/dev/local-development.md`](../../frontend/ui/docs/dev/local-development.md).
 
 1. Build the Portal and its workspace dependencies once. The dev server loads libraries such as `api-processor` from
