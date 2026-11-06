@@ -444,7 +444,7 @@ CREATE TABLE public.t (
     values: ["upper(status)", "lower(status)"],
     build: (v) => `${DDL_HEADER}CREATE TABLE public.t (
   status text NOT NULL,
-  label text GENERATED ALWAYS AS (${v}) STORED
+  display_status text GENERATED ALWAYS AS (${v}) STORED
 );
 `,
   },

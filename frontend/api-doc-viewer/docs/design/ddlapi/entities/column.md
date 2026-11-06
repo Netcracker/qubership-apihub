@@ -20,7 +20,7 @@ Table and column names come from the fixture in the **Fixture** column (relative
 | Enum type (`t.feeling` of type `mood`) | Occasional | Enum type name as the label, `Values` row (detailed mode) | `ddlapi-display-mode-simple/04-column-enum-values`, `column-types/enum` |
 | JSON / JSONB column | Occasional | Type label only; the content is opaque | `column-types/json`, `column-types/jsonb` |
 | Identity column (`users.id`) | Occasional | **generated** badge | `e2e-scenarios/users`, `column-constraints/generated-identity` |
-| Expression-generated column (`t.label`) | Occasional | **generated** badge, `As` row (detailed mode) | `column-constraints/generated-expression` |
+| Expression-generated column (`t.display_text`) | Occasional | **generated** badge, `As` row (detailed mode) | `column-constraints/generated-expression` |
 | Binary (`petstore.animals.photo`) and geometric types | Rare | Type label only | `e2e-scenarios/petstore`, `column-types/point` |
 | Array types | Rare | Type label only | none |
 

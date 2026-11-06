@@ -79,7 +79,7 @@ describe('escaping-spec-chars samples: Default row display matches the original 
   it.each(Object.keys(expectedDisplayByCase))('case %s', async (caseId) => {
     const sql = readFileSync(path.join(samplesRoot, caseId, 'sample.sql'), 'utf8')
     const realm = await buildFromDdl(sql)
-    const column = realm.schemas[0]?.tables?.[0]?.columns?.find((c) => c.name === 'label')
+    const column = realm.schemas[0]?.tables?.[0]?.columns?.find((c) => c.name === 'display_text')
     expect(column?.default).toBeDefined()
     expect(formatDefaultValueForDisplay(column!.default!)).toBe(expectedDisplayByCase[caseId])
   })
