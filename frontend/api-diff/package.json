@@ -46,7 +46,7 @@
     "@types/jest": "catalog:",
     "@types/node": "catalog:",
     "@typescript-eslint/eslint-plugin": "7.18.0",
-    "@typescript-eslint/parser": "7.18.0",
+    "@typescript-eslint/parser": "8.72.1",
     "eslint": "8.57.1",
     "eslint-plugin-sort-exports": "0.9.1",
     "fast-json-patch": "3.1.1",
