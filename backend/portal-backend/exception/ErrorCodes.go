@@ -835,6 +835,21 @@ const DdlEntityNotFoundMsg = "DDL entity $ddlEntityId not found"
 const McpEntityNotFound = "8402"
 const McpEntityNotFoundMsg = "MCP entity $mcpEntityId not found"
 
+const DdlTableGroupAlreadyExists = "8403"
+const DdlTableGroupAlreadyExistsMsg = "DDL table group with groupName=$groupName already exists"
+
+const DdlTableGroupNotFound = "8404"
+const DdlTableGroupNotFoundMsg = "DDL table group with groupName=$groupName doesn't exist"
+
+const EmptyDdlTableGroupName = "8405"
+const EmptyDdlTableGroupNameMsg = "DDL table group name cannot be empty"
+
+const DdlTableGroupTablesLimitExceeded = "8406"
+const DdlTableGroupTablesLimitExceededMsg = "DDL tables limit per group ($limit) exceeded"
+
+const DdlTableGroupVersionNotAllowed = "8407"
+const DdlTableGroupVersionNotAllowedMsg = "Cannot add a DDL entity from package '$packageId' version '$version' since it is not referenced in the current package version"
+
 const ReferencedByDashboard = "8500"
 const VersionReferencedByDashboardMsg = "Cannot delete version $version of package $packageId: it is referenced by these dashboard versions: $dashboards. Remove the references or delete the dashboards, then retry."
 const PackageReferencedByDashboardMsg = "Cannot delete package $packageId: it is referenced by these dashboard versions: $dashboards. Remove the references or delete the dashboards, then retry."
