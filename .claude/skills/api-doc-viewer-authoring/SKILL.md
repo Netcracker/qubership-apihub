@@ -942,7 +942,7 @@ width of a row's per-side element (e.g. `div[data-frame-position] { width: auto 
 breaks the same contract: each row shrank to its own content and the "card" got ragged edges. Keep
 the element a full-width flex item (`flex: 1 1 0%; min-width: 0`) and inset the *content* instead.
 `SideBySideLayout`'s root carries the class `side-by-side-layout` purely as a style hook (no rules of
-its own) for diffs-only CSS such as wider cards.
+its own) for diffs-only CSS such as the collapsible-section indent.
 
 ## Monorepo paths
 
@@ -1092,8 +1092,8 @@ centring. JSON Schema / JSO viewers keep their own rows and paddings.
   `OpenApiSpacingConfig.halfGap`.
 - **Levels.** Every container plans its own elements: `operation` (blocks 1–5, level gap 8 → 24px),
   `operationHeader`, `security`, `request`, `responses`, `section` (rows of a parameter group / Body /
-  Extensions), `card` (all 0 → 16px). The level gap splits into halves that continue the neighbours
-  (`splitBands`). Every row is its own block of its container; containers take the head of their first
+  Extensions), `card` (all 0 → 16px). The level gap takes the neighbours' tone only when both share it,
+  else stays white (OpenAPI `splitBands` / `splitBadge`). Every row is its own block of its container; containers take the head of their first
   child and the tail of their last (`BlockEdges.container`). Outer halves: the root (config
   `viewerEdges`) and the inside of a card.
 - **Data computed in next-data-model** (spec-neutral `model/abstract/layout/`: `LayoutPlanner`,
@@ -1168,7 +1168,8 @@ centring. JSON Schema / JSO viewers keep their own rows and paddings.
   approved model (2026-10-16) read "≥ 4px above / below every element, 12px between top-level blocks"
   literally: each element owns its halves, the level gap splits in two halves continuing the
   neighbours. The numbers were doubled on 2026-11-01 (rows stuck together): 8px halves, 8 = 4 + 4 level
-  gap, so a row that changed alone is 8 / 8 inside a block and 8 / 12 at a top-level edge. When
+  gap, so a row that changed alone was 8 / 8 inside a block and 8 / 12 at a top-level edge. On
+  2026-11-05 the level gap became white unless both neighbours share a tone: 8 / 8 everywhere. When
   proposing a spacing model, draw the bands of every row kind (block-edge rows included) in plain and
   diffs mode.
 - **Tuning the numbers.** Edit `DEFAULT_OPENAPI_SPACING_CONFIG` (next-data-model
@@ -1190,7 +1191,7 @@ centring. JSON Schema / JSO viewers keep their own rows and paddings.
 
 The JSON Schema property title does **not** get its medium look from `font-weight`: it uses
 `NODE_TITLE_TEXT_CLASSES` (`shared-styles/tailwind-classnames.ts`) = `text-xs text-black
-font-Inter-Medium` — the static "Inter Medium" font family (`src/index.css`) at the normal 400 weight.
+font-inter-medium` — the static "Inter Medium" font family (`src/index.css`) at the normal 400 weight.
 `TextValue` renders "Inter Variable", so `TextValue` + `textFontWeight` never matches a JSON Schema
 title. For any label that must look like a property title (security prop labels, `Scopes`, scope
 names), reuse `NODE_TITLE_TEXT_CLASSES` on a plain span instead of tuning weights.

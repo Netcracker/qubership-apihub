@@ -256,7 +256,7 @@ const Value: FC<ValueProps> = props => {
 
   return (
     <div className={cn(`text-xs text-slate-700`)}>
-      <b className={cn("font-Inter-Bolder mr-1")}>Deprecation reason:</b>
+      <b className={cn("font-inter-bolder mr-1")}>Deprecation reason:</b>
       <span className={cn(`${enableDiffs ? diffColorSchema ?? '' : ''}`)}>
         {value}
       </span>

@@ -332,7 +332,7 @@ export const HeaderRow: FC<HeaderRowProps> = (props) => {
         </div>
         <div className={cn(`flex flex-row items-center gap-2 ${method ? 'py-2' : 'pt-2 pb-1'}`)}>
           <div
-            className={cn(`flex flex-row gap-2 items-center text-xs text-black font-Inter-Medium ${isExpandable ? 'hover:cursor-pointer' : ''}`)}
+            className={cn(`flex flex-row gap-2 items-center text-xs text-black font-inter-medium ${isExpandable ? 'hover:cursor-pointer' : ''}`)}
             onClick={isExpandable ? onToggleExpander : undefined}
           // onContextMenu={defaultOnContextMenu(isExpandable, onToggleContextMenu)}
           >

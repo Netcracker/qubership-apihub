@@ -70,7 +70,7 @@ button.button-selector-option.openapi-response-code_1xx:hover {
 button.button-selector-option.openapi-response-code_1xx.selected {
   background-color: #9B7BF7;
   border-color: #9B7BF7;
-  color: #FFFFFF;
+  color: #FFF;
 }
 
 /* 2XX Success: green. */
@@ -89,7 +89,7 @@ button.button-selector-option.openapi-response-code_2xx:hover {
 button.button-selector-option.openapi-response-code_2xx.selected {
   background-color: #00BB5B;
   border-color: #00BB5B;
-  color: #FFFFFF;
+  color: #FFF;
 }
 
 /* 3XX Redirection: sky blue, the POST badge color. */
@@ -108,7 +108,7 @@ button.button-selector-option.openapi-response-code_3xx:hover {
 button.button-selector-option.openapi-response-code_3xx.selected {
   background-color: #4FC0F8;
   border-color: #4FC0F8;
-  color: #FFFFFF;
+  color: #FFF;
 }
 
 /* 4XX Client error: amber. */
@@ -127,7 +127,7 @@ button.button-selector-option.openapi-response-code_4xx:hover {
 button.button-selector-option.openapi-response-code_4xx.selected {
   background-color: #FFB02E;
   border-color: #FFB02E;
-  color: #FFFFFF;
+  color: #FFF;
 }
 
 /* 5XX Server error: red. */
@@ -146,7 +146,7 @@ button.button-selector-option.openapi-response-code_5xx:hover {
 button.button-selector-option.openapi-response-code_5xx.selected {
   background-color: #FF636F;
   border-color: #FF636F;
-  color: #FFFFFF;
+  color: #FFF;
 }
 
 /* A yellow-highlighted option title (renamed response code / media type, `OptionKeyText`) is always

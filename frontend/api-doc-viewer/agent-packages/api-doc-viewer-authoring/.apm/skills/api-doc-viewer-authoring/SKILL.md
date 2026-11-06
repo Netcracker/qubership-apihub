@@ -1191,7 +1191,7 @@ centring. JSON Schema / JSO viewers keep their own rows and paddings.
 
 The JSON Schema property title does **not** get its medium look from `font-weight`: it uses
 `NODE_TITLE_TEXT_CLASSES` (`shared-styles/tailwind-classnames.ts`) = `text-xs text-black
-font-Inter-Medium` — the static "Inter Medium" font family (`src/index.css`) at the normal 400 weight.
+font-inter-medium` — the static "Inter Medium" font family (`src/index.css`) at the normal 400 weight.
 `TextValue` renders "Inter Variable", so `TextValue` + `textFontWeight` never matches a JSON Schema
 title. For any label that must look like a property title (security prop labels, `Scopes`, scope
 names), reuse `NODE_TITLE_TEXT_CLASSES` on a plain span instead of tuning weights.

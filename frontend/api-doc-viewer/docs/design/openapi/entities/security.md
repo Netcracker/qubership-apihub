@@ -157,7 +157,7 @@ is therefore 30% of the card plus 20px before the value, the same in every prop 
 longer label wraps inside its column. 2nd-level scope rows keep their 20px left offset as padding in
 the first cell, so the scope name gets 30% of the card minus the offset and the description starts
 where 1st-level values start. Labels, the `Scopes` text, and scope names use exactly the JSON Schema
-property-title text, `NODE_TITLE_TEXT_CLASSES` (`text-xs text-black font-Inter-Medium`: the medium
+property-title text, `NODE_TITLE_TEXT_CLASSES` (`text-xs text-black font-inter-medium`: the medium
 look comes from the static "Inter Medium" family at weight 400, not from `font-weight`); values are
 12px secondary gray (the subheader / type-label gray), URLs stay link-blue; scope descriptions gray.
 

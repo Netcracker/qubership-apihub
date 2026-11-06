@@ -11,8 +11,8 @@ import { getExpanderFontSizeClass, isExpandable, shortenValue } from "./shorten-
 import { TextValueVariant } from "./types"
 import "../MarkdownTextRow/MarkdownTextRow.css"
 
-const JSON_SCHEMA_DESCRIPTION_MARKDOWN_CLASS = "markdown-text-row__json-schema-description"
-const JSON_SCHEMA_DESCRIPTION_EXPANDER_CLASS = "markdown-text-row__json-schema-expander"
+const JSON_SCHEMA_DESCRIPTION_MARKDOWN_CLASS = "markdown-text-row-json-schema-description"
+const JSON_SCHEMA_DESCRIPTION_EXPANDER_CLASS = "markdown-text-row-json-schema-expander"
 
 type MarkdownTextValueProps = {
   value: string

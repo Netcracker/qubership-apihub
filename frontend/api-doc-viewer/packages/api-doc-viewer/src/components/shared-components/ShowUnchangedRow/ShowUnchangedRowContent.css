@@ -1,6 +1,6 @@
 /* Colors, hover background, radius: the shared icon-button config (shared-styles/colors/icon-buttons.css). */
 button.icon-button.show-unchanged-trigger {
-  padding: 4px 6px 6px 6px;
+  padding: 4px 6px 6px;
   min-height: 26px;
 }
 

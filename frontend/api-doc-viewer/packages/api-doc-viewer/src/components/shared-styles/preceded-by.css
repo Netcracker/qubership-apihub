@@ -186,10 +186,6 @@
   padding-bottom: 4px;
 }
 
-.json-schema-property .title-row-content[data-precededby="json-schema-viewer"] > .json-schema-property-row-body {
-  padding-top: 16px;
-}
-
 /* CombinerSelectorControlsRow's row body needs more breathing room than the 4px default
    (line 173-176) — same override technique as the title-row rule above, just scoped through
    .json-schema-combiner-selector-row-content instead of .title-row-content. */
@@ -209,8 +205,15 @@
   align-items: flex-start;
 }
 
+/* After the less specific row-body rules above (stylelint no-descending-specificity); being more
+   specific, it wins over them wherever it stands. */
+.json-schema-property .title-row-content[data-precededby="json-schema-viewer"] > .json-schema-property-row-body {
+  padding-top: 16px;
+}
+
 .json-schema-property .additional-info-row-content .additional-info-row-label {
   padding-top: 3px;
+
   /* Legacy parity: label uses Tailwind text-xs (line-height: 1rem); .additional-info-row-label
      only sets font-size, so it fell back to inherited/default line-height, drifting row height. */
   line-height: 1rem;
@@ -384,6 +387,7 @@
   padding-top: 8px;
   padding-bottom: 8px;
 }
+
 /* ─── Separator layout (OpenAPI operation, Security sections) ──────────────── */
 
 /* Separator layout rows have no vertical padding: a row is its content. Every vertical gap is a

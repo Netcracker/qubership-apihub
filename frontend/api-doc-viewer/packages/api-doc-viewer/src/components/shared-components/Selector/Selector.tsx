@@ -71,12 +71,12 @@ export function Selector<
         const resolvedTitle = typeof option.title === "function" ? option.title(layoutSide) : option.title
         // Neutral options keep their markup byte-identical (no tone class), so existing selectors do not move.
         const toneClass = option.toneClass ? ` ${option.toneClass}` : ''
-        const croppedClass = noWrap ? ' button-selector-option_cropped' : ''
+        const croppedClass = noWrap ? ' button-selector-option-cropped' : ''
         return (
           <button
             key={option.node.id}
             data-testid={option.testId}
-            className={cn(`button-selector-option button-selector-option_${variant}${toneClass}${croppedClass} ${selectedOption === option ? 'selected' : ''} ${diffsRelatedClasses}`)}
+            className={cn(`button-selector-option button-selector-option-${variant}${toneClass}${croppedClass} ${selectedOption === option ? 'selected' : ''} ${diffsRelatedClasses}`)}
             onClick={(event) => {
               event.preventDefault()
               event.stopPropagation()

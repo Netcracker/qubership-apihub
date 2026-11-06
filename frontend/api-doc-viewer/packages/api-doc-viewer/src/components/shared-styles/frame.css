@@ -31,6 +31,7 @@ div[data-frame-position] {
   flex: 1 1 0%;
   min-width: 0;
   width: auto;
+
   /* Content inside the frame box: frame offset + inner padding on the left; on the right everything
      outside the frame box + inner padding. Percentages resolve against the side width. */
   padding-left: calc(var(--frame-left) + var(--frame-inner-padding));
@@ -52,7 +53,7 @@ div[data-frame-position]::before {
 
 div[data-frame-position="first"]::before,
 div[data-frame-position="single"]::before {
-  top: var(--frame-border-top, 0px);
+  top: var(--frame-border-top, 0);
   border-top: 1px solid #D5DCE3;
   border-top-left-radius: var(--frame-radius);
   border-top-right-radius: var(--frame-radius);
@@ -60,7 +61,7 @@ div[data-frame-position="single"]::before {
 
 div[data-frame-position="last"]::before,
 div[data-frame-position="single"]::before {
-  bottom: var(--frame-border-bottom, 0px);
+  bottom: var(--frame-border-bottom, 0);
   border-bottom: 1px solid #D5DCE3;
   border-bottom-left-radius: var(--frame-radius);
   border-bottom-right-radius: var(--frame-radius);

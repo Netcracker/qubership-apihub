@@ -247,7 +247,7 @@ const AddressRowContent: FC<AddressRowContentProps> = (props) => {
     <div
       ref={rowRef}
       data-precededby={precededBy}
-      className={cn(`address-row address-row-content font-Inter-Medium flex w-full h-full min-w-0 ${X_AXIS_PADDING_ROWS} ${diffStyles.join(' ')}`)}
+      className={cn(`address-row address-row-content font-inter-medium flex w-full h-full min-w-0 ${X_AXIS_PADDING_ROWS} ${diffStyles.join(' ')}`)}
     >
       <div
         ref={boxRef}

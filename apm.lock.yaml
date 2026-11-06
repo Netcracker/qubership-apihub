@@ -1,5 +1,5 @@
 lockfile_version: '1'
-generated_at: '2026-11-03T21:38:33.936164+00:00'
+generated_at: '2026-11-05T20:43:11.589666+00:00'
 apm_version: 0.26.0
 dependencies:
 - repo_url: _local/advanced-verification
@@ -90,10 +90,10 @@ dependencies:
   - .claude/skills/api-doc-viewer-authoring/refactoring-notes.md
   - .cursor/rules/api-doc-viewer-authoring.mdc
   deployed_file_hashes:
-    .agents/skills/api-doc-viewer-authoring/SKILL.md: sha256:26823031d9b06e8056bea582686055bb9b7ee279ef5f6381ea5bfccf6782b46c
+    .agents/skills/api-doc-viewer-authoring/SKILL.md: sha256:51c32fffd9c45604f1788083db8edef2232aa39238b542057663c526443b0b16
     .agents/skills/api-doc-viewer-authoring/refactoring-notes.md: sha256:6e03682401012b6133d38621a31e35644cdd7970f62827295ef1d64e6d2b40e5
     .claude/rules/api-doc-viewer-authoring.md: sha256:77d745d1a570e5e2080795f1721d40dc97a2684c0c6d3f620de96d061086f406
-    .claude/skills/api-doc-viewer-authoring/SKILL.md: sha256:26823031d9b06e8056bea582686055bb9b7ee279ef5f6381ea5bfccf6782b46c
+    .claude/skills/api-doc-viewer-authoring/SKILL.md: sha256:51c32fffd9c45604f1788083db8edef2232aa39238b542057663c526443b0b16
     .claude/skills/api-doc-viewer-authoring/refactoring-notes.md: sha256:6e03682401012b6133d38621a31e35644cdd7970f62827295ef1d64e6d2b40e5
     .cursor/rules/api-doc-viewer-authoring.mdc: sha256:785e8d3169f5a069d37ce706ce184b0c77a2c1516107af9be805dc0801e646f6
   source: local
@@ -1641,7 +1641,7 @@ deployments:
   owners:
   - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-authoring
   active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-authoring
-  content_hash: sha256:26823031d9b06e8056bea582686055bb9b7ee279ef5f6381ea5bfccf6782b46c
+  content_hash: sha256:51c32fffd9c45604f1788083db8edef2232aa39238b542057663c526443b0b16
 - kind: project-relative
   target: claude
   value: .claude/skills/api-doc-viewer-authoring/refactoring-notes.md
@@ -2667,7 +2667,7 @@ deployments:
   owners:
   - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-authoring
   active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-authoring
-  content_hash: sha256:26823031d9b06e8056bea582686055bb9b7ee279ef5f6381ea5bfccf6782b46c
+  content_hash: sha256:51c32fffd9c45604f1788083db8edef2232aa39238b542057663c526443b0b16
 - kind: project-relative
   target: cursor
   value: .agents/skills/api-doc-viewer-authoring/refactoring-notes.md
