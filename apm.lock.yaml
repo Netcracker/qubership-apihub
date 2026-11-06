@@ -1,5 +1,5 @@
 lockfile_version: '1'
-generated_at: '2026-11-05T20:43:11.589666+00:00'
+generated_at: '2026-11-06T15:38:05.628870+00:00'
 apm_version: 0.26.0
 dependencies:
 - repo_url: _local/advanced-verification
@@ -188,9 +188,9 @@ dependencies:
   - .claude/skills/api-doc-viewer-using/SKILL.md
   - .cursor/rules/api-doc-viewer-using.mdc
   deployed_file_hashes:
-    .agents/skills/api-doc-viewer-using/SKILL.md: sha256:613c7a9f84104b31f3f009bb37e6fe50696d74794d09fef6568aed4cf671ded4
+    .agents/skills/api-doc-viewer-using/SKILL.md: sha256:6c68f3f93f8d6617ab714f4f68d90230a68b9413b1128bfb1b93aa859624ea85
     .claude/rules/api-doc-viewer-using.md: sha256:973ac261fd82da1a721c8609cb6edeb7e8c6f616f8af1509071d95ace8f6c833
-    .claude/skills/api-doc-viewer-using/SKILL.md: sha256:613c7a9f84104b31f3f009bb37e6fe50696d74794d09fef6568aed4cf671ded4
+    .claude/skills/api-doc-viewer-using/SKILL.md: sha256:6c68f3f93f8d6617ab714f4f68d90230a68b9413b1128bfb1b93aa859624ea85
     .cursor/rules/api-doc-viewer-using.mdc: sha256:2405b3e9086affbb9c3eef445cdd607524e97c5910a5d7acd3299f9726d37a06
   source: local
   local_path: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-using
@@ -1776,7 +1776,7 @@ deployments:
   owners:
   - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-using
   active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-using
-  content_hash: sha256:613c7a9f84104b31f3f009bb37e6fe50696d74794d09fef6568aed4cf671ded4
+  content_hash: sha256:6c68f3f93f8d6617ab714f4f68d90230a68b9413b1128bfb1b93aa859624ea85
 - kind: project-relative
   target: claude
   value: .claude/skills/api-processor-build-result
@@ -2802,7 +2802,7 @@ deployments:
   owners:
   - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-using
   active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-using
-  content_hash: sha256:613c7a9f84104b31f3f009bb37e6fe50696d74794d09fef6568aed4cf671ded4
+  content_hash: sha256:6c68f3f93f8d6617ab714f4f68d90230a68b9413b1128bfb1b93aa859624ea85
 - kind: project-relative
   target: cursor
   value: .agents/skills/api-processor-build-result

@@ -154,7 +154,7 @@ configuration `showcase`. The list of published Storybooks is
 
 ## Screenshot tests
 
-`api-doc-viewer`, `apispec-view`, and `class-view` have screenshot tests. Each run builds the Storybook, serves it,
+`api-doc-viewer` and `class-view` have screenshot tests. Each run builds the Storybook, serves it,
 opens every story in Chrome, and compares the result with the reference images committed next to the tests. Chrome
 runs in a container, so the pixels match CI on any operating system.
 

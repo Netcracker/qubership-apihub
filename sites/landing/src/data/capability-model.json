@@ -300,7 +300,7 @@
       "UI",
       "LIB"
      ],
-     "<apispec-view>, <operation-view>, api-doc-viewer",
+     "api-doc-viewer operation viewers, <apispec-view>",
      "core"
     ],
     [

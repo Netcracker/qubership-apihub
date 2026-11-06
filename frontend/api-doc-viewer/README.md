@@ -13,7 +13,7 @@ without the differences between two versions shown side by side. The module is p
 | DDL (PostgreSQL) | `DdlTableViewer` | `DdlTableDiffsViewer` | One table: columns, indexes, foreign-key links |
 | GraphQL *(legacy)* | `GraphQLOperationViewer` | `GraphQLOperationDiffViewer` | One query, mutation, or subscription |
 
-The UI and `apispec-view` use the viewers. See the
+The UI uses the viewers. See the
 [processing libraries guide](../../docs/architecture/processing-libraries.md) and the
 [architecture overview](../../docs/architecture/overview.md).
 

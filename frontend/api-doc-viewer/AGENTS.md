@@ -353,7 +353,7 @@ When adding a case: YAML pair → story export → matching `it(...)` with Story
 | `frontend/api-diff` | Diff types consumed by with-diffs builders |
 | `frontend/api-unifier`, `frontend/graphapi` | Normalization and GraphAPI conversion used by the data layer |
 | `frontend/compatibility-suites` | **Only** source for `*.generated.*` stories and tests |
-| `frontend/apispec-view`, `frontend/ui` | Consumers of the viewers |
+| `frontend/ui` | Consumer of the viewers |
 
 ## Cross-platform development
 

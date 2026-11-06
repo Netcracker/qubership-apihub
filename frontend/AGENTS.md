@@ -34,7 +34,7 @@ Group of the TypeScript modules: the SPAs, the builder service, and the librarie
 - Dependency order (low to high): `json-crawl`, `ddlapi`, `graphapi`, `compatibility-suites` → `api-unifier` →
   `api-diff` → `api-processor`, `api-doc-viewer` → `apispec-view`, `build-task-consumer`, `ui`. `nx` builds
   dependencies first (`^build`).
-- Screenshot suites (`api-doc-viewer`, `apispec-view`, `class-view`) need Chrome in a container; regenerate
+- Screenshot suites (`api-doc-viewer`, `class-view`) need Chrome in a container; regenerate
   snapshots only with the containerized config.
 
 ## Agent packages

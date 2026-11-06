@@ -29,8 +29,8 @@ clear dependency direction from foundation to application.
 | **Visualization** | React components and Web Components for rendering documentation, diffs, diagrams, and live testing | `api-doc-viewer`, `apispec-view`, `class-view`, `rest-playground` |
 | **Application** | End-user applications: the Portal/Agent UI and the build worker microservice | `ui`, `build-task-consumer` |
 
-`compatibility-suites` is test data, not a layer: it holds the before-and-after cases that `api-diff`,
-`api-doc-viewer`, and `apispec-view` use to test change classification.
+`compatibility-suites` is test data, not a layer: it holds the before-and-after cases that `api-diff` and
+`api-doc-viewer` use to test change classification.
 
 ```mermaid
 flowchart TB
@@ -99,8 +99,6 @@ flowchart TB
   docviewer --> crawl
   docviewer --> ddlapi
   docviewer --> datamod
-  apispecview --> diff
-  apispecview --> docviewer
   apispecview --> unifier
   apispecview --> httpspec
   playground --> httpspec
@@ -197,8 +195,6 @@ flowchart TD
   docviewer --> crawl
   docviewer --> ddlapi
   docviewer --> datamod
-  apispecview --> diff
-  apispecview --> docviewer
   apispecview --> unifier
   apispecview --> httpspec
   playground --> httpspec
@@ -316,7 +312,7 @@ classified. Each case reflects one change. It is test data and a generator, not 
 
 **Depends on:** None
 
-**Used by:** `api-diff`, `api-doc-viewer`, and `apispec-view` (development only)
+**Used by:** `api-diff` and `api-doc-viewer` (development only)
 
 ---
 
@@ -393,7 +389,7 @@ merged document annotated with change metadata. Every change is classified by se
 
 **Depends on:** `api-unifier`, `json-crawl`, `ddlapi`
 
-**Used by:** `api-processor`, `api-doc-viewer`, `apispec-view`, `ui`
+**Used by:** `api-processor`, `api-doc-viewer`, `ui`
 
 ---
 
@@ -503,7 +499,7 @@ state (`api-state-model`, GraphQL only), then React components (`api-doc-viewer`
 
 **Depends on:** `api-diff`, `api-unifier`, `graphapi`, `ddlapi`, `json-crawl`
 
-**Used by:** `apispec-view`, `ui`
+**Used by:** `ui`
 
 ---
 
@@ -511,32 +507,26 @@ state (`api-state-model`, GraphQL only), then React components (`api-doc-viewer`
 
 **Module:** [`frontend/apispec-view`](../../frontend/apispec-view/)
 
-The module is a pnpm workspace of seven packages. Only `elements` is published:
+The module is a pnpm workspace of three packages. Only `elements` is published:
 
 | Sub-package | npm name | Published | Purpose |
 |---|---|---|---|
-| `packages/elements` | `@netcracker/qubership-apihub-apispec-view` | Yes | Web Components for rendering full API documentation with diff view |
+| `packages/elements` | `@netcracker/qubership-apihub-apispec-view` | Yes | The `<apispec-view>` Web Component: a whole OpenAPI document with navigation |
 | `packages/elements-core` | `@netcracker/qubership-apihub-apispec-view-elements-core` | No (private) | Core UI: Docs viewer, layouts, HTTP operation/service views, TryIt panel |
-| `packages/diff-elements-core` | `@netcracker/qubership-apihub-apispec-view-diff-elements-core` | No (private) | Diff-aware HTTP operation rendering with change highlighting |
-| `packages/diff-block` | `@netcracker/qubership-apihub-apispec-view-diff-block` | No (private) | Low-level diff visualization primitives (side-by-side panels, color-coded indicators) |
 | `packages/json-schema-viewer` | `@netcracker/qubership-apihub-apispec-view-json-schema-viewer` | No (private) | React component for interactive JSON Schema tree views |
-| `packages/json-schema-diff-viewer` | `@netcracker/qubership-apihub-apispec-view-json-schema-diff-viewer` | No (private) | Diff-aware JSON Schema viewer using `api-diff` |
-| `packages/samples` | `@netcracker/qubership-apihub-apispec-view-samples` | No (private) | Sample API descriptions for Storybook and tests |
 
-This is a heavily customized fork of [@stoplightio/elements](https://github.com/stoplightio/elements), extended with
-side-by-side API diff visualization.
+This is a customized fork of [@stoplightio/elements](https://github.com/stoplightio/elements). Single operations and
+version comparisons are rendered by `api-doc-viewer`; `apispec-view` renders only whole documents.
 
 **Key responsibilities:**
 
-- Web Components: `<apispec-view>`, `<operation-view>`, `<diff-operation-view>`
-- OpenAPI 2/3/3.1 and AsyncAPI rendering with sidebar, stacked, and partial layouts
-- Color-coded diff severity indicators (breaking, non-breaking, deprecated, risky, annotation)
-- Change severity filtering via React context
+- Web Component: `<apispec-view>`, used by the Portal document preview, the specification dialog of the Portal and
+  Agents, and the Portal "Copy page template" snippet
+- OpenAPI 2.0, 3.0, and 3.1 rendering with sidebar, stacked, and partial layouts
+- Try It panel, with an optional proxy server
 - Shadow DOM isolation for CSS-safe embedding
-- Dual rendering paths: standard (`elements-core`) and diff (`diff-elements-core`)
 
-**Depends on:** `api-diff`, `api-doc-viewer`, `api-unifier`, `http-spec` (development dependencies; the build bundles
-them)
+**Depends on:** `api-unifier`, `http-spec` (development dependencies; the build bundles them)
 
 **Used by:** `ui`
 
@@ -698,28 +688,28 @@ How a specification is transformed into interactive UI components.
 
 ```mermaid
 flowchart LR
-  A["OpenAPI spec"] --> B["http-spec<br/>transformOas3Service()<br/>→ IHttpService /<br/>IHttpOperation"]
+  A["OpenAPI spec"] --> E["api-unifier<br/>normalize()"]
+  E --> F["next-data-model<br/>tree builders<br/>→ precomputed nodes"]
+  F --> H["api-doc-viewer<br/>OpenApiOperationViewer /<br/>JsonSchemaViewer"]
+  H --> I["ui (Portal, Agents)<br/>renders in page"]
+
+  A --> B["http-spec<br/>transformOas3Service()<br/>→ IHttpService /<br/>IHttpOperation"]
   B --> C["apispec-view<br/>(Web Component)<br/>bundle refs,<br/>dispatch to Docs"]
   C --> D["elements-core<br/>HttpOperation /<br/>HttpService /<br/>Model components"]
-
-  A --> E["api-unifier<br/>normalize()"]
-  E --> F["next-data-model<br/>tree builders<br/>→ precomputed nodes"]
-  F --> H["api-doc-viewer<br/>JsonSchemaViewer<br/>React component"]
-  H --> D
-
-  D --> I["ui (Portal)<br/>renders in page"]
+  D --> I
 ```
 
-**Two parallel paths converge in the Portal UI:**
+**Two paths reach the UI:**
 
-1. **Full operation/service view:** `http-spec` transforms the OAS document into `IHttpService`/`IHttpOperation` models,
-   which `apispec-view` renders as complete API documentation (parameters, request body, responses, examples)
-2. **Schema detail view:** `api-unifier` normalizes the schema, `next-data-model` builds a navigable tree with diff
-   aggregates, and `api-doc-viewer` renders it as an interactive, collapsible property tree
+1. **Operations and schemas:** `api-unifier` normalizes the document, `next-data-model` builds a navigable tree, and
+   `api-doc-viewer` renders it: `OpenApiOperationViewer` for an operation, `JsonSchemaViewer` for a JSON Schema
+   document. Comparisons use the diff tree builders of `next-data-model` and the `*DiffsViewer` components, which
+   mark each change with its severity.
+2. **Whole OpenAPI documents:** `http-spec` transforms the document into `IHttpService` and `IHttpOperation` models,
+   which `apispec-view` renders with navigation, overview, operations, models, and Try It. The document preview page,
+   the specification dialog, and the embed snippet use this path.
 
-For diff views, the same pipeline runs with diff-aware variants: the diff tree builders of `next-data-model`,
-`JsonSchemaDiffsViewer`, `diff-elements-core`, and `DiffBlock` components that render side-by-side panels with
-color-coded change severity. The GraphQL viewers still use the legacy `api-data-model` and `api-state-model` packages.
+The GraphQL viewers still use the legacy `api-data-model` and `api-state-model` packages.
 
 ### 4.4 Build Task Pipeline
 
@@ -793,8 +783,8 @@ content rather than syntactic representation. Without this step, equivalent spec
 
 ### Web Components for embedding
 
-Three visualization libraries expose Web Components as their primary interface: `apispec-view` (`<apispec-view>`,
-`<operation-view>`, `<diff-operation-view>`), `class-view` (`<class-view-component>`), and `rest-playground`
+Three visualization libraries expose Web Components as their primary interface: `apispec-view` (`<apispec-view>`),
+`class-view` (`<class-view-component>`), and `rest-playground`
 (`<rest-playground>`, `<rest-examples>`). The `createElementClass` factory wraps React components as Custom Elements
 with Shadow DOM, property/attribute bridging, and scoped style injection. This enables framework-agnostic embedding in
 any web application.
@@ -806,7 +796,7 @@ Three modules hold several packages each. They are pnpm workspaces inside the re
 | Module | Sub-packages | Reason |
 |---|---|---|---|
 | `frontend/api-doc-viewer` | `api-doc-viewer`, `next-data-model`, `api-data-model`, `api-state-model`, `samples` | Tight coupling between model, state, and view layers; only the viewer is published |
-| `frontend/apispec-view` | `elements`, `elements-core`, `diff-elements-core`, `diff-block`, `json-schema-viewer`, `json-schema-diff-viewer`, `samples` | Fork of Stoplight Elements with parallel standard/diff rendering paths |
+| `frontend/apispec-view` | `elements`, `elements-core`, `json-schema-viewer` | Fork of Stoplight Elements; only the web component is published |
 | `frontend/ui` | `shared`, `portal`, `agents` | Two SPAs sharing a common component/hook/theme library |
 
 ### Fork strategy
@@ -816,7 +806,7 @@ Three modules are forks of open-source Stoplight libraries:
 | Module | Forked from | Key modifications |
 |---|---|---|
 | `frontend/http-spec` | `@stoplightio/http-spec` | Added `oas3WithMeta` variant for diff metadata preservation via `keepProperties` |
-| `frontend/apispec-view` | `@stoplightio/elements` | Added full diff visualization system (diff-elements-core, diff-block, json-schema-diff-viewer) |
+| `frontend/apispec-view` | `@stoplightio/elements` | Packaged as a Web Component for whole OpenAPI documents; the diff variants were removed when `api-doc-viewer` took over operations and comparisons |
 | `frontend/rest-playground` | `@stoplightio/elements` | Extracted TryIt and Examples panels as standalone Web Components |
 
 Internal forked packages retain their original `@stoplight/*` names but are private workspace-only packages. Only the
