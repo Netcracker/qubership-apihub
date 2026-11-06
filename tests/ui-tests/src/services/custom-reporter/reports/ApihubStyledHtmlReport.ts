@@ -7,7 +7,8 @@
  * strips or ignores much of `<head>` CSS. Do not modernise layout or CSS without
  * re-testing in that client.
  */
-import { getSysInfo } from '@test-data/props'
+import type { PortalVersionInfo } from '@test-data/props'
+import { getPortalVersionInfo, getSysInfo } from '@test-data/props'
 import process from 'node:process'
 import type { ReportRunResult, ReportTemplateContext, ReportTestInfo } from '../types'
 import { escapeHtml, formatHtmlLink, formatHtmlTestRow, formatTemplate, getAffectRatio, loadFileForReport } from '../utils'
@@ -34,6 +35,7 @@ export default class ApihubStyledHtmlReport {
 
   async getReport(): Promise<string> {
     const sysInfo = await getSysInfo()
+    const portalVersionInfo = await getPortalVersionInfo()
     const htmlTemplate = loadFileForReport('html-apihub-styled/template.html')
     const templateKeys: ReportTemplateContext = {
       status: STATUS_HTML[this.runResult.status],
@@ -51,7 +53,7 @@ export default class ApihubStyledHtmlReport {
       ratio: this.formatRatio(),
       envName: formatHtmlLink(sysInfo.environment, sysInfo.environment),
       backendVersion: escapeHtml(sysInfo.build.backendVersion),
-      frontendVersion: '-',
+      frontendVersion: escapeHtml(formatFrontendVersion(portalVersionInfo)),
       pwBranch: escapeHtml(process.env.CI_PW_BRANCH || '-'),
       ciJobLink: process.env.CI_JOB_LINK
         ? formatHtmlLink(process.env.CI_JOB_LINK, `#${process.env.CI_JOB_NUMBER ?? ''} (Detailed report)`)
@@ -96,4 +98,9 @@ export default class ApihubStyledHtmlReport {
     })
     return rows
   }
+}
+
+// The Portal version, followed by its image version when the image is branch-tagged, as System Information shows them.
+function formatFrontendVersion({ frontendVersion, imageVersion }: PortalVersionInfo): string {
+  return imageVersion ? `${frontendVersion} (${imageVersion})` : frontendVersion
 }

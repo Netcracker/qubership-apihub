@@ -69,7 +69,7 @@ test.describe('General', () => {
       const { sysInfoPopup } = portalPage.header
       const { build } = await getSysInfo()
       const extensionVersions = await getExtensionVersions()
-      const { frontendVersion, apiProcessorVersion, buildInfo } = await getPortalVersionInfo()
+      const { frontendVersion, apiProcessorVersion, imageVersion } = await getPortalVersionInfo()
 
       await portalPage.goto()
       await portalPage.header.sysInfoBtn.click()
@@ -94,11 +94,9 @@ test.describe('General', () => {
       await expect.soft(sysInfoPopup.frontendVersion).toHaveText(`Frontend v. ${frontendVersion}`)
       await expect.soft(sysInfoPopup.apiProcessorVersion).toHaveText(`API Processor v. ${apiProcessorVersion}`)
 
-      // `build-info.json` exists only in a branch-tagged image, and the entrypoint leaves the time empty when it has none.
-      // A stack on a `src-<hash>` image or on a dev server has no image version under the app versions.
-      if (buildInfo) {
-        const { branch, commit, committedAt } = buildInfo
-        const imageVersion = committedAt ? `${branch}.${commit}.${committedAt}` : `${branch}.${commit}`
+      // `build-info.json` exists only in a branch-tagged image. A stack on a `src-<hash>` image or on a dev server has no
+      // image version under the app versions.
+      if (imageVersion) {
         await expect.soft(sysInfoPopup.frontendImageVersion).toHaveText(imageVersion)
         await expect.soft(sysInfoPopup.apiProcessorImageVersion).toHaveText(imageVersion)
       } else {
