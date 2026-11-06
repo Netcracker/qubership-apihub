@@ -1,4 +1,3 @@
-import { NodeTypeAsyncOperation } from '../../types';
 
 export type TableOfContentsProps = {
   tree: TableOfContentsItem[];
@@ -38,7 +37,7 @@ export type TableOfContentsExternalLink = {
 };
 
 export type TableOfContentsNode<
-  T = 'http_service' | 'http_operation' | 'model' | 'article' | 'overview' | NodeTypeAsyncOperation,
+  T = 'http_service' | 'http_operation' | 'model' | 'article' | 'overview',
 > = {
   id: string;
   slug: string;

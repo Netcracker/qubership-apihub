@@ -5,7 +5,6 @@ import React from 'react';
 
 import { dropdownsCheck } from '../../__fixtures__/api-descriptions/dropdownsCheck';
 import { guardianApiYaml } from '../../__fixtures__/api-descriptions/guardianApiYaml';
-import { streetlightKafkaAsyncApi } from '../../__fixtures__/api-descriptions/streetlightKafkaAsyncApi';
 import { zoomApiYaml } from '../../__fixtures__/api-descriptions/zoomApiYaml';
 
 declare global {
@@ -65,9 +64,3 @@ DropdownsCheck.args = {
   apiDescriptionDocument: dropdownsCheck,
 };
 DropdownsCheck.storyName = 'Dropdowns Check';
-
-export const StreetlightKafkaApi: any = Template.bind({});
-StreetlightKafkaApi.args = {
-  apiDescriptionDocument: streetlightKafkaAsyncApi,
-};
-StreetlightKafkaApi.storyName = 'Streetlight Kafka Api';

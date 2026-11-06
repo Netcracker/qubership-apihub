@@ -39,29 +39,20 @@
     "development:storybook": "storybook dev -p 9099",
     "type-check": "tsc --noEmit"
   },
-  "rollup": {
-    "bundleDeps": [
-      "@fortawesome/free-solid-svg-icons"
-    ]
-  },
   "dependencies": {
     "openapi3-ts": "2.0.2"
   },
   "devDependencies": {
-    "@netcracker/qubership-apihub-api-doc-viewer": "workspace:^",
     "@netcracker/qubership-apihub-http-spec": "workspace:^",
     "@fortawesome/fontawesome-svg-core": "6.1.1",
-    "@schemastore/package": "0.0.4",
     "@stoplight/json": "^3.18.1",
     "@stoplight/mosaic": "^1.40.0",
     "@stoplight/types": "^13.0.0",
     "@stoplight/yaml": "^4.2.3",
-    "@storybook/react": "^8.1.11",
     "@types/json-schema": "^7.0.11",
     "@types/swagger-schema-official": "2.0.22",
     "classnames": "^2.2.6",
     "file-saver": "^2.0.5",
-    "fontfaceobserver": "^2.3.0",
     "lodash": "^4.17.21",
     "postcss": "8.3.5",
     "postcss-cli": "8.3.1",

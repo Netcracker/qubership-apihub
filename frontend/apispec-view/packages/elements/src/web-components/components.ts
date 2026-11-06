@@ -1,7 +1,6 @@
 import { createElementClass } from '@netcracker/qubership-apihub-apispec-view-elements-core';
 
 import fontAwesomeStyles from '!!raw-loader!@fortawesome/fontawesome-svg-core/styles.css';
-import apihubDocViewerStyles from '!!raw-loader!@netcracker/qubership-apihub-api-doc-viewer/dist/style.css';
 import elementsCoreStyles from '!!raw-loader!@netcracker/qubership-apihub-apispec-view-elements-core/core.css';
 import mosaicStyles from '!!raw-loader!@stoplight/mosaic/styles.css';
 import mosaicThemeStyles from '!!raw-loader!@stoplight/mosaic/themes/default.css';
@@ -19,9 +18,6 @@ elementsCoreStyle.textContent = elementsCoreStyles;
 
 const fontAwesomeStyle = document.createElement('style');
 fontAwesomeStyle.textContent = fontAwesomeStyles;
-
-const apihubDocViewerStyle = document.createElement('style');
-apihubDocViewerStyle.textContent = apihubDocViewerStyles;
 
 export const ApiElement = createElementClass(
   API,
@@ -45,5 +41,5 @@ export const ApiElement = createElementClass(
     // @ts-ignore
     proxyServer: { type: 'string' },
   },
-  [mosaicStyle, mosaicThemeStyle, elementsCoreStyle, fontAwesomeStyle, apihubDocViewerStyle],
+  [mosaicStyle, mosaicThemeStyle, elementsCoreStyle, fontAwesomeStyle],
 );

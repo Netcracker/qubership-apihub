@@ -30,12 +30,10 @@
     "@stoplight/mosaic-code-viewer": "^1.24.4",
     "@stoplight/react-error-boundary": "^2.0.0",
     "@stoplight/types": "^13.0.0",
-    "@storybook/react": "^8.1.11",
     "@types/json-schema": "^7.0.11",
     "classnames": "^2.2.6",
     "jotai": "1.6.3",
     "lodash": "^4.17.21",
-    "nanoid": "^3.1.32",
     "react": "^18.3.1"
   },
   "nx": {
