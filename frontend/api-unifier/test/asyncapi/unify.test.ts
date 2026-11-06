@@ -745,6 +745,7 @@ describe('AsyncAPI unify', () => {
           },
           channels: {
             userChannel: {
+              address: 'users/{userId}',
               parameters: {
                 userId: {
                   description: 'User ID',
@@ -771,6 +772,7 @@ describe('AsyncAPI unify', () => {
           },
           channels: {
             userChannel: {
+              address: 'users/{userId}',
               parameters: {
                 userId: {
                   enum: ['user1', 'user2', 'user3', 'user1', 'user2'],
@@ -821,6 +823,7 @@ describe('AsyncAPI unify', () => {
           },
           channels: {
             userChannel: {
+              address: 'users/{status}',
               parameters: {
                 status: {
                   enum: ['active', 'inactive', 'pending', 'inactive', 'active'],
@@ -847,6 +850,7 @@ describe('AsyncAPI unify', () => {
           },
           channels: {
             userChannel: {
+              address: 'users/{type}',
               parameters: {
                 type: {
                   enum: ['type1', 'type2', 'type3'],
@@ -873,6 +877,7 @@ describe('AsyncAPI unify', () => {
           },
           channels: {
             userChannel: {
+              address: 'users/{userId}',
               parameters: {
                 userId: {
                   enum: ['user1', 'user2', 'user3', 'user1'],
