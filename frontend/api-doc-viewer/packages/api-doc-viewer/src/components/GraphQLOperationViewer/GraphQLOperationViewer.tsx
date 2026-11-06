@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { cn } from '@apihub/utils/common/cn'
 import '../../index.css'
 
 import {
@@ -181,7 +182,7 @@ const GraphQLOperationViewerInner: FC<GraphQLOperationViewerProps> = (props) => 
   return (
     <DisplayModeContext.Provider value={displayMode}>
       <LevelContext.Provider value={0}>
-        <div style={{ marginLeft: 0 }}>
+        <div className={cn('root')} style={{ marginLeft: 0 }}>
           {root.children.map((child, index) => {
             const key = `root-children-${index}`
 

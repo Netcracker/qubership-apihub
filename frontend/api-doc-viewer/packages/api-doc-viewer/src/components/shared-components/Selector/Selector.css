@@ -4,18 +4,27 @@ button.button-selector-option {
   border: 1px solid #8F9EB4;
   color: #8F9EB4;
   border-radius: 4px;
-  padding: 0px 8px 2px;
+  padding: 0 8px 2px;
+
+  /* Diff chrome (border shadow, round marker) overhangs the option and the row: a title row is no
+     taller than its option, so the shadow reaches into the separator rows around it. Those rows are
+     positioned (`relative`, badge stub), so the one *below* - later in the DOM - painted its band over
+     the bottom shadow while the top shadow showed. Stacking the option above its row's siblings keeps
+     the chrome whole on every edge without touching the row heights. Below the floating badge / badge
+     stub (z-10); clipped as before inside an `ArrowScrollStrip` viewport. */
+  position: relative;
+  z-index: 1;
 }
 
-.button-selector-option_primary {
+.button-selector-option-primary {
   font-size: 20px;
 }
 
-.button-selector-option_secondary {
+.button-selector-option-secondary {
   font-size: 15px;
 }
 
-.button-selector-option_disabled {
+.button-selector-option-disabled {
   cursor: default !important;
 }
 
@@ -33,4 +42,26 @@ button.button-selector-option.selected {
   /* bg-slate-300 */
   background-color: #D5DCE3;
   color: #626D82;
+}
+
+/* ─── Tones: the caller passes a tone class per option (`SelectorOption.toneClass`); its colors live
+   in the caller's color config (OpenAPI response codes: shared-styles/colors/openapi.css). Diff
+   chrome (box-shadow borders, round markers) stays on top of the tone border. ─────────────── */
+
+/* ─── No-wrap line in an `ArrowScrollStrip` (security toolbar, response codes). An option never grows wider than the strip; its label is
+   cropped with an ellipsis down to one character + "…" (min-width: 2.5ch + 2 × 8px padding + border).
+   The button itself must not clip: diff round markers and border shadows sit outside its box. */
+button.button-selector-option.button-selector-option-cropped {
+  display: inline-flex;
+  flex: 0 0 auto;
+  max-width: 100%;
+  min-width: calc(2.5ch + 18px);
+}
+
+.button-selector-option-cropped .button-selector-option-label {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

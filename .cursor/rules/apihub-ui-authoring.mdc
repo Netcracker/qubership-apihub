@@ -1,6 +1,6 @@
 ---
 description: APIHUB UI TypeScript coding conventions.
-globs: frontend/ui/**/*.{ts,tsx}
+globs: "frontend/ui/**/*.{ts,tsx}"
 ---
 
 # APIHUB UI authoring

@@ -1,3 +1,4 @@
+import { cn } from "@apihub/utils/common/cn"
 import { resolveDiffSideStyle } from "@apihub/utils/diffs/resolve-diff-side-style"
 import { LayoutSide } from "@apihub/types/internal/LayoutSide"
 import {
@@ -66,7 +67,7 @@ function renderSegmentedList(
 
     if (pendingComma) {
       nodes.push(
-        <span key={`comma-${index}`} className="mr-1">
+        <span key={`comma-${index}`} className={cn("mr-1")}>
           ,
         </span>,
       )
@@ -96,7 +97,7 @@ export const CommaSeparatedListWithDiffs: FC<CommaSeparatedListWithDiffsProps> =
   }
 
   return (
-    <span className="inline-flex items-center">
+    <span className={cn("inline-flex items-center")}>
       {renderSegmentedList(display.segments, layoutSide)}
     </span>
   )

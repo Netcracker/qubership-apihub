@@ -39,8 +39,8 @@
 .markdown-text-row .markdown td {
   font-family: Inter, sans-serif;
   padding: 10px;
-  border: 1px solid rgb(218, 224, 236);
-  color: rgb(125, 125, 131);
+  border: 1px solid rgb(218 224 236);
+  color: rgb(125 125 131);
 }
 
 .markdown-text-row .markdown td:not(:first-child) {
@@ -59,13 +59,13 @@
   font-family: Inter, sans-serif;
   font-weight: normal;
   text-transform: uppercase;
-  color: rgb(103, 103, 123);
-  padding: 10px 10px 5px 10px;
+  color: rgb(103 103 123);
+  padding: 10px 10px 5px;
   text-align: left;
 }
 
 .markdown-text-row .markdown tr:nth-child(2n) td {
-  background-color: rgb(249, 250, 252);
+  background-color: rgb(249 250 252);
 }
 
 .markdown-text-row .markdown tr:first-child td:first-child {
@@ -84,18 +84,29 @@
   border-bottom-right-radius: 5px;
 }
 
+/* `TextValueVariant` sizes (MarkdownTextValue `getMarkdownFontSizeClass`): the `text-value-body*`
+   rules of TextValue.css match `span.text-value` only, never this `.markdown` div. */
+.markdown-text-row .markdown.text-value-body1 {
+  font-size: 12px;
+}
+
+.markdown-text-row .markdown.text-value-body2 {
+  font-size: 13px;
+}
+
 /* JsonSchemaViewer description / deprecation-reason rows */
-.markdown-text-row .markdown.markdown-text-row__json-schema-description {
+.markdown-text-row .markdown.markdown-text-row-json-schema-description {
   font-size: 12px;
   font-weight: 400;
   color: rgb(51 65 85);
+
   /* Legacy parity: legacy's .markdown wrapper uses Tailwind text-xs (line-height: 1rem),
      inherited by its <p> child. `.markdown-text-row .markdown > * { all: revert }` above can
      drop that inherited line-height on the <p>, so restore it explicitly here. */
   line-height: 1rem;
 }
 
-.markdown-text-row__json-schema-expander {
+.markdown-text-row-json-schema-expander {
   font-size: 12px;
   font-weight: 400;
 }

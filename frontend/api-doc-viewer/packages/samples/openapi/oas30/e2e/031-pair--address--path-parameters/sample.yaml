@@ -1,0 +1,17 @@
+openapi: 3.0.3
+info:
+  title: Orders
+  version: 1.0.0
+paths:
+  /api/v2/stores/main-store/orders/pending/export-requests/{orderId}:
+    post:
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          description: Order identifier.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""

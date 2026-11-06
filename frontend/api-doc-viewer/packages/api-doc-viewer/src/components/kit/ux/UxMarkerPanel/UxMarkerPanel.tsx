@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { cn } from '@apihub/utils/common/cn'
 import { useMemo, type FC } from 'react'
 import { DiffType } from '@netcracker/qubership-apihub-api-diff'
 import { UxDiffMarker } from '../UxMarker/UxDiffMarker'
@@ -28,7 +29,7 @@ export const UxMarkerPanel: FC<UxMarkerPanelProps> = (props) => {
 
   const keyCommon = useMemo(() => values.join(','), [values])
 
-  return <div className="flex flex-row gap-2 mx-2">
+  return <div className={cn("flex flex-row gap-2 mx-2")}>
     {values
       .filter(key => !filter || filter(key))
       .map(key => <UxDiffMarker key={`${keyCommon}_${key}`} variant={key} tooltip={key}/>)}

@@ -157,6 +157,10 @@ export class SimpleTreeNodeWithDiffs<
     this._nestedNodes.push(node);
   }
 
+  public sortNestedNodes(compare: (a: ITreeNodeWithDiffs<V, K, M, D>, b: ITreeNodeWithDiffs<V, K, M, D>) => number): void {
+    this._nestedNodes.sort(compare);
+  }
+
   public addDiffsSummary(diffsSummary: NodeDiffsSummary): void {
     for (const diffType of diffsSummary) {
       this._diffsSummary.add(diffType);

@@ -143,7 +143,7 @@ and kind aggregators; viewers read it through `DdlApiRowDiffs` (including `DdlAp
 
 | Area | What is diffed |
 | --- | --- |
-| Table | whole table add/remove, schema name, description |
+| Table | whole table add/remove, schema name (no real diff produces it — see below), description |
 | Sections | `Columns` / `Indexes` title row when every child was added or removed |
 | Column title row | whole column add/remove, type label, each badge flag, each FK target |
 | Column rows | description, **Values** (per value and whole row), **Default**, **As** |
@@ -161,6 +161,14 @@ Non-obvious rules (kept in the data layer):
   the columns an unnamed index covers, so a rename is a remove plus an add. DDL title-row diffs
   carry `DIFF_HIGHLIGHTING_MODES_DDL_TITLE_ROW` (immutable default area), so a replace diff only
   colors the row and never replaces the column/index name with a diff value.
+- The schema name row is never colored by a real diff. api-diff matches schemas by name, so a table
+  moving to another schema (`custom1` → `custom2`, `public` ↔ `custom`) is a whole-table remove
+  plus add, and a wholly added or removed table hides the schema name row. A colored row needs a
+  `name` diff on the schema itself (`DdlApiSpecWithDiffsTransformer.resolveSchemaNameDiff`), which
+  api-diff never emits. The branch (`DdlSchemaNameBlockWithDiffs`,
+  `DdlApiRowDiffs.Table.resolveSchemaNameSideDisplay`) is kept for merged documents built
+  elsewhere; it has no fixture or screenshot test. Add one only when ddlapi or api-diff can report a
+  schema rename.
 - A foreign key that keeps its key while its referenced column or table changes is one **replace**
   target diff keyed by the after target (before target in `beforeValue`): the FK badge stays plain
   and each side shows its own target text in yellow

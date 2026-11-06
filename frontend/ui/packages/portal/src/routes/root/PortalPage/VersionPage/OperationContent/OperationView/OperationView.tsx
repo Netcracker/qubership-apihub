@@ -19,9 +19,19 @@ import { SchemaContextPanel } from '@portal/components/SchemaContextPanel'
 import type { DiffMetaKeys } from '@portal/entities/diff-meta-keys'
 import type { OpenApiData } from '@portal/entities/operation-structure'
 import { OPEN_API_SECTION_PARAMETERS, OPEN_API_SECTION_REQUESTS, OPEN_API_SECTION_RESPONSES } from '@portal/entities/operation-structure'
+import { resolveOpenApiOperationKeys } from '@portal/utils/internal-documents/openapi-operation-keys'
 import { Box } from '@mui/material'
 import { DIFF_META_KEY, DIFFS_AGGREGATED_META_KEY } from '@netcracker/qubership-apihub-api-diff'
-import { AsyncApiOperationDiffsViewer, AsyncApiOperationViewer, GraphQLOperationDiffViewer, SIDE_BY_SIDE_DIFFS_LAYOUT_MODE } from '@netcracker/qubership-apihub-api-doc-viewer'
+import type { OpenApiOperationKeys } from '@netcracker/qubership-apihub-api-doc-viewer'
+import {
+  AsyncApiOperationDiffsViewer,
+  AsyncApiOperationViewer,
+  GraphQLOperationDiffViewer,
+  OpenApiOperationDiffsViewer,
+  OpenApiOperationViewer,
+  SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
+} from '@netcracker/qubership-apihub-api-doc-viewer'
+import '@netcracker/qubership-apihub-api-doc-viewer/dist/style.css'
 import { FIRST_REFERENCE_KEY_PROPERTY } from '@netcracker/qubership-apihub-api-processor'
 import { LoadingIndicator } from '@netcracker/qubership-apihub-ui-shared/components/LoadingIndicator'
 import type { VisitorNavigationDetails } from '@netcracker/qubership-apihub-ui-shared/components/SchemaGraphView/oasToClassDiagramService'
@@ -32,13 +42,8 @@ import { DEFAULT_API_TYPE } from '@netcracker/qubership-apihub-ui-shared/entitie
 import type { SchemaViewMode } from '@netcracker/qubership-apihub-ui-shared/entities/schema-view-mode'
 import { joinedJsonPath } from '@netcracker/qubership-apihub-ui-shared/utils/operations'
 import type { OpenAPIV3 } from 'openapi-types'
-import type { FC, MutableRefObject, PropsWithChildren, ReactNode } from 'react'
-import { memo, Suspense, useEffect, useMemo, useRef, useState } from 'react'
-import { createDiffOperationViewElement } from './DiffOperationViewElement'
-import type { OperationDisplayMode } from './OperationDisplayMode'
-import type { OperationViewElementProps } from './OperationViewElement'
-import { createOperationViewElement } from './OperationViewElement'
-import { useSetupOperationView } from './useSetupOperationView'
+import type { FC, ReactNode } from 'react'
+import { memo, Suspense, useEffect, useMemo, useState } from 'react'
 
 const DIFFS_META_KEYS: DiffMetaKeys = {
   diffsMetaKey: DIFF_META_KEY,
@@ -46,18 +51,11 @@ const DIFFS_META_KEYS: DiffMetaKeys = {
 }
 
 // First Order Component //
-export type OperationViewProps = PropsWithChildren<{
+export type OperationViewProps = {
   apiType: ApiType
-  displayMode?: OperationDisplayMode
-  selectedUri?: string
-  sidebarEnabled?: boolean
-  searchPhrase?: string
   schemaViewMode?: SchemaViewMode
-  hideTryIt?: boolean
   noHeading?: boolean
-  hideExamples?: boolean
   comparisonMode?: boolean
-  productionMode?: boolean
   navigationDetails?: VisitorNavigationDetails
   operationModels?: OpenApiData
   mergedDocument: unknown
@@ -69,20 +67,17 @@ export type OperationViewProps = PropsWithChildren<{
   operationName?: string
   // AsyncAPI specific
   messageId?: string
-}>
+}
 
 export const OperationView: FC<OperationViewProps> = memo<OperationViewProps>(props => {
   const {
     apiType = DEFAULT_API_TYPE,
-    selectedUri,
     schemaViewMode,
-    hideTryIt,
     noHeading = false,
-    hideExamples,
     navigationDetails,
     operationModels,
     mergedDocument,
-    comparisonMode,
+    comparisonMode = false,
     // GraphQL specific
     operationType,
     operationName,
@@ -92,9 +87,6 @@ export const OperationView: FC<OperationViewProps> = memo<OperationViewProps>(pr
 
   const filters = useMemo(() => props.filters ?? [], [props.filters])
 
-  const operationViewContainerRef = useRef<HTMLDivElement | null>(null)
-
-  // const [newRestApiViewer] = useState(false)
   const [contextPanelOpen, setContextPanelOpen] = useState<boolean>(false)
   const [contextParameter, setContextParameter] = useState<OpenAPIV3.SchemaObject>()
 
@@ -118,62 +110,25 @@ export const OperationView: FC<OperationViewProps> = memo<OperationViewProps>(pr
     setContextPanelOpen(navigationDetails ? isNavigateToModel(navigationDetails) : false)
   }, [navigationDetails, indexedModels])
 
-  const resolvedOperationViewElement = useMemo(() => {
-    if (apiType !== API_TYPE_REST) {
-      return undefined
-    }
-
-    const options: OperationViewElementProps = {
-      router: 'hash',
-      layout: 'partial',
-      hideTryIt: hideTryIt ?? false,
-      hideExport: true,
-      noHeading: noHeading,
-      selectedNodeUri: selectedUri ?? '',
-      searchPhrase: '',
-      schemaViewMode: 'detailed',
-      defaultSchemaDepth: 0,
-      hideExamples: hideExamples ?? true,
-      mergedDocument: mergedDocument,
-    }
-
-    if (comparisonMode) {
-      return createDiffOperationViewElement({
-        ...options,
-        filters: filters ?? [],
-        diffMetaKeys: DIFFS_META_KEYS,
-      })
-    }
-
-    return createOperationViewElement(options)
-    // need to create element once -> no deps
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  useEffect(() => {
-    if (
-      resolvedOperationViewElement &&
-      operationViewContainerRef.current?.childNodes &&
-      !operationViewContainerRef.current?.contains(resolvedOperationViewElement)
-    ) {
-      operationViewContainerRef.current.appendChild(resolvedOperationViewElement)
-    }
-  }, [operationViewContainerRef, resolvedOperationViewElement])
-
-  useSetupOperationView(resolvedOperationViewElement, props)
+  // The document is cut to the only operation upstream, so its keys are read from the document itself
+  const openApiOperationKeys = useMemo(
+    () => (apiType === API_TYPE_REST ? resolveOpenApiOperationKeys(mergedDocument) : undefined),
+    [apiType, mergedDocument],
+  )
 
   const apiTypeViewerElement = useMemo(() => (
-    API_TYPE_VIEWER_MAP[apiType](
-      operationViewContainerRef,
-      comparisonMode,
-      mergedDocument,
-      schemaViewMode,
-      filters,
-      operationType,
-      operationName,
-      messageId,
-    )
-  ), [apiType, comparisonMode, filters, mergedDocument, messageId, operationName, operationType, schemaViewMode])
+    API_TYPE_VIEWER_MAP[apiType]({
+      comparisonMode: comparisonMode,
+      mergedDocument: mergedDocument,
+      schemaViewMode: schemaViewMode,
+      noHeading: noHeading,
+      filters: filters,
+      openApiOperationKeys: openApiOperationKeys,
+      operationType: operationType,
+      operationName: operationName,
+      messageId: messageId,
+    })
+  ), [apiType, comparisonMode, filters, mergedDocument, messageId, noHeading, openApiOperationKeys, operationName, operationType, schemaViewMode])
 
   return (
     <Suspense fallback={<LoadingIndicator />}>
@@ -193,26 +148,53 @@ export const OperationView: FC<OperationViewProps> = memo<OperationViewProps>(pr
   )
 })
 
-function isNavigateToModel(navigationDetails: VisitorNavigationDetails): boolean {
-  return joinedJsonPath(navigationDetails.declarationPath) !== joinedJsonPath(navigationDetails.scopeDeclarationPath)
+OperationView.displayName = 'OperationView'
+
+type ApiTypeViewerOptions = {
+  comparisonMode: boolean
+  mergedDocument: unknown
+  schemaViewMode: SchemaViewMode | undefined
+  noHeading: boolean
+  filters: ChangeSeverity[]
+  // OpenAPI specific
+  openApiOperationKeys: OpenApiOperationKeys | undefined
+  // GraphQL (query, mutation, subscription) / AsyncAPI (send, receive)
+  operationType: string | undefined
+  // GraphQL (operation name) / AsyncAPI (asyncOperationId)
+  operationName: string | undefined
+  // AsyncAPI specific, message ID
+  messageId: string | undefined
 }
 
-type ApiTypeViewerCallback = (
-  ref?: MutableRefObject<HTMLDivElement | null>,
-  comparisonMode?: boolean,
-  mergedDocument?: unknown,
-  schemaViewMode?: SchemaViewMode,
-  filters?: ChangeSeverity[],
-  operationType?: string, // for GraphQL (query, mutation, subscription)/AsyncAPI (send, receive)
-  operationName?: string, // for GraphQL (operation name)/AsyncAPI (asyncOperationId)
-  messageId?: string // for AsyncAPI, message ID
-) => ReactNode
+type ApiTypeViewerCallback = (options: ApiTypeViewerOptions) => ReactNode
 
 const API_TYPE_VIEWER_MAP: Record<ApiType, ApiTypeViewerCallback> = {
-  [API_TYPE_REST]: (ref) => (
-    <Box ref={ref} />
+  [API_TYPE_REST]: ({ comparisonMode, mergedDocument, schemaViewMode, noHeading, filters, openApiOperationKeys }) => (
+    <Box
+      lineHeight={1.5}
+      px={2}
+      height="100%"
+    >
+      {!comparisonMode ? (
+        <OpenApiOperationViewer
+          source={mergedDocument}
+          operationKeys={openApiOperationKeys}
+          displayMode={schemaViewMode}
+          noHeading={noHeading}
+        />
+      ) : (
+        <OpenApiOperationDiffsViewer
+          mergedSource={mergedDocument}
+          operationKeys={openApiOperationKeys}
+          displayMode={schemaViewMode}
+          noHeading={noHeading}
+          diffMetaKeys={DIFFS_META_KEYS}
+          diffTypes={filters}
+        />
+      )}
+    </Box>
   ),
-  [API_TYPE_GRAPHQL]: (_, comparisonMode, mergedDocument, schemaViewMode, filters, operationType, operationName) => (
+  [API_TYPE_GRAPHQL]: ({ comparisonMode, mergedDocument, schemaViewMode, filters, operationType, operationName }) => (
     //todo need separate it to operationView and operationDiffView
     !comparisonMode
       ? <GraphQlOperationViewer
@@ -231,12 +213,12 @@ const API_TYPE_VIEWER_MAP: Record<ApiType, ApiTypeViewerCallback> = {
         operationName={operationName}
       />
   ),
-  [API_TYPE_ASYNCAPI]: (_, comparisonMode, mergedDocument, schemaViewMode, filters, operationType, operationName, messageId) => (
+  [API_TYPE_ASYNCAPI]: ({ comparisonMode, mergedDocument, schemaViewMode, operationName, messageId }) => (
     <Box
       key={`${operationName}-${messageId}`}
       lineHeight={1.5}
       height='100%'
-      px={4}
+      px={2}
     >
       {!comparisonMode ? (
         <AsyncApiOperationViewer
@@ -266,3 +248,6 @@ const API_TYPE_VIEWER_MAP: Record<ApiType, ApiTypeViewerCallback> = {
   ),
 }
 
+function isNavigateToModel(navigationDetails: VisitorNavigationDetails): boolean {
+  return joinedJsonPath(navigationDetails.declarationPath) !== joinedJsonPath(navigationDetails.scopeDeclarationPath)
+}

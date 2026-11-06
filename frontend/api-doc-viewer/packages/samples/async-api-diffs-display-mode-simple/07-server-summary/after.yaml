@@ -1,0 +1,28 @@
+asyncapi: 3.0.0
+info:
+  title: Display mode
+  version: 1.0.0
+channels:
+  testChannel:
+    address: events.default
+    messages:
+      TestMessage:
+        $ref: "#/components/messages/TestMessage"
+    servers:
+      - $ref: "#/servers/server0"
+operations:
+  sendOperation:
+    action: send
+    channel:
+      $ref: "#/channels/testChannel"
+    messages:
+      - $ref: "#/components/messages/TestMessage"
+components:
+  messages:
+    TestMessage:
+      name: TestMessage
+servers:
+  server0:
+    host: broker.example.com:9092
+    protocol: kafka
+    summary: Main order broker

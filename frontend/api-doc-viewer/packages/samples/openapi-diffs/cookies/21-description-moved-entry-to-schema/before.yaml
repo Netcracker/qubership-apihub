@@ -1,0 +1,20 @@
+openapi: 3.0.3
+info:
+  title: Orders
+  version: 1.0.0
+paths:
+  /orders:
+    post:
+      parameters:
+        - name: session
+          in: cookie
+          schema:
+            type: string
+          description: Entry text v1.
+        - name: theme
+          in: cookie
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""

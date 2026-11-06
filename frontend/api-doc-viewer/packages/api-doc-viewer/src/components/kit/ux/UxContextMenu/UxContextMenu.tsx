@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { cn } from '@apihub/utils/common/cn'
 import { useRef, type FC } from 'react'
 import { UxContextMenuItem } from './UxContextMenuItem/UxContextMenuItem'
 import { useClickAway } from 'react-use'
@@ -39,7 +40,7 @@ export const UxContextMenu: FC<UxContextMenuProps> = (props) => {
   return (
     <ul
       ref={ref}
-      className="absolute bg-white w-max rounded-md z-10 UxContextMenu"
+      className={cn("absolute bg-white w-max rounded-md z-10 UxContextMenu")}
     >
       {menuItems.map(menuItem => {
         const { label, onClick } = menuItem

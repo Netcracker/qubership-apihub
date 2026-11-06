@@ -1,5 +1,4 @@
 import { useDisplayMode } from "@apihub/contexts/DisplayModeContext"
-import { DETAILED_DISPLAY_MODE } from "@apihub/types/DisplayMode"
 import { LayoutSide } from "@apihub/types/internal/LayoutSide"
 import { JsonSchemaTreeNode, JsonSchemaTreeNodeWithDiffs } from "@netcracker/qubership-apihub-next-data-model/model/json-schema/types/aliases"
 import {
@@ -10,6 +9,7 @@ import {
 import { asJsonSchemaTypedNodeValue } from "@netcracker/qubership-apihub-next-data-model/shared/json-schema/guards/schema-value"
 import { JsonSchemaTreeNodeKinds } from "@netcracker/qubership-apihub-next-data-model/model/json-schema/types/node-kind"
 import {
+  resolveAllowedAdditionalPropertyNamesRowVisibility,
   resolvePlainPropertyListLastRowFlags,
   resolvePlainPropertyNodeVisibility,
 } from "@netcracker/qubership-apihub-next-data-model/building-service/json-schema/tree/node-visibility-data/kind-property"
@@ -207,8 +207,10 @@ export const SchemaNodePlainContent: FC<SchemaNodePlainContentProps> = (props) =
     [validationDiffsNode],
   )
 
-  const showAllowedAdditionalPropertyNamesRow = displayMode === DETAILED_DISPLAY_MODE
-    && Boolean(allowedAdditionalPropertyNames?.length)
+  const showAllowedAdditionalPropertyNamesRow = resolveAllowedAdditionalPropertyNamesRowVisibility(
+    Boolean(allowedAdditionalPropertyNames?.length),
+    displayMode,
+  )
 
   const allowedAdditionalPropertyNamesSubheader = useCallback(
     (layoutSide: LayoutSide) => {

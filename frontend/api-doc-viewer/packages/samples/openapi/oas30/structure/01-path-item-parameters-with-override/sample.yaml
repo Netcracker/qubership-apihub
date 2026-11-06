@@ -1,0 +1,43 @@
+openapi: 3.0.3
+info:
+  title: Orders
+  version: 1.0.0
+paths:
+  /orders/{orderId}:
+    parameters:
+      - name: orderId
+        in: path
+        required: true
+        description: Declared on the path item.
+        schema:
+          type: string
+      - name: pageSize
+        in: query
+        schema:
+          type: integer
+          default: 20
+      - name: X-Tenant
+        in: header
+        schema:
+          type: string
+    get:
+      parameters:
+        - name: X-Tenant
+          in: header
+          required: true
+          description: Overridden by the operation.
+          schema:
+            type: string
+        - name: filter
+          in: query
+          content:
+            application/json:
+              schema:
+                type: object
+                description: JSON-encoded filter, described with `content` instead of `schema`.
+                properties:
+                  status:
+                    type: string
+      responses:
+        "200":
+          description: ""

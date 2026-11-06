@@ -1,0 +1,24 @@
+openapi: 3.0.3
+info:
+  title: Orders
+  version: 1.0.0
+paths:
+  /orders:
+    post:
+      parameters:
+        - name: X-Request-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-Trace
+          in: header
+          content:
+            application/json; charset=utf-8:
+              schema:
+                type: boolean
+                description: Boolean flag.
+      responses:
+        "200":
+          description: ""

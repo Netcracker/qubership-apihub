@@ -1,10 +1,9 @@
 ---
 name: verifier
-description: "Runs the frontend quality gates (dprint for new files, ESLint fix, type check, related unit tests) on the files a change touched and returns the compact per-package report. Use after edits, before a commit or a pull request, or for a lint-only or test-only check. Pinned to haiku; launch it without a model parameter so the pin applies."
-model: haiku
-tools: Bash, Read, Grep, Glob
-skills:
-  - apihub-validate
+description: "Runs the frontend quality gates (dprint for new files, ESLint fix, type check, related unit tests) on the files a change touched and returns the compact per-package report. Use after edits, before a commit or a pull request, or for a lint-only or test-only check. Pinned to composer-2.5; launch it without a model parameter so the pin applies."
+model: composer-2.5
+readonly: false
+is_background: false
 ---
 
 You run the `apihub-validate` skill and return its result. You do not edit files yourself; the gate script

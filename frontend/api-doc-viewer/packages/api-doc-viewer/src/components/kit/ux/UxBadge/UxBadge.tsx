@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import { FONT_FAMILY_INTER } from '@apihub/constants/fonts'
+import { cn } from '@apihub/utils/common/cn'
 import type { FC, ReactNode } from 'react'
 import { memo, useMemo } from 'react'
 import { ColorSchema } from '../../../../types/aliases/common'
@@ -38,8 +40,8 @@ export const UxBadge: FC<BadgeProps> = memo<BadgeProps>(props => {
   ]).join(' '), [inline, colorSchema, kind])
 
   return (
-    <div className={classes}>
-      <pre style={{ fontFamily: 'Inter' }}>
+    <div className={cn(classes)}>
+      <pre style={{ fontFamily: FONT_FAMILY_INTER }}>
         {text}
       </pre>
     </div>

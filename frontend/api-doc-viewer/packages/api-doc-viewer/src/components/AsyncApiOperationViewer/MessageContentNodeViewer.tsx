@@ -1,3 +1,4 @@
+import { cn } from '@apihub/utils/common/cn'
 import { SUPPRESS_ROOT_NESTING_INDICATOR_CUSTOMIZATION_OPTIONS } from '@apihub/contexts/CustomizationOptionsContext'
 import { useDiffMetaKeys } from '@apihub/contexts/DiffMetaKeysContext'
 import { useDiffTypes } from '@apihub/contexts/DiffTypesContext'
@@ -110,9 +111,9 @@ export const MessageContentNodeViewer: FC<MessageContentNodeViewerProps> = (prop
   }, [diffMetaKeys, diffTypes, displayMode, layoutMode])
 
   return (
-    <div className="flex flex-col">
+    <div className={cn("flex flex-col")}>
       {headersChild && (
-        <div className="flex flex-col">
+        <div className={cn("flex flex-col")}>
           <TitleRow
             data-precededby={precededBy}
             value="Headers"
@@ -147,7 +148,7 @@ export const MessageContentNodeViewer: FC<MessageContentNodeViewerProps> = (prop
         />
       )}
       {payloadChild && (
-        <div className="flex flex-col">
+        <div className={cn("flex flex-col")}>
           <TitleRow
             data-precededby={
               headersChild

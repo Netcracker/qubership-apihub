@@ -1,5 +1,7 @@
 import { JsonSchemaDiffsViewer } from "@apihub/components/JsonSchemaViewer/JsonSchemaDiffsViewer";
+import type { DisplayMode } from "@apihub/types/DisplayMode";
 import type { ArgTypes } from "@storybook/react-vite";
+import { DISPLAY_MODE_ARG_TYPES, DISPLAY_MODE_DEFAULT_ARGS } from "../shared/display-mode-arg-types";
 import type { ComponentProps } from "react";
 import { DIFF_META_KEY, DIFFS_AGGREGATED_META_KEY } from "@netcracker/qubership-apihub-api-diff";
 import {
@@ -27,6 +29,7 @@ export type JsonSchemaDiffCaseStoryComponentProps = Pick<
   "caseId" | "beforeYaml" | "afterYaml"
 > & {
   hideUnchangedNodes: boolean;
+  displayMode?: DisplayMode;
 };
 
 export const JSON_SCHEMA_DIFFS_SUITE_DEFAULT_HIDE_UNCHANGED_NODES = false;
@@ -49,6 +52,7 @@ export const jsonSchemaDiffSampleReadonlyArgTypes = {
     table: { category: "Display" },
     description: "Forwarded to JsonSchemaDiffsViewer's hideUnchangedNodes prop.",
   },
+  ...DISPLAY_MODE_ARG_TYPES,
 } satisfies Partial<ArgTypes<JsonSchemaDiffCaseStoryComponentProps>>;
 
 type JsonSchemaDiffsViewerProps = ComponentProps<typeof JsonSchemaDiffsViewer>;
@@ -133,6 +137,7 @@ export const createJsonSchemaDiffCaseStoryFactory = (
       beforeYaml: sample.beforeYaml,
       afterYaml: sample.afterYaml,
       hideUnchangedNodes: defaultHideUnchangedNodes,
+      ...DISPLAY_MODE_DEFAULT_ARGS,
     },
     argTypes: jsonSchemaDiffSampleReadonlyArgTypes,
     render: (args) => {
@@ -143,6 +148,7 @@ export const createJsonSchemaDiffCaseStoryFactory = (
           beforeYaml={resolvedSample.beforeYaml}
           afterYaml={resolvedSample.afterYaml}
           hideUnchangedNodes={args.hideUnchangedNodes}
+          displayMode={args.displayMode}
         />
       );
     },
@@ -180,10 +186,12 @@ export const JsonSchemaDiffSamplesStory = ({
   beforeYaml,
   afterYaml,
   hideUnchangedNodes,
+  displayMode,
 }: JsonSchemaDiffCaseStoryComponentProps) => (
   <JsonSchemaDiffsViewer
     {...createJsonSchemaDiffsViewerArgs(beforeYaml, afterYaml)}
     hideUnchangedNodes={hideUnchangedNodes}
+    displayMode={displayMode}
   />
 );
 
@@ -196,10 +204,12 @@ export const JsonSchemaDiffSamplesStoryWithDisabledSubstitutionTitle = ({
   beforeYaml,
   afterYaml,
   hideUnchangedNodes,
+  displayMode,
 }: JsonSchemaDiffCaseStoryComponentProps) => (
   <JsonSchemaDiffsViewer
     {...createJsonSchemaDiffsViewerArgs(beforeYaml, afterYaml, { disableSubstitutionTitle: true })}
     hideUnchangedNodes={hideUnchangedNodes}
+    displayMode={displayMode}
   />
 );
 
@@ -211,9 +221,11 @@ export const JsonSchemaDiffSamplesStoryOas31 = ({
   beforeYaml,
   afterYaml,
   hideUnchangedNodes,
+  displayMode,
 }: JsonSchemaDiffCaseStoryComponentProps) => (
   <JsonSchemaDiffsViewer
     {...createJsonSchemaDiffsViewerArgs(beforeYaml, afterYaml, { oasVersion: "3.1" })}
     hideUnchangedNodes={hideUnchangedNodes}
+    displayMode={displayMode}
   />
 );

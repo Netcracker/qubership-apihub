@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { cn } from '@apihub/utils/common/cn'
 import { DiffRecord, isDiffMetaRecord } from '@netcracker/qubership-apihub-api-data-model'
 import { Diff, DiffAction } from "@netcracker/qubership-apihub-api-diff"
 import type { FC } from 'react'
@@ -64,7 +65,7 @@ export const DirectiveLocations: FC<DirectiveLocationsProps> = (props) => {
       : values.length
 
   return (
-    <div className="inline">
+    <div className={cn("inline")}>
       {'on '}
       {values.map((location, index) => {
         const diffForLocation = isDiffMetaRecord(diffForLocations)
@@ -182,7 +183,7 @@ export const DirectiveLocations: FC<DirectiveLocationsProps> = (props) => {
             const diffColorSchemaAfter = INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.add]
 
             result =
-              <div className="inline-flex gap-1">
+              <div className={cn("inline-flex gap-1")}>
                 <Value
                   key={before}
                   value={before}
@@ -222,7 +223,7 @@ const Value: FC<ValueProps> = props => {
     colorSchema,
   } = props
   return (
-    <div className={`inline ${colorSchema}`}>
+    <div className={cn(`inline ${colorSchema}`)}>
       {value}
       {index < total - 1 && ', '}
     </div>

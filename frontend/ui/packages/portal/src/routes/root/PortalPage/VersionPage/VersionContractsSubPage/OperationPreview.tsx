@@ -63,7 +63,6 @@ export type OperationPreviewProps = {
   isLoading: boolean
   mode: OperationViewMode
   schemaViewMode: SchemaViewMode | undefined
-  productionMode?: boolean
   maxWidthHeaderToolbar?: number
 }
 
@@ -80,7 +79,6 @@ export const OperationPreview: FC<OperationPreviewProps> = memo<OperationPreview
     isLoading,
     mode,
     schemaViewMode,
-    productionMode,
     maxWidthHeaderToolbar,
   } = props
 
@@ -162,10 +160,7 @@ export const OperationPreview: FC<OperationPreviewProps> = memo<OperationPreview
             <OperationView
               apiType={apiType}
               schemaViewMode={schemaViewMode}
-              hideTryIt
-              hideExamples
               noHeading
-              productionMode={productionMode}
               comparisonMode={false}
               mergedDocument={normalizedChangedOperation}
               // GraphQL specific

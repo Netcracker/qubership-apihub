@@ -1,6 +1,6 @@
 import { DiffMetaKeys } from "@apihub/next-data-model/building-service/abstract/tree-with-diffs/node-diffs-data/diff-meta-keys"
 import { AbstractNodeDiffsAggregator } from "@apihub/next-data-model/building-service/abstract/tree-with-diffs/node-diffs-data/node-diffs-aggregator"
-import { AbstractNodeDiffsSeveritiesAggregator } from "@apihub/next-data-model/building-service/abstract/tree-with-diffs/node-diffs-data/node-diffs-severities-aggregator"
+
 import {
   ChangedPropertyMetaData,
   ITreeNodeWithDiffs,
@@ -27,6 +27,8 @@ import {
   isDiffReplace,
 } from "@netcracker/qubership-apihub-api-diff"
 import { JsonSchemaNodeDiffsAggregatorKindAny } from "./kind-any"
+import { isExamplesFromExampleKeyword } from "@apihub/next-data-model/building-service/json-schema/json-crawl-entities/transformers/transform-example"
+import { DiffTypeOrder } from "@apihub/next-data-model/model/abstract/tree-with-diffs/diff-type-order"
 
 export class JsonSchemaNodeDiffsAggregatorKindProperty
   extends JsonSchemaNodeDiffsAggregatorKindAny {
@@ -63,9 +65,14 @@ export class JsonSchemaNodeDiffsAggregatorKindProperty
     const crawlDiffs = Reflect.get(crawlValue, diffsMetaKey)
     const hasCrawlDiffs = AbstractNodeDiffsAggregator.isDiffsRecord(crawlDiffs)
     const enumDiff = this.resolveWholeListFieldDiff(crawlValue, "enum", diffsMetaKey)
-    const examplesDiff = this.resolveWholeListFieldDiff(crawlValue, "examples", diffsMetaKey)
+    const exampleKeywordDiffs = this.resolveExampleKeywordDiffs(crawlValue, diffsMetaKey)
+    const examplesDiff = exampleKeywordDiffs
+      ? exampleKeywordDiffs.wholeDiff
+      : this.resolveWholeListFieldDiff(crawlValue, "examples", diffsMetaKey)
     const enumValueDiffs = this.resolveListFieldItemDiffs(crawlValue, "enum", diffsMetaKey)
-    const examplesValueDiffs = this.resolveListFieldItemDiffs(crawlValue, "examples", diffsMetaKey)
+    const examplesValueDiffs = exampleKeywordDiffs
+      ? exampleKeywordDiffs.itemDiffs
+      : this.resolveListFieldItemDiffs(crawlValue, "examples", diffsMetaKey)
     const allowedAdditionalPropertyNamesResult = this.resolveAllowedAdditionalPropertyNamesDiff(
       nodeKey,
       parentNode,
@@ -365,6 +372,44 @@ export class JsonSchemaNodeDiffsAggregatorKindProperty
     return undefined
   }
 
+  /**
+   * The Examples row of a schema with the `example` keyword (OAS 3.0, AsyncAPI) shows that value as
+   * its single item - `transformExample` derives a new `examples` list, which has no diffs record.
+   * The keyword's own diff is the row's diff: add / remove is a whole-list add / remove, replace is
+   * the replace of item `0`. `undefined` when the list is the schema's own `examples` (then an
+   * `example` change has no row). Changes nested inside a complex example value stay unmarked, as
+   * for an `examples` item.
+   */
+  private resolveExampleKeywordDiffs(
+    crawlValue: object,
+    diffsMetaKey: symbol,
+  ): { wholeDiff?: ChangedPropertyMetaData, itemDiffs: JsonSchemaListValueDiffs } | undefined {
+    if (!isExamplesFromExampleKeyword(Reflect.get(crawlValue, "examples"))) {
+      return undefined
+    }
+    const crawlDiffs = Reflect.get(crawlValue, diffsMetaKey)
+    const exampleDiff = AbstractNodeDiffsAggregator.isDiffsRecord(crawlDiffs) ? crawlDiffs.example : undefined
+    if (!AbstractNodeDiffsAggregator.isDiff(exampleDiff)) {
+      return { itemDiffs: {} }
+    }
+    if (isDiffAdd(exampleDiff)) {
+      return {
+        wholeDiff: this.buildChangedPropertyMetaDataFromDiff({ ...exampleDiff, afterValue: [exampleDiff.afterValue] }),
+        itemDiffs: {},
+      }
+    }
+    if (isDiffRemove(exampleDiff)) {
+      return {
+        wholeDiff: this.buildChangedPropertyMetaDataFromDiff({ ...exampleDiff, beforeValue: [exampleDiff.beforeValue] }),
+        itemDiffs: {},
+      }
+    }
+    if (isDiffReplace(exampleDiff)) {
+      return { itemDiffs: { "0": this.buildListValueDiffMetadata(exampleDiff) } }
+    }
+    return { itemDiffs: {} }
+  }
+
   private resolveListFieldItemDiffs(
     crawlValue: object,
     fieldKey: "enum" | "examples",
@@ -608,7 +653,7 @@ export class JsonSchemaNodeDiffsAggregatorKindProperty
       }
     }
 
-    const representativeDiff = AbstractNodeDiffsSeveritiesAggregator.maxChangedPropertyMetaDataByDiffType(
+    const representativeDiff = DiffTypeOrder.strongestChangedPropertyMetaData(
       ...Object.values(itemDiffs),
     )
     if (!representativeDiff) {

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { cn } from '@apihub/utils/common/cn'
 import { DiffRecord, GraphApiDiffTreeNode, isDiff, isDiffMetaRecord } from '@netcracker/qubership-apihub-api-data-model'
 import { Diff, DiffAction, DiffType, isDiffAdd, isDiffRemove } from '@netcracker/qubership-apihub-api-diff'
 import { IModelStatePropNode } from '@netcracker/qubership-apihub-api-state-model'
@@ -244,7 +245,7 @@ export const HeaderRow: FC<HeaderRowProps> = (props) => {
           disableChanges={isNodeChanged}
         />
       )}
-      <div className="text-xs font-normal text-slate-500">
+      <div className={cn("text-xs font-normal text-slate-500")}>
         {isDirective
           ? ArrayUtils.isNotEmpty(directiveLocations) &&
           (
@@ -278,7 +279,7 @@ export const HeaderRow: FC<HeaderRowProps> = (props) => {
         !isDocumentLayoutMode &&
         isExpandable && !expanded
       ) && (
-          <div className="text-xs font-normal text-slate-500">
+          <div className={cn("text-xs font-normal text-slate-500")}>
             <UxMarkerPanel
               values={diffTypesFromNodeChangesSummary}
               filter={diffTypesFromNodeChangesSummaryFilter}
@@ -313,11 +314,11 @@ export const HeaderRow: FC<HeaderRowProps> = (props) => {
     </>
 
     return (
-      <div className={rowClasses}>
-        <div className="flex flex-row relative">
+      <div className={cn(rowClasses)}>
+        <div className={cn("flex flex-row relative")}>
           <LevelIndicator level={level} />
           {operationPlaceholder
-            ? <div className="w-5" />
+            ? <div className={cn("w-5")} />
             : (
               <Expander
                 isRoot={isRoot}
@@ -329,9 +330,9 @@ export const HeaderRow: FC<HeaderRowProps> = (props) => {
               />
             )}
         </div>
-        <div className={`flex flex-row items-center gap-2 ${method ? 'py-2' : 'pt-2 pb-1'}`}>
+        <div className={cn(`flex flex-row items-center gap-2 ${method ? 'py-2' : 'pt-2 pb-1'}`)}>
           <div
-            className={`flex flex-row gap-2 items-center text-xs text-black font-Inter-Medium ${isExpandable ? 'hover:cursor-pointer' : ''}`}
+            className={cn(`flex flex-row gap-2 items-center text-xs text-black font-inter-medium ${isExpandable ? 'hover:cursor-pointer' : ''}`)}
             onClick={isExpandable ? onToggleExpander : undefined}
           // onContextMenu={defaultOnContextMenu(isExpandable, onToggleContextMenu)}
           >
@@ -363,7 +364,7 @@ export const HeaderRow: FC<HeaderRowProps> = (props) => {
 
   if (isDocumentLayoutMode) {
     return (
-      <div className="flex flex-row">
+      <div className={cn("flex flex-row")}>
         <Content {...props} layoutSide={CHANGED_LAYOUT_SIDE} />
       </div>
     )
@@ -372,14 +373,14 @@ export const HeaderRow: FC<HeaderRowProps> = (props) => {
   if (isInlineDiffsLayoutMode) {
     if (!isNodeChanged && !isContentChanged) {
       return (
-        <div className="flex flex-row">
+        <div className={cn("flex flex-row")}>
           <Content {...props} layoutSide={ORIGIN_LAYOUT_SIDE} />
         </div>
       )
     }
 
     return (
-      <div className={`flex flex-row relative ${diffTypeIncluded ? diffBackground : ''}`}>
+      <div className={cn(`flex flex-row relative ${diffTypeIncluded ? diffBackground : ''}`)}>
         {diffType && diffTypeIncluded && <UxDiffFloatingBadge variant={diffType} message={diffTypeCause} />}
         <Content {...props} layoutSide={ORIGIN_LAYOUT_SIDE} />
       </div>
@@ -389,7 +390,7 @@ export const HeaderRow: FC<HeaderRowProps> = (props) => {
   if (isSideBySideDiffsLayoutMode) {
     if (!isNodeChanged && !isContentChanged) {
       return (
-        <div className="flex flex-row">
+        <div className={cn("flex flex-row")}>
           <Content {...props} layoutSide={ORIGIN_LAYOUT_SIDE} />
           <Content {...props} layoutSide={CHANGED_LAYOUT_SIDE} />
         </div>
@@ -397,7 +398,7 @@ export const HeaderRow: FC<HeaderRowProps> = (props) => {
     }
 
     return (
-      <div className={`flex flex-row relative ${diffTypeIncluded ? diffBackground : ''}`}>
+      <div className={cn(`flex flex-row relative ${diffTypeIncluded ? diffBackground : ''}`)}>
         {diffType && diffTypeIncluded && <UxDiffFloatingBadge variant={diffType} message={diffTypeCause} />}
         {!isNodeChanged && isContentChanged || isNodeChanged && (nodeRemoved || nodeReplaced)
           ? <Content {...props} layoutSide={ORIGIN_LAYOUT_SIDE} />

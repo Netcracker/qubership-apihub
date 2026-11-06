@@ -1,0 +1,18 @@
+openapi: 3.1.0
+info:
+  title: Orders
+  version: 1.0.0
+paths:
+  /orders:
+    post:
+      security:
+        - bearer:
+            - admin
+      responses:
+        "200":
+          description: ""
+components:
+  securitySchemes:
+    bearer:
+      type: http
+      scheme: bearer

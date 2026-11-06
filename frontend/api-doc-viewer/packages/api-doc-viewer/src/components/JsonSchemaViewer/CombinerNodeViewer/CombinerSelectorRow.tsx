@@ -1,3 +1,4 @@
+import { cn } from "@apihub/utils/common/cn"
 import { Selector, SelectorOption } from "@apihub/components/shared-components/Selector/Selector"
 import { SelectorVariant } from "@apihub/components/shared-components/Selector/types"
 import { NestingIndicatorTitleRowContent } from "@apihub/components/shared-components/NestingIndicatorTitleRow/NestingIndicatorTitleRowContent"
@@ -74,13 +75,13 @@ const CombinerSelectorControlsRow = memo(<N extends JsonSchemaTreeNode>(props: C
   return (
     <div
       data-testid="json-schema-combiner-selector-row-content"
-      className={`json-schema-combiner-selector-row-content flex w-full items-stretch gap-2 ${X_AXIS_PADDING_ROWS_JSO} ${rowBackgroundClass}`.trim()}
+      className={cn(`json-schema-combiner-selector-row-content flex w-full items-stretch gap-2 ${X_AXIS_PADDING_ROWS_JSO} ${rowBackgroundClass}`.trim())}
     >
-      <div className="level-indicator-column flex items-stretch self-stretch">
+      <div className={cn("level-indicator-column flex items-stretch self-stretch")}>
         <LevelIndicator level={level} />
-        <div className="w-4" aria-hidden="true" />
+        <div className={cn("w-4")} aria-hidden="true" />
       </div>
-      <div className="json-schema-property-row-body flex min-w-0 flex-1 items-center">
+      <div className={cn("json-schema-property-row-body flex min-w-0 flex-1 items-center")}>
         <Selector
           options={options}
           selectedOption={selectedOption}
@@ -103,7 +104,7 @@ const CombinerSelectorRowContent = memo(<N extends JsonSchemaTreeNode>(props: Co
   return (
     <div
       data-testid="json-schema-combiner-selector-row"
-      className="json-schema-combiner-selector-row flex w-full flex-col"
+      className={cn("json-schema-combiner-selector-row flex w-full flex-col")}
     >
       {combinerKindLabel && (
         <NestingIndicatorTitleRowContent

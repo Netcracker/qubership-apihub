@@ -7,7 +7,9 @@ defines its own "is changed" predicate.
 | API type | Status | Design |
 | --- | --- | --- |
 | JSON Schema | implemented | [../../json-schema/features/hiding-unchanged-nodes.md](../../json-schema/features/hiding-unchanged-nodes.md) |
-| AsyncAPI, DDL API, JSO | not implemented | — |
+| OpenAPI | implemented (security scheme cards; nested JSON Schema trees as above) | [../../openapi/features/hiding-unchanged-nodes.md](../../openapi/features/hiding-unchanged-nodes.md) |
+| JSO | implemented (`JsoDiffsViewer`; embedded JSO follows its host diffs viewer's mode) | [../../jso/features/hiding-unchanged-nodes.md](../../jso/features/hiding-unchanged-nodes.md) |
+| AsyncAPI, DDL API | not implemented | — |
 
 ## Mechanism
 
@@ -15,8 +17,11 @@ defines its own "is changed" predicate.
 | --- | --- | --- |
 | `resolveUnchangedBlocks(children, isChanged, hideUnchangedNodes)` | `next-data-model/src/model/abstract/tree-with-diffs/changed-only/resolve-unchanged-blocks.ts` | Pure grouping over one sibling list |
 | `UnchangedBlockMembership` | same | `visible`, or hidden with `unchangedBlockId`, `isBlockStart`, `blockSize` |
+| `hasOwnChangeSignals(node)` | `next-data-model/src/model/abstract/tree-with-diffs/changed-only/has-own-change-signals.ts` | Spec-agnostic half of an "is changed" predicate: any of the node's own diff fields is non-empty |
 | `UnchangedVisibleItem` | same | The visible sequence: nodes plus one placeholder per block |
 | `ShowUnchangedRow` | `api-doc-viewer/src/components/shared-components/ShowUnchangedRow/` | Placeholder row with the reveal control |
+| `ShowUnchangedTrigger` | same | The three-dots reveal button alone, for rows that place it themselves (security scheme card); an icon button styled by the shared `icon-button` config ([arrow-scroll-strip.md](arrow-scroll-strip.md#arrow-button-styles-shared-icon-button-config)) |
+| `UnchangedBlocksContext`, `DiffsNodesVisibilityMode` | same | Viewer-level mode and revealed block ids; provided by `JsonSchemaDiffsViewer`, `OpenApiOperationDiffsViewer`, and `JsoDiffsViewer` |
 
 ## Rules
 

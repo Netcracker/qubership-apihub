@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { cn } from '@apihub/utils/common/cn'
 import { Diff, DiffAction } from "@netcracker/qubership-apihub-api-diff"
 import { FC } from 'react'
 import { BLOCK_CONTENT_DIFF_COLOR_MAP, DEFAULT_MUTED_VALUE_CLASS } from '../../../consts/changes'
@@ -77,7 +78,7 @@ export const DiffBadge: FC<DiffBadgeProps> = (props) => {
   if (removedRule) {
     return (
       <UxBadge
-        text={<span className={DEFAULT_MUTED_VALUE_CLASS}>{label}</span>}
+        text={<span className={cn(DEFAULT_MUTED_VALUE_CLASS)}>{label}</span>}
         colorSchema={diffColorSchema}
       />
     )

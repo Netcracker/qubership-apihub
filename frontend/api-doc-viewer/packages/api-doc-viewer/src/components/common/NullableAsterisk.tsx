@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { cn } from '@apihub/utils/common/cn'
 import { DiffRecord, isDiff } from '@netcracker/qubership-apihub-api-data-model'
 import { Diff, DiffAction } from '@netcracker/qubership-apihub-api-diff'
 import { FC, ReactNode } from 'react'
@@ -49,7 +50,7 @@ export const NullableAsterisk: FC<NullableAsteriskProps> = (props) => {
     isSideBySideDiffsLayoutMode && shouldDisplayInSideBySide ||
     !isSideBySideDiffsLayoutMode && value === false
   ) {
-    notNullableNode = <sup className="ml-0.5 text-red-500">*</sup>
+    notNullableNode = <sup className={cn("ml-0.5 text-red-500")}>*</sup>
   }
   return notNullableNode
 }

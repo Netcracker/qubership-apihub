@@ -5,6 +5,8 @@ import { findKeyByValue, getValueByPath, isArray, isObject, isObjective, takeIfD
 import { aggregateDiffsWithRollup, Diff, DiffType } from "@netcracker/qubership-apihub-api-diff";
 import { DiffMetaKeys } from "../../abstract/tree-with-diffs/node-diffs-data/diff-meta-keys";
 import { BuildingServiceLogger } from "../../../loggers";
+import { SideReader } from "../../shared/side-reader";
+import { AsyncApiSecuritySpecWithDiffsBuilder } from "./async-api-security-spec-with-diffs-builder";
 import {
   AsyncApiMessageOrientedSpec,
   AsyncApiMessageOrientedSpecData,
@@ -47,6 +49,10 @@ export class AsyncApiSpecWithDiffsTransformer extends AsyncApiSpecTransformer {
     private readonly diffMetaKeys: DiffMetaKeys,
   ) {
     super(referenceNamePropertyKey, logger)
+  }
+
+  protected override createSecuritySpecBuilder(): AsyncApiSecuritySpecWithDiffsBuilder {
+    return new AsyncApiSecuritySpecWithDiffsBuilder(this.logger, this.referenceNamePropertyKey, new SideReader(this.diffMetaKeys.diffsMetaKey))
   }
 
   public override transformOperationOrientedSpecToMessageOrientedSpec(

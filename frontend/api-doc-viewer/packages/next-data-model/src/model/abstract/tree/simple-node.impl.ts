@@ -120,4 +120,8 @@ export class SimpleTreeNode<
     this._nestedNodes.push(node);
   }
 
+  public sortNestedNodes(compare: (a: ITreeNode<V, K, M>, b: ITreeNode<V, K, M>) => number): void {
+    this._nestedNodes.sort(compare);
+  }
+
 }

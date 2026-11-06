@@ -1,0 +1,5 @@
+type: object
+propertyNames:
+  enum:
+    - id
+    - name

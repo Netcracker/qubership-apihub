@@ -67,8 +67,9 @@ JSON Schema viewers; bindings and extensions by the JSO viewers. Diagrams:
 | --- | --- | --- |
 | Message title (h1) | unless `noHeading`; `title`, else the node key | `message.title` |
 | Address row | always | `action` badge (`SEND` / `RECEIVE`) + `address` (`<address unknown>` when absent) |
-| Description | `description` present | `message.description` |
-| Summary | `summary` present | `message.summary` |
+| Description | `detailed` mode, `description` present | `message.description` |
+| Summary | `detailed` mode, `summary` present | `message.summary` |
+| `Security` (h3) | operation `security` non-empty | see **Security** |
 | Section selector | always | `Message` / `Channel` / `Operation` tabs; the first tab is selected initially |
 
 ### Message section (`MessageContentNodeViewer`)
@@ -87,7 +88,7 @@ Rows in rendering order:
 | UI element | Condition | Rendered by |
 | --- | --- | --- |
 | Channel title (h2) | `title`, else the node key | `TitleRow` |
-| Description, summary | present | `TextRow` (h5) |
+| Description, summary | `detailed` mode, present | `TextRow` (h5) |
 | `Address Parameters` (h3) | `parameters` present | `JsonSchemaViewer`; each parameter gets a `Location` custom annotation row |
 | `Servers` (h3) | `servers` present | one server block per server |
 | `Extensions` (h3) | `x-*` keys on the channel | `JsoViewer` |
@@ -99,7 +100,8 @@ Rows in rendering order:
 | --- | --- |
 | Server title (h4) | `title`, else the node key |
 | Server address row | `protocol` + `host` |
-| Description, summary | present (h6) |
+| Description, summary | `detailed` mode, present (h6) |
+| `Security` (h5, secondary size) | server `security` non-empty; see **Security** |
 | `Bindings` (h5, secondary size) | server `bindings` present |
 
 ### Operation section (`MessageOperationNodeViewer`)
@@ -107,7 +109,7 @@ Rows in rendering order:
 | UI element | Condition |
 | --- | --- |
 | Operation title (h2) | `title`, else the node key |
-| Description, summary | present (h5) |
+| Description, summary | `detailed` mode, present (h5) |
 | `Extensions`, `Bindings` | present |
 
 ### Bindings (`BindingsNodeViewer`)
@@ -117,6 +119,28 @@ Rows in rendering order:
 | `Bindings` title with protocol selector | ≥1 binding; the selector is hidden when `meta.brokenRef` is set |
 | `Version` row | always for the selected binding; `latest` when `bindingVersion` is absent |
 | Binding content | `JsoViewer` over the selected binding without `bindingVersion` |
+
+### Security (`AsyncApiSecuritySection`)
+
+Shared with OpenAPI (`SecuritySchemeCardBase`, `SecurityToolbarRow`); full design in
+[features/security.md](features/security.md).
+
+| UI element | Condition |
+| --- | --- |
+| `Security` title | the list is non-empty |
+| Toolbar (one option per list item = one scheme; always shown) | always |
+| Scheme card: name + type label (13 types) | the selected option |
+| Unresolved text | the `$ref` cannot be resolved |
+| Description | `detailed` mode, `description` present |
+| `<Place> parameter name` | `httpApiKey` |
+| `API key location` (`User` / `Password`) | `apiKey` |
+| `HTTP Authorization Scheme`, `Bearer Format` | `http` |
+| `OpenID Connect URL` | `openIdConnect` |
+| OAuth flow parts (URLs, `Scopes` from `availableScopes`, required `*` from the scheme `scopes`) | `oauth2`; scope descriptions in `detailed` mode only |
+| `Scopes` list of required scopes no flow declares | `oauth2` / `openIdConnect`; scope descriptions in `detailed` mode only |
+
+Display mode `simple` hides the annotations only (summaries, descriptions, scope descriptions):
+[../shared/features/display-mode-annotations.md](../shared/features/display-mode-annotations.md).
 
 ## Displayed (with diffs)
 
@@ -135,6 +159,7 @@ props come from `buildRowDiffProps` over precomputed `nodeDiffs`, `descendantDif
 | `Headers` / `Payload` / `Address Parameters` / `Extensions` / `Bindings` / `Servers` titles | node-level diff | `title-row` |
 | Headers, payload, parameters content | continues in `JsonSchemaDiffsViewer` | JSON Schema placements |
 | Bindings and extensions content | continues in `JsoDiffsViewer` | JSO placements |
+| Security title / toolbar / cards (operation, server) | record-driven security diffs (`SecurityRowDiffs`) | `title-row`, `selector-row`, security card placements — same rules as OpenAPI |
 
 Descendant summaries cross tree boundaries through the forward aggregators `kind-binding`,
 `kind-message-content`, `kind-channel`, and `kind-operation`, which read
@@ -150,6 +175,7 @@ Descendant summaries cross tree boundaries through the forward aggregators `kind
 | Row visibility in next-data-model | `planned` | Visibility still lives in the viewer (`shouldBeDisplayed`). |
 | Diff-type filters on rows | `planned` | `DiffTypesContext` is provided; `DiffFloatingBadgeWrapper` keeps `hidden={false}`. |
 | Channel / server / operation browser | `intentional-gap` | Scope is one operation + one message. |
+| Operation trait `security` | `intentional-gap` | Traits are not merged by the viewer. |
 | Layout modes other than document / side-by-side | `intentional-gap` | Plain viewer supports `DOCUMENT_LAYOUT_MODE` only. |
 
 ## Triage rules
@@ -165,9 +191,12 @@ Descendant summaries cross tree boundaries through the forward aggregators `kind
 | --- | ---: | --- |
 | `Async API Suite` (message general, content, channel, operation) | 66 | inline in `src/stories/async-api-suite/shared-test-data/` |
 | `Async API Diffs Suite` (message, channel, channel server, channel parameters, operation, whole operation) | 169 | `packages/samples/async-api-diffs/` |
+| `Async API Suite/Security` | 26 | `packages/samples/async-api/security/` |
+| `Async API Diffs Suite/Security Samples` | 33 | `packages/samples/async-api-diffs/security/` |
 
 ## Related documents
 
 - Architecture diagrams: [architecture/](architecture/)
+- Security sections: [features/security.md](features/security.md)
 - JSON Schema coverage (nested schemas): [../json-schema/display-coverage.md](../json-schema/display-coverage.md)
 - JSO diffs specification (bindings, extensions): [../jso/features/diffs.md](../jso/features/diffs.md)

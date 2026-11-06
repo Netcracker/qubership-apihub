@@ -14,12 +14,18 @@
  * limitations under the License.
  */
 
+import { cn } from '@apihub/utils/common/cn'
 import type { FC, PropsWithChildren } from 'react'
 import './UxTooltip.css'
 
 export type UxTooltipProps = PropsWithChildren & {
   text: string
   floatingContainer?: boolean
+  /**
+   * Tailwind max-width class (literal, e.g. `max-w-sm`) that lets long text wrap. Omitted = the
+   * single-line `w-max` popup every existing tooltip uses.
+   */
+  maxWidthClass?: string
 }
 
 const STATIC_MODE_POSITION_STYLES = 'absolute -top-2 -right-3 translate-x-full '
@@ -30,19 +36,22 @@ const POPUP_CONTENT_STYLES = 'text-center text-black text-sm'
 const POPUP_CONTAINER_STYLES = 'w-max px-2 py-1 bg-white rounded-lg UxTooltip-shadow'
 const POPUP_STYLES = `${POPUP_CONTAINER_STYLES} ${POPUP_CONTENT_STYLES} ${POPUP_ARROW_STYLES}`
 
-const buildTooltipInnerStyles = (floating: boolean) => {
-  return `UxTooltip-hint ${floating ? FLOATING_MODE_POSITION_STYLES : STATIC_MODE_POSITION_STYLES} ${VISIBILITY_STYLES} ${POPUP_STYLES}`
+const buildTooltipInnerStyles = (floating: boolean, maxWidthClass?: string) => {
+  const popupStyles = maxWidthClass
+    ? `${POPUP_STYLES.replace('w-max', `w-max ${maxWidthClass} whitespace-normal text-left`)}`
+    : POPUP_STYLES
+  return `UxTooltip-hint ${floating ? FLOATING_MODE_POSITION_STYLES : STATIC_MODE_POSITION_STYLES} ${VISIBILITY_STYLES} ${popupStyles}`
 }
 
 export const UxTooltip: FC<UxTooltipProps> = (props) => {
-  const { children, text, floatingContainer = false } = props
+  const { children, text, floatingContainer = false, maxWidthClass } = props
 
   return (
-    <div className="relative inline-flex hover:cursor-pointer">
-      <div className="UxTooltip-children inline-flex">
+    <div className={cn("relative inline-flex hover:cursor-pointer")}>
+      <div className={cn("UxTooltip-children inline-flex")}>
         {children}
       </div>
-      <span className={buildTooltipInnerStyles(floatingContainer)}>
+      <span className={cn(buildTooltipInnerStyles(floatingContainer, maxWidthClass))}>
         {text}
       </span>
     </div>

@@ -1,3 +1,3 @@
 CREATE TABLE t (
-  label text DEFAULT E'before\rafter'
+  display_text text DEFAULT E'before\rafter'
 );

@@ -1,3 +1,4 @@
+import { cn } from "@apihub/utils/common/cn"
 import { DiffType } from "@netcracker/qubership-apihub-api-diff"
 import { FC, ReactElement } from "react"
 import { UxDiffFloatingBadge } from "../../kit/ux/UxFloatingBadge/UxDiffFloatingBadge"
@@ -17,7 +18,7 @@ export const DiffFloatingBadgeWrapper: FC<DiffFloatingBadgeWrapperProps> = (prop
   }
 
   return (
-    <div className="flex flex-row relative w-full items-stretch">
+    <div className={cn("flex flex-row relative w-full items-stretch")}>
       <UxDiffFloatingBadge variant={diffType} message={diffTypeCause} />
       {children}
     </div>

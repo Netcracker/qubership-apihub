@@ -31,8 +31,13 @@ JSON Schema stack also renders AsyncAPI headers, payload and channel parameters.
 
 | Viewer | Props |
 | --- | --- |
-| `JsonSchemaViewer` | `schema`, `expandedDepth`, `displayMode`, `devMode`, `initialLevel`, `customizationOptions`, `topLevelPropsMediaTypes` |
+| `JsonSchemaViewer` | `schema`, `expandedDepth`, `displayMode`, `devMode`, `initialLevel`, `customizationOptions`, `topLevelPropsMediaTypes`, `firstRowPrecededBy` |
 | `JsonSchemaDiffsViewer` | same except `topLevelPropsMediaTypes`, plus `diffMetaKeys`, `diffTypes` (placeholder — accepted, ignored), `hideUnchangedNodes` (default `true`) |
+
+`firstRowPrecededBy` is an opt-in hook for embedding viewers (OpenAPI): the `data-precededby` of the
+first rendered row — the root title row, or with `suppressRootNestingIndicator` the root's first
+child. Without it every row keeps its own spacing (a `data-precededby` attribute on the viewer itself
+is ignored).
 
 `customizationOptions.headerRowTitle` replaces the root title; `suppressRootNestingIndicator`
 flattens a synthetic wrapper schema into a top-level property list (used by AsyncAPI).
@@ -82,9 +87,12 @@ A `Properties` / `Items` header row (`NestingIndicatorTitleRow`) precedes a node
 Hidden for the root when `suppressRootNestingIndicator` is set, and for boolean
 `additionalProperties`.
 
-### Content rows (detailed display mode only)
+### Content rows
 
 Order follows `SchemaNodePlainContent`; visibility comes from `resolvePlainPropertyNodeVisibility`.
+Every row except **Extensions** is an annotation and shows in `detailed` display mode only;
+Extensions show in both modes (`JSON_SCHEMA_PROPERTY_CONTENT_ROW_CATEGORIES`,
+[../shared/features/display-mode-annotations.md](../shared/features/display-mode-annotations.md)).
 
 | UI element | Condition | Visibility flag |
 | --- | --- | --- |

@@ -1,0 +1,28 @@
+openapi: 3.0.3
+info:
+  title: Orders
+  version: 1.0.0
+paths:
+  /orders:
+    post:
+      operationId: updateOrder
+      requestBody:
+        description: New order state.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - status
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - new
+                    - paid
+                note:
+                  type: string
+      responses:
+        "200":
+          description: ""

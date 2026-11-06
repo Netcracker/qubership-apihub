@@ -1,13 +1,13 @@
 /**
  * Auto-generated screenshot tests for DDL API Suite/Table Descriptions stories.
- * Regenerate: npm run generate-tests (from packages/api-doc-viewer).
+ * Regenerate: pnpm run generate-tests (from packages/api-doc-viewer).
  */
 import path from 'path'
 import { storyPage } from '../service/storybook-service'
 import { waitForDdlTableViewer } from '../service/viewer-waits'
 
 const META_ID = 'ddlapi-suite-table-descriptions'
-const SNAPSHOTS_DIR = path.resolve(__dirname, '..', '__image_snapshots__')
+const SNAPSHOTS_DIR = path.resolve(__dirname, '__image_snapshots__')
 
 const TEST_IDS: string[] = [
   'long-description',

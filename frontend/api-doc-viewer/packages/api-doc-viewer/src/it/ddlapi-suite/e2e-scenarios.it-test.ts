@@ -7,7 +7,7 @@ import { storyPage } from '../service/storybook-service'
 import { waitForDdlTableViewer } from '../service/viewer-waits'
 
 const META_ID = 'ddlapi-suite-e2e-scenarios'
-const SNAPSHOTS_DIR = path.resolve(__dirname, '..', '__image_snapshots__')
+const SNAPSHOTS_DIR = path.resolve(__dirname, '__image_snapshots__')
 
 const STORY_IDS: string[] = [
   'users',

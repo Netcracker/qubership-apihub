@@ -44,6 +44,33 @@ Do not modify legacy GraphQL viewers (`GraphSchemaViewer`,
 `components/common/diffs/` components without explicit user approval. Use the
 JSON Schema, AsyncAPI, JSO, and DDL viewers for new work.
 
+## CSS isolation: `cn()` on every `className`
+
+Design: `docs/design/shared/features/css-isolation.md`. The library's classes are unique in the
+host: `cn()` (`src/utils/common/cn.ts`) prefixes every class token with `api-doc-viewer-` at
+runtime, and the PostCSS plugin `postcss/css-isolation.cjs` (after `tailwindcss` and
+`autoprefixer` in `postcss.config.js`) applies the same prefix to the stylesheets of `src/`.
+
+- **Every `className` is `cn(...)`** — literal (`cn('flex px-4')`), template, constant, prop
+  (`className={cn(className)}` — idempotent), and a `className` key of a props object spread onto
+  an element (`{ ...commonProps, className: cn(className) }`). ESLint (`no-restricted-syntax` in
+  `.eslintrc.json`) fails on anything else.
+- **Plain names everywhere else** — CSS files, TS constants (`X_AXIS_PADDING_ROWS`), config maps
+  (`OPENAPI_RESPONSE_CODE_TONE_CLASSES`), class props (`toneClass`): never write the prefix
+  there; Tailwind scans the plain names in the source.
+- **Viewer root** — a public (or standalone story-rendered) viewer renders `cn('root')` on its
+  outermost element; the error fallback does too. Global rules (Tailwind preflight, `ul` / `a` /
+  `button` / `h1`, `:root` variables) apply only inside a root, through zero-specificity
+  `:where()`. A component rendered outside any root loses them.
+- **Reading classes from the DOM** — match the prefixed name (`api-doc-viewer-selected`).
+  `combiner-changed-variant.ts` and `switch-openapi-options.ts` spell the prefix inside their
+  bodies because they run through `page.evaluate()`; `tests/cn.test.ts` keeps them in sync. Prefer
+  `data-*` attributes for new DOM queries.
+- **Fonts in inline styles** — `@font-face` families are renamed (`api-doc-viewer Inter`); use
+  `FONT_FAMILY_INTER` from `src/consts/fonts.ts`, not `'Inter'`.
+- **Dynamic class names** (`` `font-${weight}` ``) work only for classes Tailwind generates from a
+  literal elsewhere — unchanged by isolation.
+
 ## Layout and display modes
 
 **Layout mode** (`LayoutMode` in `src/types/LayoutMode.ts`):
@@ -55,8 +82,14 @@ JSON Schema, AsyncAPI, JSO, and DDL viewers for new work.
 
 **Display mode** (`DisplayMode`):
 
-- `simple` — titles and types only.
-- `detailed` — descriptions, deprecation, annotations, and other metadata.
+- `simple` — every annotation hidden, nothing else (OpenAPI, AsyncAPI, JSON Schema:
+  `docs/design/shared/features/display-mode-annotations.md`); DDL keeps title rows only
+  (`docs/design/ddlapi/features/doc-view.md`).
+- `detailed` (default) — annotations shown.
+
+A new element hidden in `simple` gets one case in `bin/display-mode-simple-case-definitions.mjs`
+(the `* [Diffs ]Suite (Display Mode = simple)` suites, `api-doc-viewer-testing` → Display mode
+suites); other suites never branch by display mode.
 
 Pass modes through the matching React contexts (`LayoutModeContext`,
 `DisplayModeContext`) rather than threading props through every child.
@@ -150,6 +183,15 @@ Diff-suite stories typically:
    `async-api-diffs-utils.tsx`).
 3. Export one Storybook story per sample case; story export names become
    kebab-case story IDs (`metaId--story-name`).
+
+**Storybook order** (`.storybook/preview.ts` `storySort.order`, design `docs/design/README.md` →
+Storybook and runner order): `Debug` first, then API type blocks from the core to the overall
+specifications — JSO, JSON Schema, AsyncAPI, OpenAPI, DDL API, GraphQL. A new suite root needs an
+entry in its block and in `bin/screenshot-test-run-order.json` (runner menus;
+`tests/storybook-order.test.ts`). `storySort` is parsed statically: keep the order literal in
+`preview.ts`, no imports. A new viewer gets a `Debug/<Viewer>` story (YAML / JSON text controls plus
+the viewer's selection props, e.g. `Debug/OpenAPI Operation Viewer` with `path` + `method`) listed in
+the `Debug` sub-order.
 
 Compatibility-suite stories and tests are **generated** — run
 `pnpm run generate-stories` / `pnpm run generate-tests` inside `packages/api-doc-viewer`
@@ -269,6 +311,57 @@ CSS-custom-property-based alternative was analyzed but deliberately deferred —
 `agent-packages/api-doc-viewer-authoring/.apm/skills/api-doc-viewer-authoring/refactoring-notes.md` (entry 1)
 for the trade-off and when to reconsider it.
 
+## OpenAPI security cards — hiding unchanged content
+
+Design: `docs/design/openapi/features/hiding-unchanged-nodes.md`. `SecuritySchemeCardBase` keeps the title
+row and replaces every other row (all flow parts together) with one `SecurityRow` holding the shared
+`ShowUnchangedTrigger` when `useOptionalUnchangedBlocksContext()` says `hideUnchangedNodes`, the card is
+not revealed (`revealedBlockIds.has(node.id)`), and `SecurityRowDiffs.Scheme.isContentChanged(node)` is
+false. The context (`shared-components/ShowUnchangedRow/UnchangedBlocksContext.tsx`, mode in
+`DiffsNodesVisibilityMode.ts`) is shared with `JsonSchemaDiffsViewer`; only `OpenApiOperationDiffsViewer`
+provides it for cards, so plain and AsyncAPI cards never collapse. Do not decide "changed" from the
+rendered rows (scope toggles and display mode change them) — read the data-layer predicate.
+
+**Anonymous access (`{}`) is not an alternative** (design D17,
+`docs/design/openapi/entities/security.md` → "Optional badge"). The OpenAPI spec builders filter `{}`
+out of `alternatives` and set `security.allowsAnonymous`; the with-diffs builder writes a synthetic
+`allowsAnonymous` add / remove on the `security` node (presence of `{}` per side) **after**
+`writeAlternativesDiff`, so it never colors the toolbar. `SecurityTitleRow` renders the `Optional`
+badge through `BadgeWithDiffs` (`sizeClassName` keeps the 15px size in the diff look, which swaps
+the color schema for the default badge + green / red border) and reads
+`SecurityRowDiffs.Security.takeTitleRowDiff` / `takeOptionalBadgeDiff` / `isAnonymousAllowedOnSide`.
+Traps:
+
+- The diff sits on the section node, so `Scheme.isContentChanged` stays false: a `{}` change must
+  **not** reveal any card (hiding cases `22`, `23`). Do not "fix" collapsed cards next to a yellow
+  title row.
+- `apiDiff` pairs list slots by index: one slot can be `{}` on one side and `{ api_key }` on the
+  other (diffs `security/33`, `34`). `resolveSlotSides` decides per side, and a slot that is `{}`
+  on one side only becomes a synthetic whole add / remove of its alternative.
+- An anonymous-only list (`[{}]`) is a present section with no alternative: `buildSecurityBlock`
+  drops the toolbar block (title row alone).
+
+## JSO diffs — hiding unchanged nodes
+
+Design: `docs/design/jso/features/hiding-unchanged-nodes.md`. `JsoPropertyChildrenListWithDiffs`
+renders every JSO sibling list (the `JsoDiffsViewer` top level and each property's children) from
+`resolveJsoUnchangedBlocks` (next-data-model), placing `ShowUnchangedRow` for hidden blocks — the
+JSON Schema `SchemaNodeChildrenListWithDiffs` pattern. Traps:
+
+- **Mode follows the host, revealed ids do not.** `JsoDiffsViewer.hideUnchangedNodes` wins when set;
+  omitted, it takes the host `UnchangedBlocksContext` **mode** (JSON Schema / OpenAPI extensions),
+  else `true`. It always provides its **own** context: JSO node ids are path-based within one JSO
+  tree (`#/x-owner` in two extension sections), so sharing the host's revealed set would reveal
+  unrelated blocks.
+- **AsyncAPI opts out explicitly** (`BindingsNodeViewer`, `ExtensionsNodeViewer` →
+  `ExtensionsSection.hideUnchangedNodes={false}`): AsyncAPI has no provider, so omitting the prop
+  there would fall back to `true`.
+- **Embedded JSON Schema gets the JSO mode** (`JsoEmbeddedSchemaDiffsComponentProps.hideUnchangedNodes`);
+  before, it always used `JsonSchemaDiffsViewer`'s own default `true`.
+- **`ShowUnchangedRow` reads per-side levels** from `AsyncLevelContext` when present (like
+  `TitleRowContent`): JSO diffs only set `AsyncLevelContext`, so the single `LevelContext` level
+  drew the row at level 0.
+
 ## DDL viewer notes
 
 **Coverage baseline:** which ddlapi model fields are shown vs omitted is documented in
@@ -302,7 +395,7 @@ and link rendering are **separate concerns**:
 - Export public types from `src/index.ts`: `NavigationLinkProps`,
   `NavigationLinkComponent` (builder type is re-exported from next-data-model).
 - `ForeignKey` must read both values from `useDdlTableViewerContext()` and
-  render `<NavigationLinkComponent href={…} className="ddlapi-foreign-key-link">`.
+  render `<NavigationLinkComponent href={…} className={cn('ddlapi-foreign-key-link')}>` (the host link receives the prefixed class).
 - Storybook and screenshot suites keep the default anchor — no custom link
   component unless a story explicitly tests link chrome.
 - When implementing `DdlTableDiffsViewer`, forward the same props/context pattern.
@@ -802,7 +895,7 @@ tests for the affected suite (`async-api-diffs-suite-channel-server`,
 colors** section for why the screenshots never caught it.
 
 **Root cause:** `SideBySideLayout` (`shared-components/Layout/SideBySideLayout.tsx`)
-used to wrap each side in a **plain block** `<div className="w-1/2">`. A block
+used to wrap each side in a **plain block** `<div className={cn('w-1/2')}>`. A block
 child with no explicit width naturally fills a block parent, so any consumer's
 row content filled the column *by default* — no `w-full` needed.
 
@@ -810,10 +903,10 @@ A later, unrelated change (DDL diff viewer work, needing `items-stretch` row
 height behaviour) turned that wrapper into a **flex container**:
 
 ```diff
-- <div className="flex flex-row w-full">
--   <div className='w-1/2'>
-+ <div className="flex w-full flex-row items-stretch">
-+   <div className="flex w-1/2">
+- <div className={cn("flex flex-row w-full")}>
+-   <div className={cn('w-1/2')}>
++ <div className={cn("flex w-full flex-row items-stretch")}>
++   <div className={cn("flex w-1/2")}>
       {left}
 ```
 
@@ -830,7 +923,7 @@ were unaffected — that is the pattern to copy.
 to the row's outer div, matching the `TextRowContent` shape:
 
 ```tsx
-className={`... flex w-full h-full ${diffStyles.join(' ')}`}
+className={cn('... flex w-full h-full', diffStyles)}
 ```
 
 **Rule for `SideBySideLayout`/`OneSideLayout` consumers:** the element you
@@ -844,6 +937,13 @@ actually matches the column's width — do not rely on a screenshot looking
 visually plausible for near-white diff-background colors (see the testing
 skill section referenced above).
 
+**CSS counts too (session 2026-10, OpenAPI security cards).** A stylesheet rule that resets the
+width of a row's per-side element (e.g. `div[data-frame-position] { width: auto }` to add margins)
+breaks the same contract: each row shrank to its own content and the "card" got ragged edges. Keep
+the element a full-width flex item (`flex: 1 1 0%; min-width: 0`) and inset the *content* instead.
+`SideBySideLayout`'s root carries the class `side-by-side-layout` purely as a style hook (no rules of
+its own) for diffs-only CSS such as the collapsible-section indent.
+
 ## Monorepo paths
 
 Source imports use the `@apihub/` alias (maps to `packages/api-doc-viewer/src`).
@@ -852,3 +952,255 @@ by subpath — mirror existing import paths when adding builders or types.
 
 The JSO diffs contract is specified in `docs/design/jso/features/diffs.md` —
 read it before diffs-viewer refactors.
+
+## Color config: one CSS file per API type
+
+Design: `docs/design/shared/features/color-config.md`. Badge and selector-option colors with API-type
+meaning (HTTP method, AsyncAPI action, response-code class, DDL column flags, `read-only` /
+`write-only` / `deprecated` tags) live only in `src/components/shared-styles/colors/<api-type>.css`
+(imported once through `src/index.css`). TS configs (`utils/openapi/http-method-badge-config.ts`,
+`utils/openapi/response-code-tone.ts`, `utils/async-api/action-badge-config.ts`,
+`DdlTableViewer/consts.ts`, `consts/tags.ts`) map values to literal class names only; shared
+components take a class (`AddressRow` `badge.colorClass`, `UxBadge` `colorSchema`, `Selector`
+`SelectorOption.toneClass`). Do not put a hex value or a Tailwind `bg-*` color in a component or TS
+config. A color rule overriding a shared component's own rule must win by specificity, not by bundle
+order. `index.css` gives `button` a `border-color` transition: measure border colors ≥ 250ms after a
+hover / click in a live check.
+
+## Arrow scroll strip: previous / next arrows on a line of options
+
+Design: `docs/design/shared/features/arrow-scroll-strip.md`. Any line of options that may overflow
+its row goes into the universal `ArrowScrollStrip` (`shared-components/ArrowScrollStrip/`):
+`<ArrowScrollStrip testIdPrefix="…"><Selector … noWrap={true} /></ArrowScrollStrip>`. It owns the
+arrows, the hidden native scrollbar, the scroll state (`utils/common/strip-scroll.ts`), and the
+one-option step (`scrollTo({ behavior: 'smooth' })`); it knows nothing about selectors or API types.
+Users: the security toolbar (`SecurityToolbar`, own row) and the response codes (`ResponsesTitleRow`
+subheader, `overhangVertically`). Do not re-implement arrows per toolbar. Traps:
+
+- **Child contract:** one element whose direct children are the options (the strip measures
+  `strip > inset > line > options`). The line needs a gap (`Selector` has 8px): the room after the
+  last option is that gap before a 1px `::after` spacer. An end margin on the last option does
+  **not** count toward the scroll width, so the last option's border shadow was clipped at the right
+  edge.
+- **Row height:** the 6px decoration inset (diff round markers / border shadows overhang the option)
+  is part of a toolbar row's height but would grow a title row from 26.5px to 38.5px — pass
+  `overhangVertically` in a title-row subheader (negative block margins keep the row height).
+- **State after every render:** `useLayoutEffect` without deps plus a `ResizeObserver`; the
+  `setState` keeps the previous object when nothing changed, otherwise it loops.
+- **Arrow styles** come from the shared icon-button config (`shared-styles/colors/icon-buttons.css`,
+  `.icon-button` CSS variables), shared with the three-dots `ShowUnchangedTrigger`; icons paint
+  in `currentColor`. Per-button CSS sets padding only. Arrows are always shown, disabled at an edge.
+
+## Global `button` styles (session lesson)
+
+`src/index.css` styles **every** `<button>` inside a viewer root (padding `0.6em 1.2em`, 8px
+radius, a border and a background; scoped by CSS isolation, so host buttons are unaffected). A small icon button (e.g. a 24px arrow) keeps its box but its icon disappears — the
+padding leaves no content width. Reset it on new buttons with utilities (`p-0 border-0
+bg-transparent`; class selectors outrank the element rule) — icon buttons use the shared
+`icon-button` class (`shared-styles/colors/icon-buttons.css`), which resets it — or use a non-button clickable element
+where the JSON Schema pattern applies (clickable text + `Expander`). Also: never put
+`overflow: hidden` on a selector option or its scrolling container edge without an inset — diff
+round markers and border shadows overhang the option box and get clipped.
+
+## Framed cards = stacks of full-width rows (session lesson)
+
+OpenAPI security cards (`shared-styles/frame.css`, design: `docs/design/openapi/entities/security.md`
+→ "Card frame") are **not blocks**. Every row of a card stays as wide as its side, so a diff background
+(highlighted row, wholly added / removed card) fills the side up to the separator; the frame is an
+illusion drawn per row as an absolutely positioned `::before` box (left / right border; top on the
+`first` row, bottom on the `last`), and the row pads its content into that box. Rules that came out
+of several review rounds:
+
+- Never shrink or margin the highlighted element to draw a card — the diff color then stops at the
+  card edge and the rest of the side stays white.
+- The card's top and bottom edges are dedicated, content-less **frame rows** (`SecurityFrameRow`,
+  `cardInnerInset` high — inside the border, which runs along their outer edge), coloured by the
+  whole-card diff only. The space **outside** the border is the card's own half-gap in the
+  Security-level separators. If the border sat on a content row, collapsing an expandable row (e.g.
+  `Scopes`) would change which row is last and the row would visibly "jump"; a yellow title row would
+  also colour the space above the border.
+- Vertical spacing inside a card is separator rows, never margin (margins cut the side borders and
+  leave white seams between highlighted rows). The card's rows are planned at the `card` level with
+  outer halves, all with `data-frame-position="middle"`; `SeparatorRow.css` drops the frame padding so
+  the bands still fill the side. See the OpenAPI spacing section below.
+- Verify geometry in a live browser (testing skill → live Storybook check); SSR / HTML checks cannot
+  see widths or `::before` boxes.
+
+## Security sections: one presenter, two API types (session lesson)
+
+Design: `docs/design/async-api/features/security.md` (structure, layout, deviations) and
+`docs/design/openapi/entities/security.md` (rows, diffs). The card and the section pieces are
+**spec-neutral**; each API type only wraps them.
+
+| Piece | Shared (`shared-components/Security/`) | OpenAPI | AsyncAPI |
+| --- | --- | --- | --- |
+| Card | `SecuritySchemeCardBase` (`presentation: SecurityPresentation`) | `OpenApiSecuritySchemeCard` | `AsyncApiSecuritySchemeCard` |
+| Toolbar | `SecurityToolbarRow` (`labels`, `selected`, `onSelect`) over `SecurityToolbar` | selection in `OpenApiViewStateContext` | local `useState` |
+| Section | `security-section-blocks.ts` (`buildSecurityToolbarBlock(toolbar, render)`, `buildSecurityContentBlocks(selected, renderCard)`); the title `SECURITY_SECTION_TITLE` comes from next-data-model `model/security/display/labels.ts` | `security-blocks.tsx` `buildSecurityBlock` (h2, operation-level block) | `AsyncApiSecuritySection` (h3 `PRIMARY` in `MessageNodeViewer`, h5 `SECONDARY` in `MessageChannelServerNodeViewer`) |
+
+- **Navigate with the security guards.** `utils/security/node-type-checkers.ts`
+  (`getSecurityChildren`, `isSecuritySchemeNode`, `resolveSelectedSecurityAlternative`, …) and
+  `takeSecuritySeverities` work on nodes of either tree (`SecurityTreeNode<K>`). Do not add
+  per-spec copies (`isOpenApiSecuritySchemeNode` was removed); spec trees keep only the guard that
+  finds the section itself (`isOpenApiSecurityNode`).
+- **A card title is always smaller than its section title.** `SecuritySchemeCardBase` takes
+  `titleVariant` (default h4); the AsyncAPI card maps `SizeVariant` → h4 (operation, under h3) / h6
+  (server, under h5). A new placement of the card picks a variant below its section's title.
+- **Labels and row visibility come from the presentation**, never from a spec switch in JSX: a new
+  scheme type or row is a `SecurityDisplayLabels` / `SecurityNodeVisibility` change in
+  next-data-model. The card's `label  value` rows come from `SecuritySchemeCardRows.schemeProps` /
+  `flowProps` (key, field, label, placement, link, `format`), so a new row of that shape is one row
+  definition in `model/security/card-rows.ts` — no tuple tables or placement literals in the card.
+- **The card renders badges, it never computes them.** Scope rows carry `SecurityScopeRow.severity`
+  (with `causedAt`) and `ownRowDiff` (description highlighter); do not pick the strongest diff or
+  build a `{ type, causedAt: [] }` severity in React. The toolbar's options use
+  `SecurityRowDiffs.NodeLevel.takeChangesMarkerSummary` (the V9 marker rule of every selector) and its
+  sides `SecurityRowDiffs.Alternatives.isToolbarShownOnSide` — on the toolbar's `securityAlternatives`
+  container (`findSecurityAlternatives`), which `SecurityToolbarRow` / `buildSecurityToolbarBlock` take.
+- **Literals have one home.** OpenAPI titles and row labels: `OpenApiDisplayLabels` (next-data-model);
+  the Security title: `SECURITY_SECTION_TITLE` (`model/security/display/labels.ts`, both API types);
+  the "show unchanged" wording: `ShowUnchangedLabels.nodes(n)` / `.rows(n)`; text colours passed as
+  values (`textColor`, `labelColor` → inline style): `TextColors` (`shared-styles/colors/text-colors.ts`);
+  badge / selector colours stay CSS classes in `shared-styles/colors/*.css`; the red required `*`:
+  `RequiredMark`. Selection defaults: `OpenApiViewSelection`; the default response code rule is
+  `OpenApiResponseCode.pickDefault` in next-data-model.
+- **Selector options are nested nodes** (`docs/design/shared/features/selector-options.md`). Read
+  response codes / media types with `getOpenApiOptions(container, guard)` and alternatives with
+  `getSecurityAlternatives(security)` — all `nestedNodes()`. Never call `childrenNodes()` or `value()`
+  on a complex container (`responses`, `content`, `securityAlternatives`): they silently delegate to
+  the first option, so the code type-checks and renders the wrong data.
+- **AsyncAPI keeps its own rows outside, the shared layout inside.** The AsyncAPI section title is an
+  AsyncAPI `TitleRow` spaced by `data-precededby`; the toolbar and cards render in
+  `StackLayout level="security" outerHalves`. The element after a section is
+  `PrecededBy.SECURITY_SECTION` (`preceded-by.css`: 8px + the last card's 4px half = 12px). Local
+  selection state is fine here because no outer planner depends on it (unlike the OpenAPI operation,
+  see **View state is one store** below).
+
+## OpenAPI vertical spacing: every gap is a separator row (session lesson)
+
+Design: `docs/design/openapi/features/vertical-gaps.md` (rule, colouring, examples, config,
+algorithm); `block-separators.md` keeps the colouring principle and the badge stubs. Main rule:
+OpenAPI rows have **no vertical padding**; every vertical gap is one `SeparatorRow` made of bands —
+the upper element's half-gap + the container level's gap + the lower element's half-gap. No margins,
+no padding on rows or wrappers (section divs, layouts, `DiffFloatingBadgeWrapper`), no `min-height`
+centring. JSON Schema / JSO viewers keep their own rows and paddings.
+
+- **Elements and half-gaps.** An element is an OpenAPI row (8px half), a security card seen from
+  outside (8px), or a nested JSON Schema / JSO viewer (0px — its first / last row already insets its
+  text: JSON Schema row body via `SEPARATOR_LAYOUT_NESTED_VIEWER_START` + `--separator-layout-nested-viewer-inset`, JSO
+  26px centring). `LayoutBlockEdge.kind` (`row` / `card` / `nested`) selects the half from
+  `OpenApiSpacingConfig.halfGap`.
+- **Levels.** Every container plans its own elements: `operation` (blocks 1–5, level gap 8 → 24px),
+  `operationHeader`, `security`, `request`, `responses`, `section` (rows of a parameter group / Body /
+  Extensions), `card` (all 0 → 16px). The level gap takes the neighbours' tone only when both share it,
+  else stays white (OpenAPI `splitBands` / `splitBadge`). Every row is its own block of its container; containers take the head of their first
+  child and the tail of their last (`BlockEdges.container`). Outer halves: the root (config
+  `viewerEdges`) and the inside of a card.
+- **Data computed in next-data-model** (spec-neutral `model/abstract/layout/`: `LayoutPlanner`,
+  `BlockEdges`, `LayoutSpacingConfig`; `model/security/block-edges.ts`; OpenAPI part
+  `model/openapi/layout/`: `OpenApiBlockEdges extends BlockEdges`, `OpenApiSpacingConfig`); the
+  viewer only renders the plan (shared `shared-components/Layout/StackLayout.tsx`, `level=…`).
+  `StackLayout` and the security cards read their numbers from `LayoutSpacingContext`, which has no
+  default: every root viewer that renders a separator layout provides it (OpenAPI roots: their
+  `OpenApiSpacingConfig`; AsyncAPI roots: `DEFAULT_LAYOUT_SPACING_CONFIG`). Shared components never
+  read `OpenApiViewerContext` or import from the OpenAPI viewer folder. Never decide a colour,
+  height or "separator here?" in React.
+- **A Body's elements are decided once.** The block builder calls
+  `OpenApiBlockEdges.bodyElements(title, description, selectedMediaType, { expanded })` (title,
+  description?, schema? with its media type; collapsed = title), plans the outer edges with
+  `OpenApiBlockEdges.body(elements)` and passes the same list to `RequestBodyNodeViewer` /
+  `ResponseBodyViewer` → `MediaTypeContentSection`, which only renders it (indenting content with
+  `indentSectionContent`). Do not re-check description visibility, schema presence or expansion in the
+  component: two copies drift and the outer separator stops continuing the last row. The Body schema
+  comes wrapped from next-data-model (`OpenApiMediaTypeSchema.wrap`, the `Type` record included);
+  never build diff records in React.
+- **Root viewers.** Both OpenAPI roots render `OpenApiViewerRoot` (common contexts, root `div`, CSS
+  custom properties from `toOpenApiCssVariables`); add a root-level context or CSS property there
+  once. The CSS reading those properties has no numeric fallbacks.
+- **Blocks, not sections.** Each container has a pure builder (`buildRequestBlock`,
+  `buildResponsesBlock`, `buildSecurityBlock`, `buildParametersBlock`, `buildExtensionsBlock`,
+  `buildResponseBlocks`) returning `{ id, head, tail, payload }`, so the parent level can plan before
+  rendering. Builders live in kebab-case `*-blocks.tsx` modules next to the component files
+  (`request-blocks.tsx` → `RequestNodeViewer.tsx`), never in a file that declares components: mixing
+  them disables Fast Refresh (`react-refresh/only-export-components`). Pass the built child blocks
+  to the container component — do not build twice. Shared
+  components that must be split into elements export their pieces (`ExtensionsSectionTitleRow`,
+  `ExtensionsSectionContent`) and keep the composed component byte-identical for AsyncAPI.
+- **Memoised separators.** `SeparatorRow` (on the separator `signature` and the frame positions)
+  and `SecurityFrameRow` are `memo` with value comparators (frame positions and presence are passed
+  as resolved values, not functions), so React skips them on re-render. The planner is pure: no
+  module-level caches for separators or rendered elements — memoise on values, not identity.
+- **View state is one store.** Selections live in `OpenApiViewStateContext` (owner node id → selected
+  node id), owned by `OperationNodeViewer`: a Body's selected media type decides where Request ends,
+  which the operation level needs. Per-container `useState` for a selection breaks the plan.
+  Resolvers with the defaults: `OpenApiViewSelection` (`src/utils/openapi/view-selection.ts`). The
+  store resets **during render** when the operation node object changes (`stateOwner !== node`), not
+  in a `useEffect`: an effect commits one render with the old selections first, and `key={node.id}`
+  never resets (a rebuilt tree has the same path-based ids).
+- **Nested viewers: boundary only.** `JsonSchemaViewer` / `JsonSchemaDiffsViewer` **ignore** a
+  `data-precededby` passed to them (AsyncAPI still passes one; honouring it would shift AsyncAPI rows),
+  so the hook is the opt-in `firstRowPrecededBy` (root title row, or the first child under a
+  suppressed root). JSO: `ExtensionsSectionContent` `contentPrecededBy`. A nested viewer's edge tone
+  is the owning block's whole add / remove only (its inner rows are invisible to the OpenAPI layer).
+- **Collapsible 2nd-level sections** (design: `docs/design/openapi/features/collapsible-sections.md`):
+  `TitleRowUsage.CollapsibleSection` fixes the expander column width (the caret icons differ in width, so
+  an unfixed column moves the title on toggle); the collapsed state is the view-state set
+  `collapsed`, and a collapsed section is planned as its title row alone
+  (`buildCollapsibleSectionElements`). **Indenting content that contains nested JSON Schema / JSO
+  rows:** a transparent `border-left` on each per-side row element (`.one-side-layout > *`,
+  `.side-by-side-layout > div > *`) — it adds to the row's own padding instead of replacing it, and
+  the diff background paints under it, so highlighted rows still fill their side. A padded wrapper
+  would shrink the rows (white strip at the left of highlighted rows); overriding `padding-left`
+  would wipe each row kind's own padding.
+- **Line-height struts are offsets too.** A 12px value in a cell that inherits the page's 24px line
+  height sits in a taller line box — an offset outside the separators. Pin the cell's line height to
+  its text (`.security-prop` / `.security-scope` `line-height: 1rem`).
+- **Badge stubs on synthetic rows.** Separator and frame rows carry `BadgeStub` (same 4px bar and
+  position as `UxDiffFloatingBadge`, `pointer-events: none`, no text) inside the same
+  `relative flex` wrapper shape as `DiffFloatingBadgeWrapper`. Their segments come from the plan
+  (`LayoutSeparatorRow.badge`, `LayoutFrameRow.badge`); an edge's badge must be the badge its row
+  really renders, so the row and the edge read one placement accessor
+  (`resolveHeaderRowSeverityPlacement`) and card rows carry their rendered severity (`CardRow.severity`).
+- **CSS custom properties in `style`** are typed by `src/types/css-custom-properties.d.ts` — no casts.
+- **The user's gap requirements map onto owned halves (session lesson).** Two earlier models were
+  rejected: splitting every gap in half between rows (block-edge rows 4 / 10) and symmetric row
+  padding with separators only between blocks (a changed row at a block edge 4 / 10 again). The
+  approved model (2026-10-16) read "≥ 4px above / below every element, 12px between top-level blocks"
+  literally: each element owns its halves, the level gap splits in two halves continuing the
+  neighbours. The numbers were doubled on 2026-11-01 (rows stuck together): 8px halves, 8 = 4 + 4 level
+  gap, so a row that changed alone was 8 / 8 inside a block and 8 / 12 at a top-level edge. On
+  2026-11-05 the level gap became white unless both neighbours share a tone: 8 / 8 everywhere. When
+  proposing a spacing model, draw the bands of every row kind (block-edge rows included) in plain and
+  diffs mode.
+- **Tuning the numbers.** Edit `DEFAULT_OPENAPI_SPACING_CONFIG` (next-data-model
+  `model/openapi/layout/spacing-config.ts`) only: the shared `DEFAULT_LAYOUT_SPACING_CONFIG` (4 / 4 / 0)
+  also serves AsyncAPI Security sections. In `tests/unit-tests/openapi-layout.test.ts` only the
+  "spacing config" test pins the shipped defaults; the separator / planner tests run on a frozen 4px
+  `CONFIG` and must not follow the defaults. Then update `docs/design/openapi/features/vertical-gaps.md`
+  (and the summary table in `operation-viewer.md`) and regenerate every OpenAPI screenshot suite.
+- **Big layout changes go design-first with approval.** For this kind of change the user asked for a
+  drawn proposal in `docs/design/`, then the algorithm (data computed in next-data-model, every number
+  and rule in one config), then a cost estimate — each approved before any code. Expect the same for
+  comparable requests.
+- **Verify by measuring**, not by eye (testing skill → vertical spacing audit): OpenAPI rows have 0
+  padding; separators 16 inside a block, 24 between top-level blocks (8 next to a nested viewer inside
+  a block, 16 at a top-level edge), with the right tones per side; card frame rows 8 with the border at
+  their outer edge (border → content 16).
+
+## Typography: the JSON Schema property-title look (session lesson)
+
+The JSON Schema property title does **not** get its medium look from `font-weight`: it uses
+`NODE_TITLE_TEXT_CLASSES` (`shared-styles/tailwind-classnames.ts`) = `text-xs text-black
+font-inter-medium` — the static "Inter Medium" font family (`src/index.css`) at the normal 400 weight.
+`TextValue` renders "Inter Variable", so `TextValue` + `textFontWeight` never matches a JSON Schema
+title. For any label that must look like a property title (security prop labels, `Scopes`, scope
+names), reuse `NODE_TITLE_TEXT_CLASSES` on a plain span instead of tuning weights.
+
+## Session tooling traps (Windows / Git Bash harness)
+
+- **Long multi-line edits:** a Bash heredoc (`python - <<'EOF' … EOF`) carrying JSX/TS text with
+  backticks or quotes repeatedly failed with `unexpected EOF while looking for matching '` even with
+  a quoted delimiter. Write the edit script to the scratchpad with the Write tool and run
+  `python <file> <repo-root>` instead.
+- **Deleting tracked files:** use `rm`, not `git rm` — `git rm` stages the deletion, and the user
+  manages the index themselves (unstage with `git reset -q HEAD -- <paths>` if it happened).

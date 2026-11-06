@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { cn } from '@apihub/utils/common/cn'
 import { ChangedPropertyMetaData } from "@netcracker/qubership-apihub-next-data-model/model/abstract/tree-with-diffs/tree-node.interface"
 import type { FC } from 'react'
 import {
@@ -64,7 +65,7 @@ export const TagsWithDiffs: FC<TagsWithDiffsProps> = (props) => {
   }
 
   return (
-    <div className="flex flex-row gap-2 justify-between">
+    <div className={cn("flex flex-row gap-2 justify-between")}>
       {requiredChanged && (
         <BadgeWithDiffs
           label={REQUIRED_TAG}
