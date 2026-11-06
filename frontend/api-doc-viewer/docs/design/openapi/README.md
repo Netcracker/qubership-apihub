@@ -124,4 +124,6 @@ skills, and `AGENTS.md` are pending
 - AsyncAPI stack (closest reference): [../async-api/display-coverage.md](../async-api/display-coverage.md), [../async-api/architecture/](../async-api/architecture/)
 - JSON Schema stack (renders every schema): [../json-schema/display-coverage.md](../json-schema/display-coverage.md)
 - Shared contracts: [../shared/](../shared/)
+- Planned whole-document viewer and portable bundle (replaces the legacy `<apispec-view>`):
+  [features/document-viewer.md](features/document-viewer.md)
 - Fixture catalogues: [../../../packages/samples/openapi/README.md](../../../packages/samples/openapi/README.md), [../../../packages/samples/openapi-diffs/README.md](../../../packages/samples/openapi-diffs/README.md)
