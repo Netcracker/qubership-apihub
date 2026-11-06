@@ -214,7 +214,8 @@ export function pairByKey<T>(
  * Whether an entity belongs to the document pair being compared, given its document on each side.
  *
  * An entity both versions have belongs only to the pair of its two documents; an added or removed one belongs to
- * the pair holding its document. In any other pair the entity was moved between documents, not changed.
+ * the pair holding its document. Any other pair holds either a copy of the entity in a document that does not own
+ * it, or one side of an entity that moved between documents.
  */
 export function belongsToPair<T>(
   home: { previous?: T; current?: T },
@@ -228,6 +229,19 @@ export function belongsToPair<T>(
   if (isNonNullable(current)) { return current === currentDocument }
   if (isNonNullable(previous)) { return previous === previousDocument }
   return false
+}
+
+/** Whether the compared pair owns the operation; any other pair holds a copy of it or one side of a move. */
+export function isOperationOwnedByPair(
+  { previous, current }: OperationPair,
+  previousDocument: ResolvedVersionDocument | undefined,
+  currentDocument: ResolvedVersionDocument | undefined,
+): boolean {
+  return belongsToPair(
+    { previous: previous?.documentId, current: current?.documentId },
+    previousDocument?.slug,
+    currentDocument?.slug,
+  )
 }
 
 export const createPairOperationsMap = (

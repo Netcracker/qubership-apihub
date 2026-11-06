@@ -42,11 +42,11 @@ import {
 } from '../../types'
 import { GRAPHQL_TYPE, GRAPHQL_TYPE_KEYS } from './graphql.consts'
 import {
-  belongsToPair,
   createComparisonDocument,
   createComparisonInternalDocumentId,
   createOperationChange,
   getOperationTags,
+  isOperationOwnedByPair,
   OperationsMap,
 } from '../../components'
 import { createGraphqlApiKindValueAt } from '../../components/compare/graphql.api-kind'
@@ -124,8 +124,7 @@ export const compareDocuments: DocumentsCompare = async (
       if (!current && !previous) {
         throw new Error(`Can't find the ${operationId} operation from documents pair ${prevDoc?.fileId} and ${currDoc?.fileId}`)
       }
-      // a document pair that does not own the operation holds a copy of it, which the owner pair already reports
-      if (!belongsToPair({ previous: previous?.documentId, current: current?.documentId }, prevDoc?.slug, currDoc?.slug)) {
+      if (!isOperationOwnedByPair({ previous, current }, prevDoc, currDoc)) {
         continue
       }
       const operationChanged = Boolean(current && previous)
