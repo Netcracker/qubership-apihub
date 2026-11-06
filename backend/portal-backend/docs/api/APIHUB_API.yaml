@@ -3217,16 +3217,22 @@ paths:
             example: "app.kubernetes.io/version:release-2022.4-20230228.094427-171"
         - name: sortBy
           in: query
-          description: Sort versions by version name or creation date
+          description: |
+            Sort key for the version list.
+            * `version` — version name (lexicographic order).
+            * `createdAt` — publication time of the latest revision (same meaning as `createdAt` on each list item).
+            * `firstPublishedAt` — publication time of the first revision of each version name; publishing a new
+              revision does not change this sort key.
           schema:
             type: string
             enum:
               - version
               - createdAt
+              - firstPublishedAt
             default: version
         - name: sortOrder
           in: query
-          description: Sorting order
+          description: Sorting order (`asc` or `desc`).
           schema:
             type: string
             enum:
