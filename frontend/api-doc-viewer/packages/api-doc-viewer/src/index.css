@@ -1,9 +1,11 @@
 /* Viewer color config (badges, selector tones); @import must precede every other statement. */
 @import url("./components/shared-styles/colors/index.css");
 
+/* stylelint-disable at-rule-no-unknown -- Tailwind directives, expanded by the tailwindcss PostCSS plugin */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+/* stylelint-enable at-rule-no-unknown */
 
 @font-face {
     font-family: Inter;
