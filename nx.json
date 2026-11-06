@@ -81,12 +81,8 @@
         "projects": [
           "apispec-view-root",
           "apispec-view",
-          "apispec-view-diff-block",
-          "apispec-view-diff-elements-core",
           "apispec-view-elements-core",
-          "apispec-view-json-schema-diff-viewer",
-          "apispec-view-json-schema-viewer",
-          "apispec-view-samples"
+          "apispec-view-json-schema-viewer"
         ],
         "projectsRelationship": "fixed"
       },

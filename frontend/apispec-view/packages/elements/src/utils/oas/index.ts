@@ -9,7 +9,6 @@ import { transformOas3Operation, transformOas3Service } from '@netcracker/qubers
 import { transformOas3WithMetaOperation, transformOas3WithMetaService } from '@netcracker/qubership-apihub-http-spec/oas3WithMeta';
 import { encodePointerFragment, pointerToPath } from '@stoplight/json';
 import { IHttpService, NodeType } from '@stoplight/types';
-import { selfDiffMetaKey } from '@netcracker/qubership-apihub-apispec-view-diff-block';
 import { get, isObject, last } from 'lodash';
 import { OpenAPIObject } from 'openapi3-ts';
 import { Spec } from 'swagger-schema-official';
@@ -17,6 +16,8 @@ import { Spec } from 'swagger-schema-official';
 import { oas2SourceMap } from './oas2';
 import { oas3SourceMap } from './oas3';
 import { ISourceNodeMap, NodeTypes, ServiceChildNode, ServiceNode } from './types';
+
+const selfDiffMetaKey = Symbol('selfDiffMeta');
 
 const isOas2 = (parsed: unknown): parsed is Spec =>
   isObject(parsed) &&

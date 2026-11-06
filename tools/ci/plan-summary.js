@@ -212,7 +212,7 @@ if (!affected.size) {
 }
 
 // ---- what the skips actually saved, in units that mean something ------------------------
-const SUITE_SIZE = { 'api-doc-viewer': 947, 'apispec-view': 883, 'class-view': 58 }
+const SUITE_SIZE = { 'api-doc-viewer': 947, 'class-view': 58 }
 const allShots = Object.keys(SUITE_SIZE)
 const skippedShots = allShots.filter((s) => !shots.includes(s))
 const skippedTests = skippedShots.reduce((n, s) => n + SUITE_SIZE[s], 0)
