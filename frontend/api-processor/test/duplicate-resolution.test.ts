@@ -19,7 +19,7 @@ import { documentOf, Editor, notificationsInCategory, LocalRegistry, operationOf
 import { setReportingDuplicate } from '../src/utils'
 import { operationKey } from '../src/components/operations'
 import { reportCollisions } from '../src/components/duplicate-resolution'
-import { BUILD_TYPE, MESSAGE_CATEGORY, MESSAGE_SEVERITY, VERSION_STATUS } from '../src/consts'
+import { REST_API_TYPE, BUILD_TYPE, MESSAGE_CATEGORY, MESSAGE_SEVERITY, VERSION_STATUS } from '../src/consts'
 import { BuildConfig, BuildResult, MessageSeverity } from '../src/types'
 import { NotificationMessage } from '../src/types/package/notifications'
 
@@ -28,18 +28,23 @@ import { NotificationMessage } from '../src/types/package/notifications'
  *
  * Which claimant is indexed, what each of them is told, and when the answer must not depend on the order the
  * config listed them in. An operation is identified by its api type and its id, so only documents of one api
- * type can contest an id, and the severity of the contest follows that type: AsyncAPI an `Error`, REST and
- * GraphQL a `Warning`.
+ * type can contest an id, and the severity of the contest follows that type: AsyncAPI and a compared REST
+ * difference an `Error`, GraphQL a `Warning`.
+ *
+ * A REST contest is judged by content as well: two documents that describe the id identically are not a
+ * collision. The engine behind that is covered by `contested-operations.test.ts` and `rest-duplicates.test.ts`,
+ * the build-level case by `operation-id-collisions.test.ts`.
  *
  * What an `Error` then costs the document is `tolerant-publication.test.ts`; the category, severity and
  * release verdict of each duplicate diagnostic are rows in `notification-catalogue.test.ts`.
  */
 
 /** The two REST documents that both derive `res-data-post` — the cross-document collision fixture. */
+const restKey = (operationId: string): string => operationKey({ apiType: REST_API_TYPE, operationId })
 const CONTESTED_PAIR = 'operation-id-collisions/same-path-different-documents'
 
 const publishContestedPair = (): Promise<BuildResult> =>
-  publishVersion(CONTESTED_PAIR, 'v1', ['spec1.json', 'spec2.json'])
+  publishVersion(CONTESTED_PAIR, 'v1', ['spec1.json', 'spec2.json'], { status: VERSION_STATUS.DRAFT })
 
 // `reportCollisions` grades a contested id once, from every claimant. Today no caller can make two claimants
 // of one key disagree — an operation key carries the api type, and MCP and DDL grade by a constant — so the
@@ -201,7 +206,7 @@ describe('What each document announces, after an incremental rebuild', () => {
 describe('What each document announces, whatever the config order', () => {
   test('should drop the id from the loser even when it was processed first', async () => {
     // reversed: spec2 is processed first and owns the id until spec1 takes it
-    const result = await publishVersion(CONTESTED_PAIR, 'v1', ['spec2.json', 'spec1.json'])
+    const result = await publishVersion(CONTESTED_PAIR, 'v1', ['spec2.json', 'spec1.json'], { status: VERSION_STATUS.DRAFT })
 
     expect(operationOf(result, 'res-data-post').documentId).toBe('spec1')
 
@@ -262,7 +267,7 @@ describe('Two documents of one api type deriving one id', () => {
       .map(({ severity }) => severity)
   }
 
-  // AsyncAPI grades its own collision an `Error`; REST and GraphQL a staged `Warning`
+  // AsyncAPI grades its own collision an `Error` whatever the documents say
   test('should report a collision between two AsyncAPI documents as an Error', async () => {
     const severities = await severitiesFor('duplicate-severity/async-only', ['async-a.yaml', 'async-b.yaml'])
 
@@ -392,8 +397,70 @@ describe('The editor preview agrees with the publication', () => {
   }, 90000)
 })
 
+/*
+ * A REST collision is settled by comparing the documents that claim the id, and the preview has to settle it the
+ * way a publication does, down to the text of the message. The rebuild has no built operations left to read —
+ * the index keeps the winner of each id and nothing else — so the claim every document keeps carries the
+ * metadata the comparison needs.
+ */
+describe('The editor preview compares the documents behind a REST collision', () => {
+  const files = [{ fileId: 'spec1.json' }, { fileId: 'spec2.json' }]
+  const filesWithNoBwcLabel = [{ fileId: 'spec1.json' }, { fileId: 'spec2.json', labels: ['apihub/x-api-kind: no-bwc'] }]
+  const collisionMessage = (reason: string): string =>
+    `Duplicated operationId 'res-data-post' found in different documents: 'spec1' and 'spec2'. The documents ${reason}.`
+
+  const collisionsIn = ({ notifications }: { notifications: NotificationMessage[] }): Array<Partial<NotificationMessage>> =>
+    notifications
+      .filter(({ category }) => category === MESSAGE_CATEGORY.DuplicateOperationId)
+      .map(({ documentId, severity, message }) => ({ documentId, severity, message }))
+      .sort((left, right) => (left.documentId ?? '').localeCompare(right.documentId ?? ''))
+
+  // an identical pair raises nothing and publishes as a release, because nothing is left for the gate to refuse
+  test.each([
+    ['identical documents', 'duplicate-resolution', files, undefined],
+    ['different content', 'operation-id-collisions/same-path-different-documents', files,
+      collisionMessage('describe the operation differently')],
+    // a label never reaches the operation subtree, so only the operation metadata tells the documents apart
+    ['different api kinds', 'duplicate-resolution', filesWithNoBwcLabel, collisionMessage('disagree on apiKind')],
+    ['different api audiences', 'operation-id-collisions/same-path-different-api-audience', files,
+      collisionMessage('disagree on apiAudience')],
+  ] as Array<[string, string, BuildConfig['files'], string | undefined]>)(
+    'should report what a publication reports for %s',
+    async (name, project, pairFiles, message) => {
+      const status = message ? VERSION_STATUS.DRAFT : VERSION_STATUS.RELEASE
+      const registry = LocalRegistry.openPackage(project)
+      // the project is where the files are read from; `packageId` is where the version is published
+      const published = await registry.publish(project, {
+        packageId: `preview-parity/published/${name}`, version: 'v1', status, files: pairFiles,
+      })
+
+      const config = {
+        packageId: `preview-parity/previewed/${name}`,
+        version: 'v1',
+        status,
+        buildType: BUILD_TYPE.BUILD,
+        files: pairFiles,
+      } as BuildConfig
+      const editor = new Editor(project, config, {}, registry)
+      await editor.run()
+      // the rebuild is what grades from the claim lists; a first build grades from what it just built
+      const rebuilt = await editor.update(config, ['spec2.json'])
+
+      const expected = message
+        ? ['spec1', 'spec2'].map(documentId => ({ documentId, severity: MESSAGE_SEVERITY.Error, message }))
+        : []
+      expect(collisionsIn(published)).toEqual(expected)
+      expect(collisionsIn(rebuilt)).toEqual(expected)
+      // the smallest slug owns the id whether or not the documents agree
+      expect(published.operations.get(restKey('res-data-post'))?.documentId).toBe('spec1')
+    },
+    90000,
+  )
+})
+
 // MCP entity ids collide across documents the same way operation ids do, and the preview must grade them the
 // same way a publication does: rebuilding an unrelated file must not clear a collision between two others.
+
 describe('The editor preview agrees with the publication for MCP', () => {
   const MCP_ENDPOINT = '/mcp'
   const mcpFiles = [

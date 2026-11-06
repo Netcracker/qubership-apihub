@@ -55,6 +55,7 @@ import {
 } from '../../consts'
 import { OpenApiExtensionKey } from '@netcracker/qubership-apihub-api-unifier'
 import { OperationsMap } from '../../components'
+import type { ContestedOperationsCompare } from '../../components/contested-operations'
 import { ObjectHashCache } from '../../utils/hashes'
 
 export type BuilderType =
@@ -184,6 +185,8 @@ export interface ApiBuilder<T = any, O = any, M = any> {
   compareOperationsData?: OperationDataCompare<O>
   compareDocuments?: DocumentsCompare
   compareDdlDocuments?: DdlDocumentsCompare
+  /** Compares two documents that claim one operationId; without it, every such claim is reported. */
+  compareContestedOperations?: ContestedOperationsCompare
   createNormalizedOperationId?: OperationIdNormalizer
   createExportDocument?: DocumentExporter
 }

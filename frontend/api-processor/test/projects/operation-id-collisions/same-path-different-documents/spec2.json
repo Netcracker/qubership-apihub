@@ -22,7 +22,7 @@
         },
         "responses": {
           "201": {
-            "description": "Description",
+            "description": "Another description",
             "content": {
               "application/json;charset=UTF-8": {
                 "schema": {

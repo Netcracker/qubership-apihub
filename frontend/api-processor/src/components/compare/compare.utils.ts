@@ -40,6 +40,7 @@ import {
   difference,
   getSplittedVersionKey,
   intersection,
+  isNonNullable,
   removeFirstSlash,
   serializeDocument,
   SLUG_OPTIONS_OPERATION_ID,
@@ -207,6 +208,26 @@ export function pairByKey<T>(
     current: currentByKey[key],
   })
   return result
+}
+
+/**
+ * Whether an entity belongs to the document pair being compared, given its document on each side.
+ *
+ * An entity both versions have belongs only to the pair of its two documents; an added or removed one belongs to
+ * the pair holding its document. In any other pair the entity was moved between documents, not changed.
+ */
+export function belongsToPair<T>(
+  home: { previous?: T; current?: T },
+  previousDocument: T | undefined,
+  currentDocument: T | undefined,
+): boolean {
+  const { previous, current } = home
+  if (isNonNullable(previous) && isNonNullable(current)) {
+    return previous === previousDocument && current === currentDocument
+  }
+  if (isNonNullable(current)) { return current === currentDocument }
+  if (isNonNullable(previous)) { return previous === previousDocument }
+  return false
 }
 
 export const createPairOperationsMap = (

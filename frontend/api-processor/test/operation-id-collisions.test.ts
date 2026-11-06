@@ -289,7 +289,7 @@ describe('Operation ID collisions', () => {
       const result = await pkg.publish(pkg.packageId, {
         packageId: pkg.packageId,
         version: 'v1',
-        // draft: an intra-document duplicate does block a release, which release-gate.test.ts covers
+        // draft: the two documents differ, so the collision is an `Error` and a release would be refused
         status: VERSION_STATUS.DRAFT,
         files: [
           { fileId: 'spec1.json' },
@@ -298,51 +298,52 @@ describe('Operation ID collisions', () => {
       })
 
       // denormalised: one notification per involved document, same text — a user looking at either sees it
-      const message = 'Duplicated operationId \'res-data-post\' found in different documents: \'spec1\' and \'spec2\''
+      const message = 'Duplicated operationId \'res-data-post\' found in different documents: \'spec1\' and \'spec2\'. The documents describe the operation differently.'
       expect(result).toEqual(notificationsMatcher([
-        notificationMatcher(MESSAGE_SEVERITY.Warning, message, { category: MESSAGE_CATEGORY.DuplicateOperationId, documentId: 'spec1' }),
-        notificationMatcher(MESSAGE_SEVERITY.Warning, message, { category: MESSAGE_CATEGORY.DuplicateOperationId, documentId: 'spec2' }),
+        notificationMatcher(MESSAGE_SEVERITY.Error, message, { category: MESSAGE_CATEGORY.DuplicateOperationId, documentId: 'spec1' }),
+        notificationMatcher(MESSAGE_SEVERITY.Error, message, { category: MESSAGE_CATEGORY.DuplicateOperationId, documentId: 'spec2' }),
       ]))
 
       // the lexicographically smallest documentId wins the index, whatever order the config listed them in
       expect(operationOf(result, 'res-data-post').documentId).toBe('spec1')
     })
 
-    // Ideally we want to avoid situation when operationIds are duplicated across documents
-    // and throw error when publishing such version.
-    // We decided to move to this target gradually to avoid breaking existing published versions.
-    // So, for now we want to be able to build changelog and other build results in this case.
+    // Two documents that differ refuse a release now, so both versions here are drafts. A draft still has to
+    // produce a changelog and the rest of the build results: versions published before the rule exist, and
+    // comparing a new version against one of them has to keep working.
     test('Should build changelog when duplicated operations exist across documents', async () => {
       const pkg = LocalRegistry.openPackage('operation-id-collisions/same-path-different-documents-changelog')
 
       const v1Result = await pkg.publish(pkg.packageId, {
         packageId: pkg.packageId,
         version: 'v1',
+        status: VERSION_STATUS.DRAFT,
         files: [
           { fileId: 'v1/spec1.json' },
           { fileId: 'v1/spec2.json' },
         ],
       })
 
-      const v1Message = 'Duplicated operationId \'res-data-post\' found in different documents: \'v1-spec1\' and \'v1-spec2\''
+      const v1Message = 'Duplicated operationId \'res-data-post\' found in different documents: \'v1-spec1\' and \'v1-spec2\'. The documents describe the operation differently.'
       expect(v1Result).toEqual(notificationsMatcher([
-        notificationMatcher(MESSAGE_SEVERITY.Warning, v1Message, { documentId: 'v1-spec1' }),
-        notificationMatcher(MESSAGE_SEVERITY.Warning, v1Message, { documentId: 'v1-spec2' }),
+        notificationMatcher(MESSAGE_SEVERITY.Error, v1Message, { documentId: 'v1-spec1' }),
+        notificationMatcher(MESSAGE_SEVERITY.Error, v1Message, { documentId: 'v1-spec2' }),
       ]))
 
       const v2Result = await pkg.publish(pkg.packageId, {
         packageId: pkg.packageId,
         version: 'v2',
+        status: VERSION_STATUS.DRAFT,
         files: [
           { fileId: 'v2/spec1.json' },
           { fileId: 'v2/spec2.json' },
         ],
       })
 
-      const v2Message = 'Duplicated operationId \'res-data-post\' found in different documents: \'v2-spec1\' and \'v2-spec2\''
+      const v2Message = 'Duplicated operationId \'res-data-post\' found in different documents: \'v2-spec1\' and \'v2-spec2\'. The documents describe the operation differently.'
       expect(v2Result).toEqual(notificationsMatcher([
-        notificationMatcher(MESSAGE_SEVERITY.Warning, v2Message, { documentId: 'v2-spec1' }),
-        notificationMatcher(MESSAGE_SEVERITY.Warning, v2Message, { documentId: 'v2-spec2' }),
+        notificationMatcher(MESSAGE_SEVERITY.Error, v2Message, { documentId: 'v2-spec1' }),
+        notificationMatcher(MESSAGE_SEVERITY.Error, v2Message, { documentId: 'v2-spec2' }),
       ]))
 
       const editor = changelogEditor(pkg.packageId)

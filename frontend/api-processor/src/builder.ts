@@ -90,7 +90,12 @@ import {
   reportMcpCollisionsOf,
   validateMcpCapabilities,
 } from './components/mcp'
-import { operationKey, processOperationDocument, reportOperationCollisionsOf } from './components/operations'
+import {
+  operationKey,
+  processOperationDocument,
+  reportOperationCollisionsOf,
+  toOperationClaim,
+} from './components/operations'
 import JSZip from 'jszip'
 import { calculateHistoryForDeprecatedItems } from './components/deprecated'
 import { JsZipTool } from './components/js-zip-tool'
@@ -771,7 +776,7 @@ export class PackageVersionBuilder implements IPackageVersionBuilder {
     // seeded here has to carry its claims or its operations can never be evicted. Re-registering the same
     // document without operations leaves the claims it already had, which still name the entries in the index.
     if (operations.length) {
-      document.operationClaims = operations.map(({ operationId, apiType }) => ({ operationId, apiType }))
+      document.operationClaims = operations.map(toOperationClaim)
     }
     for (const operation of operations) {
       this.operations.set(operationKey(operation), operation)
@@ -959,7 +964,7 @@ export class PackageVersionBuilder implements IPackageVersionBuilder {
 
     // graded from the claim lists every document keeps, over the whole claimant set, so the preview and a
     // publication reach the same verdict
-    reportOperationCollisionsOf(this.documents.values(), this.notifications)
+    reportOperationCollisionsOf(this.documents.values(), this.notifications, this.apiBuilders)
     reportMcpCollisionsOf(this.documents.values(), this.notifications)
 
     // same reconciliation as a full build: a rebuilt document may have lost an id to a smaller slug

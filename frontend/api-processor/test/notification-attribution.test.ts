@@ -42,9 +42,9 @@ import { PackageVersionBuilder } from '../src/builder'
 // that forgets a category or ships a fileId where a slug belongs fails here rather than in production.
 describe('Notification attribution invariants', () => {
   const publish = (projectId: string, files: string[]): Promise<BuildResult> =>
-    publishVersion(projectId, 'v1', files)
+    publishVersion(projectId, 'v1', files, { status: VERSION_STATUS.DRAFT })
 
-  // The flag says whether the case raises a build-phase `Error`; none of the three does today, and the
+  // The flag says whether the case raises a build-phase `Error`; the duplicate pair does, and the
   // attribution test below asserts nothing on a case that raises none, so it pins which is which.
   const CASES: Array<[string, () => Promise<BuildResult>, boolean]> = [
     // a document whose references do not resolve — the `ref-*` family comes from this one site
@@ -52,7 +52,7 @@ describe('Notification attribution invariants', () => {
     // a path that fails validation — `double-slash-path`
     ['invalid paths', () => publish('operation-id-collisions/double-slash-in-path', ['spec.json']), false],
     // the same operationId in two documents — `duplicate-operation-id`, the one cross-document case today
-    ['duplicate operation ids', () => publish('operation-id-collisions/same-path-different-documents', ['spec1.json', 'spec2.json']), false],
+    ['duplicate operation ids', () => publish('operation-id-collisions/same-path-different-documents', ['spec1.json', 'spec2.json']), true],
   ]
 
   const KNOWN_CATEGORIES = new Set<string>(Object.values(MESSAGE_CATEGORY))
@@ -97,7 +97,7 @@ describe('Notification attribution invariants', () => {
 describe('Notification invariants hold in the published archive', () => {
   test('should categorise every notification in notifications.json and name a real document', async () => {
     const packageId = 'operation-id-collisions/same-path-different-documents'
-    await publishVersion(packageId, 'v1', ['spec1.json', 'spec2.json'])
+    await publishVersion(packageId, 'v1', ['spec1.json', 'spec2.json'], { status: VERSION_STATUS.DRAFT })
 
     const versionPath = `${packageId}/v1`
     const notifications = (await loadJsonFromRegistry(VERSIONS_PATH, versionPath, 'notifications.json')).notifications as Array<{ category: string; severity: number; documentId?: string }>

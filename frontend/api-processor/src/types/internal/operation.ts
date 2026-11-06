@@ -57,6 +57,19 @@ export interface ApiOperation<T = any, M = any> {
   versionInternalDocumentId: string
 }
 
+/**
+ * Operation fields a diff of the two documents that derived it cannot see: both come from the document `info`
+ * (`apiKind` also from a build label), and `info` is never attributed to an operation. Add a field only after
+ * checking that the diff misses it.
+ */
+export type ComparedOperationFields = Pick<ApiOperation, 'apiKind' | 'apiAudience'>
+
+/**
+ * The part of each derived operation a document keeps, to grade collisions once the operations are gone: the index
+ * keeps only the winner of each id.
+ */
+export type OperationClaim = Pick<ApiOperation, 'operationId' | 'apiType'> & ComparedOperationFields
+
 // `Realm` is included so the DDL version-internal / comparison documents serialize through the same
 // `serializeDocument` / `denormalize` path as REST (AD3; plan Tasks 3 & 8).
 export type ApiDocument = OpenAPIV3.Document | GraphApiSchema | AsyncAPIV3.AsyncAPIObject | Realm

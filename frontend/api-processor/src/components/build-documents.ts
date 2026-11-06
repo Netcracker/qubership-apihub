@@ -27,7 +27,14 @@ import { DDL_CONTRACT_TYPE, MCP_CONTRACT_TYPE, MESSAGE_CATEGORY, MESSAGE_SEVERIT
 import { MessageCategory } from '../types/package/notifications'
 import { ParsedDdlData, validateDdlDocument } from '../apitypes/ddl'
 import { buildDocumentDdlEntities, indexDdlEntities, reportDdlCollisions } from './ddl'
-import { buildDocumentOperations, indexOperations, OperationClaim, operationKey, reportOperationCollisions } from './operations'
+import {
+  buildDocumentOperations,
+  collectOperationClaim,
+  indexOperations,
+  operationKey,
+  reportOperationCollisions,
+} from './operations'
+import { DocumentClaim } from './contested-operations'
 import {
   buildDocumentMcpEntities,
   indexMcpEntities,
@@ -93,13 +100,13 @@ async function buildAllDocuments(
  * Runs before anything is indexed: one message names every document that claimed the id, so they all have to
  * be collected before any of them is reported.
  */
-function reportIdCollisions(built: DocumentContent[], buildResult: BuildResult): void {
-  const operationClaims: Claims<OperationClaim> = new Map()
+function reportIdCollisions(built: DocumentContent[], ctx: BuilderContext, buildResult: BuildResult): void {
+  const operationClaims: Claims<DocumentClaim> = new Map()
   const mcpClaims: Claims<McpClaim> = new Map()
   const ddlClaims: Claims<DdlEntity> = new Map()
   for (const { document, operations, mcpEntities, ddlEntities } of built) {
-    for (const { operationId, apiType } of operations ?? []) {
-      collectClaim(operationClaims, operationKey({ apiType, operationId }), { documentId: document.slug, apiType })
+    for (const operation of operations ?? []) {
+      collectOperationClaim(operationClaims, document, operation)
     }
     for (const { mcpEntityId } of mcpEntities ?? []) {
       collectClaim(mcpClaims, mcpEntityId, { documentId: document.slug })
@@ -107,7 +114,7 @@ function reportIdCollisions(built: DocumentContent[], buildResult: BuildResult):
     for (const entity of ddlEntities ?? []) { collectClaim(ddlClaims, entity.ddlEntityId, entity) }
   }
 
-  reportOperationCollisions(operationClaims, buildResult.notifications)
+  reportOperationCollisions(operationClaims, buildResult.notifications, ctx.apiBuilders)
   reportMcpCollisions(mcpClaims, buildResult.notifications)
   reportDdlCollisions(ddlClaims, buildResult.notifications)
 }
@@ -137,7 +144,7 @@ export async function buildVersionContent(
   buildResult: BuildResult,
 ): Promise<void> {
   const built = await buildAllDocuments(files, ctx, buildResult)
-  reportIdCollisions(built, buildResult)
+  reportIdCollisions(built, ctx, buildResult)
   indexBuiltIds(built, buildResult)
 
   // whole-set cross-checks: they need every entity the version's documents built, which is what the index

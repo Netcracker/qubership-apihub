@@ -207,9 +207,9 @@ const CASES: Case[] = [
     config: { files: [file('spec.yaml')] },
   },
   {
-    name: 'one operationId claimed by two documents',
+    name: 'one operationId claimed by two documents whose content differs',
     category: MESSAGE_CATEGORY.DuplicateOperationId,
-    severity: MESSAGE_SEVERITY.Warning, attributed: true, blocksRelease: false,
+    severity: MESSAGE_SEVERITY.Error, attributed: true, blocksRelease: true,
     project: 'operation-id-collisions/same-path-different-documents',
     config: { files: [file('spec1.json'), file('spec2.json')] },
   },
