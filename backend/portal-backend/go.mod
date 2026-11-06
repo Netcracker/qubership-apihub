@@ -26,7 +26,7 @@ require (
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/russellhaering/goxmldsig v1.6.1
 	github.com/shaj13/go-guardian/v2 v2.11.6
-	github.com/shaj13/libcache v1.0.4
+	github.com/shaj13/libcache v1.2.1
 	github.com/sirupsen/logrus v1.10.2
 	github.com/spf13/viper v1.20.1
 	github.com/stretchr/testify v1.12.1
