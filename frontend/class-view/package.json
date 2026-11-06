@@ -59,7 +59,7 @@
     "@types/jest": "catalog:",
     "@types/jest-image-snapshot": "6.1.0",
     "@types/node": "catalog:",
-    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.72.1",
     "@typescript-eslint/parser": "^6.0.0",
     "eslint": "^8.45.0",
     "eslint-plugin-storybook": "catalog:",

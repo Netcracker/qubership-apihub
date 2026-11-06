@@ -60,7 +60,7 @@
     "@types/jest": "catalog:",
     "@types/node": "catalog:",
     "@types/object-hash": "3.0.6",
-    "@typescript-eslint/eslint-plugin": "6.0.0",
+    "@typescript-eslint/eslint-plugin": "8.72.1",
     "@typescript-eslint/parser": "6.0.0",
     "eslint": "8.48.0",
     "graphql": "16.12.0",
