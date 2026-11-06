@@ -22,6 +22,8 @@ import type { VersionStatus } from '../entities/version-status'
 import { DRAFT_VERSION_STATUS, NO_PREVIOUS_RELEASE_VERSION_OPTION } from '../entities/version-status'
 import type { VersionDialogFormProps, VersionFormData } from '../components/VersionDialogForm'
 import { VersionDialogForm } from '../components/VersionDialogForm'
+import type { Package } from '../entities/packages'
+import { DASHBOARD_KIND, PACKAGE_KIND } from '../entities/packages'
 
 const meta: Meta<typeof VersionDialogForm> = {
   component: VersionDialogForm,
@@ -64,6 +66,29 @@ export const DefaultStory: Story = {
     isPublishing: false,
     hideDescriptorField: true,
     hideDescriptorVersionField: true,
+  },
+  render: StoryComponent,
+}
+
+const CURRENT_PACKAGE: Package = {
+  key: 'QS.WS.CURRENT',
+  alias: 'CURRENT',
+  name: 'Current package',
+  kind: PACKAGE_KIND,
+}
+
+export const WithPreviousVersionPackageStory: Story = {
+  name: 'With previous version package',
+  args: {
+    ...DefaultStory.args,
+    packageObj: CURRENT_PACKAGE,
+    previousVersionsPackageKey: CURRENT_PACKAGE.key,
+    previousVersionPackages: [
+      CURRENT_PACKAGE,
+      { key: 'QS.WS.OTHER', alias: 'OTHER', name: 'Other package', kind: PACKAGE_KIND },
+      { key: 'QS.WS.DASHBOARD', alias: 'DASHBOARD', name: 'Some dashboard', kind: DASHBOARD_KIND },
+    ],
+    hidePreviousVersionPackageField: false,
   },
   render: StoryComponent,
 }
