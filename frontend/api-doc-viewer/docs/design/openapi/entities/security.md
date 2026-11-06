@@ -142,7 +142,7 @@ Sketches: [../features/security-redesign.md](../features/security-redesign.md) �
 | Title (h4) | always | scheme name; subheader: **gray type text** (JSON Schema / DDL type-label look), not a badge | `TitleRow` |
 | Unresolved | `!isResolved` | muted `Security scheme is not defined in components.` | — |
 | Description | `description` | markdown, right after the title | `DescriptionRow` |
-| `<Place> parameter name` | apiKey, `name` | value `name`; the label prefix comes from `in` per side: `Header` / `Query` / `Cookie` / `Path` (`OpenApiDisplayLabels.apiKeyParameterNameLabel`) — the former `In` and `Name` rows merged. An `in` replace paints the row yellow and puts the yellow text highlighter on the place word only (`Header` / `Query` …), never on ` parameter name` | `SecuritySchemeParameterNameRow` (an `in` change counts here) |
+| `<Place> parameter name` | apiKey, `name` | value `name`; the label prefix comes from `in` per side: `Header` / `Query` / `Cookie` / `Path` (`OpenApiDisplayLabels.apiKeyParameterNameLabel`) — the former `In` and `Name` rows merged. An `in` replace paints the row yellow and puts the yellow text highlighter on the place word only (`Header` / `Query` …), never on the `parameter name` part | `SecuritySchemeParameterNameRow` (an `in` change counts here) |
 | `HTTP Authorization Scheme` | http, `scheme` | `basic`, `bearer`, … from the scheme, never hard-coded | `SecuritySchemeHttpSchemeRow` |
 | `Bearer Format` | http, `bearerFormat` | `JWT`, `PAT`, … | `SecuritySchemeBearerFormatRow` |
 | `OpenID Connect URL` | openIdConnect | link | `SecuritySchemeOpenIdConnectUrlRow` |
@@ -182,6 +182,7 @@ row, the flow headers included, is one element of the card's `StackLayout` (leve
 A scope is **required** when the selected requirement lists it (Q-S2). Required scopes are shown
 **only** as `*` on scope rows — there is no `Required scopes` / `Required roles` prop row for any
 scheme type (decided 2026-10-14):
+
 - oauth2: `*` on the scope rows of every flow that declares the scope; required scopes no flow
   declares are listed in the scheme's own `Scopes ▾` list after the flow parts;
 - openIdConnect and OAS 3.1 roles on other types (no flows): every requirement scope is a row with

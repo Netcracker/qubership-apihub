@@ -39,6 +39,7 @@ The UI and `apispec-view` use the viewers. See the
 
 Inside this repository the consumers depend on the package as `workspace:^`. Other applications install it from the
 registry:
+
 ```bash
 npm add @netcracker/qubership-apihub-api-doc-viewer
 ```
@@ -365,6 +366,7 @@ const prepared = denormalize(normalize(graphApi, options), options)
 | `NavigationLinkComponent`, `NavigationLinkProps` | type | Foreign-key link renderer and its props `{ href, className?, children }` |
 | `buildDiffCauseByPathCausedAt` | function | `(path: JsonPath \| undefined) => string \| undefined` — formats `caused by <path> change` for a change caused at `path`; `undefined` for an empty or missing path |
 | `buildOpenApiDiffCause` | function | *Deprecated — use `buildDiffCauseByPathCausedAt`.* Formats `caused by components.… change` from an `apiDiff` `Diff`'s declaration paths |
+
 ## Development
 
 The module is a pnpm workspace with these packages:

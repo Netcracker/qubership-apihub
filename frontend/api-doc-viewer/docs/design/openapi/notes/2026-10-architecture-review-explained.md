@@ -138,7 +138,7 @@ renders it; the toolbar's "no toolbar on this side" uses the existing `NodeLevel
 
 **Visible change** — only the hover text of scope-row badges (OpenAPI and AsyncAPI alike):
 
-```
+```text
 BEFORE                                       │ AFTER
  Scopes ▾                                    │  Scopes ▾
 ▌  read:pets   Read your pets                │    read:pets   Read all your pets     ← yellow row, risky badge
@@ -167,7 +167,7 @@ AsyncAPI-only `API key location` row; the card renders the list.
 
 **Visible change:** none:
 
-```
+```text
 ▌ petstore_auth   OAuth 2.0          (same rows, same order, same badges —
   HTTP authorization scheme  bearer   now described once, in the data layer)
   Bearer format              JWT
@@ -186,7 +186,7 @@ alternative's own change summary).
 **How markers look** — the marker colour is the strongest change type in *(own summary ∪
 descendant summary)* of the option:
 
-```
+```text
 Response codes (OpenAPI, V9):      [200]°   [[201]]   [404]
                                      │         └ wholly added: green border, no marker
                                      └ something inside response 200 changed
@@ -275,7 +275,7 @@ The AsyncAPI security sections use the same engine for their toolbar and framed 
 
 **Problem.** Who imports what today:
 
-```
+```text
 AsyncApiOperationViewer/AsyncApiSecuritySection.tsx ──┐
 shared-components/Security/SecuritySchemeCardBase.tsx ┼──► OpenApiOperationViewer/OpenApiLayout.tsx
 shared-components/Security/security-section-blocks.ts ┘    OpenApiOperationViewer/OpenApiViewerContext.ts
@@ -308,7 +308,7 @@ neutral names and a neutral home:
 
 After:
 
-```
+```text
 AsyncAPI section ─┐                           ┌─ OpenAPI containers
 shared Security  ─┼──► shared-components/Layout/StackLayout ──► ndm model/abstract/layout
 shared Separator ─┘          ▲ LayoutSpacingContext                 ▲
@@ -363,7 +363,7 @@ stays (DDL's own constant, same value).
 
 Who imports what now:
 
-```
+```text
 AsyncAPI section ─┐
 shared Security  ─┼──► shared-components/Layout/StackLayout ──► ndm model/abstract/layout
 OpenAPI blocks   ─┘          ▲ useLayoutSpacing()                  ▲            ▲
@@ -418,7 +418,7 @@ components.
 The Body does not show the schema root directly. Like AsyncAPI, it wraps the schema in a synthetic
 object with one property `Type`, so the first row of the nested viewer reads `Type  object`:
 
-```
+```text
 Body  [application/json]°
   Type  object                  <- synthetic property: the whole schema
     id     string
@@ -453,7 +453,7 @@ To plan the separators around the Body, the parent level must know the Body's fi
 element **before** it renders it. The Body then plans its own elements inside. Both sides answer the
 same questions independently:
 
-```
+```text
 block builder (request-blocks.tsx)          component (RequestBodyNodeViewer → MediaTypeContentSection)
   description shown?   ─── same rule ───►     description shown?        (computed again)
   title / description edges ─────────►       title / description edges (computed again)
@@ -467,7 +467,7 @@ What can go wrong: the outer separator below the Body takes its colour from what
 believes is the Body's last element. Say a media type was added (green), and one day only the
 component's schema check is changed so that it shows a schema the parent's check rejects:
 
-```
+```text
 both copies agree                        the copies disagree
 
 Body  [application/json]°                Body  [application/json]°
@@ -503,7 +503,7 @@ The CSS then reads those properties with fallbacks: `var(--collapsible-section-e
 
 **Fix.**
 
-```
+```text
 OpenApiOperationViewer                    OpenApiOperationDiffsViewer
   builds the plain tree                     builds the with-diffs tree
         │                                   DiffMetaKeys / DiffTypes / UnchangedBlocks providers
@@ -535,7 +535,7 @@ presence diff, a synthetic add whose diff type (breaking / non-breaking / annota
 the badge would change. So the wrapper is built by a next-data-model **model accessor** reading the
 built tree: still no diff data assembled in React, and exactly the diff used today.
 
-```
+```text
 before                                         after
 MediaTypeContentSection (React)                MediaTypeContentSection (React)
   wrapJsonSchemaForDiffsViewer('Type',           OpenApiMediaTypeSchema.wrap(mediaType, diffsMetaKey)
@@ -545,7 +545,7 @@ MediaTypeContentSection (React)                MediaTypeContentSection (React)
 
 **F6 after the change.** One list, two readers:
 
-```
+```text
 buildRequestBodyBlock / buildResponseBodyBlock
   elements = OpenApiBlockEdges.bodyElements(title, description?, selected, { expanded })
      │                                   │
@@ -586,7 +586,7 @@ options are nested nodes of the container they belong to.
 
 **The new shape:**
 
-```
+```text
 operation                                   security (simple: own value, title row)
 ├─ responses  ◆ complex                     └─ securityAlternatives ◆ complex  (the toolbar)
 │   ╎ 200 ╎ 2XX ╎ default   (nested)             ╎ alternative 0 ╎ alternative 1   (nested)

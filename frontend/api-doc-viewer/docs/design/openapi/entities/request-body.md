@@ -73,6 +73,7 @@ Without it a Body is its title row and media types.
 | Wrapping | next-data-model `OpenApiMediaTypeSchema.wrap(mediaType, diffsMetaKey?)` (`model/openapi/media-type-schema.ts`): the schema under one property `OpenApiDisplayLabels.WRAPPED_BODY_SCHEMA_TITLE` (`'Type'`), `SUPPRESS_ROOT_NESTING_INDICATOR_CUSTOMIZATION_OPTIONS` — the AsyncAPI payload rendering (Q4; AsyncAPI still wraps with its viewer helper). The viewer only memoises the call per selected media type (architecture review 2026-10, F5). |
 | Diffs | with the diffs key, the wrapper carries the record `{ Type: <the media type's whole add / remove> }` (`SectionRowDiffs.takeHeaderRowDiff(mediaType)`, inherited from a wholly added / removed owner included) so the root property is painted; diffs inside the schema are already on the merged schema |
 | Elements | which Body elements exist (title, description, schema) is decided once by the block builder with `OpenApiBlockEdges.bodyElements` and passed to `MediaTypeContentSection`, which renders them (F6) |
+
 ## Extensions
 
 Approved split (2026-10-08). The request side has **no separate Extensions subsection**: every

@@ -5,6 +5,7 @@ later step (§5). The normative rules now live in [../entities/security.md](../e
 this file keeps the approved sketches. Interpretations Q-S1–Q-S9 below were approved as written.
 
 The templates below are text sketches, not pixel layouts:
+
 - `[ … ]` is a selector button;
 - `‹` / `›` are the arrow buttons;
 - `*` is the red required asterisk;
@@ -171,7 +172,7 @@ api_key        (gray API key)              │ api_key        (gray API key)
 - A value highlighter is used for `replace` only; added and removed values are not highlighted
  (requirement Diffs-4).
 - An apiKey location (`in`) replace highlights only the place word of the label (`Header`,
-  `Query`, `Cookie`, `Path`); ` parameter name` and the value stay unhighlighted.
+  `Query`, `Cookie`, `Path`); the `parameter name` part and the value stay unhighlighted.
 
 ### 4.5 A scope's "required" changed (OAuth2)
 

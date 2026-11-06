@@ -40,6 +40,7 @@ built from three kinds of combinations over one section list in **display order*
 | **All sections** (+ `noHeading`) | The full page. | The only place where both response codes with headers and body meet every other section. |
 
 Constraints:
+
 - A 1-code and a 2-codes responses section are never combined. As a result, windows never reach
   the 2-codes sections; they appear only in pairs and in all-sections. This is intended.
 - The section list must follow the viewer's display order (`OPENAPI_SECTION_ORDER` and the
