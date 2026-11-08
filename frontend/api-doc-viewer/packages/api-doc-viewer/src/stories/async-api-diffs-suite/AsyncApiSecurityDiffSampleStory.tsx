@@ -2,9 +2,10 @@ import { AsyncApiOperationDiffsViewer } from "@apihub/components/AsyncApiOperati
 import { DETAILED_DISPLAY_MODE, DisplayMode } from "@apihub/types/DisplayMode";
 import { FC, useMemo } from "react";
 import { ASYNC_API_SECURITY_OPERATION_KEYS } from "../async-api-suite/AsyncApiSecuritySampleStory";
+import { type AutoSwitchArgs } from "../shared/auto-switch";
 import { createAsyncApiViewerArgs } from "./async-api-diffs-utils";
 
-export type AsyncApiSecurityDiffSampleStoryProps = {
+export type AsyncApiSecurityDiffSampleStoryProps = AutoSwitchArgs & {
   caseId: string;
   beforeYaml: string;
   afterYaml: string;

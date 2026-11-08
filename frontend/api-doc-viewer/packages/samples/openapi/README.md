@@ -40,7 +40,7 @@ Total: 288 cases.
 `OpenAPI Operation Suite/<OAS version>/<Group>` stories under `packages/api-doc-viewer/src/stories/openapi-suite/`
 (controls: display mode, default `detailed`; auto-switch, default on; no heading); ITs
 `packages/api-doc-viewer/src/it/openapi-suite/<dialect>-<group>.it-test.ts` capture every case in
-`detailed`, after selecting the case's options (`switchOpenApiOptions`). Display mode `simple`
+`detailed`, after the story `play` selects the case's options (`playAutoSwitch`). Display mode `simple`
 is covered by `OpenAPI Operation Suite (Display Mode = simple)` (`packages/samples/openapi-display-mode-simple/`).
 
 ## Regenerate

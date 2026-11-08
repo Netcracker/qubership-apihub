@@ -5,7 +5,8 @@ import {
   OPENAPI_ARROW_BUTTONS_OPERATION,
   openApiArrowButtonsCases,
 } from "@netcracker/qubership-apihub-samples";
-import { OPENAPI_STORY_ARG_TYPES, OPENAPI_STORY_DEFAULT_ARGS } from "../openapi-suite/openapi-story-args";
+import { OPENAPI_SUITE_STORY_ARG_TYPES, OPENAPI_SUITE_STORY_DEFAULT_ARGS } from "../openapi-suite/openapi-story-args";
+import { playAutoSwitch } from "../shared/auto-switch";
 import { OpenApiSampleStory } from "../openapi-suite/OpenApiSampleStory";
 
 /**
@@ -18,8 +19,9 @@ import { OpenApiSampleStory } from "../openapi-suite/OpenApiSampleStory";
 const meta = {
   title: "OpenAPI Operation Suite (Arrow Buttons)/Security Toolbar",
   component: OpenApiSampleStory,
-  argTypes: OPENAPI_STORY_ARG_TYPES,
-  args: OPENAPI_STORY_DEFAULT_ARGS,
+  argTypes: OPENAPI_SUITE_STORY_ARG_TYPES,
+  args: OPENAPI_SUITE_STORY_DEFAULT_ARGS,
+  play: playAutoSwitch,
 } satisfies Meta<typeof OpenApiSampleStory>;
 
 export default meta;

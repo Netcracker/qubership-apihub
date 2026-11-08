@@ -15,21 +15,13 @@
  */
 
 import { Page } from 'puppeteer'
-import { switchCombinerNodesToChangedVariant } from '../../utils/combiner-changed-variant'
-import { switchOpenApiOptions } from '../../utils/openapi/switch-openapi-options'
 
 /**
  * Shared "ready for screenshot" waits for screenshot ITs. Hand-written and generated ITs import
- * these instead of declaring local copies (generators in `bin/` emit the import).
+ * these instead of declaring local copies (generators in `bin/` emit the import). None of them
+ * selects options: the story `play` does (`src/stories/shared/auto-switch.ts`), and `storyPage`
+ * waits for it.
  */
-
-export type JsonSchemaViewerWaitOptions = {
-  /**
-   * Switch oneOf/anyOf combiner nodes to the variant that contains the diff before capture.
-   * Changes rendered content, so it is opt-in per suite (a no-op on pages without combiners).
-   */
-  switchCombinerVariant?: boolean
-}
 
 /** Document loaded and two animation frames painted (layout settled after the last React commit). */
 export async function waitForRenderingComplete(page: Page): Promise<void> {
@@ -39,11 +31,7 @@ export async function waitForRenderingComplete(page: Page): Promise<void> {
   ))
 }
 
-async function waitForJsonSchemaTree(
-  page: Page,
-  viewerTestId: string,
-  options: JsonSchemaViewerWaitOptions,
-): Promise<void> {
+async function waitForJsonSchemaTree(page: Page, viewerTestId: string): Promise<void> {
   await page.waitForSelector(`[data-testid="${viewerTestId}"]`, { visible: true })
   // A combiner root renders through CombinerNodeViewer, which emits no [data-name="JsonNode"]
   // when its active option is a scalar or another combiner - waiting on JsonNode alone hangs
@@ -58,23 +46,14 @@ async function waitForJsonSchemaTree(
     return false
   })
   await waitForRenderingComplete(page)
-  if (options.switchCombinerVariant) {
-    await page.evaluate(switchCombinerNodesToChangedVariant)
-  }
 }
 
-export async function waitForJsonSchemaViewer(
-  page: Page,
-  options: JsonSchemaViewerWaitOptions = {},
-): Promise<void> {
-  await waitForJsonSchemaTree(page, 'json-schema-viewer', options)
+export async function waitForJsonSchemaViewer(page: Page): Promise<void> {
+  await waitForJsonSchemaTree(page, 'json-schema-viewer')
 }
 
-export async function waitForJsonSchemaDiffsViewer(
-  page: Page,
-  options: JsonSchemaViewerWaitOptions = {},
-): Promise<void> {
-  await waitForJsonSchemaTree(page, 'json-schema-diffs-viewer', options)
+export async function waitForJsonSchemaDiffsViewer(page: Page): Promise<void> {
+  await waitForJsonSchemaTree(page, 'json-schema-diffs-viewer')
 }
 
 export async function waitForDdlTableViewer(page: Page): Promise<void> {
@@ -97,22 +76,10 @@ export async function waitForVisibleSelector(page: Page, selector: string | unde
   await waitForRenderingComplete(page)
 }
 
-export type OpenApiOperationViewerWaitOptions = {
-  /** Selector options to select before capture, in order (`switchOpenApiOptions`). */
-  switchTo?: readonly string[]
-}
-
 /** `OpenApiOperationViewer` root visible and painted (nested JSON Schema viewers render synchronously). */
-export async function waitForOpenApiOperationViewer(
-  page: Page,
-  options: OpenApiOperationViewerWaitOptions = {},
-): Promise<void> {
+export async function waitForOpenApiOperationViewer(page: Page): Promise<void> {
   await page.waitForSelector('[data-testid="openapi-operation-viewer"]', { visible: true })
   await waitForRenderingComplete(page)
-  if (options.switchTo && options.switchTo.length > 0) {
-    await page.evaluate(switchOpenApiOptions, options.switchTo)
-    await waitForRenderingComplete(page)
-  }
 }
 
 /** `OpenApiOperationDiffsViewer` root visible and painted. */

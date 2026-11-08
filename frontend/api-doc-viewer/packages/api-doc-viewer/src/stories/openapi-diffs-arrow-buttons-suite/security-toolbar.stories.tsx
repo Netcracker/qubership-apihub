@@ -4,7 +4,8 @@ import {
   findOpenApiArrowButtonsCase,
   openApiDiffsArrowButtonsCases,
 } from "@netcracker/qubership-apihub-samples";
-import { OPENAPI_DIFFS_STORY_ARG_TYPES, OPENAPI_DIFFS_STORY_DEFAULT_ARGS } from "../openapi-suite/openapi-story-args";
+import { OPENAPI_DIFFS_SUITE_STORY_ARG_TYPES, OPENAPI_DIFFS_SUITE_STORY_DEFAULT_ARGS } from "../openapi-suite/openapi-story-args";
+import { playAutoSwitch } from "../shared/auto-switch";
 import { OpenApiDiffSampleStory } from "../openapi-diffs-suite/OpenApiDiffSampleStory";
 
 /**
@@ -17,8 +18,9 @@ import { OpenApiDiffSampleStory } from "../openapi-diffs-suite/OpenApiDiffSample
 const meta = {
   title: "OpenAPI Operation Diffs Suite (Arrow Buttons)/Security Toolbar",
   component: OpenApiDiffSampleStory,
-  argTypes: OPENAPI_DIFFS_STORY_ARG_TYPES,
-  args: OPENAPI_DIFFS_STORY_DEFAULT_ARGS,
+  argTypes: OPENAPI_DIFFS_SUITE_STORY_ARG_TYPES,
+  args: OPENAPI_DIFFS_SUITE_STORY_DEFAULT_ARGS,
+  play: playAutoSwitch,
 } satisfies Meta<typeof OpenApiDiffSampleStory>;
 
 export default meta;

@@ -7,7 +7,7 @@
  *   `src/stories/async-api-diffs-suite/security.stories.tsx`;
  * - screenshot ITs: `src/it/async-api-suite/security.it-test.ts`,
  *   `src/it/async-api-diffs-suite/security.it-test.ts` (every case in display mode `detailed`, the
- *   default; server cases open the Channel section first). Display mode `simple` is covered by
+ *   default; the stories of server cases select the Channel section on load). Display mode `simple` is covered by
  *   `Async API Suite (Display Mode = simple)` / `Async API Diffs Suite (Display Mode = simple)`.
  *
  * Usage (from packages/api-doc-viewer): node bin/generate-async-api-security-suite.mjs
@@ -78,8 +78,8 @@ ${rows.join("\n")}
 ## Storybook and screenshot tests
 
 Storybook: \`${PLAIN_TITLE}\`, story \`Case_<case id>\` (\`src/stories/async-api-suite/security.stories.tsx\`).
-ITs: \`src/it/async-api-suite/security.it-test.ts\`, every case in display mode \`detailed\`; server
-cases open the Channel section first.
+ITs: \`src/it/async-api-suite/security.it-test.ts\`, every case in display mode \`detailed\`; the
+stories of server cases select the Channel section on load.
 `, "utf8");
 }
 
@@ -110,12 +110,18 @@ ${rows.join("\n")}
 
 Storybook: \`${DIFF_TITLE}\`, story \`Case_<case id>\` (\`src/stories/async-api-diffs-suite/security.stories.tsx\`).
 ITs: \`src/it/async-api-diffs-suite/security.it-test.ts\`, every case in display mode \`detailed\`;
-server cases open the Channel section first.
+the stories of server cases select the Channel section on load.
 `, "utf8");
 }
 
+/** A server case's story selects the Channel section on load: the servers render there. */
+const storyExport = (caseId, section) => {
+  const switchTo = section === "server" ? `, ["message-channel"]` : "";
+  return `export const ${toExportName(caseId)}: Story = createCaseStory("${caseId}"${switchTo});`;
+};
+
 function writePlainStories() {
-  const exports = PLAIN_CASES.map(([caseId]) => `export const ${toExportName(caseId)}: Story = createCaseStory("${caseId}");`);
+  const exports = PLAIN_CASES.map(([caseId, , , section]) => storyExport(caseId, section));
   fs.writeFileSync(plainStoriesFile, `// ${GENERATED}
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import {
@@ -123,6 +129,7 @@ import {
   ASYNC_API_SECURITY_STORY_DEFAULT_ARGS,
   AsyncApiSecuritySampleStory,
 } from "./AsyncApiSecuritySampleStory";
+import { autoSwitchParameters, playAutoSwitch } from "../shared/auto-switch";
 
 const documents = import.meta.glob(
   "../../../../samples/async-api/security/*/document.yaml",
@@ -139,18 +146,19 @@ const meta = {
   component: AsyncApiSecuritySampleStory,
   argTypes: ASYNC_API_SECURITY_STORY_ARG_TYPES,
   args: ASYNC_API_SECURITY_STORY_DEFAULT_ARGS,
+  play: playAutoSwitch,
 } satisfies Meta<typeof AsyncApiSecuritySampleStory>;
 
 export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-const createCaseStory = (caseId: string): Story => {
+const createCaseStory = (caseId: string, switchTo: string[] = []): Story => {
   const yaml = documentByCaseId[caseId];
   if (!yaml) {
     throw new Error(\`Sample case not found: \${caseId}\`);
   }
-  return { name: caseId, args: { caseId, yaml } };
+  return { name: caseId, args: { caseId, yaml }, parameters: autoSwitchParameters(switchTo) };
 };
 
 ${exports.join("\n")}
@@ -158,10 +166,11 @@ ${exports.join("\n")}
 }
 
 function writeDiffStories() {
-  const exports = DIFF_CASES.map(([caseId]) => `export const ${toExportName(caseId)}: Story = createCaseStory("${caseId}");`);
+  const exports = DIFF_CASES.map(([caseId, , , , section]) => storyExport(caseId, section));
   fs.writeFileSync(diffStoriesFile, `// ${GENERATED}
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { ASYNC_API_SECURITY_STORY_ARG_TYPES, ASYNC_API_SECURITY_STORY_DEFAULT_ARGS } from "../async-api-suite/AsyncApiSecuritySampleStory";
+import { autoSwitchParameters, playAutoSwitch } from "../shared/auto-switch";
 import { collectSampleCases } from "../utils/diffs-samples-cases";
 import { createSampleById } from "../utils/sample-cases";
 import { AsyncApiSecurityDiffSampleStory } from "./AsyncApiSecurityDiffSampleStory";
@@ -184,18 +193,23 @@ const meta = {
   component: AsyncApiSecurityDiffSampleStory,
   argTypes: ASYNC_API_SECURITY_STORY_ARG_TYPES,
   args: ASYNC_API_SECURITY_STORY_DEFAULT_ARGS,
+  play: playAutoSwitch,
 } satisfies Meta<typeof AsyncApiSecurityDiffSampleStory>;
 
 export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-const createCaseStory = (caseId: string): Story => {
+const createCaseStory = (caseId: string, switchTo: string[] = []): Story => {
   const sample = sampleById[caseId];
   if (!sample) {
     throw new Error(\`Sample case not found: \${caseId}\`);
   }
-  return { name: caseId, args: { caseId, beforeYaml: sample.beforeYaml, afterYaml: sample.afterYaml } };
+  return {
+    name: caseId,
+    args: { caseId, beforeYaml: sample.beforeYaml, afterYaml: sample.afterYaml },
+    parameters: autoSwitchParameters(switchTo),
+  };
 };
 
 ${exports.join("\n")}
@@ -204,20 +218,17 @@ ${exports.join("\n")}
 
 function writeTests(file, title, cases, suiteName) {
   const metaId = toStorybookMetaId(title);
-  const rows = cases.map(([caseId, , , , section]) => {
-    const storyId = `${metaId}--${toStorybookStorySlug(toExportName(caseId))}`;
-    return `  ['${caseId}', '${storyId}', ${(section ?? "operation") === "server"}],`;
-  });
+  const rows = cases.map(([caseId]) => `  ['${caseId}', '${metaId}--${toStorybookStorySlug(toExportName(caseId))}'],`);
   fs.writeFileSync(file, `// ${GENERATED}
 /**
- * Screenshot tests for ${suiteName}: every case in display mode \`detailed\` (the default). Server
- * cases open the Channel section first.
+ * Screenshot tests for ${suiteName}: every case in display mode \`detailed\` (the default). The
+ * stories of server cases select the Channel section on load.
  */
 import { storyPage } from '../service/storybook-service'
 import { waitForRenderingComplete } from '../service/viewer-waits'
 
-/** [case id, story id, open the Channel section (server security)]. */
-const CASES: ReadonlyArray<readonly [string, string, boolean]> = [
+/** [case id, story id]. */
+const CASES: ReadonlyArray<readonly [string, string]> = [
 ${rows.join("\n")}
 ]
 
@@ -226,15 +237,10 @@ describe('${suiteName}', () => {
     await jestPuppeteer.resetPage()
   })
 
-  it.each(CASES)('%s', async (_caseId, storyId, openChannel) => {
+  it.each(CASES)('%s', async (_caseId, storyId) => {
     const story = await storyPage(page, storyId)
     const component = await story.viewComponent()
     await waitForRenderingComplete(page)
-    if (openChannel) {
-      await page.click('[data-testid="message-channel"]')
-      await page.waitForSelector('[data-testid="message-channel-section"]', { visible: true })
-      await waitForRenderingComplete(page)
-    }
     expect(await component.captureScreenshot()).toMatchImageSnapshot()
   })
 })

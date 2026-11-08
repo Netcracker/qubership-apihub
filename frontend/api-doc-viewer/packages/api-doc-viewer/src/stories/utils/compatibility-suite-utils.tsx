@@ -33,6 +33,7 @@ import { DETAILED_DISPLAY_MODE, DisplayMode } from '../../types/DisplayMode'
 import { SIDE_BY_SIDE_DIFFS_LAYOUT_MODE } from '../../types/LayoutMode'
 import { ArrayUtils } from '../../utils/common/arrays'
 import { ddlStoryNavigationLinkBuilder } from '../ddlapi-suite/ddl-story-navigation'
+import { AUTO_SWITCH_DEFAULT_ARGS, type AutoSwitchArgs } from '../shared/auto-switch'
 import { TEST_DIFF_META_KEYS } from '../shared/test-diff-meta-keys'
 import {
   prepareDdlCompatibilitySuiteMergedSource,
@@ -154,7 +155,7 @@ export function getDdlStoryArgs(
 
 // OpenAPI
 
-export type OpenApiCompatibilitySuiteStoryArgs = {
+export type OpenApiCompatibilitySuiteStoryArgs = AutoSwitchArgs & {
   before: string
   after: string
   displayMode: DisplayMode
@@ -198,7 +199,7 @@ export function getOpenApiStoryArgs(
   specificationVersionPair?: SpecificationVersionPair,
 ): OpenApiCompatibilitySuiteStoryArgs {
   const [before, after] = getCompatibilitySuite(suiteType, suiteId, testId, specificationVersionPair)
-  return { before, after, displayMode: DETAILED_DISPLAY_MODE, hideUnchangedNodes: false }
+  return { before, after, displayMode: DETAILED_DISPLAY_MODE, hideUnchangedNodes: false, ...AUTO_SWITCH_DEFAULT_ARGS }
 }
 
 // Debug helpers

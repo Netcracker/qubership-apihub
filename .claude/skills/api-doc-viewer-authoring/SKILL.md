@@ -62,10 +62,9 @@ runtime, and the PostCSS plugin `postcss/css-isolation.cjs` (after `tailwindcss`
   outermost element; the error fallback does too. Global rules (Tailwind preflight, `ul` / `a` /
   `button` / `h1`, `:root` variables) apply only inside a root, through zero-specificity
   `:where()`. A component rendered outside any root loses them.
-- **Reading classes from the DOM** — match the prefixed name (`api-doc-viewer-selected`).
-  `combiner-changed-variant.ts` and `switch-openapi-options.ts` spell the prefix inside their
-  bodies because they run through `page.evaluate()`; `tests/cn.test.ts` keeps them in sync. Prefer
-  `data-*` attributes for new DOM queries.
+- **Reading classes from the DOM** — match the prefixed name (`api-doc-viewer-selected`); build it
+  with `cn()` (the story auto-switch in `src/stories/shared/auto-switch.ts` does). Prefer `data-*`
+  attributes for new DOM queries.
 - **Fonts in inline styles** — `@font-face` families are renamed (`api-doc-viewer Inter`); use
   `FONT_FAMILY_INTER` from `src/consts/fonts.ts`, not `'Inter'`.
 - **Dynamic class names** (`` `font-${weight}` ``) work only for classes Tailwind generates from a

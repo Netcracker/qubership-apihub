@@ -5,6 +5,7 @@ import {
   ASYNC_API_SECURITY_STORY_DEFAULT_ARGS,
   AsyncApiSecuritySampleStory,
 } from "../async-api-suite/AsyncApiSecuritySampleStory";
+import { autoSwitchParameters, playAutoSwitch } from "../shared/auto-switch";
 import { collectSampleSources } from "../utils/sample-cases";
 
 const sampleFiles = import.meta.glob(
@@ -23,32 +24,33 @@ const meta = {
   component: AsyncApiSecuritySampleStory,
   argTypes: ASYNC_API_SECURITY_STORY_ARG_TYPES,
   args: ASYNC_API_SECURITY_STORY_DEFAULT_ARGS,
+  play: playAutoSwitch,
 } satisfies Meta<typeof AsyncApiSecuritySampleStory>;
 
 export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-const createCaseStory = (caseId: string): Story => {
+const createCaseStory = (caseId: string, switchTo: string[] = []): Story => {
   const yaml = yamlByCaseId[caseId];
   if (!yaml) {
     throw new Error(`Sample case not found: ${caseId}`);
   }
-  return { name: caseId, args: { caseId, yaml } };
+  return { name: caseId, args: { caseId, yaml }, parameters: autoSwitchParameters(switchTo) };
 };
 
-export const Case_01_operation_summary: Story = createCaseStory("01-operation-summary");
-export const Case_02_operation_description: Story = createCaseStory("02-operation-description");
+export const Case_01_operation_summary: Story = createCaseStory("01-operation-summary", ["message-operation"]);
+export const Case_02_operation_description: Story = createCaseStory("02-operation-description", ["message-operation"]);
 export const Case_03_message_summary: Story = createCaseStory("03-message-summary");
 export const Case_04_message_description: Story = createCaseStory("04-message-description");
-export const Case_05_channel_summary: Story = createCaseStory("05-channel-summary");
-export const Case_06_channel_description: Story = createCaseStory("06-channel-description");
-export const Case_07_server_summary: Story = createCaseStory("07-server-summary");
-export const Case_08_server_description: Story = createCaseStory("08-server-description");
+export const Case_05_channel_summary: Story = createCaseStory("05-channel-summary", ["message-channel"]);
+export const Case_06_channel_description: Story = createCaseStory("06-channel-description", ["message-channel"]);
+export const Case_07_server_summary: Story = createCaseStory("07-server-summary", ["message-channel"]);
+export const Case_08_server_description: Story = createCaseStory("08-server-description", ["message-channel"]);
 export const Case_09_security_scheme_description: Story = createCaseStory("09-security-scheme-description");
 export const Case_10_security_scope_description: Story = createCaseStory("10-security-scope-description");
 export const Case_11_payload_schema_description: Story = createCaseStory("11-payload-schema-description");
 export const Case_12_headers_schema_description: Story = createCaseStory("12-headers-schema-description");
-export const Case_13_channel_parameter_description: Story = createCaseStory("13-channel-parameter-description");
-export const Case_14_channel_parameter_location: Story = createCaseStory("14-channel-parameter-location");
+export const Case_13_channel_parameter_description: Story = createCaseStory("13-channel-parameter-description", ["message-channel"]);
+export const Case_14_channel_parameter_location: Story = createCaseStory("14-channel-parameter-location", ["message-channel"]);
 export const Case_15_bindings_schema_description: Story = createCaseStory("15-bindings-schema-description");

@@ -2,7 +2,8 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { collectSampleCases } from "../utils/diffs-samples-cases";
 import { createSampleById } from "../utils/sample-cases";
-import { OPENAPI_DIFFS_STORY_ARG_TYPES, OPENAPI_DIFFS_STORY_DEFAULT_ARGS } from "../openapi-suite/openapi-story-args";
+import { OPENAPI_DIFFS_SUITE_STORY_ARG_TYPES, OPENAPI_DIFFS_SUITE_STORY_DEFAULT_ARGS } from "../openapi-suite/openapi-story-args";
+import { autoSwitchParameters, playAutoSwitch } from "../shared/auto-switch";
 import { OpenApiDiffSampleStory } from "./OpenApiDiffSampleStory";
 
 const beforeFiles = import.meta.glob(
@@ -21,28 +22,33 @@ const sampleById = createSampleById(collectSampleCases(beforeFiles, afterFiles))
 const meta = {
   title: "OpenAPI Operation Diffs Suite/Security",
   component: OpenApiDiffSampleStory,
-  argTypes: OPENAPI_DIFFS_STORY_ARG_TYPES,
-  args: OPENAPI_DIFFS_STORY_DEFAULT_ARGS,
+  argTypes: OPENAPI_DIFFS_SUITE_STORY_ARG_TYPES,
+  args: OPENAPI_DIFFS_SUITE_STORY_DEFAULT_ARGS,
+  play: playAutoSwitch,
 } satisfies Meta<typeof OpenApiDiffSampleStory>;
 
 export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-const createCaseStory = (caseId: string): Story => {
+const createCaseStory = (caseId: string, switchTo: string[] = []): Story => {
   const sample = sampleById[caseId];
   if (!sample) {
     throw new Error(`Sample case not found: ${caseId}`);
   }
-  return { name: caseId, args: { caseId, beforeYaml: sample.beforeYaml, afterYaml: sample.afterYaml } };
+  return {
+    name: caseId,
+    args: { caseId, beforeYaml: sample.beforeYaml, afterYaml: sample.afterYaml },
+    parameters: autoSwitchParameters(switchTo),
+  };
 };
 
 export const Case_01_security_added: Story = createCaseStory("01-security-added");
 export const Case_02_security_removed: Story = createCaseStory("02-security-removed");
 export const Case_03_document_security_overridden: Story = createCaseStory("03-document-security-overridden");
 export const Case_04_document_security_override_removed: Story = createCaseStory("04-document-security-override-removed");
-export const Case_05_alternative_added: Story = createCaseStory("05-alternative-added");
-export const Case_06_alternative_removed: Story = createCaseStory("06-alternative-removed");
+export const Case_05_alternative_added: Story = createCaseStory("05-alternative-added", ["security-alternative-1"]);
+export const Case_06_alternative_removed: Story = createCaseStory("06-alternative-removed", ["security-alternative-1"]);
 export const Case_07_anonymous_alternative_added: Story = createCaseStory("07-anonymous-alternative-added");
 export const Case_08_anonymous_alternative_removed: Story = createCaseStory("08-anonymous-alternative-removed");
 export const Case_09_scheme_added_to_alternative: Story = createCaseStory("09-scheme-added-to-alternative");
@@ -69,5 +75,5 @@ export const Case_29_refresh_url_removed: Story = createCaseStory("29-refresh-ur
 export const Case_30_flow_scope_added: Story = createCaseStory("30-flow-scope-added");
 export const Case_31_flow_scope_removed: Story = createCaseStory("31-flow-scope-removed");
 export const Case_32_flow_scope_description_changed: Story = createCaseStory("32-flow-scope-description-changed");
-export const Case_33_anonymous_alternative_replaced_by_api_key: Story = createCaseStory("33-anonymous-alternative-replaced-by-api-key");
-export const Case_34_api_key_alternative_replaced_by_anonymous: Story = createCaseStory("34-api-key-alternative-replaced-by-anonymous");
+export const Case_33_anonymous_alternative_replaced_by_api_key: Story = createCaseStory("33-anonymous-alternative-replaced-by-api-key", ["security-alternative-1"]);
+export const Case_34_api_key_alternative_replaced_by_anonymous: Story = createCaseStory("34-api-key-alternative-replaced-by-anonymous", ["security-alternative-1"]);

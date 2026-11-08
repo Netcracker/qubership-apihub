@@ -5,6 +5,7 @@ import {
   ASYNC_API_SECURITY_STORY_DEFAULT_ARGS,
   AsyncApiSecuritySampleStory,
 } from "./AsyncApiSecuritySampleStory";
+import { autoSwitchParameters, playAutoSwitch } from "../shared/auto-switch";
 
 const documents = import.meta.glob(
   "../../../../samples/async-api/security/*/document.yaml",
@@ -21,18 +22,19 @@ const meta = {
   component: AsyncApiSecuritySampleStory,
   argTypes: ASYNC_API_SECURITY_STORY_ARG_TYPES,
   args: ASYNC_API_SECURITY_STORY_DEFAULT_ARGS,
+  play: playAutoSwitch,
 } satisfies Meta<typeof AsyncApiSecuritySampleStory>;
 
 export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-const createCaseStory = (caseId: string): Story => {
+const createCaseStory = (caseId: string, switchTo: string[] = []): Story => {
   const yaml = documentByCaseId[caseId];
   if (!yaml) {
     throw new Error(`Sample case not found: ${caseId}`);
   }
-  return { name: caseId, args: { caseId, yaml } };
+  return { name: caseId, args: { caseId, yaml }, parameters: autoSwitchParameters(switchTo) };
 };
 
 export const Case_01_user_password: Story = createCaseStory("01-user-password");
@@ -59,5 +61,5 @@ export const Case_21_gssapi: Story = createCaseStory("21-gssapi");
 export const Case_22_scheme_description: Story = createCaseStory("22-scheme-description");
 export const Case_23_several_alternatives: Story = createCaseStory("23-several-alternatives");
 export const Case_24_inline_scheme: Story = createCaseStory("24-inline-scheme");
-export const Case_25_server_security: Story = createCaseStory("25-server-security");
-export const Case_26_operation_and_server_security: Story = createCaseStory("26-operation-and-server-security");
+export const Case_25_server_security: Story = createCaseStory("25-server-security", ["message-channel"]);
+export const Case_26_operation_and_server_security: Story = createCaseStory("26-operation-and-server-security", ["message-channel"]);

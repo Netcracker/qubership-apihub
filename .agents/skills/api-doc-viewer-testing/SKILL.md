@@ -238,16 +238,38 @@ generators emit the import, not a function body.
 
 | Helper | Waits for |
 | --- | --- |
-| `waitForJsonSchemaViewer(page, options?)` | `[data-testid="json-schema-viewer"]`, then a visible `[data-name="JsonNode"]` **or** `[data-testid="json-schema-combiner-node-viewer"]`, then paint settle |
-| `waitForJsonSchemaDiffsViewer(page, options?)` | same, with `[data-testid="json-schema-diffs-viewer"]` |
+| `waitForJsonSchemaViewer(page)` | `[data-testid="json-schema-viewer"]`, then a visible `[data-name="JsonNode"]` **or** `[data-testid="json-schema-combiner-node-viewer"]`, then paint settle |
+| `waitForJsonSchemaDiffsViewer(page)` | same, with `[data-testid="json-schema-diffs-viewer"]` |
 | `waitForDdlTableViewer(page)` / `waitForDdlTableDiffsViewer(page)` | `[data-testid="ddl-table-viewer"]` / `[data-testid="ddl-table-diffs-viewer"]`, then paint settle |
 | `waitForRenderingComplete(page)` | paint settle only (see **Flaky rendering**) |
 
 The combiner alternative is required: a combiner root whose active option is a scalar or
 another combiner renders no `JsonNode`, and waiting on `JsonNode` alone hangs until the
-Puppeteer timeout. `{ switchCombinerVariant: true }` switches oneOf/anyOf nodes to the variant
-holding the diff before capture — it changes rendered content, so keep it exactly as the
-suite's baselines were captured (JSON Schema diffs suites except allOf use it).
+Puppeteer timeout.
+
+### Initial navigation happens in the story, never in the IT
+
+A story opens on the options its case covers: its `play` (`playAutoSwitch`,
+`src/stories/shared/auto-switch.ts`) selects the test ids in story parameter `autoSwitch.switchTo`
+(an OpenAPI response code or security alternative, an AsyncAPI section tab or binding), then one
+changed option per other selector — wholly added first, then wholly removed, then changed inside
+(the oneOf/anyOf variant holding the diff, recursively). Rule and priorities:
+`docs/design/shared/features/selector-options.md` → Stories and screenshot tests.
+
+- `storyPageWithArgs` waits until `window.__STORYBOOK_PREVIEW__.currentRender.phase` is `finished`
+  (Storybook runs `play` under `iframe.html` too) and fails the test when `play` throws. **No IT
+  clicks a selector option, section tab, or combiner variant before the capture**, and no viewer
+  wait selects anything. Clicks that are the case itself stay in the IT: revealing hidden
+  unchanged rows (`show-unchanged-nodes`), arrow buttons of an overflowing strip.
+- Every suite with selectors (OpenAPI, AsyncAPI, JSON Schema diffs, OpenAPI compatibility) has the
+  `autoSwitch` story control (default on). `play` runs once per story load: changing a control does
+  not re-run it, so a hand-made selection survives; the control itself takes effect on the next
+  load (F5). A story that shows the default selection on purpose sets `autoSwitch: false` in its
+  args (node-changes-summary case 7 "default choice").
+- New suite: meta `play: playAutoSwitch`, `AUTO_SWITCH_ARG_TYPES` / `AUTO_SWITCH_DEFAULT_ARGS`,
+  `autoSwitchParameters([...])` per story when a case needs an explicit option. A story that
+  renders a viewer through `meta.component` needs `autoSwitch` in the component props
+  (`AsyncApiSuiteStory`).
 
 A wrong story id produces the same timeout as a broken viewer — rule out ID mismatch first.
 
@@ -361,10 +383,8 @@ the generator is wrong):
   `docs/design/openapi/features/plain-case-matrix.md`. Groups: E2E section combinations, minimal,
   fields, document structure (OAS 3.1: fields + structure, only what differs from 3.0). Cases list
   `switchTo` option test ids (security alternative, response code, `request-media-type-*` /
-  `response-media-type-*`); `switchOpenApiOptions` (`src/utils/openapi/`) selects them from the story
-  `play` and from ITs via `waitForOpenApiOperationViewer(page, { switchTo })` — pure DOM, every
-  helper inside the function body (the combiner auto-switch contract). Story URL args encode
-  booleans as `!true` / `!false`.
+  `response-media-type-*`) as story parameters; the story `play` selects them on load (see
+  **Initial navigation happens in the story**). Story URL args encode booleans as `!true` / `!false`.
 - OpenAPI Operation Diffs Suite — `node bin/generate-openapi-diffs-suite.mjs` (cases in
   `bin/openapi-diffs-case-definitions.mjs`) → recreates `packages/samples/openapi-diffs/` (fixtures +
   catalogues), `src/stories/openapi-diffs-suite/<category>.stories.tsx`,
@@ -387,8 +407,8 @@ the generator is wrong):
   `src/stories/async-api-suite/security.stories.tsx` (`Async API Suite/Security`),
   `src/stories/async-api-diffs-suite/security.stories.tsx` (`Async API Diffs Suite/Security Samples`)
   and the paired `src/it/async-api-[diffs-]suite/security.it-test.ts`. Every case is captured in
-  `detailed` (`simple`: the Display mode suites); server cases click `[data-testid="message-channel"]` and wait for
-  `message-channel-section` first (servers live in the Channel tab). Section test id:
+  `detailed` (`simple`: the Display mode suites); the stories of server cases select the Channel tab
+  (`message-channel`) on load, because servers live there. Section test id:
   `async-api-security-section`. Data-layer tests: `next-data-model/tests/unit-tests/async-api-security.test.ts`
   (fixtures via `tests/helpers/async-api-security-fixtures.ts`).
 - OpenAPI Arrow Buttons (programmatic, hand-written; no generator) — `OpenAPI Operation Suite (Arrow

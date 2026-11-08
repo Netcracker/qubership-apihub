@@ -19,49 +19,49 @@ describe("JSON Schema Diffs Suite/Array Validation/Array Validations Example", (
 
   it("001-example-added-empty-array", async () => {
     story = await storyPage(page, `json-schema-diffs-suite-array-validation-array-validations-example--case-001-example-added-empty-array`);
-    await waitForJsonSchemaDiffsViewer(page, { switchCombinerVariant: true });
+    await waitForJsonSchemaDiffsViewer(page);
     component = await story.viewComponent();
     expect(await component.captureScreenshot()).toMatchImageSnapshot();
   });
 
   it("002-example-added-array", async () => {
     story = await storyPage(page, `json-schema-diffs-suite-array-validation-array-validations-example--case-002-example-added-array`);
-    await waitForJsonSchemaDiffsViewer(page, { switchCombinerVariant: true });
+    await waitForJsonSchemaDiffsViewer(page);
     component = await story.viewComponent();
     expect(await component.captureScreenshot()).toMatchImageSnapshot();
   });
 
   it("003-example-removed-empty-array", async () => {
     story = await storyPage(page, `json-schema-diffs-suite-array-validation-array-validations-example--case-003-example-removed-empty-array`);
-    await waitForJsonSchemaDiffsViewer(page, { switchCombinerVariant: true });
+    await waitForJsonSchemaDiffsViewer(page);
     component = await story.viewComponent();
     expect(await component.captureScreenshot()).toMatchImageSnapshot();
   });
 
   it("004-example-removed-array", async () => {
     story = await storyPage(page, `json-schema-diffs-suite-array-validation-array-validations-example--case-004-example-removed-array`);
-    await waitForJsonSchemaDiffsViewer(page, { switchCombinerVariant: true });
+    await waitForJsonSchemaDiffsViewer(page);
     component = await story.viewComponent();
     expect(await component.captureScreenshot()).toMatchImageSnapshot();
   });
 
   it("005-example-replaced-empty-to-array", async () => {
     story = await storyPage(page, `json-schema-diffs-suite-array-validation-array-validations-example--case-005-example-replaced-empty-to-array`);
-    await waitForJsonSchemaDiffsViewer(page, { switchCombinerVariant: true });
+    await waitForJsonSchemaDiffsViewer(page);
     component = await story.viewComponent();
     expect(await component.captureScreenshot()).toMatchImageSnapshot();
   });
 
   it("006-example-replaced-array-to-empty", async () => {
     story = await storyPage(page, `json-schema-diffs-suite-array-validation-array-validations-example--case-006-example-replaced-array-to-empty`);
-    await waitForJsonSchemaDiffsViewer(page, { switchCombinerVariant: true });
+    await waitForJsonSchemaDiffsViewer(page);
     component = await story.viewComponent();
     expect(await component.captureScreenshot()).toMatchImageSnapshot();
   });
 
   it("007-example-replaced-array-to-array", async () => {
     story = await storyPage(page, `json-schema-diffs-suite-array-validation-array-validations-example--case-007-example-replaced-array-to-array`);
-    await waitForJsonSchemaDiffsViewer(page, { switchCombinerVariant: true });
+    await waitForJsonSchemaDiffsViewer(page);
     component = await story.viewComponent();
     expect(await component.captureScreenshot()).toMatchImageSnapshot();
   });

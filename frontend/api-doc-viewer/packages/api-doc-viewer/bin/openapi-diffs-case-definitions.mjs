@@ -608,14 +608,14 @@ export const RESPONSES_CASES = [
     pair: [`response-${kind}-added`, `response-${kind}-removed`],
     titles: [`\`${code}\` response added (headers + body)`, `\`${code}\` response removed`],
     apply: () => addResponse(code, description),
-    clicks: [`response-code-${code}`],
+    switchTo: [`response-code-${code}`],
   })),
   {
     change: 'code-case-renamed',
     title: '`4xx` renamed to `4XX`',
     setup: () => addResponse('4xx', 'Client error.'),
     after: () => doc => renameKey(operation(doc).responses, '4xx', '4XX'),
-    clicks: ['response-code-4XX'],
+    switchTo: ['response-code-4XX'],
   },
   {
     change: 'code-renamed-and-description-changed',
@@ -625,7 +625,7 @@ export const RESPONSES_CASES = [
       renameKey(operation(doc).responses, '4xx', '4XX')
       operation(doc).responses['4XX'].description = 'Any client error.'
     },
-    clicks: ['response-code-4XX'],
+    switchTo: ['response-code-4XX'],
   },
   { change: 'description-changed', title: 'response description replaced', after: () => doc => { response(doc).description = 'The order after the update.' } },
   {
@@ -686,7 +686,7 @@ export const SECURITY_CASES = [
     titles: ['second alternative added', 'one of two alternatives removed'],
     setup: () => doc => defineSchemes(doc, 'api_key'),
     apply: () => doc => { operation(doc).security.push({ api_key: [] }) },
-    clicks: ['security-alternative-1'],
+    switchTo: ['security-alternative-1'],
   },
   {
     pair: ['anonymous-alternative-added', 'anonymous-alternative-removed'],
@@ -782,7 +782,7 @@ export const SECURITY_CASES = [
       defineSchemes(doc, 'api_key')
     },
     apply: () => doc => { operation(doc).security[1] = { api_key: [] } },
-    clicks: ['security-alternative-1'],
+    switchTo: ['security-alternative-1'],
   },
 ]
 
@@ -803,7 +803,7 @@ export const OAS31_CASES = [
       defineSchemes(doc, 'mtls')
     },
     apply: () => doc => { operation(doc).security.push({ mtls: [] }) },
-    clicks: ['security-alternative-1'],
+    switchTo: ['security-alternative-1'],
   },
   {
     pair: ['role-scopes-added', 'role-scopes-removed'],

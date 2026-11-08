@@ -11,7 +11,7 @@ import {
   RESPONSE_200_BODY_TARGET,
 } from "../preprocess";
 import { parseYamlSource } from "../utils/parse-yaml-source";
-import { switchCombinerNodesToChangedVariant } from "@apihub/utils/combiner-changed-variant";
+import { AUTO_SWITCH_ARG_TYPES, AUTO_SWITCH_DEFAULT_ARGS, type AutoSwitchArgs, playAutoSwitch } from "../shared/auto-switch";
 
 export const JSON_SCHEMA_DIFF_META_KEYS = {
   diffsMetaKey: DIFF_META_KEY,
@@ -27,7 +27,7 @@ export type JsonSchemaDiffSampleCase = {
 export type JsonSchemaDiffCaseStoryComponentProps = Pick<
   JsonSchemaDiffSampleCase,
   "caseId" | "beforeYaml" | "afterYaml"
-> & {
+> & AutoSwitchArgs & {
   hideUnchangedNodes: boolean;
   displayMode?: DisplayMode;
 };
@@ -53,6 +53,7 @@ export const jsonSchemaDiffSampleReadonlyArgTypes = {
     description: "Forwarded to JsonSchemaDiffsViewer's hideUnchangedNodes prop.",
   },
   ...DISPLAY_MODE_ARG_TYPES,
+  ...AUTO_SWITCH_ARG_TYPES,
 } satisfies Partial<ArgTypes<JsonSchemaDiffCaseStoryComponentProps>>;
 
 type JsonSchemaDiffsViewerProps = ComponentProps<typeof JsonSchemaDiffsViewer>;
@@ -62,6 +63,7 @@ type JsonSchemaDiffCaseStoryArgs = {
   args: JsonSchemaDiffCaseStoryComponentProps;
   argTypes: typeof jsonSchemaDiffSampleReadonlyArgTypes;
   render: (args: JsonSchemaDiffCaseStoryComponentProps) => JSX.Element;
+  play: typeof playAutoSwitch;
 };
 
 export const JSON_SCHEMA_DIFFS_SUITE_EXPANDED_DEPTH = 5;
@@ -118,7 +120,8 @@ export const createJsonSchemaDiffsViewerArgs = (
 
 /**
  * `defaultHideUnchangedNodes` seeds the `hideUnchangedNodes` story arg (default `false`: validation
- * and metadata suites show every row; the "Hiding Unchanged Nodes" suite passes `true`).
+ * and metadata suites show every row; the "Hiding Unchanged Nodes" suite passes `true`). On load,
+ * every story switches oneOf/anyOf combiners to their changed variant (`playAutoSwitch`).
  */
 export const createJsonSchemaDiffCaseStoryFactory = (
   StoryComponent: (props: JsonSchemaDiffCaseStoryComponentProps) => JSX.Element,
@@ -138,6 +141,7 @@ export const createJsonSchemaDiffCaseStoryFactory = (
       afterYaml: sample.afterYaml,
       hideUnchangedNodes: defaultHideUnchangedNodes,
       ...DISPLAY_MODE_DEFAULT_ARGS,
+      ...AUTO_SWITCH_DEFAULT_ARGS,
     },
     argTypes: jsonSchemaDiffSampleReadonlyArgTypes,
     render: (args) => {
@@ -152,34 +156,8 @@ export const createJsonSchemaDiffCaseStoryFactory = (
         />
       );
     },
+    play: playAutoSwitch,
   };
-};
-
-type JsonSchemaDiffCaseStoryArgsWithChangedVariant = JsonSchemaDiffCaseStoryArgs & {
-  play: (context: { canvasElement: HTMLElement }) => Promise<void>;
-};
-
-/**
- * Same as `createJsonSchemaDiffCaseStoryFactory`, but also switches oneOf/anyOf combiner nodes
- * to their changed variant on mount (recursing into nested combiners until a leaf is reached),
- * so the story opens accented on the change instead of the combiner's default first option.
- * Only meaningful for suites that actually contain oneOf/anyOf combiners — a safe no-op
- * otherwise. Screenshot ITs do not rely on this `play` function (it does not run under the
- * Puppeteer iframe.html harness); they call `switchCombinerNodesToChangedVariant` directly via
- * `page.evaluate`.
- */
-export const createJsonSchemaDiffCaseStoryFactoryWithChangedVariant = (
-  StoryComponent: (props: JsonSchemaDiffCaseStoryComponentProps) => JSX.Element,
-  sampleById: Record<string, JsonSchemaDiffSampleCase>,
-  defaultHideUnchangedNodes: boolean = JSON_SCHEMA_DIFFS_SUITE_DEFAULT_HIDE_UNCHANGED_NODES,
-) => {
-  const createCaseStory = createJsonSchemaDiffCaseStoryFactory(StoryComponent, sampleById, defaultHideUnchangedNodes);
-  return (caseId: string): JsonSchemaDiffCaseStoryArgsWithChangedVariant => ({
-    ...createCaseStory(caseId),
-    play: async ({ canvasElement }) => {
-      await switchCombinerNodesToChangedVariant(canvasElement);
-    },
-  });
 };
 
 export const JsonSchemaDiffSamplesStory = ({

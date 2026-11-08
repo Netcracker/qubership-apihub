@@ -7,23 +7,23 @@
 import { storyPageWithArgs } from '../service/storybook-service'
 import { waitForRenderingComplete } from '../service/viewer-waits'
 
-/** [case id, story id, message section tab opened before the capture]. */
-const CASES: ReadonlyArray<readonly [string, string, string | undefined]> = [
-  ['01-operation-summary', 'async-api-suite-display-mode-simple--case-01-operation-summary', 'message-operation'],
-  ['02-operation-description', 'async-api-suite-display-mode-simple--case-02-operation-description', 'message-operation'],
-  ['03-message-summary', 'async-api-suite-display-mode-simple--case-03-message-summary', undefined],
-  ['04-message-description', 'async-api-suite-display-mode-simple--case-04-message-description', undefined],
-  ['05-channel-summary', 'async-api-suite-display-mode-simple--case-05-channel-summary', 'message-channel'],
-  ['06-channel-description', 'async-api-suite-display-mode-simple--case-06-channel-description', 'message-channel'],
-  ['07-server-summary', 'async-api-suite-display-mode-simple--case-07-server-summary', 'message-channel'],
-  ['08-server-description', 'async-api-suite-display-mode-simple--case-08-server-description', 'message-channel'],
-  ['09-security-scheme-description', 'async-api-suite-display-mode-simple--case-09-security-scheme-description', undefined],
-  ['10-security-scope-description', 'async-api-suite-display-mode-simple--case-10-security-scope-description', undefined],
-  ['11-payload-schema-description', 'async-api-suite-display-mode-simple--case-11-payload-schema-description', undefined],
-  ['12-headers-schema-description', 'async-api-suite-display-mode-simple--case-12-headers-schema-description', undefined],
-  ['13-channel-parameter-description', 'async-api-suite-display-mode-simple--case-13-channel-parameter-description', 'message-channel'],
-  ['14-channel-parameter-location', 'async-api-suite-display-mode-simple--case-14-channel-parameter-location', 'message-channel'],
-  ['15-bindings-schema-description', 'async-api-suite-display-mode-simple--case-15-bindings-schema-description', undefined],
+/** [case id, story id]. */
+const CASES: ReadonlyArray<readonly [string, string]> = [
+  ['01-operation-summary', 'async-api-suite-display-mode-simple--case-01-operation-summary'],
+  ['02-operation-description', 'async-api-suite-display-mode-simple--case-02-operation-description'],
+  ['03-message-summary', 'async-api-suite-display-mode-simple--case-03-message-summary'],
+  ['04-message-description', 'async-api-suite-display-mode-simple--case-04-message-description'],
+  ['05-channel-summary', 'async-api-suite-display-mode-simple--case-05-channel-summary'],
+  ['06-channel-description', 'async-api-suite-display-mode-simple--case-06-channel-description'],
+  ['07-server-summary', 'async-api-suite-display-mode-simple--case-07-server-summary'],
+  ['08-server-description', 'async-api-suite-display-mode-simple--case-08-server-description'],
+  ['09-security-scheme-description', 'async-api-suite-display-mode-simple--case-09-security-scheme-description'],
+  ['10-security-scope-description', 'async-api-suite-display-mode-simple--case-10-security-scope-description'],
+  ['11-payload-schema-description', 'async-api-suite-display-mode-simple--case-11-payload-schema-description'],
+  ['12-headers-schema-description', 'async-api-suite-display-mode-simple--case-12-headers-schema-description'],
+  ['13-channel-parameter-description', 'async-api-suite-display-mode-simple--case-13-channel-parameter-description'],
+  ['14-channel-parameter-location', 'async-api-suite-display-mode-simple--case-14-channel-parameter-location'],
+  ['15-bindings-schema-description', 'async-api-suite-display-mode-simple--case-15-bindings-schema-description'],
 ]
 
 describe('Async API Suite (Display Mode = simple)', () => {
@@ -32,15 +32,10 @@ describe('Async API Suite (Display Mode = simple)', () => {
   })
 
   describe.each(['detailed', 'simple'])('display mode %s', (displayMode) => {
-    it.each(CASES)('%s', async (_caseId, storyId, section) => {
+    it.each(CASES)('%s', async (_caseId, storyId) => {
       const story = await storyPageWithArgs(page, storyId, { displayMode })
       const component = await story.viewComponent()
       await waitForRenderingComplete(page)
-      if (section) {
-        await page.click(`[data-testid="${section}"]`)
-        await page.waitForSelector(`[data-testid="${section}-section"]`, { visible: true })
-        await waitForRenderingComplete(page)
-      }
       expect(await component.captureScreenshot()).toMatchImageSnapshot()
     })
   })

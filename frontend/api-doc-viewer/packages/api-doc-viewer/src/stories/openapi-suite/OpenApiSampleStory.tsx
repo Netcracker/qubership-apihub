@@ -2,10 +2,11 @@ import { OpenApiOperationViewer } from "@apihub/components/OpenApiOperationViewe
 import { DisplayMode } from "@apihub/types/DisplayMode";
 import { useMemo } from "react";
 import { prepareOpenApiDocument } from "../preprocess";
+import { type AutoSwitchArgs } from "../shared/auto-switch";
 import { parseYamlSource } from "../utils/parse-yaml-source";
 import { serveTemplateOperationAs } from "./openapi-suite-utils";
 
-export type OpenApiSampleStoryProps = {
+export type OpenApiSampleStoryProps = AutoSwitchArgs & {
   caseId: string;
   sampleYaml: string;
   path: string;
@@ -14,10 +15,6 @@ export type OpenApiSampleStoryProps = {
   methodTemplate?: boolean;
   displayMode?: DisplayMode;
   noHeading?: boolean;
-  /** Selector options the case covers (security alternative, response code, media type), in order. */
-  switchTo?: readonly string[];
-  /** Select `switchTo` on mount (story `play`); off = the viewer's initial selection. */
-  autoSwitch?: boolean;
 };
 
 export const OpenApiSampleStory = ({ sampleYaml, path, method, methodTemplate, displayMode, noHeading }: OpenApiSampleStoryProps) => {

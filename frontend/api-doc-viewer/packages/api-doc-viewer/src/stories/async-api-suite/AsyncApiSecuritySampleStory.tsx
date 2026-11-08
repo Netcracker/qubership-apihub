@@ -2,6 +2,7 @@ import { AsyncApiOperationViewer } from "@apihub/components/AsyncApiOperationVie
 import { DETAILED_DISPLAY_MODE, DisplayMode } from "@apihub/types/DisplayMode";
 import { FC, useMemo } from "react";
 import { prepareAsyncApiDocument } from "../preprocess";
+import { AUTO_SWITCH_ARG_TYPES, AUTO_SWITCH_DEFAULT_ARGS, type AutoSwitchArgs } from "../shared/auto-switch";
 import { DISPLAY_MODE_ARG_TYPES, DISPLAY_MODE_DEFAULT_ARGS } from "../shared/display-mode-arg-types";
 import { parseYamlSource } from "../utils/parse-yaml-source";
 import { TEST_REFERENCE_NAME_PROPERTY } from "./shared-test-data";
@@ -9,12 +10,21 @@ import { TEST_REFERENCE_NAME_PROPERTY } from "./shared-test-data";
 /** Operation / message every AsyncAPI Security and Display Mode fixture declares. */
 export const ASYNC_API_SECURITY_OPERATION_KEYS = { operationKey: "sendOperation", messageKey: "TestMessage" } as const;
 
-/** Story controls of the AsyncAPI document suites: the display mode (a story arg). */
-export const ASYNC_API_SECURITY_STORY_ARG_TYPES = DISPLAY_MODE_ARG_TYPES;
+/**
+ * Story controls of the AsyncAPI document suites: the display mode and `autoSwitch` (story args).
+ * The suites pass `playAutoSwitch` as the story `play`.
+ */
+export const ASYNC_API_SECURITY_STORY_ARG_TYPES = {
+  ...DISPLAY_MODE_ARG_TYPES,
+  ...AUTO_SWITCH_ARG_TYPES,
+} as const;
 
-export const ASYNC_API_SECURITY_STORY_DEFAULT_ARGS: { displayMode: DisplayMode } = DISPLAY_MODE_DEFAULT_ARGS;
+export const ASYNC_API_SECURITY_STORY_DEFAULT_ARGS: { displayMode: DisplayMode; autoSwitch: boolean } = {
+  ...DISPLAY_MODE_DEFAULT_ARGS,
+  ...AUTO_SWITCH_DEFAULT_ARGS,
+};
 
-export type AsyncApiSecuritySampleStoryProps = {
+export type AsyncApiSecuritySampleStoryProps = AutoSwitchArgs & {
   caseId: string;
   yaml: string;
   displayMode?: DisplayMode;

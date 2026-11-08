@@ -113,13 +113,14 @@ Cases list option test ids to select before review/capture, in order: `security-
 `response-code-<code>`, `request-media-type-<key>`, `response-media-type-<key>` (media-type ids are
 prefixed per body because both bodies can show the same media type).
 
-- One pure-DOM implementation, `switchOpenApiOptions(testIds, root = document)` in
-  `src/utils/openapi/switch-openapi-options.ts` — same contract as
-  `switchCombinerNodesToChangedVariant`: every constant/helper **inside** the function body, so
-  `page.evaluate(switchOpenApiOptions, ids)` works.
-- Stories: `play: playOpenApiAutoSwitch` (control `autoSwitch`, default on).
-- ITs: `waitForOpenApiOperationViewer(page, { switchTo })` and story arg `autoSwitch: '!false'`
-  (the IT selects the options itself; do not rely on `play` under `iframe.html`).
+- Stories: `parameters: autoSwitchParameters(switchTo)` and meta `play: playAutoSwitch` (control
+  `autoSwitch`, default on), shared with every other suite (`src/stories/shared/auto-switch.ts`).
+  After the listed ids, `play` also selects one changed option in every other selector.
+- ITs never select options: `storyPageWithArgs` waits for the story `play` to finish
+  (SKILL.md → **Initial navigation happens in the story**).
+- Diffs cases list `switchTo` too (`bin/openapi-diffs-case-definitions.mjs`), for a change on a
+  non-initial option the generic pass does not pick (a response code changed inside while another
+  code changed too).
 
 ## Diffs suite (`packages/samples/openapi-diffs/`)
 
@@ -141,7 +142,7 @@ prefixed per body because both bodies can show the same media type).
 - Path parameters cannot be added / removed / made optional (the path template would change and
   `apiDiff` pairs different paths = a different operation).
 - Response cases: whole add / remove per code kind; everything else changes the initially
-  selected `200`, except one non-initial-code marker case. `clicks` select the changed option in ITs.
+  selected `200`, except one non-initial-code marker case. `switchTo` selects the changed option on load.
 - JSON Schema internals are not fanned out (one representative property add / remove + one schema
   replace per body).
 - Stories pick `POST` and the first `paths` key of the **after** document (merged documents key a
@@ -158,10 +159,10 @@ prefixed per body because both bodies can show the same media type).
   (`bin/generate-display-mode-simple-suites.mjs`, see SKILL.md → Display mode suites), the only ITs
   that run `describe.each(['detailed', 'simple'])`. Never add a per-mode export, fixture, or IT
   branch here. Plain stories also have `autoSwitch` and `noHeading` controls
-  (`OPENAPI_PLAIN_STORY_ARG_TYPES`); diff stories `displayMode` and `hideUnchangedNodes`
-  (`OPENAPI_DIFFS_STORY_ARG_TYPES`, default `false` — hiding is off in the diffs suite, for the
-  OpenAPI layer and every embedded JSON Schema / JSO viewer; only the "Hiding Unchanged Nodes"
-  suite sets `true`).
+  (`OPENAPI_PLAIN_STORY_ARG_TYPES`); diff stories `displayMode`, `hideUnchangedNodes`, and
+  `autoSwitch` (`OPENAPI_DIFFS_SUITE_STORY_ARG_TYPES`, `hideUnchangedNodes` default `false` — hiding
+  is off in the diffs suite, for the OpenAPI layer and every embedded JSON Schema / JSO viewer;
+  only the "Hiding Unchanged Nodes" suite sets `true`).
 - Storybook URL args encode booleans as `!true` / `!false`; a bare `'false'` arrives as a string.
 - Waits: `waitForOpenApiOperationViewer` / `waitForOpenApiOperationDiffsViewer`
   (`src/it/service/viewer-waits.ts`); never local wait helpers.

@@ -9,7 +9,7 @@
  * Every case: `{ slug, title, document, path, method, switchTo?, argVariants? }`. A group with a
  * `template` (`{ slug, document, path, method }`) writes that one fixture; its cases carry no
  * `document` and render the template with their own `method`.
- * `switchTo` lists selector option test ids selected before capture (story `play` + ITs).
+ * `switchTo` lists selector option test ids the story `play` selects on load; the ITs wait for it.
  *
  * Regenerate: `node bin/generate-openapi-suite.mjs`.
  */

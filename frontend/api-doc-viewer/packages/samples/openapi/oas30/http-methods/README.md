@@ -23,8 +23,8 @@ every case serves its only operation as the case's method (story arg `method`, c
 
 Storybook: `OpenAPI Operation Suite/OAS 3.0/HTTP Methods`
 (`src/stories/openapi-suite/oas30-http-methods.stories.tsx`). ITs:
-`src/it/openapi-suite/oas30-http-methods.it-test.ts`, every case in display mode `detailed`,
-auto-switch options selected first (`simple`: `OpenAPI Operation Suite (Display Mode = simple)`).
+`src/it/openapi-suite/oas30-http-methods.it-test.ts`, every case in display mode `detailed`
+after the story selects the case's options (`simple`: `OpenAPI Operation Suite (Display Mode = simple)`).
 
 ## Regenerate
 

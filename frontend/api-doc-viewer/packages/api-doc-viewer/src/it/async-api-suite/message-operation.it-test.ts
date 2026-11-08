@@ -14,23 +14,12 @@ describe('AsyncAPI Suite 2 - Message Operation', () => {
     await jestPuppeteer.resetPage()
   })
 
-  async function switchToOperationSection() {
-    await page.click('[data-testid="message-operation"]')
-    await page.waitForSelector('[data-testid="message-operation-section"]', { visible: true })
-  }
-
-  async function switchToSecondBindingOption() {
-    await page.click('[data-testid="binding-1"]')
-    await page.waitForSelector('[data-testid="binding-1-content"]', { visible: true })
-  }
-
   it('operation-id', async () => {
     story = await storyPage(
       page,
       'async-api-suite-message-operation--operation-id'
     )
     component = await story.viewComponent()
-    await switchToOperationSection()
     await waitForRenderingComplete(page)
     expect(await component.captureScreenshot()).toMatchImageSnapshot()
   })
@@ -41,7 +30,6 @@ describe('AsyncAPI Suite 2 - Message Operation', () => {
       'async-api-suite-message-operation--title'
     )
     component = await story.viewComponent()
-    await switchToOperationSection()
     await waitForRenderingComplete(page)
     expect(await component.captureScreenshot()).toMatchImageSnapshot()
   })
@@ -52,7 +40,6 @@ describe('AsyncAPI Suite 2 - Message Operation', () => {
       'async-api-suite-message-operation--description'
     )
     component = await story.viewComponent()
-    await switchToOperationSection()
     await waitForRenderingComplete(page)
     expect(await component.captureScreenshot()).toMatchImageSnapshot()
   })
@@ -63,7 +50,6 @@ describe('AsyncAPI Suite 2 - Message Operation', () => {
       'async-api-suite-message-operation--summary'
     )
     component = await story.viewComponent()
-    await switchToOperationSection()
     await waitForRenderingComplete(page)
     expect(await component.captureScreenshot()).toMatchImageSnapshot()
   })
@@ -74,7 +60,6 @@ describe('AsyncAPI Suite 2 - Message Operation', () => {
       'async-api-suite-message-operation--extensions'
     )
     component = await story.viewComponent()
-    await switchToOperationSection()
     await waitForRenderingComplete(page)
     expect(await component.captureScreenshot()).toMatchImageSnapshot()
   })
@@ -85,7 +70,6 @@ describe('AsyncAPI Suite 2 - Message Operation', () => {
       'async-api-suite-message-operation--bindings-one-option'
     )
     component = await story.viewComponent()
-    await switchToOperationSection()
     await waitForRenderingComplete(page)
     expect(await component.captureScreenshot()).toMatchImageSnapshot()
   })
@@ -96,7 +80,6 @@ describe('AsyncAPI Suite 2 - Message Operation', () => {
       'async-api-suite-message-operation--bindings-two-options-selected-first'
     )
     component = await story.viewComponent()
-    await switchToOperationSection()
     await waitForRenderingComplete(page)
     expect(await component.captureScreenshot()).toMatchImageSnapshot()
   })
@@ -107,8 +90,6 @@ describe('AsyncAPI Suite 2 - Message Operation', () => {
       'async-api-suite-message-operation--bindings-two-options-selected-second'
     )
     component = await story.viewComponent()
-    await switchToOperationSection()
-    await switchToSecondBindingOption()
     await waitForRenderingComplete(page)
     expect(await component.captureScreenshot()).toMatchImageSnapshot()
   })
@@ -119,7 +100,6 @@ describe('AsyncAPI Suite 2 - Message Operation', () => {
       'async-api-suite-message-operation--description-summary'
     )
     component = await story.viewComponent()
-    await switchToOperationSection()
     await waitForRenderingComplete(page)
     expect(await component.captureScreenshot()).toMatchImageSnapshot()
   })
@@ -130,7 +110,6 @@ describe('AsyncAPI Suite 2 - Message Operation', () => {
       'async-api-suite-message-operation--description-extensions'
     )
     component = await story.viewComponent()
-    await switchToOperationSection()
     await waitForRenderingComplete(page)
     expect(await component.captureScreenshot()).toMatchImageSnapshot()
   })
@@ -141,7 +120,6 @@ describe('AsyncAPI Suite 2 - Message Operation', () => {
       'async-api-suite-message-operation--description-bindings-one-option'
     )
     component = await story.viewComponent()
-    await switchToOperationSection()
     await waitForRenderingComplete(page)
     expect(await component.captureScreenshot()).toMatchImageSnapshot()
   })
@@ -152,7 +130,6 @@ describe('AsyncAPI Suite 2 - Message Operation', () => {
       'async-api-suite-message-operation--extensions-bindings-one-option'
     )
     component = await story.viewComponent()
-    await switchToOperationSection()
     await waitForRenderingComplete(page)
     expect(await component.captureScreenshot()).toMatchImageSnapshot()
   })

@@ -3,6 +3,7 @@ import { DIFF_META_KEY, DIFFS_AGGREGATED_META_KEY } from "@netcracker/qubership-
 import { DisplayMode } from "@apihub/types/DisplayMode";
 import { useMemo } from "react";
 import { mergeOpenApiDocuments } from "../preprocess";
+import { type AutoSwitchArgs } from "../shared/auto-switch";
 import { parseYamlSource } from "../utils/parse-yaml-source";
 
 /** `mergeOpenApiDocuments` stores diffs under api-diff's own `DIFF_META_KEY`. */
@@ -14,7 +15,7 @@ const OPENAPI_STORY_DIFF_META_KEYS = {
 /** Every diff fixture changes `POST` of its only path; a renamed path is keyed by its after path (E1). */
 const OPENAPI_DIFFS_SUITE_METHOD = "post";
 
-export type OpenApiDiffSampleStoryProps = {
+export type OpenApiDiffSampleStoryProps = AutoSwitchArgs & {
   caseId: string;
   beforeYaml: string;
   afterYaml: string;

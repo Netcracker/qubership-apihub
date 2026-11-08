@@ -136,7 +136,7 @@ const serverSecurity = (...names) => (doc) => { server(doc).security = names.map
 
 /**
  * Plain cases: [case id, title, mutator, section] — section `operation` (message root) or
- * `server` (Channel section: the test clicks it before the capture).
+ * `server` (Channel section: the story selects it on load).
  */
 export const PLAIN_CASES = [
   ["01-user-password", "`userPassword`", operationSecurity("userPassword"), "operation"],

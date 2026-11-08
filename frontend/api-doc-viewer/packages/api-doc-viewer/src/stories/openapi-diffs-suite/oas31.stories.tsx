@@ -2,7 +2,8 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { collectSampleCases } from "../utils/diffs-samples-cases";
 import { createSampleById } from "../utils/sample-cases";
-import { OPENAPI_DIFFS_STORY_ARG_TYPES, OPENAPI_DIFFS_STORY_DEFAULT_ARGS } from "../openapi-suite/openapi-story-args";
+import { OPENAPI_DIFFS_SUITE_STORY_ARG_TYPES, OPENAPI_DIFFS_SUITE_STORY_DEFAULT_ARGS } from "../openapi-suite/openapi-story-args";
+import { autoSwitchParameters, playAutoSwitch } from "../shared/auto-switch";
 import { OpenApiDiffSampleStory } from "./OpenApiDiffSampleStory";
 
 const beforeFiles = import.meta.glob(
@@ -21,25 +22,30 @@ const sampleById = createSampleById(collectSampleCases(beforeFiles, afterFiles))
 const meta = {
   title: "OpenAPI Operation Diffs Suite/OAS 3.1",
   component: OpenApiDiffSampleStory,
-  argTypes: OPENAPI_DIFFS_STORY_ARG_TYPES,
-  args: OPENAPI_DIFFS_STORY_DEFAULT_ARGS,
+  argTypes: OPENAPI_DIFFS_SUITE_STORY_ARG_TYPES,
+  args: OPENAPI_DIFFS_SUITE_STORY_DEFAULT_ARGS,
+  play: playAutoSwitch,
 } satisfies Meta<typeof OpenApiDiffSampleStory>;
 
 export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-const createCaseStory = (caseId: string): Story => {
+const createCaseStory = (caseId: string, switchTo: string[] = []): Story => {
   const sample = sampleById[caseId];
   if (!sample) {
     throw new Error(`Sample case not found: ${caseId}`);
   }
-  return { name: caseId, args: { caseId, beforeYaml: sample.beforeYaml, afterYaml: sample.afterYaml } };
+  return {
+    name: caseId,
+    args: { caseId, beforeYaml: sample.beforeYaml, afterYaml: sample.afterYaml },
+    parameters: autoSwitchParameters(switchTo),
+  };
 };
 
 export const Case_01_nullable_via_type_array: Story = createCaseStory("01-nullable-via-type-array");
-export const Case_02_mutual_tls_alternative_added: Story = createCaseStory("02-mutual-tls-alternative-added");
-export const Case_03_mutual_tls_alternative_removed: Story = createCaseStory("03-mutual-tls-alternative-removed");
+export const Case_02_mutual_tls_alternative_added: Story = createCaseStory("02-mutual-tls-alternative-added", ["security-alternative-1"]);
+export const Case_03_mutual_tls_alternative_removed: Story = createCaseStory("03-mutual-tls-alternative-removed", ["security-alternative-1"]);
 export const Case_04_role_scopes_added: Story = createCaseStory("04-role-scopes-added");
 export const Case_05_role_scopes_removed: Story = createCaseStory("05-role-scopes-removed");
 export const Case_06_responses_added: Story = createCaseStory("06-responses-added");

@@ -46,6 +46,8 @@ const OPENAPI_CONFIG = {
   storyComponentName: 'OpenApiStoryComponent',
   storyArgsTypeName: 'OpenApiCompatibilitySuiteStoryArgs',
   storyArgsGetter: 'getOpenApiStoryArgs',
+  // On load, a story selects every changed response code, media type, and security alternative.
+  autoSwitch: true,
 }
 
 /** One story per case; `versionPair` (OpenAPI) is passed to `getCompatibilitySuite`. */
@@ -65,12 +67,12 @@ const printStoryFile = (config, { metaId, title }, cases) => {
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { ${config.storyArgsGetter}, ${config.storyArgsTypeName}, ${config.storyComponentName} } from '${UTILS_IMPORT_PATH}'
 import { ${config.specTypeConst} } from '@netcracker/qubership-apihub-compatibility-suites'
-
+${config.autoSwitch ? "import { AUTO_SWITCH_ARG_TYPES, playAutoSwitch } from '../shared/auto-switch'\n" : ''}
 const meta: Meta<${config.storyArgsTypeName}> = {
   id: '${metaId}',
   title: '${title}',
   render: ${config.storyComponentName},
-}
+${config.autoSwitch ? '  argTypes: AUTO_SWITCH_ARG_TYPES,\n  play: playAutoSwitch,\n' : ''}}
 
 export default meta
 type Story = StoryObj<typeof meta>

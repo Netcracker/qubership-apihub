@@ -14,18 +14,12 @@ describe('Async API Diffs Suite - Channel Parameters Samples', () => {
     await jestPuppeteer.resetPage()
   })
 
-  async function switchToChannelSection() {
-    await page.click('[data-testid="message-channel"]')
-    await page.waitForSelector('[data-testid="message-channel-section"]', { visible: true })
-  }
-
   it('1-channel-parameters-two-added', async () => {
     story = await storyPage(
       page,
       'async-api-diffs-suite-channel-parameters-samples--case-1-channel-parameters-two-added'
     )
     component = await story.viewComponent()
-    await switchToChannelSection()
     await waitForRenderingComplete(page)
     expect(await component.captureScreenshot()).toMatchImageSnapshot()
   })
@@ -36,7 +30,6 @@ describe('Async API Diffs Suite - Channel Parameters Samples', () => {
       'async-api-diffs-suite-channel-parameters-samples--case-2-channel-parameters-two-removed'
     )
     component = await story.viewComponent()
-    await switchToChannelSection()
     await waitForRenderingComplete(page)
     expect(await component.captureScreenshot()).toMatchImageSnapshot()
   })
@@ -47,7 +40,6 @@ describe('Async API Diffs Suite - Channel Parameters Samples', () => {
       'async-api-diffs-suite-channel-parameters-samples--case-3-channel-parameters-second-added'
     )
     component = await story.viewComponent()
-    await switchToChannelSection()
     await waitForRenderingComplete(page)
     expect(await component.captureScreenshot()).toMatchImageSnapshot()
   })
@@ -58,7 +50,6 @@ describe('Async API Diffs Suite - Channel Parameters Samples', () => {
       'async-api-diffs-suite-channel-parameters-samples--case-4-channel-parameters-second-removed'
     )
     component = await story.viewComponent()
-    await switchToChannelSection()
     await waitForRenderingComplete(page)
     expect(await component.captureScreenshot()).toMatchImageSnapshot()
   })
@@ -69,7 +60,6 @@ describe('Async API Diffs Suite - Channel Parameters Samples', () => {
       'async-api-diffs-suite-channel-parameters-samples--case-5-channel-parameters-key-renamed'
     )
     component = await story.viewComponent()
-    await switchToChannelSection()
     await waitForRenderingComplete(page)
     expect(await component.captureScreenshot()).toMatchImageSnapshot()
   })
@@ -80,7 +70,6 @@ describe('Async API Diffs Suite - Channel Parameters Samples', () => {
       'async-api-diffs-suite-channel-parameters-samples--case-6-channel-parameters-fields-added'
     )
     component = await story.viewComponent()
-    await switchToChannelSection()
     await waitForRenderingComplete(page)
     expect(await component.captureScreenshot()).toMatchImageSnapshot()
   })
@@ -91,7 +80,6 @@ describe('Async API Diffs Suite - Channel Parameters Samples', () => {
       'async-api-diffs-suite-channel-parameters-samples--case-7-channel-parameters-fields-removed'
     )
     component = await story.viewComponent()
-    await switchToChannelSection()
     await waitForRenderingComplete(page)
     expect(await component.captureScreenshot()).toMatchImageSnapshot()
   })
@@ -102,7 +90,6 @@ describe('Async API Diffs Suite - Channel Parameters Samples', () => {
       'async-api-diffs-suite-channel-parameters-samples--case-8-channel-parameters-fields-changed'
     )
     component = await story.viewComponent()
-    await switchToChannelSection()
     await waitForRenderingComplete(page)
     expect(await component.captureScreenshot()).toMatchImageSnapshot()
   })

@@ -20,14 +20,14 @@ describe("JSON Schema Diffs Suite (Node Changes Summary)/Case 5 — One Level Ob
 
   it("expanded-root", async () => {
     story = await storyPage(page, `${META_ID}--expanded-root`);
-    await waitForJsonSchemaDiffsViewer(page, { switchCombinerVariant: true });
+    await waitForJsonSchemaDiffsViewer(page);
     component = await story.viewComponent();
     expect(await component.captureScreenshot()).toMatchImageSnapshot();
   });
 
   it("collapsed-root", async () => {
     story = await storyPage(page, `${META_ID}--collapsed-root`);
-    await waitForJsonSchemaDiffsViewer(page, { switchCombinerVariant: true });
+    await waitForJsonSchemaDiffsViewer(page);
     component = await story.viewComponent();
     expect(await component.captureScreenshot()).toMatchImageSnapshot();
   });

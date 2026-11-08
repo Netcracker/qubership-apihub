@@ -36,7 +36,7 @@ const toExportName = (caseId) => `Case_${caseId.replace(/[^A-Za-z0-9]/g, "_")}`;
 const escapeCell = (text) => text.replaceAll("|", "\\|");
 const quote = (value) => JSON.stringify(value);
 
-/** AsyncAPI message sections: test id of the tab a case opens before the capture. */
+/** AsyncAPI message sections: test id of the tab a case's story selects on load. */
 const ASYNC_API_SECTION_TEST_IDS = { content: "message-content", channel: "message-channel", operation: "message-operation" };
 
 const SUITES = [
@@ -207,6 +207,13 @@ const afterFiles = ${globLiteral(suite, `after.${suite.ext}`)};`;
 const exportsOf = (cases, factoryOf = () => "createCaseStory") =>
   cases.map((definition) => `export const ${toExportName(definition.caseId)}: Story = ${factoryOf(definition)}(${quote(definition.caseId)});`).join("\n");
 
+/** AsyncAPI: a case that opens a message section passes its tab test id to the story factory. */
+const asyncApiExportsOf = (cases) =>
+  cases.map((definition) => {
+    const section = definition.section ? `, [${quote(ASYNC_API_SECTION_TEST_IDS[definition.section])}]` : "";
+    return `export const ${toExportName(definition.caseId)}: Story = createCaseStory(${quote(definition.caseId)}${section});`;
+  }).join("\n");
+
 function storiesJsonSchema(suite, cases) {
   const mediaTypes = Object.fromEntries(cases.filter((c) => c.topLevelPropsMediaTypes).map((c) => [c.caseId, c.topLevelPropsMediaTypes]));
   return `import type { Meta } from "@storybook/react-vite";
@@ -283,6 +290,7 @@ import {
   ASYNC_API_SECURITY_STORY_DEFAULT_ARGS,
   AsyncApiSecuritySampleStory,
 } from "../async-api-suite/AsyncApiSecuritySampleStory";
+import { autoSwitchParameters, playAutoSwitch } from "../shared/auto-switch";
 import { collectSampleSources } from "../utils/sample-cases";
 
 const sampleFiles = ${globLiteral(suite, "sample.yaml")};
@@ -298,21 +306,22 @@ const meta = {
   component: AsyncApiSecuritySampleStory,
   argTypes: ASYNC_API_SECURITY_STORY_ARG_TYPES,
   args: ASYNC_API_SECURITY_STORY_DEFAULT_ARGS,
+  play: playAutoSwitch,
 } satisfies Meta<typeof AsyncApiSecuritySampleStory>;
 
 export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-const createCaseStory = (caseId: string): Story => {
+const createCaseStory = (caseId: string, switchTo: string[] = []): Story => {
   const yaml = yamlByCaseId[caseId];
   if (!yaml) {
     throw new Error(\`Sample case not found: \${caseId}\`);
   }
-  return { name: caseId, args: { caseId, yaml } };
+  return { name: caseId, args: { caseId, yaml }, parameters: autoSwitchParameters(switchTo) };
 };
 
-${exportsOf(cases)}
+${asyncApiExportsOf(cases)}
 `;
 }
 
@@ -320,6 +329,7 @@ function storiesAsyncApiDiffs(suite, cases) {
   return `import type { Meta, StoryObj } from "@storybook/react-vite";
 import { ASYNC_API_SECURITY_STORY_ARG_TYPES, ASYNC_API_SECURITY_STORY_DEFAULT_ARGS } from "../async-api-suite/AsyncApiSecuritySampleStory";
 import { AsyncApiSecurityDiffSampleStory } from "../async-api-diffs-suite/AsyncApiSecurityDiffSampleStory";
+import { autoSwitchParameters, playAutoSwitch } from "../shared/auto-switch";
 import { collectSampleCases } from "../utils/diffs-samples-cases";
 import { createSampleById } from "../utils/sample-cases";
 
@@ -334,29 +344,35 @@ const meta = {
   component: AsyncApiSecurityDiffSampleStory,
   argTypes: ASYNC_API_SECURITY_STORY_ARG_TYPES,
   args: ASYNC_API_SECURITY_STORY_DEFAULT_ARGS,
+  play: playAutoSwitch,
 } satisfies Meta<typeof AsyncApiSecurityDiffSampleStory>;
 
 export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-const createCaseStory = (caseId: string): Story => {
+const createCaseStory = (caseId: string, switchTo: string[] = []): Story => {
   const sample = sampleById[caseId];
   if (!sample) {
     throw new Error(\`Sample case not found: \${caseId}\`);
   }
-  return { name: caseId, args: { caseId, beforeYaml: sample.beforeYaml, afterYaml: sample.afterYaml } };
+  return {
+    name: caseId,
+    args: { caseId, beforeYaml: sample.beforeYaml, afterYaml: sample.afterYaml },
+    parameters: autoSwitchParameters(switchTo),
+  };
 };
 
-${exportsOf(cases)}
+${asyncApiExportsOf(cases)}
 `;
 }
 
 function storiesOpenApi(suite, cases) {
   return `import type { Meta, StoryObj } from "@storybook/react-vite";
-import { OPENAPI_STORY_ARG_TYPES, OPENAPI_STORY_DEFAULT_ARGS } from "../openapi-suite/openapi-story-args";
+import { OPENAPI_SUITE_STORY_ARG_TYPES, OPENAPI_SUITE_STORY_DEFAULT_ARGS } from "../openapi-suite/openapi-story-args";
 import { collectOpenApiSamples, takeOpenApiSample } from "../openapi-suite/openapi-suite-utils";
 import { OpenApiSampleStory } from "../openapi-suite/OpenApiSampleStory";
+import { playAutoSwitch } from "../shared/auto-switch";
 
 const sampleFiles = ${globLiteral(suite, "sample.yaml")};
 
@@ -367,8 +383,9 @@ const meta = {
   id: "${metaIdOf(suite)}",
   title: "${suite.title}",
   component: OpenApiSampleStory,
-  argTypes: OPENAPI_STORY_ARG_TYPES,
-  args: OPENAPI_STORY_DEFAULT_ARGS,
+  argTypes: OPENAPI_SUITE_STORY_ARG_TYPES,
+  args: OPENAPI_SUITE_STORY_DEFAULT_ARGS,
+  play: playAutoSwitch,
 } satisfies Meta<typeof OpenApiSampleStory>;
 
 export default meta;
@@ -386,8 +403,9 @@ ${exportsOf(cases)}
 
 function storiesOpenApiDiffs(suite, cases) {
   return `import type { Meta, StoryObj } from "@storybook/react-vite";
-import { OPENAPI_DIFFS_STORY_ARG_TYPES, OPENAPI_DIFFS_STORY_DEFAULT_ARGS } from "../openapi-suite/openapi-story-args";
+import { OPENAPI_DIFFS_SUITE_STORY_ARG_TYPES, OPENAPI_DIFFS_SUITE_STORY_DEFAULT_ARGS } from "../openapi-suite/openapi-story-args";
 import { OpenApiDiffSampleStory } from "../openapi-diffs-suite/OpenApiDiffSampleStory";
+import { playAutoSwitch } from "../shared/auto-switch";
 import { collectSampleCases } from "../utils/diffs-samples-cases";
 import { createSampleById } from "../utils/sample-cases";
 
@@ -400,8 +418,9 @@ const meta = {
   id: "${metaIdOf(suite)}",
   title: "${suite.title}",
   component: OpenApiDiffSampleStory,
-  argTypes: OPENAPI_DIFFS_STORY_ARG_TYPES,
-  args: OPENAPI_DIFFS_STORY_DEFAULT_ARGS,
+  argTypes: OPENAPI_DIFFS_SUITE_STORY_ARG_TYPES,
+  args: OPENAPI_DIFFS_SUITE_STORY_DEFAULT_ARGS,
+  play: playAutoSwitch,
 } satisfies Meta<typeof OpenApiDiffSampleStory>;
 
 export default meta;
@@ -498,32 +517,11 @@ const VIEWER_WAITS = {
 };
 
 function writeTests(suite, cases) {
-  const isAsyncApi = suite.apiTitle === "AsyncAPI";
   const [waitName, waitCall] = VIEWER_WAITS[suite.apiTitle][suite.diffs ? 1 : 0];
-  const rows = cases.map((definition) => {
-    const section = definition.section ? `'${ASYNC_API_SECTION_TEST_IDS[definition.section]}'` : "undefined";
-    return isAsyncApi
-      ? `  ['${definition.caseId}', '${storyIdOf(suite, definition.caseId)}', ${section}],`
-      : `  ['${definition.caseId}', '${storyIdOf(suite, definition.caseId)}'],`;
-  });
-  const casesType = isAsyncApi
-    ? `/** [case id, story id, message section tab opened before the capture]. */
-const CASES: ReadonlyArray<readonly [string, string, string | undefined]> = [`
-    : `/** [case id, story id]. */
+  const rows = cases.map((definition) => `  ['${definition.caseId}', '${storyIdOf(suite, definition.caseId)}'],`);
+  const casesType = `/** [case id, story id]. */
 const CASES: ReadonlyArray<readonly [string, string]> = [`;
-  const body = isAsyncApi
-    ? `    it.each(CASES)('%s', async (_caseId, storyId, section) => {
-      const story = await storyPageWithArgs(page, storyId, { displayMode })
-      const component = await story.viewComponent()
-      await waitForRenderingComplete(page)
-      if (section) {
-        await page.click(\`[data-testid="\${section}"]\`)
-        await page.waitForSelector(\`[data-testid="\${section}-section"]\`, { visible: true })
-        await waitForRenderingComplete(page)
-      }
-      expect(await component.captureScreenshot()).toMatchImageSnapshot()
-    })`
-    : `    it.each(CASES)('%s', async (_caseId, storyId) => {
+  const body = `    it.each(CASES)('%s', async (_caseId, storyId) => {
       const story = await storyPageWithArgs(page, storyId, { displayMode })
       const component = await story.viewComponent()
       await ${waitCall}

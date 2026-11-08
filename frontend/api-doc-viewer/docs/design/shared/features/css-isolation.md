@@ -87,8 +87,8 @@ element rules by specificity as before.
    (`OPENAPI_RESPONSE_CODE_TONE_CLASSES`), and class props (`toneClass`, `maxWidthClass`) hold plain
    names; only `cn()` at the `className` site prefixes them.
 3. **Code that reads classes from the DOM matches the prefixed name** (`api-doc-viewer-selected`);
-   prefer `data-*` attributes for new DOM queries. Current readers:
-   `src/utils/combiner-changed-variant.ts`, `src/utils/openapi/switch-openapi-options.ts`.
+   prefer `data-*` attributes for new DOM queries. Build the name with `cn()` where the code can import
+   it. Current reader: `src/stories/shared/auto-switch.ts` (story auto-switch).
 4. **Source CSS uses plain names** — tests that read CSS as text (color config) keep working.
 
 ## Host contract

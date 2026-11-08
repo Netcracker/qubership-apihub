@@ -2,7 +2,8 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { collectSampleCases } from "../utils/diffs-samples-cases";
 import { createSampleById } from "../utils/sample-cases";
-import { OPENAPI_DIFFS_STORY_ARG_TYPES, OPENAPI_DIFFS_STORY_DEFAULT_ARGS } from "../openapi-suite/openapi-story-args";
+import { OPENAPI_DIFFS_SUITE_STORY_ARG_TYPES, OPENAPI_DIFFS_SUITE_STORY_DEFAULT_ARGS } from "../openapi-suite/openapi-story-args";
+import { autoSwitchParameters, playAutoSwitch } from "../shared/auto-switch";
 import { OpenApiDiffSampleStory } from "./OpenApiDiffSampleStory";
 
 const beforeFiles = import.meta.glob(
@@ -21,20 +22,25 @@ const sampleById = createSampleById(collectSampleCases(beforeFiles, afterFiles))
 const meta = {
   title: "OpenAPI Operation Diffs Suite/Request Headers",
   component: OpenApiDiffSampleStory,
-  argTypes: OPENAPI_DIFFS_STORY_ARG_TYPES,
-  args: OPENAPI_DIFFS_STORY_DEFAULT_ARGS,
+  argTypes: OPENAPI_DIFFS_SUITE_STORY_ARG_TYPES,
+  args: OPENAPI_DIFFS_SUITE_STORY_DEFAULT_ARGS,
+  play: playAutoSwitch,
 } satisfies Meta<typeof OpenApiDiffSampleStory>;
 
 export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-const createCaseStory = (caseId: string): Story => {
+const createCaseStory = (caseId: string, switchTo: string[] = []): Story => {
   const sample = sampleById[caseId];
   if (!sample) {
     throw new Error(`Sample case not found: ${caseId}`);
   }
-  return { name: caseId, args: { caseId, beforeYaml: sample.beforeYaml, afterYaml: sample.afterYaml } };
+  return {
+    name: caseId,
+    args: { caseId, beforeYaml: sample.beforeYaml, afterYaml: sample.afterYaml },
+    parameters: autoSwitchParameters(switchTo),
+  };
 };
 
 export const Case_01_entry_added: Story = createCaseStory("01-entry-added");

@@ -48,6 +48,32 @@ The children of an option are ordinary children of that option.
 - Selected-option state is view state (AsyncAPI: the selector component; OpenAPI:
   `OpenApiViewStateContext`, because the parent level plans separators from the selected option).
 
+## Stories and screenshot tests
+
+A story opens on the options its case is about, so the story and its screenshot show the same
+state. The story `play` (`playAutoSwitch` in `packages/api-doc-viewer/src/stories/shared/auto-switch.ts`)
+selects, on load:
+
+1. The options the case lists by test id (story parameter `autoSwitch.switchTo`), in order: an
+   OpenAPI response code, media type, or security alternative; an AsyncAPI message section tab or
+   binding.
+2. In every other selector, one changed option that is not selected, by priority: a wholly added
+   option (`diffs-border-shadow_green`), a wholly removed option (`diffs-border-shadow_red`), an
+   option with changes inside (another border shadow or a `diffs-round-marker_*`). The last one is
+   skipped when the selected option already shows a change. A click can reveal a nested selector
+   (a combiner inside a variant), so the pass repeats.
+
+Each selector is clicked at most once. Both sides of the side-by-side diffs layout share the
+selection, so the closest `side-by-side-layout` element identifies a selector.
+
+- The `autoSwitch` story control (default on) turns the navigation off. `play` runs once per story
+  load: the control takes effect on the next load (F5), and changing another control keeps an option
+  the user selected by hand.
+- Screenshot ITs never select options. `storyPageWithArgs` waits until Storybook reports the story
+  render, `play` included, as `finished`, and fails the test when `play` throws (an unknown test id
+  in `switchTo`).
+- A story that shows the default selection on purpose sets `autoSwitch: false` in its args.
+
 ## Related documents
 
 - Tree model: [../architecture/data-model-plain.md](../architecture/data-model-plain.md),

@@ -1,6 +1,4 @@
-import { cn, CSS_CLASS_PREFIX } from "../src/utils/common/cn"
-import { switchCombinerNodesToChangedVariant } from "../src/utils/combiner-changed-variant"
-import { switchOpenApiOptions } from "../src/utils/openapi/switch-openapi-options"
+import { cn } from "../src/utils/common/cn"
 
 describe("cn", () => {
   it("prefixes every whitespace-separated token", () => {
@@ -29,14 +27,5 @@ describe("cn", () => {
   it("returns an empty string for no classes", () => {
     expect(cn()).toBe("")
     expect(cn(undefined, false)).toBe("")
-  })
-
-  /* These helpers run through Puppeteer's page.evaluate(), so they cannot import the prefix and
-     spell it inside their bodies; keep the spelled prefix in sync with CSS_CLASS_PREFIX. */
-  it.each([
-    ["switchCombinerNodesToChangedVariant", switchCombinerNodesToChangedVariant],
-    ["switchOpenApiOptions", switchOpenApiOptions],
-  ])("%s matches prefixed class names", (_name, helper) => {
-    expect(helper.toString()).toContain(CSS_CLASS_PREFIX)
   })
 })
