@@ -3,7 +3,7 @@ import { Box } from '@mui/material'
 import type { Theme } from '@mui/material/styles'
 import type { SystemStyleObject } from '@mui/system/styleFunctionSx/styleFunctionSx'
 import { type FC, memo, useCallback, useMemo } from 'react'
-import { generatePath, Outlet } from 'react-router-dom'
+import { Outlet } from 'react-router-dom'
 
 import { AppHeader } from '@netcracker/qubership-apihub-ui-shared/components/AppHeader'
 import {
@@ -23,7 +23,7 @@ import {
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import { useAgentEnabled } from '@netcracker/qubership-apihub-ui-shared/features/system-extensions/useSystemExtensions'
 import { SystemInfoPopup, useSystemInfo } from '@netcracker/qubership-apihub-ui-shared/features/system-info'
-import { useVersionInfo } from '@netcracker/qubership-apihub-ui-shared/hooks/frontend-version/useVersionInfo'
+import { useImageVersion, useVersionInfo } from '@netcracker/qubership-apihub-ui-shared/hooks/frontend-version/useVersionInfo'
 import { useSuperAdminCheck } from '@netcracker/qubership-apihub-ui-shared/hooks/user-roles/useSuperAdminCheck'
 import { LogoIcon } from '@netcracker/qubership-apihub-ui-shared/icons/LogoIcon'
 import { RobotIcon } from '@netcracker/qubership-apihub-ui-shared/icons/RobotIcon'
@@ -33,7 +33,6 @@ import { AiAssistantPanel } from '@portal/components/AiAssistant/AiAssistantPane
 import {
   AiAssistantProvider,
 } from '@portal/components/AiAssistant/state/AiAssistantProvider'
-import * as packageJson from '../../../../package.json'
 import { portal } from '@netcracker/qubership-apihub-ui-shared/utils/version-info'
 import { PORTAL_PATH_PATTERNS } from '../../../routes'
 import { Notification, useShowErrorNotification } from '../BasePage/Notification'
@@ -48,7 +47,8 @@ export const BasePage: FC = memo(() => {
   const { notification: systemNotification, aiChatEnabled } = useSystemInfo()
   const showErrorNotification = useShowErrorNotification()
   const isSuperAdmin = useSuperAdminCheck()
-  const { frontendVersion, apiProcessorVersion } = useVersionInfo(portal, packageJson.version)
+  const { frontendVersion, apiProcessorVersion } = useVersionInfo(portal, __APP_VERSION__)
+  const imageVersion = useImageVersion(portal)
   const agentEnabled = useAgentEnabled()
   const viewPortStyleCalculator = useCallback(
     (theme: Theme): SystemStyleObject<Theme> => {
@@ -89,6 +89,7 @@ export const BasePage: FC = memo(() => {
             <SystemInfoPopup
               frontendVersionKey={frontendVersion}
               apiProcessorVersion={apiProcessorVersion}
+              imageVersion={imageVersion}
             />
             <UserPanel/>
           </>
@@ -113,7 +114,7 @@ export const BasePage: FC = memo(() => {
   return (
     <MainPageProvider>
       <SidePanelManagerProvider>
-        <ModuleFetchingErrorBoundary showReloadPopup={packageJson.version !== frontendVersion}>
+        <ModuleFetchingErrorBoundary showReloadPopup={__APP_VERSION__ !== frontendVersion}>
           {/* Render the provider unconditionally. A conditional wrapper remounts the page when
               aiChatEnabled arrives with the system info, and every component on it loses its state. */}
           <AiAssistantProvider>
@@ -140,13 +141,17 @@ const aiAssistantButtonProps = {
 }
 
 function replacePackageId(locationPathname: string, searchParams: URLSearchParams, packageId: Key): string {
-  const locationMatch = matchPathname(locationPathname, PORTAL_PATH_PATTERNS)!
-  const newPathname = generatePath(
-    locationMatch.pattern.path,
-    {
-      ...locationMatch!.params,
-      packageId,
-    },
-  )
-  return `${newPathname}?${searchParams}`
+  const locationMatch = matchPathname(locationPathname, PORTAL_PATH_PATTERNS)
+  if (!locationMatch) {
+    return `${locationPathname}?${searchParams}`
+  }
+  // Only the package segment is replaced: react-router versions differ in how matchPath decodes the other parameters.
+  // matchPathname appends '*' to each pattern, so the last segment can read ':packageId*'.
+  const packageIdIndex = locationMatch.pattern.path.split('/')
+    .findIndex(segment => segment.replace(/\*$/, '') === ':packageId')
+  const segments = locationPathname.split('/')
+  if (packageIdIndex >= 0) {
+    segments[packageIdIndex] = encodeURIComponent(packageId)
+  }
+  return `${segments.join('/')}?${searchParams}`
 }

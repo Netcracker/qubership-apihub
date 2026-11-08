@@ -1,8 +1,11 @@
 # Portal mock server
 
+**Deprecated.** The Express mock servers are being replaced by [MSW mocks](./msw-mocks.md). Add new mocks to MSW;
+the routes below will move there.
+
 Express app under `packages/portal/server/`. Default listen URL: `http://localhost:3003` (`NODEJS_PORT` to override).
 
-Use it in **mixed mode** ([local-development.md](./local-development.md#optional-mixed-mode-proxy--local-mock)) or with `dev:frontend`. Default **proxy mode** does not use this server; `/api` goes to the real APIHUB.
+Use it in **mixed mode** ([local-development.md](./local-development.md#deprecated-mixed-mode-proxy--express-mock)) or with `dev:frontend`. Default **proxy mode** does not use this server; `/api` goes to the real APIHUB.
 
 ## Vite proxy (`vite.config.ts`)
 

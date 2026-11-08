@@ -93,7 +93,7 @@ function eventsFor(answer) {
 /** A GitHub client that keeps the comments, like the real one, and records every write. */
 function fakeGh({
   issueOverrides = {}, labels = [], comments = [], pulls = {}, threads = [], checkRuns = [], statuses = [],
-  rerunFails = false,
+  rerunFails = false, behindBy = 3,
 } = {}) {
   const calls = []
   const store = comments.map((c) => ({ ...c }))
@@ -116,6 +116,7 @@ function fakeGh({
     addLabels: async (n, add) => calls.push(['addLabels', n, add]),
     removeLabel: async (n, label) => calls.push(['removeLabel', n, label]),
     getPull: async (n) => pulls[n] ?? { number: n, state: 'closed' },
+    compareCommits: async (base, head) => (calls.push(['compareCommits', base, head]), { behind_by: behindBy }),
     listReviewThreads: async (n) => (calls.push(['listReviewThreads', n]), threads.map((t) => ({ ...t }))),
     replyToReviewComment: async (n, id, body) => calls.push(['replyToReviewComment', n, id, body]),
     addReaction: async (id, content) => calls.push(['addReaction', id, content]),
@@ -154,13 +155,20 @@ function fakeExec({
   pushFails = false,
   changed = 'backend/x.go',
   mergeBase = BASE,
+  developSha = sha(800),
+  contains = false,
+  conflicts = [],
+  mergeFails = 0,
+  markers = [],
 } = {}) {
   const calls = []
+  const markerAnswers = [...markers]
   let head = BASE
   let commits = 0
   let statusCalls = 0
   let checkCalls = 0
   const ok = (stdout = '') => ({ exitCode: 0, stdout, stderr: '', timedOut: false })
+  const exit = (exitCode, stdout = '', stderr = '') => ({ exitCode, stdout, stderr, timedOut: false })
   const exec = async (file, args, options = {}) => {
     calls.push({ file, args, options })
     if (file === 'pnpm') {
@@ -172,9 +180,17 @@ function fakeExec({
       case 'ls-remote':
         return ok(remote)
       case 'rev-parse':
-        return ok(`${head}\n`)
+        return ok(`${args.includes('origin/develop') ? developSha : head}\n`)
       case 'merge-base':
+        if (args.includes('--is-ancestor')) return exit(contains ? 0 : 1)
         return ok(`${mergeBase}\n`)
+      case 'merge':
+        if (mergeFails) return exit(mergeFails, '', 'error: an untracked file is in the way')
+        return exit(conflicts.length > 0 ? 1 : 0, 'Automatic merge failed\n')
+      case 'grep': {
+        const found = markerAnswers.shift()
+        return exit(found ? 0 : 1, found ?? '')
+      }
       case 'bundle':
         fs.writeFileSync(args[2], 'a bundle')
         return ok()
@@ -186,6 +202,7 @@ function fakeExec({
         head = sha(commits)
         return ok()
       case 'diff':
+        if (args.includes('--diff-filter=U')) return ok(conflicts.join('\n'))
         if (args.includes('--shortstat')) return ok(shortstat)
         if (args.includes('--name-only')) return ok(changed)
         if (args.includes('--stat')) return ok(' backend/x.go | 2 +-')
@@ -211,7 +228,7 @@ function fakeRunAgent(answers) {
   const runs = []
   const runAgent = async (options) => {
     const inputText = fs.readFileSync(options.files[0], 'utf8')
-    runs.push({ agent: options.agent, model: options.model, inputText })
+    runs.push({ agent: options.agent, model: options.model, message: options.message, inputText })
     const next = queues[options.agent]?.shift()
     assert.ok(next !== undefined, `unexpected call of ${options.agent}`)
     if (next instanceof Error) throw next
@@ -1035,7 +1052,7 @@ test('preflight of a CI fix needs no decision: it checks the state and writes th
   await withContext({ env: { AGENT_KIND: 'later' } }, async (ctx) => {
     await assert.rejects(
       preflight(ctx.env, ctx.deps),
-      /AGENT_KIND must be initial, ci-fix, human, or review, got 'later'/,
+      /AGENT_KIND must be initial, ci-fix, human, review, or update, got 'later'/,
     )
   })
 })
@@ -2226,5 +2243,315 @@ test('run, CI fix, blocked: the hand-off names the failed checks, the first erro
         'failed checks, with no new attempt and no model cost.',
       '- To try another fix, comment `/agent retry` with guidance.',
     ].join('\n'))
+  })
+})
+
+// ------------------------------------------------------------------------------------------------ /agent update
+
+const CONFLICTS = ['backend/a.go', 'docs/b.md']
+const MERGE_MESSAGE = `Merge branch 'develop' into ${BRANCH}\n\nPart of #200.\n\nAgent-Run: ${RUN}`
+const updateCommand = { name: 'update', force: false, notes: '' }
+const updateOptions = ({ command = updateCommand, pulls, env = {}, ...rest } = {}) =>
+  personOptions('update', {
+    command, pulls: pulls ?? openPull({ head: { sha: sha(900) } }), env: { AGENT_PR: '70', ...env }, ...rest,
+  })
+const outcomeOf = (ctx) => JSON.parse(fs.readFileSync(path.join(ctx.env.AGENT_OUT, 'outcome.json'), 'utf8'))
+const hasText = (text, ...parts) => assert.ok(text.includes(parts.join('')), `missing: ${parts.join('')}`)
+const gitArgs = (ctx) => ctx.exec.calls.filter((c) => c.file === 'git').map((c) => c.args)
+
+test('humanDecision: an update needs the open pull request of the state and is refused when develop is merged', () => {
+  const issue = { state: 'open', type: { name: 'Bug' } }
+  const base = {
+    issue, state: handOffState(), command: { name: 'update' }, kind: 'update', pr: 70, pull: { state: 'open' },
+  }
+  assert.deepEqual(humanDecision(base), { outcome: 'proceed', fresh: false, changes: true })
+  assert.equal(humanDecision({ ...base, behindBy: 4 }).outcome, 'proceed')
+  assert.deepEqual(humanDecision({ ...base, behindBy: 0 }), {
+    outcome: 'refuse-up-to-date', fresh: false, changes: true,
+  })
+  assert.equal(humanDecision({ ...base, pr: 99, behindBy: 0 }).outcome, 'refuse-no-branch')
+  assert.equal(humanDecision({ ...base, pull: { state: 'closed' }, behindBy: 0 }).outcome, 'refuse-pr-closed')
+  assert.equal(humanDecision({ ...base, issue: { ...issue, state: 'closed' } }).outcome, 'refuse-closed')
+  // Only an update looks at how far the branch is behind.
+  const review = { ...base, kind: 'review', command: { name: 'review-changes' }, behindBy: 0 }
+  assert.equal(humanDecision(review).outcome, 'proceed')
+})
+
+test('refusalReply: an update of a branch that already has develop', () => {
+  assert.equal(
+    refusalReply({ outcome: 'refuse-up-to-date', actor: 'carol', issue: {}, state: { pr: 70 } }),
+    '@carol, pull request #70 already contains the latest `develop`, so there is nothing to update.',
+  )
+})
+
+test('preflight of an update: compares the head of the pull request with develop and marks the state', async () => {
+  await withContext(updateOptions(), async (ctx) => {
+    const result = await preflight(ctx.env, ctx.deps)
+    assert.deepEqual([result.proceed, result.outcome, result.changes], [true, 'proceed', true])
+    assert.deepEqual(ctx.gh.calls.find((c) => c[0] === 'compareCommits'), ['compareCommits', 'develop', sha(900)])
+    assert.equal(ctx.outputs(), 'proceed=true\noutcome=proceed\n')
+    const saved = savedState(ctx.gh)
+    assert.deepEqual(
+      [saved.phase, saved.implementing.kind, saved.implementing.pr, saved.implementing.actor, saved.budgetFrom],
+      ['implementing', 'update', 70, 'carol', 1],
+    )
+    const context = JSON.parse(fs.readFileSync(path.join(ctx.env.AGENT_OUT, 'context.json'), 'utf8'))
+    assert.deepEqual(
+      [context.kind, context.changes, context.fresh, context.analyzeFirst],
+      ['update', true, false, false],
+    )
+    assert.deepEqual(reactionsOf(ctx), ['eyes'])
+  })
+})
+
+test('preflight of an update: a pull request that has develop gets the reply and nothing else', async () => {
+  await withContext(updateOptions({ ghOptions: { behindBy: 0 } }), async (ctx) => {
+    const result = await preflight(ctx.env, ctx.deps)
+    assert.deepEqual([result.proceed, result.outcome], [false, 'refuse-up-to-date'])
+    assert.equal(ctx.outputs(), 'proceed=false\noutcome=refuse-up-to-date\n')
+    const replies = ctx.gh.calls.filter((c) => c[0] === 'createIssueComment')
+    assert.deepEqual(replies, [[
+      'createIssueComment',
+      200,
+      '@carol, pull request #70 already contains the latest `develop`, so there is nothing to update.',
+    ]])
+    assert.equal(savedState(ctx.gh).phase, 'needs-human')
+    assert.deepEqual(reactionsOf(ctx), ['eyes', 'confused'])
+  })
+})
+
+test('preflight of an update: another pull request or a closed one is refused before develop is compared', async () => {
+  await withContext(updateOptions({ env: { AGENT_PR: '99' } }), async (ctx) => {
+    assert.equal((await preflight(ctx.env, ctx.deps)).outcome, 'refuse-no-branch')
+  })
+  await withContext(updateOptions({ pulls: openPull({ state: 'closed' }) }), async (ctx) => {
+    assert.equal((await preflight(ctx.env, ctx.deps)).outcome, 'refuse-pr-closed')
+    assert.deepEqual(ctx.gh.calls.filter((c) => c[0] === 'compareCommits'), [])
+  })
+})
+
+test('an update without conflicts: no model, no checks, a merge commit, a lease push, and waiting-ci', async () => {
+  const options = updateOptions({ agents: {}, exec: fakeExec({ remote: REMOTE }) })
+  await withContext(options, async (ctx) => {
+    const result = await runPerson(ctx)
+    assert.deepEqual(result, { result: 'pr-opened', pr: 70, branch: BRANCH })
+    assert.deepEqual(ctx.runAgent.runs, [])
+    assert.deepEqual(ctx.exec.calls.filter((c) => c.file === 'pnpm'), [])
+
+    const git = gitArgs(ctx)
+    assert.deepEqual(git.find((a) => a[0] === 'merge-base' && a.includes('--is-ancestor')), [
+      'merge-base', '--is-ancestor', sha(800), 'HEAD',
+    ])
+    assert.deepEqual(git.find((a) => a[0] === 'merge'), ['merge', '--no-ff', '--no-commit', sha(800)])
+    assert.deepEqual(ctx.exec.git('commit').map((c) => c.args), [['commit', '--no-verify', '-m', MERGE_MESSAGE]])
+    assert.equal(git.find((a) => a[0] === 'bundle').at(-1), `${sha(800)}..HEAD`)
+    const push = ctx.exec.git('push')[0].args
+    assert.ok(push.includes(`--force-with-lease=refs/heads/${BRANCH}:${sha(900)}`))
+    assert.ok(!push.includes('--force'))
+    assert.equal(push.at(-1), `${sha(1)}:refs/heads/${BRANCH}`)
+
+    // The pull request keeps its title and description; it was ready, and a merge does not make it a draft.
+    assert.deepEqual(ctx.patGh.calls, [])
+    assert.deepEqual(ctx.patGh.edits, [])
+
+    const outcome = outcomeOf(ctx)
+    assert.deepEqual(
+      [outcome.kind, outcome.result, outcome.rounds, outcome.implementation, outcome.checks, outcome.review],
+      ['update', 'pr-opened', 0, null, null, null],
+    )
+    assert.deepEqual(outcome.merge, { conflicts: [] })
+    assert.deepEqual([outcome.branchInfo.base, outcome.branchInfo.head], [sha(800), sha(1)])
+
+    const saved = savedState(ctx.gh)
+    assert.deepEqual([saved.phase, saved.pr, saved.branch, saved.implementing], ['waiting-ci', 70, BRANCH, undefined])
+    assert.deepEqual(
+      { ...saved.attempts.at(-1), at: 'x' },
+      { n: 2, kind: 'update', actor: 'carol', run: RUN, result: 'pr-opened', rounds: 0, checks: null, selfReview: null,
+        notes: null, at: 'x' },
+    )
+    hasText(
+      ctx.gh.store[0].body,
+      '### AI update: develop merged into pull request #70\n\n',
+      'Branch `bugfix/200-changelog-is-empty-for-a`. The merge had no conflicts, so no model ran. ',
+      'CI runs again on the pull request.',
+    )
+    // No comment to the person: the state comment tells, and CI on GitHub goes on.
+    assert.deepEqual(ctx.gh.calls.filter((c) => c[0] !== 'addReaction').map((c) => c[0]), [
+      'compareCommits', 'updateIssueComment', 'updateIssueComment', 'removeLabel',
+    ])
+    assert.deepEqual(reactionsOf(ctx), ['eyes', 'rocket'])
+  })
+})
+
+test('an update with conflicts: the implementer resolves them, and the merge commit is the one commit', async () => {
+  const command = { name: 'update', force: false, notes: 'Keep the new flag.' }
+  const exec = fakeExec({ remote: REMOTE, conflicts: CONFLICTS })
+  await withContext(updateOptions({ command, exec }), async (ctx) => {
+    const result = await runPerson(ctx)
+    assert.deepEqual(result, { result: 'pr-opened', pr: 70, branch: BRANCH })
+    assert.deepEqual(ctx.runAgent.runs.map((r) => r.agent), ['implementer', 'self-reviewer'])
+    const [implementer, reviewer] = ctx.runAgent.runs
+    assert.equal(
+      implementer.message,
+      'Resolve the merge conflicts of issue #200. Your input is the attached implement-input.md.',
+    )
+    assert.match(implementer.inputText, /- Playbook: none \(this attempt merges develop\)\n- Issue type: Bug\n/)
+    assert.match(implementer.inputText, /- Attempt: 2 \(update\)\n/)
+    hasText(
+      implementer.inputText,
+      'a maintainer asked to merge the latest `develop` into its branch. ',
+      'The merge has started and stopped on conflicts.',
+    )
+    hasText(
+      implementer.inputText,
+      '## Files with conflicts\n\n<untrusted>\n- `backend/a.go`\n- `docs/b.md`\n</untrusted>\n\n',
+      '## Title and description',
+    )
+    assert.match(implementer.inputText, /## The maintainer's guidance\n\n<untrusted>\nKeep the new flag\./)
+    assert.match(reviewer.inputText, new RegExp(`- Base commit: ${sha(800)}\\n- Head commit: ${sha(1)}\\n`))
+    hasText(reviewer.inputText, 'the head commit is the merge commit. Check that the conflicts in\n  the files')
+    hasText(reviewer.inputText, '## Files with conflicts\n\n<untrusted>\n- `backend/a.go`\n- `docs/b.md`\n')
+
+    // The merge commit is the first and only commit of the round; the markers were looked for before it.
+    assert.deepEqual(ctx.exec.git('commit').map((c) => c.args), [['commit', '--no-verify', '-m', MERGE_MESSAGE]])
+    const grep = ctx.exec.git('grep')
+    assert.deepEqual(grep.map((c) => c.args.slice(-3)), [['--', ...CONFLICTS]])
+    const order = ctx.exec.calls.map((c) => c.args[0])
+    assert.ok(order.indexOf('grep') < order.indexOf('commit'))
+
+    // The checks and the bundle start at the commit of develop that was merged.
+    assert.ok(ctx.exec.calls.find((c) => c.file === 'pnpm').args.includes(`--base=${sha(800)}`))
+    assert.equal(gitArgs(ctx).find((a) => a[0] === 'bundle').at(-1), `${sha(800)}..HEAD`)
+    assert.deepEqual(outcomeOf(ctx).merge, { conflicts: CONFLICTS })
+    assert.deepEqual(ctx.patGh.edits, [])
+    hasText(
+      ctx.gh.store[0].body,
+      '### AI update: develop merged into pull request #70\n\n',
+      `Branch \`${BRANCH}\`. I resolved the conflicts in 2 file(s) in 1 round(s). `,
+      'CI runs again on the pull request.\n\n',
+      '- Local checks (reported by the work job): green\n',
+    )
+    assert.equal(savedState(ctx.gh).phase, 'waiting-ci')
+    assert.equal(savedState(ctx.gh).attempts.at(-1).kind, 'update')
+  })
+})
+
+test('an update with conflicts: a later round amends the merge commit, which keeps both parents', async () => {
+  const agents = { implementer: [done, done], 'self-reviewer': [changes, approve] }
+  const exec = fakeExec({ remote: REMOTE, conflicts: CONFLICTS })
+  await withContext(updateOptions({ exec, agents }), async (ctx) => {
+    const result = await runPerson(ctx)
+    assert.equal(result.result, 'pr-opened')
+    assert.deepEqual(ctx.exec.git('commit').map((c) => c.args), [
+      ['commit', '--no-verify', '-m', MERGE_MESSAGE],
+      ['commit', '--no-verify', '--amend', '-m', MERGE_MESSAGE],
+    ])
+    assert.equal(ctx.exec.git('grep').length, 2)
+    assert.match(ctx.runAgent.runs[2].inputText, /## Result of round 1: fix this first/)
+    assert.match(ctx.gh.store[0].body, /in 2 round\(s\)\. CI runs again/)
+  })
+})
+
+test('an update with conflicts: a conflict marker left in a file blocks the attempt and names the file', async () => {
+  const markers = ['backend/a.go:12:<<<<<<< HEAD\nbackend/a.go:30:>>>>>>> abc123\ndocs/b.md:3:<<<<<<< HEAD\n']
+  const exec = fakeExec({ remote: REMOTE, conflicts: CONFLICTS, markers })
+  const options = updateOptions({ exec, agents: { implementer: [done] } })
+  await withContext(options, async (ctx) => {
+    const result = await runPerson(ctx)
+    assert.deepEqual(result, { result: 'blocked', pr: 70, branch: BRANCH })
+    const reason = 'Conflict markers are left in backend/a.go, docs/b.md.'
+    assert.equal(outcomeOf(ctx).blockedReason, reason)
+    assert.deepEqual(ctx.exec.git('commit'), [])
+    assert.deepEqual(ctx.exec.git('push'), [])
+    assert.deepEqual(ctx.exec.git('bundle'), [])
+    const saved = savedState(ctx.gh)
+    const last = saved.attempts.at(-1)
+    assert.deepEqual([saved.phase, last.result, last.reason], ['needs-human', 'blocked', reason])
+    const body = ctx.gh.store[0].body
+    hasText(body, '### AI update is blocked\n\n', `I did not change pull request #70: ${reason}\n`)
+    hasText(
+      body,
+      '**What I need from you:** resolve the conflicts by hand, or comment `/agent update` with guidance.',
+    )
+    assert.match(ctx.gh.store[0].body, /on the pull request to try again<\/sub>/)
+    assert.deepEqual(
+      ctx.gh.calls.filter((c) => c[0] === 'createIssueComment'),
+      [['createIssueComment', 200, `@carol, I could not update #70: ${reason}`]],
+    )
+    assert.deepEqual(ctx.gh.calls.find((c) => c[0] === 'addLabels'), ['addLabels', 200, ['agent:needs-human']])
+    assert.deepEqual(reactionsOf(ctx), ['eyes', 'confused'])
+  })
+})
+
+test('an update that finds develop in the branch fails with the reason, and nothing is merged or pushed', async () => {
+  const options = updateOptions({ agents: {}, exec: fakeExec({ remote: REMOTE, contains: true }) })
+  await withContext(options, async (ctx) => {
+    await assert.rejects(
+      runPerson(ctx),
+      /The branch already contains origin\/develop, so there is nothing to merge/,
+    )
+    assert.deepEqual(ctx.exec.git('merge'), [])
+    assert.deepEqual(ctx.exec.git('push'), [])
+    const saved = savedState(ctx.gh)
+    const last = saved.attempts.at(-1)
+    assert.deepEqual([saved.phase, last.kind, last.result], ['needs-human', 'update', 'error'])
+    hasText(
+      ctx.gh.store[0].body,
+      '### AI implementation failed\n\nThe implementation did not finish: The branch already contains',
+    )
+    assert.match(ctx.gh.store[0].body, /comment `\/agent update` on the pull request to try again<\/sub>/)
+    assert.deepEqual(reactionsOf(ctx), ['eyes', 'confused'])
+  })
+})
+
+test('an update whose merge fails without conflicts fails with the Git message', async () => {
+  const options = updateOptions({ agents: {}, exec: fakeExec({ remote: REMOTE, mergeFails: 128 }) })
+  await withContext(options, async (ctx) => {
+    await assert.rejects(runPerson(ctx), /git merge failed with 128: error: an untracked file is in the way/)
+    assert.deepEqual(ctx.exec.git('commit'), [])
+    assert.deepEqual(ctx.exec.git('push'), [])
+  })
+})
+
+test('an update whose pull request closed meanwhile does not open a new one', async () => {
+  await withContext(updateOptions({ agents: {}, exec: fakeExec({ remote: REMOTE }) }), async (ctx) => {
+    await preflight(ctx.env, ctx.deps)
+    const { AGENT_PAT: _pat, GITHUB_TOKEN: _token, ...workEnv } = ctx.env
+    await work(workEnv, { exec: ctx.deps.exec, runAgent: ctx.deps.runAgent })
+    ctx.gh.getPull = async (n) => ({ number: n, state: 'closed' })
+    await assert.rejects(publish(ctx.env, ctx.deps), /Pull request #70 is not open, so the update has no place to go/)
+    assert.deepEqual(ctx.patGh.calls, [])
+  })
+})
+
+test('publish does not trust an update outcome that lacks the merge facts', async () => {
+  await withContext(updateOptions({ agents: {}, exec: fakeExec({ remote: REMOTE }) }), async (ctx) => {
+    await preflight(ctx.env, ctx.deps)
+    const { AGENT_PAT: _pat, GITHUB_TOKEN: _token, ...workEnv } = ctx.env
+    await work(workEnv, { exec: ctx.deps.exec, runAgent: ctx.deps.runAgent })
+    const file = path.join(ctx.env.AGENT_OUT, 'outcome.json')
+    const forged = { ...outcomeOf(ctx), merge: null }
+    fs.writeFileSync(file, JSON.stringify(forged))
+    await assert.rejects(publish(ctx.env, ctx.deps), /not trusted: an update needs the merge facts/)
+    assert.deepEqual(ctx.exec.git('push'), [])
+  })
+})
+
+test('an update in dry-run commits locally, pushes nothing, and says in the summary what it would push', async () => {
+  const options = updateOptions({
+    agents: {}, exec: fakeExec({ remote: REMOTE }), env: { AGENT_DRY_RUN: 'true' },
+  })
+  await withContext(options, async (ctx) => {
+    const result = await runPerson(ctx)
+    assert.equal(result.result, 'pr-opened')
+    assert.deepEqual(ctx.gh.calls.filter((c) => c[0] !== 'compareCommits'), [])
+    assert.deepEqual(ctx.patGh.calls, [])
+    assert.deepEqual(ctx.exec.git('push'), [])
+    assert.equal(ctx.exec.git('commit').length, 1)
+    const summary = ctx.summary()
+    assert.match(summary, /\n## Dry run: AI implementation of #200\n/)
+    assert.match(summary, /\nWould push the merge of develop to `bugfix\/200-changelog-is-empty-for-a`\.\n/)
+    assert.doesNotMatch(summary, /### Commit message|### Pull request/)
+    assert.match(summary, /"phase": "waiting-ci"/)
   })
 })

@@ -141,3 +141,11 @@ declare module '@mui/material/SvgIcon' {
     'extra-small': true
   }
 }
+
+/**
+ * The version of the app, `<version>+<build id>`. The Portal and the Agents SPA substitute it at build time with Vite
+ * `define` (vite-plugins/app-version.ts), so an app reads it instead of importing its own package.json.
+ */
+declare global {
+  const __APP_VERSION__: string
+}

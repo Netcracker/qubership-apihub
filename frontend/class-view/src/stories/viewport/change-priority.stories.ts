@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Meta, StoryFn } from '@storybook/html'
+import { Meta, StoryFn } from '@storybook/html-vite'
 import {
   ClassObject,
   ContentObject,
@@ -33,7 +33,7 @@ import {
   range,
   storyArgsFunc,
 } from 'stories/common'
-import { useArgs } from '@storybook/client-api'
+import { useArgs } from 'storybook/preview-api'
 import { isDefine } from 'main/core/utils'
 import { DEFAULT_ANIMATION_DURATION } from 'main/defaults'
 

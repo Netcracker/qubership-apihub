@@ -487,7 +487,7 @@ describe('properties', function () {
   })
 
   describe('patternProperties', function () {
-    it('merges simliar schemas', function () {
+    it('merges similar schemas', function () {
       const result = normalize({
         patternProperties: {
           '^\\$.+': {

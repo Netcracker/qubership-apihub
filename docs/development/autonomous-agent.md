@@ -66,6 +66,7 @@ with a rocket when it ends well or a confused face when it refuses or fails.
 | `/agent stop` | issue or pull request of the agent | The agent stops its work on the issue. |
 | `/agent retry [notes]` | issue or pull request of the agent | A new attempt with a fresh budget; the notes are guidance. |
 | `/agent rerun [notes]` | issue or pull request of the agent | Reruns the failed CI checks; no new attempt, no model. |
+| `/agent update [notes]` | pull request of the agent | Merges the latest `develop`; on conflicts, the agent resolves them. See [Update the branch](#update-the-branch). |
 | `/agent ci_check [notes]` | pull request | Finds the root cause of a red CI; reruns the failed jobs when it is flaky or an outage. |
 | `/agent <question>` | issue, or pull request of a person | The assistant answers in a comment and changes nothing. |
 | `/agent <text>` | pull request of the agent | A change request: one attempt on the branch of the pull request. |
@@ -159,6 +160,23 @@ model, so it costs nothing and does not touch the attempt budget. Any text after
   wait for an approval of the workflows of a fork), instead of "CI still runs".
 - Cancelled checks are rerun like failed ones.
 - It runs in its own job `rerun`, which holds `AGENT_PAT` only to take a green pull request out of draft.
+
+### Update the branch
+
+`/agent update [notes]` on a pull request of the agent merges the latest `develop` into its branch. Use it when the
+pull request has conflicts, because then CI does not run and the CI gate cannot help, or when it has fallen behind.
+The agent merges and pushes the merge commit on top of the branch; it never rebases or force-pushes.
+
+- **No conflicts:** no model runs and the command costs nothing. CI runs again on the new head, and the
+  [CI loop](#the-ci-loop) goes on from there.
+- **Conflicts:** the implementer resolves them, and the local checks and the self-review run as in any attempt. The
+  notes are guidance for the resolution. When a conflict needs a decision, the agent hands over to you.
+- **Up to date:** when the branch already contains the latest `develop`, the agent replies that there is nothing to
+  update.
+- **Workflow files:** when `develop` changed files under `.github/workflows/` since the branch point, GitHub refuses
+  the push of the agent's token. The agent says so; use the **Update branch** button of the pull request, or merge by
+  hand.
+- It counts as a person's attempt: the CI loop gets a fresh budget.
 
 ### CI check
 

@@ -13,9 +13,9 @@
 
 **Revision History:**  
 
-| Date           | Description                         |
-| -------------- | ----------------------------------- |
-|14.04.2025      | Improvements of working with custom servers in <https://github.com/Netcracker/qubership-apihub/issues/127> |
+| Date       | Description                                                                                                |
+| ---------- | ---------------------------------------------------------------------------------------------------------- |
+| 14.04.2025 | Improvements of working with custom servers in <https://github.com/Netcracker/qubership-apihub/issues/127> |
 
 ***
 
@@ -235,4 +235,4 @@ parameters directly within the Playground.
 
 ## Screen View
 
-![Playground impovements](../../images/design/di-portal-opview-002-playground/1.webp)
+![Playground improvements](../../images/design/di-portal-opview-002-playground/1.webp)

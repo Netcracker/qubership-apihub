@@ -3,6 +3,7 @@ module github.com/Netcracker/qubership-apihub/backend/agent
 go 1.27.2
 
 require (
+	github.com/Netcracker/qubership-apihub/backend/commons-go v0.0.1
 	github.com/go-playground/validator/v10 v10.30.5
 	github.com/golang/mock v1.6.0
 	github.com/gorilla/handlers v1.5.2
@@ -13,7 +14,6 @@ require (
 	github.com/sirupsen/logrus v1.10.2
 	github.com/spf13/viper v1.20.1
 	github.com/stretchr/testify v1.12.1
-	github.com/x-cray/logrus-prefixed-formatter v0.5.2
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	gopkg.in/resty.v1 v1.12.0
 	gopkg.in/square/go-jose.v2 v2.6.0
@@ -81,7 +81,6 @@ require (
 	github.com/leodido/go-urn v1.5.0 // indirect
 	github.com/mattn/go-colorable v0.1.15 // indirect
 	github.com/mattn/go-isatty v0.0.22 // indirect
-	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
@@ -91,12 +90,10 @@ require (
 	github.com/netcracker/qubership-core-lib-go-bg-state-monitor/v2 v2.5.4 // indirect
 	github.com/netcracker/qubership-core-lib-go-rest-utils/v2 v2.4.4 // indirect
 	github.com/netcracker/qubership-core-lib-go/v3 v3.7.3 // indirect
-	github.com/onsi/ginkgo v1.16.5 // indirect
 	github.com/openshift/api v0.0.0-20250919002755-a966b57583fb // indirect
 	github.com/openshift/client-go v0.0.0-20250915125341-81c9dc83a675 // indirect
 	github.com/pelletier/go-toml/v2 v2.4.3 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
-	github.com/rogpeppe/go-internal v1.16.0 // indirect
 	github.com/sagikazarmark/locafero v0.7.0 // indirect
 	github.com/savsgio/gotils v0.0.0-20240704082632-aef3928b8a38 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
@@ -141,3 +138,5 @@ require (
 	sigs.k8s.io/structured-merge-diff/v4 v4.6.0 // indirect
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
+
+replace github.com/Netcracker/qubership-apihub/backend/commons-go => ../commons-go
