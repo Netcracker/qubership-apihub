@@ -1151,6 +1151,15 @@ centring. JSON Schema / JSO viewers keep their own rows and paddings.
   the diff background paints under it, so highlighted rows still fill their side. A padded wrapper
   would shrink the rows (white strip at the left of highlighted rows); overriding `padding-left`
   would wipe each row kind's own padding.
+- **One row component, one row per side (session lesson, 2026-11).** The indent rule above needs
+  the element directly under each layout side to be the row that paints the background.
+  `CombinerSelectorRow` once stacked the `anyOf` label and the option buttons under one wrapper
+  `div` per side, so the border landed on the wrapper and every combiner in an OpenAPI section had
+  a white strip left of its yellow rows. Two rows are two sibling components, each with its own
+  `DiffFloatingBadgeWrapper` and layout; pass the same `diffType` to both and the badge line stays
+  unbroken. Do not patch the CSS rule for one component: the user picked the structural fix
+  because it matches every other row. When you offer fix options, rank them by consistency with
+  the existing row pattern, not by diff size.
 - **Line-height struts are offsets too.** A 12px value in a cell that inherits the page's 24px line
   height sits in a taller line box — an offset outside the separators. Pin the cell's line height to
   its text (`.security-prop` / `.security-scope` `line-height: 1rem`).

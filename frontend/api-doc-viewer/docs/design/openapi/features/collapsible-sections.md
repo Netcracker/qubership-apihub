@@ -53,6 +53,12 @@ The shift is a **transparent left border** on every per-side row element inside 
   row still fills its whole side — the full-width row rule;
 - floating badges (outside the rows) and separators (no content) do not move.
 
+This works only because every row component renders **one row per layout side**: the element
+directly under each side is the row that paints the diff background. A component that groups
+several rows under one wrapper per side gets the border on the wrapper, which has no background,
+and the indent stays white next to its highlighted rows. `CombinerSelectorRow` (the `anyOf` label
+and the option buttons) had this defect until 2026-11; it now renders two separate rows.
+
 The viewer root writes `--collapsible-section-expander-width` and `--openapi-section-content-indent`
 from the spacing config.
 

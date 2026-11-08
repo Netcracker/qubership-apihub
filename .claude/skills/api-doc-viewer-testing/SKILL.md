@@ -82,7 +82,8 @@ before a browser check caught them in minutes. Instead:
 4. Stop the Storybook process and close the tab afterwards. This is still not a screenshot IT run.
 
 **Vertical spacing audit (session lesson, OpenAPI spacing rework).** For spacing work, a headless
-Puppeteer script (the repo-root `node_modules/puppeteer`, no Docker) over many story ids beats
+Puppeteer script (`packages/api-doc-viewer/node_modules/puppeteer`, a pnpm link with its own
+Chrome; there is none in the repo-root `node_modules`; no Docker) over many story ids beats
 clicking through stories. Per row element (`.title-row-content`, `.text-row-content`,
 `.markdown-text-row-content`, `.address-row-content`, `.security-row`, …) print the computed
 `padding-top/bottom`, `data-precededby`, the diff background class, and the
@@ -703,6 +704,15 @@ the raw PNG bytes (which showed the row background was in fact missing).
 - Lowering `customDiffConfig.threshold` to catch this reliably trades away
   tolerance for anti-aliasing and font-rendering noise elsewhere in the
   ~900+ existing snapshots — not a decision to make locally per-suite.
+- **The blind spot works in both directions (session lesson, 2026-11).**
+  Baselines can carry the defect: the `openapi-compatibility-suite-*`
+  combiner baselines were captured with a white strip next to the yellow
+  `anyOf` rows, and the user found it by looking at a PNG. After the fix,
+  those tests still pass against the old baselines. Regenerate the affected
+  baselines after fixing a missing pale background even when the run is
+  green, and prove the fix by measuring each highlighted row against its
+  layout side (`getBoundingClientRect()` left and right gaps of every
+  `[class*="diffs-background_"]` element under `.side-by-side-layout > div`).
 
 ### Same blind spot for small-text color (session lesson, 2026-11)
 
