@@ -14,48 +14,43 @@
  * limitations under the License.
  */
 
-import type { FC } from 'react'
-import { memo } from 'react'
+import { Box, styled } from '@mui/material'
+import { type FC, memo, type ReactNode } from 'react'
+
+import { ServicesPageFooter } from '../ServicesPageFooter'
+import { useActiveStep } from '../ServicesPageProvider/ServicesStepsProvider'
 import {
-  useCreateSnapshotStep,
-  useDiscoverServicesStep,
-  usePromoteVersionStep,
-  useValidationResultsStep,
-} from '../ServicesPageProvider/ServicesStepsProvider'
-import { DiscoverServicesStep } from './DiscoverServicesStep/DiscoverServicesStep'
+  CREATE_SNAPSHOT_STEP_KEY,
+  DISCOVER_SERVICES_STEP_KEY,
+  PROMOTE_VERSION_STEP_KEY,
+  type StepKey,
+} from '../ServicesPageProvider/servicesSteps'
 import { CreateSnapshotStep } from './CreateSnapshotStep/CreateSnapshotStep'
-import { ValidationResultsStep } from './ValidationResultsStep/ValidationResultsStep'
+import { DiscoverServicesStep } from './DiscoverServicesStep/DiscoverServicesStep'
 import { PromoteVersionStep } from './PromoteVersionStep/PromoteVersionStep'
 
+const STEP_KEY_TO_CONTENT_MAP: Record<StepKey, ReactNode> = {
+  [DISCOVER_SERVICES_STEP_KEY]: <DiscoverServicesStep/>,
+  [CREATE_SNAPSHOT_STEP_KEY]: <CreateSnapshotStep/>,
+  [PROMOTE_VERSION_STEP_KEY]: <PromoteVersionStep/>,
+}
+
 export const ServicesPageBody: FC = memo(() => {
-  const [discoverServicesStep] = useDiscoverServicesStep()
-  const [createSnapshotStep] = useCreateSnapshotStep()
-  const [validationResultsStep] = useValidationResultsStep()
-  const [promoteVersionStep] = usePromoteVersionStep()
+  const { key } = useActiveStep()
 
-  if (discoverServicesStep.active) {
-    return (
-      <DiscoverServicesStep/>
-    )
-  }
+  return (
+    <>
+      <StepContent>{STEP_KEY_TO_CONTENT_MAP[key]}</StepContent>
+      <ServicesPageFooter/>
+    </>
+  )
+})
 
-  if (createSnapshotStep.active) {
-    return (
-      <CreateSnapshotStep/>
-    )
-  }
+ServicesPageBody.displayName = 'ServicesPageBody'
 
-  if (validationResultsStep.active) {
-    return (
-      <ValidationResultsStep/>
-    )
-  }
-
-  if (promoteVersionStep.active) {
-    return (
-      <PromoteVersionStep/>
-    )
-  }
-
-  return null
+const StepContent = styled(Box)({
+  flex: 1,
+  minHeight: 0,
+  display: 'flex',
+  flexDirection: 'column',
 })

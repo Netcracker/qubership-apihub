@@ -26,13 +26,8 @@ import { PackageSelector } from '@netcracker/qubership-apihub-ui-shared/componen
 import { useActiveTabs } from '@netcracker/qubership-apihub-ui-shared/hooks/pathparams/useActiveTabs'
 import { SERVICES_PAGE } from '../../routes'
 import { useInvalidateServices } from './useServices'
-import {
-  INITIAL_STEP_STATUS,
-  useCreateSnapshotStep,
-  useDiscoverServicesStep,
-  usePromoteVersionStep,
-  useValidationResultsStep,
-} from './ServicesPage/ServicesPageProvider/ServicesStepsProvider'
+import { DISCOVER_SERVICES_STEP_KEY } from './ServicesPage/ServicesPageProvider/servicesSteps'
+import { useResetStepsAfter } from './ServicesPage/ServicesPageProvider/ServicesStepsProvider'
 import { useRunDiscovery } from './ServicesPage/ServicesPageBody/DiscoverServicesStep/useRunDiscovery'
 import {
   useCreateSnapshotPublicationOptions,
@@ -49,10 +44,7 @@ export const WorkspaceSelector: FC = memo(() => {
 
   const { resetCreateSnapshotPublicationOptions } = useCreateSnapshotPublicationOptions()
   const [runDiscovery] = useRunDiscovery()
-  const [, setCreateSnapshotStep] = useCreateSnapshotStep()
-  const [, setValidationResultsStep] = useValidationResultsStep()
-  const [, setPromoteVersionStep] = usePromoteVersionStep()
-  const [, setDiscoverServicesStep] = useDiscoverServicesStep()
+  const resetStepsAfter = useResetStepsAfter()
 
   const invalidateServices = useInvalidateServices()
 
@@ -82,15 +74,12 @@ export const WorkspaceSelector: FC = memo(() => {
 
       if (activeTab === SERVICES_PAGE) {
         invalidateServices()
-        setDiscoverServicesStep(prevState => ({ ...prevState, active: true }))
         resetCreateSnapshotPublicationOptions()
-        setCreateSnapshotStep(prevState => ({ ...prevState, status: INITIAL_STEP_STATUS, active: false }))
-        setValidationResultsStep(prevState => ({ ...prevState, status: INITIAL_STEP_STATUS, active: false }))
-        setPromoteVersionStep(prevState => ({ ...prevState, status: INITIAL_STEP_STATUS, active: false }))
+        resetStepsAfter(DISCOVER_SERVICES_STEP_KEY)
         runDiscovery(workspaceId)
       }
     }
-  }, [activeTab, invalidateServices, resetCreateSnapshotPublicationOptions, runDiscovery, setCreateSnapshotStep, setDiscoverServicesStep, setPromoteVersionStep, setSearchParams, setValidationResultsStep])
+  }, [activeTab, invalidateServices, resetCreateSnapshotPublicationOptions, resetStepsAfter, runDiscovery, setSearchParams])
 
   const onSelectWorkspace = useCallback(
     (workspace: Package | null) => setWorkspace(workspace?.key),

@@ -28,14 +28,6 @@ import {
   type PublishStatus,
   RUNNING_PUBLISH_STATUS,
 } from '@netcracker/qubership-apihub-ui-shared/utils/packages-builder'
-import type {
-  StepStatus} from './ServicesPage/ServicesPageProvider/ServicesStepsProvider'
-import {
-  ERROR_STEP_STATUS,
-  INITIAL_STEP_STATUS,
-  RUNNING_STEP_STATUS,
-  SUCCESS_STEP_STATUS,
-} from './ServicesPage/ServicesPageProvider/ServicesStepsProvider'
 
 export const PUBLISH_STATUS_TO_STATUS_MARKER_VARIANT_MAP: Record<PublishStatus, StatusMarkerVariant> = {
   [NONE_PUBLISH_STATUS]: LOADING_STATUS_MARKER_VARIANT,
@@ -60,11 +52,4 @@ export const PUBLISH_STATUS_TO_STATUS_DESCRIPTION_MAP: Record<PublishStatus, Pub
   [RUNNING_PUBLISH_STATUS]: EMPTY_STATUS_DESCRIPTION,
   [COMPLETE_PUBLISH_STATUS]: COMPLETE_PUBLISH_STATUS_DESCRIPTION,
   [ERROR_PUBLISH_STATUS]: ERROR_PUBLISH_STATUS_DESCRIPTION,
-}
-
-export const PUBLISH_STATUS_TO_STEP_STATUS_MAP: Record<PublishStatus, StepStatus> = {
-  [NONE_PUBLISH_STATUS]: INITIAL_STEP_STATUS,
-  [RUNNING_PUBLISH_STATUS]: RUNNING_STEP_STATUS,
-  [COMPLETE_PUBLISH_STATUS]: SUCCESS_STEP_STATUS,
-  [ERROR_PUBLISH_STATUS]: ERROR_STEP_STATUS,
 }

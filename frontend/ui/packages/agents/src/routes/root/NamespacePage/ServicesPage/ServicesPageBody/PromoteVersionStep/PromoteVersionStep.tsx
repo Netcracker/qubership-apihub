@@ -64,10 +64,11 @@ import {
   usePromoteVersionPublicationOptions,
 } from '../../ServicesPageProvider/ServicesPublicationOptionsProvider'
 import {
+  COMPLETE_STEP_STATUS,
+  PROMOTE_VERSION_STEP_KEY,
   RUNNING_STEP_STATUS,
-  SUCCESS_STEP_STATUS,
-  usePromoteVersionStep,
-} from '../../ServicesPageProvider/ServicesStepsProvider'
+} from '../../ServicesPageProvider/servicesSteps'
+import { useSetStepStatus } from '../../ServicesPageProvider/ServicesStepsProvider'
 import { useSnapshotPublicationInfo } from '../../../useSnapshotPublicationInfo'
 
 export const PromoteVersionStep: FC = memo(() => {
@@ -372,12 +373,9 @@ function useToolbarData(
 
   const versionOptions = useVersionOptions()
 
-  const [, setPromoteVersionStep] = usePromoteVersionStep()
+  const setStepStatus = useSetStepStatus()
   const stepStatus = usePromoteVersionStepStatus()
-  useEffect(() => setPromoteVersionStep(prevState => ({
-    ...prevState,
-    status: stepStatus,
-  })), [setPromoteVersionStep, stepStatus])
+  useEffect(() => setStepStatus(PROMOTE_VERSION_STEP_KEY, stepStatus), [setStepStatus, stepStatus])
 
   const {
     previousVersion: previousVersionForm,
@@ -403,7 +401,7 @@ function useToolbarData(
     previousVersionOptions,
     onSubmit,
     stepStatus === RUNNING_STEP_STATUS,
-    stepStatus === SUCCESS_STEP_STATUS,
+    stepStatus === COMPLETE_STEP_STATUS,
     isPromoteVersionAvailable,
     statusForm,
     previousVersionForm,

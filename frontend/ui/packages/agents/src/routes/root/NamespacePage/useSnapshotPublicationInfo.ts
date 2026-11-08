@@ -52,6 +52,7 @@ type SnapshotPublicationInfoQueryState = {
 export function useSnapshotPublicationInfo(options?: {
   snapshotKey?: SnapshotKey
   promote?: boolean
+  enabled?: boolean
 }): SnapshotPublicationInfoQueryState {
   const { agentId, namespaceKey } = useParams()
   const workspaceKey = useSearchParam(WORKSPACE_SEARCH_PARAM)
@@ -67,7 +68,7 @@ export function useSnapshotPublicationInfo(options?: {
   } = useQuery<SnapshotPublicationInfoDto, Error, SnapshotPublicationInfo>({
     queryKey: [SNAPSHOT_PUBLICATION_INFO_QUERY_KEY, namespaceKey, snapshotKey, promotion],
     queryFn: () => getSnapshotPublicationInfo(agentId!, namespaceKey!, workspaceKey!, snapshotKey!, promotion, prefix),
-    enabled: !!namespaceKey && !!snapshotKey,
+    enabled: !!namespaceKey && !!snapshotKey && (options?.enabled ?? true),
     select: toSnapshotPublicationInfo,
   })
 

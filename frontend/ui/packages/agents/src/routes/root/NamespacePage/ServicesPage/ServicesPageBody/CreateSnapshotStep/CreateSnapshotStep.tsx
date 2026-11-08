@@ -40,14 +40,12 @@ import { VERSION_PROBLEM_DIALOG_SURFACE } from '@netcracker/qubership-apihub-ui-
 import type { IsLoading, IsSuccess } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
 import { useCreateSnapshotPublicationOptions } from '../../ServicesPageProvider/ServicesPublicationOptionsProvider'
 import {
+  COMPLETE_STEP_STATUS,
+  CREATE_SNAPSHOT_STEP_KEY,
   ERROR_STEP_STATUS,
-  INITIAL_STEP_STATUS,
   RUNNING_STEP_STATUS,
-  SUCCESS_STEP_STATUS,
-  useCreateSnapshotStep,
-  usePromoteVersionStep,
-  useValidationResultsStep,
-} from '../../ServicesPageProvider/ServicesStepsProvider'
+} from '../../ServicesPageProvider/servicesSteps'
+import { useResetStepsAfter, useSetStepStatus } from '../../ServicesPageProvider/ServicesStepsProvider'
 import { isNotEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
 import type { ServiceKey } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import { checkVersionRestrictedSymbols } from '@netcracker/qubership-apihub-ui-shared/utils/validations'
@@ -288,16 +286,14 @@ function useToolbarData(
 
   useEffect(() => form.reset(defaultValues), [defaultValues, form])
 
-  const [, setValidationResultsStep] = useValidationResultsStep()
-  const [, setPromoteVersionStep] = usePromoteVersionStep()
+  const resetStepsAfter = useResetStepsAfter()
 
   const onSubmit = useMemo(
     () => form.handleSubmit(publishOptions => {
-      setValidationResultsStep(prevState => ({ ...prevState, status: INITIAL_STEP_STATUS }))
-      setPromoteVersionStep(prevState => ({ ...prevState, status: INITIAL_STEP_STATUS }))
+      resetStepsAfter(CREATE_SNAPSHOT_STEP_KEY)
       createSnapshot(publishOptions)
     }),
-    [form, createSnapshot, setPromoteVersionStep, setValidationResultsStep],
+    [form, createSnapshot, resetStepsAfter],
   )
 
   const versionOptions = useVersionOptions()
@@ -308,9 +304,9 @@ function useToolbarData(
     withDefaultOption: true,
   })
 
-  const [, setCreateSnapshotStep] = useCreateSnapshotStep()
+  const setStepStatus = useSetStepStatus()
   const status = useCreateSnapshotStepStatus()
-  useEffect(() => setCreateSnapshotStep(prevState => ({ ...prevState, status })), [setCreateSnapshotStep, status])
+  useEffect(() => setStepStatus(CREATE_SNAPSHOT_STEP_KEY, status), [setStepStatus, status])
 
   const onReset = useCallback(() => {
     form.reset({
@@ -319,9 +315,8 @@ function useToolbarData(
       serviceKeys: [],
     })
     resetCreateSnapshotPublicationOptions()
-    setValidationResultsStep(prevState => ({ ...prevState, status: INITIAL_STEP_STATUS }))
-    setPromoteVersionStep(prevState => ({ ...prevState, status: INITIAL_STEP_STATUS }))
-  }, [form, resetCreateSnapshotPublicationOptions, setPromoteVersionStep, setValidationResultsStep])
+    resetStepsAfter(CREATE_SNAPSHOT_STEP_KEY)
+  }, [form, resetCreateSnapshotPublicationOptions, resetStepsAfter])
 
   const isCreateSnapshotAvailable = !!name && !!baseline && isNotEmpty(serviceKeys)
 
@@ -332,9 +327,9 @@ function useToolbarData(
     onSubmit,
     onReset,
     status === RUNNING_STEP_STATUS,
-    status === SUCCESS_STEP_STATUS,
+    status === COMPLETE_STEP_STATUS,
     isCreateSnapshotAvailable,
-    status === SUCCESS_STEP_STATUS || status === ERROR_STEP_STATUS,
+    status === COMPLETE_STEP_STATUS || status === ERROR_STEP_STATUS,
     baseline,
     form.formState.errors,
   ]

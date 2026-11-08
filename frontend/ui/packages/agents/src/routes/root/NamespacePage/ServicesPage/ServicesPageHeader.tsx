@@ -14,194 +14,239 @@
  * limitations under the License.
  */
 
-import type { FC } from 'react'
-import { memo, useCallback, useMemo } from 'react'
-import type { ButtonProps, Theme } from '@mui/material'
-import { Box, Button, CircularProgress, Divider, Step, StepLabel, Stepper, Tooltip, Typography } from '@mui/material'
-import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft'
-import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight'
-import type { Step as ServicesPageStep, StepKey, StepStatus } from './ServicesPageProvider/ServicesStepsProvider'
+import CheckCircleIcon from '@mui/icons-material/CheckCircle'
+import { ButtonBase, CircularProgress, styled, type Theme, Typography } from '@mui/material'
+import { type FC, memo, useId } from 'react'
+
 import {
-  CREATE_SNAPSHOT_STEP_KEY,
-  DISCOVER_SERVICES_STEP_KEY,
+  MUTED_TEXT_COLOR,
+  WIZARD_STEP_CURRENT_BACKGROUND_COLOR,
+  WIZARD_STEP_SUCCEEDED_BACKGROUND_COLOR,
+} from '@netcracker/qubership-apihub-ui-shared/themes/colors'
+import type { Pixel } from '@netcracker/qubership-apihub-ui-shared/utils/types'
+
+import { INFO_HINT_HOST_STYLES, InfoHint } from '@agents/components/InfoHint'
+import { useOpenStep, useSteps } from './ServicesPageProvider/ServicesStepsProvider'
+import {
+  COMPLETE_STEP_STATUS,
   ERROR_STEP_STATUS,
-  INITIAL_STEP_STATUS,
-  PROMOTE_VERSION_STEP_KEY,
+  NONE_STEP_STATUS,
   RUNNING_STEP_STATUS,
-  SUCCESS_STEP_STATUS,
-  useCreateSnapshotStep,
-  useDiscoverServicesStep,
-  usePromoteVersionStep,
-  useValidationResultsStep,
-  VALIDATION_RESULTS_STEP_KEY,
-} from './ServicesPageProvider/ServicesStepsProvider'
-import type { Color } from '@netcracker/qubership-apihub-ui-shared/utils/types'
+  type Step,
+  type StepStatus,
+} from './ServicesPageProvider/servicesSteps'
 
-export const ServicesPageHeader: FC = memo(() => {
-  const [activeStepIndex, allSteps, backButtonProps, nextButtonProps] = useHeaderData()
+const STEP_BADGE_SIZE: Pixel = 20
+const STEP_INFO_HINT_SIZE: Pixel = 16
 
-  return (
-    <Box
-      sx={{
-        display: 'grid',
-        columnGap: 1,
-        gridTemplateColumns: '1fr max-content',
-        gridTemplateAreas: `
-          'stepper actions'
-        `,
-      }}
-    >
-      <Stepper
-        sx={{ gridArea: 'stepper' }}
-        activeStep={activeStepIndex}
-      >
-        {allSteps.map(({ key, name, status }) => (
-          <Step key={key}>
-            <Tooltip title={STEP_KEY_TO_TOOLTIP_MESSAGE_MAP[key]}>
-              <StepLabel
-                data-testid={`StepIndicator-${key}`}
-                StepIconProps={{
-                  sx: (theme) => ({
-                    color: `${STEP_STATUS_TO_COLOR_MAP[status](theme)} !important`,
-                  }),
-                }}
-                icon={status === RUNNING_STEP_STATUS && <CircularProgress size={24}/>}
-                optional={
-                  <Box data-testid="StepStatus" display="flex">
-                    <Typography data-testid={status} noWrap
-                                variant="caption">{STEP_STATUS_TO_STATUS_MESSAGE_MAP[status]}</Typography>
-                  </Box>
-                }
-              >
-                {name}
-              </StepLabel>
-            </Tooltip>
-          </Step>
-        ))}
-      </Stepper>
+type StepLook = 'unreached' | 'idle' | 'current' | 'succeeded' | 'failed'
 
-      <Box
-        sx={{
-          gridArea: 'actions',
-          display: 'flex',
-          gap: 2,
-          alignItems: 'center',
-        }}
-      >
-        <Divider orientation="vertical"/>
-        <Button {...backButtonProps} data-testid="BackButton" variant="outlined">
-          <KeyboardArrowLeftIcon fontSize="small" sx={{ ml: -1.5 }}/>
-          Back
-        </Button>
-        <Button {...nextButtonProps} data-testid="NextButton">
-          Next
-          <KeyboardArrowRightIcon fontSize="small" sx={{ mr: -1.5 }}/>
-        </Button>
-      </Box>
-    </Box>
-  )
-})
+type StepLookColors = Readonly<{
+  background: string
+  badge: string
+  name: string
+}>
 
-type ActiveStepIndex = number
-type AllSteps = ReadonlyArray<ServicesPageStep>
-type BackButtonProps = ButtonProps
-type NextButtonProps = ButtonProps
-
-function useHeaderData(): [
-  ActiveStepIndex,
-  AllSteps,
-  BackButtonProps,
-  NextButtonProps,
-] {
-  const [discoverServicesStep, setDiscoverServicesStep] = useDiscoverServicesStep()
-  const [createSnapshotStep, setCreateSnapshotStep] = useCreateSnapshotStep()
-  const [validationResultsStep, setValidationResultsStep] = useValidationResultsStep()
-  const [promoteVersionStep, setPromoteVersionStep] = usePromoteVersionStep()
-
-  const allSteps = useMemo(() => {
-    const steps = [discoverServicesStep, createSnapshotStep, validationResultsStep]
-    steps.push(promoteVersionStep)
-    return steps
-  }, [createSnapshotStep, discoverServicesStep, promoteVersionStep, validationResultsStep])
-  const activeStep = useMemo(() => allSteps.find(step => step.active)!, [allSteps])
-  const activeStepIndex = activeStep.index
-
-  const onBackButtonClick = useCallback(() => {
-    if (createSnapshotStep.active) {
-      setCreateSnapshotStep(prevState => ({ ...prevState, active: false }))
-      setDiscoverServicesStep(prevState => ({ ...prevState, active: true }))
-    }
-    if (validationResultsStep.active) {
-      setValidationResultsStep(prevState => ({ ...prevState, active: false }))
-      setCreateSnapshotStep(prevState => ({ ...prevState, active: true }))
-    }
-    if (promoteVersionStep.active) {
-      setPromoteVersionStep(prevState => ({ ...prevState, active: false }))
-      setValidationResultsStep(prevState => ({ ...prevState, active: true }))
-    }
-  }, [createSnapshotStep.active, validationResultsStep.active, promoteVersionStep.active, setCreateSnapshotStep, setDiscoverServicesStep, setValidationResultsStep, setPromoteVersionStep])
-
-  const onNextButtonClick = useCallback(() => {
-    if (discoverServicesStep.active) {
-      setDiscoverServicesStep(prevState => ({ ...prevState, active: false }))
-      setCreateSnapshotStep(prevState => ({ ...prevState, active: true }))
-    }
-    if (createSnapshotStep.active) {
-      setCreateSnapshotStep(prevState => ({ ...prevState, active: false }))
-      setValidationResultsStep(prevState => ({ ...prevState, active: true }))
-    }
-    if (validationResultsStep.active) {
-      setValidationResultsStep(prevState => ({ ...prevState, active: false }))
-      setPromoteVersionStep(prevState => ({ ...prevState, active: true }))
-    }
-  }, [discoverServicesStep.active, createSnapshotStep.active, validationResultsStep.active, setDiscoverServicesStep, setCreateSnapshotStep, setValidationResultsStep, setPromoteVersionStep])
-
-  const nextButtonVariant = useMemo(() => {
-    if (activeStep.status === SUCCESS_STEP_STATUS) {
-      return 'contained'
-    }
-    return 'outlined'
-  }, [activeStep.status])
-
-  const nextButtonDisabled = useMemo(() => {
-    if (activeStep.status !== SUCCESS_STEP_STATUS) {
-      return true
-    }
-    return activeStepIndex === allSteps.length - 1
-  }, [activeStepIndex, activeStep.status, allSteps.length])
-
-  return [
-    activeStepIndex,
-    allSteps,
-    {
-      disabled: activeStepIndex === 0,
-      onClick: onBackButtonClick,
-    },
-    {
-      variant: nextButtonVariant,
-      disabled: nextButtonDisabled,
-      onClick: onNextButtonClick,
-    },
-  ]
+const STEP_LOOK_TO_COLORS: Record<StepLook, (theme: Theme) => StepLookColors> = {
+  unreached: ({ palette }) => ({
+    background: palette.background.default,
+    badge: MUTED_TEXT_COLOR,
+    name: MUTED_TEXT_COLOR,
+  }),
+  idle: ({ palette }) => ({
+    background: palette.background.default,
+    badge: MUTED_TEXT_COLOR,
+    name: palette.common.black,
+  }),
+  current: ({ palette }) => ({
+    background: WIZARD_STEP_CURRENT_BACKGROUND_COLOR,
+    badge: palette.primary.main,
+    name: palette.common.black,
+  }),
+  succeeded: ({ palette }) => ({
+    background: WIZARD_STEP_SUCCEEDED_BACKGROUND_COLOR,
+    badge: palette.secondary.main,
+    name: palette.common.black,
+  }),
+  failed: ({ palette }) => ({
+    background: palette.error.light,
+    badge: palette.error.main,
+    name: palette.common.black,
+  }),
 }
 
 const STEP_STATUS_TO_STATUS_MESSAGE_MAP: Record<StepStatus, string> = {
-  [INITIAL_STEP_STATUS]: '',
+  [NONE_STEP_STATUS]: '',
   [RUNNING_STEP_STATUS]: 'In Progress',
-  [SUCCESS_STEP_STATUS]: 'Success',
+  [COMPLETE_STEP_STATUS]: 'Success',
   [ERROR_STEP_STATUS]: 'Failed',
 }
 
-const STEP_KEY_TO_TOOLTIP_MESSAGE_MAP: Record<StepKey, string> = {
-  [DISCOVER_SERVICES_STEP_KEY]: 'Browse services and API documents',
-  [CREATE_SNAPSHOT_STEP_KEY]: 'Publish draft to APIHUB',
-  [VALIDATION_RESULTS_STEP_KEY]: 'Check BWC status and changes',
-  [PROMOTE_VERSION_STEP_KEY]: 'Publish release to APIHUB',
+export const ServicesPageHeader: FC = memo(() => {
+  const steps = useSteps()
+
+  return (
+    <WizardTabs aria-label="Wizard steps">
+      {steps.map(step => (
+        <li key={step.key}>
+          <WizardStepTab step={step}/>
+        </li>
+      ))}
+    </WizardTabs>
+  )
+})
+
+ServicesPageHeader.displayName = 'ServicesPageHeader'
+
+type WizardStepTabProps = {
+  step: Step
 }
 
-const STEP_STATUS_TO_COLOR_MAP: Record<StepStatus, (theme: Theme) => Color | undefined> = {
-  [INITIAL_STEP_STATUS]: () => undefined,
-  [RUNNING_STEP_STATUS]: () => undefined,
-  [SUCCESS_STEP_STATUS]: ({ palette: { success } }) => success.main,
-  [ERROR_STEP_STATUS]: ({ palette: { error } }) => error.main,
+const WizardStepTab: FC<WizardStepTabProps> = ({ step }) => {
+  const { key, name, tooltip, status, active, reached } = step
+  const openStep = useOpenStep()
+  const look = stepLookOf(step)
+  const caption = STEP_STATUS_TO_STATUS_MESSAGE_MAP[status]
+  const hintId = useId()
+
+  // Not `disabled`: a disabled ButtonBase takes no pointer events, and the tab would not show its info icon on hover
+  return (
+    <WizardTab
+      look={look}
+      aria-current={active ? 'step' : undefined}
+      aria-describedby={hintId}
+      aria-disabled={!reached}
+      tabIndex={reached ? 0 : -1}
+      onClick={reached ? () => openStep(key) : undefined}
+      data-testid={`StepIndicator-${key}`}
+    >
+      <StepBadge step={step} look={look}/>
+      <StepText>
+        <StepTitle>
+          <Typography
+            component="span"
+            variant="body2"
+            noWrap
+            sx={theme => ({ color: STEP_LOOK_TO_COLORS[look](theme).name })}
+          >
+            {name}
+          </Typography>
+          <InfoHint title={tooltip} size={STEP_INFO_HINT_SIZE} data-testid={`StepInfoHint-${key}`}/>
+        </StepTitle>
+        {caption && (
+          <Typography component="span" variant="subtitle2" noWrap data-testid="StepStatus">
+            {caption}
+          </Typography>
+        )}
+      </StepText>
+      {/* The icon is hidden from screen readers, so the tab carries its text as the description */}
+      <span id={hintId} hidden>{tooltip}</span>
+    </WizardTab>
+  )
+}
+
+WizardStepTab.displayName = 'WizardStepTab'
+
+type StepBadgeProps = {
+  step: Step
+  look: StepLook
+}
+
+const StepBadge: FC<StepBadgeProps> = ({ step: { index, status, completed }, look }) => {
+  if (status === RUNNING_STEP_STATUS) {
+    return <CircularProgress size={STEP_BADGE_SIZE}/>
+  }
+  if (completed) {
+    return <CompletedIcon/>
+  }
+  return <NumberBadge look={look}>{index + 1}</NumberBadge>
+}
+
+StepBadge.displayName = 'StepBadge'
+
+// An ordered list, the usual markup of a stepper
+const WizardTabs = styled('ol')(({ theme }) => ({
+  display: 'grid',
+  gridAutoFlow: 'column',
+  gridAutoColumns: 'minmax(0, 1fr)',
+  gap: theme.spacing(2),
+  margin: 0,
+  padding: 0,
+  listStyle: 'none',
+}))
+
+const WizardTab = styled(ButtonBase, { shouldForwardProp: prop => prop !== 'look' })<{ look: StepLook }>(
+  ({ theme, look }) => ({
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    gap: theme.spacing(1),
+    width: '100%',
+    minHeight: 44,
+    padding: theme.spacing(0.5, 1.5),
+    borderRadius: 8,
+    // A button takes the font of the browser, not of its parent
+    fontFamily: theme.typography.fontFamily,
+    textAlign: 'left',
+    backgroundColor: STEP_LOOK_TO_COLORS[look](theme).background,
+    cursor: look === 'unreached' ? 'default' : 'pointer',
+    // The card header clips what overflows its title, so the focus ring is drawn inside the tab
+    '&.Mui-focusVisible': {
+      outlineOffset: -4,
+    },
+    ...INFO_HINT_HOST_STYLES,
+  }),
+)
+
+// A tab is a button, so its parts are spans
+const StepText = styled('span')({
+  display: 'flex',
+  flexDirection: 'column',
+  minWidth: 0,
+})
+
+const StepTitle = styled('span')(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  gap: theme.spacing(0.5),
+}))
+
+const NumberBadge = styled('span', { shouldForwardProp: prop => prop !== 'look' })<{ look: StepLook }>(
+  ({ theme, look }) => ({
+    display: 'inline-flex',
+    flexShrink: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: STEP_BADGE_SIZE,
+    height: STEP_BADGE_SIZE,
+    borderRadius: '50%',
+    backgroundColor: STEP_LOOK_TO_COLORS[look](theme).badge,
+    color: theme.palette.common.white,
+    fontSize: 12,
+    fontWeight: 500,
+  }),
+)
+
+// The circle of the icon takes 20 of its 24 px, so the icon overflows by 2 px on each side to match the number badges
+const CompletedIcon = styled(CheckCircleIcon)(({ theme }) => ({
+  fontSize: 24,
+  margin: -2,
+  color: theme.palette.secondary.main,
+}))
+
+// The status decides the color before the open step does: an open step that failed is red
+function stepLookOf({ reached, active, status }: Step): StepLook {
+  if (!reached) {
+    return 'unreached'
+  }
+  if (status === ERROR_STEP_STATUS) {
+    return 'failed'
+  }
+  if (status === COMPLETE_STEP_STATUS) {
+    return 'succeeded'
+  }
+  if (active || status === RUNNING_STEP_STATUS) {
+    return 'current'
+  }
+  return 'idle'
 }

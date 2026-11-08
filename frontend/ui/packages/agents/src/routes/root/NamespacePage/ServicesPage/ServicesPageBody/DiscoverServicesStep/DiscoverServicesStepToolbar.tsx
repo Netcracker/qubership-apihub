@@ -18,27 +18,16 @@ import type { FC } from 'react'
 import { memo, useCallback, useEffect, useState } from 'react'
 import { LoadingButton } from '@mui/lab'
 import { Box } from '@mui/material'
-import type { StepStatus } from '../../ServicesPageProvider/ServicesStepsProvider'
-import {
-  ERROR_STEP_STATUS,
-  INITIAL_STEP_STATUS,
-  RUNNING_STEP_STATUS,
-  SUCCESS_STEP_STATUS,
-  useCreateSnapshotStep,
-  useDiscoverServicesStep,
-  usePromoteVersionStep,
-  useValidationResultsStep,
-} from '../../ServicesPageProvider/ServicesStepsProvider'
+import { DISCOVER_SERVICES_STEP_KEY } from '../../ServicesPageProvider/servicesSteps'
+import { useResetStepsAfter, useSetStepStatus } from '../../ServicesPageProvider/ServicesStepsProvider'
 import { useServices } from '../../../useServices'
 import { useRunDiscovery } from './useRunDiscovery'
 import { useCreateSnapshotPublicationOptions } from '../../ServicesPageProvider/ServicesPublicationOptionsProvider'
 import type { SearchValue } from '@netcracker/qubership-apihub-ui-shared/components/SearchBar'
 import { SearchBar } from '@netcracker/qubership-apihub-ui-shared/components/SearchBar'
-import type { DiscoveryStatus } from '@agents/entities/statuses'
 import {
   COMPLETE_DISCOVERY_STATUS,
   ERROR_DISCOVERY_STATUS,
-  NONE_DISCOVERY_STATUS,
   RUNNING_DISCOVERY_STATUS,
 } from '@agents/entities/statuses'
 import type { IsError, IsLoading, IsSuccess } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
@@ -50,18 +39,14 @@ export type DiscoverServicesStepToolbarProps = {
 export const DiscoverServicesStepToolbar: FC<DiscoverServicesStepToolbarProps> = memo<DiscoverServicesStepToolbarProps>(({ onSearch }) => {
   const { resetCreateSnapshotPublicationOptions } = useCreateSnapshotPublicationOptions()
   const [runDiscovery, isLoading] = useRunDiscovery()
-  const [, setCreateSnapshotStep] = useCreateSnapshotStep()
-  const [, setValidationResultsStep] = useValidationResultsStep()
-  const [, setPromoteVersionStep] = usePromoteVersionStep()
+  const resetStepsAfter = useResetStepsAfter()
   const [isDiscoverServicesRunning, isDiscoverServicesSuccess] = useDiscoverServicesStepStatus()
 
   const onDiscovery = useCallback(() => {
     resetCreateSnapshotPublicationOptions()
-    setCreateSnapshotStep(prevState => ({ ...prevState, status: INITIAL_STEP_STATUS }))
-    setValidationResultsStep(prevState => ({ ...prevState, status: INITIAL_STEP_STATUS }))
-    setPromoteVersionStep(prevState => ({ ...prevState, status: INITIAL_STEP_STATUS }))
+    resetStepsAfter(DISCOVER_SERVICES_STEP_KEY)
     runDiscovery()
-  }, [resetCreateSnapshotPublicationOptions, runDiscovery, setCreateSnapshotStep, setPromoteVersionStep, setValidationResultsStep])
+  }, [resetCreateSnapshotPublicationOptions, resetStepsAfter, runDiscovery])
 
   const [searchValue, setSearchValue] = useState('')
   useEffect(() => onSearch?.(searchValue), [onSearch, searchValue])
@@ -87,27 +72,15 @@ export const DiscoverServicesStepToolbar: FC<DiscoverServicesStepToolbarProps> =
   )
 })
 
-const DISCOVERY_STATUS_TO_STEP_STATUS_MAP: Record<DiscoveryStatus, StepStatus> = {
-  [NONE_DISCOVERY_STATUS]: INITIAL_STEP_STATUS,
-  [RUNNING_DISCOVERY_STATUS]: RUNNING_STEP_STATUS,
-  [COMPLETE_DISCOVERY_STATUS]: SUCCESS_STEP_STATUS,
-  [ERROR_DISCOVERY_STATUS]: ERROR_STEP_STATUS,
-}
-
 function useDiscoverServicesStepStatus(): [
   IsLoading,
   IsSuccess,
   IsError,
 ] {
   const [{ status: discoveryStatus }] = useServices()
-  const [, setDiscoverServicesStep] = useDiscoverServicesStep()
+  const setStepStatus = useSetStepStatus()
 
-  useEffect(() => {
-    setDiscoverServicesStep(prevState => ({
-      ...prevState,
-      status: DISCOVERY_STATUS_TO_STEP_STATUS_MAP[discoveryStatus],
-    }))
-  }, [discoveryStatus, setDiscoverServicesStep])
+  useEffect(() => setStepStatus(DISCOVER_SERVICES_STEP_KEY, discoveryStatus), [discoveryStatus, setStepStatus])
 
   return [
     discoveryStatus === RUNNING_DISCOVERY_STATUS,
