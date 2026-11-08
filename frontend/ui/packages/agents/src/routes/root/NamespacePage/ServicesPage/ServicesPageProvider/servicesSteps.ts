@@ -25,9 +25,9 @@ export type Step = Readonly<{
   tooltip: string
   status: StepStatus
   active: boolean
-  // Opened since the steps before it were last reset, so its tab opens it
+  // Opened since it was last reset, so its tab opens it
   reached: boolean
-  // Succeeded, and a later step was reached or it is the last step: its tab shows a check mark
+  // Succeeded, and a later step is reached or it is the last step: its tab shows a check mark
   completed: boolean
 }>
 

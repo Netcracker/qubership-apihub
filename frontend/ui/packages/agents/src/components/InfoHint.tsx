@@ -8,8 +8,8 @@ import type { Pixel } from '@netcracker/qubership-apihub-ui-shared/utils/types'
 
 const INFO_HINT_CLASS_NAME = 'info-hint'
 
-// Styles of the element that an info hint describes: its hint shows while the element is hovered or holds keyboard
-// focus, or contains the element that holds it
+// These styles go on the element that an info hint describes, and show the hint while the element is hovered or
+// holds keyboard focus, or contains the element that holds it
 export const INFO_HINT_HOST_STYLES: CSSObject = {
   [`&:hover .${INFO_HINT_CLASS_NAME}, &:focus-visible .${INFO_HINT_CLASS_NAME}, &:has(:focus-visible) .${INFO_HINT_CLASS_NAME}`]:
     {

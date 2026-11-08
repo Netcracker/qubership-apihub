@@ -109,7 +109,8 @@ const WizardStepTab: FC<WizardStepTabProps> = ({ step }) => {
   const caption = STEP_STATUS_TO_STATUS_MESSAGE_MAP[status]
   const hintId = useId()
 
-  // Not `disabled`: a disabled ButtonBase takes no pointer events, and the tab would not show its info icon on hover
+  // A tab not reached gets aria-disabled instead of `disabled`: a disabled ButtonBase takes no pointer events, so
+  // the tab would not show its info icon on hover
   return (
     <WizardTab
       look={look}
@@ -164,7 +165,7 @@ const StepBadge: FC<StepBadgeProps> = ({ step: { index, status, completed }, loo
 
 StepBadge.displayName = 'StepBadge'
 
-// An ordered list, the usual markup of a stepper
+// The tabs form an ordered list, the usual markup of a stepper
 const WizardTabs = styled('ol')(({ theme }) => ({
   display: 'grid',
   gridAutoFlow: 'column',
