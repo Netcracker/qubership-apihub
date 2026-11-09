@@ -3,25 +3,16 @@ import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight'
 import { Box, Button, styled } from '@mui/material'
 import { type FC, memo } from 'react'
 
-import { useHasPromotableServices } from './ServicesPageBody/CreateSnapshotStep/useHasPromotableServices'
-import { COMPLETE_STEP_STATUS, CREATE_SNAPSHOT_STEP_KEY } from './ServicesPageProvider/servicesSteps'
 import { useActiveStep, useOpenStep, useSteps } from './ServicesPageProvider/ServicesStepsProvider'
+import { useIsNextStepAvailable } from './useIsNextStepAvailable'
 
 export const ServicesPageFooter: FC = memo(() => {
   const steps = useSteps()
-  const { key, index, status } = useActiveStep()
+  const { index } = useActiveStep()
   const openStep = useOpenStep()
-  // The snapshot details exist only once the snapshot is published
-  const isSnapshotComplete = steps.some(
-    step => step.key === CREATE_SNAPSHOT_STEP_KEY && step.status === COMPLETE_STEP_STATUS,
-  )
-  const hasPromotableServices = useHasPromotableServices(isSnapshotComplete)
+  const isNextEnabled = useIsNextStepAvailable()
 
   const isFirstStep = index === 0
-  const isLastStep = index === steps.length - 1
-  // Promote Version lists only the services of the snapshot that have a baseline package
-  const isNextBlocked = key === CREATE_SNAPSHOT_STEP_KEY && !hasPromotableServices
-  const isNextEnabled = !isLastStep && status === COMPLETE_STEP_STATUS && !isNextBlocked
 
   return (
     <Footer>

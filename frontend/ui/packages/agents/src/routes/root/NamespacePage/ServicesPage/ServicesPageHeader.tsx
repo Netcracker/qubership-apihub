@@ -26,7 +26,7 @@ import {
 import type { Pixel } from '@netcracker/qubership-apihub-ui-shared/utils/types'
 
 import { INFO_HINT_HOST_STYLES, InfoHint } from '@agents/components/InfoHint'
-import { useOpenStep, useSteps } from './ServicesPageProvider/ServicesStepsProvider'
+import { useActiveStep, useOpenStep, useSteps } from './ServicesPageProvider/ServicesStepsProvider'
 import {
   COMPLETE_STEP_STATUS,
   ERROR_STEP_STATUS,
@@ -35,6 +35,7 @@ import {
   type Step,
   type StepStatus,
 } from './ServicesPageProvider/servicesSteps'
+import { useIsNextStepAvailable } from './useIsNextStepAvailable'
 
 const STEP_BADGE_SIZE: Pixel = 20
 const STEP_INFO_HINT_SIZE: Pixel = 16
@@ -84,12 +85,17 @@ const STEP_STATUS_TO_STATUS_MESSAGE_MAP: Record<StepStatus, string> = {
 
 export const ServicesPageHeader: FC = memo(() => {
   const steps = useSteps()
+  const { index: activeStepIndex } = useActiveStep()
+  const isNextStepAvailable = useIsNextStepAvailable()
 
   return (
     <WizardTabs aria-label="Wizard steps">
       {steps.map(step => (
         <li key={step.key}>
-          <WizardStepTab step={step}/>
+          <WizardStepTab
+            step={step}
+            openable={step.reached || (isNextStepAvailable && step.index === activeStepIndex + 1)}
+          />
         </li>
       ))}
     </WizardTabs>
@@ -100,25 +106,27 @@ ServicesPageHeader.displayName = 'ServicesPageHeader'
 
 type WizardStepTabProps = {
   step: Step
+  // A step already reached, or the next step when "Next" would open it
+  openable: boolean
 }
 
-const WizardStepTab: FC<WizardStepTabProps> = ({ step }) => {
-  const { key, name, tooltip, status, active, reached } = step
+const WizardStepTab: FC<WizardStepTabProps> = ({ step, openable }) => {
+  const { key, name, tooltip, status, active } = step
   const openStep = useOpenStep()
   const look = stepLookOf(step)
   const caption = STEP_STATUS_TO_STATUS_MESSAGE_MAP[status]
   const hintId = useId()
 
-  // A tab not reached gets aria-disabled instead of `disabled`: a disabled ButtonBase takes no pointer events, so
-  // the tab would not show its info icon on hover
+  // A tab that opens nothing gets aria-disabled instead of `disabled`: a disabled ButtonBase takes no pointer events,
+  // so the tab would not show its info icon on hover
   return (
     <WizardTab
       look={look}
       aria-current={active ? 'step' : undefined}
       aria-describedby={hintId}
-      aria-disabled={!reached}
-      tabIndex={reached ? 0 : -1}
-      onClick={reached ? () => openStep(key) : undefined}
+      aria-disabled={!openable}
+      tabIndex={openable ? 0 : -1}
+      onClick={openable ? () => openStep(key) : undefined}
       data-testid={`StepIndicator-${key}`}
     >
       <StepBadge step={step} look={look}/>
@@ -193,7 +201,10 @@ const WizardTab = styled(ButtonBase, { shouldForwardProp: prop => prop !== 'look
     fontFamily: theme.typography.fontFamily,
     textAlign: 'left',
     backgroundColor: STEP_LOOK_TO_COLORS[look](theme).background,
-    cursor: look === 'unreached' ? 'default' : 'pointer',
+    cursor: 'pointer',
+    '&[aria-disabled="true"]': {
+      cursor: 'default',
+    },
     // The card header clips what overflows its title, so the focus ring is drawn inside the tab
     '&.Mui-focusVisible': {
       outlineOffset: -4,

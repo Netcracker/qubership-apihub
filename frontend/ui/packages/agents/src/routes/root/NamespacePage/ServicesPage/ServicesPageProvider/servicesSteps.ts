@@ -90,8 +90,8 @@ export function withStepOpened(state: StepsState, key: StepKey): StepsState {
   }
 }
 
-// The steps after the given one start over: they lose their status, and only "Next" reaches them again. If one of
-// them is open, the given step opens in its place.
+// The steps after the given one start over: they lose their status, and only "Next" or the tab of the next step
+// reaches them again. If one of them is open, the given step opens in its place.
 export function withStepsResetAfter(state: StepsState, key: StepKey): StepsState {
   const index = stepIndexOf(key)
   return {
