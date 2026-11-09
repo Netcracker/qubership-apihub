@@ -78,6 +78,9 @@ func (s *snapshotServiceImpl) GetSnapshot(ctx context.Context, namespace string,
 	if err != nil {
 		return nil, err
 	}
+	if references == nil {
+		return nil, nil
+	}
 
 	groupVersionForUrl := versionContent.Version
 	if !versionContent.NotLatestRevision {
@@ -110,6 +113,10 @@ func (s *snapshotServiceImpl) GetSnapshot(ctx context.Context, namespace string,
 			pkg, err := s.apihubClient.GetPackageById(ctx, refPackageId)
 			if err != nil {
 				errors.Store(refPackageId, err)
+				return
+			}
+			if pkg == nil {
+				log.Errorf("Package %s referenced by snapshot not found, will not be included to snapshot output", refPackageId)
 				return
 			}
 
@@ -222,6 +229,9 @@ func (s *snapshotServiceImpl) CreateSnapshot(ctx context.Context, namespace stri
 	serviceListResponse, err := s.agentClient.ListServices(ctx, namespace, workspaceId, snapshotDTO.AgentUrl, snapshotDTO.DiscoveryServices)
 	if err != nil {
 		return nil, err
+	}
+	if serviceListResponse == nil {
+		return nil, fmt.Errorf("failed to list services for workspace '%s': agent returned no services", workspaceId)
 	}
 	if serviceListResponse.Status != view.StatusComplete {
 		log.Infof("Create snapshot failed: incorrect discovery status %s for namespace %s", serviceListResponse.Status, namespace)
