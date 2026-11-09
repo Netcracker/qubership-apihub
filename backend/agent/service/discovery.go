@@ -273,10 +273,11 @@ func (d discoveryServiceImpl) runDiscovery(secCtx secctx.SecurityContext, namesp
 					}
 
 					baselineObj = &view.Baseline{
-						PackageId: baselinePackage.Id,
-						Name:      baselinePackage.Name,
-						Url:       fmt.Sprintf("%s/portal/packages/%s/%s?mode=overview&item=summary", d.apihubUrl, baselinePackage.Id, url.PathEscape(defaultVersion)),
-						Versions:  versions,
+						PackageId:             baselinePackage.Id,
+						Name:                  baselinePackage.Name,
+						Url:                   fmt.Sprintf("%s/portal/packages/%s/%s?mode=overview&item=summary", d.apihubUrl, baselinePackage.Id, url.PathEscape(defaultVersion)),
+						ReleaseVersionPattern: baselinePackage.ReleaseVersionPattern,
+						Versions:              versions,
 					}
 				}
 			})
