@@ -19,7 +19,7 @@ require (
 	github.com/mark3labs/mcp-go v1.4.0
 	github.com/minio/minio-go/v7 v7.4.1
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/openai/openai-go/v3 v3.90.0
+	github.com/openai/openai-go/v3 v3.95.0
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.25.0
 	github.com/prometheus/client_model v0.6.3
@@ -172,7 +172,7 @@ require (
 	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/tencentcloud/tencentcloud-sdk-go v3.0.233+incompatible // indirect
-	github.com/tidwall/gjson v1.19.0 // indirect
+	github.com/tidwall/gjson v1.20.0 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
 	github.com/tidwall/sjson v1.2.5 // indirect
