@@ -27,7 +27,7 @@ export type Step = Readonly<{
   active: boolean
   // Opened since it was last reset, so its tab opens it
   reached: boolean
-  // Succeeded, and a later step is reached or it is the last step: its tab shows a check mark
+  // Succeeded and not the open step: its tab shows a check mark
   completed: boolean
 }>
 
@@ -58,8 +58,6 @@ const STEP_DEFINITIONS: ReadonlyArray<Pick<Step, 'key' | 'name' | 'tooltip'>> = 
   },
 ]
 
-const LAST_STEP_INDEX = STEP_DEFINITIONS.length - 1
-
 export const INITIAL_STEPS_STATE: StepsState = {
   activeStepIndex: 0,
   lastReachedStepIndex: 0,
@@ -75,8 +73,7 @@ export function toSteps({ activeStepIndex, lastReachedStepIndex, statuses }: Ste
     status: statuses[index],
     active: index === activeStepIndex,
     reached: index <= lastReachedStepIndex,
-    completed: statuses[index] === COMPLETE_STEP_STATUS &&
-      (index < lastReachedStepIndex || index === LAST_STEP_INDEX),
+    completed: statuses[index] === COMPLETE_STEP_STATUS && index !== activeStepIndex,
   }))
 }
 

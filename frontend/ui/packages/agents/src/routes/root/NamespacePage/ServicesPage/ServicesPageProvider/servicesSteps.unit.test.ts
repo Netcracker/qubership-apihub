@@ -45,9 +45,11 @@ describe('servicesSteps', () => {
     ])
   })
 
-  it('completes a succeeded step once a later step is reached, and the last step once it succeeds', () => {
+  it('shows a check mark on a succeeded step that is not open, and the number on the open step', () => {
     expect(toSteps(CREATE_SNAPSHOT_SUCCEEDED).map(({ completed }) => completed)).toEqual([true, false, false])
-    expect(toSteps(PROMOTE_VERSION_OPEN).map(({ completed }) => completed)).toEqual([true, true, true])
+    expect(toSteps(PROMOTE_VERSION_OPEN).map(({ completed }) => completed)).toEqual([true, true, false])
+    const backOnFirst = withStepOpened(PROMOTE_VERSION_OPEN, DISCOVER_SERVICES_STEP_KEY)
+    expect(toSteps(backOnFirst).map(({ completed }) => completed)).toEqual([false, true, true])
   })
 
   it('resets the later steps and opens the given step in place of a later one', () => {
