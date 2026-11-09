@@ -5,6 +5,11 @@ the routes below will move there.
 
 Express app under `packages/portal/server/`. Default listen URL: `http://localhost:3003` (`NODEJS_PORT` to override).
 
+The provisional [local Library API](./library-api-questions.md) supports the Create Library dialog and seeds a library
+named `test`. Set `VITE_LOCAL_LIBRARIES=true` in the ignored `packages/portal/.env.local` and restart Vite
+to route `/api/v1/libraries`, `/api/v1/favorites/libraries`, and `/api/v1/search/classes` to this server
+in proxy mode.
+
 Use it in **mixed mode** ([local-development.md](./local-development.md#deprecated-mixed-mode-proxy--express-mock)) or with `dev:frontend`. Default **proxy mode** does not use this server; `/api` goes to the real APIHUB.
 
 ## Vite proxy (`vite.config.ts`)

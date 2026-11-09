@@ -62,16 +62,17 @@ export function useDeleteApiKey(): [DeleteApiKey, IsLoading] {
   return [mutate, isLoading]
 }
 
-export function useAvailablePackageRoles(packageKey: Key, userId?: Key): [Roles, IsLoading, Error | null] {
-  const { data, isLoading, error } = useQuery<RolesDto, Error, Roles>({
+export function useAvailablePackageRoles(packageKey: Key, userId?: Key, enabled = true): [Roles, IsLoading, Error | null] {
+  const { data, isInitialLoading, error } = useQuery<RolesDto, Error, Roles>({
     queryKey: [AVAILABLE_ROLES_FOR_PACKAGE_QUERY_KEY, userId, packageKey],
     queryFn: () => getAvailableRoles(packageKey!, userId),
     select: toRoles,
+    enabled: enabled,
   })
 
   return [
     useMemo(() => data ?? [], [data]),
-    isLoading,
+    isInitialLoading,
     error,
   ]
 }

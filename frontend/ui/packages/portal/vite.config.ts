@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import monacoEditor from 'vite-plugin-monaco-editor'
 import path, { resolve } from 'path'
@@ -45,7 +45,12 @@ const devServer = 'http://localhost:3003'
 const injectNodeGlobals = { Buffer: ['buffer', 'Buffer'] as [string, string], process: 'process' }
 
 export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, __dirname, 'VITE_')
   const isProxyMode = mode === 'proxy'
+  // In proxy mode, VITE_LOCAL_LIBRARIES=true sends the Library API to the local dev:backend mock
+  // (the real libraries-backend does not exist yet); see docs/dev/portal-mock-server.md.
+  const useLocalLibraries = isProxyMode && env.VITE_LOCAL_LIBRARIES === 'true'
+  const libraryProxyOptions = { target: devServer, changeOrigin: true, secure: false }
   const proxyOptions = { target: isProxyMode ? proxyServer : devServer, changeOrigin: true, secure: false }
   // Bundle-size analysis is opt-in via `npm run build:analyze` (which passes `--mode analyze`).
   // It is kept out of the default build because generating the report holds the full module graph
@@ -173,6 +178,10 @@ export default defineConfig(({ mode }) => {
     server: {
       open: '/login',
       proxy: {
+        ...(useLocalLibraries && {
+          '/api/v1/libraries': libraryProxyOptions,
+          '/api/v1/favorites/libraries': libraryProxyOptions,
+        }),
         // Vite matches the keys as path prefixes in order, so '/api' also covers the linter at '/api-linter'. A prefix
         // with another target goes before it.
         '/api': proxyOptions,

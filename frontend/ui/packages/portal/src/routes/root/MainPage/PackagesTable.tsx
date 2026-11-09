@@ -53,6 +53,9 @@ import { useSuperAdminCheck } from '@netcracker/qubership-apihub-ui-shared/hooks
 import { useResizeObserver } from '@netcracker/qubership-apihub-ui-shared/hooks/common/useResizeObserver'
 import { getTooltipMessage } from '@netcracker/qubership-apihub-ui-shared/utils/tooltip-message'
 import { getBwcData } from '@netcracker/qubership-apihub-ui-shared/utils/change-severities'
+import { useLibraries } from '../useLibraries'
+import { usePackage } from '../usePackage'
+import { LibraryRows } from './LibraryRows'
 
 export type PackagesTableProps = {
   rootPackageKey?: Key
@@ -72,7 +75,7 @@ export const PackagesTable: FC<PackagesTableProps> = memo(({ rootPackageKey, pac
 
   const {
     packages,
-    isLoading,
+    isLoading: isPackagesLoading,
     isFetching,
     fetchNextPage,
     fetchingNextPage,
@@ -88,6 +91,16 @@ export const PackagesTable: FC<PackagesTableProps> = memo(({ rootPackageKey, pac
     lastReleaseVersionDetails: true,
     refererPageName: refererPageName ?? MAIN_PAGE_REFERER,
   })
+
+  const { libraries, groups: libraryGroups, isLoading: isLibrariesLoading, error: librariesError } = useLibraries({
+    parentPackageId: rootPackageKey,
+    includeDescendants: true,
+    textFilter: textFilter,
+    onlyFavorite: onlyFavorite,
+    enabled: !onlyShared,
+  })
+  const [rootPackage] = usePackage({ packageKey: rootPackageKey, showParents: true })
+  const isLoading = isPackagesLoading || isLibrariesLoading
 
   const [favorPackage] = useFavorPackage(rootPackageKey, refererPageName)
   const [disfavorPackage] = useDisfavorPackage(rootPackageKey, refererPageName)
@@ -277,7 +290,7 @@ export const PackagesTable: FC<PackagesTableProps> = memo(({ rootPackageKey, pac
 
   return (
     <Placeholder
-      invisible={isLoading || isNotEmpty(packages)}
+      invisible={isLoading || isNotEmpty(packages) || isNotEmpty(libraries) || !!librariesError}
       area={CONTENT_PLACEHOLDER_AREA}
       message={textFilter ? NO_SEARCH_RESULTS : 'No packages'}
     >
@@ -321,6 +334,12 @@ export const PackagesTable: FC<PackagesTableProps> = memo(({ rootPackageKey, pac
                 ))}
               </TableRow>
             ))}
+            <LibraryRows
+              libraries={libraries}
+              columns={getHeaderGroups()[0].headers.map(header => header.id)}
+              error={librariesError}
+              parents={rootPackage ? [rootPackage, ...libraryGroups] : libraryGroups}
+            />
             {hasNextPage && <RowSkeleton refObject={ref}/>}
             {isLoading && <TableSkeleton/>}
           </TableBody>
