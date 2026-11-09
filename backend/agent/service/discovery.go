@@ -253,7 +253,7 @@ func (d discoveryServiceImpl) runDiscovery(secCtx secctx.SecurityContext, namesp
 					versions := make([]view.BaselineVersion, 0)
 
 					defaultVersion := baselinePackage.DefaultReleaseVersion
-					versionsResp, err := d.apihubClient.GetVersions(secCtx, baselinePackage.Id, 0, 100)
+					versionsResp, err := d.apihubClient.GetVersions(secCtx, baselinePackage.Id, view.ReleaseVersionStatus, 0, 100)
 					if err != nil {
 						log.Warnf("failed to get baseline %s versions: %s", baselinePackage.Id, err)
 					} else {
