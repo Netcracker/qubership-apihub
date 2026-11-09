@@ -1,5 +1,5 @@
 import type { FC } from 'react'
-import React, { memo, useCallback, useMemo } from 'react'
+import React, { memo, useCallback, useMemo, useState } from 'react'
 import { Box, Button } from '@mui/material'
 import ListOutlinedIcon from '@mui/icons-material/ListOutlined'
 import { useTextSearchParam } from '../useTextSearchParam'
@@ -7,6 +7,8 @@ import type { TableMode } from '../useTableMode'
 import { FLAT_TABLE_MODE, TREE_TABLE_MODE, useTableMode } from '../useTableMode'
 import { usePackage } from '../usePackage'
 import { CreatePackageDialog } from './CreatePackageDialog'
+import { useLibrariesEnabled } from '../useLibrariesEnabled'
+import { CreateLibraryDialog } from './CreateLibraryDialog'
 import { useIsPrivateMainPage, useIsWorkspacesPage } from './useMainPage'
 import { usePrivateWorkspace } from './MainPageSubpages/PrivatePage/usePrivateWorkspaceUser'
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
@@ -37,6 +39,8 @@ export const PackagesFilterer: FC<PackagesFiltererProps> = memo<PackagesFilterer
   const isPrivatePage = useIsPrivateMainPage()
   const setSearchParams = useSetSearchParams()
   const [textFilter] = useTextSearchParam()
+  const [isCreateLibraryOpen, setCreateLibraryOpen] = useState(false)
+  const areLibrariesEnabled = useLibrariesEnabled()
 
   const [packageObject] = usePackage({ packageKey: rootPackageKey })
   const { showCreatePackageDialog } = useEventBus()
@@ -69,6 +73,15 @@ export const PackagesFilterer: FC<PackagesFiltererProps> = memo<PackagesFilterer
   const CREATE_BUTTON_OPTIONS = [
     { key: GROUP_KIND, label: 'Group', method: showCreateGroupDialogHandle, 'data-testid': 'GroupMenuItem' },
     { key: PACKAGE_KIND, label: 'Package', method: showCreatePackageDialogHandle, 'data-testid': 'PackageMenuItem' },
+    ...(areLibrariesEnabled
+      ? [{
+        key: 'library',
+        label: 'Library',
+        method: () => setCreateLibraryOpen(true),
+        disabled: !packageObject,
+        'data-testid': 'LibraryMenuItem',
+      }]
+      : []),
     { key: DASHBOARD_KIND, label: 'Dashboard', method: showCreateDashboardDialogHandle, 'data-testid': 'DashboardMenuItem' },
   ]
 
@@ -114,6 +127,10 @@ export const PackagesFilterer: FC<PackagesFiltererProps> = memo<PackagesFilterer
         </Button>
       )}
       <CreatePackageDialog/>
+      {isCreateLibraryOpen && packageObject && <CreateLibraryDialog
+        parentPackage={packageObject}
+        onClose={() => setCreateLibraryOpen(false)}
+      />}
     </>
   )
 })

@@ -114,8 +114,8 @@ function appendIndicatorToAutocompleteEndAdornment(
     return indicator
   }
 
-  return cloneElement(autocompleteEndAdornment, undefined, [
+  return cloneElement(autocompleteEndAdornment, undefined,
     ...Children.toArray(autocompleteEndAdornment.props.children),
     indicator,
-  ])
+  )
 }

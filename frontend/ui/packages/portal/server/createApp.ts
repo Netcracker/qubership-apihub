@@ -12,11 +12,13 @@ import { RolesRouter } from './routers/roles/router'
 import { SystemAdminsRouter } from './routers/system-admins/router'
 import { SystemRouter } from './routers/system/router'
 import { UsersRouter } from './routers/users/router'
+import { createLibrariesRouters } from './routers/libraries/router'
 
 // Factory split out of index.ts so tests (supertest) can mount the app without
 // binding to a port. index.ts wires the network listener on top of this.
 export function createApp(): Express {
   const app = express()
+  const libraryRouters = createLibrariesRouters()
   const routersMap = new Map<string, Router>([
     ['/api/v2/auth/', AuthRouter()],
     ['/api/v2/users/', UsersRouter()],
@@ -30,6 +32,9 @@ export function createApp(): Express {
     ['/api/v2/admins/', SystemAdminsRouter()],
     ['/api/v1/ai-chat/', AiChatRouter()],
     ['/api/v1/ephemeral-files/', EphemeralFilesRouter()],
+    ['/api/v1/libraries/', libraryRouters.libraries],
+    ['/api/v1/favorites/libraries/', libraryRouters.favorites],
+    ['/api/v1/search/classes', libraryRouters.classes],
   ])
 
   app.use(cors())

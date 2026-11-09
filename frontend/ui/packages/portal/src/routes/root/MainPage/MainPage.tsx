@@ -9,6 +9,7 @@ import { DASHBOARD_KIND, GROUP_KIND, PACKAGE_KIND } from '@netcracker/qubership-
 import { useNavigation } from '@portal/routes/NavigationProvider'
 import { FAVORITE_PAGE_REFERER } from '@portal/entities/referer-pages-names'
 import { usePackages } from '@portal/routes/root/usePackages'
+import { useLibraries } from '@portal/routes/root/useLibraries'
 import { useLocation } from 'react-use'
 import { FAVORITE_PAGE } from '../../../routes'
 
@@ -21,19 +22,23 @@ export const MAIN_CARD_STYLES = {
 
 export const MainPage: FC = memo(() => {
 
-  const [packages, isLoading] = usePackages({
+  const [packages, arePackagesLoading] = usePackages({
     kind: [PACKAGE_KIND, GROUP_KIND, DASHBOARD_KIND],
     onlyFavorite: true,
     refererPageKey: FAVORITE_PAGE_REFERER,
   })
+  const { libraries, isLoading: areLibrariesLoading } = useLibraries({ onlyFavorite: true })
   const { navigateToWorkspace } = useNavigation()
   const location = useLocation()
 
   useEffect(() => {
-    if (!packages.length && !isLoading && location.pathname?.includes(FAVORITE_PAGE)) {
+    if (
+      !arePackagesLoading && !areLibrariesLoading && !packages.length && !libraries.length &&
+      location.pathname?.includes(FAVORITE_PAGE)
+    ) {
       navigateToWorkspace({ workspaceKey: '' })
     }
-  }, [isLoading, location.pathname, navigateToWorkspace, packages.length])
+  }, [areLibrariesLoading, arePackagesLoading, libraries.length, location.pathname, navigateToWorkspace, packages.length])
 
   return (
     <Box sx={{
