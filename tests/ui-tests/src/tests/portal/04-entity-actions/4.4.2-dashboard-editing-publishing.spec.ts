@@ -1,4 +1,5 @@
-import { test } from '@fixtures'
+import { registerVersionFiles, test } from '@fixtures'
+import { VERSION_CHANGES_TAB_REST } from '@portal/entities'
 import { PortalPage } from '@portal/pages/PortalPage'
 import { expect } from '@services/expect-decorator'
 import {
@@ -7,6 +8,7 @@ import {
   D121,
   D122,
   D123,
+  GET_PET_BY_TAG_V2_SWAGGER,
   PK11,
   PK12,
   V_P_DSH_CONFLICT_PKG_NESTED_R,
@@ -318,11 +320,16 @@ test.describe('4.4.2 Dashboard editing/publishing', () => {
       status: 'draft',
     }
 
-    test('[P-PUDSH-12] Publishing a dashboard version with a previous version from another dashboard',
+    test('[P-PUDSH-12-BUG-1043] Publishing a dashboard version with a previous version from another dashboard',
       {
-        annotation: URL_ANNOTATION,
+        annotation: [
+          URL_ANNOTATION,
+          { type: 'URL', description: 'https://github.com/Netcracker/qubership-apihub/issues/1043' },
+        ],
       },
-      async ({ sysadminPage: page }) => {
+      async ({ sysadminPage: page, usedResources }) => {
+
+        registerVersionFiles(usedResources, V_P_PKG_FOR_DASHBOARDS_REST_BASE_R)
 
         const portalPage = new PortalPage(page)
         const { versionDashboardPage: versionPage } = portalPage
@@ -352,6 +359,20 @@ test.describe('4.4.2 Dashboard editing/publishing', () => {
         await test.step('Verify the previous version opens in another dashboard', async () => {
           await expect(versionPage.toolbar.title).toHaveText(D11.name)
           await expect.soft(versionPage.toolbar.versionSlt).toHaveText(V_P_DSH_OVERVIEW_R.version)
+        })
+
+        await portalPage.gotoVersion(V_P_DSH_FOREIGN_PREV_N, VERSION_CHANGES_TAB_REST)
+
+        await test.step('Verify API Changes loads the comparison against the other dashboard', async () => {
+          await expect(versionPage.apiChangesTab.table.getOperationRow(GET_PET_BY_TAG_V2_SWAGGER)).toBeVisible()
+          await expect(versionPage.apiChangesTab.toolbar.comparedToLnk).toHaveText(V_P_DSH_OVERVIEW_R.version)
+        })
+
+        await versionPage.apiChangesTab.toolbar.comparedToLnk.click()
+
+        await test.step('Verify the API Changes baseline link opens the other dashboard', async () => {
+          await expect(versionPage.toolbar.title).toHaveText(D11.name)
+          await expect(versionPage.toolbar.versionSlt).toHaveText(V_P_DSH_OVERVIEW_R.version)
         })
       })
   })
