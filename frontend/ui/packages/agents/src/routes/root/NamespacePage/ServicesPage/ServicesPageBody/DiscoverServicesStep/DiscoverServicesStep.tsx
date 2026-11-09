@@ -14,35 +14,77 @@
  * limitations under the License.
  */
 
-import type { FC } from 'react'
-import { memo, useMemo, useState } from 'react'
+import { type FC, memo, useMemo, useState } from 'react'
+
+import type { Spec } from '@netcracker/qubership-apihub-ui-shared/entities/specs'
+
+import type { Service } from '@agents/entities/services'
 import { useServices } from '../../../useServices'
-import { DiscoverServicesStepTable } from './DiscoverServicesStepTable'
-import { DiscoverServicesStepToolbar } from './DiscoverServicesStepToolbar'
-import { filterServices } from '../../services'
+import { BaselinePackageTableCell } from '../BaselinePackageTableCell'
+import { ServiceLabelsTableCell } from '../ServiceLabelsTableCell'
+import { ServiceOrDocumentationTableCell } from '../ServiceOrDocumentationTableCell'
+import type { ServiceSectionModel } from '../ServiceSections/ServiceSection'
+import { ServiceSections } from '../ServiceSections/ServiceSections'
 import {
-  CONTENT_PLACEHOLDER_AREA,
-  NO_SEARCH_RESULTS,
-  Placeholder,
-} from '@netcracker/qubership-apihub-ui-shared/components/Placeholder'
-import { isNotEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
+  BASELINE_PACKAGE_COLUMN_ID,
+  SERVICE_LABELS_COLUMN_ID,
+  SERVICE_OR_DOCUMENTATION_COLUMN_ID,
+  type ServiceTableColumn,
+  type ServiceTableLink,
+} from '../ServiceSections/ServiceTable'
+import { ViewPackageTableCell } from '../ViewPackageTableCell'
+import { DiscoverServicesStepToolbar } from './DiscoverServicesStepToolbar'
+
+const DISCOVERED_SERVICES_SECTION_ID = 'discovered-services'
+
+type DiscoveredServiceRow = Partial<{
+  service: Service
+  spec: Spec
+  children: DiscoveredServiceRow[]
+}>
+
+const DISCOVERED_SERVICE_COLUMNS: ReadonlyArray<ServiceTableColumn<DiscoveredServiceRow>> = [
+  {
+    id: SERVICE_OR_DOCUMENTATION_COLUMN_ID,
+    header: 'Service / Documentation',
+    cell: row => <ServiceOrDocumentationTableCell value={row}/>,
+  },
+  {
+    id: SERVICE_LABELS_COLUMN_ID,
+    header: 'Labels',
+    cell: row => <ServiceLabelsTableCell value={row}/>,
+  },
+  {
+    id: BASELINE_PACKAGE_COLUMN_ID,
+    header: 'Baseline Package',
+    cell: row => <BaselinePackageTableCell value={row}/>,
+  },
+]
+
+const viewPackageLink: ServiceTableLink<DiscoveredServiceRow> = row => <ViewPackageTableCell value={row}/>
 
 export const DiscoverServicesStep: FC = memo(() => {
   const [{ services }, isLoading] = useServices()
-
   const [searchValue, setSearchValue] = useState('')
-  const filteredServices = useMemo(() => filterServices(searchValue, services), [searchValue, services])
+
+  // TODO(ui-agents): group the services by what discovery found in them
+  const sections = useMemo<ReadonlyArray<ServiceSectionModel<DiscoveredServiceRow>>>(() => [{
+    id: DISCOVERED_SERVICES_SECTION_ID,
+    title: 'Discovered Services',
+    columns: DISCOVERED_SERVICE_COLUMNS,
+    link: viewPackageLink,
+    rows: services.map(service => ({
+      service: service,
+      children: service.specs?.map(spec => ({ spec })),
+    })),
+  }], [services])
 
   return (
     <>
       <DiscoverServicesStepToolbar onSearch={setSearchValue}/>
-      <Placeholder
-        invisible={isNotEmpty(filteredServices) || isLoading}
-        area={CONTENT_PLACEHOLDER_AREA}
-        message={searchValue ? NO_SEARCH_RESULTS: 'No services'}
-      >
-        <DiscoverServicesStepTable value={filteredServices} isLoading={isLoading}/>
-      </Placeholder>
+      <ServiceSections sections={sections} searchValue={searchValue} isLoading={isLoading}/>
     </>
   )
 })
+
+DiscoverServicesStep.displayName = 'DiscoverServicesStep'

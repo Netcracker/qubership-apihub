@@ -23,8 +23,7 @@ import { LoadingButton } from '@mui/lab'
 
 import type { IsLoading, IsSuccess } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
 
-import { filterServices } from '../../services'
-import { PromoteVersionStepTable } from './PromoteVersionStepTable'
+import { PromoteVersionStepSections } from './PromoteVersionStepSections'
 import type { PromoteVersion } from './usePromoteVersion'
 import { usePromoteVersion } from './usePromoteVersion'
 import type { Service } from '@agents/entities/services'
@@ -52,11 +51,6 @@ import { ErrorIndicator } from '@netcracker/qubership-apihub-ui-shared/component
 import { PUBLICATION_ERROR_MESSAGES } from '@netcracker/qubership-apihub-ui-shared/utils/publicationErrorMessages'
 import { useVersionProblemDetails } from '@netcracker/qubership-apihub-ui-shared/hooks/versions/useVersionProblemDetails'
 import { VERSION_PROBLEM_DIALOG_SURFACE } from '@netcracker/qubership-apihub-ui-shared/hooks/versions/versionProblemDetails'
-import {
-  CONTENT_PLACEHOLDER_AREA,
-  NO_SEARCH_RESULTS,
-  Placeholder,
-} from '@netcracker/qubership-apihub-ui-shared/components/Placeholder'
 import { isNotEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
 import type { ServiceKey } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import {
@@ -109,13 +103,6 @@ export const PromoteVersionStep: FC = memo(() => {
   const [searchValue, setSearchValue] = useState('')
   const [showOnlyPromotable, setShowOnlyPromotable] = useState(false)
 
-  const filteredServices = useMemo(() => {
-    const filteredData = filterServices(searchValue, services)
-    return showOnlyPromotable
-      ? filteredData.filter(service => service.availablePromoteStatuses?.includes(status))
-      : filteredData
-  }, [status, searchValue, services, showOnlyPromotable])
-
   const promotableFilter = useCallback(
     (service: Service): boolean => (showOnlyPromotable ? !!service.availablePromoteStatuses?.includes(status) : true),
     [showOnlyPromotable, status],
@@ -123,8 +110,11 @@ export const PromoteVersionStep: FC = memo(() => {
 
   return (
     <Box
-      height="100%"
       component="form"
+      display="flex"
+      flexDirection="column"
+      flex={1}
+      minHeight={0}
       onSubmit={onSubmit}
     >
       <Box
@@ -244,7 +234,7 @@ export const PromoteVersionStep: FC = memo(() => {
         </Box>
       </Box>
 
-      <Box height="100%">
+      <Box display="flex" flexDirection="column" flex={1} minHeight={0}>
         <Typography
           data-testid="VersionFormatErrorTypography"
           noWrap
@@ -260,6 +250,7 @@ export const PromoteVersionStep: FC = memo(() => {
         />
 
         <FormControlLabel
+          sx={{ alignSelf: 'flex-start' }}
           data-testid="OnlyPromotableCheckbox"
           label="Show only available services"
           control={<Checkbox onChange={(_, checked) => setShowOnlyPromotable(checked)}/>}
@@ -269,22 +260,16 @@ export const PromoteVersionStep: FC = memo(() => {
           name="serviceKeys"
           control={control}
           render={({ field: { onChange, value } }) => (
-            <Placeholder
-              invisible={isNotEmpty(filteredServices) || isServicesLoading}
-              area={CONTENT_PLACEHOLDER_AREA}
-              message={NO_SEARCH_RESULTS}
-            >
-              <PromoteVersionStepTable
-                selectable={!areControlsDisabled}
-                selected={value}
-                onSelect={onChange}
-                services={services}
-                promoteStatus={status}
-                searchValue={searchValue}
-                filter={promotableFilter}
-                isServicesLoading={isServicesLoading}
-              />
-            </Placeholder>
+            <PromoteVersionStepSections
+              selectable={!areControlsDisabled}
+              selected={value}
+              onSelect={onChange}
+              services={services}
+              promoteStatus={status}
+              searchValue={searchValue}
+              filter={promotableFilter}
+              isServicesLoading={isServicesLoading}
+            />
           )}
         />
       </Box>

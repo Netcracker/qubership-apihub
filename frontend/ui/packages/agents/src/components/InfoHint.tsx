@@ -20,12 +20,23 @@ export const INFO_HINT_HOST_STYLES: CSSObject = {
 type InfoHintProps = {
   title: string
   size: Pixel
+  // The host names this id in its aria-describedby: the icon is hidden from screen readers, so the host carries the
+  // text as its description
+  descriptionId: string
 } & TestableProps
 
-export const InfoHint: FC<InfoHintProps> = memo<InfoHintProps>(({ title, size, 'data-testid': dataTestId }) => (
-  <Tooltip title={title}>
-    <HintIcon className={INFO_HINT_CLASS_NAME} sx={{ fontSize: size }} data-testid={dataTestId} />
-  </Tooltip>
+export const InfoHint: FC<InfoHintProps> = memo<InfoHintProps>(({
+  title,
+  size,
+  descriptionId,
+  'data-testid': dataTestId,
+}) => (
+  <>
+    <Tooltip title={title}>
+      <HintIcon className={INFO_HINT_CLASS_NAME} sx={{ fontSize: size }} data-testid={dataTestId} />
+    </Tooltip>
+    <span id={descriptionId} hidden>{title}</span>
+  </>
 ))
 
 InfoHint.displayName = 'InfoHint'

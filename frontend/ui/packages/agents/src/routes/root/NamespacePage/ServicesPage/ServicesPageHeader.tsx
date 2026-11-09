@@ -132,7 +132,12 @@ const WizardStepTab: FC<WizardStepTabProps> = ({ step }) => {
           >
             {name}
           </Typography>
-          <InfoHint title={tooltip} size={STEP_INFO_HINT_SIZE} data-testid={`StepInfoHint-${key}`}/>
+          <InfoHint
+            title={tooltip}
+            size={STEP_INFO_HINT_SIZE}
+            descriptionId={hintId}
+            data-testid={`StepInfoHint-${key}`}
+          />
         </StepTitle>
         {caption && (
           <Typography component="span" variant="subtitle2" noWrap data-testid="StepStatus">
@@ -140,8 +145,6 @@ const WizardStepTab: FC<WizardStepTabProps> = ({ step }) => {
           </Typography>
         )}
       </StepText>
-      {/* The icon is hidden from screen readers, so the tab carries its text as the description */}
-      <span id={hintId} hidden>{tooltip}</span>
     </WizardTab>
   )
 }

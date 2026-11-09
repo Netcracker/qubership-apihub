@@ -23,7 +23,7 @@ import { LoadingButton } from '@mui/lab'
 import type { CreateSnapshot } from './useCreateSnapshot'
 import { useCreateSnapshot } from './useCreateSnapshot'
 import { useCreateSnapshotStepStatus } from './useCreateSnapshotStepStatus'
-import { CreateSnapshotStepTable } from './CreateSnapshotStepTable'
+import { CreateSnapshotStepSections } from './CreateSnapshotStepSections'
 import { useSetSnapshotTableSelectable, useSnapshotTableSelectable } from '../../SnapshotTableProvider'
 import { useVersionOptions } from '../../../AutomationPage/useVersionOptions'
 import type { BaselineOptions } from '../../../baselineOptions'
@@ -87,8 +87,11 @@ export const CreateSnapshotStep: FC = memo(() => {
 
   return (
     <Box
-      height="100%"
       component="form"
+      display="flex"
+      flexDirection="column"
+      flex={1}
+      minHeight={0}
       onSubmit={onSubmit}
     >
       <Box
@@ -232,7 +235,7 @@ export const CreateSnapshotStep: FC = memo(() => {
         name="serviceKeys"
         control={control}
         render={({ field: { onChange, value } }) => (
-          <CreateSnapshotStepTable
+          <CreateSnapshotStepSections
             selectable={isTableSelectable}
             selected={value}
             onSelect={onChange}
