@@ -17,6 +17,8 @@
 import type { FC } from 'react'
 import { memo } from 'react'
 
+import { MUTED_TEXT_COLOR } from '../themes/colors'
+
 export type WarningIconProps = {
   color?: string
   fill: boolean
@@ -64,3 +66,11 @@ export const RedWarningIcon: FC = memo(() => {
     <WarningIcon color="#FF5260" fill={true}/>
   )
 })
+
+export const MutedWarningIcon: FC = memo(() => {
+  return (
+    <WarningIcon color={MUTED_TEXT_COLOR} fill={false}/>
+  )
+})
+
+MutedWarningIcon.displayName = 'MutedWarningIcon'

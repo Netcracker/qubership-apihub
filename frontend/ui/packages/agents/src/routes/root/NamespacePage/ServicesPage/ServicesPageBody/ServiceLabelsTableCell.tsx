@@ -18,9 +18,11 @@ import type { FC } from 'react'
 import { memo } from 'react'
 import type { Row } from '@tanstack/react-table'
 import type { Service } from '@agents/entities/services'
-import { Box } from '@mui/material'
+import { Box, type SxProps, type Theme } from '@mui/material'
 import { OverflowTooltip } from '@netcracker/qubership-apihub-ui-shared/components/OverflowTooltip'
 import { CustomChip } from '@netcracker/qubership-apihub-ui-shared/components/CustomChip'
+import { MUTED_TEXT_COLOR } from '@netcracker/qubership-apihub-ui-shared/themes/colors'
+import { isEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
 import { getFormattedLabel } from '../services'
 
 export type ServiceLabelsTableCellProps = {
@@ -34,6 +36,8 @@ type CellData = Partial<{
 export const ServiceLabelsTableCell: FC<ServiceLabelsTableCellProps> = memo<ServiceLabelsTableCellProps>(({ value: { original: { service } } }) => {
   if (service && service.labels) {
     const labels = Object.entries(service.labels)
+    // A service without API documents is drawn grey, as its name is
+    const chipSx = isEmpty(service.specs) ? MUTED_LABEL_CHIP_SX : undefined
 
     return (
         <Box>
@@ -44,6 +48,7 @@ export const ServiceLabelsTableCell: FC<ServiceLabelsTableCellProps> = memo<Serv
             >
               <CustomChip
                 value={getFormattedLabel(key, value)}
+                sx={chipSx}
                 label={
                   <OverflowTooltip title={getFormattedLabel(key, value)}>
                     <Box sx={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -60,3 +65,8 @@ export const ServiceLabelsTableCell: FC<ServiceLabelsTableCellProps> = memo<Serv
 
   return null
 })
+
+const MUTED_LABEL_CHIP_SX: SxProps<Theme> = {
+  color: MUTED_TEXT_COLOR,
+  backgroundColor: 'action.hover',
+}

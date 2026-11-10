@@ -14,53 +14,37 @@
  * limitations under the License.
  */
 
-import type { FC } from 'react'
-import { memo, useCallback, useEffect, useState } from 'react'
 import { LoadingButton } from '@mui/lab'
 import { Box } from '@mui/material'
-import { DISCOVER_SERVICES_STEP_KEY } from '../../ServicesPageProvider/servicesSteps'
-import { useResetStepsAfter, useSetStepStatus } from '../../ServicesPageProvider/ServicesStepsProvider'
-import { useServices } from '../../../useServices'
-import { useRunDiscovery } from './useRunDiscovery'
-import { useCreateSnapshotPublicationOptions } from '../../ServicesPageProvider/ServicesPublicationOptionsProvider'
-import type { SearchValue } from '@netcracker/qubership-apihub-ui-shared/components/SearchBar'
-import { SearchBar } from '@netcracker/qubership-apihub-ui-shared/components/SearchBar'
-import {
-  COMPLETE_DISCOVERY_STATUS,
-  ERROR_DISCOVERY_STATUS,
-  RUNNING_DISCOVERY_STATUS,
-} from '@agents/entities/statuses'
-import type { IsError, IsLoading, IsSuccess } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
+import { type FC, memo, useEffect, useState } from 'react'
+
+import { SearchBar, type SearchValue } from '@netcracker/qubership-apihub-ui-shared/components/SearchBar'
 
 export type DiscoverServicesStepToolbarProps = {
-  onSearch?: (value: SearchValue) => void
+  isDiscoveryRunning: boolean
+  onRestartDiscovery: () => void
+  onSearch: (value: SearchValue) => void
 }
 
-export const DiscoverServicesStepToolbar: FC<DiscoverServicesStepToolbarProps> = memo<DiscoverServicesStepToolbarProps>(({ onSearch }) => {
-  const { resetCreateSnapshotPublicationOptions } = useCreateSnapshotPublicationOptions()
-  const [runDiscovery, isLoading] = useRunDiscovery()
-  const resetStepsAfter = useResetStepsAfter()
-  const [isDiscoverServicesRunning, isDiscoverServicesSuccess] = useDiscoverServicesStepStatus()
-
-  const onDiscovery = useCallback(() => {
-    resetCreateSnapshotPublicationOptions()
-    resetStepsAfter(DISCOVER_SERVICES_STEP_KEY)
-    runDiscovery()
-  }, [resetCreateSnapshotPublicationOptions, resetStepsAfter, runDiscovery])
-
+export const DiscoverServicesStepToolbar: FC<DiscoverServicesStepToolbarProps> = memo<DiscoverServicesStepToolbarProps>((
+  {
+    isDiscoveryRunning,
+    onRestartDiscovery,
+    onSearch,
+  },
+) => {
   const [searchValue, setSearchValue] = useState('')
-  useEffect(() => onSearch?.(searchValue), [onSearch, searchValue])
+  useEffect(() => onSearch(searchValue), [onSearch, searchValue])
 
   return (
     <Box display="flex" gap={2} pt={1}>
       <LoadingButton
-        data-testid={isDiscoverServicesSuccess ? 'RestartDiscoveryButton' : 'RunDiscoveryButton'}
-        disabled={isDiscoverServicesRunning}
-        variant={isDiscoverServicesSuccess ? 'outlined' : 'contained'}
-        onClick={onDiscovery}
-        loading={isLoading || isDiscoverServicesRunning}
+        data-testid="RestartDiscoveryButton"
+        variant="outlined"
+        loading={isDiscoveryRunning}
+        onClick={onRestartDiscovery}
       >
-        {isDiscoverServicesSuccess ? 'Restart Discovery' : 'Run Discovery'}
+        Restart Discovery
       </LoadingButton>
       <Box sx={{ alignSelf: 'center', ml: 'auto' }}>
         <SearchBar
@@ -71,20 +55,3 @@ export const DiscoverServicesStepToolbar: FC<DiscoverServicesStepToolbarProps> =
     </Box>
   )
 })
-
-function useDiscoverServicesStepStatus(): [
-  IsLoading,
-  IsSuccess,
-  IsError,
-] {
-  const [{ status: discoveryStatus }] = useServices()
-  const setStepStatus = useSetStepStatus()
-
-  useEffect(() => setStepStatus(DISCOVER_SERVICES_STEP_KEY, discoveryStatus), [discoveryStatus, setStepStatus])
-
-  return [
-    discoveryStatus === RUNNING_DISCOVERY_STATUS,
-    discoveryStatus === COMPLETE_DISCOVERY_STATUS,
-    discoveryStatus === ERROR_DISCOVERY_STATUS,
-  ]
-}

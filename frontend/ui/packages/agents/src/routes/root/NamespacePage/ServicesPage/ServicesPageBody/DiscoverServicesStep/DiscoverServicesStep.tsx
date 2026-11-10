@@ -14,77 +14,127 @@
  * limitations under the License.
  */
 
-import { type FC, memo, useMemo, useState } from 'react'
+import { LoadingButton } from '@mui/lab'
+import { type FC, memo, useCallback, useEffect } from 'react'
 
-import type { Spec } from '@netcracker/qubership-apihub-ui-shared/entities/specs'
+import { LoadingIndicator } from '@netcracker/qubership-apihub-ui-shared/components/LoadingIndicator'
+import type { IsLoading } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
 
-import type { Service } from '@agents/entities/services'
-import { useServices } from '../../../useServices'
-import { BaselinePackageTableCell } from '../BaselinePackageTableCell'
-import { ServiceLabelsTableCell } from '../ServiceLabelsTableCell'
-import { ServiceOrDocumentationTableCell } from '../ServiceOrDocumentationTableCell'
-import type { ServiceSectionModel } from '../ServiceSections/ServiceSection'
-import { ServiceSections } from '../ServiceSections/ServiceSections'
 import {
-  BASELINE_PACKAGE_COLUMN_ID,
-  SERVICE_LABELS_COLUMN_ID,
-  SERVICE_OR_DOCUMENTATION_COLUMN_ID,
-  type ServiceTableColumn,
-  type ServiceTableLink,
-} from '../ServiceSections/ServiceTable'
-import { ViewPackageTableCell } from '../ViewPackageTableCell'
-import { DiscoverServicesStepToolbar } from './DiscoverServicesStepToolbar'
+  EmptyState,
+  FAILED_EMPTY_STATE_VARIANT,
+  READY_EMPTY_STATE_VARIANT,
+} from '@agents/components/EmptyState/EmptyState'
+import { RUNNING_DISCOVERY_STATUS } from '@agents/entities/statuses'
+import { useShowErrorNotification } from '../../../../BasePage/NotificationHandler'
+import { useServices } from '../../../useServices'
+import { useCreateSnapshotPublicationOptions } from '../../ServicesPageProvider/ServicesPublicationOptionsProvider'
+import { DISCOVER_SERVICES_STEP_KEY } from '../../ServicesPageProvider/servicesSteps'
+import { useResetStepsAfter, useSetStepStatus } from '../../ServicesPageProvider/ServicesStepsProvider'
+import { DiscoveredServices } from './DiscoveredServices'
+import {
+  discoveryViewOf,
+  FAILED_DISCOVERY_VIEW,
+  LOADING_DISCOVERY_VIEW,
+  NO_SERVICES_DISCOVERY_VIEW,
+  NOT_RUN_DISCOVERY_VIEW,
+  SERVICES_DISCOVERY_VIEW,
+} from './useDiscoveryView'
+import { useRunDiscovery } from './useRunDiscovery'
 
-const DISCOVERED_SERVICES_SECTION_ID = 'discovered-services'
-
-type DiscoveredServiceRow = Partial<{
-  service: Service
-  spec: Spec
-  children: DiscoveredServiceRow[]
-}>
-
-const DISCOVERED_SERVICE_COLUMNS: ReadonlyArray<ServiceTableColumn<DiscoveredServiceRow>> = [
-  {
-    id: SERVICE_OR_DOCUMENTATION_COLUMN_ID,
-    header: 'Service / Documentation',
-    cell: row => <ServiceOrDocumentationTableCell value={row}/>,
-  },
-  {
-    id: SERVICE_LABELS_COLUMN_ID,
-    header: 'Labels',
-    cell: row => <ServiceLabelsTableCell value={row}/>,
-  },
-  {
-    id: BASELINE_PACKAGE_COLUMN_ID,
-    header: 'Baseline Package',
-    cell: row => <BaselinePackageTableCell value={row}/>,
-  },
-]
-
-const viewPackageLink: ServiceTableLink<DiscoveredServiceRow> = row => <ViewPackageTableCell value={row}/>
+type StartDiscovery = () => void
 
 export const DiscoverServicesStep: FC = memo(() => {
-  const [{ services }, isLoading] = useServices()
-  const [searchValue, setSearchValue] = useState('')
+  const [discovery, isLoading] = useServices()
+  const { status, services } = discovery
+  const setStepStatus = useSetStepStatus()
+  const [startDiscovery, isStarting] = useStartDiscovery()
 
-  // TODO(ui-agents): group the services by what discovery found in them
-  const sections = useMemo<ReadonlyArray<ServiceSectionModel<DiscoveredServiceRow>>>(() => [{
-    id: DISCOVERED_SERVICES_SECTION_ID,
-    title: 'Discovered Services',
-    columns: DISCOVERED_SERVICE_COLUMNS,
-    link: viewPackageLink,
-    rows: services.map(service => ({
-      service: service,
-      children: service.specs?.map(spec => ({ spec })),
-    })),
-  }], [services])
+  // Every view writes the status, so the tab of the step follows the discovery in the empty states too
+  useEffect(() => setStepStatus(DISCOVER_SERVICES_STEP_KEY, status), [setStepStatus, status])
 
-  return (
-    <>
-      <DiscoverServicesStepToolbar onSearch={setSearchValue}/>
-      <ServiceSections sections={sections} searchValue={searchValue} isLoading={isLoading}/>
-    </>
-  )
+  switch (discoveryViewOf(discovery, isLoading)) {
+    case LOADING_DISCOVERY_VIEW:
+      return <LoadingIndicator/>
+    case NOT_RUN_DISCOVERY_VIEW:
+      return (
+        <EmptyState
+          variant={READY_EMPTY_STATE_VARIANT}
+          title="No Services Discovered Yet"
+          lines={['Run discovery to load services and API documents from the selected cluster']}
+          action={
+            <LoadingButton
+              variant="contained"
+              loading={isStarting}
+              onClick={startDiscovery}
+              data-testid="RunDiscoveryButton"
+            >
+              Run Discovery
+            </LoadingButton>
+          }
+          data-testid="DiscoveryNotRunState"
+        />
+      )
+    case FAILED_DISCOVERY_VIEW:
+      return (
+        <EmptyState
+          variant={FAILED_EMPTY_STATE_VARIANT}
+          title="Discovery failed"
+          lines={[
+            'The agent could not complete discovery.',
+            'Check that the agent is running in the selected cluster and try again',
+          ]}
+          action={
+            <LoadingButton
+              variant="contained"
+              loading={isStarting}
+              onClick={startDiscovery}
+              data-testid="RetryDiscoveryButton"
+            >
+              Try Again
+            </LoadingButton>
+          }
+          data-testid="DiscoveryFailedState"
+        />
+      )
+    case NO_SERVICES_DISCOVERY_VIEW:
+      return (
+        <EmptyState
+          variant={READY_EMPTY_STATE_VARIANT}
+          title="No Services Found"
+          lines={[
+            'Discovery did not find any services in the selected cloud and namespace.',
+            'Verify cloud and namespace, then run discovery again',
+          ]}
+          data-testid="NoServicesFoundState"
+        />
+      )
+    case SERVICES_DISCOVERY_VIEW:
+      return (
+        <DiscoveredServices
+          services={services}
+          isDiscoveryRunning={isStarting || status === RUNNING_DISCOVERY_STATUS}
+          onRestartDiscovery={startDiscovery}
+        />
+      )
+  }
 })
 
 DiscoverServicesStep.displayName = 'DiscoverServicesStep'
+
+// Steps 2 and 3 start over, since their snapshot and promotion came from the last result of the discovery
+function useStartDiscovery(): [StartDiscovery, IsLoading] {
+  const { resetCreateSnapshotPublicationOptions } = useCreateSnapshotPublicationOptions()
+  const resetStepsAfter = useResetStepsAfter()
+  const showErrorNotification = useShowErrorNotification()
+  // The Agents SPA shows no failed request by itself, so a failed start would leave the step without a sign
+  const [runDiscovery, isStarting] = useRunDiscovery(error => showErrorNotification({ message: error.message }))
+
+  const startDiscovery = useCallback(() => {
+    resetCreateSnapshotPublicationOptions()
+    resetStepsAfter(DISCOVER_SERVICES_STEP_KEY)
+    runDiscovery()
+  }, [resetCreateSnapshotPublicationOptions, resetStepsAfter, runDiscovery])
+
+  return [startDiscovery, isStarting]
+}

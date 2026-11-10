@@ -41,20 +41,19 @@ export const NamespacePage: FC = memo(() => {
 
   const workspace = useSearchParam(WORKSPACE_SEARCH_PARAM)
 
-  if (!workspace) {
-    return (
-      <WelcomePage />
-    )
-  }
-
+  // The welcome page holds the workspace selector, which resets the wizard when it sets the default workspace
   return (
     <ServicesPageProvider key={namespaceKey}>
-      <IdpUrlContextProvider>
-        <LayoutWithToolbar
-          toolbar={<Toolbar header={<NamespaceToolbar />} />}
-          body={<NamespacePageBody menuItem={namespaceMode as NamespacePageRoute} />}
-        />
-      </IdpUrlContextProvider>
+      {workspace
+        ? (
+          <IdpUrlContextProvider>
+            <LayoutWithToolbar
+              toolbar={<Toolbar header={<NamespaceToolbar />} />}
+              body={<NamespacePageBody menuItem={namespaceMode as NamespacePageRoute} />}
+            />
+          </IdpUrlContextProvider>
+        )
+        : <WelcomePage />}
     </ServicesPageProvider>
   )
 })

@@ -28,7 +28,6 @@ import { SERVICES_PAGE } from '../../routes'
 import { useInvalidateServices } from './useServices'
 import { DISCOVER_SERVICES_STEP_KEY } from './ServicesPage/ServicesPageProvider/servicesSteps'
 import { useResetStepsAfter } from './ServicesPage/ServicesPageProvider/ServicesStepsProvider'
-import { useRunDiscovery } from './ServicesPage/ServicesPageBody/DiscoverServicesStep/useRunDiscovery'
 import {
   useCreateSnapshotPublicationOptions,
 } from './ServicesPage/ServicesPageProvider/ServicesPublicationOptionsProvider'
@@ -43,7 +42,6 @@ export const WorkspaceSelector: FC = memo(() => {
   const errorNotification = useShowErrorNotification()
 
   const { resetCreateSnapshotPublicationOptions } = useCreateSnapshotPublicationOptions()
-  const [runDiscovery] = useRunDiscovery()
   const resetStepsAfter = useResetStepsAfter()
 
   const invalidateServices = useInvalidateServices()
@@ -72,14 +70,14 @@ export const WorkspaceSelector: FC = memo(() => {
         [WORKSPACE_SEARCH_PARAM]: workspaceId,
       })
 
+      // Only the buttons of Discover Services start a discovery, so Step 1 shows what is stored for the workspace
       if (activeTab === SERVICES_PAGE) {
         invalidateServices()
         resetCreateSnapshotPublicationOptions()
         resetStepsAfter(DISCOVER_SERVICES_STEP_KEY)
-        runDiscovery(workspaceId)
       }
     }
-  }, [activeTab, invalidateServices, resetCreateSnapshotPublicationOptions, resetStepsAfter, runDiscovery, setSearchParams])
+  }, [activeTab, invalidateServices, resetCreateSnapshotPublicationOptions, resetStepsAfter, setSearchParams])
 
   const onSelectWorkspace = useCallback(
     (workspace: Package | null) => setWorkspace(workspace?.key),

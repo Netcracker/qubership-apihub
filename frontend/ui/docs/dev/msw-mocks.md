@@ -87,3 +87,16 @@ A version whose marker sets errors also gets one notification without a document
 Notifications dialog; a current backend returns none there. The dialog opens only from a document with errors, so
 publish documents that have errors. Documents with errors, API types with errors, and the notifications of documents
 need no mock: a published version with broken documents gives them.
+
+## Discovery states of the Agent
+
+The handlers of the Agent services read the local storage key `msw-discovery`, since a backend cannot fail a
+discovery or find no services on demand. `localStorage.setItem('msw-discovery', '<value>')` and a reload select a
+case; `localStorage.removeItem('msw-discovery')` and a reload bring back the result of the backend.
+
+| Value | Case |
+| --- | --- |
+| `none` | The services list holds no result, as before the first discovery of the namespace and workspace |
+| `error` | The discovery failed |
+| `empty` | The discovery succeeded and found no services |
+| `start-error` | The request that starts a discovery fails with status 500 |

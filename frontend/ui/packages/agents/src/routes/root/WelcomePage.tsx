@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-import type { FC } from 'react'
-import { memo } from 'react'
-import { Typography } from '@mui/material'
-import { NamespaceToolbar } from './NamespacePage/NamespaceToolbar'
+import { type FC, memo } from 'react'
+
 import { PageLayout } from '@netcracker/qubership-apihub-ui-shared/components/PageLayout'
 import { Toolbar } from '@netcracker/qubership-apihub-ui-shared/components/Toolbar'
-import { CONTENT_PLACEHOLDER_AREA, Placeholder } from '@netcracker/qubership-apihub-ui-shared/components/Placeholder'
+
+import { EmptyState, READY_EMPTY_STATE_VARIANT } from '@agents/components/EmptyState/EmptyState'
+import { NamespaceToolbar } from './NamespacePage/NamespaceToolbar'
 
 export const WelcomePage: FC = memo(() => {
   return (
@@ -31,16 +31,11 @@ export const WelcomePage: FC = memo(() => {
         />
       }
       body={
-        <Placeholder
-          invisible={false}
-          area={CONTENT_PLACEHOLDER_AREA}
-          message={
-            <Typography width='590px' fontSize='15px'>
-              Please select Cloud, Namespace and Portal Workspace to start working with Agent.
-              Portal workspace determines where the baseline packages will come from, where
-              snapshots and promoted versions will be published.
-            </Typography>
-          }
+        <EmptyState
+          variant={READY_EMPTY_STATE_VARIANT}
+          title="Select source and destination"
+          lines={['Choose cloud and namespace under From, then select a portal workspace under To']}
+          data-testid="SelectSourceAndDestinationState"
         />
       }
     />

@@ -21,21 +21,26 @@ import type { IsError, IsLoading, IsSuccess } from '@netcracker/qubership-apihub
 import { runServiceDiscovery } from '@agents/entities/services'
 import { WORKSPACE_SEARCH_PARAM } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
 import { useSearchParam } from '@netcracker/qubership-apihub-ui-shared/hooks/searchparams/useSearchParam'
-import type { WorkspaceKey } from '@agents/entities/keys'
 import {
   useGetAgentPrefix,
 } from '@netcracker/qubership-apihub-ui-shared/features/system-extensions/useSystemExtensions'
 
-export function useRunDiscovery(): [RunDiscovery, IsLoading, IsSuccess, IsError] {
+export function useRunDiscovery(onError: (error: Error) => void): [RunDiscovery, IsLoading, IsSuccess, IsError] {
   const { agentId, namespaceKey } = useParams()
   const workspaceId = useSearchParam(WORKSPACE_SEARCH_PARAM)
 
   const invalidateServices = useInvalidateServices()
   const prefix = useGetAgentPrefix()
 
-  const { mutate, isLoading, isSuccess, isError } = useMutation<void, Error, WorkspaceKey | undefined>({
-    mutationFn: (workspaceKey) => runServiceDiscovery(agentId!, namespaceKey!, workspaceKey ?? workspaceId!, prefix),
+  const { mutate, isLoading, isSuccess, isError } = useMutation<void, Error | undefined>({
+    mutationFn: () => runServiceDiscovery(agentId!, namespaceKey!, workspaceId!, prefix),
     onSuccess: invalidateServices,
+    // A 401 rejects with no error, and the sign-in takes over from there
+    onError: error => {
+      if (error) {
+        onError(error)
+      }
+    },
   })
 
   return [
@@ -46,4 +51,4 @@ export function useRunDiscovery(): [RunDiscovery, IsLoading, IsSuccess, IsError]
   ]
 }
 
-export type RunDiscovery = (workspaceKey?: WorkspaceKey) => void
+export type RunDiscovery = () => void
