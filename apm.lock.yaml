@@ -1,5 +1,5 @@
 lockfile_version: '1'
-generated_at: '2026-11-10T08:24:52.920766+00:00'
+generated_at: '2026-11-10T11:13:20.210782+00:00'
 apm_version: 0.35.0
 dependencies:
 - repo_url: _local/advanced-verification
@@ -116,8 +116,8 @@ dependencies:
     .agents/skills/analyze-migration/.env.before.example: sha256:368deeb14380dcc4d4f5992fbf2aff913bfa38f879e52faf2a2d64560248d348
     .agents/skills/analyze-migration/.gitignore: sha256:bcbf9b6a3e6d5132504f784e4103213451513470ae7cbbc8ec2e7ae8f3853d93
     .agents/skills/analyze-migration/SKILL.md: sha256:6e2e3b2e2014cfd205d52f90082f336d1d7893062b2f570c0315f385afa2fba4
-    .agents/skills/analyze-migration/go.mod: sha256:2974ae18544f90da1ba93a3ef47642741eabd314f02b4e5ab41d02933ad8e909
-    .agents/skills/analyze-migration/go.sum: sha256:70a6195aef75ef014e95a6d67d5b9d7b40764197145309d0d3af2732417ba23d
+    .agents/skills/analyze-migration/go.mod: sha256:bf0a3f8e6e57d4abbdfd015cd260ec354420186915b93ae89d53a256fe3f4f82
+    .agents/skills/analyze-migration/go.sum: sha256:85e94757b5e0e1cf41a234122cd15908552ffdd869722e976708d3a5a0157ca8
     .agents/skills/analyze-migration/internal/apiutil/client.go: sha256:cc75666bc86dd92499c9bdf6941b469cbeee09214552a08085afa75b7d122bb2
     .agents/skills/analyze-migration/internal/apiutil/client_test.go: sha256:6c60f4db39437bd0a8c0d9b805e126f7f4587a7f1e684db4f8fead286ae420f2
     .agents/skills/analyze-migration/internal/artifact/write.go: sha256:2ea1b6802d38bf9bdac20354e70ff26a0603dcbbf88c54e20d9b30d618a6f71b
@@ -147,8 +147,8 @@ dependencies:
     .claude/skills/analyze-migration/.env.before.example: sha256:368deeb14380dcc4d4f5992fbf2aff913bfa38f879e52faf2a2d64560248d348
     .claude/skills/analyze-migration/.gitignore: sha256:bcbf9b6a3e6d5132504f784e4103213451513470ae7cbbc8ec2e7ae8f3853d93
     .claude/skills/analyze-migration/SKILL.md: sha256:6e2e3b2e2014cfd205d52f90082f336d1d7893062b2f570c0315f385afa2fba4
-    .claude/skills/analyze-migration/go.mod: sha256:2974ae18544f90da1ba93a3ef47642741eabd314f02b4e5ab41d02933ad8e909
-    .claude/skills/analyze-migration/go.sum: sha256:70a6195aef75ef014e95a6d67d5b9d7b40764197145309d0d3af2732417ba23d
+    .claude/skills/analyze-migration/go.mod: sha256:bf0a3f8e6e57d4abbdfd015cd260ec354420186915b93ae89d53a256fe3f4f82
+    .claude/skills/analyze-migration/go.sum: sha256:85e94757b5e0e1cf41a234122cd15908552ffdd869722e976708d3a5a0157ca8
     .claude/skills/analyze-migration/internal/apiutil/client.go: sha256:cc75666bc86dd92499c9bdf6941b469cbeee09214552a08085afa75b7d122bb2
     .claude/skills/analyze-migration/internal/apiutil/client_test.go: sha256:6c60f4db39437bd0a8c0d9b805e126f7f4587a7f1e684db4f8fead286ae420f2
     .claude/skills/analyze-migration/internal/artifact/write.go: sha256:2ea1b6802d38bf9bdac20354e70ff26a0603dcbbf88c54e20d9b30d618a6f71b
@@ -176,7 +176,7 @@ dependencies:
     .claude/skills/analyze-migration/scripts/query-version/main.go: sha256:0c2a880ac3f8d5fc78cec6e8a367cb7814b62622a59f8752a5733f2fcec40acb
   source: local
   local_path: ./agent-packages/analyze-migration
-  content_hash: sha256:ab962239151a734fd3af403c4a206d4da67b092e11038e1a536951479ff86d1e
+  content_hash: sha256:7be4a6e1da953becc8c54c14286efda66362634556a99b61784d77d140c71717
 - repo_url: _local/api-diff-authoring
   name: api-diff-authoring
   version: 1.0.0
@@ -1819,7 +1819,7 @@ deployments:
   owners:
   - ./agent-packages/analyze-migration
   active_owner: ./agent-packages/analyze-migration
-  content_hash: sha256:2974ae18544f90da1ba93a3ef47642741eabd314f02b4e5ab41d02933ad8e909
+  content_hash: sha256:bf0a3f8e6e57d4abbdfd015cd260ec354420186915b93ae89d53a256fe3f4f82
 - kind: project-relative
   target: claude
   value: .claude/skills/analyze-migration/go.sum
@@ -1828,7 +1828,7 @@ deployments:
   owners:
   - ./agent-packages/analyze-migration
   active_owner: ./agent-packages/analyze-migration
-  content_hash: sha256:70a6195aef75ef014e95a6d67d5b9d7b40764197145309d0d3af2732417ba23d
+  content_hash: sha256:85e94757b5e0e1cf41a234122cd15908552ffdd869722e976708d3a5a0157ca8
 - kind: project-relative
   target: claude
   value: .claude/skills/analyze-migration/internal/apiutil/client.go
@@ -3115,7 +3115,7 @@ deployments:
   owners:
   - ./agent-packages/analyze-migration
   active_owner: ./agent-packages/analyze-migration
-  content_hash: sha256:2974ae18544f90da1ba93a3ef47642741eabd314f02b4e5ab41d02933ad8e909
+  content_hash: sha256:bf0a3f8e6e57d4abbdfd015cd260ec354420186915b93ae89d53a256fe3f4f82
 - kind: project-relative
   target: cursor
   value: .agents/skills/analyze-migration/go.sum
@@ -3124,7 +3124,7 @@ deployments:
   owners:
   - ./agent-packages/analyze-migration
   active_owner: ./agent-packages/analyze-migration
-  content_hash: sha256:70a6195aef75ef014e95a6d67d5b9d7b40764197145309d0d3af2732417ba23d
+  content_hash: sha256:85e94757b5e0e1cf41a234122cd15908552ffdd869722e976708d3a5a0157ca8
 - kind: project-relative
   target: cursor
   value: .agents/skills/analyze-migration/internal/apiutil/client.go
