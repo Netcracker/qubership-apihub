@@ -231,6 +231,31 @@ func getLimitQueryParamBase(r *http.Request, defaultLimit, maxLimit int) (int, *
 	return defaultLimit, nil
 }
 
+func getOffsetQueryParam(r *http.Request) (int, *exception.CustomError) {
+	if r.URL.Query().Get("offset") == "" {
+		return 0, nil
+	}
+	offset, err := strconv.Atoi(r.URL.Query().Get("offset"))
+	if err != nil {
+		return 0, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.IncorrectParamType,
+			Message: exception.IncorrectParamTypeMsg,
+			Params:  map[string]interface{}{"param": "offset", "type": "int"},
+			Debug:   err.Error(),
+		}
+	}
+	if offset < 0 {
+		return 0, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidParameterValue,
+			Message: exception.InvalidParameterValueMsg,
+			Params:  map[string]interface{}{"param": "offset", "value": offset},
+		}
+	}
+	return offset, nil
+}
+
 // TODO: duplicate in v2
 func handlePkgRedirectOrRespondWithError(w http.ResponseWriter, r *http.Request, responder responder.Responder, ptHandler service.PackageTransitionHandler, packageId, msg string, err error) {
 	ctx := r.Context()

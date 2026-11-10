@@ -5,7 +5,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"strconv"
 
 	"github.com/Netcracker/qubership-apihub/backend/portal-backend/exception"
 	"github.com/Netcracker/qubership-apihub/backend/portal-backend/responder"
@@ -182,9 +181,10 @@ func (c *ddlTableGroupControllerImpl) GetGroupedDdlEntities(w http.ResponseWrite
 		c.responder.RespondWithCustomError(w, limErr)
 		return
 	}
-	offset := 0
-	if r.URL.Query().Get("offset") != "" {
-		offset, _ = strconv.Atoi(r.URL.Query().Get("offset"))
+	offset, offsetErr := getOffsetQueryParam(r)
+	if offsetErr != nil {
+		c.responder.RespondWithCustomError(w, offsetErr)
+		return
 	}
 	ctx := secctx.MakeUserContext(r)
 	result, svcErr := c.ddlTableGroupService.GetGroupedDdlEntities(ctx, packageId, versionName, groupName, refPackageId, textFilter, limit, offset)
