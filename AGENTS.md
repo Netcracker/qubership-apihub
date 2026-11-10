@@ -99,6 +99,26 @@ After you edit a package, run from the repository root:
 apm install --target cursor,claude
 ```
 
+Run it twice and check `git status` after each run. apm 0.35.0 deletes the deployed copies of a changed local
+package on the first run ("no trustworthy local deployment baseline") and writes them on the second. A deleted file
+under `.agents/`, `.claude/`, or `.cursor/` that the second run does not restore is a real problem.
+
+apm also deletes a deployed copy with CRLF line endings: its bytes no longer match `apm.lock.yaml`. A Windows clone
+made before `.gitattributes` set LF for these trees can still hold such copies, because Git does not rewrite
+checked-out files when attributes change. Check those files out again before you run apm:
+
+```bash
+git ls-files --eol .agents .claude .cursor agent-packages '*/agent-packages/*' | grep 'w/crlf' | cut -f2 > crlf.txt
+xargs -a crlf.txt rm -f && xargs -a crlf.txt git checkout --
+rm crlf.txt
+```
+
+```powershell
+$crlf = git ls-files --eol .agents .claude .cursor agent-packages '*/agent-packages/*' |
+  Select-String 'w/crlf' | ForEach-Object { ($_.Line -split "`t")[1] }
+if ($crlf) { $crlf | ForEach-Object { Remove-Item -LiteralPath $_ }; git checkout -- $crlf }
+```
+
 Commit the package sources, `.agents/skills/`, `.claude/skills/`, and the refreshed rule trees together.
 A clone then has skills for Claude Code and for harnesses that read `.agents/skills/`, without `apm install`.
 Do not commit `.cursor/skills/`. Cursor reads `.agents/skills/` and `.claude/skills/`.
