@@ -10,7 +10,7 @@ require (
 	github.com/gorilla/mux v1.8.1
 	github.com/netcracker/qubership-core-lib-go-paas-mediation-client/v8 v8.10.4
 	github.com/shaj13/go-guardian/v2 v2.11.6
-	github.com/shaj13/libcache v1.0.4
+	github.com/shaj13/libcache v1.2.1
 	github.com/sirupsen/logrus v1.10.2
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.12.1

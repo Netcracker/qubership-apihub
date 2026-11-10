@@ -11,7 +11,7 @@ require (
 	github.com/gorilla/mux v1.8.1
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/shaj13/go-guardian/v2 v2.11.6
-	github.com/shaj13/libcache v1.0.4
+	github.com/shaj13/libcache v1.2.1
 	github.com/sirupsen/logrus v1.10.2
 	github.com/spf13/viper v1.21.0
 	github.com/xuri/excelize/v2 v2.11.1-0.20261003002531-6258dcebc4e2
