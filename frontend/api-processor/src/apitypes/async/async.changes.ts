@@ -43,6 +43,7 @@ import {
   createComparisonInternalDocumentId,
   createOperationChange,
   getOperationTags,
+  isOperationOwnedByPair,
   OperationsMap,
 } from '../../components'
 import { createAsyncApiKindValueAt } from '../../components/compare/async.api-kind'
@@ -155,6 +156,9 @@ export const compareDocuments: DocumentsCompare = async (
         } = operationsMap[operationId] ?? {}
         if (!current && !previous) {
           throw new Error(`Can't find the ${operationId} operation from documents pair ${prevDoc?.fileId} and ${currDoc?.fileId}`)
+        }
+        if (!isOperationOwnedByPair({ previous, current }, prevDoc, currDoc)) {
+          continue
         }
 
         const operationPotentiallyChanged = Boolean(current && previous)

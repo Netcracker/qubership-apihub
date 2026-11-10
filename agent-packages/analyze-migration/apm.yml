@@ -1,0 +1,6 @@
+name: analyze-migration
+version: 0.1.0
+description: Analyse APIHub operations migrations and investigate build errors
+author: Qubership
+dependencies:
+  apm: []

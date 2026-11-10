@@ -46,9 +46,9 @@ comments. It is a proof of concept; the design is in [the internal docs](../inte
 - **Reports weekly** on the progress toward autonomy. See [Weekly report](#weekly-report).
 
 The agent never approves or requests changes; its review is a comment. The review comment ends with what the AI calls
-on the pull request have cost so far. Dependabot pull requests are never reviewed, also not with `/agent review`: a
-dependency bump has nothing to review, and a review costs money. The only command the agent takes on a Dependabot pull
-request is `/agent ci_check`.
+on the pull request have cost so far. Dependency update pull requests (Renovate or Dependabot) are never reviewed,
+also not with `/agent review`: a dependency bump has nothing to review, and a review costs money. The only command the
+agent takes on a dependency update pull request is `/agent ci_check`.
 
 Who can use it: anyone who opens a pull request or a `Bug` or `Task` issue gets the automatic review and the automatic
 analysis. A command, an answer to a hand-off, and an implementation need a user with write access to the repository,
@@ -58,9 +58,9 @@ bots.
 ## Commands
 
 A command is a comment whose first non-empty line starts with `/agent`. Only a user with write access can give one, and
-only the users in `AGENT_ALLOWED_ACTORS` while it is set. The agent ignores bots and Dependabot pull requests, except
-for `/agent ci_check` on a Dependabot pull request. It reacts to your comment with an eyes emoji when it starts, then
-with a rocket when it ends well or a confused face when it refuses or fails.
+only the users in `AGENT_ALLOWED_ACTORS` while it is set. The agent ignores bots and dependency update pull requests
+(Renovate or Dependabot), except for `/agent ci_check` on a dependency update pull request. It reacts to your comment
+with an eyes emoji when it starts, then with a rocket when it ends well or a confused face when it refuses or fails.
 
 | Command | Where | What happens |
 |---|---|---|

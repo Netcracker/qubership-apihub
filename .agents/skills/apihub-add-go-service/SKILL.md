@@ -1,6 +1,6 @@
 ---
 name: apihub-add-go-service
-description: "Adds a Go backend service to the qubership-apihub monorepo and wires it into every place that lists services: go.work, Go version, Dockerfile, config template, Nx inference and the lang:go tag, CI image matrix, release registration, CODEOWNERS and Dependabot, Helm chart and values, Docker Compose, and docs/configuration-reference.md. Use when creating a module under backend/ (for example libraries-backend), or when checking that an existing one is fully wired."
+description: "Adds a Go backend service to the qubership-apihub monorepo and wires it into every place that lists services: go.work, Go version, Dockerfile, config template, Nx inference and the lang:go tag, CI image matrix, release registration, CODEOWNERS and Renovate, Helm chart and values, Docker Compose, and docs/configuration-reference.md. Use when creating a module under backend/ (for example libraries-backend), or when checking that an existing one is fully wired."
 ---
 
 # Add a Go backend service
@@ -58,7 +58,7 @@ code applies when the key is absent. Environment-only services skip this step.
   The shared `backend/.dockerignore` applies; add host-only artifacts of the new module to it.
 - Without commons-go: the context is `backend/<name>`, with the module's own `.dockerignore`.
 - Builder: `docker.io/golang:<go-version>-alpine3.23`; keep the version equal to `backend/.go-version`
-  (Dependabot's docker ecosystem bumps it, and `go-version-check.sh` guards the module side).
+  (Renovate does not update the `golang` image, and `go-version-check.sh` guards the module side).
 - Run every Go command with `GOWORK=off`, `CGO_ENABLED=0`, `GOFLAGS=-mod=readonly`.
 - Runtime: the pinned `ghcr.io/netcracker/qubership-core-base` image, `USER 10001:10001`, files copied with
   `--chown=10001:0 --chmod=555`.
@@ -101,12 +101,12 @@ infers the dependency from `go.work`; confirm with `pnpm exec nx graph --file=gr
   `backend/*/go.mod`; neither needs an edit. A module without its own `wwhrd.yml` uses the one of
   `backend/portal-backend`.
 
-### 8. CODEOWNERS and Dependabot
+### 8. CODEOWNERS and Renovate
 
 - `.github/CODEOWNERS`: `/backend/` already owns the new directory. Add a line only for different owners, and
   keep the order general to specific.
-- `.github/dependabot.yml`: add `/backend/<name>` to the `gomod` directories and to the `docker` directories.
-  Both lists are explicit because Dependabot does not expand them.
+- `.github/renovate.json`: the `backend/*/go.mod` and `backend/*/Dockerfile` globs in `includePaths` already cover a
+  module directly under `backend/`. Add a line only for a module somewhere else.
 
 ### 9. Helm chart
 

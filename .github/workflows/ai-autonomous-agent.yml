@@ -70,23 +70,23 @@ jobs:
     # A cheap filter before a runner starts: bots never command the agent. A `schedule` event (the sweep) starts a
     # runner only when `AGENT_ENABLED` is `true`, so a disabled agent costs nothing every 10 minutes. It passes the
     # other conditions below: the event fields they read are empty there, and its `github.actor` is whoever last
-    # changed the workflow file, often Dependabot bumping an action, so the actor check skips it. A comment must hold
+    # changed the workflow file, often a dependency bot bumping an action, so the actor check skips it. A comment must hold
     # `/agent`, unless it is on an issue: the author of an issue that waits for information answers without a
     # command, and the router checks that. Comments on pull requests stay command-only.
-    # Dependabot pull requests are never reviewed, also on request: a dependency bump has nothing to review, and a
-    # review costs money. So no runner starts for Dependabot's own events or for a comment on its pull request. The one
-    # exception is a comment that holds `/agent` and `ci_check` or `ci-check` (`contains()` ignores case): a red
+    # Dependabot and Renovate pull requests are never reviewed, also on request: a dependency bump has nothing to
+    # review, and a review costs money. So no runner starts for a dependency bot's own events or for a comment on its
+    # pull request. The one exception is a comment that holds `/agent` and `ci_check` or `ci-check` (`contains()` ignores case): a red
     # dependency bump is what people ask the CI check about. The filter is loose on purpose; the router parses the
     # comment and skips everything but `/agent ci_check` on such a pull request.
     if: >-
       (github.event_name != 'schedule' || vars.AGENT_ENABLED == 'true') &&
-      (github.event_name == 'schedule' || github.actor != 'dependabot[bot]') &&
-      github.event.pull_request.user.login != 'dependabot[bot]' &&
-      github.event.workflow_run.actor.login != 'dependabot[bot]' &&
+      (github.event_name == 'schedule' || !contains(fromJSON('["dependabot[bot]", "renovate[bot]"]'), github.actor)) &&
+      !contains(fromJSON('["dependabot[bot]", "renovate[bot]"]'), github.event.pull_request.user.login) &&
+      !contains(fromJSON('["dependabot[bot]", "renovate[bot]"]'), github.event.workflow_run.actor.login) &&
       (github.event_name != 'workflow_run' ||
       github.event.workflow_run.head_repository.full_name == github.repository) &&
       !(github.event_name == 'issue_comment' && github.event.issue.pull_request != null &&
-      github.event.issue.user.login == 'dependabot[bot]' &&
+      contains(fromJSON('["dependabot[bot]", "renovate[bot]"]'), github.event.issue.user.login) &&
       !(contains(github.event.comment.body, '/agent') &&
       (contains(github.event.comment.body, 'ci_check') || contains(github.event.comment.body, 'ci-check')))) &&
       (github.event_name != 'issue_comment' ||

@@ -46,6 +46,7 @@ import {
   createComparisonInternalDocumentId,
   createOperationChange,
   getOperationTags,
+  isOperationOwnedByPair,
   OperationsMap,
 } from '../../components'
 import { createGraphqlApiKindValueAt } from '../../components/compare/graphql.api-kind'
@@ -122,6 +123,9 @@ export const compareDocuments: DocumentsCompare = async (
       const { current, previous } = operationsMap[operationId] ?? {}
       if (!current && !previous) {
         throw new Error(`Can't find the ${operationId} operation from documents pair ${prevDoc?.fileId} and ${currDoc?.fileId}`)
+      }
+      if (!isOperationOwnedByPair({ previous, current }, prevDoc, currDoc)) {
+        continue
       }
       const operationChanged = Boolean(current && previous)
       const operationAddedOrRemoved = !operationChanged

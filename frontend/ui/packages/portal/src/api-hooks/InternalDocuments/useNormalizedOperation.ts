@@ -22,14 +22,11 @@ export function useNormalizedOperation(options: Options): QueryResultWithNoInter
 
   const hasVersionInternalDocument = !!operation?.versionInternalDocumentId
 
-  const operationPackageKey = encodeURIComponent(packageId ?? '')
-  const operationPackageVersion = encodeURIComponent(versionId ?? '')
-
   const {
     data: internalDocuments,
     isLoading: isInternalDocumentsLoading,
     error: internalDocumentsError,
-  } = useInternalDocumentsByPackageVersion(operationPackageKey, operationPackageVersion)
+  } = useInternalDocumentsByPackageVersion(packageId, versionId)
 
   const internalDocumentWithOperation = useMemo(
     () => internalDocuments?.find(document => document.id === operation?.versionInternalDocumentId),

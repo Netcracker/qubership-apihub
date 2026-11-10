@@ -1,0 +1,16 @@
+openapi: 3.0.3
+info:
+  title: b-bwc
+  version: v2
+  x-api-kind: BWC
+paths:
+  /items:
+    get:
+      responses:
+        '200':
+          description: OK
+  /b-bwc:
+    get:
+      responses:
+        '200':
+          description: OK

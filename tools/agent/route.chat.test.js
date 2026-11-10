@@ -349,6 +349,18 @@ test('a pull request of Dependabot stays ignored by every new command but ci_che
   }
 })
 
+test('a pull request of Renovate stays ignored by every new command but ci_check', () => {
+  const bodies = ['/agent', '/agent cost', '/agent stop', '/agent retry', '/agent update', '/agent rerun',
+    '/agent a question']
+  for (const body of bodies) {
+    const payload = onPersonPull(body)
+    payload.issue.user.login = 'renovate[bot]'
+    const result = route('issue_comment', payload, { ...write, agentFacts: agentFacts() })
+    assert.equal(result.action, 'skip', body)
+    assert.equal(result.reason, 'dependency update pull requests are not handled', body)
+  }
+})
+
 // ---------------------------------------------------------------------------------------------------------------
 // the answer to a hand-off
 // ---------------------------------------------------------------------------------------------------------------
