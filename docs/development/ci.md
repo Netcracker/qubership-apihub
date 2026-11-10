@@ -64,8 +64,9 @@ half-way.
 | `ci-ok` | always | the verdict |
 | `release-artifacts` | `main`, after `ci-ok`, when the commit carries release tags | publishes the release |
 
-"The run may publish" is false for a pull request from a fork and for every Dependabot run: their token cannot
-write packages, so the image, E2E, and Storybook jobs are skipped.
+"The run may publish" is false only for a pull request from a fork: its token cannot write packages, so the image
+jobs build without pushing, and the E2E and Storybook jobs are skipped. A run of a dependency bot (Renovate or
+Dependabot) publishes its images and runs E2E, but skips the Storybook jobs.
 
 ## The required check: `ci-ok`
 

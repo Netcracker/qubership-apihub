@@ -47,14 +47,17 @@ export async function getPortalVersionInfo(): Promise<PortalVersionInfo> {
     return { frontendVersion, apiProcessorVersion }
   }
 
-  const buildInfo = await buildResponse.json()
+  // The entrypoint writes `committedAt` as an empty string when the image has no commit time.
+  const { branch, commit, committedAt } = await buildResponse.json()
+  const imageVersion = committedAt ? `${branch}.${commit}.${committedAt}` : `${branch}.${commit}`
 
-  return { frontendVersion, apiProcessorVersion, buildInfo }
+  return { frontendVersion, apiProcessorVersion, imageVersion }
 }
 
 export interface PortalVersionInfo {
   frontendVersion: string
   apiProcessorVersion: string
-  // The image that serves the Portal: the entrypoint writes `committedAt` as an empty string when it has no time.
-  buildInfo?: { branch: string; commit: string; committedAt: string }
+  // The image that serves the Portal, as System Information shows it: `<branch>.<commit>.<committedAt>`, or
+  // `<branch>.<commit>` when the image has no commit time.
+  imageVersion?: string
 }

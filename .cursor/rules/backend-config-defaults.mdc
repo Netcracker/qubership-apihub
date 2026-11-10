@@ -1,6 +1,6 @@
 ---
 description: Backend config defaults and validation conventions
-globs: "backend/portal-backend/**/*.go"
+globs: backend/portal-backend/**/*.go
 ---
 
 # Backend Configuration Defaults

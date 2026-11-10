@@ -1,8 +1,6 @@
 ---
 description: Agent OpenAPI file list and sync requirements
-globs:
-  - "backend/agent/docs/api/**"
-  - "backend/agent/controller/**"
+globs: backend/agent/docs/api/**, backend/agent/controller/**
 ---
 
 # Agent OpenAPI Files

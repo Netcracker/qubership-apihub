@@ -1,6 +1,6 @@
 ---
 description: Backend SQL migration path and validation script
-globs: "backend/portal-backend/**/resources/migrations/**"
+globs: backend/portal-backend/**/resources/migrations/**
 ---
 
 # Backend Database Migrations

@@ -76,7 +76,7 @@ The workflows rely on these repository settings. They are not checkable from cod
 Squash every pull request. Nx reads every commit between a component's last tag and `HEAD`. A squash makes each pull
 request one commit whose message is the linted pull request title, so work-in-progress commits never reach the bump
 calculation. A `BREAKING CHANGE:` footer in the pull request description counts as a major bump when it starts a
-line. The phrase inside a sentence or in quoted release notes, as in Dependabot descriptions, does not count.
+line. The phrase inside a sentence or in quoted release notes, as in Renovate descriptions, does not count.
 
 **Never squash a sync of `release` into `develop`, or of `main` into `develop`.** A squash drops the link to the
 `release` commits, and the hotfixes would be counted a second time at the next release. The bots always merge with a
@@ -467,7 +467,7 @@ of `tools/release/` read it to write the version plan, and Nx applies that plan.
 - A commit with an unknown type, or a title that is not a Conventional Commit, gives no bump. A `BREAKING CHANGE:`
   footer still gives major.
 - Merge commits are ignored.
-- Dependabot commits start with `chore: deps:`, so they give a patch bump.
+- Renovate commits start with `chore: deps:`, so they give a patch bump.
 - Below `1.0.0` the table still holds: `feat` takes `0.1.0` to `0.2.0`.
 
 ### Components and dependents

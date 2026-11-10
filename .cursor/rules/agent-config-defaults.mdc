@@ -1,6 +1,6 @@
 ---
 description: Agent config defaults and validation conventions
-globs: "backend/agent/**/*.go"
+globs: backend/agent/**/*.go
 ---
 
 # Agent Configuration Defaults

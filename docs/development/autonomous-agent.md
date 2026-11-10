@@ -26,6 +26,9 @@ comments. It is a proof of concept; the design is in [the internal docs](../inte
   information, it asks the author and sets `agent:needs-human`; the author's answer in a comment, or an edit of the
   issue, starts the analysis again at once. Comment `/agent analyze` to run it again yourself. The agent never changes
   an `ai:*` label that a person set.
+- **Reads attachments.** The analysis and the implementation read the screenshots (PNG, JPEG, GIF, WebP) and the text
+  files (specs, logs, samples) that the description and the comments link, up to 10 images of 5 MB and 10 text files of
+  1 MB. ZIP archives and videos are not read, so attach the files themselves or a screenshot.
 - **Caps its automatic work.** In any 24 hours the agent starts at most `AGENT_DAILY_ANALYSES` analyses of new issues
   (default 10) and `AGENT_DAILY_REVIEWS` reviews of new pull requests (default 15), so a flood of issues or pull
   requests cannot run up a bill. Commands, answers of an author, and edits do not count and are never capped. The job
@@ -43,9 +46,9 @@ comments. It is a proof of concept; the design is in [the internal docs](../inte
 - **Reports weekly** on the progress toward autonomy. See [Weekly report](#weekly-report).
 
 The agent never approves or requests changes; its review is a comment. The review comment ends with what the AI calls
-on the pull request have cost so far. Dependabot pull requests are never reviewed, also not with `/agent review`: a
-dependency bump has nothing to review, and a review costs money. The only command the agent takes on a Dependabot pull
-request is `/agent ci_check`.
+on the pull request have cost so far. Dependency update pull requests (Renovate or Dependabot) are never reviewed,
+also not with `/agent review`: a dependency bump has nothing to review, and a review costs money. The only command the
+agent takes on a dependency update pull request is `/agent ci_check`.
 
 Who can use it: anyone who opens a pull request or a `Bug` or `Task` issue gets the automatic review and the automatic
 analysis. A command, an answer to a hand-off, and an implementation need a user with write access to the repository,
@@ -55,9 +58,9 @@ bots.
 ## Commands
 
 A command is a comment whose first non-empty line starts with `/agent`. Only a user with write access can give one, and
-only the users in `AGENT_ALLOWED_ACTORS` while it is set. The agent ignores bots and Dependabot pull requests, except
-for `/agent ci_check` on a Dependabot pull request. It reacts to your comment with an eyes emoji when it starts, then
-with a rocket when it ends well or a confused face when it refuses or fails.
+only the users in `AGENT_ALLOWED_ACTORS` while it is set. The agent ignores bots and dependency update pull requests
+(Renovate or Dependabot), except for `/agent ci_check` on a dependency update pull request. It reacts to your comment
+with an eyes emoji when it starts, then with a rocket when it ends well or a confused face when it refuses or fails.
 
 | Command | Where | What happens |
 |---|---|---|
@@ -66,6 +69,7 @@ with a rocket when it ends well or a confused face when it refuses or fails.
 | `/agent stop` | issue or pull request of the agent | The agent stops its work on the issue. |
 | `/agent retry [notes]` | issue or pull request of the agent | A new attempt with a fresh budget; the notes are guidance. |
 | `/agent rerun [notes]` | issue or pull request of the agent | Reruns the failed CI checks; no new attempt, no model. |
+| `/agent update [notes]` | pull request of the agent | Merges the latest `develop`; on conflicts, the agent resolves them. See [Update the branch](#update-the-branch). |
 | `/agent ci_check [notes]` | pull request | Finds the root cause of a red CI; reruns the failed jobs when it is flaky or an outage. |
 | `/agent <question>` | issue, or pull request of a person | The assistant answers in a comment and changes nothing. |
 | `/agent <text>` | pull request of the agent | A change request: one attempt on the branch of the pull request. |
@@ -159,6 +163,23 @@ model, so it costs nothing and does not touch the attempt budget. Any text after
   wait for an approval of the workflows of a fork), instead of "CI still runs".
 - Cancelled checks are rerun like failed ones.
 - It runs in its own job `rerun`, which holds `AGENT_PAT` only to take a green pull request out of draft.
+
+### Update the branch
+
+`/agent update [notes]` on a pull request of the agent merges the latest `develop` into its branch. Use it when the
+pull request has conflicts, because then CI does not run and the CI gate cannot help, or when it has fallen behind.
+The agent merges and pushes the merge commit on top of the branch; it never rebases or force-pushes.
+
+- **No conflicts:** no model runs and the command costs nothing. CI runs again on the new head, and the
+  [CI loop](#the-ci-loop) goes on from there.
+- **Conflicts:** the implementer resolves them, and the local checks and the self-review run as in any attempt. The
+  notes are guidance for the resolution. When a conflict needs a decision, the agent hands over to you.
+- **Up to date:** when the branch already contains the latest `develop`, the agent replies that there is nothing to
+  update.
+- **Workflow files:** when `develop` changed files under `.github/workflows/` since the branch point, GitHub refuses
+  the push of the agent's token. The agent says so; use the **Update branch** button of the pull request, or merge by
+  hand.
+- It counts as a person's attempt: the CI loop gets a fresh budget.
 
 ### CI check
 

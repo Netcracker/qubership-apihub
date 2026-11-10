@@ -66,7 +66,7 @@ function fakeGh({ labels = [], laterLabels = null, comments = [], failOn = null,
   }
 }
 
-async function runMain({ answer, exitCode = 0, gh = fakeGh(), env = {} }) {
+async function runMain({ answer, exitCode = 0, gh = fakeGh(), env = {}, fetch }) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'analyze-test-'))
   const agentCalls = []
   const runAgent = async (options) => {
@@ -84,7 +84,7 @@ async function runMain({ answer, exitCode = 0, gh = fakeGh(), env = {} }) {
   }
   let error = null
   try {
-    await main(fullEnv, { gh, runAgent })
+    await main(fullEnv, { gh, runAgent, fetch })
   } catch (err) {
     error = err
   }
@@ -122,6 +122,37 @@ test('a suitable verdict adds the label, then writes the state', async () => {
   assert.equal(agentCalls[0].agent, 'analyst')
   assert.match(agentCalls[0].inputText, /^# Issue #200\n/)
   assert.deepEqual(files, ['analysis-input.md', 'analyst.final.md', 'summary.md'])
+})
+
+test('the analyst gets the screenshots and the files of the issue next to its input', async () => {
+  const shot = 'https://github.com/user-attachments/assets/9ce68ecc'
+  const spec = 'https://github.com/user-attachments/files/26459320/spec.json'
+  const video = 'https://github.com/user-attachments/assets/b0b0'
+  const bodies = {
+    [shot]: Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1]),
+    [spec]: Buffer.from('{"openapi":"3.0.0"}'),
+    [video]: Buffer.from([0, 0, 0, 0x18, 0x66, 0x74, 0x79, 0x70]),
+  }
+  const fetch = async (url) => new Response(bodies[url], { status: 200 })
+  const comments = [{ id: 1, user: { login: 'bob' }, created_at: '2026-10-02T00:00:00Z', body: `Spec: ${spec}` }]
+  const gh = fakeGh({ comments, issuePatch: { body: `Steps:\n![shot](${shot})\n${video}` } })
+  const { agentCalls, error, files } = await runMain({ answer: suitable, gh, fetch })
+  assert.equal(error, null)
+  const [call] = agentCalls
+  assert.deepEqual(call.files.slice(1).map((f) => path.basename(f)), ['attachment-01.png', 'attachment-03.json'])
+  assert.match(call.message, / The other attached files are the attachments of the issue that it lists\.$/)
+  assert.match(call.inputText, /\n## Attachments\n\nThe description and the comments link 3 attachments\. 2 of them/)
+  assert.match(call.inputText, /- `attachment-03\.json` \(text, 19 B\), in the comment of bob on 2026-10-02T00:00:00Z/)
+  assert.match(call.inputText, /- Not read, in the description: \S+\. Reason: a binary file; the agent reads PNG/)
+  assert.ok(files.includes('attachments'))
+})
+
+test('an issue without attachments attaches only the input', async () => {
+  const fetch = async () => assert.fail('nothing to download')
+  const { agentCalls } = await runMain({ answer: suitable, fetch })
+  assert.equal(agentCalls[0].files.length, 1)
+  assert.doesNotMatch(agentCalls[0].inputText, /## Attachments/)
+  assert.match(agentCalls[0].message, /analysis-input\.md\.$/)
 })
 
 test('needs-info labels the issue and posts a separate comment that mentions the author', async () => {

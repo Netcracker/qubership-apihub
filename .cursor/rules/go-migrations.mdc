@@ -1,6 +1,6 @@
 ---
 description: SQL migration numbering and file conventions
-globs: "**/resources/migrations/**"
+globs: **/resources/migrations/**
 ---
 
 # Database Migrations

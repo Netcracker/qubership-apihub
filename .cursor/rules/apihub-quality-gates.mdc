@@ -1,8 +1,6 @@
 ---
 description: Quality gates of a frontend change.
-globs:
-  - "frontend/**"
-  - "tests/ui-tests/**"
+globs: frontend/**, tests/ui-tests/**
 ---
 
 Before you report a change in `frontend/` or `tests/ui-tests/` as done, run the `apihub-validate` skill on the

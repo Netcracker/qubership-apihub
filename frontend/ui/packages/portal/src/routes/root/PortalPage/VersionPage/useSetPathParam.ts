@@ -50,7 +50,7 @@ const routes = [
   `${versionPageRoute}/${COMPARE_PAGE}/:apiType/:operationId`,
 ]
 
-function generatePathname(
+export function generatePathname(
   pathname: string = '',
   params: Readonly<Params<string>>,
   valueToChange: string,
@@ -58,7 +58,11 @@ function generatePathname(
 ): string {
   const pathPattern = routes.find((pattern) => matchPath(pattern, pathname)) ?? ''
 
-  return generatePath(pathPattern, { ...params, [keyToChange]: valueToChange })
+  const decodedParams: Params<string> = { ...params, [keyToChange]: valueToChange }
+  const encodedParams = Object.fromEntries(
+    Object.entries(decodedParams).map(([key, value]) => [key, value && encodeURIComponent(value)]),
+  )
+  return generatePath(pathPattern, encodedParams)
 }
 
 export function useSetPathParam(): (valueToChange: string, keyToChange?: string) => void {

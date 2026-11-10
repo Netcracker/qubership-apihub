@@ -1,6 +1,6 @@
 ---
 description: CI super-linter and MD link checker rules for changed files in APIHub repositories
-globs: "**"
+globs: **
 ---
 
 # CI linters (super-linter / link checker)

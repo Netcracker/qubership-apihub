@@ -1,6 +1,6 @@
 ---
 description: Unit tests of the frontend modules.
-globs: "frontend/**/*.{ts,tsx,js,mjs}"
+globs: frontend/**/*.{ts,tsx,js,mjs}
 ---
 
 When deciding whether a change in `frontend/` needs unit tests, or when writing or changing one, apply the

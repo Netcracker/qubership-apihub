@@ -357,7 +357,8 @@ implementation.
 ## Flow C: implementation
 
 **Trigger.** `/agent implement [force] [notes]` or `/agent fix` on an issue. Also the steering commands of
-[Flow D](#flow-d-commands) that start an attempt (`kind` `human` or `review`), and the CI gate (`kind` `ci-fix`).
+[Flow D](#flow-d-commands) that start an attempt (`kind` `human`, `review`, or `update`), and the CI gate
+(`kind` `ci-fix`).
 
 One attempt runs in two jobs. The work job runs code the model wrote, so it holds no GitHub token; the publish job
 holds the tokens and runs no model and no repository code.
@@ -405,7 +406,7 @@ sequenceDiagram
 | The issue is closed, or not a `Bug` or `Task` | refused in the preflight |
 | An attempt runs (less than 120 minutes old) | refused in the preflight |
 | `ai:unsuitable` without `force` | refused; `force` starts it and records `forced: true` |
-| The analysis has open questions | refused, unless a person steers (`kind` `human` or `review`) |
+| The analysis has open questions | refused, unless a person steers (`kind` `human`, `review`, or `update`) |
 | The issue changed since the analysis | the work step runs the analyst first; `needs-info` or `unsuitable` stops the run |
 | The implementer reports that it cannot continue, or no change | `blocked`, nothing pushed |
 | The diff of the whole pull request is above the limit (`Bug` 20 files or 600 lines, `Task` 30 or 1,000), measured after the last round and again in `publish` | `blocked`, nothing pushed |
@@ -502,6 +503,7 @@ flowchart LR
 | `/agent <question>` | `chat` | `assistant` | a reply; the cost record in the state |
 | `/agent stop` | `stop` | none | `phase` `stopped`, the cancelled run, no `agent:needs-human`, a reply |
 | `/agent retry [notes]` | `implement` | the Flow C roles | a new attempt with a fresh CI budget |
+| `/agent update [notes]` on the agent's PR | `implement`, kind `update` | none for a clean merge; the Flow C roles on conflicts | the merge of `develop` pushed on top of the branch, a fresh CI budget, `phase` `waiting-ci`; a reply and no state change when the branch is up to date |
 | `/agent rerun [notes]` | `rerun` | none | `phase` `waiting-ci`, `ciGate` deleted, an entry in `reruns`, no `agent:needs-human`; the failed checks run again; no attempt |
 | `/agent ci_check [notes]` | `ci-check` | `ci-triager`, only when CI is red | a reply with the verdict, the cause, and the places to fix; the cost record and a `ciChecks` entry on the pull request; a rerun of the failed jobs for a flaky or infrastructure failure, and, on the agent's pull request in `needs-human` or `waiting-ci`, the same state change as `/agent rerun` |
 | `/agent <text>` on the agent's pull request | `implement` | the Flow C roles | one attempt on its branch |

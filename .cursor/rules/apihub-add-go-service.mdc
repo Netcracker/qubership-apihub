@@ -1,11 +1,6 @@
 ---
 description: Wiring files of a Go backend service in the monorepo.
-globs:
-  - "go.work"
-  - "backend/.go-version"
-  - "backend/.dockerignore"
-  - "backend/*/go.mod"
-  - "backend/*/Dockerfile"
+globs: go.work, backend/.go-version, backend/.dockerignore, backend/*/go.mod, backend/*/Dockerfile
 ---
 
 When you add a Go module under `backend/`, or change how one is built or released, apply the

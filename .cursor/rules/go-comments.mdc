@@ -1,6 +1,6 @@
 ---
 description: Go comment policy and entity-to-view converter naming
-globs: "**/*.go"
+globs: **/*.go
 ---
 
 # Go Comments and Converters

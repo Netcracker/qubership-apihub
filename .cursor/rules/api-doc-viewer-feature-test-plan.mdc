@@ -1,6 +1,6 @@
 ---
 description: Build a manual QA test plan for an api-doc-viewer feature branch.
-globs: "frontend/api-doc-viewer/**/*"
+globs: frontend/api-doc-viewer/**/*
 ---
 
 When the user asks for a manual QA or end-to-end test plan of a feature, a fix, or a branch that changes the

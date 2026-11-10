@@ -49,7 +49,7 @@ jobs:
       e2e_tier: ${{ steps.e2e_tier.outputs.value }}
       storybooks: ${{ steps.storybooks.outputs.value }}
       can_publish: ${{ steps.can_publish.outputs.value }}
-      dependabot: ${{ steps.can_publish.outputs.dependabot }}
+      dependency_bot: ${{ steps.can_publish.outputs.dependency_bot }}
       release_tags: ${{ steps.release_tags.outputs.value }}
     steps:
       - uses: actions/checkout@v7
@@ -148,11 +148,10 @@ jobs:
       # image jobs still build there but push nothing, and the E2E and Storybook jobs are skipped;
       # tools/ci/ci-verdict.js accepts exactly those skips when this output is `false`.
       #
-      # Dependabot runs publish: the `permissions` of a job raise their token above the read-only
-      # default, so a dependency update gets its images and the full E2E before it is merged. Kind E2E
-      # generates the credentials that Dependabot secrets do not carry. The Storybook jobs are skipped
-      # there (`dependabot`): storybook-store.sh logs in to ghcr before the build runs dependency code,
-      # and a Dependabot branch needs no Storybook.
+      # Runs of a dependency bot publish: the `permissions` of a job raise their token above the
+      # read-only default, so a dependency update gets its images and the full E2E before it is merged.
+      # The Storybook jobs are skipped there (`dependency_bot`): storybook-store.sh logs in to ghcr
+      # before the build runs dependency code, and a dependency update branch needs no Storybook.
       - name: Can this run publish
         id: can_publish
         shell: bash
@@ -167,13 +166,13 @@ jobs:
           if [ "$EVENT" = 'pull_request' ] && [ "$HEAD_REPO" != "$REPO" ]; then
             value=false
           fi
-          dependabot=false
-          if [ "$ACTOR" = 'dependabot[bot]' ]; then
-            dependabot=true
+          dependency_bot=false
+          if [ "$ACTOR" = 'dependabot[bot]' ] || [ "$ACTOR" = 'renovate[bot]' ]; then
+            dependency_bot=true
           fi
           echo "value=$value" >> "$GITHUB_OUTPUT"
-          echo "dependabot=$dependabot" >> "$GITHUB_OUTPUT"
-          echo "can publish: $value, dependabot: $dependabot"
+          echo "dependency_bot=$dependency_bot" >> "$GITHUB_OUTPUT"
+          echo "can publish: $value, dependency bot: $dependency_bot"
 
       # The E2E tier, decided once so a push and its pull request do not both run E2E:
       #   pull_request event          full, none if only docs/ or Markdown files changed
@@ -594,13 +593,13 @@ jobs:
   # Stores each Storybook in ghcr as an OCI artifact keyed by content hash and gives this branch a
   # pointer to it (tools/ci/storybook-store.sh); pages.yml assembles the site from the store. All
   # six run on every push, for the images' reason, and build only new content. Not run for pull
-  # requests, whose ref is no branch, nor for Dependabot branches (see `Can this run publish`). Not
+  # requests, whose ref is no branch, nor for dependency update branches (see `Can this run publish`). Not
   # gated on tests: a red branch's Storybook shows what is red.
   storybooks:
     needs: [plan]
     if: >-
       github.event_name != 'pull_request' && needs.plan.outputs.can_publish == 'true'
-      && needs.plan.outputs.dependabot != 'true'
+      && needs.plan.outputs.dependency_bot != 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:
@@ -689,7 +688,7 @@ jobs:
   # job that had to run was skipped: tools/ci/ci-verdict.js derives from the plan which jobs those
   # are. A skip is accepted only where the plan says nothing is affected (go, java, screenshot-tests),
   # where E2E is not due (tier none), where the run is a pull request (storybooks), or where the run
-  # cannot publish (can_publish false: e2e, storybooks), where the run is Dependabot's (storybooks),
+  # cannot publish (can_publish false: e2e, storybooks), where the run is a dependency bot's (storybooks),
   # or where PAGES_DEPLOY is not true (storybook-pages).
   ci-ok:
     needs:

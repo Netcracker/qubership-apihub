@@ -1,0 +1,4 @@
+# Agent skill trees. A skill's Go code runs only when the skill runs, so Nx must not infer projects from its go.mod.
+.agents/
+.claude/
+agent-packages/**/.apm/

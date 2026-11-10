@@ -1,8 +1,6 @@
 ---
 description: Check whether a portal-backend change needs Helm, Compose, or configuration reference updates.
-globs:
-  - "backend/portal-backend/**/*.go"
-  - "backend/portal-backend/docs/api/**"
+globs: backend/portal-backend/**/*.go, backend/portal-backend/docs/api/**
 ---
 
 When implementing or modifying backend configuration, env-backed defaults, startup

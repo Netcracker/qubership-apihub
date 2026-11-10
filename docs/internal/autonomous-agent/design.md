@@ -270,8 +270,8 @@ The analysis runs again on `/agent analyze`, and on an edit of the issue or a co
 waits for information. It runs for every author, because it changes nothing but a label and a comment.
 
 1. **Skip** when a person has already set `ai:suitable` or `ai:unsuitable`.
-2. **Analyze** (`analyst`, light model). Reads the issue, its comments, and the code it points at, and follows the new
-   `apihub-issue-analysis` skill. The result is one of three:
+2. **Analyze** (`analyst`, light model). Reads the issue, its comments, its attachments (screenshots and text files),
+   and the code it points at, and follows the new `apihub-issue-analysis` skill. The result is one of three:
    - `suitable`: the issue holds enough to implement it, and the change fits the agent's tools and checks. The output
      adds a short plan: modules, approach, tests, risk.
    - `unsuitable`: a reason the agent cannot overcome, such as a decision that belongs to people, access the agent
@@ -357,6 +357,7 @@ repository. It ignores every other comment and every comment of a bot, its own i
 | `/agent implement [notes]`, `/agent fix [notes]` | `Bug` or `Task` issue | Starts Flow C; the notes become hints. On an `ai:unsuitable` issue, replies with the reasons instead |
 | `/agent implement force [notes]` | `ai:unsuitable` issue | Starts Flow C despite the label |
 | `/agent retry [notes]` | issue or agent PR in `agent:needs-human` | Resumes Flow C with a fresh attempt budget |
+| `/agent update [notes]` | agent PR | Merges the latest `develop` into the branch; on conflicts, `implementer` resolves them, see [Updating the branch](#updating-the-branch) |
 | `/agent stop` | issue or agent PR | Stops the flow; the phase becomes `stopped`; no further runs until `/agent implement` or `/agent retry` |
 | `/agent review` | pull request | Runs Flow A |
 | `/agent cost` | issue or pull request | Replies with the cost table, see [Cost reporting](#cost-reporting) |
@@ -370,6 +371,30 @@ but a label and a comment. A review with change requests on the agent's pull req
 gets every unresolved thread, and the publish step replies in each thread with what it changed.
 
 The agent never pushes to a branch of a person. On those pull requests it reviews and answers.
+
+### Updating the branch
+
+`/agent update` brings a pull request of the agent up to date with `develop` when it has fallen behind or has
+conflicts. Conflicts stop CI from running on the pull request at all, so the CI gate never sees them and a person must
+ask. The attempt has the kind `update` and gives the CI loop a fresh budget, like `/agent retry`.
+
+- **Merge, not rebase.** The script runs `git merge --no-ff origin/develop` and pushes the merge commit on top of the
+  branch, with the lease of any person's attempt. A rebase would need a force push, which could drop a commit that a
+  person pushed to the branch and would detach the review comments. Pull requests are squash-merged, so the merge
+  commit does not reach `develop`.
+- **Already up to date.** The preflight asks GitHub how far the head is behind `develop`. At zero it replies that
+  there is nothing to update and changes no state.
+- **A clean merge runs no model.** The script commits the merge, and the publish job pushes it. The run ends in
+  `waiting-ci`, and the CI gate takes over: a red CI starts the usual CI fix.
+- **Conflicts go to the implementer.** The working tree stays in the merge, and the input lists the files with
+  conflict markers; the notes after the command are guidance. The rounds, the local checks, and the self-review run as
+  in Flow C, and every round commits the merge commit (later rounds amend it). A file that still has a conflict marker
+  blocks the attempt.
+- **The diff limits measure the pull request only.** After the merge, the branch point is the merged `develop`, so the
+  diff from it holds the change of the pull request and not the commits of `develop`.
+- **Workflow files.** `AGENT_PAT` has no Workflows permission, and GitHub refuses a push whose commits change
+  `.github/workflows/`, even when the change comes from `develop`. The agent still tries. On that refusal, the attempt
+  fails with a message that says why: update the branch by hand, or give the token the Workflows permission.
 
 ## Budgets and the stop rule
 
@@ -560,6 +585,9 @@ The repository is public, so issue text, comments, and fork code are untrusted i
   and self-review results stay in the state and the description, labeled as reported by the work job. The OpenAI key
   stays reachable by the code under test in the work job. The proof of concept accepts that; give the key its own
   OpenAI project and a budget on it.
+- **Attachments are untrusted too.** The analyst and the implementer read the screenshots and text files that an issue
+  links. The scripts download them, not the model: only GitHub attachment hosts are allowed, every redirect must stay
+  on them, and no credential is sent. The prompts treat an attachment like the issue text, including text in an image.
 - **Only maintainers start write flows.** Every command, every answer to a hand-off, and every review with change
   requests needs write access. The marker in the description of a pull request counts only when the state of the issue
   names that pull request. A review event runs the workflow file of the pull request, so the jobs name the default
