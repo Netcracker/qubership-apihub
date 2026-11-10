@@ -79,6 +79,8 @@ import { useDocumentSearchParam } from '../useDocumentSearchParam'
 import { useOperation } from '../useOperation'
 import { useOperationSearchParam } from '../useOperationSearchParam'
 import { OperationsSidebarOnComparison } from './OperationsSidebarOnComparison'
+import { PAGE_TITLES } from '@portal/routes/pageTitles'
+import { useComparisonTitleSides, usePageTitle } from '@portal/routes/usePageTitle'
 
 export function isOperationPairGrouped(
   operationPairsGroupedByTags: OperationPairsGroupedByTag,
@@ -395,6 +397,14 @@ export const DifferentOperationGroupsComparisonPage: FC = memo(() => {
   )
 
   const groupsComparisonParams = useComparisonParams()
+  const comparisonTitleSides = useComparisonTitleSides(groupsComparisonParams)
+  usePageTitle(PAGE_TITLES.groupOperationsComparison({
+    originGroup: previousGroup,
+    changedGroup: group,
+    changed: comparisonTitleSides.changed,
+    originOperationTitle: originOperation?.title,
+    changedOperationTitle: changedOperation?.title,
+  }))
   const [originComparisonObject, changedComparisonObject] = useComparisonObjects({
     ...groupsComparisonParams,
     currentGroup: group,

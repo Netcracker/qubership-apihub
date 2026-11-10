@@ -27,8 +27,12 @@ import {
 import { MainPageCard } from '@portal/routes/root/MainPage/MainPageCard'
 import { DASHBOARD_KIND, GROUP_KIND, PACKAGE_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
 import { FAVORITE_PAGE_REFERER } from '@portal/entities/referer-pages-names'
+import { PAGE_TITLES } from '@portal/routes/pageTitles'
+import { usePageTitle } from '@portal/routes/usePageTitle'
 
 export const FavoritePage: FC = memo(() => {
+  usePageTitle(PAGE_TITLES.favorite())
+
   const { textFilter, types } = useActivityHistoryFiltersContext()
   const setActivityHistoryFilters = useSetActivityHistoryFiltersContext()
 

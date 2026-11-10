@@ -19,8 +19,12 @@ import React, { memo } from 'react'
 import { usePrivateWorkspace } from './usePrivateWorkspaceUser'
 import { PrivatePagePlaceholder } from './PrivatePagePlaceholder'
 import { PrivatePageTable } from './PrivatePageTable'
+import { PAGE_TITLES } from '@portal/routes/pageTitles'
+import { usePageTitle } from '@portal/routes/usePageTitle'
 
 export const PrivatePage: FC = memo(() => {
+  usePageTitle(PAGE_TITLES.private())
+
   const [workspaceId, isLoading] = usePrivateWorkspace({ cacheTime: 1000 })
 
   return workspaceId

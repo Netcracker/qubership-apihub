@@ -24,9 +24,12 @@ import { useActiveTabs } from '@netcracker/qubership-apihub-ui-shared/hooks/path
 import { useSuperAdminCheck } from '@netcracker/qubership-apihub-ui-shared/hooks/user-roles/useSuperAdminCheck'
 import { LayoutWithToolbar } from '@netcracker/qubership-apihub-ui-shared/components/PageLayouts/LayoutWithToolbar'
 import { CONTENT_PLACEHOLDER_AREA, NO_PERMISSION, Placeholder } from '@netcracker/qubership-apihub-ui-shared/components/Placeholder'
+import { PAGE_TITLES } from '@portal/routes/pageTitles'
+import { usePageTitle } from '@portal/routes/usePageTitle'
 
 export const SettingsPage: FC = memo(() => {
   const [menuItem] = useActiveTabs()
+  usePageTitle(PAGE_TITLES.portalSettings(menuItem))
   const isSuperAdmin = useSuperAdminCheck()
   const [, setActiveTab] = useState<SettingsPageRoute>(USER_ROLES_PAGE)
 

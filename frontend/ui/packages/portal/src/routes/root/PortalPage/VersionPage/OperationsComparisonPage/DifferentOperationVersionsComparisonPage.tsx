@@ -79,6 +79,8 @@ import { useOperationSearchParam } from '../useOperationSearchParam'
 import { DdlTableComparisonContent } from '../VersionContractsSubPage/DdlTableContentView'
 import { OperationsSidebarOnComparison } from './OperationsSidebarOnComparison'
 import { useDdlEntityComparisonState } from './useDdlEntityComparisonState'
+import { PAGE_TITLES } from '@portal/routes/pageTitles'
+import { useComparisonTitleSides, usePageTitle } from '@portal/routes/usePageTitle'
 
 function getOperationPairsFromPackageChanges(
   packageChanges: ReadonlyArray<OperationChangeBase>,
@@ -334,6 +336,12 @@ export const DifferentOperationVersionsComparisonPage: FC = memo(() => {
   // TODO 01.09.23 // Extract to hook? Can we optimize it and reuse some parameters?
   const versionsComparisonParams = useComparisonParams()
 
+  const comparisonTitleSides = useComparisonTitleSides(versionsComparisonParams)
+  usePageTitle(PAGE_TITLES.operationsComparison({
+    ...comparisonTitleSides,
+    originOperationTitle: originOperation?.title,
+    changedOperationTitle: changedOperation?.title,
+  }))
   const [originComparisonObject, changedComparisonObject] = useComparisonObjects({
     ...versionsComparisonParams,
     originOperationKey: operationKey,

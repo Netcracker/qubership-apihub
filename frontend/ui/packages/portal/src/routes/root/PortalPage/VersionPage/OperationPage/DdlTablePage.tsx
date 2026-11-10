@@ -31,6 +31,8 @@ import { useAutoFetchInfinitePages } from '../useAutoFetchInfinitePages'
 import { getDdlTableLink } from '../useNavigateToOperation'
 import { DdlTableContentView } from '../VersionContractsSubPage/DdlTableContentView'
 import { DdlTableSelector } from './DdlTableSelector'
+import { PAGE_TITLES } from '@portal/routes/pageTitles'
+import { useVersionPageTitle } from '@portal/routes/usePageTitle'
 
 export const DdlTablePage: FC = memo(() => {
   const { packageId, versionId, operationId: ddlEntityId } = useParams<{
@@ -108,6 +110,8 @@ export const DdlTablePage: FC = memo(() => {
     }
     return `${getRouteApiTypeTitle(CONTRACT_TYPE_DDL)}: ${getDdlTableDisplayName(tableDetails)}`
   }, [tableDetails])
+
+  useVersionPageTitle(PAGE_TITLES.contract(tableDetails && getDdlTableDisplayName(tableDetails), CONTRACT_TYPE_DDL))
 
   return (
     <PageLayout

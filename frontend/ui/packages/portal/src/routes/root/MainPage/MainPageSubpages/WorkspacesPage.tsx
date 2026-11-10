@@ -19,8 +19,12 @@ import React from 'react'
 import { MainPageCard } from '@portal/routes/root/MainPage/MainPageCard'
 import { WORKSPACE_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
 import { WORKSPACES_PAGE_REFERER } from '@portal/entities/referer-pages-names'
+import { PAGE_TITLES } from '@portal/routes/pageTitles'
+import { usePageTitle } from '@portal/routes/usePageTitle'
 
 export const WorkspacesPage: FC = () => {
+  usePageTitle(PAGE_TITLES.workspaces())
+
   return (
     <MainPageCard
       title="Workspaces"

@@ -36,12 +36,20 @@ import {
   useCompareBreadcrumbs,
 } from '@portal/routes/root/PortalPage/VersionPage/useCompareBreadcrumbs'
 import { BreadcrumbsDataContext } from '../ComparedPackagesBreadcrumbsProvider'
+import { PAGE_TITLES } from '@portal/routes/pageTitles'
+import { useComparisonTitleSides, usePageTitle } from '@portal/routes/usePageTitle'
 
 export const GroupComparePage: FC = memo(() => {
   const { group } = useParams()
   const groupsComparisonParams = useComparisonParams()
   const { originPackageKey, originVersionKey, changedPackageKey, changedVersionKey } = groupsComparisonParams
   const previousGroup = useSearchParam(GROUP_SEARCH_PARAM)
+  const comparisonTitleSides = useComparisonTitleSides(groupsComparisonParams)
+  usePageTitle(PAGE_TITLES.groupsComparison({
+    originGroup: previousGroup,
+    changedGroup: group,
+    changed: comparisonTitleSides.changed,
+  }))
 
   const compareGroupsOptions = useMemo(() => ({
     changedPackageKey: changedPackageKey,

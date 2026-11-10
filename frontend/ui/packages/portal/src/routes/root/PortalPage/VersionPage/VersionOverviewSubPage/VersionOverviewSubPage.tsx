@@ -34,9 +34,12 @@ import { RevisionsHistoryCard } from './RevisionsHistoryCard'
 import { ActivityHistoryByPackageCard } from './ActivityHistoryByPackageCard'
 import { useActiveTabs } from '@netcracker/qubership-apihub-ui-shared/hooks/pathparams/useActiveTabs'
 import { PageLayout } from '@netcracker/qubership-apihub-ui-shared/components/PageLayout'
+import { PAGE_TITLES } from '@portal/routes/pageTitles'
+import { useVersionPageTitle } from '@portal/routes/usePageTitle'
 
 export const VersionOverviewSubPage: FC = memo(() => {
   const [, sidebarItem] = useActiveTabs()
+  useVersionPageTitle(PAGE_TITLES.overview(sidebarItem))
   const { packageId, versionId } = useParams()
   const { navigateToOverview } = useNavigation()
 

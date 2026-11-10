@@ -48,6 +48,8 @@ import { DdlTableListWithPreview } from './DdlTableListWithPreview'
 import { McpEntityListView } from './McpEntityListView'
 import { McpEntityListWithPreview } from './McpEntityListWithPreview'
 import { McpOverview } from './McpOverview'
+import { PAGE_TITLES } from '@portal/routes/pageTitles'
+import { useVersionPageTitle } from '@portal/routes/usePageTitle'
 
 export const VersionContractsSubPage: FC = memo(() => {
   const [searchValue, setSearchValue] = useState('')
@@ -57,6 +59,7 @@ export const VersionContractsSubPage: FC = memo(() => {
     apiType?: ApiType | ContractType
   }>()
   const routeApiType = toRouteApiType(apiType)
+  useVersionPageTitle(PAGE_TITLES.contracts(routeApiType))
   const bodyRef: MutableRefObject<HTMLDivElement | null> = useRef(null)
 
   const [summaryPackageKey, summaryVersionKey] = usePackageParamsWithRef()

@@ -12,6 +12,7 @@ import { Toolbar } from '@netcracker/qubership-apihub-ui-shared/components/Toolb
 import { ToolbarTitle } from '@netcracker/qubership-apihub-ui-shared/components/ToolbarTitle'
 import { CONTRACT_TYPE_MCP } from '@netcracker/qubership-apihub-ui-shared/entities/contract-types'
 import {
+  getMcpContractEntityDisplayName,
   getMcpContractEntityToolbarTitle,
   MCP_COLLECTION_EMPTY_MESSAGES,
   MCP_COLLECTION_LABELS,
@@ -34,6 +35,8 @@ import { MCP_COLLECTION_SEARCH_PARAM, useMcpCollectionSearchParam } from '../use
 import { MCP_ENDPOINT_SEARCH_PARAM, useMcpEndpointSearchParam } from '../useMcpEndpointSearchParam'
 import { getMcpEntityLink } from '../useNavigateToOperation'
 import { McpEntitySelector } from './McpEntitySelector'
+import { PAGE_TITLES } from '@portal/routes/pageTitles'
+import { useVersionPageTitle } from '@portal/routes/usePageTitle'
 
 export const McpEntityPage: FC = memo(() => {
   const { packageId, versionId, operationId: mcpEntityId } = useParams<{
@@ -131,6 +134,7 @@ export const McpEntityPage: FC = memo(() => {
   }, [entityDetails])
 
   const sectionTitle = MCP_COLLECTION_LABELS[mcpListCollection]
+  useVersionPageTitle(PAGE_TITLES.contract(entityDetails && getMcpContractEntityDisplayName(entityDetails), CONTRACT_TYPE_MCP))
   const emptyMessage = MCP_COLLECTION_EMPTY_MESSAGES[mcpListCollection]
 
   return (

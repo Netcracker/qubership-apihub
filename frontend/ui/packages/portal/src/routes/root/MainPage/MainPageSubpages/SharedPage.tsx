@@ -27,8 +27,12 @@ import { Box } from '@mui/material'
 import { DASHBOARD_KIND, PACKAGE_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
 import { MainPageCard } from '@portal/routes/root/MainPage/MainPageCard'
 import { SHARED_PAGE_REFERER } from '@portal/entities/referer-pages-names'
+import { PAGE_TITLES } from '@portal/routes/pageTitles'
+import { usePageTitle } from '@portal/routes/usePageTitle'
 
 export const SharedPage: FC = memo(() => {
+  usePageTitle(PAGE_TITLES.shared())
+
   const { textFilter, types } = useActivityHistoryFiltersContext()
   const setActivityHistoryFilters = useSetActivityHistoryFiltersContext()
 

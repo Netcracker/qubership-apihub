@@ -20,10 +20,13 @@ import { ConfigurePackageVersionPage } from './PackagePage/ConfigurePackageVersi
 import { ConfigureDashboardPage } from './DashboardPage/ConfigureDashboardPage'
 import { usePackage } from '@netcracker/qubership-apihub-ui-shared/hooks/packages/usePackage'
 import { DASHBOARD_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
+import { PAGE_TITLES } from '@portal/routes/pageTitles'
+import { useVersionPageTitle } from '@portal/routes/usePageTitle'
 
 export const ConfigurePage: FC = memo(() => {
   const { packageObj } = usePackage({ showParents: true })
   const isDashboard = packageObj?.kind === DASHBOARD_KIND
+  useVersionPageTitle(PAGE_TITLES.configure(isDashboard))
 
   return isDashboard ? <ConfigureDashboardPage/> : <ConfigurePackageVersionPage/>
 })

@@ -38,6 +38,8 @@ import { SelectedOperationTagsProvider } from '../SelectedOperationTagsProvider'
 import { useOperation } from '../useOperation'
 import { useOperationLocation } from '../useOperationLocation'
 import { VersionsComparisonGlobalParamsContext } from '../VersionsComparisonGlobalParams'
+import { PAGE_TITLES } from '@portal/routes/pageTitles'
+import { useComparisonTitleSides, usePageTitle } from '@portal/routes/usePageTitle'
 
 export const DifferentOperationsComparisonPage: FC = memo(() => {
   const { operationId: changedOperationKey, apiType } = useParams()
@@ -71,6 +73,12 @@ export const DifferentOperationsComparisonPage: FC = memo(() => {
     isLoading: isOriginOperationLoading || isChangedOperationLoading,
   }
 
+  const comparisonTitleSides = useComparisonTitleSides(versionsComparisonParams)
+  usePageTitle(PAGE_TITLES.operationsComparison({
+    ...comparisonTitleSides,
+    originOperationTitle: originOperation?.title,
+    changedOperationTitle: changedOperation?.title,
+  }))
   const [originComparisonObject, changedComparisonObject] = useComparisonObjects({
     ...versionsComparisonParams,
     originOperationKey: originOperationKey,

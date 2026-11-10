@@ -65,6 +65,8 @@ import { OperationToolbarHeader } from './OperationToolbarHeader'
 import { useOpenApiVisitor } from './useOpenApiVisitor'
 import { useOperationsWithSameModel } from './useOperationsWithSameModel'
 import { useUpdateRecentOperations } from './useUpdateRecentOperations'
+import { PAGE_TITLES } from '@portal/routes/pageTitles'
+import { useVersionPageTitle } from '@portal/routes/usePageTitle'
 
 // High Order Component //
 export const OperationPage: FC = memo(() => {
@@ -109,6 +111,7 @@ export const OperationPage: FC = memo(() => {
       : undefined
 
   const models = useOpenApiVisitor(visitorData)
+  useVersionPageTitle(PAGE_TITLES.contract(changedOperation?.title || changedOperation?.operationKey, apiType))
   useUpdateRecentOperations(changedOperation)
   const recentOperationsData = useRecentOperations()
   const recentOperations = useMemo(

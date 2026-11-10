@@ -9,12 +9,18 @@ import {
   CONTENT_PLACEHOLDER_AREA,
   Placeholder,
 } from '@netcracker/qubership-apihub-ui-shared/components/Placeholder/Placeholder'
+import { useActiveTabs } from '@netcracker/qubership-apihub-ui-shared/hooks/pathparams/useActiveTabs'
 import type { SpecItemUri } from '@netcracker/qubership-apihub-ui-shared/utils/specifications'
 import { ClientValidationStatuses, useApiQualityValidationSummary } from '../ApiQualityValidationSummaryProvider'
 import { ValidatedDocumentSelector } from './ValidatedDocumentSelector'
 import { VersionApiQualityCard } from './VersionApiQualityCard'
+import { PAGE_TITLES } from '@portal/routes/pageTitles'
+import { useVersionPageTitle } from '@portal/routes/usePageTitle'
 
 export const VersionApiQualitySubPage: FC = memo(() => {
+  const [, apiType] = useActiveTabs()
+  useVersionPageTitle(PAGE_TITLES.apiQuality(apiType))
+
   const validationSummary = useApiQualityValidationSummary()
   const validationSummaryAvailable = validationSummary?.status === ClientValidationStatuses.SUCCESS
 

@@ -19,6 +19,8 @@ import { VersionsComparisonGlobalParamsContext } from '../VersionsComparisonGlob
 import { DashboardsCompareContent } from './DashboardsCompareContent'
 import { useVersionCompareSidebar } from './useVersionCompareSidebar'
 import { VersionCompareContent } from './VersionCompareContent'
+import { PAGE_TITLES } from '@portal/routes/pageTitles'
+import { useComparisonTitleSides, usePageTitle } from '@portal/routes/usePageTitle'
 
 export const VersionComparePage: FC = memo(() => {
   const [mainPackageKind] = usePackageKind()
@@ -27,6 +29,8 @@ export const VersionComparePage: FC = memo(() => {
 
   const versionsComparisonParams = useComparisonParams()
   const { originPackageKey, originVersionKey, changedPackageKey, changedVersionKey } = versionsComparisonParams
+  const comparisonTitleSides = useComparisonTitleSides(versionsComparisonParams)
+  usePageTitle(PAGE_TITLES.versionsComparison(comparisonTitleSides))
 
   const compareVersionsOptions = useMemo(() => ({
     changedPackageKey: changedPackageKey,
