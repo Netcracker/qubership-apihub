@@ -29,7 +29,7 @@ export function filterRowsByServiceName<TRow extends NamedServiceRow>(rows: TRow
 }
 
 // The header checkbox counts the rows that can be selected. While none can, as during a publication, it is disabled
-// and shows how many of the rows are selected.
+// and shows whether all or some of the rows are selected.
 export function selectAllStateOf(rows: ReadonlyArray<SelectableRowState>): SelectAllState {
   const selectableRows = rows.filter(({ canSelect }) => canSelect)
   const countedRows = isNotEmpty(selectableRows) ? selectableRows : rows
