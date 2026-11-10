@@ -18,6 +18,8 @@ const CASES: ReadonlyArray<readonly [string, string, Readonly<Record<string, str
   ['08-deprecated-operation', 'openapi-operation-suite-oas-3-0-document-structure--case-08-deprecated-operation', {}],
   ['09-deprecated-operation-without-summary', 'openapi-operation-suite-oas-3-0-document-structure--case-09-deprecated-operation-without-summary', {}],
   ['10-security-anonymous-only', 'openapi-operation-suite-oas-3-0-document-structure--case-10-security-anonymous-only', {}],
+  ['11-circular-schema-with-extension', 'openapi-operation-suite-oas-3-0-document-structure--case-11-circular-schema-with-extension', {}],
+  ['12-circular-schema-through-all-of', 'openapi-operation-suite-oas-3-0-document-structure--case-12-circular-schema-through-all-of', {}],
 ]
 
 describe('OpenAPI Operation Suite - OAS 3.0 Document Structure', () => {

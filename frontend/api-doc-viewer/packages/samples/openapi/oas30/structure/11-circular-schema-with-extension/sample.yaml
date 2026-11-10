@@ -1,0 +1,30 @@
+openapi: 3.0.3
+info:
+  title: Orders
+  version: 1.0.0
+paths:
+  /orders:
+    post:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Offering"
+      responses:
+        "200":
+          description: ""
+components:
+  schemas:
+    Offering:
+      type: object
+      x-entity: Offering
+      properties:
+        id:
+          type: string
+        parent:
+          $ref: "#/components/schemas/Offering"
+        children:
+          type: array
+          items:
+            $ref: "#/components/schemas/Offering"

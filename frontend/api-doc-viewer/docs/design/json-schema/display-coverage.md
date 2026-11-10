@@ -159,7 +159,7 @@ state is precomputed by next-data-model; the viewer reads it through `JsonSchema
 
 | Suite | Stories | Fixtures |
 | --- | ---: | --- |
-| `JSON Schema Suite` (types, validations, value range, combiners, circular, description) | 515 | `packages/samples/json-schema/` |
+| `JSON Schema Suite` (types, validations, value range, combiners, circular, description) | 518 | `packages/samples/json-schema/` |
 | `JSON Schema Suite (Extensions)` | 13 | `packages/samples/json-schema/extensions/` |
 | `JSON Schema Suite (Performance)` | 1 | `packages/samples/json-schema/performance-tests/` |
 | `JSON Schema Diffs Suite` | 1148 | `packages/samples/json-schema-diffs/` |

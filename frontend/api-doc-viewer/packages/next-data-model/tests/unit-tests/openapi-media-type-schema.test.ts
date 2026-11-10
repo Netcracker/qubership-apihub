@@ -1,14 +1,17 @@
 import { DiffAction } from '@netcracker/qubership-apihub-api-diff'
 import { TreeNodeComplexityTypes } from '../../src/model/abstract/tree/tree-node.interface'
+import { JsonSchemaTreeBuilder } from '../../src/building-service/json-schema/tree/builder'
+import { OpenApiTreeBuilder } from '../../src/building-service/openapi/tree/builder'
 import { OpenApiTreeWithDiffsBuilder } from '../../src/building-service/openapi/tree-with-diffs/builder'
 import { SectionRowDiffs } from '../../src/model/abstract/tree-with-diffs/row-diffs-base'
 import { OpenApiDisplayLabels } from '../../src/model/openapi/display/labels'
 import { OpenApiMediaTypeSchema } from '../../src/model/openapi/media-type-schema'
-import { OpenApiTreeNodeWithDiffs } from '../../src/model/openapi/types/aliases'
+import { JsonSchemaTreeNode } from '../../src/model/json-schema/types/aliases'
+import { OpenApiTreeNode, OpenApiTreeNodeWithDiffs } from '../../src/model/openapi/types/aliases'
 import { OpenApiTreeNodeKind, OpenApiTreeNodeKinds } from '../../src/model/openapi/types/node-kind'
 import { isOpenApiTreeNodeWithDiffs } from '../../src/shared/openapi/guards/tree-node'
 import { isObjective } from '../../src/utilities'
-import { loadMergedOpenApiSample, OPENAPI_TEST_DIFF_META_KEYS } from '../helpers/openapi-fixtures'
+import { loadMergedOpenApiSample, loadNormalizedOpenApiSample, OPENAPI_TEST_DIFF_META_KEYS } from '../helpers/openapi-fixtures'
 
 const OPERATION = { path: '/orders', method: 'post' }
 const DIFFS_KEY = OPENAPI_TEST_DIFF_META_KEYS.diffsMetaKey
@@ -75,5 +78,52 @@ describe('OpenAPI media-type schema (Body)', () => {
     const mediaType = requestMediaType('17-schema-property-added', 'application/json')
     expect(SectionRowDiffs.takeHeaderRowDiff(mediaType)).toBeUndefined()
     expect(properties(OpenApiMediaTypeSchema.wrap(mediaType, DIFFS_KEY))[DIFFS_KEY]).toBeUndefined()
+  })
+})
+
+describe('OpenAPI media-type schema (cycles in the nested viewer)', () => {
+  const CASE_ID = 'oas30/structure/11-circular-schema-with-extension'
+
+  function plainChild(node: OpenApiTreeNode, kind: OpenApiTreeNodeKind): OpenApiTreeNode {
+    const found = (node.type === TreeNodeComplexityTypes.COMPLEX ? node.nestedNodes() : node.childrenNodes()).find(candidate => candidate.kind === kind)
+    if (!found) {
+      throw new Error(`no ${kind} under ${node.kind}`)
+    }
+    return found
+  }
+
+  /** Walks the keys from the root, materializing deferred children on the way, as the viewer does on expand. */
+  function resolveByKeys(builder: JsonSchemaTreeBuilder, keys: string[]): JsonSchemaTreeNode {
+    let current = builder.tree.root!
+    for (const key of keys) {
+      builder.materializeChildren(current)
+      const next = current.childrenNodes().find(node => String(node.key) === key)
+      if (!next) {
+        throw new Error(`no ${key} under ${current.id}`)
+      }
+      current = next
+    }
+    return current
+  }
+
+  // The nested viewer's tree starts from the schema of the media type node value. When that value
+  // held a copy of the schema, the original never reached the cycle guard's ancestors, and a `$ref`
+  // back to it was detected one level late.
+  it.each([
+    ['lazy', { materializeDepth: 2 }],
+    ['eager', {}],
+  ] as const)('a `$ref` back to the body schema is a cycle on the first level (%s)', (_mode, params) => {
+    const document = loadNormalizedOpenApiSample(CASE_ID) as any
+    const root = new OpenApiTreeBuilder({ source: document, operationKeys: OPERATION }).build().root!
+    const body = plainChild(plainChild(root, OpenApiTreeNodeKinds.REQUEST), OpenApiTreeNodeKinds.REQUEST_BODY)
+    const mediaType = plainChild(plainChild(body, OpenApiTreeNodeKinds.CONTENT), OpenApiTreeNodeKinds.MEDIA_TYPE)
+    expect(OpenApiMediaTypeSchema.take(mediaType)).toBe(document.paths['/orders'].post.requestBody.content['application/json'].schema)
+
+    const builder = new JsonSchemaTreeBuilder({ source: OpenApiMediaTypeSchema.wrap(mediaType), ...params })
+    builder.build()
+    expect(resolveByKeys(builder, [TITLE]).isCycle).toBe(false)
+    expect(resolveByKeys(builder, [TITLE, 'parent']).isCycle).toBe(true)
+    expect(resolveByKeys(builder, [TITLE, 'children']).isCycle).toBe(false)
+    expect(resolveByKeys(builder, [TITLE, 'children', 'items']).isCycle).toBe(true)
   })
 })

@@ -304,7 +304,7 @@ Tick a case once reviewed. Sources: `packages/samples/openapi/` and `packages/sa
 - [x] `10-headers-and-body`
 - [x] `11-description-and-body-schema-description`
 
-### `oas30/structure` (9)
+### `oas30/structure` (12)
 
 - [x] `01-path-item-parameters-with-override`
 - [x] `02-ref-parameter-body-response`
@@ -315,6 +315,9 @@ Tick a case once reviewed. Sources: `packages/samples/openapi/` and `packages/sa
 - [x] `07-security-anonymous-alternative`
 - [x] `08-deprecated-operation`
 - [x] `09-deprecated-operation-without-summary`
+- [ ] `10-security-anonymous-only`
+- [ ] `11-circular-schema-with-extension`
+- [ ] `12-circular-schema-through-all-of`
 
 ### `oas31/fields/security` (3)
 

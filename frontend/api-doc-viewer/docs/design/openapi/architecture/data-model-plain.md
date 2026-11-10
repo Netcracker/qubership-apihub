@@ -173,6 +173,10 @@ Notes:
 - Node value pick lists: `OPENAPI_NODE_VALUE_PROPS` (`tree/node-data/builder.ts`, `satisfies` per
   kind); the security kinds reuse `SECURITY_NODE_VALUE_PROPS`. The same lists are the field-diff
   allow-list of the with-diffs aggregators.
+- `pick` (`TreeBuilder`) keeps the picked fields by reference. A media type's, parameter's, or
+  header's `schema` is therefore the document's own object, and the nested viewer's tree starts
+  from it: a `$ref` back to that schema is a cycle on the first level. A copy left the original out
+  of the cycle guard's ancestors, so the cycle showed one level late. Node values are read-only.
 - `meta`: `{ _fragment }`.
 - Row visibility: `OpenApiNodeVisibility` (operation header rows, body / response descriptions) and
   `OPENAPI_SECURITY_NODE_VISIBILITY` (scheme cards, flows). Pure functions of a node value, valid for

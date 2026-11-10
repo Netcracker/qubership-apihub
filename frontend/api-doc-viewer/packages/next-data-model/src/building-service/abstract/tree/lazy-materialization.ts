@@ -13,11 +13,15 @@ export type PendingSubtree<R> = {
 }
 
 export class LazyMaterializationState<R> {
+  /**
+   * Raw fragment of every built node, which rebuilds the ancestors of a resumed crawl. It can
+   * differ from `PendingSubtree.fragment`: that one is the transformed value, crawled on resume,
+   * while the cycle guard compares raw values.
+   */
   readonly fragments = new Map<NodeId, object>()
   readonly pending = new Map<NodeId, PendingSubtree<R>>()
 
   defer(work: PendingSubtree<R>): void {
-    this.fragments.set(work.nodeId, work.fragment)
     this.pending.set(work.nodeId, work)
   }
 

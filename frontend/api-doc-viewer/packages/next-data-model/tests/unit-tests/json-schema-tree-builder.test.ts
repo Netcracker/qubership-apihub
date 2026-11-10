@@ -8,9 +8,11 @@ import {
   resolvePlainPropertyIsExpandable,
 } from "../../src/building-service/json-schema/tree/node-visibility-data/kind-property"
 import { JsonSchemaTreeWithDiffsBuilder } from "../../src/building-service/json-schema/tree-with-diffs/builder"
+import { JsonSchemaTreeNode } from "../../src/model/json-schema/types/aliases"
 import { JsonSchemaTreeNodeKinds } from "../../src/model/json-schema/types/node-kind"
 import { TreeNodeComplexityTypes } from "../../src/model/abstract/tree/tree-node.interface"
 import { jsonSchemaHasOwnChildren } from "../../src/shared/json-schema/has-own-children"
+import { loadNormalizedOpenApiSample } from "../helpers/openapi-fixtures"
 import { simplifyConsole } from "../helpers/simplify-console"
 
 describe("JsonSchemaTreeBuilder", () => {
@@ -438,5 +440,57 @@ describe("JsonSchemaTreeBuilder circular combiner variants (with diffs)", () => 
     expect(cyclicNode.childrenNodes().length).toBeGreaterThan(0)
     const nestedProperty = cyclicNode.childrenNodes().find((node: any) => node.key === "nested")
     expect(nestedProperty).toBeDefined()
+  })
+})
+
+describe("JsonSchemaTreeBuilder cycles of schemas with extensions", () => {
+  simplifyConsole()
+
+  // The builder copies every schema that has an `x-` extension (`transformJsonSchemaExtensions`).
+  // Cycles of such schemas used to go undetected: the cycle guard looked up the raw schema, while
+  // the ancestors held the copies. The eager build then never ended, and a lazy one grew a level
+  // on every expand.
+  const BUILD_MODES = [
+    ["lazy", { materializeDepth: 2 }],
+    ["eager", {}],
+  ] as const
+
+  function loadBodySchema(caseId: string): unknown {
+    const document = loadNormalizedOpenApiSample(caseId) as any
+    return document.paths["/orders"].post.requestBody.content["application/json"].schema
+  }
+
+  /** Walks the ids from the root, materializing deferred children on the way, as the viewer does on expand. */
+  function resolveNode(builder: JsonSchemaTreeBuilder, ids: string[]): JsonSchemaTreeNode {
+    let current = builder.tree.root!
+    for (const id of ids) {
+      builder.materializeChildren(current)
+      const next = current.childrenNodes().find((node) => node.id === id)
+      if (!next) {
+        throw new Error(`No node ${id} under ${current.id}`)
+      }
+      current = next
+    }
+    return current
+  }
+
+  it.each(BUILD_MODES)("detects a direct cycle of a schema with an extension (%s)", (_mode, params) => {
+    const builder = new JsonSchemaTreeBuilder({ source: loadBodySchema("oas30/structure/11-circular-schema-with-extension"), ...params })
+    builder.build()
+
+    expect(resolveNode(builder, ["#/properties/parent"]).isCycle).toBe(true)
+    expect(resolveNode(builder, ["#/properties/children"]).isCycle).toBe(false)
+    expect(resolveNode(builder, ["#/properties/children", "#/properties/children/items"]).isCycle).toBe(true)
+  })
+
+  it.each(BUILD_MODES)("detects a cycle through `allOf` one level below the merged schema (%s)", (_mode, params) => {
+    const builder = new JsonSchemaTreeBuilder({ source: loadBodySchema("oas30/structure/12-circular-schema-through-all-of"), ...params })
+    builder.build()
+
+    // `allOf` merges the enclosing schema with a description into a new schema: not a cycle itself.
+    const delivery = resolveNode(builder, ["#/properties/delivery"])
+    expect(delivery.isCycle).toBe(false)
+    expect(resolveNode(builder, ["#/properties/delivery", "#/properties/delivery/properties/delivery"]).isCycle).toBe(true)
+    expect(resolveNode(builder, ["#/properties/children", "#/properties/children/items"]).isCycle).toBe(true)
   })
 })

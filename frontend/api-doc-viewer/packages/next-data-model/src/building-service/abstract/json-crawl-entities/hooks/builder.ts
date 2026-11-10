@@ -122,6 +122,12 @@ export function createTreeBuildingHooks<
     lazy,
   } = params;
 
+  // A transformer may return a copy of the crawled value (`transformJsonSchemaExtensions` copies
+  // every schema with an extension). The cycle guard looks up the raw value, so the ancestors and
+  // the lazy fragments are keyed by the raw value the copy came from.
+  const rawValuesOfCopies = new WeakMap<object, object>();
+  const resolveRawValue = (value: object): object => rawValuesOfCopies.get(value) ?? value;
+
   const preventInfiniteLoopHook: SyncCrawlHook<S, R> = ({ value, state, key, path }) => {
     if (typeof key === "symbol") {
       return;
@@ -167,6 +173,9 @@ export function createTreeBuildingHooks<
       (accumulatedTransformedValue, transform) => transform(key, accumulatedTransformedValue, source, path, state),
       value
     );
+    if (transformedValue !== value && isObject(value) && isObject(transformedValue)) {
+      rawValuesOfCopies.set(transformedValue, resolveRawValue(value));
+    }
 
     return { value: transformedValue };
   };
@@ -205,8 +214,11 @@ export function createTreeBuildingHooks<
       parent.addChildNode(treeNode);
     }
 
-    if (lazy && (isObject(value) || isArray(value))) {
-      lazy.state.rememberFragment(nodeId, value as object);
+    const shouldTrackAncestor = isObject(value) || isArray(value);
+    const ancestorKey = shouldTrackAncestor ? resolveRawValue(value as object) : value;
+
+    if (lazy && shouldTrackAncestor) {
+      lazy.state.rememberFragment(nodeId, ancestorKey as object);
     }
 
     // TODO 22.05.2026 // This is NOT shared logic! It's only diffs-related logic!
@@ -250,9 +262,8 @@ export function createTreeBuildingHooks<
       });
     }
 
-    const shouldTrackAncestor = isObject(value) || isArray(value);
     if (shouldTrackAncestor) {
-      ancestors.enter(value, treeNode);
+      ancestors.enter(ancestorKey, treeNode);
     }
 
     let newState: S;
@@ -273,7 +284,7 @@ export function createTreeBuildingHooks<
       return {
         done: true,
         exitHook: shouldTrackAncestor
-          ? () => { ancestors.leave(value) }
+          ? () => { ancestors.leave(ancestorKey) }
           : undefined,
       };
     }
@@ -282,7 +293,7 @@ export function createTreeBuildingHooks<
       value: nextCrawlValue,
       state: newState,
       exitHook: shouldTrackAncestor
-        ? () => { ancestors.leave(value) }
+        ? () => { ancestors.leave(ancestorKey) }
         : undefined,
     };
   };

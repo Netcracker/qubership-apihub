@@ -63,3 +63,58 @@ export const Cycled: Story = {
     <JsonSchemaViewer schema={cycledSchema} expandedDepth={JSON_SCHEMA_SUITE_EXPANDED_DEPTH} />
   ),
 }
+
+// The viewer copies a schema with an `x-` extension while building the tree. These cases check that
+// cycles of such schemas still end in a circular node.
+const OFFERING_REF = "#/components/schemas/Offering"
+
+function createCircularCase(caseId: string, offering: Record<string, unknown>): Story {
+  const schema = { $ref: OFFERING_REF }
+  const components = { schemas: { Offering: offering } }
+  const prepared = prepareJsonSchema({ schema, target: REQUEST_BODY_TARGET, additionalComponents: components, circular: true })
+  return {
+    args: {
+      caseId,
+      sampleYaml: toSampleYaml({ schema, additionalComponents: components }),
+    },
+    render: () => (
+      <JsonSchemaViewer schema={prepared} expandedDepth={JSON_SCHEMA_SUITE_EXPANDED_DEPTH} />
+    ),
+  }
+}
+
+function offeringSchema(extensions: Record<string, unknown>, properties: Record<string, unknown>): Record<string, unknown> {
+  return { type: "object", ...extensions, properties: { id: { type: "string" }, ...properties } }
+}
+
+const DIRECT_CYCLE_PROPERTIES = {
+  parent: { $ref: OFFERING_REF },
+  children: { type: "array", items: { $ref: OFFERING_REF } },
+}
+
+// `allOf` merges the enclosing schema and a description into a new schema, so `delivery` is not a
+// cycle itself; the circular node is `delivery.delivery`.
+const ALL_OF_CYCLE_PROPERTIES = {
+  delivery: {
+    allOf: [
+      { $ref: OFFERING_REF },
+      { type: "object", description: "Only `id` is used for a delivery offering." },
+    ],
+  },
+  children: { type: "array", items: { $ref: OFFERING_REF } },
+}
+
+export const CycledWithExtension: Story = createCircularCase(
+  "cycled-with-extension",
+  offeringSchema({ "x-entity": "Offering" }, DIRECT_CYCLE_PROPERTIES),
+)
+
+export const CycledThroughAllOf: Story = createCircularCase(
+  "cycled-through-all-of",
+  offeringSchema({}, ALL_OF_CYCLE_PROPERTIES),
+)
+
+export const CycledThroughAllOfWithExtension: Story = createCircularCase(
+  "cycled-through-all-of-with-extension",
+  offeringSchema({ "x-entity": "Offering" }, ALL_OF_CYCLE_PROPERTIES),
+)

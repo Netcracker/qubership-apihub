@@ -41,3 +41,5 @@ export const Case_07_security_anonymous_alternative: Story = createCaseStory("07
 export const Case_08_deprecated_operation: Story = createCaseStory("08-deprecated-operation", "/orders", "post", []);
 export const Case_09_deprecated_operation_without_summary: Story = createCaseStory("09-deprecated-operation-without-summary", "/orders", "post", []);
 export const Case_10_security_anonymous_only: Story = createCaseStory("10-security-anonymous-only", "/orders", "post", []);
+export const Case_11_circular_schema_with_extension: Story = createCaseStory("11-circular-schema-with-extension", "/orders", "post", []);
+export const Case_12_circular_schema_through_all_of: Story = createCaseStory("12-circular-schema-through-all-of", "/orders", "post", []);

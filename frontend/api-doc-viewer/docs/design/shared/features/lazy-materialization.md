@@ -19,6 +19,11 @@ Used by the JSON Schema and JSO builders; AsyncAPI and DDL build eagerly.
    on node creation and left in the crawl `exitHook`, so it always holds exactly the values on the
    current path. When a subtree is materialized later, the registry is rebuilt from the tree with
    `collectAncestorsFromTree`, walking `container ?? parent` from the node to the root.
+   The registry and `fragments` hold **raw** values: the cycle guard looks up a value before the
+   crawl transformers run, and a transformer may return a copy (`transformJsonSchemaExtensions`
+   copies every schema with an `x-` extension). Keying by the copy left such cycles undetected:
+   the eager build never ended, and a lazy one grew a level on every expand. The deferred
+   `PendingSubtree.fragment` stays the transformed value, because the resumed crawl reads it.
 3. **Expandability without building.** A simple node is expandable when its fragment has own
    children (`jsonSchemaHasOwnChildren`, `defaultObjectTreeHasOwnChildren`); combiner owners
    delegate to their branches.
