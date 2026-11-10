@@ -14,6 +14,7 @@ and [`qubership-ai-packages`](https://github.com/Netcracker/qubership-ai-package
 | `apihub-deployment-followup` | `apihub-deployment-followup/` | Reminder to update Helm or Compose when a backend change needs it |
 | `apihub-add-go-service` | `apihub-add-go-service/` | Checklist for adding a Go service under `backend/` |
 | `apihub-landing-refresh` | `apihub-landing-refresh/` | Refresh versions, release cards, and links of the landing in `sites/landing/` |
+| `apihub-adr` | `apihub-adr/` | When a change needs an architecture decision record in `docs/internal/adr/` |
 | `analyze-migration` | `analyze-migration/` | Analyse an APIHub operations migration and investigate build errors |
 
 ## One manifest for the whole repository
