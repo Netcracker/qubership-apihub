@@ -63,8 +63,6 @@ import {
   DifferentOperationGroupsComparisonPage,
 } from '@portal/routes/root/PortalPage/VersionPage/OperationsComparisonPage/DifferentOperationGroupsComparisonPage'
 import { ProfilePage } from './root/ProfilePage/ProfilePage'
-import { PageTitle } from '@portal/components/PageTitle'
-import { PAGE_TITLES } from './pageTitles'
 
 // The target is absolute: a relative one resolves against the decoded URL, which since react-router 6.22 decodes
 // '?' and '#' too, so a '?', '#', or '%' in a version (agent snapshot versions contain '%') produces a wrong path.
@@ -139,19 +137,9 @@ export const router = createBrowserRouter(
           </Route>
         </Route>
       </Route>
-      <Route path="*" element={
-        <>
-          <PageTitle segments={PAGE_TITLES.notFound()}/>
-          <ErrorPage title={NOT_FOUND_TITLE} homePath="/portal"/>
-        </>
-      }/>
+      <Route path="*" element={<ErrorPage title={NOT_FOUND_TITLE} homePath="/portal"/>}/>
     </Route>,
-    <Route path="/login" element={
-      <>
-        <PageTitle segments={PAGE_TITLES.login()}/>
-        <LoginPage applicationName={'APIHUB Portal'}/>
-      </>
-    }/>,
+    <Route path="/login" element={<LoginPage applicationName={'APIHUB Portal'}/>}/>,
   ]),
 )
 

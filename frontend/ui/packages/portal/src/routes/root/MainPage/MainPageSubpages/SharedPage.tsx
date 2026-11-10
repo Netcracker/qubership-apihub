@@ -28,10 +28,10 @@ import { DASHBOARD_KIND, PACKAGE_KIND } from '@netcracker/qubership-apihub-ui-sh
 import { MainPageCard } from '@portal/routes/root/MainPage/MainPageCard'
 import { SHARED_PAGE_REFERER } from '@portal/entities/referer-pages-names'
 import { PAGE_TITLES } from '@portal/routes/pageTitles'
-import { usePageTitle } from '@portal/routes/usePageTitle'
+import { useDocumentTitle } from '@netcracker/qubership-apihub-ui-shared/hooks/common/useDocumentTitle'
 
 export const SharedPage: FC = memo(() => {
-  usePageTitle(PAGE_TITLES.shared())
+  useDocumentTitle(PAGE_TITLES.shared())
 
   const { textFilter, types } = useActivityHistoryFiltersContext()
   const setActivityHistoryFilters = useSetActivityHistoryFiltersContext()

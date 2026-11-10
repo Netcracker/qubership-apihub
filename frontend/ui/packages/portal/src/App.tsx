@@ -17,8 +17,10 @@
 import { ErrorHandler } from '@portal/components/ErrorHandler'
 import { EventBusProvider } from '@portal/routes/EventBusProvider'
 import { router } from '@portal/routes/Router'
+import { PORTAL_DOCUMENT_TITLE_FORMAT } from '@portal/routes/pageTitles'
 import { CssBaseline, ThemeProvider } from '@mui/material'
 import { AppPlaceholder } from '@netcracker/qubership-apihub-ui-shared/components/AppPlaceholder'
+import { DocumentTitleFormatContext } from '@netcracker/qubership-apihub-ui-shared/hooks/common/useDocumentTitle'
 import { useUser } from '@netcracker/qubership-apihub-ui-shared/hooks/authorization'
 import { useSystemConfiguration } from '@netcracker/qubership-apihub-ui-shared/hooks/authorization/useSystemConfiguration'
 import { theme } from '@netcracker/qubership-apihub-ui-shared/themes/theme'
@@ -49,9 +51,11 @@ const AppInner: FC = memo(() => {
       <CssBaseline />
       <ErrorHandler>
         <EventBusProvider>
-          {systemConfiguration && (isLoginPage || user)
-            ? <RouterProvider router={router} />
-            : <AppPlaceholder />}
+          <DocumentTitleFormatContext.Provider value={PORTAL_DOCUMENT_TITLE_FORMAT}>
+            {systemConfiguration && (isLoginPage || user)
+              ? <RouterProvider router={router} />
+              : <AppPlaceholder />}
+          </DocumentTitleFormatContext.Provider>
         </EventBusProvider>
       </ErrorHandler>
     </ThemeProvider>

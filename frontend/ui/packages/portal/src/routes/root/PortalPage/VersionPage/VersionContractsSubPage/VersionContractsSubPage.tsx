@@ -49,7 +49,7 @@ import { McpEntityListView } from './McpEntityListView'
 import { McpEntityListWithPreview } from './McpEntityListWithPreview'
 import { McpOverview } from './McpOverview'
 import { PAGE_TITLES } from '@portal/routes/pageTitles'
-import { useVersionPageTitle } from '@portal/routes/usePageTitle'
+import { useVersionPageTitle } from '@portal/routes/useVersionPageTitle'
 
 export const VersionContractsSubPage: FC = memo(() => {
   const [searchValue, setSearchValue] = useState('')

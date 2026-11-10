@@ -25,7 +25,7 @@ import { VERSION_TAB_IDS } from '../VersionTabApiTypes/version-tab-allowed-api-t
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import { useApiAudienceSearchFilter } from '../useApiAudienceSearchFilters'
 import { PAGE_TITLES } from '@portal/routes/pageTitles'
-import { useVersionPageTitle } from '@portal/routes/usePageTitle'
+import { useVersionPageTitle } from '@portal/routes/useVersionPageTitle'
 
 // High Order Component //
 export const VersionDeprecatedOperationsSubPage: FC = memo(() => {

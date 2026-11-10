@@ -80,7 +80,8 @@ import { useOperation } from '../useOperation'
 import { useOperationSearchParam } from '../useOperationSearchParam'
 import { OperationsSidebarOnComparison } from './OperationsSidebarOnComparison'
 import { PAGE_TITLES } from '@portal/routes/pageTitles'
-import { useComparisonTitleSides, usePageTitle } from '@portal/routes/usePageTitle'
+import { useDocumentTitle } from '@netcracker/qubership-apihub-ui-shared/hooks/common/useDocumentTitle'
+import { useComparisonTitleSides } from '@portal/routes/useVersionPageTitle'
 
 export function isOperationPairGrouped(
   operationPairsGroupedByTags: OperationPairsGroupedByTag,
@@ -398,7 +399,7 @@ export const DifferentOperationGroupsComparisonPage: FC = memo(() => {
 
   const groupsComparisonParams = useComparisonParams()
   const comparisonTitleSides = useComparisonTitleSides(groupsComparisonParams)
-  usePageTitle(PAGE_TITLES.groupOperationsComparison({
+  useDocumentTitle(PAGE_TITLES.groupOperationsComparison({
     originGroup: previousGroup,
     changedGroup: group,
     changed: comparisonTitleSides.changed,

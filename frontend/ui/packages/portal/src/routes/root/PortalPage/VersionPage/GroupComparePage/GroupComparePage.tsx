@@ -37,7 +37,8 @@ import {
 } from '@portal/routes/root/PortalPage/VersionPage/useCompareBreadcrumbs'
 import { BreadcrumbsDataContext } from '../ComparedPackagesBreadcrumbsProvider'
 import { PAGE_TITLES } from '@portal/routes/pageTitles'
-import { useComparisonTitleSides, usePageTitle } from '@portal/routes/usePageTitle'
+import { useDocumentTitle } from '@netcracker/qubership-apihub-ui-shared/hooks/common/useDocumentTitle'
+import { useComparisonTitleSides } from '@portal/routes/useVersionPageTitle'
 
 export const GroupComparePage: FC = memo(() => {
   const { group } = useParams()
@@ -45,7 +46,7 @@ export const GroupComparePage: FC = memo(() => {
   const { originPackageKey, originVersionKey, changedPackageKey, changedVersionKey } = groupsComparisonParams
   const previousGroup = useSearchParam(GROUP_SEARCH_PARAM)
   const comparisonTitleSides = useComparisonTitleSides(groupsComparisonParams)
-  usePageTitle(PAGE_TITLES.groupsComparison({
+  useDocumentTitle(PAGE_TITLES.groupsComparison({
     originGroup: previousGroup,
     changedGroup: group,
     changed: comparisonTitleSides.changed,

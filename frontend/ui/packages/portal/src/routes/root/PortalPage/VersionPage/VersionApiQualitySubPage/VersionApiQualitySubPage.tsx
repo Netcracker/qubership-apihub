@@ -15,7 +15,7 @@ import { ClientValidationStatuses, useApiQualityValidationSummary } from '../Api
 import { ValidatedDocumentSelector } from './ValidatedDocumentSelector'
 import { VersionApiQualityCard } from './VersionApiQualityCard'
 import { PAGE_TITLES } from '@portal/routes/pageTitles'
-import { useVersionPageTitle } from '@portal/routes/usePageTitle'
+import { useVersionPageTitle } from '@portal/routes/useVersionPageTitle'
 
 export const VersionApiQualitySubPage: FC = memo(() => {
   const [, apiType] = useActiveTabs()

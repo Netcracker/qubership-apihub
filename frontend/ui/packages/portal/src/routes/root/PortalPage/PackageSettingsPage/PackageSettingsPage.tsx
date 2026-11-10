@@ -27,7 +27,7 @@ import { NoPackagePlaceholder } from '../../NoPackagePlaceholder'
 import { useActiveTabs } from '@netcracker/qubership-apihub-ui-shared/hooks/pathparams/useActiveTabs'
 import { PageLayout } from '@netcracker/qubership-apihub-ui-shared/components/PageLayout'
 import { PAGE_TITLES } from '@portal/routes/pageTitles'
-import { usePageTitle } from '@portal/routes/usePageTitle'
+import { useDocumentTitle } from '@netcracker/qubership-apihub-ui-shared/hooks/common/useDocumentTitle'
 
 export const PackageSettingsPage: FC = memo(() => {
   const [menuItem] = useActiveTabs()
@@ -35,7 +35,7 @@ export const PackageSettingsPage: FC = memo(() => {
 
   const { packageId, groupId } = useParams()
   const [packageObject, isPackageLoading] = usePackage({ packageKey: packageId ?? groupId ?? '', showParents: true })
-  usePageTitle(PAGE_TITLES.packageSettings(menuItem, packageObject?.name))
+  useDocumentTitle(PAGE_TITLES.packageSettings(menuItem, packageObject?.name))
 
   return (
     <ActiveTabContentContext.Provider value={menuItem as PackageSettingsPageRoute}>

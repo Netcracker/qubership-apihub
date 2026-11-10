@@ -1,6 +1,6 @@
 /*
- * Browser tab titles of the portal: the single place for their wording, order and separators.
- * When the wording changes, only this file is edited; pages pass data and never build strings.
+ * Browser tab titles of the portal: which parts each page shows and in which order.
+ * Pages pass data and never build strings. The wording is in `pageTitleLabels.ts`.
  *
  * Segments go from the most specific to the least specific one, the app name is appended
  * by the format. Empty segments (data not loaded yet) are skipped, see `buildDocumentTitle`.
@@ -9,36 +9,24 @@
 import { getRouteApiTypeTitle, isApiContract } from '@netcracker/qubership-apihub-ui-shared/entities/contract-types'
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import { REVISION_DELIMITER } from '@netcracker/qubership-apihub-ui-shared/entities/versions'
-import type {
-  DocumentTitleFormat,
-  DocumentTitleSegment,
-  DocumentTitleSegments,
+import {
+  createDocumentTitleFormat,
+  type DocumentTitleFormat,
+  type DocumentTitleSegment,
+  type DocumentTitleSegments,
 } from '@netcracker/qubership-apihub-ui-shared/utils/document-title'
+import { APIHUB_APP_NAME } from '@netcracker/qubership-apihub-ui-shared/utils/document-title-labels'
 import { getSplittedVersionKey } from '@netcracker/qubership-apihub-ui-shared/utils/versions'
 
 import {
-  ACCESS_TOKENS_PAGE,
-  ACTIVITY_HISTORY_PAGE,
-  API_SPECIFIC_CONFIGURATION_PAGE,
-  EXPORT_SETTINGS_PAGE,
-  GENERAL_PAGE,
-  OPERATION_GROUPS_PAGE,
-  type OverviewPageRoute,
-  PACKAGES_PAGE,
-  type PackageSettingsPageRoute,
-  PERSONAL_ACCESS_TOKENS_PAGE,
-  type ProfilePageRoute,
-  REVISION_HISTORY_PAGE,
-  ROLES_HIERARCHY_PAGE,
-  RULESET_MANAGEMENT_PAGE,
-  type SettingsPageRoute,
-  SUMMARY_PAGE,
-  SYSTEM_ADMINISTRATORS_PAGE,
-  SYSTEM_TOKENS_PAGE,
-  USER_ACCESS_CONTROLS_PAGE,
-  USER_ROLES_PAGE,
-  VERSIONS_PAGE,
-} from '../routes'
+  COMPARISON_ARROW,
+  OVERVIEW_TAB_TITLES,
+  PACKAGE_SETTINGS_TAB_TITLES,
+  PAGE_TITLE_LABELS,
+  PORTAL_SETTINGS_TAB_TITLES,
+  PROFILE_TAB_TITLES,
+} from './pageTitleLabels'
+import type { OverviewPageRoute, PackageSettingsPageRoute, ProfilePageRoute, SettingsPageRoute } from '../routes'
 
 /** A version as the title shows it: the revision is shown only when it is not the latest one, as in the toolbar. */
 type TitleVersion = Partial<{
@@ -72,72 +60,9 @@ type GroupOperationsComparisonTitleParams = GroupsComparisonTitleParams & Partia
   changedOperationTitle: string
 }>
 
-export const PORTAL_DOCUMENT_TITLE_FORMAT: DocumentTitleFormat = {
-  appName: 'APIHUB',
-  segmentSeparator: ' · ',
-  appNameSeparator: ' | ',
-}
-
-const COMPARISON_ARROW = ' → '
-
-const PAGE_TITLE_LABELS = {
-  login: 'Log In',
-  notFound: 'Page Not Found',
-  favorite: 'Favorite',
-  shared: 'Shared',
-  private: 'Private',
-  workspaces: 'Workspaces',
-  workspace: 'Workspace',
-  group: 'Group',
-  portalSettings: 'Portal Settings',
-  profile: 'Profile',
-  packageSettings: 'Settings',
-  contracts: 'Contracts',
-  operation: 'Operation',
-  apiChanges: 'API Changes',
-  deprecated: 'Deprecated',
-  apiQuality: 'API Quality',
-  documents: 'Documents',
-  preview: 'Preview',
-  compare: 'Compare',
-  compareGroups: 'Compare Groups',
-  configureVersion: 'Configure Version',
-  configureDashboard: 'Configure Dashboard',
-} as const
-
-const PORTAL_SETTINGS_TAB_TITLES: Record<SettingsPageRoute, string> = {
-  [USER_ROLES_PAGE]: 'User Roles',
-  [ROLES_HIERARCHY_PAGE]: 'Roles Hierarchy',
-  [SYSTEM_ADMINISTRATORS_PAGE]: 'System Administrators',
-  [SYSTEM_TOKENS_PAGE]: 'System Tokens',
-  [RULESET_MANAGEMENT_PAGE]: 'API Quality Rulesets',
-}
-
-const PROFILE_TAB_TITLES: Record<ProfilePageRoute, string> = {
-  [PERSONAL_ACCESS_TOKENS_PAGE]: 'Personal Access Tokens',
-}
-
-const PACKAGE_SETTINGS_TAB_TITLES: Record<PackageSettingsPageRoute, string> = {
-  [GENERAL_PAGE]: 'General',
-  [API_SPECIFIC_CONFIGURATION_PAGE]: 'API Specific Configuration',
-  [EXPORT_SETTINGS_PAGE]: 'Export Settings',
-  [VERSIONS_PAGE]: 'Versions',
-  [ACCESS_TOKENS_PAGE]: 'Access Tokens',
-  [USER_ACCESS_CONTROLS_PAGE]: 'User Access Control',
-}
-
-const OVERVIEW_TAB_TITLES: Record<OverviewPageRoute, string> = {
-  [SUMMARY_PAGE]: 'Summary',
-  [ACTIVITY_HISTORY_PAGE]: 'Activity History',
-  [REVISION_HISTORY_PAGE]: 'Revision History',
-  [OPERATION_GROUPS_PAGE]: 'Operation Groups',
-  [PACKAGES_PAGE]: 'Packages',
-}
+export const PORTAL_DOCUMENT_TITLE_FORMAT: DocumentTitleFormat = createDocumentTitleFormat(APIHUB_APP_NAME)
 
 export const PAGE_TITLES = {
-  login: (): DocumentTitleSegments => [PAGE_TITLE_LABELS.login],
-  notFound: (): DocumentTitleSegments => [PAGE_TITLE_LABELS.notFound],
-
   favorite: (): DocumentTitleSegments => [PAGE_TITLE_LABELS.favorite],
   shared: (): DocumentTitleSegments => [PAGE_TITLE_LABELS.shared],
   private: (): DocumentTitleSegments => [PAGE_TITLE_LABELS.private],

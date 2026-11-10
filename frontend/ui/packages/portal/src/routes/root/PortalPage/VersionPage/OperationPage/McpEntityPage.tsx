@@ -36,7 +36,7 @@ import { MCP_ENDPOINT_SEARCH_PARAM, useMcpEndpointSearchParam } from '../useMcpE
 import { getMcpEntityLink } from '../useNavigateToOperation'
 import { McpEntitySelector } from './McpEntitySelector'
 import { PAGE_TITLES } from '@portal/routes/pageTitles'
-import { useVersionPageTitle } from '@portal/routes/usePageTitle'
+import { useVersionPageTitle } from '@portal/routes/useVersionPageTitle'
 
 export const McpEntityPage: FC = memo(() => {
   const { packageId, versionId, operationId: mcpEntityId } = useParams<{

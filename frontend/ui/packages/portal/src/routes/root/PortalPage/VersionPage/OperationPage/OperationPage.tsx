@@ -66,7 +66,7 @@ import { useOpenApiVisitor } from './useOpenApiVisitor'
 import { useOperationsWithSameModel } from './useOperationsWithSameModel'
 import { useUpdateRecentOperations } from './useUpdateRecentOperations'
 import { PAGE_TITLES } from '@portal/routes/pageTitles'
-import { useVersionPageTitle } from '@portal/routes/usePageTitle'
+import { useVersionPageTitle } from '@portal/routes/useVersionPageTitle'
 
 // High Order Component //
 export const OperationPage: FC = memo(() => {

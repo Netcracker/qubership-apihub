@@ -20,10 +20,10 @@ import { usePrivateWorkspace } from './usePrivateWorkspaceUser'
 import { PrivatePagePlaceholder } from './PrivatePagePlaceholder'
 import { PrivatePageTable } from './PrivatePageTable'
 import { PAGE_TITLES } from '@portal/routes/pageTitles'
-import { usePageTitle } from '@portal/routes/usePageTitle'
+import { useDocumentTitle } from '@netcracker/qubership-apihub-ui-shared/hooks/common/useDocumentTitle'
 
 export const PrivatePage: FC = memo(() => {
-  usePageTitle(PAGE_TITLES.private())
+  useDocumentTitle(PAGE_TITLES.private())
 
   const [workspaceId, isLoading] = usePrivateWorkspace({ cacheTime: 1000 })
 

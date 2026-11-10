@@ -39,7 +39,8 @@ import { useOperation } from '../useOperation'
 import { useOperationLocation } from '../useOperationLocation'
 import { VersionsComparisonGlobalParamsContext } from '../VersionsComparisonGlobalParams'
 import { PAGE_TITLES } from '@portal/routes/pageTitles'
-import { useComparisonTitleSides, usePageTitle } from '@portal/routes/usePageTitle'
+import { useDocumentTitle } from '@netcracker/qubership-apihub-ui-shared/hooks/common/useDocumentTitle'
+import { useComparisonTitleSides } from '@portal/routes/useVersionPageTitle'
 
 export const DifferentOperationsComparisonPage: FC = memo(() => {
   const { operationId: changedOperationKey, apiType } = useParams()
@@ -74,7 +75,7 @@ export const DifferentOperationsComparisonPage: FC = memo(() => {
   }
 
   const comparisonTitleSides = useComparisonTitleSides(versionsComparisonParams)
-  usePageTitle(PAGE_TITLES.operationsComparison({
+  useDocumentTitle(PAGE_TITLES.operationsComparison({
     ...comparisonTitleSides,
     originOperationTitle: originOperation?.title,
     changedOperationTitle: changedOperation?.title,

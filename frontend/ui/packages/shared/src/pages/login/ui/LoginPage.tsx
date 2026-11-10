@@ -21,8 +21,10 @@ import { memo, useEffect } from 'react'
 import { useSearchParam } from 'react-use'
 import { useUser } from '../../../hooks/authorization'
 import { useSystemConfiguration } from '../../../hooks/authorization/useSystemConfiguration'
+import { useDocumentTitle } from '../../../hooks/common/useDocumentTitle'
 import { isExternalIdentityProvider, isInternalIdentityProvider } from '../../../types/system-configuration'
 import { SEARCH_PARAM_NO_AUTO_LOGIN, SEARCH_PARAM_REDIRECT_URI } from '../../../utils/constants'
+import { LOGIN_PAGE_TITLE } from '../../../utils/document-title-labels'
 import { isSameOriginUrl } from '../../../utils/redirects'
 import { ExternalAuthControls } from './ExternalAuthControls'
 import { InternalAuthForm } from './InternalAuthForm'
@@ -34,6 +36,7 @@ export type LoginPageComponentProps = {
 export const LoginPage: FC<LoginPageComponentProps> = memo(({ applicationName }) => {
   const noAutoLogin = useSearchParam(SEARCH_PARAM_NO_AUTO_LOGIN)
   const redirectUri = useSearchParam(SEARCH_PARAM_REDIRECT_URI)
+  useDocumentTitle([LOGIN_PAGE_TITLE])
 
   const [user] = useUser()
   const [systemConfiguration] = useSystemConfiguration()

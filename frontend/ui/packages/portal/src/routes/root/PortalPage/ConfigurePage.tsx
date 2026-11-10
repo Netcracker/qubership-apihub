@@ -21,7 +21,7 @@ import { ConfigureDashboardPage } from './DashboardPage/ConfigureDashboardPage'
 import { usePackage } from '@netcracker/qubership-apihub-ui-shared/hooks/packages/usePackage'
 import { DASHBOARD_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
 import { PAGE_TITLES } from '@portal/routes/pageTitles'
-import { useVersionPageTitle } from '@portal/routes/usePageTitle'
+import { useVersionPageTitle } from '@portal/routes/useVersionPageTitle'
 
 export const ConfigurePage: FC = memo(() => {
   const { packageObj } = usePackage({ showParents: true })

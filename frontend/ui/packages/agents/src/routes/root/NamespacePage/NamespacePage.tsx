@@ -34,6 +34,8 @@ import { LayoutWithTabs } from '@netcracker/qubership-apihub-ui-shared/component
 import { WelcomePage } from '../WelcomePage'
 import { useSearchParam } from '@netcracker/qubership-apihub-ui-shared/hooks/searchparams/useSearchParam'
 import { WORKSPACE_SEARCH_PARAM } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
+import { useDocumentTitle } from '@netcracker/qubership-apihub-ui-shared/hooks/common/useDocumentTitle'
+import { PAGE_TITLES } from '../../pageTitles'
 
 export const NamespacePage: FC = memo(() => {
   const { namespaceKey } = useParams()
@@ -69,7 +71,17 @@ const PATH_PARAM_TO_SUB_PAGE_MAP: Record<NamespacePageRoute, ReactNode> = {
 type NamespacePageBodyProps = {
   menuItem: NamespacePageRoute
 }
+
 const NamespacePageBody: FC<NamespacePageBodyProps> = memo<NamespacePageBodyProps>(({ menuItem }) => {
+  const { agentId, namespaceKey } = useParams()
+  const [, subTab] = useActiveTabs()
+  useDocumentTitle(PAGE_TITLES.namespace({
+    mode: menuItem,
+    subTab: subTab,
+    namespaceKey: namespaceKey,
+    agentId: agentId,
+  }))
+
   return (
     <LayoutWithTabs
       tabs={<NamespaceNavigationMenu />}

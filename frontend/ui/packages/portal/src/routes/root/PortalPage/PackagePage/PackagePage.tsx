@@ -28,11 +28,11 @@ import {
   PublishDashboardVersionFromCSVDialog,
 } from '@portal/routes/root/PortalPage/DashboardPage/PublishDashboardVersionFromCSVDialog'
 import { PAGE_TITLES } from '@portal/routes/pageTitles'
-import { usePageTitle } from '@portal/routes/usePageTitle'
+import { useDocumentTitle } from '@netcracker/qubership-apihub-ui-shared/hooks/common/useDocumentTitle'
 
 export const PackagePage: FC = memo(() => {
   const [packageObject, isPackageLoading] = usePackage({ showParents: true })
-  usePageTitle(PAGE_TITLES.package(packageObject?.name))
+  useDocumentTitle(PAGE_TITLES.package(packageObject?.name))
   const { kind = PACKAGE_KIND } = packageObject ?? {}
 
   const defaultVersion = packageObject?.defaultVersion

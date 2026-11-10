@@ -23,7 +23,7 @@ import { CurrentDocumentsListProvider } from './CurrentDocumentsListProvider'
 import { DocumentNotificationsDialog } from './DocumentNotificationsDialog/DocumentNotificationsDialog'
 import { PageLayout } from '@netcracker/qubership-apihub-ui-shared/components/PageLayout'
 import { PAGE_TITLES } from '@portal/routes/pageTitles'
-import { useVersionPageTitle } from '@portal/routes/usePageTitle'
+import { useVersionPageTitle } from '@portal/routes/useVersionPageTitle'
 import { useDocument } from '../useDocument'
 import { usePackageParamsWithRef } from '../../usePackageParamsWithRef'
 

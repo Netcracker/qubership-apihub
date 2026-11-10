@@ -1,3 +1,5 @@
+import { DOCUMENT_TITLE_APP_NAME_SEPARATOR, DOCUMENT_TITLE_SEGMENT_SEPARATOR } from './document-title-labels'
+
 export type DocumentTitleSegment = string | null | undefined
 
 export type DocumentTitleSegments = ReadonlyArray<DocumentTitleSegment>
@@ -7,6 +9,15 @@ export type DocumentTitleFormat = Readonly<{
   segmentSeparator: string
   appNameSeparator: string
 }>
+
+/** The title format of an app: the separators are common to all apps, only the app name differs. */
+export function createDocumentTitleFormat(appName: string): DocumentTitleFormat {
+  return {
+    appName: appName,
+    segmentSeparator: DOCUMENT_TITLE_SEGMENT_SEPARATOR,
+    appNameSeparator: DOCUMENT_TITLE_APP_NAME_SEPARATOR,
+  }
+}
 
 /**
  * Builds a browser tab title from the most specific segment to the least specific one,

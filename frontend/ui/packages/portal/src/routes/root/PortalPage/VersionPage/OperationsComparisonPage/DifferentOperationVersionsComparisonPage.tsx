@@ -80,7 +80,8 @@ import { DdlTableComparisonContent } from '../VersionContractsSubPage/DdlTableCo
 import { OperationsSidebarOnComparison } from './OperationsSidebarOnComparison'
 import { useDdlEntityComparisonState } from './useDdlEntityComparisonState'
 import { PAGE_TITLES } from '@portal/routes/pageTitles'
-import { useComparisonTitleSides, usePageTitle } from '@portal/routes/usePageTitle'
+import { useDocumentTitle } from '@netcracker/qubership-apihub-ui-shared/hooks/common/useDocumentTitle'
+import { useComparisonTitleSides } from '@portal/routes/useVersionPageTitle'
 
 function getOperationPairsFromPackageChanges(
   packageChanges: ReadonlyArray<OperationChangeBase>,
@@ -337,7 +338,7 @@ export const DifferentOperationVersionsComparisonPage: FC = memo(() => {
   const versionsComparisonParams = useComparisonParams()
 
   const comparisonTitleSides = useComparisonTitleSides(versionsComparisonParams)
-  usePageTitle(PAGE_TITLES.operationsComparison({
+  useDocumentTitle(PAGE_TITLES.operationsComparison({
     ...comparisonTitleSides,
     originOperationTitle: originOperation?.title,
     changedOperationTitle: changedOperation?.title,

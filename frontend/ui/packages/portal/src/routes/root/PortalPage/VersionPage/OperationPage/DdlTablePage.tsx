@@ -32,7 +32,7 @@ import { getDdlTableLink } from '../useNavigateToOperation'
 import { DdlTableContentView } from '../VersionContractsSubPage/DdlTableContentView'
 import { DdlTableSelector } from './DdlTableSelector'
 import { PAGE_TITLES } from '@portal/routes/pageTitles'
-import { useVersionPageTitle } from '@portal/routes/usePageTitle'
+import { useVersionPageTitle } from '@portal/routes/useVersionPageTitle'
 
 export const DdlTablePage: FC = memo(() => {
   const { packageId, versionId, operationId: ddlEntityId } = useParams<{
