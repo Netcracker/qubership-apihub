@@ -18,7 +18,7 @@ of this repository now.
 | Deployment | `deploy/helm-templates/`, `deploy/docker-compose/` | Helm chart, local Kubernetes quickstart, Compose stacks |
 | Documentation | `docs/` | Installation, admin, configuration map, release process |
 | Tooling | `tools/` | Release scripts, CI helpers, Nx plugins |
-| CI | `.github/` | Workflows, CODEOWNERS, Dependabot |
+| CI | `.github/` | Workflows, CODEOWNERS, Renovate |
 
 Each group and each module has its own `AGENTS.md` (and a `CLAUDE.md` that imports it): start from
 [`backend/AGENTS.md`](backend/AGENTS.md), [`frontend/AGENTS.md`](frontend/AGENTS.md),
