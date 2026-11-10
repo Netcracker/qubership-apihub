@@ -4,7 +4,7 @@
  * Commit types and their bumps are read from `release.conventionalCommits.types` in nx.json (decision R6),
  * so these scripts and `nx release` cannot disagree on what a commit is worth. A commit is parsed the way
  * Nx 23 parses it (same header pattern, `This reverts commit`), except that a `BREAKING CHANGE:` counts only
- * as a footer at the start of a line: squash merges carry pull request descriptions, and a Dependabot
+ * as a footer at the start of a line: squash merges carry pull request descriptions, and a Renovate
  * description quotes upstream release notes that may contain the phrase.
  */
 const fs = require('node:fs')
