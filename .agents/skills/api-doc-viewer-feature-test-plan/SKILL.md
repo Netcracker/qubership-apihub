@@ -1,6 +1,6 @@
 ---
 name: api-doc-viewer-feature-test-plan
-description: Build a manual end-to-end QA test plan for a feature or fix of the api-doc-viewer viewers in a branch, ready to hand to QA — an interview, an analysis of the change and of the host app, packed test-data packages from the fixtures, case lists with steps and expected results, a GitHub and GitLab backlog retest, a results sheet, and a QA start page. Use when the user asks for a QA or test plan of a branch, a feature, or a story that touches frontend/api-doc-viewer, or runs /api-doc-viewer-feature-test-plan.
+description: Build a manual end-to-end QA test plan for a feature or fix of the api-doc-viewer viewers in a branch, ready to hand to QA — an interview, an analysis of the change and of the host app, packed test-data packages from the fixtures, case lists with steps and expected results, a GitHub and GitLab backlog retest, a results sheet, a QA start page, and a self-contained bundle for QA. Extends its own scripts when the change brings an API type they do not cover yet (for example new plain and with-diffs viewers). Use when the user asks for a QA or test plan of a branch, a feature, or a story that touches frontend/api-doc-viewer, or runs /api-doc-viewer-feature-test-plan.
 ---
 
 # Feature test plan for QA
@@ -10,9 +10,9 @@ cases in the host app (the APIHUB Portal, `frontend/ui/packages/portal`), not in
 suites of api-doc-viewer are the catalogue of cases and the expected pictures; the plan packs their fixtures into a
 few packages QA can publish, and writes a few hundred manual cases that combine them.
 
-The templates and references are self-contained. The first full run of this skill was the OpenAPI operation viewers
-plan of branch `feature/openapi-rework` (folder `qa-openapi-operation-viewers/`); when that folder exists in the
-branch at hand, its `README.md`, `test-plan/README.md`, and `config/` are a complete example.
+**The plan folder is temporary.** It is generated, handed to QA once as a bundle, kept until QA reports, and then
+deleted; it is not committed to the main branch and no later plan refers to it. What lasts is this skill: its scripts,
+templates, and [references/lessons.md](references/lessons.md), which every run updates (phase 9).
 
 ## Workflow
 
@@ -27,12 +27,17 @@ can yourself first (the branch diff, the design documents, the fixture catalogue
 correct it; ask only what the repository cannot tell you. Batch the questions, at most four per round, with
 recommended options first.
 
-### 2. Analyze the change and the host app
+### 2. Analyze the change, the host app, and the skill's coverage
 
 Follow [references/analysis.md](references/analysis.md): the changed components from `git diff`, the API types that
 share them (the regression scope), the design documents (`display-coverage.md` decides what is a defect), and the
 host-app facts that limit what QA can reach (which display modes and layouts, which flows). Write the facts into the
 plan README as a numbered table (P1, P2, …): they shape every case.
+
+Then run the coverage check of [references/extending.md](references/extending.md): can the skill's builders read the
+fixtures of every API type in scope, keep their IDs apart, and check them? For a new API type, or a fixture shape the
+builders do not know, **extend the skill first** (a builder, a format module, the references), redeploy it, and prove
+it on a throwaway plan. Say so to the user before starting: it is part of the work, not a detour.
 
 ### 3. Scaffold the QA folder
 
@@ -82,10 +87,23 @@ node $S/results-sheet.mjs --qa qa-<feature>
 It writes `test-plan/results.csv` with one row per case, the operations to open, and the screenshot baselines, and
 keeps any results already entered.
 
-### 8. Finish and hand over
+### 8. Bundle and hand over
 
-Run the checks of [references/handover.md](references/handover.md) (links, line length, counts in the documents, the
-sheet), then tell the user what QA receives and how. Do not commit unless asked.
+Run the checks of [references/handover.md](references/handover.md), then bundle the plan for QA:
+
+```bash
+node $S/bundle.mjs --qa qa-<feature>
+```
+
+It writes `qa-<feature>.zip`: the plan without `config/` and `tools/`, with every baseline the sheet names copied in.
+Tell the user what QA receives, and that the folder is to be deleted once QA reports. Do not commit the plan folder.
+
+### 9. Update the skill
+
+Before finishing, fold what this run taught into the skill ([references/extending.md](references/extending.md),
+section "Updating the skill after every plan"): general code moved out of the plan's `config/`, new lessons, gaps in
+the interview, the templates, or the references. Redeploy with `apm install --target cursor,claude` and list the
+changed skill files for the user, to commit separately from anything else.
 
 ## References
 
@@ -93,8 +111,9 @@ sheet), then tell the user what QA receives and how. Do not commit unless asked.
 | --- | --- |
 | [references/interview.md](references/interview.md) | The questions, what to find out before asking, and the defaults |
 | [references/analysis.md](references/analysis.md) | Scoping the change, the regression, and the host-app facts |
-| [references/test-data.md](references/test-data.md) | The packing engine, the config, the builders, and the checks |
+| [references/extending.md](references/extending.md) | The coverage check, adding an API type, and updating the skill after a run |
+| [references/test-data.md](references/test-data.md) | The packing engine, the config, the builders, the formats, and the checks |
 | [references/cases.md](references/cases.md) | The case format, IDs, cells, oracles, budgets, and the mandatory checks |
 | [references/backlog.md](references/backlog.md) | Collecting and selecting GitHub and GitLab issues and their samples |
-| [references/handover.md](references/handover.md) | The final checks and what QA receives |
-| [references/lessons.md](references/lessons.md) | What was not obvious in the first run; read before phase 4 |
+| [references/handover.md](references/handover.md) | The final checks, the bundle, and the life of the plan folder |
+| [references/lessons.md](references/lessons.md) | What was not obvious in earlier runs; read before phase 4 |

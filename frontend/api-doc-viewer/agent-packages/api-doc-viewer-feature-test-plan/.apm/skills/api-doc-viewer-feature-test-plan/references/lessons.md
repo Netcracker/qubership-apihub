@@ -1,7 +1,8 @@
-# Lessons from the first run
+# Lessons
 
-Findings of the first plan, for the OpenAPI operation viewers of branch `feature/openapi-rework`, that were not
-obvious from the request or the documentation. Each one cost a wrong first attempt or a correction.
+What was not obvious from the request or the documentation in earlier runs. Each lesson cost a wrong first attempt
+or a correction, and stands on its own: the plan folders that prompted them are deleted. Every run adds to this file
+(phase 9). The first lessons came from the plan of the OpenAPI operation viewers.
 
 ## About the request
 
@@ -59,4 +60,7 @@ obvious from the request or the documentation. Each one cost a wrong first attem
 - Shell heredocs mangle backslashes and backticks in replacement scripts; edit files directly or write the script to
   a file first.
 - Keep Markdown at 120 characters; generated READMEs wrap their prose.
-- What QA receives is the folder in the branch, not a zip: the baselines are elsewhere in the repository.
+- The baselines live elsewhere in the repository, so a zip of the plan folder alone is useless to QA: `bundle.mjs`
+  copies them in. A link to the branch works too, but only while the plan folder is committed, which it should not be.
+- Plan folders are temporary: a reference to an earlier plan breaks once it is deleted. Keep lessons and code in the
+  skill.

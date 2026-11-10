@@ -40,7 +40,7 @@ view (`OperationView.tsx`, `OperationContent.tsx`), the view-mode constants
 (`shared/src/entities/operation-view-mode.ts`), and the comparison flows (`VersionPage/`, `OperationsComparisonPage/`,
 `CompareOperationPathsDialog.tsx`). Record:
 
-| Fact to record | Example from the first run |
+| Fact to record | Example (OpenAPI operation viewers) |
 | --- | --- |
 | Which display modes the host offers, plain and in comparisons | Plain: `Doc` (detailed) and `Simple`; comparisons: `Doc` and `Raw` only, so diffs in `simple` cannot be reached |
 | Which viewer props the host never sets | `hideUnchangedNodes` is never passed: hiding is always on |

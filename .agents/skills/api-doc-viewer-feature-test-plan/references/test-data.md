@@ -13,6 +13,7 @@ pnpm exec nx run-many -t build -p api-diff compatibility-suites ddlapi
 node $S/packing/pack.mjs --qa qa-<feature>       # writes qa-<feature>/samples/packages/
 node $S/packing/verify.mjs --qa qa-<feature>     # 0 failures expected
 node $S/results-sheet.mjs --qa qa-<feature>      # after the case lists exist
+node $S/bundle.mjs --qa qa-<feature>             # the zip for QA (handover.md)
 ```
 
 ## The config
@@ -47,7 +48,7 @@ built in code) keeps it next to the config in `config/` and passes it `lib`.
 A case is `{ id, fixture, sides, title?, extension?, baselineHint? }`: `sides` holds one document (plain) or two
 (diffs); `fixture` names the source for QA and for the baseline lookup.
 
-## Formats
+## Packing modes
 
 **OpenAPI packing (default).** Each case's path items move under `/<case-id>/…`, so QA finds a case by searching the
 prefix. Cases share a document only when:
@@ -65,7 +66,8 @@ because APIHUB builds operation IDs from the path and the method.
 cannot be merged without renaming what the viewers show. Only the names APIHUB builds IDs from carry the case ID:
 AsyncAPI operation keys (`prefixAsyncApiOperations`), DDL schema names (`prefixDdlSchemas`: `public` and unqualified
 tables move into `<case>`, other schemas into `<case>_<name>`, types and domains with them; keep schema names within
-PostgreSQL's 63 characters), GraphQL root fields (`prefixGraphqlRootFields`).
+PostgreSQL's 63 characters), GraphQL root fields (`prefixGraphqlRootFields`). A format module checks each of them
+(below).
 
 **`versions`.** Samples copied byte for byte under one document name per package (`builders/copied.mjs`:
 `pair`, `single`, `folderPair`, `copiedPackage`). One item: versions `1.0` and `2.0`. Several items: `<item>-1.0` and
@@ -85,6 +87,21 @@ A builder that imports the TypeScript builders of `packages/samples/src` or `pac
 goes through `typescript-loader.mjs`: Node cannot load them directly (extensionless imports, types imported as
 values). A builder the plan needs that is not generic (plan-specific case IDs, new cases) lives in the plan's
 `config/` and receives `lib` from the config function.
+
+## Format modules
+
+`scripts/packing/formats/` holds one module per document type of "files" packages: `asyncapi.mjs`, `ddl.mjs`,
+`graphql.mjs`. The interface is at the top of `formats/index.mjs`; the engine loads every module of the folder, so a
+new API type adds a file and changes nothing else ([extending.md](extending.md)).
+
+| Member | Used by | Does |
+| --- | --- | --- |
+| `matches(content, item)` | both | Whether a written case side belongs to the format |
+| `lookFor(content)` | `pack.mjs` | What QA searches in the portal (the "Look for" column of the package README) |
+| `ids(content, item)` | `verify.mjs` | The IDs APIHUB builds from the document; they must be unique within a version |
+| `compare({ content, item, side, fixtureFile })` | `verify.mjs` | A message when the document differs from its fixture beyond the builder's renaming |
+
+A document without a format (OpenAPI, a standalone JSON Schema file) is checked by equality with its case only.
 
 ## Marker cases
 

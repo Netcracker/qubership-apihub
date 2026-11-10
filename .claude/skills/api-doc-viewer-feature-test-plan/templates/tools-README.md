@@ -21,6 +21,14 @@ node $S/results-sheet.mjs --qa qa-<feature>
 
 It keeps the `Result`, `Tester`, `Date`, and `Note` columns already filled in.
 
+## Bundle for QA
+
+```bash
+node $S/bundle.mjs --qa qa-<feature>
+```
+
+It writes `qa-<feature>.zip` with the baselines copied in. Delete this folder once QA has reported.
+
 ## Backlog collection
 
 ```bash

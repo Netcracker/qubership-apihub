@@ -13,7 +13,7 @@ branch changes, and which shared code other API types use.>
 | [test-plan/README.md](test-plan/README.md) | The QA start page |
 | [test-plan/results.csv](test-plan/results.csv) | The results sheet (generated; QA fills Result, Tester, Date, Note) |
 | [samples/packages/](samples/packages/README.md) | The test-data packages (generated) |
-| [config/](config/test-plan.config.mjs), [tools/README.md](tools/README.md) | The config of the skill's scripts, and how to rebuild the data |
+| `config/`, `tools/README.md` | The config of the skill's scripts, and how to rebuild the data (not in the QA bundle) |
 
 ## Scope
 
