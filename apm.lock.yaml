@@ -1,5 +1,5 @@
 lockfile_version: '1'
-generated_at: '2026-10-31T18:05:16.778413+00:00'
+generated_at: '2026-11-10T08:24:52.920766+00:00'
 apm_version: 0.35.0
 dependencies:
 - repo_url: _local/advanced-verification
@@ -449,13 +449,13 @@ dependencies:
   - .claude/skills/apihub-add-go-service/SKILL.md
   - .cursor/rules/apihub-add-go-service.mdc
   deployed_file_hashes:
-    .agents/skills/apihub-add-go-service/SKILL.md: sha256:29432ca44dce47ea24d3c6384c9d4db964bcea47964fa6a60f59cec35216aaf1
+    .agents/skills/apihub-add-go-service/SKILL.md: sha256:ebbe75a98c5fd46952575d456a2db3f706e3fb1dbafbde3f711ab8b06ea63b8a
     .claude/rules/apihub-add-go-service.md: sha256:72440034c1c2be02692006e812c7135640f2c45a2ebe6afd23e3346083bd8975
-    .claude/skills/apihub-add-go-service/SKILL.md: sha256:29432ca44dce47ea24d3c6384c9d4db964bcea47964fa6a60f59cec35216aaf1
+    .claude/skills/apihub-add-go-service/SKILL.md: sha256:ebbe75a98c5fd46952575d456a2db3f706e3fb1dbafbde3f711ab8b06ea63b8a
     .cursor/rules/apihub-add-go-service.mdc: sha256:2cd6f5cb746764ff45e938bff87c0af84b6412ad6e615ef2991994525aa81baf
   source: local
   local_path: ./agent-packages/apihub-add-go-service
-  content_hash: sha256:0d3827c9cf9729793203b46489a05963c45f320de1f18d34bd7e3c608bfe9a3c
+  content_hash: sha256:bb78770600865ea75e5b19038e61ca57b9c727cd49fddb8ce8dcb1098f0a527f
 - repo_url: _local/apihub-agent-developer
   name: apihub-agent-developer
   version: 0.1.0
@@ -2350,7 +2350,7 @@ deployments:
   owners:
   - ./agent-packages/apihub-add-go-service
   active_owner: ./agent-packages/apihub-add-go-service
-  content_hash: sha256:29432ca44dce47ea24d3c6384c9d4db964bcea47964fa6a60f59cec35216aaf1
+  content_hash: sha256:ebbe75a98c5fd46952575d456a2db3f706e3fb1dbafbde3f711ab8b06ea63b8a
 - kind: project-relative
   target: claude
   value: .claude/skills/apihub-agent-developer
@@ -3646,7 +3646,7 @@ deployments:
   owners:
   - ./agent-packages/apihub-add-go-service
   active_owner: ./agent-packages/apihub-add-go-service
-  content_hash: sha256:29432ca44dce47ea24d3c6384c9d4db964bcea47964fa6a60f59cec35216aaf1
+  content_hash: sha256:ebbe75a98c5fd46952575d456a2db3f706e3fb1dbafbde3f711ab8b06ea63b8a
 - kind: project-relative
   target: cursor
   value: .agents/skills/apihub-agent-developer
