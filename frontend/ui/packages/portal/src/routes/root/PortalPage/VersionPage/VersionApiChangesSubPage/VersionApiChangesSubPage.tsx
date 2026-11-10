@@ -49,7 +49,6 @@ import { ApiChangesNavigation } from './ApiChangesNavigation'
 // High Order Component //
 export const VersionApiChangesSubPage: FC = memo(() => {
   const { apiType = DEFAULT_API_TYPE } = useParams<{
-    packageId: string
     versionId: string
     apiType?: ApiType | ContractType
   }>()
@@ -72,7 +71,7 @@ export const VersionApiChangesSubPage: FC = memo(() => {
 
   const previousReleaseVersion = usePreviousReleaseVersion()
   const previousReleasePackageKey = usePreviousReleasePackageKey()
-  const [previousReleasePackage] = usePackage({ packageKey: previousReleasePackageKey })
+  const [previousReleasePackage] = usePackage({ packageKey: previousReleasePackageKey, showParents: true })
   const { versionKey: previousReleaseVersionKey } = getSplittedVersionKey(previousReleaseVersion)
 
   const [searchValue, setSearchValue] = useState('')
