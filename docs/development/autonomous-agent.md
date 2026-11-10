@@ -26,6 +26,9 @@ comments. It is a proof of concept; the design is in [the internal docs](../inte
   information, it asks the author and sets `agent:needs-human`; the author's answer in a comment, or an edit of the
   issue, starts the analysis again at once. Comment `/agent analyze` to run it again yourself. The agent never changes
   an `ai:*` label that a person set.
+- **Reads attachments.** The analysis and the implementation read the screenshots (PNG, JPEG, GIF, WebP) and the text
+  files (specs, logs, samples) that the description and the comments link, up to 10 images of 5 MB and 10 text files of
+  1 MB. ZIP archives and videos are not read, so attach the files themselves or a screenshot.
 - **Caps its automatic work.** In any 24 hours the agent starts at most `AGENT_DAILY_ANALYSES` analyses of new issues
   (default 10) and `AGENT_DAILY_REVIEWS` reviews of new pull requests (default 15), so a flood of issues or pull
   requests cannot run up a bill. Commands, answers of an author, and edits do not count and are never capped. The job
