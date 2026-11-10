@@ -12,6 +12,13 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const (
+	// A read that fails once is tried again: after a cluster member leaves, the node can route the read to that
+	// member until it receives the next routing table.
+	revocationReadAttempts   = 3
+	revocationReadRetryDelay = time.Second
+)
+
 type TokenRevocationService interface {
 	RevokeUserTokens(ctx context.Context, userId string) error
 	IsTokenRevoked(ctx context.Context, userId string, tokenCreationTimestamp int64) (bool, error)
@@ -22,6 +29,7 @@ func NewTokenRevocationService(provider cache.OlricProvider, cacheTTLSec int) To
 		olricProvider:             provider,
 		userTokenRevocationsCache: nil,
 		cacheTTL:                  time.Duration(cacheTTLSec) * time.Second,
+		readRetryDelay:            revocationReadRetryDelay,
 		ready:                     make(chan struct{}),
 	}
 
@@ -31,23 +39,31 @@ func NewTokenRevocationService(provider cache.OlricProvider, cacheTTLSec int) To
 	return tokenRevocationService
 }
 
+type revocationCache interface {
+	Get(key string) (interface{}, error)
+	PutEx(key string, value interface{}, timeout time.Duration) error
+}
+
 type tokenRevocationServiceImpl struct {
 	// TODO: need to sync the cache to DB periodically and read on startup if no Olric cluster
 	olricProvider             cache.OlricProvider
-	userTokenRevocationsCache *olric.DMap
+	userTokenRevocationsCache revocationCache
 	cacheTTL                  time.Duration
+	readRetryDelay            time.Duration
 	ready                     chan struct{}
 }
 
 func (l *tokenRevocationServiceImpl) initWhenOlricReady() {
-	var err error
 	hasErrors := false
 
 	olricCache := l.olricProvider.Get()
-	l.userTokenRevocationsCache, err = olricCache.NewDMap("UserTokenRevocations")
+	// Assign the map only on success: a nil *olric.DMap stored in the interface field would not compare equal to nil.
+	revocations, err := olricCache.NewDMap("UserTokenRevocations")
 	if err != nil {
 		log.Errorf("Failed to creare dmap UserTokenRevocations: %s", err.Error())
 		hasErrors = true
+	} else {
+		l.userTokenRevocationsCache = revocations
 	}
 
 	if hasErrors {
@@ -78,8 +94,8 @@ func (l *tokenRevocationServiceImpl) RevokeUserTokens(ctx context.Context, userI
 
 // IsTokenRevoked reports whether the token was revoked. A non-nil error means the check could not be
 // performed because the caller's context is done; it is returned rather than reported as a revocation
-// so that a timed-out request is not presented to the user as an authentication failure. Cache
-// failures keep failing closed.
+// so that a timed-out request is not presented to the user as an authentication failure. A cache
+// read that fails is retried; when every attempt fails, the token is reported as revoked.
 func (l *tokenRevocationServiceImpl) IsTokenRevoked(ctx context.Context, userId string, tokenCreationTimestamp int64) (bool, error) {
 	if l.userTokenRevocationsCache == nil {
 		return false, nil
@@ -89,15 +105,25 @@ func (l *tokenRevocationServiceImpl) IsTokenRevoked(ctx context.Context, userId 
 		return false, err
 	}
 
-	val, err := l.userTokenRevocationsCache.Get(userId)
-	if err != nil {
+	for attempt := 1; ; attempt++ {
+		val, err := l.userTokenRevocationsCache.Get(userId)
+		if err == nil {
+			revocationTimestamp, _ := val.(int64)
+			return tokenCreationTimestamp <= revocationTimestamp, nil
+		}
 		if errors.Is(err, olric.ErrKeyNotFound) {
 			return false, nil
 		}
-		log.Errorf("Error getting revocation timestamp: %v", err)
-		return true, nil
-	}
-	revocationTimestamp, _ := val.(int64)
+		if attempt == revocationReadAttempts {
+			log.Errorf("Error getting revocation timestamp after %d attempts: %v", attempt, err)
+			return true, nil
+		}
+		log.Warnf("Error getting revocation timestamp, attempt %d of %d: %v", attempt, revocationReadAttempts, err)
 
-	return tokenCreationTimestamp <= revocationTimestamp, nil
+		select {
+		case <-time.After(l.readRetryDelay):
+		case <-ctx.Done():
+			return false, ctx.Err()
+		}
+	}
 }
