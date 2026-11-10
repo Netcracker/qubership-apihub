@@ -72,6 +72,7 @@ export const VersionApiChangesSubPage: FC = memo(() => {
 
   const previousReleaseVersion = usePreviousReleaseVersion()
   const previousReleasePackageKey = usePreviousReleasePackageKey()
+  const [previousReleasePackage] = usePackage({ packageKey: previousReleasePackageKey })
   const { versionKey: previousReleaseVersionKey } = getSplittedVersionKey(previousReleaseVersion)
 
   const [searchValue, setSearchValue] = useState('')
@@ -110,12 +111,12 @@ export const VersionApiChangesSubPage: FC = memo(() => {
         <VersionErrorIndicatorWithFetch
           packageKey={previousReleasePackageKey}
           versionKey={previousReleaseVersion}
-          kind={packageObject?.kind}
+          kind={previousReleasePackage?.kind}
           data-testid="PreviousVersionErrorIndicator"
         />
       </VersionLinkContainer>
     )
-  }, [packageObject?.kind, previousReleasePackageKey, previousReleaseVersion, previousReleaseVersionKey])
+  }, [previousReleasePackage?.kind, previousReleasePackageKey, previousReleaseVersion, previousReleaseVersionKey])
 
   return (
     <ChangesSummaryProvider>
