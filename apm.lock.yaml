@@ -1,5 +1,5 @@
 lockfile_version: '1'
-generated_at: '2026-11-10T11:13:20.210782+00:00'
+generated_at: '2026-11-10T11:21:42.062058+00:00'
 apm_version: 0.35.0
 dependencies:
 - repo_url: _local/advanced-verification
@@ -525,17 +525,17 @@ dependencies:
   deployed_file_hashes:
     .agents/skills/apihub-bug-fix/SKILL.md: sha256:1ca79fce52fe3b9998a27112f10271cd9304f7d0c35c48b86af8acd5daabd158
     .agents/skills/apihub-ci-failure-triage/SKILL.md: sha256:fef1d06c0bea2fed152146771b288d91469a2526a12255babf3e6a84d0ace13c
-    .agents/skills/apihub-issue-analysis/SKILL.md: sha256:0eca430b89676a4f48bf8979e1b916056f6053b5d9d39fb64b2e00aa32cf5f2e
+    .agents/skills/apihub-issue-analysis/SKILL.md: sha256:953170c23648ceed7a6e85bdec6f7bb551ea5485c07b251c70dd79b6411247fc
     .agents/skills/apihub-pr-review/SKILL.md: sha256:a46cb17206a3716da1b73ecd6d9c533f1087657dad7e45e2ecbaf5ba8e595aa3
     .agents/skills/apihub-task/SKILL.md: sha256:aed20fe58346b12100a798fd8e4add7a890cf586070fda249ddd32c00f2b830d
     .claude/skills/apihub-bug-fix/SKILL.md: sha256:1ca79fce52fe3b9998a27112f10271cd9304f7d0c35c48b86af8acd5daabd158
     .claude/skills/apihub-ci-failure-triage/SKILL.md: sha256:fef1d06c0bea2fed152146771b288d91469a2526a12255babf3e6a84d0ace13c
-    .claude/skills/apihub-issue-analysis/SKILL.md: sha256:0eca430b89676a4f48bf8979e1b916056f6053b5d9d39fb64b2e00aa32cf5f2e
+    .claude/skills/apihub-issue-analysis/SKILL.md: sha256:953170c23648ceed7a6e85bdec6f7bb551ea5485c07b251c70dd79b6411247fc
     .claude/skills/apihub-pr-review/SKILL.md: sha256:a46cb17206a3716da1b73ecd6d9c533f1087657dad7e45e2ecbaf5ba8e595aa3
     .claude/skills/apihub-task/SKILL.md: sha256:aed20fe58346b12100a798fd8e4add7a890cf586070fda249ddd32c00f2b830d
   source: local
   local_path: ./agent-packages/apihub-autonomous-agent
-  content_hash: sha256:3896a85310896e5435fa764ed8dcc51d844ae014ea681dbfb86314fc20c408b1
+  content_hash: sha256:0fd7519c6c2c8ae4a0d39419d84b9f668ddd53254f2561b147e0ceea66aa436f
 - repo_url: _local/apihub-backend-developer
   name: apihub-backend-developer
   version: 0.2.0
@@ -2566,7 +2566,7 @@ deployments:
   owners:
   - ./agent-packages/apihub-autonomous-agent
   active_owner: ./agent-packages/apihub-autonomous-agent
-  content_hash: sha256:0eca430b89676a4f48bf8979e1b916056f6053b5d9d39fb64b2e00aa32cf5f2e
+  content_hash: sha256:953170c23648ceed7a6e85bdec6f7bb551ea5485c07b251c70dd79b6411247fc
 - kind: project-relative
   target: claude
   value: .claude/skills/apihub-landing-refresh
@@ -3862,7 +3862,7 @@ deployments:
   owners:
   - ./agent-packages/apihub-autonomous-agent
   active_owner: ./agent-packages/apihub-autonomous-agent
-  content_hash: sha256:0eca430b89676a4f48bf8979e1b916056f6053b5d9d39fb64b2e00aa32cf5f2e
+  content_hash: sha256:953170c23648ceed7a6e85bdec6f7bb551ea5485c07b251c70dd79b6411247fc
 - kind: project-relative
   target: cursor
   value: .agents/skills/apihub-landing-refresh
