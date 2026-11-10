@@ -36,6 +36,7 @@ If yes, it is `needs-info`.
   ...).
 - **Approach**: what to change and where, in two to five sentences, naming files or functions.
 - **Tests**: the test that proves the fix (for a bug: the failing test to write first) and the module checks to run.
+- **ADR**: when the issue makes a decision that needs one (`apihub-adr`), the ADR to write; otherwise omit the line.
 - **Risk**: `low`, `medium`, or `high` for the change itself.
 
 ## Questions (for `needs-info`)

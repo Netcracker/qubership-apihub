@@ -1,5 +1,5 @@
 lockfile_version: '1'
-generated_at: '2026-11-10T11:21:42.062058+00:00'
+generated_at: '2026-11-10T11:30:11.873120+00:00'
 apm_version: 0.35.0
 dependencies:
 - repo_url: _local/advanced-verification
@@ -456,6 +456,25 @@ dependencies:
   source: local
   local_path: ./agent-packages/apihub-add-go-service
   content_hash: sha256:bb78770600865ea75e5b19038e61ca57b9c727cd49fddb8ce8dcb1098f0a527f
+- repo_url: _local/apihub-adr
+  name: apihub-adr
+  version: 0.1.0
+  package_type: apm_package
+  deployed_files:
+  - .agents/skills/apihub-adr
+  - .agents/skills/apihub-adr/SKILL.md
+  - .claude/rules/apihub-adr.md
+  - .claude/skills/apihub-adr
+  - .claude/skills/apihub-adr/SKILL.md
+  - .cursor/rules/apihub-adr.mdc
+  deployed_file_hashes:
+    .agents/skills/apihub-adr/SKILL.md: sha256:dd5d9fe1bc8d7dea2427b45d114e0d0025ee776ddc73719e168121d6fc209a59
+    .claude/rules/apihub-adr.md: sha256:495d96e2ee0f8a06adfafe9a6ce63bd4d7087125d6eb58d63ea12066641f08da
+    .claude/skills/apihub-adr/SKILL.md: sha256:dd5d9fe1bc8d7dea2427b45d114e0d0025ee776ddc73719e168121d6fc209a59
+    .cursor/rules/apihub-adr.mdc: sha256:c330fc6bb203ad5d5ea8555e1568da1f9a0c2a90369b81bd96b2e87e9b6395ed
+  source: local
+  local_path: ./agent-packages/apihub-adr
+  content_hash: sha256:fd8e4e83e1936fd3f669690d00671f26b379f2d1c5d6aa59ecddc6aafe71203d
 - repo_url: _local/apihub-agent-developer
   name: apihub-agent-developer
   version: 0.1.0
@@ -525,17 +544,17 @@ dependencies:
   deployed_file_hashes:
     .agents/skills/apihub-bug-fix/SKILL.md: sha256:1ca79fce52fe3b9998a27112f10271cd9304f7d0c35c48b86af8acd5daabd158
     .agents/skills/apihub-ci-failure-triage/SKILL.md: sha256:fef1d06c0bea2fed152146771b288d91469a2526a12255babf3e6a84d0ace13c
-    .agents/skills/apihub-issue-analysis/SKILL.md: sha256:953170c23648ceed7a6e85bdec6f7bb551ea5485c07b251c70dd79b6411247fc
-    .agents/skills/apihub-pr-review/SKILL.md: sha256:a46cb17206a3716da1b73ecd6d9c533f1087657dad7e45e2ecbaf5ba8e595aa3
-    .agents/skills/apihub-task/SKILL.md: sha256:aed20fe58346b12100a798fd8e4add7a890cf586070fda249ddd32c00f2b830d
+    .agents/skills/apihub-issue-analysis/SKILL.md: sha256:fb451324e907ffc5df5dbec68d07dbce4cb1f3228652cd3e2c68e91bfe00f986
+    .agents/skills/apihub-pr-review/SKILL.md: sha256:f0d1dd7eb77bcb96247fe5b24be1fae886d4a5cf3ecf157e141616d9bfaf0fc5
+    .agents/skills/apihub-task/SKILL.md: sha256:e94f554c751516d95cc05880c23cce32d00dd6aabcc2da6f86b499fb659f1aa1
     .claude/skills/apihub-bug-fix/SKILL.md: sha256:1ca79fce52fe3b9998a27112f10271cd9304f7d0c35c48b86af8acd5daabd158
     .claude/skills/apihub-ci-failure-triage/SKILL.md: sha256:fef1d06c0bea2fed152146771b288d91469a2526a12255babf3e6a84d0ace13c
-    .claude/skills/apihub-issue-analysis/SKILL.md: sha256:953170c23648ceed7a6e85bdec6f7bb551ea5485c07b251c70dd79b6411247fc
-    .claude/skills/apihub-pr-review/SKILL.md: sha256:a46cb17206a3716da1b73ecd6d9c533f1087657dad7e45e2ecbaf5ba8e595aa3
-    .claude/skills/apihub-task/SKILL.md: sha256:aed20fe58346b12100a798fd8e4add7a890cf586070fda249ddd32c00f2b830d
+    .claude/skills/apihub-issue-analysis/SKILL.md: sha256:fb451324e907ffc5df5dbec68d07dbce4cb1f3228652cd3e2c68e91bfe00f986
+    .claude/skills/apihub-pr-review/SKILL.md: sha256:f0d1dd7eb77bcb96247fe5b24be1fae886d4a5cf3ecf157e141616d9bfaf0fc5
+    .claude/skills/apihub-task/SKILL.md: sha256:e94f554c751516d95cc05880c23cce32d00dd6aabcc2da6f86b499fb659f1aa1
   source: local
   local_path: ./agent-packages/apihub-autonomous-agent
-  content_hash: sha256:0fd7519c6c2c8ae4a0d39419d84b9f668ddd53254f2561b147e0ceea66aa436f
+  content_hash: sha256:ef5456b5c77608a06be5e5c53ecf794585b83c97afaa3f6974794fe6d66aba75
 - repo_url: _local/apihub-backend-developer
   name: apihub-backend-developer
   version: 0.2.0
@@ -1370,6 +1389,15 @@ deployments:
   - ./agent-packages/apihub-add-go-service
   active_owner: ./agent-packages/apihub-add-go-service
   content_hash: sha256:72440034c1c2be02692006e812c7135640f2c45a2ebe6afd23e3346083bd8975
+- kind: project-relative
+  target: claude
+  value: .claude/rules/apihub-adr.md
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-adr
+  active_owner: ./agent-packages/apihub-adr
+  content_hash: sha256:495d96e2ee0f8a06adfafe9a6ce63bd4d7087125d6eb58d63ea12066641f08da
 - kind: project-relative
   target: claude
   value: .claude/rules/apihub-agent-developer.md
@@ -2353,6 +2381,24 @@ deployments:
   content_hash: sha256:ebbe75a98c5fd46952575d456a2db3f706e3fb1dbafbde3f711ab8b06ea63b8a
 - kind: project-relative
   target: claude
+  value: .claude/skills/apihub-adr
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-adr
+  active_owner: ./agent-packages/apihub-adr
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/apihub-adr/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-adr
+  active_owner: ./agent-packages/apihub-adr
+  content_hash: sha256:dd5d9fe1bc8d7dea2427b45d114e0d0025ee776ddc73719e168121d6fc209a59
+- kind: project-relative
+  target: claude
   value: .claude/skills/apihub-agent-developer
   runtime: null
   scope: project
@@ -2566,7 +2612,7 @@ deployments:
   owners:
   - ./agent-packages/apihub-autonomous-agent
   active_owner: ./agent-packages/apihub-autonomous-agent
-  content_hash: sha256:953170c23648ceed7a6e85bdec6f7bb551ea5485c07b251c70dd79b6411247fc
+  content_hash: sha256:fb451324e907ffc5df5dbec68d07dbce4cb1f3228652cd3e2c68e91bfe00f986
 - kind: project-relative
   target: claude
   value: .claude/skills/apihub-landing-refresh
@@ -2620,7 +2666,7 @@ deployments:
   owners:
   - ./agent-packages/apihub-autonomous-agent
   active_owner: ./agent-packages/apihub-autonomous-agent
-  content_hash: sha256:a46cb17206a3716da1b73ecd6d9c533f1087657dad7e45e2ecbaf5ba8e595aa3
+  content_hash: sha256:f0d1dd7eb77bcb96247fe5b24be1fae886d4a5cf3ecf157e141616d9bfaf0fc5
 - kind: project-relative
   target: claude
   value: .claude/skills/apihub-react-coding
@@ -2656,7 +2702,7 @@ deployments:
   owners:
   - ./agent-packages/apihub-autonomous-agent
   active_owner: ./agent-packages/apihub-autonomous-agent
-  content_hash: sha256:aed20fe58346b12100a798fd8e4add7a890cf586070fda249ddd32c00f2b830d
+  content_hash: sha256:e94f554c751516d95cc05880c23cce32d00dd6aabcc2da6f86b499fb659f1aa1
 - kind: project-relative
   target: claude
   value: .claude/skills/apihub-typescript-coding
@@ -3649,6 +3695,24 @@ deployments:
   content_hash: sha256:ebbe75a98c5fd46952575d456a2db3f706e3fb1dbafbde3f711ab8b06ea63b8a
 - kind: project-relative
   target: cursor
+  value: .agents/skills/apihub-adr
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-adr
+  active_owner: ./agent-packages/apihub-adr
+  content_hash: null
+- kind: project-relative
+  target: cursor
+  value: .agents/skills/apihub-adr/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-adr
+  active_owner: ./agent-packages/apihub-adr
+  content_hash: sha256:dd5d9fe1bc8d7dea2427b45d114e0d0025ee776ddc73719e168121d6fc209a59
+- kind: project-relative
+  target: cursor
   value: .agents/skills/apihub-agent-developer
   runtime: null
   scope: project
@@ -3862,7 +3926,7 @@ deployments:
   owners:
   - ./agent-packages/apihub-autonomous-agent
   active_owner: ./agent-packages/apihub-autonomous-agent
-  content_hash: sha256:953170c23648ceed7a6e85bdec6f7bb551ea5485c07b251c70dd79b6411247fc
+  content_hash: sha256:fb451324e907ffc5df5dbec68d07dbce4cb1f3228652cd3e2c68e91bfe00f986
 - kind: project-relative
   target: cursor
   value: .agents/skills/apihub-landing-refresh
@@ -3916,7 +3980,7 @@ deployments:
   owners:
   - ./agent-packages/apihub-autonomous-agent
   active_owner: ./agent-packages/apihub-autonomous-agent
-  content_hash: sha256:a46cb17206a3716da1b73ecd6d9c533f1087657dad7e45e2ecbaf5ba8e595aa3
+  content_hash: sha256:f0d1dd7eb77bcb96247fe5b24be1fae886d4a5cf3ecf157e141616d9bfaf0fc5
 - kind: project-relative
   target: cursor
   value: .agents/skills/apihub-react-coding
@@ -3952,7 +4016,7 @@ deployments:
   owners:
   - ./agent-packages/apihub-autonomous-agent
   active_owner: ./agent-packages/apihub-autonomous-agent
-  content_hash: sha256:aed20fe58346b12100a798fd8e4add7a890cf586070fda249ddd32c00f2b830d
+  content_hash: sha256:e94f554c751516d95cc05880c23cce32d00dd6aabcc2da6f86b499fb659f1aa1
 - kind: project-relative
   target: cursor
   value: .agents/skills/apihub-typescript-coding
@@ -4502,6 +4566,15 @@ deployments:
   - ./agent-packages/apihub-add-go-service
   active_owner: ./agent-packages/apihub-add-go-service
   content_hash: sha256:2cd6f5cb746764ff45e938bff87c0af84b6412ad6e615ef2991994525aa81baf
+- kind: project-relative
+  target: cursor
+  value: .cursor/rules/apihub-adr.mdc
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-adr
+  active_owner: ./agent-packages/apihub-adr
+  content_hash: sha256:c330fc6bb203ad5d5ea8555e1568da1f9a0c2a90369b81bd96b2e87e9b6395ed
 - kind: project-relative
   target: cursor
   value: .cursor/rules/apihub-agent-developer.mdc
