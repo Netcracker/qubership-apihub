@@ -168,7 +168,8 @@ Merge the backward-compatible half first, usually the backend. The E2E run of th
 Renovate opens weekly pull requests for npm, Go modules, Maven, GitHub Actions, Dockerfiles, and Compose files, as
 configured in [`.github/renovate.json`](../../.github/renovate.json). npm and Go updates come as one pull request per
 dependency for all projects, so a version never differs between two projects. A release waits 7 days before Renovate
-offers it; a security update does not wait and is not tied to the weekly schedule.
+offers it; a security update does not wait and is not tied to the weekly schedule. Why Renovate and not Dependabot:
+[ADR 0010](../internal/adr/0010-renovate-for-dependency-updates.md).
 
 - The title starts with `chore: deps:`, which gives each touched component a patch bump at the next release. Keep the
   title when you merge.
