@@ -1,7 +1,9 @@
 import { useSnapshotPublicationInfo } from '../../../useSnapshotPublicationInfo'
 
-// The snapshot details list the services the snapshot published, and baselineFound marks the ones that have a
-// baseline package
+/**
+ * Whether the published snapshot holds a service with a baseline package, which Promote Version needs. Fetches the
+ * snapshot details only while `isSnapshotComplete` is true, and returns false while it has none.
+ */
 export function useHasPromotableServices(isSnapshotComplete: boolean): boolean {
   const { snapshotPublicationInfo: { services } } = useSnapshotPublicationInfo({ enabled: isSnapshotComplete })
   return services.some(({ baselineFound }) => baselineFound)

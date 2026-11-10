@@ -15,9 +15,10 @@
  */
 
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
-import { ButtonBase, CircularProgress, styled, type Theme, Typography } from '@mui/material'
+import { ButtonBase, CircularProgress, styled, type Theme, Typography, type TypographyProps } from '@mui/material'
 import { type FC, memo, useId } from 'react'
 
+import { InfoHint, VISIBLE_ON_HOVER_HOST_STYLES } from '@netcracker/qubership-apihub-ui-shared/components/InfoHint'
 import {
   MUTED_TEXT_COLOR,
   WIZARD_STEP_CURRENT_BACKGROUND_COLOR,
@@ -25,8 +26,7 @@ import {
 } from '@netcracker/qubership-apihub-ui-shared/themes/colors'
 import type { Pixel } from '@netcracker/qubership-apihub-ui-shared/utils/types'
 
-import { INFO_HINT_HOST_STYLES, InfoHint } from '@agents/components/InfoHint'
-import { useActiveStep, useOpenStep, useSteps } from './ServicesPageProvider/ServicesStepsProvider'
+import { useOpenStep, useSteps } from './ServicesPageProvider/ServicesStepsProvider'
 import {
   COMPLETE_STEP_STATUS,
   ERROR_STEP_STATUS,
@@ -35,12 +35,20 @@ import {
   type Step,
   type StepStatus,
 } from './ServicesPageProvider/servicesSteps'
-import { useIsNextStepAvailable } from './useIsNextStepAvailable'
+import { useOpenableSteps } from './useOpenableSteps'
 
 const STEP_BADGE_SIZE: Pixel = 20
-const STEP_INFO_HINT_SIZE: Pixel = 16
 
-type StepLook = 'unreached' | 'idle' | 'current' | 'succeeded' | 'failed'
+const IDLE_STEP_LOOK = 'idle'
+const CURRENT_STEP_LOOK = 'current'
+const SUCCEEDED_STEP_LOOK = 'succeeded'
+const FAILED_STEP_LOOK = 'failed'
+
+type StepLook =
+  | typeof IDLE_STEP_LOOK
+  | typeof CURRENT_STEP_LOOK
+  | typeof SUCCEEDED_STEP_LOOK
+  | typeof FAILED_STEP_LOOK
 
 type StepLookColors = Readonly<{
   background: string
@@ -49,27 +57,22 @@ type StepLookColors = Readonly<{
 }>
 
 const STEP_LOOK_TO_COLORS: Record<StepLook, (theme: Theme) => StepLookColors> = {
-  unreached: ({ palette }) => ({
+  [IDLE_STEP_LOOK]: ({ palette }) => ({
     background: palette.background.default,
     badge: MUTED_TEXT_COLOR,
     name: MUTED_TEXT_COLOR,
   }),
-  idle: ({ palette }) => ({
-    background: palette.background.default,
-    badge: MUTED_TEXT_COLOR,
-    name: palette.common.black,
-  }),
-  current: ({ palette }) => ({
+  [CURRENT_STEP_LOOK]: ({ palette }) => ({
     background: WIZARD_STEP_CURRENT_BACKGROUND_COLOR,
     badge: palette.primary.main,
     name: palette.common.black,
   }),
-  succeeded: ({ palette }) => ({
+  [SUCCEEDED_STEP_LOOK]: ({ palette }) => ({
     background: WIZARD_STEP_SUCCEEDED_BACKGROUND_COLOR,
     badge: palette.secondary.main,
     name: palette.common.black,
   }),
-  failed: ({ palette }) => ({
+  [FAILED_STEP_LOOK]: ({ palette }) => ({
     background: palette.error.light,
     badge: palette.error.main,
     name: palette.common.black,
@@ -85,17 +88,13 @@ const STEP_STATUS_TO_STATUS_MESSAGE_MAP: Record<StepStatus, string> = {
 
 export const ServicesPageHeader: FC = memo(() => {
   const steps = useSteps()
-  const { index: activeStepIndex } = useActiveStep()
-  const isNextStepAvailable = useIsNextStepAvailable()
+  const openableSteps = useOpenableSteps()
 
   return (
     <WizardTabs aria-label="Wizard steps">
       {steps.map(step => (
         <li key={step.key}>
-          <WizardStepTab
-            step={step}
-            openable={step.reached || (isNextStepAvailable && step.index === activeStepIndex + 1)}
-          />
+          <WizardStepTab step={step} openable={openableSteps[step.index]} />
         </li>
       ))}
     </WizardTabs>
@@ -106,7 +105,6 @@ ServicesPageHeader.displayName = 'ServicesPageHeader'
 
 type WizardStepTabProps = {
   step: Step
-  // A step already reached, or the next step when "Next" would open it
   openable: boolean
 }
 
@@ -117,6 +115,12 @@ const WizardStepTab: FC<WizardStepTabProps> = ({ step, openable }) => {
   const caption = STEP_STATUS_TO_STATUS_MESSAGE_MAP[status]
   const hintId = useId()
 
+  const handleClick = (): void => {
+    if (openable) {
+      openStep(key)
+    }
+  }
+
   // A tab that opens nothing gets aria-disabled instead of `disabled`: a disabled ButtonBase takes no pointer events,
   // so the tab would not show its info icon on hover
   return (
@@ -126,23 +130,18 @@ const WizardStepTab: FC<WizardStepTabProps> = ({ step, openable }) => {
       aria-describedby={hintId}
       aria-disabled={!openable}
       tabIndex={openable ? 0 : -1}
-      onClick={openable ? () => openStep(key) : undefined}
+      onClick={handleClick}
       data-testid={`StepIndicator-${key}`}
     >
       <StepBadge step={step} look={look}/>
       <StepText>
         <StepTitle>
-          <Typography
-            component="span"
-            variant="body2"
-            noWrap
-            sx={theme => ({ color: STEP_LOOK_TO_COLORS[look](theme).name })}
-          >
+          <StepName look={look} component="span" variant="body2" noWrap>
             {name}
-          </Typography>
+          </StepName>
           <InfoHint
-            title={tooltip}
-            size={STEP_INFO_HINT_SIZE}
+            tooltip={tooltip}
+            fontSize="extra-small"
             descriptionId={hintId}
             data-testid={`StepInfoHint-${key}`}
           />
@@ -171,7 +170,7 @@ const StepBadge: FC<StepBadgeProps> = ({ step: { index, status, completed }, loo
   if (completed) {
     return <CompletedIcon/>
   }
-  return <NumberBadge look={look}>{index + 1}</NumberBadge>
+  return <NumberBadge look={look} component="span" variant="subtitle2">{index + 1}</NumberBadge>
 }
 
 StepBadge.displayName = 'StepBadge'
@@ -197,8 +196,6 @@ const WizardTab = styled(ButtonBase, { shouldForwardProp: prop => prop !== 'look
     minHeight: 44,
     padding: theme.spacing(0.5, 1.5),
     borderRadius: 8,
-    // A button takes the font of the browser, not of its parent
-    fontFamily: theme.typography.fontFamily,
     textAlign: 'left',
     backgroundColor: STEP_LOOK_TO_COLORS[look](theme).background,
     cursor: 'pointer',
@@ -209,7 +206,7 @@ const WizardTab = styled(ButtonBase, { shouldForwardProp: prop => prop !== 'look
     '&.Mui-focusVisible': {
       outlineOffset: -4,
     },
-    ...INFO_HINT_HOST_STYLES,
+    ...VISIBLE_ON_HOVER_HOST_STYLES,
   }),
 )
 
@@ -226,7 +223,19 @@ const StepTitle = styled('span')(({ theme }) => ({
   gap: theme.spacing(0.5),
 }))
 
-const NumberBadge = styled('span', { shouldForwardProp: prop => prop !== 'look' })<{ look: StepLook }>(
+// The theme's body2 sets its own color, so the name cannot take the color from the tab
+const StepName = styled(Typography, { shouldForwardProp: prop => prop !== 'look' })<
+  TypographyProps<'span'> & { component: 'span'; look: StepLook }
+>(
+  ({ theme, look }) => ({
+    color: STEP_LOOK_TO_COLORS[look](theme).name,
+  }),
+)
+
+// A Typography, since a button takes the font of the browser rather than of its parent
+const NumberBadge = styled(Typography, { shouldForwardProp: prop => prop !== 'look' })<
+  TypographyProps<'span'> & { component: 'span'; look: StepLook }
+>(
   ({ theme, look }) => ({
     display: 'inline-flex',
     flexShrink: 0,
@@ -237,7 +246,6 @@ const NumberBadge = styled('span', { shouldForwardProp: prop => prop !== 'look' 
     borderRadius: '50%',
     backgroundColor: STEP_LOOK_TO_COLORS[look](theme).badge,
     color: theme.palette.common.white,
-    fontSize: 12,
     fontWeight: 500,
   }),
 )
@@ -249,19 +257,17 @@ const CompletedIcon = styled(CheckCircleIcon)(({ theme }) => ({
   color: theme.palette.secondary.main,
 }))
 
-// The status decides the color before the open step does: an open step that failed is red
-function stepLookOf({ reached, active, status }: Step): StepLook {
-  if (!reached) {
-    return 'unreached'
-  }
+// The status decides the color before the open step does: an open step that failed is red. A step that is not open
+// and has no status stays grey, whether or not it was opened before.
+function stepLookOf({ active, status }: Step): StepLook {
   if (status === ERROR_STEP_STATUS) {
-    return 'failed'
+    return FAILED_STEP_LOOK
   }
   if (status === COMPLETE_STEP_STATUS) {
-    return 'succeeded'
+    return SUCCEEDED_STEP_LOOK
   }
   if (active || status === RUNNING_STEP_STATUS) {
-    return 'current'
+    return CURRENT_STEP_LOOK
   }
-  return 'idle'
+  return IDLE_STEP_LOOK
 }

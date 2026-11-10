@@ -25,16 +25,12 @@ export type Step = Readonly<{
   tooltip: string
   status: StepStatus
   active: boolean
-  // Opened since it was last reset, so its tab opens it
-  reached: boolean
-  // Succeeded and not the open step: its tab shows a check mark
+  /** Succeeded and not the open step: its tab shows a check mark. */
   completed: boolean
 }>
 
 export type StepsState = Readonly<{
   activeStepIndex: number
-  // The steps open in order, so every step up to this one is reached
-  lastReachedStepIndex: number
   statuses: ReadonlyArray<StepStatus>
 }>
 
@@ -60,11 +56,10 @@ const STEP_DEFINITIONS: ReadonlyArray<Pick<Step, 'key' | 'name' | 'tooltip'>> = 
 
 export const INITIAL_STEPS_STATE: StepsState = {
   activeStepIndex: 0,
-  lastReachedStepIndex: 0,
   statuses: STEP_DEFINITIONS.map(() => NONE_STEP_STATUS),
 }
 
-export function toSteps({ activeStepIndex, lastReachedStepIndex, statuses }: StepsState): ReadonlyArray<Step> {
+export function toSteps({ activeStepIndex, statuses }: StepsState): ReadonlyArray<Step> {
   return STEP_DEFINITIONS.map(({ key, name, tooltip }, index) => ({
     key: key,
     index: index,
@@ -72,36 +67,55 @@ export function toSteps({ activeStepIndex, lastReachedStepIndex, statuses }: Ste
     tooltip: tooltip,
     status: statuses[index],
     active: index === activeStepIndex,
-    reached: index <= lastReachedStepIndex,
     completed: statuses[index] === COMPLETE_STEP_STATUS && index !== activeStepIndex,
   }))
 }
 
+/**
+ * Whether each step can open, from its tab or from "Next": the open step always, the first step always, and a later
+ * step when the step before it can open and can be left for it, as `isLeavable` decides.
+ */
+export function openableStepsOf(
+  steps: ReadonlyArray<Step>,
+  isLeavable: (step: Step) => boolean,
+): ReadonlyArray<boolean> {
+  return steps.reduce<ReadonlyArray<boolean>>(
+    (openable, step, index) => [
+      ...openable,
+      step.active || index === 0 || (openable[index - 1] && isLeavable(steps[index - 1])),
+    ],
+    [],
+  )
+}
+
 export function withStepOpened(state: StepsState, key: StepKey): StepsState {
   const index = stepIndexOf(key)
-  // The open step is always reached, so opening it again changes nothing
+  // The same state renders nothing when the open step is opened again
   if (index === state.activeStepIndex) {
     return state
   }
   return {
     ...state,
     activeStepIndex: index,
-    lastReachedStepIndex: Math.max(state.lastReachedStepIndex, index),
   }
 }
 
-// The steps after the given one start over: they lose their status, and only "Next" or the tab of the next step
-// reaches them again. If one of them is open, the given step opens in its place.
+/**
+ * Starts the steps after the given one over: they lose their status, so they cannot open until the steps before them
+ * can be left again. If one of them is open, the given step opens in its place.
+ */
 export function withStepsResetAfter(state: StepsState, key: StepKey): StepsState {
   const index = stepIndexOf(key)
   return {
     activeStepIndex: Math.min(state.activeStepIndex, index),
-    lastReachedStepIndex: Math.min(state.lastReachedStepIndex, index),
     statuses: state.statuses.map((status, stepIndex) => (stepIndex > index ? NONE_STEP_STATUS : status)),
   }
 }
 
-// The steps write their status from effects, so an unchanged status returns the same state and renders nothing
+/**
+ * Sets the status of a step. An unchanged status returns the same state, so a step that writes its status from an
+ * effect renders nothing new.
+ */
 export function withStepStatus(state: StepsState, key: StepKey, status: StepStatus): StepsState {
   const index = stepIndexOf(key)
   if (state.statuses[index] === status) {

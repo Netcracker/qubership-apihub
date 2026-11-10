@@ -11,6 +11,7 @@ import {
 } from '@mui/material'
 import { type ReactElement, type ReactNode, useId, useState } from 'react'
 
+import { InfoHint, VISIBLE_ON_HOVER_HOST_STYLES } from '@netcracker/qubership-apihub-ui-shared/components/InfoHint'
 import {
   SERVICE_SECTION_HEADER_BACKGROUND_COLOR,
   SERVICE_SECTION_HEADER_EXPANDED_BACKGROUND_COLOR,
@@ -19,7 +20,6 @@ import {
 } from '@netcracker/qubership-apihub-ui-shared/themes/colors'
 import type { Pixel } from '@netcracker/qubership-apihub-ui-shared/utils/types'
 
-import { INFO_HINT_HOST_STYLES, InfoHint } from '@agents/components/InfoHint'
 import {
   type ServiceSelection,
   ServiceTable,
@@ -29,7 +29,6 @@ import {
 } from './ServiceTable'
 
 const SECTION_HEADER_CHEVRON_SIZE: Pixel = 16
-const SECTION_HEADER_INFO_HINT_SIZE: Pixel = 20
 
 export type ServiceSectionModel<TRow extends ServiceTableRow<TRow>> = Readonly<{
   // Unique among the sections of a step
@@ -80,8 +79,7 @@ export function ServiceSection<TRow extends ServiceTableRow<TRow>>({
           </Typography>
           {tooltip && (
             <InfoHint
-              title={tooltip}
-              size={SECTION_HEADER_INFO_HINT_SIZE}
+              tooltip={tooltip}
               descriptionId={hintId}
               data-testid="ServiceSectionInfoHint"
             />
@@ -123,7 +121,7 @@ const SectionHeader = styled(AccordionSummary)(({ theme }) => ({
     gap: theme.spacing(1),
     minWidth: 0,
   },
-  ...INFO_HINT_HOST_STYLES,
+  ...VISIBLE_ON_HOVER_HOST_STYLES,
 }))
 
 // The info icon stands closer to the title than the chevron does

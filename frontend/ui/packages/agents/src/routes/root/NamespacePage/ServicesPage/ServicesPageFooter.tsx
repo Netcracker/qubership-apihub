@@ -4,37 +4,33 @@ import { Box, Button, styled } from '@mui/material'
 import { type FC, memo } from 'react'
 
 import { useActiveStep, useOpenStep, useSteps } from './ServicesPageProvider/ServicesStepsProvider'
-import { useIsNextStepAvailable } from './useIsNextStepAvailable'
+import { useOpenableSteps } from './useOpenableSteps'
 
 export const ServicesPageFooter: FC = memo(() => {
   const steps = useSteps()
   const { index } = useActiveStep()
   const openStep = useOpenStep()
-  const isNextEnabled = useIsNextStepAvailable()
+  const openableSteps = useOpenableSteps()
 
   const isFirstStep = index === 0
+  const isLastStep = index === steps.length - 1
+  const isNextEnabled = !isLastStep && openableSteps[index + 1]
+
+  const handleBackClick = (): void => openStep(steps[index - 1].key)
+  const handleNextClick = (): void => openStep(steps[index + 1].key)
 
   return (
     <Footer>
       {!isFirstStep && (
-        <Button
-          data-testid="BackButton"
-          variant="outlined"
-          onClick={() => openStep(steps[index - 1].key)}
-        >
-          <KeyboardArrowLeftIcon fontSize="small" sx={{ ml: -1.5 }} />
+        <BackButton data-testid="BackButton" variant="outlined" onClick={handleBackClick}>
+          <KeyboardArrowLeftIcon fontSize="small" />
           Back
-        </Button>
+        </BackButton>
       )}
-      <Button
-        data-testid="NextButton"
-        variant={isNextEnabled ? 'contained' : 'outlined'}
-        disabled={!isNextEnabled}
-        onClick={() => openStep(steps[index + 1].key)}
-      >
+      <NextButton data-testid="NextButton" variant="contained" disabled={!isNextEnabled} onClick={handleNextClick}>
         Next
-        <KeyboardArrowRightIcon fontSize="small" sx={{ mr: -1.5 }} />
-      </Button>
+        <KeyboardArrowRightIcon fontSize="small" />
+      </NextButton>
     </Footer>
   )
 })
@@ -48,4 +44,14 @@ const Footer = styled(Box)(({ theme }) => ({
   gap: theme.spacing(1),
   paddingTop: theme.spacing(2),
   paddingBottom: theme.spacing(3),
+}))
+
+// The arrows are children rather than startIcon and endIcon, which a small Button makes 18 px with an 8 px gap; the
+// arrow side has less padding, since the arrow shape leaves room of its own
+const BackButton = styled(Button)(({ theme }) => ({
+  paddingLeft: theme.spacing(1.5),
+}))
+
+const NextButton = styled(Button)(({ theme }) => ({
+  paddingRight: theme.spacing(1.5),
 }))
