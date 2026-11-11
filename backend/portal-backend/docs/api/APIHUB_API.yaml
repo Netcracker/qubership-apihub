@@ -834,7 +834,10 @@ paths:
         - Packages
         - Admin
       summary: Create a new package
-      description: Create a new package in APIHUB registry.
+      description: |
+        Create a new package in APIHUB registry.
+        When creating a group, package, or dashboard, the parent must be a workspace or group.
+        A package or dashboard parent is rejected with HTTP 400.
       operationId: postPackages
       requestBody:
         description: Package for creation
@@ -5388,7 +5391,7 @@ paths:
       tags:
         - Roles
       summary: Get list of existing roles
-      description: List of all roles and their permissions.
+      description: List of roles and their permissions. The system role `none` is not returned.
       operationId: getRoles
       responses:
         "200":
@@ -13366,7 +13369,9 @@ components:
       type: object
       properties:
         parentId:
-          description: Parent package ID
+          description: |
+            Parent package ID. The parent must have kind workspace or group, not package or dashboard.
+            Ignored when creating a workspace.
           type: string
         kind:
           description: |

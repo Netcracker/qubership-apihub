@@ -1,36 +1,34 @@
-name: 'Dependabot: Go workspace sync'
+name: 'Renovate: Go workspace sync'
 
-# Dependabot updates one go.mod at a time and does not know about go.work. A bump in one module
-# raises shared indirect dependencies, so the other modules no longer state what the workspace
-# resolves, and the go-checks job of CI fails on the drift (tools/ci/go-work-sync-check.sh). This
-# workflow brings the other go.mod and go.sum files in line on the Dependabot branch and pushes the
-# result as a second commit.
+# Renovate updates the go.mod files without looking at go.work. A bump in one module raises shared
+# indirect dependencies, so the other modules no longer state what the workspace resolves, and the
+# go-checks job of CI fails on the drift (tools/ci/go-work-sync-check.sh). This workflow brings the
+# other go.mod and go.sum files in line on the Renovate branch and pushes the result as a second
+# commit. The `renovate/gomod-` prefix comes from additionalBranchPrefix in .github/renovate.json.
 #
 # The push uses GO_WORK_SYNC_TOKEN, a fine-grained PAT with `contents: write` on this repository,
-# stored in the Dependabot secrets: a run started by Dependabot sees only those, and a push made with
-# GITHUB_TOKEN would not start CI for the new commit. The PAT's push is not by Dependabot, so it does
-# not start this workflow again.
+# stored in the Actions secrets: a push made with GITHUB_TOKEN would not start CI for the new commit.
+# The PAT's push is not by Renovate, so it does not start this workflow again.
 #
-# Once the branch holds a commit that is not its own, Dependabot stops rebasing the pull request by
-# itself. `@dependabot rebase` (or `recreate`) still works: Dependabot force-pushes its single
-# commit, and this workflow syncs the branch again.
+# Renovate keeps managing the branch because the commit author, github-actions[bot], is listed in
+# gitIgnoredAuthors. When Renovate rewrites its commit, this workflow syncs the branch again.
 
 on:
   push:
     branches:
-      - 'dependabot/go_modules/**'
+      - 'renovate/gomod-**'
 
 permissions:
   contents: read
 
 concurrency:
-  group: dependabot-go-work-sync-${{ github.ref }}
+  group: renovate-go-work-sync-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   sync:
-    # Only Dependabot's own pushes; a deleted branch also fires `push`.
-    if: github.actor == 'dependabot[bot]' && !github.event.deleted
+    # Only Renovate's own pushes; a deleted branch also fires `push`.
+    if: github.actor == 'renovate[bot]' && !github.event.deleted
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:

@@ -744,8 +744,9 @@ The job exits non-zero when the analysis or a label call failed (`main` throws `
   - `AGENT_RUN_URL`, `AGENT_OUT`, `GITHUB_STEP_SUMMARY`, and the `AGENT_*` variables of `lib/config.js`
     (`dryRun`, `models.light`).
 - **Outputs:** no step outputs.
-  - Under `AGENT_OUT`: `analysis-input.md` (the analyst input), the opencode events and answer files written by
-    `callAgent`, and `summary.md` (the human part of the state comment). The job uploads the folder as the artifact
+  - Under `AGENT_OUT`: `analysis-input.md` (the analyst input), `attachments/` (the images and text files of the
+    issue, when it links any), the opencode events and answer files written by `callAgent`, and `summary.md` (the human
+    part of the state comment). The job uploads the folder as the artifact
     `ai-autonomous-analysis-<number>-<run_attempt>`.
   - In dry-run: a `## Dry run: AI analysis of #<n>` block in the job summary (the text, the labels to add and remove,
     and the comment that would notify the author).
@@ -819,13 +820,19 @@ The job exits non-zero when the analysis or a label call failed (`main` throws `
 - **Untrusted text:** `renderInput` puts the title, the body, every comment (each cut at 20,000 characters), and the
   previous reason and questions inside `untrusted()` blocks. Model text in comments goes through `inline()`, which
   defuses `@` mentions.
+- **Attachments:** `runAnalysis` downloads the attachments of the issue with `issueAttachments` unless the caller passes
+  `attachments` (`implement.js work` does). `renderInput` adds the `## Attachments` section after the comments, and
+  the call to `analyst` gets the saved files as extra `--file` arguments (`files`) and the sentence from
+  `attachedNote`. The self-reviewer, the PR reviewer, the CI triager, and the chat assistant do not get them.
+  `deps.fetch` replaces the network in tests.
 - **Tests:**
   - `tools/agent/analyze.test.js`: `checkAnalysis`, `labelChanges` (ownership, person labels, needs-info),
     `agentLabelAfter`, `nextState`, `failedState`, the renderers, the state round trip, `renderInput` (untrusted
     blocks, cuts, previous analysis).
   - `tools/agent/analyze.main.test.js`: `analyze()` with injected GitHub and agent clients: each verdict, re-analysis,
     person labels, dry-run, failures, labels re-read after the model call, failed label calls, `askAuthor: false`, and
-    the sweep re-check (each skip reason, no call and no write, and the normal path).
+    the sweep re-check (each skip reason, no call and no write, and the normal path), and the download of the
+    attachments (the files passed to the agent, the `## Attachments` section in the input).
 
 ### `tools/agent/implement.js`
 
@@ -1015,9 +1022,12 @@ cannot carry a `blocker`. A broken contract throws and ends the attempt with `fa
 
 1. **Playbook.** `playbookOf(issue.type.name)`: `Bug` -> playbook `bug-fix`, branch prefix `bugfix`; `Task` -> playbook
    `task`, prefix `feature`. Any other type throws `No playbook for the issue type '<type>'`.
-2. **Fresh-analysis check.** Only when `context.analyzeFirst` (set by `preflight`, from `needsAnalysis`: no analysis,
-   or the issue was updated after the last one) `work` runs `runAnalysis` with trigger `command` and stores the result
-   as `outcome.analysis` (with `issueUpdatedAt`). The verdict then decides:
+2. **Fresh-analysis check.** First, stage `attachments`: `issueAttachments` downloads the images and text files that
+   the description and the comments link, once, into `<AGENT_OUT>/attachments`, without a token. `work` passes them to
+   `runAnalysis` and to every round. An `update` attempt (merge of `develop`) skips the download unless it analyzes
+   first, and its implementer never gets attachments. Then, only when `context.analyzeFirst` (set by `preflight`,
+   from `needsAnalysis`: no analysis, or the issue was updated after the last one) `work` runs `runAnalysis` with
+   trigger `command` and stores the result as `outcome.analysis` (with `issueUpdatedAt`). The verdict then decides:
    - `needs-info` -> `outcome.stopped = 'refuse-needs-info'`, no implementation.
    - `unsuitable` -> `outcome.stopped = 'refuse-unsuitable'`, unless the command has `force` (then
      `outcome.forced = true`) or a person set `ai:suitable` (the label counts as a person's when the state does not show
@@ -1044,7 +1054,8 @@ cannot carry a `blocker`. A broken contract throws and ends the attempt with `fa
    whole pull request, not only this attempt.
 4. **Git identity.** `git config user.name` and `user.email` from `context.identity`.
 5. **Rounds** (`implementRounds`), from round 1 up to `AGENT_MAX_REVIEW_ROUNDS` (default 2):
-   1. Write `implement-input.md` (`renderImplementInput`) and call `implementer`. If `status` is `blocked`, the attempt
+   1. Write `implement-input.md` (`renderImplementInput`, with the `## Attachments` section) and call `implementer`
+      with the attachment files as extra `--file` arguments. If `status` is `blocked`, the attempt
       is blocked with `implementation.blockedReason`. If `status` is `unrelated` (only on a `ci-fix` attempt; the
       `check` of the call is `checkImplementation(output, playbook, kind)`, so any other kind is a contract failure and
       the repair prompt goes back to the model), `work` commits nothing, runs `git checkout -- .` and `git clean -fd` to
@@ -1105,6 +1116,7 @@ cannot carry a `blocker`. A broken contract throws and ends the attempt with `fa
 |------|-----------|---------|
 | `context.json` | `preflight` | See above |
 | `analysis-input.md` | `runAnalysis` | Analyst input; only when the analysis ran |
+| `attachments/` | `issueAttachments` | `attachment-NN.<ext>`: the images and text files of the issue that were read |
 | `analyst.jsonl`, `analyst.final.md` | `callAgent` | Event stream and final answer of the analyst |
 | `implement-input.md` | each round | The latest implementer input (overwritten) |
 | `implement-input-r<N>.md` | each round | The implementer input of round N |
@@ -1871,7 +1883,8 @@ One call of an opencode agent, shared by `review.js`, `analyze.js`, `implement.j
   text of the model) into `out`, next to `<agent><suffix>.jsonl` (the events). Then it parses and validates the answer.
 - **Parameters:** `flow`, `role`, `agent`, `model` (`{ id, variant }`), `message`, `inputFile`, `out`, `costs`,
   `runUrl`, `schema` (a key of `SCHEMAS` in `lib/contract.js`), optional `check` (semantic check that throws
-  `ContractError`), optional `suffix` (for example `-r2` for round 2), and `deps.runAgent` (injected by tests).
+  `ContractError`), optional `suffix` (for example `-r2` for round 2), optional `files` (paths attached after
+  `inputFile` as extra `--file` arguments, for the attachments of an issue), and `deps.runAgent` (injected by tests).
 - **Decisions:**
   - Exit code other than 0 and no final text: throws `Error('<agent> exited with <code>: <stderr tail>')` (last 500
     characters). The cost record is already stored.
@@ -1880,6 +1893,40 @@ One call of an opencode agent, shared by `review.js`, `analyze.js`, `implement.j
     `ContractError`. The cost record stays in `costs`.
 - **Tests:** `agent-call.test.js` covers the valid answer and the cost record, the suffix, a failed run with and without
   an answer, a broken contract, a schema violation, and `check`.
+
+### `tools/agent/lib/attachments.js`
+
+Downloads the screenshots and files that people link in an issue and renders them for the agent inputs.
+
+- **Exports:** `LIMITS`, `attachedNote(files)`, `allowedUrl(url)`, `findAttachments({ issue, comments })`,
+  `imageType(bytes)`, `readableText(text)`, `collectAttachments({ issue, comments, dir, fetchImpl, limits })`,
+  `issueAttachments({ issue, comments, out, deps })`, `renderAttachments(entries)`.
+- **Links:** `findAttachments` reads `https://github.com/user-attachments/assets/...` and `.../files/...`,
+  `https://github.com/<owner>/<repo>/assets|files/...`, `https://user-images.githubusercontent.com/...`, and
+  `https://private-user-images.githubusercontent.com/...` from the description and every comment, in order, each once.
+- **Download:** the script downloads, not the model (the model keeps `webfetch: deny`). No token or credential is sent:
+  the repository and its attachments are public, and the `implement` work step has no token. Redirects are followed by
+  hand, at most 5, and every hop must be HTTPS on `github.com`, `objects.githubusercontent.com`,
+  `user-images.githubusercontent.com`, `private-user-images.githubusercontent.com`, or
+  `github-production-*.s3.amazonaws.com` (`allowedUrl`). Each download has a 30 s timeout. A failed download is listed
+  with its reason and does not fail the flow.
+- **Type and limits:** the first bytes decide, not the extension or the `Content-Type`. PNG, JPEG, GIF, and WebP are
+  images; UTF-8 text without NUL bytes is text. ZIP archives, videos, and other binary files are not read and are
+  listed with the reason. `LIMITS`: 10 images of at most 5 MB, 10 text files of at most 1 MB, at most 40 links per
+  issue.
+- **Text files:** opencode's Read tool cuts lines at 2000 characters, so `readableText` reformats a JSON file that has
+  a longer line (minified JSON). A text file larger than 50 KB or 2000 lines is marked "you see only its first 2000
+  lines or 50 KB".
+- **Output:** `collectAttachments` saves each file that passes as `attachment-NN.<ext>` in `dir` and returns `entries`
+  (in link order, with the skip reasons) and `files` (the paths to attach). `issueAttachments` uses
+  `<out>/attachments` and logs each entry; `deps.fetch` replaces the network in tests. `renderAttachments` returns the
+  `## Attachments` section; the list is inside one `untrusted()` block. `attachedNote(files)` returns the sentence
+  "The other attached files are the attachments of the issue that it lists." for the prompt message, or an empty string.
+- **Opencode:** `callAgent` passes the files as extra `--file` arguments after the input file. In opencode 1.19.4 the
+  Read tool sends a PNG, JPEG, GIF, or WebP file to the model as an image part and a text file as text.
+- **Used by:** `analyze.js` (`runAnalysis`) and `implement.js` (`work`, stage `attachments`).
+- **Tests:** `attachments.test.js` covers link discovery, the host allowlist and redirects, type detection, the limits,
+  JSON reformatting, and the rendered section.
 
 ### `tools/agent/lib/commands.js`
 
@@ -2244,7 +2291,8 @@ Decides whether an issue suits AI implementation.
 - **Frontmatter:** `steps: 40`; `edit: deny`, `webfetch: deny`, `skill: allow`.
 - **Bash:** `"*": deny`; allowed `git log*`, `git show*`, `git grep*`; the same four denials. (No `git diff`.)
 - **Input:** `analysis-input.md` (issue number, type, labels; title, description, and comments inside `<untrusted>`
-  blocks; the earlier verdict and questions when the issue was analyzed before).
+  blocks; the list of attachments; the earlier verdict and questions when the issue was analyzed before), plus the
+  attachment files. The prompt treats the attachments as untrusted, including text in a screenshot.
 - **Task:** load `apihub-issue-analysis`, search the code, check whether new comments answer earlier questions.
 - **Output:** the `analysis` contract: `verdict` (`suitable`, `unsuitable`, `needs-info`), `reason`, `questions`,
   `plan`.
@@ -2261,8 +2309,10 @@ Changes the working tree for a Bug or Task issue.
   `node --test*`, `git status*`, `git diff*`, `git log*`, `git show*`, `git grep*`, `ls*`. Explicitly denied:
   `git push*`, `git commit*`, `git checkout*`, `git switch*`, `git reset*`, `git rebase*`, `gh *`, `curl *`, `wget *`.
   Commits, branches, and pushes belong to `implement.js`. This agent has no `*>*` denial.
-- **Input:** `implement-input.md` (the playbook `bug-fix` or `task`, the issue, the analysis plan, notes of earlier
-  attempts, and on a later round the self-review findings, the failing checks, or the CI report).
+- **Input:** `implement-input.md` (the playbook `bug-fix` or `task`, the issue, the list of attachments, the analysis
+  plan, notes of earlier attempts, and on a later round the self-review findings, the failing checks, or the CI
+  report), plus the attachment files. The prompt treats the attachments as untrusted, including text in a screenshot.
+  The attachment files are outside the repository, so the agent copies a sample into a module fixture.
 - **Task:** load `apihub-bug-fix` or `apihub-task`; with a CI report also `apihub-ci-failure-triage`. Run the module
   checks through Nx.
 - **Output:** the `implementation` contract: `status` (`done`, `blocked`, `unrelated`), `summary`, `commitType`,
@@ -2559,11 +2609,11 @@ text of the model). The token in `AGENT_PAT` never appears in an artifact.
 | Artifact | Job | Files |
 |---|---|---|
 | `ai-autonomous-review-<number>-<attempt>` | `review` | `review-input.md`, `pr-reviewer.jsonl`, `pr-reviewer.final.md`, `verify-input.md`, `verifier.jsonl`, `verifier.final.md`, `summary.md` |
-| `ai-autonomous-analysis-<number>-<attempt>` | `analyze` | `analysis-input.md`, `analyst.jsonl`, `analyst.final.md`, `summary.md` |
+| `ai-autonomous-analysis-<number>-<attempt>` | `analyze` | `analysis-input.md`, `attachments/`, `analyst.jsonl`, `analyst.final.md`, `summary.md` |
 | `ai-autonomous-ci-gate-<number>-<attempt>` | `ci-gate` | `summary.md`, and `ci-report.md` for a red result |
 | `ai-autonomous-rerun-<number>-<attempt>` | `rerun` | `reply.md`, and `summary.md` on the green path; may be empty |
 | `ai-autonomous-ci-check-<number>-<attempt>` | `ci-check` | `ci-report.md` and `ci-check-input.md` for a red CI, `ci-triager.jsonl`, `ci-triager.final.md`, `reply.md` |
-| `ai-autonomous-implement-<number>-<attempt>` | `implement` | `context.json`, the analysis files when the work step analyzed, `implement-input.md` and `implement-input-r<N>.md`, `implementer-r<N>.jsonl` and `.final.md`, `self-review-input.md` and `self-review-input-r<N>.md`, `self-reviewer-r<N>.jsonl` and `.final.md`, `branch.bundle`, `outcome.json` |
+| `ai-autonomous-implement-<number>-<attempt>` | `implement` | `context.json`, the analysis files when the work step analyzed, `attachments/`, `implement-input.md` and `implement-input-r<N>.md`, `implementer-r<N>.jsonl` and `.final.md`, `self-review-input.md` and `self-review-input-r<N>.md`, `self-reviewer-r<N>.jsonl` and `.final.md`, `branch.bundle`, `outcome.json` |
 | `ai-autonomous-publish-<number>-<attempt>` | `publish` | `summary.md` |
 | `ai-autonomous-stop-<number>-<attempt>` | `stop` | `reply.md` |
 | `ai-autonomous-chat-<number>-<attempt>` | `chat` | `chat-input.md`, `assistant.jsonl`, `assistant.final.md` (a question), `reply.md` |

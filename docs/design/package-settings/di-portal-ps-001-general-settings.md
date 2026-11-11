@@ -30,7 +30,7 @@ The functionality allows users to view and modify information about package para
 2. The system opens the general page, which displays information about the parameters of the current package.
 
    - API to show information on General page - GET /api/v2/packages/{packageId}
-     - packageId = сurrent package Id
+     - packageId = current package Id
    - The system shows the following parameters:
      - Package Name
      - Service Name - The associated service name of the package. This parameter is required if you publish versions to

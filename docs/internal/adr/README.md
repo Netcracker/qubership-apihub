@@ -17,6 +17,7 @@ needed a meeting to settle, record it. ADRs are written for maintainers who were
 | [0007](./0007-pages-layout-and-the-storybook-and-erd-stores.md) | GitHub Pages layout, and the Storybook and ERD stores | Accepted |
 | [0008](./0008-documentation-architecture-and-docs-site.md) | Documentation architecture and the docs site | Accepted |
 | [0009](./0009-pages-published-from-develop.md) | Pages, except the Storybooks, are published from `develop` | Accepted |
+| [0010](./0010-renovate-for-dependency-updates.md) | Renovate for dependency updates | Accepted |
 
 ## Add an ADR
 

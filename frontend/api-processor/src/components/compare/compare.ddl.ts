@@ -37,6 +37,7 @@ import {
 import { collectTableDescriptors } from '../../apitypes/ddl/ddl.entities'
 import { DDL_DOCUMENT_TYPE } from '../../apitypes/ddl/ddl.consts'
 import {
+  belongsToPair,
   calculateTotalImpactedSummary,
   createChangeBase,
   createComparisonDocument,
@@ -102,25 +103,6 @@ function indexByEntityId(docInfos: DdlDocInfo[]): Record<DdlEntityId, DdlDocInfo
     }
   }
   return index
-}
-
-/**
- * Whether entity `home` (its global `ddlEntityId` pairing) belongs to the doc pair `[prevDoc, currDoc]`.
- * A changed/moved entity (both sides defined) belongs only to its exact pair; a pure add/remove (one
- * side defined) belongs to whichever surviving pair carries its defined side — its partial doc pair was
- * absorbed by `removeRedundantPartialPairs`. This keeps a cross-file-moved table from being double-counted
- * as remove+add across the two pairs it touches.
- */
-function belongsToPair(
-  home: { previous?: DdlDocInfo; current?: DdlDocInfo },
-  prevDoc: DdlDocInfo | undefined,
-  currDoc: DdlDocInfo | undefined,
-): boolean {
-  const { previous, current } = home
-  if (previous && current) { return previous === prevDoc && current === currDoc }
-  if (current) { return current === currDoc }
-  if (previous) { return previous === prevDoc }
-  return false
 }
 
 function createDdlChange(

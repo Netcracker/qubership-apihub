@@ -90,7 +90,7 @@ export default defineConfig(({ mode }) => {
           injectTo: 'head-prepend',
         },
       }),
-      createVersionJsonFilePlugin(),
+      createVersionJsonFilePlugin('agents'),
       removeMswFromDistPlugin(),
     ],
     optimizeDeps: {
