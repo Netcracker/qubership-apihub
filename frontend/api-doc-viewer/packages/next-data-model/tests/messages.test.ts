@@ -735,3 +735,52 @@ describe('Cases with operation messages', () => {
     })
   })
 })
+
+describe('Message sections whose transformers wrap the raw value', () => {
+  simplifyConsole()
+
+  // `unifyParamsWithSchema` returns `{ schema: value }` and `collectRawValues` returns
+  // `{ rawValues: value }`. The cycle guard used to take the raw value under the wrapper for a
+  // cycle back to the wrapper's own node, and added a clone of that node to the node itself.
+  it('adds no cycle node to headers, payload, extensions, or channel parameters', () => {
+    const tree = createAsyncApiTreeForTests({
+      asyncapi: "3.0.0",
+      info: { title: "wrapped-sections-test", version: "1.0.0" },
+      channels: {
+        'test-channel': {
+          address: "test/{id}",
+          parameters: { id: { description: "Identifier" } },
+          'x-channel-extension': { owner: "team" },
+          messages: { WrappedMessage: { $ref: "#/components/messages/WrappedMessage" } },
+        },
+      },
+      components: {
+        messages: {
+          WrappedMessage: {
+            name: "WrappedMessage",
+            headers: { type: "object", properties: { 'X-Trace-Id': { type: "string" } } },
+            payload: { type: "object", properties: { eventId: { type: "string" } } },
+            'x-message-extension': { owner: "team" },
+          },
+        },
+      },
+      operations: {
+        'wrapped-operation': {
+          action: "send",
+          channel: { $ref: "#/channels/test-channel" },
+          messages: [{ $ref: "#/channels/test-channel/messages/WrappedMessage" }],
+        },
+      },
+    })
+
+    const nodes = [...tree!.nodes.values()]
+    const kinds = nodes.map(node => node.kind)
+    expect(kinds).toEqual(expect.arrayContaining([
+      AsyncApiTreeNodeKinds.MESSAGE_HEADERS,
+      AsyncApiTreeNodeKinds.MESSAGE_PAYLOAD,
+      AsyncApiTreeNodeKinds.EXTENSIONS,
+      AsyncApiTreeNodeKinds.MESSAGE_CHANNEL_PARAMETERS,
+    ]))
+    expect(nodes.filter(node => node.isCycle).map(node => node.id)).toEqual([])
+  })
+})

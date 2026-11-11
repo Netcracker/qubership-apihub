@@ -569,13 +569,13 @@ function collectStructureCases() {
     structureCase('security-anonymous-only', '`security: [{}]`: Security title with the `Optional` badge only (no toolbar, no cards)', (document) => {
       document.paths[SHORT_PATH] = { post: { security: [{}], responses: { 200: statusOnly() } } }
     }),
-    structureCase('circular-schema-with-extension', 'self-referencing body schema with an `x-` extension: circular icon on `parent` and on the `children` items', (document) => {
+    structureCase('circular-schema-with-extension', 'self-referencing body schema with an `x-` extension: circular icon on `parent` (required) and on the `children` items', (document) => {
       document.paths[SHORT_PATH] = { post: { requestBody: offeringBody(), responses: { 200: statusOnly() } } }
       components(document).schemas = {
         Offering: offeringSchema({
           parent: { $ref: OFFERING_REF },
           children: { type: 'array', items: { $ref: OFFERING_REF } },
-        }),
+        }, ['parent']),
       }
     }),
     structureCase('circular-schema-through-all-of', '`allOf` of the enclosing schema and a description, on a schema with an `x-` extension: `delivery` is a new schema, the circular icon is one level deeper', (document) => {
@@ -593,7 +593,12 @@ function collectStructureCases() {
 // A schema that carries an `x-` extension and references itself. The JSON Schema builder copies a
 // schema with extensions, and cycles of such schemas used to go undetected.
 const OFFERING_REF = '#/components/schemas/Offering'
-const offeringSchema = (properties) => ({ type: 'object', 'x-entity': 'Offering', properties: { id: { type: 'string' }, ...properties } })
+const offeringSchema = (properties, required = []) => ({
+  type: 'object',
+  'x-entity': 'Offering',
+  ...(required.length > 0 ? { required } : {}),
+  properties: { id: { type: 'string' }, ...properties },
+})
 const offeringBody = () => ({ required: true, content: { 'application/json': { schema: { $ref: OFFERING_REF } } } })
 
 // ---------------------------------------------------------------------------------------------

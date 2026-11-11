@@ -52,7 +52,9 @@ export interface ITreeNode<
   createCycledClone(
     id: NodeId,
     key: NodeKey,
+    kind: K,
     parent: ITreeNode | null,
+    meta?: M,
   ): ITreeNode<V, K, M>
 
   value(nestedNodeId?: NodeId): V | null;

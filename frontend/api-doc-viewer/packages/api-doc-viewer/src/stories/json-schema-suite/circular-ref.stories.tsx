@@ -83,8 +83,17 @@ function createCircularCase(caseId: string, offering: Record<string, unknown>): 
   }
 }
 
-function offeringSchema(extensions: Record<string, unknown>, properties: Record<string, unknown>): Record<string, unknown> {
-  return { type: "object", ...extensions, properties: { id: { type: "string" }, ...properties } }
+function offeringSchema(
+  extensions: Record<string, unknown>,
+  properties: Record<string, unknown>,
+  required: string[] = [],
+): Record<string, unknown> {
+  return {
+    type: "object",
+    ...extensions,
+    ...(required.length > 0 ? { required } : {}),
+    properties: { id: { type: "string" }, ...properties },
+  }
 }
 
 const DIRECT_CYCLE_PROPERTIES = {
@@ -106,7 +115,8 @@ const ALL_OF_CYCLE_PROPERTIES = {
 
 export const CycledWithExtension: Story = createCircularCase(
   "cycled-with-extension",
-  offeringSchema({ "x-entity": "Offering" }, DIRECT_CYCLE_PROPERTIES),
+  // `parent` is required: its cycle node shows the asterisk of its own position.
+  offeringSchema({ "x-entity": "Offering" }, DIRECT_CYCLE_PROPERTIES, ["parent"]),
 )
 
 export const CycledThroughAllOf: Story = createCircularCase(

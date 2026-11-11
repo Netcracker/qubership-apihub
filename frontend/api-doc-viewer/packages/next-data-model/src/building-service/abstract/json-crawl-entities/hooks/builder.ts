@@ -29,7 +29,9 @@ type CycleCloneFactory<
     sourceNode: N,
     cloneId: NodeId,
     cloneKey: NodeKey,
+    cloneKind: K,
     cloneParent: N | null,
+    cloneMeta?: M,
   ) => N
 }
 
@@ -74,6 +76,11 @@ export interface TreeBuildingHooksFactoryParams<
   isSimpleNode: (node: N) => boolean
   isComplexNode: (node: N) => boolean
   resolveNodeKey: (key: NodeKey, value: unknown) => NodeKey
+  /**
+   * The meta of a cycle node at its own position, for an API type whose meta depends on the
+   * position (JSON Schema `required`). Without it, the cycle node copies the source's meta.
+   */
+  createCycleCloneMeta?: (source: N, key: NodeKey, parent: N) => M
   isDisallowedValue?: (value: unknown) => boolean
   /** When true, descend into value without creating a tree node (legacy JSON Schema tuple `items`). */
   shouldSkipNodeCreation?: (value: unknown, rules: R) => boolean
@@ -116,6 +123,7 @@ export function createTreeBuildingHooks<
     isSimpleNode,
     isComplexNode,
     resolveNodeKey,
+    createCycleCloneMeta,
     isDisallowedValue = defaultIsDisallowedValue,
     shouldSkipNodeCreation,
     shouldStopAfterNodeCreation,
@@ -128,11 +136,18 @@ export function createTreeBuildingHooks<
   const rawValuesOfCopies = new WeakMap<object, object>();
   const resolveRawValue = (value: object): object => rawValuesOfCopies.get(value) ?? value;
 
-  const preventInfiniteLoopHook: SyncCrawlHook<S, R> = ({ value, state, key, path }) => {
+  const preventInfiniteLoopHook: SyncCrawlHook<S, R> = ({ value, state, key, path, rules }) => {
     if (typeof key === "symbol") {
       return;
     }
     if (!isObject(value) && !isArray(value)) {
+      return { value };
+    }
+    // A cycle is shown as a node, so only a position that holds a node can be one; elsewhere
+    // `createNodesHook` decides. Below a transformer's wrapper (`{ rawValues: value }`,
+    // `{ schema: value }`) the crawl meets the raw value its node is registered by: not a cycle.
+    const cloneKind = rules?.kind;
+    if (!cloneKind || !supportedNodeKinds.includes(cloneKind)) {
       return { value };
     }
 
@@ -154,7 +169,10 @@ export function createTreeBuildingHooks<
 
     const nodeId = buildNodeId(pathPrefix, path);
     const nodeKey = resolveNodeKey(key, value);
-    const cycledClone = tree.createCycledClone(alreadyExisted, nodeId, nodeKey, parent);
+    // The clone repeats the source at another position, so it takes that position's kind (an
+    // `items` badge, a property title) and position-dependent meta, not the source's.
+    const cloneMeta = createCycleCloneMeta?.(alreadyExisted, nodeKey, parent);
+    const cycledClone = tree.createCycledClone(alreadyExisted, nodeId, nodeKey, cloneKind, parent, cloneMeta);
     if (container) {
       container.addNestedNode(cycledClone);
     } else if (parent) {

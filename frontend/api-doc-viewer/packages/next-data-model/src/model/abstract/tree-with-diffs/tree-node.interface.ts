@@ -203,7 +203,9 @@ export interface ITreeNodeWithDiffs<
   createCycledClone(
     id: NodeId,
     key: NodeKey,
+    kind: K,
     parent: ITreeNodeWithDiffs | null,
+    meta?: M,
   ): ITreeNodeWithDiffs<V, K, M, D>
 
   value(nestedNodeId?: NodeId): V | null;

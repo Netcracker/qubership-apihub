@@ -483,6 +483,34 @@ describe("JsonSchemaTreeBuilder cycles of schemas with extensions", () => {
     expect(resolveNode(builder, ["#/properties/children", "#/properties/children/items"]).isCycle).toBe(true)
   })
 
+  // A cycle node used to take the kind of the node it repeats: `children/items` repeating the root
+  // was a `root` node, so its title showed the key as text instead of the `item` badge.
+  it.each(BUILD_MODES)("gives a cycle node the kind of its own position (%s)", (_mode, params) => {
+    const builder = new JsonSchemaTreeBuilder({ source: loadBodySchema("oas30/structure/11-circular-schema-with-extension"), ...params })
+    builder.build()
+
+    expect(builder.tree.root!.kind).toBe(JsonSchemaTreeNodeKinds.ROOT)
+    expect(resolveNode(builder, ["#/properties/parent"]).kind).toBe(JsonSchemaTreeNodeKinds.PROPERTY)
+    expect(resolveNode(builder, ["#/properties/children", "#/properties/children/items"]).kind).toBe(JsonSchemaTreeNodeKinds.ITEMS)
+  })
+
+  // A cycle node used to copy the meta of the node it repeats, so `required` came from the root's
+  // position (never required) and a required circular property lost its asterisk.
+  it.each(BUILD_MODES)("gives a cycle node the `required` flag of its own position (%s)", (_mode, params) => {
+    const offering: Record<string, any> = { type: "object", required: ["parent"], properties: { id: { type: "string" } } }
+    offering.properties.parent = offering
+    offering.properties.children = { type: "array", items: offering }
+    const builder = new JsonSchemaTreeBuilder({ source: offering, ...params })
+    builder.build()
+
+    const parent = resolveNode(builder, ["#/properties/parent"])
+    expect(parent.isCycle).toBe(true)
+    expect(parent.meta()).toMatchObject({ required: true, isCycle: true })
+    const items = resolveNode(builder, ["#/properties/children", "#/properties/children/items"])
+    expect(items.isCycle).toBe(true)
+    expect(items.meta()).toMatchObject({ required: false, isCycle: true })
+  })
+
   it.each(BUILD_MODES)("detects a cycle through `allOf` one level below the merged schema (%s)", (_mode, params) => {
     const builder = new JsonSchemaTreeBuilder({ source: loadBodySchema("oas30/structure/12-circular-schema-through-all-of"), ...params })
     builder.build()

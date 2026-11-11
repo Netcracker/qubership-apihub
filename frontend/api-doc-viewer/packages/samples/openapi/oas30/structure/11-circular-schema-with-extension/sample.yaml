@@ -19,6 +19,8 @@ components:
     Offering:
       type: object
       x-entity: Offering
+      required:
+        - parent
       properties:
         id:
           type: string

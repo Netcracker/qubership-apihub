@@ -112,7 +112,7 @@ describe('OpenAPI media-type schema (cycles in the nested viewer)', () => {
   it.each([
     ['lazy', { materializeDepth: 2 }],
     ['eager', {}],
-  ] as const)('a `$ref` back to the body schema is a cycle on the first level (%s)', (_mode, params) => {
+  ] as const)('a `$ref` back to the body schema is a cycle on the first level, required where its parent lists it (%s)', (_mode, params) => {
     const document = loadNormalizedOpenApiSample(CASE_ID) as any
     const root = new OpenApiTreeBuilder({ source: document, operationKeys: OPERATION }).build().root!
     const body = plainChild(plainChild(root, OpenApiTreeNodeKinds.REQUEST), OpenApiTreeNodeKinds.REQUEST_BODY)
@@ -123,6 +123,7 @@ describe('OpenAPI media-type schema (cycles in the nested viewer)', () => {
     builder.build()
     expect(resolveByKeys(builder, [TITLE]).isCycle).toBe(false)
     expect(resolveByKeys(builder, [TITLE, 'parent']).isCycle).toBe(true)
+    expect(resolveByKeys(builder, [TITLE, 'parent']).meta().required).toBe(true)
     expect(resolveByKeys(builder, [TITLE, 'children']).isCycle).toBe(false)
     expect(resolveByKeys(builder, [TITLE, 'children', 'items']).isCycle).toBe(true)
   })

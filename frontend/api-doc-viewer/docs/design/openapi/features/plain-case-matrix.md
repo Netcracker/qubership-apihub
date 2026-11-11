@@ -396,7 +396,7 @@ How to extend and maintain the suites:
 | `08-deprecated-operation` | `POST /orders` | deprecated operation with a summary (tag in the title row) | — |
 | `09-deprecated-operation-without-summary` | `POST /orders` | deprecated operation without a summary (tag on the address row) | — |
 | `10-security-anonymous-only` | `POST /orders` | `security: [{}]`: Security title with the `Optional` badge only (no toolbar, no cards) | — |
-| `11-circular-schema-with-extension` | `POST /orders` | self-referencing body schema with an `x-` extension: circular icon on `parent` and on the `children` items | — |
+| `11-circular-schema-with-extension` | `POST /orders` | self-referencing body schema with an `x-` extension: circular icon on `parent` (required) and on the `children` items | — |
 | `12-circular-schema-through-all-of` | `POST /orders` | `allOf` of the enclosing schema and a description, on a schema with an `x-` extension: `delivery` is a new schema, the circular icon is one level deeper | — |
 
 ### OAS 3.1 — Fields / Security (`oas31/fields/security/`, 3)
