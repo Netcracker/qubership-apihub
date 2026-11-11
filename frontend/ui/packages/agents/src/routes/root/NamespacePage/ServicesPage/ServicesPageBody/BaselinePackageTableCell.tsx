@@ -19,8 +19,7 @@ import type { Row } from '@tanstack/react-table'
 import { type FC, memo } from 'react'
 
 import { OverflowTooltip } from '@netcracker/qubership-apihub-ui-shared/components/OverflowTooltip'
-import { MutedWarningIcon, YellowWarningIcon } from '@netcracker/qubership-apihub-ui-shared/icons/WarningIcon'
-import { MUTED_TEXT_COLOR } from '@netcracker/qubership-apihub-ui-shared/themes/colors'
+import { DisabledWarningIcon, YellowWarningIcon } from '@netcracker/qubership-apihub-ui-shared/icons/WarningIcon'
 import { isEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
 
 import type { Service } from '@agents/entities/services'
@@ -41,13 +40,13 @@ export const BaselinePackageTableCell: FC<BaselinePackageTableCellProps> = memo<
   }
 
   // A service without API documents is drawn grey, as its name is
-  const isMuted = isEmpty(service.specs)
-  const color = isMuted ? MUTED_TEXT_COLOR : 'inherit'
+  const disabled = isEmpty(service.specs)
+  const color = disabled ? 'action.disabled' : 'inherit'
 
   if (!service.baseline) {
     return (
       <NoBaselinePackage>
-        {isMuted ? <MutedWarningIcon/> : <YellowWarningIcon/>}
+        {disabled ? <DisabledWarningIcon/> : <YellowWarningIcon/>}
         <Typography noWrap variant="inherit" color={color}>No baseline package</Typography>
       </NoBaselinePackage>
     )

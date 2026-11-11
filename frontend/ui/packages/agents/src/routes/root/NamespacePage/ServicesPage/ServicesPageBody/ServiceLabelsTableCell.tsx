@@ -21,7 +21,6 @@ import type { Service } from '@agents/entities/services'
 import { Box, type SxProps, type Theme } from '@mui/material'
 import { OverflowTooltip } from '@netcracker/qubership-apihub-ui-shared/components/OverflowTooltip'
 import { CustomChip } from '@netcracker/qubership-apihub-ui-shared/components/CustomChip'
-import { MUTED_TEXT_COLOR } from '@netcracker/qubership-apihub-ui-shared/themes/colors'
 import { isEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
 import { getFormattedLabel } from '../services'
 
@@ -37,7 +36,7 @@ export const ServiceLabelsTableCell: FC<ServiceLabelsTableCellProps> = memo<Serv
   if (service && service.labels) {
     const labels = Object.entries(service.labels)
     // A service without API documents is drawn grey, as its name is
-    const chipSx = isEmpty(service.specs) ? MUTED_LABEL_CHIP_SX : undefined
+    const chipSx = isEmpty(service.specs) ? DISABLED_LABEL_CHIP_SX : undefined
 
     return (
         <Box>
@@ -66,7 +65,7 @@ export const ServiceLabelsTableCell: FC<ServiceLabelsTableCellProps> = memo<Serv
   return null
 })
 
-const MUTED_LABEL_CHIP_SX: SxProps<Theme> = {
-  color: MUTED_TEXT_COLOR,
+const DISABLED_LABEL_CHIP_SX: SxProps<Theme> = {
+  color: 'action.disabled',
   backgroundColor: 'action.hover',
 }

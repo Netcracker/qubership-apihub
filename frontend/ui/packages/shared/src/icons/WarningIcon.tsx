@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
+import { useTheme } from '@mui/material/styles'
 import type { FC } from 'react'
 import { memo } from 'react'
-
-import { MUTED_TEXT_COLOR } from '../themes/colors'
 
 export type WarningIconProps = {
   color?: string
@@ -67,10 +66,11 @@ export const RedWarningIcon: FC = memo(() => {
   )
 })
 
-export const MutedWarningIcon: FC = memo(() => {
+export const DisabledWarningIcon: FC = memo(() => {
+  const { palette } = useTheme()
   return (
-    <WarningIcon color={MUTED_TEXT_COLOR} fill={false}/>
+    <WarningIcon color={palette.action.disabled} fill={false}/>
   )
 })
 
-MutedWarningIcon.displayName = 'MutedWarningIcon'
+DisabledWarningIcon.displayName = 'DisabledWarningIcon'

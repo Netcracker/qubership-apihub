@@ -72,7 +72,7 @@ export const ServiceOrDocumentationTableCell: FC<ServiceOrDocumentationTableCell
   if (service && isEmpty(service.specs)) {
     return (
       <OverflowTooltip title={service.key}>
-        <Typography noWrap variant="inherit" color="#8F9EB4" pl={3}>{service.key}</Typography>
+        <Typography noWrap variant="inherit" color="action.disabled" pl={3}>{service.key}</Typography>
       </OverflowTooltip>
     )
   }

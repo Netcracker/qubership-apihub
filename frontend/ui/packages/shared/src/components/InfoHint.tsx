@@ -47,7 +47,7 @@ export const InfoHint: FC<InfoHintProps> = memo<InfoHintProps>(({
       <HintIcon
         className={VISIBLE_ON_HOVER_CLASS_NAME}
         fontSize={fontSize}
-        color="action"
+        color="disabled"
         data-testid={dataTestId}
       />
     </Tooltip>

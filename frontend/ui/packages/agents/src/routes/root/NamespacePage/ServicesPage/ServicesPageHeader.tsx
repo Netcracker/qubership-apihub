@@ -20,7 +20,6 @@ import { type FC, memo, useId } from 'react'
 import { InfoHint, VISIBLE_ON_HOVER_HOST_STYLES } from '@netcracker/qubership-apihub-ui-shared/components/InfoHint'
 import { CheckCircleIcon } from '@netcracker/qubership-apihub-ui-shared/icons/CheckCircleIcon'
 import {
-  MUTED_TEXT_COLOR,
   WIZARD_STEP_CURRENT_BACKGROUND_COLOR,
   WIZARD_STEP_SUCCEEDED_BACKGROUND_COLOR,
 } from '@netcracker/qubership-apihub-ui-shared/themes/colors'
@@ -61,10 +60,11 @@ type StepLookColors = Readonly<{
 }>
 
 const STEP_LOOK_TO_COLORS: Record<StepLook, (theme: Theme) => StepLookColors> = {
+  // A step not reached is drawn in the disabled grey of the theme, the grey of the info icon
   [IDLE_STEP_LOOK]: ({ palette }) => ({
     background: palette.background.default,
-    badge: MUTED_TEXT_COLOR,
-    name: MUTED_TEXT_COLOR,
+    badge: palette.action.disabled,
+    name: palette.action.disabled,
   }),
   [CURRENT_STEP_LOOK]: ({ palette }) => ({
     background: WIZARD_STEP_CURRENT_BACKGROUND_COLOR,
