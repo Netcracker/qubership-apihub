@@ -1,164 +1,103 @@
-import {
-  Alert,
-  Box,
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Link,
-  MenuItem,
-  styled,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TablePagination,
-  TableRow,
-  TextField,
-  Typography,
-} from '@mui/material'
-import { type FC, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import MenuOutlinedIcon from '@mui/icons-material/MenuOutlined'
+import { Alert } from '@mui/material'
+import type { ResizeCallback } from 're-resizable'
+import { type FC, useRef, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 
-import { BodyCard } from '@netcracker/qubership-apihub-ui-shared/components/BodyCard'
 import { LoadingIndicator } from '@netcracker/qubership-apihub-ui-shared/components/LoadingIndicator'
-import { SearchBar } from '@netcracker/qubership-apihub-ui-shared/components/SearchBar'
+import { RichFiltersLayout } from '@netcracker/qubership-apihub-ui-shared/components/PageLayouts/RichFiltersLayout'
+import { ListBox } from '@netcracker/qubership-apihub-ui-shared/components/Panels/ListBox'
+import { PageTitle } from '@netcracker/qubership-apihub-ui-shared/components/Titles/PageTitle'
+import { useResizeObserver } from '@netcracker/qubership-apihub-ui-shared/hooks/common/useResizeObserver'
+import { SegmentItemIcon } from '@netcracker/qubership-apihub-ui-shared/icons/SegmentItemIcon'
+import {
+  DETAILED_OPERATIONS_VIEW_MODE,
+  LIST_OPERATIONS_VIEW_MODE,
+} from '@netcracker/qubership-apihub-ui-shared/types/views'
+import { NAVIGATION_MAX_WIDTH } from '@netcracker/qubership-apihub-ui-shared/utils/page-layouts'
 
-import type { LibraryClassDto, LibraryVersionDto } from '@portal/entities/libraries'
-import { getLibraryVersionPath } from './library-version'
-import { useLibraryClasses } from './useLibraryClasses'
+import type { LibraryVersionDto } from '@portal/entities/libraries'
+import { useSetBackwardLocationContext } from '@portal/routes/BackwardLocationProvider'
+import { usePortalPageSettingsContext } from '@portal/routes/PortalPageSettingsProvider'
+import { filterJavaClasses, getJavaClassPageLink } from './javaapi/java-api'
+import { JavaClassListView } from './javaapi/JavaClassListView'
+import { JavaClassListWithPreview } from './javaapi/JavaClassListWithPreview'
+import { JavaTypeFilter, useJavaTypeFilter } from './javaapi/JavaTypeFilter'
+import { useLibraryJavaApiReport } from './useLibraryJavaApi'
 
-const KINDS = ['all', 'class', 'interface', 'enum', 'annotation', 'record'] as const
-const PAGE_SIZE = 25
+const VIEW_OPTIONS = [
+  { icon: <MenuOutlinedIcon fontSize="small" />, value: LIST_OPERATIONS_VIEW_MODE, tooltip: 'List view' },
+  { icon: <SegmentItemIcon />, value: DETAILED_OPERATIONS_VIEW_MODE, tooltip: 'Detailed view' },
+]
+const SUBPAGE_MARGIN = 24
 
 export const LibraryReferenceTab: FC<{ version: LibraryVersionDto }> = ({ version }) => {
-  const [textFilter, setTextFilter] = useState('')
-  const [kind, setKind] = useState<typeof KINDS[number]>('all')
-  const [page, setPage] = useState(0)
-  const [selected, setSelected] = useState<LibraryClassDto>()
+  const [searchValue, setSearchValue] = useState('')
+  const { data, isLoading, error } = useLibraryJavaApiReport(version.libraryId, version.version)
+  const [javaType] = useJavaTypeFilter()
+  const {
+    hideFiltersPanel,
+    toggleHideFiltersPanel,
+    operationsViewMode,
+    toggleOperationsViewMode,
+    previewSize,
+    togglePreviewSize,
+  } = usePortalPageSettingsContext()
+  const bodyRef = useRef<HTMLDivElement | null>(null)
+  const [bodyWidth, setBodyWidth] = useState<number>()
+  useResizeObserver(bodyRef, setBodyWidth)
   const navigate = useNavigate()
-  const { data, isLoading, error } = useLibraryClasses({
-    libraryId: version.libraryId,
-    version: version.version,
-    textFilter: textFilter,
-    kind: kind === 'all' ? undefined : kind,
-    page: page,
-    limit: PAGE_SIZE,
-  })
-  const classes = data?.classes ?? []
+  const { pathname, search } = useLocation()
+  const setBackwardLocation = useSetBackwardLocationContext()
+  const classes = filterJavaClasses(data?.classes ?? [], searchValue, javaType)
+  const openClass = (className: string): void => {
+    setBackwardLocation(previous => ({ ...previous, fromOperation: { pathname, search } }))
+    navigate(getJavaClassPageLink(version.libraryId, version.version, className))
+  }
+  const onResize: ResizeCallback = (_, __, ___, delta) => togglePreviewSize(previewSize + delta.width)
+  const maxPreviewWidth = bodyWidth !== undefined
+    ? bodyWidth - SUBPAGE_MARGIN
+    : NAVIGATION_MAX_WIDTH
+
+  let body = (
+    <ListBox>
+      <JavaClassListView classes={classes} onOpen={openClass} />
+    </ListBox>
+  )
+  if (isLoading) body = <LoadingIndicator />
+  else if (error) body = <Alert severity="error">{error.message}</Alert>
+  else if (!data) body = <Alert severity="info">No JavaAPI report is available for this version.</Alert>
+  else if (operationsViewMode === DETAILED_OPERATIONS_VIEW_MODE) {
+    body = (
+      <JavaClassListWithPreview
+        document={data.document}
+        classes={classes}
+        allClasses={data.classes}
+        onOpen={openClass}
+        initialSize={previewSize}
+        handleResize={onResize}
+        maxPreviewWidth={maxPreviewWidth}
+      />
+    )
+  }
 
   return (
-    <>
-      <BodyCard
-        header="API Reference"
-        action={
-          <Filters>
-            <TextField
-              select
-              label="Kind"
-              value={kind}
-              onChange={event => {
-                setKind(KINDS.find(value => value === event.target.value) ?? 'all')
-                setPage(0)
-              }}
-            >
-              {KINDS.map(value => <MenuItem key={value} value={value}>{value === 'all' ? 'All kinds' : value}
-              </MenuItem>)}
-            </TextField>
-            <SearchBar
-              placeholder="Search classes and methods"
-              inputProps={{ 'aria-label': 'Search classes and methods' }}
-              onValueChange={value => {
-                setTextFilter(value)
-                setPage(0)
-              }}
-            />
-          </Filters>
-        }
-        body={
-          <>
-            {error && <Alert severity="error">{error.message}</Alert>}
-            {isLoading ? <LoadingIndicator /> : (
-              <TableContainer>
-                <Table aria-label="Java API reference">
-                  <TableHead>
-                    <TableRow>
-                      {['Class', 'Kind', 'Package', 'Method signature'].map(title => (
-                        <TableCell key={title}>{title}</TableCell>
-                      ))}
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {classes.map(item => (
-                      <TableRow key={`${item.classId}:${item.methodId ?? ''}`}>
-                        <TableCell>
-                          <Link
-                            component="button"
-                            onClick={() => setSelected(item)}
-                          >
-                            {item.qualifiedName}
-                          </Link>
-                        </TableCell>
-                        <TableCell>{item.kind ?? '—'}</TableCell>
-                        <TableCell>{item.packageName ?? '—'}</TableCell>
-                        <TableCell>{item.signature ?? '—'}</TableCell>
-                      </TableRow>
-                    ))}
-                    {!classes.length && !error && (
-                      <TableRow>
-                        <TableCell colSpan={4}>No classes or methods match your filters.</TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            )}
-            <TablePagination
-              component="div"
-              count={-1}
-              page={page}
-              rowsPerPage={PAGE_SIZE}
-              rowsPerPageOptions={[PAGE_SIZE]}
-              onPageChange={(_, value) => setPage(value)}
-              nextIconButtonProps={{ disabled: isLoading || classes.length < PAGE_SIZE }}
-            />
-          </>
-        }
-      />
-      <Dialog open={!!selected} onClose={() => setSelected(undefined)} fullWidth maxWidth="md">
-        <DialogTitle>{selected?.qualifiedName}</DialogTitle>
-        <DialogContent>
-          <Typography variant="subtitle2">{selected?.kind} · {selected?.packageName}</Typography>
-          <Signature>{selected?.signature ?? selected?.qualifiedName}</Signature>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            onClick={() => {
-              if (selected) {
-                navigate(
-                  `${getLibraryVersionPath(version.libraryId, version.version, 'changes')}?${new URLSearchParams({
-                    classId: selected.classId,
-                  })}`,
-                )
-              }
-              setSelected(undefined)
-            }}
-          >
-            View changes
-          </Button>
-          <Button onClick={() => setSelected(undefined)}>Close</Button>
-        </DialogActions>
-      </Dialog>
-    </>
+    <RichFiltersLayout
+      title={<PageTitle title="API Reference" />}
+      searchPlaceholder="Search Java types"
+      setSearchValue={setSearchValue}
+      hideFiltersPanel={hideFiltersPanel}
+      onClickFilterButton={toggleHideFiltersPanel}
+      filtersApplied={!!javaType}
+      filters={<JavaTypeFilter />}
+      viewMode={operationsViewMode}
+      viewOptions={VIEW_OPTIONS}
+      onOperationsViewChange={value => value && toggleOperationsViewMode(value)}
+      hideExport
+      bodyRef={bodyRef}
+      body={body}
+      data-testid="LibraryReferenceTab"
+    />
   )
 }
 LibraryReferenceTab.displayName = 'LibraryReferenceTab'
-
-const Filters = styled(Box)(({ theme }) => ({ display: 'flex', gap: theme.spacing(1), minWidth: theme.spacing(45) }))
-const Signature = styled(Typography)(({ theme }) => ({
-  marginTop: theme.spacing(2),
-  overflowWrap: 'anywhere',
-  fontFamily: 'monospace',
-}))

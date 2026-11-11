@@ -34,7 +34,6 @@ export function createApp(): Express {
     ['/api/v1/ephemeral-files/', EphemeralFilesRouter()],
     ['/api/v1/libraries/', libraryRouters.libraries],
     ['/api/v1/favorites/libraries/', libraryRouters.favorites],
-    ['/api/v1/search/classes', libraryRouters.classes],
   ])
 
   app.use(cors())

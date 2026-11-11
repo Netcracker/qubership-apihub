@@ -1,9 +1,96 @@
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import request from 'supertest'
 
 import { createApp } from '../createApp'
 
+const CURRENT_VERSION = 'feature-slsintel-20976-2026803.08456-build2'
+const PREVIOUS_VERSION = 'master-20251002.125155-build144'
 const BASE = '/api/v1/libraries'
 const VERSIONS = `${BASE}/local-library-test/versions`
+
+describe('Local Library Java API reports', () => {
+  const REPORT = `${BASE}/local-library-demo/versions/${CURRENT_VERSION}/java-api/report`
+
+  it.each([CURRENT_VERSION, PREVIOUS_VERSION])('returns the complete report for seeded version %s', async version => {
+    const expected: unknown = JSON.parse(
+      readFileSync(join(__dirname, '../../../../../api-doc-viewer/packages/samples/javaapi/api-report.json'), 'utf8'),
+    )
+    const result = await request(createApp())
+      .get(`${BASE}/local-library-demo/versions/${version}/java-api/report`).expect(200)
+    expect(result.body).toEqual(expected)
+  })
+
+  it.each([
+    { libraryId: 'missing', version: CURRENT_VERSION, code: 'LIBRARY_NOT_FOUND' },
+    { libraryId: 'local-library-demo', version: 'missing', code: 'LIBRARY_VERSION_NOT_FOUND' },
+  ])('returns $code for $libraryId / $version', async ({ libraryId, version, code }) => {
+    const result = await request(createApp()).get(`${BASE}/${libraryId}/versions/${version}/java-api/report`).expect(
+      404,
+    )
+    expect(result.body.code).toBe(code)
+  })
+
+  it('does not return the seeded report for a newly published version', async () => {
+    const app = createApp()
+    await request(app).post(VERSIONS).send({ version: CURRENT_VERSION }).expect(202)
+    const result = await request(app).get(`${VERSIONS}/${CURRENT_VERSION}/java-api/report`).expect(404)
+    expect(result.body.code).toBe('LIBRARY_JAVA_API_REPORT_NOT_FOUND')
+  })
+
+  it('does not return a report after its version is deleted', async () => {
+    const app = createApp()
+    await request(app).delete(`${BASE}/local-library-demo/versions/${CURRENT_VERSION}`).expect(204)
+    const result = await request(app).get(REPORT).expect(404)
+    expect(result.body.code).toBe('LIBRARY_VERSION_NOT_FOUND')
+  })
+})
+
+describe('Local Library Java API diffs', () => {
+  const DIFF = `${BASE}/local-library-demo/versions/${CURRENT_VERSION}/java-api/diff`
+
+  it.each([
+    {},
+    { previousVersion: PREVIOUS_VERSION },
+    { previousLibraryId: 'local-library-demo', previousVersion: PREVIOUS_VERSION },
+  ])('returns the complete diff with previous version parameters %j', async query => {
+    const expected: unknown = JSON.parse(
+      readFileSync(join(__dirname, '../../../../../api-doc-viewer/packages/samples/javaapi/api-diff.json'), 'utf8'),
+    )
+    const result = await request(createApp()).get(DIFF).query(query).expect(200)
+    expect(result.body).toEqual(expected)
+  })
+
+  it.each([
+    { previousVersion: 'missing' },
+    { previousVersion: CURRENT_VERSION },
+    { previousLibraryId: 'local-library-test', previousVersion: PREVIOUS_VERSION },
+  ])('returns comparison not found for an uncomputed pair %j', async query => {
+    const result = await request(createApp()).get(DIFF).query(query).expect(404)
+    expect(result.body.code).toBe('LIBRARY_COMPARISON_NOT_FOUND')
+  })
+
+  it('returns comparison not found for the previous version without a predecessor', async () => {
+    const result = await request(createApp())
+      .get(`${BASE}/local-library-demo/versions/${PREVIOUS_VERSION}/java-api/diff`).expect(404)
+    expect(result.body.code).toBe('LIBRARY_COMPARISON_NOT_FOUND')
+  })
+
+  it('returns comparison not found after the predecessor is deleted', async () => {
+    const app = createApp()
+    await request(app).delete(`${BASE}/local-library-demo/versions/${PREVIOUS_VERSION}`).expect(204)
+    const result = await request(app).get(DIFF).expect(404)
+    expect(result.body.code).toBe('LIBRARY_COMPARISON_NOT_FOUND')
+  })
+
+  it.each([
+    { libraryId: 'missing', version: CURRENT_VERSION, code: 'LIBRARY_NOT_FOUND' },
+    { libraryId: 'local-library-demo', version: 'missing', code: 'LIBRARY_VERSION_NOT_FOUND' },
+  ])('returns $code for $libraryId / $version', async ({ libraryId, version, code }) => {
+    const result = await request(createApp()).get(`${BASE}/${libraryId}/versions/${version}/java-api/diff`).expect(404)
+    expect(result.body.code).toBe(code)
+  })
+})
 
 describe('Local Library API', () => {
   it('returns the seeded test library by name and ID', async () => {
@@ -127,16 +214,21 @@ describe('Local Library permissions and members', () => {
 
   it('lists the seeded owners and the catalog inherited viewer', async () => {
     const app = createApp()
-    const owner = { user: { userId: 'local-dev', name: 'Local Developer' }, roles: [{ roleId: 'owner', role: 'Owner' }] }
+    const owner = {
+      user: { userId: 'local-dev', name: 'Local Developer' },
+      roles: [{ roleId: 'owner', role: 'Owner' }],
+    }
     await request(app).get(MEMBERS).expect(200, { members: [owner] })
-    await request(app).get(CATALOG_MEMBERS).expect(200, { members: [owner, {
-      user: { userId: 'demo-viewer', name: 'demo-viewer' },
-      roles: [{
-        roleId: 'viewer',
-        role: 'Viewer',
-        inheritedFrom: { packageId: 'DEMO', kind: 'workspace', name: 'DEMO' },
+    await request(app).get(CATALOG_MEMBERS).expect(200, {
+      members: [owner, {
+        user: { userId: 'demo-viewer', name: 'demo-viewer' },
+        roles: [{
+          roleId: 'viewer',
+          role: 'Viewer',
+          inheritedFrom: { packageId: 'DEMO', kind: 'workspace', name: 'DEMO' },
+        }],
       }],
-    }] })
+    })
   })
 
   it('upserts unknown users, replaces their direct roles, and clears empty assignments', async () => {
@@ -156,7 +248,8 @@ describe('Local Library permissions and members', () => {
     await request(app).put(`${MEMBERS}/new-user`).send({ roleIds: ['owner'] }).expect(204)
     const replaced = await request(app).get(MEMBERS).expect(200)
     expect(replaced.body.members).toContainEqual({
-      user: { userId: 'new-user', name: 'new-user' }, roles: [{ roleId: 'owner', role: 'Owner' }],
+      user: { userId: 'new-user', name: 'new-user' },
+      roles: [{ roleId: 'owner', role: 'Owner' }],
     })
     await request(app).put(`${MEMBERS}/new-user`).send({ roleIds: [] }).expect(204)
     const cleared = await request(app).get(MEMBERS).expect(200)
@@ -195,14 +288,18 @@ describe('Local Library permissions and members', () => {
     expect(result.body.code).toBe('LIBRARY_NOT_FOUND')
   })
 
-  it.each(['get', 'put', 'delete'] as const)('returns LIBRARY_NOT_FOUND for %s on unknown library members', async method => {
-    const path = method === 'get' ? 'members' : 'members/user'
-    const result = await request(createApp())[method](`${BASE}/missing/${path}`).expect(404)
-    expect(result.body.code).toBe('LIBRARY_NOT_FOUND')
-  })
+  it.each(['get', 'put', 'delete'] as const)(
+    'returns LIBRARY_NOT_FOUND for %s on unknown library members',
+    async method => {
+      const path = method === 'get' ? 'members' : 'members/user'
+      const result = await request(createApp())[method](`${BASE}/missing/${path}`).expect(404)
+      expect(result.body.code).toBe('LIBRARY_NOT_FOUND')
+    },
+  )
 
   it.each([[], {}, { roleIds: 'viewer' }, { roleIds: [1] }, { roleIds: ['unknown'] }].map(body => ({ body })))(
-    'rejects invalid member roles: %j', async ({ body }) => {
+    'rejects invalid member roles: %j',
+    async ({ body }) => {
       const result = await request(createApp()).put(`${MEMBERS}/new-user`).send(body).expect(400)
       expect(result.body.code).toBe('BAD_REQUEST')
     },
@@ -251,11 +348,14 @@ describe('Local Library API keys', () => {
     expect(missing.body.code).toBe('LIBRARY_API_KEY_NOT_FOUND')
   })
 
-  it.each(['get', 'post', 'delete'] as const)('returns LIBRARY_NOT_FOUND for %s on unknown library keys', async method => {
-    const path = method === 'delete' ? 'apiKeys/key' : 'apiKeys'
-    const result = await request(createApp())[method](`${BASE}/missing/${path}`).expect(404)
-    expect(result.body.code).toBe('LIBRARY_NOT_FOUND')
-  })
+  it.each(['get', 'post', 'delete'] as const)(
+    'returns LIBRARY_NOT_FOUND for %s on unknown library keys',
+    async method => {
+      const path = method === 'delete' ? 'apiKeys/key' : 'apiKeys'
+      const result = await request(createApp())[method](`${BASE}/missing/${path}`).expect(404)
+      expect(result.body.code).toBe('LIBRARY_NOT_FOUND')
+    },
+  )
 
   it.each([
     [],
@@ -271,17 +371,14 @@ describe('Local Library API keys', () => {
 })
 
 describe('Local Library release summaries', () => {
-  const CURRENT_VERSION = 'feature-slsintel-20976-2026803.08456-build2'
-  const PREVIOUS_VERSION = 'master-20251002.125155-build144'
-
-  it('lists the newest release and its breaking changes from the seeded comparison', async () => {
+  it('lists the newest release and the breaking changes of the diff sample', async () => {
     const app = createApp()
     const list = await request(app).get(BASE).query({ textFilter: 'catalog' }).expect(200)
     expect(list.body.libraries).toEqual([expect.objectContaining({
       libraryId: 'local-library-demo',
       parentPackageId: 'DEMO',
       latestRelease: CURRENT_VERSION,
-      breakingChangesCount: 45,
+      breakingChangesCount: 4,
     })])
     const details = await request(app).get(`${BASE}/local-library-demo`).expect(200)
     expect(details.body).toEqual(list.body.libraries[0])

@@ -5,10 +5,14 @@ the routes below will move there.
 
 Express app under `packages/portal/server/`. Default listen URL: `http://localhost:3003` (`NODEJS_PORT` to override).
 
-The provisional [local Library API](./library-api-questions.md) supports the Create Library dialog and seeds a library
-named `test`. Set `VITE_LOCAL_LIBRARIES=true` in the ignored `packages/portal/.env.local` and restart Vite
-to route `/api/v1/libraries`, `/api/v1/favorites/libraries`, and `/api/v1/search/classes` to this server
-in proxy mode.
+The provisional local Library API (`server/routers/libraries/`) stands in for the libraries-backend, which does not
+exist yet. It keeps libraries, versions, members, and API keys in memory and serves the jdiff samples of
+api-doc-viewer as Java API reports and diffs. It is an exception to the MSW rule above: its routes depend on each
+other's state (a published version becomes readable), and its contract is covered by
+`server/__tests__/libraries.spec.ts`. It moves to MSW with the other routes.
+Set `VITE_LOCAL_LIBRARIES=true` in the ignored `packages/portal/.env.local` and restart Vite: in proxy mode
+`/api/v1/libraries` and `/api/v1/favorites/libraries` then go to this server, and the Library UI shows without the
+`libraries-backend` extension.
 
 Use it in **mixed mode** ([local-development.md](./local-development.md#deprecated-mixed-mode-proxy--express-mock)) or with `dev:frontend`. Default **proxy mode** does not use this server; `/api` goes to the real APIHUB.
 

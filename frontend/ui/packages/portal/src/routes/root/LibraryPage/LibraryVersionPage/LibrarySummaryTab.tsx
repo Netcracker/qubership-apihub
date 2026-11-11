@@ -1,6 +1,7 @@
-import { Alert, Box, Link, styled, type Theme, Tooltip, Typography, useMediaQuery } from '@mui/material'
+import { Alert, Box, IconButton, Link, styled, type Theme, Tooltip, Typography, useMediaQuery } from '@mui/material'
 import { type FC, Fragment, type ReactNode } from 'react'
 import { NavLink } from 'react-router-dom'
+import { useCopyToClipboard } from 'react-use'
 
 import { BodyCard } from '@netcracker/qubership-apihub-ui-shared/components/BodyCard'
 import { CustomChip } from '@netcracker/qubership-apihub-ui-shared/components/CustomChip'
@@ -11,51 +12,68 @@ import {
   CHANGE_SEVERITY_COLOR_MAP,
   NON_BREAKING_CHANGE_SEVERITY,
 } from '@netcracker/qubership-apihub-ui-shared/entities/change-severities'
+import { CopyIcon } from '@netcracker/qubership-apihub-ui-shared/icons/CopyIcon'
 
-import type { LibraryChangeSeverity, LibraryVersionDto, MavenLibraryDto } from '@portal/entities/libraries'
+import type { LibraryVersionDto, MavenLibraryDto } from '@portal/entities/libraries'
+import { useShowSuccessNotification } from '@portal/routes/root/BasePage/Notification'
 import { FrontTruncatedText } from '@portal/routes/root/LibraryPage/FrontTruncatedText'
 import { ContractsSummary } from '@portal/routes/root/PortalPage/VersionPage/VersionOverviewSubPage/SummaryTab/ContractsSummary'
 import { SummaryPanels } from '@portal/routes/root/PortalPage/VersionPage/VersionOverviewSubPage/SummaryTab/SummaryPanel'
 import { SummarySection } from '@portal/routes/root/PortalPage/VersionPage/VersionOverviewSubPage/SummaryTab/SummarySection'
+import { countJavaTypes, sumChangesSummaries } from './javaapi/java-api'
 import { getLibraryVersionPath } from './library-version'
-import { useLibraryComparison } from './useLibraryChanges'
+import { useLibraryJavaApiDiff, useLibraryJavaApiReport } from './useLibraryJavaApi'
 
 type LibrarySummaryTabProps = { library: MavenLibraryDto; version: LibraryVersionDto }
 type SummaryMetric = { id: string; label: string; value: ReactNode }
 
+const LOADING_VALUE = 'Loading…'
+const EMPTY_VALUE = '—'
+const CHANGE_SEVERITIES = [
+  { severity: BREAKING_CHANGE_SEVERITY, title: 'Breaking changes' },
+  { severity: NON_BREAKING_CHANGE_SEVERITY, title: 'Non-breaking changes' },
+] as const
+
 export const LibrarySummaryTab: FC<LibrarySummaryTabProps> = ({ library, version }) => {
-  const { comparison, isLoading, error } = useLibraryComparison({
-    libraryId: library.libraryId,
-    version: version.version,
-  })
-  const count = (severity: LibraryChangeSeverity): ReactNode => (comparison
-    ? Object.values(comparison.changeCounts ?? {}).reduce((total, counts) => total + (counts?.[severity] ?? 0), 0)
-    : '—')
-  const metrics = version.metadata?.javaApi
+  const [, copyToClipboard] = useCopyToClipboard()
+  const showSuccessNotification = useShowSuccessNotification()
+  const { data: diff, isLoading, error } = useLibraryJavaApiDiff(library.libraryId, version.version)
+  const { data: report, isLoading: isReportLoading, error: reportError } = useLibraryJavaApiReport(
+    library.libraryId,
+    version.version,
+  )
+  const changesSummary = diff ? sumChangesSummaries(diff.classes) : undefined
+  const metrics = report ? countJavaTypes(report.classes) : undefined
   const isCompact = useMediaQuery((theme: Theme) => theme.breakpoints.down('lg'))
+  const renderChangeCounts = (): ReactNode => {
+    if (error) return EMPTY_VALUE
+    if (isLoading) return LOADING_VALUE
+    if (!changesSummary) return EMPTY_VALUE
+    return (
+      <ChangeCounts component="span">
+        {CHANGE_SEVERITIES.map(({ severity, title }) => (
+          <Tooltip key={severity} title={title}>
+            <ChangeCount component="span">
+              <ChangeDot component="span" severity={severity} />
+              {changesSummary[severity]}
+            </ChangeCount>
+          </Tooltip>
+        ))}
+      </ChangeCounts>
+    )
+  }
   const validations = {
     title: 'JavaAPI Validation',
     metrics: [{
       label: 'Number of changes',
-      value: error ? '—' : isLoading ? 'Loading…' : (
-        <ChangeCounts component="span">
-          <Tooltip title="Breaking changes">
-            <ChangeCount component="span">
-              <BreakingDot component="span" />
-              {count('breaking')}
-            </ChangeCount>
-          </Tooltip>
-          <Tooltip title="Non-breaking changes">
-            <ChangeCount component="span">
-              <NonBreakingDot component="span" />
-              {count('non-breaking')}
-            </ChangeCount>
-          </Tooltip>
-        </ChangeCounts>
-      ),
+      value: renderChangeCounts(),
     }],
   }
   const gav = `${library.coordinatesKey}:${version.version}`
+  const handleCopyGav = (): void => {
+    copyToClipboard(gav)
+    showSuccessNotification({ message: 'GAV copied' })
+  }
   const versionMetrics: SummaryMetric[] = [
     {
       id: 'current',
@@ -73,14 +91,23 @@ export const LibrarySummaryTab: FC<LibrarySummaryTabProps> = ({ library, version
             </Link>
           </FrontTruncatedText>
         )
-        : '—',
+        : EMPTY_VALUE,
     },
-    { id: 'publisher', label: 'Published by', value: <UserView name={version.createdBy ?? '—'} /> },
+    { id: 'publisher', label: 'Published by', value: <UserView name={version.createdBy ?? EMPTY_VALUE} /> },
     { id: 'date', label: 'Publication Date', value: <FormattedDate value={version.createdAt} /> },
     {
       id: 'gav',
       label: 'GAV',
-      value: <FrontTruncatedText text={gav} data-testid="LibraryGavTypography" />,
+      value: (
+        <GavValue>
+          <FrontTruncatedText text={gav} data-testid="LibraryGavTypography" />
+          <Tooltip title="Copy GAV">
+            <IconButton size="small" aria-label="Copy GAV" onClick={handleCopyGav} data-testid="CopyGavButton">
+              <CopyIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </GavValue>
+      ),
     },
   ]
 
@@ -107,6 +134,7 @@ export const LibrarySummaryTab: FC<LibrarySummaryTabProps> = ({ library, version
             </VersionMetrics>
           </VersionSummary>
           {error && <Alert severity="error">{error.message}</Alert>}
+          {reportError && <Alert severity="error">{reportError.message}</Alert>}
           <JavaSummary data-testid="LibraryJavaSummary">
             <ContractsSummary>
               <SummarySection>
@@ -114,9 +142,22 @@ export const LibrarySummaryTab: FC<LibrarySummaryTabProps> = ({ library, version
                   numbers={{
                     title: 'JavaAPI',
                     metrics: [
-                      { label: 'Total number of classes', value: metrics?.classes ?? '—' },
-                      { label: 'Total number of interfaces', value: metrics?.interfaces ?? '—' },
-                      { label: 'Total number of enums', value: metrics?.enums ?? '—' },
+                      {
+                        label: 'Total number of classes',
+                        value: isReportLoading ? LOADING_VALUE : metrics?.CLASS ?? EMPTY_VALUE,
+                      },
+                      {
+                        label: 'Total number of interfaces',
+                        value: isReportLoading ? LOADING_VALUE : metrics?.INTERFACE ?? EMPTY_VALUE,
+                      },
+                      {
+                        label: 'Total number of enums',
+                        value: isReportLoading ? LOADING_VALUE : metrics?.ENUM ?? EMPTY_VALUE,
+                      },
+                      {
+                        label: 'Total number of annotation types',
+                        value: isReportLoading ? LOADING_VALUE : metrics?.ANNOTATION ?? EMPTY_VALUE,
+                      },
                     ],
                   }}
                   validations={isCompact ? undefined : validations}
@@ -162,15 +203,25 @@ const VersionMetrics = styled(Box)(({ theme }) => ({
   },
 }))
 const MetricValue = styled(Box)(({ theme }) => ({ ...theme.typography.body2, margin: 0, minWidth: 0 }))
+const GavValue = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  gap: theme.spacing(0.5),
+  '& > .MuiTypography-root': { minWidth: 0 },
+  // opacity, not visibility: a hidden button could not take keyboard focus
+  '& .MuiIconButton-root': { opacity: 0, flexShrink: 0 },
+  '&:hover .MuiIconButton-root, &:focus-within .MuiIconButton-root': { opacity: 1 },
+}))
 const JavaSummary = styled(Box)(({ theme }) => ({
   [theme.breakpoints.down('lg')]: { '& > div': { gridTemplateColumns: 'max-content minmax(0, 1fr)' } },
 }))
 const ChangeCounts = styled(Box)(({ theme }) => ({ display: 'flex', gap: theme.spacing(1), alignItems: 'center' }))
 const ChangeCount = styled(Box)(({ theme }) => ({ display: 'flex', alignItems: 'center', gap: theme.spacing(1) }))
-const BreakingDot = styled(Box)(({ theme }) => ({
+const ChangeDot = styled(Box, {
+  shouldForwardProp: prop => prop !== 'severity',
+})<{ severity: typeof CHANGE_SEVERITIES[number]['severity'] }>(({ theme, severity }) => ({
   width: theme.spacing(1),
   height: theme.spacing(1),
   borderRadius: '50%',
-  backgroundColor: CHANGE_SEVERITY_COLOR_MAP[BREAKING_CHANGE_SEVERITY],
+  backgroundColor: CHANGE_SEVERITY_COLOR_MAP[severity],
 }))
-const NonBreakingDot = styled(BreakingDot)({ backgroundColor: CHANGE_SEVERITY_COLOR_MAP[NON_BREAKING_CHANGE_SEVERITY] })

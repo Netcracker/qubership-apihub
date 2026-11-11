@@ -49,11 +49,13 @@ export type LibrariesDto = Readonly<{
 
 export type LibraryMemberDto = Readonly<{
   user: Readonly<{ userId: Key; name: string }>
-  roles: ReadonlyArray<Readonly<{
-    roleId: string
-    role: string
-    inheritedFrom?: Readonly<{ packageId: Key; kind: string; name: string }>
-  }>>
+  roles: ReadonlyArray<
+    Readonly<{
+      roleId: string
+      role: string
+      inheritedFrom?: Readonly<{ packageId: Key; kind: string; name: string }>
+    }>
+  >
 }>
 
 export type LibraryMembersDto = Readonly<{ members: LibraryMemberDto[] }>
@@ -102,47 +104,4 @@ export type LibraryRegistryVersionsDto = Readonly<{
 
 export type LibraryVersionUpdateDto = Pick<LibraryVersionPublishDto, 'status' | 'labels'>
 
-export type LibraryChangeSeverity = 'breaking' | 'non-breaking' | 'annotation'
-export type LibraryChangeType = 'added' | 'removed' | 'changed' | 'deprecated'
-export type LibraryClassKind = 'class' | 'interface' | 'enum' | 'annotation' | 'record'
-
-export type LibraryComparisonDto = Readonly<{
-  comparisonId: Key
-  libraryId: Key
-  version: string
-  previousLibraryId: Key
-  previousVersion: string
-  changeCounts?: Partial<Record<LibraryChangeType, Partial<Record<LibraryChangeSeverity, number>>>>
-  openCount?: number
-  noContent?: boolean
-  builderVersion?: string
-  lastActive?: string
-}>
-
-export type LibraryChangeDto = Readonly<{
-  changeId: Key
-  classId: Key
-  methodId?: Key
-  changeType: LibraryChangeType
-  severity: LibraryChangeSeverity
-  description?: string
-  details?: Readonly<{ qualifiedName?: string; oldSignature?: string; newSignature?: string }>
-}>
-
-export type LibraryChangesDto = Readonly<{
-  comparison: LibraryComparisonDto
-  changes: LibraryChangeDto[]
-}>
-
-export type LibraryClassDto = Readonly<{
-  libraryId: Key
-  version: string
-  classId: Key
-  qualifiedName: string
-  packageName?: string
-  kind?: LibraryClassKind
-  methodId?: Key
-  signature?: string
-}>
-
-export type LibraryClassesDto = Readonly<{ classes: LibraryClassDto[] }>
+export type LibraryJavaApiDocumentDto = Readonly<Record<string, unknown>>

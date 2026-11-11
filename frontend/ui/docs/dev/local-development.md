@@ -7,14 +7,23 @@ Node.js **>= 24** is required (`engines` in the repository root `package.json`).
 **Default setup for Portal UI work.** Vite serves the frontend with HMR and forwards `/api`, `/api-linter`,
 `/agents-backend`, and `/playground` to a real APIHUB instance.
 
-1. Set `proxyServer` in `packages/portal/vite.config.ts` to your APIHUB URL (default:
-   `http://host.docker.internal:8081`).
+1. Set `VITE_PROXY_TARGET` in an ignored `packages/portal/.env.local` to your APIHUB URL
+   (default: `http://host.docker.internal:8081`).
 2. From the workspace root, build the Portal once: `pnpm install`, then `pnpm exec nx build ui-portal`. The dev
    server loads the other workspace packages, such as api-processor, from their `dist/` directories.
 3. From `packages/portal`: `pnpm dev:proxy`.
 4. Open the Vite URL from the terminal (typically `http://localhost:5173`, opens `/login`).
 
 No local mock server is required for this workflow.
+
+## Local Library development
+
+The Library UI shows only when the backend registers the `libraries-backend` extension, or with the local Library
+API of the [Express mock](./portal-mock-server.md).
+Set `VITE_LOCAL_LIBRARIES=true` in `packages/portal/.env.local` and restart Vite.
+Run `dev:backend` alongside `dev:proxy`: `/api/v1/libraries` and `/api/v1/favorites/libraries` go to port 3003.
+Other requests reach the real APIHUB. The local backend starts with the libraries `Library (JavaAPI) test` and
+`Library (JavaAPI) Catalog library` (with two versions, a Java API report, and a diff) and resets on restart.
 
 ## Proxy mode with MSW mocks
 
@@ -27,7 +36,7 @@ backend; add new mocks there.
 The Express mock server is deprecated, and its routes will move to [MSW](./msw-mocks.md). Use it only for a route
 that MSW does not mock yet, while the rest of the Portal talks to the real backend.
 
-1. Configure `proxyServer` as in proxy mode.
+1. Configure `VITE_PROXY_TARGET` as in proxy mode.
 2. `pnpm dev:backend` (mock on `http://localhost:3003`; override port with `NODEJS_PORT`).
 3. `pnpm dev:proxy` in a second terminal.
 4. For each prefix that should hit the mock, add a `server.proxy` entry with `target: devServer` **before** the catch-all `/api` rule. See [portal-mock-server.md](./portal-mock-server.md#vite-proxy-viteconfigts) for the Vite example and mock API reference.

@@ -1,6 +1,6 @@
 import { Box, List, styled } from '@mui/material'
-import { type FC, type ReactNode } from 'react'
-import { Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom'
+import type { FC, ReactNode } from 'react'
+import { Navigate, Route, Routes, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 
 import { ErrorPage } from '@netcracker/qubership-apihub-ui-shared/components/ErrorPage'
 import { LoadingIndicator } from '@netcracker/qubership-apihub-ui-shared/components/LoadingIndicator'
@@ -18,6 +18,7 @@ import { usePortalPageSettingsContext } from '@portal/routes/PortalPageSettingsP
 import { OverviewNavigationItem } from '@portal/routes/root/PortalPage/VersionPage/VersionOverviewSubPage/OverviewNavigationItem'
 import { useLibrary } from '../../useLibrary'
 import { useLibraryVersion } from '../useLibraryVersions'
+import { getPreviousLibraryVersion } from './javaapi/java-api'
 import { getLibraryVersionPath } from './library-version'
 import { LibraryActivityTab } from './LibraryActivityTab'
 import { LibraryChangesTab } from './LibraryChangesTab'
@@ -37,7 +38,8 @@ export const LibraryVersionPage: FC = () => {
   const { version, isLoading: isVersionLoading, error: versionError } = useLibraryVersion(libraryId, versionId)
   const { expandMainMenu, toggleExpandMainMenu } = usePortalPageSettingsContext()
   const navigate = useNavigate()
-  const { search } = useLocation()
+  const [query] = useSearchParams()
+  const { previousLibraryId = '', previousVersion = '' } = getPreviousLibraryVersion(query)
   if (isLoading || isVersionLoading) return <LoadingIndicator />
   if (!library || !version) {
     return (
@@ -103,7 +105,12 @@ export const LibraryVersionPage: FC = () => {
               />
               <Route
                 path="changes"
-                element={<LibraryChangesTab key={`${libraryId}:${versionId}:${search}`} version={version} />}
+                element={
+                  <LibraryChangesTab
+                    key={`${libraryId}:${versionId}:${previousLibraryId}:${previousVersion}`}
+                    version={version}
+                  />
+                }
               />
               <Route path="*" element={<Navigate to={getLibraryVersionPath(libraryId, versionId)} replace />} />
             </Routes>

@@ -1,183 +1,108 @@
-import {
-  Alert,
-  Box,
-  Button,
-  Chip,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Link,
-  MenuItem,
-  styled,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TablePagination,
-  TableRow,
-  TextField,
-  Typography,
-} from '@mui/material'
+import { Alert, Link } from '@mui/material'
 import { type FC, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { NavLink, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 
-import { BodyCard } from '@netcracker/qubership-apihub-ui-shared/components/BodyCard'
+import type { JavaApiChangeDescription } from '@netcracker/qubership-apihub-api-doc-viewer'
+import { ChangeSeverityFilters } from '@netcracker/qubership-apihub-ui-shared/components/ChangeSeverityFilters'
+import { CATEGORY_OPERATION } from '@netcracker/qubership-apihub-ui-shared/components/ChangesTooltip'
 import { LoadingIndicator } from '@netcracker/qubership-apihub-ui-shared/components/LoadingIndicator'
+import { RichFiltersLayout } from '@netcracker/qubership-apihub-ui-shared/components/PageLayouts/RichFiltersLayout'
+import { ListBox } from '@netcracker/qubership-apihub-ui-shared/components/Panels/ListBox'
+import { TextWithOverflowTooltip } from '@netcracker/qubership-apihub-ui-shared/components/TextWithOverflowTooltip'
+import { PageTitle } from '@netcracker/qubership-apihub-ui-shared/components/Titles/PageTitle'
+import {
+  useSeverityFiltersSearchParam,
+} from '@netcracker/qubership-apihub-ui-shared/hooks/change-severities/useSeverityFiltersSearchParam'
 
-import type { LibraryChangeDto, LibraryVersionDto } from '@portal/entities/libraries'
-import { useLibraryChanges } from './useLibraryChanges'
-
-const SEVERITIES = ['all', 'breaking', 'non-breaking', 'annotation'] as const
-const CHANGE_TYPES = ['all', 'added', 'removed', 'changed', 'deprecated'] as const
-const PAGE_SIZE = 25
+import type { LibraryVersionDto } from '@portal/entities/libraries'
+import { useSetBackwardLocationContext } from '@portal/routes/BackwardLocationProvider'
+import { usePortalPageSettingsContext } from '@portal/routes/PortalPageSettingsProvider'
+import {
+  filterJavaClasses,
+  getJavaClassPageLink,
+  getPreviousLibraryVersion,
+  JAVA_CHANGE_SEVERITIES,
+  sumChangesSummaries,
+} from './javaapi/java-api'
+import { JavaChangesTable } from './javaapi/JavaChangesTable'
+import { JavaTypeFilter, useJavaTypeFilter } from './javaapi/JavaTypeFilter'
+import { getLibraryVersionPath } from './library-version'
+import { useLibraryJavaApiDiff } from './useLibraryJavaApi'
 
 export const LibraryChangesTab: FC<{ version: LibraryVersionDto }> = ({ version }) => {
   const [query] = useSearchParams()
-  const [severity, setSeverity] = useState<typeof SEVERITIES[number]>('all')
-  const [changeType, setChangeType] = useState<typeof CHANGE_TYPES[number]>('all')
-  const [page, setPage] = useState(0)
-  const [selected, setSelected] = useState<LibraryChangeDto>()
-  const { data, isLoading, error } = useLibraryChanges({
-    libraryId: version.libraryId,
-    version: version.version,
-    previousLibraryId: query.get('previousLibraryId') ?? undefined,
-    previousVersion: query.get('previousVersion') ?? undefined,
-    classId: query.get('classId') ?? undefined,
-    severity: severity === 'all' ? undefined : severity,
-    changeType: changeType === 'all' ? undefined : changeType,
-    page: page,
-    limit: PAGE_SIZE,
-  })
-  const changes = data?.changes ?? []
+  const previous = getPreviousLibraryVersion(query)
+  const { data, isLoading, error } = useLibraryJavaApiDiff(version.libraryId, version.version, previous)
+  const [searchValue, setSearchValue] = useState('')
+  const [javaType] = useJavaTypeFilter()
+  const [severityFilters, setSeverityFilters] = useSeverityFiltersSearchParam()
+  const { hideFiltersPanel, toggleHideFiltersPanel } = usePortalPageSettingsContext()
+  const navigate = useNavigate()
+  const { pathname, search } = useLocation()
+  const setBackwardLocation = useSetBackwardLocationContext()
+  const matchingClasses = filterJavaClasses(data?.classes ?? [], searchValue, javaType)
+  // TODO(api-doc-viewer): drop the annotation once its .d.ts includes the next-data-model types
+  const classes = severityFilters.length
+    ? matchingClasses.filter(({ changes }) =>
+      changes.some(({ severity }: JavaApiChangeDescription) => severityFilters.includes(severity)),
+    )
+    : matchingClasses
+  const changesSummary = sumChangesSummaries(matchingClasses)
+  // the server compares with these defaults when the query names no other version
+  const previousLibraryId = previous.previousLibraryId ?? version.libraryId
+  const previousVersion = previous.previousVersion ?? version.previousVersion
+  const openClass = (className: string): void => {
+    setBackwardLocation(current => ({ ...current, fromOperation: { pathname, search } }))
+    navigate(getJavaClassPageLink(version.libraryId, version.version, className, 'diff', previous))
+  }
+
+  let body = (
+    <ListBox>
+      <JavaChangesTable classes={classes} onOpen={openClass} />
+    </ListBox>
+  )
+  if (isLoading) body = <LoadingIndicator />
+  else if (error) body = <Alert severity="error">{error.message}</Alert>
+  else if (!data) body = <Alert severity="info">No comparison has been computed for this version pair.</Alert>
+
   return (
-    <>
-      <BodyCard
-        header="API Changes"
-        action={
-          <Filters>
-            <TextField
-              select
-              label="Severity"
-              value={severity}
-              onChange={event => {
-                setSeverity(SEVERITIES.find(value => value === event.target.value) ?? 'all')
-                setPage(0)
-              }}
-            >
-              {SEVERITIES.map(value => (
-                <MenuItem key={value} value={value}>{value === 'all' ? 'All severities' : value}</MenuItem>
-              ))}
-            </TextField>
-            <TextField
-              select
-              label="Change type"
-              value={changeType}
-              onChange={event => {
-                setChangeType(CHANGE_TYPES.find(value => value === event.target.value) ?? 'all')
-                setPage(0)
-              }}
-            >
-              {CHANGE_TYPES.map(value => (
-                <MenuItem key={value} value={value}>{value === 'all' ? 'All change types' : value}</MenuItem>
-              ))}
-            </TextField>
-          </Filters>
-        }
-        body={
-          <>
-            {error && <Alert severity="error">{error.message}</Alert>}
-            {isLoading ? <LoadingIndicator /> : (
-              <>
-                {data && (
-                  <Typography variant="body2">{data.comparison.previousVersion} → {data.comparison.version}</Typography>
-                )}
-                {!data && !error && (
-                  <Alert severity="info">No comparison has been computed for this version pair.</Alert>
-                )}
-                {data && (
-                  <TableContainer>
-                    <Table aria-label="Java API changes">
-                      <TableHead>
-                        <TableRow>
-                          {['Class / Method', 'Change type', 'Severity', 'Description'].map(title => (
-                            <TableCell key={title}>{title}</TableCell>
-                          ))}
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {changes.map(change => (
-                          <TableRow key={change.changeId}>
-                            <TableCell>
-                              <Link
-                                component="button"
-                                onClick={() => setSelected(change)}
-                              >
-                                {change.details?.qualifiedName ?? change.classId}
-                                {change.methodId ? ` · ${change.methodId}` : ''}
-                              </Link>
-                            </TableCell>
-                            <TableCell>{change.changeType}</TableCell>
-                            <TableCell>
-                              <Chip
-                                label={change.severity}
-                                color={change.severity === 'breaking'
-                                  ? 'error'
-                                  : change.severity === 'non-breaking'
-                                  ? 'success'
-                                  : 'default'}
-                                size="small"
-                              />
-                            </TableCell>
-                            <TableCell>{change.description}</TableCell>
-                          </TableRow>
-                        ))}
-                        {!changes.length && (
-                          <TableRow>
-                            <TableCell colSpan={4}>No changes match your filters.</TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                )}
-              </>
-            )}
-            {data && (
-              <TablePagination
-                component="div"
-                count={-1}
-                page={page}
-                rowsPerPage={PAGE_SIZE}
-                rowsPerPageOptions={[PAGE_SIZE]}
-                onPageChange={(_, value) => setPage(value)}
-                nextIconButtonProps={{ disabled: isLoading || changes.length < PAGE_SIZE }}
-              />
-            )}
-          </>
-        }
-      />
-      <Dialog open={!!selected} onClose={() => setSelected(undefined)} fullWidth maxWidth="md">
-        <DialogTitle>{selected?.description}</DialogTitle>
-        <DialogContent>
-          <Typography variant="subtitle2">Previous signature</Typography>
-          <Signature>{selected?.details?.oldSignature ?? '—'}</Signature>
-          <Typography variant="subtitle2">Current signature</Typography>
-          <Signature>{selected?.details?.newSignature ?? '—'}</Signature>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setSelected(undefined)}>Close</Button>
-        </DialogActions>
-      </Dialog>
-    </>
+    <RichFiltersLayout
+      title={
+        <PageTitle
+          title={previousVersion ? 'API changes compared to' : 'API changes'}
+          titleComponent={previousVersion && (
+            <TextWithOverflowTooltip tooltipText={previousVersion} variant="inherit" sx={{ minWidth: 0 }}>
+              <Link
+                component={NavLink}
+                to={getLibraryVersionPath(previousLibraryId, previousVersion)}
+                data-testid="ComparedToLink"
+              >
+                {previousVersion}
+              </Link>
+            </TextWithOverflowTooltip>
+          )}
+        />
+      }
+      searchPlaceholder="Search Java types"
+      setSearchValue={setSearchValue}
+      hideFiltersPanel={hideFiltersPanel}
+      onClickFilterButton={toggleHideFiltersPanel}
+      filtersApplied={!!javaType}
+      filters={<JavaTypeFilter />}
+      hideViewToggle
+      hideExport
+      additionalActions={data && (
+        <ChangeSeverityFilters
+          changes={changesSummary}
+          changeSeverities={JAVA_CHANGE_SEVERITIES}
+          filters={severityFilters}
+          handleFilters={selected => setSeverityFilters(selected.toString())}
+          category={CATEGORY_OPERATION}
+        />
+      )}
+      body={body}
+      data-testid="LibraryChangesTab"
+    />
   )
 }
 LibraryChangesTab.displayName = 'LibraryChangesTab'
-
-const Filters = styled(Box)(({ theme }) => ({ display: 'flex', gap: theme.spacing(1), minWidth: theme.spacing(35) }))
-const Signature = styled(Typography)(({ theme }) => ({
-  margin: theme.spacing(1, 0, 2),
-  overflowWrap: 'anywhere',
-  fontFamily: 'monospace',
-}))
