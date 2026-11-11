@@ -169,13 +169,14 @@ export type PublishOptions = {
 
 function toPublishOptions(
   packageKey: Key,
-  { previousVersion, status, version, labels, files, sources, refs }: Options,
+  { previousVersion, previousVersionPackageId, status, version, labels, files, sources, refs }: Options,
   createdBy: Key,
 ): PublishOptions {
   return {
     packageId: packageKey ?? '',
     version: version,
     previousVersion: getSplittedVersionKey(previousVersion).versionKey,
+    previousVersionPackageId: previousVersionPackageId,
     status: status as VersionStatus,
     createdBy: createdBy,
     refs: refs.map(toBuildConfigRef),
@@ -201,6 +202,7 @@ type Options = {
   version: string
   status: string
   previousVersion?: string
+  previousVersionPackageId?: Key
   refs: PackageReference[]
   labels?: string[]
   files?: BuildConfigFile[]
