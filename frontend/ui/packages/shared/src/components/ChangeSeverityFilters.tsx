@@ -45,8 +45,8 @@ export const ChangeSeverityFilters: FC<ChangeSeverityFiltersProps> = memo<Change
     return null
   }
 
-  const filtersLayout = (Object.keys(changes) as Array<ChangeSeverity>).map(severity => {
-    return changeSeverities.has(severity) ? (
+  const filtersLayout = Array.from(changeSeverities).map(severity => {
+    return changes[severity] !== undefined ? (
       <ToggleButton key={severity} value={severity} data-testid={`ChangesFilterButton-${severity}`}>
         <ChangesTooltip changeType={severity} category={category}>
           <Box alignItems="center" display="flex">
