@@ -3,9 +3,8 @@ package view
 const DdlTableGroupTablesLimit = 5000
 
 type CreateDdlTableGroupReq struct {
-	GroupName   string          `json:"groupName" validate:"required"`
-	Description string          `json:"description"`
-	Tables      []DdlGroupTable `json:"tables" validate:"dive"`
+	GroupName   string `json:"groupName" validate:"required"`
+	Description string `json:"description"`
 }
 
 type UpdateDdlTableGroupReq struct {

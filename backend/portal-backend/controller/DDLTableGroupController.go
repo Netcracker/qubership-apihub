@@ -44,47 +44,6 @@ type ddlTableGroupControllerImpl struct {
 	responder            responder.Responder
 }
 
-func (c *ddlTableGroupControllerImpl) checkReadAccess(w http.ResponseWriter, r *http.Request, packageId string) bool {
-	ctx := secctx.MakeUserContext(r)
-	ok, err := c.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
-	if err != nil {
-		handlePkgRedirectOrRespondWithError(w, r, c.responder, c.ptHandler, packageId, "Failed to check user privileges", err)
-		return false
-	}
-	if !ok {
-		c.responder.RespondWithCustomError(w, &exception.CustomError{
-			Status:  http.StatusForbidden,
-			Code:    exception.InsufficientPrivileges,
-			Message: exception.InsufficientPrivilegesMsg,
-		})
-		return false
-	}
-	return true
-}
-
-func (c *ddlTableGroupControllerImpl) checkManageVersionAccess(w http.ResponseWriter, r *http.Request, packageId, versionName string) bool {
-	ctx := secctx.MakeUserContext(r)
-	versionStatus, err := c.versionService.GetVersionStatus(ctx, packageId, versionName)
-	if err != nil {
-		handlePkgRedirectOrRespondWithError(w, r, c.responder, c.ptHandler, packageId, "Failed to check user privileges", err)
-		return false
-	}
-	ok, err := c.roleService.HasManageVersionPermission(ctx, packageId, versionStatus)
-	if err != nil {
-		handlePkgRedirectOrRespondWithError(w, r, c.responder, c.ptHandler, packageId, "Failed to check user privileges", err)
-		return false
-	}
-	if !ok {
-		c.responder.RespondWithCustomError(w, &exception.CustomError{
-			Status:  http.StatusForbidden,
-			Code:    exception.InsufficientPrivileges,
-			Message: exception.InsufficientPrivilegesMsg,
-		})
-		return false
-	}
-	return true
-}
-
 func (c *ddlTableGroupControllerImpl) readJsonRequestBody(w http.ResponseWriter, r *http.Request, req interface{}) bool {
 	defer r.Body.Close()
 	body, err := io.ReadAll(r.Body)
@@ -124,7 +83,7 @@ func (c *ddlTableGroupControllerImpl) readJsonRequestBody(w http.ResponseWriter,
 
 func (c *ddlTableGroupControllerImpl) ListDdlTableGroups(w http.ResponseWriter, r *http.Request) {
 	packageId := getStringParam(r, "packageId")
-	if !c.checkReadAccess(w, r, packageId) {
+	if !checkReadAccess(w, r, c.roleService, c.ptHandler, c.responder, packageId) {
 		return
 	}
 	versionName, err := getUnescapedStringParam(r, "version")
@@ -149,7 +108,7 @@ func (c *ddlTableGroupControllerImpl) ListDdlTableGroups(w http.ResponseWriter, 
 
 func (c *ddlTableGroupControllerImpl) GetGroupedDdlEntities(w http.ResponseWriter, r *http.Request) {
 	packageId := getStringParam(r, "packageId")
-	if !c.checkReadAccess(w, r, packageId) {
+	if !checkReadAccess(w, r, c.roleService, c.ptHandler, c.responder, packageId) {
 		return
 	}
 	versionName, err := getUnescapedStringParam(r, "version")
@@ -208,7 +167,7 @@ func (c *ddlTableGroupControllerImpl) CreateDdlTableGroup(w http.ResponseWriter,
 		})
 		return
 	}
-	if !c.checkManageVersionAccess(w, r, packageId, versionName) {
+	if !checkManageVersionAccess(w, r, c.roleService, c.versionService, c.ptHandler, c.responder, packageId, versionName) {
 		return
 	}
 	var req view.CreateDdlTableGroupReq
@@ -247,7 +206,7 @@ func (c *ddlTableGroupControllerImpl) UpdateDdlTableGroup(w http.ResponseWriter,
 		})
 		return
 	}
-	if !c.checkManageVersionAccess(w, r, packageId, versionName) {
+	if !checkManageVersionAccess(w, r, c.roleService, c.versionService, c.ptHandler, c.responder, packageId, versionName) {
 		return
 	}
 	var req view.UpdateDdlTableGroupReq
@@ -286,7 +245,7 @@ func (c *ddlTableGroupControllerImpl) DeleteDdlTableGroup(w http.ResponseWriter,
 		})
 		return
 	}
-	if !c.checkManageVersionAccess(w, r, packageId, versionName) {
+	if !checkManageVersionAccess(w, r, c.roleService, c.versionService, c.ptHandler, c.responder, packageId, versionName) {
 		return
 	}
 	ctx := secctx.MakeUserContext(r)

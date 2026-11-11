@@ -152,11 +152,7 @@ func (s *ddlTableGroupServiceImpl) CreateDdlTableGroup(ctx context.Context, pack
 		GroupId:     uuid.NewString(),
 		Description: req.Description,
 	}
-	members, err := s.makeGroupedDdlTableEntities(ctx, versionEnt, newGroup, req.Tables)
-	if err != nil {
-		return err
-	}
-	return s.ddlTableGroupRepo.CreateDdlTableGroup(ctx, newGroup, members)
+	return s.ddlTableGroupRepo.CreateDdlTableGroup(ctx, newGroup, nil)
 }
 
 func (s *ddlTableGroupServiceImpl) UpdateDdlTableGroup(ctx context.Context, packageId, versionName, groupName string, req view.UpdateDdlTableGroupReq) error {

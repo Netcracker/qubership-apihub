@@ -7027,8 +7027,9 @@ paths:
         - Operation groups
       summary: Create DDL table group
       description: |
-        Create a manual DDL table group on a package version. The group name must be unique within the
-        package version revision. A group may hold at most 5000 DDL entities.
+        Create an empty manual DDL table group on a package version. The group name must be unique within
+        the package version revision. Add DDL entities to the group afterward with the update operation,
+        which accepts at most 5000 of them.
       operationId: createPackageVersionDdlTableGroup
       parameters:
         - $ref: "#/components/parameters/packageId"
@@ -12809,7 +12810,9 @@ components:
           type: string
           example: "public-table-users"
     CreateDdlTableGroupReq:
-      description: Request to create a manual DDL table group.
+      description: |
+        Request to create an empty manual DDL table group. Add DDL entities to the group afterward with
+        the update operation.
       type: object
       required:
         - groupName
@@ -12820,11 +12823,6 @@ components:
         description:
           type: string
           example: "Tables owned by the billing domain"
-        tables:
-          description: DDL entities of the group. At most 5000 entries.
-          type: array
-          items:
-            $ref: "#/components/schemas/DdlGroupTable"
     UpdateDdlTableGroupReq:
       description: |
         Request to update a manual DDL table group. Only the properties present in the body are changed; a

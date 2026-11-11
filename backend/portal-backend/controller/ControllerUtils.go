@@ -15,6 +15,7 @@ import (
 	"github.com/Netcracker/qubership-apihub/backend/portal-backend/service"
 
 	"github.com/Netcracker/qubership-apihub/backend/portal-backend/exception"
+	"github.com/Netcracker/qubership-apihub/backend/portal-backend/secctx"
 	"github.com/Netcracker/qubership-apihub/backend/portal-backend/view"
 	"github.com/gorilla/mux"
 )
@@ -254,6 +255,50 @@ func getOffsetQueryParam(r *http.Request) (int, *exception.CustomError) {
 		}
 	}
 	return offset, nil
+}
+
+// checkReadAccess responds with 403 and returns false when the user lacks read permission on packageId.
+func checkReadAccess(w http.ResponseWriter, r *http.Request, roleService service.RoleService, ptHandler service.PackageTransitionHandler, resp responder.Responder, packageId string) bool {
+	ctx := secctx.MakeUserContext(r)
+	ok, err := roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
+	if err != nil {
+		handlePkgRedirectOrRespondWithError(w, r, resp, ptHandler, packageId, "Failed to check user privileges", err)
+		return false
+	}
+	if !ok {
+		resp.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusForbidden,
+			Code:    exception.InsufficientPrivileges,
+			Message: exception.InsufficientPrivilegesMsg,
+		})
+		return false
+	}
+	return true
+}
+
+// checkManageVersionAccess responds with 403 and returns false when the user lacks permission to manage
+// versionName given its current status.
+func checkManageVersionAccess(w http.ResponseWriter, r *http.Request, roleService service.RoleService, versionService service.VersionService, ptHandler service.PackageTransitionHandler, resp responder.Responder, packageId, versionName string) bool {
+	ctx := secctx.MakeUserContext(r)
+	versionStatus, err := versionService.GetVersionStatus(ctx, packageId, versionName)
+	if err != nil {
+		handlePkgRedirectOrRespondWithError(w, r, resp, ptHandler, packageId, "Failed to check user privileges", err)
+		return false
+	}
+	ok, err := roleService.HasManageVersionPermission(ctx, packageId, versionStatus)
+	if err != nil {
+		handlePkgRedirectOrRespondWithError(w, r, resp, ptHandler, packageId, "Failed to check user privileges", err)
+		return false
+	}
+	if !ok {
+		resp.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusForbidden,
+			Code:    exception.InsufficientPrivileges,
+			Message: exception.InsufficientPrivilegesMsg,
+		})
+		return false
+	}
+	return true
 }
 
 // TODO: duplicate in v2
