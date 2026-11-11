@@ -6976,7 +6976,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -7052,7 +7052,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -7145,7 +7145,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -7221,7 +7221,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
@@ -7289,7 +7289,7 @@ paths:
             Location:
               schema:
                 type: string
-              description: Current ednpoint with new packageId of moved package
+              description: Current endpoint with new packageId of moved package
             X-New-Package-Id:
               schema:
                 type: string
