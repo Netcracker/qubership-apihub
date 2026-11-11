@@ -1,0 +1,7 @@
+---
+paths:
+  - "docs/design/contract-types/**/*.md"
+---
+
+When you fill or verify **Related API**, **API / Logic**, or Execution API bullets in a T1/T2/T3 design under
+`docs/design/contract-types/`, apply the `apihub-design-api-trace` skill.
