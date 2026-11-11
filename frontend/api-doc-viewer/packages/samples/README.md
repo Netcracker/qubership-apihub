@@ -26,6 +26,7 @@ its output folder must not share it with hand-written files.
 | `ddlapi/` | DDL API | plain | [ddlapi/README.md](ddlapi/README.md) |
 | `ddlapi-diffs/` | DDL API | with diffs | [ddlapi-diffs/README.md](ddlapi-diffs/README.md) |
 | `jso-diffs/` | JSO | with diffs | [jso-diffs/README.md](jso-diffs/README.md) |
+| `javaapi/` | Java API (prototype) | plain and diff source | [javaapi/README.md](javaapi/README.md) |
 
 Plain AsyncAPI and plain JSO stories use inline data under `packages/api-doc-viewer/src/stories/`.
 `*.generated.*` compatibility-suite artifacts come from the external

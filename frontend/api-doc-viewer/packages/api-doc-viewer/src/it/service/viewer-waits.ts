@@ -70,6 +70,11 @@ export async function waitForDdlTableDiffsViewer(page: Page): Promise<void> {
   await waitForRenderingComplete(page)
 }
 
+export async function waitForJavaClassViewer(page: Page): Promise<void> {
+  await page.waitForSelector('[data-testid="java-class-viewer"]', { visible: true })
+  await waitForRenderingComplete(page)
+}
+
 /** Waits for an optional viewer selector (compatibility-suite generated ITs pass one per spec type). */
 export async function waitForVisibleSelector(page: Page, selector: string | undefined): Promise<void> {
   if (selector === undefined) {

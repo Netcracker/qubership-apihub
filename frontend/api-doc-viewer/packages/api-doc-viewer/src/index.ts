@@ -5,6 +5,25 @@ export * from './components/AsyncApiOperationViewer/AsyncApiOperationDiffsViewer
 export * from './components/AsyncApiOperationViewer/AsyncApiOperationViewer'
 export * from './components/DdlTableViewer/DdlTableDiffsViewer'
 export * from './components/DdlTableViewer/DdlTableViewer'
+export { JavaElementIcon } from './components/JavaClassViewer/JavaElementIcon'
+export type { JavaElementIconKind } from './components/JavaClassViewer/JavaElementIcon'
+export { JAVA_API_TYPE_KIND_TITLES } from './components/JavaClassViewer/consts'
+export {
+  JavaApiChangeActions,
+  JavaApiChangeSeverities,
+  JavaApiClassListBuilder,
+} from '@netcracker/qubership-apihub-next-data-model'
+export type {
+  ClassKey as JavaClassKey,
+  JavaApiChangeAction,
+  JavaApiChangeDescription,
+  JavaApiChangeSeverity,
+  JavaApiClassListItem,
+  JavaApiMemberCountKind,
+  JavaApiNavigationLinkBuilder,
+  JavaApiRawElement,
+} from '@netcracker/qubership-apihub-next-data-model'
+export * from './components/JavaClassViewer/JavaClassViewer'
 export * from './components/GraphQLOperationViewer/GraphQLOperationDiffViewer'
 export * from './components/GraphQLOperationViewer/GraphQLOperationViewer'
 export * from './components/JsonSchemaViewer/JsonSchemaViewer'

@@ -1,0 +1,92 @@
+{
+  "tool" : "jdiff",
+  "toolVersion" : "0.1.0",
+  "mode" : "api-diff",
+  "generatedAt" : "2026-01-01T00:00:01Z",
+  "input" : {
+    "newVersion" : "1.1.0",
+    "gav" : "com.example:example-catalog-library",
+    "oldVersion" : "1.0.0"
+  },
+  "artifacts" : [ {
+    "groupId" : "com.example",
+    "artifactId" : "example-catalog-library",
+    "oldVersion" : "1.0.0",
+    "newVersion" : "1.1.0",
+    "semverVerdict" : "MAJOR",
+    "changes" : [ {
+      "className" : "com.example.catalog.model.Order",
+      "elementType" : "CLASS",
+      "status" : "MODIFIED",
+      "changeTypes" : [ ],
+      "binaryCompatible" : false,
+      "sourceCompatible" : false,
+      "breaking" : true,
+      "semver" : "MAJOR"
+    }, {
+      "className" : "com.example.catalog.model.Order",
+      "elementType" : "CONSTRUCTOR",
+      "member" : "Order(java.lang.String, java.lang.Long, java.lang.Boolean, java.util.List)",
+      "status" : "REMOVED",
+      "changeTypes" : [ "CONSTRUCTOR_REMOVED" ],
+      "details" : "Modifier: NON_FINAL -> n.a.; Modifier: NON_STATIC -> n.a.; Modifier: PUBLIC -> n.a.; Modifier: NON_ABSTRACT -> n.a.; Modifier: NON_BRIDGE -> n.a.; Modifier: NON_SYNTHETIC -> n.a.",
+      "binaryCompatible" : false,
+      "sourceCompatible" : false,
+      "breaking" : true,
+      "semver" : "MAJOR"
+    }, {
+      "className" : "com.example.catalog.model.Order",
+      "elementType" : "CONSTRUCTOR",
+      "member" : "Order(java.lang.String, java.lang.Long, java.lang.Boolean)",
+      "status" : "NEW",
+      "changeTypes" : [ ],
+      "details" : "Modifier: n.a. -> NON_FINAL; Modifier: n.a. -> NON_STATIC; Modifier: n.a. -> PUBLIC; Modifier: n.a. -> NON_ABSTRACT; Modifier: n.a. -> NON_BRIDGE; Modifier: n.a. -> NON_SYNTHETIC",
+      "binaryCompatible" : true,
+      "sourceCompatible" : true,
+      "breaking" : false,
+      "semver" : "MINOR"
+    }, {
+      "className" : "com.example.catalog.model.Order",
+      "elementType" : "METHOD",
+      "member" : "java.util.List getTagIds()",
+      "status" : "REMOVED",
+      "changeTypes" : [ "METHOD_REMOVED" ],
+      "details" : "Modifier: NON_FINAL -> n.a.; Modifier: NON_STATIC -> n.a.; Modifier: PUBLIC -> n.a.; Modifier: NON_ABSTRACT -> n.a.; Modifier: NON_BRIDGE -> n.a.; Modifier: NON_SYNTHETIC -> n.a.; Return type: java.util.List -> n.a.",
+      "binaryCompatible" : false,
+      "sourceCompatible" : false,
+      "breaking" : true,
+      "semver" : "MAJOR"
+    }, {
+      "className" : "com.example.catalog.model.Order",
+      "elementType" : "METHOD",
+      "member" : "void setTagIds(java.util.List)",
+      "status" : "REMOVED",
+      "changeTypes" : [ "METHOD_REMOVED" ],
+      "details" : "Modifier: NON_FINAL -> n.a.; Modifier: NON_STATIC -> n.a.; Modifier: PUBLIC -> n.a.; Modifier: NON_ABSTRACT -> n.a.; Modifier: NON_BRIDGE -> n.a.; Modifier: NON_SYNTHETIC -> n.a.; Return type: void -> n.a.",
+      "binaryCompatible" : false,
+      "sourceCompatible" : false,
+      "breaking" : true,
+      "semver" : "MAJOR"
+    }, {
+      "className" : "com.example.catalog.model.Order$OrderBuilder",
+      "elementType" : "CLASS",
+      "status" : "MODIFIED",
+      "changeTypes" : [ ],
+      "binaryCompatible" : false,
+      "sourceCompatible" : false,
+      "breaking" : true,
+      "semver" : "MAJOR"
+    }, {
+      "className" : "com.example.catalog.model.Order$OrderBuilder",
+      "elementType" : "METHOD",
+      "member" : "com.example.catalog.model.Order$OrderBuilder tagIds(java.util.List)",
+      "status" : "REMOVED",
+      "changeTypes" : [ "METHOD_REMOVED" ],
+      "details" : "Modifier: NON_FINAL -> n.a.; Modifier: NON_STATIC -> n.a.; Modifier: PUBLIC -> n.a.; Modifier: NON_ABSTRACT -> n.a.; Modifier: NON_BRIDGE -> n.a.; Modifier: NON_SYNTHETIC -> n.a.; Return type: com.example.catalog.model.Order$OrderBuilder -> n.a.",
+      "binaryCompatible" : false,
+      "sourceCompatible" : false,
+      "breaking" : true,
+      "semver" : "MAJOR"
+    } ]
+  } ]
+}
