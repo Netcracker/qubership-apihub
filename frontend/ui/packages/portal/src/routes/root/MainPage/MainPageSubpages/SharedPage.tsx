@@ -25,10 +25,10 @@ import { useActivityHistory } from '../../useActivityHistory'
 import { ActivityHistoryCard } from './ActivityHistoryCard'
 import { Box } from '@mui/material'
 import { DASHBOARD_KIND, PACKAGE_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
+import { useDocumentTitle } from '@netcracker/qubership-apihub-ui-shared/hooks/common/useDocumentTitle'
 import { MainPageCard } from '@portal/routes/root/MainPage/MainPageCard'
 import { SHARED_PAGE_REFERER } from '@portal/entities/referer-pages-names'
 import { PAGE_TITLES } from '@portal/routes/pageTitles'
-import { useDocumentTitle } from '@netcracker/qubership-apihub-ui-shared/hooks/common/useDocumentTitle'
 
 export const SharedPage: FC = memo(() => {
   useDocumentTitle(PAGE_TITLES.shared())

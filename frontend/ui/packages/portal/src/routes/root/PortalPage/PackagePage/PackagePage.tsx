@@ -24,11 +24,11 @@ import { DASHBOARD_KIND, PACKAGE_KIND } from '@netcracker/qubership-apihub-ui-sh
 import { getSplittedVersionKey } from '@netcracker/qubership-apihub-ui-shared/utils/versions'
 import { LoadingIndicator } from '@netcracker/qubership-apihub-ui-shared/components/LoadingIndicator'
 import { PageLayout } from '@netcracker/qubership-apihub-ui-shared/components/PageLayout'
+import { useDocumentTitle } from '@netcracker/qubership-apihub-ui-shared/hooks/common/useDocumentTitle'
 import {
   PublishDashboardVersionFromCSVDialog,
 } from '@portal/routes/root/PortalPage/DashboardPage/PublishDashboardVersionFromCSVDialog'
 import { PAGE_TITLES } from '@portal/routes/pageTitles'
-import { useDocumentTitle } from '@netcracker/qubership-apihub-ui-shared/hooks/common/useDocumentTitle'
 
 export const PackagePage: FC = memo(() => {
   const [packageObject, isPackageLoading] = usePackage({ showParents: true })

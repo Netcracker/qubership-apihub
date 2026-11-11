@@ -34,8 +34,8 @@ import { isBoolean } from '@netcracker/qubership-apihub-ui-shared/utils/types'
 import { ToolbarTitle } from '@netcracker/qubership-apihub-ui-shared/components/ToolbarTitle'
 import { MainPageCard } from '@portal/routes/root/MainPage/MainPageCard'
 import { CONTENT_PLACEHOLDER_AREA, NO_PERMISSION, Placeholder } from '@netcracker/qubership-apihub-ui-shared/components/Placeholder'
-import { PAGE_TITLES } from '@portal/routes/pageTitles'
 import { useDocumentTitle } from '@netcracker/qubership-apihub-ui-shared/hooks/common/useDocumentTitle'
+import { PAGE_TITLES } from '@portal/routes/pageTitles'
 
 export const WorkspacePage: FC = memo(() => {
   const { workspaceKey = '' } = useParams()

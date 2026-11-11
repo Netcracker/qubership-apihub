@@ -34,6 +34,11 @@ describe('portal page titles', () => {
       .toBe('API Quality · REST API | APIHUB')
   })
 
+  it('names the configuration page after the package kind once the package is loaded', () => {
+    expect(title(PAGE_TITLES.configure(undefined))).toBe('APIHUB')
+    expect(title(PAGE_TITLES.configure('dashboard'))).toBe('Configure Dashboard | APIHUB')
+  })
+
   it('titles contract types and a contract that is still loading', () => {
     expect(title(PAGE_TITLES.contract('users', 'ddl'))).toBe('users · DDL | APIHUB')
     expect(title(PAGE_TITLES.contract(undefined, 'rest'))).toBe('Operation · REST API | APIHUB')

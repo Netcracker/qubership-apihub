@@ -2,6 +2,7 @@ import { type FC, memo, type ReactNode, useMemo } from 'react'
 
 import { PageLayout } from '@netcracker/qubership-apihub-ui-shared/components/PageLayout'
 import { DASHBOARD_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
+import { useDocumentTitle } from '@netcracker/qubership-apihub-ui-shared/hooks/common/useDocumentTitle'
 
 import { useCompareBreadcrumbs } from '@portal/routes/root/PortalPage/VersionPage/useCompareBreadcrumbs'
 import { useComparisonObjects } from '@portal/routes/root/PortalPage/VersionPage/useComparisonObjects'
@@ -20,7 +21,6 @@ import { DashboardsCompareContent } from './DashboardsCompareContent'
 import { useVersionCompareSidebar } from './useVersionCompareSidebar'
 import { VersionCompareContent } from './VersionCompareContent'
 import { PAGE_TITLES } from '@portal/routes/pageTitles'
-import { useDocumentTitle } from '@netcracker/qubership-apihub-ui-shared/hooks/common/useDocumentTitle'
 import { useComparisonTitleSides } from '@portal/routes/useVersionPageTitle'
 
 export const VersionComparePage: FC = memo(() => {

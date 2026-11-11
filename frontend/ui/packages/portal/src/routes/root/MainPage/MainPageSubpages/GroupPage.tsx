@@ -33,8 +33,8 @@ import { usePackageActivityHistory } from '../../useActivityHistory'
 import { MainPageCard } from '@portal/routes/root/MainPage/MainPageCard'
 import { ToolbarTitle } from '@netcracker/qubership-apihub-ui-shared/components/ToolbarTitle'
 import { isBoolean } from '@netcracker/qubership-apihub-ui-shared/utils/types'
-import { PAGE_TITLES } from '@portal/routes/pageTitles'
 import { useDocumentTitle } from '@netcracker/qubership-apihub-ui-shared/hooks/common/useDocumentTitle'
+import { PAGE_TITLES } from '@portal/routes/pageTitles'
 
 export const GroupPage: FC = memo(() => {
   const { groupId: groupKey = '' } = useParams()

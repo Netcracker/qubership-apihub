@@ -6,8 +6,13 @@ const title = (segments: DocumentTitleSegments): string => buildDocumentTitle(se
 
 describe('agent page titles', () => {
   it('names the agent on the welcome page only when one is selected', () => {
-    expect(title(PAGE_TITLES.welcome(undefined))).toBe('Select Namespace | APIHUB Agent')
-    expect(title(PAGE_TITLES.welcome('cloud-1'))).toBe('Select Namespace · cloud-1 | APIHUB Agent')
+    expect(title(PAGE_TITLES.welcome({}))).toBe('Select Namespace | APIHUB Agent')
+    expect(title(PAGE_TITLES.welcome({ agentId: 'cloud-1' }))).toBe('Select Namespace · cloud-1 | APIHUB Agent')
+  })
+
+  it('names the selected namespace on the welcome page and asks for the workspace', () => {
+    expect(title(PAGE_TITLES.welcome({ agentId: 'cloud-1', namespaceKey: 'billing' })))
+      .toBe('Select Workspace · billing · cloud-1 | APIHUB Agent')
   })
 
   it('names a namespace tab with the namespace and the agent', () => {

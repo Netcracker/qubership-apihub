@@ -72,6 +72,8 @@ type NamespacePageBodyProps = {
   menuItem: NamespacePageRoute
 }
 
+// Owns the tab title, not NamespacePage: NamespacePage renders WelcomePage instead of this body until a workspace
+// is selected, and a title set in the parent would overwrite the one of WelcomePage.
 const NamespacePageBody: FC<NamespacePageBodyProps> = memo<NamespacePageBodyProps>(({ menuItem }) => {
   const { agentId, namespaceKey } = useParams()
   const [, subTab] = useActiveTabs()

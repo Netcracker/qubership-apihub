@@ -25,6 +25,7 @@ import { useComparisonParams } from '@portal/routes/root/PortalPage/VersionPage/
 import { LayoutWithToolbar } from '@netcracker/qubership-apihub-ui-shared/components/PageLayouts/LayoutWithToolbar'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import type { OperationData, OptionalOperationPair } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
+import { useDocumentTitle } from '@netcracker/qubership-apihub-ui-shared/hooks/common/useDocumentTitle'
 import type { FC } from 'react'
 import { memo } from 'react'
 import { useParams } from 'react-router-dom'
@@ -39,7 +40,6 @@ import { useOperation } from '../useOperation'
 import { useOperationLocation } from '../useOperationLocation'
 import { VersionsComparisonGlobalParamsContext } from '../VersionsComparisonGlobalParams'
 import { PAGE_TITLES } from '@portal/routes/pageTitles'
-import { useDocumentTitle } from '@netcracker/qubership-apihub-ui-shared/hooks/common/useDocumentTitle'
 import { useComparisonTitleSides } from '@portal/routes/useVersionPageTitle'
 
 export const DifferentOperationsComparisonPage: FC = memo(() => {

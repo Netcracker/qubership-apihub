@@ -1,3 +1,9 @@
+/*
+ * Wording of the portal tab titles: page names, tab names and the comparison arrow.
+ * The order of the parts is in `pageTitles.ts`; separators and the app name are common to all apps
+ * (`@netcracker/qubership-apihub-ui-shared/utils/document-title-labels`).
+ */
+
 import {
   ACCESS_TOKENS_PAGE,
   ACTIVITY_HISTORY_PAGE,

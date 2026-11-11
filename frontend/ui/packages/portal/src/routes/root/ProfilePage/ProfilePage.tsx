@@ -5,8 +5,8 @@ import { PERSONAL_ACCESS_TOKENS_PAGE, type ProfilePageRoute } from '../../../rou
 import { ProfileBody } from './ProfileBody'
 import { ProfileToolbar } from './ProfileToolbar'
 import { useActiveTabs } from '@netcracker/qubership-apihub-ui-shared/hooks/pathparams/useActiveTabs'
-import { PAGE_TITLES } from '@portal/routes/pageTitles'
 import { useDocumentTitle } from '@netcracker/qubership-apihub-ui-shared/hooks/common/useDocumentTitle'
+import { PAGE_TITLES } from '@portal/routes/pageTitles'
 
 export const ProfilePage: FC = memo(() => {
   const [menuItem] = useActiveTabs()

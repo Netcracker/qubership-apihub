@@ -1,3 +1,9 @@
+/*
+ * Wording of the Agent tab titles: the app name, page names and tab names.
+ * The order of the parts is in `pageTitles.ts`; separators are common to all apps
+ * (`@netcracker/qubership-apihub-ui-shared/utils/document-title-labels`).
+ */
+
 import {
   AUTHENTICATION_REPORTS_PAGE,
   AUTOMATION_PAGE,
@@ -18,6 +24,7 @@ export const AGENTS_APP_NAME = 'APIHUB Agent'
 
 export const PAGE_TITLE_LABELS = {
   selectNamespace: 'Select Namespace',
+  selectWorkspace: 'Select Workspace',
 } as const
 
 export const NAMESPACE_TAB_TITLES: Record<NamespaceTitleTab, string> = {

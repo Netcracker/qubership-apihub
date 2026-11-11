@@ -8,6 +8,7 @@
 
 import { getRouteApiTypeTitle, isApiContract } from '@netcracker/qubership-apihub-ui-shared/entities/contract-types'
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
+import { DASHBOARD_KIND, type PackageKind } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
 import { REVISION_DELIMITER } from '@netcracker/qubership-apihub-ui-shared/entities/versions'
 import {
   createDocumentTitleFormat,
@@ -101,9 +102,7 @@ export const PAGE_TITLES = {
   apiQuality: (apiType?: string): DocumentTitleSegments => [PAGE_TITLE_LABELS.apiQuality, toApiTypeTitle(apiType)],
   documents: (documentTitle?: string): DocumentTitleSegments => [documentTitle, PAGE_TITLE_LABELS.documents],
   documentPreview: (documentTitle?: string): DocumentTitleSegments => [documentTitle, PAGE_TITLE_LABELS.preview],
-  configure: (isDashboard: boolean): DocumentTitleSegments => [
-    isDashboard ? PAGE_TITLE_LABELS.configureDashboard : PAGE_TITLE_LABELS.configureVersion,
-  ],
+  configure: (packageKind?: PackageKind): DocumentTitleSegments => [toConfigureTitle(packageKind)],
 
   versionsComparison: versionsComparisonTitle,
   operationsComparison: (params: OperationsComparisonTitleParams): DocumentTitleSegments => [
@@ -133,6 +132,13 @@ function toTitleVersion(version: TitleVersion | undefined): string | undefined {
   const { versionKey, revisionKey } = getSplittedVersionKey(version.fullVersion)
   const isLatestRevision = version.latestRevision ?? true
   return isLatestRevision || !revisionKey ? versionKey : `${versionKey}${REVISION_DELIMITER}${revisionKey}`
+}
+
+function toConfigureTitle(packageKind: PackageKind | undefined): string | undefined {
+  if (!packageKind) {
+    return undefined
+  }
+  return packageKind === DASHBOARD_KIND ? PAGE_TITLE_LABELS.configureDashboard : PAGE_TITLE_LABELS.configureVersion
 }
 
 function toApiTypeTitle(apiType: string | undefined): DocumentTitleSegment {

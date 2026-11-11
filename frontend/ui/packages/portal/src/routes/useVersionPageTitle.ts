@@ -8,6 +8,12 @@ import type { ComparisonParams } from './root/PortalPage/VersionPage/useComparis
 import { usePackage } from './root/usePackage'
 import { useVersionWithRevision } from './root/useVersionWithRevision'
 
+/**
+ * Sets the title of a package version page: appends the package name and the version to the given segments.
+ * The package and the version come from the URL, so on a dashboard they stay the dashboard's even when a
+ * referenced package is selected. Both are read from the same queries as the page toolbar, so no extra
+ * request is made.
+ */
 export function useVersionPageTitle(segments: DocumentTitleSegments): void {
   const { packageId, versionId } = useParams()
   const [packageObject] = usePackage({ showParents: true })

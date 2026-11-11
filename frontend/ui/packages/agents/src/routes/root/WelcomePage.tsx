@@ -26,8 +26,8 @@ import { useDocumentTitle } from '@netcracker/qubership-apihub-ui-shared/hooks/c
 import { PAGE_TITLES } from '../pageTitles'
 
 export const WelcomePage: FC = memo(() => {
-  const { agentId } = useParams()
-  useDocumentTitle(PAGE_TITLES.welcome(agentId))
+  const { agentId, namespaceKey } = useParams()
+  useDocumentTitle(PAGE_TITLES.welcome({ agentId: agentId, namespaceKey: namespaceKey }))
 
   return (
     <PageLayout

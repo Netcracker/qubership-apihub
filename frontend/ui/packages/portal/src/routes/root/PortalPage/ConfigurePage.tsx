@@ -26,7 +26,7 @@ import { useVersionPageTitle } from '@portal/routes/useVersionPageTitle'
 export const ConfigurePage: FC = memo(() => {
   const { packageObj } = usePackage({ showParents: true })
   const isDashboard = packageObj?.kind === DASHBOARD_KIND
-  useVersionPageTitle(PAGE_TITLES.configure(isDashboard))
+  useVersionPageTitle(PAGE_TITLES.configure(packageObj?.kind))
 
   return isDashboard ? <ConfigureDashboardPage/> : <ConfigurePackageVersionPage/>
 })

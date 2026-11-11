@@ -1,3 +1,8 @@
+/*
+ * Browser tab titles of the Agent: which parts each page shows and in which order.
+ * Pages pass data and never build strings. The wording is in `pageTitleLabels.ts`.
+ */
+
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import {
   createDocumentTitleFormat,
@@ -7,6 +12,12 @@ import {
 
 import { AGENTS_APP_NAME, NAMESPACE_TAB_TITLES, type NamespaceTitleTab, PAGE_TITLE_LABELS } from './pageTitleLabels'
 import { SECURITY_REPORTS_PAGE } from './routes'
+
+type WelcomeTitleParams = Partial<{
+  agentId: Key
+  /** Set when the namespace is selected and only the workspace is missing. */
+  namespaceKey: Key
+}>
 
 type NamespaceTitleParams = Partial<{
   /** The namespace page tab, the first segment of the path after the namespace. */
@@ -20,7 +31,11 @@ type NamespaceTitleParams = Partial<{
 export const AGENTS_DOCUMENT_TITLE_FORMAT: DocumentTitleFormat = createDocumentTitleFormat(AGENTS_APP_NAME)
 
 export const PAGE_TITLES = {
-  welcome: (agentId?: Key): DocumentTitleSegments => [PAGE_TITLE_LABELS.selectNamespace, agentId],
+  welcome: ({ agentId, namespaceKey }: WelcomeTitleParams): DocumentTitleSegments => [
+    namespaceKey ? PAGE_TITLE_LABELS.selectWorkspace : PAGE_TITLE_LABELS.selectNamespace,
+    namespaceKey,
+    agentId,
+  ],
   namespace: ({ mode, subTab, namespaceKey, agentId }: NamespaceTitleParams): DocumentTitleSegments => [
     NAMESPACE_TAB_TITLES[toNamespaceTitleTab(mode, subTab)],
     namespaceKey,

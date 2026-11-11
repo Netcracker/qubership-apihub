@@ -32,8 +32,8 @@ const apispecViewDist = path.dirname(requireFromHere.resolve('@netcracker/qubers
 // The entry point of a running APIHUB: the UI nginx (port 8081 of the Docker Compose stacks, also when the backend
 // runs from the IDE) or the ingress of local Kubernetes. Not the backend itself: nginx strips the extension prefixes
 // such as /api-linter and forwards them to their services.
-const proxyServer = 'https://qubership-apihub.localtest.me'
-// const proxyServer = 'http://host.docker.internal:8081'
+// const proxyServer = 'https://qubership-apihub.localtest.me'
+const proxyServer = 'http://host.docker.internal:8081'
 
 // The legacy Express mock of `pnpm dev:backend`, the proxy target outside proxy mode (`pnpm dev:frontend`).
 // TODO(ui): remove it with the mock once MSW covers its routes; every prefix then goes to proxyServer.

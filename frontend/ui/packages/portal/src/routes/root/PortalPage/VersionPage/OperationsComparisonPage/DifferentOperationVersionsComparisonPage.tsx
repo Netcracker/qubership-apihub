@@ -52,6 +52,7 @@ import { useFlatVersionChangelog } from '@netcracker/qubership-apihub-ui-shared/
 import {
   usePagedVersionChangelog,
 } from '@netcracker/qubership-apihub-ui-shared/widgets/ChangesViewWidget/api/useCommonPagedVersionChangelog'
+import { useDocumentTitle } from '@netcracker/qubership-apihub-ui-shared/hooks/common/useDocumentTitle'
 import { Box, Typography } from '@mui/material'
 import type { FC } from 'react'
 import { memo, useEffect, useMemo, useState } from 'react'
@@ -80,7 +81,6 @@ import { DdlTableComparisonContent } from '../VersionContractsSubPage/DdlTableCo
 import { OperationsSidebarOnComparison } from './OperationsSidebarOnComparison'
 import { useDdlEntityComparisonState } from './useDdlEntityComparisonState'
 import { PAGE_TITLES } from '@portal/routes/pageTitles'
-import { useDocumentTitle } from '@netcracker/qubership-apihub-ui-shared/hooks/common/useDocumentTitle'
 import { useComparisonTitleSides } from '@portal/routes/useVersionPageTitle'
 
 function getOperationPairsFromPackageChanges(

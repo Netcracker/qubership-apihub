@@ -24,8 +24,8 @@ import { useActiveTabs } from '@netcracker/qubership-apihub-ui-shared/hooks/path
 import { useSuperAdminCheck } from '@netcracker/qubership-apihub-ui-shared/hooks/user-roles/useSuperAdminCheck'
 import { LayoutWithToolbar } from '@netcracker/qubership-apihub-ui-shared/components/PageLayouts/LayoutWithToolbar'
 import { CONTENT_PLACEHOLDER_AREA, NO_PERMISSION, Placeholder } from '@netcracker/qubership-apihub-ui-shared/components/Placeholder'
-import { PAGE_TITLES } from '@portal/routes/pageTitles'
 import { useDocumentTitle } from '@netcracker/qubership-apihub-ui-shared/hooks/common/useDocumentTitle'
+import { PAGE_TITLES } from '@portal/routes/pageTitles'
 
 export const SettingsPage: FC = memo(() => {
   const [menuItem] = useActiveTabs()

@@ -54,6 +54,7 @@ import {
   GROUP_SEARCH_PARAM,
   OPERATION_SEARCH_PARAM,
 } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
+import { useDocumentTitle } from '@netcracker/qubership-apihub-ui-shared/hooks/common/useDocumentTitle'
 import type { FC } from 'react'
 import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
@@ -80,7 +81,6 @@ import { useOperation } from '../useOperation'
 import { useOperationSearchParam } from '../useOperationSearchParam'
 import { OperationsSidebarOnComparison } from './OperationsSidebarOnComparison'
 import { PAGE_TITLES } from '@portal/routes/pageTitles'
-import { useDocumentTitle } from '@netcracker/qubership-apihub-ui-shared/hooks/common/useDocumentTitle'
 import { useComparisonTitleSides } from '@portal/routes/useVersionPageTitle'
 
 export function isOperationPairGrouped(
