@@ -21,6 +21,7 @@ import (
 const (
 	GIT_BRANCH           = "GIT_BRANCH"
 	GIT_HASH             = "GIT_HASH"
+	COMMIT_TIME          = "COMMIT_TIME"
 	APIHUB_CONFIG_FOLDER = "APIHUB_CONFIG_FOLDER"
 
 	LocalIDPId = "local-idp"
@@ -72,6 +73,7 @@ type SystemInfoService interface {
 	GetZeroDayAdminCreds() (string, string)
 	GetSystemApiKey() string
 	FailBuildOnBrokenRefs() bool
+	GetValidationRulesSeverity() view.ValidationRulesSeverity
 	GetAccessTokenDurationSec() int
 	GetRefreshTokenDurationSec() int
 	IsLegacySAML() bool
@@ -154,12 +156,13 @@ func (g *systemInfoServiceImpl) GetClientSecret() string {
 
 func (g *systemInfoServiceImpl) GetSystemInfo() *view.SystemInfo {
 	return &view.SystemInfo{
-		BackendVersion: g.GetBackendVersion(),
-		ProductionMode: g.IsProductionMode(),
-		Notification:   g.getSystemNotification(),
-		ExternalLinks:  g.GetExternalLinks(),
-		AiChatEnabled:  g.GetAiChatConfig().Enabled,
-		FeatureFlags:   g.GetFeatureFlags(),
+		BackendVersion:          g.GetBackendVersion(),
+		ProductionMode:          g.IsProductionMode(),
+		Notification:            g.getSystemNotification(),
+		ExternalLinks:           g.GetExternalLinks(),
+		AiChatEnabled:           g.GetAiChatConfig().Enabled,
+		FeatureFlags:            g.GetFeatureFlags(),
+		ValidationRulesSeverity: g.GetValidationRulesSeverity(),
 	}
 }
 
@@ -330,6 +333,9 @@ func (g *systemInfoServiceImpl) setBackendVersion() {
 		g.config.TechnicalParameters.BackendVersion = "unknown"
 	} else {
 		g.config.TechnicalParameters.BackendVersion = gitBranch + "." + gitHash
+		if commitTime := os.Getenv(COMMIT_TIME); commitTime != "" {
+			g.config.TechnicalParameters.BackendVersion += "." + commitTime
+		}
 	}
 }
 
@@ -508,6 +514,13 @@ func (g *systemInfoServiceImpl) GetSystemApiKey() string {
 
 func (g *systemInfoServiceImpl) FailBuildOnBrokenRefs() bool {
 	return g.config.BusinessParameters.FailBuildOnBrokenRefs
+}
+
+func (g *systemInfoServiceImpl) GetValidationRulesSeverity() view.ValidationRulesSeverity {
+	if g.FailBuildOnBrokenRefs() {
+		return view.ValidationRulesSeverity{BrokenRefs: view.BrokenRefsSeverityError}
+	}
+	return view.ValidationRulesSeverity{BrokenRefs: view.BrokenRefsSeverityWarning}
 }
 
 func (g *systemInfoServiceImpl) GetAccessTokenDurationSec() int {

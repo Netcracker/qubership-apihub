@@ -15,7 +15,8 @@
  *     checked.
  *
  *   node tools/agent/implement.js work             (job `implement`, OPENAI_API_KEY only)
- *     One attempt, in stages and without GitHub: the analysis (when the issue changed since the last one), the branch,
+ *     One attempt, in stages and without GitHub: the attachments of the issue (downloaded without a token, see
+ *     lib/attachments.js), the analysis (when the issue changed since the last one), the branch,
  *     rounds of implement (`implementer`), local commit, local checks, and self-review (`self-reviewer`, the other
  *     model), and the diff limits. It writes `outcome.json` (everything `publish` needs, the cost of every model call
  *     included, also when a stage failed) and `branch.bundle` (the commits) to AGENT_OUT.
@@ -36,6 +37,12 @@
  * refusals about the issue type's suitability, give the CI loop a fresh budget (`budgetFrom` in the state), and, when
  * the pull request of an earlier attempt is closed, start a new branch and pull request.
  *
+ * `AGENT_KIND=update` (`/agent update` on a pull request of the agent) merges the current `origin/develop` into the
+ * branch of that pull request and pushes the merge commit without force. A clean merge runs no model, no local checks,
+ * and no self-review: the script commits the merge, and CI on GitHub takes over. A merge with conflicts stays in the
+ * merge state, and the implementer resolves the conflicts in the usual rounds. The first commit of the rounds is the
+ * merge commit, and later rounds amend it.
+ *
  * `publish` does not trust the work job: it computes the diff of the pushed commits itself and enforces the diff
  * limits and the protected paths, and it opens every pull request as a draft. Only the CI gate marks one ready.
  *
@@ -48,9 +55,9 @@
  * Environment: GITHUB_REPOSITORY, GITHUB_TOKEN (`preflight`, `publish`), OPENAI_API_KEY (`work`), AGENT_PAT
  * (`preflight`, `publish`), AGENT_NUMBER (the issue), AGENT_COMMAND (JSON of the parsed command), AGENT_ACTOR (login of
  * the commenter or reviewer; a `ci-fix` attempt takes it from the state), AGENT_KIND (`initial`, the default,
- * `ci-fix`, `human`, or `review`), AGENT_PR (the pull request of a comment or a review), AGENT_COMMENT_ID (the comment
- * that gets the reactions), AGENT_RUN_URL, AGENT_OUT (folder for context, inputs, events, outcome, and bundle), the
- * AGENT_* variables of lib/config.js, GITHUB_OUTPUT, GITHUB_STEP_SUMMARY.
+ * `ci-fix`, `human`, `review`, or `update`), AGENT_PR (the pull request of a comment or a review), AGENT_COMMENT_ID
+ * (the comment that gets the reactions), AGENT_RUN_URL, AGENT_OUT (folder for context, inputs, events, outcome, and
+ * bundle), the AGENT_* variables of lib/config.js, GITHUB_OUTPUT, GITHUB_STEP_SUMMARY.
  */
 'use strict'
 
@@ -66,6 +73,7 @@ const { callAgent } = require('./lib/agent-call')
 const { SECRET_ENV } = require('./lib/opencode')
 const { untrusted } = require('./lib/prompt')
 const { inline, clip, tailLines, stripAnsi } = require('./lib/text')
+const { issueAttachments, renderAttachments, attachedNote } = require('./lib/attachments')
 const {
   runAnalysis,
   labelChanges,
@@ -170,22 +178,32 @@ function preflightDecision({ issue, state: st, command, now = Date.now() }) {
 }
 
 /**
- * What to do with an attempt that a person asked for (`kind` human or review): `/agent retry`, a change request on a
- * pull request of the agent, an answer to a hand-off, or a review with change requests. The person explicitly asked to
- * go on, so the labels and the verdict of the analysis do not refuse it; the issue must be open and typed, and no
- * attempt may be running.
- *
- * A change request or a review needs the open pull request that the state names, because it changes that branch. A
- * retry or an answer continues the open pull request of the earlier attempt, and starts a new branch and pull request
- * (`fresh`) when that pull request is closed or merged.
- *
- * @param {{ issue: object, state: object|null, command: { name?: string }|null, kind: 'human'|'review',
- *   pr: number|null, pull: object|null, now?: number }} input `pull` is the pull request of `state.pr`, or `null`
- * @returns {{ outcome: 'refuse-closed'|'refuse-type'|'refuse-busy'|'refuse-no-branch'|'refuse-pr-closed'|'proceed',
- *   fresh: boolean, changes: boolean }} `changes` is true for an attempt that changes the open pull request
+ * True for an attempt that changes the open pull request of the state: a review with change requests, an update, and a
+ * change request (the `chat` command on a pull request of the agent).
  */
-function humanDecision({ issue, state: st, command, kind, pr, pull, now = Date.now() }) {
-  const changes = kind === 'review' || command?.name === 'chat'
+const changesOpenPull = (kind, command) => kind === 'review' || kind === 'update' || command?.name === 'chat'
+
+/**
+ * What to do with an attempt that a person asked for (`kind` human, review, or update): `/agent retry`, a change
+ * request on a pull request of the agent, an answer to a hand-off, a review with change requests, or `/agent update`.
+ * The person explicitly asked to go on, so the labels and the verdict of the analysis do not refuse it; the issue must
+ * be open and typed, and no attempt may be running.
+ *
+ * A change request, a review, or an update needs the open pull request that the state names, because it changes that
+ * branch. A retry or an answer continues the open pull request of the earlier attempt, and starts a new branch and pull
+ * request (`fresh`) when that pull request is closed or merged. An update of a branch that already contains `develop`
+ * is refused.
+ *
+ * @param {{ issue: object, state: object|null, command: { name?: string }|null, kind: 'human'|'review'|'update',
+ *   pr: number|null, pull: object|null, behindBy?: number|null, now?: number }} input `pull` is the pull request of
+ *   `state.pr`, or `null`; `behindBy` is the number of commits of `develop` that the pull request lacks (an update
+ *   only), or `null` when unknown
+ * @returns {{ outcome: 'refuse-closed'|'refuse-type'|'refuse-busy'|'refuse-no-branch'|'refuse-pr-closed'
+ *   |'refuse-up-to-date'|'proceed', fresh: boolean, changes: boolean }} `changes` is true for an attempt that changes
+ *   the open pull request
+ */
+function humanDecision({ issue, state: st, command, kind, pr, pull, behindBy = null, now = Date.now() }) {
+  const changes = changesOpenPull(kind, command)
   const refuse = (outcome) => ({ outcome, fresh: false, changes })
   if (issue.state === 'closed') return refuse('refuse-closed')
   if (!Object.hasOwn(PLAYBOOKS, issue.type?.name ?? '')) return refuse('refuse-type')
@@ -196,6 +214,7 @@ function humanDecision({ issue, state: st, command, kind, pr, pull, now = Date.n
     if (!st?.branch || !st.pr || st.pr !== pr) return refuse('refuse-no-branch')
     if (!open) return refuse('refuse-pr-closed')
   }
+  if (kind === 'update' && behindBy === 0) return refuse('refuse-up-to-date')
   return { outcome: 'proceed', fresh: !changes && Boolean(st?.pr) && !open, changes }
 }
 
@@ -247,6 +266,8 @@ function refusalReply({ outcome, actor, issue, state: st }) {
     case 'refuse-pr-closed':
       return `${who}, the pull request is closed, so there is nothing to change on it. Comment ` +
         '`/agent retry` with guidance to start a new pull request.'
+    case 'refuse-up-to-date':
+      return `${who}, pull request #${st.pr} already contains the latest \`develop\`, so there is nothing to update.`
     default:
       throw new Error(`No reply for the outcome '${outcome}'`)
   }
@@ -401,11 +422,12 @@ function commitMessage({ type, scope, title, number, runUrl }) {
  * or unrelated answer says why, and `unrelated` (the failure is not caused by the change) is for a CI fix only. Throws
  * `ContractError`; returns the answer otherwise.
  *
- * @param {'initial'|'human'|'ci-fix'|'review'} [kind] why the attempt runs
+ * @param {'initial'|'human'|'ci-fix'|'review'|'update'} [kind] why the attempt runs; an update commits a merge, so its
+ *   commit type is not used and the playbook rule does not apply
  */
 function checkImplementation(output, playbook, kind) {
   const problems = []
-  if (playbook === 'bug-fix' && output.commitType !== 'fix') {
+  if (playbook === 'bug-fix' && kind !== 'update' && output.commitType !== 'fix') {
     problems.push(`commitType: a bug-fix must use 'fix', got '${output.commitType}'`)
   }
   if (output.status === 'blocked' && output.blockedReason.trim() === '') {
@@ -505,6 +527,7 @@ const NOTES_HEADING = {
   'ci-fix': 'Notes of the maintainer who asked for this implementation',
   human: "The maintainer's guidance",
   review: 'The review that asks for changes',
+  update: "The maintainer's guidance",
 }
 
 /** What the implementer of a CI fix does when the change did not cause the failure. */
@@ -553,8 +576,8 @@ function renderReviewThreads(threads, omitted = 0) {
  *
  * @param {object} input
  * @param {string} input.playbook `bug-fix` or `task`
- * @param {'initial'|'human'|'ci-fix'|'review'} input.kind why this attempt runs; `ci-fix` is started by the CI gate,
- *   `human` and `review` by a person
+ * @param {'initial'|'human'|'ci-fix'|'review'|'update'} input.kind why this attempt runs; `ci-fix` is started by the
+ *   CI gate, `human`, `review`, and `update` by a person
  * @param {object} input.issue
  * @param {object[]} input.comments the comments of the issue without the state comment; bot comments are skipped
  * @param {object|null} input.plan the plan of the analysis
@@ -566,17 +589,18 @@ function renderReviewThreads(threads, omitted = 0) {
  * @param {string} [input.ciReport] the CI report of a `ci-fix` attempt, with the log text of failed jobs
  * @param {object[]} [input.reviewThreads] the unresolved review threads of a `review` attempt that the implementer sees
  * @param {number} [input.omittedThreads] how many more unresolved threads were left out
+ * @param {string[]} [input.conflicts] the files with merge conflicts of an `update` attempt
  */
 function renderImplementInput({
   playbook, kind, issue, comments, plan, analysis, notes, attempts, round, previous, ciReport, reviewThreads,
-  omittedThreads = 0,
+  omittedThreads = 0, conflicts = [], attachments = [],
 }) {
   const people = comments.filter((c) => !isBot(c.user))
   const shown = people.slice(-MAX_COMMENTS)
   const out = [
     `# Implementation of issue #${issue.number}`,
     '',
-    `- Playbook: ${playbook}`,
+    `- Playbook: ${kind === 'update' ? 'none (this attempt merges develop)' : playbook}`,
     `- Issue type: ${issue.type?.name ?? 'none'}`,
     `- Attempt: ${(attempts?.length ?? 0) + 1} (${kind})`,
     `- Round: ${round}`,
@@ -598,6 +622,16 @@ function renderImplementInput({
         '',
       ]
       : []),
+    ...(kind === 'update'
+      ? [
+        'The pull request of this issue is open, and a maintainer asked to merge the latest `develop` into its ' +
+          'branch. The merge has started and stopped on conflicts. Resolve the conflicts in the files below and ' +
+          'nothing else: keep the change of the pull request and the change of `develop` in each file. Fix only ' +
+          'what the merge breaks.',
+        '',
+        ...renderConflictFiles(conflicts),
+      ]
+      : []),
     '## Title and description',
     '',
     `Written by ${issue.user?.login ?? 'unknown'} on ${issue.created_at ?? 'an unknown date'}.`,
@@ -615,6 +649,7 @@ function renderImplementInput({
     out.push(`Written by ${c.user?.login ?? 'unknown'} on ${c.created_at ?? 'an unknown date'}.`, '')
     out.push(untrusted(clipText(c.body)), '')
   }
+  out.push(...renderAttachments(attachments))
   out.push('## Plan of the analysis', '', ...renderPlan(plan, analysis), '')
   if (notes) out.push(`## ${NOTES_HEADING[kind] ?? NOTES_HEADING.initial}`, '', untrusted(notes), '')
   if (kind === 'review') out.push(...renderReviewThreads(reviewThreads ?? [], omittedThreads))
@@ -641,8 +676,16 @@ function renderImplementInput({
   return out.join('\n')
 }
 
+/**
+ * The files with merge conflicts of an `update` attempt. Git names them, but whoever wrote the branch chose the paths,
+ * so the list goes inside one `<untrusted>` block.
+ */
+function renderConflictFiles(conflicts) {
+  return ['## Files with conflicts', '', untrusted(conflicts.map((file) => `- \`${file}\``).join('\n')), '']
+}
+
 /** The text of `self-review-input.md`: the issue, the plan, the implementer's summary, and the commits to compare. */
-function renderSelfReviewInput({ issue, plan, analysis, notes, summary, base, head, kind }) {
+function renderSelfReviewInput({ issue, plan, analysis, notes, summary, base, head, kind, conflicts = [] }) {
   return [
     `# Self-review of the change for issue #${issue.number}`,
     '',
@@ -653,7 +696,13 @@ function renderSelfReviewInput({ issue, plan, analysis, notes, summary, base, he
       ? [`- This attempt fixes a red CI run: the last commit (\`git show ${head}\`) is the fix, and the comparison ` +
         'above is the whole branch.']
       : []),
+    ...(kind === 'update'
+      ? ['- This attempt merges `develop` into the branch: the head commit is the merge commit. Check that the ' +
+        'conflicts in\n  the files below keep both the change of the pull request and the change of `develop`, and ' +
+        'that the comparison\n  above still holds only the change of the pull request.']
+      : []),
     '',
+    ...(kind === 'update' ? renderConflictFiles(conflicts) : []),
     '## The issue',
     '',
     untrusted(`Title: ${issue.title}\n\n${clipText(issue.body)}`),
@@ -769,10 +818,13 @@ function ciHandOffLines(report, reason) {
  * @param {string} [input.ciReport] the CI report of a CI fix, for the hand-off texts
  * @param {{ names: string, counted: number, max: number }} [input.rerun] for `unrelated`: the failed checks (as
  *   `checkNames` writes them), the attempts counted so far, and the limit
+ * @param {string[]} [input.conflicts] for an `update`: the files that had merge conflicts
  */
 function renderOutcome({ result, number, pr, branch, attempt, implementation, checks, review, reason, message, runUrl,
-  totalUsd, kind, ciReport, rerun }) {
-  const retry = 'comment `/agent implement` with guidance to try again'
+  totalUsd, kind, ciReport, rerun, conflicts = [] }) {
+  const retry = kind === 'update'
+    ? UPDATE_RETRY
+    : 'comment `/agent implement` with guidance to try again'
   if (result === 'unrelated') {
     return [
       '### AI implementation: CI failed, but not because of this change',
@@ -795,6 +847,11 @@ function renderOutcome({ result, number, pr, branch, attempt, implementation, ch
       '',
       costLine(runUrl, totalUsd, retry),
     ].join('\n')
+  }
+  if (kind === 'update' && (result === 'pr-opened' || result === 'draft' || result === 'blocked')) {
+    return renderUpdateOutcome({
+      result, number, pr, branch, attempt, implementation, checks, review, reason, runUrl, totalUsd, conflicts,
+    })
   }
   if (result === 'blocked' && kind === 'ci-fix') {
     return [
@@ -843,18 +900,80 @@ function renderOutcome({ result, number, pr, branch, attempt, implementation, ch
   ]
   if (result === 'draft') {
     out.push('**What I tried**', '', inline(attempt.notes || implementation.notes || 'No notes.'), '')
-    out.push('**What is open**', '')
-    if (!checks.passed) {
-      for (const r of checks.results.filter((x) => x.exitCode !== 0)) {
-        out.push(`- Failing check: \`${r.command}\` (${r.timedOut ? 'timed out' : `exit code ${r.exitCode}`}).`)
-      }
-    }
-    for (const f of openFindings(review)) {
-      out.push(`- ${f.severity} at \`${f.file}${f.line ? `:${f.line}` : ''}\`: ${inline(f.body)}`)
-    }
+    out.push('**What is open**', '', ...openItems(checks, review))
     const what = ciFix ? 'pull request' : 'draft pull request'
     out.push('', `**What I need from you:** review the ${what}, push a fix to the branch, or comment ` +
       '`/agent implement` with guidance for another attempt.', '')
+  }
+  out.push(costLine(runUrl, totalUsd, `closes #${number} when merged`))
+  return out.join('\n')
+}
+
+/** The failing checks and the open findings of a draft, as bullets. */
+function openItems(checks, review) {
+  const out = []
+  if (!checks.passed) {
+    for (const r of checks.results.filter((x) => x.exitCode !== 0)) {
+      out.push(`- Failing check: \`${r.command}\` (${r.timedOut ? 'timed out' : `exit code ${r.exitCode}`}).`)
+    }
+  }
+  for (const f of openFindings(review)) {
+    out.push(`- ${f.severity} at \`${f.file}${f.line ? `:${f.line}` : ''}\`: ${inline(f.body)}`)
+  }
+  return out
+}
+
+const UPDATE_RETRY = 'comment `/agent update` on the pull request to try again'
+
+/**
+ * The state comment of an `update` attempt: `develop` merged without conflicts (no model ran), merged with conflicts
+ * that the implementer resolved, or a hand-off. `attempt.rounds` is 0 for a clean merge.
+ */
+function renderUpdateOutcome({ result, number, pr, branch, attempt, implementation, checks, review, reason, runUrl,
+  totalUsd, conflicts }) {
+  if (result === 'blocked') {
+    return [
+      '### AI update is blocked',
+      '',
+      `I did not change pull request #${pr}: ${inline(reason)}`,
+      '',
+      ...(attempt.notes ? ['**What I tried**', '', inline(attempt.notes), ''] : []),
+      '**What I need from you:** resolve the conflicts by hand, or comment `/agent update` with guidance.',
+      '',
+      costLine(runUrl, totalUsd, UPDATE_RETRY),
+    ].join('\n')
+  }
+  if (result === 'pr-opened' && attempt.rounds === 0) {
+    return [
+      `### AI update: develop merged into pull request #${pr}`,
+      '',
+      `Branch \`${branch}\`. The merge had no conflicts, so no model ran. CI runs again on the pull request.`,
+      '',
+      costLine(runUrl, totalUsd, `closes #${number} when merged`),
+    ].join('\n')
+  }
+  const rounds = `${attempt.rounds} round(s)`
+  const lead = result === 'pr-opened'
+    ? [`### AI update: develop merged into pull request #${pr}`,
+      '', `Branch \`${branch}\`. I resolved the conflicts in ${conflicts.length} file(s) in ${rounds}. CI runs again ` +
+        'on the pull request.']
+    : [`### AI update needs a person: pull request #${pr}`,
+      '', `Branch \`${branch}\`. I merged develop and resolved the conflicts, but stopped after ${rounds} without a ` +
+        'green result.']
+  const out = [
+    ...lead,
+    '',
+    `- Local checks (reported by the work job): ${checks.passed ? 'green' : 'red'}`,
+    '- Self-review (reported by the work job): ' +
+      `${effectiveVerdict(review) === 'approve' ? 'approved' : 'changes requested'}`,
+    `- Summary: ${inline(implementation.summary)}`,
+    '',
+  ]
+  if (result === 'draft') {
+    out.push('**What I tried**', '', inline(attempt.notes || implementation.notes || 'No notes.'), '')
+    out.push('**What is open**', '', ...openItems(checks, review))
+    out.push('', '**What I need from you:** review the pull request, push a fix to the branch, or comment ' +
+      '`/agent update` with guidance for another attempt.', '')
   }
   out.push(costLine(runUrl, totalUsd, `closes #${number} when merged`))
   return out.join('\n')
@@ -864,6 +983,10 @@ function renderOutcome({ result, number, pr, branch, attempt, implementation, ch
 function actorComment({ result, actor, pr, reason, message, kind, ciReport }) {
   switch (result) {
     case 'draft':
+      if (kind === 'update') {
+        return `@${actor}, I merged develop into #${pr} and resolved the conflicts, but the result is not green yet. ` +
+          'The AI implementation comment on this issue says what is open.'
+      }
       if (kind === 'ci-fix') {
         return `@${actor}, I pushed a fix to pull request #${pr}, but it is not green yet. ` +
           'The AI implementation comment on this issue says what is open.'
@@ -874,6 +997,7 @@ function actorComment({ result, actor, pr, reason, message, kind, ciReport }) {
       return `@${actor}, CI failed on #${pr}, but I think this change does not cause it: ${inline(reason)} ` +
         'I reran the failed checks; the CI gate decides again.'
     case 'blocked':
+      if (kind === 'update') return `@${actor}, I could not update #${pr}: ${inline(reason)}`
       if (kind === 'ci-fix') {
         return [`@${actor}, I could not fix CI on #${pr}.`, '', ...ciHandOffLines(ciReport, reason), '',
           ...waysOnLines()].join('\n')
@@ -1001,7 +1125,15 @@ async function pushBranch({ env, repo, branch, previousSha, exec, ref = 'HEAD' }
   args.push(url, `${ref}:refs/heads/${branch}`)
   const r = await exec('git', args, { timeoutMs: GIT_TIMEOUT_MS })
   if (r.exitCode !== 0) {
-    throw new Error(`git push to ${branch} failed with ${r.exitCode}: ${redact(tailLines(r.stderr, 10), [url, pat])}`)
+    const tail = redact(tailLines(r.stderr, 10), [url, pat])
+    // AGENT_PAT has no Workflows permission: a merge of `develop` that brings workflow changes is refused this way.
+    if (/refusing to allow/i.test(tail) && /workflow/i.test(tail)) {
+      throw new Error(`GitHub refused the push to ${branch}: the commits change files under .github/workflows/, and ` +
+        'AGENT_PAT has no Workflows permission. For /agent update this means that develop changed workflow files ' +
+        'since the branch point. Update the branch by hand (the Update branch button of the pull request), or give ' +
+        `the token the Workflows permission and comment /agent update again. Git said: ${tail}`)
+    }
+    throw new Error(`git push to ${branch} failed with ${r.exitCode}: ${tail}`)
   }
 }
 
@@ -1029,15 +1161,17 @@ function requireEnv(env, name) {
   return env[name]
 }
 
-const ENV_KINDS = new Set(['initial', 'ci-fix', 'human', 'review'])
+const ENV_KINDS = new Set(['initial', 'ci-fix', 'human', 'review', 'update'])
 
 /**
  * `AGENT_KIND`: `initial` (the default; the run decides between initial and human by the number of earlier attempts),
- * `ci-fix` (started by the CI gate), or `human` and `review` (started by a person).
+ * `ci-fix` (started by the CI gate), or `human`, `review`, and `update` (started by a person).
  */
 function attemptKind(env) {
   const kind = env.AGENT_KIND || 'initial'
-  if (!ENV_KINDS.has(kind)) throw new Error(`AGENT_KIND must be initial, ci-fix, human, or review, got '${kind}'`)
+  if (!ENV_KINDS.has(kind)) {
+    throw new Error(`AGENT_KIND must be initial, ci-fix, human, review, or update, got '${kind}'`)
+  }
   return kind
 }
 
@@ -1045,7 +1179,7 @@ function attemptKind(env) {
 const attemptKindOf = (envKind, attemptNo) => (envKind === 'initial' && attemptNo > 1 ? 'human' : envKind)
 
 /** The attempts a person asked for: they skip the refusals about suitability and give the CI loop a fresh budget. */
-const isPersonKind = (kind) => kind === 'human' || kind === 'review'
+const isPersonKind = (kind) => kind === 'human' || kind === 'review' || kind === 'update'
 
 /** The pull request number from `AGENT_PR`, or `null`. */
 const pullOf = (env) => (Number(env.AGENT_PR) > 0 ? Number(env.AGENT_PR) : null)
@@ -1167,7 +1301,7 @@ async function writeContext(env = process.env, deps = {}) {
   const command = parseCommandEnv(env.AGENT_COMMAND)
   return saveContext({
     out, number, ciFix, kind, actor, command, runUrl, analyzeFirst, loaded, st: loaded.st, identity,
-    changes: kind === 'review' || command.name === 'chat',
+    changes: changesOpenPull(kind, command),
   })
 }
 
@@ -1208,9 +1342,9 @@ const staysSilent = (command, outcome) => command?.name === 'answer' && outcome 
 /**
  * Decides, answers a refusal, marks the issue as being implemented, and writes `context.json` for the work step.
  * `deps.gh` and `deps.patGh` are injectable. A CI fix (`AGENT_KIND=ci-fix`) has no decision: the CI gate made it, so
- * only the state is checked. An attempt that a person asked for (`human`, `review`) has the decision of
- * `humanDecision`. The comment that started the job (`AGENT_COMMENT_ID`) gets an `eyes` reaction at once, and
- * `confused` when the preflight refuses.
+ * only the state is checked. An attempt that a person asked for (`human`, `review`, `update`) has the decision of
+ * `humanDecision`; for an update it first asks GitHub how far the pull request is behind `develop`. The comment that
+ * started the job (`AGENT_COMMENT_ID`) gets an `eyes` reaction at once, and `confused` when the preflight refuses.
  *
  * @returns {Promise<{ proceed: boolean, outcome: string, forced: boolean }>}
  */
@@ -1254,7 +1388,12 @@ async function preflight(env = process.env, deps = {}) {
     if (person) {
       // The pull request of the state tells a retry whether to continue it or to start again.
       pull = st.pr ? await gh.getPull(st.pr) : null
-      result = humanDecision({ issue, state: st, command, kind, pr: prNumber, pull })
+      let behindBy = null
+      if (kind === 'update' && pull?.state === 'open') {
+        behindBy = (await gh.compareCommits(BASE_BRANCH, pull.head.sha)).behind_by ?? null
+        log.info('develop compared', { pr: st.pr, head: pull.head.sha, behindBy: behindBy ?? 'unknown' })
+      }
+      result = humanDecision({ issue, state: st, command, kind, pr: prNumber, pull, behindBy })
     } else {
       result = preflightDecision({ issue, state: st, command, config })
     }
@@ -1383,6 +1522,61 @@ async function prepareBranch({ exec, st, type, number, title, ciFix = false, mus
   return { branch, continuing, previousSha: continuing && !ciFix ? remote : null, base }
 }
 
+/** The message of the merge commit of an `update` attempt. */
+function mergeMessage({ branch, number, runUrl }) {
+  return `Merge branch '${BASE_BRANCH}' into ${branch}\n\nPart of #${number}.\n\nAgent-Run: ${runUrl}`
+}
+
+/**
+ * Starts the merge of `origin/develop` into the checked-out branch and leaves it uncommitted (`--no-commit`), so the
+ * caller commits a clean merge itself and the implementer resolves a conflicted one. `prepareBranch` fetched
+ * `develop` before. Throws when the branch already contains `develop`, or when the merge fails without conflicts
+ * (for example, an untracked file is in the way).
+ *
+ * @returns {Promise<{ developSha: string, conflicts: string[] }>} the commit of `develop` that is merged, and the files
+ *   with conflicts (none for a clean merge)
+ */
+async function mergeDevelop({ exec }) {
+  const developSha = await git(exec, ['rev-parse', `origin/${BASE_BRANCH}`])
+  // `git()` throws on a non-zero exit and `allowFail` hides the code, but here the code is the answer: 0 means yes.
+  const ancestor = await exec('git', ['merge-base', '--is-ancestor', developSha, 'HEAD'], { timeoutMs: GIT_TIMEOUT_MS })
+  if (ancestor.exitCode === 0) {
+    throw new Error(`The branch already contains origin/${BASE_BRANCH}, so there is nothing to merge`)
+  }
+  if (ancestor.exitCode !== 1) {
+    throw new Error(`git merge-base failed with ${ancestor.exitCode}: ${tailLines(ancestor.stderr, 10)}`)
+  }
+  const merged = await exec('git', ['merge', '--no-ff', '--no-commit', developSha], { timeoutMs: GIT_TIMEOUT_MS })
+  const conflicts = changedFiles(await git(exec, ['diff', '--name-only', '--diff-filter=U']))
+  if (merged.exitCode !== 0 && conflicts.length === 0) {
+    throw new Error(`git merge failed with ${merged.exitCode}: ${tailLines(merged.stderr, 10)}`)
+  }
+  log.info('merge started', { developSha, clean: conflicts.length === 0, conflicts: conflicts.join(',') || 'none' })
+  return { developSha, conflicts }
+}
+
+/** Commits a clean merge. There is no implementer, no check, and no self-review: CI on GitHub decides. */
+async function commitMerge({ exec, message }) {
+  await git(exec, ['commit', '--no-verify', '-m', message])
+  const head = await git(exec, ['rev-parse', 'HEAD'])
+  log.info('committed locally', { head, note: 'the merge commit, no conflicts' })
+  return { status: 'done', rounds: 0, implementation: null, checks: null, review: null, head }
+}
+
+/**
+ * The files among `files` that still hold a conflict marker: the opening, the base of the diff3 style, the separator,
+ * or the closing line. `git add -A` would commit the markers as if they were code, so the rounds of an update look
+ * first.
+ */
+async function conflictMarkers({ exec, files }) {
+  const args = ['grep', '-n', '-E', '^((<<<<<<<|\\|\\|\\|\\|\\|\\|\\||>>>>>>>)( |$)|=======$)', '--', ...files]
+  const r = await exec('git', args, { timeoutMs: GIT_TIMEOUT_MS })
+  if (r.exitCode === 1) return []
+  if (r.exitCode !== 0) throw new Error(`git grep failed with ${r.exitCode}: ${tailLines(r.stderr, 10)}`)
+  const found = r.stdout.split(/\r?\n/).filter(Boolean).map((line) => line.slice(0, line.indexOf(':')))
+  return [...new Set(found)]
+}
+
 /** Runs the check commands in order and keeps the last lines of each output. Stops at the first failure. */
 async function runChecks({ exec, base }) {
   const results = []
@@ -1409,6 +1603,8 @@ async function runChecks({ exec, base }) {
 /**
  * The rounds: implement, commit locally, run the local checks, and self-review. They repeat while the checks are red or
  * the self-review asks for changes, up to `maxReviewRounds`. An attempt is always one commit: later rounds amend it.
+ * An `update` attempt resolves merge conflicts: `ctx.conflicts` names the files, and its one commit is the merge
+ * commit (`ctx.commitMessage`), which git creates because the merge is still open. No round commits conflict markers.
  *
  * @returns {Promise<{ status: 'done'|'blocked'|'unrelated', rounds: number, reason?: string,
  *   implementation: object|null, checks: object|null, review: object|null, head: string|null }>}
@@ -1435,6 +1631,7 @@ async function implementRounds(ctx) {
         kind: ctx.kind,
         issue,
         comments: ctx.comments,
+        attachments: ctx.attachments?.entries ?? [],
         plan: ctx.plan,
         analysis: ctx.analysis,
         notes: ctx.command.notes ?? '',
@@ -1444,6 +1641,7 @@ async function implementRounds(ctx) {
         ciReport: ctx.ciReport,
         reviewThreads: ctx.reviewThreads,
         omittedThreads: ctx.omittedThreads,
+        conflicts: ctx.conflicts ?? [],
       })
       fs.writeFileSync(inputFile, text)
       fs.writeFileSync(path.join(out, `implement-input${suffix}.md`), text)
@@ -1454,8 +1652,12 @@ async function implementRounds(ctx) {
         role: 'implementer',
         agent: 'implementer',
         model: config.models.implement,
-        message: `Implement issue #${number}. Your input is the attached implement-input.md.`,
+        message: ctx.kind === 'update'
+          ? `Resolve the merge conflicts of issue #${number}. Your input is the attached implement-input.md.`
+          : `Implement issue #${number}. Your input is the attached implement-input.md.` +
+            attachedNote(ctx.attachments?.files),
         inputFile,
+        files: ctx.attachments?.files ?? [],
         schema: 'implementation',
         check: (o) => checkImplementation(o, ctx.playbook, ctx.kind),
       })
@@ -1478,6 +1680,17 @@ async function implementRounds(ctx) {
       return { status: 'unrelated', rounds: round, reason, implementation, checks, review, head }
     }
 
+    if (ctx.kind === 'update') {
+      const left = await log.group(`${tag}: look for conflict markers`, () =>
+        conflictMarkers({ exec, files: ctx.conflicts ?? [] }),
+      )
+      if (left.length > 0) {
+        const reason = `Conflict markers are left in ${left.join(', ')}.`
+        log.info('decision', { stage: 'commit', action: 'blocked', reason })
+        return { status: 'blocked', rounds: round, reason, implementation, checks, review, head }
+      }
+    }
+
     const dirty = await log.group(`${tag}: commit locally`, async () => {
       const porcelain = await git(exec, ['status', '--porcelain'])
       if (porcelain === '' && !committed) {
@@ -1488,7 +1701,7 @@ async function implementRounds(ctx) {
         log.info('decision', { stage: 'commit', action: 'keep the commit of the earlier round: no new changes' })
         return true
       }
-      const message = commitMessage({
+      const message = ctx.commitMessage ?? commitMessage({
         type: implementation.commitType,
         scope: implementation.scope,
         title: implementation.title,
@@ -1529,6 +1742,7 @@ async function implementRounds(ctx) {
         base,
         head,
         kind: ctx.kind,
+        conflicts: ctx.conflicts ?? [],
       })
       fs.writeFileSync(inputFile, text)
       fs.writeFileSync(path.join(out, `self-review-input${suffix}.md`), text)
@@ -1613,6 +1827,7 @@ async function work(env = process.env, deps = {}) {
     branchInfo: null,
     diff: null,
     bundle: false,
+    merge: null,
     costs,
   }
   log.info('implementation starts', {
@@ -1632,12 +1847,20 @@ async function work(env = process.env, deps = {}) {
     outcome.playbook = playbookOf(type).playbook
     log.info('playbook', { type, playbook: outcome.playbook, attempt: attemptNo, kind })
 
+    // 0. The attachments, once for the analysis and every round. A merge of develop does not need them.
+    stage = 'attachments'
+    const attachments = kind === 'update' && !context.analyzeFirst
+      ? { entries: [], files: [] }
+      : await log.group('Download the attachments', () => issueAttachments({ issue, comments, out, deps }))
+
     // 1. Analysis, when the issue changed since the last one. Publishing it is the job of `publish`.
     let analysis = null
     if (context.analyzeFirst) {
       stage = 'analysis'
       const verdict = await log.group('Analysis', async () => {
-        const result = await runAnalysis({ issue, comments, st, trigger: 'command', config, out, costs, runUrl, deps })
+        const result = await runAnalysis({
+          issue, comments, st, trigger: 'command', config, out, costs, runUrl, attachments, deps,
+        })
         outcome.analysis = { ...result, issueUpdatedAt: issue.updated_at }
         analysis = result
         return result.verdict
@@ -1662,6 +1885,7 @@ async function work(env = process.env, deps = {}) {
         config, deps, exec, issue, comments, st, command, out, runUrl, costs, type, playbook: outcome.playbook, kind,
         number, identity, analysis, ciFix, fresh: Boolean(context.fresh), changes: Boolean(context.changes),
         reviewThreads: context.reviewThreads ?? [], omittedThreads: context.omittedThreads ?? 0,
+        attachments: kind === 'update' ? { entries: [], files: [] } : attachments,
       }))
     }
   } catch (err) {
@@ -1704,30 +1928,47 @@ async function workOnIssue(ctx) {
     log.info('git identity', { name: identity.name, email: identity.email })
   })
 
+  // An update starts the merge of `develop`. A clean merge is committed here and needs no rounds; a conflicted one is
+  // resolved by the rounds. The pull request is measured from the tip of `develop` that was merged, so every later
+  // check sees the change of the pull request only.
+  const update = ctx.kind === 'update'
+  const merge = update ? await log.group('Merge develop', () => mergeDevelop({ exec })) : null
+  const clean = update && merge.conflicts.length === 0
+  const base = merge ? merge.developSha : branchInfo.base
+  const mergeCommitMessage = update
+    ? mergeMessage({ branch: branchInfo.branch, number, runUrl: ctx.runUrl })
+    : undefined
   const analysis = ctx.analysis ?? st.analysis ?? null
-  const rounds = await implementRounds({
-    config,
-    exec,
-    out,
-    costs,
-    runUrl: ctx.runUrl,
-    deps,
-    issue,
-    number,
-    base: branchInfo.base,
-    playbook: ctx.playbook,
-    kind: ctx.kind,
-    comments: ctx.comments,
-    plan: analysis?.plan ?? null,
-    analysis,
-    command,
-    attempts: st.attempts ?? [],
-    ciReport: ctx.ciFix ? st.lastCiReport ?? '' : '',
-    reviewThreads: ctx.reviewThreads,
-    omittedThreads: ctx.omittedThreads,
-  })
-  const base = branchInfo.base
-  const info = { ...branchInfo, head: rounds.head }
+  let rounds
+  if (clean) {
+    rounds = await log.group('Commit the merge', () => commitMerge({ exec, message: mergeCommitMessage }))
+  } else {
+    rounds = await implementRounds({
+      config,
+      exec,
+      out,
+      costs,
+      runUrl: ctx.runUrl,
+      deps,
+      issue,
+      number,
+      base,
+      playbook: ctx.playbook,
+      kind: ctx.kind,
+      comments: ctx.comments,
+      attachments: ctx.attachments,
+      plan: analysis?.plan ?? null,
+      analysis,
+      command,
+      attempts: st.attempts ?? [],
+      ciReport: ctx.ciFix ? st.lastCiReport ?? '' : '',
+      reviewThreads: ctx.reviewThreads,
+      omittedThreads: ctx.omittedThreads,
+      conflicts: merge?.conflicts ?? [],
+      commitMessage: mergeCommitMessage,
+    })
+  }
+  const info = { ...branchInfo, base, head: rounds.head }
 
   if (rounds.status === 'unrelated') {
     // Nothing to push: `publish` reruns the failed checks instead.
@@ -1762,7 +2003,8 @@ async function workOnIssue(ctx) {
       blockedReason = diffBlockReason({ stat, nameOnly, playbook: ctx.playbook })
     })
   }
-  const green = !blockedReason && rounds.checks.passed && effectiveVerdict(rounds.review) === 'approve'
+  const green = !blockedReason &&
+    (clean || (rounds.checks.passed && effectiveVerdict(rounds.review) === 'approve'))
   const result = blockedReason ? 'blocked' : green ? 'pr-opened' : 'draft'
   log.info('decision', { stage: 'publish', result, reason: blockedReason ?? 'none' })
 
@@ -1789,6 +2031,7 @@ async function workOnIssue(ctx) {
     branchInfo: info,
     diff,
     bundle,
+    merge: update ? { conflicts: merge.conflicts } : null,
   }
 }
 
@@ -1842,6 +2085,7 @@ function failedOutcome({ kind, attemptNo, message, costs }) {
     branchInfo: null,
     diff: null,
     bundle: false,
+    merge: null,
     costs,
   }
 }
@@ -1871,8 +2115,9 @@ function branchAllowed(branch, expected, mayBeVersioned) {
  * the branch it derives itself (the state, else the issue), and the texts it builds from the outcome must have the
  * shape the contracts promise.
  *
- * `unrelated` is a result of a CI fix only, and has no code: no bundle, no checks, no self-review. `kind` is the kind
- * the publish job derived itself; without it the outcome's own claim is used.
+ * `unrelated` is a result of a CI fix only, and has no code: no bundle, no checks, no self-review. An `update` carries
+ * the facts of its merge, and one that merged without conflicts (no rounds) has code but no implementation, checks, or
+ * self-review. `kind` is the kind the publish job derived itself; without it the outcome's own claim is used.
  *
  * @returns {string[]} the problems; empty when the outcome may be published
  */
@@ -1916,7 +2161,23 @@ function outcomeProblems({ outcome, st, issue, number, kind = outcome.kind }) {
   if (outcome.checks && !(Array.isArray(outcome.checks.results) && typeof outcome.checks.passed === 'boolean')) {
     problems.push('checks have no results')
   }
-  if (hasCode && !(outcome.implementation && outcome.review && outcome.checks && outcome.branchInfo)) {
+  // A clean merge is the only code result without the rounds: it ran no model, so it can only claim a green result.
+  const mergedCleanly = kind === 'update' && outcome.rounds === 0
+  if (kind === 'update' && hasCode) {
+    const conflicts = outcome.merge?.conflicts
+    if (!(Array.isArray(conflicts) && conflicts.every((file) => typeof file === 'string'))) {
+      problems.push('an update needs the merge facts')
+    } else if (mergedCleanly && conflicts.length > 0) {
+      problems.push('an update without rounds cannot have conflicts')
+    }
+    if (mergedCleanly && outcome.result !== 'pr-opened') {
+      problems.push(`a clean update cannot have the result '${outcome.result}'`)
+    }
+  }
+  const complete = mergedCleanly
+    ? Boolean(outcome.branchInfo)
+    : Boolean(outcome.implementation && outcome.review && outcome.checks && outcome.branchInfo)
+  if (hasCode && !complete) {
     problems.push('a result with code lacks the implementation, the review, the checks, or the branch')
   }
   return problems
@@ -1935,14 +2196,14 @@ async function fetchBundle({ exec, file, head }) {
 }
 
 /**
- * Makes an open pull request match the new outcome: its title and description (not for a CI fix or a review, which keep
- * the description of the change as a whole), and its draft state in one direction only. A ready pull request goes back
- * to draft when the attempt is not green. `publish` never marks one ready: only the CI gate does, after the checks on
- * GitHub are green, because the local results come from a job that ran code of the change. Done as the PAT owner, so
- * the events start the workflows of the repository.
+ * Makes an open pull request match the new outcome: its title and description (not for a CI fix, a review, or an
+ * update, which keep the description of the change as a whole), and its draft state in one direction only. A ready
+ * pull request goes back to draft when the attempt is not green. `publish` never marks one ready: only the CI gate
+ * does, after the checks on GitHub are green, because the local results come from a job that ran code of the change.
+ * Done as the PAT owner, so the events start the workflows of the repository.
  */
 async function updateOpenPull({ client, open, title, body, toDraft, kind }) {
-  if (kind !== 'ci-fix' && kind !== 'review') {
+  if (kind !== 'ci-fix' && kind !== 'review' && kind !== 'update') {
     await client.updatePull(open.number, { title, body })
     log.info('pull request updated', { pr: open.number, title })
   }
@@ -2079,7 +2340,7 @@ async function publishAttempt(env, deps) {
   return finish({
     config, env, deps, gh, exec, issue, st, commentId: loaded.existing?.id ?? null, costs, outcome, failure, progress,
     attemptNo, kind, actor, runUrl, number, at, out, repo,
-    changesPull: kind === 'review' || command.name === 'chat',
+    changesPull: changesOpenPull(kind, command),
   })
 }
 
@@ -2187,20 +2448,23 @@ async function finish(ctx) {
   async function publishCode() {
     if (!hasCode) return
     const { implementation, checks, review, branchInfo } = outcome
-    published.title = commitTitle({
-      type: implementation.commitType,
-      scope: implementation.scope,
-      title: implementation.title,
-    })
-    published.body = prBody({
-      number,
-      issueTitle: issue.title,
-      implementation,
-      checks,
-      review,
-      rounds: outcome.rounds,
-      actor,
-    })
+    // An update merges `develop` and has no title or description of its own; a clean one has no implementation.
+    if (kind !== 'update') {
+      published.title = commitTitle({
+        type: implementation.commitType,
+        scope: implementation.scope,
+        title: implementation.title,
+      })
+      published.body = prBody({
+        number,
+        issueTitle: issue.title,
+        implementation,
+        checks,
+        review,
+        rounds: outcome.rounds,
+        actor,
+      })
+    }
     // An open pull request that is ready stays so after a green attempt and goes back to draft after any other.
     published.toDraft = outcome.result !== 'pr-opened'
     if (config.dryRun) return
@@ -2232,11 +2496,11 @@ async function finish(ctx) {
         })
         return
       }
-      // A CI fix belongs to the pull request that is red, and so does a change request; a new one would be a
-      // different change.
+      // A CI fix belongs to the pull request that is red, and so do a change request and an update; a new one would
+      // be a different change.
       if (kind === 'ci-fix' || changesPull) {
-        throw new Error(`Pull request #${progress.pr} is not open, so the ${kind === 'ci-fix' ? 'CI fix' : 'change'} ` +
-          'has no place to go')
+        const what = kind === 'ci-fix' ? 'CI fix' : kind === 'update' ? 'update' : 'change'
+        throw new Error(`Pull request #${progress.pr} is not open, so the ${what} has no place to go`)
       }
       const created = await openPull({
         env, repo, deps, title: published.title, head: branchInfo.branch, base: BASE_BRANCH, body: published.body,
@@ -2340,6 +2604,7 @@ async function finish(ctx) {
       totalUsd,
       kind,
       ciReport,
+      conflicts: outcome.merge?.conflicts ?? [],
       rerun: result === 'unrelated'
         ? {
           names: ciChecks().checkNames(rerun.failed),
@@ -2382,6 +2647,7 @@ async function finish(ctx) {
           report.push('Would reply in each review thread that the implementer saw, after the push.', '')
         }
       }
+      if (kind === 'update' && hasCode) report.push(`Would push the merge of develop to \`${progress.branch}\`.`, '')
       report.push('### Labels', '', `- add: ${labelChanges.add.join(', ') || 'none'}`,
         `- remove: ${labelChanges.remove.join(', ') || 'none'}`, '')
       if (result === 'unrelated') {
@@ -2497,8 +2763,12 @@ module.exports = {
   attemptKind,
   attemptKindOf,
   humanDecision,
+  changesOpenPull,
   diffBlockReason,
   prepareBranch,
+  mergeDevelop,
+  mergeMessage,
+  conflictMarkers,
   branchAllowed,
   renderReviewThreads,
   limitThreads,

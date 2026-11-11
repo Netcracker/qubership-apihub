@@ -36,13 +36,9 @@ RUN if env | grep -Eiq '^(http|https|all)_proxy=https?://https?://'; then unset 
 RUN if env | grep -Eiq '^(http|https|all)_proxy=https?://https?://'; then unset HTTP_PROXY HTTPS_PROXY ALL_PROXY http_proxy https_proxy all_proxy; fi; \
     GOWORK=off GOSUMDB=off CGO_ENABLED=0 GOFLAGS=-mod=readonly go mod download && GOWORK=off GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -o qubership-api-linter-service .
 
-FROM ghcr.io/netcracker/qubership-core-base:2.5.8@sha256:0c2c9e4b49e73efffb30edf8d3de8b3eb43194a6c4f688da08ec3236b570b486
+FROM ghcr.io/netcracker/qubership-core-base:2.5.11@sha256:1b80a6ba225210f2308c68679aa40e5211d4712269200a55862ec2a9061a55de
 
-ARG GIT_BRANCH=unknown
-ARG GIT_HASH=unknown
-
-ENV GIT_BRANCH=$GIT_BRANCH
-ENV GIT_HASH=$GIT_HASH
+# GIT_BRANCH, GIT_HASH, and COMMIT_TIME are added to the branch tag by tools/ci/ref-overlay, not to this image.
 ENV SPECTRAL_BIN_PATH=resources/spectral/linux/spectral
 
 WORKDIR /app/qubership-api-linter-service

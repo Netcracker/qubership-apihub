@@ -9,7 +9,7 @@ It allows to scale builders(browser, node services) horizontally without changes
 
 ## build config
 
-Biold config is a metadata set for an object that will be created during the build.
+Build config is a metadata set for an object that will be created during the build.
 
 Example:
 
@@ -147,7 +147,7 @@ TODO
 
 For example due to OOM killed or browser(tab) is closed.
 
-start -> processing -> keepalives stop going -> BE detects that the build is no longer processed by the following criterea: "now - last_active > {timeout}" ->
+start -> processing -> keepalives stop going -> BE detects that the build is no longer processed by the following criteria: "now - last_active > {timeout}" ->
 the build is considered as free and goes to the queue again -> when node service is ready to take the build, restart_count is checked. If restart_count >= 2 then the build is failed with message "Restart count exceeded limit" -> if restart is available, build is taken by node service *and bound to builder id* (status=running) **and restart_count is incremented** -> build as usual
 
 #### builder internal error (handled)
@@ -167,7 +167,7 @@ Error build is not restarted.
 
 ## build statuses
 
-none - build is not strarted
+none - build is not started
 running - build is started
 complete - successfully completed
 error - completed with error

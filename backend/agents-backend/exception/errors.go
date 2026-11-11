@@ -74,3 +74,9 @@ const SecurityCheckNotFoundMsg = "Security check with processId='$processId' not
 
 const InsufficientPrivileges = "17"
 const InsufficientPrivilegesMsg = "You don't have enough privileges to perform this operation"
+
+const ApihubSystemInfoUnavailable = "18"
+const ApihubSystemInfoUnavailableMsg = "Failed to get APIHUB system info: $error"
+
+const InvalidValidationRulesSeverity = "19"
+const InvalidValidationRulesSeverityMsg = "APIHUB system info did not report a valid validation rules severity for broken refs: '$brokenRefs'"

@@ -11,7 +11,9 @@ that CI then checks. Nothing else.
 
 ## Procedure
 
-1. Read the issue and every comment. Separate facts (observed behavior, logs, versions, steps) from wishes.
+1. Read the issue, every comment, and every attachment: a screenshot often shows the wrong behavior, and an attached
+   file is often the spec or the data that reproduces it. Separate facts (observed behavior, logs, versions, steps)
+   from wishes.
 2. Find the code the issue is about: search for the names, messages, endpoints, and UI texts it mentions. Read the
    module's `AGENTS.md`. A bug you cannot locate in the code is not ready.
 3. Decide the verdict with the table below.
@@ -34,9 +36,14 @@ If yes, it is `needs-info`.
   ...).
 - **Approach**: what to change and where, in two to five sentences, naming files or functions.
 - **Tests**: the test that proves the fix (for a bug: the failing test to write first) and the module checks to run.
+- **ADR**: when the issue makes a decision that needs one (`apihub-adr`), the ADR to write; otherwise omit the line.
 - **Risk**: `low`, `medium`, or `high` for the change itself.
 
 ## Questions (for `needs-info`)
 
 Each question is one sentence the reporter can answer without reading code. Ask for what blocks the work, not for
 what would be nice to know. Three questions at most is a good limit.
+
+Never ask for what an attachment already shows. When an attachment you need could not be read (a ZIP archive, a
+video, a file over the size limit), name it and ask for it in a form you can read: the files themselves, a
+screenshot, or the text pasted into a comment.

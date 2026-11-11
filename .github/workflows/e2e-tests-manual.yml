@@ -56,7 +56,7 @@ on:
         type: string
         default: develop
       playwright-args:
-        description: "Playwright test command arguments. Empty means the runtime's default (--project=Portal --grep-invert=@flaky)"
+        description: "Playwright test command arguments. Empty means the runtime default: Kind with the agent runs Portal and Agent, otherwise Portal. All use 8 workers and exclude @flaky and @specific"
         type: string
         default: ''
       agent:

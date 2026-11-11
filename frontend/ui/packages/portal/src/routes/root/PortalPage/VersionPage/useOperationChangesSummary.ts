@@ -113,10 +113,10 @@ function getOperationChangesSummary(options: Options): Promise<ChangesSummaryDto
   const endpoint = generatePath(
     endpointPattern,
     {
-      packageId: packageKey,
-      versionId: versionKey,
+      packageId: encodeURIComponent(packageKey),
+      versionId: encodeURIComponent(versionKey),
       apiType: apiType,
-      operationId: operationId,
+      operationId: encodeURIComponent(operationId),
     },
   )
   return requestJson<ChangesSummaryDto>(

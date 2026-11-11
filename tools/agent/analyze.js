@@ -7,7 +7,8 @@
  *
  *   1. load the issue, its comments, and its state comment; for the trigger `sweep`, stop here without a model call when
  *      the issue already has an analysis or a decision label, is closed, or is no longer a Bug or Task;
- *   2. `analyst` (the light model) reads the issue and the code and answers with `analysis` JSON;
+ *   2. download the attachments of the issue (lib/attachments.js); `analyst` (the light model) reads the issue, its
+ *      attachments, and the code and answers with `analysis` JSON;
  *   3. publish: the `ai:suitable` or `ai:unsuitable` label (or `agent:needs-human` for missing information), read
  *      again after the model call so that a label a person set meanwhile wins; then the state comment of the issue
  *      rewritten with the verdict and with the labels that were really changed; and, for `needs-info`, a separate
@@ -34,6 +35,7 @@ const { ContractError } = require('./lib/contract')
 const { callAgent } = require('./lib/agent-call')
 const { inline, clip: clipText } = require('./lib/text')
 const { untrusted } = require('./lib/prompt')
+const { issueAttachments, renderAttachments, attachedNote } = require('./lib/attachments')
 const log = require('./lib/log')
 
 const LABEL_SUITABLE = 'ai:suitable'
@@ -254,9 +256,10 @@ const clip = (text) => clipText(text, MAX_TEXT)
 
 /**
  * The text of `analysis-input.md`: facts of the issue, then everything people wrote inside `<untrusted>` blocks, then
- * what the agent concluded and asked the last time. `comments` must not hold the state comment.
+ * the list of the attachments (`attachments`: the entries of lib/attachments.js), then what the agent concluded and
+ * asked the last time. `comments` must not hold the state comment.
  */
-function renderInput({ issue, comments, st, trigger }) {
+function renderInput({ issue, comments, st, trigger, attachments = [] }) {
   const prior = st?.analysis
   const out = [
     `# Issue #${issue.number}`,
@@ -279,6 +282,7 @@ function renderInput({ issue, comments, st, trigger }) {
     out.push(`Written by ${c.user?.login ?? 'unknown'} on ${c.created_at ?? 'an unknown date'}.`, '')
     out.push(untrusted(clip(c.body)), '')
   }
+  out.push(...renderAttachments(attachments))
   if (prior) {
     // The reason and the questions are model output, written after reading people's text: they may echo it.
     out.push('## Previous analysis', '')
@@ -295,15 +299,19 @@ function renderInput({ issue, comments, st, trigger }) {
  * The model part of an analysis, without any call to GitHub: writes the analyst input, runs the analyst (the light
  * model), and returns its validated output. The cost record goes to `costs` also when the call fails. The
  * implementation job calls it (`implement.js work`), where no GitHub token exists, and publishes the result later.
+ * The attachments are downloaded here unless the caller passes the ones it downloaded (`attachments`).
  *
  * @param {{ issue: object, comments: object[], st: object, trigger: string, config: object, out: string,
- *   costs: object[], runUrl: string, deps?: { runAgent?: Function } }} input `comments` hold no state comment
+ *   costs: object[], runUrl: string, attachments?: { entries: object[], files: string[] },
+ *   deps?: { runAgent?: Function, fetch?: Function } }} input `comments` hold no state comment
  */
-async function runAnalysis({ issue, comments, st, trigger, config, out, costs, runUrl, deps = {} }) {
+async function runAnalysis({ issue, comments, st, trigger, config, out, costs, runUrl, attachments, deps = {} }) {
   fs.mkdirSync(out, { recursive: true })
   const inputFile = path.join(out, 'analysis-input.md')
+  const found = attachments ??
+    (await log.group('Download the attachments', () => issueAttachments({ issue, comments, out, deps })))
   await log.group('Build the analyst input', async () => {
-    const text = renderInput({ issue, comments, st, trigger })
+    const text = renderInput({ issue, comments, st, trigger, attachments: found.entries })
     fs.writeFileSync(inputFile, text)
     log.info('input written', { file: inputFile, characters: text.length })
   })
@@ -313,8 +321,10 @@ async function runAnalysis({ issue, comments, st, trigger, config, out, costs, r
       role: 'analyst',
       agent: 'analyst',
       model: config.models.light,
-      message: `Analyze issue #${issue.number}. Your input is the attached analysis-input.md.`,
+      message: `Analyze issue #${issue.number}. Your input is the attached analysis-input.md.` +
+        attachedNote(found.files),
       inputFile,
+      files: found.files,
       out,
       costs,
       runUrl,

@@ -272,15 +272,7 @@ func newReleaseVersionPreviousVersionNotReleaseError(ctx context.Context, packag
 }
 
 func (b *buildServiceImpl) setValidationRulesSeverity(config view.BuildConfig) view.BuildConfig {
-	var severity string
-	if b.systemInfoService.FailBuildOnBrokenRefs() {
-		severity = view.BrokenRefsSeverityError
-	} else {
-		severity = view.BrokenRefsSeverityWarning
-	}
-	config.ValidationRulesSeverity = view.ValidationRulesSeverity{
-		BrokenRefs: severity,
-	}
+	config.ValidationRulesSeverity = b.systemInfoService.GetValidationRulesSeverity()
 	return config
 }
 

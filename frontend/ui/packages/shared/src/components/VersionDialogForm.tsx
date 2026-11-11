@@ -15,7 +15,7 @@
  */
 
 import * as React from 'react'
-import type { ChangeEvent, FC, ReactElement, ReactNode, SyntheticEvent } from 'react'
+import type { ChangeEvent, FC, ReactNode, SyntheticEvent } from 'react'
 import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import type { Control, FormState, UseFormSetValue } from 'react-hook-form'
 import { Controller, useWatch } from 'react-hook-form'
@@ -67,8 +67,10 @@ import { useVersionProblemDetails } from '../hooks/versions/useVersionProblemDet
 import { VERSION_PROBLEM_DIALOG_SURFACE } from '../hooks/versions/versionProblemDetails'
 import { LabelsAutocomplete } from './LabelsAutocomplete'
 import type { Package, PackageKind, Packages } from '../entities/packages'
-import { PACKAGE_KIND } from '../entities/packages'
+import { DASHBOARD_KIND, PACKAGE_KIND } from '../entities/packages'
+import { usePackages } from '../hooks/packages/usePackages'
 import { OptionItem } from './OptionItem'
+import { VersionOptionItem } from './VersionOptionItem'
 import { disableAutocompleteSearch } from '../utils/mui'
 import { DEFAULT_DEBOUNCE } from '../utils/constants'
 import { InfoContextIcon } from '../icons/InfoContextIcon'
@@ -76,7 +78,7 @@ import { CSV_FILE_EXTENSION } from '../utils/files'
 import { FileUploadField } from './FileUploadField'
 import type { AutocompleteInputChangeReason } from '@mui/base/AutocompleteUnstyled/useAutocomplete'
 import { VersionErrorFormMessage } from './ErrorIndicators/VersionErrorFormMessage'
-import { VersionErrorIndicator } from './ErrorIndicators/VersionErrorIndicator'
+import { VersionFieldErrorIndicator } from './ErrorIndicators/VersionFieldErrorIndicator'
 import { VersionSelectorAutocomplete } from './Autocompletes/VersionSelectorAutocomplete'
 import type { ApiType } from '../entities/api-types'
 import { API_TYPE_REST, API_TYPE_TITLE_MAP, API_TYPES } from '../entities/api-types'
@@ -92,6 +94,7 @@ export type VersionFormData = {
   status: VersionStatus
   labels: string[]
   previousVersion: Key
+  previousVersionPackage?: Package | null
   apiType?: ApiType
   file?: File
 }
@@ -125,6 +128,8 @@ export type VersionDialogFormProps<T extends VersionFormData = VersionFormData> 
   versions?: Key[]
   previousVersionsPackageKey?: Key
   previousVersions?: PackageVersions
+  previousVersionPackages?: Packages
+  unresolvedPreviousVersionPackageKey?: Key
   getVersionLabels?: (version: Key) => string[]
   isPublishing?: boolean
   extraValidationMassage?: string | null
@@ -139,6 +144,7 @@ export type VersionDialogFormProps<T extends VersionFormData = VersionFormData> 
   hideSaveMessageField?: boolean
   hideCopyPackageFields?: boolean
   hidePreviousVersionField?: boolean
+  hidePreviousVersionPackageField?: boolean
   publishButtonDisabled?: boolean
   publishFieldsDisabled?: boolean
   currentPackageKey?: Key
@@ -146,6 +152,11 @@ export type VersionDialogFormProps<T extends VersionFormData = VersionFormData> 
   formHelperText?: string
   isBlocking?: boolean
   statusErrorIndicator?: ReactNode
+}
+
+type RememberedPreviousVersion = {
+  packageKey: Key | undefined
+  version: PackageVersion
 }
 
 export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogFormProps>((props) => {
@@ -171,9 +182,12 @@ export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogF
     onPackagesFilter,
     packages,
     packagesTitle,
+    packageObj,
     versions,
     previousVersionsPackageKey,
     previousVersions,
+    previousVersionPackages,
+    unresolvedPreviousVersionPackageKey,
     getVersionLabels,
     packagePermissions,
     releaseVersionPattern,
@@ -189,6 +203,7 @@ export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogF
     hideDescriptorVersionField,
     hideSaveMessageField,
     hidePreviousVersionField,
+    hidePreviousVersionPackageField = true,
     hideCopyPackageFields,
     publishButtonDisabled,
     publishFieldsDisabled,
@@ -206,6 +221,7 @@ export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogF
   const status = useWatch({ control: control, name: 'status' })
   const apiType = useWatch({ control: control, name: 'apiType' })
   const previousVersion = useWatch({ control: control, name: 'previousVersion' })
+  const previousVersionPackage = useWatch({ control: control, name: 'previousVersionPackage' })
   const descriptorFile = useWatch({ control: control, name: 'descriptorFile' })
   const isReleaseStatus = status === RELEASE_VERSION_STATUS
   const onWorkspacesChange = useCallback((_: SyntheticEvent, value: string): void => onWorkspacesFilter?.(value), [onWorkspacesFilter])
@@ -226,6 +242,48 @@ export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogF
 
   const previousVersionStatuses = useMemo(() => getPreviousVersionStatuses(status), [status])
 
+  const showPreviousVersionPackageField = !hidePreviousVersionField && !hidePreviousVersionPackageField
+  const selectedPreviousVersionPackageKey = previousVersionPackage?.key ?? previousVersionsPackageKey
+  const isPreviousVersionPackageUnresolved =
+    !!unresolvedPreviousVersionPackageKey && selectedPreviousVersionPackageKey === unresolvedPreviousVersionPackageKey
+  const isForeignPreviousVersionPackage =
+    !!toPreviousVersionPackageId(previousVersionPackage, packageObj?.key ?? currentPackageKey)
+  const previousVersionPackageKind = previousVersionPackage?.kind ?? kind
+
+  const [previousVersionPackageSearch, setPreviousVersionPackageSearch] = useState('')
+  const debouncedSetPreviousVersionPackageSearch = useMemo(
+    () => debounce(setPreviousVersionPackageSearch, DEFAULT_DEBOUNCE),
+    [],
+  )
+
+  const {
+    packages: queriedPreviousVersionPackages,
+    isLoading: arePreviousVersionPackagesLoading,
+  } = usePackages({
+    kind: PREVIOUS_VERSION_PACKAGE_KINDS,
+    textFilter: previousVersionPackageSearch,
+    enabled: showPreviousVersionPackageField && previousVersionPackages === undefined,
+  })
+
+  const previousVersionPackageOptions = useMemo(
+    () => getPackageOptions(
+      previousVersionPackages ?? queriedPreviousVersionPackages,
+      previousVersionPackage ?? packageObj ?? null,
+      !!previousVersionPackageSearch,
+    ),
+    [packageObj, previousVersionPackage, previousVersionPackageSearch, previousVersionPackages, queriedPreviousVersionPackages],
+  )
+
+  const onPreviousVersionPackageChange = useCallback((_: SyntheticEvent, value: Package | null): void => {
+    const nextPackageKey = value?.key ?? previousVersionsPackageKey
+    if (nextPackageKey === selectedPreviousVersionPackageKey) {
+      return
+    }
+    setValue('previousVersionPackage', value)
+    setValue('previousVersion', NO_PREVIOUS_RELEASE_VERSION_OPTION)
+    setSelectedPreviousVersion?.(NO_PREVIOUS_RELEASE_VERSION_OPTION)
+  }, [previousVersionsPackageKey, selectedPreviousVersionPackageKey, setSelectedPreviousVersion, setValue])
+
   const [previousVersionSearch, setPreviousVersionSearch] = useState('')
   const debouncedSetPreviousVersionSearch = useMemo(
     () => debounce(setPreviousVersionSearch, DEFAULT_DEBOUNCE),
@@ -233,10 +291,13 @@ export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogF
   )
 
   const { versions: queriedPreviousVersions, areVersionsLoading: arePreviousVersionsLoading } = usePackageVersions({
-    packageKey: previousVersionsPackageKey,
+    packageKey: selectedPreviousVersionPackageKey,
     status: previousVersionStatuses,
     textFilter: previousVersionSearch,
-    enabled: !hidePreviousVersionField && previousVersions === undefined && !!previousVersionsPackageKey,
+    enabled: !hidePreviousVersionField &&
+      previousVersions === undefined &&
+      !!selectedPreviousVersionPackageKey &&
+      !isPreviousVersionPackageUnresolved,
   })
 
   const normalizedPreviousVersions = useMemo(
@@ -249,29 +310,42 @@ export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogF
     [normalizedPreviousVersions],
   )
 
-  const [rememberedPreviousVersion, setRememberedPreviousVersion] = useState<PackageVersion | undefined>()
+  const [rememberedPreviousVersionEntry, setRememberedPreviousVersionEntry] = useState<RememberedPreviousVersion | undefined>()
 
   useEffect(() => {
     if (!previousVersion || previousVersion === NO_PREVIOUS_RELEASE_VERSION_OPTION) {
-      setRememberedPreviousVersion(undefined)
+      setRememberedPreviousVersionEntry(undefined)
       return
     }
     const known = previousVersionMap.get(previousVersion)
     if (known) {
-      setRememberedPreviousVersion(known)
+      setRememberedPreviousVersionEntry({ packageKey: selectedPreviousVersionPackageKey, version: known })
       return
     }
-    setRememberedPreviousVersion(remembered => (
-      remembered?.key === previousVersion ? remembered : undefined
+    setRememberedPreviousVersionEntry(remembered => (
+      remembered?.version.key === previousVersion && remembered.packageKey === selectedPreviousVersionPackageKey
+        ? remembered
+        : undefined
     ))
-  }, [previousVersion, previousVersionMap])
+  }, [previousVersion, previousVersionMap, selectedPreviousVersionPackageKey])
 
-  const selectedPreviousVersion = useMemo(
-    () => previousVersionMap.get(previousVersion) ?? (
-      rememberedPreviousVersion?.key === previousVersion ? rememberedPreviousVersion : undefined
-    ),
-    [previousVersionMap, previousVersion, rememberedPreviousVersion],
+  // Packages may share version keys, so a remembered version counts only for the package it was loaded from
+  const rememberedPreviousVersion = rememberedPreviousVersionEntry?.packageKey === selectedPreviousVersionPackageKey
+    ? rememberedPreviousVersionEntry?.version
+    : undefined
+
+  /**
+   * Looks up the fetched list first, so a version changed on the server wins over the remembered one.
+   * The remembered version is the fallback only for its own key.
+   */
+  const findPreviousVersion = useCallback(
+    (versionKey: Key): PackageVersion | undefined =>
+      previousVersionMap.get(versionKey) ??
+        (rememberedPreviousVersion?.key === versionKey ? rememberedPreviousVersion : undefined),
+    [previousVersionMap, rememberedPreviousVersion],
   )
+
+  const selectedPreviousVersion = findPreviousVersion(previousVersion)
 
   const selectedStatus = selectedPreviousVersion?.status
 
@@ -279,65 +353,18 @@ export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogF
     ? previousVersion
     : undefined
 
-  const {
-    isBlocking: isPreviousVersionBlocking,
-    formHelperText: previousVersionFormHelperText,
-    hasProblems: previousVersionHasProblems,
-  } = useVersionProblemDetails({
-    packageKey: previousVersionsPackageKey || targetPackage?.key || currentPackageKey,
-    versionKey: previousVersionKey,
+  const previousVersionProblem = useVersionProblemDetails({
+    packageKey: selectedPreviousVersionPackageKey || targetPackage?.key || currentPackageKey,
+    // Not the package key: without it the hook falls back to the current package and requests the version there
+    versionKey: isPreviousVersionPackageUnresolved ? undefined : previousVersionKey,
     hasErrors: selectedPreviousVersion?.hasErrors,
     changelogHasErrors: selectedPreviousVersion?.changelogHasErrors,
     apiProcessorVersion: selectedPreviousVersion?.apiProcessorVersion,
-    kind: kind,
+    kind: previousVersionPackageKind,
     surface: VERSION_PROBLEM_DIALOG_SURFACE.PUBLISH_PREVIOUS_VERSION,
   })
 
-  const formHelperMessage = formHelperText ?? previousVersionFormHelperText
-
-  /**
-   * Single source for the status chip, used by the dropdown, the closed field and the validation.
-   *
-   * Order matters: the fetched list is consulted first, so a status changed on the server wins over
-   * the remembered one. The fallback applies only to the version the status was remembered for.
-   */
-  const getPreviousVersionOptionStatus = useCallback(
-    (versionKey: Key): VersionStatus | undefined =>
-      previousVersionMap.get(versionKey)?.status ??
-      (versionKey === rememberedPreviousVersion?.key
-        ? rememberedPreviousVersion.status
-        : undefined),
-    [previousVersionMap, rememberedPreviousVersion],
-  )
-
-  const renderPreviousVersionStatusChip = useCallback(
-    (versionKey: Key): ReactNode => {
-      const previousVersionStatus = getPreviousVersionOptionStatus(versionKey)
-      return previousVersionStatus
-        ? <VersionStatusChip status={previousVersionStatus}/>
-        : null
-    },
-    [getPreviousVersionOptionStatus],
-  )
-
-  const renderPreviousVersionErrorIndicator = useCallback((versionKey: Key): ReactElement | null => {
-    const versionItem = previousVersionMap.get(versionKey) ?? (
-      rememberedPreviousVersion?.key === versionKey ? rememberedPreviousVersion : undefined
-    )
-    if (!versionItem) {
-      return null
-    }
-    return (
-      <VersionErrorIndicator
-        versionKey={versionKey}
-        hasErrors={versionItem.hasErrors}
-        changelogHasErrors={versionItem.changelogHasErrors}
-        apiProcessorVersion={versionItem.apiProcessorVersion}
-        fontSize="extra-small"
-        showTooltip={false}
-      />
-    )
-  }, [previousVersionMap, rememberedPreviousVersion])
+  const formHelperMessage = formHelperText ?? previousVersionProblem.formHelperText
 
   const previousVersionOptions = useMemo(() => {
     const availableKeys = normalizedPreviousVersions.map(({ key }) => key)
@@ -354,16 +381,9 @@ export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogF
     ]
   }, [normalizedPreviousVersions, previousVersion])
 
-  const hasInvalidPreviousVersionStatus = useMemo(() => {
-    if (!previousVersion || previousVersion === NO_PREVIOUS_RELEASE_VERSION_OPTION) {
-      return false
-    }
-    const previousStatus = getPreviousVersionOptionStatus(previousVersion)
-    if (!previousStatus) {
-      return false
-    }
-    return !isPreviousVersionStatusAllowed(status, previousStatus)
-  }, [previousVersion, getPreviousVersionOptionStatus, status])
+  const hasInvalidPreviousVersionStatus = previousVersion !== NO_PREVIOUS_RELEASE_VERSION_OPTION &&
+    !!selectedStatus &&
+    !isPreviousVersionStatusAllowed(status, selectedStatus)
 
   const debouncedOnWorkspacesChange = useMemo(() => debounce(onWorkspacesChange, DEFAULT_DEBOUNCE), [onWorkspacesChange])
   const debouncedOnPackagesChange = useMemo(() => debounce(onPackagesChange, DEFAULT_DEBOUNCE), [onPackagesChange])
@@ -733,7 +753,8 @@ export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogF
                 return checkReleaseVersionFormat(version, releaseVersionPattern)
               },
               restrictedSymbols: checkVersionRestrictedSymbols,
-              notEqualToPrevious: (version) => checkVersionNotEqualToPrevious(version, getSplittedVersionKey(previousVersion).versionKey),
+              notEqualToPrevious: (version) => isForeignPreviousVersionPackage ||
+                checkVersionNotEqualToPrevious(version, getSplittedVersionKey(previousVersion).versionKey),
             },
           }}
           render={({ field }) => (
@@ -838,6 +859,40 @@ export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogF
         {!hidePreviousVersionField && (
           <>
             <Divider sx={{ mx: 0, mt: 1, mb: 0.5 }} orientation="horizontal"/>
+            {showPreviousVersionPackageField && (
+              <Controller
+                name="previousVersionPackage"
+                control={control}
+                render={({ field: { value } }) => (
+                  <Autocomplete
+                    value={value ?? packageObj ?? null}
+                    disabled={isPublishFieldsDisabled}
+                    options={previousVersionPackageOptions}
+                    loading={arePreviousVersionPackagesLoading}
+                    filterOptions={disableAutocompleteSearch}
+                    isOptionEqualToValue={(option, value) => option.key === value.key}
+                    getOptionLabel={(option) => option?.name ?? ''}
+                    renderOption={(props, { key, name }) => <OptionItem
+                      key={key}
+                      props={props}
+                      title={name}
+                      subtitle={key}
+                    />}
+                    onInputChange={createOnInputChange((_, value) => debouncedSetPreviousVersionPackageSearch(value))}
+                    onClose={() => debouncedSetPreviousVersionPackageSearch('')}
+                    onChange={onPreviousVersionPackageChange}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        required
+                        label={getPreviousVersionPackageFieldLabel(kind)}
+                      />
+                    )}
+                    data-testid="PreviousVersionPackageAutocomplete"
+                  />
+                )}
+              />
+            )}
             <Controller
               name="previousVersion"
               control={control}
@@ -847,14 +902,8 @@ export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogF
                   inputChip={selectedStatus
                     ? <VersionStatusChip sx={{ height: '18px' }} status={selectedStatus}/>
                     : undefined}
-                  inputIndicator={previousVersionHasProblems && selectedPreviousVersion && (
-                    <VersionErrorIndicator
-                      versionKey={previousVersion}
-                      hasErrors={selectedPreviousVersion.hasErrors}
-                      changelogHasErrors={selectedPreviousVersion.changelogHasErrors}
-                      apiProcessorVersion={selectedPreviousVersion.apiProcessorVersion}
-                      kind={kind}
-                    />
+                  inputIndicator={previousVersionProblem.hasProblems && (
+                    <VersionFieldErrorIndicator problem={previousVersionProblem}/>
                   )}
                   value={field.value ?? null}
                   options={previousVersionOptions}
@@ -864,23 +913,34 @@ export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogF
                   onClose={() => debouncedSetPreviousVersionSearch('')}
                   getOptionLabel={getPreviousVersionOptionLabel}
                   isOptionEqualToValue={(option, value) => option === getSplittedVersionKey(value).versionKey}
-                  renderOption={(props, versionKey) => (
-                    <OptionItem
-                      key={versionKey}
-                      props={props}
-                      title={getPreviousVersionOptionLabel(versionKey)}
-                      overflowTooltipPlacement="left"
-                      indicator={renderPreviousVersionErrorIndicator(versionKey)}
-                      chip={renderPreviousVersionStatusChip(versionKey)}
-                      data-testid={`Option-${versionKey}`}
-                    />
-                  )}
+                  renderOption={(props, versionKey) => {
+                    const previousVersionItem = findPreviousVersion(versionKey)
+                    if (!previousVersionItem) {
+                      return (
+                        <OptionItem
+                          key={versionKey}
+                          props={props}
+                          title={getPreviousVersionOptionLabel(versionKey)}
+                          overflowTooltipPlacement="left"
+                          data-testid={`Option-${versionKey}`}
+                        />
+                      )
+                    }
+                    return (
+                      <VersionOptionItem
+                        key={versionKey}
+                        props={props}
+                        version={previousVersionItem}
+                        data-testid={`Option-${versionKey}`}
+                      />
+                    )
+                  }}
                   renderInput={(params) => (
                     <TextField
                       {...params}
                       required
                       label={previousVersionLabels.fieldLabel}
-                      error={hasInvalidPreviousVersionStatus || isPreviousVersionBlocking}
+                      error={hasInvalidPreviousVersionStatus || previousVersionProblem.isBlocking}
                       helperText={hasInvalidPreviousVersionStatus
                         ? RELEASE_PREVIOUS_VERSION_REQUIRED_MESSAGE
                         : extraValidationMassage}
@@ -909,7 +969,7 @@ export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogF
           variant="contained"
           type="submit"
           loading={isPublishing}
-          disabled={isFileReading || publishButtonDisabled || publishFieldsDisabled || isPublishing || isPreviousVersionBlocking || isBlocking || hasInvalidPreviousVersionStatus}
+          disabled={isFileReading || publishButtonDisabled || publishFieldsDisabled || isPublishing || previousVersionProblem.isBlocking || isBlocking || hasInvalidPreviousVersionStatus}
           data-testid={submitButtonTittle ? `${submitButtonTittle}Button` : 'PublishButton'}
         >
           {submitButtonTittle ?? 'Publish'}
@@ -934,6 +994,15 @@ export function replaceEmptyPreviousVersion(previousVersion: Key): Key {
     : previousVersion
 }
 
+export function toPreviousVersionPackageId(
+  previousVersionPackage: Package | null | undefined,
+  packageKey: Key | undefined,
+): Key | undefined {
+  return previousVersionPackage && previousVersionPackage.key !== packageKey
+    ? previousVersionPackage.key
+    : undefined
+}
+
 export function getVersionOptions(versionLabelsMap: Record<string, string[]>, targetVersion: string): VersionKey[] {
   const versions: string[] = Object.keys(versionLabelsMap)
   if (targetVersion && !versions.includes(targetVersion)) {
@@ -950,6 +1019,14 @@ export function getPackageOptions(packages: Packages, existingPackage: Package |
 }
 
 export const EMPTY_VERSION_KEY: Key = ''
+
+const PREVIOUS_VERSION_PACKAGE_KINDS: PackageKind[] = [PACKAGE_KIND, DASHBOARD_KIND]
+
+function getPreviousVersionPackageFieldLabel(kind: PackageKind): string {
+  return kind === DASHBOARD_KIND
+    ? 'Previous version dashboard'
+    : 'Previous version package'
+}
 
 function checkFileUpload(descriptorContent: string | null): boolean {
   return !!descriptorContent

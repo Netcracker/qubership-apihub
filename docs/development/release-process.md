@@ -76,7 +76,7 @@ The workflows rely on these repository settings. They are not checkable from cod
 Squash every pull request. Nx reads every commit between a component's last tag and `HEAD`. A squash makes each pull
 request one commit whose message is the linted pull request title, so work-in-progress commits never reach the bump
 calculation. A `BREAKING CHANGE:` footer in the pull request description counts as a major bump when it starts a
-line. The phrase inside a sentence or in quoted release notes, as in Dependabot descriptions, does not count.
+line. The phrase inside a sentence or in quoted release notes, as in Renovate descriptions, does not count.
 
 **Never squash a sync of `release` into `develop`, or of `main` into `develop`.** A squash drops the link to the
 `release` commits, and the hotfixes would be counted a second time at the next release. The bots always merge with a
@@ -299,14 +299,15 @@ has five parts:
 Old URLs keep working: the root `404.html` redirects `pages/erd/...` to `erd/portal-backend/...` and legacy
 documentation paths to `docs/`.
 
-Everything except the Storybooks comes from one ref. The workflow picks it in this order:
+Everything except the Storybooks comes from `develop`. The workflow picks the ref in this order:
 
 1. The repository variable `SITE_REF`, if set. It can be a branch, a tag, or a commit SHA.
-2. `main`, once `main` has `sites/landing/package.json`.
-3. `develop` otherwise.
+2. `develop`.
 
-The variable `LANDING_REF` overrides the ref of the landing only. The landing and the docs are built from that ref
-and cached by commit. The ERDs are not built by Pages: it pulls the renders for the site's commit from `ghcr.io`.
+The variable `LANDING_REF` overrides the ref of the landing only. The landing is cached by its commit, and the docs
+site is cached by the site ref and commit. The ERDs are not built by Pages: it pulls the renders for the site's
+commit from `ghcr.io`.
+
 The Storybooks are pulled from the Storybook store and get what the rest of the site leaves of the 900 MiB budget
 (the `budget_mib` input of `pages.yml`).
 
@@ -438,7 +439,9 @@ the monorepo and of that repository.
 
 - A release image stays while its Git tag exists: `<image>:<version>` for `<component>/<version>`, and the legacy
   `X.Y.Z` tags.
-- `latest`, `next`, `dev`, and `pull-N-merge` always stay. Closing a pull request deletes nothing.
+- `latest`, `next`, and `dev` always stay. `pull-N-merge` stays while pull request N is open and goes on
+  the next run after it closes. Each page of that lookup is a core API call and counts toward the
+  rate-limit floor.
 - A deleted branch's tag goes on the next run. Superseded indexes and `src-<hash>` content that no kept tag uses go a
   day after their last change.
 - A run never takes the API rate limit below half, so CI keeps its share. The legacy backlog takes several weeks.
@@ -464,7 +467,7 @@ of `tools/release/` read it to write the version plan, and Nx applies that plan.
 - A commit with an unknown type, or a title that is not a Conventional Commit, gives no bump. A `BREAKING CHANGE:`
   footer still gives major.
 - Merge commits are ignored.
-- Dependabot commits start with `chore: deps:`, so they give a patch bump.
+- Renovate commits start with `chore: deps:`, so they give a patch bump.
 - Below `1.0.0` the table still holds: `feat` takes `0.1.0` to `0.2.0`.
 
 ### Components and dependents
@@ -601,25 +604,20 @@ You released without the card, so the landing does not list the version. Do not 
 2. Finish** would fail with "Stale main", because `main` would hold a commit that `release` lacks. CI on `main` would
 also rebuild every image and move `:latest`.
 
-1. Open a pull request into `develop` that adds `sites/landing/src/content/releases/v<X>-<Y>-<Z>.md`.
-2. To publish the card before the next release, point the landing at `develop` and dispatch the Pages workflow.
-   The repository variable `LANDING_REF` overrides the ref of the landing in the Pages assembly and nothing else:
+Pages publishes the landing from `develop`. Open a pull request into `develop` that adds
+`sites/landing/src/content/releases/v<X>-<Y>-<Z>.md`, and dispatch the Pages workflow after it merges:
 
-   ```bash
-   gh variable set LANDING_REF --body develop --repo Netcracker/qubership-apihub
-   gh workflow run pages.yml --repo Netcracker/qubership-apihub --ref develop
-   ```
+```bash
+gh workflow run pages.yml --repo Netcracker/qubership-apihub --ref develop
+```
 
-3. After the next release, remove the variable, so the landing is built from `main` again:
-
-   ```bash
-   gh variable delete LANDING_REF --repo Netcracker/qubership-apihub
-   ```
+`LANDING_REF` overrides the landing ref only. Leave it unset: a set variable keeps the landing on that ref.
 
 ### A hotfix migration and the ERD
 
 A hotfix that adds an SQL migration reaches `main` through `release`. `erd.yml` renders on `main` by itself, because
-the migrations folder has a new key there, and then dispatches `pages.yml`. The site keeps showing `main`.
+the migrations folder has a new key there, and then dispatches `pages.yml`. The site is published from `develop`,
+so the diagram on the site updates when that hotfix is merged back into `develop`.
 
 To render an ERD that `erd.yml` considers done, or to re-render after you change the render tooling by hand, force a
 render of every backend on a branch:

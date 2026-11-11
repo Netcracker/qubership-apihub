@@ -18,6 +18,7 @@ import (
 	"github.com/Netcracker/qubership-apihub/backend/agents-backend/security"
 	exposer "github.com/Netcracker/qubership-apihub/backend/commons-go/api-spec-exposer"
 	"github.com/Netcracker/qubership-apihub/backend/commons-go/api-spec-exposer/config"
+	"github.com/Netcracker/qubership-apihub/backend/commons-go/logging"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 
@@ -27,6 +28,8 @@ import (
 )
 
 func init() {
+	log.SetFormatter(logging.NewFormatter())
+	logging.RedirectStandardLog()
 	setLogLevel(os.Getenv("LOG_LEVEL"))
 }
 
@@ -43,6 +46,7 @@ func main() {
 
 	basePath := systemInfoService.GetBasePath()
 	r := mux.NewRouter().SkipClean(true).UseEncodedPath()
+	r.Use(logging.RequestIDMiddleware)
 	r.Use(midldleware.WriteDeadlineMiddleware)
 
 	dbCreds := systemInfoService.GetDBCreds()
@@ -145,6 +149,7 @@ func main() {
 	logsController := controller.NewLogsController(resp)
 
 	healthController := controller.NewHealthController(readyChan)
+	versionController := controller.NewVersionController(service.BackendVersionFromEnv(), resp)
 
 	//TODO: it is necessary to add a new permission for the entire agent’s functionality after adding the ability to extend permissions in qubership-apihub-backend
 	r.HandleFunc("/api/v2/agents", authenticator.Secure(agentController.ListAgents)).Methods(http.MethodGet)
@@ -203,6 +208,7 @@ func main() {
 		r.HandleFunc(endpointConfig.Path, endpointConfig.Handler).Methods(http.MethodGet)
 	}
 
+	r.HandleFunc("/api/v1/system/version", authenticator.Secure(versionController.GetVersion)).Methods(http.MethodGet)
 	r.HandleFunc("/live", healthController.HandleLiveRequest).Methods(http.MethodGet)
 	r.HandleFunc("/ready", healthController.HandleReadyRequest).Methods(http.MethodGet)
 	r.PathPrefix("/debug/").Handler(http.DefaultServeMux)

@@ -57,7 +57,7 @@ export const DdlEntityChangeCell: FC<DdlEntityChangeCellProps> = memo<DdlEntityC
   })
 
   const link = useMemo(() => ({
-    pathname: `/portal/packages/${packageId}/${versionId}/compare/${apiType}/${ddlEntityId}`,
+    pathname: `/portal/packages/${encodeURIComponent(packageId!)}/${encodeURIComponent(versionId!)}/compare/${apiType}/${encodeURIComponent(ddlEntityId)}`,
     search: `${searchParams}`,
   }), [apiType, ddlEntityId, packageId, searchParams, versionId])
 

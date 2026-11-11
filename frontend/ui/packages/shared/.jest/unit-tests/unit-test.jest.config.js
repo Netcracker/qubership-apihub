@@ -24,18 +24,19 @@ const pathsOf = (pkg) => {
 
 export default {
   testRunner: 'jest-circus/runner',
-  testMatch: ['**/*.unit-test.ts'],
+  testMatch: ['**/*.unit.test.ts'],
   rootDir: '../..',
   roots: ['<rootDir>/src', '<rootDir>/../portal/src', '<rootDir>/../agents/src'],
   testEnvironment: 'node',
   moduleFileExtensions: [
     'ts',
+    'tsx',
     'js',
     'json',
     'node',
   ],
   transform: {
-    '\\.ts?$': [
+    '\\.tsx?$': [
       'ts-jest',
       { tsconfig: '<rootDir>/.jest/unit-tests/tsconfig.unit-test.json' },
     ],

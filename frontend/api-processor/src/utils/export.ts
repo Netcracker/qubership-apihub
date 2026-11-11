@@ -41,9 +41,10 @@ export function createUnknownExportDocument(filename: string, data: Blob): Expor
 
 export async function generateLegalStatementPage(packageName: string, version: string, legalStatement: Blob, backLinkFilename: string): Promise<Blob> {
   const filled = (await legalStatement.text())
-    .replaceAll('{{packageName}}', packageName)
-    .replaceAll('{{version}}', version)
-    .replace('{{backLinkFilename}}', backLinkFilename)
+    // A replacer function keeps the value literal: a string would expand patterns such as `$&` and `$'`.
+    .replaceAll('{{packageName}}', () => packageName)
+    .replaceAll('{{version}}', () => version)
+    .replace('{{backLinkFilename}}', () => backLinkFilename)
   return new Blob([filled])
 }
 
@@ -52,13 +53,13 @@ export async function generateHtmlPage(document: string, fileTitle: string, pack
   const apispecViewScript = await (await templateResolver('scripts/apispec-view.js')).text()
   const breadcrumbs = `<div class="breadcrumbs"><a href="index.html">Table of contents</a> > <span>${fileTitle}</span></div>`
   const filled = template
-    .replace('{{fileTitle}}', fileTitle)
-    // arrow function disables replacement patterns like $&
+    // A replacer function keeps the value literal: a string would expand patterns such as `$&` and `$'`.
+    .replace('{{fileTitle}}', () => fileTitle)
     .replace('{{apispecViewScript}}', () => apispecViewScript)
-    .replaceAll('{{packageName}}', packageName)
-    .replaceAll('{{version}}', version)
-    .replace('{{breadcrumbs}}', breadcrumbs)
-    .replace('{{spec}}', escapeHTML(document))
+    .replaceAll('{{packageName}}', () => packageName)
+    .replaceAll('{{version}}', () => version)
+    .replace('{{breadcrumbs}}', () => breadcrumbs)
+    .replace('{{spec}}', () => escapeHTML(document))
   return new Blob([filled])
 }
 
@@ -93,11 +94,12 @@ export async function generateIndexHtmlPage(packageName: string, version: string
   const [readmeHtml, markdownItScript] = await generateReadmeParts(templateResolver, readme)
 
   const filled = template
-    .replaceAll('{{packageName}}', packageName)
-    .replaceAll('{{version}}', version)
-    .replace('{{markdownItScript}}', markdownItScript)
-    .replace('{{readmeHtml}}', readmeHtml)
-    .replace('{{htmlList}}', htmlList)
+    // A replacer function keeps the value literal: a string would expand patterns such as `$&` and `$'`.
+    .replaceAll('{{packageName}}', () => packageName)
+    .replaceAll('{{version}}', () => version)
+    .replace('{{markdownItScript}}', () => markdownItScript)
+    .replace('{{readmeHtml}}', () => readmeHtml)
+    .replace('{{htmlList}}', () => htmlList)
   return new Blob([filled])
 }
 

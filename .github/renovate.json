@@ -1,0 +1,157 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": [
+    "Renovate configuration for the whole monorepo. It takes the organization defaults (7-day release age, security updates) and keeps the scope, grouping, and limits this repository chose.",
+    "The commit prefix `chore: deps:` stays (release decision R4): the release tooling gives such a commit a patch bump for its module at the next release."
+  ],
+  "extends": ["github>Netcracker/renovate-config:org-inherited-config"],
+  "dependencyDashboard": false,
+  "enabledManagers": ["github-actions", "npm", "gomod", "maven", "dockerfile", "docker-compose"],
+  "includePaths": [
+    ".github/workflows/**",
+    ".github/actions/**",
+    "package.json",
+    "pnpm-workspace.yaml",
+    "frontend/*/package.json",
+    "frontend/*/packages/*/package.json",
+    "tests/ui-tests/package.json",
+    "tools/build-id/package.json",
+    "tools/jest-chrome-in-docker-environment/package.json",
+    "sites/*/package.json",
+    "backend/*/go.mod",
+    "backend/java-task-consumer/pom.xml",
+    "backend/java-task-consumer/java-task-consumer/pom.xml",
+    "backend/java-task-consumer/jdiff-engine/pom.xml",
+    "backend/*/Dockerfile",
+    "frontend/*/Dockerfile*",
+    "deploy/docker-compose/apihub-generic/docker-compose.yml",
+    "deploy/docker-compose/with-keycloak/docker-compose.yml"
+  ],
+  "schedule": ["* * * * 1"],
+  "labels": ["dependencies"],
+  "semanticCommits": "disabled",
+  "commitMessagePrefix": "chore: deps:",
+  "separateMajorMinor": false,
+  "prHourlyLimit": 0,
+  "prConcurrentLimit": 24,
+  "gitIgnoredAuthors": ["41898282+github-actions[bot]@users.noreply.github.com"],
+  "packageRules": [
+    {
+      "description": "Keep image and action references as they are written: the organization defaults would pin every one of them to a digest.",
+      "matchManagers": ["github-actions", "dockerfile", "docker-compose"],
+      "pinDigests": false
+    },
+    {
+      "description": "Update only actions and reusable workflows in GitHub Actions files, not runner labels, service images, or tool versions passed to setup actions.",
+      "matchManagers": ["github-actions"],
+      "enabled": false
+    },
+    {
+      "description": "One pull request for all actions.",
+      "matchManagers": ["github-actions"],
+      "matchDepTypes": ["action", "workflow"],
+      "enabled": true,
+      "groupName": "github-actions",
+      "addLabels": ["github-actions"]
+    },
+    {
+      "description": "One pull request per dependency for all projects, so a version never differs between two projects of one lockfile. Clearing the group turns off the monorepo groups of the organization defaults.",
+      "matchManagers": ["npm"],
+      "rangeStrategy": "bump",
+      "groupName": null,
+      "groupSlug": null,
+      "addLabels": ["npm"]
+    },
+    {
+      "description": "Update only declared dependencies: the package manager, the engines, the peer ranges, and the overrides change by hand.",
+      "matchManagers": ["npm"],
+      "matchDepTypes": [
+        "engines",
+        "packageManager",
+        "volta",
+        "devEngines.runtime",
+        "devEngines.packageManager",
+        "peerDependencies",
+        "overrides",
+        "resolutions",
+        "pnpm.overrides"
+      ],
+      "enabled": false
+    },
+    {
+      "description": "Node stays on the 24 LTS line, as in setup-workspace and the build-task-consumer image.",
+      "matchPackageNames": ["@types/node"],
+      "allowedVersions": "<25"
+    },
+    {
+      "description": "TypeScript 7.0 is intentionally deferred; resume updates with 7.1 and later.",
+      "matchPackageNames": ["typescript"],
+      "allowedVersions": "!/^7\\.0\\./"
+    },
+    {
+      "description": "One pull request per dependency for all Go modules. Each go.mod is tidied here; renovate-go-work-sync.yml brings the other modules in line with go.work on the `renovate/gomod-` branches.",
+      "matchManagers": ["gomod"],
+      "groupName": null,
+      "groupSlug": null,
+      "additionalBranchPrefix": "gomod-",
+      "postUpdateOptions": ["gomodTidy"],
+      "addLabels": ["go"]
+    },
+    {
+      "description": "backend/.go-version is the one Go version of the workspace, and tools/ci/go-version-check.sh fails on any drift, so the go and toolchain directives change by hand. A replace directive points at a local module.",
+      "matchManagers": ["gomod"],
+      "matchDepTypes": ["golang", "toolchain", "replace"],
+      "enabled": false
+    },
+    {
+      "description": "A new major of a Go module at v1 or later has a new module path and needs its imports rewritten, which is a manual migration.",
+      "matchManagers": ["gomod"],
+      "matchUpdateTypes": ["major"],
+      "matchCurrentVersion": "!/^v?0\\./",
+      "enabled": false
+    },
+    {
+      "description": "One pull request for the Maven reactor of the Java task consumer.",
+      "matchManagers": ["maven"],
+      "groupName": "maven",
+      "addLabels": ["java"]
+    },
+    {
+      "description": "One pull request for the base images of every Dockerfile.",
+      "matchManagers": ["dockerfile"],
+      "groupName": "docker",
+      "addLabels": ["docker"]
+    },
+    {
+      "description": "One pull request for the images of the Docker Compose stacks for users.",
+      "matchManagers": ["docker-compose"],
+      "groupName": "docker-compose",
+      "addLabels": ["docker"]
+    },
+    {
+      "description": "The golang builder images follow backend/.go-version in one change with the go.mod files and go.work.",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["/(^|/)golang$/"],
+      "enabled": false
+    },
+    {
+      "description": "Node stays on the 24 LTS line, as in setup-workspace.",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["/(^|/)node$/"],
+      "allowedVersions": "<25"
+    },
+    {
+      "description": "Keep the plain X.Y.Z tags of qubership-core-base: the organization defaults would move them to alpine-X.Y.Z.",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["/(^|/)netcracker/qubership-core-base$/"],
+      "versioning": "docker",
+      "allowedVersions": "/^\\d+\\.\\d+\\.\\d+$/"
+    },
+    {
+      "description": "Keycloak tags end in a rebuild number, X.Y.Z-N, which Docker versioning reads as an incompatible suffix.",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["/(^|/)keycloak/keycloak$/"],
+      "versioning": "regex:^(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)-(?<build>\\d+)$"
+    }
+  ]
+}

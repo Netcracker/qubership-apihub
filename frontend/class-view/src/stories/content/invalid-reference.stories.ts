@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Meta } from '@storybook/html'
+import type { Meta } from '@storybook/html-vite'
 import {
   CLASS_SUFFIX,
   generateClassObject,

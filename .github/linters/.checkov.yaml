@@ -44,3 +44,7 @@ skip-path:
 - backend/portal-backend/tests/api/fixtures
 - tests/ui-tests/resources
 - tests/postman-collections/working-directory
+# Sample secrets (a JWT and a private key in OpenAPI examples) that CKV_SECRET_9 and CKV_SECRET_13 flag;
+# JSON has no comments, so an inline checkov:skip is not possible here
+- backend/test-service/static
+- __fixtures__

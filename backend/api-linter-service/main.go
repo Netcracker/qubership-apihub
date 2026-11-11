@@ -17,6 +17,7 @@ import (
 	"github.com/Netcracker/qubership-apihub/backend/api-linter-service/security"
 	exposer "github.com/Netcracker/qubership-apihub/backend/commons-go/api-spec-exposer"
 	"github.com/Netcracker/qubership-apihub/backend/commons-go/api-spec-exposer/config"
+	"github.com/Netcracker/qubership-apihub/backend/commons-go/logging"
 	"github.com/google/uuid"
 
 	"github.com/Netcracker/qubership-apihub/backend/api-linter-service/controller"
@@ -30,6 +31,8 @@ import (
 )
 
 func init() {
+	log.SetFormatter(logging.NewFormatter())
+	logging.RedirectStandardLog()
 	logLevel, err := log.ParseLevel(os.Getenv("LOG_LEVEL"))
 	if err != nil {
 		logLevel = log.InfoLevel
@@ -49,6 +52,7 @@ func main() {
 
 	basePath := systemInfoService.GetBasePath()
 	r := mux.NewRouter().SkipClean(true).UseEncodedPath()
+	r.Use(logging.RequestIDMiddleware)
 	r.Use(midldleware.WriteDeadlineMiddleware)
 
 	creds := systemInfoService.GetCreds()
@@ -177,6 +181,7 @@ func main() {
 	rulesetController := controller.NewRulesetController(rulesetService, authorizationService, resp)
 	cleanupController := controller.NewCleanupController(cleanupService, authorizationService, systemInfoService, resp)
 	healthController := controller.NewHealthController(readyChan)
+	versionController := controller.NewVersionController(service.BackendVersionFromEnv(), resp)
 	logsController := controller.NewLogsController(resp)
 	linterController := controller.NewLinterController(linterConfigService, resp)
 	scoringController := controller.NewScoringController(scoringService, authorizationService, resp)
@@ -213,6 +218,7 @@ func main() {
 	r.HandleFunc("/api/internal/clear/{testId}", authenticator.Secure(cleanupController.ClearTestData)).Methods(http.MethodDelete)
 
 	// Service endpoints
+	r.HandleFunc("/api/v1/system/version", authenticator.Secure(versionController.GetVersion)).Methods(http.MethodGet)
 	r.HandleFunc("/live", healthController.HandleLiveRequest).Methods(http.MethodGet)
 	r.HandleFunc("/ready", healthController.HandleReadyRequest).Methods(http.MethodGet)
 	r.PathPrefix("/debug/").Handler(http.DefaultServeMux) // TODO: env to config!

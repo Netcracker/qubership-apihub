@@ -73,7 +73,7 @@ export const OperationChangeCell: FC<OperationChangeCellProps> = memo<OperationC
   })
 
   const link = useMemo(() => ({
-    pathname: `/portal/packages/${packageId}/${versionId}/compare/${apiType}/${operationKey}`,
+    pathname: `/portal/packages/${encodeURIComponent(packageId!)}/${encodeURIComponent(versionId!)}/compare/${apiType}/${encodeURIComponent(operationKey!)}`,
     search: `${searchParams}`,
   }), [apiType, operationKey, packageId, searchParams, versionId])
 

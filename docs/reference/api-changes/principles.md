@@ -209,7 +209,7 @@ resolve such reference during publication. For example, in case below, there are
 
 * 2 files (getAddressUnitsByName_createAddressUnit.yml, getAddressUnitById.yml) that contain paths objects
 * 2 files (AddressUnit.yml, CreateAddressUnitRequest.yml) that contain schemas.
-* 1 file common-openapi.yml that contains security shemes.
+* 1 file common-openapi.yml that contains security schemes.
 
 **Specification 1:**
 
