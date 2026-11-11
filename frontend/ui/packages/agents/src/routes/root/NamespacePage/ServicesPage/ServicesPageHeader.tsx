@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import { ButtonBase, CircularProgress, styled, type Theme, Typography, type TypographyProps } from '@mui/material'
 import { type FC, memo, useId } from 'react'
 
 import { InfoHint, VISIBLE_ON_HOVER_HOST_STYLES } from '@netcracker/qubership-apihub-ui-shared/components/InfoHint'
+import { CheckCircleIcon } from '@netcracker/qubership-apihub-ui-shared/icons/CheckCircleIcon'
 import {
   MUTED_TEXT_COLOR,
   WIZARD_STEP_CURRENT_BACKGROUND_COLOR,
@@ -37,7 +37,11 @@ import {
 } from './ServicesPageProvider/servicesSteps'
 import { useOpenableSteps } from './useOpenableSteps'
 
-const STEP_BADGE_SIZE: Pixel = 20
+// CheckCircleIcon has the default MUI size of 24 px and draws its circle 17 units wide in a 20-unit view box, so the
+// circle is 20.4 px wide and 1.8 px away from each edge. The number badge copies that box to line up with the icon.
+const STEP_ICON_SIZE: Pixel = 24
+const STEP_BADGE_SIZE: Pixel = STEP_ICON_SIZE * 17 / 20
+const STEP_BADGE_MARGIN: Pixel = (STEP_ICON_SIZE - STEP_BADGE_SIZE) / 2
 
 const IDLE_STEP_LOOK = 'idle'
 const CURRENT_STEP_LOOK = 'current'
@@ -165,12 +169,12 @@ type StepBadgeProps = {
 
 const StepBadge: FC<StepBadgeProps> = ({ step: { index, status, completed }, look }) => {
   if (status === RUNNING_STEP_STATUS) {
-    return <CircularProgress size={STEP_BADGE_SIZE}/>
+    return <StepProgress size={STEP_BADGE_SIZE}/>
   }
   if (completed) {
     return <CompletedIcon/>
   }
-  return <NumberBadge look={look} component="span" variant="subtitle2">{index + 1}</NumberBadge>
+  return <NumberBadge look={look}>{index + 1}</NumberBadge>
 }
 
 StepBadge.displayName = 'StepBadge'
@@ -232,10 +236,7 @@ const StepName = styled(Typography, { shouldForwardProp: prop => prop !== 'look'
   }),
 )
 
-// A Typography, since a button takes the font of the browser rather than of its parent
-const NumberBadge = styled(Typography, { shouldForwardProp: prop => prop !== 'look' })<
-  TypographyProps<'span'> & { component: 'span'; look: StepLook }
->(
+const NumberBadge = styled('span', { shouldForwardProp: prop => prop !== 'look' })<{ look: StepLook }>(
   ({ theme, look }) => ({
     display: 'inline-flex',
     flexShrink: 0,
@@ -243,17 +244,29 @@ const NumberBadge = styled(Typography, { shouldForwardProp: prop => prop !== 'lo
     justifyContent: 'center',
     width: STEP_BADGE_SIZE,
     height: STEP_BADGE_SIZE,
+    margin: STEP_BADGE_MARGIN,
     borderRadius: '50%',
     backgroundColor: STEP_LOOK_TO_COLORS[look](theme).badge,
     color: theme.palette.common.white,
-    fontWeight: 500,
+    // A button takes the font of the browser rather than of its parent, so the badge sets the font itself
+    fontFamily: theme.typography.fontFamily,
+    fontSize: theme.typography.body2.fontSize,
+    fontWeight: 700,
+    // The trim cuts the line box down to the height of the digits, so the flex centering centers the digits themselves
+    // rather than a box with the ascent and the descent of the font. Line height 1 keeps the digits close to the
+    // center in a browser without text-box.
+    lineHeight: 1,
+    textBox: 'trim-both cap alphabetic',
   }),
 )
 
-// The circle of the icon takes 20 of its 24 px, so the icon overflows by 2 px on each side to match the number badges
+// The margin keeps the step name from shifting when the number badge turns into the spinner
+const StepProgress = styled(CircularProgress)({
+  flexShrink: 0,
+  margin: STEP_BADGE_MARGIN,
+})
+
 const CompletedIcon = styled(CheckCircleIcon)(({ theme }) => ({
-  fontSize: 24,
-  margin: -2,
   color: theme.palette.secondary.main,
 }))
 
