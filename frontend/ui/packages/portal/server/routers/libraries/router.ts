@@ -1,9 +1,10 @@
 import { type Request, type RequestHandler, type Response, Router } from 'express'
 import { randomBytes, randomUUID } from 'node:crypto'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import type {
   LibraryApiKey,
   LibraryApiKeyCreate,
-  LibraryComparison,
   LibraryMember,
   LibraryMemberUpdate,
   LibraryVersion,
@@ -12,6 +13,10 @@ import type {
 import { createMockLibraryContent } from './mock-content'
 
 const PUBLIC_LIBRARY_ROLE = 'viewer'
+// The jdiff samples of api-doc-viewer; its stories and tests read the same files
+const JAVA_API_SAMPLES_DIR = join(__dirname, '../../../../../../api-doc-viewer/packages/samples/javaapi')
+const JAVA_API_REPORT_PATH = join(JAVA_API_SAMPLES_DIR, 'api-report.json')
+const JAVA_API_DIFF_PATH = join(JAVA_API_SAMPLES_DIR, 'api-diff.json')
 
 // The mock's Node configuration cannot resolve UI entity aliases, so these mirror PackagePermission.
 const LIBRARY_PERMISSIONS = [
@@ -58,13 +63,13 @@ type Library = LibraryCreate & {
   createdBy: string
 }
 
-type LibrariesRouters = { libraries: Router; classes: Router; favorites: Router }
+type LibrariesRouters = { libraries: Router; favorites: Router }
 
 export function createLibrariesRouters(): LibrariesRouters {
   const router = Router()
-  const searchRouter = Router()
   const favoritesRouter = Router()
   const mock = createMockLibraryContent()
+  const sampleBreakingChangesCount = countBreakingChanges(JAVA_API_DIFF_PATH)
   const libraryMembers = new Map(Object.entries(mock.members))
   const libraryApiKeys = new Map<string, LibraryApiKey[]>()
   const libraryVersions: LibraryVersion[] = [...mock.versions]
@@ -99,29 +104,15 @@ export function createLibrariesRouters(): LibrariesRouters {
     createdBy: 'Name Surname',
   }]
 
-  const findComparison = (
+  // The only computed comparison is the diff sample: the seeded current version against its seeded predecessor
+  const hasComparison = (
     current: LibraryVersion,
     previousLibraryId = current.libraryId,
     previousVersion = current.previousVersion,
-  ): LibraryComparison | undefined => {
-    if (
-      current.libraryId !== mock.versions[0].libraryId || current.version !== mock.versions[0].version ||
-      previousLibraryId !== current.libraryId || previousVersion !== mock.versions[1].version ||
-      !libraryVersions.some(item => item.libraryId === previousLibraryId && item.version === previousVersion)
-    ) return
-    return {
-      comparisonId: 'local-catalog-comparison',
-      libraryId: current.libraryId,
-      version: current.version,
-      previousLibraryId: previousLibraryId,
-      previousVersion: previousVersion,
-      changeCounts: { removed: { breaking: 30 }, changed: { breaking: 15 }, added: { 'non-breaking': 3 } },
-      openCount: 48,
-      noContent: false,
-      builderVersion: 'local-mock',
-      lastActive: current.createdAt,
-    }
-  }
+  ): boolean =>
+    current.libraryId === mock.versions[0].libraryId && current.version === mock.versions[0].version &&
+    previousLibraryId === current.libraryId && previousVersion === mock.versions[1].version &&
+    libraryVersions.some(item => item.libraryId === previousLibraryId && item.version === previousVersion)
 
   const getLibrarySummary = (library: Library): Library & {
     latestRelease?: string
@@ -131,9 +122,7 @@ export function createLibrariesRouters(): LibrariesRouters {
       version.libraryId === library.libraryId && version.status === 'release',
     )
     if (!latestRelease) return library
-    const comparison = findComparison(latestRelease)
-    const breakingChangesCount = Object.values(comparison?.changeCounts ?? {})
-      .reduce((total, counts) => total + (counts.breaking ?? 0), 0)
+    const breakingChangesCount = hasComparison(latestRelease) ? sampleBreakingChangesCount : 0
     return { ...library, latestRelease: latestRelease.version, breakingChangesCount: breakingChangesCount }
   }
 
@@ -266,7 +255,11 @@ export function createLibrariesRouters(): LibrariesRouters {
 
   router.put('/:libraryId/members/:userId', (req, res) => {
     if (!isLibraryMemberUpdate(req.body)) {
-      res.status(400).json({ status: 400, code: 'BAD_REQUEST', message: 'Provide roleIds as an array of known library roles' })
+      res.status(400).json({
+        status: 400,
+        code: 'BAD_REQUEST',
+        message: 'Provide roleIds as an array of known library roles',
+      })
       return
     }
     const members = libraryMembers.get(req.params.libraryId) ?? []
@@ -361,13 +354,33 @@ export function createLibrariesRouters(): LibrariesRouters {
     res.json({ versions: filtered.slice(paging.offset, paging.offset + paging.limit) })
   })
 
-  const getComparison = (req: Request, res: Response): LibraryComparison | undefined => {
+  router.get('/:libraryId/versions/:version/java-api/report', (req, res) => {
+    const version = libraryVersions.find(item =>
+      item.libraryId === req.params.libraryId && item.version === req.params.version,
+    )
+    if (!version) {
+      res.status(404).json({ status: 404, code: 'LIBRARY_VERSION_NOT_FOUND', message: 'Library version not found' })
+      return
+    }
+    if (!mock.versions.some(seed => seed.libraryId === version.libraryId && seed.version === version.version)) {
+      res.status(404).json({
+        status: 404,
+        code: 'LIBRARY_JAVA_API_REPORT_NOT_FOUND',
+        message: 'No Java API report has been built for this version',
+      })
+      return
+    }
+    res.sendFile(JAVA_API_REPORT_PATH)
+  })
+
+  // Answers 404 itself and returns false when the version or its comparison does not exist
+  const checkComparison = (req: Request, res: Response): boolean => {
     const current = libraryVersions.find(item =>
       item.libraryId === req.params.libraryId && item.version === req.params.version,
     )
     if (!current) {
       res.status(404).json({ status: 404, code: 'LIBRARY_VERSION_NOT_FOUND', message: 'Library version not found' })
-      return
+      return false
     }
     const previousLibraryId = typeof req.query.previousLibraryId === 'string'
       ? req.query.previousLibraryId
@@ -375,93 +388,19 @@ export function createLibrariesRouters(): LibrariesRouters {
     const previousVersion = typeof req.query.previousVersion === 'string'
       ? req.query.previousVersion
       : current.previousVersion
-    const comparison = findComparison(current, previousLibraryId, previousVersion)
-    if (!comparison) {
+    if (!hasComparison(current, previousLibraryId, previousVersion)) {
       res.status(404).json({
         status: 404,
         code: 'LIBRARY_COMPARISON_NOT_FOUND',
         message: 'No comparison has been computed for this version pair',
       })
-      return
+      return false
     }
-    return comparison
+    return true
   }
 
-  router.get('/:libraryId/versions/:version/changes/summary', (req, res) => {
-    const comparison = getComparison(req, res)
-    if (comparison) res.json(comparison)
-  })
-
-  router.get('/:libraryId/versions/:version/changes', (req, res) => {
-    const comparison = getComparison(req, res)
-    if (!comparison) return
-    const paging = getPaging(req, res)
-    if (!paging) return
-    const severities = queryValues(req.query.severity)
-    const changeTypes = queryValues(req.query.changeType)
-    if (
-      severities.some(value => !['breaking', 'non-breaking', 'annotation'].includes(value)) ||
-      changeTypes.some(value => !['added', 'removed', 'changed', 'deprecated'].includes(value))
-    ) {
-      res.status(400).json({ status: 400, code: 'BAD_REQUEST', message: 'Select a valid severity and change type' })
-      return
-    }
-    const changes = mock.changes.filter(change =>
-      (!severities.length || severities.includes(change.severity)) &&
-      (!changeTypes.length || changeTypes.includes(change.changeType)) &&
-      (!req.query.classId || req.query.classId === change.classId),
-    )
-    res.json({ comparison: comparison, changes: changes.slice(paging.offset, paging.offset + paging.limit) })
-  })
-
-  searchRouter.get('/', (req, res) => {
-    if (typeof req.query.textFilter !== 'string' || req.query.version && !req.query.libraryId) {
-      res.status(400).json({
-        status: 400,
-        code: 'BAD_REQUEST',
-        message: 'Provide textFilter and a libraryId when filtering by version',
-      })
-      return
-    }
-    const paging = getPaging(req, res)
-    if (!paging) return
-    const kinds = queryValues(req.query.kind)
-    if (kinds.some(kind => !['class', 'interface', 'enum', 'annotation', 'record'].includes(kind))) {
-      res.status(400).json({ status: 400, code: 'BAD_REQUEST', message: 'Select a valid Java type kind' })
-      return
-    }
-    const text = req.query.textFilter.toLowerCase()
-    const classes = libraryVersions.filter(version =>
-      version.libraryId === 'local-library-demo' &&
-      mock.versions.some(seed => seed.version === version.version) &&
-      (!req.query.libraryId || req.query.libraryId === version.libraryId) &&
-      (!req.query.version || req.query.version === version.version),
-    )
-      .flatMap(version =>
-        mock.classes.filter(item => !kinds.length || kinds.includes(item.kind))
-          .filter(item =>
-            version.version !== mock.versions[1].version || item.kind !== 'class' ||
-            Number(item.classId.split('-')[1]) <= 112,
-          )
-          .flatMap(({ methods, ...item }) => {
-            const result = { ...item, libraryId: version.libraryId, version: version.version }
-            const versionMethods = version.version === mock.versions[1].version
-              ? methods.map(method => ({ ...method, signature: method.signature.replace(', boolean', '') }))
-              : item.kind === 'class' && Number(item.classId.split('-')[1]) <= 30
-              ? []
-              : methods
-            return [
-              ...(item.qualifiedName.toLowerCase().includes(text) ? [result] : []),
-              ...(text
-                ? versionMethods.filter(method => method.signature.toLowerCase().includes(text)).map(method => ({
-                  ...result,
-                  ...method,
-                }))
-                : []),
-            ]
-          }),
-      )
-    res.json({ classes: classes.slice(paging.offset, paging.offset + paging.limit) })
+  router.get('/:libraryId/versions/:version/java-api/diff', (req, res) => {
+    if (checkComparison(req, res)) res.sendFile(JAVA_API_DIFF_PATH)
   })
 
   router.get('/:libraryId/versions/:version', (req, res) => {
@@ -583,7 +522,20 @@ export function createLibrariesRouters(): LibrariesRouters {
   favoritesRouter.put('/:libraryId', setFavorite(true))
   favoritesRouter.delete('/:libraryId', setFavorite(false))
 
-  return { libraries: router, classes: searchRouter, favorites: favoritesRouter }
+  return { libraries: router, favorites: favoritesRouter }
+}
+
+type JdiffRow = { member?: string; status: string; breaking: boolean }
+type JdiffDocument = { artifacts: { changes: JdiffRow[] }[] }
+
+// Breaking rows of a jdiff diff as the UI counts them: changed members with jdiff's `breaking` verdict.
+// The sample's type rows only reflect their members' changes, so they are left out.
+function countBreakingChanges(path: string): number {
+  const document = JSON.parse(readFileSync(path, 'utf8')) as JdiffDocument
+  return document.artifacts
+    .flatMap(artifact => artifact.changes)
+    .filter(row => row.member && row.status !== 'UNCHANGED' && row.breaking)
+    .length
 }
 
 function setMemberDirectRoles(members: LibraryMember[], userId: string, roleIds: string[]): void {

@@ -53,6 +53,7 @@ import { ProfilePage } from './root/ProfilePage/ProfilePage'
 import { LibraryPage } from './root/LibraryPage/LibraryPage'
 import { LibrarySettingsPage } from './root/LibraryPage/LibrarySettingsPage/LibrarySettingsPage'
 import { LibraryVersionPage } from './root/LibraryPage/LibraryVersionPage/LibraryVersionPage'
+import { JavaClassPage } from './root/LibraryPage/LibraryVersionPage/javaapi/JavaClassPage'
 
 // The target is absolute: a relative one resolves against the decoded URL, which since react-router 6.22 decodes
 // '?' and '#' too, so a '?', '#', or '%' in a version (agent snapshot versions contain '%') produces a wrong path.
@@ -84,6 +85,7 @@ export const router = createBrowserRouter(
         <Route path={LIBRARY_PAGE_PATH_PATTERN} element={<LibraryPage/>}/>
         <Route path={`${LIBRARY_SETTINGS_PAGE_PATH_PATTERN}*`} element={<LibrarySettingsPage/>}/>
         <Route path={`${LIBRARY_VERSION_PAGE_PATH_PATTERN}/*`} element={<LibraryVersionPage/>}/>
+        <Route path={`${LIBRARY_VERSION_PAGE_PATH_PATTERN}/classes/:className`} element={<JavaClassPage/>}/>
         <Route path="packages/:packageId">
           <Route index element={<PackagePage/>}/>
           <Route path={`${SPECIAL_VERSION_KEY}/${PACKAGE_SETTINGS_PAGE}/*`} element={<PackageSettingsPage/>}/>

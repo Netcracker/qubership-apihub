@@ -8,7 +8,7 @@ import { DialogForm } from '@netcracker/qubership-apihub-ui-shared/components/Di
 import type { LibraryVersionDto } from '@portal/entities/libraries'
 import { useLibraryVersions } from '../useLibraryVersions'
 import { getLibraryVersionPath } from './library-version'
-import { useComparisonLibraries } from './useLibraryChanges'
+import { useComparisonLibraries } from './useComparisonLibraries'
 
 type CompareLibraryVersionsDialogProps = { version: LibraryVersionDto; onClose: () => void }
 

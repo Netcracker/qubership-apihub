@@ -10,3 +10,7 @@ export function getLibraryVersionPath(libraryId: string, versionId: string, tab 
     })
   }/${tab}`
 }
+
+export function getLibraryJavaClassPath(libraryId: string, versionId: string, className: string): string {
+  return getLibraryVersionPath(libraryId, versionId, `classes/${encodeURIComponent(className)}`)
+}
