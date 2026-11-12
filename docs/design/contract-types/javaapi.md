@@ -35,14 +35,11 @@ Library, with the same search behaviour.
 
 | Concept | Definition |
 | :---- | :---- |
-| Library | Workspace entity of type `library`. One Maven artefact (coordinates without version). Holds zero or more Library
-  versions. |
+| Library | Workspace entity of type `library`. One Maven artefact (coordinates without version). Holds zero or more Library versions. |
 | Maven coordinates | Repository name + `groupId` + `artifactId`. Immutable after create. |
 | GAV | `groupId:artifactId:version` including repository context in UI. |
-| Library version | A Maven version published in APIHUB with status Draft or Release, optional labels, API report, and API diff
-  vs the selected **Previous version**. |
-| Previous version | Another Library version already in APIHUB, or **No previous version**. User-selected at publish; drives
-  `oldVersion` in `api-diff`. |
+| Library version | A Maven version published in APIHUB with status Draft or Release, optional labels, API report, and API diff vs the selected **Previous version**. |
+| Previous version | Another Library version already in APIHUB, or **No previous version**. User-selected at publish; drives `oldVersion` in `api-diff`. |
 | JavaAPI | Product label for the Java library API type in UI (always one word: **JavaAPI**). |
 | Java type | Class, interface, enum, or annotation row in API Reference, keyed by `className`. |
 | Member | Constructor, method, or field; signature in JSON `member`. |
@@ -102,24 +99,20 @@ Unless noted, **API / Logic** is **TBD** — see [Backend](#backend) (low-level 
 | :---- | :---- | :---- |
 | User chooses **Create → Library**. Popup **Create Library** opens. | [2.1 Create Library](https://www.figma.com/design/Yh7cjYj1FpHeDWt1hYMAkT/-APIHUB--Tasks?node-id=6075-314956) | TBD |
 | Required above **Maven Coordinates**: **Name**, **Workspace/Parent Group**, **Alias**. | — | — |
-| **Maven Coordinates** section (immutable after create): **Maven Repository Name** *, **Maven GroupId** *,
-  **Maven ArtifactId** *, **Description** (optional), **Private** checkbox (default unchecked). | — | — |
+| **Maven Coordinates** section (immutable after create): **Maven Repository Name** (required), **Maven GroupId** (required), **Maven ArtifactId** (required), **Description** (optional), **Private** checkbox (default unchecked). | — | — |
 | **Create** disabled until required fields valid. **Cancel** closes without saving. | — | — |
 
 ### Use Case 3: Create — Artifactory verification failed
 
 | Description | UI (Mockup) | API / Logic |
 | :---- | :---- | :---- |
-| User submits coordinates not found in Artifactory. Notification in popup: *These coordinates could not be verified in
-  Artifactory. Check repository name and Maven GA*. **Create** does not succeed until resolved. | [2.3 Create — Artifactory error](https://www.figma.com/design/Yh7cjYj1FpHeDWt1hYMAkT/-APIHUB--Tasks?node-id=7671-114891) | TBD — verify on create |
+| User submits coordinates not found in Artifactory. Notification in popup: *These coordinates could not be verified in Artifactory. Check repository name and Maven GA*. **Create** does not succeed until resolved. | [2.3 Create — Artifactory error](https://www.figma.com/design/Yh7cjYj1FpHeDWt1hYMAkT/-APIHUB--Tasks?node-id=7671-114891) | TBD — verify on create |
 
 ### Use Case 4: Create — duplicate Maven coordinates
 
 | Description | UI (Mockup) | API / Logic |
 | :---- | :---- | :---- |
-| Another Library already uses the same repository name and Maven GA. Notification: *Duplicate Maven coordinates. A
-  library with this repository name and Maven GA is already registered. Use the existing library to publish versions, or
-  change the coordinates.* | [2.4 Create — duplicate GA](https://www.figma.com/design/Yh7cjYj1FpHeDWt1hYMAkT/-APIHUB--Tasks?node-id=7671-134350) | TBD |
+| Another Library already uses the same repository name and Maven GA. Notification: *Duplicate Maven coordinates. A library with this repository name and Maven GA is already registered. Use the existing library to publish versions, or change the coordinates.* | [2.4 Create — duplicate GA](https://www.figma.com/design/Yh7cjYj1FpHeDWt1hYMAkT/-APIHUB--Tasks?node-id=7671-134350) | TBD |
 
 ### Use Case 5: Create succeeds — empty Library
 
@@ -135,7 +128,7 @@ Unless noted, **API / Logic** is **TBD** — see [Backend](#backend) (low-level 
 | Description | UI (Mockup) | API / Logic |
 | :---- | :---- | :---- |
 | Owner clicks **+** / **Publish** on the Library. **Publish** popup opens. | [Publish popup](https://www.figma.com/design/Yh7cjYj1FpHeDWt1hYMAkT/-APIHUB--Tasks?node-id=7309-99741) | TBD |
-| Required: **Library version** *, **Previous version** *, **Status** *. Optional: **Labels**. No document upload. |
+| Required: **Library version** (required), **Previous version** (required), **Status** (required). Optional: **Labels**. No document upload. | — | — |
 | **Publish** runs job; **Cancel** closes. | — | — |
 
 ### Use Case 7: Library version combobox (Artifactory)
@@ -158,8 +151,7 @@ Unless noted, **API / Logic** is **TBD** — see [Backend](#backend) (low-level 
 
 | Description | UI (Mockup) | API / Logic |
 | :---- | :---- | :---- |
-| Status rules match Package (e.g. cannot pick **Draft** as Previous version when publishing **Release**). Invalid
-  combinations block **Publish** with validation messaging consistent with Package. | — | TBD — reuse Package rules |
+| Status rules match Package (e.g. cannot pick **Draft** as Previous version when publishing **Release**). Invalid combinations block **Publish** with validation messaging consistent with Package. | — | TBD — reuse Package rules |
 
 ### Use Case 10: Publish processing and completion
 
@@ -190,8 +182,7 @@ Unless noted, **API / Logic** is **TBD** — see [Backend](#backend) (low-level 
 
 | Description | UI (Mockup) | API / Logic |
 | :---- | :---- | :---- |
-| Summary shows version, status, publisher, timestamps, coordinates, JavaAPI summary counts, diff teaser vs Previous
-  version (when not **No previous version**). | [3.0 After publication](https://www.figma.com/design/Yh7cjYj1FpHeDWt1hYMAkT/-APIHUB--Tasks?node-id=6077-111507) | TBD |
+| Summary shows version, status, publisher, timestamps, coordinates, JavaAPI summary counts, diff teaser vs Previous version (when not **No previous version**). | [3.0 After publication](https://www.figma.com/design/Yh7cjYj1FpHeDWt1hYMAkT/-APIHUB--Tasks?node-id=6077-111507) | TBD |
 | **GAV** field shows copy icon on hover; click copies GAV to clipboard. | — | Client clipboard |
 
 ### Use Case 14: Activity history sub-tab
@@ -206,15 +197,13 @@ Unless noted, **API / Logic** is **TBD** — see [Backend](#backend) (low-level 
 
 | Description | UI (Mockup) | API / Logic |
 | :---- | :---- | :---- |
-| On **API Reference**, the top version header toolbar shows **Compare** only (no other header actions from REST Doc
-  View set). | [4.0 API Reference — list](https://www.figma.com/design/Yh7cjYj1FpHeDWt1hYMAkT/-APIHUB--Tasks?node-id=7350-61731) | — |
+| On **API Reference**, the top version header toolbar shows **Compare** only (no other header actions from REST Doc View set). | [4.0 API Reference — list](https://www.figma.com/design/Yh7cjYj1FpHeDWt1hYMAkT/-APIHUB--Tasks?node-id=7350-61731) | — |
 
 ### Use Case 16: Doc view and Raw view
 
 | Description | UI (Mockup) | API / Logic |
 | :---- | :---- | :---- |
-| User toggles **Doc view** (structured type/member layout) and **Raw view** (raw report payload). No other view modes. |
-| [4.0 API Reference — list](https://www.figma.com/design/Yh7cjYj1FpHeDWt1hYMAkT/-APIHUB--Tasks?node-id=7350-61731) | TBD |
+| User toggles **Doc view** (structured type/member layout) and **Raw view** (raw report payload). No other view modes. | [4.0 API Reference — list](https://www.figma.com/design/Yh7cjYj1FpHeDWt1hYMAkT/-APIHUB--Tasks?node-id=7350-61731) | TBD |
 
 ### Use Case 17: Type list
 
@@ -277,15 +266,13 @@ Unless noted, **API / Logic** is **TBD** — see [Backend](#backend) (low-level 
 
 | Description | UI (Mockup) | API / Logic |
 | :---- | :---- | :---- |
-| Global Search opens with default API contract **REST API**; filters use **Package** and **Package version** (and other
-  existing REST fields). | [7.0 Global Search — REST](https://www.figma.com/design/Yh7cjYj1FpHeDWt1hYMAkT/-APIHUB--Tasks?node-id=7812-526827) | TBD |
+| Global Search opens with default API contract **REST API**; filters use **Package** and **Package version** (and other existing REST fields). | [7.0 Global Search — REST](https://www.figma.com/design/Yh7cjYj1FpHeDWt1hYMAkT/-APIHUB--Tasks?node-id=7812-526827) | TBD |
 
 ### Use Case 25: JavaAPI contract filters
 
 | Description | UI (Mockup) | API / Logic |
 | :---- | :---- | :---- |
-| User sets API contract to **JavaAPI**. **Package** / **Package version** filters become **Library** / **Library
-  version**. Other shared filters (workspace, group, status, dates) remain. | [7.1 Global Search — JavaAPI](https://www.figma.com/design/Yh7cjYj1FpHeDWt1hYMAkT/-APIHUB--Tasks?node-id=7671-140682) | TBD |
+| User sets API contract to **JavaAPI**. **Package** / **Package version** filters become **Library** / **Library version**. Other shared filters (workspace, group, status, dates) remain. | [7.1 Global Search — JavaAPI](https://www.figma.com/design/Yh7cjYj1FpHeDWt1hYMAkT/-APIHUB--Tasks?node-id=7671-140682) | TBD |
 | Results show Java types (classes, interfaces, etc.) with breadcrumbs through Library and Library version. | [7.2 Global Search — results](https://www.figma.com/design/Yh7cjYj1FpHeDWt1hYMAkT/-APIHUB--Tasks?node-id=7678-144452) | TBD |
 
 ### Use Case 26: Global search empty states
@@ -305,4 +292,4 @@ Unless noted, **API / Logic** is **TBD** — see [Backend](#backend) (low-level 
 
 ## Backend
 
-**TBD**
+Backend contracts and REST APIs: TBD (low-level design pending).
