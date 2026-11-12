@@ -1,5 +1,5 @@
 lockfile_version: '1'
-generated_at: '2026-11-12T09:29:33.034094+00:00'
+generated_at: '2026-11-12T11:09:16.493015+00:00'
 apm_version: 0.35.0
 dependencies:
 - repo_url: _local/advanced-verification
@@ -331,7 +331,7 @@ dependencies:
   - .cursor/rules/api-doc-viewer-feature-test-plan.mdc
   deployed_file_hashes:
     .agents/skills/api-doc-viewer-feature-test-plan/SKILL.md: sha256:a4f29401ad503814e234fbb464508719a21b7769d30ea72e8a20704f8b2abafe
-    .agents/skills/api-doc-viewer-feature-test-plan/references/analysis.md: sha256:7330ef9382031b19ea2d96f26692219a9d257f59780e3b94c01d57fb2362cb77
+    .agents/skills/api-doc-viewer-feature-test-plan/references/analysis.md: sha256:ba5478fd992b1089abad600a1991e2add006469e83d10b1bb7e8f911e350dfbc
     .agents/skills/api-doc-viewer-feature-test-plan/references/backlog.md: sha256:bb8183cc81707e5b85c3a688265782aa29fd80fe367112c10feb5236f68680e7
     .agents/skills/api-doc-viewer-feature-test-plan/references/cases.md: sha256:a23a5189b927443d4d530d0467208ef1ab705991d3a4fd017b6e45844663058b
     .agents/skills/api-doc-viewer-feature-test-plan/references/extending.md: sha256:569740d7c59edb65c82a67926ee353c7450e679250dd5ee6ba68096bc9045c82
@@ -373,7 +373,7 @@ dependencies:
     .agents/skills/api-doc-viewer-feature-test-plan/templates/tools-README.md: sha256:fba278fc2b0d8f00890499b652ee331acfaf611fcf9f10fd4c4d041a00dd4999
     .claude/rules/api-doc-viewer-feature-test-plan.md: sha256:e53d719c5f79babe184fb65130b4f38d56927b7704b5fb6433cc04f91b9a6448
     .claude/skills/api-doc-viewer-feature-test-plan/SKILL.md: sha256:a4f29401ad503814e234fbb464508719a21b7769d30ea72e8a20704f8b2abafe
-    .claude/skills/api-doc-viewer-feature-test-plan/references/analysis.md: sha256:7330ef9382031b19ea2d96f26692219a9d257f59780e3b94c01d57fb2362cb77
+    .claude/skills/api-doc-viewer-feature-test-plan/references/analysis.md: sha256:ba5478fd992b1089abad600a1991e2add006469e83d10b1bb7e8f911e350dfbc
     .claude/skills/api-doc-viewer-feature-test-plan/references/backlog.md: sha256:bb8183cc81707e5b85c3a688265782aa29fd80fe367112c10feb5236f68680e7
     .claude/skills/api-doc-viewer-feature-test-plan/references/cases.md: sha256:a23a5189b927443d4d530d0467208ef1ab705991d3a4fd017b6e45844663058b
     .claude/skills/api-doc-viewer-feature-test-plan/references/extending.md: sha256:569740d7c59edb65c82a67926ee353c7450e679250dd5ee6ba68096bc9045c82
@@ -416,7 +416,7 @@ dependencies:
     .cursor/rules/api-doc-viewer-feature-test-plan.mdc: sha256:c1fb1777d1a9045e61028c0c2b0e30d35c48c3db1149af82b8c02b0f1d84daf3
   source: local
   local_path: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-feature-test-plan
-  content_hash: sha256:c79d9f481fb22bd0d5e53764a3ad105840431ed59e6e9950e43b4354c5c85584
+  content_hash: sha256:1d84b3a9bfedbb21cb9db1b31139c35f172e11ab3609dedfad6f5539c87cfb93
 - repo_url: _local/api-doc-viewer-review-session
   name: api-doc-viewer-review-session
   version: 1.0.0
@@ -2367,7 +2367,7 @@ deployments:
   owners:
   - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-feature-test-plan
   active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-feature-test-plan
-  content_hash: sha256:7330ef9382031b19ea2d96f26692219a9d257f59780e3b94c01d57fb2362cb77
+  content_hash: sha256:ba5478fd992b1089abad600a1991e2add006469e83d10b1bb7e8f911e350dfbc
 - kind: project-relative
   target: claude
   value: .claude/skills/api-doc-viewer-feature-test-plan/references/backlog.md
@@ -4077,7 +4077,7 @@ deployments:
   owners:
   - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-feature-test-plan
   active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-feature-test-plan
-  content_hash: sha256:7330ef9382031b19ea2d96f26692219a9d257f59780e3b94c01d57fb2362cb77
+  content_hash: sha256:ba5478fd992b1089abad600a1991e2add006469e83d10b1bb7e8f911e350dfbc
 - kind: project-relative
   target: cursor
   value: .agents/skills/api-doc-viewer-feature-test-plan/references/backlog.md

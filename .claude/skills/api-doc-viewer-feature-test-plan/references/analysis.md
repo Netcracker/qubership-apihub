@@ -24,6 +24,14 @@ Find who imports a changed shared module to scope the regression pass:
 grep -rl "<ChangedModule>" frontend/api-doc-viewer/packages/api-doc-viewer/src/components
 ```
 
+Every API type in the regression scope needs a reason that names the changed code it uses: a path in the branch diff
+that the viewer of that type imports, or that the host app renders it with (for example, the changes list of the
+API Changes tab). Check each reason with the `grep` above, and with `git diff --stat <base>...HEAD` on the viewer's
+own folder and its `next-data-model/src/building-service/<api-type>/`. A shared module that the viewer does not import
+is not a reason, even when it serves the other types in scope. Write the reasons per API type, as a table, in the plan
+README and at the top of `test-plan/regression.md`. A type with no reason left is out of scope, and the plan README
+says why.
+
 ## What the design says
 
 - `docs/design/<api-type>/display-coverage.md`: what is shown and what is intentionally absent. A missing row listed
