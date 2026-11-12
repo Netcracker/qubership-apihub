@@ -940,7 +940,15 @@ paths:
                   type: array
                   items:
                     type: string
-                  description: Optional list of package IDs to migrate. If omitted, migration scope is determined by server-side defaults.
+                  description: |
+                    Optional list of exact package IDs and folder scopes. Use a folder ID followed by `.*`,
+                    for example `workspace.rest.*`, to include all active packages and dashboards in that folder
+                    and its nested folders. The dot is a hierarchy boundary: `workspace.rest.*` does not include
+                    `workspace.restOther`. Exact IDs keep their existing behavior and can be mixed with folder scopes.
+                    Folder scopes are resolved once when the migration starts; the resolved IDs are reused after a restart.
+                    A folder scope with no eligible descendants returns HTTP 400, even when other entries match.
+                    If omitted or empty, no package filter is applied. The versions filter still applies if provided.
+                  example: ["workspace.rest.*", "workspace.async.events"]
                 versions:
                   type: array
                   items:

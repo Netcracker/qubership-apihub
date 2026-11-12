@@ -46,6 +46,11 @@ func (d *dbMigrationServiceImpl) StartMigrateOperations(ctx context.Context, req
 			}
 		}
 
+		packageIds, err := resolveMigrationPackageIds(ctx, tx, req.PackageIds)
+		if err != nil {
+			return err
+		}
+
 		var lastSeqNum int
 		_, err = tx.Query(pg.Scan(&lastSeqNum), "SELECT COALESCE(MAX(sequence_number), 0) FROM migration_run")
 		if err != nil {
@@ -57,7 +62,7 @@ func (d *dbMigrationServiceImpl) StartMigrateOperations(ctx context.Context, req
 			StartedAt:              time.Now(),
 			Status:                 mView.MigrationStatusRunning,
 			Stage:                  mView.MigrationStageStarting,
-			PackageIds:             req.PackageIds,
+			PackageIds:             packageIds,
 			Versions:               req.Versions,
 			IsRebuildChangelogOnly: req.RebuildChangelogOnly,
 			SkipValidation:         req.SkipValidation,
