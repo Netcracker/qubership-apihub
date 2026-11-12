@@ -18,7 +18,13 @@ Follow `AGENTS.md` and project rules. For examples and doc routing, see [referen
 5. **Related modules** — before finishing, apply `apihub-deployment-followup` and
    `postman-e2e-followup` skills when the change may affect deployment or E2E tests
    (local packages under `agent-packages/` and `tests/postman-collections/agent-packages/`).
-6. **End-to-end verification** — for changes with observable HTTP behavior, apply the
+6. **Change history / activity tracking** — when a change adds or affects a package-scoped
+   entity's create/update/delete action (new entity type or new action on an existing one),
+   check whether it needs an `ATEventType` (`view/ActivityTracking.go`) and a
+   `ActivityTrackingService.TrackEvent` call so the action shows up in package activity
+   history (see `service/ActivityTrackingService.go`, `repository/ActivityTrackingRepository.go`).
+   Not every change needs this — only actions that should be visible in a package's history.
+7. **End-to-end verification** — for changes with observable HTTP behavior, apply the
    `advanced-verification` skill to build, run, and verify the change locally with a
    Postman/Newman collection under `backend/portal-backend/tests/api/` before finishing.
 
@@ -51,6 +57,7 @@ In addition to the `apihub-go-developer` checklist:
 - [ ] REST changes reflected in `docs/api/*.yaml`.
 - [ ] Migration check script passed; any missing-down warning is intentional.
 - [ ] **Related repositories** — deployment and Postman follow-up skills applied when applicable (`apihub-deployment-followup`, `postman-e2e-followup`).
+- [ ] **Change history** — new/changed entity actions considered for activity tracking (`ATEventType` + `ActivityTrackingService.TrackEvent`) when applicable.
 - [ ] End-to-end verified locally via `advanced-verification` when the change affects HTTP behavior.
 
 Suggest invoking `apihub-backend-self-review` in a **new chat** or with a **different model** for an independent pass over the diff.

@@ -95,10 +95,13 @@ func MakeDdlContractEntityView(ent *DDLContractEntity, data []byte) *view.DdlCon
 	return result
 }
 
-func MakeDdlChangedEntityView(ent *DDLContractComparisonEntity) view.DdlChangedEntityView {
+func MakeDdlChangedEntityView(ent *DDLContractComparisonEntity, includeChanges bool) view.DdlChangedEntityView {
 	result := view.DdlChangedEntityView{
 		ChangeSummary:                ent.ChangesSummary,
 		ComparisonInternalDocumentId: ent.ComparisonInternalDocumentId,
+	}
+	if includeChanges {
+		result.Changes = makeDdlChangesListView(ent)
 	}
 	if ent.DdlEntityId != "" {
 		result.DdlEntityData = &view.DdlEntityData{
@@ -119,6 +122,21 @@ func MakeDdlChangedEntityView(ent *DDLContractComparisonEntity) view.DdlChangedE
 			Description: ent.PreviousDescription,
 			PackageRef:  view.MakePackageRefKey(ent.PreviousPackageId, ent.PreviousVersion, ent.PreviousRevision),
 		}
+	}
+	return result
+}
+
+// makeDdlChangesListView normalises the ddl_comparison.changes jsonb into the typed
+// SingleOperationChange shapes. DDL stores a bare array there, unlike operations, which wrap it in a
+// "changes" key.
+func makeDdlChangesListView(ent *DDLContractComparisonEntity) []interface{} {
+	changes, ok := ent.Changes.([]interface{})
+	if !ok {
+		return nil
+	}
+	result := make([]interface{}, 0, len(changes))
+	for _, change := range changes {
+		result = append(result, view.ParseSingleOperationChange(change))
 	}
 	return result
 }

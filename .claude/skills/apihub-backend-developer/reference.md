@@ -37,6 +37,26 @@ const ExampleNotFoundMsg = "Example with id = $id not found"
 
 Use existing patterns for parameter placeholders (`$id`, `$param`, etc.). Do not inline error code strings in controllers or services.
 
+## Change history / activity tracking
+
+Package activity history (`GET .../activity`) is built from `ActivityTrackingEntity` rows written through
+`ActivityTrackingService.TrackEvent`. When a new or changed action should be visible there, add an `ATEventType`
+constant in `view/ActivityTracking.go` and call `TrackEvent` from the service method that performs the action:
+
+```go
+activityTrackingService.TrackEvent(ctx, view.ActivityTrackingEvent{
+	Type:      view.ATETCreatePackage, // add a new ATET* constant for a new action
+	Data:      map[string]interface{}{"packageId": pkgId},
+	PackageId: pkgId,
+	Date:      time.Now(),
+	UserId:    secctx.GetUserId(ctx),
+})
+```
+
+`TrackEvent` is fire-and-forget (errors are logged, not propagated) — call it after the action has committed
+successfully, not before. If the new event type should be filterable from the API, add it to `ConvertEventTypes` in
+`view/ActivityTracking.go`.
+
 ## main.go wiring
 
 - Add `repository.New...` with other repository constructors (end of repository block).
