@@ -1,5 +1,5 @@
 lockfile_version: '1'
-generated_at: '2026-11-12T08:48:30.842591+00:00'
+generated_at: '2026-11-12T09:29:33.034094+00:00'
 apm_version: 0.35.0
 dependencies:
 - repo_url: _local/advanced-verification
@@ -337,8 +337,8 @@ dependencies:
     .agents/skills/api-doc-viewer-feature-test-plan/references/extending.md: sha256:569740d7c59edb65c82a67926ee353c7450e679250dd5ee6ba68096bc9045c82
     .agents/skills/api-doc-viewer-feature-test-plan/references/handover.md: sha256:ff70f2ec2a5b8bb47c41c4a9a4d47e7e4ad032a9c9b1adaf2e5b0beda25860b5
     .agents/skills/api-doc-viewer-feature-test-plan/references/interview.md: sha256:06ed727960f500d1d05bc592af929d30759a90d164243ea2f76ca84d5ed1343c
-    .agents/skills/api-doc-viewer-feature-test-plan/references/lessons.md: sha256:a1d9f115bad763ca07d407d450e05db6b64d8a89c76b166db8b4fc7dbe6240cc
-    .agents/skills/api-doc-viewer-feature-test-plan/references/test-data.md: sha256:8389962abec78efd8222f8baaeda5704164fe67e1c62e984eec373eb7e00b05a
+    .agents/skills/api-doc-viewer-feature-test-plan/references/lessons.md: sha256:7a5fd82c8a80a9d1405e837ebd14ffb0dbb8cef7235c70edfec988aec35e8703
+    .agents/skills/api-doc-viewer-feature-test-plan/references/test-data.md: sha256:987b60cdb2d9020933ec4095da16a5dfead5c0f3141baf73724c99d61ecd4850
     .agents/skills/api-doc-viewer-feature-test-plan/scripts/backlog/collect-issues.js: sha256:25ff363487dabba430e2de313e318d0dc873d3033832718e79a099740ee6565c
     .agents/skills/api-doc-viewer-feature-test-plan/scripts/backlog/download-attachments.js: sha256:d6a95092a6c625d3988d2d91fd8a565e473d006c5263f338fcba519754a59bcb
     .agents/skills/api-doc-viewer-feature-test-plan/scripts/backlog/dump-issues.js: sha256:eb1601155dcd207bf21a91c757b0a8b0e31e34ed894d71be87be75f7d60fb4de
@@ -354,9 +354,9 @@ dependencies:
     .agents/skills/api-doc-viewer-feature-test-plan/scripts/packing/builders/copied.mjs: sha256:90109ced6de85908124e7958820016c7a77f715709db17673e172fbae2a4f06c
     .agents/skills/api-doc-viewer-feature-test-plan/scripts/packing/builders/json-schema.mjs: sha256:084f64d0ad21de1e0b9370966f950c9893378bf3002bd292b85ac81a70f1c3f3
     .agents/skills/api-doc-viewer-feature-test-plan/scripts/packing/builders/openapi-hiding-and-arrows.mjs: sha256:7c1c9acf4bb400cd20018fab8b189df611062dd14419bc316a8822caccf4edaa
-    .agents/skills/api-doc-viewer-feature-test-plan/scripts/packing/builders/regression.mjs: sha256:3f9ee800a28888d59d7d6bf036db584a6f78aa4ba91e0944098c927026fa1dc2
+    .agents/skills/api-doc-viewer-feature-test-plan/scripts/packing/builders/regression.mjs: sha256:fc28e32271bc87fea3c418f26c84915c00824b02e2e46343014f3c387358edcc
     .agents/skills/api-doc-viewer-feature-test-plan/scripts/packing/formats/asyncapi.mjs: sha256:8c71e13236938953d4c780b183f0ceacddda6cf6e27f3526fe945411072f1866
-    .agents/skills/api-doc-viewer-feature-test-plan/scripts/packing/formats/ddl.mjs: sha256:6368d10c68df6145cc9f6c22494a34547ce1b0a25e73b4f689017bc4526ec636
+    .agents/skills/api-doc-viewer-feature-test-plan/scripts/packing/formats/ddl.mjs: sha256:742bfa4c6ac20c7b41894d9edc9858df7f9cd99447c21379bf87a406d926e478
     .agents/skills/api-doc-viewer-feature-test-plan/scripts/packing/formats/graphql.mjs: sha256:2c9acf6c208b951b8eefc48be4a02f668dd7710ae1cd3eb5501561dd0f18a1bb
     .agents/skills/api-doc-viewer-feature-test-plan/scripts/packing/formats/index.mjs: sha256:ecc6868ccb76a230e48410cefdd0b7d6ee8f505248118e1edc4cc2b821076301
     .agents/skills/api-doc-viewer-feature-test-plan/scripts/packing/lib.mjs: sha256:3a6f98d89e88bc75fbc78ebb5eb7c7d17ce89aea3f44b8c1a645218ab465924d
@@ -379,8 +379,8 @@ dependencies:
     .claude/skills/api-doc-viewer-feature-test-plan/references/extending.md: sha256:569740d7c59edb65c82a67926ee353c7450e679250dd5ee6ba68096bc9045c82
     .claude/skills/api-doc-viewer-feature-test-plan/references/handover.md: sha256:ff70f2ec2a5b8bb47c41c4a9a4d47e7e4ad032a9c9b1adaf2e5b0beda25860b5
     .claude/skills/api-doc-viewer-feature-test-plan/references/interview.md: sha256:06ed727960f500d1d05bc592af929d30759a90d164243ea2f76ca84d5ed1343c
-    .claude/skills/api-doc-viewer-feature-test-plan/references/lessons.md: sha256:a1d9f115bad763ca07d407d450e05db6b64d8a89c76b166db8b4fc7dbe6240cc
-    .claude/skills/api-doc-viewer-feature-test-plan/references/test-data.md: sha256:8389962abec78efd8222f8baaeda5704164fe67e1c62e984eec373eb7e00b05a
+    .claude/skills/api-doc-viewer-feature-test-plan/references/lessons.md: sha256:7a5fd82c8a80a9d1405e837ebd14ffb0dbb8cef7235c70edfec988aec35e8703
+    .claude/skills/api-doc-viewer-feature-test-plan/references/test-data.md: sha256:987b60cdb2d9020933ec4095da16a5dfead5c0f3141baf73724c99d61ecd4850
     .claude/skills/api-doc-viewer-feature-test-plan/scripts/backlog/collect-issues.js: sha256:25ff363487dabba430e2de313e318d0dc873d3033832718e79a099740ee6565c
     .claude/skills/api-doc-viewer-feature-test-plan/scripts/backlog/download-attachments.js: sha256:d6a95092a6c625d3988d2d91fd8a565e473d006c5263f338fcba519754a59bcb
     .claude/skills/api-doc-viewer-feature-test-plan/scripts/backlog/dump-issues.js: sha256:eb1601155dcd207bf21a91c757b0a8b0e31e34ed894d71be87be75f7d60fb4de
@@ -396,9 +396,9 @@ dependencies:
     .claude/skills/api-doc-viewer-feature-test-plan/scripts/packing/builders/copied.mjs: sha256:90109ced6de85908124e7958820016c7a77f715709db17673e172fbae2a4f06c
     .claude/skills/api-doc-viewer-feature-test-plan/scripts/packing/builders/json-schema.mjs: sha256:084f64d0ad21de1e0b9370966f950c9893378bf3002bd292b85ac81a70f1c3f3
     .claude/skills/api-doc-viewer-feature-test-plan/scripts/packing/builders/openapi-hiding-and-arrows.mjs: sha256:7c1c9acf4bb400cd20018fab8b189df611062dd14419bc316a8822caccf4edaa
-    .claude/skills/api-doc-viewer-feature-test-plan/scripts/packing/builders/regression.mjs: sha256:3f9ee800a28888d59d7d6bf036db584a6f78aa4ba91e0944098c927026fa1dc2
+    .claude/skills/api-doc-viewer-feature-test-plan/scripts/packing/builders/regression.mjs: sha256:fc28e32271bc87fea3c418f26c84915c00824b02e2e46343014f3c387358edcc
     .claude/skills/api-doc-viewer-feature-test-plan/scripts/packing/formats/asyncapi.mjs: sha256:8c71e13236938953d4c780b183f0ceacddda6cf6e27f3526fe945411072f1866
-    .claude/skills/api-doc-viewer-feature-test-plan/scripts/packing/formats/ddl.mjs: sha256:6368d10c68df6145cc9f6c22494a34547ce1b0a25e73b4f689017bc4526ec636
+    .claude/skills/api-doc-viewer-feature-test-plan/scripts/packing/formats/ddl.mjs: sha256:742bfa4c6ac20c7b41894d9edc9858df7f9cd99447c21379bf87a406d926e478
     .claude/skills/api-doc-viewer-feature-test-plan/scripts/packing/formats/graphql.mjs: sha256:2c9acf6c208b951b8eefc48be4a02f668dd7710ae1cd3eb5501561dd0f18a1bb
     .claude/skills/api-doc-viewer-feature-test-plan/scripts/packing/formats/index.mjs: sha256:ecc6868ccb76a230e48410cefdd0b7d6ee8f505248118e1edc4cc2b821076301
     .claude/skills/api-doc-viewer-feature-test-plan/scripts/packing/lib.mjs: sha256:3a6f98d89e88bc75fbc78ebb5eb7c7d17ce89aea3f44b8c1a645218ab465924d
@@ -416,7 +416,7 @@ dependencies:
     .cursor/rules/api-doc-viewer-feature-test-plan.mdc: sha256:c1fb1777d1a9045e61028c0c2b0e30d35c48c3db1149af82b8c02b0f1d84daf3
   source: local
   local_path: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-feature-test-plan
-  content_hash: sha256:f48d58acb5f824820c4fb371190bc9c8039988fd1c1706531b600ab38e7eb239
+  content_hash: sha256:c79d9f481fb22bd0d5e53764a3ad105840431ed59e6e9950e43b4354c5c85584
 - repo_url: _local/api-doc-viewer-review-session
   name: api-doc-viewer-review-session
   version: 1.0.0
@@ -2421,7 +2421,7 @@ deployments:
   owners:
   - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-feature-test-plan
   active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-feature-test-plan
-  content_hash: sha256:a1d9f115bad763ca07d407d450e05db6b64d8a89c76b166db8b4fc7dbe6240cc
+  content_hash: sha256:7a5fd82c8a80a9d1405e837ebd14ffb0dbb8cef7235c70edfec988aec35e8703
 - kind: project-relative
   target: claude
   value: .claude/skills/api-doc-viewer-feature-test-plan/references/test-data.md
@@ -2430,7 +2430,7 @@ deployments:
   owners:
   - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-feature-test-plan
   active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-feature-test-plan
-  content_hash: sha256:8389962abec78efd8222f8baaeda5704164fe67e1c62e984eec373eb7e00b05a
+  content_hash: sha256:987b60cdb2d9020933ec4095da16a5dfead5c0f3141baf73724c99d61ecd4850
 - kind: project-relative
   target: claude
   value: .claude/skills/api-doc-viewer-feature-test-plan/scripts/backlog/collect-issues.js
@@ -2574,7 +2574,7 @@ deployments:
   owners:
   - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-feature-test-plan
   active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-feature-test-plan
-  content_hash: sha256:3f9ee800a28888d59d7d6bf036db584a6f78aa4ba91e0944098c927026fa1dc2
+  content_hash: sha256:fc28e32271bc87fea3c418f26c84915c00824b02e2e46343014f3c387358edcc
 - kind: project-relative
   target: claude
   value: .claude/skills/api-doc-viewer-feature-test-plan/scripts/packing/formats/asyncapi.mjs
@@ -2592,7 +2592,7 @@ deployments:
   owners:
   - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-feature-test-plan
   active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-feature-test-plan
-  content_hash: sha256:6368d10c68df6145cc9f6c22494a34547ce1b0a25e73b4f689017bc4526ec636
+  content_hash: sha256:742bfa4c6ac20c7b41894d9edc9858df7f9cd99447c21379bf87a406d926e478
 - kind: project-relative
   target: claude
   value: .claude/skills/api-doc-viewer-feature-test-plan/scripts/packing/formats/graphql.mjs
@@ -4131,7 +4131,7 @@ deployments:
   owners:
   - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-feature-test-plan
   active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-feature-test-plan
-  content_hash: sha256:a1d9f115bad763ca07d407d450e05db6b64d8a89c76b166db8b4fc7dbe6240cc
+  content_hash: sha256:7a5fd82c8a80a9d1405e837ebd14ffb0dbb8cef7235c70edfec988aec35e8703
 - kind: project-relative
   target: cursor
   value: .agents/skills/api-doc-viewer-feature-test-plan/references/test-data.md
@@ -4140,7 +4140,7 @@ deployments:
   owners:
   - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-feature-test-plan
   active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-feature-test-plan
-  content_hash: sha256:8389962abec78efd8222f8baaeda5704164fe67e1c62e984eec373eb7e00b05a
+  content_hash: sha256:987b60cdb2d9020933ec4095da16a5dfead5c0f3141baf73724c99d61ecd4850
 - kind: project-relative
   target: cursor
   value: .agents/skills/api-doc-viewer-feature-test-plan/scripts/backlog/collect-issues.js
@@ -4284,7 +4284,7 @@ deployments:
   owners:
   - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-feature-test-plan
   active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-feature-test-plan
-  content_hash: sha256:3f9ee800a28888d59d7d6bf036db584a6f78aa4ba91e0944098c927026fa1dc2
+  content_hash: sha256:fc28e32271bc87fea3c418f26c84915c00824b02e2e46343014f3c387358edcc
 - kind: project-relative
   target: cursor
   value: .agents/skills/api-doc-viewer-feature-test-plan/scripts/packing/formats/asyncapi.mjs
@@ -4302,7 +4302,7 @@ deployments:
   owners:
   - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-feature-test-plan
   active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-feature-test-plan
-  content_hash: sha256:6368d10c68df6145cc9f6c22494a34547ce1b0a25e73b4f689017bc4526ec636
+  content_hash: sha256:742bfa4c6ac20c7b41894d9edc9858df7f9cd99447c21379bf87a406d926e478
 - kind: project-relative
   target: cursor
   value: .agents/skills/api-doc-viewer-feature-test-plan/scripts/packing/formats/graphql.mjs

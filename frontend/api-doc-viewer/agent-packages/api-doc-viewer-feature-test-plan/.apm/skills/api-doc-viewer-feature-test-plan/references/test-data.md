@@ -159,7 +159,7 @@ README, so that QA can open it. Look at the list of marker cases after every run
 | --- | --- |
 | OpenAPI plain | Every packed path item and component equals the case's |
 | OpenAPI diffs | `apiDiff` of each packed document pair finds exactly the diffs of the case pairs, path prefixes removed, a whole `components` add or remove split into single components |
-| `files` | Every file equals its case; AsyncAPI without the prefix equals its fixture; ddlapi and `graphql` parse the written document and the fixture into the same model; IDs are unique in each version |
+| `files` | Every file equals its case; AsyncAPI without the prefix equals its fixture; ddlapi and `graphql` parse the written document and the fixture into the same model, and ddlapi reports no issue (api-processor publishes each one as an `Error`); IDs are unique in each version |
 | `versions` | Every copied file equals its source byte for byte; no other file is in the package |
 
 ## Baselines

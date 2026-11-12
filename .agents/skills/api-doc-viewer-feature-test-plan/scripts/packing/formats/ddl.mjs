@@ -1,6 +1,8 @@
 // DDL scripts (PostgreSQL). APIHUB identifies a table by its schema and name, so the builder moves every object into
 // schemas of the case (builders/regression.mjs, prefixDdlSchemas). The check parses the written script and the fixture
-// with ddlapi and compares the models with the schema names mapped back.
+// with ddlapi and compares the models with the schema names mapped back. The written script must also parse without
+// an issue: api-processor reports every ddlapi issue (a skipped statement such as CREATE SCHEMA, an unresolved
+// reference) as an Error notification of the publication.
 import fs from 'node:fs'
 import path from 'node:path'
 import { createRequire } from 'node:module'
@@ -12,7 +14,8 @@ const ddlParser = () =>
 
 // The parsed model as JSON with the case schemas renamed back ("ddp_x" -> "public", "ddp_x_custom" -> "custom").
 async function ddlModel(sql, prefix) {
-  const realm = await ddlParser().buildFromDdl(sql)
+  const issues = []
+  const realm = await ddlParser().buildFromDdl(sql, { onError: issue => issues.push(issue) })
   let text = stableStringify(realm)
   if (prefix) {
     text = text.replaceAll(`"${prefix}_`, '"').replaceAll(`"${prefix}"`, '"public"')
@@ -21,7 +24,7 @@ async function ddlModel(sql, prefix) {
   const model = JSON.parse(text)
   model.schemas = (model.schemas ?? []).filter(schema => (schema.tables ?? []).length || (schema.objects ?? []).length)
     .sort((a, b) => a.name.localeCompare(b.name))
-  return { text: stableStringify(model), realm }
+  return { text: stableStringify(model), realm, issues }
 }
 
 const casePrefix = item => item.id.replace(/-/g, '_')
@@ -42,6 +45,7 @@ export default {
   async compare({ content, item, fixtureFile }) {
     if (!fixtureFile) return undefined
     const written = await ddlModel(content, casePrefix(item))
+    if (written.issues.length) return `ddlapi reports ${written.issues.map(issue => issue.message).join('; ')}`
     const fixture = await ddlModel(fs.readFileSync(fixtureFile, 'utf8'))
     return written.text === fixture.text ? undefined : `the DDL model differs from ${fixtureFile}`
   },

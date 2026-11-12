@@ -57,6 +57,10 @@ const unquote = name => name.replace(/^"|"$/g, '')
 // CREATE SCHEMA, CREATE TABLE, CREATE TYPE, CREATE [UNIQUE] INDEX … ON, ALTER TABLE, REFERENCES, COMMENT ON TABLE,
 // TYPE, INDEX, and COLUMN, and schema-qualified names anywhere else (column types such as public.mood).
 // verify-files.mjs parses the result and the original with ddlapi and compares them.
+//
+// The CREATE SCHEMA statements are left out of the result. ddlapi skips them (it infers a schema from the qualified
+// names), and api-processor reports every statement ddlapi skips as an Error notification, so a package with them
+// publishes with errors; the model ddlapi builds is the same without them.
 export function prefixDdlSchemas(sql, prefix) {
   const schemas = new Set(['public'])
   for (const [, name] of sql.matchAll(new RegExp(`CREATE\\s+SCHEMA\\s+(?:IF\\s+NOT\\s+EXISTS\\s+)?(${IDENT})`, 'gi'))) {
@@ -85,10 +89,7 @@ export function prefixDdlSchemas(sql, prefix) {
     const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
     text = text.replace(new RegExp(`(?<![.\\w"])${escaped}(?![\\w".])`, 'g'), `${prefix}.${name}`)
   }
-  if (!new RegExp(`CREATE\\s+SCHEMA\\s+(?:IF\\s+NOT\\s+EXISTS\\s+)?${prefix}\\b`, 'i').test(text)) {
-    text = `CREATE SCHEMA IF NOT EXISTS ${prefix};\n\n${text}`
-  }
-  return text
+  return text.replace(/^[ \t]*CREATE\s+SCHEMA\b[^;]*;[ \t]*(?:\r?\n)*/gim, '')
 }
 
 const readDdl = (file, id) => prefixDdlSchemas(fs.readFileSync(file, 'utf8'), id.replace(/-/g, '_'))

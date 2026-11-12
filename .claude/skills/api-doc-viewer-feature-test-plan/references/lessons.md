@@ -39,6 +39,11 @@ or a correction, and stands on its own: the plan folders that prompted them are 
 
 ## About packing
 
+- A fixture the viewer renders is not always one APIHUB publishes cleanly. AsyncAPI fixtures referred to component
+  messages from operations (the parser refuses the document), and DDL fixtures start with `CREATE SCHEMA` (ddlapi
+  skips it, api-processor reports an `Error`). Publish one document of every API type before handing over, and make
+  the check reject what the publication would; the DDL check now fails on any ddlapi issue.
+
 - Security scheme names repeat across fixtures with different definitions; a scheme a case names but does not define
   (an unresolved card) must not get a definition from another case. Conflict-aware packing handles both.
 - Removing the whole `components` object is classified differently from removing one component: such a case must not
