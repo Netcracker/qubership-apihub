@@ -163,15 +163,17 @@ every image the backend branch changed. [CI](./ci.md) describes the other inputs
 Merge the backward-compatible half first, usually the backend. The E2E run of the other pull request then runs against
 `develop` with that half in it.
 
-## Dependabot pull requests
+## Renovate pull requests
 
-Dependabot opens weekly pull requests for npm, Go modules, Maven, GitHub Actions, Dockerfiles, and Compose files, as
-configured in [`.github/dependabot.yml`](../../.github/dependabot.yml). npm and Go updates come as one pull request per
-dependency for all projects, so a version never differs between two projects.
+Renovate opens weekly pull requests for npm, Go modules, Maven, GitHub Actions, Dockerfiles, and Compose files, as
+configured in [`.github/renovate.json`](../../.github/renovate.json). npm and Go updates come as one pull request per
+dependency for all projects, so a version never differs between two projects. A release waits 7 days before Renovate
+offers it; a security update does not wait and is not tied to the weekly schedule. Why Renovate and not Dependabot:
+[ADR 0010](../internal/adr/0010-renovate-for-dependency-updates.md).
 
 - The title starts with `chore: deps:`, which gives each touched component a patch bump at the next release. Keep the
   title when you merge.
-- Dependabot runs get a read-only token. CI builds and tests the affected projects but skips the images, E2E, and
-  the Storybooks; `ci-ok` accepts those skips.
+- CI builds and tests the affected projects, publishes their images, and runs E2E. It skips the Storybooks, and
+  `ci-ok` accepts that skip.
 - Read the dependency's release notes for breaking changes. If the update needs code changes, push them to the
-  Dependabot branch and keep the title.
+  Renovate branch and keep the title. Renovate stops updating a branch that holds your commits.

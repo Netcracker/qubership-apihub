@@ -18,7 +18,7 @@ of this repository now.
 | Deployment | `deploy/helm-templates/`, `deploy/docker-compose/` | Helm chart, local Kubernetes quickstart, Compose stacks |
 | Documentation | `docs/` | Installation, admin, configuration map, release process |
 | Tooling | `tools/` | Release scripts, CI helpers, Nx plugins |
-| CI | `.github/` | Workflows, CODEOWNERS, Dependabot |
+| CI | `.github/` | Workflows, CODEOWNERS, Renovate |
 
 Each group and each module has its own `AGENTS.md` (and a `CLAUDE.md` that imports it): start from
 [`backend/AGENTS.md`](backend/AGENTS.md), [`frontend/AGENTS.md`](frontend/AGENTS.md),
@@ -83,7 +83,7 @@ packages live next to the code they describe:
 
 | Location | Packages |
 |----------|----------|
-| `agent-packages/` | `apihub-deployment-authoring`, `apihub-deployment-followup`, `apihub-add-go-service`, `apihub-landing-refresh`, `apihub-design-authoring` |
+| `agent-packages/` | `apihub-deployment-authoring`, `apihub-deployment-followup`, `apihub-add-go-service`, `apihub-landing-refresh`, `apihub-adr`, `apihub-design-authoring` |
 | `backend/portal-backend/agent-packages/` | `apihub-backend-developer`, `apihub-backend-self-review`, `backend-conventions`, `advanced-verification` |
 | `backend/agent/agent-packages/` | `apihub-agent-developer`, `agent-conventions` |
 | `frontend/<library>/agent-packages/` | `api-diff-*`, `api-doc-viewer-*`, `next-data-model-*`, `api-processor-*`, `api-unifier-*`, `ddlapi-*`, `json-crawl-*` |
@@ -97,6 +97,26 @@ After you edit a package, run from the repository root:
 
 ```bash
 apm install --target cursor,claude
+```
+
+Run it twice and check `git status` after each run. apm 0.35.0 deletes the deployed copies of a changed local
+package on the first run ("no trustworthy local deployment baseline") and writes them on the second. A deleted file
+under `.agents/`, `.claude/`, or `.cursor/` that the second run does not restore is a real problem.
+
+apm also deletes a deployed copy with CRLF line endings: its bytes no longer match `apm.lock.yaml`. A Windows clone
+made before `.gitattributes` set LF for these trees can still hold such copies, because Git does not rewrite
+checked-out files when attributes change. Check those files out again before you run apm:
+
+```bash
+git ls-files --eol .agents .claude .cursor agent-packages '*/agent-packages/*' | grep 'w/crlf' | cut -f2 > crlf.txt
+xargs -a crlf.txt rm -f && xargs -a crlf.txt git checkout --
+rm crlf.txt
+```
+
+```powershell
+$crlf = git ls-files --eol .agents .claude .cursor agent-packages '*/agent-packages/*' |
+  Select-String 'w/crlf' | ForEach-Object { ($_.Line -split "`t")[1] }
+if ($crlf) { $crlf | ForEach-Object { Remove-Item -LiteralPath $_ }; git checkout -- $crlf }
 ```
 
 Commit the package sources, `.agents/skills/`, `.claude/skills/`, and the refreshed rule trees together.

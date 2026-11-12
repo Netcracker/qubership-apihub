@@ -228,7 +228,7 @@ function fakeRunAgent(answers) {
   const runs = []
   const runAgent = async (options) => {
     const inputText = fs.readFileSync(options.files[0], 'utf8')
-    runs.push({ agent: options.agent, model: options.model, message: options.message, inputText })
+    runs.push({ agent: options.agent, model: options.model, message: options.message, inputText, files: options.files })
     const next = queues[options.agent]?.shift()
     assert.ok(next !== undefined, `unexpected call of ${options.agent}`)
     if (next instanceof Error) throw next
@@ -262,7 +262,7 @@ function setup({ env = {}, command = { name: 'implement', force: false, notes: '
   const read = (file) => (fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '')
   return {
     env: fullEnv,
-    deps: { gh, exec, patGh, runAgent },
+    deps: { gh, exec, patGh, runAgent, fetch: options.fetch },
     gh,
     exec,
     patGh,
@@ -281,7 +281,7 @@ function setup({ env = {}, command = { name: 'implement', force: false, notes: '
 async function run(env, deps) {
   await writeContext(env, deps)
   const { AGENT_PAT: _pat, GITHUB_TOKEN: _token, ...workEnv } = env
-  await work(workEnv, { exec: deps.exec, runAgent: deps.runAgent })
+  await work(workEnv, { exec: deps.exec, runAgent: deps.runAgent, fetch: deps.fetch })
   return publish(env, deps)
 }
 
@@ -549,6 +549,34 @@ test('run, green path: branch, identity, implement, checks, self-review, push, P
     assert.match(ctx.runAgent.runs[1].inputText, new RegExp(`git diff ${BASE} ${sha(1)}`))
     assert.ok(ctx.outFiles().includes('implement-input.md'))
     assert.ok(ctx.outFiles().includes('implementer-r1.final.md'))
+  })
+})
+
+test('run: the implementer gets the attachments of the issue, the self-reviewer does not', async () => {
+  const shot = 'https://github.com/user-attachments/assets/0d6f1a9e'
+  const png = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1])
+  const fetched = []
+  const fetch = async (url, init) => {
+    fetched.push({ url, headers: init.headers })
+    return new Response(png, { status: 200 })
+  }
+  const st = running(analyzed(suitable, { label: 'ai:suitable' }), false)
+  const gh = fakeGh({
+    comments: [botComment(5, st)],
+    labels: ['ai:suitable', 'agent:needs-human'],
+    issueOverrides: { body: `Steps: publish.\n\n![the empty changelog](${shot})` },
+  })
+  const agents = { implementer: [done], 'self-reviewer': [approve] }
+  await withContext({ gh, agents, fetch }, async (ctx) => {
+    await run(ctx.env, ctx.deps)
+    assert.deepEqual(fetched, [{ url: shot, headers: { 'user-agent': 'qubership-apihub-ai-agent' } }])
+    const [implementer, reviewer] = ctx.runAgent.runs
+    const attached = path.join(ctx.env.AGENT_OUT, 'attachments', 'attachment-01.png')
+    assert.deepEqual(implementer.files.slice(1), [attached])
+    assert.match(implementer.message, /The other attached files are the attachments of the issue that it lists\.$/)
+    assert.match(implementer.inputText, /\n## Attachments\n/)
+    assert.match(implementer.inputText, /- `attachment-01\.png` \(image, 9 B\), in the description, "the empty/)
+    assert.equal(reviewer.files.length, 1)
   })
 })
 

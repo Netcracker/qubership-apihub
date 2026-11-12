@@ -270,8 +270,8 @@ The analysis runs again on `/agent analyze`, and on an edit of the issue or a co
 waits for information. It runs for every author, because it changes nothing but a label and a comment.
 
 1. **Skip** when a person has already set `ai:suitable` or `ai:unsuitable`.
-2. **Analyze** (`analyst`, light model). Reads the issue, its comments, and the code it points at, and follows the new
-   `apihub-issue-analysis` skill. The result is one of three:
+2. **Analyze** (`analyst`, light model). Reads the issue, its comments, its attachments (screenshots and text files),
+   and the code it points at, and follows the new `apihub-issue-analysis` skill. The result is one of three:
    - `suitable`: the issue holds enough to implement it, and the change fits the agent's tools and checks. The output
      adds a short plan: modules, approach, tests, risk.
    - `unsuitable`: a reason the agent cannot overcome, such as a decision that belongs to people, access the agent
@@ -585,6 +585,9 @@ The repository is public, so issue text, comments, and fork code are untrusted i
   and self-review results stay in the state and the description, labeled as reported by the work job. The OpenAI key
   stays reachable by the code under test in the work job. The proof of concept accepts that; give the key its own
   OpenAI project and a budget on it.
+- **Attachments are untrusted too.** The analyst and the implementer read the screenshots and text files that an issue
+  links. The scripts download them, not the model: only GitHub attachment hosts are allowed, every redirect must stay
+  on them, and no credential is sent. The prompts treat an attachment like the issue text, including text in an image.
 - **Only maintainers start write flows.** Every command, every answer to a hand-off, and every review with change
   requests needs write access. The marker in the description of a pull request counts only when the state of the issue
   names that pull request. A review event runs the workflow file of the pull request, so the jobs name the default

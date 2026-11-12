@@ -63,7 +63,7 @@ Read the [architecture overview](docs/architecture/overview.md) for the full pic
 | [`docs/`](docs/README.md) | Installation, administration, user guide, architecture, design items, and the developer guide |
 | [`tools/`](tools/README.md) | Release scripts, CI helpers, and Nx plugins |
 | `sites/` | Sources of the landing, the documentation site, and the navigation page (`sites/index/`) |
-| `.github/` | Workflows, CODEOWNERS, and Dependabot configuration |
+| `.github/` | Workflows, CODEOWNERS, and Renovate configuration |
 
 ## Where the repositories went
 
