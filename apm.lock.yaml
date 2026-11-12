@@ -493,7 +493,7 @@ dependencies:
     .cursor/rules/api-doc-viewer-testing.mdc: sha256:da6f2bff0ad97eef742cc9ab4a0f3a688a52c114cf179c6272e4355834e7449e
   source: local
   local_path: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-testing
-  content_hash: sha256:5ad8c7cd87b6143dc2b87022e9a7cc51f26d12e652fd437a2b7058e4ebabfb20
+  content_hash: sha256:c9232d7901ea1ee18bdebb2d3c5a8b7d42110b5b44d8c76fa045cae4aef51ee6
 - repo_url: _local/api-doc-viewer-using
   name: api-doc-viewer-using
   version: 1.0.0
