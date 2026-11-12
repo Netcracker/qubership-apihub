@@ -6,9 +6,11 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 	"os"
+	"os/signal"
 	"path"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/Netcracker/qubership-apihub/backend/commons-go/api-spec-exposer/config"
@@ -47,6 +49,9 @@ import (
 )
 
 const startupOperationTimeout = 60 * time.Second
+
+// olricShutdownTimeout must stay below the pod termination grace period, which is 30 seconds by default.
+const olricShutdownTimeout = 10 * time.Second
 
 func init() {
 	logFilePath := os.Getenv("LOG_FILE_PATH") //Example: /logs/apihub.log
@@ -225,6 +230,7 @@ func main() {
 		log.Error("Failed to create olricProvider: " + err.Error())
 		panic("Failed to create olricProvider: " + err.Error())
 	}
+	leaveOlricClusterOnTermination(olricProvider)
 
 	privateUserPackageService := service.NewPrivateUserPackageService(publishedRepository, usersRepository, roleRepository, favoritesRepository)
 	userService := service.NewUserService(usersRepository, systemInfoService, privateUserPackageService)
@@ -767,6 +773,26 @@ func main() {
 	dbMigrationService.StartOpsMigrationRestoreProc(context.Background())
 
 	log.Fatalf("Http server returned error: %v", srv.ListenAndServe())
+}
+
+// leaveOlricClusterOnTermination makes the node leave the Olric cluster before the process exits on SIGTERM or
+// SIGINT. A node that exits without leaving stays in the routing table of the other members until their failure
+// detector notices that it is gone, and cache requests routed to it time out in the meantime.
+func leaveOlricClusterOnTermination(olricProvider cache.OlricProvider) {
+	signals := make(chan os.Signal, 1)
+	signal.Notify(signals, syscall.SIGTERM, os.Interrupt)
+	go func() {
+		sig := <-signals
+		log.Infof("Received signal %s, leaving the Olric cluster", sig)
+		ctx, cancel := context.WithTimeout(context.Background(), olricShutdownTimeout)
+		err := olricProvider.Shutdown(ctx)
+		cancel()
+		if err != nil {
+			log.Errorf("Failed to leave the Olric cluster: %v", err)
+			os.Exit(1)
+		}
+		os.Exit(0)
+	}()
 }
 
 func isAiChatEnabled(sis service.SystemInfoService) bool {
