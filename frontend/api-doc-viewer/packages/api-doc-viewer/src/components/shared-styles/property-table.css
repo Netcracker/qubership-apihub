@@ -1,0 +1,27 @@
+.property-table-entry .title-row-content {
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.property-table-entry .title-row-content .text-value {
+  font-size: 12px;
+}
+
+.property-table-entry .text-row-content {
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.property-table-entry .text-row-content .text-value {
+  font-size: 12px;
+}
+
+.property-table-entry .subheader {
+  font-size: 12px;
+}
+
+.additional-info-row-label {
+  color: #626d82;
+  font-size: 12px;
+  font-weight: 400;
+}

@@ -2,18 +2,18 @@ import { X_AXIS_PADDING_ROWS_ASYNC_API, X_AXIS_PADDING_ROWS_DDL_API_PROPERTIES, 
 import { AdditionalInfoRowLayoutOverrides, AdditionalInfoRowUsage } from "./types"
 
 const ADDITIONAL_INFO_ROW_X_AXIS_PADDING_BY_USAGE: Partial<Record<AdditionalInfoRowUsage, string>> = {
-  [AdditionalInfoRowUsage.DdlApiProperty]: X_AXIS_PADDING_ROWS_DDL_API_PROPERTIES,
+  [AdditionalInfoRowUsage.PropertyTableEntry]: X_AXIS_PADDING_ROWS_DDL_API_PROPERTIES,
   [AdditionalInfoRowUsage.JsonSchemaValidation]: X_AXIS_PADDING_ROWS_JSO,
 }
 
 const ADDITIONAL_INFO_ROW_BODY_CLASS_BY_USAGE: Partial<Record<AdditionalInfoRowUsage, string>> = {
-  [AdditionalInfoRowUsage.DdlApiProperty]: 'ddlapi-property-row-body',
+  [AdditionalInfoRowUsage.PropertyTableEntry]: 'property-table-entry-body',
   [AdditionalInfoRowUsage.Default]: 'additional-info-row-body',
   [AdditionalInfoRowUsage.JsonSchemaValidation]: 'json-schema-property-row-body',
 }
 
 const ADDITIONAL_INFO_ROW_MIN_HEIGHT_BY_USAGE: Partial<Record<AdditionalInfoRowUsage, string>> = {
-  [AdditionalInfoRowUsage.DdlApiProperty]: 'min-h-[26px]',
+  [AdditionalInfoRowUsage.PropertyTableEntry]: 'min-h-[26px]',
 }
 
 export type AdditionalInfoRowResolvedLayout = {
@@ -37,6 +37,6 @@ export function resolveAdditionalInfoRowLayout(
     minHeightClass: overrides.minHeightClass
       ?? ADDITIONAL_INFO_ROW_MIN_HEIGHT_BY_USAGE[usage]
       ?? '',
-    stretchLevelIndicator: usage === AdditionalInfoRowUsage.DdlApiProperty,
+    stretchLevelIndicator: usage === AdditionalInfoRowUsage.PropertyTableEntry,
   }
 }

@@ -83,7 +83,7 @@ const IndexesNodePlainViewer: FC<IndexesNodePlainViewerProps> = (props) => {
         expandable={false}
         expanded={true}
         variant={TextValueVariant.h2}
-        usage={TitleRowUsage.DdlApiSection}
+        usage={TitleRowUsage.PropertyTableSection}
       />
       <LevelContext.Provider value={level + 1}>
         {indexViewerContexts.map(({ indexNode, titlePrecededBy, isLastInList }) => (
@@ -137,7 +137,7 @@ const IndexesNodeWithDiffsViewer: FC<IndexesNodeWithDiffsViewerProps> = (props) 
         expandable={false}
         expanded={true}
         variant={TextValueVariant.h2}
-        usage={TitleRowUsage.DdlApiSection}
+        usage={TitleRowUsage.PropertyTableSection}
         {...titleRowDiffProps}
       />
       <LevelContext.Provider value={level + 1}>

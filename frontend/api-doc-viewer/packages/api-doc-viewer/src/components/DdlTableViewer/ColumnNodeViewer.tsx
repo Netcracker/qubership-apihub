@@ -39,7 +39,7 @@ export type ColumnNodeViewerProps = WithPrecededByProps & {
 export const ColumnNodeViewer: FC<ColumnNodeViewerProps> = (props) => {
   const {
     node,
-    additionalInfoPrecededBy = PrecededBy.DDL_COLUMN_ROW,
+    additionalInfoPrecededBy = PrecededBy.PROPERTY_TABLE_ROW,
     isLastInList = false,
     [ATTRIBUTE_PRECEDED_BY]: precededBy,
   } = props
@@ -143,7 +143,7 @@ export const ColumnNodeViewer: FC<ColumnNodeViewerProps> = (props) => {
   }
 
   return (
-    <div data-testid="ddl-column-node-viewer" className="flex flex-col ddlapi-property">
+    <div data-testid="ddl-column-node-viewer" className="flex flex-col property-table-entry">
       <TitleRow
         data-precededby={precededBy}
         {...{ [ATTRIBUTE_DDL_LIST_LAST_ROW]: listLastRowFlags.isTitleListLastRow || undefined }}
@@ -152,22 +152,22 @@ export const ColumnNodeViewer: FC<ColumnNodeViewerProps> = (props) => {
         expanded={true}
         variant={TextValueVariant.body2}
         subheader={subheader}
-        usage={TitleRowUsage.DdlApiProperty}
+        usage={TitleRowUsage.PropertyTableEntry}
       />
       {visibility.showDescription && (
         <TextRow
-          data-precededby={PrecededBy.DDL_COLUMN_ROW}
+          data-precededby={PrecededBy.PROPERTY_TABLE_ROW}
           {...{ [ATTRIBUTE_DDL_LIST_LAST_ROW]: listLastRowFlags.isDescriptionListLastRow || undefined }}
           value={value.description ?? ''}
           variant={TextValueVariant.body2}
           textFontWeight="normal"
           textColor={DEFAULT_LONG_TEXT_COLOR}
-          usage={TextRowUsage.DdlApiProperty}
+          usage={TextRowUsage.PropertyTableEntry}
         />
       )}
       {visibility.showEnumValuesRow && (
         <AdditionalInfoRow
-          usage={AdditionalInfoRowUsage.DdlApiProperty}
+          usage={AdditionalInfoRowUsage.PropertyTableEntry}
           data-precededby={additionalInfoPrecededBy}
           {...{ [ATTRIBUTE_DDL_LIST_LAST_ROW]: listLastRowFlags.isEnumAdditionalInfoListLastRow || undefined }}
           label={ADDITIONAL_INFO_LABEL_VALUES}
@@ -176,10 +176,10 @@ export const ColumnNodeViewer: FC<ColumnNodeViewerProps> = (props) => {
       )}
       {visibility.showDefaultRow && (
         <AdditionalInfoRow
-          usage={AdditionalInfoRowUsage.DdlApiProperty}
+          usage={AdditionalInfoRowUsage.PropertyTableEntry}
           data-precededby={
             resolvePlainColumnAdditionalInfoRowUsesAfterRowPrecededBy(visibility, "default")
-              ? PrecededBy.DDL_COLUMN_AFTER_ADDITIONAL_INFO_ROW
+              ? PrecededBy.PROPERTY_TABLE_ROW_AFTER_ADDITIONAL_INFO
               : additionalInfoPrecededBy
           }
           {...{ [ATTRIBUTE_DDL_LIST_LAST_ROW]: listLastRowFlags.isDefaultAdditionalInfoListLastRow || undefined }}
@@ -189,10 +189,10 @@ export const ColumnNodeViewer: FC<ColumnNodeViewerProps> = (props) => {
       )}
       {visibility.showGeneratedRow && (
         <AdditionalInfoRow
-          usage={AdditionalInfoRowUsage.DdlApiProperty}
+          usage={AdditionalInfoRowUsage.PropertyTableEntry}
           data-precededby={
             resolvePlainColumnAdditionalInfoRowUsesAfterRowPrecededBy(visibility, "generated")
-              ? PrecededBy.DDL_COLUMN_AFTER_ADDITIONAL_INFO_ROW
+              ? PrecededBy.PROPERTY_TABLE_ROW_AFTER_ADDITIONAL_INFO
               : additionalInfoPrecededBy
           }
           {...{ [ATTRIBUTE_DDL_LIST_LAST_ROW]: listLastRowFlags.isGeneratedAdditionalInfoListLastRow || undefined }}

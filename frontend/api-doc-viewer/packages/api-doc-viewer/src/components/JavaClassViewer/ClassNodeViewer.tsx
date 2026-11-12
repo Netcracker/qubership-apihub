@@ -7,7 +7,12 @@ import { FC, useCallback, useMemo } from 'react'
 import { DiffFloatingBadgeWrapper } from '../shared-components/DiffFloatingBadgeWrapper/DiffFloatingBadgeWrapper'
 import { TextValueVariant } from '../shared-components/TextValue/types'
 import { TitleRow } from '../shared-components/TitleRow/TitleRow'
-import { ATTRIBUTE_PRECEDED_BY, PrecededBy, WithPrecededByProps } from '../shared-components/WithPrecededByProps'
+import {
+  ATTRIBUTE_PRECEDED_BY,
+  getPropertyTableHeaderPrecededBy,
+  PrecededBy,
+  WithPrecededByProps,
+} from '../shared-components/WithPrecededByProps'
 import { ChangeInfoRows } from './ChangeInfoRows'
 import { JAVA_API_TYPE_KIND_TITLES } from './consts'
 import { JavaElementIcon } from './JavaElementIcon'
@@ -45,7 +50,7 @@ export const ClassNodeViewer: FC<ClassNodeViewerProps> = (props) => {
   if (!value) {
     return null
   }
-  const headerPrecededBy = noHeading ? PrecededBy.ROOT : PrecededBy.DDL_TABLE_HEADER_ROW
+  const headerPrecededBy = getPropertyTableHeaderPrecededBy(noHeading)
 
   const backgroundClass = javaApiRowBackgroundClass(rowDiff)
   return (
@@ -64,9 +69,9 @@ export const ClassNodeViewer: FC<ClassNodeViewerProps> = (props) => {
           )}
           <div
             data-precededby={headerPrecededBy}
-            className={`ddl-schema-name-block-row flex h-full ${X_AXIS_PADDING_ROWS_ASYNC_API}`}
+            className={`property-table-subheader-row flex h-full ${X_AXIS_PADDING_ROWS_ASYNC_API}`}
           >
-            <span className="ddl-schema-name-block">
+            <span className="property-table-subheader">
               {value.packageName}
               {value.enclosingClassName && (
                 <>
@@ -76,15 +81,18 @@ export const ClassNodeViewer: FC<ClassNodeViewerProps> = (props) => {
               )}
             </span>
           </div>
-          <div className={`ddlapi-property ${X_AXIS_PADDING_ROWS_ASYNC_API}`}>
-            <ChangeInfoRows data-precededby={PrecededBy.DDL_TABLE_SCHEMA_ROW} compatibility={value.compatibility} />
+          <div className={`property-table-entry ${X_AXIS_PADDING_ROWS_ASYNC_API}`}>
+            <ChangeInfoRows
+              data-precededby={PrecededBy.PROPERTY_TABLE_SUBHEADER_ROW}
+              compatibility={value.compatibility}
+            />
           </div>
         </div>
       </DiffFloatingBadgeWrapper>
       {sectionNodes.map(sectionNode => (
         <SectionNodeViewer
           key={sectionNode.id}
-          data-precededby={PrecededBy.DDL_TABLE_SCHEMA_ROW}
+          data-precededby={PrecededBy.PROPERTY_TABLE_SUBHEADER_ROW}
           node={sectionNode}
         />
       ))}

@@ -30,13 +30,13 @@ export const SectionNodeViewer: FC<SectionNodeViewerProps> = (props) => {
         expandable={false}
         expanded={true}
         variant={TextValueVariant.h2}
-        usage={TitleRowUsage.DdlApiSection}
+        usage={TitleRowUsage.PropertyTableSection}
       />
       <LevelContext.Provider value={level + 1}>
         {memberNodes.map(memberNode => (
           <MemberNodeViewer
             key={memberNode.id}
-            data-precededby={PrecededBy.DDL_COLUMN_ROW}
+            data-precededby={PrecededBy.PROPERTY_TABLE_ROW}
             node={memberNode}
           />
         ))}

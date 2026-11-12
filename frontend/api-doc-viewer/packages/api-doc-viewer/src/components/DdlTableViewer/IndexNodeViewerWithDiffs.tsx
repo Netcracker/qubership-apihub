@@ -111,7 +111,7 @@ export const IndexNodeViewerWithDiffs: FC<IndexNodeViewerWithDiffsProps> = (prop
   }
 
   return (
-    <div data-testid="ddl-index-node-viewer" className="flex flex-col ddlapi-property">
+    <div data-testid="ddl-index-node-viewer" className="flex flex-col property-table-entry">
       <TitleRow
         data-precededby={precededBy}
         {...{ [ATTRIBUTE_DDL_LIST_LAST_ROW]: listLastRowFlags.isTitleListLastRow || undefined }}
@@ -120,7 +120,7 @@ export const IndexNodeViewerWithDiffs: FC<IndexNodeViewerWithDiffsProps> = (prop
         expanded={true}
         variant={TextValueVariant.body2}
         subheader={visibility.showSubheader ? subheader : undefined}
-        usage={TitleRowUsage.DdlApiProperty}
+        usage={TitleRowUsage.PropertyTableEntry}
         hideLevelIndicatorWhenSideEmpty={hideLevelIndicatorWhenSideEmpty}
         {...titleRowDiffProps}
       />
@@ -132,7 +132,7 @@ export const IndexNodeViewerWithDiffs: FC<IndexNodeViewerWithDiffsProps> = (prop
           variant={TextValueVariant.body1}
           textFontWeight="normal"
           textColor={DEFAULT_LONG_TEXT_COLOR}
-          usage={TextRowUsage.DdlApiProperty}
+          usage={TextRowUsage.PropertyTableEntry}
           diff={descriptionDiff}
           diffsSeverities={node.diffsSeverities}
           hideLevelIndicatorWhenSideEmpty={hideLevelIndicatorWhenSideEmpty}

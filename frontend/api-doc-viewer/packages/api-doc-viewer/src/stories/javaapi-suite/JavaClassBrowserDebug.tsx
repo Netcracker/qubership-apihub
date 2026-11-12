@@ -1,5 +1,5 @@
 import { JavaClassViewer } from '@apihub/components/JavaClassViewer/JavaClassViewer'
-import type { NavigationLinkComponent } from '@apihub/components/DdlTableViewer/DefaultNavigationLink'
+import type { NavigationLinkComponent } from '@apihub/components/shared-components/DefaultNavigationLink/DefaultNavigationLink'
 import { collectJavaApiClassNames } from '@netcracker/qubership-apihub-next-data-model/shared/javaapi/class-names'
 import { FC, useMemo, useState } from 'react'
 import { API_DIFF, API_REPORT } from './java-samples-common'

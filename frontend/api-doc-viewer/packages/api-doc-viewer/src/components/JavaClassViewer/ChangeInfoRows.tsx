@@ -23,7 +23,7 @@ type ChangeInfoRowsProps = WithPrecededByProps & {
 // description and properties of a DDL column. An api-report compares a jar with itself, so its
 // unchanged elements render nothing.
 export const ChangeInfoRows: FC<ChangeInfoRowsProps> = (props) => {
-  const { compatibility, [ATTRIBUTE_PRECEDED_BY]: precededBy = PrecededBy.DDL_COLUMN_ROW } = props
+  const { compatibility, [ATTRIBUTE_PRECEDED_BY]: precededBy = PrecededBy.PROPERTY_TABLE_ROW } = props
 
   const changesSubheader = useCallback(() => (
     <div className="flex flex-wrap items-center gap-2">
@@ -51,44 +51,44 @@ export const ChangeInfoRows: FC<ChangeInfoRowsProps> = (props) => {
   const hasDetails = !!compatibility.details
   const hasChangeTypes = compatibility.changeTypes.length > 0
   // the first property row follows whatever came before it, the rest follow a property row
-  const afterPropertyRow = PrecededBy.DDL_COLUMN_AFTER_ADDITIONAL_INFO_ROW
+  const afterPropertyRow = PrecededBy.PROPERTY_TABLE_ROW_AFTER_ADDITIONAL_INFO
   let binaryCompatiblePrecededBy = precededBy
   if (hasChangeTypes) binaryCompatiblePrecededBy = afterPropertyRow
-  else if (hasDetails) binaryCompatiblePrecededBy = PrecededBy.DDL_COLUMN_ROW
+  else if (hasDetails) binaryCompatiblePrecededBy = PrecededBy.PROPERTY_TABLE_ROW
   return (
     <>
       {hasDetails && (
         <TextRow
-          data-precededby={PrecededBy.DDL_COLUMN_ROW}
+          data-precededby={PrecededBy.PROPERTY_TABLE_ROW}
           value={compatibility.details}
           variant={TextValueVariant.body2}
           textFontWeight="normal"
           textColor={DEFAULT_LONG_TEXT_COLOR}
-          usage={TextRowUsage.DdlApiProperty}
+          usage={TextRowUsage.PropertyTableEntry}
         />
       )}
       {hasChangeTypes && (
         <AdditionalInfoRow
-          usage={AdditionalInfoRowUsage.DdlApiProperty}
-          data-precededby={hasDetails ? PrecededBy.DDL_COLUMN_ROW : precededBy}
+          usage={AdditionalInfoRowUsage.PropertyTableEntry}
+          data-precededby={hasDetails ? PrecededBy.PROPERTY_TABLE_ROW : precededBy}
           label={ADDITIONAL_INFO_LABEL_CHANGES}
           subheader={changesSubheader}
         />
       )}
       <AdditionalInfoRow
-        usage={AdditionalInfoRowUsage.DdlApiProperty}
+        usage={AdditionalInfoRowUsage.PropertyTableEntry}
         data-precededby={binaryCompatiblePrecededBy}
         label={ADDITIONAL_INFO_LABEL_BINARY_COMPATIBLE}
         subheader={binaryCompatibleSubheader}
       />
       <AdditionalInfoRow
-        usage={AdditionalInfoRowUsage.DdlApiProperty}
+        usage={AdditionalInfoRowUsage.PropertyTableEntry}
         data-precededby={afterPropertyRow}
         label={ADDITIONAL_INFO_LABEL_SOURCE_COMPATIBLE}
         subheader={sourceCompatibleSubheader}
       />
       <AdditionalInfoRow
-        usage={AdditionalInfoRowUsage.DdlApiProperty}
+        usage={AdditionalInfoRowUsage.PropertyTableEntry}
         data-precededby={afterPropertyRow}
         label={ADDITIONAL_INFO_LABEL_SEMVER}
         subheader={semverSubheader}

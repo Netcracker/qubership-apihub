@@ -84,7 +84,7 @@ export const MemberNodeViewer: FC<MemberNodeViewerProps> = (props) => {
     <DiffFloatingBadgeWrapper diffType={rowDiff?.diffType} diffTypeCause={undefined}>
       <div
         data-testid="java-member-node-viewer"
-        className={`flex flex-col ddlapi-property w-full ${backgroundClass}`.trim()}
+        className={`flex flex-col property-table-entry w-full ${backgroundClass}`.trim()}
       >
         <TitleRow
           data-precededby={precededBy}
@@ -93,7 +93,7 @@ export const MemberNodeViewer: FC<MemberNodeViewerProps> = (props) => {
           expanded={true}
           variant={TextValueVariant.body2}
           subheader={subheader}
-          usage={TitleRowUsage.DdlApiProperty}
+          usage={TitleRowUsage.PropertyTableEntry}
         />
         <ChangeInfoRows compatibility={value.compatibility} />
       </div>
