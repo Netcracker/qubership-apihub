@@ -60,7 +60,7 @@ export const TableNodeViewerWithDiffs: FC<TableNodeViewerWithDiffsProps> = (prop
     && (!!value?.description || !!descriptionDiff)
     && !nodeDiff
 
-  const tableHeaderPrecededBy = noHeading ? PrecededBy.ROOT : PrecededBy.DDL_TABLE_HEADER_ROW
+  const tableHeaderPrecededBy = noHeading ? PrecededBy.ROOT : PrecededBy.PROPERTY_TABLE_HEADER_ROW
 
   return (
     <div data-testid="ddl-table-node-viewer" className="flex flex-col">
@@ -86,7 +86,7 @@ export const TableNodeViewerWithDiffs: FC<TableNodeViewerWithDiffsProps> = (prop
         <TextRow
           data-precededby={
             isSchemaNameDisplayed
-              ? PrecededBy.DDL_TABLE_SCHEMA_ROW
+              ? PrecededBy.PROPERTY_TABLE_SUBHEADER_ROW
               : tableHeaderPrecededBy
           }
           value={value?.description ?? ''}
@@ -103,7 +103,7 @@ export const TableNodeViewerWithDiffs: FC<TableNodeViewerWithDiffsProps> = (prop
             isDescriptionDisplayed
               ? PrecededBy.DDL_TABLE_DESCRIPTION_ROW
               : isSchemaNameDisplayed
-                ? PrecededBy.DDL_TABLE_SCHEMA_ROW
+                ? PrecededBy.PROPERTY_TABLE_SUBHEADER_ROW
                 : tableHeaderPrecededBy
           }
           node={columnsChild}
@@ -113,11 +113,11 @@ export const TableNodeViewerWithDiffs: FC<TableNodeViewerWithDiffsProps> = (prop
         <IndexesNodeViewer
           data-precededby={
             columnsChild?.childrenNodes().length
-              ? PrecededBy.DDL_COLUMN_ROW
+              ? PrecededBy.PROPERTY_TABLE_ROW
               : isDescriptionDisplayed
                 ? PrecededBy.DDL_TABLE_DESCRIPTION_ROW
                 : isSchemaNameDisplayed
-                  ? PrecededBy.DDL_TABLE_SCHEMA_ROW
+                  ? PrecededBy.PROPERTY_TABLE_SUBHEADER_ROW
                   : tableHeaderPrecededBy
           }
           node={indexesChild}

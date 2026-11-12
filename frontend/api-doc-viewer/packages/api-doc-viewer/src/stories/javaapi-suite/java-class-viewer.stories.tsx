@@ -1,5 +1,5 @@
-import type { NavigationLinkComponent } from '@apihub/components/DdlTableViewer/DefaultNavigationLink'
 import { JavaClassViewer } from '@apihub/components/JavaClassViewer/JavaClassViewer'
+import type { NavigationLinkComponent } from '@apihub/components/shared-components/DefaultNavigationLink/DefaultNavigationLink'
 import { collectJavaApiClassNames } from '@netcracker/qubership-apihub-next-data-model/shared/javaapi/class-names'
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { FC, useMemo, useState } from 'react'

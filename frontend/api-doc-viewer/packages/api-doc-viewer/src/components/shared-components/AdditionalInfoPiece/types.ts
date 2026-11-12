@@ -1,5 +1,5 @@
 export enum AdditionalInfoPieceUsage {
   Default = 'default',
-  DdlApiProperty = 'ddlapi-property',
+  PropertyTableEntry = 'property-table-entry',
   JsonSchemaValidation = 'json-schema-validation',
 }

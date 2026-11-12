@@ -287,11 +287,14 @@ the ddlapi package.
 FK badges in `ForeignKey/ForeignKey.tsx` link to related tables. URL construction
 and link rendering are **separate concerns**:
 
+The shared link component lives in
+`packages/api-doc-viewer/src/components/shared-components/DefaultNavigationLink/DefaultNavigationLink.tsx`.
+
 | Piece | Location | Role |
 | --- | --- | --- |
 | `NavigationLinkBuilder` | `next-data-model` type; required `DdlTableViewer` prop | `(schema, table, column) => string` — href for the referenced table |
 | `navigationLinkComponent` | optional `DdlTableViewer` prop | React component that renders the FK label as a link |
-| `DefaultNavigationLink` | `DefaultNavigationLink.tsx` | Default implementation — plain `<a href>` |
+| `DefaultNavigationLink` | `shared-components/DefaultNavigationLink/` | Default implementation: plain `<a href>` |
 | `DdlTableViewerContext` | `DdlTableViewerContext.tsx` | Supplies builder + component to `ForeignKey` |
 
 **Authoring rules:**
@@ -466,7 +469,7 @@ next-data-model so badges and expression chips keep their own contracts.
 Several viewers render a **flat or nested list of properties** under a section
 header. Each list item is a node viewer (`ColumnNodeViewer`, `IndexNodeViewer`,
 `JsoPropertyNodeViewer`, …) wrapped in a property container class
-(`.ddlapi-property`, `.jso-property`, …).
+(`.property-table-entry`, `.jso-property`, …).
 
 | Concern | List parent (e.g. `ColumnsNodeViewer`, `IndexesNodeViewer`) | Item node viewer (e.g. `ColumnNodeViewer`) |
 | --- | --- | --- |
@@ -474,7 +477,7 @@ header. Each list item is a node viewer (`ColumnNodeViewer`, `IndexNodeViewer`,
 | `LevelContext` | `Provider value={level + 1}` around children | Consumes level for `LevelIndicator` |
 | Cross-sibling `data-precededby` | **Precompute in one pass** (`buildColumnViewerContexts`, `buildIndexViewerContexts`) | Receive as props; do not inspect previous sibling |
 | List position (first / middle / last) | Set `isLastInList`; pass to children | Apply terminal-row marker on **last structural row** |
-| Vertical spacing between items | Section header `margin-bottom` (`TitleRowUsage.DdlApiSection`) | Uniform row-body padding in CSS — see **DDL API property-list indentations** |
+| Vertical spacing | Section header `margin-bottom` | Uniform row-body padding; see property-list indentations below |
 
 **Reference implementations:**
 
@@ -492,33 +495,41 @@ parent precomputes context, item viewer renders stack** split — do not embed
 
 ### DDL API property-list indentations (`ddlapi-indentations-update`)
 
+The property-table names are shared by the DDL and Java viewers.
+
 Authoritative **numeric** spacing lives in source — do not copy pixel values
 into agent docs. When changing spacing, edit CSS/TSX and verify in Storybook or
 screenshot ITs.
 
+Paths below are relative to `packages/api-doc-viewer/src/components/`.
+
 | Source | Role |
 | --- | --- |
-| `packages/api-doc-viewer/src/components/shared-styles/preceded-by.css` | `.ddlapi-property` row rules; section-header `margin-bottom` |
-| `packages/api-doc-viewer/src/components/DdlTableViewer/ColumnsNodeViewer.tsx` | `Columns` section `TitleRow` with `TitleRowUsage.DdlApiSection` |
-| `packages/api-doc-viewer/src/components/DdlTableViewer/IndexesNodeViewer.tsx` | `Indexes` section `TitleRow` with `TitleRowUsage.DdlApiSection` |
-| `packages/api-doc-viewer/src/components/DdlTableViewer/TableNodeViewer.tsx` | `data-precededby` chain between table sections (e.g. Columns → Indexes) |
-| `packages/api-doc-viewer/src/components/shared-components/TitleRow/TitleRowContent.tsx` | `DdlApiProperty` row layout, `data-usage`, `min-h-*` on property rows |
-| `packages/api-doc-viewer/src/components/shared-components/AdditionalInfoRow/AdditionalInfoRowContent.tsx` | Additional-info property row chrome (generalized from `DdlTableViewer/AdditionalInfoRow/`; now shared by DDL, AsyncAPI, and JSON Schema) |
-| `packages/api-doc-viewer/src/components/shared-components/TextRow/TextRowContent.tsx` | Description property row chrome |
-| `packages/api-doc-viewer/src/components/shared-components/DiffFloatingBadgeWrapper/DiffFloatingBadgeWrapper.tsx` | Side-by-side diff badge wrapper (must not be offset by row margins) |
-| `packages/api-doc-viewer/src/components/shared-components/Layout/SideBySideLayout.tsx` | Stretch behaviour for diff columns |
-| `packages/api-doc-viewer/src/components/shared-components/WithPrecededByProps.ts` | `PrecededBy` / `data-ddl-list-last-row` enum values |
+| `shared-styles/preceded-by.css` | `.property-table-entry` spacing; section-header `margin-bottom` |
+| `shared-styles/property-table.css` | Shared row fonts and additional-info label styling |
+| `shared-styles/property-table-subheader.css` | Shared `.property-table-subheader` styling |
+| `DdlTableViewer/ColumnsNodeViewer.tsx` | `Columns` title with `TitleRowUsage.PropertyTableSection` |
+| `DdlTableViewer/IndexesNodeViewer.tsx` | `Indexes` title with `TitleRowUsage.PropertyTableSection` |
+| `DdlTableViewer/TableNodeViewer.tsx` | `data-precededby` chain between table sections |
+| `shared-components/TitleRow/TitleRowContent.tsx` | `PropertyTableEntry` layout, `data-usage`, `min-h-*` |
+| `shared-components/AdditionalInfoRow/AdditionalInfoRowContent.tsx` | Shared additional-info row chrome |
+| `shared-components/TextRow/TextRowContent.tsx` | Description row chrome |
+| `shared-components/DiffFloatingBadgeWrapper/DiffFloatingBadgeWrapper.tsx` | Diff badge wrapper; avoid row margins |
+| `shared-components/Layout/SideBySideLayout.tsx` | Stretch behavior for diff columns |
+| `shared-components/WithPrecededByProps.ts` | `PrecededBy` / `data-ddl-list-last-row` enum values |
+
+Additional-info row chrome is shared by DDL, Java, AsyncAPI, and JSON Schema.
 
 #### Spacing hierarchy (three layers — do not collapse)
 
 1. **Property row band** — every `TitleRow`, `TextRow`, and `AdditionalInfoRow`
-   inside `.ddlapi-property` (`ColumnNodeViewer*`, `IndexNodeViewer*`) uses the
-   **same** min-height and symmetric vertical padding on `.ddlapi-property-row-body`
+   inside `.property-table-entry` (`ColumnNodeViewer*`, `IndexNodeViewer*`) uses the
+   **same** min-height and symmetric vertical padding on `.property-table-entry-body`
    only. Inter-row gap = bottom padding of one row plus top padding of the next.
 2. **Section header → first property** — gap from the `Columns` / `Indexes`
    section title down to the first column/index item is controlled only by
-   **`margin-bottom`** on that section `TitleRow` (`TitleRowUsage.DdlApiSection`,
-   targeted via `data-usage="ddlapi-section"` in CSS). Same rule for Columns
+   **`margin-bottom`** on that section `TitleRow` (`TitleRowUsage.PropertyTableSection`,
+   targeted via `data-usage="property-table-section"` in CSS). Same rule for Columns
    and Indexes. This gap must be **larger** than a single row’s vertical padding
    and **smaller** than the gap between major table sections.
 3. **Major section gap** (e.g. Columns block → Indexes block) — still driven by
@@ -532,16 +543,16 @@ screenshot ITs.
 ├── .level-indicator-column.self-stretch         ← line spans full row height
 │   ├── LevelIndicator
 │   └── Expander (or w-4 spacer on AdditionalInfoRow)
-└── .ddlapi-property-row-body                     ← symmetric padding HERE only
+└── .property-table-entry-body                     ← symmetric padding HERE only
     ├── TextValue (title)                         ← items-center with subheader
     └── subheader (type, badges, …)
 ```
 
-- `TitleRowUsage.DdlApiProperty`: indent in `header`; **title + subheader only**
-  in `.ddlapi-property-row-body` — never duplicate `headerValue` in both places.
-- Inside `.ddlapi-property`, **zero** vertical padding and margin on
+- `TitleRowUsage.PropertyTableEntry`: indent in `header`; **title + subheader only**
+  in `.property-table-entry-body` — never duplicate `headerValue` in both places.
+- Inside `.property-table-entry`, **zero** vertical padding and margin on
   `.title-row-content`, `.additional-info-row-content`, and `.text-row-content`
-  wrappers — override global `[data-precededby="ddl-column-row"]` rules.
+  wrappers — override global `[data-precededby="property-table-row"]` rules.
 - **Never** put list spacing on property row wrappers (`margin-top` between
   middle items breaks the vertical line; wrapper `padding-top` misaligns diff
   badges — see bad patterns below).
@@ -549,14 +560,14 @@ screenshot ITs.
 #### React wiring
 
 - **Section headers:** `ColumnsNodeViewer` / `IndexesNodeViewer` pass
-  `usage={TitleRowUsage.DdlApiSection}` on the section `TitleRow`.
+  `usage={TitleRowUsage.PropertyTableSection}` on the section `TitleRow`.
   `TitleRowContent` exposes `data-usage` for CSS selectors.
 - **Property items:** all column/index title rows use the same list markers for
-  spacing (`DDL_COLUMN_ROW` / `DDL_INDEX_ROW`) — **not** `DDL_SECTION_HEADER`
+  spacing (`PROPERTY_TABLE_ROW` / `DDL_INDEX_ROW`) — **not** `DDL_SECTION_HEADER`
   for first-item gap (section margin replaces that role).
 - **`buildColumnViewerContexts` / `buildIndexViewerContexts`:** still precompute
   `data-precededby` for line continuity and “previous column had additional-info
-  rows” (`DDL_COLUMN_AFTER_ADDITIONAL_INFO_ROW`); do not use those markers to
+  rows” (`PROPERTY_TABLE_ROW_AFTER_ADDITIONAL_INFO`); do not use those markers to
   encode section-to-first-item or first-vs-middle padding differences.
 - **`data-ddl-list-last-row`:** terminal row marker unchanged; list tail spacing
   is defined in CSS — see `preceded-by.css`.
@@ -573,7 +584,7 @@ min-height. Do not raise row-body padding without re-checking.
 JSO property lists (`.jso-property`) use a related but separate model: no
 row-body split, minimal wrapper padding. Align DDL with JSO **conceptually**
 (full row height includes indent band; no wrapper margins that offset diff
-chrome) but implement via the DDL `.ddlapi-property` rules above.
+chrome) but implement via the DDL `.property-table-entry` rules above.
 
 #### Bad patterns (rejected during `ddlapi-indentations-update`)
 
@@ -582,7 +593,7 @@ chrome) but implement via the DDL `.ddlapi-property` rules above.
 | `padding-top` on `.title-row-content` for section or first-item gap | Creates a band above flex children; `DiffFloatingBadgeWrapper` / absolute diff badge extends above visible row; `LevelIndicator` does not span the padded band correctly |
 | `margin-top` on first property `TitleRow` inside diffs layout | Margin collapse / wrapper height mismatch; diff badge no longer aligns with row |
 | Different row-body padding for first vs middle items via `DDL_SECTION_HEADER` | Asymmetric bands; content sticks to diff background bottom; hard to match Columns and Indexes |
-| `align-items: flex-start` on title-row `.ddlapi-property-row-body` | Title `TextValue` sits higher than subheader badges (badges are taller flex items) |
+| `align-items: flex-start` on `.property-table-entry-body` | Title sits higher than the taller subheader badges |
 | Splitting “section gap” and “internal padding” across row wrapper and row-body without a single hierarchy | Repeated regressions; final model uses one row band + section `margin-bottom` + global section `precededby` |
 
 #### Lessons learnt
@@ -607,7 +618,7 @@ on property rows in `TitleRowContent` / `AdditionalInfoRowContent` /
 Follow the **DDL API property-list indentations** section above for where
 padding and margins may live. Quick rules:
 
-- Padding on `.ddlapi-property-row-body` only — line stays continuous.
+- Padding on `.property-table-entry-body` only — line stays continuous.
 - No `margin-top` between middle list items.
 - Section and list-boundary margins are explicit exceptions documented in
   `preceded-by.css`.
@@ -625,11 +636,14 @@ Row components set `data-precededby={PrecededBy…}`. Enum values in
 
 **Columns list — parent precomputes (`buildColumnViewerContexts`):**
 
+Use `PROPERTY_TABLE_ROW` by default, or `PROPERTY_TABLE_ROW_AFTER_ADDITIONAL_INFO` when the previous
+column has at least one `AdditionalInfoRow`. Apply the latter to the generated row when a default row is above it.
+
 | Prop / attribute | Set on | When |
 | --- | --- | --- |
-| `data-precededby` | `ColumnNodeViewer` → `TitleRow` | `DDL_COLUMN_ROW`, or `DDL_COLUMN_AFTER_ADDITIONAL_INFO_ROW` when **previous** column had ≥1 `AdditionalInfoRow` |
-| `additionalInfoPrecededBy` | each `AdditionalInfoRow` | `DDL_COLUMN_ROW` default; `DDL_COLUMN_AFTER_ADDITIONAL_INFO_ROW` when previous column had additional-info rows |
-| (within column) generated row | second `AdditionalInfoRow` | `DDL_COLUMN_AFTER_ADDITIONAL_INFO_ROW` when default row exists above |
+| `data-precededby` | `ColumnNodeViewer` → `TitleRow` | Previous-column marker described above |
+| `additionalInfoPrecededBy` | each `AdditionalInfoRow` | Previous-column marker described above |
+| (within column) generated row | second `AdditionalInfoRow` | Default row exists above |
 | `isLastInList` | `ColumnNodeViewer` | From parent index; drives `data-ddl-list-last-row` on terminal row |
 | `data-ddl-list-last-row` | `TitleRow` or last `AdditionalInfoRow` | Last column in list: title if no additional-info rows; else last additional-info row |
 
@@ -656,13 +670,13 @@ Use `hasDdlColumnAdditionalInfoRows()` from `utils/ddlapi/column-row-utils.ts`
 
 | Mistake | Symptom | Fix |
 | --- | --- | --- |
-| Padding on row wrapper for “symmetric indent” | Gaps in vertical line; short line segments | Padding on `.ddlapi-property-row-body` only — see **ddlapi-indentations-update** |
-| `headerValue` in both `header` and row body (`DdlApiProperty`) | Duplicated column/index titles | Indent in `header`; title + subheader only in row body |
+| Row-wrapper padding | Broken vertical line | Pad `.property-table-entry-body` only |
+| Duplicated `headerValue` for `PropertyTableEntry` | Duplicate titles | Indent in header; title + subheader in body |
 | `{headerValue}{subheader}` replaced by `{rowBody}` for all usages | Section headers duplicated (`Columns Columns`) | Non-DDL: keep `{header}{subheader}`; DDL only uses row body |
-| Global `preceded-by.css` rules assumed scoped | Mystery padding on `.ddlapi-property` rows | Explicit zero padding on property row wrappers |
+| Global spacing assumed scoped | Extra padding on `.property-table-entry` rows | Zero padding on row wrappers |
 | `margin-top` on middle list items | Line breaks between siblings | Uniform row-body padding; section gaps on section headers only |
 | First-item spacing via `DDL_SECTION_HEADER` row rules | Asymmetric diff bands; badge/title misalignment | Section `margin-bottom` + uniform property rows |
-| Wrapper `padding-top` for section gap under diffs | Diff badge protrudes above row | Section `margin-bottom` on `DdlApiSection` header; no wrapper padding |
+| Wrapper padding for section gap | Protruding diff badge | `margin-bottom` on `PropertyTableSection` header |
 | `align-items: flex-start` on title row-body | Title above subheader/badges | `items-center` on title-row row-body |
 | Deriving “previous sibling had X” in child viewer | Fragile, hard to test | One-pass `build*ViewerContexts` in list parent |
 | `data-ddl-list-last-row` on description `TextRow` | Wrong bottom spacing | Terminal row = last `TitleRow` or `AdditionalInfoRow` per product rule |

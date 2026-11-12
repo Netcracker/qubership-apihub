@@ -9,13 +9,16 @@ import { ClassKey } from '@netcracker/qubership-apihub-next-data-model/shared/ja
 import { JavaApiNavigationLinkBuilder } from '@netcracker/qubership-apihub-next-data-model/shared/javaapi/types/navigation-link-builder'
 import { FC, memo, useMemo } from 'react'
 import '../../index.css'
-import '../DdlTableViewer/DdlSchemaNameBlock/DdlSchemaNameBlock.css'
-import '../DdlTableViewer/styles/index.css'
+import '../shared-styles/property-table-subheader.css'
+import '../shared-styles/property-table.css'
 import '../shared-components/SubheaderValue/SubheaderValue.css'
 import '../shared-styles/preceded-by.css'
-import { DefaultNavigationLink, type NavigationLinkComponent } from '../DdlTableViewer/DefaultNavigationLink'
 import { ErrorBoundary } from '../services/ErrorBoundary'
 import { ErrorBoundaryFallback } from '../services/ErrorBoundaryFallback'
+import {
+  DefaultNavigationLink,
+  type NavigationLinkComponent,
+} from '../shared-components/DefaultNavigationLink/DefaultNavigationLink'
 import { ClassNodeViewer } from './ClassNodeViewer'
 import { JavaClassViewerContext } from './JavaClassViewerContext'
 import './styles/index.css'

@@ -1,6 +1,6 @@
 import type { JavaApiNavigationLinkBuilder } from '@netcracker/qubership-apihub-next-data-model/shared/javaapi/types/navigation-link-builder'
 import { createContext, useContext } from 'react'
-import type { NavigationLinkComponent } from '../DdlTableViewer/DefaultNavigationLink'
+import type { NavigationLinkComponent } from '../shared-components/DefaultNavigationLink/DefaultNavigationLink'
 
 export type JavaClassViewerContextValue = {
   navigationLinkBuilder?: JavaApiNavigationLinkBuilder

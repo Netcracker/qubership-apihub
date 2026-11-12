@@ -14,12 +14,12 @@ import { MarkdownTextValue } from "../TextValue/MarkdownTextValue"
 import type { MarkdownTextRowContentProps } from "./types"
 
 const MARKDOWN_TEXT_ROW_X_AXIS_PADDING_BY_USAGE: Partial<Record<TextRowUsage, string>> = {
-  [TextRowUsage.DdlApiProperty]: X_AXIS_PADDING_ROWS_DDL_API_PROPERTIES,
+  [TextRowUsage.PropertyTableEntry]: X_AXIS_PADDING_ROWS_DDL_API_PROPERTIES,
   [TextRowUsage.JsonSchemaDescription]: X_AXIS_PADDING_ROWS_JSO,
 }
 
 const MARKDOWN_TEXT_ROW_ADDITIONAL_CLASSES_BY_USAGE: Partial<Record<TextRowUsage, string[]>> = {
-  [TextRowUsage.DdlApiProperty]: ["min-h-[26px]"],
+  [TextRowUsage.PropertyTableEntry]: ["min-h-[26px]"],
 }
 
 function getMarkdownTextRowClassesByUsage(usage: TextRowUsage): string {
@@ -33,7 +33,7 @@ function isMarkdownSideContentVisible(
   layoutSide: MarkdownTextRowContentProps["layoutSide"],
   usage: TextRowUsage,
 ): boolean {
-  if (usage === TextRowUsage.DdlApiProperty) {
+  if (usage === TextRowUsage.PropertyTableEntry) {
     return DdlApiRowDiffs.PropertyRow.isContentVisible(diff, layoutSide)
   }
   if (!diff?.data) {
@@ -56,8 +56,8 @@ export const MarkdownTextRowContent: FC<MarkdownTextRowContentProps> = memo<Mark
   const { [ATTRIBUTE_PRECEDED_BY]: precededBy } = props
 
   const level = useEffectiveLevel(layoutSide)
-  const isDdlApiPropertyRow = usage === TextRowUsage.DdlApiProperty
-  const showsLevelIndentForUsage = isDdlApiPropertyRow || usage === TextRowUsage.JsonSchemaDescription
+  const isPropertyTableEntryRow = usage === TextRowUsage.PropertyTableEntry
+  const showsLevelIndentForUsage = isPropertyTableEntryRow || usage === TextRowUsage.JsonSchemaDescription
   const isSideContentVisible = useMemo(
     () => isMarkdownSideContentVisible(diff, layoutSide, usage),
     [diff, layoutSide, usage],
@@ -99,7 +99,7 @@ export const MarkdownTextRowContent: FC<MarkdownTextRowContentProps> = memo<Mark
       data-precededby={precededBy}
       className={[
         "markdown-text-row-content flex w-full h-full gap-2",
-        isDdlApiPropertyRow || usage === TextRowUsage.JsonSchemaDescription ? "items-stretch" : "",
+        isPropertyTableEntryRow || usage === TextRowUsage.JsonSchemaDescription ? "items-stretch" : "",
         usageDrivenClasses,
         ...diffsStyleClasses,
       ].filter(Boolean).join(" ")}
@@ -111,8 +111,8 @@ export const MarkdownTextRowContent: FC<MarkdownTextRowContentProps> = memo<Mark
           <div className="w-4" aria-hidden="true" />
         </div>
       )}
-      {isDdlApiPropertyRow ? (
-        <div className="ddlapi-property-row-body flex min-w-0 flex-1 items-center gap-2">
+      {isPropertyTableEntryRow ? (
+        <div className="property-table-entry-body flex min-w-0 flex-1 items-center gap-2">
           {markdownValue}
         </div>
       ) : usage === TextRowUsage.JsonSchemaDescription ? (
