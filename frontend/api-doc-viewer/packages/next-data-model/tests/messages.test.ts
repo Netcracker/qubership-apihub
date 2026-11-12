@@ -593,6 +593,10 @@ describe('Cases with operation messages', () => {
         channels: {
           'test-channel': {
             address: "test-channel",
+            messages: {
+              FirstMessage: { $ref: "#/components/messages/FirstMessage" },
+              SecondMessage: { $ref: "#/components/messages/SecondMessage" }
+            },
           }
         },
         operations: {
@@ -600,8 +604,8 @@ describe('Cases with operation messages', () => {
             action: "send",
             channel: { $ref: "#/channels/test-channel" },
             messages: [
-              { $ref: "#/components/messages/FirstMessage" },
-              { $ref: "#/components/messages/SecondMessage" }
+              { $ref: "#/channels/test-channel/messages/FirstMessage" },
+              { $ref: "#/channels/test-channel/messages/SecondMessage" }
             ]
           }
         },
@@ -654,6 +658,9 @@ describe('Cases with operation messages', () => {
         channels: {
           'test-channel': {
             address: "test-channel",
+            messages: {
+              TestMessage: { $ref: "#/components/messages/TestMessage" }
+            },
           }
         },
         operations: {
@@ -661,7 +668,7 @@ describe('Cases with operation messages', () => {
             action: "send",
             channel: { $ref: "#/channels/test-channel" },
             messages: [
-              { $ref: "#/components/messages/TestMessage" }
+              { $ref: "#/channels/test-channel/messages/TestMessage" }
             ]
           }
         },

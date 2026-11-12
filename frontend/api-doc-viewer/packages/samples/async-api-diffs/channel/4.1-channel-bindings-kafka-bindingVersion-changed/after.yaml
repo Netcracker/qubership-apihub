@@ -10,7 +10,7 @@ channels:
         $ref: '#/components/messages/TestMessage'
     bindings:
       kafka:
-        bindingVersion: 2.0.0
+        bindingVersion: 0.5.0
 operations:
   sendOperation:
     action: send

@@ -14,11 +14,11 @@ const COMPONENTS_WITH_MESSAGES = {
   }
 }
 
-const SINGLE_MESSAGE_USAGE = {
+const singleMessageUsage = (channel: string) => ({
   messages: [
-    { $ref: "#/components/messages/test-message" }
+    { $ref: `#/channels/${channel}/messages/test-message` }
   ]
-}
+})
 
 describe('Bindings', () => {
   simplifyConsole()
@@ -33,14 +33,17 @@ describe('Bindings', () => {
         },
         channels: {
           'test-channel': {
-            address: "test-channel"
+            address: "test-channel",
+            messages: {
+              'test-message': { $ref: "#/components/messages/test-message" }
+            }
           }
         },
         operations: {
           'test-operation': {
             action: "send",
             channel: { $ref: "#/channels/test-channel" },
-            ...SINGLE_MESSAGE_USAGE,
+            ...singleMessageUsage('test-channel'),
             bindings: {
               kafka: {
                 groupId: {
@@ -115,14 +118,17 @@ describe('Bindings', () => {
         },
         channels: {
           'test-channel': {
-            address: "test-channel"
+            address: "test-channel",
+            messages: {
+              'test-message': { $ref: "#/components/messages/test-message" }
+            }
           }
         },
         operations: {
           'test-operation': {
             action: "send",
             channel: { $ref: "#/channels/test-channel" },
-            ...SINGLE_MESSAGE_USAGE,
+            ...singleMessageUsage('test-channel'),
             bindings: {
               kafka: {
                 groupId: {
@@ -224,6 +230,9 @@ describe('Bindings', () => {
                 replicas: 2,
                 bindingVersion: "0.5.0"
               }
+            },
+            messages: {
+              'test-message': { $ref: "#/components/messages/test-message" }
             }
           }
         },
@@ -231,7 +240,7 @@ describe('Bindings', () => {
           'test-operation': {
             action: "send",
             channel: { $ref: "#/channels/test-channel" },
-            ...SINGLE_MESSAGE_USAGE,
+            ...singleMessageUsage('test-channel'),
           }
         },
         ...COMPONENTS_WITH_MESSAGES
@@ -304,6 +313,9 @@ describe('Bindings', () => {
                 },
                 bindingVersion: "0.3.0"
               }
+            },
+            messages: {
+              'test-message': { $ref: "#/components/messages/test-message" }
             }
           }
         },
@@ -311,7 +323,7 @@ describe('Bindings', () => {
           'test-operation': {
             action: "send",
             channel: { $ref: "#/channels/test-channel" },
-            ...SINGLE_MESSAGE_USAGE,
+            ...singleMessageUsage('test-channel'),
           }
         },
         ...COMPONENTS_WITH_MESSAGES
@@ -386,13 +398,16 @@ describe('Bindings', () => {
         channels: {
           'test-channel': {
             address: "test-channel",
+            messages: {
+              'test-message': { $ref: "#/components/messages/test-message" }
+            },
           }
         },
         operations: {
           'test-operation': {
             action: "send",
             channel: { $ref: "#/channels/test-channel" },
-            ...SINGLE_MESSAGE_USAGE,
+            ...singleMessageUsage('test-channel'),
           }
         },
         components: {
@@ -469,13 +484,16 @@ describe('Bindings', () => {
         channels: {
           'test-channel': {
             address: "test-channel",
+            messages: {
+              'test-message': { $ref: "#/components/messages/test-message" }
+            },
           }
         },
         operations: {
           'test-operation': {
             action: "send",
             channel: { $ref: "#/channels/test-channel" },
-            ...SINGLE_MESSAGE_USAGE,
+            ...singleMessageUsage('test-channel'),
           }
         },
         components: {

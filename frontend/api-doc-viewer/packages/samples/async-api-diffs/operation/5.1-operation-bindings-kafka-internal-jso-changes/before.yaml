@@ -17,8 +17,8 @@ operations:
       - $ref: '#/channels/testChannel/messages/TestMessage'
     bindings:
       kafka:
-        bindingVersion: 1.0.0
-        arbitraryJso:
+        bindingVersion: 0.4.0
+        x-arbitraryJso:
           unchanged: keep
           removed: bye
           changed: 111
