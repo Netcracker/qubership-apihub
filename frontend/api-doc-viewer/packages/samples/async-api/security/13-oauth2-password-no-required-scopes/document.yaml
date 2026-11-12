@@ -21,7 +21,7 @@ operations:
     channel:
       $ref: "#/channels/testChannel"
     messages:
-      - $ref: "#/components/messages/TestMessage"
+      - $ref: "#/channels/testChannel/messages/TestMessage"
     security:
       - $ref: "#/components/securitySchemes/oauthPassword"
 components:

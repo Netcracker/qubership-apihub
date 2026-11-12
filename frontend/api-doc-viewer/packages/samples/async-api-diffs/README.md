@@ -7,6 +7,13 @@ Before/after YAML pairs for `AsyncApiOperationDiffsViewer`:
 `packages/samples/fixtures/whole-apihub-operation-template.yaml` is not referenced by code. Design:
 `docs/design/async-api/display-coverage.md`.
 
+## Valid AsyncAPI 3.0
+
+Every fixture is a document that APIHUB can publish: api-processor validates it with `@asyncapi/parser` and refuses
+it on any error. An operation's `messages` refer to messages of the operation's channel
+(`$ref: '#/channels/testChannel/messages/TestMessage'`), never to `#/components/messages/...` directly; the channel's
+`messages` refer to the components. The viewer accepts both, so a story renders even when the publication fails.
+
 ## Categories
 
 | Category | Cases | Covers |

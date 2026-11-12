@@ -14,7 +14,7 @@ operations:
     channel:
       $ref: "#/channels/testChannel"
     messages:
-      - $ref: "#/components/messages/TestMessage"
+      - $ref: "#/channels/testChannel/messages/TestMessage"
     summary: Publishes an order event
 components:
   messages:

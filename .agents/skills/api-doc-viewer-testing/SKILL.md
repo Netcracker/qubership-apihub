@@ -336,6 +336,12 @@ See `frontend/api-doc-viewer/AGENTS.md` — **Generated filenames**.
 Local fixture suites (JSO, AsyncAPI, DDL, JSON Schema diffs under `packages/samples/`)
 use plain `*.it-test.ts` / `*.stories.tsx` / `*.ts` even when a bin script regenerates them.
 
+A fixture must be a document APIHUB can publish, not only one the viewer renders: QA publishes the fixtures to test
+the portal. For AsyncAPI 3.0, an operation's `messages` refer to messages of its channel
+(`#/channels/<channel>/messages/<key>`), and the channel's `messages` refer to `#/components/messages/...`; a direct
+component reference under an operation fails api-processor's `@asyncapi/parser` validation ("Operation message does
+not belong to the specified channel") while every story still renders.
+
 **Generated — compatibility suites only** (do not edit by hand; regenerate):
 
 - GraphQL, DDL API, and OpenAPI compatibility suites — `bin/generate-compatibility-suite-stories.mjs`

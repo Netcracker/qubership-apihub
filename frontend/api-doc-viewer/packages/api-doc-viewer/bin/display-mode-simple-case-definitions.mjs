@@ -27,7 +27,7 @@ const asyncApiBase = () => ({
     sendOperation: {
       action: "send",
       channel: { $ref: "#/channels/testChannel" },
-      messages: [{ $ref: "#/components/messages/TestMessage" }],
+      messages: [{ $ref: "#/channels/testChannel/messages/TestMessage" }],
     },
   },
   components: {

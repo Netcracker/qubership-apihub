@@ -485,10 +485,10 @@ dependencies:
   - .claude/skills/api-doc-viewer-testing/openapi-suites.md
   - .cursor/rules/api-doc-viewer-testing.mdc
   deployed_file_hashes:
-    .agents/skills/api-doc-viewer-testing/SKILL.md: sha256:9ca88d1741a2d763ea6e2ded33867d84ede553e1752fae541f22c3ee6bdd12ff
+    .agents/skills/api-doc-viewer-testing/SKILL.md: sha256:a2854cca6f828041d35f6997f850ac1a9f17b9edec5176fe49bc7438d4627676
     .agents/skills/api-doc-viewer-testing/openapi-suites.md: sha256:38e2aa773556c7718b16f4842637916718d05517dd8ba8d3a50ba5a89ddeb735
     .claude/rules/api-doc-viewer-testing.md: sha256:56dbe13ef83743f14c08c8fbb0852e2764d2f8b03a44b8ae0a94951a4ecfa62f
-    .claude/skills/api-doc-viewer-testing/SKILL.md: sha256:9ca88d1741a2d763ea6e2ded33867d84ede553e1752fae541f22c3ee6bdd12ff
+    .claude/skills/api-doc-viewer-testing/SKILL.md: sha256:a2854cca6f828041d35f6997f850ac1a9f17b9edec5176fe49bc7438d4627676
     .claude/skills/api-doc-viewer-testing/openapi-suites.md: sha256:38e2aa773556c7718b16f4842637916718d05517dd8ba8d3a50ba5a89ddeb735
     .cursor/rules/api-doc-viewer-testing.mdc: sha256:da6f2bff0ad97eef742cc9ab4a0f3a688a52c114cf179c6272e4355834e7449e
   source: local
