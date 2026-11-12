@@ -14,6 +14,7 @@ the skill itself (its package source, then redeploy), not the plan folder. A pla
 | Can the packed data be checked against the fixtures? | OpenAPI (`apiDiff`), or the format module's `compare` | Write `compare` |
 | Is there a baseline for its cases? | `baselines.mjs` finds the stories' PNGs (about 98% for existing types) | Add a `baselineHint` to the cases, or extend the lookup |
 | Does the host app show the type? | The analysis found the pages and comparison flows ([analysis.md](analysis.md)) | Record it as a decision for the team; the viewer may not be wired into the portal yet |
+| Does the budget fit the fixtures? | The agreed number of cases can open the packed operations | Merge them into composite operations ([test-data.md](test-data.md), "Composite cases"); for a type that is not OpenAPI, extend `composite.mjs` or keep its packages small |
 | Does the case format fit? | Areas, cells, and the Open column describe the type's views | Add what is missing to [cases.md](cases.md) and the templates |
 
 ## Adding an API type

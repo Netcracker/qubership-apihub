@@ -160,7 +160,9 @@ for (const file of SOURCES) {
       Operations: cases.map(c => `${c.package}: ${c.operations.join(' ') || c.document}`).join('\n'),
       Steps: plain(row.steps),
       Expected: plain(row.expected),
-      Baselines: cases.map(c => c.baseline).filter(Boolean).join('\n'),
+      // A composite case (builders/composite.mjs) has the baselines of its members.
+      Baselines: [...new Set(cases.flatMap(c => (c.members ? c.members.map(m => m.baseline) : [c.baseline])))]
+        .filter(Boolean).join('\n'),
       Source: row.source,
       Result: kept.Result || 'Not tested',
       Tester: kept.Tester ?? '',

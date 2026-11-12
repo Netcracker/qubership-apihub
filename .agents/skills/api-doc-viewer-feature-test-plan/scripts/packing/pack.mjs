@@ -298,6 +298,7 @@ function writePackage(definition) {
         baseline: findBaseline(item.baselineHint ?? item.fixture),
         ...(item.title ? { title: item.title } : {}),
         ...(item.marker ? { marker: true } : {}),
+        ...(item.members ? { members: membersOf(item) } : {}),
         operations: [...new Set(prefixed.flatMap(paths => operationsOf({ paths })))],
       })
     }
@@ -307,6 +308,36 @@ function writePackage(definition) {
   manifest.sort((a, b) => order.get(a.id) - order.get(b.id))
   fs.writeFileSync(path.join(packageDir, 'README.md'), packageReadme(definition, layout, documents, manifest))
   return { definition, layout, documents, manifest }
+}
+
+// The member cases of a composite case (builders/composite.mjs), each with its fixture and baseline.
+function membersOf(item) {
+  return item.members.map(member => ({
+    id: member.id,
+    fixture: member.fixture,
+    baseline: findBaseline(member.baselineHint ?? member.fixture),
+  }))
+}
+
+// The member table of a package with composite cases: which fixture each renamed name comes from.
+function membersSection(manifest) {
+  const composites = manifest.filter(c => c.members)
+  if (!composites.length) return []
+  return [
+    '## Composite cases',
+    '',
+    ...wrap('A composite case is one operation that merges the operations of several fixture cases. A name that ' +
+      'another member already uses with a different value carries the member\'s case ID: a parameter ' +
+      '`status_dqp-07`, a header `X-Rate-Limit_drh-03`, a media type `application/vnd.drb-02+json`, a component ' +
+      '`Order_dsec-11`, or, in a merged JSON Schema, the property `jstr-01`. A name without a suffix comes from ' +
+      'the first member that uses it. Compare each member with its baseline: the content, not the layout.'),
+    '',
+    '| Case | Member | Fixture | Baseline |',
+    '| --- | --- | --- | --- |',
+    ...composites.flatMap(c => c.members.map(m =>
+      `| \`${c.id}\` | \`${m.id}\` | \`${m.fixture}\` | ${m.baseline ? `\`${m.baseline.split('/').pop()}\`` : ''} |`)),
+    '',
+  ]
 }
 
 // Wraps prose at 120 characters, the line length of the Markdown in this repository.
@@ -361,8 +392,9 @@ function packageReadme(definition, layout, documents, manifest) {
     ...manifest.map(c => `| \`${c.id}\`${c.marker ? ' (marker)' : ''} | ` +
       `${hasTitles ? `${(c.title ?? '').replace(/\|/g, '\\|')} | ` : ''}` +
       `${c.operations.map(o => `\`${o}\``).join('<br>')} | \`${c.document}\` | ` +
-      `${c.fixture.startsWith('new') ? c.fixture : `\`${c.fixture}\``} |`),
+      `${c.fixture.startsWith('new') || c.members ? c.fixture : `\`${c.fixture}\``} |`),
     '',
+    ...membersSection(manifest),
   ]
   return lines.join('\n')
 }

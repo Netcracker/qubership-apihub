@@ -82,11 +82,52 @@ PostgreSQL's 63 characters), GraphQL root fields (`prefixGraphqlRootFields`). A 
 | `openapi-hiding-and-arrows` | `hidingDiffsCases`, `arrowsPlainCases`, `arrowsDiffsCases` (from `packages/samples/src/*.ts`) |
 | `compatibility` | `compatibilitySampleCases` (the first case of each OpenAPI suite per OAS version pair), `graphqlCompatibilityPairs` |
 | `copied` | `pair`, `single`, `folderPair`, `versionsOf`, `copiedPackage` |
+| `composite` | `compositeCases`: many single-operation cases merged into a few big operations (below) |
+
+A config can also read a fixture folder itself with `lib.sourceCases({ dir, code }, layout)` and filter the result
+(one case of a suite, a suite without the cases another package takes).
 
 A builder that imports the TypeScript builders of `packages/samples/src` or `packages/api-doc-viewer/src/stories`
 goes through `typescript-loader.mjs`: Node cannot load them directly (extensionless imports, types imported as
 values). A builder the plan needs that is not generic (plan-specific case IDs, new cases) lives in the plan's
 `config/` and receives `lib` from the config function.
+
+## Composite cases
+
+A compact plan (30–60 manual cases) cannot open a thousand operations. `builders/composite.mjs` merges the operations
+of many fixture cases (its members) into one big operation, so that one manual case opens one operation and checks one
+of its sections:
+
+```js
+{ build: () => compositeCases({ code: 'cprm', layout: 'diffs', title: 'Parameters',
+  sources: [{ dir: 'openapi-diffs/query-parameters', code: 'dqp' }, { dir: 'openapi-diffs/cookies', code: 'dck' }] }) }
+```
+
+| Option | Meaning |
+| --- | --- |
+| `code`, `title` | The composite case IDs (`cprm-01`, `cprm-02`, …) and the title of their documents |
+| `layout` | `plain` or `diffs`, as the package |
+| `sources` | The member sources, as a package's (`{ dir, code }` or `{ build }`); every member case ID must be unique |
+| `mode` | `operation` (default) merges section by section; `schema-properties` makes each member's request body schema (from `wrapSchema`) the property `<case ID>` of one object schema |
+| `maxMembers` | The most members per composite (default: no limit); 60–90 keeps a JSON Schema composite readable |
+
+In `operation` mode, lists and maps merge (parameters, security alternatives, response headers and links, media
+types, extensions, components); a name another member uses with a different value gets the member's case ID
+(`status_dqp-07`, `application/vnd.drsb-02+json`, `Order_dsec-11`). Other fields have one owner; two members that
+need the same field with different values go into different composites. In diffs, a member needs what it changes and
+what refers to a component it changes; the rest is context, dropped where it collides. Path parameters of later members
+are appended to the first member's path.
+
+The check is built in: apiDiff of every diffs composite, with the renaming undone, must find exactly its members'
+diffs. A member that fails is evicted and returned as a case of its own; `pack.mjs` prints them. `COMPOSITE_DEBUG=1`
+prints the missing and unexpected diffs. The manifest gives a composite its `members` (fixture and baseline each), the
+package README lists them in a "Composite cases" table, and the results sheet names every member's baseline.
+
+What does not merge, found on the OpenAPI suites: security alternatives that a member adds or removes (apiDiff matches
+them by position), media type renames (apiDiff detects a rename only between two lone media types), a whole request
+body or response code added or removed next to another member's change of the same body or code, and added or removed
+operations. Expect 75–98% of a diffs suite in composites (parameters merge almost whole; operation header and
+security cases split most), the rest on their own.
 
 ## Format modules
 

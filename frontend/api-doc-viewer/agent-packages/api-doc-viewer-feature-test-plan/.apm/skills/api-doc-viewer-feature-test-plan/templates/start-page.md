@@ -40,6 +40,13 @@ A case is one row of a case list, and one row of [results.csv](results.csv) with
 | Steps | What to do after you open it. Nothing written means: open it and look. |
 | Expected | What must be true. Where it says "as the baseline shows", compare with the picture in the `Baselines` column of the sheet (a path in this folder, `baselines/…`). The portal is narrower than the baseline, so compare the content (rows, texts, colors, markers), not the pixels. |
 
+<When the plan uses composite operations, keep this paragraph:> **Composite operations.** Most cases open a
+composite: one operation that merges the operations of many fixture cases (its members). The composite table at the
+end of the package README lists the members of each composite, with the fixture and the baseline of each. A name that
+another member already uses with a different value carries the member's case ID (a parameter `status_dqp-07`, a media
+type `application/vnd.drsb-02+json`). To check a member, find its rows by the case ID and compare them with its
+baseline.
+
 To open a case in a comparison: open the package, version `2.0`, compare it with `1.0`, then open the operation from
 the list of changed operations (search the prefix there too).
 

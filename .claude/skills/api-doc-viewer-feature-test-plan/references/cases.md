@@ -37,6 +37,10 @@ Start from `templates/case-file.md`.
 - One manual case covers several fixture cases that differ only in a value (added, removed, changed; three scheme
   kinds; four parameter groups). Whole-section and whole-operation adds and removes, and selector options, get cases
   of their own: they repaint the view.
+- For a compact budget (30–60 cases), open composites (test-data.md, "Composite cases"): one case per section of a
+  composite (query parameters of `cprm-01`, response codes of `crsp-01`), the members listed by group in Expected,
+  each "as its member's baseline shows". Whole-operation adds and removes and the evicted members join the case of
+  their section. Sample a large programmatic matrix evenly (every n-th combiner case) rather than dropping it.
 - Give `S` only to cases with annotations (descriptions, external docs), plus one sanity case per area.
 - Portal-flow cases (preview pane, deep links, every comparison flow, filters, swap, navigation) are written from the
   host-app analysis; mark flows you could not verify as such.

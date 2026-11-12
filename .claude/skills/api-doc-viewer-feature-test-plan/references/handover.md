@@ -30,7 +30,8 @@ node .agents/skills/api-doc-viewer-feature-test-plan/scripts/bundle.mjs --qa qa-
 | `README.md` | Scope, host-app facts, the mandatory checks, known limits |
 | Not included | `config/` and `tools/`: they only rebuild the plan |
 
-The zip is several megabytes (13 MB for about 450 cases); share it the way the team shares large files.
+The zip is several megabytes (13 MB for about 450 cases; 17 MB for a compact plan of 40 cases whose composites name
+1090 baselines); share it the way the team shares large files.
 
 ## The life of the plan folder
 

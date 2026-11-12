@@ -1,7 +1,6 @@
 // Cases of the JSON Schema track (QA-JSS-*): each JSON Schema fixture, or before and after pair, becomes the
 // application/json request body of POST /orders, as prepareJsonDiffSchema() of the stories puts it into an
 // operation. The programmatic suites (combiners, value range) come from the builders the stories use.
-// Plan: variants/variant-a-json-schema.md, "Test data packages".
 import fs from 'node:fs'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'

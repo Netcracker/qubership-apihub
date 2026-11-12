@@ -35,7 +35,7 @@ question tool with at most four questions per round, recommended option first.
 
 | # | Question | Find it first in | Default |
 | --- | --- | --- | --- |
-| 13 | How many manual cases (a budget), how many testers, how many days? | — | 200–300 cases for a large change, about 4 minutes each |
+| 13 | How many manual cases (a budget), how many testers, how many days? A compact budget (30–60) needs composite operations: one case per section of a few big operations | — | 200–300 cases for a large change, about 4 minutes each; for 30–60, composites ([test-data.md](test-data.md), "Composite cases") |
 | 14 | The folder name, and how QA will get it (a branch link, a zip)? | — | `qa-<feature>` at the repository root; a link to the branch, so that baselines resolve |
 | 15 | Are there decisions to record for the team (cells the host app cannot reach)? | Phase 2 facts | List them in the plan README as "Decisions needed" |
 

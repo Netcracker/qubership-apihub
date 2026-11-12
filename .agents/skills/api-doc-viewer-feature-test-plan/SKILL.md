@@ -64,7 +64,8 @@ node $S/packing/verify.mjs --qa qa-<feature>
 ```
 
 `verify.mjs` must report 0 failures. Prove once that it can fail: change one packed file by hand, run it, and
-regenerate.
+regenerate. For a compact budget, merge the fixtures into composite operations (`builders/composite.mjs`); its own
+apiDiff check leaves out what does not merge.
 
 ### 5. Backlog retest (when in scope)
 

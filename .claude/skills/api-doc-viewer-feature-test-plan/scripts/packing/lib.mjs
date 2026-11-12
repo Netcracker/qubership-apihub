@@ -125,7 +125,7 @@ function withOnlyMethod(document, method) {
 
 // Cases of one source: `{ id, fixture, sides }`, where `sides` holds one OpenAPI document (plain) or two (diffs).
 // A source either names a folder of OpenAPI fixtures (`dir`) or builds its cases in code (`build`).
-function sourceCases(source, layout) {
+export function sourceCases(source, layout) {
   if (source.build) return source.build()
   const root = path.join(SAMPLES_ROOT, source.dir)
   const cases = []

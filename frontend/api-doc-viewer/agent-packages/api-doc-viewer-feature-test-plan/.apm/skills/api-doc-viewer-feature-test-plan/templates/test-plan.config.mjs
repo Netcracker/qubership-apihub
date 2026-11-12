@@ -10,6 +10,7 @@
 export default async ({ load }) => {
   const { plainFolderCases, diffsFolderCases } = await load('json-schema')
   const { copiedPackage, pair } = await load('copied')
+  const { compositeCases } = await load('composite')
 
   const packages = [
     // OpenAPI fixtures, packed into a few documents; cases are found by their path prefix (/fop-01/…).
@@ -24,6 +25,20 @@ export default async ({ load }) => {
       layout: 'diffs',
       description: 'Operation header changes',
       sources: [{ dir: 'openapi-diffs/operation', code: 'dop' }],
+    },
+    // A compact plan: many fixture cases merged into a few big operations (cases cprm-01, …).
+    {
+      name: 'QA-CMP-DIFFS',
+      layout: 'diffs',
+      description: 'Composite operations of the parameter diffs',
+      sources: [{
+        build: () => compositeCases({
+          code: 'cprm',
+          layout: 'diffs',
+          title: 'Parameters',
+          sources: [{ dir: 'openapi-diffs/query-parameters', code: 'dqp' }, { dir: 'openapi-diffs/cookies', code: 'dck' }],
+        }),
+      }],
     },
     // JSON Schema fixtures as request bodies of POST /orders.
     {
