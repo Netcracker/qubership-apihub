@@ -14,7 +14,7 @@
  *                                skipped when the plan says the run cannot publish (`can_publish` is
  *                                `false`: a pull request from a fork), because the token has no
  *                                package write access there
- *   storybooks, storybook-pages  also skipped on Dependabot runs (`dependabot` is `true`)
+ *   storybooks, storybook-pages  also skipped on dependency bot runs (`dependency_bot` is `true`)
  *
  * The image jobs run on such a run too: they build without pushing, so a skip there is a failure.
  *
@@ -36,7 +36,7 @@
 function dueJobs(out, event, pagesDeploy) {
   // Only the exact string `false` excuses a skip; an empty output (plan failed) counts as publishing.
   const canPublish = out.can_publish !== 'false'
-  const storybooksDue = event !== 'pull_request' && canPublish && out.dependabot !== 'true'
+  const storybooksDue = event !== 'pull_request' && canPublish && out.dependency_bot !== 'true'
   return {
     plan: true,
     js: true,

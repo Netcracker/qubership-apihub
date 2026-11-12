@@ -15,7 +15,8 @@
  *     checked.
  *
  *   node tools/agent/implement.js work             (job `implement`, OPENAI_API_KEY only)
- *     One attempt, in stages and without GitHub: the analysis (when the issue changed since the last one), the branch,
+ *     One attempt, in stages and without GitHub: the attachments of the issue (downloaded without a token, see
+ *     lib/attachments.js), the analysis (when the issue changed since the last one), the branch,
  *     rounds of implement (`implementer`), local commit, local checks, and self-review (`self-reviewer`, the other
  *     model), and the diff limits. It writes `outcome.json` (everything `publish` needs, the cost of every model call
  *     included, also when a stage failed) and `branch.bundle` (the commits) to AGENT_OUT.
@@ -72,6 +73,7 @@ const { callAgent } = require('./lib/agent-call')
 const { SECRET_ENV } = require('./lib/opencode')
 const { untrusted } = require('./lib/prompt')
 const { inline, clip, tailLines, stripAnsi } = require('./lib/text')
+const { issueAttachments, renderAttachments, attachedNote } = require('./lib/attachments')
 const {
   runAnalysis,
   labelChanges,
@@ -591,7 +593,7 @@ function renderReviewThreads(threads, omitted = 0) {
  */
 function renderImplementInput({
   playbook, kind, issue, comments, plan, analysis, notes, attempts, round, previous, ciReport, reviewThreads,
-  omittedThreads = 0, conflicts = [],
+  omittedThreads = 0, conflicts = [], attachments = [],
 }) {
   const people = comments.filter((c) => !isBot(c.user))
   const shown = people.slice(-MAX_COMMENTS)
@@ -647,6 +649,7 @@ function renderImplementInput({
     out.push(`Written by ${c.user?.login ?? 'unknown'} on ${c.created_at ?? 'an unknown date'}.`, '')
     out.push(untrusted(clipText(c.body)), '')
   }
+  out.push(...renderAttachments(attachments))
   out.push('## Plan of the analysis', '', ...renderPlan(plan, analysis), '')
   if (notes) out.push(`## ${NOTES_HEADING[kind] ?? NOTES_HEADING.initial}`, '', untrusted(notes), '')
   if (kind === 'review') out.push(...renderReviewThreads(reviewThreads ?? [], omittedThreads))
@@ -1628,6 +1631,7 @@ async function implementRounds(ctx) {
         kind: ctx.kind,
         issue,
         comments: ctx.comments,
+        attachments: ctx.attachments?.entries ?? [],
         plan: ctx.plan,
         analysis: ctx.analysis,
         notes: ctx.command.notes ?? '',
@@ -1650,8 +1654,10 @@ async function implementRounds(ctx) {
         model: config.models.implement,
         message: ctx.kind === 'update'
           ? `Resolve the merge conflicts of issue #${number}. Your input is the attached implement-input.md.`
-          : `Implement issue #${number}. Your input is the attached implement-input.md.`,
+          : `Implement issue #${number}. Your input is the attached implement-input.md.` +
+            attachedNote(ctx.attachments?.files),
         inputFile,
+        files: ctx.attachments?.files ?? [],
         schema: 'implementation',
         check: (o) => checkImplementation(o, ctx.playbook, ctx.kind),
       })
@@ -1841,12 +1847,20 @@ async function work(env = process.env, deps = {}) {
     outcome.playbook = playbookOf(type).playbook
     log.info('playbook', { type, playbook: outcome.playbook, attempt: attemptNo, kind })
 
+    // 0. The attachments, once for the analysis and every round. A merge of develop does not need them.
+    stage = 'attachments'
+    const attachments = kind === 'update' && !context.analyzeFirst
+      ? { entries: [], files: [] }
+      : await log.group('Download the attachments', () => issueAttachments({ issue, comments, out, deps }))
+
     // 1. Analysis, when the issue changed since the last one. Publishing it is the job of `publish`.
     let analysis = null
     if (context.analyzeFirst) {
       stage = 'analysis'
       const verdict = await log.group('Analysis', async () => {
-        const result = await runAnalysis({ issue, comments, st, trigger: 'command', config, out, costs, runUrl, deps })
+        const result = await runAnalysis({
+          issue, comments, st, trigger: 'command', config, out, costs, runUrl, attachments, deps,
+        })
         outcome.analysis = { ...result, issueUpdatedAt: issue.updated_at }
         analysis = result
         return result.verdict
@@ -1871,6 +1885,7 @@ async function work(env = process.env, deps = {}) {
         config, deps, exec, issue, comments, st, command, out, runUrl, costs, type, playbook: outcome.playbook, kind,
         number, identity, analysis, ciFix, fresh: Boolean(context.fresh), changes: Boolean(context.changes),
         reviewThreads: context.reviewThreads ?? [], omittedThreads: context.omittedThreads ?? 0,
+        attachments: kind === 'update' ? { entries: [], files: [] } : attachments,
       }))
     }
   } catch (err) {
@@ -1941,6 +1956,7 @@ async function workOnIssue(ctx) {
       playbook: ctx.playbook,
       kind: ctx.kind,
       comments: ctx.comments,
+      attachments: ctx.attachments,
       plan: analysis?.plan ?? null,
       analysis,
       command,
