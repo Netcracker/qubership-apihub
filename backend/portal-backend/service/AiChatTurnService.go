@@ -624,6 +624,8 @@ func (s *aiChatTurnServiceImpl) executeToolCalls(ctx context.Context, toolCalls 
 			result, err = s.mcpService.ExecuteSearchTool(ctx, mcpReq)
 		case ToolNameSearchOperationsV2:
 			result, err = s.mcpService.ExecuteSearchToolV2(ctx, mcpReq)
+		case ToolNameSearchOperationsV3:
+			result, err = s.mcpService.ExecuteSearchToolV3(ctx, mcpReq)
 		case ToolNameListWorkspacePackages:
 			result, err = s.mcpService.ExecuteListWorkspacePackagesTool(ctx, mcpReq)
 		case ToolNameListPackageVersions:

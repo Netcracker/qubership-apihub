@@ -338,6 +338,7 @@ func TestGetToolMetadataUsesGenericToolNames(t *testing.T) {
 	require.ElementsMatch(t, []string{
 		ToolNameSearchOperations,
 		ToolNameSearchOperationsV2,
+		ToolNameSearchOperationsV3,
 		ToolNameGetOperationSpec,
 		ToolNameGetOperationDiff,
 		ToolNameGetDocument,

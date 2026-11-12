@@ -223,7 +223,9 @@ func (m mcpService) ExecuteGetSpecTool(ctx context.Context, req mcp.CallToolRequ
 	return mcp.NewToolResultStructuredOnly(payload), nil
 }
 
-// ExecuteSearchTool executes the search_api_operations tool (deprecated: uses the configured AI MCP workspace)
+// ExecuteSearchTool searches the configured AI MCP workspace.
+//
+// Deprecated: Use ExecuteSearchToolV3.
 func (m mcpService) ExecuteSearchTool(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	workspace := m.systemInfoService.GetAiMCPConfig().Workspace
 	group := req.GetString("group", "")
@@ -233,8 +235,23 @@ func (m mcpService) ExecuteSearchTool(ctx context.Context, req mcp.CallToolReque
 	return m.executeSearchCore(ctx, req, workspace, resolveMCPSearchPackageIds([]string{group}, workspace), metrics.MCPSearchToolCalled, ToolNameSearchOperations)
 }
 
-// ExecuteSearchToolV2 executes the search_api_operations_v2 tool with a caller-supplied workspace
+// ExecuteSearchToolV2 searches a caller-supplied workspace with an optional group.
+//
+// Deprecated: Use ExecuteSearchToolV3.
 func (m mcpService) ExecuteSearchToolV2(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	workspace, err := req.RequireString("workspace")
+	if err != nil {
+		return mcp.NewToolResultError(err.Error()), nil
+	}
+	group := req.GetString("group", "")
+	if err := validateMCPGroup(group, workspace); err != nil {
+		return mcp.NewToolResultError(err.Error()), nil
+	}
+	return m.executeSearchCore(ctx, req, workspace, resolveMCPSearchPackageIds([]string{group}, workspace), metrics.MCPSearchV2ToolCalled, ToolNameSearchOperationsV2)
+}
+
+// ExecuteSearchToolV3 searches a caller-supplied workspace with optional group filters.
+func (m mcpService) ExecuteSearchToolV3(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	workspace, err := req.RequireString("workspace")
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
@@ -246,7 +263,7 @@ func (m mcpService) ExecuteSearchToolV2(ctx context.Context, req mcp.CallToolReq
 	if err := validateMCPGroups(groups, workspace); err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
-	return m.executeSearchCore(ctx, req, workspace, resolveMCPSearchPackageIds(groups, workspace), metrics.MCPSearchV2ToolCalled, ToolNameSearchOperationsV2)
+	return m.executeSearchCore(ctx, req, workspace, resolveMCPSearchPackageIds(groups, workspace), metrics.MCPSearchV3ToolCalled, ToolNameSearchOperationsV3)
 }
 
 func (m mcpService) executeSearchCore(ctx context.Context, req mcp.CallToolRequest, workspace string, packageIds []string, metric string, tool string) (*mcp.CallToolResult, error) {
