@@ -42,14 +42,16 @@ user’s sort choice **per package** in **browser local storage**, and loads row
    - **Publication Date (Newest)** and **Publication Date (Oldest)** sort by the publication time of the **first
    revision** of each version name; publishing a new revision does **not** change list position for these options.
 3. User opens the sort dropdown and selects an option.
+
    | Dropdown label (UI) | `sortBy` | `sortOrder` |
-    | ------------------- | -------- | ----------- |
-    | Publication Date (Newest) | `firstPublishedAt` | `desc` |
-    | Publication Date (Oldest) | `firstPublishedAt` | `asc` |
-    | Last revision date (Newest) | `createdAt` | `desc` |
-    | Last revision date (Oldest) | `createdAt` | `asc` |
-    | Version Name (A–Z) | `version` | `asc` |
-    | Version Name (Z–A) | `version` | `desc` |
+   | ------------------- | -------- | ----------- |
+   | Publication Date (Newest) | `firstPublishedAt` | `desc` |
+   | Publication Date (Oldest) | `firstPublishedAt` | `asc` |
+   | Last revision date (Newest) | `createdAt` | `desc` |
+   | Last revision date (Oldest) | `createdAt` | `asc` |
+   | Version Name (A–Z) | `version` | `asc` |
+   | Version Name (Z–A) | `version` | `desc` |
+
    - API to load versions — GET /api/v3/packages/{packageId}/versions:
      - `packageId` = current package
      - `status` = `release` or `draft` according to the active tab (comma-separated filter as today)
