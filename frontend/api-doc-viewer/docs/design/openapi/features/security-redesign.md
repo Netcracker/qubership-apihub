@@ -43,7 +43,9 @@ Security                                                        h2 (OpenAPI); h3
 - **Long option titles** are cropped with an ellipsis. Each button has a minimum width that keeps
   at least one character plus `…` visible: `[v…]` is the narrowest allowed rendering.
 - **Arrows when everything fits.** Interpretation: both arrows are still shown, both disabled, so
-  the row does not jump when options change.
+  the row does not jump when options change. **Superseded (2026-11-13):** no arrow is shown when
+  everything fits; the arrows sit right before and after the strip
+  ([../../shared/features/arrow-scroll-strip.md](../../shared/features/arrow-scroll-strip.md)).
 
 ## 2. Security props grid (shared by every card)
 
@@ -237,7 +239,7 @@ Servers
 | Q-S2 | Required scopes for oauth2 | Shown as `*` on the scope rows of every flow, replacing the separate `Required scopes` row. A required scope that no flow defines is still listed, in a trailing `Scopes` part. **Final (2026-10-14):** required scopes show only as `*` on scope rows; openIdConnect and OAS 3.1 roles get their own `Scopes ▾` / `Roles ▾` list (rows with `*`) instead of a `Required scopes` / `Required roles` prop. |
 | Q-S3 | Required scopes for openIdConnect, and OAS 3.1 roles on other types | A plain security prop `Required scopes` / `Required roles` with a comma-separated value; diffs colour the row, with per-item highlighting as today. **Final (2026-10-14):** required scopes show only as `*` on scope rows; openIdConnect and OAS 3.1 roles get their own `Scopes ▾` / `Roles ▾` list (rows with `*`) instead of a `Required scopes` / `Required roles` prop. |
 | Q-S4 | Display mode `simple` | Unchanged rule: title and type text always; description, security props, flow parts and scopes in `detailed` only. **Superseded (2026-10-31):** `simple` hides annotations only — scheme and scope descriptions ([../../shared/features/display-mode-annotations.md](../../shared/features/display-mode-annotations.md)). |
-| Q-S5 | Toolbar arrows when all options fit | Arrows shown and disabled (no layout jump). Alternative: hide both arrows. |
+| Q-S5 | Toolbar arrows when all options fit | Arrows shown and disabled (no layout jump). Alternative: hide both arrows. **Superseded (2026-11-13):** both arrows are hidden (not rendered) when all options fit; disabled (gray) still marks an edge of an overflowing strip. |
 | Q-S6 | Card frame | Kept (per-row frame segments); the new rows keep drawing their segment. |
 | Q-S7 | Unresolved scheme (no definition in `components`) | Title + muted text row as today, no props. |
 | Q-S8 | Scheme type changed (e.g. apiKey → HTTP) | The gray type text gets a value highlighter on both sides, the props follow the per-row rules (old ones removed, new ones added); the title row is not painted. |

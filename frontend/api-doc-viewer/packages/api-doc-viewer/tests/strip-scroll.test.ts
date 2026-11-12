@@ -9,9 +9,14 @@ const items = [
 
 describe("strip-scroll", () => {
   it("disables the left arrow at the left edge and the right one at the right edge", () => {
-    expect(resolveStripScrollState(0, 250, 424)).toEqual({ canScrollLeft: false, canScrollRight: true })
-    expect(resolveStripScrollState(174, 250, 424)).toEqual({ canScrollLeft: true, canScrollRight: false })
-    expect(resolveStripScrollState(0, 500, 424)).toEqual({ canScrollLeft: false, canScrollRight: false })
+    expect(resolveStripScrollState(0, 250, 424, 306)).toEqual({ overflows: true, canScrollLeft: false, canScrollRight: true })
+    expect(resolveStripScrollState(174, 250, 424, 306)).toEqual({ overflows: true, canScrollLeft: true, canScrollRight: false })
+  })
+
+  it("hides the arrows when the options fit the room without them", () => {
+    expect(resolveStripScrollState(0, 424, 424, 500)).toEqual({ overflows: false, canScrollLeft: false, canScrollRight: false })
+    // The options fit only without the arrows (56px): the arrows go, and the strip widens to the options.
+    expect(resolveStripScrollState(30, 394, 424, 450)).toEqual({ overflows: false, canScrollLeft: false, canScrollRight: false })
   })
 
   it("scrolls right by exactly one option: the first cut option is aligned to the right edge", () => {

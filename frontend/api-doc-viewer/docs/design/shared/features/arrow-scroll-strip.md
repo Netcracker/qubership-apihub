@@ -15,14 +15,15 @@ the arrows replace it. Status: **implemented**.
 | --- | --- |
 | Line | the options never wrap: one line (`Selector` `noWrap`); an option never grows wider than the strip, its label is cropped with an ellipsis (one character + `…` stay visible) |
 | Native scrollbar | hidden (`scrollbar-width: none` and `::-webkit-scrollbar`); the strip still scrolls natively (touchpad, shift + wheel) and the arrows follow |
-| Arrows shown | **always**, both of them, also when everything fits (then both disabled): the row never jumps when an option is added, removed, or the width changes |
-| Left arrow | enabled when the strip is scrolled away from its left edge; disabled at the left edge |
-| Right arrow | enabled while options are hidden past the right edge; disabled at the right edge |
+| Arrows shown | only when the options overflow: both arrows, or none. When every option fits the room the strip has without arrows, no arrow is rendered and the first option starts at the row's start (the start inset moves out of the row, see the decoration inset); the options move right by 34px (the arrow, 24px, the 4px gap, and the 6px inset) when they start to overflow. The room is measured without the arrows, so an arrow never stays shown only because its own width makes the options overflow |
+| Position | the strip is as wide as its options, up to the rest of the row (`flex: 0 1 auto`), and the arrows sit right before and after it, not at the ends of the row |
+| Left arrow | enabled when the strip is scrolled away from its left edge; disabled (gray) at the left edge |
+| Right arrow | enabled while options are hidden past the right edge; disabled (gray) at the right edge |
 | Click | scrolls by exactly **one option** in its direction: the next option hidden past the edge is aligned to that edge (`resolveStripScrollTarget`, `utils/common/strip-scroll.ts`); an option wider than the strip is aligned to its start |
 | Animation | smooth: `scrollTo({ behavior: 'smooth' })`, no custom animation code |
-| State updates | on scroll, on strip resize (`ResizeObserver`), and after every render (options added / removed / re-labelled); a state update is skipped when nothing changed |
-| Diffs (side by side) | one strip per side, each with its own scroll position and arrows: the sides list different options (a wholly added option is hidden on the origin side, a removed one on the changed side) |
-| Decoration inset | the strip keeps a 6px inset around the options, so diff round markers and border shadows (they overhang the option box by up to 5px) are never clipped at the strip edges. After the last option the room is the line's gap (8px) before a 1px spacer: an end margin on the last option does not count toward the scroll width, so it would leave the last option's border shadow clipped at the right edge |
+| State updates | on scroll, on a resize of the strip or of the room it has (`ResizeObserver`), and after every render (options added / removed / re-labelled); a state update is skipped when nothing changed |
+| Diffs (side by side) | one strip per side, each with its own scroll position and arrows: the sides list different options (a wholly added option is hidden on the origin side, a removed one on the changed side), so one side can show arrows and the other none |
+| Decoration inset | the strip keeps a 6px inset around the options, so diff round markers and border shadows (they overhang the option box by up to 5px) are never clipped at the strip edges. Without arrows the strip has a −6px start margin: the start inset covers the space before the strip (the row's padding, or the gap after a title), and the first option's box starts at the row's start. After the last option the room is the line's gap (8px) before a 1px spacer: an end margin on the last option does not count toward the scroll width, so it would leave the last option's border shadow clipped at the right edge |
 | Row height | in its own row (security toolbar) the vertical inset is part of the row; in a title row's subheader (response codes) it overhangs the row (negative block margins), so the title row keeps its height (26.5px) |
 | Selection | selecting an option does not scroll the strip |
 | Absent side | no strip (no options, no arrows) on the side where the row's section does not exist: the Responses section, or a Security section wholly added / removed (`ResponsesTitleRow` via `OpenApiRowDiffs.NodeLevel.isPresentOnSide`; `SecurityToolbar` via its row diff) |
@@ -47,8 +48,10 @@ one-option step. It knows nothing about selectors or API types.
 | `overhangVertically` | the vertical inset overhangs the row instead of growing it (default `false`; `true` in a title-row subheader) |
 
 The wrapper renders `flex min-w-0 flex-1 items-center`, so it takes the rest of whatever row it is
-placed in: the security toolbar row, or the `Responses` title row after the title text. Applying it
-to another toolbar is a two-line change: wrap the line, pass `noWrap` to `Selector`.
+placed in: the security toolbar row, or the `Responses` title row after the title text. Its width is
+the room the strip has without arrows. Inside it the strip is as wide as its options, so the arrows
+follow the options and the rest of the wrapper stays empty. Applying it to another toolbar is a
+two-line change: wrap the line, pass `noWrap` to `Selector`.
 
 ## Arrow button styles (shared icon-button config)
 
@@ -73,7 +76,7 @@ three-dots trigger keeps `4px 6px 6px` (its icon sits 2px lower). The package-wi
 
 | Suite (Storybook root) | Cases per toolbar |
 | --- | --- |
-| `OpenAPI Operation Suite (Arrow Buttons)` | one option (both arrows disabled); every option (overflow: left / middle / right) |
+| `OpenAPI Operation Suite (Arrow Buttons)` | one option (no arrows); every option (overflow: left / middle / right) |
 | `OpenAPI Operation Diffs Suite (Arrow Buttons)` | one option → every option (the changed side overflows); every option → one option (the origin side overflows) |
 
 Fixtures are programmatic (`packages/samples/src/openapi-arrow-buttons.ts`, catalogue in
@@ -95,7 +98,7 @@ An overflowing case is **one test with three screenshots** (`src/it/service/arro
 | Middle | right-arrow clicks until the **median option** (number ⌊n / 2⌋ + 1 of the n options on that side) has reached the centre of the strip (its centre at or left of the strip's centre) — "visible" would not do: in the plain security case the median option is visible from the start | both arrows enabled |
 | Right | right-arrow clicks until the right arrow is disabled | left arrow enabled, right arrow disabled |
 
-A non-overflowing case is one screenshot with both arrows asserted disabled. Arrows are clicked in
+A non-overflowing case is one screenshot with both arrows asserted absent. Arrows are clicked in
 the DOM (`element.click()`), not with the mouse, so no hover background is captured; after each
 click the test waits until the smooth scroll has settled. Display mode `detailed` only: the strips
 do not depend on it.

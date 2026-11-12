@@ -150,7 +150,7 @@ const TOOLBARS: readonly OpenApiArrowButtonsToolbar[] = ["security-toolbar", "re
 export const openApiArrowButtonsCases: readonly OpenApiArrowButtonsCase[] = TOOLBARS.flatMap(toolbar => {
   const nouns = OPTION_NOUNS[toolbar];
   return [
-    { caseId: "01-single-option", title: `${nouns.single}: both arrows disabled`, toolbar, lineup: "single" },
+    { caseId: "01-single-option", title: `${nouns.single}: fits, no arrows`, toolbar, lineup: "single" },
     { caseId: "02-every-option", title: `${nouns.every}: overflow, arrows enabled`, toolbar, lineup: "every" },
   ] satisfies OpenApiArrowButtonsCase[];
 });

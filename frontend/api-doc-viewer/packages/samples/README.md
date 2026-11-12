@@ -85,7 +85,7 @@ story exports and the IT `CASES` list (story ids via `bin/storybook-story-id-uti
 
 ### OpenAPI arrow buttons
 
-Toolbars whose options fit their strip (both arrows disabled) or overflow it (arrows enabled), for the
+Toolbars whose options fit their strip (no arrows) or overflow it (arrows shown), for the
 shared `ArrowScrollStrip` ([design](../../docs/design/shared/features/arrow-scroll-strip.md)). One
 operation template (`buildOpenApiArrowButtonsDocument(toolbar, lineup)`); a lineup is `single` (one
 option) or `every` (the strip overflows at the 1800px screenshot viewport, also on one diffs side).

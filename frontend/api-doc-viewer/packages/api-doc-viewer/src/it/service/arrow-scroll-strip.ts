@@ -12,10 +12,13 @@ export type ArrowScrollStripTarget = {
   readonly index?: number
 }
 
-/** Whether each arrow is enabled. */
+/** State of one arrow: `hidden` when the options fit the strip, else `enabled` or `disabled` (at its edge). */
+export type ArrowState = 'hidden' | 'disabled' | 'enabled'
+
+/** State of each arrow. */
 export type ArrowScrollStripArrows = {
-  readonly left: boolean
-  readonly right: boolean
+  readonly left: ArrowState
+  readonly right: ArrowState
 }
 
 /** Clicks needed for the longest strip of the suites (65 response codes) plus headroom. */
@@ -30,17 +33,23 @@ async function findStrip(page: Page, { testIdPrefix, index = 0 }: ArrowScrollStr
   return strip
 }
 
-/** Enabled state of both arrows of the strip. */
+/** State of both arrows of the strip. */
 export async function readArrowScrollStripArrows(page: Page, target: ArrowScrollStripTarget): Promise<ArrowScrollStripArrows> {
   const strip = await findStrip(page, target)
   return strip.evaluate((element, testIdPrefix) => {
-    const isEnabled = (direction: string): boolean => {
+    const readState = (direction: string): ArrowState => {
       const arrow = element.parentElement?.querySelector(`[data-testid="${testIdPrefix}-arrow-${direction}"]`)
-      return arrow instanceof HTMLButtonElement && !arrow.disabled
+      if (!(arrow instanceof HTMLButtonElement)) {
+        return 'hidden'
+      }
+      return arrow.disabled ? 'disabled' : 'enabled'
     }
-    return { left: isEnabled('left'), right: isEnabled('right') }
+    return { left: readState('left'), right: readState('right') }
   }, target.testIdPrefix)
 }
+
+/** Arrows of a strip whose options fit: none rendered. */
+export const HIDDEN_ARROWS: ArrowScrollStripArrows = { left: 'hidden', right: 'hidden' }
 
 /** One right-arrow click, then waits until the smooth scroll has settled; `false` when the arrow is disabled. */
 async function clickRightArrow(strip: ElementHandle<Element>, testIdPrefix: string): Promise<boolean> {
@@ -96,14 +105,14 @@ async function scrollRightUntil(page: Page, target: ArrowScrollStripTarget, isDo
  * (initial), middle (the median option scrolled to the strip's centre), right edge (the right arrow disabled).
  */
 export async function expectArrowScrollStripStates(page: Page, component: ViewComponent, target: ArrowScrollStripTarget): Promise<void> {
-  expect(await readArrowScrollStripArrows(page, target)).toEqual({ left: false, right: true })
+  expect(await readArrowScrollStripArrows(page, target)).toEqual({ left: 'disabled', right: 'enabled' })
   expect(await component.captureScreenshot()).toMatchImageSnapshot()
 
   await scrollRightUntil(page, target, isMedianOptionCentered)
-  expect(await readArrowScrollStripArrows(page, target)).toEqual({ left: true, right: true })
+  expect(await readArrowScrollStripArrows(page, target)).toEqual({ left: 'enabled', right: 'enabled' })
   expect(await component.captureScreenshot()).toMatchImageSnapshot()
 
   await scrollRightUntil(page, target, async () => false)
-  expect(await readArrowScrollStripArrows(page, target)).toEqual({ left: true, right: false })
+  expect(await readArrowScrollStripArrows(page, target)).toEqual({ left: 'enabled', right: 'disabled' })
   expect(await component.captureScreenshot()).toMatchImageSnapshot()
 }

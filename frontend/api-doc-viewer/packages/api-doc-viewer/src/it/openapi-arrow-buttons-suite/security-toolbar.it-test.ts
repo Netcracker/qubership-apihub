@@ -1,10 +1,10 @@
 /**
  * Screenshot tests for OpenAPI Operation Suite (Arrow Buttons) - Security Toolbar: a strip that fits (one
- * screenshot, both arrows disabled) and one that overflows (one test, three screenshots: left edge,
+ * screenshot, no arrows) and one that overflows (one test, three screenshots: left edge,
  * median option centred, right edge). Display mode `detailed` only: the strip does not depend on it.
  * Design: docs/design/shared/features/arrow-scroll-strip.md -> "Tests".
  */
-import { expectArrowScrollStripStates, readArrowScrollStripArrows } from '../service/arrow-scroll-strip'
+import { expectArrowScrollStripStates, HIDDEN_ARROWS, readArrowScrollStripArrows } from '../service/arrow-scroll-strip'
 import { storyPageWithArgs } from '../service/storybook-service'
 import { waitForOpenApiOperationViewer } from '../service/viewer-waits'
 
@@ -29,7 +29,7 @@ describe('OpenAPI Operation Suite (Arrow Buttons) - Security Toolbar', () => {
       await expectArrowScrollStripStates(page, component, STRIP)
       return
     }
-    expect(await readArrowScrollStripArrows(page, STRIP)).toEqual({ left: false, right: false })
+    expect(await readArrowScrollStripArrows(page, STRIP)).toEqual(HIDDEN_ARROWS)
     expect(await component.captureScreenshot()).toMatchImageSnapshot()
   })
 })

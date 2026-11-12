@@ -7,17 +7,28 @@ export type StripItemBox = {
 /** Tolerance for sub-pixel layout: an item within 1px of the viewport edge counts as visible. */
 const EDGE_TOLERANCE = 1
 
-/** Whether the strip can scroll further left / right (each arrow enabled or disabled). */
+/**
+ * Whether the arrows are shown (`overflows`) and, when they are, whether each one is enabled: the strip
+ * can scroll further left / right.
+ */
 export type StripScrollState = {
+  readonly overflows: boolean
   readonly canScrollLeft: boolean
   readonly canScrollRight: boolean
 }
 
-/** Whether the strip can scroll further left / right. */
-export function resolveStripScrollState(scrollLeft: number, clientWidth: number, scrollWidth: number): StripScrollState {
+/**
+ * The arrows of a strip. `availableWidth` is the room for the strip without arrows (the strip's
+ * wrapper): the strip overflows only when its content is wider than that room, so the arrows never
+ * stay shown because their own width made the content overflow. Both arrows are disabled when the
+ * strip does not overflow.
+ */
+export function resolveStripScrollState(scrollLeft: number, clientWidth: number, scrollWidth: number, availableWidth: number): StripScrollState {
+  const overflows = scrollWidth > availableWidth + EDGE_TOLERANCE
   return {
-    canScrollLeft: scrollLeft > EDGE_TOLERANCE,
-    canScrollRight: scrollLeft + clientWidth < scrollWidth - EDGE_TOLERANCE,
+    overflows,
+    canScrollLeft: overflows && scrollLeft > EDGE_TOLERANCE,
+    canScrollRight: overflows && scrollLeft + clientWidth < scrollWidth - EDGE_TOLERANCE,
   }
 }
 

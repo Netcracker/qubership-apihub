@@ -86,8 +86,8 @@ Rules:
 
 The codes are one non-wrapping line (`Selector` `noWrap`) in the shared `ArrowScrollStrip`
 (test ids `response-codes-strip`, `response-codes-arrow-{left,right}`), placed in the `Responses`
-title row's subheader: `Responses ‹ [200] [404] … ›`. The strip takes the rest of the row; both
-arrows are always shown, disabled while every code fits. Behaviour, styles, and tests:
+title row's subheader: `Responses ‹ [200] [404] … ›`. The strip is as wide as its codes, up to the
+rest of the row; the arrows are shown only while the codes overflow it. Behaviour, styles, and tests:
 [../../shared/features/arrow-scroll-strip.md](../../shared/features/arrow-scroll-strip.md).
 
 ## Diffs

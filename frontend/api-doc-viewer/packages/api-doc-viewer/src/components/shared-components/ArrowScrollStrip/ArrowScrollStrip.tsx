@@ -24,37 +24,48 @@ const DEFAULT_DECORATION_INSET = 6
 
 /**
  * `‹ [option] [option] … ›`: a line of options in a horizontally scrolling strip with a hidden
- * scrollbar. Each arrow scrolls by exactly one option and is disabled at its edge; both arrows are
- * always shown, so the row never jumps. It takes the rest of the row it is placed in. Knows nothing
- * about selectors or API types (security toolbar, response codes, …).
+ * scrollbar. The arrows are shown only when the options overflow the room the strip has; each arrow
+ * then scrolls by exactly one option and is disabled at its edge. The strip is as wide as its options,
+ * up to the rest of the row it is placed in, and the arrows sit right next to it. Knows nothing about
+ * selectors or API types (security toolbar, response codes, …).
  * Design: docs/design/shared/features/arrow-scroll-strip.md
  */
 export function ArrowScrollStrip(props: ArrowScrollStripProps): ReactElement {
   const { children, testIdPrefix, decorationInset = DEFAULT_DECORATION_INSET, overhangVertically = false } = props
+  const wrapperRef = useRef<HTMLDivElement>(null)
   const stripRef = useRef<HTMLDivElement>(null)
-  const [scrollState, setScrollState] = useState<StripScrollState>({ canScrollLeft: false, canScrollRight: false })
+  const [scrollState, setScrollState] = useState<StripScrollState>({ overflows: false, canScrollLeft: false, canScrollRight: false })
 
   const updateScrollState = useCallback(() => {
+    const wrapper = wrapperRef.current
     const strip = stripRef.current
-    if (!strip) {
+    if (!wrapper || !strip) {
       return
     }
-    const next = resolveStripScrollState(strip.scrollLeft, strip.clientWidth, strip.scrollWidth)
+    // The wrapper takes the rest of the row whether the arrows are shown or not. Without arrows the strip
+    // also takes the start inset (its negative start margin): that is the room without arrows.
+    const availableWidth = wrapper.clientWidth + decorationInset
+    const next = resolveStripScrollState(strip.scrollLeft, strip.clientWidth, strip.scrollWidth, availableWidth)
     // Skipped when nothing changed: it runs after every render.
     setScrollState(previous => (
-      previous.canScrollLeft === next.canScrollLeft && previous.canScrollRight === next.canScrollRight ? previous : next
+      previous.overflows === next.overflows && previous.canScrollLeft === next.canScrollLeft && previous.canScrollRight === next.canScrollRight
+        ? previous
+        : next
     ))
-  }, [])
+  }, [decorationInset])
 
   // After every render: options may have been added, removed, or re-labelled.
   useLayoutEffect(updateScrollState)
 
   useEffect(() => {
+    const wrapper = wrapperRef.current
     const strip = stripRef.current
-    if (!strip || typeof ResizeObserver === 'undefined') {
+    if (!wrapper || !strip || typeof ResizeObserver === 'undefined') {
       return
     }
+    // The wrapper resizes with the row; the strip resizes with its options (a late font load included).
     const observer = new ResizeObserver(updateScrollState)
+    observer.observe(wrapper)
     observer.observe(strip)
     return () => observer.disconnect()
   }, [updateScrollState])
@@ -76,14 +87,22 @@ export function ArrowScrollStrip(props: ArrowScrollStripProps): ReactElement {
   }
 
   return (
-    <div className={cn("arrow-scroll-strip flex min-w-0 flex-1 items-center gap-1")}>
-      <StripArrow testIdPrefix={testIdPrefix} direction="left" enabled={scrollState.canScrollLeft} onClick={scrollByOneOption} />
+    <div ref={wrapperRef} className={cn("arrow-scroll-strip flex min-w-0 flex-1 items-center gap-1")}>
+      {scrollState.overflows && (
+        <StripArrow testIdPrefix={testIdPrefix} direction="left" enabled={scrollState.canScrollLeft} onClick={scrollByOneOption} />
+      )}
+      {/* As wide as its options (`flex: 0 1 auto`), shrunk to the room left by the arrows. Without
+          arrows, a negative start margin moves the start inset out of the row, so the first option
+          starts at the row's start and its diff marker paints into the space before the strip. */}
       <div
         ref={stripRef}
         data-testid={`${testIdPrefix}-strip`}
         onScroll={updateScrollState}
-        className={cn("arrow-scroll-strip-viewport relative min-w-0 flex-1 overflow-x-auto")}
-        style={overhangVertically ? { marginBlock: -decorationInset } : undefined}
+        className={cn("arrow-scroll-strip-viewport relative min-w-0 flex-initial overflow-x-auto")}
+        style={{
+          ...(overhangVertically ? { marginBlock: -decorationInset } : {}),
+          ...(scrollState.overflows ? {} : { marginInlineStart: -decorationInset }),
+        }}
       >
         {/* Inset: decorations overhanging the options would be clipped at the strip edges. A block
             wrapper, so an option's max-width (100%) is the strip's width; the room after the last
@@ -92,7 +111,9 @@ export function ArrowScrollStrip(props: ArrowScrollStripProps): ReactElement {
           {children}
         </div>
       </div>
-      <StripArrow testIdPrefix={testIdPrefix} direction="right" enabled={scrollState.canScrollRight} onClick={scrollByOneOption} />
+      {scrollState.overflows && (
+        <StripArrow testIdPrefix={testIdPrefix} direction="right" enabled={scrollState.canScrollRight} onClick={scrollByOneOption} />
+      )}
     </div>
   )
 }

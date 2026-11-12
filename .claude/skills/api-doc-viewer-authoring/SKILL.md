@@ -988,7 +988,12 @@ subheader, `overhangVertically`). Do not re-implement arrows per toolbar. Traps:
   `setState` keeps the previous object when nothing changed, otherwise it loops.
 - **Arrow styles** come from the shared icon-button config (`shared-styles/colors/icon-buttons.css`,
   `.icon-button` CSS variables), shared with the three-dots `ShowUnchangedTrigger`; icons paint
-  in `currentColor`. Per-button CSS sets padding only. Arrows are always shown, disabled at an edge.
+  in `currentColor`. Per-button CSS sets padding only.
+- **Arrows only on overflow.** No arrow is rendered while the options fit; an overflowing strip shows
+  both, disabled (gray) at an edge. Overflow is measured against the wrapper (`flex-1`, the room
+  without arrows), not the strip: measured against the strip, the arrows' own width would keep them
+  shown after the options shrink to fit.
+  The strip is `flex-initial` (as wide as its options), so the arrows sit right next to it.
 
 ## Global `button` styles (session lesson)
 

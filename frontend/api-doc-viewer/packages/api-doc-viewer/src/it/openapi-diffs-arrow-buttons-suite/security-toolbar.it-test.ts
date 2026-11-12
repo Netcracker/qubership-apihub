@@ -1,10 +1,10 @@
 /**
  * Screenshot tests for OpenAPI Operation Diffs Suite (Arrow Buttons) - Security Toolbar: one side's strip
- * fits (both arrows disabled), the other side's overflows and is captured in three screenshots (left
+ * fits (no arrows), the other side's overflows and is captured in three screenshots (left
  * edge, median option centred, right edge). Display mode `detailed` only.
  * Design: docs/design/shared/features/arrow-scroll-strip.md -> "Tests".
  */
-import { expectArrowScrollStripStates, readArrowScrollStripArrows } from '../service/arrow-scroll-strip'
+import { expectArrowScrollStripStates, HIDDEN_ARROWS, readArrowScrollStripArrows } from '../service/arrow-scroll-strip'
 import { storyPageWithArgs } from '../service/storybook-service'
 import { waitForOpenApiOperationDiffsViewer } from '../service/viewer-waits'
 
@@ -26,7 +26,7 @@ describe('OpenAPI Operation Diffs Suite (Arrow Buttons) - Security Toolbar', () 
     const story = await storyPageWithArgs(page, storyId, { displayMode: 'detailed' })
     const component = await story.viewComponent()
     await waitForOpenApiOperationDiffsViewer(page)
-    expect(await readArrowScrollStripArrows(page, { testIdPrefix: 'security-toolbar', index: fittingSide })).toEqual({ left: false, right: false })
+    expect(await readArrowScrollStripArrows(page, { testIdPrefix: 'security-toolbar', index: fittingSide })).toEqual(HIDDEN_ARROWS)
     await expectArrowScrollStripStates(page, component, { testIdPrefix: 'security-toolbar', index: overflowingSide })
   })
 })

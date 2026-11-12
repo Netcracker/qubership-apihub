@@ -10,7 +10,7 @@ import { playAutoSwitch } from "../shared/auto-switch";
 import { OpenApiSampleStory } from "../openapi-suite/OpenApiSampleStory";
 
 /**
- * Response Codes strip: one option (both arrows disabled) and every option (the strip overflows; the ITs click
+ * Response Codes strip: one option (no arrows) and every option (the strip overflows; the ITs click
  * the right arrow to the median option and to the right edge). Cases are built in
  * `packages/samples/src/openapi-arrow-buttons.ts`, not stored as YAML.
  * Design: docs/design/shared/features/arrow-scroll-strip.md
