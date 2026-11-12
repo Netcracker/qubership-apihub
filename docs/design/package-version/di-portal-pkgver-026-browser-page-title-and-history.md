@@ -31,7 +31,8 @@ dedicated title.
 
 1. **Title format**
    - Separate **context segments** with a middle dot: ` · ` (space-dot-space).
-   - Append the **product name** once at the end: ` | APIHUB` for Portal, ` | APIHUB Agent` for Agents.
+   - Append the **product name** once at the end: suffix `| APIHUB` on Portal and `| APIHUB Agent` on Agents (one space
+     before `|` in the rendered title).
    - Order segments from **specific to general** before the suffix (for example operation → API type → package →
      version).
    - Use **package or dashboard display name only** in titles, not parent group or workspace path (long names are
@@ -45,8 +46,7 @@ dedicated title.
    - Include the human-readable type from `API_TYPE_TITLE_MAP` / contract maps (for example `REST API`, `MCP`, `DDL`).
    - Do **not** add an API type segment on overview, documents, or package settings routes (no `:apiType` in the path).
 4. **While data is loading** (package name, operation title, document title, and similar)
-   - Set a **short title** without unresolved placeholders (for example `Summary | APIHUB`, `Contracts · REST API |
-     APIHUB`).
+   - Set a **short title** without unresolved placeholders (for example `Summary | APIHUB`, `Contracts · REST API | APIHUB`).
    - When data is available, update to the **full template** for that route (see appendix).
 5. **Configure version** (`…/:versionId/edit`)
    - Package: `Configure Version · {Package name} · {version} | APIHUB`.
