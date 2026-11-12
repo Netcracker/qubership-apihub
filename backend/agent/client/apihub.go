@@ -21,7 +21,7 @@ import (
 // //go:generate mockgen -destination ../mock_client/apihub.go github.com/Netcracker/qubership-apihub/backend/agent/client ApihubClient
 
 type ApihubClient interface {
-	GetVersions(ctx secctx.SecurityContext, id string, page, limit int) (*view.PublishedVersionsView, error)
+	GetVersions(ctx secctx.SecurityContext, id string, status string, page, limit int) (*view.PublishedVersionsView, error)
 
 	GetPackageByServiceName(ctx secctx.SecurityContext, workspaceId string, serviceName string) (*view.SimplePackage, error)
 
@@ -70,9 +70,13 @@ func checkUnauthorized(resp *resty.Response) error {
 	return nil
 }
 
-func (a apihubClientImpl) GetVersions(ctx secctx.SecurityContext, id string, page, limit int) (*view.PublishedVersionsView, error) {
+func (a apihubClientImpl) GetVersions(ctx secctx.SecurityContext, id string, status string, page, limit int) (*view.PublishedVersionsView, error) {
 	req := a.makeRequest(ctx)
-	resp, err := req.Get(fmt.Sprintf("%s/api/v3/packages/%s/versions?page=%d&limit=%d", a.apihubUrl, url.PathEscape(id), page, limit))
+	reqUrl := fmt.Sprintf("%s/api/v3/packages/%s/versions?page=%d&limit=%d", a.apihubUrl, url.PathEscape(id), page, limit)
+	if status != "" {
+		reqUrl += "&status=" + url.QueryEscape(status)
+	}
+	resp, err := req.Get(reqUrl)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get versions for %s: %s", id, err.Error())
 	}

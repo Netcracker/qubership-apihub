@@ -81,10 +81,11 @@ type DiscoveryRequest struct {
 }
 
 type Baseline struct {
-	PackageId string            `json:"packageId"`
-	Name      string            `json:"name"`
-	Url       string            `json:"url"`
-	Versions  []BaselineVersion `json:"versions"`
+	PackageId             string            `json:"packageId"`
+	Name                  string            `json:"name"`
+	Url                   string            `json:"url"`
+	ReleaseVersionPattern string            `json:"releaseVersionPattern,omitempty"`
+	Versions              []BaselineVersion `json:"versions"`
 }
 
 type BaselineVersion struct {
