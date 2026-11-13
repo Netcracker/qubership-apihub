@@ -1,18 +1,22 @@
-import { filterRowsByServiceName, selectAllStateOf } from './serviceRows'
+import { filterRowsBySearch, selectAllStateOf } from './serviceRows'
 
 describe('serviceRows', () => {
-  it('matches the service name in any letter case, and neither the labels nor the baseline package', () => {
-    const backend = { service: { key: 'apihub-backend', labels: { 'app.kubernetes.io/part-of': 'linter' } } }
-    const linter = { service: { key: 'api-linter-service' } }
-    const agent = { service: { key: 'apihub-agent', baseline: { name: 'API Linter Service' } } }
+  it('matches the service name, the baseline package name and id, and a label, in any letter case', () => {
+    const backend = { service: { key: 'apihub-backend' } }
+    const linter = { service: { key: 'linter', baseline: { name: 'API Linter', packageKey: 'QS.LINT' } } }
+    const agent = { service: { key: 'apihub-agent', labels: { 'app.kubernetes.io/part-of': 'APIHUB' } } }
+    const rows = [backend, linter, agent]
 
-    expect(filterRowsByServiceName([backend, linter, agent], 'LINTER')).toEqual([linter])
+    expect(filterRowsBySearch(rows, 'BACKEND')).toEqual([backend])
+    expect(filterRowsBySearch(rows, 'api linter')).toEqual([linter])
+    expect(filterRowsBySearch(rows, 'qs.lint')).toEqual([linter])
+    expect(filterRowsBySearch(rows, 'part-of: apihub')).toEqual([agent])
   })
 
   it('returns the same rows when nothing is searched', () => {
     const rows = [{ service: { key: 'apihub-backend' } }]
 
-    expect(filterRowsByServiceName(rows, '')).toBe(rows)
+    expect(filterRowsBySearch(rows, '')).toBe(rows)
   })
 
   it('checks the header when every row that can be selected is selected', () => {

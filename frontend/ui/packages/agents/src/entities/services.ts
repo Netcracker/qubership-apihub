@@ -73,6 +73,11 @@ export const EMPTY_SERVICES: Services = {
 
 export type ServiceLabels = Record<string, string>
 
+/** Formats a label of a service as `key: value`, the form the table shows and the search matches. */
+export function getFormattedLabel(key: string, value: string): string {
+  return `${key}: ${value}`
+}
+
 export function isService(value: Record<string, unknown>): value is Service {
   return value.specs instanceof Array
 }

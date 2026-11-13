@@ -9,7 +9,7 @@ import {
 import { isNotEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
 import { genericMemo } from '@netcracker/qubership-apihub-ui-shared/utils/components'
 
-import { filterRowsByServiceName } from './serviceRows'
+import { filterRowsBySearch } from './serviceRows'
 import { ServiceSection, type ServiceSectionModel } from './ServiceSection'
 import type { ServiceTableRow } from './ServiceTable'
 
@@ -30,7 +30,7 @@ function ServiceSectionsComponent<TRow extends ServiceTableRow<TRow>>({
   const shownSections = useMemo(
     () =>
       sections
-        .map(section => ({ ...section, rows: filterRowsByServiceName(section.rows, searchValue) }))
+        .map(section => ({ ...section, rows: filterRowsBySearch(section.rows, searchValue) }))
         .filter(({ rows }) => isLoading || isNotEmpty(rows)),
     [isLoading, searchValue, sections],
   )

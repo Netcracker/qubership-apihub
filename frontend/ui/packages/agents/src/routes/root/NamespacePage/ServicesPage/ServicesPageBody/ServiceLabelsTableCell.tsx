@@ -1,12 +1,11 @@
 import type { FC } from 'react'
 import { memo } from 'react'
 import type { Row } from '@tanstack/react-table'
-import type { Service } from '@agents/entities/services'
+import { getFormattedLabel, type Service } from '@agents/entities/services'
 import { Box, type SxProps, type Theme } from '@mui/material'
 import { OverflowTooltip } from '@netcracker/qubership-apihub-ui-shared/components/OverflowTooltip'
 import { CustomChip } from '@netcracker/qubership-apihub-ui-shared/components/CustomChip'
 import { isEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
-import { getFormattedLabel } from '../services'
 
 export type ServiceLabelsTableCellProps = {
   value: Row<CellData>
