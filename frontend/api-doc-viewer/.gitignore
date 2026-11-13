@@ -18,6 +18,7 @@ dist/
 dist-ssr/
 *.local
 dist-showcase/
+.baseline-comparison/
 
 # Editor directories and files
 .vscode/*

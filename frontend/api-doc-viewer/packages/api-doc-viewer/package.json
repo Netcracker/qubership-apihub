@@ -43,7 +43,8 @@
     "regenerate-screenshots": "start-server-and-test development:local-server:static http://localhost:9009 \"pnpm run generate-tests && jest --maxWorkers 4 --updateSnapshot -c .config/it/it-test-docker.jest.config.cjs\"",
     "regenerate-screenshots:ci-legacy": "start-server-and-test development:local-server:static http://localhost:9009 \"pnpm run generate-tests && jest --maxWorkers 4 --updateSnapshot -c .config/it/it-test.jest.config.cjs\"",
     "screenshot-test-single-suite": "node bin/run-screenshot-test-suite.mjs test",
-    "regenerate-screenshots-single-suite": "node bin/run-screenshot-test-suite.mjs regenerate"
+    "regenerate-screenshots-single-suite": "node bin/run-screenshot-test-suite.mjs regenerate",
+    "compare-screenshot-baselines": "node bin/compare-screenshot-baselines.mjs"
   },
   "dependencies": {
     "@netcracker/qubership-apihub-api-diff": "workspace:^",

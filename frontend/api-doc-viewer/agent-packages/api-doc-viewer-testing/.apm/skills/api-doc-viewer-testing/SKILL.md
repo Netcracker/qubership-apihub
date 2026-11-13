@@ -41,6 +41,7 @@ From `packages/api-doc-viewer/`:
 | `pnpm run generate-tests` | Regenerate **compatibility-suite only** (`*.generated.it-test.ts`) |
 | `pnpm run screenshot-test` | Build showcase, start static server, run IT config |
 | `pnpm run regenerate-screenshots` | Same as above with `--updateSnapshot` |
+| `pnpm run compare-screenshot-baselines` | reg-cli report of the branch baselines against `develop` (skill `api-doc-viewer-baseline-comparison`) |
 
 From the repository root use `pnpm exec nx run api-doc-viewer:screenshot-test`.
 

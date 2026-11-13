@@ -76,6 +76,7 @@ apm install --target cursor,claude
 | `api-doc-viewer-authoring` | React viewers, rows, diff chrome, Storybook under `packages/api-doc-viewer/src/` |
 | `next-data-model-authoring` | Builders, aggregators, crawl rules under `packages/next-data-model/src/`; JSON Schema row reference docs under its `json-schema/` folder |
 | `api-doc-viewer-testing` | Screenshot ITs, fixtures, snapshot regeneration; **troubleshooting hangs/timeouts** (read skill first) |
+| `api-doc-viewer-baseline-comparison` | Compare the screenshot baselines of the branch with `develop` in a reg-cli report (`pnpm run compare-screenshot-baselines`) |
 | `api-doc-viewer-review-session` | End-of-session retrospective — surface findings, update skills |
 | `api-doc-viewer-feature-test-plan` | Manual QA test plan of a feature branch for the portal: interview, packed test data, cases, backlog retest, results sheet (`/api-doc-viewer-feature-test-plan`) |
 | `api-doc-viewer-reviewing` | Architecture review / refactoring of one API type stack (shared rules + `review/<api-type>.md` briefs) |

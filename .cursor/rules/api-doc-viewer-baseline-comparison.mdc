@@ -1,0 +1,8 @@
+---
+description: Compare api-doc-viewer screenshot baselines of the current branch with develop in a reg-cli report.
+globs: frontend/api-doc-viewer/**/*
+---
+
+When the user asks to compare the screenshot baselines (snapshots) of the current branch with `develop` or another
+branch, to review which baselines changed visually, or to build a reg-cli report, apply the
+`api-doc-viewer-baseline-comparison` skill.
