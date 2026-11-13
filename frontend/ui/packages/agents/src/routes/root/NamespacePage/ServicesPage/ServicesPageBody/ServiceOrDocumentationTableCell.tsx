@@ -1,5 +1,5 @@
 import type { FC } from 'react'
-import { memo, useMemo } from 'react'
+import { useMemo } from 'react'
 import type { Row } from '@tanstack/react-table'
 import { Box, IconButton, Link, Tooltip, Typography } from '@mui/material'
 import { styled } from '@mui/material/styles'
@@ -31,7 +31,8 @@ type CellData = Partial<{
   snapshotPackageKey: PackageKey
 }>
 
-export const ServiceOrDocumentationTableCell: FC<ServiceOrDocumentationTableCellProps> = memo<ServiceOrDocumentationTableCellProps>((
+// Not memo: TanStack keeps the same row object when the row opens, and memo would keep the chevron closed
+export const ServiceOrDocumentationTableCell: FC<ServiceOrDocumentationTableCellProps> = (
   {
     value: {
       depth,
@@ -110,7 +111,7 @@ export const ServiceOrDocumentationTableCell: FC<ServiceOrDocumentationTableCell
       </>}
     </Box>
   )
-})
+}
 
 const ServiceDocumentErrorsDot = styled(DotIndicator)({
   alignSelf: 'flex-start',

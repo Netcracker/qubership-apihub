@@ -193,9 +193,13 @@ function ServiceTableComponent<TRow extends ServiceTableRow<TRow>>({
         </TableHead>
         <TableBody>
           {getRowModel().rows.map(row => (
-            <TableRow key={row.id}>
-              {row.getVisibleCells().map(cell => <ServiceTableBodyCell key={cell.column.id} cell={cell} />)}
-            </TableRow>
+            <ServiceTableBodyRow
+              key={row.id}
+              cells={row.getVisibleCells()}
+              expanded={row.getIsExpanded()}
+              selected={row.getIsSelected()}
+              selectable={row.getCanSelect()}
+            />
           ))}
           {isLoading && <TableSkeleton columnIds={columnModels.map(({ name }) => name)} />}
         </TableBody>
@@ -233,6 +237,30 @@ function SelectAllCheckbox<TRow>({ table }: SelectAllCheckboxProps<TRow>): React
 }
 
 SelectAllCheckbox.displayName = 'SelectAllCheckbox'
+
+/**
+ * `expanded`, `selected`, and `selectable` are the state that the cells read through the methods of the TanStack row.
+ * The row and its cells stay the same objects when this state changes, so these props make `memo` render the row again.
+ */
+type ServiceTableBodyRowProps<TRow> = {
+  cells: ReadonlyArray<Cell<TRow, unknown>>
+  expanded: boolean
+  selected: boolean
+  selectable: boolean
+}
+
+function ServiceTableBodyRowComponent<TRow>({ cells }: ServiceTableBodyRowProps<TRow>): ReactElement {
+  return (
+    <TableRow>
+      {cells.map(cell => <ServiceTableBodyCell key={cell.column.id} cell={cell} />)}
+    </TableRow>
+  )
+}
+
+ServiceTableBodyRowComponent.displayName = 'ServiceTableBodyRow'
+
+// Opening or selecting a row and resizing a column render only the rows whose props changed
+const ServiceTableBodyRow = genericMemo(ServiceTableBodyRowComponent)
 
 type ServiceTableBodyCellProps<TRow> = {
   cell: Cell<TRow, unknown>
