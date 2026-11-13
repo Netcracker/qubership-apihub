@@ -104,7 +104,7 @@ export default defineConfig(({ mode }) => {
           injectTo: 'head-prepend',
         },
       }),
-      createVersionJsonFilePlugin(),
+      createVersionJsonFilePlugin('portal'),
       removeMswFromDistPlugin(),
     ],
     optimizeDeps: {

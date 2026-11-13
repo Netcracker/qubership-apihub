@@ -16,6 +16,7 @@ and [`qubership-ai-packages`](https://github.com/Netcracker/qubership-ai-package
 | `apihub-landing-refresh` | `apihub-landing-refresh/` | Refresh versions, release cards, and links of the landing in `sites/landing/` |
 | `apihub-adr` | `apihub-adr/` | When a change needs an architecture decision record in `docs/internal/adr/` |
 | `analyze-migration` | `analyze-migration/` | Analyse an APIHub operations migration and investigate build errors |
+| `apihub-design-authoring` | `apihub-design-authoring/` | T1/T2/T3 FD, Figma mockups, mockup sync, API trace |
 
 ## One manifest for the whole repository
 

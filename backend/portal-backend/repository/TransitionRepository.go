@@ -255,6 +255,24 @@ func copyVersions(tx *pg.Tx, fromPkg, toPkg string) (int, error) {
 	}
 	objAffected += res.RowsAffected()
 
+	copyDdlTables := "insert into ddl_tables (package_id, version, revision, ddl_entity_id, kind, schema_name, name, description, metadata, data_hash, document_id, version_internal_document_id) " +
+		"(select ?, version, revision, ddl_entity_id, kind, schema_name, name, description, metadata, data_hash, document_id, version_internal_document_id " +
+		"from ddl_tables orig where orig.package_id = ?) on conflict do nothing"
+	res, err = tx.Exec(copyDdlTables, toPkg, fromPkg)
+	if err != nil {
+		return 0, fmt.Errorf("failed to copy ddl_tables from %s to %s: %w", fromPkg, toPkg, err)
+	}
+	objAffected += res.RowsAffected()
+
+	// Deprecated: public.fts_ddl_search_text dual-write; global_search.fts_ddl_search_text below is the primary copy.
+	copyDdlFTSSearchText := "insert into fts_ddl_search_text (package_id, version, revision, ddl_entity_id, status, kind, search_data_hash, data_vector) " +
+		"(select ?, version, revision, ddl_entity_id, status, kind, search_data_hash, data_vector from fts_ddl_search_text orig where orig.package_id = ?) on conflict do nothing"
+	res, err = tx.Exec(copyDdlFTSSearchText, toPkg, fromPkg)
+	if err != nil {
+		return 0, fmt.Errorf("failed to copy fts_ddl_search_text from %s to %s: %w", fromPkg, toPkg, err)
+	}
+	objAffected += res.RowsAffected()
+
 	toWorkspaceId := utils.GetPackageWorkspaceId(toPkg)
 	fromWorkspaceId := utils.GetPackageWorkspaceId(fromPkg)
 	if err := EnsureGlobalSearchPartitionsTx(tx, toWorkspaceId); err != nil {
@@ -465,6 +483,36 @@ func moveNonVersionsData(tx *pg.Tx, fromPkg, toPkg string) (int, error) {
 	}
 	objAffected += res.RowsAffected()
 
+	updateDdlComp := "update ddl_comparison set package_id = ? where package_id = ?;"
+	res, err = tx.Exec(updateDdlComp, toPkg, fromPkg)
+	if err != nil {
+		return 0, fmt.Errorf("MoveAllData: failed to update package_id in ddl_comparison from %s to %s: %w", fromPkg, toPkg, err)
+	}
+	objAffected += res.RowsAffected()
+
+	updateDdlCompPrev := "update ddl_comparison set previous_package_id = ? where previous_package_id = ?;"
+	res, err = tx.Exec(updateDdlCompPrev, toPkg, fromPkg)
+	if err != nil {
+		return 0, fmt.Errorf("MoveAllData: failed to update prev package_id in ddl_comparison from %s to %s: %w", fromPkg, toPkg, err)
+	}
+	objAffected += res.RowsAffected()
+
+	//ddl_table_group.group_id is a stable uuid rather than a derived checksum, so unlike
+	//operation_group above it needs no re-derivation after the package id changes
+	updateDdlTableGroups := "update ddl_table_group set package_id = ? where package_id = ?;"
+	res, err = tx.Exec(updateDdlTableGroups, toPkg, fromPkg)
+	if err != nil {
+		return 0, fmt.Errorf("MoveAllData: failed to update package_id in ddl_table_group from %s to %s: %w", fromPkg, toPkg, err)
+	}
+	objAffected += res.RowsAffected()
+
+	updateGroupedDdlTables := "update grouped_ddl_table set package_id = ? where package_id = ?;"
+	res, err = tx.Exec(updateGroupedDdlTables, toPkg, fromPkg)
+	if err != nil {
+		return 0, fmt.Errorf("MoveAllData: failed to update package_id in grouped_ddl_table from %s to %s: %w", fromPkg, toPkg, err)
+	}
+	objAffected += res.RowsAffected()
+
 	updateOperationCompPrev := "update operation_comparison set previous_package_id  = ? where previous_package_id = ?;"
 	res, err = tx.Exec(updateOperationCompPrev, toPkg, fromPkg)
 	if err != nil {
@@ -566,6 +614,19 @@ func deleteVersionsData(tx *pg.Tx, fromPkg string) error {
 	if err != nil {
 		return fmt.Errorf("failed to delete orig(%s) from fts_operation_search_text: %w", fromPkg, err)
 	}
+
+	query = "delete from ddl_tables where package_id = ?"
+	_, err = tx.Exec(query, fromPkg)
+	if err != nil {
+		return fmt.Errorf("failed to delete orig(%s) from ddl_tables: %w", fromPkg, err)
+	}
+
+	query = "delete from fts_ddl_search_text where package_id = ?"
+	_, err = tx.Exec(query, fromPkg)
+	if err != nil {
+		return fmt.Errorf("failed to delete orig(%s) from fts_ddl_search_text: %w", fromPkg, err)
+	}
+
 	fromWorkspaceId := utils.GetPackageWorkspaceId(fromPkg)
 	_, err = tx.Exec(`delete from global_search.fts_operation_search_text where workspace_id = ? and package_id = ?`, fromWorkspaceId, fromPkg)
 	if err != nil {

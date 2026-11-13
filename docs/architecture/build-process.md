@@ -9,7 +9,7 @@ It allows to scale builders(browser, node services) horizontally without changes
 
 ## build config
 
-Biold config is a metadata set for an object that will be created during the build.
+Build config is a metadata set for an object that will be created during the build.
 
 Example:
 

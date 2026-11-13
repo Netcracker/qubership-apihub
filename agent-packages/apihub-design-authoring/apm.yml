@@ -1,0 +1,6 @@
+name: apihub-design-authoring
+version: 0.1.0
+description: Functional design, Figma mockups, mockup sync, and API trace for APIHUB (T1/T2/T3)
+author: Qubership
+dependencies:
+  apm: []
