@@ -54,11 +54,15 @@ How to extend and maintain the suites:
 
 <!-- BEGIN generated: node packages/api-doc-viewer/bin/generate-openapi-suite.mjs -->
 
-290 cases; ITs capture each in `detailed` (290 screenshots, plus the `noHeading` variant of the all-sections case). Display mode `simple` is covered by `OpenAPI Operation Suite (Display Mode = simple)`.
+290 cases; ITs capture each in `detailed` (290 screenshots, plus the `noHeading` variant of the all-sections case).
+Display mode `simple` is covered by `OpenAPI Operation Suite (Display Mode = simple)`.
 
 ### OAS 3.0 — E2E (`oas30/e2e/`, 168)
 
-101 pairs, 66 windows, 1 all-sections case. Columns: Sum = `summary`, ID = `operation-id`, Addr = `address`, Desc = `description`, Sec = `security`, Ext = `operation-extensions`, Path = `path-parameters`, Query = `query-parameters`, Hdr = `headers`, Cook = `cookies`, Body = `body`, R1 hdr = `responses-1-code-headers`, R1 body = `responses-1-code-body`, R2 hdr = `responses-2-codes-headers`, R2 body = `responses-2-codes-body`.
+101 pairs, 66 windows, 1 all-sections case. Columns: Sum = `summary`, ID = `operation-id`, Addr = `address`,
+Desc = `description`, Sec = `security`, Ext = `operation-extensions`, Path = `path-parameters`,
+Query = `query-parameters`, Hdr = `headers`, Cook = `cookies`, Body = `body`, R1 hdr = `responses-1-code-headers`,
+R1 body = `responses-1-code-body`, R2 hdr = `responses-2-codes-headers`, R2 body = `responses-2-codes-body`.
 
 | Case | Sum | ID | Addr | Desc | Sec | Ext | Path | Query | Hdr | Cook | Body | R1 hdr | R1 body | R2 hdr | R2 body |
 | --- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
@@ -256,7 +260,7 @@ How to extend and maintain the suites:
 | --- | --- | --- | --- |
 | `01-summary` | `POST /orders` | summary | — |
 | `02-operation-id` | `POST /orders` | operation ID | — |
-| `03-description` | `POST /orders` | markdown description | — |
+| `03-description` | `POST /orders` | Markdown description | — |
 | `04-external-docs` | `POST /orders` | external docs (description in a tooltip) | — |
 | `05-extensions` | `POST /orders` | operation `x-*` extensions | — |
 
@@ -267,9 +271,9 @@ How to extend and maintain the suites:
 | `01-api-key-header` | `POST /orders` | apiKey in a header (2nd alternative, auto-switched) | `security-alternative-1` |
 | `02-api-key-query` | `POST /orders` | apiKey in the query (2nd alternative, auto-switched) | `security-alternative-1` |
 | `03-api-key-cookie` | `POST /orders` | apiKey in a cookie (2nd alternative, auto-switched) | `security-alternative-1` |
-| `04-http-basic` | `POST /orders` | http basic (2nd alternative, auto-switched) | `security-alternative-1` |
-| `05-http-bearer` | `POST /orders` | http bearer (2nd alternative, auto-switched) | `security-alternative-1` |
-| `06-http-bearer-format` | `POST /orders` | http bearer with `bearerFormat` (2nd alternative, auto-switched) | `security-alternative-1` |
+| `04-http-basic` | `POST /orders` | HTTP `basic` (2nd alternative, auto-switched) | `security-alternative-1` |
+| `05-http-bearer` | `POST /orders` | HTTP `bearer` (2nd alternative, auto-switched) | `security-alternative-1` |
+| `06-http-bearer-format` | `POST /orders` | HTTP `bearer` with `bearerFormat` (2nd alternative, auto-switched) | `security-alternative-1` |
 | `07-oauth2-implicit-required-scope` | `POST /orders` | oauth2 implicit flow, required scope (2nd alternative, auto-switched) | `security-alternative-1` |
 | `08-oauth2-implicit-optional-scope` | `POST /orders` | oauth2 implicit flow, optional scope: declared by the flow, not listed in the requirement (2nd alternative, auto-switched) | `security-alternative-1` |
 | `09-oauth2-password-required-scope` | `POST /orders` | oauth2 password flow, required scope (2nd alternative, auto-switched) | `security-alternative-1` |
@@ -280,7 +284,7 @@ How to extend and maintain the suites:
 | `14-oauth2-authorization-code-optional-scope` | `POST /orders` | oauth2 authorization code flow, optional scope: declared by the flow, not listed in the requirement (2nd alternative, auto-switched) | `security-alternative-1` |
 | `15-openid-connect-required-scope` | `POST /orders` | openIdConnect, required scope (2nd alternative, auto-switched) | `security-alternative-1` |
 | `16-openid-connect-no-required-scopes` | `POST /orders` | openIdConnect, no required scopes: the document declares no scopes, so no `Scopes` list (2nd alternative, auto-switched) | `security-alternative-1` |
-| `17-scheme-description` | `POST /orders` | scheme with a markdown `description` (2nd alternative, auto-switched) | `security-alternative-1` |
+| `17-scheme-description` | `POST /orders` | scheme with a Markdown `description` (2nd alternative, auto-switched) | `security-alternative-1` |
 
 ### OAS 3.0 — Fields / Parameters (`oas30/fields/parameters/`, 4)
 
@@ -405,7 +409,7 @@ How to extend and maintain the suites:
 | --- | --- | --- | --- |
 | `01-mutual-tls` | `POST /orders` | `mutualTLS` (2nd alternative, auto-switched) | `security-alternative-1` |
 | `02-roles-on-api-key` | `POST /orders` | `Required roles` on an apiKey scheme | — |
-| `03-roles-on-http-bearer` | `POST /orders` | `Required roles` on an http bearer scheme | — |
+| `03-roles-on-http-bearer` | `POST /orders` | `Required roles` on an HTTP `bearer` scheme | — |
 
 ### OAS 3.1 — Fields / Responses (`oas31/fields/responses/`, 1)
 
