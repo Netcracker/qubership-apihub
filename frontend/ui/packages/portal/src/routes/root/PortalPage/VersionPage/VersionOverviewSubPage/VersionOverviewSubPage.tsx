@@ -1,5 +1,5 @@
 import type { FC, ReactNode } from 'react'
-import { memo, useEffect } from 'react'
+import { memo } from 'react'
 import { SummaryCard } from './SummaryCard'
 import { OverviewSidebar } from './OverviewSidebar'
 import type { OverviewPageRoute } from '../../../../../routes'
@@ -10,26 +10,25 @@ import {
   REVISION_HISTORY_PAGE,
   SUMMARY_PAGE,
 } from '../../../../../routes'
-import { useParams } from 'react-router-dom'
+import { Navigate, useParams } from 'react-router-dom'
 import { IncludedPackagesCard } from './IncludedPackagesCard'
 import { OperationGroupsCard } from './OperationGroupsCard/OperationGroupsCard'
-import { useNavigation } from '../../../../NavigationProvider'
+import { getOverviewPath } from '../../../../NavigationProvider'
 import { RevisionsHistoryCard } from './RevisionsHistoryCard'
 import { ActivityHistoryByPackageCard } from './ActivityHistoryByPackageCard'
 import { useActiveTabs } from '@netcracker/qubership-apihub-ui-shared/hooks/pathparams/useActiveTabs'
 import { PageLayout } from '@netcracker/qubership-apihub-ui-shared/components/PageLayout'
+import { PAGE_TITLES } from '@portal/routes/pageTitles'
+import { useVersionPageTitle } from '@portal/routes/useVersionPageTitle'
 
 export const VersionOverviewSubPage: FC = memo(() => {
   const [, sidebarItem] = useActiveTabs()
+  useVersionPageTitle(PAGE_TITLES.overview(sidebarItem))
   const { packageId, versionId } = useParams()
-  const { navigateToOverview } = useNavigation()
 
-  useEffect(
-    () => {
-      !sidebarItem && navigateToOverview({ packageKey: packageId!, versionKey: versionId! })
-    },
-    [navigateToOverview, sidebarItem, packageId, versionId],
-  )
+  if (!sidebarItem) {
+    return <Navigate to={getOverviewPath({ packageKey: packageId!, versionKey: versionId! })} replace/>
+  }
 
   return (
     <PageLayout

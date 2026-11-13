@@ -6,6 +6,7 @@ import Box from '@mui/material/Box'
 import { DEFAULT_PAGE_LAYOUT_GAP } from '../utils/page-layouts'
 import { DEFAULT_PAPER_SHADOW } from '../themes/palette'
 import { HomeIcon } from '../icons/HomeIcon'
+import { useDocumentTitle } from '../hooks/common/useDocumentTitle'
 
 export type ErrorPageProps = {
   title: string
@@ -17,46 +18,50 @@ export const ErrorPage: FC<ErrorPageProps> = memo<ErrorPageProps>(({
   title,
   message,
   homePath,
-}) => (
-  <Box
-    sx={{
-      pt: DEFAULT_PAGE_LAYOUT_GAP,
-      px: DEFAULT_PAGE_LAYOUT_GAP,
-      height: '100%',
-    }}
-  >
-    <Box sx={{
-      height: '100%',
-      backgroundColor: '#FFFFFF',
-      borderRadius: '10px 10px 0 0',
-      boxShadow: DEFAULT_PAPER_SHADOW,
-    }}>
-      <Placeholder
-        invisible={false}
-        area={CONTENT_PLACEHOLDER_AREA}
-        message={
-          <Box flex={1} display="flex" flexDirection="column" gap={1} alignItems="center">
-            <Typography component="div" variant="h5" fontSize={20} textAlign="center">{title}</Typography>
-            {message && <Typography component="div" variant="h6" color="#626D82">{message}</Typography>}
-            <Button
-              size="medium"
-              startIcon={<HomeIcon/>}
-              variant="text"
-              href={homePath}
-              sx={{
-                '& .MuiButton-startIcon': {
-                  marginRight: '4px',
-                },
-              }}
-            >
-              Go to home page
-            </Button>
-          </Box>
-        }
-      />
+}) => {
+  useDocumentTitle([title])
+
+  return (
+    <Box
+      sx={{
+        pt: DEFAULT_PAGE_LAYOUT_GAP,
+        px: DEFAULT_PAGE_LAYOUT_GAP,
+        height: '100%',
+      }}
+    >
+      <Box sx={{
+        height: '100%',
+        backgroundColor: '#FFFFFF',
+        borderRadius: '10px 10px 0 0',
+        boxShadow: DEFAULT_PAPER_SHADOW,
+      }}>
+        <Placeholder
+          invisible={false}
+          area={CONTENT_PLACEHOLDER_AREA}
+          message={
+            <Box flex={1} display="flex" flexDirection="column" gap={1} alignItems="center">
+              <Typography component="div" variant="h5" fontSize={20} textAlign="center">{title}</Typography>
+              {message && <Typography component="div" variant="h6" color="#626D82">{message}</Typography>}
+              <Button
+                size="medium"
+                startIcon={<HomeIcon/>}
+                variant="text"
+                href={homePath}
+                sx={{
+                  '& .MuiButton-startIcon': {
+                    marginRight: '4px',
+                  },
+                }}
+              >
+                Go to home page
+              </Button>
+            </Box>
+          }
+        />
+      </Box>
     </Box>
-  </Box>
-))
+  )
+})
 
 export const NOT_FOUND_TITLE = 'Page Not Found'
 export const SOMETHING_WENT_WRONG_TITLE = 'Something Went Wrong'

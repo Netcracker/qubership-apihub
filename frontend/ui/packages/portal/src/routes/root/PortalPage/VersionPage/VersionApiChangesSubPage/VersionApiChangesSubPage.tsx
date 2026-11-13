@@ -45,6 +45,8 @@ import { useVersionTabApiTypes } from '../useVersionTabApiTypes'
 import { VersionErrorIndicatorWithFetch } from '../VersionErrorIndicatorWithFetch'
 import { ApiChangesCard } from './ApiChangesCard'
 import { ApiChangesNavigation } from './ApiChangesNavigation'
+import { PAGE_TITLES } from '@portal/routes/pageTitles'
+import { useVersionPageTitle } from '@portal/routes/useVersionPageTitle'
 
 // High Order Component //
 export const VersionApiChangesSubPage: FC = memo(() => {
@@ -53,6 +55,7 @@ export const VersionApiChangesSubPage: FC = memo(() => {
     apiType?: ApiType | ContractType
   }>()
   const routeApiType = toRouteApiType(apiType)
+  useVersionPageTitle(PAGE_TITLES.apiChanges(routeApiType))
   const [apiKindFilter] = useApiKindSearchFilter()
   const [apiAudienceFilter] = useApiAudienceSearchFilter()
   const [selectedTag] = useTagSearchFilter()
