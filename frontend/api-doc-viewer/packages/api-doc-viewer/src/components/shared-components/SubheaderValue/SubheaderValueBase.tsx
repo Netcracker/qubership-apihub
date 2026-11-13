@@ -1,3 +1,4 @@
+import { cn } from "@apihub/utils/common/cn"
 import { FC, memo } from "react"
 
 export type SubheaderValueBaseProps = {
@@ -14,7 +15,7 @@ export const SubheaderValueBase: FC<SubheaderValueBaseProps> = memo<SubheaderVal
   }
 
   return (
-    <span className={className}>
+    <span className={cn(className)}>
       {`${value}`}
     </span>
   )

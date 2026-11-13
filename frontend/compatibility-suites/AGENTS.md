@@ -2,7 +2,7 @@
 
 TypeScript package `@netcracker/qubership-apihub-compatibility-suites`: a catalogue of the most important API
 change cases (OpenAPI, GraphQL, AsyncAPI), each with a `before` and an `after` document, for classifying changes.
-`api-diff` tests and the `api-doc-viewer` and `apispec-view` story generators read it. Follow the root
+`api-diff` tests and the `api-doc-viewer` story generators read it. Follow the root
 [`AGENTS.md`](../../AGENTS.md) and [`frontend/AGENTS.md`](../AGENTS.md).
 
 ## Where the code is
@@ -32,7 +32,7 @@ consumers test against it.
 ## Traps
 
 - Adding or changing a case changes the expected results of `api-diff` tests and the generated stories and
-  screenshot tests of `api-doc-viewer` and `apispec-view`. Run those after the change.
+  screenshot tests of `api-doc-viewer`. Run those after the change.
 - Only OAS `3.0.x` and `3.1.x` are accepted in `version_combinations`.
 - The `*.generated.*` files are produced; do not edit them by hand.
 

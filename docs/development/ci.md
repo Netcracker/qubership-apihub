@@ -56,7 +56,7 @@ half-way.
 | `charts` | always | lints and validates the product chart and the agent chart |
 | `go` | a Go module is affected | builds and tests the affected Go modules and checks that the binaries exist |
 | `java` | a Java project is affected | builds and tests the Maven reactor through `nx run java-task-consumer:build` |
-| `screenshot-tests` | `api-doc-viewer`, `apispec-view`, or `class-view` is affected | builds the Storybook and compares screenshots in a Chrome container |
+| `screenshot-tests` | `api-doc-viewer` or `class-view` is affected | builds the Storybook and compares screenshots in a Chrome container |
 | `js-images`, `go-images`, `java-images` | the run may publish | build or retag the eight images after the tests of their language pass |
 | `e2e` | the E2E tier is not `none` | runs `e2e-tests-kind.yml` against this run's images |
 | `storybooks` | push (not a pull request) that may publish | stores the six Storybooks in `ghcr.io` |

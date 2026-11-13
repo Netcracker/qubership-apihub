@@ -1,0 +1,4 @@
+name: api-doc-viewer-baseline-comparison
+version: 1.0.0
+description: Compare the screenshot baselines of the current branch with develop in a reg-cli report, mapping baselines that moved or were renamed.
+author: Qubership APIHUB

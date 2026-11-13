@@ -1,0 +1,22 @@
+openapi: 3.0.3
+info:
+  title: Orders
+  version: 1.0.0
+paths:
+  /orders:
+    post:
+      responses:
+        "200":
+          description: ""
+      security:
+        - oauth:
+            - orders:read
+components:
+  securitySchemes:
+    oauth:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: https://auth.example.com/token
+          scopes:
+            orders:read: Read orders

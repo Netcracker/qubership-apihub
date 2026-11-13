@@ -1,6 +1,7 @@
 # JSO diff fixtures
 
 Before/after YAML pairs for `JsoDiffsViewer`: `property/<group>.<n>-<story>-<change>/{before,after}.yaml`.
+Hiding unchanged nodes has its own fixtures: [hiding-unchanged-nodes/README.md](hiding-unchanged-nodes/README.md).
 Each case changes the value of one property, grouped by the value's starting shape. Design:
 `docs/design/jso/features/diffs.md`.
 
@@ -33,9 +34,10 @@ Plain JSO stories (`JSO Suite/General`, 19 stories) use inline data in
 ## Storybook and screenshot tests
 
 Story root `JSO Diffs Suite` (154 stories); fixtures are loaded by `property-samples-common.tsx`.
-ITs: `packages/api-doc-viewer/src/it/jso-diffs-suite.*.it-test.ts`.
+Stories pin `hideUnchangedNodes: false` (story control `hideUnchangedNodes`), so every row is shown.
+ITs: `packages/api-doc-viewer/src/it/jso-diffs-suite/*.it-test.ts`.
 
 ## Regenerate
 
 Hand-written fixtures; there is no generator. After visual changes run
-`npm run regenerate-screenshots` in `packages/api-doc-viewer/`.
+`pnpm run regenerate-screenshots` in `packages/api-doc-viewer/`.

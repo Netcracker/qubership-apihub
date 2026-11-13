@@ -19,7 +19,7 @@ flowchart TB
   end
 
   subgraph MODEL["model/async-api"]
-    Kinds["types/node-kind.ts<br/>message · messageSectionSelector · messageContent · messageHeaders · messagePayload ·<br/>channel · channelParameters · servers · server · operation · bindings · binding · extensions"]
+    Kinds["types/node-kind.ts<br/>message · messageSectionSelector · messageContent · messageHeaders · messagePayload ·<br/>channel · channelParameters · servers · server · operation · bindings · binding · extensions ·<br/>...SecurityTreeNodeKinds (security · securityRequirement · securityScheme · oauthFlow)"]
     Values["types/node-value.ts · node-meta.ts · node-value-type.ts"]
     TreeImpl["tree/{tree,simple-node,complex-node}.impl.ts · AsyncApiTree"]
   end
@@ -31,6 +31,13 @@ flowchart TB
     Rules["json-crawl-entities/rules/rules.ts · getAsyncApiCrawlRules(kind)"]
     Transformers["json-crawl-entities/transformers/<br/>lift-address · default-channel-address · rename-message-params ·<br/>unify-params-with-schema · inline-binding-params · collect-raw-values"]
     NodeData["tree/node-data/builder.ts · AsyncApiNodeDataBuilder"]
+    SecurityBuilder["shared/async-api-security-spec-builder.ts<br/>AsyncApiSecuritySpecBuilder (operation + server security lists)"]
+  end
+
+  subgraph SEC["Security module (shared with OpenAPI)"]
+    SecuritySpec["building-service/security/<br/>SecuritySpecBuilder · SecuritySpec · getSecurityCrawlRules"]
+    SecurityModel["model/security/<br/>kinds · values · SecurityDisplayLabels · SecurityNodeVisibility"]
+    SecurityPresentation["model/async-api/security-presentation.ts<br/>ASYNC_API_SECURITY_PRESENTATION"]
   end
 
   TreeBuilderAbs -->|extends| Builder
@@ -48,6 +55,10 @@ flowchart TB
   Builder --> TreeImpl
   TreeImpl --> NodesAbs
   Guards --> Kinds
+  Transformer --> SecurityBuilder
+  SecuritySpec -->|extends| SecurityBuilder
+  Rules --> SecuritySpec
+  SecurityPresentation --> SecurityModel
 ```
 
 ## Notes
@@ -56,4 +67,6 @@ flowchart TB
   `operation`.
 - Headers, payload, and channel parameters keep raw schemas; bindings and extensions keep raw
   values. Nested trees for them are built by the JSON Schema and JSO builders inside the viewer.
-- Row visibility is not in the data model yet (`shouldBeDisplayed` lives in the viewer).
+- Row visibility is not in the data model yet (`shouldBeDisplayed` lives in the viewer), except
+  the Security sections (`AsyncApiSecurityNodeVisibility`). Security design:
+  [../features/security.md](../features/security.md).

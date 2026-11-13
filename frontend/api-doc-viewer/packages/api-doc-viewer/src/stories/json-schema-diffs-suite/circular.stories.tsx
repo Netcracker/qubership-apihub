@@ -6,7 +6,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { collectSampleCases } from "../utils/diffs-samples-cases";
 import { JsonSchemaCircularDiffSamplesStory } from "./circular-utils";
 import {
-  createJsonSchemaDiffCaseStoryFactoryWithChangedVariant,
+  createJsonSchemaDiffCaseStoryFactory,
   jsonSchemaDiffSampleReadonlyArgTypes,
 } from "./json-schema-diffs-utils";
 import { createSampleById } from "../utils/sample-cases";
@@ -35,7 +35,7 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-const createCaseStory = createJsonSchemaDiffCaseStoryFactoryWithChangedVariant(
+const createCaseStory = createJsonSchemaDiffCaseStoryFactory(
   JsonSchemaCircularDiffSamplesStory,
   sampleById,
 );

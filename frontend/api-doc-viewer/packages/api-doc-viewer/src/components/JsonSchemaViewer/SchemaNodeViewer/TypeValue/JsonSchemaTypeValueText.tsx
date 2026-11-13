@@ -1,3 +1,4 @@
+import { cn } from "@apihub/utils/common/cn"
 import { FC, memo } from "react"
 import "./JsonSchemaTypeValueText.css"
 import { JSON_SCHEMA_TYPE_VALUE_DEFAULT_COLOR } from "./json-schema-type-value-colors"
@@ -32,10 +33,10 @@ export const JsonSchemaTypeValueText: FC<JsonSchemaTypeValueTextProps> = memo<Js
 
   return (
     <span
-      className="json-schema-type-value-text"
+      className={cn("json-schema-type-value-text")}
       style={color ? { color } : undefined}
     >
-      {className ? <span className={className}>{text}</span> : text}
+      {className ? <span className={cn(className)}>{text}</span> : text}
     </span>
   )
 })

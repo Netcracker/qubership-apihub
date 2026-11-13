@@ -97,12 +97,11 @@ User → UI → Backend (GET /api/v2/packages/{id}/versions/{v}/{apiType}/operat
         Backend returns operations/documents from PostgreSQL
                 ↓
         UI renders via web components:
-          - <apispec-view> for full API documentation (OpenAPI/AsyncAPI)
-          - <operation-view> for single operation detail
-          - <diff-operation-view> for version comparison
+          - <apispec-view> for a whole OpenAPI document
+          - api-doc-viewer viewers for single operations and comparisons
+            (OpenAPI, AsyncAPI, GraphQL, DDL) and for JSON Schema documents
           - <rest-playground> for interactive API testing
           - <class-view-component> for UML-style schema diagrams
-          - JsonSchemaViewer / GraphQLOperationViewer for schema rendering
 ```
 
 ## 4. TypeScript library stack
@@ -125,7 +124,7 @@ library.
 | OpenAPI 3.0/3.1 | ✅ `rest` | ✅ `Rest` | ✅ REST runner | ✅ | ✅ | ✅ | ✅ (JSON Schema) | ✅ | ✅ Spectral+AI |
 | Swagger 2.0 | ✅ (via conversion) | ✅ (→ OAS3) | ✅ | ✅ | (→ OAS3) | (→ OAS3) | ✅ | ✅ | ✅ Spectral+AI |
 | GraphQL | ✅ `graphql` | ✅ `GraphQL` | ✅ GraphQL runner | ✅ | ✅ (graphapi) | ✅ | ✅ (GraphApi) | ✅ | ❌ |
-| AsyncAPI | ✅ `asyncapi` | ✅ `Kafka` *(enum label; AsyncAPI build)* | ✅ AsyncAPI runner | ✅ | ✅ `asyncapi-3` | ✅ | ⚠️ partial vs REST | ✅ (apispec-view) | ✅ Spectral (+ scoring) |
+| AsyncAPI | ✅ `asyncapi` | ✅ `Kafka` *(enum label; AsyncAPI build)* | ✅ AsyncAPI runner | ✅ | ✅ `asyncapi-3` | ✅ | ⚠️ partial vs REST | ✅ (api-doc-viewer) | ✅ Spectral (+ scoring) |
 | Protobuf/gRPC | ✅ `protobuf` | ✅ `gRPC` | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | Markdown | — | ✅ `MD` | ✅ MD runner | ✅ viewer | — | — | — | — | — |
 | **DDLAPI** | ✅ contracts | ✅ `ddlBuilder` | ❌ | ⚠️ contracts | ✅ `ddlapi-1.0` | ✅ | — | ✅ | ❌ |

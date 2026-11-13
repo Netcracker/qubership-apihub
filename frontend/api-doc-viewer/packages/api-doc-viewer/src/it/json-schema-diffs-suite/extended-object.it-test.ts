@@ -19,42 +19,42 @@ describe("JSON Schema Diffs Suite/Object Properties And Additional Properties/Ex
 
   it("001-additional-properties-false-added", async () => {
     story = await storyPage(page, `json-schema-diffs-suite-object-properties-and-additional-properties-extended-object--case-001-additional-properties-false-added`);
-    await waitForJsonSchemaDiffsViewer(page, { switchCombinerVariant: true });
+    await waitForJsonSchemaDiffsViewer(page);
     component = await story.viewComponent();
     expect(await component.captureScreenshot()).toMatchImageSnapshot();
   });
 
   it("002-additional-properties-true-added", async () => {
     story = await storyPage(page, `json-schema-diffs-suite-object-properties-and-additional-properties-extended-object--case-002-additional-properties-true-added`);
-    await waitForJsonSchemaDiffsViewer(page, { switchCombinerVariant: true });
+    await waitForJsonSchemaDiffsViewer(page);
     component = await story.viewComponent();
     expect(await component.captureScreenshot()).toMatchImageSnapshot();
   });
 
   it("003-additional-properties-schema-added", async () => {
     story = await storyPage(page, `json-schema-diffs-suite-object-properties-and-additional-properties-extended-object--case-003-additional-properties-schema-added`);
-    await waitForJsonSchemaDiffsViewer(page, { switchCombinerVariant: true });
+    await waitForJsonSchemaDiffsViewer(page);
     component = await story.viewComponent();
     expect(await component.captureScreenshot()).toMatchImageSnapshot();
   });
 
   it("004-pattern-properties-added", async () => {
     story = await storyPage(page, `json-schema-diffs-suite-object-properties-and-additional-properties-extended-object--case-004-pattern-properties-added`);
-    await waitForJsonSchemaDiffsViewer(page, { switchCombinerVariant: true });
+    await waitForJsonSchemaDiffsViewer(page);
     component = await story.viewComponent();
     expect(await component.captureScreenshot()).toMatchImageSnapshot();
   });
 
   it("005-pattern-properties-removed", async () => {
     story = await storyPage(page, `json-schema-diffs-suite-object-properties-and-additional-properties-extended-object--case-005-pattern-properties-removed`);
-    await waitForJsonSchemaDiffsViewer(page, { switchCombinerVariant: true });
+    await waitForJsonSchemaDiffsViewer(page);
     component = await story.viewComponent();
     expect(await component.captureScreenshot()).toMatchImageSnapshot();
   });
 
   it("006-pattern-properties-replaced", async () => {
     story = await storyPage(page, `json-schema-diffs-suite-object-properties-and-additional-properties-extended-object--case-006-pattern-properties-replaced`);
-    await waitForJsonSchemaDiffsViewer(page, { switchCombinerVariant: true });
+    await waitForJsonSchemaDiffsViewer(page);
     component = await story.viewComponent();
     expect(await component.captureScreenshot()).toMatchImageSnapshot();
   });

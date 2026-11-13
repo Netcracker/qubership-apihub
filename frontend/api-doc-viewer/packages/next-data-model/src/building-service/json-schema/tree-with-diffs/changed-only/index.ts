@@ -1,4 +1,3 @@
-export { hasOwnChangeSignals } from "./has-own-change-signals"
 export { isJsonSchemaNodeChanged } from "./is-node-changed"
 export {
   resolveJsonSchemaUnchangedBlocks,

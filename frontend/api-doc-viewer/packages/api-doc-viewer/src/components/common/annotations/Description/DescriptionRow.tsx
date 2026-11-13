@@ -1,3 +1,4 @@
+import { cn } from "@apihub/utils/common/cn";
 import { LevelIndicator } from "@apihub/components/shared-components/LevelIndicator";
 import { isDiff } from "@netcracker/qubership-apihub-api-data-model";
 import { Diff, DiffAction } from "@netcracker/qubership-apihub-api-diff";
@@ -112,10 +113,10 @@ export const DescriptionRow: FC<DescriptionRowProps> = (props) => {
     ].filter(Boolean).join(' ')
 
     return (
-      <div className={rowClasses}>
+      <div className={cn(rowClasses)}>
         <LevelIndicator level={level} />
-        {shift && <div className="w-5" />}
-        <div className="py-1">
+        {shift && <div className={cn("w-5")} />}
+        <div className={cn("py-1")}>
           <Value
             value={value}
             fontSize={fontSize}
@@ -153,7 +154,7 @@ export const DescriptionRow: FC<DescriptionRowProps> = (props) => {
 
   if (isDocumentLayoutMode) {
     return (
-      <div className="flex flex-row">
+      <div className={cn("flex flex-row")}>
         <Content layoutSide={CHANGED_LAYOUT_SIDE} />
       </div>
     )
@@ -162,14 +163,14 @@ export const DescriptionRow: FC<DescriptionRowProps> = (props) => {
   if (isInlineDiffsLayoutMode) {
     if (!isContentChanged) {
       return (
-        <div className="flex flex-row">
+        <div className={cn("flex flex-row")}>
           <Content layoutSide={ORIGIN_LAYOUT_SIDE} />
         </div>
       )
     }
 
     return (
-      <div className={`flex flex-row relative ${diffTypeIncluded ? diffBackground : ''}`}>
+      <div className={cn(`flex flex-row relative ${diffTypeIncluded ? diffBackground : ''}`)}>
         {diffType && diffTypeIncluded && <UxDiffFloatingBadge variant={diffType} message={diffTypeCause} />}
         <Content layoutSide={ORIGIN_LAYOUT_SIDE} />
       </div>
@@ -179,7 +180,7 @@ export const DescriptionRow: FC<DescriptionRowProps> = (props) => {
   if (isSideBySideDiffsLayoutMode) {
     if (!isContentChanged) {
       return (
-        <div className="flex flex-row">
+        <div className={cn("flex flex-row")}>
           <Content layoutSide={ORIGIN_LAYOUT_SIDE} />
           <Content layoutSide={CHANGED_LAYOUT_SIDE} />
         </div>
@@ -187,7 +188,7 @@ export const DescriptionRow: FC<DescriptionRowProps> = (props) => {
     }
 
     return (
-      <div className={`flex flex-row relative ${diffTypeIncluded ? diffBackground : ''}`}>
+      <div className={cn(`flex flex-row relative ${diffTypeIncluded ? diffBackground : ''}`)}>
         {diffType && diffTypeIncluded && <UxDiffFloatingBadge variant={diffType} message={diffTypeCause} />}
         {isContentChanged && (itemRemoved || itemReplaced)
           ? <Content layoutSide={ORIGIN_LAYOUT_SIDE} />
@@ -300,7 +301,7 @@ const Value: FC<ValueProps> = props => {
 
   return (
     <ReactMarkdown
-      className={`markdown ${classes}`}
+      className={cn(`markdown ${classes}`)}
       remarkPlugins={[remarkGfm]}
     >
       {value}
@@ -322,8 +323,8 @@ const Expander: FC<DescriptionExpanderProps> = props => {
 
   return <>
     {isExpandable && (
-      <div className="mt-2">
-        <a className={`${getFontSizeClass(fontSize)} text-blue-600 hover:text-blue-500 hover:cursor-pointer`}
+      <div className={cn("mt-2")}>
+        <a className={cn(`${getFontSizeClass(fontSize)} text-blue-600 hover:text-blue-500 hover:cursor-pointer`)}
           onClick={() => setExpanded?.(!expanded)}
         >
           {!expanded ? 'Show all description' : 'Collapse description'}

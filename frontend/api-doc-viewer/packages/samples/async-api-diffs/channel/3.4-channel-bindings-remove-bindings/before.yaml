@@ -10,7 +10,7 @@ channels:
         $ref: '#/components/messages/TestMessage'
     bindings:
       kafka:
-        bindingVersion: 1.0.0
+        bindingVersion: 0.4.0
         topic: events-topic
         partitions: 5
 operations:
@@ -19,7 +19,7 @@ operations:
     channel:
       $ref: '#/channels/testChannel'
     messages:
-      - $ref: '#/components/messages/TestMessage'
+      - $ref: '#/channels/testChannel/messages/TestMessage'
 components:
   messages:
     TestMessage:

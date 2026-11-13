@@ -1,3 +1,3 @@
 CREATE TABLE t (
-  label text DEFAULT E'path\\to\\file'
+  display_text text DEFAULT E'path\\to\\file'
 );

@@ -1,3 +1,4 @@
+import { cn } from '@apihub/utils/common/cn'
 import { DiffType } from '@netcracker/qubership-apihub-api-diff'
 import type { CSSProperties, FC } from 'react'
 import { UxTooltip } from '../UxTooltip/UxTooltip'
@@ -21,7 +22,7 @@ export const UxDiffMarker: FC<UxDiffMarkerProps> = (props) => {
 
   const markerElement = (
     <div
-      className="UxDiffMarker inline-block"
+      className={cn("UxDiffMarker inline-block")}
       style={{ backgroundColor: DIFF_TYPE_COLORS[variant] }}
     ></div>
   )
@@ -36,7 +37,7 @@ export const UxDiffMarker: FC<UxDiffMarkerProps> = (props) => {
   }
 
   return (
-    <div className="inline-block" style={getAbsoluteStyles(floating)}>
+    <div className={cn("inline-block")} style={getAbsoluteStyles(floating)}>
       {wrappedMarkerElement}
     </div>
   )

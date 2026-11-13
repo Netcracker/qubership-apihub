@@ -1,13 +1,10 @@
 import '../index';
 
-import {
-  dropdownsCheck,
-  guardianApiYaml,
-  streetlightKafkaAsyncApi
-} from '@netcracker/qubership-apihub-apispec-view-samples';
 import { parse } from '@stoplight/yaml';
 import React from 'react';
 
+import { dropdownsCheck } from '../../__fixtures__/api-descriptions/dropdownsCheck';
+import { guardianApiYaml } from '../../__fixtures__/api-descriptions/guardianApiYaml';
 import { zoomApiYaml } from '../../__fixtures__/api-descriptions/zoomApiYaml';
 
 declare global {
@@ -67,9 +64,3 @@ DropdownsCheck.args = {
   apiDescriptionDocument: dropdownsCheck,
 };
 DropdownsCheck.storyName = 'Dropdowns Check';
-
-export const StreetlightKafkaApi: any = Template.bind({});
-StreetlightKafkaApi.args = {
-  apiDescriptionDocument: streetlightKafkaAsyncApi,
-};
-StreetlightKafkaApi.storyName = 'Streetlight Kafka Api';

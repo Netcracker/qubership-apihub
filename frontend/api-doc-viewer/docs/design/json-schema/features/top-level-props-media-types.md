@@ -34,8 +34,8 @@ before/after media-type pair per property and its own diff styling.
 
 ## Regression coverage
 
-- Story `JSON Schema Suite/Top Level Props Media Types` with a paired screenshot IT
-  (`src/it/json-schema-suite/top-level-props-media-types.it-test.ts`).
+- Case `14-top-level-props-media-types` of `JSON Schema Suite (Display Mode = simple)` (badges in
+  `detailed` and `simple`; `src/it/json-schema-display-mode-simple-suite/cases.it-test.ts`).
 - Unit test of the matching rule: `packages/api-doc-viewer/tests/top-level-props-media-types.test.ts`.
 
 ## Related documents

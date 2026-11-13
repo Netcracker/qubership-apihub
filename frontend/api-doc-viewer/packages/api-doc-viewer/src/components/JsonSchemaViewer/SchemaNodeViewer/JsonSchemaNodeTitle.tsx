@@ -1,3 +1,4 @@
+import { cn } from "@apihub/utils/common/cn"
 import { UxBadge } from "@apihub/components/kit/ux/UxBadge/UxBadge"
 import { LayoutSide } from "@apihub/types/internal/LayoutSide"
 import { resolveDiffSideStyle } from "@apihub/utils/diffs/resolve-diff-side-style"
@@ -7,8 +8,9 @@ import { ChangedPropertyMetaData } from "@netcracker/qubership-apihub-next-data-
 import { FC, ReactNode } from "react"
 import { JsonSchemaNodeTitleDisplay, JsonSchemaNodeTitleVariants } from '../utils/resolve-json-schema-node-title'
 import { JsonSchemaRequiredDiffIndicator } from "./JsonSchemaRequiredDiffIndicator"
+import { NODE_TITLE_TEXT_CLASSES } from "../../shared-styles/tailwind-classnames"
 
-const JSON_SCHEMA_NODE_TITLE_CLASS = "text-xs text-black font-Inter-Medium"
+const JSON_SCHEMA_NODE_TITLE_CLASS = NODE_TITLE_TEXT_CLASSES
 
 export type JsonSchemaNodeTitleProps = {
   display: JsonSchemaNodeTitleDisplay
@@ -33,7 +35,7 @@ const ClickableTitleBadge: FC<ClickableTitleBadgeProps> = (props) => {
   if (!onClick) {
     return <>{children}</>
   }
-  return <span className="inline-flex hover:cursor-pointer" onClick={onClick}>{children}</span>
+  return <span className={cn("inline-flex hover:cursor-pointer")} onClick={onClick}>{children}</span>
 }
 
 function resolveTitleTextClassName(onClick?: () => void): string {
@@ -52,9 +54,9 @@ export const JsonSchemaNodeTitlePlain: FC<JsonSchemaNodeTitlePlainProps> = (prop
       )
     case JsonSchemaNodeTitleVariants.TEXT:
       return (
-        <div className={resolveTitleTextClassName(onClick)} onClick={onClick}>
+        <div className={cn(resolveTitleTextClassName(onClick))} onClick={onClick}>
           {display.text}
-          {required && <sup className="ml-0.5 text-red-500">*</sup>}
+          {required && <sup className={cn("ml-0.5 text-red-500")}>*</sup>}
         </div>
       )
   }
@@ -75,8 +77,8 @@ export const JsonSchemaNodeTitleWithDiffs: FC<JsonSchemaNodeTitleProps> = (props
         ? DiffsClassesBuilder.highlighter(resolveDiffSideStyle(textDiff, layoutSide).textHighlighterColor)
         : undefined
       return (
-        <div className={resolveTitleTextClassName(onClick)} onClick={onClick}>
-          {highlighterClassName ? <span className={highlighterClassName}>{display.text}</span> : display.text}
+        <div className={cn(resolveTitleTextClassName(onClick))} onClick={onClick}>
+          {highlighterClassName ? <span className={cn(highlighterClassName)}>{display.text}</span> : display.text}
           <JsonSchemaRequiredDiffIndicator
             required={required}
             requiredDiff={requiredDiff}

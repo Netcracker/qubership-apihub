@@ -24,6 +24,10 @@ These fixtures feed screenshot-diff scenarios for DDL table changes.
 | `column-type-changes` | 127 | Base type matrix (`001`–`090`), parameter changes (`091`–`103`), enum-to-enum (`104`–`107`), scalar-to-enum (`108`–`117`), enum-to-scalar (`118`–`127`) |
 | `column-default-changes` | 75 | Column `DEFAULT` add/remove/replace per PostgreSQL scalar storage type |
 
+There is no schema-change group: api-diff matches schemas by name, so moving a table to another
+schema is a whole-table remove plus add, and the colored schema name row cannot be produced from a
+SQL pair (`docs/design/ddlapi/display-coverage.md` → Displayed (with diffs)).
+
 ## `column-default-changes` type coverage
 
 Cases use one canonical name per PostgreSQL storage family from the ddlapi scalar guard list. Each
@@ -64,5 +68,5 @@ Hand-written fixtures, except `column-default-changes`. From `packages/api-doc-v
 
 ```bash
 node bin/generate-column-default-changes-samples.mjs   # column-default-changes fixtures, stories, ITs
-npm run regenerate-screenshots                          # after visual changes
+pnpm run regenerate-screenshots                          # after visual changes
 ```

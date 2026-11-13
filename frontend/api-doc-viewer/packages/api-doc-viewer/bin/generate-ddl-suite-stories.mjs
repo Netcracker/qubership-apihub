@@ -32,12 +32,6 @@ const SUITES = [
     storyFileName: "escaping-spec-chars.stories.tsx",
   },
   {
-    suiteId: "display-mode-simple",
-    title: "DDL API Suite/Display Mode Simple",
-    storyFileName: "display-mode-simple.stories.tsx",
-    displayMode: "simple",
-  },
-  {
     suiteId: "table-descriptions",
     title: "DDL API Suite/Table Descriptions",
     storyFileName: "table-descriptions.stories.tsx",
@@ -61,7 +55,7 @@ const collectCaseIds = (suiteId) =>
     )
     .sort((left, right) => left.localeCompare(right, undefined, { numeric: true }));
 
-const printStoryFile = ({ suiteId, title, displayMode }) => {
+const printStoryFile = ({ suiteId, title }) => {
   const metaId = makeMetaId(suiteId);
   const caseIds = collectCaseIds(suiteId);
   const exports = caseIds
@@ -71,14 +65,7 @@ const printStoryFile = ({ suiteId, title, displayMode }) => {
     )
     .join("\n");
 
-  const displayModeImport = displayMode
-    ? `import { ${displayMode === "simple" ? "SIMPLE" : "DETAILED"}_DISPLAY_MODE } from "@apihub/types/DisplayMode";\n`
-    : "";
-  const factoryOptions = displayMode
-    ? `, { displayMode: ${displayMode === "simple" ? "SIMPLE" : "DETAILED"}_DISPLAY_MODE }`
-    : "";
-
-  return `${displayModeImport}import type { Meta, StoryObj } from "@storybook/react-vite";
+  return `import type { Meta, StoryObj } from "@storybook/react-vite";
 import {
   collectDdlSampleCases,
 } from "../utils/ddl-samples-cases";
@@ -97,7 +84,7 @@ const sampleFiles = import.meta.glob(
 
 const sampleCases = collectDdlSampleCases(sampleFiles);
 const sampleById = createSampleById(sampleCases);
-const createCaseStory = createCaseStoryFactory(sampleById${factoryOptions});
+const createCaseStory = createCaseStoryFactory(sampleById);
 
 // eslint-disable-next-line storybook/story-exports
 const meta = {

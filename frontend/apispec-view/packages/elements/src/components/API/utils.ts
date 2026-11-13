@@ -1,16 +1,13 @@
 import { isHttpOperation, isHttpService, TableOfContentsItem } from '@netcracker/qubership-apihub-apispec-view-elements-core';
-import { ASYNC_OPERATION_NODE_TYPE } from '@netcracker/qubership-apihub-apispec-view-elements-core/types';
 import { NodeType } from '@stoplight/types';
 import { defaults, entries } from 'lodash';
 
 import { OperationNode, ServiceChildNode, ServiceNode } from '../../utils/oas/types';
 
-export const OPERATION_NODE_TYPES = [NodeType.HttpOperation, ASYNC_OPERATION_NODE_TYPE];
-
 export type TagGroup = { title: string; items: OperationNode[] };
 
 function isOperationNode(node: ServiceChildNode): node is OperationNode {
-  return OPERATION_NODE_TYPES.includes(node.type);
+  return node.type === NodeType.HttpOperation;
 }
 
 export const computeTagGroups = (serviceNode: ServiceNode) => {

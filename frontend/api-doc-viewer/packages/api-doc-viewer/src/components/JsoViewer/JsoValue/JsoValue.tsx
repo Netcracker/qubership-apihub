@@ -1,3 +1,4 @@
+import { cn } from "@apihub/utils/common/cn"
 import { FC, memo } from "react"
 import { JsoValueBase } from "./JsoValueBase"
 import { JsoValueAppearance, useJsoValueStyles } from "./useJsoValueStyles"
@@ -22,7 +23,7 @@ export const JsoValue: FC<JsoValueProps> = memo<JsoValueProps>((props) => {
     <JsoValueBase
       isVisible={isVisible}
       value={value}
-      className={className}
+      className={cn(className)}
     />
   )
 })

@@ -12,11 +12,11 @@ const COMPONENTS_WITH_MESSAGES = {
   }
 }
 
-const SINGLE_MESSAGE_USAGE = {
+const singleMessageUsage = (channel: string) => ({
   messages: [
-    { $ref: "#/components/messages/test-message" }
+    { $ref: `#/channels/${channel}/messages/test-message` }
   ]
-}
+})
 
 describe('AsyncAPI Operations', () => {
   describe('Operation Extensions', () => {
@@ -30,13 +30,16 @@ describe('AsyncAPI Operations', () => {
         channels: {
           'test-channel': {
             address: "test-channel",
+            messages: {
+              'test-message': { $ref: "#/components/messages/test-message" }
+            },
           }
         },
         operations: {
           'test-operation': {
             action: "send",
             channel: { $ref: "#/channels/test-channel" },
-            ...SINGLE_MESSAGE_USAGE,
+            ...singleMessageUsage('test-channel'),
             'x-first': "first",
             'x-second': {
               a: 1,

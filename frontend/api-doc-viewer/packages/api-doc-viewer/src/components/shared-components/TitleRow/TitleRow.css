@@ -1,0 +1,10 @@
+/* Collapsible section title (TitleRowUsage.CollapsibleSection): the expander column has a fixed
+   width, so the title text does not move when the caret changes between its expanded / collapsed
+   icons. The width comes from the root viewer, which must write the property (OpenAPI:
+   OpenApiViewerRoot from OpenApiSpacingConfig.sectionExpander); there is no fallback.
+   Design: docs/design/openapi/features/collapsible-sections.md */
+.title-row-content[data-usage="collapsible-section"] > .level-indicator-column {
+  flex: none;
+  justify-content: center;
+  width: var(--collapsible-section-expander-width);
+}

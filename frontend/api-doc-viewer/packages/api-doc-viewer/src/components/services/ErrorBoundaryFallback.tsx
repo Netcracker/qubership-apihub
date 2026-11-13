@@ -1,3 +1,4 @@
+import { cn } from '@apihub/utils/common/cn'
 import { FC, useEffect } from 'react'
 import { ErrorBoundaryCaughtError } from './ErrorBoundary'
 
@@ -25,7 +26,7 @@ export const ErrorBoundaryFallback: FC<ErrorBoundaryFallbackProps> = (props) => 
   }, [componentName, hasCaught, error, componentStack])
 
   return (
-    <div>
+    <div className={cn('root')}>
       Something went wrong in: {componentName}
     </div>
   )

@@ -1,3 +1,4 @@
+import { cn } from "@apihub/utils/common/cn"
 import { resolveDiffSideStyle } from "@apihub/utils/diffs/resolve-diff-side-style"
 import { LayoutSide } from "@apihub/types/internal/LayoutSide"
 import {
@@ -84,7 +85,7 @@ export const ColumnTypeLabelWithDiffs: FC<ColumnTypeLabelWithDiffsProps> = memo<
   const { typeNameSegments, parameterSegments } = splitTypeNameAndParameterSegments(display.segments)
 
   return (
-    <span className="inline-flex items-center gap-1">
+    <span className={cn("inline-flex items-center gap-1")}>
       {typeNameSegments.map((segment, index) => renderColumnTypeLabelSegment(segment, index, layoutSide))}
       {parameterSegments.length > 0 && (
         <CommaSeparatedListWithDiffs

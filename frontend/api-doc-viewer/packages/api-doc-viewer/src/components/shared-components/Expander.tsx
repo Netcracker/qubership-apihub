@@ -1,3 +1,4 @@
+import { cn } from "@apihub/utils/common/cn";
 import { FC, useContext } from "react";
 import { AsyncApiDevModeContext } from "../AsyncApiOperationViewer/AsyncApiDevModeContext";
 import { ExpandingCaret } from "../common/layout/Expander/ExpandingCaret";
@@ -24,7 +25,7 @@ export const Expander: FC<ExpanderProps> = (props) => {
   }
 
   return (
-    <div className={`flex flex-row items-center justify-center ${hasHorizontalLine ? 'gap-0.5' : ''}`}>
+    <div className={cn(`flex flex-row items-center justify-center ${hasHorizontalLine ? 'gap-0.5' : ''}`)}>
       {hasHorizontalLine && <NestingHorizontalIndicator short={expandable} />}
       {expandable && expanded !== undefined && (
         <ExpandingCaret onToggle={onToggle} expanded={expanded} />

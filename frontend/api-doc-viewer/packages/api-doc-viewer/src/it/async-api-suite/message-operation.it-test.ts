@@ -1,0 +1,136 @@
+/**
+ * Auto-generated screenshot tests for Async API Suite 2 Message Operation stories.
+ */
+import { StoryPage } from '../service/story-page'
+import { ViewComponent } from '../service/view-component'
+import { storyPage } from '../service/storybook-service'
+import { waitForRenderingComplete } from '../service/viewer-waits'
+
+describe('AsyncAPI Suite 2 - Message Operation', () => {
+  let story: StoryPage
+  let component: ViewComponent
+
+  beforeEach(async () => {
+    await jestPuppeteer.resetPage()
+  })
+
+  it('operation-id', async () => {
+    story = await storyPage(
+      page,
+      'async-api-suite-message-operation--operation-id'
+    )
+    component = await story.viewComponent()
+    await waitForRenderingComplete(page)
+    expect(await component.captureScreenshot()).toMatchImageSnapshot()
+  })
+
+  it('title', async () => {
+    story = await storyPage(
+      page,
+      'async-api-suite-message-operation--title'
+    )
+    component = await story.viewComponent()
+    await waitForRenderingComplete(page)
+    expect(await component.captureScreenshot()).toMatchImageSnapshot()
+  })
+
+  it('description', async () => {
+    story = await storyPage(
+      page,
+      'async-api-suite-message-operation--description'
+    )
+    component = await story.viewComponent()
+    await waitForRenderingComplete(page)
+    expect(await component.captureScreenshot()).toMatchImageSnapshot()
+  })
+
+  it('summary', async () => {
+    story = await storyPage(
+      page,
+      'async-api-suite-message-operation--summary'
+    )
+    component = await story.viewComponent()
+    await waitForRenderingComplete(page)
+    expect(await component.captureScreenshot()).toMatchImageSnapshot()
+  })
+
+  it('extensions', async () => {
+    story = await storyPage(
+      page,
+      'async-api-suite-message-operation--extensions'
+    )
+    component = await story.viewComponent()
+    await waitForRenderingComplete(page)
+    expect(await component.captureScreenshot()).toMatchImageSnapshot()
+  })
+
+  it('bindings-one-option', async () => {
+    story = await storyPage(
+      page,
+      'async-api-suite-message-operation--bindings-one-option'
+    )
+    component = await story.viewComponent()
+    await waitForRenderingComplete(page)
+    expect(await component.captureScreenshot()).toMatchImageSnapshot()
+  })
+
+  it('bindings-two-options-selected-first', async () => {
+    story = await storyPage(
+      page,
+      'async-api-suite-message-operation--bindings-two-options-selected-first'
+    )
+    component = await story.viewComponent()
+    await waitForRenderingComplete(page)
+    expect(await component.captureScreenshot()).toMatchImageSnapshot()
+  })
+
+  it('bindings-two-options-selected-second', async () => {
+    story = await storyPage(
+      page,
+      'async-api-suite-message-operation--bindings-two-options-selected-second'
+    )
+    component = await story.viewComponent()
+    await waitForRenderingComplete(page)
+    expect(await component.captureScreenshot()).toMatchImageSnapshot()
+  })
+
+  it('description-summary', async () => {
+    story = await storyPage(
+      page,
+      'async-api-suite-message-operation--description-summary'
+    )
+    component = await story.viewComponent()
+    await waitForRenderingComplete(page)
+    expect(await component.captureScreenshot()).toMatchImageSnapshot()
+  })
+
+  it('description-extensions', async () => {
+    story = await storyPage(
+      page,
+      'async-api-suite-message-operation--description-extensions'
+    )
+    component = await story.viewComponent()
+    await waitForRenderingComplete(page)
+    expect(await component.captureScreenshot()).toMatchImageSnapshot()
+  })
+
+  it('description-bindings-one-option', async () => {
+    story = await storyPage(
+      page,
+      'async-api-suite-message-operation--description-bindings-one-option'
+    )
+    component = await story.viewComponent()
+    await waitForRenderingComplete(page)
+    expect(await component.captureScreenshot()).toMatchImageSnapshot()
+  })
+
+  it('extensions-bindings-one-option', async () => {
+    story = await storyPage(
+      page,
+      'async-api-suite-message-operation--extensions-bindings-one-option'
+    )
+    component = await story.viewComponent()
+    await waitForRenderingComplete(page)
+    expect(await component.captureScreenshot()).toMatchImageSnapshot()
+  })
+})

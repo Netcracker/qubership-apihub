@@ -5,6 +5,9 @@ description: Consume next-data-model inside api-doc-viewer — tree builders, no
 
 # Using next-data-model in api-doc-viewer
 
+**CI linters:** load the `api-doc-viewer-ci-linters` skill before you write or change a file of this module.
+CI lints every file a pull request touches as a whole: Markdown, CSS, SQL fixtures, and more.
+
 `@netcracker/qubership-apihub-next-data-model` is a **private monorepo package**.
 It builds typed trees that viewer components render. Use this skill when wiring
 viewers to trees or reading diff metadata on nodes — not when changing builders

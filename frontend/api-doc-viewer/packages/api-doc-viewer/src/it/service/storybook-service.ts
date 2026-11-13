@@ -35,10 +35,35 @@ export async function storyPageWithArgs(
     ? Object.entries(args).map(([key, value]) => `${key}:${value}`).join(';')
     : ''
   await page.goto(`${host()}/iframe.html?args=${argsQuery}&id=${storyName}&viewMode=story`, { waitUntil: 'networkidle2' })
+  await waitForStoryRenderFinished(page, storyName)
   // way to support screenshots of long pages
   // await page.goto(`${host()}?path=/story/${storyName}`, { waitUntil: 'networkidle2' })
   // const storyFrame = await waitStoryFrame(page)
   return new StoryPageImpl(page, page)
+}
+
+const STORY_RENDER_FINISHED_PHASE = 'finished'
+const STORY_RENDER_FINAL_PHASES = [STORY_RENDER_FINISHED_PHASE, 'errored', 'aborted']
+
+/**
+ * Waits until Storybook finishes rendering the story, including its `play`: stories select the
+ * options their case covers in `play` (`src/stories/shared/auto-switch.ts`), so the IT captures
+ * that state and never navigates itself. A `play` that throws fails the test here.
+ */
+async function waitForStoryRenderFinished(page: Page, storyName: string): Promise<void> {
+  const phaseHandle = await page.waitForFunction(
+    (finalPhases: string[]) => {
+      const preview = (window as { __STORYBOOK_PREVIEW__?: { currentRender?: { phase?: string } } }).__STORYBOOK_PREVIEW__
+      const phase = preview?.currentRender?.phase
+      return phase !== undefined && finalPhases.includes(phase) ? phase : false
+    },
+    {},
+    STORY_RENDER_FINAL_PHASES,
+  )
+  const phase = await phaseHandle.jsonValue()
+  if (phase !== STORY_RENDER_FINISHED_PHASE) {
+    throw new Error(`Story ${storyName} ended in render phase "${phase}"; see the browser console for the error`)
+  }
 }
 
 // async function waitStoryFrame(page: Page): Promise<Frame> {

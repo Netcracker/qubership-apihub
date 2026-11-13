@@ -1,25 +1,30 @@
 // It's necessary because storybook doesn't render nested stories without this empty story
 
-import { AsyncApiOperationViewer } from "@apihub/components/AsyncApiOperationViewer/AsyncApiOperationViewer";
-import { userEvent, within } from "storybook/test";
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { EXTENSIONS, TEST_REFERENCE_NAME_PROPERTY } from "./shared-test-data";
 import { prepareAsyncApiDocument } from "../preprocess";
+import { AUTO_SWITCH_ARG_TYPES, AUTO_SWITCH_DEFAULT_ARGS, autoSwitchParameters, playAutoSwitch } from "../shared/auto-switch";
+import { AsyncApiSuiteStory } from "./AsyncApiSuiteStory";
 
 // eslint-disable-next-line storybook/story-exports
 const meta = {
   title: 'Async API Suite/Message Channel',
-  component: AsyncApiOperationViewer,
+  component: AsyncApiSuiteStory,
   parameters: {},
   argTypes: {
     source: {
       control: 'object'
-    }
+    },
+    ...AUTO_SWITCH_ARG_TYPES,
   },
   args: {
-    source: {}
-  }
-} satisfies Meta<typeof AsyncApiOperationViewer>;
+    source: {},
+    ...AUTO_SWITCH_DEFAULT_ARGS,
+  },
+  play: playAutoSwitch,
+} satisfies Meta<typeof AsyncApiSuiteStory>;
+
+const SECTION_TEST_ID = "message-channel";
 
 export default meta;
 
@@ -80,11 +85,7 @@ const createStory = (source: ReturnType<typeof createSource>, storyName?: string
     },
     referenceNamePropertyKey: TEST_REFERENCE_NAME_PROPERTY,
   },
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    const buttons = await canvas.findAllByTestId("message-channel");
-    await userEvent.click(buttons[0]);
-  },
+  parameters: autoSwitchParameters([SECTION_TEST_ID]),
 });
 
 export const ChannelID: Story = createStory(createSource({
@@ -169,20 +170,23 @@ export const BindingsTwoOptionsSelectedFirst: Story = createStory(createSource({
   },
 }));
 
-export const BindingsTwoOptionsSelectedSecond: Story = createStory(createSource({
-  channel: {
-    bindings: {
-      kafka: {
-        bindingVersion: "0.5.0",
-        topic: "events.payment.updated",
-      },
-      mqtt: {
-        bindingVersion: "0.2.0",
-        clientId: "mqtt-client-02",
+export const BindingsTwoOptionsSelectedSecond: Story = {
+  ...createStory(createSource({
+    channel: {
+      bindings: {
+        kafka: {
+          bindingVersion: "0.5.0",
+          topic: "events.payment.updated",
+        },
+        mqtt: {
+          bindingVersion: "0.2.0",
+          clientId: "mqtt-client-02",
+        },
       },
     },
-  },
-}));
+  })),
+  parameters: autoSwitchParameters([SECTION_TEST_ID, "binding-1"]),
+};
 
 export const ServersOneServerWithHostAndProtocol: Story = createStory(createSource({
   channel: {},

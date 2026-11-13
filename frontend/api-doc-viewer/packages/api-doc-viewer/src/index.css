@@ -1,30 +1,35 @@
+/* Viewer color config (badges, selector tones); @import must precede every other statement. */
+@import url("./components/shared-styles/colors/index.css");
+
+/* stylelint-disable at-rule-no-unknown -- Tailwind directives, expanded by the tailwindcss PostCSS plugin */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+/* stylelint-enable at-rule-no-unknown */
 
 @font-face {
-    font-family: 'Inter';
-    src: local('Inter'), url(../public/fonts/InterRegular.ttf) format('truetype');
+    font-family: Inter;
+    src: local('Inter'), url("../public/fonts/InterRegular.ttf") format('truetype');
 }
 
 @font-face {
     font-family: 'Inter Medium';
-    src: local('Inter Medium'), url(../public/fonts/InterMedium.ttf) format('truetype');
+    src: local('Inter Medium'), url("../public/fonts/InterMedium.ttf") format('truetype');
 }
 
 @font-face {
     font-family: 'Inter Semi Bold';
-    src: local('Inter Semi Bold'), url(../public/fonts/InterSemiBold.ttf) format('truetype');
+    src: local('Inter Semi Bold'), url("../public/fonts/InterSemiBold.ttf") format('truetype');
 }
 
 @font-face {
     font-family: 'Fire Code';
-    src: local('Fire Code'), url(../public/fonts/FiraCode-Regular.ttf) format('truetype');
+    src: local('Fire Code'), url("../public/fonts/FiraCode-Regular.ttf") format('truetype');
 }
 
 @font-face {
     font-family: 'Inter Variable';
-    src: local('Inter Variable'), url(../public/fonts/InterVariableFont.ttf) format('truetype');
+    src: local('Inter Variable'), url("../public/fonts/InterVariableFont.ttf") format('truetype');
     font-weight: 100 900;
 }
 
@@ -32,20 +37,23 @@
     font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
     line-height: 1.5;
     font-weight: 400;
-
     font-synthesis: none;
-    text-rendering: optimizeLegibility;
+    text-rendering: optimizelegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    /* stylelint-disable-next-line property-no-vendor-prefix -- Safari and Firefox lack the unprefixed property */
     -webkit-text-size-adjust: 100%;
 }
 
+/* The declarations of the Tailwind `pl-4` and `list-disc` / `list-decimal` utilities. */
 ul {
-    @apply pl-4 list-disc
+    padding-left: 1rem;
+    list-style-type: disc;
 }
 
 ol {
-    @apply pl-4 list-decimal
+    padding-left: 1rem;
+    list-style-type: decimal;
 }
 
 a {
@@ -58,13 +66,14 @@ a:hover {
     color: #535bf2;
 }
 
-/* Disabled due to impact on apihub-ui */
-/*body {*/
-/*    margin: 0;*/
-/*    display: flex;*/
-/*    min-width: 320px;*/
-/*    min-height: 100vh;*/
-/*}*/
+/* Disabled due to impact on apihub-ui:
+body {
+    margin: 0;
+    display: flex;
+    min-width: 320px;
+    min-height: 100vh;
+}
+*/
 
 h1 {
     font-size: 3.2em;
@@ -88,9 +97,10 @@ button:hover {
 }
 
 @media (prefers-color-scheme: light) {
+    /* Scoped to the viewer root (CSS isolation), so no background: a viewer must not paint a box
+       over the host's background. Design: docs/design/shared/features/css-isolation.md */
     :root {
         color: #213547;
-        background-color: #ffffff;
     }
 
     a:hover {
@@ -102,14 +112,14 @@ button:hover {
     }
 }
 
-.font-Inter {
+.font-inter {
     font-family: Inter, sans-serif;
 }
 
-.font-Inter-Medium {
+.font-inter-medium {
     font-family: "Inter Medium", sans-serif;
 }
 
-.font-Inter-Bolder {
+.font-inter-bolder {
     font-family: "Inter Semi Bold", sans-serif;
 }

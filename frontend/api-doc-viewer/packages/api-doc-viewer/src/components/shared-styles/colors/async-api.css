@@ -1,0 +1,12 @@
+/* stylelint-disable selector-class-pattern -- modifier classes shared with TS/TSX */
+
+/* ─── Operation action badge (address row). Text is white (`AddressRow`). Mapping action → class:
+   `utils/async-api/action-badge-config.ts`. ───────────────────────────────────────────────── */
+
+.async-api-action-badge_send {
+  background-color: #38BDF8;
+}
+
+.async-api-action-badge_receive {
+  background-color: #22C55E;
+}

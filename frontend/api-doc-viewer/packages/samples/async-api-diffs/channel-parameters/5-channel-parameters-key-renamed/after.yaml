@@ -19,7 +19,7 @@ operations:
     channel:
       $ref: '#/channels/testChannel'
     messages:
-      - $ref: '#/components/messages/TestMessage'
+      - $ref: '#/channels/testChannel/messages/TestMessage'
 components:
   messages:
     TestMessage:

@@ -69,9 +69,11 @@ export class SimpleTreeNodeWithDiffs<
   public createCycledClone(
     id: NodeId,
     key: NodeKey,
+    kind: K,
     parent: ITreeNodeWithDiffs<V, K, M, D> | null,
+    meta?: M,
   ): ITreeNodeWithDiffs<V, K, M, D> {
-    const clonedNode = new SimpleTreeNodeWithDiffs<V, K, M, D>(id, key, this.kind, true, {
+    const clonedNode = new SimpleTreeNodeWithDiffs<V, K, M, D>(id, key, kind, true, {
       type: this.type,
       parent: parent,
       container: null,
@@ -79,7 +81,7 @@ export class SimpleTreeNodeWithDiffs<
       value: this._value !== null
         ? (typeof this._value === "object" ? { ...(this._value as object) } as V : this._value)
         : null,
-      meta: { ...this._meta },
+      meta: meta ?? { ...this._meta },
     });
     // Share the same children/nested arrays so later additions to the source are visible on the clone.
     clonedNode._childrenNodes = this._childrenNodes;
@@ -155,6 +157,10 @@ export class SimpleTreeNodeWithDiffs<
 
   public addNestedNode(node: ITreeNodeWithDiffs<V, K, M, D>): void {
     this._nestedNodes.push(node);
+  }
+
+  public sortNestedNodes(compare: (a: ITreeNodeWithDiffs<V, K, M, D>, b: ITreeNodeWithDiffs<V, K, M, D>) => number): void {
+    this._nestedNodes.sort(compare);
   }
 
   public addDiffsSummary(diffsSummary: NodeDiffsSummary): void {

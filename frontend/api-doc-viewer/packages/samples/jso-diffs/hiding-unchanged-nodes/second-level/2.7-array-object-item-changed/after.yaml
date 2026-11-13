@@ -1,0 +1,14 @@
+items:
+  - id: 1
+    name: a
+  - id: 2
+    name: B
+  - id: 3
+    name: c
+first:
+  node1: alpha
+  node2: 10
+  node3: true
+  node4: null
+  node5: beta
+  node6: 20

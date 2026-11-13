@@ -1,3 +1,4 @@
+import { cn } from "@apihub/utils/common/cn"
 import { DiffRecord } from '@netcracker/qubership-apihub-api-data-model'
 import { Diff } from '@netcracker/qubership-apihub-api-diff'
 import { DiffsClassesBuilder } from '@netcracker/qubership-apihub-next-data-model/building-service/abstract/tree-with-diffs/node-diffs-data/utilities'
@@ -66,12 +67,12 @@ export const NodeTitle: FC<NodeTitleProps> = (props) => {
   }
   if (!titleNode) {
     titleNode = isRenamed
-      ? <span className={DiffsClassesBuilder.highlighter(HighlightVariant.Yellow)}>{title}</span>
+      ? <span className={cn(DiffsClassesBuilder.highlighter(HighlightVariant.Yellow))}>{title}</span>
       : <>{title}</>
   }
 
   return (
-    <div className="inline">
+    <div className={cn("inline")}>
       {titleNode}
       {showRequired && (
         <RequiredStar

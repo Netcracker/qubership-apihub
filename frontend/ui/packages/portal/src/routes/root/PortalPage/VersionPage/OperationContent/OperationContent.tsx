@@ -39,7 +39,6 @@ import {
   isAsyncApiOperation,
   isGraphQlOperation,
 } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
-import { useSystemInfo } from '@netcracker/qubership-apihub-ui-shared/features/system-info'
 import {
   useSeverityFiltersSearchParam,
 } from '@netcracker/qubership-apihub-ui-shared/hooks/change-severities/useSeverityFiltersSearchParam'
@@ -188,8 +187,6 @@ export const OperationContent: FC<OperationContentProps> = wrapOperationContentE
       enabled: isRawViewMode && isGraphQLOperation,
     })
 
-    const { productionMode } = useSystemInfo()
-
     const setChangesLoadingStatus = useSetChangesLoadingStatus()
     useEffect(() => {
       setChangesLoadingStatus && setChangesLoadingStatus(isLoading)
@@ -327,9 +324,7 @@ export const OperationContent: FC<OperationContentProps> = wrapOperationContentE
           {isDocViewMode && !!mergedDocument && (
             <OperationView
               apiType={apiType as ApiType}
-              displayMode={displayMode}
               comparisonMode={comparisonMode}
-              productionMode={productionMode}
               mergedDocument={mergedDocument}
               // diffs specific
               filters={filters}
@@ -367,10 +362,7 @@ export const OperationContent: FC<OperationContentProps> = wrapOperationContentE
               <OperationView
                 apiType={apiType as ApiType}
                 schemaViewMode={schemaViewMode}
-                hideTryIt
-                hideExamples
                 comparisonMode={comparisonMode}
-                productionMode={productionMode}
                 navigationDetails={navigationDetails}
                 operationModels={operationModels}
                 mergedDocument={mergedDocument}

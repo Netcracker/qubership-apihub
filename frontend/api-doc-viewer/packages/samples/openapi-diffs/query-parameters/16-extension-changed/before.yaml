@@ -1,0 +1,20 @@
+openapi: 3.0.3
+info:
+  title: Orders
+  version: 1.0.0
+paths:
+  /orders:
+    post:
+      parameters:
+        - name: dryRun
+          in: query
+          schema:
+            type: boolean
+          x-owner: orders-team
+        - name: expand
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""

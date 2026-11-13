@@ -1,0 +1,50 @@
+openapi: 3.0.3
+info:
+  title: Orders
+  version: 1.0.0
+paths:
+  /orders:
+    post:
+      parameters:
+        - $ref: "#/components/parameters/PageSize"
+      requestBody:
+        $ref: "#/components/requestBodies/OrderBody"
+      responses:
+        "200":
+          description: ""
+        "404":
+          $ref: "#/components/responses/NotFound"
+components:
+  parameters:
+    PageSize:
+      name: pageSize
+      in: query
+      description: Page size from components.
+      schema:
+        type: integer
+  requestBodies:
+    OrderBody:
+      description: Order body from components.
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              id:
+                type: string
+              status:
+                type: string
+                enum:
+                  - new
+                  - paid
+  responses:
+    NotFound:
+      description: Not found (from components).
+      content:
+        application/problem+json:
+          schema:
+            type: object
+            properties:
+              title:
+                type: string

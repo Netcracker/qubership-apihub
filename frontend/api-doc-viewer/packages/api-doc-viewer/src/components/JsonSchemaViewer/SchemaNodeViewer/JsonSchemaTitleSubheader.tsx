@@ -1,3 +1,4 @@
+import { cn } from "@apihub/utils/common/cn"
 import { CIRCULAR_REF_TOOLTIP } from "../../../consts/tooltips"
 import { CircularRefIcon } from "@apihub/components/kit/icons/CircularRefIcon"
 import { TagsWithDiffs } from "@apihub/components/shared-components/diffs/TagsWithDiffs"
@@ -41,7 +42,7 @@ export const JsonSchemaTitleSubheader: FC<JsonSchemaTitleSubheaderProps> = (prop
   const { value, meta, isCycle, layoutSide, showTypeLabel = true, typeValueSuffix, mediaType } = props
 
   return (
-    <div className="flex flex-row items-center gap-2">
+    <div className={cn("flex flex-row items-center gap-2")}>
       {showTypeLabel && <JsonSchemaTitleRowTypeValue value={value} meta={meta} suffix={typeValueSuffix} />}
       {isCycle && (
         <UxTooltip text={CIRCULAR_REF_TOOLTIP}>
@@ -64,7 +65,7 @@ export const JsonSchemaTitleSubheaderWithDiffs: FC<JsonSchemaTitleSubheaderWithD
   const tagsWithDiffsProps = JsonSchemaTitleRowViewProps.buildTagsProps(node)
 
   return (
-    <div className="flex flex-row items-center gap-2">
+    <div className={cn("flex flex-row items-center gap-2")}>
       {showTypeLabel && (
         <JsonSchemaTitleRowTypeValueWithDiffs
           node={node}

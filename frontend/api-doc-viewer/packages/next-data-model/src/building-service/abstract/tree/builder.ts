@@ -35,8 +35,11 @@ export abstract class TreeBuilder<
 
   /* Generic utilities */
 
-  // Pick up arbitrary props by keys
-
+  /**
+   * Picks the given keys of `source` into a new object. Field values are kept by reference: a
+   * picked schema is the document's own object, so the cycle guard of a viewer that builds a tree
+   * from it (OpenAPI media types, parameters, headers) recognizes a `$ref` back to it.
+   */
   protected pick<TargetType extends object>(
     source: UnknownObject | null,
     keys: readonly (keyof TargetType)[],
@@ -47,16 +50,8 @@ export abstract class TreeBuilder<
     const target: UnknownObject = {}
     for (const key of keys) {
       const keyStr = String(key)
-      if (!(keyStr in source)) {
-        continue
-      }
-      const value = source[keyStr]
-      if (Array.isArray(value)) {
-        target[keyStr] = [...value]
-      } else if (isObject(value)) {
-        target[keyStr] = { ...value }
-      } else {
-        target[keyStr] = value
+      if (keyStr in source) {
+        target[keyStr] = source[keyStr]
       }
     }
     return this.isPartialOf<TargetType>(target, keys) ? target as TargetType : null

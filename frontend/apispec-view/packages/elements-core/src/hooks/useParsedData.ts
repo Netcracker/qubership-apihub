@@ -3,7 +3,7 @@ import { parse as parseYaml } from '@stoplight/yaml';
 import * as React from 'react';
 
 import { ParsedNode } from '../types';
-import { isAsyncOperation, isHttpOperation, isHttpService, isJSONSchema, isSMDASTRoot } from '../utils/guards';
+import { isHttpOperation, isHttpService, isJSONSchema, isSMDASTRoot } from '../utils/guards';
 
 export function useParsedData(nodeType: NodeType, data: unknown): ParsedNode | undefined {
   return React.useMemo(() => parserMap[nodeType]?.(data), [nodeType, data]);
@@ -40,13 +40,6 @@ function parseHttpOperation(rawData: unknown): ParsedNode | undefined {
   if (isHttpOperation(data)) {
     return {
       type: NodeType.HttpOperation,
-      data: data,
-    };
-  }
-
-  if (isAsyncOperation(data)) {
-    return {
-      type: 'async_operation',
       data: data,
     };
   }

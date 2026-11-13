@@ -14,10 +14,10 @@ operations:
     channel:
       $ref: '#/channels/testChannel'
     messages:
-      - $ref: '#/components/messages/TestMessage'
+      - $ref: '#/channels/testChannel/messages/TestMessage'
     bindings:
       kafka:
-        bindingVersion: 2.0.0
+        bindingVersion: 0.5.0
 components:
   messages:
     TestMessage:

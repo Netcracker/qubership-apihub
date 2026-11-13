@@ -11,7 +11,7 @@ import {
   jsonSchemaDiffSampleReadonlyArgTypes,
 } from '../json-schema-diffs-suite/json-schema-diffs-utils'
 import { JsonSchemaDiffsViewer } from '@apihub/components/JsonSchemaViewer/JsonSchemaDiffsViewer'
-import { switchCombinerNodesToChangedVariant } from '@apihub/utils/combiner-changed-variant'
+import { AUTO_SWITCH_ARG_TYPES, type AutoSwitchArgs, playAutoSwitch } from '../shared/auto-switch'
 
 const beforeFiles = import.meta.glob(
   '../../../../samples/json-schema-diffs/node-changes-summary/*/before.yaml',
@@ -42,7 +42,7 @@ const indexBySlug = (files: Record<string, string>): Record<string, string> =>
 const beforeBySlug = indexBySlug(beforeFiles)
 const afterBySlug = indexBySlug(afterFiles)
 
-type NodeChangesSummaryStoryArgs = {
+type NodeChangesSummaryStoryArgs = AutoSwitchArgs & {
   beforeYaml: string;
   afterYaml: string;
 };
@@ -52,18 +52,29 @@ export const NodeChangesSummarySampleStory = ({ beforeYaml, afterYaml }: NodeCha
   <JsonSchemaDiffsViewer {...createJsonSchemaDiffsViewerArgs(beforeYaml, afterYaml)} hideUnchangedNodes={false} />
 )
 
+const NODE_CHANGES_SUMMARY_ARG_TYPES = {
+  ...jsonSchemaDiffSampleReadonlyArgTypes,
+  ...AUTO_SWITCH_ARG_TYPES,
+}
+
 type NodeChangesSummaryCaseStoryResult = {
   name: string;
   args: NodeChangesSummaryStoryArgs;
-  argTypes: typeof jsonSchemaDiffSampleReadonlyArgTypes;
+  argTypes: typeof NODE_CHANGES_SUMMARY_ARG_TYPES;
   render: (args: NodeChangesSummaryStoryArgs) => JSX.Element;
+  play: typeof playAutoSwitch;
 };
 
-/** Renders one node-changes-summary sample case at a specific expand depth. */
+/**
+ * Renders one node-changes-summary sample case at a specific expand depth. On load, the story
+ * switches oneOf/anyOf combiners to a wholly added or removed variant (`playAutoSwitch`); pass
+ * `autoSwitch: false` for a story that shows the combiner's default variant.
+ */
 export const createNodeChangesSummaryCaseStory = (
   caseSlug: string,
   variantName: string,
   expandedDepth: number,
+  autoSwitch: boolean = true,
 ): NodeChangesSummaryCaseStoryResult => {
   const beforeYaml = beforeBySlug[caseSlug]
   const afterYaml = afterBySlug[caseSlug]
@@ -73,34 +84,12 @@ export const createNodeChangesSummaryCaseStory = (
 
   return {
     name: variantName,
-    args: { beforeYaml, afterYaml },
-    argTypes: jsonSchemaDiffSampleReadonlyArgTypes,
+    args: { beforeYaml, afterYaml, autoSwitch },
+    argTypes: NODE_CHANGES_SUMMARY_ARG_TYPES,
     render: (args) => {
       const viewerArgs = createJsonSchemaDiffsViewerArgs(args.beforeYaml, args.afterYaml)
       return <JsonSchemaDiffsViewer {...viewerArgs} expandedDepth={expandedDepth} hideUnchangedNodes={false}/>
     },
+    play: playAutoSwitch,
   }
 }
-
-type NodeChangesSummaryCaseStoryResultWithChangedVariant = NodeChangesSummaryCaseStoryResult & {
-  play: (context: { canvasElement: HTMLElement }) => Promise<void>;
-};
-
-/**
- * Same as `createNodeChangesSummaryCaseStory`, but also switches oneOf/anyOf combiner nodes to
- * their changed variant on mount (recursing into nested combiners until a leaf is reached), so
- * the story opens accented on the change instead of the combiner's default first option. Use
- * for cases that contain a oneOf/anyOf combiner (cases 5-7) — a safe no-op otherwise. Screenshot
- * ITs do not rely on this `play` function (it does not run under the Puppeteer iframe.html
- * harness); they call `switchCombinerNodesToChangedVariant` directly via `page.evaluate`.
- */
-export const createNodeChangesSummaryCaseStoryWithChangedVariant = (
-  caseSlug: string,
-  variantName: string,
-  expandedDepth: number,
-): NodeChangesSummaryCaseStoryResultWithChangedVariant => ({
-  ...createNodeChangesSummaryCaseStory(caseSlug, variantName, expandedDepth),
-  play: async ({ canvasElement }) => {
-    await switchCombinerNodesToChangedVariant(canvasElement)
-  },
-})

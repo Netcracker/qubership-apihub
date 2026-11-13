@@ -1,0 +1,82 @@
+openapi: 3.0.3
+info:
+  title: Orders
+  version: 1.0.0
+paths:
+  /orders/{orderId}:
+    post:
+      x-rate-limit: 100
+      x-audience:
+        visibility: public
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          description: Order identifier.
+          schema:
+            type: string
+        - name: dryRun
+          in: query
+          description: Validate without storing.
+          schema:
+            type: boolean
+            default: false
+        - name: expand
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - lines
+                - customer
+        - name: X-Request-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-Trace
+          in: header
+          schema:
+            type: string
+        - name: session
+          in: cookie
+          required: true
+          schema:
+            type: string
+        - name: theme
+          in: cookie
+          schema:
+            type: string
+            enum:
+              - light
+              - dark
+      requestBody:
+        description: New order state.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - status
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - new
+                    - paid
+                note:
+                  type: string
+      responses:
+        "200":
+          description: ""
+          headers:
+            ETag:
+              schema:
+                type: string
+            X-Rate-Limit-Remaining:
+              description: Requests left in the window.
+              schema:
+                type: integer

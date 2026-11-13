@@ -1,3 +1,4 @@
+import { cn } from '@apihub/utils/common/cn'
 import {
   DiffNodeMeta,
   DiffNodeValue,
@@ -109,7 +110,7 @@ export const GraphPropNodeBody: FC<GraphPropNodeBodyProps> = (props) => {
   const reserveExpanderSpace = isRoot || isOperation
 
   return (
-    <div className="flex flex-col">
+    <div className={cn("flex flex-col")}>
       {!isDisabledHeaderRow && (
         <HeaderRow
           shift={isOperation}
@@ -151,9 +152,9 @@ export const GraphPropNodeBody: FC<GraphPropNodeBodyProps> = (props) => {
 
       {/* Content */}
       {isDetailedDisplayMode && expanded && hasContent && (
-        <div data-name="Body" className="flex flex-col grow">
+        <div data-name="Body" className={cn("flex flex-col grow")}>
           {hasValidationsOrAnnotations && (
-            <div data-name="Content" className="flex flex-col">
+            <div data-name="Content" className={cn("flex flex-col")}>
               {/* TODO 01.11.23 // "shift" is a WA, find way better */}
               <Annotations
                 shift={reserveExpanderSpace}

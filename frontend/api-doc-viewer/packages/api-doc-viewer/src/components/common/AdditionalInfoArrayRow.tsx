@@ -1,3 +1,4 @@
+import { cn } from '@apihub/utils/common/cn'
 import { isDiff, isDiffMetaRecord } from '@netcracker/qubership-apihub-api-data-model'
 import { DiffAction } from '@netcracker/qubership-apihub-api-diff'
 import type { FC, ReactNode } from 'react'
@@ -145,11 +146,11 @@ export const AdditionalInfoArrayRow: FC<AdditionalInfoArrayRowProps> = (props) =
     const { originSide, changedSide } = getLayoutSideFlags(layoutSide)
 
     return (
-      <div className={rowClasses}>
+      <div className={cn(rowClasses)}>
         <LevelIndicator level={level} />
-        {shift && <div className="w-5" />}
-        <div className="flex flex-row flex-wrap items-start gap-2 py-1">
-          <div className="inline text-xs font-normal text-slate-500" style={TITLE_INLINE_STYLES}>
+        {shift && <div className={cn("w-5")} />}
+        <div className={cn("flex flex-row flex-wrap items-start gap-2 py-1")}>
+          <div className={cn("inline text-xs font-normal text-slate-500")} style={TITLE_INLINE_STYLES}>
             {title}:
           </div>
           {items.map((item, index) => {
@@ -184,14 +185,14 @@ export const AdditionalInfoArrayRow: FC<AdditionalInfoArrayRowProps> = (props) =
               !replacedItemDefined ? '' : stringifyItem($itemChange.beforeValue)
 
             let itemView: string | ReactNode = handledItem === ''
-              ? <span className={DEFAULT_SERIES_ITEM_TEXT_COLOR}>{DEFAULT_SERIES_ITEM}</span>
+              ? <span className={cn(DEFAULT_SERIES_ITEM_TEXT_COLOR)}>{DEFAULT_SERIES_ITEM}</span>
               : handledItem
 
             if (isSideBySideDiffsLayoutMode) {
               if (itemRemoved) {
                 if (originSide) {
                   itemView =
-                    <div className={`inline ${diffTypeForItemIncluded ? DEFAULT_MUTED_VALUE_CLASS : ''}`}>
+                    <div className={cn(`inline ${diffTypeForItemIncluded ? DEFAULT_MUTED_VALUE_CLASS : ''}`)}>
                       {itemView}
                     </div>
                 }
@@ -199,13 +200,13 @@ export const AdditionalInfoArrayRow: FC<AdditionalInfoArrayRowProps> = (props) =
               if (itemReplaced) {
                 if (originSide) {
                   itemView =
-                    <div className={`inline ${diffTypeForItemIncluded && isArbitraryValuesSet ? INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.replace] : ''}`}>
+                    <div className={cn(`inline ${diffTypeForItemIncluded && isArbitraryValuesSet ? INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.replace] : ''}`)}>
                       {handledReplacedItem || DEFAULT_SERIES_ITEM}
                     </div>
                 }
                 if (changedSide) {
                   itemView =
-                    <div className={`inline ${diffTypeForItemIncluded && isArbitraryValuesSet ? INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.replace] : ''}`}>
+                    <div className={cn(`inline ${diffTypeForItemIncluded && isArbitraryValuesSet ? INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.replace] : ''}`)}>
                       {itemView}
                     </div>
                 }
@@ -215,16 +216,16 @@ export const AdditionalInfoArrayRow: FC<AdditionalInfoArrayRowProps> = (props) =
             if (isInlineDiffsLayoutMode) {
               if (itemRemoved) {
                 itemView =
-                  <div className={`inline ${diffTypeForItemIncluded ? DEFAULT_MUTED_VALUE_CLASS : ''}`}>
+                  <div className={cn(`inline ${diffTypeForItemIncluded ? DEFAULT_MUTED_VALUE_CLASS : ''}`)}>
                     {itemView}
                   </div>
               }
               if (itemReplaced) {
                 itemView = <>
-                  <div className={`inline mr-1 ${diffTypeForItemIncluded && isArbitraryValuesSet ? INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.replace] : ''}`}>
+                  <div className={cn(`inline mr-1 ${diffTypeForItemIncluded && isArbitraryValuesSet ? INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.replace] : ''}`)}>
                     {handledReplacedItem || DEFAULT_SERIES_ITEM}
                   </div>
-                  <div className={`inline ${diffTypeForItemIncluded && isArbitraryValuesSet ? INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.replace] : ''}`}>
+                  <div className={cn(`inline ${diffTypeForItemIncluded && isArbitraryValuesSet ? INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.replace] : ''}`)}>
                     {itemView}
                   </div>
                 </>
@@ -254,7 +255,7 @@ export const AdditionalInfoArrayRow: FC<AdditionalInfoArrayRowProps> = (props) =
 
   if (isDocumentLayoutMode) {
     return (
-      <div className="flex flex-row">
+      <div className={cn("flex flex-row")}>
         <Content layoutSide={CHANGED_LAYOUT_SIDE} />
       </div>
     )
@@ -263,14 +264,14 @@ export const AdditionalInfoArrayRow: FC<AdditionalInfoArrayRowProps> = (props) =
   if (isInlineDiffsLayoutMode) {
     if (!isNodeChanged && !isWholeRowChangedNaturally && !isWholeRowChangedSynthetically && !isRowContentChanged) {
       return (
-        <div className="flex flex-row">
+        <div className={cn("flex flex-row")}>
           <Content layoutSide={ORIGIN_LAYOUT_SIDE} />
         </div>
       )
     }
 
     return (
-      <div className={`flex flex-row relative ${diffTypeIncluded ? diffBackground : ''}`}>
+      <div className={cn(`flex flex-row relative ${diffTypeIncluded ? diffBackground : ''}`)}>
         {diffType && diffTypeIncluded && <UxDiffFloatingBadge variant={diffType} message={diffTypeCause} />}
         <Content layoutSide={ORIGIN_LAYOUT_SIDE} />
       </div>
@@ -280,7 +281,7 @@ export const AdditionalInfoArrayRow: FC<AdditionalInfoArrayRowProps> = (props) =
   if (isSideBySideDiffsLayoutMode) {
     if (!isNodeChanged && !isWholeRowChangedNaturally && !isWholeRowChangedSynthetically && !isRowContentChanged) {
       return (
-        <div className="flex flex-row">
+        <div className={cn("flex flex-row")}>
           <Content layoutSide={ORIGIN_LAYOUT_SIDE} />
           <Content layoutSide={CHANGED_LAYOUT_SIDE} />
         </div>
@@ -288,7 +289,7 @@ export const AdditionalInfoArrayRow: FC<AdditionalInfoArrayRowProps> = (props) =
     }
 
     return (
-      <div className={`flex flex-row relative ${diffTypeIncluded ? diffBackground : ''}`}>
+      <div className={cn(`flex flex-row relative ${diffTypeIncluded ? diffBackground : ''}`)}>
         {diffType && diffTypeIncluded && <UxDiffFloatingBadge variant={diffType} message={diffTypeCause} />}
         {isRowContentChanged || (isNodeChanged || isWholeRowChangedNaturally || isWholeRowChangedSynthetically) && (rowRemoved || rowReplaced)
           ? <Content layoutSide={ORIGIN_LAYOUT_SIDE} />

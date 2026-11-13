@@ -1,3 +1,4 @@
+import { cn } from '@apihub/utils/common/cn'
 import { DEFAULT_DISPLAY_MODE } from "@apihub/constants/configuration"
 import { DisplayModeContext } from "@apihub/contexts/DisplayModeContext"
 import { LayoutModeContext } from "@apihub/contexts/LayoutModeContext"
@@ -84,7 +85,7 @@ const DdlTableViewerInner: FC<DdlTableViewerProps> =
         <DisplayModeContext.Provider value={displayMode}>
           <LayoutModeContext.Provider value={DOCUMENT_LAYOUT_MODE}>
             <LevelContext.Provider value={0}>
-              <div data-testid="ddl-table-viewer">
+              <div className={cn('root')} data-testid="ddl-table-viewer">
                 <TableNodeViewer node={tableNode} noHeading={noHeading} />
               </div>
             </LevelContext.Provider>

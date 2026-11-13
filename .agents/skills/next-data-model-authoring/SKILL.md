@@ -5,6 +5,9 @@ description: Extend next-data-model tree builders (plain → with-diffs inherita
 
 # Authoring next-data-model
 
+**CI linters:** load the `api-doc-viewer-ci-linters` skill before you write or change a file of this module.
+CI lints every file a pull request touches as a whole: Markdown, CSS, SQL fixtures, and more.
+
 next-data-model is the type-safe successor to `api-data-model`. It builds
 tree structures consumed by api-doc-viewer components. Code lives under
 `packages/next-data-model/src/`.
@@ -603,6 +606,15 @@ still aggregated. The rename sits under `NODE_LEVEL_DIFF_KEY` but is **not** a w
 `agent-packages/next-data-model-authoring/.apm/skills/next-data-model-authoring/json-schema/json-schema-node-key-rename.md`.
 Unit tests: `json-schema-property-rename-diffs.test.ts`.
 
+## Security card content changes (hiding unchanged nodes)
+
+`SecurityRowDiffs.Scheme.isContentChanged(scheme)` (`model/security/tree-with-diffs/row-diffs.ts`) decides
+whether a security scheme card collapses below its title row: whole-node add/remove, any field diff
+except the title-row fields (`name`, `type`, `requiredScopesKind`; `requiredScopes` when the kind is
+`ignored`), or any OAuth flow child diff. Design: `docs/design/openapi/features/hiding-unchanged-nodes.md`;
+unit tests: `tests/unit-tests/openapi-security-hiding-unchanged.test.ts` (cases from
+`@netcracker/qubership-apihub-samples`, merged with `mergeOpenApiDocuments` in `tests/helpers/openapi-fixtures.ts`).
+
 ## Cross-package boundary
 
 View components in `packages/api-doc-viewer` import builders and node types
@@ -625,3 +637,153 @@ Do not extract viewer JSX layout (Phase 2) before visibility rules live in
 next-data-model. Do not add `node-visibility-data/shared/` or per-kind utility
 files — kind managers in `tree/node-visibility-data/kind-*.ts` own protected
 visibility algorithms; with-diffs delegates diff-free rules to plain tree managers.
+
+## OpenAPI row diffs — traps (session lessons)
+
+Design: `docs/design/openapi/features/diffs.md`, `entities/security.md`. Accessors live in
+`model/openapi/tree-with-diffs/row-diffs.ts` (`OpenApiRowDiffs`) and, for the Security section,
+`model/security/tree-with-diffs/row-diffs.ts` (`SecurityRowDiffs`), both on
+`model/abstract/tree-with-diffs/row-diffs-base.ts`; viewers never read `node.diffs`.
+
+- **Selector option borders come from `styles.borderShadowColor`.** `Selector` paints the green / red
+  border of a wholly added / removed option from the node-level diff's `borderShadowColor`. A
+  per-stack `ChangedPropertyMetaData` builder (here `RowChangedPropertyMetaData.build`) must set it
+  for add / remove, or every option of that stack silently loses its border.
+- **A text highlighter is only set for `replace`.** Add / remove styles carry a background, not a
+  `textHighlighterColor`. When a value must still be marked on add / remove (e.g. the scheme type
+  text when a definition appears / disappears), resolve the marker per side in an accessor
+  (`resolveTypeTextHighlight`: replace → styles, add → green on changed, remove → red on origin).
+- **Row-colorizing `replace` diffs must be value-less.** `TextValue` substitutes a **string**
+  `beforeValue` / `afterValue` of the row diff into the shown text. Painting a title row with a field
+  diff (e.g. a scheme `type` replace) would make the origin title read the old field value. Build the
+  synthetic row diff from a copy without values (`deriveDiff(parent, 'replace', undefined, undefined)`
+  → `buildRowReplace`) — the same idea as DDL `asReplaceFlagDiffForTitleRow`. The same holds for
+  an **add / remove** field diff used to paint another row: `TextValue` hides the value on the side
+  where the diff's action says it does not exist (session 2026-10-15: the operation ID row painted with
+  the `deprecated` add lost its text on the origin side). Always derive a value-less `replace`.
+- **Synthetic row diffs on derived rows.** Rows that have no diff object of their own (one scope out
+  of a `scopes` map replace; a scope whose only change is `required`) get diffs derived in the model
+  from the parent diff (type + declaration paths kept); a required-only change gets a yellow
+  `buildRowReplace` so the whole row is painted.
+- **Synthetic field diffs need an allow-list.** The record-driven node-diffs aggregator copies only
+  the kind's value props; a transformer-written synthetic key (e.g. the security toolbar's
+  `alternatives`) must be listed in the synthetic-key table (security: `SECURITY_SYNTHETIC_FIELD_DIFF_KEYS` in
+  `building-service/security/tree-with-diffs/aggregation-tables.ts`; OpenAPI: the private table in
+  `building-service/openapi/tree-with-diffs/aggregation-tables.ts`) and mapped in the field
+  placements (security: `SECURITY_FIELD_PLACEMENTS` in `model/security/tree-with-diffs/placements.ts`;
+  OpenAPI: `OPENAPI_FIELD_PLACEMENTS` in `model/openapi/tree-with-diffs/placements.ts`).
+  OpenAPI, security and JSON Schema model files do not import `building-service` (DDL node visibility
+  and `model/abstract/tree-with-diffs/changed-property-meta-data.ts` still do — keep the boundary
+  for new code).
+- **Diff-type order and severities are model code: `DiffTypeOrder`**
+  (`model/abstract/tree-with-diffs/diff-type-order.ts`: `RANKS`, `compare`, `strongestType`,
+  `strongestDiff`, `strongestChangedPropertyMetaData`, `toSeverity`). Aggregators, row accessors and
+  the viewer utility `compareDiffTypes` all use it; do not add another ordering table (the JSO
+  builder's private copy is a known leftover). A row that is not a tree node (a security scope row)
+  gets its severity in its row accessor with `DiffTypeOrder.toSeverity` — never in React — so its
+  floating badge carries `causedAt` like every aggregated badge (`SecurityScopeRow.severity`).
+- **Security card rows are described once.** The aggregator fills and the card reads the same
+  `SECURITY_FIELD_PLACEMENTS`; the card's `label  value` rows come from `SecuritySchemeCardRows`
+  (`model/security/card-rows.ts`: `schemeProps`, `flowProps`, `parameterNamePlacement`). A new
+  card row = one row definition there plus its placement in the table (`security-card-rows.test.ts`).
+- **A row that may move needs one placement per host, written by the aggregator.** The operation
+  `deprecated` tag sits on the title row, else the operation ID row, else the address row — which
+  depends on view options (`noHeading`) the aggregator cannot see. The severities aggregator writes the
+  merged severity for every candidate (`TitleRow`, `OperationIdRowWithDeprecatedTag`,
+  `AddressRowWithDeprecatedTag`; a field may map to several placements); the model only **picks** the
+  placement (`OpenApiRowDiffs.Operation.resolveOperationIdRowSeverityPlacement`). Rows that are tree
+  nodes take their severities from the aggregators, not from accessors.
+- **Shared row helpers on `NodeLevelRowDiffs`** (`row-diffs-base.ts`): `isFlagOnSide(node, field, side)`
+  for boolean flags (`deprecated`, `required`) and `takeChangesMarkerSummary(node)` for selector
+  option markers (design note V9: inner changes only — response codes, media types and security
+  alternatives alike). Per-spec accessors delegate; viewers never pick summaries themselves.
+- **Layout data lives in `model/abstract/layout/` (spec-neutral) and `model/<spec>/layout/`.**
+  Separator rows, card frame rows, block-edge tones and the planner (`LayoutPlanner`, `BlockEdges`,
+  `LayoutSpacingConfig<TLevel>` / `DEFAULT_LAYOUT_SPACING_CONFIG`; per API type its levels, config
+  extension and `<Spec>BlockEdges extends BlockEdges`, e.g. `OpenApiBlockEdges`, `SecurityBlockEdges`
+  in `model/security/block-edges.ts`) are pure model code over the built tree and the view state passed in (selected nodes, `expanded`). Tones come from
+  the same `OpenApiRowDiffs` accessors that paint the rows; next to a nested JSON Schema / JSO viewer
+  only the owning block's whole add / remove counts. Design: `docs/design/openapi/features/block-separators.md`.
+- **Integer-like object keys enumerate first.** JS lists `200`, `500` before `2XX`, `default` no matter
+  the insertion order, so a canonically sorted object cannot keep response codes in order; sort the
+  tree children instead (`OpenApiTreeBuilder.sortResponseCodes`).
+- **No per-operation state on a transformer.** Facts every step needs (where the operation exists,
+  its whole add / remove, its path rename, frequently read fields) come from
+  `OpenApiDiffsOperationFactsResolver.resolve(context)` — derived from the context argument, cached
+  per context object — never from fields set by `buildSpec` before the base class calls the
+  overrides. Collaborators that need them (the security spec builder) receive the resolver and
+  `OpenApiSectionPresence` as objects, not callbacks into the transformer.
+- **"Which sides" arithmetic goes through `SideContexts`** (`building-service/shared/side-reader.ts`:
+  `NONE`, `BOTH`, `intersect`, `union`); accumulate with `presence = SideContexts.union(presence,
+  next)`, never a mutable `{ before, after }` with `||=`. Replace one record entry with
+  `SideReader.replaceRecordEntry`, not a hand-written copy + `delete` + `Reflect.set`. The side name
+  type is `DiffSide` (`model/abstract/diff-side.ts`, usable from model code).
+
+## Selector options are nested nodes (every API type)
+
+Design: `docs/design/shared/features/selector-options.md` (review F25, 2026-10-30). The options of a
+selector / toolbar are nested nodes of **one complex container**: AsyncAPI section selector and
+`bindings`, OpenAPI `responses` (codes) and `content` (media types), the shared
+`securityAlternatives` (alternatives). Traps:
+
+- **Crawl rule `complex: true` on the container.** The shared hooks then add each crawled option as
+  a nested node; the option's `container` is the complex node and its **`parent` is the container's
+  parent** (`response.parent` = operation). Children of an option are ordinary children again.
+- **A complex node delegates `value()` and `childrenNodes()` to its first (or given) nested node.**
+  Calling either on a container type-checks and returns the first option's data — the bug is
+  silent. Read options with `nestedNodes()` / `findNestedNode(id)`; reorder them with
+  `sortNestedNodes(compare)` (never `.sort()` on an array a getter returns).
+- **A node with its own value keeps it and gets a container child for the choice**: `security`
+  (simple: `isInheritedFromDocument`, `allowsAnonymous`, the title row) → `securityAlternatives`
+  (complex, the toolbar, crawled at the spec's `alternatives` list) → `securityRequirement`.
+- **Records go on the container's crawl value.** The per-option add / remove / rename entries and the
+  selector row's synthetic options diff (`SECURITY_ALTERNATIVES_DIFF_KEY`, …) sit in the container's
+  record (`SecuritySpecDiffsDecorator.writeAlternativesRecord` writes the `alternatives` list's
+  record); the record-driven aggregators take `containerNode ?? parentNode` as the owner, so an
+  option inherits the container's whole add / remove, and the container inherits its parent's. Field
+  keys and severity placements of the selector row belong to the container kind
+  (`SECURITY_FIELD_PLACEMENTS` / `SECURITY_NODE_PLACEMENTS[SECURITY_ALTERNATIVES]`).
+- **Verifying a shape change.** Compare old and new trees with nested nodes flattened into children
+  (and an added container level folded into its parent, parent entries first): ids, kinds, values,
+  diffs, descendant diffs, severities, summaries must match; the render-HTML comparison then shows
+  the viewer reads the new shape. Complex-node values are not comparable (they delegate).
+
+## Security module (OpenAPI + AsyncAPI)
+
+Design: `docs/design/async-api/features/security.md` (structure, deviations),
+`docs/design/openapi/entities/security.md` (rows, diffs). One spec-neutral module, two
+specialisations — extend it, do not fork a per-spec copy.
+
+| Layer | Spec-neutral | Per API type |
+| --- | --- | --- |
+| Kinds / values / alias | `model/security/types/` (`SecurityTreeNodeKinds`, `SECURITY_NODE_VALUE_PROPS`, `SecurityTreeNode<K>`) | spread into `OpenApiTreeNodeKinds` / `AsyncApiTreeNodeKinds`; value maps `T extends SecurityTreeNodeKind ? SecurityTreeNodeValue<T>` |
+| Spec builders | `building-service/security/` — `SecuritySpecBuilder<TInput>` (abstract), `SecuritySpecDiffsDecorator` (composed), `getSecurityCrawlRules()` | `<Spec>SecuritySpecBuilder` + `<Spec>SecuritySpecWithDiffsBuilder extends` it; the spec transformer's `createSecuritySpecBuilder()` is the only with-diffs override |
+| Aggregators | record-driven (`building-service/abstract/.../record-driven-aggregators.ts`) + placement tables (`model/security/tree-with-diffs/placements.ts`) + synthetic keys (`building-service/security/tree-with-diffs/aggregation-tables.ts`) | OpenAPI spreads the tables into `OPENAPI_AGGREGATION_TABLES`; AsyncAPI factories dispatch `isSecurityTreeNodeKind(kind)` to `ASYNC_API_SECURITY_NODE_AGGREGATORS`. Both are one `RecordDrivenAggregatorRegistry<V, K, M, T>` per API type, built from `RecordDrivenAggregationTables<T>` (`SECURITY_AGGREGATION_TABLES` for AsyncAPI) — no per-kind classes, no factories, no casts |
+| Row diffs | `SecurityRowDiffs` | — |
+| Labels / visibility | `SecurityDisplayLabels`, `SecurityNodeVisibility`, `SecurityPresentation` | `model/<spec>/security-presentation.ts` (`*_SECURITY_DISPLAY_LABELS`, `*_SECURITY_NODE_VISIBILITY`, `*_SECURITY_PRESENTATION`) |
+
+Traps (session 2026-10-20):
+
+- **Mapping a merged list drops its diff record.** `apiDiff` stores a list's item add / remove under
+  the list's own symbol key; `list.map(...)` returns an array without it. The AsyncAPI transformer's
+  `withServersSecurity` copies `Object.getOwnPropertySymbols(servers)` onto the mapped list — without
+  it a wholly added server had no diff and its Security section did not inherit the add.
+- **AsyncAPI owners carry no child-section descendant diffs.** The message root and `server` use
+  `KindAny` descendant aggregators that return nothing, so the security builder writes the
+  section's own whole add / remove into the section record under `NODE_LEVEL_DIFF_KEY` (`''`); the
+  record-driven aggregator still inherits a wholly added / removed owner first.
+- **Security lists are compared by index.** An AsyncAPI list item is one alternative of one scheme;
+  item add / remove is an option add / remove (toolbar `alternatives` diff + green / red option),
+  field changes of an item are changes of its scheme. With `firstReferenceKeyProperty` the
+  reference-name symbol is **not** set on security items: names resolve as symbol → `$ref` last
+  segment → deep-equal `components.securitySchemes` entry → `Security scheme <n>`.
+- **One placement per row instance.** AsyncAPI `apiKey` (`API key location`) and `httpApiKey` /
+  OpenAPI `apiKey` (`<Place> parameter name`) share `SecuritySchemeParameterNameRow`: a scheme type
+  has only one of the two rows. A new row that can coexist with an existing one needs its own
+  placement.
+- **Layout edges take any row node.** `BlockEdges` (generic), `SecurityBlockEdges` and
+  `LayoutPlanner.frameRow` accept `RowDiffsNode`, so the AsyncAPI Security section reuses the
+  separator layout of the OpenAPI operation. Keep OpenAPI-only edges (`operationHeaderRow`, bodies,
+  responses) on `OpenApiBlockEdges` over `OpenApiTreeNode`; never import `model/openapi/layout/` from
+  shared or other-API-type code. A shared level goes into `SharedLayoutLevel` and
+  `DEFAULT_LAYOUT_SPACING_CONFIG.levelGap`; an API-type level only into its own config.

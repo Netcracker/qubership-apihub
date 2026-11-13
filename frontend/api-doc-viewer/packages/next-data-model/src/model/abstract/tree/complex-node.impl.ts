@@ -24,9 +24,11 @@ export class ComplexTreeNode<
   public createCycledClone(
     id: NodeId,
     key: NodeKey,
+    kind: K,
     parent: ITreeNode<V, K, M> | null,
+    meta?: M,
   ): ITreeNode<V, K, M> {
-    const result = new ComplexTreeNode<V, K, M>(id, key, this.kind, true, {
+    const result = new ComplexTreeNode<V, K, M>(id, key, kind, true, {
       type: this.type,
       parent: parent,
       container: null,
@@ -34,7 +36,7 @@ export class ComplexTreeNode<
       value: this._value !== null
         ? (typeof this._value === "object" ? { ...(this._value as object) } as V : this._value)
         : null,
-      meta: { ...this._meta },
+      meta: meta ?? { ...this._meta },
     });
     // Share the same children/nested arrays so later additions to the source are visible on the clone.
     result._childrenNodes = this._childrenNodes;

@@ -1,3 +1,4 @@
+import { cn } from "@apihub/utils/common/cn"
 import { SUPPRESS_ROOT_NESTING_INDICATOR_CUSTOMIZATION_OPTIONS } from "@apihub/contexts/CustomizationOptionsContext"
 import { useDisplayMode } from "@apihub/contexts/DisplayModeContext"
 import { LevelContext, useLevelContext } from "@apihub/contexts/LevelContext"
@@ -83,7 +84,7 @@ export const JsoPropertyNodeViewer: FC<JsoPropertyNodeViewerProps> = (props) => 
   // ---
 
   return (
-    <div data-testid='jso-property-node-viewer' className="flex flex-col jso-property">
+    <div data-testid='jso-property-node-viewer' className={cn("flex flex-col jso-property")}>
       <TitleRow
         data-precededby={precededBy}
         value={`${node.key}`}

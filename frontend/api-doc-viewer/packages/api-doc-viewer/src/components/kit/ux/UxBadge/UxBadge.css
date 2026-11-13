@@ -53,19 +53,7 @@
   box-shadow: inset 0 0 0 1px rgb(21 128 61);
 }
 
-/* readOnly, writeOnly */
-.ux-badge_tag-blue {
-  background-color: #00C1FF;
-  border-color: #00C1FF;
-  color: white;
-}
-
-/* deprecated */
-.ux-badge_tag-amber {
-  background-color: #EF9206;
-  box-shadow: inset 0 0 0 1px #EF9206;
-  color: white;
-}
+/* Tag colors (read-only / write-only / deprecated): shared-styles/colors/json-schema.css */
 
 .ux-badge_operation-query {
   background-color: rgb(34 197 94);
@@ -85,39 +73,4 @@
   color: rgb(255 255 255);
 }
 
-/* DDL API */
-
-.ux-badge_ddlapi_primary-key {
-  background-color: #D4AF37;
-  box-shadow: inset 0 0 0 1px #D4AF37;
-  color: white;
-  text-transform: uppercase;
-}
-
-.ux-badge_ddlapi_foreign-key {
-  background-color: #0068ff;
-  box-shadow: inset 0 0 0 1px #0068ff;
-  color: white;
-  text-transform: uppercase;
-}
-
-.ux-badge_ddlapi_unique {
-  background-color: #A02AF4;
-  box-shadow: inset 0 0 0 1px #A02AF4;
-  color: white;
-  text-transform: uppercase;
-}
-
-.ux-badge_ddlapi_not-null {
-  background-color: #F96825;
-  box-shadow: inset 0 0 0 1px #F96825;
-  color: white;
-  text-transform: uppercase;
-}
-
-.ux-badge_ddlapi_generated {
-  background-color: #00BB5B;
-  box-shadow: inset 0 0 0 1px #00BB5B;
-  color: white;
-  text-transform: uppercase;
-}
+/* DDL API badge colors: shared-styles/colors/ddlapi.css */

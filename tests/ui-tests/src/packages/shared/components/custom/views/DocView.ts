@@ -4,6 +4,6 @@ import { BaseComponent } from '@shared/components/base'
 export class DocView extends BaseComponent {
 
   constructor(page: Page) {
-    super(page.locator('operation-view'), 'Doc view')
+    super(page.getByTestId('openapi-operation-viewer'), 'Doc view')
   }
 }

@@ -4,14 +4,16 @@ import { JsonSchemaTreeNodeWithDiffs } from "@netcracker/qubership-apihub-next-d
 import { FC, Fragment, useMemo } from "react"
 import { PrecededBy } from "../../shared-components/WithPrecededByProps"
 import { JsonSchemaNodeViewerWithDiffs } from "../JsonSchemaNodeViewerWithDiffs"
-import { useUnchangedBlocksContext } from "../UnchangedBlocksContext"
+import { useUnchangedBlocksContext } from "@apihub/components/shared-components/ShowUnchangedRow/UnchangedBlocksContext"
 
 export type SchemaNodeChildrenListWithDiffsProps = {
   children: readonly JsonSchemaTreeNodeWithDiffs[]
+  /** `data-precededby` of the first visible node row (see `JsonSchemaDiffsViewerProps.firstRowPrecededBy`). */
+  firstRowPrecededBy?: PrecededBy
 }
 
 export const SchemaNodeChildrenListWithDiffs: FC<SchemaNodeChildrenListWithDiffsProps> = (props) => {
-  const { children } = props
+  const { children, firstRowPrecededBy } = props
   const { hideUnchangedNodes, revealedBlockIds, revealBlock } = useUnchangedBlocksContext()
 
   const { visibleSequence } = useMemo(
@@ -32,7 +34,7 @@ export const SchemaNodeChildrenListWithDiffs: FC<SchemaNodeChildrenListWithDiffs
                   .map((blockChild, blockChildIndex) => (
                     <JsonSchemaNodeViewerWithDiffs
                       key={blockChild.id}
-                      data-precededby={PrecededBy.JSON_SCHEMA_PROPERTY}
+                      data-precededby={visibleIndex === 0 && blockChildIndex === 0 ? firstRowPrecededBy ?? PrecededBy.JSON_SCHEMA_PROPERTY : PrecededBy.JSON_SCHEMA_PROPERTY}
                       node={blockChild}
                       isLastInList={isLastInList && blockChildIndex === item.blockSize - 1}
                     />
@@ -54,7 +56,7 @@ export const SchemaNodeChildrenListWithDiffs: FC<SchemaNodeChildrenListWithDiffs
         return (
           <JsonSchemaNodeViewerWithDiffs
             key={item.node.id}
-            data-precededby={PrecededBy.JSON_SCHEMA_PROPERTY}
+            data-precededby={visibleIndex === 0 ? firstRowPrecededBy ?? PrecededBy.JSON_SCHEMA_PROPERTY : PrecededBy.JSON_SCHEMA_PROPERTY}
             node={item.node}
             isLastInList={isLastInList}
           />

@@ -1,0 +1,21 @@
+openapi: 3.0.3
+info:
+  title: Orders
+  version: 1.0.0
+paths:
+  /orders:
+    post:
+      responses:
+        "200":
+          description: ""
+          headers:
+            ETag:
+              content:
+                application/json; charset=utf-8:
+                  schema:
+                    type: boolean
+                    description: Boolean flag.
+            X-Request-Id:
+              schema:
+                type: string
+                format: uuid

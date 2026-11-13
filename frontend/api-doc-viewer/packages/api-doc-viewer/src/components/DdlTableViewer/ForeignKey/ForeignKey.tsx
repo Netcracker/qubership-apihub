@@ -1,3 +1,4 @@
+import { cn } from '@apihub/utils/common/cn'
 import { DdlApiForeignKeyTarget } from "@netcracker/qubership-apihub-next-data-model/model/ddlapi/tree/node-value"
 import { HighlightVariant } from "@netcracker/qubership-apihub-next-data-model/model/abstract/tree-with-diffs/tree-node.interface"
 import { DiffsClassesBuilder } from "@netcracker/qubership-apihub-next-data-model/building-service/abstract/tree-with-diffs/node-diffs-data/utilities"
@@ -33,7 +34,7 @@ export const ForeignKey: FC<ForeignKeyProps> = memo<ForeignKeyProps>(props => {
   )
 
   const link = (
-    <NavigationLinkComponent href={href} className={linkClassName}>
+    <NavigationLinkComponent href={href} className={cn(linkClassName)}>
       {formatForeignKeyTarget(target)}
     </NavigationLinkComponent>
   )
@@ -43,7 +44,7 @@ export const ForeignKey: FC<ForeignKeyProps> = memo<ForeignKeyProps>(props => {
   }
 
   return (
-    <div className="ddlapi-foreign-key inline-flex flex-row items-center gap-1">
+    <div className={cn("ddlapi-foreign-key inline-flex flex-row items-center gap-1")}>
       <UxBadge text="FK" colorSchema={DDL_API_FOREIGN_KEY_BADGE_COLOR_SCHEMA} inline />
       {link}
     </div>

@@ -34,8 +34,8 @@
     "build": "pnpm run build:dist",
     "build:dist": "tsc && vite build",
     "build:showcase": "pnpm run generate-stories && storybook build -o ../../dist-showcase --disable-telemetry",
-    "generate-stories": "node bin/generate-compatibility-suite-stories.mjs && node bin/generate-ddl-suite-stories.mjs",
-    "generate-tests": "node bin/generate-compatibility-suite-tests.mjs && node bin/generate-ddl-suite-tests.mjs",
+    "generate-stories": "node bin/generate-compatibility-suite-stories.mjs",
+    "generate-tests": "node bin/generate-compatibility-suite-tests.mjs",
     "development:storybook": "pnpm run generate-stories && storybook dev -p 9099",
     "development:local-server:static": "pnpm run build:showcase && ws -p 9009 -d ../../dist-showcase --spa index.html --static.maxage 3600",
     "screenshot-test": "start-server-and-test development:local-server:static http://localhost:9009 \"pnpm run generate-tests && jest --maxWorkers 4 -c .config/it/it-test-docker.jest.config.cjs\"",
@@ -43,7 +43,8 @@
     "regenerate-screenshots": "start-server-and-test development:local-server:static http://localhost:9009 \"pnpm run generate-tests && jest --maxWorkers 4 --updateSnapshot -c .config/it/it-test-docker.jest.config.cjs\"",
     "regenerate-screenshots:ci-legacy": "start-server-and-test development:local-server:static http://localhost:9009 \"pnpm run generate-tests && jest --maxWorkers 4 --updateSnapshot -c .config/it/it-test.jest.config.cjs\"",
     "screenshot-test-single-suite": "node bin/run-screenshot-test-suite.mjs test",
-    "regenerate-screenshots-single-suite": "node bin/run-screenshot-test-suite.mjs regenerate"
+    "regenerate-screenshots-single-suite": "node bin/run-screenshot-test-suite.mjs regenerate",
+    "compare-screenshot-baselines": "node bin/compare-screenshot-baselines.mjs"
   },
   "dependencies": {
     "@netcracker/qubership-apihub-api-diff": "workspace:^",
@@ -90,6 +91,7 @@
     "jest-puppeteer": "11.0.0",
     "jest-snapshot": "30.4.1",
     "local-web-server": "5.3.0",
+    "postcss-selector-parser": "6.1.4",
     "puppeteer": "24.42.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
@@ -100,6 +102,10 @@
     "typescript": "catalog:",
     "vite": "catalog:",
     "vite-plugin-dts": "catalog:"
+  },
+  "peerDependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
   },
   "nx": {
     "name": "api-doc-viewer"

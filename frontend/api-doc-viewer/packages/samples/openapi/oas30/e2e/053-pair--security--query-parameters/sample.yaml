@@ -1,0 +1,44 @@
+openapi: 3.0.3
+info:
+  title: Orders
+  version: 1.0.0
+paths:
+  /orders:
+    post:
+      security:
+        - oauth:
+            - orders:write
+        - api_key: []
+      parameters:
+        - name: dryRun
+          in: query
+          description: Validate without storing.
+          schema:
+            type: boolean
+            default: false
+        - name: expand
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - lines
+                - customer
+      responses:
+        "200":
+          description: ""
+components:
+  securitySchemes:
+    oauth:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: https://auth.example.com/token
+          scopes:
+            orders:read: Read orders
+            orders:write: Modify orders
+    api_key:
+      type: apiKey
+      in: header
+      name: X-API-Key

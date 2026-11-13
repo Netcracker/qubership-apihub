@@ -25,7 +25,7 @@
  * a historical inaccuracy rather than inventing one - React 17's types carried these same
  * two props and they never fired there either.
  *
- * It lives here, in `elements`, rather than in elements-core and diff-elements-core where
+ * It lives here, in `elements`, rather than in elements-core where
  * the affected JSX is, because a module augmentation is global to the *program* and this is
  * the only program that is type-checked: `elements` is the one package with a `type-check`
  * script, and it pulls the siblings in through the root tsconfig's `paths`. Every webpack

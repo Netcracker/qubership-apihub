@@ -200,7 +200,7 @@ const Item = React.memo<{ item: OperationNode }>(({ item }) => {
               </TabPanel>
               <TabPanel>
                 <TryItWithRequestSamples
-                  httpOperation={item.data as any} /* TODO: Think about types when came back to AsyncAPI support */
+                  httpOperation={item.data}
                   tryItCredentialsPolicy={tryItCredentialsPolicy}
                   corsProxy={corsProxy}
                 />

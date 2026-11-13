@@ -31,11 +31,11 @@ const COMPONENTS_WITH_MESSAGES = {
   }
 }
 
-const SINGLE_MESSAGE_USAGE = {
+const singleMessageUsage = (channel: string) => ({
   messages: [
-    { $ref: "#/components/messages/test-message" }
+    { $ref: `#/channels/${channel}/messages/test-message` }
   ]
-}
+})
 
 describe('Feature: Reference Name Property', () => {
   simplifyConsole()
@@ -43,6 +43,7 @@ describe('Feature: Reference Name Property', () => {
   it('should resolve operation node key based on the reference name property', () => {
     const source = {
       asyncapi: '3.0.0',
+      info: { title: 'reference-name-property-test', version: '1.0.0' },
       operations: {
         'test-operation': {
           $ref: '#/components/operations/test-operation',
@@ -51,6 +52,9 @@ describe('Feature: Reference Name Property', () => {
       channels: {
         'test-channel': {
           title: 'Test channel',
+          messages: {
+            'test-message': { $ref: "#/components/messages/test-message" }
+          },
         },
       },
       components: {
@@ -61,7 +65,7 @@ describe('Feature: Reference Name Property', () => {
             channel: {
               $ref: '#/channels/test-channel',
             },
-            ...SINGLE_MESSAGE_USAGE,
+            ...singleMessageUsage('test-channel'),
           },
         }
       },
@@ -81,6 +85,7 @@ describe('Feature: Reference Name Property', () => {
   it('should resolve operation node key based on the id property if reference name property is not present', () => {
     const source = {
       asyncapi: '3.0.0',
+      info: { title: 'reference-name-property-test', version: '1.0.0' },
       operations: {
         'test-operation': {
           title: 'Test operation',
@@ -88,12 +93,15 @@ describe('Feature: Reference Name Property', () => {
           channel: {
             $ref: '#/channels/test-channel',
           },
-          ...SINGLE_MESSAGE_USAGE,
+          ...singleMessageUsage('test-channel'),
         },
       },
       channels: {
         'test-channel': {
           title: 'Test channel',
+          messages: {
+            'test-message': { $ref: "#/components/messages/test-message" }
+          },
         },
       },
       ...COMPONENTS_WITH_MESSAGES,
@@ -113,6 +121,7 @@ describe('Feature: Reference Name Property', () => {
   it('should resolve channel node key based on the reference name property', () => {
     const source = {
       asyncapi: '3.0.0',
+      info: { title: 'reference-name-property-test', version: '1.0.0' },
       operations: {
         'test-operation': {
           title: 'Test operation',
@@ -120,12 +129,15 @@ describe('Feature: Reference Name Property', () => {
           channel: {
             $ref: '#/channels/test-channel',
           },
-          ...SINGLE_MESSAGE_USAGE,
+          ...singleMessageUsage('test-channel'),
         },
       },
       channels: {
         'test-channel': {
           description: 'Test channel without title',
+          messages: {
+            'test-message': { $ref: "#/components/messages/test-message" }
+          },
         },
       },
       ...COMPONENTS_WITH_MESSAGES,
@@ -146,16 +158,17 @@ describe('Feature: Reference Name Property', () => {
   it('should resolve message node key based on the reference name property', () => {
     const source = {
       asyncapi: '3.0.0',
+      info: { title: 'reference-name-property-test', version: '1.0.0' },
       operations: {
         'test-operation': {
           title: 'Test operation',
           action: 'send',
           messages: [
             {
-              $ref: '#/messages/test-message-1',
+              $ref: '#/channels/test-channel/messages/test-message-1',
             },
             {
-              $ref: '#/messages/test-message-2',
+              $ref: '#/channels/test-channel/messages/test-message-2',
             },
           ],
           channel: {
@@ -166,14 +179,14 @@ describe('Feature: Reference Name Property', () => {
       channels: {
         'test-channel': {
           title: 'Test channel',
-        },
-      },
-      messages: {
-        'test-message-1': {
-          description: 'Test message 1',
-        },
-        'test-message-2': {
-          description: 'Test message 2',
+          messages: {
+            'test-message-1': {
+              description: 'Test message 1',
+            },
+            'test-message-2': {
+              description: 'Test message 2',
+            },
+          },
         },
       },
     }

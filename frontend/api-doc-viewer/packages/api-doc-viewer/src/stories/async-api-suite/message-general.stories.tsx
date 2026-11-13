@@ -1,25 +1,30 @@
 // It's necessary because storybook doesn't render nested stories without this empty story
 
-import { AsyncApiOperationViewer } from "@apihub/components/AsyncApiOperationViewer/AsyncApiOperationViewer";
-import { userEvent, within } from "storybook/test";
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { TEST_REFERENCE_NAME_PROPERTY } from "./shared-test-data";
 import { prepareAsyncApiDocument } from "../preprocess";
+import { AUTO_SWITCH_ARG_TYPES, AUTO_SWITCH_DEFAULT_ARGS, autoSwitchParameters, playAutoSwitch } from "../shared/auto-switch";
+import { AsyncApiSuiteStory } from "./AsyncApiSuiteStory";
 
 // eslint-disable-next-line storybook/story-exports
 const meta = {
   title: 'Async API Suite/Message',
-  component: AsyncApiOperationViewer,
+  component: AsyncApiSuiteStory,
   parameters: {},
   argTypes: {
     source: {
       control: 'object'
-    }
+    },
+    ...AUTO_SWITCH_ARG_TYPES,
   },
   args: {
-    source: {}
-  }
-} satisfies Meta<typeof AsyncApiOperationViewer>;
+    source: {},
+    ...AUTO_SWITCH_DEFAULT_ARGS,
+  },
+  play: playAutoSwitch,
+} satisfies Meta<typeof AsyncApiSuiteStory>;
+
+const SECTION_TEST_ID = "message-content";
 
 export default meta;
 
@@ -81,11 +86,7 @@ const createStory = (
     referenceNamePropertyKey: TEST_REFERENCE_NAME_PROPERTY,
     noHeading: options.noHeading ?? false,
   },
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    const buttons = await canvas.findAllByTestId("message-content");
-    await userEvent.click(buttons[0]);
-  },
+  parameters: autoSwitchParameters([SECTION_TEST_ID]),
 });
 
 export const MessageIdSend: Story = createStory(createSource({

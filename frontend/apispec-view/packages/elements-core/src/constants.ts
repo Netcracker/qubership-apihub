@@ -1,4 +1,3 @@
-import { JsonSchemaViewerProps } from '@netcracker/qubership-apihub-api-doc-viewer';
 import {
   faBookOpen,
   faCloud,
@@ -64,11 +63,6 @@ export const HttpMethodColors = {
   put: 'warning',
   patch: 'warning',
   delete: 'danger',
-} as const;
-
-export const AsyncMethodColors = {
-  publish: 'warning',
-  subscribe: 'primary',
 } as const;
 
 export const HttpCodeColor = {
@@ -156,9 +150,4 @@ export const CodeToIntentMap: Record<number, IntentVals> = {
   2: 'success',
   4: 'warning',
   5: 'danger',
-};
-
-// Replacement for legacy `overriddenKind="parameters"`: renders root object/array properties as a flat top-level list
-export const JSON_SCHEMA_VIEWER_CUSTOMIZATION_OPTIONS: JsonSchemaViewerProps['customizationOptions'] = {
-  suppressRootNestingIndicator: true,
 };

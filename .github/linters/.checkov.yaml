@@ -41,6 +41,8 @@ skip-path:
 - frontend/api-processor/test
 - frontend/api-diff/test
 - frontend/api-unifier/test
+# Viewer fixtures: security scheme variants (apiKey in header / query / cookie, no servers) that CKV_OPENAPI_20 flags
+- frontend/api-doc-viewer/packages/samples
 - backend/portal-backend/tests/api/fixtures
 - tests/ui-tests/resources
 - tests/postman-collections/working-directory

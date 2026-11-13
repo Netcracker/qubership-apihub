@@ -6,10 +6,8 @@ import type {
 } from '@netcracker/qubership-apihub-http-spec/oas';
 import { transformOas2Operation, transformOas2Service } from '@netcracker/qubership-apihub-http-spec/oas2';
 import { transformOas3Operation, transformOas3Service } from '@netcracker/qubership-apihub-http-spec/oas3';
-import { transformOas3WithMetaOperation, transformOas3WithMetaService } from '@netcracker/qubership-apihub-http-spec/oas3WithMeta';
 import { encodePointerFragment, pointerToPath } from '@stoplight/json';
 import { IHttpService, NodeType } from '@stoplight/types';
-import { selfDiffMetaKey } from '@netcracker/qubership-apihub-apispec-view-diff-block';
 import { get, isObject, last } from 'lodash';
 import { OpenAPIObject } from 'openapi3-ts';
 import { Spec } from 'swagger-schema-official';
@@ -42,34 +40,12 @@ export function transformOasToServiceNode(apiDescriptionDocument: unknown) {
       oas3SourceMap,
       transformService,
       transformOperation,
-      null
     );
   }
   if (isOas3(apiDescriptionDocument)) {
-    return computeServiceNode(apiDescriptionDocument, oas3SourceMap, transformService, transformOperation, null);
+    return computeServiceNode(apiDescriptionDocument, oas3SourceMap, transformService, transformOperation);
   } else if (isOas2(apiDescriptionDocument)) {
-    return computeServiceNode(apiDescriptionDocument, oas2SourceMap, transformOas2Service, transformOas2Operation, null);
-  }
-
-  return null;
-}
-
-export function transformOasToServiceNodeWithDiffMeta(apiDescriptionDocument: unknown, diffMetaKey: symbol) {
-  const transformService = transformOas3WithMetaService;
-  const transformOperation = transformOas3WithMetaOperation;
-  if (isOas31(apiDescriptionDocument)) {
-    return computeServiceNode(
-      { ...apiDescriptionDocument, jsonSchemaDialect: 'http://json-schema.org/draft-07/schema#' },
-      oas3SourceMap,
-      transformService,
-      transformOperation,
-      diffMetaKey,
-    );
-  }
-  if (isOas3(apiDescriptionDocument)) {
-    return computeServiceNode(apiDescriptionDocument, oas3SourceMap, transformService, transformOperation, diffMetaKey);
-  } else if (isOas2(apiDescriptionDocument)) {
-    return computeServiceNode(apiDescriptionDocument, oas2SourceMap, transformOas2Service, transformOas2Operation, diffMetaKey);
+    return computeServiceNode(apiDescriptionDocument, oas2SourceMap, transformOas2Service, transformOas2Operation);
   }
 
   return null;
@@ -80,19 +56,15 @@ function computeServiceNode(
   map: ISourceNodeMap[],
   transformService: Oas2HttpServiceTransformer | Oas3HttpServiceTransformer,
   transformOperation: Oas2HttpOperationTransformer | Oas3HttpOperationTransformer,
-  diffMetaKey: symbol | null
 ) {
-  const serviceDocument = transformService({
-    document,
-    keepProperties: diffMetaKey ? [diffMetaKey.toString()] : undefined,
-  }) as IHttpService;
+  const serviceDocument = transformService({ document }) as IHttpService;
   const serviceNode: ServiceNode = {
     type: NodeType.HttpService,
     uri: '/',
     name: serviceDocument.name,
     data: serviceDocument,
     tags: serviceDocument.tags?.map(tag => tag.name) || [],
-    children: computeChildNodes(document, document, diffMetaKey, map, transformOperation),
+    children: computeChildNodes(document, document, map, transformOperation),
   };
 
   return serviceNode;
@@ -101,7 +73,6 @@ function computeServiceNode(
 function computeChildNodes(
   document: Spec | OpenAPIObject,
   data: unknown,
-  diffMetaKey: symbol | null,
   map: ISourceNodeMap[],
   transformer: Oas2HttpOperationTransformer | Oas3HttpOperationTransformer,
   parentUri: string = '',
@@ -122,33 +93,18 @@ function computeChildNodes(
       if (match.type === NodeTypes.Operation && jsonPath.length === 3) {
         const path = String(jsonPath[1]);
         const method = String(jsonPath[2]);
-        const operationDocument = transformer({
-          document,
-          path,
-          method,
-          keepProperties: diffMetaKey ? [diffMetaKey.toString()] : undefined,
-        });
+        const operationDocument = transformer({ document, path, method });
 
-        const pathMeta = diffMetaKey ? (document.paths as any)?.[diffMetaKey]?.[path] : undefined;
-        const meta = pathMeta && {
-          [selfDiffMetaKey]: pathMeta,
-        };
         nodes.push({
           type: NodeType.HttpOperation,
           uri: uri,
           data: operationDocument,
           name: operationDocument.summary || operationDocument.iid || operationDocument.path,
           tags: operationDocument.tags?.map(tag => tag.name) || [],
-          ...meta,
         });
       } else if (match.type === NodeTypes.Model) {
         const schemaDocument = get(document, jsonPath);
         const schemaName = schemaDocument.title || last(uri.split('/')) || '';
-        const schemas = !isOas2(document) ? document?.components?.schemas : document.schemes;
-        const schemaElementMeta = diffMetaKey ? schemas?.[diffMetaKey]?.[schemaName] : undefined;
-        const meta = schemaElementMeta && {
-          [selfDiffMetaKey]: schemaElementMeta,
-        };
 
         nodes.push({
           type: NodeType.Model,
@@ -156,12 +112,11 @@ function computeChildNodes(
           data: schemaDocument,
           name: schemaName,
           tags: schemaDocument['x-tags'] || [],
-          ...meta,
         });
       }
 
       if (match.children) {
-        nodes.push(...computeChildNodes(document, data[key], diffMetaKey, match.children, transformer, uri));
+        nodes.push(...computeChildNodes(document, data[key], match.children, transformer, uri));
       }
     }
   }

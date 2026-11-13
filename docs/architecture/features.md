@@ -153,10 +153,10 @@
 
 ### 4.3 Interactive Components
 
-- **`<apispec-view>`**: Full API documentation viewer (OpenAPI 2/3, AsyncAPI) with sidebar navigation; AsyncAPI
-  operation tables use dedicated cells where needed (e.g. `AsyncApiTableCell`)
-- **`<operation-view>`**: Single operation detail viewer
-- **`<diff-operation-view>`**: Side-by-side operation diff with change severity filtering
+- **`<apispec-view>`**: Full OpenAPI document viewer (OpenAPI 2.0, 3.0, 3.1) with sidebar navigation and Try It; the
+  Portal document preview and the specification dialog use it, and the "Copy page template" snippet embeds it
+- **`api-doc-viewer` viewers** (React components): single operations and their comparisons for OpenAPI, AsyncAPI,
+  GraphQL, and DDL, and JSON Schema documents, with change severity filtering
 - **`<rest-playground>`**: Interactive REST API testing from OpenAPI specs (parameter auto-population, auth panel,
   response viewer)
 - **`<rest-examples>`**: Request/response example display from API specs

@@ -301,7 +301,7 @@ function cherryPickOperation(options: CherryPickOperationOptions): OpenAPIV3.Doc
     [comparedOperationMethod]: foundPathObject?.[comparedOperationMethod],
   }
 
-  // Leave only change for operation with necessary path because ASV takes first item and does not know which operation is there
+  // Leave only the whole-path / whole-method diff of the cherry-picked operation, so the merged document stays consistent
   if (DIFF_META_KEY in paths && isObject(paths[DIFF_META_KEY])) {
     const whollyChangedPaths: Record<string, unknown> = paths[DIFF_META_KEY]
     const clonedWhollyChangedPaths: Record<string, unknown> = {}
