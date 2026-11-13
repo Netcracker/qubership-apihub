@@ -65,6 +65,9 @@ func (a authorizationServiceImpl) HasPublishPackagePermission(ctx context.Contex
 	if err != nil {
 		return false, err
 	}
+	if roles == nil {
+		return false, nil
+	}
 	for _, role := range roles.Roles {
 		for _, perm := range role.Permissions {
 			if perm == view.ManageDraftVersionPermission {

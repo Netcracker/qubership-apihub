@@ -86,11 +86,19 @@ func (a apihubClientImpl) GetApiKeyByKey(apiKey string) (*view.ApihubApiKeyView,
 	req.SetHeader("api-key", apiKey)
 
 	resp, err := req.Get(fmt.Sprintf("%s/api/v2/auth/apiKey", a.apihubUrl))
-	if err != nil || resp.StatusCode() != http.StatusOK {
+	if err != nil {
+		return nil, fmt.Errorf("failed to get api key: %w", err)
+	}
+	if resp.StatusCode() != http.StatusOK {
 		if resp.StatusCode() == http.StatusNotFound {
 			return nil, nil
 		}
-		return nil, err
+		if resp.StatusCode() == http.StatusUnauthorized || resp.StatusCode() == http.StatusForbidden {
+			// an unknown or rejected key means invalid credentials, not a service failure
+			return nil, nil
+		}
+		log.Errorf("Failed to get api key: unexpected status code %d", resp.StatusCode())
+		return nil, fmt.Errorf("failed to get api key: status code %d", resp.StatusCode())
 	}
 
 	var apiKeyView view.ApihubApiKeyView
@@ -129,15 +137,17 @@ func checkCustomError(resp *resty.Response) error {
 func (a apihubClientImpl) GetRsaPublicKey(ctx context.Context) (*view.PublicKey, error) {
 	req := a.makeRequest(ctx)
 	resp, err := req.Get(fmt.Sprintf("%s/api/v2/auth/publicKey", a.apihubUrl))
-	if err != nil || resp.StatusCode() != http.StatusOK {
+	if err != nil {
+		return nil, fmt.Errorf("failed to get rsa public key: %w", err)
+	}
+	if resp.StatusCode() != http.StatusOK {
 		if authErr := checkUnauthorized(resp); authErr != nil {
 			return nil, authErr
 		}
-		// resp could be nil here - in this case the next row will fall to panic()
 		if resp.StatusCode() == http.StatusNotFound {
 			return nil, nil
 		}
-		return nil, err
+		return nil, fmt.Errorf("failed to get rsa public key: status code %d", resp.StatusCode())
 	}
 
 	publicKey := view.PublicKey{
@@ -511,11 +521,15 @@ func (a apihubClientImpl) CheckAuthToken(ctx context.Context, token string) (boo
 	req.SetHeader("Cookie", fmt.Sprintf("%s=%s", view.AccessTokenCookieName, token))
 
 	resp, err := req.Get(fmt.Sprintf("%s/api/v1/auth/token", a.apihubUrl))
-	if err != nil || resp.StatusCode() != http.StatusOK {
+	if err != nil {
+		return false, fmt.Errorf("failed to check auth token: %w", err)
+	}
+	if resp.StatusCode() != http.StatusOK {
 		if authErr := checkUnauthorized(resp); authErr != nil {
 			return false, nil
 		}
-		return false, err
+		log.Errorf("Failed to check auth token: unexpected status code %d", resp.StatusCode())
+		return false, fmt.Errorf("failed to check auth token: status code %d", resp.StatusCode())
 	}
 	return true, nil
 }
@@ -532,11 +546,18 @@ func (a apihubClientImpl) GetUserByPAT(ctx context.Context, token string) (*view
 	req.SetHeader("X-Personal-Access-Token", token)
 
 	resp, err := req.Get(fmt.Sprintf("%s/api/v1/user", a.apihubUrl))
-	if err != nil || resp.StatusCode() != http.StatusOK {
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user by PAT: %w", err)
+	}
+	if resp.StatusCode() != http.StatusOK {
+		if resp.StatusCode() == http.StatusNotFound {
+			return nil, nil
+		}
 		if authErr := checkUnauthorized(resp); authErr != nil {
 			return nil, nil
 		}
-		return nil, err
+		log.Errorf("Failed to get user by PAT: unexpected status code %d", resp.StatusCode())
+		return nil, fmt.Errorf("failed to get user by PAT: status code %d", resp.StatusCode())
 	}
 
 	var user view.User
@@ -560,11 +581,18 @@ func (a apihubClientImpl) GetPatByPAT(ctx context.Context, token string) (*view.
 	req.SetHeader("X-Personal-Access-Token", token)
 
 	resp, err := req.Get(fmt.Sprintf("%s/api/v2/auth/pat", a.apihubUrl))
-	if err != nil || resp.StatusCode() != http.StatusOK {
+	if err != nil {
+		return nil, fmt.Errorf("failed to get pat by token: %w", err)
+	}
+	if resp.StatusCode() != http.StatusOK {
+		if resp.StatusCode() == http.StatusNotFound {
+			return nil, nil
+		}
 		if authErr := checkUnauthorized(resp); authErr != nil {
 			return nil, nil
 		}
-		return nil, err
+		log.Errorf("Failed to get pat by token: unexpected status code %d", resp.StatusCode())
+		return nil, fmt.Errorf("failed to get pat by token: status code %d", resp.StatusCode())
 	}
 
 	var pat view.PersonalAccessTokenExtAuthView
@@ -580,11 +608,18 @@ func (a apihubClientImpl) GetAvailableRoles(ctx context.Context, packageId strin
 	req := a.makeRequest(ctx)
 
 	resp, err := req.Get(fmt.Sprintf("%s/api/v2/packages/%s/availableRoles", a.apihubUrl, packageId))
-	if err != nil || resp.StatusCode() != http.StatusOK {
+	if err != nil {
+		return nil, fmt.Errorf("failed to get available roles for package '%s': %w", packageId, err)
+	}
+	if resp.StatusCode() != http.StatusOK {
+		if resp.StatusCode() == http.StatusNotFound {
+			// APIHUB answers 404 for a package that does not exist or is out of the api key scope
+			return nil, nil
+		}
 		if authErr := checkUnauthorized(resp); authErr != nil {
 			return nil, nil
 		}
-		return nil, err
+		return nil, fmt.Errorf("failed to get available roles for package '%s': status code %d", packageId, resp.StatusCode())
 	}
 
 	var roles view.PackageRoles

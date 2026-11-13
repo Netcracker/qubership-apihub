@@ -73,7 +73,15 @@ func (n *namespaceSecurityServiceImpl) StartAuthSecurityCheckProcess(ctx context
 
 	namespaces, err := n.agentClient.GetNamespaces(ctx, agent.AgentUrl)
 	if err != nil {
-		return "", fmt.Errorf("failed to list namespaces for agent (agentUrl = '%v')", req.AgentId)
+		return "", fmt.Errorf("failed to list namespaces for agent '%s' (agentUrl = '%s'): %s", req.AgentId, agent.AgentUrl, err.Error())
+	}
+	if namespaces == nil {
+		return "", &exception.CustomError{
+			Status:  http.StatusNotFound,
+			Code:    exception.NamespaceNotFound,
+			Message: exception.NamespaceNotFoundMsg,
+			Params:  map[string]interface{}{"namespace": req.Namespace, "agentId": req.AgentId},
+		}
 	}
 	namespaceExists := false
 	for _, agentNamespace := range namespaces.Namespaces {
