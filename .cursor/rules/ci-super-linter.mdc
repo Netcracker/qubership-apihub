@@ -33,6 +33,40 @@ changing skills or rules.
 - Only one H1 per file (**MD025**); use `##` for main sections in long design docs.
 - Tables are exempt from line-length in `.markdownlint.json`; still keep rows readable.
 
+### Markdown tables (common PR failure in `docs/design/`)
+
+**markdownlint does not wrap table cells.** A line break inside a row breaks the table and fails
+**MD055** / **MD056** (wrong pipes, wrong column count). This is the usual cause of red
+`--> Linted: MARKDOWN` on design PRs.
+
+| Rule | Mistake | Fix |
+| :--- | :--- | :--- |
+| MD055 / MD056 | One logical row split across two physical lines (often after a long Figma URL or definition) | Put the **entire** row on **one** line: leading `|`, every column, trailing `|`. |
+| MD056 | A table row with only description text and no mockup / API columns | Add missing cells: `| — | TBD |` for use-case tables (3 columns). |
+| MD037 | Required marker `**Field** *` (space between `**` and `*`) | Use `**Field** (required)` like other design docs, not asterisk-after-bold. |
+| MD036 | Standalone `**TBD**` under a `##` heading | Use normal prose, e.g. `Backend contracts: TBD (low-level design pending).` |
+
+**Wrong** (two lines = two broken rows):
+
+```markdown
+| Library version | A Maven version published in APIHUB with status Draft or Release, and API diff
+  vs the selected **Previous version**. |
+```
+
+**Right** (one line, same meaning):
+
+```markdown
+| Library version | A Maven version published in APIHUB with status Draft or Release, and API diff vs the selected **Previous version**. |
+```
+
+Before push, on changed design Markdown:
+
+```bash
+npx markdownlint-cli --config .github/linters/.markdownlint.json path/to/file.md
+```
+
+Paragraphs and bullet lists **may** wrap across lines; **pipe tables may not.**
+
 ## Natural language (textlint)
 
 - Follow `.github/linters/.textlintrc` terminology (e.g. `Markdown`, `OpenAPI`, `predefined`,

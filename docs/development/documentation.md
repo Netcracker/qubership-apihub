@@ -121,6 +121,9 @@ push.
 npx -y markdownlint-cli@0.43 --config .github/linters/.markdownlint.json docs/development/documentation.md
 ```
 
+Functional designs (`docs/design/`) often fail on **table row line breaks** — see
+[Design Markdown and CI lint](./design-doc-markdown-lint.md).
+
 Do not add a term to `.textlintrc` that conflicts with an existing one (such as both `IDS` and `IDs`), and do not add
 `REST`: the rule would flag the word "rest". Lychee skips agent files and test fixtures; the workflow lists them. An
 external link must be reachable, so prefer stable URLs.
