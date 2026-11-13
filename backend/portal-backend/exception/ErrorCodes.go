@@ -17,6 +17,7 @@ const InvalidParameterValueMsg = "Value '$value' is not allowed for parameter $p
 const InvalidParameterValueLengthMsg = "Parameter $param with value $value exceeds maximum allowed length: $maxLen"
 const InvalidItemsNumberMsg = "Too many items in parameter $param, allowed max number is $maxItems"
 const InvalidLimitMsg = "Value '$value' is not allowed for parameter limit. Allowed values are in range 1:$maxLimit"
+const MigrationPackageScopeNotFoundMsg = "No active packages or dashboards match migration scope '$value'"
 
 const BadRequestBody = "10"
 const BadRequestBodyMsg = "Failed to decode body"

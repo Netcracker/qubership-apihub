@@ -1,0 +1,245 @@
+{
+  "info": {
+    "name": "Migration folder scopes",
+    "description": "Checks folder scope resolution through POST /api/internal/migrate/operations and polls GET /api/internal/migrate/operations/{id}. Creates an isolated workspace with a nested package, a similarly prefixed sibling folder, and an empty folder, then removes the workspace. Uses a sysadm api-key supplied as apiKey and a running backend at baseUrl. No published versions or builder are required. Run only on an isolated instance with no other migration running: operations migration creates migration tables and uses an exclusive migration slot. This collection checks request acceptance and empty-scope safety; Go tests cover the resolved ID list.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "apikey",
+    "apikey": [
+      { "key": "key", "value": "api-key", "type": "string" },
+      { "key": "value", "value": "{{apiKey}}", "type": "string" },
+      { "key": "in", "value": "header", "type": "string" }
+    ]
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8090", "type": "string" },
+    { "key": "apiKey", "value": "", "type": "string" },
+    { "key": "workspaceAlias", "value": "", "type": "string" },
+    { "key": "workspaceId", "value": "", "type": "string" },
+    { "key": "migrationId", "value": "", "type": "string" },
+    { "key": "pollAttempts", "value": "0", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "00 - Setup",
+      "item": [
+        {
+          "name": "Create isolated hierarchy",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('workspaceAlias', 'mg' + Date.now().toString(36).slice(-8));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Workspace created', function () { pm.response.to.have.status(201); });",
+                  "if (pm.response.code !== 201) { pm.execution.setNextRequest(null); } else {",
+                  "  const workspaceId = pm.response.json().packageId;",
+                  "  pm.collectionVariables.set('workspaceId', workspaceId);",
+                  "  const entities = [",
+                  "    ['group', '', 'group'],",
+                  "    ['nested', '.group', 'group'],",
+                  "    ['leaf', '.group.nested', 'package'],",
+                  "    ['groupother', '', 'group'],",
+                  "    ['sibling', '.groupother', 'package'],",
+                  "    ['empty', '', 'group']",
+                  "  ];",
+                  "  function createNext(index) {",
+                  "    if (index === entities.length) { return; }",
+                  "    const [alias, parentSuffix, kind] = entities[index];",
+                  "    pm.sendRequest({",
+                  "      url: pm.variables.get('baseUrl') + '/api/v2/packages',",
+                  "      method: 'POST',",
+                  "      header: { 'Content-Type': 'application/json', 'api-key': pm.variables.get('apiKey') },",
+                  "      body: { mode: 'raw', raw: JSON.stringify({ alias, parentId: workspaceId + parentSuffix, kind, name: alias }) }",
+                  "    }, function (err, response) {",
+                  "      pm.test('Create ' + alias, function () {",
+                  "        pm.expect(err).to.equal(null);",
+                  "        pm.expect(response.code).to.equal(201);",
+                  "      });",
+                  "      if (err || response.code !== 201) {",
+                  "        pm.execution.setNextRequest('Delete isolated workspace');",
+                  "        return;",
+                  "      }",
+                  "      createNext(index + 1);",
+                  "    });",
+                  "  }",
+                  "  createNext(0);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"alias\":\"{{workspaceAlias}}\",\"kind\":\"workspace\",\"name\":\"Migration folder scope test\"}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/v2/packages"
+          }
+        }
+      ]
+    },
+    {
+      "name": "01 - Reject empty scopes",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Unmatched folder is rejected without starting a migration', function () {",
+              "  pm.response.to.have.status(400);",
+              "  pm.expect(pm.response.json().code).to.equal('9');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "item": [
+        {
+          "name": "A similar prefix is not a hierarchy match",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"packageIds\":[\"{{workspaceId}}.grou.*\"]}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/internal/migrate/operations"
+          }
+        },
+        {
+          "name": "An empty folder does not become a full migration",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"packageIds\":[\"{{workspaceId}}.empty.*\"]}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/internal/migrate/operations"
+          }
+        },
+        {
+          "name": "A valid entry does not hide an unmatched folder",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"packageIds\":[\"{{workspaceId}}.group.*\",\"{{workspaceId}}.empty.*\"]}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/internal/migrate/operations"
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 - Migrate a nested scope",
+      "item": [
+        {
+          "name": "Start mixed and overlapping scopes",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Nested folder scope is accepted', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "  pm.expect(pm.response.json().id).to.be.a('string').and.not.empty;",
+                  "});",
+                  "if (pm.response.code === 201) {",
+                  "  pm.collectionVariables.set('migrationId', pm.response.json().id);",
+                  "  pm.collectionVariables.set('pollAttempts', '0');",
+                  "} else { pm.execution.setNextRequest('Delete isolated workspace'); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"packageIds\":[\"{{workspaceId}}.group.*\",\"{{workspaceId}}.group.nested.*\",\"{{workspaceId}}.group.nested.leaf\"],\"skipValidation\":true}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/internal/migrate/operations"
+          }
+        },
+        {
+          "name": "Wait for scoped migration",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Migration report is available', function () { pm.response.to.have.status(200); });",
+                  "if (pm.response.code === 200) {",
+                  "  const report = pm.response.json();",
+                  "  const attempts = Number(pm.collectionVariables.get('pollAttempts')) + 1;",
+                  "  pm.collectionVariables.set('pollAttempts', String(attempts));",
+                  "  if (report.status === 'running' && attempts < 120) {",
+                  "    setTimeout(function () { pm.execution.setNextRequest('Wait for scoped migration'); }, 500);",
+                  "  } else {",
+                  "    pm.test('Migration completes without builds for unpublished packages', function () {",
+                  "      pm.expect(report.status).to.equal('complete');",
+                  "      pm.expect(report.successBuildsCount).to.be.oneOf([undefined, 0]);",
+                  "      pm.expect(report.errorBuildsCount).to.be.oneOf([undefined, 0]);",
+                  "    });",
+                  "  }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/internal/migrate/operations/{{migrationId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 - Cleanup",
+      "item": [
+        {
+          "name": "Delete isolated workspace",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Isolated hierarchy is removed', function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/v2/packages/{{workspaceId}}"
+          }
+        }
+      ]
+    }
+  ]
+}
