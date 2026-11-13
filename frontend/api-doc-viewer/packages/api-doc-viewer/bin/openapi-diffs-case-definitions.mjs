@@ -717,7 +717,7 @@ export const SECURITY_CASES = [
   },
   {
     change: 'scheme-type-changed',
-    title: 'scheme type replaced: apiKey -> http bearer (type badge only)',
+    title: 'scheme type replaced: apiKey -> HTTP `bearer` (type badge only)',
     setup: () => withSecurity({ api_key: [] }),
     after: () => doc => { doc.components.securitySchemes.api_key = { type: 'http', scheme: 'bearer' } },
   },
@@ -730,10 +730,10 @@ export const SECURITY_CASES = [
   },
   { change: 'api-key-location-changed', title: 'apiKey `in` replaced: header -> query', setup: () => withSecurity({ api_key: [] }), after: () => doc => { scheme(doc, 'api_key').in = 'query' } },
   { change: 'api-key-name-changed', title: 'apiKey `name` replaced', setup: () => withSecurity({ api_key: [] }), after: () => doc => { scheme(doc, 'api_key').name = 'X-Orders-Key' } },
-  { change: 'http-scheme-changed', title: 'http `scheme` replaced: basic -> digest', setup: () => withSecurity({ basic: [] }), after: () => doc => { scheme(doc, 'basic').scheme = 'digest' } },
+  { change: 'http-scheme-changed', title: 'HTTP `scheme` replaced: basic -> digest', setup: () => withSecurity({ basic: [] }), after: () => doc => { scheme(doc, 'basic').scheme = 'digest' } },
   {
     pair: ['bearer-format-added', 'bearer-format-removed'],
-    titles: ['http `bearerFormat` added', 'http `bearerFormat` removed'],
+    titles: ['HTTP `bearerFormat` added', 'HTTP `bearerFormat` removed'],
     setup: () => doc => {
       withSecurity({ bearer: [] })(doc)
       delete scheme(doc, 'bearer').bearerFormat

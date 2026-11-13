@@ -331,9 +331,9 @@ const SECURITY_TYPES = [
   ['api-key-header', 'apiKey in a header', { type: 'apiKey', in: 'header', name: 'X-API-Key' }, []],
   ['api-key-query', 'apiKey in the query', { type: 'apiKey', in: 'query', name: 'api_key' }, []],
   ['api-key-cookie', 'apiKey in a cookie', { type: 'apiKey', in: 'cookie', name: 'api_key' }, []],
-  ['http-basic', 'http basic', { type: 'http', scheme: 'basic' }, []],
-  ['http-bearer', 'http bearer', { type: 'http', scheme: 'bearer' }, []],
-  ['http-bearer-format', 'http bearer with `bearerFormat`', { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }, []],
+  ['http-basic', 'HTTP `basic`', { type: 'http', scheme: 'basic' }, []],
+  ['http-bearer', 'HTTP `bearer`', { type: 'http', scheme: 'bearer' }, []],
+  ['http-bearer-format', 'HTTP `bearer` with `bearerFormat`', { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }, []],
   ['oauth2-implicit', 'oauth2 implicit flow', {
     type: 'oauth2', flows: { implicit: { authorizationUrl: 'https://auth.example.com/authorize', scopes: { 'orders:read': 'Read orders' } } },
   }, ['orders:read'], OAUTH2_OPTIONAL_SCOPE],
@@ -392,7 +392,7 @@ function collectFieldsSubgroups() {
   const operation = [
     fieldsCase('summary', 'summary', ({ operation }) => { operation.summary = 'Update an order' }),
     fieldsCase('operation-id', 'operation ID', ({ operation }) => { operation.operationId = 'updateOrder' }),
-    fieldsCase('description', 'markdown description', ({ operation }) => {
+    fieldsCase('description', 'Markdown description', ({ operation }) => {
       operation.description = 'Replaces the order.\n\n- Validates the **status** transition.\n- Returns the stored order.'
     }),
     fieldsCase('external-docs', 'external docs (description in a tooltip)', ({ operation }) => {
@@ -408,7 +408,7 @@ function collectFieldsSubgroups() {
         securityCase(`${slug}-${optional[0]}`, `${title}, ${optional[1]}`, scheme, [], { schemeName: slug }),
       ]
     : [securityCase(slug, title, scheme, scopes)])
-  security.push(securityCase('scheme-description', 'scheme with a markdown `description`', {
+  security.push(securityCase('scheme-description', 'scheme with a Markdown `description`', {
     ...SECURITY_TYPES[0][2],
     description: 'Key issued in the **developer portal**.\n\n- Send it with every request.\n- Rotate it every 90 days.',
   }, []))
@@ -619,7 +619,7 @@ function collectOas31FieldsSubgroups() {
       operation.security = [{ api_key: ['admin', 'auditor'] }]
       securitySchemes(document).api_key = { type: 'apiKey', in: 'header', name: 'X-API-Key' }
     }, { openapi: OAS31 }),
-    fieldsCase('roles-on-http-bearer', '`Required roles` on an http bearer scheme', ({ document, operation }) => {
+    fieldsCase('roles-on-http-bearer', '`Required roles` on an HTTP `bearer` scheme', ({ document, operation }) => {
       operation.security = [{ bearer: ['admin'] }]
       securitySchemes(document).bearer = { type: 'http', scheme: 'bearer' }
     }, { openapi: OAS31 }),

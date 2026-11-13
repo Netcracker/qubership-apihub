@@ -270,6 +270,27 @@ function renderList(cases) {
     ...cases.map(c => `| \`${c.caseId}\` | \`${c.method.toUpperCase()} ${c.path}\` | ${escapeCell(c.title)} | ${switchCell(c)} |`)].join("\n");
 }
 
+// Wraps a Markdown paragraph at `width` characters (markdownlint MD013) without breaking a code span. An array keeps
+// each of its items on one line, such as a column legend `Hdr = \`headers\``.
+function wrapProse(text, width = 120) {
+  const units = Array.isArray(text) ? text : [text];
+  const words = units.flatMap(unit => (Array.isArray(text) ? [unit] : unit.match(/(?:`[^`]*`|[^\s`])+/g) ?? []));
+  const lines = [];
+  let line = "";
+  for (const word of words) {
+    if (line && line.length + 1 + word.length > width) {
+      lines.push(line);
+      line = word;
+    } else {
+      line = line ? `${line} ${word}` : word;
+    }
+  }
+  if (line) {
+    lines.push(line);
+  }
+  return lines.join("\n");
+}
+
 function writeMatrix(expanded) {
   const total = expanded.reduce((sum, { cases }) => sum + cases.length, 0);
   const sections = expanded.flatMap(({ group, cases }) => {
@@ -277,14 +298,17 @@ function writeMatrix(expanded) {
     if (group.group === "e2e") {
       const pairs = cases.filter(c => c.slug.startsWith("pair--")).length;
       const windows = cases.filter(c => c.slug.startsWith("window-")).length;
-      return [heading, "", `${pairs} pairs, ${windows} windows, 1 all-sections case. Columns: ${E2E_SECTION_IDS.map(id => `${SECTION_COLUMNS[id]} = \`${id}\``).join(", ")}.`, "", renderE2eGrid(cases), ""];
+      const legend = E2E_SECTION_IDS.map((id, index) =>
+        `${SECTION_COLUMNS[id]} = \`${id}\`${index === E2E_SECTION_IDS.length - 1 ? "." : ","}`);
+      const intro = `${pairs} pairs, ${windows} windows, 1 all-sections case. Columns:`.split(" ");
+      return [heading, "", wrapProse([...intro, ...legend]), "", renderE2eGrid(cases), ""];
     }
     return [heading, "", renderList(cases), ""];
   });
   const block = [
     MATRIX_BEGIN,
     "",
-    `${total} cases; ITs capture each in \`detailed\` (${total} screenshots, plus the \`noHeading\` variant of the all-sections case). Display mode \`simple\` is covered by \`${SUITE_TITLE} (Display Mode = simple)\`.`,
+    wrapProse(`${total} cases; ITs capture each in \`detailed\` (${total} screenshots, plus the \`noHeading\` variant of the all-sections case). Display mode \`simple\` is covered by \`${SUITE_TITLE} (Display Mode = simple)\`.`),
     "",
     ...sections,
     MATRIX_END,

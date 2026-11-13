@@ -160,7 +160,7 @@ export const PLAIN_CASES = [
   ["19-scram-sha-256", "`scramSha256`", operationSecurity("scram256"), "operation"],
   ["20-scram-sha-512", "`scramSha512`", operationSecurity("scram512"), "operation"],
   ["21-gssapi", "`gssapi`", operationSecurity("gssapi"), "operation"],
-  ["22-scheme-description", "scheme with a markdown description", (doc) => {
+  ["22-scheme-description", "scheme with a Markdown description", (doc) => {
     scheme(doc, "bearer").description = "JWT issued by the **events** identity provider."
     operationSecurity("bearer")(doc)
   }, "operation"],
