@@ -10,6 +10,7 @@ import {
   TableRow,
 } from '@mui/material'
 import {
+  type Cell,
   type ColumnDef,
   type ColumnSizingInfoState,
   type ColumnSizingState,
@@ -24,7 +25,17 @@ import {
   type Table as ReactTable,
   useReactTable,
 } from '@tanstack/react-table'
-import { type FC, type ReactElement, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import {
+  type FC,
+  type MouseEvent,
+  type ReactElement,
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 
 import { ColumnDelimiter } from '@netcracker/qubership-apihub-ui-shared/components/ColumnDelimiter'
 import type { ServiceKey } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
@@ -49,6 +60,8 @@ export const BASELINE_PACKAGE_COLUMN_ID = 'baseline-package'
 const SELECTION_COLUMN_ID = 'selection'
 const LINK_COLUMN_ID = 'link'
 const MIN_COLUMN_WIDTH: Pixel = 180
+// The controls that a service row renders: the chevron, "View Package" and the other links, and "Error Details"
+const ROW_CONTROL_SELECTOR = 'a, button'
 
 const SELECTION_COLUMN_MODEL: ColumnModel = { name: SELECTION_COLUMN_ID, fixedWidth: 60 }
 const LINK_COLUMN_MODEL: ColumnModel = { name: LINK_COLUMN_ID, fixedWidth: 180 }
@@ -181,15 +194,7 @@ function ServiceTableComponent<TRow extends ServiceTableRow<TRow>>({
         <TableBody>
           {getRowModel().rows.map(row => (
             <TableRow key={row.id}>
-              {row.getVisibleCells().map(cell => (
-                <TableCell
-                  key={cell.column.id}
-                  data-testid={`Cell-${cell.column.id}`}
-                  align={cell.column.id === LINK_COLUMN_ID ? 'right' : 'left'}
-                >
-                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                </TableCell>
-              ))}
+              {row.getVisibleCells().map(cell => <ServiceTableBodyCell key={cell.column.id} cell={cell} />)}
             </TableRow>
           ))}
           {isLoading && <TableSkeleton columnIds={columnModels.map(({ name }) => name)} />}
@@ -229,6 +234,52 @@ function SelectAllCheckbox<TRow>({ table }: SelectAllCheckboxProps<TRow>): React
 
 SelectAllCheckbox.displayName = 'SelectAllCheckbox'
 
+type ServiceTableBodyCellProps<TRow> = {
+  cell: Cell<TRow, unknown>
+}
+
+/**
+ * A click on the cell opens or closes a row with API documents, outside the checkbox column. A drag that ends in
+ * another cell leaves the row as it is: the browser sends its click to the row, which holds both cells.
+ */
+function ServiceTableBodyCell<TRow>({ cell }: ServiceTableBodyCellProps<TRow>): ReactElement {
+  const { row, column } = cell
+  const togglesRow = row.getCanExpand() && column.id !== SELECTION_COLUMN_ID
+
+  const handleClick = (event: MouseEvent<HTMLTableCellElement>): void => {
+    if (!togglesRow) {
+      return
+    }
+    const { target } = event
+    // A tooltip renders through a portal, and React still passes a click in it up to this cell
+    if (!(target instanceof Element) || !event.currentTarget.contains(target)) {
+      return
+    }
+    // A control does only its own job
+    if (target.closest(ROW_CONTROL_SELECTOR)) {
+      return
+    }
+    // The user released the button after selecting text, also past the end of the text
+    if (window.getSelection()?.isCollapsed === false) {
+      return
+    }
+    row.toggleExpanded()
+  }
+
+  return (
+    <BodyTableCell
+      data-testid={`Cell-${column.id}`}
+      align={column.id === LINK_COLUMN_ID ? 'right' : 'left'}
+      clickable={togglesRow}
+      onClick={handleClick}
+    >
+      {flexRender(column.columnDef.cell, cell.getContext())}
+    </BodyTableCell>
+  )
+}
+
+ServiceTableBodyCell.displayName = 'ServiceTableBodyCell'
+
 type TableSkeletonProps = {
   columnIds: ReadonlyArray<string>
 }
@@ -255,6 +306,12 @@ const CompactCheckbox = styled(Checkbox)({
   paddingTop: 0,
   paddingBottom: 0,
 })
+
+const BodyTableCell = styled(TableCell, {
+  shouldForwardProp: prop => prop !== 'clickable',
+})<{ clickable: boolean }>(({ clickable }) => ({
+  cursor: clickable ? 'pointer' : undefined,
+}))
 
 const HeadTableCell = styled(TableCell)({
   '&:hover': {

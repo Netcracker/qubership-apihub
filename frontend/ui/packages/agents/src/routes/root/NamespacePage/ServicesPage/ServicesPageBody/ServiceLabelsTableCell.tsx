@@ -2,7 +2,7 @@ import type { FC } from 'react'
 import { memo } from 'react'
 import type { Row } from '@tanstack/react-table'
 import { getFormattedLabel, type Service } from '@agents/entities/services'
-import { Box, type SxProps, type Theme } from '@mui/material'
+import { Box, styled, type SxProps, type Theme } from '@mui/material'
 import { OverflowTooltip } from '@netcracker/qubership-apihub-ui-shared/components/OverflowTooltip'
 import { CustomChip } from '@netcracker/qubership-apihub-ui-shared/components/CustomChip'
 import { isEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
@@ -28,7 +28,7 @@ export const ServiceLabelsTableCell: FC<ServiceLabelsTableCellProps> = memo<Serv
               key={getFormattedLabel(key, value)}
               sx={{ mr: 1, mb: 0.5 }}
             >
-              <CustomChip
+              <LabelChip
                 value={getFormattedLabel(key, value)}
                 sx={chipSx}
                 label={
@@ -46,6 +46,11 @@ export const ServiceLabelsTableCell: FC<ServiceLabelsTableCellProps> = memo<Serv
   }
 
   return null
+})
+
+// MUI gives a chip without a click handler the default arrow; a label takes the cursor of its cell, which opens the row
+const LabelChip = styled(CustomChip)({
+  cursor: 'inherit',
 })
 
 const DISABLED_LABEL_CHIP_SX: SxProps<Theme> = {
