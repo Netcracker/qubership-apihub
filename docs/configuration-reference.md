@@ -23,7 +23,7 @@ This page ties together **what you edit in GitOps** versus **what the processes 
 Annotated **YAML schemas** used by file-backed binaries live only where the loader exists today:
 
 | Component | Boot-time YAML template | Loader / pointers |
-|-----------|--------------------------|-------------------|
+| --------- | ------------------------ | ----------------- |
 | API Registry | [`config.template.yaml`](../backend/portal-backend/config.template.yaml) (module `backend/portal-backend/`) | `APIHUB_CONFIG_FOLDER` → `config.yaml`; see backend service bootstrap. |
 | Kubernetes Agent | [`config.template.yaml`](../backend/agent/config.template.yaml) | Agent image (file-based like backend). |
 | **API Linter** | [`config.template.yaml`](../backend/api-linter-service/config.template.yaml) | **`LINTER_CONFIG_FOLDER`** → `config.yaml`. Spectral rulesets stay **data** managed through the linter API/database, separate from this boot config. |
@@ -38,11 +38,11 @@ above when in doubt.
 ## 1. Configuration model per component
 
 | Service | Primary runtime configuration | Remarks |
-|---------|-------------------------------|---------|
+| ------- | ----------------------------- | ------- |
 | **qubership-apihub-backend** | **`config.yaml` on disk** | **`APIHUB_CONFIG_FOLDER`**; optional **`LOG_LEVEL`**, **`GOMEMLIMIT`**. File-backed: DB, security, SSO, S3, Olric, cleanup, AI, `extensions`. Helm: **`qubershipApihubBackend.env`** → `qubership-apihub-backend-config-secret.yaml`. |
 | **qubership-apihub-ui** | Environment variables only | Internal upstream DNS (`*_ADDRESS`). Public URL in backend **`security.apihubExternalUrl`**. See [Installation guide § UI](./installation-guide.md#qubership-apihub-uienv-portal-ui). |
 | **qubership-apihub-build-task-consumer** | Environment variables only | **`APIHUB_BACKEND_ADDRESS`** + **`APIHUB_API_KEY`** (aligned with backend **`zeroDayConfiguration.accessToken`** on bootstrap). |
-| **qubership-api-linter-service** | **`config.yaml` on disk** | **`LINTER_CONFIG_FOLDER`**; optional **`LOG_LEVEL`**, **`GOMEMLIMIT`**. File-backed: DB, `technicalParameters.apihub.*`, `linters.*`, `olric.*`. Helm: **`qubershipApiLinterService.env`** → `qubership-api-linter-service-config-secret.yaml`. |
+| **qubership-api-linter-service** | **`config.yaml` on disk** | **`LINTER_CONFIG_FOLDER`**; optional **`LOG_LEVEL`**, **`GOMEMLIMIT`**. File-backed: DB, `technicalParameters.apihub.*`, `linters.*` (AI linter: `linters.ai.openAI.*`, `linters.ai.lint.*`, `linters.ai.deduplication.*`; connection and HTTP failures of an LLM request are retried up to `linters.ai.openAI.maxRetries` times, default `5`, and output failures of a lint request up to `linters.ai.lint.maxRetriesOnInvalidOutput` times, default `2`; see [Installation guide § Linter](./installation-guide.md#qubership-api-linter-service)), `olric.*`. Helm: **`qubershipApiLinterService.env`** → `qubership-api-linter-service-config-secret.yaml`. |
 | **qubership-apihub-agents-backend** | **`config.yaml` on disk** | **`AGENTS_BACKEND_CONFIG_FOLDER`**; optional **`LOG_LEVEL`**, **`GOMEMLIMIT`**. File-backed: DB, `technicalParameters.apihub.*`, `businessParameters.*`, `security.*`, `cleanup.snapshots.*`. Helm: **`qubershipApihubAgentsBackend.env`** → `qubership-apihub-agents-backend-config-secret.yaml`. |
 
 **Kubernetes agent** (optional extension, not started by default Compose bundle): configured like the backend pattern —
@@ -56,7 +56,7 @@ Chart: **[`deploy/helm-templates/qubership-apihub/`](../deploy/helm-templates/qu
 **`values.yaml`** with inline semantics.
 
 | `values.yaml` root key | Produced runtime configuration |
-|------------------------|-------------------------------|
+| ---------------------- | ----------------------------- |
 | `qubershipApihubBackend.env` | Rendered **as YAML** into Secret `config.yaml`, mounted under **`/app/qubership-apihub-service/etc/`** with **`APIHUB_CONFIG_FOLDER=/app/qubership-apihub-service/etc/`**. Olric **`namespace`** / **`replicaCount`** patched from Helm. Same schema as **`config.template.yaml`**. |
 | `qubershipApihubBackend.customCa` | Optional Kubernetes Secret mounted at **`/tmp/cert`** on the backend pod. Used with the [qubership-core-base](https://github.com/Netcracker/qubership-core-base-images) runtime image: the entrypoint loads PEM files into the system trust store before the app starts (OIDC, SAML, playground proxy, AI chat). Set **`enabled: true`** and **`secretName`**. |
 | `qubershipApihubBackend.goMemLimit` | Pod env **`GOMEMLIMIT`** (Go runtime soft limit; not part of `config.yaml`). Default **`410MiB`** (~80% of default **`resource.memory.limit`** `512Mi`). |
@@ -128,13 +128,13 @@ and **`deploy/docker-compose/with-keycloak/`** (Keycloak SSO example). The stack
 runs everything except the backend, so that you can debug the backend from an IDE.
 
 | File | Service | Role |
-|------|---------|------|
+| ---- | ------- | ---- |
 | `qubership-apihub-backend-config.yaml` | Backend | Mounted as `config.yaml`. Uses **`${JWT_PRIVATE_KEY}`**, **`${APIHUB_ACCESS_TOKEN}`**, **`${APIHUB_ADMIN_EMAIL}`**, **`${APIHUB_ADMIN_PASSWORD}`** for `generate_env_and_up_compose.sh`. **`extensions[].baseUrl`** must be reachable from browsers and backend (see Compose readme — often `host.docker.internal`). |
 | `certs/` (optional) | Backend, linter, agents-backend | Corporate CA **`.crt`/`.cer`/`.pem`** in **`certs/`**; uncomment **`./certs:/tmp/cert:ro`** in **`docker-compose.yml`**. [qubership-core-base](https://github.com/Netcracker/qubership-core-base-images) **`/tmp/cert`** contract. MinIO/S3 CA stays in backend **`s3Storage.crt`**. |
 | `docker-compose.yml` (`qubership-apihub-backend` `environment`) | Backend | **`APIHUB_CONFIG_FOLDER`**, **`GOMEMLIMIT`** (Go runtime soft limit; default **`800MiB`** for Compose **`memory: 1G`** limit). |
 | `qubership-apihub-ui.env` | Portal UI | Internal upstream addresses (`APIHUB_BACKEND_ADDRESS`, `API_LINTER_SERVICE_ADDRESS`, …). |
 | `qubership-apihub-build-task-consumer.env` | Builder | **`APIHUB_API_KEY`**, **`APIHUB_BACKEND_ADDRESS`**. Compose uses **`host.docker.internal:8090`** so the worker reaches the backend through the published host port. |
-| `qubership-api-linter-service-config.yaml` | Linter | Mounted as `config.yaml`: DB, **`technicalParameters.apihub.{url,accessToken}`** (`${APIHUB_ACCESS_TOKEN}`), **`linters.spectral.*`**, **`linters.ai.*`**. Compose sets **`LINTER_CONFIG_FOLDER`**, **`GOMEMLIMIT`** (default **`1600MiB`** for **`memory: 2G`**). |
+| `qubership-api-linter-service-config.yaml` | Linter | Mounted as `config.yaml`: DB, **`technicalParameters.apihub.{url,accessToken}`** (`${APIHUB_ACCESS_TOKEN}`), **`linters.spectral.*`**, **`linters.ai.*`** (including `linters.ai.openAI.*`, `linters.ai.lint.*`, and `linters.ai.deduplication.*`; see [Installation guide § Linter](./installation-guide.md#qubership-api-linter-service)). Compose sets **`LINTER_CONFIG_FOLDER`**, **`GOMEMLIMIT`** (default **`1600MiB`** for **`memory: 2G`**). |
 | `qubership-apihub-agents-backend-config.yaml` | Agents backend | Mounted as `config.yaml`: DB, **`technicalParameters.apihub.{url,accessToken}`**, **`businessParameters.defaultWorkspaceId`**, **`security.*`**, **`cleanup.snapshots.*`**. Compose sets **`AGENTS_BACKEND_CONFIG_FOLDER`**, **`GOMEMLIMIT`** (default **`205MiB`** for **`memory: 256M`**). |
 | `scripts/init-db/init.sql` | PostgreSQL init | Creates users/DBs: `apihub_backend`, `api_linter`, `agents_backend`. |
 
@@ -177,7 +177,7 @@ console credentials from the backend's Kubernetes secret if you have access to t
 ## 5. Where to drill deeper by topic
 
 | Topic | Prefer |
-|-------|--------|
+| ----- | ------ |
 | Auth / SAML / OIDC model | Backend [security-model.md](administration/security-model.md), **`security.externalIdentityProviders`** in **`config.template.yaml`** |
 | Data retention / cleanup jobs | Backend **`cleanup`** section + [data-maintenance](administration/data-maintenance.md) |
 | End user workflows | Portal & Agents Markdown guides ([Portal User Guide](user-guide/portal.md), [Agent User Guide](user-guide/agent.md)) + [design items](design/) |
