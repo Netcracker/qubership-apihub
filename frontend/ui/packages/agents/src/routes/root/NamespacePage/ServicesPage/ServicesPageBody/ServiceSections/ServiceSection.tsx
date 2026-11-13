@@ -31,16 +31,16 @@ import {
 const SECTION_HEADER_CHEVRON_SIZE: Pixel = 16
 
 export type ServiceSectionModel<TRow extends ServiceTableRow<TRow>> = Readonly<{
-  // Unique among the sections of a step
+  /** Unique among the sections of a step. */
   id: string
   title: ReactNode
   tooltip?: string
-  // Stands at the right end of the header, such as the publication status of a snapshot
+  /** Shown at the right end of the header, such as the publication status of a snapshot. */
   status?: ReactNode
   columns: ReadonlyArray<ServiceTableColumn<TRow>>
   link?: ServiceTableLink<TRow>
   rows: TRow[]
-  // Only a section where the user picks services has one; its rows then carry checkboxes
+  /** Set only on a section where the user picks services; its rows then get checkboxes. */
   selection?: ServiceSelection
 }>
 

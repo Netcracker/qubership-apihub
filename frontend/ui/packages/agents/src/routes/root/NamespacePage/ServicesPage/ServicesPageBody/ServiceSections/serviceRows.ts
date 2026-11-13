@@ -18,8 +18,10 @@ type SelectAllState = Readonly<{
   disabled: boolean
 }>
 
-// The search matches the name of a service only, in any letter case. Without a search the rows come back as they
-// are, so the table keeps its data.
+/**
+ * Returns the rows whose service name contains the search value, in any letter case. An empty search returns
+ * `rows` itself.
+ */
 export function filterRowsByServiceName<TRow extends NamedServiceRow>(rows: TRow[], searchValue: string): TRow[] {
   if (!searchValue) {
     return rows
@@ -28,8 +30,10 @@ export function filterRowsByServiceName<TRow extends NamedServiceRow>(rows: TRow
   return rows.filter(({ service }) => !!service?.key.toLowerCase().includes(query))
 }
 
-// The header checkbox counts the rows that can be selected. While none can, as during a publication, it is disabled
-// and shows whether all or some of the rows are selected.
+/**
+ * Returns the state of the header checkbox from the rows that can be selected. While none can, as during a
+ * publication, the checkbox is disabled and shows whether all or some of the rows are selected.
+ */
 export function selectAllStateOf(rows: ReadonlyArray<SelectableRowState>): SelectAllState {
   const selectableRows = rows.filter(({ canSelect }) => canSelect)
   const countedRows = isNotEmpty(selectableRows) ? selectableRows : rows

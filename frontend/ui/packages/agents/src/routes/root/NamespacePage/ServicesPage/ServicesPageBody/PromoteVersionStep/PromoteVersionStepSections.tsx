@@ -71,7 +71,7 @@ type PromoteVersionStepSectionsProps = {
   selected: ServiceKey[]
   onSelect: (selected: ServiceKey[]) => void
   searchValue: string
-  // Leaves the services that "Show only available services" keeps
+  /** The filter of "Show only available services": a service it returns false for gets no row. */
   filter: (service: Service) => boolean
   isServicesLoading: boolean
 }
@@ -128,7 +128,6 @@ export const PromoteVersionStepSections: FC<PromoteVersionStepSectionsProps> = m
     },
   ], [promoteStatus])
 
-  // The services of the snapshot that have a baseline package
   const rows = useMemo<PromotionServiceRow[]>(() =>
     services
       .filter(service => !!service.baseline && filter(service))
@@ -171,7 +170,6 @@ export const PromoteVersionStepSections: FC<PromoteVersionStepSectionsProps> = m
     snapshotPublicationInfo.services,
   ])
 
-  // A service the user may not promote with the selected status keeps a disabled checkbox and the lock icon
   const isSelectable = useCallback(
     (service: Service) => selectable && !!service.availablePromoteStatuses?.includes(promoteStatus),
     [promoteStatus, selectable],

@@ -111,7 +111,6 @@ export const CreateSnapshotStepSections: FC<CreateSnapshotStepSectionsProps> = m
       }
     }), [allPublishDetails, config?.builderId, config?.serviceConfigs, services])
 
-  // The checkboxes are locked while a snapshot is published and after it
   const isSelectable = useCallback(() => selectable, [selectable])
 
   const sections = useMemo<ReadonlyArray<ServiceSectionModel<SnapshotServiceRow>>>(() => [{

@@ -53,7 +53,7 @@ const MIN_COLUMN_WIDTH: Pixel = 180
 const SELECTION_COLUMN_MODEL: ColumnModel = { name: SELECTION_COLUMN_ID, fixedWidth: 60 }
 const LINK_COLUMN_MODEL: ColumnModel = { name: LINK_COLUMN_ID, fixedWidth: 180 }
 
-// A row of a service, or of one of its API documents under it
+/** A row of a service, or of one of its API documents under it. */
 export type ServiceTableRow<TRow> = Partial<{
   service: Service
   spec: Spec
@@ -66,13 +66,13 @@ export type ServiceTableColumn<TRow> = Readonly<{
   cell: (row: Row<TRow>) => ReactNode
 }>
 
-// The content at the right end of a row, such as a link that the theme shows while the pointer is over the row
+/** Renders the content at the right end of a row, such as a link shown while the pointer is over the row. */
 export type ServiceTableLink<TRow> = (row: Row<TRow>) => ReactNode
 
 export type ServiceSelection = Readonly<{
   selected: ReadonlyArray<ServiceKey>
   onSelect: (selected: ServiceKey[]) => void
-  // A service that fails it gets a disabled checkbox
+  /** A service it returns false for gets a disabled checkbox. */
   isSelectable: (service: Service) => boolean
 }>
 
@@ -239,7 +239,6 @@ const TableSkeleton: FC<TableSkeletonProps> = ({ columnIds }) => (
 
 TableSkeleton.displayName = 'TableSkeleton'
 
-// A loading row draws a bar in each column of data, and none in the checkbox and link columns
 const RowSkeleton: FC<TableSkeletonProps> = ({ columnIds }) => (
   <TableRow>
     {columnIds.map(id => (

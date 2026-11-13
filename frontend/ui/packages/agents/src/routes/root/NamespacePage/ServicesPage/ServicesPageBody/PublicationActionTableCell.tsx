@@ -15,7 +15,7 @@ import { useEventBus } from '../../../../EventBusProvider'
 import { HoverLink } from './HoverLink'
 
 type PublicationActionTableCellProps = TestableProps & {
-  // Undefined for a service that is not part of the current publication run
+  /** Undefined for a service that is not part of the current publication run. */
   serviceConfig: ServiceConfig | undefined
   publishDetails: PublishDetails
   versionLinkLabel: string

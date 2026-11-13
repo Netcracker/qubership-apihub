@@ -9,7 +9,10 @@ type HoverLinkProps = TestableProps & {
   label: string
 }
 
-// A link at the right end of a table row; the theme shows it while the pointer is over the row
+/**
+ * A link hidden until the pointer is over its table row: the theme shows the `hoverable` class of a hovered row.
+ * Renders nothing without `url`.
+ */
 export const HoverLink: FC<HoverLinkProps> = ({ url, label, 'data-testid': dataTestId }) => {
   if (!url) {
     return null

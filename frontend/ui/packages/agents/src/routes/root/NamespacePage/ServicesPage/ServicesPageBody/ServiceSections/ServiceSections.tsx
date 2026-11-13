@@ -26,7 +26,7 @@ function ServiceSectionsComponent<TRow extends ServiceTableRow<TRow>>({
   searchValue,
   isLoading,
 }: ServiceSectionsProps<TRow>): ReactElement {
-  // A section that the search leaves without services is not shown, unless the services are still loading
+  // While the services load, every section stays, so its table shows the loading rows
   const shownSections = useMemo(
     () =>
       sections
