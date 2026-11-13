@@ -29,7 +29,7 @@ func (s scoringRepositoryImpl) GetScoringForVersion(ctx context.Context, package
 		Where("revision = ?", revision).
 		Select()
 	if err != nil {
-		if errors.As(err, &pg.ErrNoRows) {
+		if errors.Is(err, pg.ErrNoRows) {
 			return nil, nil
 		}
 		return nil, err

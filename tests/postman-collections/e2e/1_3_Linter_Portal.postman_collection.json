@@ -958,6 +958,78 @@
                     "protocolProfileBehavior": {}
                 },
                 {
+                    "name": "4.1.1 Wait for Scoring Backwards Compatibility (v2)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const maxAttempts = 20;",
+                                    "const attempts = parseInt(pm.environment.get('scoringBwcAttempts') || '0') + 1;",
+                                    "pm.environment.set('scoringBwcAttempts', attempts);",
+                                    "",
+                                    "pm.test(\"Status code is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "",
+                                    "if (pm.response.code === 200) {",
+                                    "    const data = pm.response.json();",
+                                    "    if (data.process.status !== 'completed') {",
+                                    "        pm.test(\"Status is absent while the score is in progress\", function () {",
+                                    "            pm.expect(data).to.not.have.property('status');",
+                                    "        });",
+                                    "    }",
+                                    "    const state = data.process && data.process.backwardsCompatibility;",
+                                    "    if (state !== 'completed' && state !== 'error' && attempts < maxAttempts) {",
+                                    "        console.log('Backwards compatibility is ' + state + ', retrying in 3s...');",
+                                    "        setTimeout(() => postman.setNextRequest(pm.info.requestName), 3000);",
+                                    "    } else {",
+                                    "        pm.environment.unset('scoringBwcAttempts');",
+                                    "        pm.test(\"Backwards compatibility is scored before the lint is final\", function () {",
+                                    "            pm.expect(state, 'process.backwardsCompatibility after ' + attempts + ' attempts').to.eql('completed');",
+                                    "            pm.expect(data.publicationIntegrityDetails).to.be.an('object');",
+                                    "            // 0000.1 has no previous version, so the section is empty.",
+                                    "            pm.expect(data.backwardsCompatibilityDetails).to.be.an('object').that.is.empty;",
+                                    "        });",
+                                    "    }",
+                                    "} else {",
+                                    "    pm.environment.unset('scoringBwcAttempts');",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "url": {
+                            "raw": "{{SERVER_HOST}}/api-linter/api/v2/packages/{{project_lt}}/versions/0000.1/scoring",
+                            "host": [
+                                "{{SERVER_HOST}}"
+                            ],
+                            "path": [
+                                "api-linter",
+                                "api",
+                                "v2",
+                                "packages",
+                                "{{project_lt}}",
+                                "versions",
+                                "0000.1",
+                                "scoring"
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "api-key",
+                                "value": "{{at-api-key}}",
+                                "type": "default"
+                            }
+                        ]
+                    },
+                    "response": [],
+                    "protocolProfileBehavior": {}
+                },
+                {
                     "name": "4.2 Wait for Validation to Complete",
                     "event": [
                         {
@@ -965,24 +1037,34 @@
                             "script": {
                                 "type": "text/javascript",
                                 "exec": [
-                                    "pm.test(\"Wait for validation to complete\", function () {",
+                                    "const maxAttempts = 10;",
+                                    "const attempts = parseInt(pm.environment.get('validationAttempts') || '0') + 1;",
+                                    "pm.environment.set('validationAttempts', attempts);",
+                                    "",
+                                    "pm.test(\"Status code is 200\", function () {",
                                     "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "",
+                                    "if (pm.response.code === 200) {",
                                     "    const data = pm.response.json();",
                                     "    const status = data.status;",
-                                    "",
-                                    "    if (status === 'inProgress') {",
+                                    "    if (status === 'inProgress' && attempts < maxAttempts) {",
                                     "        console.log('Validation in progress, retrying in 3s...');",
                                     "        setTimeout(() => postman.setNextRequest(pm.info.requestName), 3000);",
-                                    "        return;",
+                                    "    } else {",
+                                    "        pm.environment.unset('validationAttempts');",
+                                    "        pm.test(\"Validation is completed\", function () {",
+                                    "            pm.expect(status, 'validation status after ' + attempts + ' attempts').to.be.oneOf(['success', 'error']);",
+                                    "        });",
+                                    "        pm.environment.set('validationStatus', status);",
+                                    "        if (status === 'error') {",
+                                    "            console.log('Validation failed:', data.details);",
+                                    "        }",
+                                    "        postman.setNextRequest('4.3 Get Validation Summary');",
                                     "    }",
-                                    "",
-                                    "    pm.expect(status).to.be.oneOf(['success', 'error'], 'Validation must be completed');",
-                                    "    pm.environment.set('validationStatus', status);",
-                                    "    if (status === 'error') {",
-                                    "        console.log('Validation failed:', data.details);",
-                                    "    }",
+                                    "} else {",
                                     "    pm.environment.unset('validationAttempts');",
-                                    "});"
+                                    "}"
                                 ]
                             }
                         },
@@ -991,15 +1073,7 @@
                             "script": {
                                 "type": "text/javascript",
                                 "exec": [
-                                    "let attempts = parseInt(pm.environment.get('validationAttempts') || '0');",
-                                    "if (attempts >= 10) {",
-                                    "    console.log('Max validation attempts reached (10)');",
-                                    "    pm.environment.unset('validationAttempts');",
-                                    "    postman.setNextRequest('4.3 Get Validation Summary (Final)');",
-                                    "    return;",
-                                    "}",
-                                    "pm.environment.set('validationAttempts', attempts + 1);",
-                                    "console.log('Validation check attempt:', attempts + 1);"
+                                    ""
                                 ]
                             }
                         }
@@ -1086,6 +1160,135 @@
                                 "0000.1",
                                 "validation",
                                 "summary"
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "api-key",
+                                "value": "{{at-api-key}}",
+                                "type": "default"
+                            }
+                        ]
+                    },
+                    "response": [],
+                    "protocolProfileBehavior": {}
+                },
+                {
+                    "name": "4.3.1 Wait for Scoring to Complete (v2)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const maxAttempts = 20;",
+                                    "const attempts = parseInt(pm.environment.get('scoringAttempts') || '0') + 1;",
+                                    "pm.environment.set('scoringAttempts', attempts);",
+                                    "",
+                                    "pm.test(\"Status code is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "",
+                                    "if (pm.response.code === 200) {",
+                                    "    const data = pm.response.json();",
+                                    "    const state = data.process && data.process.status;",
+                                    "    if (state !== 'completed' && attempts < maxAttempts) {",
+                                    "        console.log('Scoring is ' + state + ', retrying in 3s...');",
+                                    "        setTimeout(() => postman.setNextRequest(pm.info.requestName), 3000);",
+                                    "    } else {",
+                                    "        pm.environment.unset('scoringAttempts');",
+                                    "        pm.test(\"Scoring is completed\", function () {",
+                                    "            pm.expect(state, 'process.status after ' + attempts + ' attempts').to.eql('completed');",
+                                    "            pm.expect(data.process.publicationIntegrity).to.be.oneOf(['completed', 'error']);",
+                                    "            pm.expect(data.process.backwardsCompatibility).to.be.oneOf(['completed', 'error']);",
+                                    "            pm.expect(data.process.qualityCheck).to.be.oneOf(['completed', 'error']);",
+                                    "            pm.expect(data.status).to.be.oneOf(['passed', 'passed_with_defects', 'not_passed']);",
+                                    "            pm.expect(data.reason).to.be.an('array');",
+                                    "            pm.expect(data.debug).to.be.an('array');",
+                                    "        });",
+                                    "        pm.environment.set('scoringV2', JSON.stringify(data));",
+                                    "    }",
+                                    "} else {",
+                                    "    pm.environment.unset('scoringAttempts');",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "url": {
+                            "raw": "{{SERVER_HOST}}/api-linter/api/v2/packages/{{project_lt}}/versions/0000.1/scoring",
+                            "host": [
+                                "{{SERVER_HOST}}"
+                            ],
+                            "path": [
+                                "api-linter",
+                                "api",
+                                "v2",
+                                "packages",
+                                "{{project_lt}}",
+                                "versions",
+                                "0000.1",
+                                "scoring"
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "api-key",
+                                "value": "{{at-api-key}}",
+                                "type": "default"
+                            }
+                        ]
+                    },
+                    "response": [],
+                    "protocolProfileBehavior": {}
+                },
+                {
+                    "name": "4.3.2 Get Scoring (v1) and Compare with v2",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status code is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "",
+                                    "if (pm.response.code === 200) {",
+                                    "    const v1 = pm.response.json();",
+                                    "    const v2 = JSON.parse(pm.environment.get('scoringV2') || '{}');",
+                                    "    pm.test(\"v1 returns the same score as v2, without process\", function () {",
+                                    "        pm.expect(v1).to.not.have.property('process');",
+                                    "        pm.expect(v1.status).to.eql(v2.status);",
+                                    "        pm.expect(v1.reason).to.eql(v2.reason);",
+                                    "        pm.expect(v1.publicationIntegrityDetails).to.eql(v2.publicationIntegrityDetails);",
+                                    "        pm.expect(v1.backwardsCompatibilityDetails).to.eql(v2.backwardsCompatibilityDetails);",
+                                    "        pm.expect(v1.qualityCheckDetails).to.eql(v2.qualityCheckDetails);",
+                                    "    });",
+                                    "}",
+                                    "pm.environment.unset('scoringV2');"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "url": {
+                            "raw": "{{SERVER_HOST}}/api-linter/api/v1/packages/{{project_lt}}/versions/0000.1/scoring",
+                            "host": [
+                                "{{SERVER_HOST}}"
+                            ],
+                            "path": [
+                                "api-linter",
+                                "api",
+                                "v1",
+                                "packages",
+                                "{{project_lt}}",
+                                "versions",
+                                "0000.1",
+                                "scoring"
                             ]
                         },
                         "method": "GET",

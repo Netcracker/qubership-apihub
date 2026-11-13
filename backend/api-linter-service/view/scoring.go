@@ -1,6 +1,6 @@
 package view
 
-type VersionScore struct {
+type VersionScore_deprecated struct {
 	Status                       ScoringStatus                              `json:"status"`
 	Reasons                      []string                                   `json:"reason"`
 	Debug                        []string                                   `json:"debug"`
@@ -8,6 +8,38 @@ type VersionScore struct {
 	BackwardCompatibilityDetails map[OpApiType]BackwardCompatibilityDetails `json:"backwardsCompatibilityDetails"`
 	QualityCheckDetails          map[OpApiType][]QualityCheckDetails        `json:"qualityCheckDetails"`
 }
+
+type VersionScore struct {
+	Status  ScoringStatus `json:"status,omitempty"`
+	Reasons []string      `json:"reason"`
+	Debug   []string      `json:"debug"`
+	//TODO: unite ScoringProcess and details ?
+	PublicationIntegrityDetails  *PublicationIntegrityDetails               `json:"publicationIntegrityDetails,omitempty"`
+	BackwardCompatibilityDetails map[OpApiType]BackwardCompatibilityDetails `json:"backwardsCompatibilityDetails"`
+	QualityCheckDetails          map[OpApiType][]QualityCheckDetails        `json:"qualityCheckDetails"`
+	Process                      ScoringProcess                             `json:"process"`
+}
+
+type ScoringProcess struct {
+	Status                 ScoringProcessStatus `json:"status"`
+	PublicationIntegrity   ScoringProcessStatus `json:"publicationIntegrity"`
+	BackwardsCompatibility ScoringProcessStatus `json:"backwardsCompatibility"`
+	QualityCheck           ScoringProcessStatus `json:"qualityCheck"`
+}
+
+type ScoringProcessStatus string
+
+const (
+	ScoringProcessPending    ScoringProcessStatus = "pending"
+	ScoringProcessInProgress ScoringProcessStatus = "in_progress"
+	ScoringProcessCompleted  ScoringProcessStatus = "completed"
+	ScoringProcessError      ScoringProcessStatus = "error"
+)
+
+func (s ScoringProcessStatus) IsTerminal() bool {
+	return s == ScoringProcessCompleted || s == ScoringProcessError
+}
+
 type ScoringStatus string
 
 const (
