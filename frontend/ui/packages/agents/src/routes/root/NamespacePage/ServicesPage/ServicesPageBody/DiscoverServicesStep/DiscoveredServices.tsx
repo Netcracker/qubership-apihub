@@ -43,7 +43,6 @@ type DiscoveredServicesProps = {
   onRestartDiscovery: () => void
 }
 
-// In the order of the design
 const DISCOVERED_SERVICE_SECTION_HEADERS: ReadonlyArray<DiscoveredServiceSectionHeader> = [
   {
     group: WITH_BASELINE_PACKAGE_GROUP,

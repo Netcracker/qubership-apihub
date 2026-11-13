@@ -6,7 +6,7 @@ import {
 } from './discoveredServiceGroups'
 
 const DOCUMENT = { name: 'Linter Service API' }
-const BASELINE_PACKAGE = { packageKey: 'NCPROD.NC.CP.AH.APILS', name: 'API Linter Service' }
+const BASELINE_PACKAGE = { packageKey: 'QS.LINT', name: 'API Linter Service' }
 
 describe('discoveredServiceGroups', () => {
   it('puts a service with API documents and a baseline package into the group with a baseline package', () => {

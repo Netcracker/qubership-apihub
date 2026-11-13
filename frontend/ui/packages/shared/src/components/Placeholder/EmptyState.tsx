@@ -1,28 +1,28 @@
-import { Box, styled, Typography } from '@mui/material'
+import { Box, styled } from '@mui/material'
 import { type FC, memo, type ReactNode } from 'react'
 
-import type { TestableProps } from '@netcracker/qubership-apihub-ui-shared/components/Testable'
+import type { TestableProps } from '../Testable'
 
-import failedIllustration from './empty-state-failed.svg'
-import readyIllustration from './empty-state-ready.svg'
+import failedIllustration from './failed.svg'
+import noDataIllustration from './no-data.svg'
 
-export const READY_EMPTY_STATE_VARIANT = 'ready'
+export const NO_DATA_EMPTY_STATE_VARIANT = 'no-data'
 export const FAILED_EMPTY_STATE_VARIANT = 'failed'
 
 type EmptyStateVariant =
-  | typeof READY_EMPTY_STATE_VARIANT
+  | typeof NO_DATA_EMPTY_STATE_VARIANT
   | typeof FAILED_EMPTY_STATE_VARIANT
 
 type EmptyStateProps = {
   variant: EmptyStateVariant
   title: string
-  // Each line starts on a line of its own, as the mockups break the description
+  /** The lines of the description, each rendered on a line of its own. */
   lines: ReadonlyArray<string>
   action?: ReactNode
 } & TestableProps
 
 const EMPTY_STATE_VARIANT_TO_ILLUSTRATION_MAP: Record<EmptyStateVariant, string> = {
-  [READY_EMPTY_STATE_VARIANT]: readyIllustration,
+  [NO_DATA_EMPTY_STATE_VARIANT]: noDataIllustration,
   [FAILED_EMPTY_STATE_VARIANT]: failedIllustration,
 }
 
@@ -47,7 +47,7 @@ export const EmptyState: FC<EmptyStateProps> = memo<EmptyStateProps>(({
 
 EmptyState.displayName = 'EmptyState'
 
-// Fills the flex column of a wizard step as well as the plain box of the welcome page
+// `flex` fills the parent when it is a flex column, and `height` when it is any other box
 const EmptyStateBox = styled(Box)(({ theme }) => ({
   flex: 1,
   height: '100%',
@@ -66,17 +66,18 @@ const EmptyStateText = styled(Box)(({ theme }) => ({
   textAlign: 'center',
 }))
 
-const EmptyStateTitle = styled(Typography)(({ theme }) => ({
+// The theme has no 20 px variant, so the title sets the size on h5, as the titles of ErrorPage and
+// PackageRedirectPage do
+const EmptyStateTitle = styled(Box)(({ theme }) => ({
+  ...theme.typography.h5,
   fontSize: 20,
   fontWeight: 500,
-  lineHeight: '28px',
-  color: theme.palette.common.black,
 }))
 
-const EmptyStateDescription = styled(Typography)(({ theme }) => ({
+const EmptyStateDescription = styled(Box)(({ theme }) => ({
+  ...theme.typography.h6,
   display: 'flex',
   flexDirection: 'column',
-  fontSize: 15,
   lineHeight: '22px',
   color: theme.palette.text.secondary,
 }))

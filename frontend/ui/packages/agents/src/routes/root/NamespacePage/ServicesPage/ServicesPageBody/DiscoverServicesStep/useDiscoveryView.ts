@@ -1,4 +1,4 @@
-import type { IsLoading } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
+import type { IsError, IsLoading } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
 import { isEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
 
 import type { Services } from '@agents/entities/services'
@@ -23,16 +23,26 @@ type DiscoveryView =
   | typeof NO_SERVICES_DISCOVERY_VIEW
   | typeof SERVICES_DISCOVERY_VIEW
 
-// What Discover Services shows; the footer and the next step of the wizard depend on it too
+/** What Discover Services shows; the footer and the next step of the wizard depend on it too. */
 export function useDiscoveryView(): DiscoveryView {
-  const [discovery, isLoading] = useServices()
-  return discoveryViewOf(discovery, isLoading)
+  const [discovery, isLoading, isError] = useServices()
+  return discoveryViewOf(discovery, isLoading, isError)
 }
 
-// A running discovery shows the services it has found so far
-export function discoveryViewOf({ status, services }: Services, isLoading: IsLoading): DiscoveryView {
+/**
+ * The view of Discover Services for a services response. A running discovery shows the services it found so far,
+ * and a services request that failed with no result shows the failed discovery.
+ */
+export function discoveryViewOf(
+  { status, services }: Services,
+  isLoading: IsLoading,
+  isError: IsError,
+): DiscoveryView {
   if (isLoading) {
     return LOADING_DISCOVERY_VIEW
+  }
+  if (isError) {
+    return FAILED_DISCOVERY_VIEW
   }
   switch (status) {
     case NONE_DISCOVERY_STATUS:
