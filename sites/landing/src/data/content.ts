@@ -469,7 +469,7 @@ export const features = [
     title: 'Beyond API Types: Catalog Contracts',
     description: 'Publish DDLAPI database schemas and MCP tool/resource/prompt documents as first-class contracts in the same package versions. The Portal covers search, dashboards, changelog, and export — not only browse.',
     bullets: [
-      'DDLAPI: table viewer, changelog, dashboards, and side-by-side schema Diff View',
+      'DDLAPI: table viewer, table groups, changelog, dashboards, side-by-side schema Diff View, and Excel export with the group',
       'MCP contracts: configure endpoints before publish, then search, compare, and export',
       'Shared build pipeline via ddlBuilder / mcpBuilder; document apiKind persisted on publish',
       'MCP server for IDEs remains separate: it queries the catalog; it is not the contract type',
@@ -527,7 +527,7 @@ export const scenarios = [
     persona: 'Data / Platform Architect',
     icon: '🗄️',
     title: 'Version database schemas next to APIs',
-    steps: ['Publish DDLAPI', 'Review table viewer', 'Diff table schemas', 'Export changelog'],
+    steps: ['Publish DDLAPI', 'Group tables', 'Diff table schemas', 'Export changelog'],
     value: 'DB contracts live in the same catalog as service APIs — one release story for app and data.',
     color: 'indigo',
   },
