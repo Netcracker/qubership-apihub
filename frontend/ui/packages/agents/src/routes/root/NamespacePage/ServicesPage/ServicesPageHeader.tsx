@@ -183,16 +183,12 @@ const WizardTab = styled(ButtonBase, { shouldForwardProp: prop => prop !== 'look
     width: '100%',
     minHeight: 44,
     padding: theme.spacing(0.5, 1.5),
-    borderRadius: 8,
+    borderRadius: 10,
     textAlign: 'left',
     backgroundColor: STEP_LOOK_TO_COLORS[look](theme).background,
     cursor: 'pointer',
     '&[aria-disabled="true"]': {
       cursor: 'default',
-    },
-    // The card header clips what overflows its title, so the focus ring is drawn inside the tab
-    '&.Mui-focusVisible': {
-      outlineOffset: -4,
     },
     ...VISIBLE_ON_HOVER_HOST_STYLES,
   }),

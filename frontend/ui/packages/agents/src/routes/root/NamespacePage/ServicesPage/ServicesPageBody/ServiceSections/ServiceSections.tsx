@@ -60,5 +60,9 @@ const SectionList = styled(Box)(({ theme }) => ({
   display: 'flex',
   flexDirection: 'column',
   gap: theme.spacing(2),
-  marginTop: theme.spacing(1),
+  // The focus ring is drawn outside the header, and overflow-y clips it. The padding holds the
+  // ring; the negative margin keeps the sections in line with the toolbar.
+  padding: theme.spacing(1),
+  marginLeft: theme.spacing(-1),
+  marginRight: theme.spacing(-1),
 }))
