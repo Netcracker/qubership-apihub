@@ -338,6 +338,7 @@ func TestGetToolMetadataUsesGenericToolNames(t *testing.T) {
 	require.ElementsMatch(t, []string{
 		ToolNameSearchOperations,
 		ToolNameSearchOperationsV2,
+		ToolNameSearchOperationsV3,
 		ToolNameGetOperationSpec,
 		ToolNameGetOperationDiff,
 		ToolNameGetDocument,
@@ -462,8 +463,21 @@ func TestValidateMCPGroup(t *testing.T) {
 }
 
 func TestResolveMCPSearchPackageIds(t *testing.T) {
-	require.Equal(t, []string{"SECRET"}, resolveMCPSearchPackageIds("", "SECRET"))
-	require.Equal(t, []string{"SECRET.pkg2"}, resolveMCPSearchPackageIds("SECRET.pkg2", "SECRET"))
+	t.Run("no groups scopes to the workspace", func(t *testing.T) {
+		require.Equal(t, []string{"SECRET"}, resolveMCPSearchPackageIds(nil, "SECRET"))
+		require.Equal(t, []string{"SECRET"}, resolveMCPSearchPackageIds([]string{}, "SECRET"))
+	})
+	t.Run("single group", func(t *testing.T) {
+		require.Equal(t, []string{"SECRET.pkg2"}, resolveMCPSearchPackageIds([]string{"SECRET.pkg2"}, "SECRET"))
+	})
+	t.Run("several groups keep their order", func(t *testing.T) {
+		require.Equal(t, []string{"SECRET.pkg2", "SECRET.pkg3"},
+			resolveMCPSearchPackageIds([]string{"SECRET.pkg2", "SECRET.pkg3"}, "SECRET"))
+	})
+	t.Run("duplicates and empty items are dropped", func(t *testing.T) {
+		require.Equal(t, []string{"SECRET.pkg2", "SECRET.pkg3"},
+			resolveMCPSearchPackageIds([]string{"SECRET.pkg2", "", "SECRET.pkg2", "SECRET.pkg3", ""}, "SECRET"))
+	})
 }
 
 func TestResolveMCPSearchVersions(t *testing.T) {
