@@ -7,6 +7,7 @@ import {
   openableStepsOf,
   PROMOTE_VERSION_STEP_KEY,
   type Step,
+  type StepKey,
 } from './ServicesPageProvider/servicesSteps'
 import { useSteps } from './ServicesPageProvider/ServicesStepsProvider'
 
@@ -23,21 +24,14 @@ export function useOpenableSteps(): ReadonlyArray<boolean> {
   )
   const hasPromotableServices = useHasPromotableServices(isSnapshotComplete)
 
-  const isLeavable = ({ key, status }: Step): boolean => {
-    if (status !== COMPLETE_STEP_STATUS) {
-      return false
-    }
-    switch (key) {
-      // Create Snapshot lists the discovered services, so a discovery that found none leaves it nothing
-      case DISCOVER_SERVICES_STEP_KEY:
-        return discoveryView === SERVICES_DISCOVERY_VIEW
-      // Promote Version lists only the services of the snapshot that have a baseline package
-      case CREATE_SNAPSHOT_STEP_KEY:
-        return hasPromotableServices
-      case PROMOTE_VERSION_STEP_KEY:
-        return false
-    }
+  const isLeavableByStepKey: Record<StepKey, boolean> = {
+    // Create Snapshot lists the discovered services, so a discovery that found none leaves it nothing
+    [DISCOVER_SERVICES_STEP_KEY]: discoveryView === SERVICES_DISCOVERY_VIEW,
+    // Promote Version lists only the services of the snapshot that have a baseline package
+    [CREATE_SNAPSHOT_STEP_KEY]: hasPromotableServices,
+    [PROMOTE_VERSION_STEP_KEY]: false,
   }
+  const isLeavable = ({ key, status }: Step): boolean => status === COMPLETE_STEP_STATUS && isLeavableByStepKey[key]
 
   return openableStepsOf(steps, isLeavable)
 }
