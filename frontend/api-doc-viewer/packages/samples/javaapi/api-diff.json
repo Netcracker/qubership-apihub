@@ -1,0 +1,92 @@
+{
+  "tool" : "jdiff",
+  "toolVersion" : "0.1.0-SNAPSHOT",
+  "mode" : "api-diff",
+  "generatedAt" : "2026-10-15T11:33:23.370451800Z",
+  "input" : {
+    "newVersion" : "2025.1.1.15",
+    "gav" : "org.qubership:qip-catalog-library",
+    "oldVersion" : "2025.1.1.13"
+  },
+  "artifacts" : [ {
+    "groupId" : "org.qubership",
+    "artifactId" : "qip-catalog-library",
+    "oldVersion" : "2025.1.1.13",
+    "newVersion" : "2025.1.1.15",
+    "semverVerdict" : "MAJOR",
+    "changes" : [ {
+      "className" : "org.qubership.integration.platform.catalog.model.deployment.update.DeploymentInfo",
+      "elementType" : "CLASS",
+      "status" : "MODIFIED",
+      "changeTypes" : [ ],
+      "binaryCompatible" : false,
+      "sourceCompatible" : false,
+      "breaking" : true,
+      "semver" : "MAJOR"
+    }, {
+      "className" : "org.qubership.integration.platform.catalog.model.deployment.update.DeploymentInfo",
+      "elementType" : "CONSTRUCTOR",
+      "member" : "DeploymentInfo(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.Long, java.lang.Boolean, java.lang.Boolean, java.util.List)",
+      "status" : "REMOVED",
+      "changeTypes" : [ "CONSTRUCTOR_REMOVED" ],
+      "details" : "Modifier: NON_FINAL -> n.a.; Modifier: NON_STATIC -> n.a.; Modifier: PUBLIC -> n.a.; Modifier: NON_ABSTRACT -> n.a.; Modifier: NON_BRIDGE -> n.a.; Modifier: NON_SYNTHETIC -> n.a.",
+      "binaryCompatible" : false,
+      "sourceCompatible" : false,
+      "breaking" : true,
+      "semver" : "MAJOR"
+    }, {
+      "className" : "org.qubership.integration.platform.catalog.model.deployment.update.DeploymentInfo",
+      "elementType" : "CONSTRUCTOR",
+      "member" : "DeploymentInfo(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.Long, java.lang.Boolean, java.lang.Boolean)",
+      "status" : "NEW",
+      "changeTypes" : [ ],
+      "details" : "Modifier: n.a. -> NON_FINAL; Modifier: n.a. -> NON_STATIC; Modifier: n.a. -> PUBLIC; Modifier: n.a. -> NON_ABSTRACT; Modifier: n.a. -> NON_BRIDGE; Modifier: n.a. -> NON_SYNTHETIC",
+      "binaryCompatible" : true,
+      "sourceCompatible" : true,
+      "breaking" : false,
+      "semver" : "MINOR"
+    }, {
+      "className" : "org.qubership.integration.platform.catalog.model.deployment.update.DeploymentInfo",
+      "elementType" : "METHOD",
+      "member" : "java.util.List getDependencyChainIds()",
+      "status" : "REMOVED",
+      "changeTypes" : [ "METHOD_REMOVED" ],
+      "details" : "Modifier: NON_FINAL -> n.a.; Modifier: NON_STATIC -> n.a.; Modifier: PUBLIC -> n.a.; Modifier: NON_ABSTRACT -> n.a.; Modifier: NON_BRIDGE -> n.a.; Modifier: NON_SYNTHETIC -> n.a.; Return type: java.util.List -> n.a.",
+      "binaryCompatible" : false,
+      "sourceCompatible" : false,
+      "breaking" : true,
+      "semver" : "MAJOR"
+    }, {
+      "className" : "org.qubership.integration.platform.catalog.model.deployment.update.DeploymentInfo",
+      "elementType" : "METHOD",
+      "member" : "void setDependencyChainIds(java.util.List)",
+      "status" : "REMOVED",
+      "changeTypes" : [ "METHOD_REMOVED" ],
+      "details" : "Modifier: NON_FINAL -> n.a.; Modifier: NON_STATIC -> n.a.; Modifier: PUBLIC -> n.a.; Modifier: NON_ABSTRACT -> n.a.; Modifier: NON_BRIDGE -> n.a.; Modifier: NON_SYNTHETIC -> n.a.; Return type: void -> n.a.",
+      "binaryCompatible" : false,
+      "sourceCompatible" : false,
+      "breaking" : true,
+      "semver" : "MAJOR"
+    }, {
+      "className" : "org.qubership.integration.platform.catalog.model.deployment.update.DeploymentInfo$DeploymentInfoBuilder",
+      "elementType" : "CLASS",
+      "status" : "MODIFIED",
+      "changeTypes" : [ ],
+      "binaryCompatible" : false,
+      "sourceCompatible" : false,
+      "breaking" : true,
+      "semver" : "MAJOR"
+    }, {
+      "className" : "org.qubership.integration.platform.catalog.model.deployment.update.DeploymentInfo$DeploymentInfoBuilder",
+      "elementType" : "METHOD",
+      "member" : "org.qubership.integration.platform.catalog.model.deployment.update.DeploymentInfo$DeploymentInfoBuilder dependencyChainIds(java.util.List)",
+      "status" : "REMOVED",
+      "changeTypes" : [ "METHOD_REMOVED" ],
+      "details" : "Modifier: NON_FINAL -> n.a.; Modifier: NON_STATIC -> n.a.; Modifier: PUBLIC -> n.a.; Modifier: NON_ABSTRACT -> n.a.; Modifier: NON_BRIDGE -> n.a.; Modifier: NON_SYNTHETIC -> n.a.; Return type: org.qubership.integration.platform.catalog.model.deployment.update.DeploymentInfo$DeploymentInfoBuilder -> n.a.",
+      "binaryCompatible" : false,
+      "sourceCompatible" : false,
+      "breaking" : true,
+      "semver" : "MAJOR"
+    } ]
+  } ]
+}

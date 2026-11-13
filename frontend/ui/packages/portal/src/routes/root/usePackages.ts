@@ -5,7 +5,7 @@ import type { InvalidateQuery, IsFetching, IsLoading } from '@netcracker/qubersh
 import { EMPTY_PAGE_REFERER } from '@netcracker/qubership-apihub-ui-shared/entities/referer-pages-names'
 import { getPackages } from '@netcracker/qubership-apihub-ui-shared/hooks/packages/usePackages'
 
-const PACKAGES_QUERY_KEY = 'packages-query-key'
+export const PACKAGES_QUERY_KEY = 'packages-query-key'
 
 export function usePackages(options: {
   kind: PackageKind | PackageKind[]

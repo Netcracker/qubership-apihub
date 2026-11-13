@@ -15,14 +15,14 @@ import { TitleRowContentProps, TitleRowUsage } from "./types"
 
 const TITLE_ROW_X_AXIS_PADDING_BY_USAGE: Partial<Record<TitleRowUsage, string>> = {
   [TitleRowUsage.JsoProperty]: X_AXIS_PADDING_ROWS_JSO,
-  [TitleRowUsage.DdlApiSection]: X_AXIS_PADDING_ROWS_DDL_API,
-  [TitleRowUsage.DdlApiProperty]: X_AXIS_PADDING_ROWS_DDL_API_PROPERTIES,
+  [TitleRowUsage.PropertyTableSection]: X_AXIS_PADDING_ROWS_DDL_API,
+  [TitleRowUsage.PropertyTableEntry]: X_AXIS_PADDING_ROWS_DDL_API_PROPERTIES,
   [TitleRowUsage.JsonSchemaProperty]: X_AXIS_PADDING_ROWS_JSO,
 }
 
 const TITLE_ROW_ADDITIONAL_CLASSES_BY_USAGE: Partial<Record<TitleRowUsage, string[]>> = {
   [TitleRowUsage.JsoProperty]: ['min-h-[26px]'],
-  [TitleRowUsage.DdlApiProperty]: ['min-h-[26px]'],
+  [TitleRowUsage.PropertyTableEntry]: ['min-h-[26px]'],
 }
 
 function getTitleRowClassesByUsage(usage: TitleRowUsage): string {
@@ -59,7 +59,7 @@ export const TitleRowContent: FC<TitleRowContentProps> = memo<TitleRowContentPro
   const highlightingModeForKey = useMemo(() => {
     switch (usage) {
       case TitleRowUsage.Default:
-      case TitleRowUsage.DdlApiProperty:
+      case TitleRowUsage.PropertyTableEntry:
         return highlightingMode.get(DiffHiglightingApplicationArea.Default)!
       case TitleRowUsage.AsyncApiJsoSection:
       case TitleRowUsage.JsoProperty:
@@ -118,7 +118,7 @@ export const TitleRowContent: FC<TitleRowContentProps> = memo<TitleRowContentPro
       />
     )
   }, [titleContent, enableHeaderValue, precededBy, value, variant, layoutSide, diff, usage, highlightingModeForKey, onClickExpander])
-  const isDdlApiPropertyRow = usage === TitleRowUsage.DdlApiProperty
+  const isPropertyTableEntryRow = usage === TitleRowUsage.PropertyTableEntry
   const isJsonSchemaPropertyRow = usage === TitleRowUsage.JsonSchemaProperty
   const jsonSchemaIsRoot = isRoot || level === 0
 
@@ -157,10 +157,10 @@ export const TitleRowContent: FC<TitleRowContentProps> = memo<TitleRowContentPro
             />
           </div>
         )}
-        {!isDdlApiPropertyRow && headerValue}
+        {!isPropertyTableEntryRow && headerValue}
       </>
     )
-  }, [enableHeader, expandable, expanded, hideLevelIndicatorWhenSideEmpty, isDdlApiPropertyRow, isJsonSchemaPropertyRow, jsonSchemaIsRoot, level, onClickExpander, precededBy])
+  }, [enableHeader, expandable, expanded, hideLevelIndicatorWhenSideEmpty, isPropertyTableEntryRow, isJsonSchemaPropertyRow, jsonSchemaIsRoot, level, onClickExpander, precededBy])
 
   const usageDrivenClasses = useMemo(() => {
     return getTitleRowClassesByUsage(usage)
@@ -171,11 +171,11 @@ export const TitleRowContent: FC<TitleRowContentProps> = memo<TitleRowContentPro
       data-precededby={precededBy}
       data-ddl-list-last-row={ddlListLastRow ? true : undefined}
       data-usage={usage !== TitleRowUsage.Default ? usage : undefined}
-      className={`title-row-content flex w-full ${isDdlApiPropertyRow || isJsonSchemaPropertyRow ? 'items-stretch' : 'items-center'} h-full ${usageDrivenClasses} gap-2 ${diffsStyleClasses.join(' ')}`}
+      className={`title-row-content flex w-full ${isPropertyTableEntryRow || isJsonSchemaPropertyRow ? 'items-stretch' : 'items-center'} h-full ${usageDrivenClasses} gap-2 ${diffsStyleClasses.join(' ')}`}
     >
       {header}
-      {isDdlApiPropertyRow ? (
-        <div className="ddlapi-property-row-body flex min-w-0 flex-1 items-center gap-2">
+      {isPropertyTableEntryRow ? (
+        <div className="property-table-entry-body flex min-w-0 flex-1 items-center gap-2">
           {headerValue}
           {subheader?.(layoutSide)}
         </div>

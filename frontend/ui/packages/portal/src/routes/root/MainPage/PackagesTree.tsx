@@ -52,6 +52,8 @@ import { getTooltipMessage } from '@netcracker/qubership-apihub-ui-shared/utils/
 import { getBwcData } from '@netcracker/qubership-apihub-ui-shared/utils/change-severities'
 import { useIntersectionObserver } from '@netcracker/qubership-apihub-ui-shared/hooks/common/useIntersectionObserver'
 import { usePagedPackages } from '@portal/routes/root/usePagedPackages'
+import { useLibraries } from '../useLibraries'
+import { LibraryRows } from './LibraryRows'
 
 export type PackagesTreeProps = Readonly<{
   rootPackageKey?: Key
@@ -95,6 +97,12 @@ export const PackagesTree: FC<PackagesTreeProps> = memo<PackagesTreeProps>(({ ro
     onlyShared: onlyShared,
     lastReleaseVersionDetails: true,
     refererPageName: refererPageName ?? MAIN_PAGE_REFERER,
+  })
+
+  const { libraries, isLoading: isLibrariesLoading, error: librariesError } = useLibraries({
+    parentPackageId: rootPackageKey,
+    onlyFavorite: onlyFavorite,
+    enabled: !onlyShared,
   })
 
   const [containerWidth, setContainerWidth] = useState(DEFAULT_CONTAINER_WIDTH)
@@ -158,11 +166,11 @@ export const PackagesTree: FC<PackagesTreeProps> = memo<PackagesTreeProps>(({ ro
     [setColumnSizing, actualColumnSizing],
   )
 
-  const isLoading = useMemo(() => (isGroupsLoading || isPackagesLoading), [isGroupsLoading, isPackagesLoading])
+  const isLoading = isGroupsLoading || isPackagesLoading || isLibrariesLoading
 
   return (
     <Placeholder
-      invisible={isNotEmpty(packages) || isNotEmpty(groups) || isLoading}
+      invisible={isNotEmpty(packages) || isNotEmpty(groups) || isNotEmpty(libraries) || isLoading || !!librariesError}
       area={CONTENT_PLACEHOLDER_AREA}
       message="No packages"
     >
@@ -213,6 +221,12 @@ export const PackagesTree: FC<PackagesTreeProps> = memo<PackagesTreeProps>(({ ro
                 isFetching={isFetching && updatingPackageKey === packageItem.key}
               />
             ))}
+            {!isLoading && <LibraryRows
+              libraries={libraries}
+              columns={getHeaderGroups()[0].headers.map(header => header.id)}
+              error={librariesError}
+              tree
+            />}
           </TableBody>
           {(hasNextPage || hasNextPageGroup) && <RowSkeleton refObject={ref}/>}
           {isLoading && <TableSkeleton/>}
@@ -280,7 +294,13 @@ const GroupRow: FC<GroupRowProps> = memo<GroupRowProps>(props => {
     refererPageName: refererPageName ?? MAIN_PAGE_REFERER,
   })
 
-  const isLoading = useMemo(() => (isFetchingPackage || isFetchingGroup), [isFetchingPackage, isFetchingGroup])
+  const { libraries, isLoading: isLibrariesLoading, error: librariesError } = useLibraries({
+    parentPackageId: key,
+    onlyFavorite: onlyFavorite,
+    enabled: open && !onlyShared,
+  })
+
+  const isLoading = useMemo(() => (isFetchingPackage || isFetchingGroup || isLibrariesLoading), [isFetchingPackage, isFetchingGroup, isLibrariesLoading])
 
   const nextLevel = level + 1
 
@@ -338,7 +358,7 @@ const GroupRow: FC<GroupRowProps> = memo<GroupRowProps>(props => {
                       pl: paddingLeft,
                       width: '100%',
                     }}>
-                      {(!open || isNotEmpty(groups) || isNotEmpty(packages))
+                      {(!open || isNotEmpty(groups) || isNotEmpty(packages) || isNotEmpty(libraries))
                         ? (
                           <IconButton
                             sx={{ p: 0, mr: 1 }}
@@ -430,6 +450,13 @@ const GroupRow: FC<GroupRowProps> = memo<GroupRowProps>(props => {
           isFetching={isFetching && updatingPackageKey === packageItem.key}
         />
       ))}
+      {open && !isLoading && <LibraryRows
+        libraries={libraries}
+        columns={columns.map(column => column.key)}
+        error={librariesError}
+        level={nextLevel}
+        tree
+      />}
       {(hasNextPage || hasNextPageGroup) && <RowSkeleton refObject={ref}/>}
       {isLoading && <RowSkeleton/>}
     </>

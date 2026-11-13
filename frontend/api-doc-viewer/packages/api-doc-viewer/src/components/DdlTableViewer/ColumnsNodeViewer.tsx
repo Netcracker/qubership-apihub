@@ -39,12 +39,12 @@ function buildColumnViewerContexts(
     const isLastInList = index === columnNodes.length - 1
 
     const titlePrecededBy = previousHadAdditionalInfo
-      ? PrecededBy.DDL_COLUMN_AFTER_ADDITIONAL_INFO_ROW
-      : PrecededBy.DDL_COLUMN_ROW
+      ? PrecededBy.PROPERTY_TABLE_ROW_AFTER_ADDITIONAL_INFO
+      : PrecededBy.PROPERTY_TABLE_ROW
 
     const additionalInfoPrecededBy = previousHadAdditionalInfo
-      ? PrecededBy.DDL_COLUMN_AFTER_ADDITIONAL_INFO_ROW
-      : PrecededBy.DDL_COLUMN_ROW
+      ? PrecededBy.PROPERTY_TABLE_ROW_AFTER_ADDITIONAL_INFO
+      : PrecededBy.PROPERTY_TABLE_ROW
 
     const context: ColumnViewerContext = {
       columnNode,
@@ -110,7 +110,7 @@ const ColumnsNodePlainViewer: FC<ColumnsNodePlainViewerProps> = (props) => {
         expandable={false}
         expanded={true}
         variant={TextValueVariant.h2}
-        usage={TitleRowUsage.DdlApiSection}
+        usage={TitleRowUsage.PropertyTableSection}
       />
       <LevelContext.Provider value={level + 1}>
         {columnViewerContexts.map(({ columnNode, titlePrecededBy, additionalInfoPrecededBy, isLastInList }) => (
@@ -167,7 +167,7 @@ const ColumnsNodeWithDiffsViewer: FC<ColumnsNodeWithDiffsViewerProps> = (props) 
         expandable={false}
         expanded={true}
         variant={TextValueVariant.h2}
-        usage={TitleRowUsage.DdlApiSection}
+        usage={TitleRowUsage.PropertyTableSection}
         {...titleRowDiffProps}
       />
       <LevelContext.Provider value={level + 1}>

@@ -7,6 +7,7 @@ export const SystemExtensionNames = {
   apiLinter: 'api-linter',
   agentsBackend: 'agents-backend',
   ncService: 'nc-service',
+  librariesBackend: 'libraries-backend',
 } as const
 
 export type SystemExtensionName = typeof SystemExtensionNames[keyof typeof SystemExtensionNames]
@@ -29,6 +30,10 @@ export function useAgentEnabled(): boolean {
 
 export function useNcServiceEnabled(): boolean {
   return useExtensionNameEnabled(SystemExtensionNames.ncService)
+}
+
+export function useLibrariesBackendEnabled(): boolean {
+  return useExtensionNameEnabled(SystemExtensionNames.librariesBackend)
 }
 
 export function useGetAgentPrefix(): string {

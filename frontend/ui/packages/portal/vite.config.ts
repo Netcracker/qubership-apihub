@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import monacoEditor from 'vite-plugin-monaco-editor'
 import path, { resolve } from 'path'
@@ -29,12 +29,6 @@ const apispecViewDist = path.dirname(requireFromHere.resolve('@netcracker/qubers
   .split(path.sep)
   .join('/')
 
-// The entry point of a running APIHUB: the UI nginx (port 8081 of the Docker Compose stacks, also when the backend
-// runs from the IDE) or the ingress of local Kubernetes. Not the backend itself: nginx strips the extension prefixes
-// such as /api-linter and forwards them to their services.
-// const proxyServer = 'https://qubership-apihub.localtest.me'
-const proxyServer = 'http://host.docker.internal:8081'
-
 // The legacy Express mock of `pnpm dev:backend`, the proxy target outside proxy mode (`pnpm dev:frontend`).
 // TODO(ui): remove it with the mock once MSW covers its routes; every prefix then goes to proxyServer.
 const devServer = 'http://localhost:3003'
@@ -45,7 +39,14 @@ const devServer = 'http://localhost:3003'
 const injectNodeGlobals = { Buffer: ['buffer', 'Buffer'] as [string, string], process: 'process' }
 
 export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, __dirname, 'VITE_')
+  // The entry point of a running APIHUB: the UI nginx (port 8081 of the Docker Compose stacks, also when the backend
+  // runs from the IDE) or the ingress of local Kubernetes. Not the backend itself: nginx strips the extension prefixes
+  // such as /api-linter and forwards them to their services.
+  const proxyServer = env.VITE_PROXY_TARGET || 'http://host.docker.internal:8081'
   const isProxyMode = mode === 'proxy'
+  const useLocalLibraries = !isProxyMode || env.VITE_LOCAL_LIBRARIES === 'true'
+  const libraryProxyOptions = { target: devServer, changeOrigin: true, secure: false }
   const proxyOptions = { target: isProxyMode ? proxyServer : devServer, changeOrigin: true, secure: false }
   // Bundle-size analysis is opt-in via `npm run build:analyze` (which passes `--mode analyze`).
   // It is kept out of the default build because generating the report holds the full module graph
@@ -173,6 +174,8 @@ export default defineConfig(({ mode }) => {
     server: {
       open: '/login',
       proxy: {
+        '/api/v1/libraries': useLocalLibraries ? libraryProxyOptions : proxyOptions,
+        '/api/v1/favorites/libraries': useLocalLibraries ? libraryProxyOptions : proxyOptions,
         // Vite matches the keys as path prefixes in order, so '/api' also covers the linter at '/api-linter'. A prefix
         // with another target goes before it.
         '/api': proxyOptions,

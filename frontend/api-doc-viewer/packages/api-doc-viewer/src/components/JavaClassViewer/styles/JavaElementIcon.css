@@ -1,0 +1,41 @@
+/* stylelint-disable selector-class-pattern -- modifier classes shared with TS/TSX */
+
+.java-element-icon {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  margin-right: 8px;
+  border-radius: 50%;
+  color: #fff;
+  font-family: "Inter Variable", sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.java-element-icon_class {
+  background-color: #3d8bd9;
+}
+
+.java-element-icon_interface {
+  background-color: #3fa34d;
+}
+
+.java-element-icon_enum {
+  background-color: #9c5fc8;
+}
+
+.java-element-icon_annotation {
+  background-color: #5c9e31;
+}
+
+.java-element-icon_field {
+  background-color: #d99a1f;
+}
+
+.java-element-icon_method {
+  background-color: #e0603e;
+}

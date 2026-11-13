@@ -20,13 +20,13 @@ export enum PrecededBy {
   */
   SERVER_BLOCK = 'server-block',
   SERVER_ADDRESS_ROW = 'server-address-row',
-  DDL_TABLE_HEADER_ROW = 'ddl-table-header-row',
-  DDL_TABLE_SCHEMA_ROW = 'ddl-table-schema-row',
+  PROPERTY_TABLE_HEADER_ROW = 'property-table-header-row',
+  PROPERTY_TABLE_SUBHEADER_ROW = 'property-table-subheader-row',
   DDL_TABLE_DESCRIPTION_ROW = 'ddl-table-description-row',
   DDL_SECTION_HEADER = 'ddl-section-header',
-  DDL_COLUMN_ROW = 'ddl-column-row',
+  PROPERTY_TABLE_ROW = 'property-table-row',
   /** Follows a sibling column block that ended with an additional-info row. */
-  DDL_COLUMN_AFTER_ADDITIONAL_INFO_ROW = 'ddl-column-after-additional-info-row',
+  PROPERTY_TABLE_ROW_AFTER_ADDITIONAL_INFO = 'property-table-row-after-additional-info',
   DDL_INDEX_ROW = 'ddl-index-row',
 }
 

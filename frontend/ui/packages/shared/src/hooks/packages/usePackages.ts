@@ -69,6 +69,7 @@ export async function getPackages(
   lastReleaseVersionDetails: boolean,
   versionLabel: string,
   showAllDescendants: boolean,
+  signal?: AbortSignal,
 ): Promise<Packages> {
 
   const searchParam = optionalSearchParams({
@@ -87,7 +88,7 @@ export async function getPackages(
 
   return toPackages(await requestJson<PackagesDto>(`/api/v2/packages?${searchParam}`, {
     method: 'GET',
-  }))
+  }, {}, signal))
 }
 
 export function toPackages(value: PackagesDto): Packages {

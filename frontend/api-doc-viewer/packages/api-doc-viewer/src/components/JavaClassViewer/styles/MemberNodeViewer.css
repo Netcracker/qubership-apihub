@@ -1,0 +1,19 @@
+.java-member-title {
+  font-family: "Inter Variable", sans-serif;
+  font-size: 12px;
+  line-height: 20px;
+  color: #000;
+  overflow-wrap: anywhere;
+}
+
+.java-member-signature {
+  min-width: 0;
+}
+
+.java-member-name {
+  font-weight: 400;
+}
+
+.java-member-parameters {
+  font-weight: 400;
+}

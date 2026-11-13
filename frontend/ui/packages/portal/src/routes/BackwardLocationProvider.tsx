@@ -26,6 +26,7 @@ export type BackwardLocation = {
 }
 
 type BackwardLocationState = {
+  fromLibrarySettings?: BackwardLocation
   fromDocumentsComparison?: BackwardLocation
   fromOperation?: BackwardLocation
   fromOperationsComparison?: BackwardLocation
