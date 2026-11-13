@@ -5,6 +5,9 @@ description: Extend api-doc-viewer React viewers — components, layout modes, d
 
 # Authoring api-doc-viewer
 
+**CI linters:** load the `api-doc-viewer-ci-linters` skill before you write or change a file of this module.
+CI lints every file a pull request touches as a whole: Markdown, CSS, SQL fixtures, and more.
+
 api-doc-viewer renders API specifications (JSON Schema, GraphQL, AsyncAPI,
 JSO, DDL tables) as human-readable React trees. The view layer lives under
 `packages/api-doc-viewer/src/`; tree construction and diff aggregation live

@@ -5,6 +5,9 @@ description: Architecture review and refactoring of one api-doc-viewer API type 
 
 # Reviewing an API type stack
 
+**CI linters:** load the `api-doc-viewer-ci-linters` skill before you write or change a file of this module.
+CI lints every file a pull request touches as a whole: Markdown, CSS, SQL fixtures, and more.
+
 Use for an architecture review or refactoring pass over one API type: its data model in
 `packages/next-data-model/` and its viewers in `packages/api-doc-viewer/`. The shared rules below
 apply to every API type; scope and specifics live in the brief for that type:

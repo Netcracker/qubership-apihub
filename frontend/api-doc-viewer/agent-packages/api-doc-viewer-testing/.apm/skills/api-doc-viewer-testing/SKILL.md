@@ -5,6 +5,9 @@ description: Write api-doc-viewer screenshot integration tests against Storybook
 
 # Testing api-doc-viewer
 
+**CI linters:** load the `api-doc-viewer-ci-linters` skill before you write or change a file of this module.
+CI lints every file a pull request touches as a whole: Markdown, CSS, SQL fixtures, and more.
+
 Screenshot integration tests live in `packages/api-doc-viewer/src/it/`. They
 run Jest with `jest-puppeteer` and `jest-image-snapshot` against a static
 Storybook build.

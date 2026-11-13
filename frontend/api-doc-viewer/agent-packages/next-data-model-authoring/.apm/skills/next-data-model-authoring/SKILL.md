@@ -5,6 +5,9 @@ description: Extend next-data-model tree builders (plain → with-diffs inherita
 
 # Authoring next-data-model
 
+**CI linters:** load the `api-doc-viewer-ci-linters` skill before you write or change a file of this module.
+CI lints every file a pull request touches as a whole: Markdown, CSS, SQL fixtures, and more.
+
 next-data-model is the type-safe successor to `api-data-model`. It builds
 tree structures consumed by api-doc-viewer components. Code lives under
 `packages/next-data-model/src/`.

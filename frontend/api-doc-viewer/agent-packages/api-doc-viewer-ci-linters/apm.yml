@@ -1,0 +1,4 @@
+name: api-doc-viewer-ci-linters
+version: 1.0.0
+description: The CI linter rules (super-linter v9.0.0 and lychee) that every file of frontend/api-doc-viewer must pass.
+author: Qubership APIHUB

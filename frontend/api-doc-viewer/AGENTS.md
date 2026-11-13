@@ -72,6 +72,7 @@ apm install --target cursor,claude
 
 | Skill | When |
 | --- | --- |
+| `api-doc-viewer-ci-linters` | **Before writing or changing any file of the module**: the CI linter rules (super-linter, lychee) for Markdown, CSS, SQL fixtures, and the rest |
 | `api-doc-viewer-authoring` | React viewers, rows, diff chrome, Storybook under `packages/api-doc-viewer/src/` |
 | `next-data-model-authoring` | Builders, aggregators, crawl rules under `packages/next-data-model/src/`; JSON Schema row reference docs under its `json-schema/` folder |
 | `api-doc-viewer-testing` | Screenshot ITs, fixtures, snapshot regeneration; **troubleshooting hangs/timeouts** (read skill first) |

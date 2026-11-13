@@ -5,6 +5,9 @@ description: Integrate api-doc-viewer React components in a host application —
 
 # Using api-doc-viewer
 
+**CI linters:** load the `api-doc-viewer-ci-linters` skill before you write or change a file of this module.
+CI lints every file a pull request touches as a whole: Markdown, CSS, SQL fixtures, and more.
+
 Embed human-readable API specification viewers from
 `@netcracker/qubership-apihub-api-doc-viewer` in a React host application.
 Import only from the **package root** and the published CSS subpath — internal
