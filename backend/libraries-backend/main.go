@@ -149,7 +149,11 @@ func main() {
 		reportIngestService, systemInfoService)
 	authorizationService := service.NewAuthorizationService(apihubClient, memberRepository)
 	libraryService := service.NewLibraryService(libraryRepository, memberRepository, registryService)
-	libraryVersionService := service.NewLibraryVersionService(libraryVersionRepository, buildService)
+	registryClient, err := client.NewRegistryClient()
+	if err != nil {
+		log.Fatalf("Failed to create the registry client: %v", err)
+	}
+	libraryVersionService := service.NewLibraryVersionService(libraryVersionRepository, buildService, registryService, registryClient)
 	changesService := service.NewChangesService(comparisonRepository, libraryVersionRepository)
 	memberService := service.NewMemberService(memberRepository, authorizationService, apihubClient)
 	searchService := service.NewSearchService(libraryContentRepository)
@@ -179,6 +183,7 @@ func main() {
 	// Versions
 	r.HandleFunc("/api/v1/libraries/{libraryId}/versions", authenticator.Secure(libraryVersionController.GetLibraryVersions)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v1/libraries/{libraryId}/versions", authenticator.Secure(libraryVersionController.PostLibraryVersion)).Methods(http.MethodPost)
+	r.HandleFunc("/api/v1/libraries/{libraryId}/available-versions", authenticator.Secure(libraryVersionController.GetAvailableVersions)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v1/libraries/{libraryId}/versions/{version}", authenticator.Secure(libraryVersionController.GetLibraryVersion)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v1/libraries/{libraryId}/versions/{version}", authenticator.Secure(libraryVersionController.DeleteLibraryVersion)).Methods(http.MethodDelete)
 

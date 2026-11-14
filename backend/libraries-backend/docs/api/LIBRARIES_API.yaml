@@ -415,6 +415,81 @@ paths:
                     message: "This version is already imported for the library"
         "500":
           $ref: "#/components/responses/InternalServerError"
+  "/api/v1/libraries/{libraryId}/available-versions":
+    parameters:
+      - $ref: "#/components/parameters/libraryId"
+    get:
+      tags:
+        - Versions
+      summary: Get versions available for import
+      description: |
+        List the versions of the library that its registry has and that are not imported yet, newest first.
+        The service reads `maven-metadata.xml` of the library's coordinates from the configured registry on
+        every call. A version that is imported and not deleted is left out; a deleted version is listed again,
+        because it can be imported again. Requires the permission that importing a version requires.
+      operationId: getAvailableLibraryVersions
+      parameters:
+        - name: textFilter
+          in: query
+          description: Return only the versions that contain this text, matched case-insensitively.
+          schema:
+            type: string
+        - $ref: "#/components/parameters/limit"
+        - $ref: "#/components/parameters/page"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AvailableVersions"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                LanguageNotSupported:
+                  value:
+                    status: 400
+                    code: "3102"
+                    message: "Importing a version is not supported for language 'go'; only 'java' has a build worker"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: The library is not found, or its registry has no metadata for the artifact.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                LibraryNotFound:
+                  value:
+                    status: 404
+                    code: "3000"
+                    message: "Library my-lib is not found"
+                ArtifactNotFound:
+                  value:
+                    status: 404
+                    code: "3103"
+                    message: "Artifact com.example:demo-lib is not found in repository 'maven-remote'"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "502":
+          description: The registry is unreachable, answered with an error, or returned metadata that cannot be parsed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                RegistryRequestFailed:
+                  value:
+                    status: 502
+                    code: "3104"
+                    message: "Failed to read artifact metadata from registry 'central'"
   "/api/v1/libraries/{libraryId}/versions/{version}":
     parameters:
       - $ref: "#/components/parameters/libraryId"
@@ -1267,6 +1342,21 @@ components:
           format: date-time
         createdBy:
           type: string
+    AvailableVersions:
+      type: object
+      required:
+        - versions
+      properties:
+        versions:
+          type: array
+          items:
+            type: object
+            required:
+              - version
+            properties:
+              version:
+                type: string
+                example: "2.17.2"
     ChangeSummary:
       type: object
       required:

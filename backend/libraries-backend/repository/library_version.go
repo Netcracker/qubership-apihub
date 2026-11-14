@@ -19,6 +19,8 @@ type LibraryVersionRepository interface {
 	Upsert(ctx context.Context, version entity.LibraryVersionEntity) error
 	Get(ctx context.Context, libraryId, version string) (*entity.LibraryVersionEntity, error)
 	Exists(ctx context.Context, libraryId, version string) (bool, error)
+	// ListVersionNames returns every version of the library that is not soft-deleted, whatever its status.
+	ListVersionNames(ctx context.Context, libraryId string) ([]string, error)
 	List(ctx context.Context, libraryId string, req view.LibraryVersionListReq) ([]entity.LibraryVersionEntity, error)
 	// LatestRelease returns the newest release version of the library other than the one given, which is
 	// what a comparison falls back to when the caller names no previous version.
@@ -73,6 +75,19 @@ func (l libraryVersionRepositoryImpl) Exists(ctx context.Context, libraryId, ver
 		Where("version = ?", version).
 		Where("deleted_at is null").
 		Exists()
+}
+
+func (l libraryVersionRepositoryImpl) ListVersionNames(ctx context.Context, libraryId string) ([]string, error) {
+	result := make([]string, 0)
+	err := l.cp.GetConnection().ModelContext(ctx, (*entity.LibraryVersionEntity)(nil)).
+		Column("version").
+		Where("library_id = ?", libraryId).
+		Where("deleted_at is null").
+		Select(&result)
+	if err != nil && err != pg.ErrNoRows {
+		return nil, err
+	}
+	return result, nil
 }
 
 func (l libraryVersionRepositoryImpl) List(ctx context.Context, libraryId string, req view.LibraryVersionListReq) ([]entity.LibraryVersionEntity, error) {

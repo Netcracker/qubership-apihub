@@ -72,6 +72,12 @@ const LibraryVersionAlreadyExistsMsg = "This version is already imported for the
 const LanguageNotSupported = "3102"
 const LanguageNotSupportedMsg = "Importing a version is not supported for language '$language'; only '$supported' has a build worker"
 
+const LibraryArtifactNotFound = "3103"
+const LibraryArtifactNotFoundMsg = "Artifact $artifact is not found in repository '$repository'"
+
+const RegistryRequestFailed = "3104"
+const RegistryRequestFailedMsg = "Failed to read artifact metadata from registry '$registryId'"
+
 const LibraryComparisonNotFound = "3200"
 const LibraryComparisonNotFoundMsg = "No comparison has been computed yet for this version pair"
 

@@ -44,6 +44,21 @@ type LibraryVersionListReq struct {
 	Page       int
 }
 
+// AvailableVersion is a version the registry has and this service has not imported yet.
+type AvailableVersion struct {
+	Version string `json:"version"`
+}
+
+type AvailableVersions struct {
+	Versions []AvailableVersion `json:"versions"`
+}
+
+type AvailableVersionListReq struct {
+	TextFilter string
+	Limit      int
+	Page       int
+}
+
 // Keys the service writes into LibraryVersion.Metadata so a caller polling a version can tell an
 // import that is still running from one that failed.
 const (

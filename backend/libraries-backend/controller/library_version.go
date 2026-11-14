@@ -14,6 +14,7 @@ type LibraryVersionController interface {
 	PostLibraryVersion(w http.ResponseWriter, r *http.Request)
 	GetLibraryVersion(w http.ResponseWriter, r *http.Request)
 	DeleteLibraryVersion(w http.ResponseWriter, r *http.Request)
+	GetAvailableVersions(w http.ResponseWriter, r *http.Request)
 }
 
 func NewLibraryVersionController(
@@ -140,4 +141,38 @@ func (c libraryVersionControllerImpl) DeleteLibraryVersion(w http.ResponseWriter
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// GetAvailableVersions requires the import permission, because its only purpose is to pick a version to
+// import, and it reads the registry with the credentials from the configuration.
+func (c libraryVersionControllerImpl) GetAvailableVersions(w http.ResponseWriter, r *http.Request) {
+	ctx := secctx.MakeUserContext(r)
+	libraryId := getStringParam(r, "libraryId")
+
+	library := authorize(ctx, w, c.responder, c.libraryService, c.authorizationService, libraryId, view.ManageDraftVersionPermission)
+	if library == nil {
+		return
+	}
+
+	limit, customError := getLimitQueryParam(r)
+	if customError != nil {
+		c.responder.RespondWithCustomError(w, customError)
+		return
+	}
+	page, customError := getPageQueryParam(r)
+	if customError != nil {
+		c.responder.RespondWithCustomError(w, customError)
+		return
+	}
+
+	versions, err := c.libraryVersionService.ListAvailable(ctx, *library, view.AvailableVersionListReq{
+		TextFilter: r.URL.Query().Get("textFilter"),
+		Limit:      limit,
+		Page:       page,
+	})
+	if err != nil {
+		c.responder.RespondWithError(w, "Failed to get the versions available for import", err)
+		return
+	}
+	c.responder.RespondWithJson(w, http.StatusOK, versions)
 }
