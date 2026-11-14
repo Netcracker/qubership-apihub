@@ -1,9 +1,11 @@
 # libraries-backend — data model
 
-Status: proposed, not yet implemented. `backend/libraries-backend/` has no `go.mod` and no migrations; use the
-`apihub-add-go-service` skill when the module is actually scaffolded.
+Status: implemented. The schema below is what
+[`resources/migrations/1_init.up.sql`](../resources/migrations/1_init.up.sql) creates; read that file for the
+authoritative definition and this one for the reasoning. The
+[Deviations](#deviations-in-the-implemented-schema) section lists where the two differ on purpose.
 
-This document proposes the PostgreSQL schema for `libraries-backend`, the planned service that tracks external
+This document describes the PostgreSQL schema of `libraries-backend`, the service that tracks external
 library registries (Maven, npm, Go modules) and serves Java build tasks to
 [java-task-consumer](../../java-task-consumer/README.md). It follows the conventions already used in
 `portal-backend`: `character varying` IDs, an internal `id` plus a human-friendly `alias`, soft delete via
@@ -22,9 +24,11 @@ contract.
 - Library content means the parsed build output: the list of classes and their nested methods, not a cached copy of
   the raw artifact (jar, npm tarball, Go module zip).
 - Search stays scoped to this service; it does not federate with `portal-backend`'s existing package search.
-- `build_id` doubles as the `publishId` the worker sees on `POST /api/v3/packages/{packageId}/java-publish/{publishId}/status`,
-  matching the existing `build-task-consumer` pattern. Confirm this against the Pact file before cutting migrations.
-- Metrics scope is undecided; see [Open questions](#open-questions).
+- `build_id` doubles as the `publishId` the worker sees on
+  `POST /api/v3/libraries/{libraryId}/java-publish/{publishId}/status`, matching the existing
+  `build-task-consumer` pattern. The path was renamed from `packageId` when the service was implemented; see
+  [backend-api.md](../../java-task-consumer/docs/backend-api.md).
+- Metrics are not implemented; see [Resolved questions](#resolved-questions).
 
 ## Registries
 
@@ -34,7 +38,7 @@ config/secret store, keyed by `registry.id`.
 ```sql
 CREATE TABLE IF NOT EXISTS registry (
     id         character varying NOT NULL,
-    type       character varying NOT NULL, -- 'atrifactory' | 'nexus'
+    type       character varying NOT NULL, -- 'artifactory' | 'nexus'
     base_url   character varying NOT NULL,
     name       character varying,
     created_at timestamp without time zone NOT NULL,
@@ -87,9 +91,14 @@ CREATE TABLE IF NOT EXISTS library (
     deleted_by         character varying,
     CONSTRAINT pk_library PRIMARY KEY (id),
     CONSTRAINT fk_library_repository FOREIGN KEY (repository) REFERENCES repository(repository)
-        ON DELETE CASCADE ON UPDATE CASCADE,
-    CONSTRAINT uq_library_repository_coordinates UNIQUE (repository, coordinates_key)
+        ON DELETE CASCADE ON UPDATE CASCADE
 );
+
+-- A partial unique index, not a UNIQUE constraint: a soft-deleted library must not keep its coordinates
+-- reserved, or the same library could never be tracked again.
+CREATE UNIQUE INDEX uq_library_repository_coordinates
+    ON library (repository, coordinates_key)
+    WHERE deleted_at IS NULL;
 ```
 
 ## Library versions
@@ -147,13 +156,11 @@ CREATE TABLE IF NOT EXISTS library_class (
         ON DELETE CASCADE ON UPDATE CASCADE
 );
 
-/*
 CREATE TABLE IF NOT EXISTS library_method_data (
     data_hash character varying NOT NULL,
     data      bytea NOT NULL, -- parameters, return type, thrown exceptions, annotations, javadoc
     CONSTRAINT pk_library_method_data PRIMARY KEY (data_hash)
 );
-*/
 
 CREATE TABLE IF NOT EXISTS library_method (
     library_id character varying NOT NULL,
@@ -221,7 +228,7 @@ contract ([backend-api.md](../../java-task-consumer/docs/backend-api.md)): poll 
 ```sql
 CREATE TABLE IF NOT EXISTS build (
     build_id      character varying NOT NULL,
-    status        character varying NOT NULL, -- 'running' | 'complete' | 'error'
+    status        character varying NOT NULL, -- 'none' | 'running' | 'complete' | 'error'
     details       character varying,
     library_id    character varying NOT NULL,
     version       character varying NOT NULL,
@@ -229,7 +236,7 @@ CREATE TABLE IF NOT EXISTS build (
     created_at    timestamp without time zone DEFAULT now() NOT NULL,
     last_active   timestamp without time zone DEFAULT now() NOT NULL,
     created_by    character varying NOT NULL,
-    restart_count integer,
+    restart_count integer DEFAULT 0 NOT NULL,
     started_at    timestamp without time zone,
     builder_id    character varying,
     priority      integer DEFAULT 0 NOT NULL,
@@ -300,16 +307,68 @@ CREATE TABLE IF NOT EXISTS library_search (
 CREATE INDEX idx_library_search_vector ON library_search USING gin (search_vector);
 ```
 
-`search_vector` is built from `library.name`, `alias`, `description`, and `coordinates_key`. Add the equivalent
-`library_class_search` / `library_method_search` tables, keyed by `(library_id, version, class_id)` and
-`(library_id, version, class_id, method_id)`, for class- and method-level search, not just library-level.
+`search_vector` is built from `library.name`, `alias`, `description`, and `coordinates_key`. Class- and
+method-level search use the equivalent tables, keyed by the entity they index:
 
-## Open questions
+```sql
+CREATE TABLE IF NOT EXISTS library_class_search (
+    library_id    character varying NOT NULL,
+    version       character varying NOT NULL,
+    class_id      character varying NOT NULL,
+    search_vector tsvector NOT NULL,
+    CONSTRAINT pk_library_class_search PRIMARY KEY (library_id, version, class_id),
+    CONSTRAINT fk_library_class_search_class FOREIGN KEY (library_id, version, class_id)
+        REFERENCES library_class(library_id, version, class_id) ON DELETE CASCADE ON UPDATE CASCADE
+);
 
-- **Metrics.** Scope is undecided. A likely lightweight shape is counters on `library`/`library_version`
-  (`download_count`, `build_count`, `last_built_at`), updated by application logic rather than a time-series store.
-  Revisit if a richer requirement shows up (for example per-day build counts).
-- **Database ownership.** This document assumes `libraries-backend` gets its own PostgreSQL schema, consistent with
-  it being scaffolded as a standalone module via the `apihub-add-go-service` skill. If it shares `portal-backend`'s
-  database instead, `parent_package_id` and `user_id` become real foreign keys rather than cross-service
-  references.
+CREATE TABLE IF NOT EXISTS library_method_search (
+    library_id    character varying NOT NULL,
+    version       character varying NOT NULL,
+    class_id      character varying NOT NULL,
+    method_id     character varying NOT NULL,
+    search_vector tsvector NOT NULL,
+    CONSTRAINT pk_library_method_search PRIMARY KEY (library_id, version, class_id, method_id),
+    CONSTRAINT fk_library_method_search_method FOREIGN KEY (library_id, version, class_id, method_id)
+        REFERENCES library_method(library_id, version, class_id, method_id) ON DELETE CASCADE ON UPDATE CASCADE
+);
+```
+
+Both carry a GIN index on `search_vector`, like `library_search`.
+
+Every vector is built with the `simple` text-search configuration, and both the indexed text and the query text pass
+through the same normalisation (`regexp_replace(..., '[^a-zA-Z0-9_]+', ' ', 'g')`, see `repository/common.go`). An
+English stemmer would fold `Mapping` and `maps` into one token, and the default parser keeps `jackson-databind` and
+`com.example.Foo` as single compound tokens, so a search for one segment would never match the whole name.
+
+## Deviations in the implemented schema
+
+The migration departs from the proposal above in four places, each deliberate:
+
+- **`uq_library_repository_coordinates` is a partial unique index**, not a `UNIQUE` constraint, so soft-deleting a
+  library frees its coordinates. A constraint cannot be partial.
+- **`library_method_data` exists.** It was commented out in the proposal, but `library_method.data_hash` references
+  it, so the table is required for the foreign key to resolve.
+- **`build.status` has a fourth value, `none`**, for a queued build nobody has taken. The three values the proposal
+  lists are what the worker reports; the queue needs a not-started state as well, matching `portal-backend`'s `build`.
+- **`build.restart_count` is `DEFAULT 0 NOT NULL`.** The queue compares it against a limit on every poll, so a null
+  would have to be handled on a hot path for no benefit.
+
+Two columns are kept for shape but carry less meaning than in `portal-backend`:
+
+- **`library_version_comparison.open_count`** equals the total number of changes. Nothing in this service reviews a
+  change, so every change counts as open.
+- **`library_class.modifiers` and `library_method.modifiers` stay null.** The jdiff report carries modifier changes
+  only as prose in its `details` field, never as a list, so there is nothing to populate them from. The prose is kept
+  in the content-addressed body.
+
+Fields of a class have no normalised row: the data model has classes and methods only, so a `FIELD` entry is stored
+inside the class body and a field-level change is recorded as a class-level change with the member named in
+`details`. This keeps `method_id` meaning "a method of this class".
+
+## Resolved questions
+
+- **Metrics.** Not implemented, and no counters were added. `build` already records `created_at`, `started_at`,
+  `last_active`, and `status` per build, which answers "when was this last built" without a new column. Revisit when
+  a requirement names the metric it needs.
+- **Database ownership.** `libraries-backend` has its own PostgreSQL database (`apihub_libraries`), so
+  `parent_package_id`, `created_by`, and `user_id` stay plain `character varying` cross-service references.

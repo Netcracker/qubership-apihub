@@ -27,7 +27,7 @@ on:
         default: full
       image_tags:
         description: >-
-          JSON object with the keys backend, buildTaskConsumer, ui, apiLinterService, agentsBackend,
+          JSON object with the keys backend, buildTaskConsumer, ui, apiLinterService, agentsBackend, librariesBackend,
           and agent. A missing key takes default_image_tag. A src-<hash> tag pins exact content.
         required: false
         type: string
@@ -183,6 +183,10 @@ jobs:
             image:
               repository: 'ghcr.io/$owner/qubership-apihub-agents-backend'
               tag: '$agentsBackend'
+          qubershipApihubLibrariesBackend:
+            image:
+              repository: 'ghcr.io/$owner/qubership-apihub-libraries-backend'
+              tag: '$librariesBackend'
           EOF
           {
             echo "owner=$owner"
@@ -197,6 +201,7 @@ jobs:
             echo "ghcr.io/$owner/qubership-apihub-ui:$ui"
             echo "ghcr.io/$owner/qubership-api-linter-service:$apiLinterService"
             echo "ghcr.io/$owner/qubership-apihub-agents-backend:$agentsBackend"
+            echo "ghcr.io/$owner/qubership-apihub-libraries-backend:$librariesBackend"
             if [ '${{ inputs.agent }}' = 'true' ]; then
               echo "ghcr.io/$owner/qubership-apihub-agent:$agent"
             fi
@@ -405,6 +410,9 @@ jobs:
                 - name: agents-backend
                   baseUrl: http://qubership-apihub-agents-backend:8080
                   pathPrefix: agents-backend
+                - name: libraries-backend
+                  baseUrl: http://qubership-apihub-libraries-backend:8080
+                  pathPrefix: libraries-backend
                 - name: nc-service
                   baseUrl: http://qubership-apihub-backend:8080
                   pathPrefix: apihub-nc
@@ -412,6 +420,11 @@ jobs:
             env:
               businessParameters:
                 defaultWorkspaceId: 'QS'
+              technicalParameters:
+                apihub:
+                  url: 'https://${APIHUB_HOST}'
+          qubershipApihubLibrariesBackend:
+            env:
               technicalParameters:
                 apihub:
                   url: 'https://${APIHUB_HOST}'
@@ -437,6 +450,7 @@ jobs:
           }
           backend="$(config_of qubership-apihub-backend-config-secret)"
           agents_backend="$(config_of qubership-apihub-agents-backend-config-secret)"
+          libraries_backend="$(config_of qubership-apihub-libraries-backend-config-secret)"
           require() {
             printf '%s' "$1" | grep --fixed-strings --quiet -- "$2" \
               || { echo "::error::$3"; exit 1; }
@@ -445,7 +459,8 @@ jobs:
           require "$backend" 'name: nc-service' "the backend does not register the nc-service extension"
           require "$agents_backend" 'defaultWorkspaceId: QS' "agents-backend has no default workspace"
           require "$agents_backend" "https://${APIHUB_HOST}" "agents-backend does not use the public APIHUB URL"
-          echo "the backend and agents-backend use the default workspace QS, nc-service, and the public URL"
+          require "$libraries_backend" "https://${APIHUB_HOST}" "libraries-backend does not use the public APIHUB URL"
+          echo "the backend, agents-backend, and libraries-backend use the workspace QS, nc-service, and the public URL"
 
       # The Agent UI tests discover these six deployments. The chart hardcodes its name and
       # app.kubernetes.io/part-of, so each copy is helm template plus a rewrite, the same pipeline the

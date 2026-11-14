@@ -19,7 +19,7 @@ import org.junit.jupiter.api.io.TempDir;
 class LocalJavaBuildQueueTest {
 
     private static final String BUILDER_ID = "debug-builder-1";
-    private static final String PACKAGE_ID = "debug-pkg";
+    private static final String LIBRARY_ID = "debug-lib";
     private static final String PUBLISH_ID = "report";
 
     @TempDir
@@ -30,11 +30,11 @@ class LocalJavaBuildQueueTest {
         String configJson = """
                 {
                   "publishId": "%s",
-                  "packageId": "%s",
+                  "libraryId": "%s",
                   "buildType": "java-api-report",
                   "metadata": {"gav": "org.qubership:qip-catalog-library:2025.1.1.15"}
                 }
-                """.formatted(PUBLISH_ID, PACKAGE_ID);
+                """.formatted(PUBLISH_ID, LIBRARY_ID);
         byte[] reportZip = ResultPackager.zipReport("{\"mode\":\"api-report\"}".getBytes(StandardCharsets.UTF_8));
         try (LocalJavaBuildQueue queue = new LocalJavaBuildQueue("test-api-key")) {
             int port = queue.start(0);
@@ -44,14 +44,14 @@ class LocalJavaBuildQueueTest {
             assertThat(registry.findTask()).isEmpty();
 
             var pending = queue.watch(PUBLISH_ID);
-            queue.enqueue(BUILDER_ID, TestSupport.taskZip(configJson), PACKAGE_ID, PUBLISH_ID);
+            queue.enqueue(BUILDER_ID, TestSupport.taskZip(configJson), LIBRARY_ID, PUBLISH_ID);
 
             var task = registry.findTask();
             assertThat(task).isPresent();
             assertThat(task.get().publishId()).isEqualTo(PUBLISH_ID);
             assertThat(task.get().config().buildType()).isEqualTo(BuildType.JAVA_API_REPORT);
 
-            registry.postBuildStatus(PACKAGE_ID, PUBLISH_ID, BuildStatus.COMPLETE, reportZip, null);
+            registry.postBuildStatus(LIBRARY_ID, PUBLISH_ID, BuildStatus.COMPLETE, reportZip, null);
 
             LocalJavaBuildQueue.PublishResult result = pending.get(5, TimeUnit.SECONDS);
             assertThat(result.complete()).isTrue();
@@ -64,20 +64,20 @@ class LocalJavaBuildQueueTest {
         String configJson = """
                 {
                   "publishId": "diff",
-                  "packageId": "%s",
+                  "libraryId": "%s",
                   "buildType": "java-api-diff",
                   "metadata": {}
                 }
-                """.formatted(PACKAGE_ID);
+                """.formatted(LIBRARY_ID);
         try (LocalJavaBuildQueue queue = new LocalJavaBuildQueue("test-api-key")) {
             int port = queue.start(0);
             WorkerConfig config = TestSupport.workerConfig(port, workDir, BUILDER_ID);
             RegistryClient registry = new RegistryClient(config);
             var pending = queue.watch("diff");
-            queue.enqueue(BUILDER_ID, TestSupport.taskZip(configJson), PACKAGE_ID, "diff");
+            queue.enqueue(BUILDER_ID, TestSupport.taskZip(configJson), LIBRARY_ID, "diff");
             assertThat(registry.findTask()).isPresent();
 
-            registry.postBuildStatus(PACKAGE_ID, "diff", BuildStatus.ERROR, null, "engine failed");
+            registry.postBuildStatus(LIBRARY_ID, "diff", BuildStatus.ERROR, null, "engine failed");
 
             LocalJavaBuildQueue.PublishResult result = pending.get(5, TimeUnit.SECONDS);
             assertThat(result.complete()).isFalse();
@@ -104,7 +104,7 @@ class LocalJavaBuildQueueTest {
                         var task = registry.findTask();
                         if (task.isPresent()) {
                             registry.postBuildStatus(
-                                    task.get().packageId(),
+                                    task.get().libraryId(),
                                     task.get().publishId(),
                                     BuildStatus.COMPLETE,
                                     zip,

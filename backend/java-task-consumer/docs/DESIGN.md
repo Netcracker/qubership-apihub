@@ -44,7 +44,7 @@ Mirrors `build-task-consumer` with a **separate Java task queue**:
 | Call | Endpoint | Notes |
 |------|----------|-------|
 | Poll | `POST /api/v2/java-builders/{builderId}/tasks` | `api-key` header; sysadmin; `204` or ZIP |
-| Status | `POST /api/v3/packages/{id}/java-publish/{publishId}/status` | multipart: `status`, `builderId`, `data` or `errors` |
+| Status | `POST /api/v3/libraries/{libraryId}/java-publish/{publishId}/status` | multipart: `status`, `builderId`, `data` or `errors` |
 
 ### `config.json`
 

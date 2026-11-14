@@ -13,8 +13,9 @@ add what is specific to each.
 - The Helm `values.yaml` and templates are the canonical Kubernetes contract. Compose reproduces the same logical
   split. `docs/configuration-reference.md` is the map between them and must stay in sync in every change.
 - Runtime config authority: `config.template.yaml` mounted as `config.yaml` for the backend, linter, and
-  agents-backend; `config.yaml` for the agent; environment only for the builder and the UI.
-- Linter and agents-backend URLs in the backend `extensions` must match how each stack reaches those services.
+  agents-backend, and libraries-backend; `config.yaml` for the agent; environment only for the builder and the UI.
+- Linter, agents-backend, and libraries-backend URLs in the backend `extensions` must match how each stack reaches
+  those services.
 - Nothing here builds with Nx. Use `helm lint` and `helm template`, or the Compose scripts, and say which tools you
   could not run.
 - The user-facing install steps are in `docs/installation-guide.md`.

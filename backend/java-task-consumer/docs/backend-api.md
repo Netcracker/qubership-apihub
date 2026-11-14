@@ -30,9 +30,12 @@ POST /api/v2/java-builders/{builderId}/tasks
 ### Post build status
 
 ```http
-POST /api/v3/packages/{packageId}/java-publish/{publishId}/status
+POST /api/v3/libraries/{libraryId}/java-publish/{publishId}/status
 Content-Type: multipart/form-data
 ```
+
+`libraryId` is libraries-backend's own `library.id`. It is deliberately not an APIHUB `packageId`: that
+concept does not exist in that service's database.
 
 | Field | Required | Values |
 |-------|----------|--------|
@@ -48,7 +51,7 @@ Success response: `204 No Content`.
 ```json
 {
   "publishId": "string",
-  "packageId": "string",
+  "libraryId": "string",
   "buildType": "java-api-report | java-api-diff | java-upgrade-impact",
   "metadata": { }
 }
@@ -120,6 +123,12 @@ Single entry: `report.json` — canonical `DiffReport` JSON from jdiff-engine (s
 
 Each JTC instance generates a `builderId` (UUID) on startup, or reads `JAVA_BUILDER_ID`.
 Backend must bind a polled task to that `builderId` and validate it on status posts.
+
+## Related documents
+
+The provider side of this contract is [`backend/libraries-backend`](../../libraries-backend/README.md); its HTTP
+surface is [`LIBRARIES_API.yaml`](../../libraries-backend/docs/api/LIBRARIES_API.yaml) and its schema is
+[`data-model.md`](../../libraries-backend/docs/data-model.md).
 
 ## Suggested backend entities
 

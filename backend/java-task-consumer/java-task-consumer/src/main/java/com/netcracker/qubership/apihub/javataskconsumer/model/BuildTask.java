@@ -8,7 +8,7 @@ public record BuildTask(JavaBuildConfig config, Path sourcesZip) {
         return config.publishId();
     }
 
-    public String packageId() {
-        return config.packageId();
+    public String libraryId() {
+        return config.libraryId();
     }
 }

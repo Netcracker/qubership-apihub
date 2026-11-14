@@ -12,7 +12,7 @@ Group of the server-side modules: Go services, a shared Go library, and the Java
 | `test-service` | Mock service that exposes sample specifications | [AGENTS.md](test-service/AGENTS.md) |
 | `commons-go` | Shared Go library (`api-spec-exposer`) | [AGENTS.md](commons-go/AGENTS.md) |
 | `java-task-consumer` | Maven reactor: Java API build worker and `jdiff-engine` | [AGENTS.md](java-task-consumer/AGENTS.md) |
-| `libraries-backend` | Placeholder for the Go service that feeds the Java worker | [AGENTS.md](libraries-backend/AGENTS.md) |
+| `libraries-backend` | Go service that tracks library registries and feeds the Java worker | [AGENTS.md](libraries-backend/AGENTS.md) |
 
 ## Shared facts
 
@@ -21,8 +21,8 @@ Group of the server-side modules: Go services, a shared Go library, and the Java
 - Nx infers Go projects (`@nx-go/nx-go`) and tags them `lang:go`; project names are the directory names. Run
   `pnpm exec nx run <module>:build` and `pnpm exec nx run <module>:test` from the repository root.
 - Runtime config comes from `config.template.yaml` mounted as `config.yaml` in `portal-backend`,
-  `api-linter-service`, and `agents-backend`, and from `config.yaml` in `agent`. When you change a knob, update
-  `deploy/` and `docs/configuration-reference.md` in the same change.
+  `api-linter-service`, `agents-backend`, and `libraries-backend`, and from `config.yaml` in `agent`. When you
+  change a knob, update `deploy/` and `docs/configuration-reference.md` in the same change.
 - Adding a Go service: use the `apihub-add-go-service` skill.
 
 ## Agent packages

@@ -1,0 +1,14 @@
+database:
+  host: 'host.docker.internal'
+  port: 5432
+  name: 'libraries_backend'
+  username: 'libraries_backend_user'
+  password: 'libraries_backend_password'
+technicalParameters:
+  apihub:
+    url: 'http://host.docker.internal:8081'
+    # Must be the same as APIHUB_ACCESS_TOKEN in BE
+    accessToken: ${APIHUB_ACCESS_TOKEN}
+# The external registries libraries may be tracked in. Empty by default: a library can only be created in
+# a repository listed here, so add your own registry before tracking anything.
+registries: []

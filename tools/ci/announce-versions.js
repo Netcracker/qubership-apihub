@@ -35,6 +35,7 @@ const IMAGE_COMPONENTS = [
   { name: 'Backend', image: 'qubership-apihub-backend' },
   { name: 'API Linter', image: 'qubership-api-linter-service' },
   { name: 'Agents Backend', image: 'qubership-apihub-agents-backend' },
+  { name: 'Libraries Backend', image: 'qubership-apihub-libraries-backend' },
   { name: 'Build task consumer', image: 'qubership-apihub-build-task-consumer' },
 ]
 const UI_IMAGE = 'qubership-apihub-ui'

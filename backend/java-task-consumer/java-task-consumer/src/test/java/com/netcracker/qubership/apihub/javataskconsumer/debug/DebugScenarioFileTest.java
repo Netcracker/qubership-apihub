@@ -10,7 +10,7 @@ class DebugScenarioFileTest {
     void classpathScenarioCoversEveryBuildType() throws Exception {
         DebugScenarioFile scenario = DebugScenarioRunner.loadClasspath("/debug/netcracker-scenarios.json");
 
-        assertThat(scenario.packageId()).isEqualTo("debug-pkg");
+        assertThat(scenario.libraryId()).isEqualTo("debug-lib");
         assertThat(scenario.tasks()).extracting(DebugTaskSpec::id)
                 .containsExactly("report", "diff", "upgrade-impact", "upgrade-impact-docker");
         assertThat(scenario.tasks()).extracting(DebugTaskSpec::buildType)

@@ -13,7 +13,8 @@ chart; they do not replace it for production. Follow the root [`AGENTS.md`](../.
 
 Each full stack has `docker-compose.yml`, `generate_env_and_up_compose.sh`, `generate_jwt_pkey.sh`, the three
 `config.yaml` sources (`qubership-apihub-backend-config.yaml`, `qubership-api-linter-service-config.yaml`,
-`qubership-apihub-agents-backend-config.yaml`), and the env files `qubership-apihub-ui.env` and
+`qubership-apihub-agents-backend-config.yaml`, `qubership-apihub-libraries-backend-config.yaml`), and the env files
+`qubership-apihub-ui.env` and
 `qubership-apihub-build-task-consumer.env`.
 
 ## Build and test
@@ -33,7 +34,8 @@ runs Compose. On Windows run it from Git Bash or WSL. The Compose end-to-end wor
 
 - Keep both stacks in step: a knob added to one `config.yaml` usually belongs in the other.
 - `APIHUB_API_KEY` of the builder must equal `zeroDayConfiguration.accessToken` of the backend.
-- `technicalParameters.apihub.url` of the linter and agents-backend is the Portal URL as reachable from their
+- `technicalParameters.apihub.url` of the linter, agents-backend, and libraries-backend is the Portal URL as
+  reachable from their
   containers (often `host.docker.internal` plus the published UI port). `extensions[].baseUrl` in the backend config
   must be reachable from the browser and from the backend process.
 - Config changes need `docs/configuration-reference.md` and the Helm chart updated in the same change.

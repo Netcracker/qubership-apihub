@@ -4,7 +4,7 @@ import static com.netcracker.qubership.apihub.javataskconsumer.pact.LibrariesBac
 import static com.netcracker.qubership.apihub.javataskconsumer.pact.LibrariesBackendPact.BUILDER_ID;
 import static com.netcracker.qubership.apihub.javataskconsumer.pact.LibrariesBackendPact.CONSUMER;
 import static com.netcracker.qubership.apihub.javataskconsumer.pact.LibrariesBackendPact.MULTIPART_CONTENT_TYPE_REGEX;
-import static com.netcracker.qubership.apihub.javataskconsumer.pact.LibrariesBackendPact.PACKAGE_ID;
+import static com.netcracker.qubership.apihub.javataskconsumer.pact.LibrariesBackendPact.LIBRARY_ID;
 import static com.netcracker.qubership.apihub.javataskconsumer.pact.LibrariesBackendPact.POLL_PATH;
 import static com.netcracker.qubership.apihub.javataskconsumer.pact.LibrariesBackendPact.PROVIDER;
 import static com.netcracker.qubership.apihub.javataskconsumer.pact.LibrariesBackendPact.PUBLISH_ID;
@@ -128,7 +128,7 @@ class RegistryClientPactTest {
         Optional<BuildTask> task = client.findTask();
         assertThat(task).isPresent();
         assertThat(task.get().publishId()).isEqualTo(PUBLISH_ID);
-        assertThat(task.get().packageId()).isEqualTo(PACKAGE_ID);
+        assertThat(task.get().libraryId()).isEqualTo(LIBRARY_ID);
         assertThat(task.get().config().buildType()).isEqualTo(BuildType.JAVA_API_REPORT);
         assertThat(task.get().config().metadata().get("gav").asText()).isEqualTo("com.example:lib:1.0.0");
     }
@@ -137,7 +137,7 @@ class RegistryClientPactTest {
     @PactTestFor(pactMethod = "runningStatus")
     void postBuildStatusSendsRunningHeartbeat(MockServer mockServer, @TempDir Path workDir) {
         RegistryClient client = newClient(mockServer, workDir);
-        assertThatCode(() -> client.postBuildStatus(PACKAGE_ID, PUBLISH_ID, BuildStatus.RUNNING, null, null))
+        assertThatCode(() -> client.postBuildStatus(LIBRARY_ID, PUBLISH_ID, BuildStatus.RUNNING, null, null))
                 .doesNotThrowAnyException();
     }
 
@@ -146,7 +146,7 @@ class RegistryClientPactTest {
     void postBuildStatusSendsCompleteResultZip(MockServer mockServer, @TempDir Path workDir) throws Exception {
         RegistryClient client = newClient(mockServer, workDir);
         byte[] resultZip = ResultPackager.zipReport("{\"mode\":\"api-report\"}".getBytes(StandardCharsets.UTF_8));
-        client.postBuildStatus(PACKAGE_ID, PUBLISH_ID, BuildStatus.COMPLETE, resultZip, null);
+        client.postBuildStatus(LIBRARY_ID, PUBLISH_ID, BuildStatus.COMPLETE, resultZip, null);
     }
 
     @Test
@@ -154,7 +154,7 @@ class RegistryClientPactTest {
     void postBuildStatusSendsErrorMessage(MockServer mockServer, @TempDir Path workDir) {
         RegistryClient client = newClient(mockServer, workDir);
         assertThatCode(() ->
-                        client.postBuildStatus(PACKAGE_ID, PUBLISH_ID, BuildStatus.ERROR, null, "engine failed"))
+                        client.postBuildStatus(LIBRARY_ID, PUBLISH_ID, BuildStatus.ERROR, null, "engine failed"))
                 .doesNotThrowAnyException();
     }
 

@@ -46,8 +46,8 @@ test('previousTag takes the highest stable version below the new one', () => {
   assert.equal(previousTag('', '2.16.0', tags.filter((t) => !t.includes('/'))), '2.15.0')
 })
 
-// Released before the commit under test; build-task-consumer, api-linter-service, and agents-backend are
-// not release groups of this fixture, but the product chart pins them by their tags.
+// Released before the commit under test; build-task-consumer, api-linter-service, agents-backend, and
+// libraries-backend are not release groups of this fixture, but the product chart pins them by their tags.
 const MERGED = [
   'api-diff/4.0.0',
   'ui/3.10.1',
@@ -57,6 +57,7 @@ const MERGED = [
   'api-linter-service/1.3.0',
   'agents-backend/0.9.0',
   'agents-backend/0.10.0',
+  'libraries-backend/0.1.0',
   '2.15.0',
 ]
 
@@ -168,6 +169,12 @@ test('buildPlan: the product chart pins every product image at its current versi
           image: 'ghcr.io/netcracker/qubership-apihub-agents-backend',
         },
         { path: 'qubershipApihubAgentsBackend.version', component: 'agents-backend', version: '0.10.0' },
+        {
+          path: 'qubershipApihubLibrariesBackend.image.tag',
+          component: 'libraries-backend',
+          version: '0.1.0',
+          image: 'ghcr.io/netcracker/qubership-apihub-libraries-backend',
+        },
       ],
     },
   ])
@@ -209,7 +216,7 @@ test('buildPlan: the agent chart goes with the agent release; the product then l
 test('buildPlan: a chart that cannot pin a component is a problem', async () => {
   const p = await plan(['2.16.0'], { mergedTags: ['2.15.0', 'agent/2.1.5', '2.16.0'] })
   assert.ok(p.problems.includes('The chart qubership-apihub 2.16.0 cannot pin portal-backend: it has no release.'))
-  assert.equal(p.problems.filter((x) => x.startsWith('The chart qubership-apihub')).length, 5)
+  assert.equal(p.problems.filter((x) => x.startsWith('The chart qubership-apihub')).length, 6)
 })
 
 test('CHARTS: every pinned component has an image, and the chart directories exist', () => {

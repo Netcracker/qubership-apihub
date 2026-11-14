@@ -54,7 +54,7 @@ class RegistryClientWireMockTest {
         String configJson = """
                 {
                   "publishId": "pub-42",
-                  "packageId": "demo-pkg",
+                  "libraryId": "demo-lib",
                   "buildType": "java-api-report",
                   "metadata": {"gav": "com.example:lib:1.0.0"}
                 }
@@ -68,23 +68,23 @@ class RegistryClientWireMockTest {
         Optional<BuildTask> task = client.findTask();
         assertThat(task).isPresent();
         assertThat(task.get().publishId()).isEqualTo("pub-42");
-        assertThat(task.get().packageId()).isEqualTo("demo-pkg");
+        assertThat(task.get().libraryId()).isEqualTo("demo-lib");
         assertThat(task.get().config().buildType()).isEqualTo(BuildType.JAVA_API_REPORT);
         assertThat(task.get().config().metadata().get("gav").asText()).isEqualTo("com.example:lib:1.0.0");
     }
 
     @Test
     void postBuildStatusSendsMultipartComplete() throws Exception {
-        String packageId = "demo-pkg";
+        String libraryId = "demo-lib";
         String publishId = "pub-99";
-        stubFor(post(urlPathEqualTo("/api/v3/packages/" + packageId + "/java-publish/" + publishId + "/status"))
+        stubFor(post(urlPathEqualTo("/api/v3/libraries/" + libraryId + "/java-publish/" + publishId + "/status"))
                 .willReturn(aResponse().withStatus(204)));
 
         byte[] zip = new byte[] {1, 2, 3};
-        client.postBuildStatus(packageId, publishId, BuildStatus.COMPLETE, zip, null);
+        client.postBuildStatus(libraryId, publishId, BuildStatus.COMPLETE, zip, null);
 
         verify(postRequestedFor(urlPathEqualTo(
-                "/api/v3/packages/" + packageId + "/java-publish/" + publishId + "/status"))
+                "/api/v3/libraries/" + libraryId + "/java-publish/" + publishId + "/status"))
                 .withHeader("api-key", equalTo("test-api-key"))
                 .withRequestBody(containing("name=\"status\""))
                 .withRequestBody(containing("complete"))
@@ -95,15 +95,15 @@ class RegistryClientWireMockTest {
 
     @Test
     void postBuildStatusSendsErrorMessage() throws Exception {
-        String packageId = "demo-pkg";
+        String libraryId = "demo-lib";
         String publishId = "pub-err";
-        stubFor(post(urlPathEqualTo("/api/v3/packages/" + packageId + "/java-publish/" + publishId + "/status"))
+        stubFor(post(urlPathEqualTo("/api/v3/libraries/" + libraryId + "/java-publish/" + publishId + "/status"))
                 .willReturn(aResponse().withStatus(204)));
 
-        client.postBuildStatus(packageId, publishId, BuildStatus.ERROR, null, "boom");
+        client.postBuildStatus(libraryId, publishId, BuildStatus.ERROR, null, "boom");
 
         verify(postRequestedFor(urlPathEqualTo(
-                "/api/v3/packages/" + packageId + "/java-publish/" + publishId + "/status"))
+                "/api/v3/libraries/" + libraryId + "/java-publish/" + publishId + "/status"))
                 .withRequestBody(containing("name=\"errors\""))
                 .withRequestBody(containing("boom")));
     }

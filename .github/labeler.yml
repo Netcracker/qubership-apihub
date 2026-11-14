@@ -10,6 +10,10 @@
   - changed-files:
       - any-glob-to-any-file: 'backend/api-linter-service/**'
 
+'module:libraries-backend':
+  - changed-files:
+      - any-glob-to-any-file: 'backend/libraries-backend/**'
+
 'module:agents-backend':
   - changed-files:
       - any-glob-to-any-file: 'backend/agents-backend/**'

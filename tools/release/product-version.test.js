@@ -2,12 +2,13 @@ const { test } = require('node:test')
 const assert = require('node:assert/strict')
 const { PRODUCT_COMPONENTS, componentBumpsAtHead, latestProductTag, productVersion } = require('./product-version')
 
-test('the product components are the six of the design', () => {
+test('the product components are the seven of the design', () => {
   assert.deepEqual([...PRODUCT_COMPONENTS].sort(), [
     'agents-backend',
     'api-linter-service',
     'build-task-consumer',
     'java-task-consumer',
+    'libraries-backend',
     'portal-backend',
     'ui',
   ])

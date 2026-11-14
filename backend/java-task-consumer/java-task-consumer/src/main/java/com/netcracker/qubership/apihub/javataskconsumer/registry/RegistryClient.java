@@ -66,14 +66,14 @@ public final class RegistryClient {
     }
 
     public void postBuildStatus(
-            String packageId,
+            String libraryId,
             String publishId,
             BuildStatus status,
             byte[] resultZip,
             String errorMessage
     ) throws IOException, InterruptedException {
         String url = config.backendBaseUrl()
-                + "/api/v3/packages/" + encode(packageId)
+                + "/api/v3/libraries/" + encode(libraryId)
                 + "/java-publish/" + encode(publishId)
                 + "/status";
         MultipartBody body = new MultipartBody()

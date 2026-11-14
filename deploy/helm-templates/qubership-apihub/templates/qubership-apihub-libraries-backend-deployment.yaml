@@ -1,0 +1,102 @@
+# yamllint disable-file
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: qubership-apihub-libraries-backend
+  labels:
+    name: qubership-apihub-libraries-backend
+    app.kubernetes.io/version: '{{.Values.qubershipApihubLibrariesBackend.version}}'
+    app.kubernetes.io/component: 'backend'
+    app.kubernetes.io/technology: 'go'
+    app.kubernetes.io/part-of: qubership-apihub-libraries-backend
+    app.kubernetes.io/managed-by: helm
+spec:
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+  template:
+    metadata:
+      labels:
+        name: qubership-apihub-libraries-backend
+        app.kubernetes.io/version: '{{.Values.qubershipApihubLibrariesBackend.version}}'
+        app.kubernetes.io/component: 'backend'
+        app.kubernetes.io/part-of: qubership-apihub-libraries-backend
+        app.kubernetes.io/managed-by: helm
+        app.kubernetes.io/technology: 'go'
+    spec:
+      hostPID: false
+      hostIPC: false
+      volumes:
+      - name: qubership-apihub-libraries-backend-config
+        secret:
+            defaultMode: 420
+            secretName: qubership-apihub-libraries-backend-config-secret
+      - name: tmp-volume
+        emptyDir: {}
+      {{- if and .Values.qubershipApihubLibrariesBackend.customCa.enabled .Values.qubershipApihubLibrariesBackend.customCa.secretName }}
+      - name: qubership-apihub-libraries-backend-custom-ca
+        secret:
+            defaultMode: 420
+            secretName: {{ .Values.qubershipApihubLibrariesBackend.customCa.secretName | quote }}
+      {{- end }}
+      containers:
+      - name: qubership-apihub-libraries-backend
+        image: '{{.Values.qubershipApihubLibrariesBackend.image.repository}}:{{.Values.qubershipApihubLibrariesBackend.image.tag}}'
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+          - name: qubership-apihub-libraries-backend-config
+            mountPath: /app/qubership-apihub-libraries-backend/etc/
+          - name: tmp-volume
+            mountPath: /tmp
+          {{- if and .Values.qubershipApihubLibrariesBackend.customCa.enabled .Values.qubershipApihubLibrariesBackend.customCa.secretName }}
+          - name: qubership-apihub-libraries-backend-custom-ca
+            mountPath: /tmp/cert
+            readOnly: true
+          {{- end }}
+        ports:
+          - name: web
+            containerPort: 8080
+            protocol: TCP
+        env:
+          - name: LOG_LEVEL
+            value: '{{.Values.qubershipApihubLibrariesBackend.env.logLevel}}'
+          - name: GOMEMLIMIT
+            value: '{{.Values.qubershipApihubLibrariesBackend.goMemLimit | default "800MiB"}}'
+          - name: LIBRARIES_CONFIG_FOLDER
+            value: '/app/qubership-apihub-libraries-backend/etc/'
+        resources:
+          requests:
+            cpu: '{{.Values.qubershipApihubLibrariesBackend.resource.cpu.request}}'
+            memory: '{{.Values.qubershipApihubLibrariesBackend.resource.memory.request}}'
+          limits:
+            cpu: '{{.Values.qubershipApihubLibrariesBackend.resource.cpu.limit}}'
+            memory: '{{.Values.qubershipApihubLibrariesBackend.resource.memory.limit}}'
+        livenessProbe:
+          httpGet:
+            path: /live
+            port: web
+          initialDelaySeconds: 5
+          timeoutSeconds: 2
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: web
+          initialDelaySeconds: 5
+          timeoutSeconds: 2
+        securityContext:
+          runAsUser: 10001
+          runAsGroup: 10001
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          seccompProfile:
+            type: RuntimeDefault
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+  selector:
+    matchLabels:
+      name: qubership-apihub-libraries-backend

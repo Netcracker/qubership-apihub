@@ -9,3 +9,7 @@ GRANT ALL PRIVILEGES ON DATABASE api_linter TO api_linter_user;
 CREATE USER agents_backend_user WITH PASSWORD 'agents_backend_password' CREATEDB INHERIT;
 CREATE DATABASE agents_backend OWNER agents_backend_user;
 GRANT ALL PRIVILEGES ON DATABASE agents_backend TO agents_backend_user;
+
+CREATE USER libraries_backend_user WITH PASSWORD 'libraries_backend_password' CREATEDB INHERIT;
+CREATE DATABASE libraries_backend OWNER libraries_backend_user;
+GRANT ALL PRIVILEGES ON DATABASE libraries_backend TO libraries_backend_user;

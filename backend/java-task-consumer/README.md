@@ -139,7 +139,7 @@ The worker talks to the **libraries backend**, not to the main APIHUB backend. T
 | Operation | Method and path |
 |-----------|-----------------|
 | Take task | `POST /api/v2/java-builders/{builderId}/tasks`: `204` or a ZIP |
-| Status | `POST /api/v3/packages/{packageId}/java-publish/{publishId}/status` |
+| Status | `POST /api/v3/libraries/{libraryId}/java-publish/{publishId}/status` |
 
 The task ZIP contains `config.json`. The result ZIP contains `report.json` (`DiffReport` from the proof of concept).
 Regenerate the Pact file with:

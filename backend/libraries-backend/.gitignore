@@ -1,0 +1,8 @@
+.idea
+.vscode
+*.bak
+*.iml
+.DS_Store
+/qubership-apihub-libraries-backend
+/qubership-apihub-libraries-backend.exe
+/config.yaml

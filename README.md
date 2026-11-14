@@ -56,7 +56,7 @@ Read the [architecture overview](docs/architecture/overview.md) for the full pic
 
 | Folder | Content |
 |--------|---------|
-| [`backend/`](backend/README.md) | Go services (`portal-backend`, `api-linter-service`, `agents-backend`, `agent`, `test-service`, `commons-go`), the Java task consumer, and `libraries-backend` |
+| [`backend/`](backend/README.md) | Go services (`portal-backend`, `api-linter-service`, `agents-backend`, `libraries-backend`, `agent`, `test-service`, `commons-go`) and the Java task consumer |
 | [`frontend/`](frontend/README.md) | The UI (Portal and Agents SPAs), the builder (`build-task-consumer`), and the TypeScript libraries |
 | [`tests/`](tests/README.md) | End-to-end suites: Newman collections (`postman-collections`) and Playwright tests (`ui-tests`) |
 | [`deploy/`](deploy/README.md) | The Helm chart, the local Kubernetes quickstart, and the Docker Compose stacks |
@@ -79,6 +79,7 @@ the old prefix, and a module with a release group is released as `<prefix>/X.Y.Z
 | `qubership-api-linter-service` | [`backend/api-linter-service`](backend/api-linter-service/) | `api-linter-service/` |
 | `qubership-apihub-agent` | [`backend/agent`](backend/agent/) | `agent/` |
 | `qubership-apihub-agents-backend` | [`backend/agents-backend`](backend/agents-backend/) | `agents-backend/` |
+| `qubership-apihub-libraries-backend` | [`backend/libraries-backend`](backend/libraries-backend/) | `libraries-backend/` |
 | `qubership-apihub-test-service` | [`backend/test-service`](backend/test-service/) | `test-service/` |
 | `qubership-apihub-commons-go` | [`backend/commons-go`](backend/commons-go/) | `commons-go/` |
 | `qubership-apihub-libraries-backend` | [`backend/libraries-backend`](backend/libraries-backend/) | `libraries-backend/` |

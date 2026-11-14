@@ -157,6 +157,40 @@ services:
             qubership-apihub-ui:
                 condition: service_healthy
 
+    qubership-apihub-libraries-backend:
+        image: ghcr.io/netcracker/qubership-apihub-libraries-backend:dev
+        container_name: qubership-apihub-libraries-backend
+        ports:
+        - "8093:8080"
+        environment:
+            - LOG_LEVEL=INFO
+            - GOMEMLIMIT=800MiB
+            - LIBRARIES_CONFIG_FOLDER=/app/qubership-apihub-libraries-backend/
+        volumes:
+            - ./qubership-apihub-libraries-backend-config.yaml:/app/qubership-apihub-libraries-backend/config.yaml
+        # Optional: corporate CA for HTTPS outbound (APIHUB, artifact registries). Requires core-base image.
+        # Uncomment and place .crt/.cer/.pem files in ./certs/
+        #     - ./certs:/tmp/cert:ro
+        healthcheck:
+            test: [ "CMD-SHELL", "curl --silent --fail localhost:8080/ready || exit 1" ]
+            interval: 10s
+            timeout: 10s
+            retries: 10
+            start_period: 5s
+        restart: unless-stopped
+        deploy:
+            resources:
+                limits:
+                    cpus: '0.5'
+                    memory: 1000M
+        networks:
+            default:
+                aliases:
+                - qubership-apihub-libraries-backend
+        depends_on:
+            qubership-apihub-ui:
+                condition: service_healthy
+
     ###### 3rd party services
 
     postgres:

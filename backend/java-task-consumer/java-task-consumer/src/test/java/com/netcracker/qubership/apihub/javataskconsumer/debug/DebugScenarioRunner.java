@@ -44,12 +44,12 @@ final class DebugScenarioRunner {
         for (DebugTaskSpec task : scenario.tasks()) {
             ObjectNode config = MAPPER.createObjectNode();
             config.put("publishId", task.id());
-            config.put("packageId", scenario.packageId());
+            config.put("libraryId", scenario.libraryId());
             config.put("buildType", task.buildType());
             config.set("metadata", task.metadata());
             byte[] zip = TestSupport.taskZip(MAPPER.writeValueAsString(config));
             var pending = queue.watch(task.id());
-            queue.enqueue(builderId, zip, scenario.packageId(), task.id());
+            queue.enqueue(builderId, zip, scenario.libraryId(), task.id());
             log.info("Waiting for {} ({})", task.id(), task.buildType());
             LocalJavaBuildQueue.PublishResult result =
                     pending.get(TASK_TIMEOUT.toMillis(), TimeUnit.MILLISECONDS);

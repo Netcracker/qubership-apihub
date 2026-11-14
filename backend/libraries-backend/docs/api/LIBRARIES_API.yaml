@@ -6,14 +6,13 @@ info:
     Go modules), ingests parsed build output for each tracked library version, and serves Java build tasks to
     [java-task-consumer](../../../java-task-consumer/README.md).
 
-    **Status: proposed, not yet implemented.** `backend/libraries-backend/` has no `go.mod`, no controllers, and is
-    not wired into `go.work`, Nx, or CI. This document is the HTTP-contract counterpart to
-    [data-model.md](../data-model.md) (the proposed PostgreSQL schema) and follows the same conventions already
+    **Status: implemented.** This document is the HTTP-contract counterpart to
+    [data-model.md](../data-model.md) (the PostgreSQL schema) and follows the same conventions already
     used by `portal-backend` (see `APIHUB_API.yaml`) wherever the two services' concepts line up: `library` mirrors
     `package_group`, `library_version` mirrors `published_version`, roles and permissions are read from
     `portal-backend`'s own catalogue rather than redefined here.
 
-    ## Design notes on the open items in the original endpoint sketch
+    ## Design notes
 
     - **Comparison.** `library_version_comparison` / `library_version_changes` (see data model) back a `changes`
       sub-resource under a version, mirroring `portal-backend`'s `GET /packages/{packageId}/versions/{version}/changes`
@@ -21,14 +20,13 @@ info:
       a comparison can cross libraries (an upgrade-impact style diff), not only compare a version against its own
       predecessor. A comparison is **not** created by a direct POST — it is produced as a side effect of a
       `java-api-diff` build (see [`Build` queue](../data-model.md#build-queue)); the `changes` endpoints are
-      read-only and return `404` until that build completes.
-    - **`POST /api/v3/packages/{packageId}/java-publish/{publishId}/status` rename.** Renamed to
+      read-only and return `404` until that build completes. The service queues that diff itself, after a
+      `java-api-report` build completes for a version that has a predecessor.
+    - **`POST /api/v3/packages/{packageId}/java-publish/{publishId}/status` was renamed** to
       `POST /api/v3/libraries/{libraryId}/java-publish/{publishId}/status` — `packageId` does not exist as a
-      concept in this service's own database; the path parameter it actually resolves against is `library.id`.
-      **This is a breaking rename against the existing contract documents**
-      (`java-task-consumer/docs/backend-api.md`, `java-task-consumer/pacts/java-task-consumer-libraries-backend.json`),
-      which currently hardcode the `packageId` segment. Update those two artifacts and regenerate the Pact file
-      in the same change that implements this rename; do not ship the rename unilaterally on the backend side.
+      concept in this service's own database; the path parameter it resolves against is `library.id`. The rename
+      landed on both sides: `java-task-consumer`'s `RegistryClient`, its `config.json` field (now `libraryId`),
+      `docs/backend-api.md`, and the Pact file all use the new path.
     - **Favorites and members use a resource style, not `portal-backend`'s action style.** `portal-backend` favors
       a package via `POST /packages/{packageId}/favor` / `.../disfavor` and surfaces the result as an `isFavorite`
       flag; the sketch for this service used a `favorites/libraries` collection with `PUT`/`DELETE` instead. Kept
@@ -37,9 +35,18 @@ info:
     - **Members use `PUT` for a single upsert**, not `portal-backend`'s `POST` (bulk create) + `PATCH`
       (add/remove one role) split. Simpler surface, sufficient for what the sketch asked for; revisit if bulk
       member management turns out to be needed.
-    - **Promoting a version from `draft` to `release` has no endpoint yet.** `library_version.status` has both
-      values, but nothing in the original sketch requested the transition. Left out deliberately; add a `PATCH`
-      on the version resource when that workflow is defined, rather than guessing its shape now.
+    - **Promoting a version from `draft` to `release` has no endpoint.** A version is created in `draft` and the
+      service moves it to `release` itself once its `java-api-report` build has delivered content, which is the
+      transition the import flow needs. A caller-driven transition has no endpoint yet; add a `PATCH` on the
+      version resource when that workflow is defined, rather than guessing its shape now.
+
+    - **Only `java` can import a version.** `language` accepts `java`, `go`, and `js` so a library can be tracked
+      in any of them, but only Java has a build worker. Importing a version of a `go` or `js` library answers
+      `400 LANGUAGE_NOT_SUPPORTED` rather than queueing a task nothing can run.
+
+    - **Registries and repositories are administrative.** Both endpoints require system administrator privileges:
+      they expose the internal base URLs of the configured registries, which an ordinary library reader does not
+      need.
     - **Registries and repositories are read-only here.** `data-model.md` states registry credentials live in
       config/secret store, not the database — these two endpoints expose what is already configured; they are
       not a registry-management CRUD API.

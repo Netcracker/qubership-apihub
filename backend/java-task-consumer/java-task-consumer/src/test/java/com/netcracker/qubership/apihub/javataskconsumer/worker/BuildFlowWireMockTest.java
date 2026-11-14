@@ -27,7 +27,7 @@ import org.junit.jupiter.api.io.TempDir;
 class BuildFlowWireMockTest {
 
     private static final String BUILDER_ID = "builder-flow-1";
-    private static final String PACKAGE_ID = "flow-pkg";
+    private static final String LIBRARY_ID = "flow-pkg";
     private static final String PUBLISH_ID = "flow-pub";
 
     @TempDir
@@ -47,11 +47,11 @@ class BuildFlowWireMockTest {
         String configJson = """
                 {
                   "publishId": "%s",
-                  "packageId": "%s",
+                  "libraryId": "%s",
                   "buildType": "java-api-report",
                   "metadata": {"gav": "com.example:lib:1.0.0"}
                 }
-                """.formatted(PUBLISH_ID, PACKAGE_ID);
+                """.formatted(PUBLISH_ID, LIBRARY_ID);
 
         stubFor(post(urlPathEqualTo("/api/v2/java-builders/" + BUILDER_ID + "/tasks"))
                 .willReturn(aResponse()
@@ -59,7 +59,7 @@ class BuildFlowWireMockTest {
                         .withHeader("Content-Type", "application/zip")
                         .withBody(TestSupport.taskZip(configJson))));
 
-        stubFor(post(urlPathEqualTo("/api/v3/packages/" + PACKAGE_ID + "/java-publish/" + PUBLISH_ID + "/status"))
+        stubFor(post(urlPathEqualTo("/api/v3/libraries/" + LIBRARY_ID + "/java-publish/" + PUBLISH_ID + "/status"))
                 .willReturn(aResponse().withStatus(204)));
 
         Optional<BuildTask> task = registry.findTask();
@@ -70,7 +70,7 @@ class BuildFlowWireMockTest {
         orchestrator.run(task.get());
 
         verify(postRequestedFor(urlPathEqualTo(
-                "/api/v3/packages/" + PACKAGE_ID + "/java-publish/" + PUBLISH_ID + "/status"))
+                "/api/v3/libraries/" + LIBRARY_ID + "/java-publish/" + PUBLISH_ID + "/status"))
                 .withRequestBody(containing("name=\"status\""))
                 .withRequestBody(containing("complete"))
                 .withRequestBody(containing("report.json")));
@@ -81,18 +81,18 @@ class BuildFlowWireMockTest {
         String configJson = """
                 {
                   "publishId": "%s",
-                  "packageId": "%s",
+                  "libraryId": "%s",
                   "buildType": "java-api-diff",
                   "metadata": {}
                 }
-                """.formatted(PUBLISH_ID, PACKAGE_ID);
+                """.formatted(PUBLISH_ID, LIBRARY_ID);
 
         stubFor(post(urlPathEqualTo("/api/v2/java-builders/" + BUILDER_ID + "/tasks"))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withBody(TestSupport.taskZip(configJson))));
 
-        stubFor(post(urlPathEqualTo("/api/v3/packages/" + PACKAGE_ID + "/java-publish/" + PUBLISH_ID + "/status"))
+        stubFor(post(urlPathEqualTo("/api/v3/libraries/" + LIBRARY_ID + "/java-publish/" + PUBLISH_ID + "/status"))
                 .willReturn(aResponse().withStatus(204)));
 
         BuildTask task = registry.findTask().orElseThrow();
@@ -102,7 +102,7 @@ class BuildFlowWireMockTest {
         orchestrator.run(task);
 
         verify(postRequestedFor(urlPathEqualTo(
-                "/api/v3/packages/" + PACKAGE_ID + "/java-publish/" + PUBLISH_ID + "/status"))
+                "/api/v3/libraries/" + LIBRARY_ID + "/java-publish/" + PUBLISH_ID + "/status"))
                 .withRequestBody(containing("name=\"status\""))
                 .withRequestBody(containing("error"))
                 .withRequestBody(containing("engine failed")));

@@ -171,7 +171,7 @@ Qubership APIHUB will be accessible on [https://qubership-apihub.localtest.me](h
 Credentials for login can be found in `./qubership-apihub/local-secrets.yaml` file
 
 The browser may warn about the self-signed certificate. That is expected for local Kind.
-Outbound HTTPS from backend / linter / agents-backend trusts the same local CA via
+Outbound HTTPS from backend / linter / agents-backend / libraries-backend trusts the same local CA via
 `customCa` (Secret `apihub-local-custom-ca` mounted at `/tmp/cert`).
 
 ## Local TLS for Kind (automatic)
@@ -184,7 +184,7 @@ Outbound HTTPS from backend / linter / agents-backend trusts the same local CA v
 | `qubership-apihub/certs/tls.crt` / `tls.key` | Server cert for `qubership-apihub.localtest.me` / `*.localtest.me` |
 
 Deploy scripts create Secret `apihub-local-custom-ca` and Helm values enable `customCa` for
-backend, linter, and agents-backend. Ingress TLS material is injected via `local-secrets.yaml`
+backend, linter, agents-backend, and libraries-backend. Ingress TLS material is injected via `local-secrets.yaml`
 (`APIHUB_TLS_CRT` / `APIHUB_TLS_KEY`).
 
 ## Optional: corporate custom CA for backend HTTPS outbound calls
@@ -200,7 +200,7 @@ kubectl create secret generic apihub-local-custom-ca \
   --dry-run=client -o yaml | kubectl apply -f -
 ```
 
-Then restart backend / linter / agents-backend pods so the base image reloads `/tmp/cert`.
+Then restart backend / linter / agents-backend / libraries-backend pods so the base image reloads `/tmp/cert`.
 
 MinIO/S3 custom CA remains in **`s3Storage.crt`** inside the backend config Secret, not in `/tmp/cert`.
 
@@ -214,7 +214,7 @@ MinIO/S3 custom CA remains in **`s3Storage.crt`** inside the backend config Secr
 
 ## Apache Superset (optional)
 
-[Apache Superset](https://superset.apache.org/) can be deployed alongside APIHUB to build reports and dashboards over your PostgreSQL data. The `apache-superset` chart is pre-configured with connections to the APIHUB backend databases (`apihub_backend`, `api_linter`, `agents_backend`).
+[Apache Superset](https://superset.apache.org/) can be deployed alongside APIHUB to build reports and dashboards over your PostgreSQL data. The `apache-superset` chart is pre-configured with connections to the APIHUB backend databases (`apihub_backend`, `api_linter`, `agents_backend`, `libraries_backend`).
 
 **Prerequisites:** Postgres-db and APIHUB must be deployed first.
 

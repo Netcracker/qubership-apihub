@@ -1,0 +1,17 @@
+DROP TABLE IF EXISTS public.library_method_search;
+DROP TABLE IF EXISTS public.library_class_search;
+DROP TABLE IF EXISTS public.library_search;
+DROP TABLE IF EXISTS public.library_member_role;
+DROP TABLE IF EXISTS public.favorite_libraries;
+DROP TABLE IF EXISTS public.build_result;
+DROP TABLE IF EXISTS public.build;
+DROP TABLE IF EXISTS public.library_version_changes;
+DROP TABLE IF EXISTS public.library_version_comparison;
+DROP TABLE IF EXISTS public.library_method;
+DROP TABLE IF EXISTS public.library_method_data;
+DROP TABLE IF EXISTS public.library_class;
+DROP TABLE IF EXISTS public.library_class_data;
+DROP TABLE IF EXISTS public.library_version;
+DROP TABLE IF EXISTS public.library;
+DROP TABLE IF EXISTS public.repository;
+DROP TABLE IF EXISTS public.registry;

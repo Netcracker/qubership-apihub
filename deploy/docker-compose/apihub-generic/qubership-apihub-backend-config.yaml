@@ -30,3 +30,6 @@ extensions:
   - name: agents-backend
     baseUrl: http://host.docker.internal:8092
     pathPrefix: agents-backend
+  - name: libraries-backend
+    baseUrl: http://host.docker.internal:8093
+    pathPrefix: libraries-backend

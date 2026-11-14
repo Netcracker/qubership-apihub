@@ -100,7 +100,7 @@ jobs:
           # Images are not selected by `affected`: whether a branch tag points at the right image is a
           # question about the registry. The images job retags when the content already exists. The diff
           # below only feeds the summary.
-          images='["ui-portal","build-task-consumer","agent","test-service","agents-backend","api-linter-service","portal-backend","java-task-consumer"]'
+          images='["ui-portal","build-task-consumer","agent","test-service","agents-backend","api-linter-service","libraries-backend","portal-backend","java-task-consumer"]'
           image_inputs="$(git diff --name-only "$NX_BASE" "$NX_HEAD" -- \
             .dockerignore tools/ci .github/workflows/ci.yml .github/actions || true)"
 
@@ -538,6 +538,10 @@ jobs:
          {"project":"api-linter-service","image":"qubership-api-linter-service",
           "dockerfile":"backend/api-linter-service/Dockerfile",
           "build_projects":"api-linter-service,commons-go","deploy":"","context":"backend",
+          "dockerignore":".dockerignore backend/.dockerignore","workspace_build":"false","outputs":""},
+         {"project":"libraries-backend","image":"qubership-apihub-libraries-backend",
+          "dockerfile":"backend/libraries-backend/Dockerfile",
+          "build_projects":"libraries-backend,commons-go","deploy":"","context":"backend",
           "dockerignore":".dockerignore backend/.dockerignore","workspace_build":"false","outputs":""},
          {"project":"portal-backend","image":"qubership-apihub-backend",
           "dockerfile":"backend/portal-backend/Dockerfile",

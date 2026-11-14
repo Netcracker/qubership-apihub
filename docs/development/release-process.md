@@ -277,8 +277,8 @@ order:
    release. The product release and the agent release carry their chart `.tgz`.
 
 Images exist for these components: `ui`, `build-task-consumer`, `portal-backend`, `api-linter-service`,
-`agents-backend`, `agent`, `test-service`, and `java-task-consumer`. Libraries publish to npm. `commons-go` publishes
-nothing.
+`agents-backend`, `libraries-backend`, `agent`, `test-service`, and `java-task-consumer`. Libraries publish to npm.
+`commons-go` publishes nothing.
 
 Every step is idempotent. After a failure, re-run the failed jobs of the CI run on `main`. Steps skip what already
 exists.
@@ -294,7 +294,8 @@ has five parts:
 - the product landing at `landing/`;
 - the documentation site at `docs/` (a placeholder until the docs site exists at the ref);
 - the Storybooks at `storybook/<component>/<branch>/`;
-- the database ERDs at `erd/<backend>/` for `portal-backend`, `api-linter-service`, and `agents-backend`.
+- the database ERDs at `erd/<backend>/` for `portal-backend`, `api-linter-service`, `agents-backend`, and
+  `libraries-backend`.
 
 Old URLs keep working: the root `404.html` redirects `pages/erd/...` to `erd/portal-backend/...` and legacy
 documentation paths to `docs/`.
@@ -397,9 +398,9 @@ The chart sources in Git keep their development defaults: `version: 0.0.1`, `app
 - `version` and `appVersion`: the release version;
 - the annotation `org.opencontainers.image.revision`: the release commit;
 - in `values.yaml`, every image tag at its component's current version, the highest stable tag merged into the release
-  commit. The product chart pins `portal-backend`, `build-task-consumer`, `ui`, `api-linter-service`, and
-  `agents-backend`, including `qubershipApihubAgentsBackend.version`. The agent chart pins the agent. The values are
-  replaced in place, so comments and the rest of the file stay as they are.
+  commit. The product chart pins `portal-backend`, `build-task-consumer`, `ui`, `api-linter-service`,
+  `agents-backend` (including `qubershipApihubAgentsBackend.version`), and `libraries-backend`. The agent chart pins
+  the agent. The values are replaced in place, so comments and the rest of the file stay as they are.
 
 Then the job checks that every pinned image exists in ghcr, runs `helm lint --strict` and validates the rendered
 manifests with kubeconform (`tools/ci/chart-check.sh`), packages the chart, and reads the registry. It does this twice:
@@ -485,8 +486,8 @@ of `tools/release/` read it to write the version plan, and Nx applies that plan.
 
 The product tag is the previous bare `X.Y.Z` tag, bumped by the highest bump among:
 
-- the components `portal-backend`, `ui`, `build-task-consumer`, `api-linter-service`, `agents-backend`, and
-  `java-task-consumer`;
+- the components `portal-backend`, `ui`, `build-task-consumer`, `api-linter-service`, `agents-backend`,
+  `libraries-backend`, and `java-task-consumer`;
 - the commits that touch `deploy/`.
 
 The agent has its own version and does not move the product version. Library bumps reach the product through `ui` and
@@ -506,7 +507,7 @@ The prefix is the Nx release group name:
   `graphapi`, `http-spec`, `json-crawl`, `rest-playground`, `jest-chrome-in-docker-environment`, `apispec-view`, and
   `api-doc-viewer`.
 - Applications and services: `ui`, `build-task-consumer`, `portal-backend`, `api-linter-service`, `agents-backend`,
-  `agent`, `test-service`, and `java-task-consumer`.
+  `libraries-backend`, `agent`, `test-service`, and `java-task-consumer`.
 - Go library: `commons-go`.
 
 Go and Java components keep their version only in the tag. JavaScript components also keep it in `package.json`.

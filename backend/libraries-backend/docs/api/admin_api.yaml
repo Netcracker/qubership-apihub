@@ -1,0 +1,199 @@
+openapi: 3.0.3
+info:
+  title: APIHUB Libraries Backend Admin API
+  version: "1.0"
+  description: >
+    Administrative operations of `libraries-backend`: reading the running image version and inspecting or
+    adjusting the runtime log level. The log-level operations require the system administrator role. The
+    business API is in [LIBRARIES_API.yaml](LIBRARIES_API.yaml); the registry and repository endpoints there
+    are administrative as well and stay in that document, next to the resources they describe.
+  contact:
+    name: Netcracker Opensource Group
+    email: opensourcegroup@netcracker.com
+  license:
+    name: Apache-2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0
+servers:
+  - url: /
+security:
+  - BearerAuth: []
+  - api-key: []
+  - PersonalAccessToken: []
+tags:
+  - name: Service
+    description: Service information.
+  - name: Debug
+    description: Debugging and log management.
+paths:
+  /api/v1/system/version:
+    get:
+      tags:
+        - Service
+      summary: Get the backend version
+      description: >
+        Returns the version of the running image, as `<branch>.<commit>.<commit time>`, or `unknown` when the
+        image carries no build metadata. The values come from the thin layer CI adds to a branch tag, not from
+        the image itself.
+      operationId: getSystemVersion
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - version
+                properties:
+                  version:
+                    type: string
+                    example: "main.a1b2c3d.1730700000"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /api/v1/debug/logs/checkLevel:
+    get:
+      tags:
+        - Debug
+      summary: Check the log level
+      description: >
+        Returns the current service-wide log level. As a side effect, emits one sample entry at error, warn,
+        info, debug, and trace severity to verify logging output, so each call adds log volume.
+      operationId: checkLogLevel
+      responses:
+        "200":
+          description: The current service-wide log level, as plain text.
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "Current log level is 'info'. See logs for details"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /api/v1/debug/logs/setLevel:
+    post:
+      tags:
+        - Debug
+      summary: Set the log level
+      description: >
+        Sets the service-wide log level for the running process. The change applies immediately to every
+        component and is not persisted across a restart.
+      operationId: setLogLevel
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - level
+              properties:
+                level:
+                  type: string
+                  description: The level to apply immediately. Not persisted across a restart.
+                  enum:
+                    - panic
+                    - fatal
+                    - error
+                    - warn
+                    - info
+                    - debug
+                    - trace
+      responses:
+        "200":
+          description: Success
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+components:
+  responses:
+    BadRequest:
+      description: Bad request — the body is not valid JSON, or the level is not one of the allowed values.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Unauthorized:
+      description: Unauthorized — the authentication credentials are missing or invalid.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Forbidden:
+      description: Forbidden — the caller does not hold the system administrator role.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          examples:
+            InsufficientPrivileges:
+              value:
+                status: 403
+                code: "1900"
+                message: "You don't have enough privileges to perform this operation"
+    InternalServerError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+  schemas:
+    ErrorResponse:
+      description: >
+        The error payload every failed request returns. Use `code` for programmatic handling. When `params`
+        is present, `message` still holds its `$key` placeholders and the client substitutes them before
+        display.
+      type: object
+      required:
+        - status
+        - code
+        - message
+      properties:
+        status:
+          description: The HTTP status code, matching the response status.
+          type: number
+        code:
+          description: The internal error code, for programmatic handling.
+          type: string
+          example: "1900"
+        message:
+          description: >
+            The message template, in English. Placeholders are not substituted by the server; replace each
+            `$key` with the matching value from `params`.
+          type: string
+        params:
+          description: The values for the `$key` placeholders of `message`.
+          type: object
+        debug:
+          description: >
+            Technical detail for troubleshooting, present only when `security.showDebugInResponse` is
+            enabled. It may contain internal identifiers, so it should not reach end users.
+          type: string
+  securitySchemes:
+    BearerAuth:
+      type: http
+      description: >
+        JWT bearer token, sent as `Authorization: Bearer <token>`. The declared schemes are alternatives;
+        any one of them is sufficient.
+      scheme: bearer
+      bearerFormat: JWT
+    api-key:
+      type: apiKey
+      description: APIHUB API key, sent in the `api-key` header.
+      name: api-key
+      in: header
+    PersonalAccessToken:
+      type: apiKey
+      description: Personal access token, sent in the `X-Personal-Access-Token` header.
+      name: X-Personal-Access-Token
+      in: header

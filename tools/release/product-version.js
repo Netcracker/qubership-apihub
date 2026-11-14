@@ -31,6 +31,7 @@ const PRODUCT_COMPONENTS = [
   'build-task-consumer',
   'api-linter-service',
   'agents-backend',
+  'libraries-backend',
   'java-task-consumer',
 ]
 const PRODUCT_PATHS = ['deploy']

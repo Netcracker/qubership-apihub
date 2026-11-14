@@ -25,7 +25,7 @@ public final class LocalJavaBuildQueue implements AutoCloseable {
     private static final Pattern POLL =
             Pattern.compile("^/api/v2/java-builders/([^/]+)/tasks$");
     private static final Pattern STATUS =
-            Pattern.compile("^/api/v3/packages/([^/]+)/java-publish/([^/]+)/status$");
+            Pattern.compile("^/api/v3/libraries/([^/]+)/java-publish/([^/]+)/status$");
 
     private final String apiKey;
     private final Map<String, Deque<byte[]>> queues = new ConcurrentHashMap<>();
@@ -47,8 +47,8 @@ public final class LocalJavaBuildQueue implements AutoCloseable {
         return bound;
     }
 
-    public void enqueue(String builderId, byte[] zip, String packageId, String publishId) {
-        publishes.add(publishKey(packageId, publishId));
+    public void enqueue(String builderId, byte[] zip, String libraryId, String publishId) {
+        publishes.add(publishKey(libraryId, publishId));
         waiters.computeIfAbsent(publishId, id -> new CompletableFuture<>());
         Deque<byte[]> q = queues.computeIfAbsent(builderId, id -> new ArrayDeque<>());
         synchronized (q) {
@@ -112,9 +112,9 @@ public final class LocalJavaBuildQueue implements AutoCloseable {
         send(exchange, 200, zip, "application/zip");
     }
 
-    private void handleStatus(HttpExchange exchange, String packageId, String publishId)
+    private void handleStatus(HttpExchange exchange, String libraryId, String publishId)
             throws IOException {
-        if (!publishes.contains(publishKey(packageId, publishId))) {
+        if (!publishes.contains(publishKey(libraryId, publishId))) {
             send(exchange, 404, new byte[0], null);
             return;
         }
@@ -145,8 +145,8 @@ public final class LocalJavaBuildQueue implements AutoCloseable {
         exchange.close();
     }
 
-    private static String publishKey(String packageId, String publishId) {
-        return packageId + "/" + publishId;
+    private static String publishKey(String libraryId, String publishId) {
+        return libraryId + "/" + publishId;
     }
 
     public record PublishResult(String status, String errors, byte[] resultZip) {

@@ -53,7 +53,7 @@ public final class BuildOrchestrator {
 
     private void sendStatus(BuildTask task, BuildStatus status, byte[] zip, String error) {
         try {
-            registry.postBuildStatus(task.packageId(), task.publishId(), status, zip, error);
+            registry.postBuildStatus(task.libraryId(), task.publishId(), status, zip, error);
         } catch (Exception e) {
             log.error("Failed to post status {} for publishId={}", status, task.publishId(), e);
         }

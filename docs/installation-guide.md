@@ -25,7 +25,7 @@ contract), see [Configuration reference](./configuration-reference.md).
 
 | Name | Version | Required | Notes |
 |------|---------|----------|-------|
-| **PostgreSQL** | 14+ | Yes | Three logical databases required: `apihub_backend`, `api_linter`, `agents_backend` (names are configurable). Pre-create them before first start — see `scripts/init-db/init.sql` in the Compose folder. |
+| **PostgreSQL** | 14+ | Yes | Four logical databases required: `apihub_backend`, `api_linter`, `agents_backend`, `libraries_backend` (names are configurable). Pre-create them before first start — see `scripts/init-db/init.sql` in the Compose folder. |
 | **S3-compatible storage** | Any | Optional | Offloads build artefacts; reduces PG growth. Configure under `s3Storage` in backend `config.yaml` / Helm values. |
 | **SAML / OIDC identity provider** | Any | Optional | Required when `security.productionMode: true`. Keycloak example: [`deploy/docker-compose/with-keycloak/`](../deploy/docker-compose/with-keycloak/). |
 | **LDAP** | Any | Optional | User directory sync when federated login is active (`security.ldap` in backend config). |
@@ -57,6 +57,7 @@ Defaults in `values.yaml` and `docker-compose.yml` are enough for sandboxes. For
 | **qubership-apihub-build-task-consumer** | Env vars only | `APIHUB_BACKEND_ADDRESS`, `APIHUB_API_KEY`, `LOG_LEVEL`, `FOLDER_STORE`, `OPERATIONS_BUILD_BATCH` |
 | **qubership-api-linter-service** | **`config.yaml`** (path set by `LINTER_CONFIG_FOLDER`), same schema as [`config.template.yaml`](../backend/api-linter-service/config.template.yaml) | `LINTER_CONFIG_FOLDER`, `LOG_LEVEL`, `GOMEMLIMIT` |
 | **qubership-apihub-agents-backend** | **`config.yaml`** (path set by `AGENTS_BACKEND_CONFIG_FOLDER`), same schema as [`config.template.yaml`](../backend/agents-backend/config.template.yaml) | `AGENTS_BACKEND_CONFIG_FOLDER`, `LOG_LEVEL`, `GOMEMLIMIT` |
+| **qubership-apihub-libraries-backend** | **`config.yaml`** (path set by `LIBRARIES_CONFIG_FOLDER`), same schema as [`config.template.yaml`](../backend/libraries-backend/config.template.yaml) | `LIBRARIES_CONFIG_FOLDER`, `LOG_LEVEL`, `GOMEMLIMIT` |
 | **qubership-apihub-agent** *(K8s, optional)* | **`config.yaml`** (path set by `AGENT_CONFIG_FOLDER`), same schema as [`config.template.yaml`](../backend/agent/config.template.yaml) | `APIHUB_CONFIG_FOLDER` |
 
 **Helm:** `qubershipApihubBackend.env`, `qubershipApiLinterService.env`, and `qubershipApihubAgentsBackend.env` in
@@ -106,6 +107,7 @@ After start: <http://localhost:8081/login> — Portal UI.
 | **8090** | `qubership-apihub-backend` | Backend REST API (builder reaches it via `host.docker.internal:8090`) |
 | **8091** | `qubership-api-linter-service` | Linter API |
 | **8092** | `qubership-apihub-agents-backend` | Agents backend API |
+| **8093** | `qubership-apihub-libraries-backend` | Libraries backend API |
 | 5432 | `postgres` | PostgreSQL |
 | 47375–47376 | `qubership-apihub-backend` | Prometheus metrics / Olric cluster ports |
 
@@ -140,6 +142,9 @@ extensions:
   - name: api-linter
     baseUrl: 'http://host.docker.internal:8091'
     pathPrefix: api-linter
+  - name: libraries-backend
+    baseUrl: http://qubership-apihub-libraries-backend:8080
+    pathPrefix: libraries-backend
   - name: agents-backend
     baseUrl: 'http://host.docker.internal:8092'
     pathPrefix: agents-backend
@@ -191,6 +196,32 @@ technicalParameters:
   apihub:
     url: 'http://host.docker.internal:8081'
     accessToken: '<same value as zeroDayConfiguration.accessToken>'
+```
+
+#### `qubership-apihub-libraries-backend-config.yaml` (libraries backend)
+
+`registries` is empty by default. A library can only be tracked in a repository listed here, and the
+credentials stay in this file — they never reach the database.
+
+```yaml
+database:
+  host: 'host.docker.internal'
+  port: 5432
+  name: 'libraries_backend'
+  username: 'libraries_backend_user'
+  password: 'libraries_backend_password'
+technicalParameters:
+  apihub:
+    url: 'http://host.docker.internal:8081'
+    accessToken: '<same value as zeroDayConfiguration.accessToken>'
+registries:
+  - id: 'central'
+    type: 'artifactory'
+    baseUrl: 'https://artifactory.example.com/artifactory'
+    username: '<registry user, or omit for anonymous access>'
+    password: '<registry password or token>'
+    repositories:
+      - 'maven-remote'
 ```
 
 #### `qubership-apihub-ui.env` (portal UI)

@@ -28,7 +28,8 @@ The registry is configured through **`config.yaml`**, whose annotated super-set 
    upgrading between product versions.
 2. Keep **`security.apihubExternalUrl`** truthfully matching the hostname users type; mismatches break OAuth/SAML
    redirects and deep links.
-3. **`extensions`** must list every sidecar the UI should hit (linter, agents-backend); `baseUrl` + `pathPrefix` pair
+3. **`extensions`** must list every sidecar the UI should hit (linter, agents-backend, libraries-backend);
+   `baseUrl` + `pathPrefix` pair
    must match what you publish (internal DNS in Kubernetes, `host.docker.internal` patterns in desktop Compose).
 4. **`zeroDayConfiguration.accessToken`** bootstraps privileged automation; pair it with **`APIHUB_API_KEY`** /
    **`APIHUB_ACCESS_TOKEN`** variables in workers until you adopt service accounts or PAT-based automation from the
@@ -83,7 +84,7 @@ Scripts under **`deploy/docker-compose/apihub-generic/`**:
 |------|----------|
 | IdP onboarding | SAML metadata / OIDC client credentials live under **`externalIdentityProviders`**. Detailed flows: [**security-model.md**](administration/security-model.md). Keycloak Compose recipe: **`deploy/docker-compose/with-keycloak/`**. |
 | Rotate JWT signing key | Plan user re-login sessions; coordinate with SSO session lifetime. Replace **`jwt.privateKey`**, bounce backend pods/deployments. |
-| Rotate system token (the home for token handling; behavior is in [Access Tokens Management](design/package-settings/di-portal-ps-003-access-tokens-management.md)) | Change backend **`accessToken`**, the builder **`APIHUB_API_KEY`**, and linter / agents-backend **`technicalParameters.apihub.accessToken`** concurrently; regenerate the Helm config Secrets (`build-task-consumer`, linter, agents-backend). |
+| Rotate system token (the home for token handling; behavior is in [Access Tokens Management](design/package-settings/di-portal-ps-003-access-tokens-management.md)) | Change backend **`accessToken`**, the builder **`APIHUB_API_KEY`**, and linter / agents-backend / libraries-backend **`technicalParameters.apihub.accessToken`** concurrently; regenerate the Helm config Secrets (`build-task-consumer`, linter, agents-backend, libraries-backend). |
 | Playground proxy hardening | Keep **`security.insecureProxy`** / **`allowedHostsForProxy`** tight; never expose unsafe proxy settings on untrusted networks. |
 
 ---

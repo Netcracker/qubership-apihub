@@ -94,7 +94,8 @@ jobs:
             images="$(jq -cn --arg prefix "ghcr.io/$owner/" --arg tag "$TAG" '
               ["qubership-apihub-ui", "qubership-apihub-build-task-consumer", "qubership-apihub-backend",
                "qubership-api-linter-service", "qubership-apihub-agents-backend", "qubership-apihub-agent",
-               "qubership-apihub-test-service", "qubership-apihub-java-task-consumer"]
+               "qubership-apihub-libraries-backend", "qubership-apihub-test-service",
+               "qubership-apihub-java-task-consumer"]
               | map($prefix + . + ":" + $tag)')"
           fi
           echo "target=$TARGET" >> "$GITHUB_OUTPUT"

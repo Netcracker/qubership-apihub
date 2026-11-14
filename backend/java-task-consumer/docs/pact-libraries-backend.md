@@ -24,12 +24,17 @@ Regenerate the file from the JTC repo:
 mvn -pl java-task-consumer -am test -Dtest=RegistryClientPactTest -Dsurefire.failIfNoSpecifiedTests=false
 ```
 
+Editing the JSON by hand does not work even for a rename: the poll response and the `data` part are
+base64-encoded ZIP bytes, so the `config.json` inside the example archive keeps whatever the last run wrote.
+A search-and-replace over the file updates the paths and provider states and silently leaves the archive
+stale. Change `RegistryClientPactTest` and regenerate.
+
 ## Interactions
 
 Five interactions cover the worker loop. Example IDs are fixed so provider states stay simple:
 
 - `builderId` = `builder-test-1`
-- `packageId` = `demo-pkg`
+- `libraryId` = `demo-lib`
 - `publishId` = `pub-99`
 - `api-key` header = `test-api-key`
 
@@ -37,7 +42,7 @@ Five interactions cover the worker loop. Example IDs are fixed so provider state
 |----------------|---------|-------------------|
 | `no java build tasks are available` | `POST /api/v2/java-builders/builder-test-1/tasks` | `204` |
 | `a java-api-report task is queued for builder builder-test-1` | same poll | `200` + `Content-Type: application/zip` |
-| `java publish pub-99 exists for package demo-pkg` | `POST /api/v3/packages/demo-pkg/java-publish/pub-99/status` with `status=running` | `204` |
+| `java publish pub-99 exists for library demo-lib` | `POST /api/v3/libraries/demo-lib/java-publish/pub-99/status` with `status=running` | `204` |
 | same | status `complete` plus part `data` (`package.zip`) | `204` |
 | same | status `error` plus part `errors=engine failed` | `204` |
 
@@ -68,7 +73,7 @@ Suggested mapping:
 |-------|--------|
 | `no java build tasks are available` | Empty the Java build queue for `builder-test-1`. |
 | `a java-api-report task is queued for builder builder-test-1` | Enqueue one task whose ZIP contains `config.json` from the pact example (or any valid `java-api-report` config with the example ids). |
-| `java publish pub-99 exists for package demo-pkg` | Accept status posts for that package/publish (create the row if your model requires it). |
+| `java publish pub-99 exists for library demo-lib` | Accept status posts for that library/publish (create the row if your model requires it). |
 
 Auth: accept `api-key: test-api-key` in the verification environment (or disable auth for the
 verifier). Production must still require a real system token.
@@ -131,7 +136,7 @@ func TestLibrariesBackendPact(t *testing.T) {
                 // enqueue task ZIP with config.json
                 return nil, nil
             },
-            "java publish pub-99 exists for package demo-pkg": func(setup bool, s provider.ProviderState) (provider.ProviderStateResponse, error) {
+            "java publish pub-99 exists for library demo-lib": func(setup bool, s provider.ProviderState) (provider.ProviderStateResponse, error) {
                 // ensure publish row exists
                 return nil, nil
             },
@@ -153,7 +158,7 @@ Minimum `config.json` for the queued-task state:
 ```json
 {
   "publishId": "pub-99",
-  "packageId": "demo-pkg",
+  "libraryId": "demo-lib",
   "buildType": "java-api-report",
   "metadata": {"gav": "com.example:lib:1.0.0"}
 }

@@ -1,5 +1,5 @@
 {
-  "packageId": "debug-pkg",
+  "libraryId": "debug-lib",
   "tasks": [
     {
       "id": "report",

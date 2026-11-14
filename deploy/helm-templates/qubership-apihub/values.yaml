@@ -338,6 +338,10 @@ qubershipApihubBackend:
       - name: agents-backend
         baseUrl: http://qubership-apihub-agents-backend:8080
         pathPrefix: agents-backend
+      # APIHUB Libraries Backend enabled by default. See section qubershipApihubLibrariesBackend below for configuration
+      - name: libraries-backend
+        baseUrl: http://qubership-apihub-libraries-backend:8080
+        pathPrefix: libraries-backend
 
 # Section with APIHUB Build Task Consumer configuration
 qubershipApihubBuildTaskConsumer:
@@ -595,3 +599,100 @@ qubershipApihubAgentsBackend:
         schedule: '0 22 * * 0'
         # Optional; Retention period in days for snapshots; snapshots older than this are removed by the cleanup job. WARNING: a value of 0 removes ALL snapshots; If not set, default value: 30; Example: 30
         ttlDays: 30
+
+# Section with Qubership APIHUB Libraries Backend deployment configuration
+qubershipApihubLibrariesBackend:
+  # Optional; Qubership APIHUB Libraries Backend release version; If not set, default value: unknown; Example: 1.0.0
+  version: ''
+  image:
+    repository: 'ghcr.io/netcracker/qubership-apihub-libraries-backend'
+    # Pin tags from the latest product release: https://github.com/Netcracker/qubership-apihub/releases/latest
+    tag: 'dev'
+
+  # Optional; custom CA certificates for outbound HTTPS calls (APIHUB API, artifact registries).
+  # Requires the qubership-core-base runtime image. The base image entrypoint loads .crt/.cer/.pem files from
+  # /tmp/cert into the system trust store before the application starts.
+  customCa:
+    # Optional; mount custom CA Secret when true; If not set, default value: false; Example: true
+    enabled: false
+    # Optional; Kubernetes Secret name with one or more PEM certificate files (.crt, .cer, or .pem keys); If not set, default value: ""; Example: apihub-libraries-backend-custom-ca
+    secretName: ''
+
+  # Section with resource limits
+  # Mandatory
+  # Below are the default values which are good enough for any cases including production
+  resource:
+    cpu:
+      request: "30m"
+      limit: "1"
+    memory:
+      request: "150Mi"
+      limit: "1000Mi"
+
+  # Optional; Go runtime memory soft limit passed as GOMEMLIMIT (container env). Keep below resource.memory.limit; If not set, default value: 800MiB (~80% of default memory.limit 1000Mi); Example: 2400MiB
+  goMemLimit: '800MiB'
+
+  # Section with business and technical parameters for Qubership APIHUB Libraries Backend.
+  env:
+    # Optional; Set log level on init to specified value. Values: Info, Warn, Error, etc; If not set, default value: INFO; Example: DEBUG
+    logLevel: 'INFO'
+
+    # Section with PostgreSQL database connection parameters
+    database:
+      # Mandatory; PostgreSQL database host ; If not set, default value: localhost; Example: postgres.example.com
+      host: ''
+      # Mandatory; PostgreSQL database port; If not set, default value: 5432; Example: 5432
+      port: null
+      # Mandatory; Logical database in PostgreSQL cluster for APIHUB. Manual pre-creation required; If not set, default value: apihub_libraries; Example: apihub_libraries_prod_db
+      name: ''
+      # Mandatory; User for database.name database; If not set, default value: apihub_libraries; Example: apihub_libraries_prod_admin
+      username: ''
+      # Mandatory; Password for database.username user.; If not set, default value: ""; Example: apihub_libraries_prod_password
+      password: ''
+
+    # Section with technical parameters
+    technicalParameters:
+      # Optional; Base path for binary and static files; If not set, default value: .; Example: /app
+      basePath: '.'
+      # Optional; Listen address for the Libraries Backend, can be used to avoid port conflicts in case of run on bare metal; If not set, default value: :8080; Example: :8080
+      listenAddress: ':8080'
+      # Optional; Directory containing API specifications for exposure; If not set, defaults to basePath + "/api"; Example: ./docs/api
+      apiSpecDirectory: ''
+      apihub:
+        # Mandatory; Factual Qubership APIHUB server URL in your environment.; If not set, default value: http://localhost:8090; Example: https://apihub.example.com
+        url: 'http://localhost:8090'
+        # Mandatory; APIHUB access token. In case of clean installation - must be the same as in qubershipApihubBackend.env.zeroDayConfiguration.accessToken section; If not set, default value: ""; Example: access-token-12345
+        accessToken: ''
+
+    # Section with the external artifact registries this service tracks libraries in. Credentials are read
+    # from here and never stored in the database. A library can only be created in a repository listed here.
+    # If not set, default value: []
+    registries: []
+    #   # Mandatory per entry; Identifier of the registry, referenced by the libraries tracked in it; Example: central
+    #   - id: 'central'
+    #     # Mandatory per entry; Registry product. Values: artifactory, nexus; Example: artifactory
+    #     type: 'artifactory'
+    #     # Mandatory per entry; Base URL of the registry; Example: https://artifactory.example.com/artifactory
+    #     baseUrl: 'https://artifactory.example.com/artifactory'
+    #     # Optional per entry; Display name of the registry; If not set, default value: ""; Example: Maven Central mirror
+    #     name: ''
+    #     # Optional per entry; User for the registry; If not set, the registry is accessed anonymously; Example: apihub
+    #     username: ''
+    #     # Optional per entry; Password or token for registries[].username; If not set, default value: ""; Example: strong-password
+    #     password: ''
+    #     # Mandatory per entry; Repositories of the registry that libraries may be tracked in; Example: [maven-remote]
+    #     repositories: ['maven-remote']
+
+    # Section with the Java build queue configuration. java-task-consumer polls this queue.
+    build:
+      # Optional; How long a running build may stay silent before the queue offers it to another worker; If not set, default value: 600; Example: 600
+      keepaliveTimeoutSeconds: 600
+      # Optional; How many times the queue re-offers a build that went silent before failing it; If not set, default value: 2; Example: 2
+      restartLimit: 2
+
+    # Section with all security parameters
+    security:
+      # Optional; Allows to set extra allowed origins to CORS header. Used for FE debugging. Should be empty on prod envs.; If not set, default value: []; Example: [https://localhost:5137]
+      allowedOrigins: []
+      # Optional; Enables the 'debug' field with internal error details in API error responses. Should be disabled on prod envs; If not set, default value: false; Example: false
+      showDebugInResponse: false

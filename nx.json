@@ -121,6 +121,11 @@
         "projectsRelationship": "fixed",
         "version": { "versionActions": "tools/release/version-actions/tag-only.js" }
       },
+      "libraries-backend": {
+        "projects": ["libraries-backend"],
+        "projectsRelationship": "fixed",
+        "version": { "versionActions": "tools/release/version-actions/tag-only.js" }
+      },
       "agent": {
         "projects": ["agent"],
         "projectsRelationship": "fixed",

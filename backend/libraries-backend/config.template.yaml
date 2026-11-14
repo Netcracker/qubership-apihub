@@ -1,0 +1,59 @@
+# Section with PostgreSQL database connection parameters
+database:
+  # Mandatory; PostgreSQL database host; If not set, default value: localhost; Example: postgres.example.com
+  host: ''
+  # Mandatory; PostgreSQL database port; If not set, default value: 5432; Example: 5432
+  port: 5432
+  # Mandatory; PostgreSQL database name. Manual pre-creation required; If not set, default value: apihub_libraries; Example: apihub_libraries
+  name: 'apihub_libraries'
+  # Mandatory; User for <database.name> database; If not set, default value: apihub_libraries; Example: apihub_libraries
+  username: ''
+  # Mandatory; Password for <database.username> user; If not set, default value: apihub_libraries; Example: strong-password
+  password: ''
+
+# Section with technical parameters
+technicalParameters:
+  # Optional; Base path for binary and static files; If not set, default value: .; Example: /app
+  basePath: '.'
+  # Optional; Listen address for the Libraries Backend, can be used to avoid port conflicts in case of run on bare metal; If not set, default value: :8080; Example: :8080
+  listenAddress: ':8080'
+  # Optional; Directory containing API specifications for exposure; If not set, defaults to basePath + "/api"; Example: ./docs/api
+  apiSpecDirectory: ''
+  apihub:
+    # Mandatory; Factual Qubership APIHUB server URL in your environment.; If not set, default value: http://localhost:8090; Example: https://apihub.example.com
+    url: ''
+    # Mandatory; Admin access token for your Qubership APIHUB. Used to authenticate callers and to read the role catalogue; If not set, default value: ""; Example: access-token-12345
+    accessToken: ''
+
+# Section with the external artifact registries this service tracks libraries in. Credentials are read from
+# here and never stored in the database. A library can only be created in a repository listed below.
+registries: []
+  # Mandatory per entry; Identifier of the registry, referenced by the libraries tracked in it; Example: central
+  # - id: 'central'
+  #   # Mandatory per entry; Registry product; Allowed values: artifactory, nexus; Example: artifactory
+  #   type: 'artifactory'
+  #   # Mandatory per entry; Base URL of the registry; Example: https://artifactory.example.com/artifactory
+  #   baseUrl: 'https://artifactory.example.com/artifactory'
+  #   # Optional per entry; Display name of the registry; If not set, default value: ""; Example: Maven Central mirror
+  #   name: 'Maven Central mirror'
+  #   # Optional per entry; User for the registry; If not set, the registry is accessed anonymously; Example: apihub
+  #   username: ''
+  #   # Optional per entry; Password or token for <registries[].username>; If not set, default value: ""; Example: strong-password
+  #   password: ''
+  #   # Mandatory per entry; Repositories of the registry that libraries may be tracked in; Example: [maven-remote]
+  #   repositories:
+  #     - 'maven-remote'
+
+# Section with the Java build queue configuration
+build:
+  # Optional; How long a running build may stay silent before the queue offers it to another worker; If not set, default value: 600; Example: 600
+  keepaliveTimeoutSeconds: 600
+  # Optional; How many times the queue re-offers a build that went silent before failing it; If not set, default value: 2; Example: 2
+  restartLimit: 2
+
+# Section with all security parameters
+security:
+  # Optional; Allows to set extra allowed origins to CORS header. Used for FE debugging. Should be empty on prod envs.; If not set, default value: []; Example: [https://localhost:5137]
+  allowedOrigins: []
+  # Optional; Enables the 'debug' field with internal error details in API error responses. Should be disabled on prod envs; If not set, default value: false; Example: false
+  showDebugInResponse: false

@@ -28,9 +28,11 @@ end-to-end workflow (`.github/workflows/e2e-tests-kind.yml`) installs the chart 
 ## Traps
 
 - A change to `values.yaml`, a template, or a mounted file needs `docs/configuration-reference.md` and the Compose
-  stacks in the same change. Tokens and URLs must stay aligned across the backend, linter, and agents-backend
+  stacks in the same change. Tokens and URLs must stay aligned across the backend, linter, agents-backend, and
+  libraries-backend
   `config.yaml` files and the builder env (configuration reference, section 4).
-- The `extensions` URLs in the backend config must match how the cluster reaches the linter and agents-backend
+- The `extensions` URLs in the backend config must match how the cluster reaches the linter, agents-backend, and
+  libraries-backend
   (cluster DNS here; `host.docker.internal` in Compose).
 - `local-k8s-quickstart` is for developers only and is not production-ready.
 - The agent has its own standalone chart in `backend/agent/helm-templates/`; that is not this chart.

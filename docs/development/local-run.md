@@ -80,6 +80,7 @@ Build the image you changed, tag it, and point the stack at the tag. Build from 
 podman build -f backend/portal-backend/Dockerfile -t localhost/qubership-apihub-backend:local backend
 podman build -f backend/api-linter-service/Dockerfile -t localhost/qubership-api-linter-service:local backend
 podman build -f backend/agents-backend/Dockerfile -t localhost/qubership-apihub-agents-backend:local backend
+podman build -f backend/libraries-backend/Dockerfile -t localhost/qubership-apihub-libraries-backend:local backend
 podman build -f backend/agent/Dockerfile -t localhost/qubership-apihub-agent:local backend
 
 # UI: the image copies the dist folders of both apps.
