@@ -15,6 +15,7 @@ import {
   getMockVersionFlags,
 } from '@netcracker/qubership-apihub-ui-shared/mocks/mock-version-flags'
 import { patchJsonResponse } from '@netcracker/qubership-apihub-ui-shared/mocks/patch-json-response'
+import { SORT_BY_CREATED_AT, SORT_BY_FIRST_PUBLISHED_AT } from '@netcracker/qubership-apihub-ui-shared/types/sorting'
 
 const MOCK_REVISIONS_MARKER = 'errors-revisions'
 const MOCK_DELETED_REFERENCE_MARKER = 'errors-deleted-reference'
@@ -34,7 +35,7 @@ export const versionHandlers = [
   }),
 
   http.get('*/api/v3/packages/:packageKey/versions', ({ request }) => (
-    patchJsonResponse<PackageVersionsDto>(request, data => ({
+    patchJsonResponse<PackageVersionsDto>(withFirstPublishedAtSortFallback(request), data => ({
       ...data,
       versions: data.versions.map(version => ({ ...version, ...getMockVersionFlags(version.version) })),
     }))
@@ -75,4 +76,16 @@ function getMockDeletedRefs(versionKey: string, references: ReadonlyArray<Unreso
     references.find(({ parentPackageRef }) => parentPackageRef === firstReference.packageRef)
   return [firstChildReference?.packageRef, secondReference?.packageRef]
     .filter((ref): ref is Key => ref !== undefined)
+}
+
+// TODO #1020: remove when the backend supports sortBy=firstPublishedAt (DI-Portal-PKGVER-025).
+// Until then the backend rejects it with 400, so the mock asks for createdAt instead:
+// the order is close enough to check the UI, though a new revision moves a version up.
+function withFirstPublishedAtSortFallback(request: Request): Request {
+  const url = new URL(request.url)
+  if (url.searchParams.get('sortBy') !== SORT_BY_FIRST_PUBLISHED_AT) {
+    return request
+  }
+  url.searchParams.set('sortBy', SORT_BY_CREATED_AT)
+  return new Request(url, request)
 }

@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test'
-import { BaseComponent, Button, SearchBar } from '@shared/components/base'
+import { BaseComponent, Button, DropdownMenu, SearchBar } from '@shared/components/base'
 import { VersionSelectTableRow } from './VersionSelect/VersionSelectTableRow'
 
 export class VersionSelect extends BaseComponent {
@@ -7,6 +7,7 @@ export class VersionSelect extends BaseComponent {
   readonly releaseBtn = new Button(this.content.getByTestId('ReleaseButton'), 'Release')
   readonly draftBtn = new Button(this.content.getByTestId('DraftButton'), 'Draft')
   readonly searchbar = new SearchBar(this.content.getByTestId('VersionSearchBar'), 'Version')
+  readonly sortMenu = new DropdownMenu(this.content.getByTestId('VersionSortButton'), 'Version sort')
   readonly createVersionBtn = new Button(this.content.getByTestId('CreateVersionButton'), 'Create version')
 
   constructor(private readonly page: Page) {
