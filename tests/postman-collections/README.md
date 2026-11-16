@@ -12,7 +12,7 @@ The suite tests the product from outside, through the backend API; see the
 | Path | Content |
 |------|---------|
 | `e2e/` | The regression collections, numbered by purpose (`1_1_Smoke_Portal`, `1_2_Smoke_Agent`, ..., `4_Access_control`) |
-| `use_cases/` | Scenario collections, such as `shareability` |
+| `use_cases/` | Scenario collections: `shareability`, `libraries-commons-lang` |
 | `Syntetic_test_data.postman_collection.json` | Fast creation of sample data |
 | `environment/` | `local`, `local_k8s`, and `Env1` Postman environments |
 | `working-directory/` | Fixture files that the requests upload |
@@ -61,12 +61,28 @@ collections as an input; see [CI](../../docs/development/ci.md#manual-e2e).
 the variables `Username`, `User_email`, `Password`, and `at-api-key`. `local_k8s.postman_environment.json` is the
 variant for the Kind cluster.
 
+`LIBRARIES_HOST` is the base URL of libraries-backend. Compose publishes that service on port 8093, so the value is
+`localhost:8093`. On Kind, forward the service before you run the collection:
+
+```bash
+kubectl port-forward -n qubership-apihub svc/qubership-apihub-libraries-backend 8093:8080
+```
+
+`LIBRARIES_REPOSITORY` is the repository id from the libraries-backend registry configuration. The local Maven
+Central registry uses `maven2`. `use_cases/libraries-commons-lang.postman_collection.json` creates
+`commons-lang:commons-lang`, imports 1.0.1, then imports 2.6 with 1.0.1 as the previous version, and reads each
+version's inventory and the comparison. Override `LIBRARY_GROUP_ID`, `LIBRARY_ARTIFACT_ID`, `LIBRARY_VERSION`,
+`LIBRARY_NEXT_VERSION`, and `CONTENT_PACKAGE_PREFIX` to track a different library. It is not in the default CI
+list: it needs the Java worker and a configured Maven registry.
+
 ## API specifications
 
 The collections test the OpenAPI specifications in
-[`backend/portal-backend/docs/api/`](../../backend/portal-backend/docs/api/)
-and [`backend/agent/docs/api/`](../../backend/agent/docs/api/). Update the collections in the same pull request as a
-change to the REST contract; the `postman-e2e-followup` and `postman-e2e-authoring` skills list the steps.
+[`backend/portal-backend/docs/api/`](../../backend/portal-backend/docs/api/),
+[`backend/agent/docs/api/`](../../backend/agent/docs/api/), and
+[`backend/libraries-backend/docs/api/`](../../backend/libraries-backend/docs/api/).
+Update the collections in the same pull request as a change to the REST contract; the `postman-e2e-followup` and
+`postman-e2e-authoring` skills list the steps.
 
 ## Further reading
 

@@ -78,6 +78,9 @@ const LibraryArtifactNotFoundMsg = "Artifact $artifact is not found in repositor
 const RegistryRequestFailed = "3104"
 const RegistryRequestFailedMsg = "Failed to read artifact metadata from registry '$registryId'"
 
+const PreviousVersionNotFound = "3105"
+const PreviousVersionNotFoundMsg = "Previous version $previousVersion of library $libraryId is not found"
+
 const LibraryComparisonNotFound = "3200"
 const LibraryComparisonNotFoundMsg = "No comparison has been computed yet for this version pair"
 

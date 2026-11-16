@@ -75,11 +75,16 @@ with `podman build --build-arg JAVA_BASE_TAG=21-alpine-latest .`.
 
 ### Helm
 
-The chart in `helm/java-task-consumer` is not part of the product chart yet.
+The chart in `helm/java-task-consumer` is not part of the product chart yet. `apihub.backendAddress` is the
+libraries-backend service, which serves the Java build queue.
+
+The container runs with a read-only root filesystem, so the chart mounts two `emptyDir` volumes: the task work
+directory (`storage.workDir.path`, the `WORK_DIR` of the worker) and the Maven local repository
+(`storage.mavenRepository.path`). Both are emptied when the pod restarts. Set `storage.*.sizeLimit` to cap them.
 
 ```bash
 helm upgrade --install jtc ./helm/java-task-consumer \
-  --set apihub.backendAddress=qubership-apihub-backend:8080 \
+  --set apihub.backendAddress=qubership-apihub-libraries-backend:8080 \
   --set apihub.accessToken=<token>
 ```
 
@@ -94,7 +99,7 @@ kubectl create secret generic jtc-registry-auth \
   --from-file=config.json=$HOME/.docker/config.json
 
 helm upgrade --install jtc ./helm/java-task-consumer \
-  --set apihub.backendAddress=qubership-apihub-backend:8080 \
+  --set apihub.backendAddress=qubership-apihub-libraries-backend:8080 \
   --set apihub.accessToken=<token> \
   --set registryAuth.existingSecret=jtc-registry-auth
 ```

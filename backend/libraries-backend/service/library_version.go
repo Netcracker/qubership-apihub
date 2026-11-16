@@ -81,13 +81,9 @@ func (l libraryVersionServiceImpl) Import(ctx context.Context, library entity.Li
 		}
 	}
 
-	previousVersion := ""
-	previousRelease, err := l.libraryVersionRepository.LatestRelease(ctx, library.Id, req.Version)
+	previousVersion, err := l.resolvePreviousVersion(ctx, library.Id, req)
 	if err != nil {
 		return nil, err
-	}
-	if previousRelease != nil {
-		previousVersion = previousRelease.Version
 	}
 
 	buildId, err := l.buildService.EnqueueApiReport(ctx, library, req.Version)
@@ -114,6 +110,43 @@ func (l libraryVersionServiceImpl) Import(ctx context.Context, library entity.Li
 
 	result := entity.MakeLibraryVersionView(versionEntity)
 	return &result, nil
+}
+
+// resolvePreviousVersion returns the version the comparison of the imported version is computed against: the
+// one the request names, which must be an imported version of the library other than the imported one, or the
+// latest release of the library. An empty result means the library has nothing to compare against yet.
+func (l libraryVersionServiceImpl) resolvePreviousVersion(ctx context.Context, libraryId string, req view.LibraryVersionImportReq) (string, error) {
+	if req.PreviousVersion == "" {
+		previousRelease, err := l.libraryVersionRepository.LatestRelease(ctx, libraryId, req.Version)
+		if err != nil {
+			return "", err
+		}
+		if previousRelease == nil {
+			return "", nil
+		}
+		return previousRelease.Version, nil
+	}
+	if req.PreviousVersion == req.Version {
+		return "", &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidParameterValue,
+			Message: exception.InvalidParameterValueMsg,
+			Params:  map[string]interface{}{"value": req.PreviousVersion, "param": "previousVersion"},
+		}
+	}
+	previous, err := l.libraryVersionRepository.Get(ctx, libraryId, req.PreviousVersion)
+	if err != nil {
+		return "", err
+	}
+	if previous == nil {
+		return "", &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.PreviousVersionNotFound,
+			Message: exception.PreviousVersionNotFoundMsg,
+			Params:  map[string]interface{}{"libraryId": libraryId, "previousVersion": req.PreviousVersion},
+		}
+	}
+	return previous.Version, nil
 }
 
 func (l libraryVersionServiceImpl) Get(ctx context.Context, libraryId, version string) (*view.LibraryVersion, error) {

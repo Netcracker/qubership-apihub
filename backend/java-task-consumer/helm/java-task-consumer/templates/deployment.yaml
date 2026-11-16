@@ -15,8 +15,23 @@ spec:
         {{- include "java-task-consumer.labels" . | nindent 8 }}
     spec:
       serviceAccountName: {{ include "java-task-consumer.fullname" . }}
-      {{- if or .Values.apihub.accessToken (include "java-task-consumer.registryAuthEnabled" .) }}
+      # The root filesystem is read-only, so the task work directory and the Maven local repository are emptyDir
+      # volumes. Both are lost when the pod restarts; the worker fetches what it needs again.
       volumes:
+        - name: work-dir
+          emptyDir:
+            {{- with .Values.storage.workDir.sizeLimit }}
+            sizeLimit: {{ . }}
+            {{- else }}
+            {}
+            {{- end }}
+        - name: maven-repository
+          emptyDir:
+            {{- with .Values.storage.mavenRepository.sizeLimit }}
+            sizeLimit: {{ . }}
+            {{- else }}
+            {}
+            {{- end }}
         {{- if .Values.apihub.accessToken }}
         - name: apihub-api-key
           secret:
@@ -27,7 +42,6 @@ spec:
           secret:
             secretName: {{ include "java-task-consumer.registryAuthSecretName" . }}
         {{- end }}
-      {{- end }}
       containers:
         - name: java-task-consumer
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
@@ -47,7 +61,7 @@ spec:
             - name: JDIFF_THREADS
               value: {{ .Values.env.jdiffThreads | quote }}
             - name: WORK_DIR
-              value: /tmp/java-task-consumer
+              value: {{ .Values.storage.workDir.path | quote }}
             - name: JDIFF_JAPICMP_JAR
               value: /opt/jdiff/japicmp.jar
             {{- if .Values.apihub.accessToken }}
@@ -58,8 +72,11 @@ spec:
             - name: DOCKER_CONFIG
               value: /etc/secrets/docker
             {{- end }}
-          {{- if or .Values.apihub.accessToken (include "java-task-consumer.registryAuthEnabled" .) }}
           volumeMounts:
+            - name: work-dir
+              mountPath: {{ .Values.storage.workDir.path | quote }}
+            - name: maven-repository
+              mountPath: {{ .Values.storage.mavenRepository.path | quote }}
             {{- if .Values.apihub.accessToken }}
             - name: apihub-api-key
               mountPath: /etc/secrets/apihub
@@ -70,7 +87,6 @@ spec:
               mountPath: /etc/secrets/docker
               readOnly: true
             {{- end }}
-          {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           livenessProbe:

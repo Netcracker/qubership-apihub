@@ -37,7 +37,9 @@ The worker endpoints are the contract in [backend-api.md](../java-task-consumer/
 4. On `complete` the service parses `report.json` into `library_class` and `library_method`, rebuilds the search
    vectors, and moves the version to `release`.
 5. If the version has a predecessor, a `java-api-diff` build is queued next. Its result becomes the comparison the
-   `changes` endpoints serve. There is no endpoint that starts a comparison directly.
+   `changes` endpoints serve. The predecessor is the `previousVersion` of the import request, which must be an
+   imported version of the library, or, when the request names none, the latest release of the library. There is
+   no endpoint that starts a comparison directly.
 
 A build that goes silent longer than `build.keepaliveTimeoutSeconds` returns to the queue, up to
 `build.restartLimit` times, then fails. Poll the version and read `metadata.buildStatus` and `metadata.buildError`

@@ -23,8 +23,23 @@ env:
   jdiffThreads: "4"
 
 apihub:
-  backendAddress: qubership-apihub-backend:8080
+  # Address of libraries-backend, the service that serves the Java build queue; http:// is assumed without a scheme.
+  backendAddress: qubership-apihub-libraries-backend:8080
   accessToken: ""
+
+# Writable directories of a container whose root filesystem is read-only. Each is an emptyDir volume, so its
+# content does not survive a pod restart; the worker fetches the artifacts again.
+storage:
+  # Task work directory (WORK_DIR): task and result ZIP files and the extracted jars of the build in progress.
+  workDir:
+    path: /tmp/java-task-consumer
+    # Optional; emptyDir size limit; an empty value leaves it unbounded. Example: 2Gi
+    sizeLimit: ""
+  # Maven local repository (~/.m2 of the image user, UID 10001), where resolved artifacts are cached between tasks.
+  mavenRepository:
+    path: /home/appuser/.m2
+    # Optional; emptyDir size limit; an empty value leaves it unbounded. Example: 4Gi
+    sizeLimit: ""
 
 # OCI registry credentials for daemonless subject image pull (java-upgrade-impact, subject.type=docker).
 # Mounts config.json and sets DOCKER_CONFIG=/etc/secrets/docker.

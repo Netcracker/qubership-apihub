@@ -28,7 +28,8 @@ Other files:
   workspace, one package with two versions that have every kind of change, and one dashboard with two package versions.
   Run it as often as you need more data. Its "Cleanup Test Data" folder removes the workspace and everything in it.
 - `use_cases/` holds scenario collections, `environment/` the Postman environments, and `working-directory/` the
-  fixture files.
+  fixture files. `libraries-commons-lang` imports `commons-lang:commons-lang` 1.0.1 and 2.6 and reads the inventory
+  and the comparison. It is not part of the default CI run.
 
 To start, create a test internal user and an API key with system administrator rights. Put the user in the environment
 file and the key in the `at-api-key` variable. The deployment can create both: see `APIHUB_ADMIN_EMAIL`,

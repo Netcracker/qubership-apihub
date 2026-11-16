@@ -20,6 +20,9 @@ func (s VersionStatus) Valid() bool {
 type LibraryVersionImportReq struct {
 	Version string   `json:"version"`
 	Labels  []string `json:"labels,omitempty"`
+	// PreviousVersion is the version the comparison is computed against. Empty means the latest release of
+	// the library.
+	PreviousVersion string `json:"previousVersion,omitempty"`
 }
 
 type LibraryVersion struct {

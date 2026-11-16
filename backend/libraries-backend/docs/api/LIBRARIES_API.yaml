@@ -376,7 +376,8 @@ paths:
       description: |
         Register a new version for an already-tracked library and enqueue a `java-api-report` build to populate it.
         The library's existing `repository` and `coordinates` resolve the artifact to pull; this request supplies
-        only the version string to import. The response is `202 Accepted` because population happens asynchronously
+        the version string to import and, optionally, the `previousVersion` the comparison is computed against.
+        The response is `202 Accepted` because population happens asynchronously
         through the [java build worker loop](#tag/Builders) — poll `GET .../versions/{version}` until
         `status` leaves `draft` with content, or build errors surface as `library_version.metadata`.
       operationId: postLibraryVersion
@@ -394,7 +395,22 @@ paths:
               schema:
                 $ref: "#/components/schemas/LibraryVersion"
         "400":
-          $ref: "#/components/responses/BadRequest"
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                PreviousVersionNotFound:
+                  value:
+                    status: 400
+                    code: "3105"
+                    message: "Previous version 2.17.0 of library my-lib is not found"
+                LanguageNotSupported:
+                  value:
+                    status: 400
+                    code: "3102"
+                    message: "Importing a version is not supported for language 'go'; only 'java' has a build worker"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
@@ -1316,6 +1332,13 @@ components:
           type: array
           items:
             type: string
+        previousVersion:
+          description: |
+            Version of this library the comparison is computed against. It must be an imported version other than
+            `version`; its status does not matter, because the diff build resolves both artifacts from the registry.
+            When omitted, the latest release of the library is used, and a library with no release gets no comparison.
+          type: string
+          example: "2.17.0"
     LibraryVersion:
       type: object
       required:
