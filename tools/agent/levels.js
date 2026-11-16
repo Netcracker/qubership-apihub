@@ -9,7 +9,8 @@
  *   1. read the pull request and the issues it closes (GraphQL `closingIssuesReferences`);
  *   2. for each issue, collect the merged pull requests that close it; the issue gets the LOWEST level among those
  *      that have one (the issue was as autonomous as its least autonomous part), and loses its other level labels;
- *   3. a merged pull request without a level gets one reminder comment; an agent pull request that holds commits
+ *   3. the stop labels (`needs-human:*`, including `approval-required`) of the merged pull request are removed;
+ *   4. a merged pull request without a level gets one reminder comment; an agent pull request that holds commits
  *      without an `Agent-Run:` trailer gets one comment that counts them.
  *
  * In dry-run, the job summary shows what would change. Environment: GITHUB_REPOSITORY, GITHUB_TOKEN, AGENT_NUMBER
@@ -20,6 +21,7 @@
 const fs = require('node:fs')
 const { loadConfig, isActorAllowed } = require('./lib/config')
 const { createClient } = require('./lib/github')
+const { clearStops } = require('./lib/stops')
 const log = require('./lib/log')
 
 /** From the least to the most autonomous. */
@@ -164,6 +166,8 @@ async function main(
     log.info('decision', { action: 'skip', reason: 'the pull request is not merged' })
     return
   }
+  // The work of the agent on a merged pull request is over, so no stop label stays on it.
+  if (!config.dryRun) await log.group('Clear the stop labels', () => clearStops(gh, [number]))
   if (!isActorAllowed(config, pr.user?.login)) {
     log.info('decision', { action: 'skip', reason: `author '${pr.user?.login}' is not in AGENT_ALLOWED_ACTORS` })
     return

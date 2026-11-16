@@ -24,14 +24,14 @@ const cost = (extra = {}) => ({
 const bot = (id, body) => ({ id, user: { login: 'github-actions[bot]' }, body })
 
 const SEARCHES = {
-  bugs: [labeled(200, ['ai:suitable', 'agent:needs-human']), labeled(202, [])],
+  bugs: [labeled(200, ['ai:suitable', 'needs-human:stuck']), labeled(202, [])],
   tasks: [labeled(201, ['ai:unsuitable'])],
   merged: [labeled(70, ['ai:l1-executor']), labeled(71, ['dependencies']), labeled(72, ['ai:l0-assistant'])],
   opened: [
     labeled(70, ['agent:completed', 'ai:l1-executor'], {
       body: agentBody(200), draft: false, pull_request: { merged_at: IN },
     }),
-    labeled(75, ['agent:needs-human'], { body: agentBody(150), draft: true, pull_request: { merged_at: null } }),
+    labeled(75, ['needs-human:stuck'], { body: agentBody(150), draft: true, pull_request: { merged_at: null } }),
     labeled(76, [], { body: 'A change by a person.', draft: false, pull_request: { merged_at: null } }),
   ],
   reviewed: [labeled(76, ['agent:pr-reviewed']), labeled(71, ['agent:pr-reviewed'])],
@@ -108,7 +108,7 @@ test('main posts the report to the issue and writes it to the job summary', asyn
 
   // Issues: 3 created, 1 suitable, 1 unsuitable, 1 not assessed, 1 waiting for a person.
   assert.match(post[2], /\| Bug and Task issues created \| 3 \|/)
-  assert.match(post[2], /\| Waiting for a person now \(`agent:needs-human`\) \| 1 \|/)
+  assert.match(post[2], /\| Waiting for a person now \(`needs-human:\*`\) \| 1 \|/)
   // Pull requests merged: one with a level of each kind, one without.
   assert.match(post[2], /\| `ai:l1-executor` \| 1 \| 33% \|/)
   assert.match(post[2], /\| No level \| 1 \| 33% \|/)
@@ -116,6 +116,8 @@ test('main posts the report to the issue and writes it to the job summary', asyn
   assert.match(post[2], /\| Opened in the period \| 2 \|/)
   assert.match(post[2], /\| Reached `agent:completed` \| 1 \|/)
   assert.match(post[2], /\| Merged \| 1 \|/)
+  assert.match(post[2], /\| Draft or `needs-human:\*` \| 1 \|/)
+  assert.match(post[2], /\| Waiting for approval \(`needs-human:approval-required`\) \| 0 \|/)
   assert.match(post[2], /\| Reviewed by the agent \(`agent:pr-reviewed`\) \| 2 \|/)
   // Attempts: one in the period on #200 (forced) and one on #150; the one before the period is left out.
   assert.match(post[2], /\| `ci-green` \| 1 \|/)

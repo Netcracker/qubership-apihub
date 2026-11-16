@@ -171,7 +171,7 @@ const sweepGather = (client, env = {}, now = NOW) =>
 const BASE = 'repo:o/r is:issue is:open'
 const NO_DECISION = '-label:"ai:suitable" -label:"ai:unsuitable"'
 const WINDOW = 'created:2026-10-18T12:00:00Z..2026-10-25T11:30:00Z'
-const ANALYSIS_COUNT = 'repo:o/r is:issue label:"ai:suitable","ai:unsuitable","agent:needs-human" ' +
+const ANALYSIS_COUNT = 'repo:o/r is:issue label:"ai:suitable","ai:unsuitable","needs-human:context-missing" ' +
   'updated:>=2026-10-24T12:00:00Z sort:updated-desc'
 
 test('the sweep searches the candidates first and counts nothing when there is none', async () => {

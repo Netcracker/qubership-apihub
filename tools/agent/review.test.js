@@ -208,12 +208,11 @@ test('renderSummary with only inline findings does not say "No findings."', () =
   assert.doesNotMatch(text, /outside the diff lines/)
 })
 
-test('renderSummary ends with the run link and the cost formatted by formatUsd', () => {
-  assert.match(render({ totalUsd: 0.5 }), /\[Run\]\(https:\/\/github\.com\/o\/r\/actions\/runs\/1\) · .* \$0\.50 · /)
-  assert.match(render({ totalUsd: 0.0012 }), /so far: \$0\.0012 ·/)
-  assert.match(render({ totalUsd: 0 }), /so far: \$0\.0000 ·/)
-  const last = render().trimEnd().split('\n').pop()
-  assert.match(last, /^<sub>.*`\/agent review`.*`\/agent cost`.*<\/sub>$/)
+test('renderSummary ends with the run link and the commands, without a cost text', () => {
+  const last = render({ totalUsd: 0.5 }).trimEnd().split('\n').pop()
+  assert.match(last, /^<sub>\[Run\]\(https:\/\/github\.com\/o\/r\/actions\/runs\/1\) · .*`\/agent review`/)
+  assert.match(last, /`\/agent cost`.*<\/sub>$/)
+  assert.doesNotMatch(render({ totalUsd: 0.5 }), /AI cost|so far|\$0\.50/)
 })
 
 test('verificationLine counts what the verifier did; a finding without a verdict counts as plausible', () => {

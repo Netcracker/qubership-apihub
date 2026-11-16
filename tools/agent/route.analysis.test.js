@@ -69,7 +69,7 @@ test('a decision a person made is respected, whatever the label objects look lik
   strings.issue.labels = ['ai:suitable']
   assert.equal(route('issues', strings).action, 'skip')
   const other = fixture('issues.opened.bug')
-  other.issue.labels = [{ name: 'agent:needs-human' }, { name: 'ai:l1-executor' }]
+  other.issue.labels = [{ name: 'needs-human:context-missing' }, { name: 'ai:l1-executor' }]
   assert.equal(route('issues', other).action, 'analyze')
 })
 
