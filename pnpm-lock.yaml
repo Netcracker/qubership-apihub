@@ -2929,8 +2929,8 @@ importers:
         specifier: 4.17.17
         version: 4.17.17
       '@types/express-ws':
-        specifier: 3.0.1
-        version: 3.0.1
+        specifier: 3.0.6
+        version: 3.0.6
       '@types/jest':
         specifier: 'catalog:'
         version: 30.0.0
@@ -3384,8 +3384,8 @@ importers:
         specifier: 4.17.17
         version: 4.17.17
       '@types/express-ws':
-        specifier: 3.0.1
-        version: 3.0.1
+        specifier: 3.0.6
+        version: 3.0.6
       '@types/lodash':
         specifier: ^4.17.20
         version: 4.17.20
@@ -10056,8 +10056,8 @@ packages:
   '@types/express-serve-static-core@5.1.3':
     resolution: {integrity: sha512-dPfW8NFiOF4wOHc7+N/QSxlY9cfSsenewGbAz8C8U/MULPd/YZ27LvJUIlzaXie7e6Ove9YunJGgC9tbHD2cKw==}
 
-  '@types/express-ws@3.0.1':
-    resolution: {integrity: sha512-VguRXzcpPBF0IggIGpUoM65cZJDfMQxoc6dKoCz1yLzcwcXW7ft60yhq3ygKhyEhEIQFtLrWjyz4AJ1qjmzCFw==}
+  '@types/express-ws@3.0.6':
+    resolution: {integrity: sha512-6ZDt+tMEQgM4RC1sMX1fIO7kHQkfUDlWfxoPddXUeeDjmc+Yt/fCzqXfp8rFahNr5eIxdomrWphLEWDkB2q3UQ==}
 
   '@types/express@4.17.17':
     resolution: {integrity: sha512-Q4FmmuLGBG58btUnfS1c1r/NQdlp3DMfGDGig8WhfpA2YRUtEkxAjkZb0yvplJGYdF1fsQ81iMDcH24sSCNC/Q==}
@@ -35098,7 +35098,7 @@ snapshots:
       '@types/range-parser': 1.2.7
       '@types/send': 1.2.1
 
-  '@types/express-ws@3.0.1':
+  '@types/express-ws@3.0.6':
     dependencies:
       '@types/express': 5.0.6
       '@types/express-serve-static-core': 5.1.3
