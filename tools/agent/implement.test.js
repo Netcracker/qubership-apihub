@@ -26,6 +26,7 @@ const {
   renderSelfReviewInput,
   prBody,
   renderOutcome,
+  stopReasonOf,
   actorComment,
   attemptRecord,
   defaultExec,
@@ -69,6 +70,7 @@ const implementation = {
   verification: 'Added TestBuildNilChangelog.',
   notes: 'The nil came from an empty package.',
   blockedReason: '',
+  stopReason: '',
 }
 const greenChecks = {
   passed: true,
@@ -315,13 +317,30 @@ test('checkImplementation: a bug-fix is a fix, and a blocked answer says why', (
     assert.match(e.message, /a bug-fix must use 'fix', got 'feat'/)
     return true
   })
-  const noReason = { ...implementation, status: 'blocked', blockedReason: '  ' }
+  const noReason = { ...implementation, status: 'blocked', blockedReason: '  ', stopReason: 'context-missing' }
   assert.throws(() => checkImplementation(noReason, 'task'), /a blocked answer needs a reason/)
   assert.equal(checkImplementation({ ...noReason, blockedReason: 'Unclear.' }, 'task').status, 'blocked')
   assert.throws(
     () => checkImplementation({ ...noReason, commitType: 'feat' }, 'bug-fix'),
     (e) => e.problems.length === 2,
   )
+})
+
+test('checkImplementation: a blocked answer names a stop reason, and no other answer does', () => {
+  const blocked = { ...implementation, status: 'blocked', blockedReason: 'Unclear.', stopReason: 'context-missing' }
+  assert.equal(checkImplementation(blocked, 'task').stopReason, 'context-missing')
+  assert.throws(() => checkImplementation({ ...blocked, stopReason: '' }, 'task'), (e) => {
+    assert.ok(e instanceof ContractError)
+    assert.deepEqual(e.problems, ['stopReason: a blocked answer needs a stop reason'])
+    return true
+  })
+  for (const status of ['done', 'unrelated']) {
+    const other = { ...implementation, status, blockedReason: 'Flaky.', stopReason: 'stuck' }
+    assert.throws(() => checkImplementation(other, 'task', 'ci-fix'), (e) => {
+      assert.deepEqual(e.problems, ["stopReason: only a blocked answer has a stop reason, got 'stuck'"])
+      return true
+    })
+  }
 })
 
 test('checkImplementation: unrelated needs a reason and is allowed only on a CI fix', () => {
@@ -340,7 +359,7 @@ test('checkImplementation: unrelated needs a reason and is allowed only on a CI 
     /an unrelated answer needs a reason/,
   )
   // A blocked answer stays possible on every kind.
-  const blocked = { ...implementation, status: 'blocked', blockedReason: 'Unclear.' }
+  const blocked = { ...implementation, status: 'blocked', blockedReason: 'Unclear.', stopReason: 'stuck' }
   assert.equal(checkImplementation(blocked, 'task', 'ci-fix').status, 'blocked')
 })
 
@@ -617,7 +636,6 @@ test('renderOutcome: green, draft, blocked, and error texts', () => {
     pr: 77,
     branch: 'bugfix/200-x',
     runUrl: 'https://x/runs/1',
-    totalUsd: 1.234,
     implementation,
     review: approve,
   }
@@ -625,11 +643,8 @@ test('renderOutcome: green, draft, blocked, and error texts', () => {
   assert.match(green, /^### AI implementation: pull request #77 is open\n\nBranch `bugfix\/200-x`\. 1 round\(s\)\./)
   assert.match(green, /- Local checks \(reported by the work job\): green\n/)
   assert.match(green, /- Self-review \(reported by the work job\): approved\n/)
-  assert.match(
-    green,
-    /<sub>\[Run\]\(https:\/\/x\/runs\/1\) · AI cost of this issue so far: \$1\.23 · closes #200 when merged<\/sub>$/,
-  )
-  assert.doesNotMatch(green, /What I need from you/)
+  assert.match(green, /<sub>\[Run\]\(https:\/\/x\/runs\/1\) · closes #200 when merged<\/sub>$/)
+  assert.doesNotMatch(green, /AI cost|\*\*Reason:\*\*|\$/)
 
   const draft = renderOutcome({
     ...common,
@@ -640,11 +655,13 @@ test('renderOutcome: green, draft, blocked, and error texts', () => {
   })
   assert.match(draft, /^### AI implementation needs a person: draft pull request #77\n/)
   assert.match(draft, /I stopped after 2 round\(s\) without a green result\./)
-  assert.match(draft, /\*\*What I tried\*\*\n\nTried a guard\./)
-  assert.match(draft, /- Failing check: `pnpm exec nx affected` \(exit code 1\)\./)
-  assert.match(draft, /- major at `a\/b\.go:7`: The error is swallowed\./)
+  assert.match(draft, /\*\*Reason:\*\* `needs-human:budget-exhausted`\n\n\*\*Blocker\.\*\* Failing check: /)
+  assert.match(draft, /\*\*Work completed\.\*\* Tried a guard\./)
+  assert.match(draft, /Failing check: `pnpm exec nx affected` \(exit code 1\)\./)
+  assert.match(draft, /major at `a\/b\.go:7`: The error is swallowed\./)
   assert.doesNotMatch(draft, /Rename x/)
-  assert.match(draft, /\*\*What I need from you:\*\* review the draft pull request/)
+  assert.match(draft, /\*\*Required action\.\*\* Review the draft pull request and push a fix/)
+  assert.match(draft, /\*\*Resume condition\.\*\* Comment `\/agent implement` with guidance/)
 
   const blocked = renderOutcome({
     ...common,
@@ -652,23 +669,39 @@ test('renderOutcome: green, draft, blocked, and error texts', () => {
     pr: null,
     attempt: entry,
     reason: 'It is unclear.\nWhich API?',
+    stopReason: 'context-missing',
     implementation: undefined,
   })
   assert.match(
     blocked,
-    /^### AI implementation is blocked\n\nI stopped without a pull request: It is unclear\. Which API\?\n/,
+    new RegExp('^### AI implementation is blocked\\n\\nI stopped without a pull request\\.\\n\\n' +
+      '\\*\\*Reason:\\*\\* `needs-human:context-missing`\\n\\n\\*\\*Blocker\\.\\*\\* It is unclear\\. Which API\\?\\n'),
   )
-  assert.match(blocked, /\*\*What I tried\*\*\n\nTried a guard\./)
-  assert.match(blocked, /\*\*What I need from you:\*\*/)
+  assert.match(blocked, /\*\*Work completed\.\*\* Tried a guard\./)
+  assert.match(blocked, /\*\*Required action\.\*\* Decide or add what is missing\./)
+  assert.match(blocked, /\*\*Resume condition\.\*\* Comment `\/agent implement` with guidance/)
+  // Without a reason from the model a blocked result is `stuck`.
+  assert.match(renderOutcome({ ...common, result: 'blocked', reason: 'r', attempt: entry }), /`needs-human:stuck`/)
 
   const failed = renderOutcome({ ...common, result: 'error', message: 'git push failed\nsorry' })
   assert.match(failed, /^### AI implementation failed\n\nThe implementation did not finish: git push failed sorry\n/)
+  assert.match(failed, /\*\*Reason:\*\* `needs-human:environment-blocked`\n\n\*\*Blocker\.\*\* git push failed sorry\n/)
+})
+
+test('stopReasonOf: blocked takes the reason of the model, draft is a spent budget, error is the environment', () => {
+  assert.equal(stopReasonOf('blocked', 'risk-found'), 'risk-found')
+  assert.equal(stopReasonOf('blocked', 'approval-required'), 'stuck')
+  assert.equal(stopReasonOf('blocked', null), 'stuck')
+  assert.equal(stopReasonOf('draft', 'risk-found'), 'budget-exhausted')
+  assert.equal(stopReasonOf('error'), 'environment-blocked')
+  assert.equal(stopReasonOf('pr-opened'), null)
+  assert.equal(stopReasonOf('unrelated'), null)
 })
 
 test('renderOutcome: without a pull request number (dry run) it does not print undefined or null', () => {
   const text = renderOutcome({
     result: 'draft', number: 200, pr: null, branch: 'b', attempt: { rounds: 1, notes: 'n' }, implementation,
-    checks: redChecks, review: approve, runUrl: 'u', totalUsd: 0,
+    checks: redChecks, review: approve, runUrl: 'u',
   })
   assert.doesNotMatch(text, /undefined|null|#null/)
 })
@@ -956,7 +989,7 @@ test('renderSelfReviewInput: the summary of the implementer is data, and a CI fi
 
 test('renderOutcome and actorComment: a CI fix talks about the fix, not about a new pull request', () => {
   const common = {
-    number: 200, pr: 70, branch: 'b', runUrl: 'u', totalUsd: 1, implementation, review: approve, kind: 'ci-fix',
+    number: 200, pr: 70, branch: 'b', runUrl: 'u', implementation, review: approve, kind: 'ci-fix',
     attempt: { rounds: 1, notes: 'n' },
   }
   const green = renderOutcome({ ...common, result: 'pr-opened', checks: greenChecks })
@@ -966,7 +999,7 @@ test('renderOutcome and actorComment: a CI fix talks about the fix, not about a 
   )
   const draft = renderOutcome({ ...common, result: 'draft', checks: redChecks })
   assert.match(draft, /^### AI implementation needs a person: CI fix for pull request #70\n/)
-  assert.match(draft, /\*\*What I need from you:\*\* review the pull request, push a fix/)
+  assert.match(draft, /\*\*Required action\.\*\* Review the pull request and push a fix/)
   assert.doesNotMatch(draft, /draft pull request/)
   assert.match(
     actorComment({ result: 'draft', actor: 'dave', pr: 70, kind: 'ci-fix' }),
@@ -980,7 +1013,6 @@ test('renderOutcome and actorComment: unrelated says what failed, why, and that 
     number: 200,
     pr: 70,
     runUrl: 'u',
-    totalUsd: 1,
     kind: 'ci-fix',
     reason: 'Two requests timed out.\nThe change touches no auth.',
     rerun: { names: '`E2E tests (kind)`, `ci-ok`', counted: 2, max: 3 },
@@ -1006,14 +1038,16 @@ test('renderOutcome and actorComment: a blocked CI fix lists the failed checks, 
     signature: 'abc',
   })
   const common = {
-    number: 200, pr: 70, runUrl: 'u', totalUsd: 1, kind: 'ci-fix', attempt: { rounds: 1, notes: 'Tried it.' },
+    number: 200, pr: 70, runUrl: 'u', kind: 'ci-fix', attempt: { rounds: 1, notes: 'Tried it.' },
     reason: 'I cannot reach the service.', ciReport: report,
   }
-  const text = renderOutcome({ ...common, result: 'blocked' })
+  const text = renderOutcome({ ...common, result: 'blocked', stopReason: 'access-missing' })
   assert.match(text, /^### AI implementation needs a person: CI is red\n\nI stopped without changing pull request #70\.\n/)
   assert.match(text, /\n- Failed checks: `a`, `b`, `c`, `d`, `e`, and 2 more\.\n- First error, in `c`: `Error: boom`\.\n/)
-  assert.match(text, /\n- Why I stopped: I cannot reach the service\.\n\n\*\*What I tried\*\*\n\nTried it\.\n\nWhat you can do:\n\n/)
-  assert.match(text, /\n- To try another fix, comment `\/agent retry` with guidance\.\n\n<sub>/)
+  assert.match(text, /\n- Why I stopped: I cannot reach the service\.\n\n\*\*Reason:\*\* `needs-human:access-missing`\n\n/)
+  assert.match(text, /\*\*Blocker\.\*\* I cannot reach the service\.\n\n\*\*Work completed\.\*\* Tried it\.\n\n/)
+  assert.match(text, /\*\*Required action\.\*\* If the failure is not caused by the change .* comment `\/agent retry` with guidance\./)
+  assert.match(text, /\*\*Resume condition\.\*\* Comment `\/agent rerun` to rerun the checks, or `\/agent retry`/)
   const note = actorComment({ result: 'blocked', actor: 'dave', ...common })
   assert.match(note, /^@dave, I could not fix CI on #70\.\n\n- Failed checks: /)
   assert.match(note, /comment `\/agent rerun`: it reruns the failed checks, with no new attempt and no model cost\.\n/)
@@ -1289,21 +1323,21 @@ test('outcomeProblems: an update without conflicts has code without implementati
 test('renderOutcome: an update that merged without conflicts says that no model ran', () => {
   const text = renderOutcome({
     result: 'pr-opened', kind: 'update', number: 200, pr: 70, branch: 'b', attempt: { rounds: 0, notes: null },
-    implementation: null, checks: null, review: null, runUrl: 'https://x/runs/1', totalUsd: 1.234, conflicts: [],
+    implementation: null, checks: null, review: null, runUrl: 'https://x/runs/1', conflicts: [],
   })
   assert.equal(text, [
     '### AI update: develop merged into pull request #70',
     '',
     'Branch `b`. The merge had no conflicts, so no model ran. CI runs again on the pull request.',
     '',
-    '<sub>[Run](https://x/runs/1) · AI cost of this issue so far: $1.23 · closes #200 when merged</sub>',
+    '<sub>[Run](https://x/runs/1) · closes #200 when merged</sub>',
   ].join('\n'))
 })
 
 test('renderOutcome: an update that resolved conflicts counts the files and shows the checks and the review', () => {
   const text = renderOutcome({
     result: 'pr-opened', kind: 'update', number: 200, pr: 70, branch: 'b', attempt: { rounds: 2, notes: 'n' },
-    implementation, checks: greenChecks, review: approve, runUrl: 'u', totalUsd: 0,
+    implementation, checks: greenChecks, review: approve, runUrl: 'u',
     conflicts: ['a.go', 'b.go', 'c.go'],
   })
   hasText(
@@ -1320,8 +1354,7 @@ test('renderOutcome: an update that resolved conflicts counts the files and show
 test('renderOutcome: an update that is not green is a hand-off with what is open', () => {
   const text = renderOutcome({
     result: 'draft', kind: 'update', number: 200, pr: 70, branch: 'b', attempt: { rounds: 3, notes: 'Kept both.' },
-    implementation, checks: redChecks, review: { verdict: 'changes', findings: [major, minor] }, runUrl: 'u',
-    totalUsd: 0, conflicts: ['a.go'],
+    implementation, checks: redChecks, review: { verdict: 'changes', findings: [major, minor] }, runUrl: 'u', conflicts: ['a.go'],
   })
   hasText(
     text,
@@ -1331,36 +1364,37 @@ test('renderOutcome: an update that is not green is a hand-off with what is open
   )
   hasText(
     text,
-    '**What I tried**\n\nKept both.\n\n**What is open**\n\n',
-    '- Failing check: `pnpm exec nx affected` (exit code 1).\n',
+    '**Reason:** `needs-human:budget-exhausted`\n\n**Blocker.** Failing check: `pnpm exec nx affected` (exit code 1). ',
+    'major at `a/b.go:7`: The error is swallowed.\n\n**Work completed.** Kept both.\n\n',
   )
-  hasText(text, '- major at `a/b.go:7`: The error is swallowed.\n')
   assert.doesNotMatch(text, /Rename x/)
   hasText(
     text,
-    '\n\n**What I need from you:** review the pull request, push a fix to the branch, or comment `/agent update` ',
-    'with guidance for another attempt.\n\n<sub>',
+    '**Required action.** Review the pull request and push a fix to the branch.\n\n',
+    '**Resume condition.** Comment `/agent update` with guidance, and I start another attempt.\n\n<sub>',
   )
 })
 
 test('renderOutcome: a blocked update did not change the pull request; an error suggests /agent update', () => {
   const blocked = renderOutcome({
-    result: 'blocked', kind: 'update', number: 200, pr: 70, branch: 'b', totalUsd: 0, runUrl: 'u',
+    result: 'blocked', kind: 'update', number: 200, pr: 70, branch: 'b', runUrl: 'u',
     attempt: { rounds: 1, notes: 'Tried both sides.' },
     reason: 'Conflict markers are left in a.go.\n@bob knows.',
+    stopReason: 'conflict-unresolved',
   })
   hasText(
     blocked,
-    '### AI update is blocked\n\n',
-    'I did not change pull request #70: Conflict markers are left in a.go. @​bob knows.\n\n',
-    '**What I tried**\n\nTried both sides.\n\n',
-    '**What I need from you:** resolve the conflicts by hand, or comment `/agent update` with guidance.\n\n<sub>',
+    '### AI update is blocked\n\nI did not change pull request #70.\n\n',
+    '**Reason:** `needs-human:conflict-unresolved`\n\n',
+    '**Blocker.** Conflict markers are left in a.go. @​bob knows.\n\n',
+    '**Work completed.** Tried both sides.\n\n**Required action.** Resolve the conflicts by hand.\n\n',
+    '**Resume condition.** Comment `/agent update` with guidance, and I start a new attempt.\n\n<sub>',
   )
   assert.match(blocked, /· comment `\/agent update` on the pull request to try again<\/sub>$/)
-  const bare = { result: 'blocked', kind: 'update', number: 200, pr: 70, reason: 'r', runUrl: 'u', totalUsd: 0 }
-  assert.doesNotMatch(renderOutcome({ ...bare, attempt: {} }), /What I tried/)
+  const bare = { result: 'blocked', kind: 'update', number: 200, pr: 70, reason: 'r', runUrl: 'u' }
+  assert.doesNotMatch(renderOutcome({ ...bare, attempt: {} }), /Work completed/)
   const failed = renderOutcome({
-    result: 'error', kind: 'update', number: 200, pr: 70, message: 'git push failed', runUrl: 'u', totalUsd: 0,
+    result: 'error', kind: 'update', number: 200, pr: 70, message: 'git push failed', runUrl: 'u',
   })
   assert.match(failed, /^### AI implementation failed\n\nThe implementation did not finish: git push failed\n/)
   assert.match(failed, /· comment `\/agent update` on the pull request to try again<\/sub>$/)

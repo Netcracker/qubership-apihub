@@ -10,7 +10,7 @@
     },
     "labels": [
       {
-        "name": "agent:needs-human"
+        "name": "needs-human:context-missing"
       }
     ],
     "user": {

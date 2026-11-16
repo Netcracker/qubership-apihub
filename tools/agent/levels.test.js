@@ -177,6 +177,7 @@ function fakeGh({ pr, closing = [], pulls = {}, comments = [], commits = [] }) {
   return {
     calls,
     getPull: async () => pr,
+    getIssue: async () => ({ number: pr.number, labels: pr.labels }),
     graphql: async (query, variables) => {
       if (query.includes('closingIssuesReferences')) {
         const nodes = closing.map((i) => ({ number: i.number, labels: { nodes: i.labels.map((name) => ({ name })) } }))
@@ -301,4 +302,21 @@ test('main skips a disabled agent, an unmerged pull request, and an author outsi
     await main(e, gh)
     assert.deepEqual(gh.calls, [])
   }
+})
+
+test('main clears every stop label of the merged pull request, including approval-required', async () => {
+  const labels = [{ name: L1 }, { name: 'needs-human:approval-required' }, { name: 'agent:completed' }]
+  const gh = fakeGh({ pr: mergedPr({ labels }), closing: [] })
+  await main(env(), gh)
+  assert.deepEqual(gh.calls, [['removeLabel', 130, 'needs-human:approval-required']])
+})
+
+test('main leaves the stop labels of a pull request that is not merged, and in dry-run', async () => {
+  const labels = [{ name: L1 }, { name: 'needs-human:stuck' }]
+  const open = fakeGh({ pr: mergedPr({ merged: false, labels }), closing: [] })
+  await main(env(), open)
+  assert.deepEqual(open.calls, [])
+  const dry = fakeGh({ pr: mergedPr({ labels }), closing: [] })
+  await main(env({ AGENT_DRY_RUN: 'true' }), dry)
+  assert.deepEqual(dry.calls, [])
 })

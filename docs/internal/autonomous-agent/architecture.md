@@ -64,7 +64,7 @@ flowchart LR
 |---|---|---|
 | Workflows | `.github/workflows/ai-autonomous-*.yml` | Triggers, permissions, tokens, checkouts, one job per action |
 | Scripts | `tools/agent/*.js` | One script per job: `route`, `review`, `analyze`, `implement`, `ci-gate`, `ci-check`, `chat`, `levels`, `report` |
-| Library | `tools/agent/lib/` | GitHub client, state comment, opencode runner, contracts, cost records, logging |
+| Library | `tools/agent/lib/` | GitHub client, state comment, result comments, stop labels, signatures, opencode runner, contracts, cost records, logging |
 | Roles | `tools/agent/opencode/agents/*.md` | What each model call may do: steps, permissions, output contract |
 | Playbooks | `agent-packages/apihub-autonomous-agent/` | Skills that tell a role how to do its work in this repository |
 
@@ -177,7 +177,8 @@ Runners keep nothing. The agent keeps its memory where people already look.
 | Store | Holds | Read by |
 |---|---|---|
 | The state comment | one comment by `github-actions[bot]` per issue and per pull request: a status for people and a hidden JSON block | every script |
-| Labels | `ai:*` (suitability, execution level) and `agent:*` (outcome) | `route`, the scripts, people, the weekly report |
+| Result comments | one comment per command family (analysis, implementation, review) on the issue or pull request, each ending with a signature line | people; `results` in the state lists them |
+| Labels | `ai:*` (suitability, execution level), `agent:*` (outcome), and `needs-human:*` (why the agent stopped) | `route`, the scripts, people, the weekly report |
 | The pull request marker | `<!-- ai-autonomous-agent issue=<N> -->` in the body of the agent's pull request | `route`, `chat`, `levels`, `report` |
 | The branch | the commits of every attempt | `implement`, people |
 | Artifacts | prompt inputs, opencode events, answers, `outcome.json`, the Git bundle | `publish` (the bundle and the outcome only), people for debugging |
@@ -189,7 +190,8 @@ The state comment counts only when `github-actions[bot]` wrote it. The schema is
 | Label | Set on | By | When |
 |---|---|---|---|
 | `ai:suitable`, `ai:unsuitable` | issue | `analyze`, `implement` (analysis) | after an analysis, unless a person set one of them |
-| `agent:needs-human` | issue, pull request | `analyze`, `publish`, `ci-gate`; removed by `rerun`, `publish` (after an `unrelated` rerun), and `stop` | the agent waits for a person |
+| `needs-human:<reason>` (14 labels) | issue, pull request | `analyze` (`context-missing`), `publish`, `ci-gate`; cleared by a new attempt, `rerun`, `ci-check` (hand-back), `publish` (after `pr-opened` or an `unrelated` rerun), `ci-gate` (green), `stop`, and `levels` (merged pull request) | the agent waits for a person, and the reason says why |
+| `needs-human:approval-required` | pull request | `ci-gate` | CI is green and a person reviews the pull request; cleared when it is merged or when the agent starts a new attempt |
 | `agent:completed` | issue, pull request | `ci-gate` | CI is green on the agent's pull request |
 | `agent:pr-reviewed` | pull request | `review` | after a review is published |
 | `ai:l1-executor` | pull request | `ci-gate` | CI is green on the agent's pull request |
@@ -267,7 +269,7 @@ from the state comments of the pull requests that carry `agent:pr-reviewed`; a f
 counts only on a pull request that an earlier review labeled); over the cap, `route` skips with a reason that points to
 `/agent review`. A command is not counted and not capped. Before any model call, `review.js` also measures the diff:
 more than `AGENT_REVIEW_MAX_LINES` changed lines or `AGENT_REVIEW_MAX_FILES` files, lock files not counted, ends the
-job green with a state comment that says so and an entry in `reviews` marked `skipped: 'size'`.
+job green with a review result comment that says so and an entry in `reviews` marked `skipped: 'size'`.
 `/agent review force` reviews such a diff anyway.
 
 ```mermaid
@@ -289,15 +291,16 @@ sequenceDiagram
   V->>M: verifier with the findings
   M-->>V: verdict per finding: confirmed, plausible, rejected
   V->>GH: one review, event COMMENT, inline comments
-  V->>GH: summary comment with the impact and the state, label agent:pr-reviewed
+  V->>GH: review result comment with the impact and the signature, the state, label agent:pr-reviewed
 ```
 
 **Decisions.** A rejected finding is dropped. A `plausible` one is kept and marked "plausible, not confirmed". A
 finding without a line goes to the summary comment. When a model call fails, the summary comment says so and the
-person comments `/agent review` again.
+person comments `/agent review` again. The inline review carries no signature; the summary comment does.
 
 **State.** The pull request state gets a record in `reviews` (with `trigger`: `auto` for a pull request event,
-`command` for `/agent review`) and the cost records. A review that failed after its model calls is a record too
+`command` for `/agent review`) and the cost records, and the review result comment is listed in `results`. A review that
+failed after its model calls is a record too
 (`failed: true`): it cost money, so the daily cap counts it, and `ready_for_review` does not start it again; the
 failure comment tells the person to comment `/agent review`. **Labels:** `agent:pr-reviewed`, but not for a skipped or
 failed review. **A person** reads the review; the agent never approves or requests changes.
@@ -322,7 +325,8 @@ not count.
 
 **Daily cap.** The analyses started by `opened`, `typed`, or the sweep count toward `AGENT_DAILY_ANALYSES` (default 10
 in any 24 hours, counted from the state comments of the issues that carry `ai:suitable`, `ai:unsuitable`, or
-`agent:needs-human`, newest first, at most 100 read). The sweep takes only what the cap leaves; an event over the cap is
+`needs-human:context-missing`, newest first, at most 100 read). The sweep takes only what the cap leaves; an event over
+the cap is
 skipped and left to a later sweep. Answers of the author and commands are not counted and not capped.
 
 ```mermaid
@@ -339,8 +343,8 @@ sequenceDiagram
   A->>M: analyst with the issue and its comments
   M-->>A: suitable with a plan, unsuitable with a reason, or needs-info with questions
   A->>GH: read the labels again
-  A->>GH: set ai:suitable or ai:unsuitable, or agent:needs-human
-  A->>GH: state comment: verdict, reason, plan or questions, cost
+  A->>GH: set ai:suitable or ai:unsuitable, or needs-human:context-missing
+  A->>GH: analysis result comment: verdict, reason, plan or questions, signature
   opt needs-info
     A->>GH: a comment that mentions the author and lists the questions
   end
@@ -349,6 +353,11 @@ sequenceDiagram
 **Decisions.** The labels are read again after the model call, so a label that a person set during the run wins. The
 agent changes only an `ai:*` label it set itself (`analysis.labelSetBy == 'agent'`). A failed call records the cost
 and a `failed` entry in `analyses` and keeps the earlier verdict.
+
+**Stop.** A `needs-info` verdict is a stop with the reason `context-missing`: the label `needs-human:context-missing`,
+an entry in `stops`, and a stop block in the analysis result (the blocker, the numbered questions as the required
+action, and what resumes the work). Another verdict removes the label and closes the entry. A new analysis edits the
+analysis result comment only when it is the newest result comment of the agent; otherwise it writes a new one.
 
 **State.** `phase` becomes `analyzed` or `needs-info`; `analysis` holds the verdict, the reason, the plan or the
 questions, and `issueUpdatedAt`; `analyses` grows by one. **A person** decides: the analysis never starts an
@@ -408,16 +417,20 @@ sequenceDiagram
 | `ai:unsuitable` without `force` | refused; `force` starts it and records `forced: true` |
 | The analysis has open questions | refused, unless a person steers (`kind` `human`, `review`, or `update`) |
 | The issue changed since the analysis | the work step runs the analyst first; `needs-info` or `unsuitable` stops the run |
-| The implementer reports that it cannot continue, or no change | `blocked`, nothing pushed |
+| The implementer reports that it cannot continue, or no change | `blocked`, nothing pushed; the stop reason is the implementer's `stopReason`, or `stuck` for no change |
 | The diff of the whole pull request is above the limit (`Bug` 20 files or 600 lines, `Task` 30 or 1,000), measured after the last round and again in `publish` | `blocked`, nothing pushed |
 | The diff touches a protected path (`.github/workflows/`, `.claude/`, `.cursor/`, `tools/agent/`, `agent-packages/`, any `AGENTS.md` or `CLAUDE.md`) | `blocked`, nothing pushed |
 | Local checks and self-review pass | pull request as a draft, `phase` `waiting-ci` |
-| Anything else after a push | draft pull request, `agent:needs-human`, `phase` `needs-human` |
-| The work job left no outcome | `publish` records the failure and the costs it finds, `agent:needs-human` |
+| Anything else after a push | draft pull request, `needs-human:budget-exhausted`, `phase` `needs-human` |
+| The work job left no outcome | `publish` records the failure and the costs it finds, `needs-human:environment-blocked` |
 
 **State.** `implementing` while it runs; then `branch`, `pr`, `playbook`, `forced`, and one record in `attempts`.
-**Labels:** `ai:suitable` or `ai:unsuitable` when the work step re-analyzed; `agent:needs-human` when the result is not
-green. **A person** reads the draft; only the CI gate marks it ready, and only a person merges it.
+**Labels:** `ai:suitable` or `ai:unsuitable` when the work step re-analyzed; one `needs-human:<reason>` label when the
+result is not green (`blocked`: the reason of the model or the script, `draft`: `budget-exhausted`, `error`:
+`environment-blocked`), and none after `pr-opened`. Each hand-off comment ends with a stop block (reason, blocker, work
+completed, required action, resume condition), and the stop goes into `stops`. A green attempt opens the pull request
+ready for review, any other result opens it as a draft. **A person** reads it; only the CI gate takes a draft out of
+draft, and only a person merges it.
 
 ## Flow C: the CI loop
 
@@ -437,12 +450,12 @@ flowchart TB
   DONE -- no --> GREEN{"all green?"}
   GREEN -- yes --> FRESH1{"same head and<br/>phase waiting-ci?"}
   FRESH1 -- no --> SUP(["exit: superseded or state-changed"])
-  FRESH1 -- yes --> READY["PR ready for review with AGENT_PAT<br/>agent:completed, ai:l1-executor<br/>phase completed, mention the person"]
+  FRESH1 -- yes --> READY["PR ready for review with AGENT_PAT<br/>agent:completed, ai:l1-executor,<br/>needs-human:approval-required on the PR<br/>phase completed, mention the person"]
   GREEN -- no --> REPORT["CI report from the failed job logs<br/>failure signature"]
   REPORT --> E2E{"only E2E jobs failed, or only<br/>cancelled checks (ci-ok aside),<br/>and no rerun of this commit yet?"}
   E2E -- yes --> RERUN(["rerun the failed jobs once per commit"])
   E2E -- no --> RULE{"same signature as before,<br/>or AGENT_MAX_ATTEMPTS spent?"}
-  RULE -- yes --> HAND["agent:needs-human on issue and PR<br/>phase needs-human, hand-off comment"]
+  RULE -- yes --> HAND["needs-human:stuck or budget-exhausted on issue and PR<br/>phase needs-human, hand-off comment"]
   RULE -- no --> NEXT["phase implementing, kind ci-fix<br/>output next = implement"]
   NEXT --> IMPL(["implement and publish: a CI fix commit"])
   IMPL -.-> START
@@ -464,10 +477,12 @@ reruns it by itself. `failedChecks` lists it with the conclusion `cancelled`. Bo
 (`e2eRerun: { sha, count }`; the name stays). A mix of cancelled and really failed checks is a normal red result.
 When the rerun is used up or no run can be rerun and only cancelled checks remain, nothing failed, so the gate does not
 start a CI fix: it takes the stop path (`needs-human`, labels, hand-off comment) with the reason that the checks were
-cancelled again. The failure signature leaves cancelled checks out when any other check failed.
+cancelled again (`needs-human:environment-blocked`, as for a rejected rerun). The failure signature leaves cancelled
+checks out when any other check failed.
 
 **Hand-offs.** The stop rule and a blocked CI fix write the failed checks (at most five), the first error line, the
-reason, and two ways on: `/agent rerun` for a failure the change does not cause, and `/agent retry` with guidance.
+stop block with the reason, and two ways on: `/agent rerun` for a failure the change does not cause, and `/agent retry`
+with guidance.
 
 **State.** The last attempt gets `result` `ci-green` or `ci-red` and the `signature`; `lastCiReport`, `ciGate`, and
 `e2eRerun` are written. **A person** reviews the green pull request, or answers the hand-off.
@@ -500,11 +515,11 @@ flowchart LR
 |---|---|---|---|
 | `/agent`, `/agent help` | `chat` | none | a reply with the commands that work there |
 | `/agent cost` | `chat` | none | a reply with the cost table |
-| `/agent <question>` | `chat` | `assistant` | a reply; the cost record in the state |
-| `/agent stop` | `stop` | none | `phase` `stopped`, the cancelled run, no `agent:needs-human`, a reply |
+| `/agent <question>` | `chat` | `assistant` | a reply signed with the cost of the answer; the cost record in the state |
+| `/agent stop` | `stop` | none | `phase` `stopped`, the cancelled run, no `needs-human:*` label, a reply |
 | `/agent retry [notes]` | `implement` | the Flow C roles | a new attempt with a fresh CI budget |
 | `/agent update [notes]` on the agent's PR | `implement`, kind `update` | none for a clean merge; the Flow C roles on conflicts | the merge of `develop` pushed on top of the branch, a fresh CI budget, `phase` `waiting-ci`; a reply and no state change when the branch is up to date |
-| `/agent rerun [notes]` | `rerun` | none | `phase` `waiting-ci`, `ciGate` deleted, an entry in `reruns`, no `agent:needs-human`; the failed checks run again; no attempt |
+| `/agent rerun [notes]` | `rerun` | none | `phase` `waiting-ci`, `ciGate` deleted, an entry in `reruns`, no `needs-human:*` label; the failed checks run again; no attempt |
 | `/agent ci_check [notes]` | `ci-check` | `ci-triager`, only when CI is red | a reply with the verdict, the cause, and the places to fix; the cost record and a `ciChecks` entry on the pull request; a rerun of the failed jobs for a flaky or infrastructure failure, and, on the agent's pull request in `needs-human` or `waiting-ci`, the same state change as `/agent rerun` |
 | `/agent <text>` on the agent's pull request | `implement` | the Flow C roles | one attempt on its branch |
 | a review with change requests | `implement` | the Flow C roles | one attempt; a reply in each thread the implementer saw |
@@ -537,7 +552,7 @@ flowchart TB
   V -- "change, unknown, or flaky/infra<br/>with low confidence" --> NO["no rerun"]
   V -- "flaky or infra" --> RERUN["rerun the failed jobs"]
   RERUN --> ACC{"accepted, and the agent's PR<br/>in needs-human or waiting-ci?"}
-  ACC -- yes --> GATE["issue: phase waiting-ci, ciGate deleted,<br/>no agent:needs-human; the CI gate decides"]
+  ACC -- yes --> GATE["issue: phase waiting-ci, ciGate deleted,<br/>no needs-human:* label; the CI gate decides"]
   ACC -- no --> REPLY
   GATE --> REPLY
   NO --> REPLY["cost record and ciChecks entry on the PR,<br/>then the reply"]
@@ -600,9 +615,9 @@ flowchart LR
 | The analysis asks questions | answers in a comment or edits the issue | analyzes again |
 | An issue is `ai:suitable` | decides with `/agent implement` | one attempt |
 | An issue is `ai:unsuitable` | sets another label, or comments `/agent implement force` | one forced attempt |
-| A draft or a block (`agent:needs-human`) | answers in a comment, `/agent retry`, or takes over | one attempt with the comment as guidance |
+| A draft or a block (a `needs-human:*` label other than `approval-required`) | answers in a comment, `/agent retry`, or takes over | one attempt with the comment as guidance |
 | The stop rule hands over | the same, or `/agent rerun` when the failure is not the change | one attempt with a fresh CI budget, or the failed checks run again |
-| CI is green (`agent:completed`) | reviews, asks changes in a review or with `/agent <text>`, merges | one attempt per review or comment |
+| CI is green (`agent:completed`, `needs-human:approval-required`) | reviews, asks changes in a review or with `/agent <text>`, merges | one attempt per review or comment |
 | CI is red and the cause is unclear | `/agent ci_check` | the triager names the root cause; a flaky or infrastructure failure is rerun |
 | Anything | `/agent stop` | stops at once |
 | A pull request is merged | checks or sets the `ai:l*` level | copies it to the issues |

@@ -11,8 +11,9 @@
  *   1. facts by script: changed files, modules, risk flags, the merge base;
  *   2. `pr-reviewer` (the review model) writes the review as JSON;
  *   3. `verifier` (the verify model, a different one) confirms or rejects each finding;
- *   4. publish: one review with inline comments on the lines a review comment can target, the state comment of the
- *      pull request rewritten with the summary, and the `agent:pr-reviewed` label. In dry-run, the job summary instead.
+ *   4. publish: one review with inline comments on the lines a review comment can target, the review result comment
+ *      of the pull request (lib/results.js) written with the summary and the signature of the cost, and the
+ *      `agent:pr-reviewed` label. In dry-run, the job summary instead.
  *
  * The cost of every opencode run is recorded in the state, also when a later step fails.
  *
@@ -31,7 +32,7 @@ const { execFileSync } = require('node:child_process')
 const { loadConfig } = require('./lib/config')
 const { createClient } = require('./lib/github')
 const state = require('./lib/state')
-const usage = require('./lib/usage')
+const results = require('./lib/results')
 const { commentableLines } = require('./lib/diff')
 const { checkSize, renderSkip } = require('./lib/review-size')
 const { callAgent } = require('./lib/agent-call')
@@ -85,8 +86,11 @@ function verificationLine(findings, verdicts) {
     'The text above was written before that check.'
 }
 
-/** The human part of the state comment: impact, findings outside the diff lines, and the cost so far. */
-function renderSummary({ review, other, inlineCount, headSha, runUrl, totalUsd, verification = '' }) {
+/**
+ * The human part of the review result: impact and findings outside the diff lines. The signature with the cost is
+ * added when the comment is published. `totalUsd` is ignored.
+ */
+function renderSummary({ review, other, inlineCount, headSha, runUrl, verification = '' }) {
   const i = review.impact
   const changed = (x) => `changed: ${yesNo(x.changed)}${'breaking' in x ? `, breaking: ${yesNo(x.breaking)}` : ''}`
   const out = [
@@ -117,10 +121,7 @@ function renderSummary({ review, other, inlineCount, headSha, runUrl, totalUsd, 
     out.push('')
   }
   if (!inlineCount && !other.length) out.push('No findings.', '')
-  out.push(
-    `<sub>[Run](${runUrl}) · AI cost of this pull request so far: $${usage.formatUsd(totalUsd)} · ` +
-      'comment `/agent review` to review again, `/agent cost` for details</sub>',
-  )
+  out.push(`<sub>[Run](${runUrl}) · comment \`/agent review\` to review again, \`/agent cost\` for details</sub>`)
   return out.join('\n')
 }
 
@@ -128,23 +129,27 @@ function git(args) {
   return execFileSync('git', args, { encoding: 'utf8' }).trim()
 }
 
-/** Writes the state comment: the human part and the state, with the cost records another flow added meanwhile. */
-async function writeStateComment(gh, number, existing, human, st) {
-  const body = state.render(human, await state.withFreshCosts(gh, number, st))
-  if (existing) {
-    await gh.updateIssueComment(existing.id, body)
-    log.info('state comment updated', { id: existing.id })
-  } else {
-    const created = await gh.createIssueComment(number, body)
-    log.info('state comment created', { id: created?.id })
-  }
+/**
+ * Writes the review result and the state, with the cost records another flow added meanwhile. A review run is a new
+ * command, so the comment of the review family is reused only when it is the newest result comment of the agent.
+ */
+async function writeResult(gh, number, human, st, runUrl) {
+  const published = await results.publishResult(gh, number, {
+    family: 'review',
+    human,
+    st,
+    run: runUrl,
+    newCommand: true,
+    emptyState: () => state.emptyPullState(number),
+  })
+  log.info('review result written', { id: published.commentId })
 }
 
 /**
  * The review of a pull request above the size limit: no model call, no label, no inline review. The state comment says
  * why, and the `reviews` entry stops `ready_for_review` from trying again. In dry-run, the job summary instead.
  */
-async function skipForSize({ env, config, gh, number, pr, size, existing, initial, command, runUrl }) {
+async function skipForSize({ env, config, gh, number, pr, size, initial, command, runUrl }) {
   const headSha = pr.head.sha
   log.info('review skipped: the diff is above the size limit', {
     lines: size.lines,
@@ -166,13 +171,14 @@ async function skipForSize({ env, config, gh, number, pr, size, existing, initia
   await log.group(config.dryRun ? 'Publish (dry run: job summary only)' : 'Publish', async () => {
     if (config.dryRun) {
       if (env.GITHUB_STEP_SUMMARY) {
-        const report = [`## Dry run: AI review of #${number}`, '', human, '']
+        const shown = results.previewResult({ family: 'review', human, st, run: runUrl })
+        const report = [`## Dry run: AI review of #${number}`, '', shown, '']
         fs.appendFileSync(env.GITHUB_STEP_SUMMARY, report.join('\n') + '\n')
       }
       log.info('dry run: written to the job summary')
       return
     }
-    await writeStateComment(gh, number, existing, human, st)
+    await writeResult(gh, number, human, st, runUrl)
   })
 }
 
@@ -225,7 +231,7 @@ async function main(env = process.env, deps = {}) {
   const { size, tooBig, skip } = checkSize(files, config.limits, Boolean(command?.force))
   log.info('size', { lines: size.lines, files: size.files, tooBig, force: Boolean(command?.force) })
   if (skip) {
-    await skipForSize({ env, config, gh, number, pr, size, existing, initial, command, runUrl })
+    await skipForSize({ env, config, gh, number, pr, size, initial, command, runUrl })
     return
   }
 
@@ -344,14 +350,12 @@ async function main(env = process.env, deps = {}) {
         title: f.title,
       })
     }
-    const totalUsd = [...st.costs, ...costs].reduce((s, c) => s + c.usd, 0)
     human = renderSummary({
       review,
       other: placed.other,
       inlineCount: inline.length,
       headSha,
       runUrl,
-      totalUsd,
       verification: verificationLine(review.findings, verdicts),
     })
     fs.writeFileSync(path.join(out, 'summary.md'), human)
@@ -373,7 +377,8 @@ async function main(env = process.env, deps = {}) {
 
   await log.group(config.dryRun ? 'Publish (dry run: job summary only)' : 'Publish', async () => {
     if (config.dryRun) {
-      const report = [`## Dry run: AI review of #${number}`, '', human, '']
+      const shown = results.previewResult({ family: 'review', human, st, run: runUrl })
+      const report = [`## Dry run: AI review of #${number}`, '', shown, '']
       for (const f of inline) {
         report.push(`- inline \`${f.file}:${f.line}\`: ${findingBody(f).replace(/\s*\n\s*/g, ' ')}`)
       }
@@ -381,9 +386,9 @@ async function main(env = process.env, deps = {}) {
       log.info('dry run: written to the job summary', { inline: inline.length })
       return
     }
-    // The state comment goes first: it holds the cost record, which must survive a failed review post. It is read
-    // again right before the write, so a cost record that chat added since the state was loaded survives too.
-    await writeStateComment(gh, number, existing, human, st)
+    // The result comment goes first: it holds the cost record, which must survive a failed review post. The state is
+    // read again right before the write, so a cost record that chat added since the state was loaded survives too.
+    await writeResult(gh, number, human, st, runUrl)
     if (inline.length) {
       try {
         const created = await gh.createReview(number, {

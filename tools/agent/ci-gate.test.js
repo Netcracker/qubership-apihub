@@ -31,6 +31,7 @@ const {
   stopDecision,
   greenState,
   stoppedState,
+  STOP_REASON,
   nextAttemptState,
   rerunState,
   gateGuard,
@@ -527,6 +528,7 @@ const waiting = () => ({
   attempts: [attempt(1, 'initial', { result: 'pr-opened' })],
 })
 const at = '2026-10-23T09:00:00Z'
+const STOP = { reason: 'budget', on: [200, 70] }
 
 test('greenState: completed, the attempt is ci-green, the old report goes, the decision is recorded', () => {
   const before = waiting()
@@ -539,19 +541,43 @@ test('greenState: completed, the attempt is ci-green, the old report goes, the d
   assert.equal(before.attempts[0].result, 'pr-opened')
 })
 
+test('greenState closes the open stop of the history', () => {
+  const stopped = { ...waiting(), stops: [{ reason: 'stuck', at: 't0', run: 'r0', on: [200, 70] }] }
+  const after = greenState(stopped, { sha: 'abc', at, run: 'r' })
+  assert.deepEqual(after.stops, [{ reason: 'stuck', at: 't0', run: 'r0', on: [200, 70], resumedAt: at, resumedRun: 'r' }])
+})
+
+test('stoppedState maps the reason of the decision to a stop reason, and the history records it', () => {
+  assert.deepEqual(STOP_REASON, {
+    'same-failure': 'stuck',
+    budget: 'budget-exhausted',
+    'rerun-rejected': 'environment-blocked',
+    cancelled: 'environment-blocked',
+  })
+  for (const [reason, stop] of Object.entries(STOP_REASON)) {
+    const stopped = stoppedState(waiting(), { signature: 's', report: 'R', sha: 'a', at, run: 'r', reason, on: [200, 70] })
+    assert.deepEqual(stopped.stops.map((x) => [x.reason, x.on]), [[stop, [200, 70]]])
+  }
+  // A second stop closes the first one.
+  const first = stoppedState(waiting(), { signature: 's', report: 'R', sha: 'a', at, run: 'r', reason: 'budget', on: [200] })
+  const second = stoppedState(first, { signature: 's', report: 'R', sha: 'b', at: 't2', run: 'r2', reason: 'same-failure', on: [200] })
+  assert.deepEqual(second.stops.map((x) => [x.reason, x.resumedAt]), [['budget-exhausted', 't2'], ['stuck', undefined]])
+})
+
 test('stoppedState and nextAttemptState: the signature on the last attempt, the report, and the new phase', () => {
-  const stopped = stoppedState(waiting(), { signature: 's1', report: 'R', sha: 'abc', at, run: 'r' })
+  const stopped = stoppedState(waiting(), { signature: 's1', report: 'R', sha: 'abc', at, run: 'r', ...STOP })
   assert.deepEqual([stopped.phase, stopped.lastCiReport, stopped.attempts[0].signature, stopped.attempts[0].result], [
     'needs-human', 'R', 's1', 'ci-red',
   ])
   assert.equal(stopped.implementing, undefined)
+  assert.deepEqual(stopped.stops, [{ reason: 'budget-exhausted', at, run: 'r', on: [200, 70] }])
   const next = nextAttemptState(waiting(), { signature: 's1', report: 'R', sha: 'abc', at, run: 'r', actor: 'carol' })
   assert.equal(next.phase, 'implementing')
   assert.deepEqual(next.implementing, { run: 'r', actor: 'carol', at, kind: 'ci-fix' })
   assert.equal(next.ciGate.decided, true)
   assert.deepEqual(next.costs, [{ usd: 1.5 }])
   assert.equal(
-    stoppedState({ phase: 'waiting-ci' }, { signature: 's', report: 'R', sha: 'a', at, run: 'r' }).attempts.length,
+    stoppedState({ phase: 'waiting-ci' }, { signature: 's', report: 'R', sha: 'a', at, run: 'r', ...STOP }).attempts.length,
     0,
   )
 })
@@ -560,12 +586,12 @@ test('an unrelated attempt keeps unrelated: true when the CI verdict replaces it
   const unrelated = () => ({ ...waiting(), attempts: [attempt(1, 'ci-fix', { result: 'unrelated' })] })
   const green = greenState(unrelated(), { sha: 'abc', at, run: 'r' })
   assert.deepEqual([green.attempts[0].result, green.attempts[0].unrelated], ['ci-green', true])
-  const stopped = stoppedState(unrelated(), { signature: 's1', report: 'R', sha: 'abc', at, run: 'r' })
+  const stopped = stoppedState(unrelated(), { signature: 's1', report: 'R', sha: 'abc', at, run: 'r', ...STOP })
   assert.deepEqual([stopped.attempts[0].result, stopped.attempts[0].unrelated], ['ci-red', true])
   const next = nextAttemptState(unrelated(), { signature: 's1', report: 'R', sha: 'abc', at, run: 'r', actor: 'carol' })
   assert.deepEqual([next.attempts[0].result, next.attempts[0].unrelated], ['ci-red', true])
   // The flag stays on a later patch, and another attempt never gets it.
-  const again = greenState(stoppedState(unrelated(), { signature: 's', report: 'R', sha: 'a', at, run: 'r' }), { sha: 'b', at, run: 'r' })
+  const again = greenState(stoppedState(unrelated(), { signature: 's', report: 'R', sha: 'a', at, run: 'r', ...STOP }), { sha: 'b', at, run: 'r' })
   assert.equal(again.attempts[0].unrelated, true)
   assert.equal(greenState(waiting(), { sha: 'abc', at, run: 'r' }).attempts[0].unrelated, undefined)
 })
@@ -623,29 +649,30 @@ test('attemptsTable: one row per attempt; a pipe or a mention in the notes canno
 
 test('renderGreen, renderNextAttempt, and renderRerun say what happened and what follows', () => {
   const green = renderGreen({
-    pr: 70, headSha: '3f2a9c1d5b7e8f40', attempts: 2, runUrl: 'https://x/runs/1', totalUsd: 1.5,
+    pr: 70, headSha: '3f2a9c1d5b7e8f40', attempts: 2, runUrl: 'https://x/runs/1',
   })
   assert.match(
     green,
     /^### AI implementation: CI is green on pull request #70\n\nEvery check of commit `3f2a9c1d5b7e` passed after 2/,
   )
   assert.match(green, /A person reviews and merges the pull request\./)
-  assert.match(green, /\$1\.50 · the issue closes when the pull request is merged<\/sub>$/)
+  assert.match(green, /<sub>\[Run\]\(https:\/\/x\/runs\/1\) · the issue closes when the pull request is merged<\/sub>$/)
+  assert.doesNotMatch(green, /AI cost|\$/)
   assert.doesNotMatch(green, /could not mark/)
   assert.match(
-    renderGreen({ pr: 70, headSha: 'abc', attempts: 1, readyError: 'AGENT_PAT is not set', runUrl: 'u', totalUsd: 0 }),
+    renderGreen({ pr: 70, headSha: 'abc', attempts: 1, readyError: 'AGENT_PAT is not set', runUrl: 'u' }),
     /I could not mark the pull request ready for review: AGENT_PAT is not set Mark it ready yourself\./,
   )
   const failed = [{ name: 'build', conclusion: 'failure', url: 'https://x/job/1' }]
-  const next = renderNextAttempt({ pr: 70, n: 2, max: 3, failed, runUrl: 'u', totalUsd: 0 })
+  const next = renderNextAttempt({ pr: 70, n: 2, max: 3, failed, runUrl: 'u' })
   assert.match(
     next,
     /^### AI implementation: CI is red on pull request #70\n\nAttempt 2 of 3 fixes it\. The failed checks:/,
   )
   assert.match(next, /- `build`: failure \(\[log\]\(https:\/\/x\/job\/1\)\)/)
-  assert.match(renderRerun({ pr: 70, failed, runUrl: 'u', totalUsd: 0 }), /Only E2E jobs failed\. I reran them once/)
+  assert.match(renderRerun({ pr: 70, failed, runUrl: 'u' }), /Only E2E jobs failed\. I reran them once/)
   const cancelled = [{ kind: 'check', name: 'run-lint', conclusion: 'cancelled', url: null }]
-  const rerunText = renderRerun({ pr: 70, failed: cancelled, runUrl: 'u', totalUsd: 0, kind: 'cancelled' })
+  const rerunText = renderRerun({ pr: 70, failed: cancelled, runUrl: 'u', kind: 'cancelled' })
   assert.match(rerunText, /The failed checks were cancelled, so nothing really failed\. I reran them once/)
   assert.match(rerunText, /- `run-lint`: cancelled/)
 })
@@ -657,25 +684,29 @@ test('renderStopped: the reason, every attempt, the current failure, and one req
   ]
   const failed = [{ name: 'build', conclusion: 'failure', url: null }]
   const text = renderStopped({
-    pr: 70, reason: 'same-failure', max: 3, attempts, failed, report: 'R'.repeat(5000), runUrl: 'u', totalUsd: 2,
+    pr: 70, reason: 'same-failure', max: 3, attempts, failed, report: 'R'.repeat(5000), runUrl: 'u',
   })
   assert.match(
     text,
     /^### AI implementation needs a person: CI is red on pull request #70\n\n- Failed checks: `build`\.\n/,
   )
-  assert.match(text, /\n- `build` has no error line I could read\.\n- Why I stopped: The last attempt failed/)
+  assert.match(text, /\n- `build` has no error line I could read\.\n\n\*\*Reason:\*\* `needs-human:stuck`\n\n/)
+  assert.match(text, /\*\*Blocker\.\*\* The last attempt failed in the same way as the one before it/)
+  assert.match(text, /\*\*Work completed\.\*\* 2 attempt\(s\), listed below\./)
   assert.match(text, /\| 2 \| ci-fix \| ci-red \| `aaa` \| Tried a test\. \|/)
   assert.match(
     text,
     /<details><summary>CI report<\/summary>\n\nR+\n\[cut: the text is longer than 3000 characters\]\n\n<\/details>/,
   )
-  assert.match(text, /\nWhat you can do:\n\n- If the failure is not caused by the change \(a flaky test, an outage\), /)
-  assert.match(text, /comment `\/agent rerun`: it reruns the failed checks, with no new attempt and no model cost\.\n/)
-  assert.match(text, /\n- To try another fix, comment `\/agent retry` with guidance\.\n/)
-  assert.match(
-    renderStopped({ pr: 70, reason: 'budget', max: 3, attempts, failed, report: 'R', runUrl: 'u', totalUsd: 0 }),
-    /I used all 3 attempts, and CI is still red\./,
-  )
+  assert.match(text, /\*\*Required action\.\*\* If the failure is not caused by the change \(a flaky test, an outage\), /)
+  assert.match(text, /comment `\/agent rerun`: it reruns the failed checks, with no new attempt and no model cost\. /)
+  assert.match(text, /To try another fix, comment `\/agent retry` with guidance\.\n/)
+  assert.match(text, /\*\*Resume condition\.\*\* Comment `\/agent rerun` to rerun the checks, or `\/agent retry`/)
+  const budget = renderStopped({ pr: 70, reason: 'budget', max: 3, attempts, failed, report: 'R', runUrl: 'u' })
+  assert.match(budget, /\*\*Reason:\*\* `needs-human:budget-exhausted`\n\n\*\*Blocker\.\*\* I used all 3 attempts, and CI is still red\./)
+  const cancelled = [{ kind: 'check', name: 'run-lint', conclusion: 'cancelled', url: null }]
+  const rejected = renderStopped({ pr: 70, reason: 'rerun-rejected', max: 3, attempts, failed: cancelled, report: 'R', runUrl: 'u' })
+  assert.match(rejected, /`needs-human:environment-blocked`/)
 })
 
 test('greenComment and stopComment mention the person, name the check and its error, and ask for a retry', () => {
@@ -787,4 +818,8 @@ test('rerunRefusal and rerunRequestState', () => {
     phase: 'waiting-ci', pr: 70, branch: 'b', reruns: [{ at: 't', actor: 'erin', sha: 'abc', runs: [1], run: 'u' }],
   })
   assert.equal(st.ciGate.sha, 'a')
+  // The rerun puts the work back on its way: an open stop is closed.
+  const stopped = { ...st, stops: [{ reason: 'stuck', at: 't0', run: 'r0', on: [200, 70] }] }
+  const resumed = rerunRequestState(stopped, { sha: 'abc', runs: [1], actor: 'erin', at: 't', run: 'u' })
+  assert.deepEqual(resumed.stops, [{ reason: 'stuck', at: 't0', run: 'r0', on: [200, 70], resumedAt: 't', resumedRun: 'u' }])
 })

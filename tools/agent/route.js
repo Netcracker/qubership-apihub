@@ -692,9 +692,9 @@ function dailyCountNeeded(eventName, payload, config, extra) {
 /**
  * The automatic analyses or reviews of the last 24 hours, counted from the state comments of the issues or pull
  * requests that were updated in that time and carry a label the agent leaves behind: `agent:pr-reviewed` for a review,
- * `ai:suitable`, `ai:unsuitable`, or `agent:needs-human` for an analysis (a comma list is an OR in a search). A failed
- * review sets no label, so it is found only on a pull request that an earlier review labeled; the count may miss the
- * others. The newest come first (`sort:updated-desc`). At most `MAX_STATES_READ` of them are read; the log says when
+ * `ai:suitable`, `ai:unsuitable`, or `needs-human:context-missing` for an analysis (a comma list is an OR in a
+ * search). A failed review sets no label, so it is found only on a pull request that an earlier review labeled; the
+ * count may miss the others. The newest come first (`sort:updated-desc`). At most `MAX_STATES_READ` of them are read; the log says when
  * that cap cuts the list.
  *
  * @returns {Promise<number>}
@@ -703,7 +703,7 @@ async function countDaily({ kind, repository, now, getClient }) {
   const gh = getClient()
   const since = daily.windowStart(now)
   const scope = kind === 'analyses'
-    ? 'is:issue label:"ai:suitable","ai:unsuitable","agent:needs-human"'
+    ? 'is:issue label:"ai:suitable","ai:unsuitable","needs-human:context-missing"'
     : 'is:pr label:"agent:pr-reviewed"'
   const found = await gh.searchIssues(
     `repo:${repository} ${scope} updated:>=${daily.toSearchTime(since)} sort:updated-desc`,
