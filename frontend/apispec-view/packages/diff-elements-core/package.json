@@ -45,7 +45,7 @@
     "@stoplight/yaml": "^4.2.3",
     "@storybook/react": "^8.1.11",
     "@testing-library/dom": "10.4.2",
-    "@testing-library/user-event": "14.6.1",
+    "@testing-library/user-event": "14.6.10",
     "@types/har-format": "^1.2.5",
     "@types/json-schema": "^7.0.11",
     "classnames": "^2.2.6",
