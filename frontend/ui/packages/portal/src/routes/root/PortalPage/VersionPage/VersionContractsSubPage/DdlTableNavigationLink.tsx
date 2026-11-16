@@ -7,9 +7,10 @@ import { NavLink } from 'react-router-dom'
 export const DdlTableNavigationLink: FC<NavigationLinkProps> = memo<NavigationLinkProps>(({
   href,
   className,
+  title,
   children,
 }) => (
-  <Link component={NavLink} to={href} className={className}>
+  <Link component={NavLink} to={href} className={className} title={title}>
     {children}
   </Link>
 ))

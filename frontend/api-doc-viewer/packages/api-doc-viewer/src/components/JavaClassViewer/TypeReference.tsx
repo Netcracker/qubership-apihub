@@ -1,5 +1,6 @@
 import {
   toJavaBaseTypeName,
+  toJavaCanonicalTypeName,
   toJavaSimpleTypeName,
 } from '@netcracker/qubership-apihub-next-data-model/shared/javaapi/type-names'
 import { FC, memo, useMemo } from 'react'
@@ -16,16 +17,17 @@ export const TypeReference: FC<TypeReferenceProps> = memo<TypeReferenceProps>(({
     useJavaClassViewerContext()
   const baseName = toJavaBaseTypeName(type)
   const label = toJavaSimpleTypeName(type)
+  const title = toJavaCanonicalTypeName(type)
   const href = useMemo(
     () => navigationLinkBuilder && knownClassNames.has(baseName) ? navigationLinkBuilder(baseName) : undefined,
     [navigationLinkBuilder, knownClassNames, baseName],
   )
 
   if (!href) {
-    return <span className="java-type-reference" title={type.replaceAll('$', '.')}>{label}</span>
+    return <span className="java-type-reference" title={title}>{label}</span>
   }
   return (
-    <NavigationLink href={href} className="java-type-reference java-type-reference_link">
+    <NavigationLink href={href} title={title} className="java-type-reference java-type-reference_link">
       {label}
     </NavigationLink>
   )

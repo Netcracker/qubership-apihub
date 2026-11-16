@@ -15,10 +15,11 @@ export const JavaClassBrowserDebug: FC<JavaClassBrowserDebugProps> = ({ sample }
   const selectedClassName = classNames.includes(className) ? className : classNames[0] ?? ''
 
   const StoryNavigationLink: NavigationLinkComponent = useMemo(
-    () => ({ href, className: linkClassName, children }) => (
+    () => ({ href, className: linkClassName, title, children }) => (
       <a
         href={href}
         className={linkClassName}
+        title={title}
         onClick={event => {
           event.preventDefault()
           setClassName(href.slice(1))

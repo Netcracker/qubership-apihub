@@ -11,6 +11,7 @@ describe('JavaApiClassListBuilder', () => {
         javaApiElement('a.Zulu', { elementType: 'ENUM' }),
         javaApiElement('a.Outer$Inner', { elementType: 'INTERFACE' }),
         javaApiElement('a.Annotation', { elementType: 'ANNOTATION' }),
+        javaApiElement('a.$Generated$Types'),
       ),
     }).build()
 
@@ -20,6 +21,7 @@ describe('JavaApiClassListBuilder', () => {
       packageName,
       typeKind,
     }))).toEqual([
+      { className: 'a.$Generated$Types', displayName: '$Generated.Types', packageName: 'a', typeKind: 'CLASS' },
       { className: 'a.Annotation', displayName: 'Annotation', packageName: 'a', typeKind: 'ANNOTATION' },
       { className: 'a.Outer$Inner', displayName: 'Outer.Inner', packageName: 'a', typeKind: 'INTERFACE' },
       { className: 'a.Zulu', displayName: 'Zulu', packageName: 'a', typeKind: 'ENUM' },
