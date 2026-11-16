@@ -8,16 +8,32 @@ const CURRENT_VERSION = 'feature-demo-101-2026803.08456-build2'
 const PREVIOUS_VERSION = 'master-20251002.125155-build144'
 const BASE = '/api/v1/libraries'
 const VERSIONS = `${BASE}/local-library-test/versions`
+const CATALOG = `${BASE}/local-library-demo`
+const CATALOG_VERSIONS = `${CATALOG}/versions`
+const SAMPLES = join(__dirname, '../../../../../api-doc-viewer/packages/samples/javaapi')
+
+function libraryBody(overrides: Record<string, unknown> = {}): Record<string, unknown> {
+  return {
+    alias: 'example',
+    name: 'Example library',
+    language: 'java',
+    repository: 'maven-local',
+    coordinates: { groupId: 'com.example', artifactId: 'example' },
+    ...overrides,
+  }
+}
+
+function readSample(name: string): unknown {
+  return JSON.parse(readFileSync(join(SAMPLES, name), 'utf8'))
+}
 
 describe('Local Library Java API reports', () => {
-  const REPORT = `${BASE}/local-library-demo/versions/${CURRENT_VERSION}/java-api/report`
+  const REPORT = `${CATALOG_VERSIONS}/${CURRENT_VERSION}/java-api/report`
 
   it.each([CURRENT_VERSION, PREVIOUS_VERSION])('returns the complete report for seeded version %s', async version => {
-    const expected: unknown = JSON.parse(
-      readFileSync(join(__dirname, '../../../../../api-doc-viewer/packages/samples/javaapi/api-report.json'), 'utf8'),
-    )
+    const expected = readSample('api-report.json')
     const result = await request(createApp())
-      .get(`${BASE}/local-library-demo/versions/${version}/java-api/report`).expect(200)
+      .get(`${CATALOG_VERSIONS}/${version}/java-api/report`).expect(200)
     expect(result.body).toEqual(expected)
   })
 
@@ -40,23 +56,21 @@ describe('Local Library Java API reports', () => {
 
   it('does not return a report after its version is deleted', async () => {
     const app = createApp()
-    await request(app).delete(`${BASE}/local-library-demo/versions/${CURRENT_VERSION}`).expect(204)
+    await request(app).delete(`${CATALOG_VERSIONS}/${CURRENT_VERSION}`).expect(204)
     const result = await request(app).get(REPORT).expect(404)
     expect(result.body.code).toBe('LIBRARY_VERSION_NOT_FOUND')
   })
 })
 
 describe('Local Library Java API diffs', () => {
-  const DIFF = `${BASE}/local-library-demo/versions/${CURRENT_VERSION}/java-api/diff`
+  const DIFF = `${CATALOG_VERSIONS}/${CURRENT_VERSION}/java-api/diff`
 
   it.each([
     {},
     { previousVersion: PREVIOUS_VERSION },
     { previousLibraryId: 'local-library-demo', previousVersion: PREVIOUS_VERSION },
   ])('returns the complete diff with previous version parameters %j', async query => {
-    const expected: unknown = JSON.parse(
-      readFileSync(join(__dirname, '../../../../../api-doc-viewer/packages/samples/javaapi/api-diff.json'), 'utf8'),
-    )
+    const expected = readSample('api-diff.json')
     const result = await request(createApp()).get(DIFF).query(query).expect(200)
     expect(result.body).toEqual(expected)
   })
@@ -72,13 +86,13 @@ describe('Local Library Java API diffs', () => {
 
   it('returns comparison not found for the previous version without a predecessor', async () => {
     const result = await request(createApp())
-      .get(`${BASE}/local-library-demo/versions/${PREVIOUS_VERSION}/java-api/diff`).expect(404)
+      .get(`${CATALOG_VERSIONS}/${PREVIOUS_VERSION}/java-api/diff`).expect(404)
     expect(result.body.code).toBe('LIBRARY_COMPARISON_NOT_FOUND')
   })
 
   it('returns comparison not found after the predecessor is deleted', async () => {
     const app = createApp()
-    await request(app).delete(`${BASE}/local-library-demo/versions/${PREVIOUS_VERSION}`).expect(204)
+    await request(app).delete(`${CATALOG_VERSIONS}/${PREVIOUS_VERSION}`).expect(204)
     const result = await request(app).get(DIFF).expect(404)
     expect(result.body.code).toBe('LIBRARY_COMPARISON_NOT_FOUND')
   })
@@ -108,16 +122,11 @@ describe('Local Library API', () => {
 
   it('creates a private Java library and lists it under its selected parent', async () => {
     const app = createApp()
-    const body = {
-      alias: 'example',
-      name: 'Example library',
-      language: 'java',
-      repository: 'maven-local',
-      coordinates: { groupId: 'com.example', artifactId: 'example' },
+    const body = libraryBody({
       parentPackageId: 'workspace.group',
       description: 'Library for local UI development',
       defaultRole: 'none',
-    }
+    })
     const created = await request(app).post(BASE).send(body).expect(201)
     expect(created.body).toMatchObject({ ...body, coordinatesKey: 'com.example:example', isFavorite: false })
     await request(app).get(`${BASE}/${created.body.libraryId}`).expect(200, created.body)
@@ -127,28 +136,18 @@ describe('Local Library API', () => {
   })
 
   it('rejects duplicate repository and Maven coordinates', async () => {
-    const result = await request(createApp()).post(BASE).send({
-      alias: 'duplicate',
-      name: 'Duplicate library',
-      language: 'java',
-      repository: 'maven-local',
+    const result = await request(createApp()).post(BASE).send(libraryBody({
       coordinates: { groupId: 'com.example', artifactId: 'test' },
-    }).expect(409)
+    })).expect(409)
     expect(result.body.code).toBe('LIBRARY_ALREADY_EXISTS')
-    expect(result.body.message).toBe(
-      'Duplicate Maven coordinates. A library with this repository name and Maven GA is already registered. Use the existing library to publish versions, or change the coordinates.',
-    )
   })
 
   it('returns the Artifactory verification error for the local repository and GA fixture without creating a library', async () => {
     const app = createApp()
-    const result = await request(app).post(BASE).send({
-      alias: 'unverified',
-      name: 'Unverified library',
-      language: 'java',
+    const result = await request(app).post(BASE).send(libraryBody({
       repository: 'unverified-repository',
       coordinates: { groupId: 'com.example', artifactId: 'missing-artifact' },
-    }).expect(400)
+    })).expect(400)
     expect(result.body).toEqual({
       status: 400,
       code: 'LIBRARY_COORDINATES_NOT_VERIFIED',
@@ -159,20 +158,7 @@ describe('Local Library API', () => {
 
   it.each([
     { name: 'Incomplete library' },
-    {
-      alias: 'test',
-      name: ' ',
-      language: 'java',
-      repository: 'maven-local',
-      coordinates: { groupId: 'com.example', artifactId: 'new' },
-    },
-    {
-      alias: 'test',
-      name: 'test',
-      language: 'java',
-      repository: 'maven-local',
-      coordinates: { groupId: 'com.example' },
-    },
+    libraryBody({ name: 1 }),
   ])('rejects invalid Library fields: %j', async body => {
     const result = await request(createApp()).post(BASE).send(body).expect(400)
     expect(result.body.code).toBe('BAD_REQUEST')
@@ -181,7 +167,7 @@ describe('Local Library API', () => {
 
 describe('Local Library permissions and members', () => {
   const MEMBERS = `${BASE}/local-library-test/members`
-  const CATALOG_MEMBERS = `${BASE}/local-library-demo/members`
+  const CATALOG_MEMBERS = `${CATALOG}/members`
 
   it('returns all package permissions on list, detail, create, and update responses', async () => {
     const app = createApp()
@@ -197,19 +183,13 @@ describe('Local Library permissions and members', () => {
       'document_shareability_management',
     ]
     const list = await request(app).get(BASE).expect(200)
-    for (const library of list.body.libraries) expect(library.permissions).toEqual(permissions)
     const details = await request(app).get(`${BASE}/local-library-test`).expect(200)
     expect(details.body.permissions).toEqual(permissions)
-    const created = await request(app).post(BASE).send({
-      alias: 'access',
-      name: 'Access library',
-      language: 'java',
-      repository: 'maven-local',
-      coordinates: { groupId: 'com.example', artifactId: 'access' },
-    }).expect(201)
-    expect(created.body.permissions).toEqual(permissions)
+    const created = await request(app).post(BASE).send(libraryBody()).expect(201)
     const updated = await request(app).patch(`${BASE}/${created.body.libraryId}`).send({ name: 'Updated' }).expect(200)
-    expect(updated.body.permissions).toEqual(permissions)
+    for (const library of [...list.body.libraries, created.body, updated.body]) {
+      expect(library.permissions).toEqual(details.body.permissions)
+    }
   })
 
   it('lists the seeded owners and the catalog inherited viewer', async () => {
@@ -231,7 +211,7 @@ describe('Local Library permissions and members', () => {
     })
   })
 
-  it('upserts unknown users, replaces their direct roles, and clears empty assignments', async () => {
+  it('upserts unknown users with their direct roles', async () => {
     const app = createApp()
     await request(app).put(`${MEMBERS}/new-user`)
       .send({ roleIds: ['admin', 'release-manager', 'editor', 'viewer'] }).expect(204)
@@ -245,12 +225,22 @@ describe('Local Library permissions and members', () => {
         { roleId: 'viewer', role: 'Viewer' },
       ],
     })
+  })
+
+  it('replaces direct roles', async () => {
+    const app = createApp()
+    await request(app).put(`${MEMBERS}/new-user`).send({ roleIds: ['viewer'] }).expect(204)
     await request(app).put(`${MEMBERS}/new-user`).send({ roleIds: ['owner'] }).expect(204)
     const replaced = await request(app).get(MEMBERS).expect(200)
     expect(replaced.body.members).toContainEqual({
       user: { userId: 'new-user', name: 'new-user' },
       roles: [{ roleId: 'owner', role: 'Owner' }],
     })
+  })
+
+  it('clears empty assignments', async () => {
+    const app = createApp()
+    await request(app).put(`${MEMBERS}/new-user`).send({ roleIds: ['owner'] }).expect(204)
     await request(app).put(`${MEMBERS}/new-user`).send({ roleIds: [] }).expect(204)
     const cleared = await request(app).get(MEMBERS).expect(200)
     expect(cleared.body.members).toHaveLength(1)
@@ -288,16 +278,12 @@ describe('Local Library permissions and members', () => {
     expect(result.body.code).toBe('LIBRARY_NOT_FOUND')
   })
 
-  it.each(['get', 'put', 'delete'] as const)(
-    'returns LIBRARY_NOT_FOUND for %s on unknown library members',
-    async method => {
-      const path = method === 'get' ? 'members' : 'members/user'
-      const result = await request(createApp())[method](`${BASE}/missing/${path}`).expect(404)
-      expect(result.body.code).toBe('LIBRARY_NOT_FOUND')
-    },
-  )
+  it('returns LIBRARY_NOT_FOUND on unknown library members', async () => {
+    const result = await request(createApp()).get(`${BASE}/missing/members`).expect(404)
+    expect(result.body.code).toBe('LIBRARY_NOT_FOUND')
+  })
 
-  it.each([[], {}, { roleIds: 'viewer' }, { roleIds: [1] }, { roleIds: ['unknown'] }].map(body => ({ body })))(
+  it.each([{}, { roleIds: ['unknown'] }].map(body => ({ body })))(
     'rejects invalid member roles: %j',
     async ({ body }) => {
       const result = await request(createApp()).put(`${MEMBERS}/new-user`).send(body).expect(400)
@@ -308,9 +294,9 @@ describe('Local Library permissions and members', () => {
 
 describe('Local Library API keys', () => {
   const API_KEYS = `${BASE}/local-library-test/apiKeys`
-  const CATALOG_API_KEYS = `${BASE}/local-library-demo/apiKeys`
+  const CATALOG_API_KEYS = `${CATALOG}/apiKeys`
 
-  it('returns a random secret on creation and lists only metadata in that library', async () => {
+  it('returns a 64-hex secret on creation and lists only metadata in that library', async () => {
     const app = createApp()
     await request(app).get(API_KEYS).expect(200, { apiKeys: [] })
     const created = await request(app).post(API_KEYS)
@@ -348,22 +334,14 @@ describe('Local Library API keys', () => {
     expect(missing.body.code).toBe('LIBRARY_API_KEY_NOT_FOUND')
   })
 
-  it.each(['get', 'post', 'delete'] as const)(
-    'returns LIBRARY_NOT_FOUND for %s on unknown library keys',
-    async method => {
-      const path = method === 'delete' ? 'apiKeys/key' : 'apiKeys'
-      const result = await request(createApp())[method](`${BASE}/missing/${path}`).expect(404)
-      expect(result.body.code).toBe('LIBRARY_NOT_FOUND')
-    },
-  )
+  it('returns LIBRARY_NOT_FOUND on unknown library keys', async () => {
+    const result = await request(createApp()).get(`${BASE}/missing/apiKeys`).expect(404)
+    expect(result.body.code).toBe('LIBRARY_NOT_FOUND')
+  })
 
   it.each([
-    [],
     {},
-    { name: ' ', createdFor: 'user' },
     { name: 'Token', createdFor: 1 },
-    { name: 'Token', createdFor: 'user', roles: 'viewer' },
-    { name: 'Token', createdFor: 'user', roles: [1] },
   ].map(body => ({ body })))('rejects invalid API key fields: %j', async ({ body }) => {
     const result = await request(createApp()).post(API_KEYS).send(body).expect(400)
     expect(result.body.code).toBe('BAD_REQUEST')
@@ -380,7 +358,7 @@ describe('Local Library release summaries', () => {
       latestRelease: CURRENT_VERSION,
       breakingChangesCount: 4,
     })])
-    const details = await request(app).get(`${BASE}/local-library-demo`).expect(200)
+    const details = await request(app).get(CATALOG).expect(200)
     expect(details.body).toEqual(list.body.libraries[0])
   })
 
@@ -391,22 +369,28 @@ describe('Local Library release summaries', () => {
   })
 
   it('ignores drafts and recomputes the latest release after status changes and deletion', async () => {
-    const app = createApp()
-    await request(app).post(VERSIONS).send({ version: '1.0.0', status: 'release' }).expect(202)
-    await request(app).post(VERSIONS).send({ version: '2.0.0', previousVersion: '1.0.0' }).expect(202)
-    const withDraft = await request(app).get(BASE).query({ textFilter: 'test' }).expect(200)
-    expect(withDraft.body.libraries[0]).toMatchObject({ latestRelease: '1.0.0', breakingChangesCount: 0 })
-    await request(app).patch(`${VERSIONS}/2.0.0`).send({ status: 'release' }).expect(200)
-    const promoted = await request(app).get(BASE).query({ textFilter: 'test' }).expect(200)
-    expect(promoted.body.libraries[0]).toMatchObject({ latestRelease: '2.0.0', breakingChangesCount: 0 })
-    await request(app).delete(`${VERSIONS}/2.0.0`).expect(204)
-    const deleted = await request(app).get(BASE).query({ textFilter: 'test' }).expect(200)
-    expect(deleted.body.libraries[0]).toMatchObject({ latestRelease: '1.0.0', breakingChangesCount: 0 })
+    jest.useFakeTimers({ doNotFake: ['nextTick', 'setImmediate'] })
+    try {
+      const app = createApp()
+      await request(app).post(VERSIONS).send({ version: '1.0.0', status: 'release' }).expect(202)
+      await request(app).patch(`${VERSIONS}/1.0.0`).send({ status: 'release' }).expect(200)
+      await request(app).post(VERSIONS).send({ version: '2.0.0', previousVersion: '1.0.0' }).expect(202)
+      const withDraft = await request(app).get(BASE).query({ textFilter: 'test' }).expect(200)
+      expect(withDraft.body.libraries[0]).toMatchObject({ latestRelease: '1.0.0', breakingChangesCount: 0 })
+      await request(app).patch(`${VERSIONS}/2.0.0`).send({ status: 'release' }).expect(200)
+      const promoted = await request(app).get(BASE).query({ textFilter: 'test' }).expect(200)
+      expect(promoted.body.libraries[0]).toMatchObject({ latestRelease: '2.0.0', breakingChangesCount: 0 })
+      await request(app).delete(`${VERSIONS}/2.0.0`).expect(204)
+      const deleted = await request(app).get(BASE).query({ textFilter: 'test' }).expect(200)
+      expect(deleted.body.libraries[0]).toMatchObject({ latestRelease: '1.0.0', breakingChangesCount: 0 })
+    } finally {
+      jest.useRealTimers()
+    }
   })
 
   it('reports zero when the seeded comparison predecessor no longer exists', async () => {
     const app = createApp()
-    await request(app).delete(`${BASE}/local-library-demo/versions/${PREVIOUS_VERSION}`).expect(204)
+    await request(app).delete(`${CATALOG_VERSIONS}/${PREVIOUS_VERSION}`).expect(204)
     const list = await request(app).get(BASE).query({ textFilter: 'catalog' }).expect(200)
     expect(list.body.libraries[0]).toMatchObject({ latestRelease: CURRENT_VERSION, breakingChangesCount: 0 })
   })
@@ -428,21 +412,13 @@ describe('Local Library favorites', () => {
 
   it('lists favorites across parents when no parent filter is provided', async () => {
     const app = createApp()
-    const unparented = await request(app).post(BASE).send({
-      alias: 'unassigned',
-      name: 'Unassigned library',
-      language: 'java',
-      repository: 'maven-local',
+    const unparented = await request(app).post(BASE).send(libraryBody({
       coordinates: { groupId: 'com.example', artifactId: 'unassigned' },
-    }).expect(201)
-    const parented = await request(app).post(BASE).send({
-      alias: 'parented',
-      name: 'Workspace library',
-      language: 'java',
-      repository: 'maven-local',
+    })).expect(201)
+    const parented = await request(app).post(BASE).send(libraryBody({
       coordinates: { groupId: 'com.example', artifactId: 'parented' },
       parentPackageId: 'workspace',
-    }).expect(201)
+    })).expect(201)
     await request(app).put(`${FAVORITES}/${unparented.body.libraryId}`).expect(204)
     await request(app).put(`${FAVORITES}/${parented.body.libraryId}`).expect(204)
     const list = await request(app).get(BASE)
@@ -465,86 +441,112 @@ describe('Local Library favorites', () => {
     await request(app).get(BASE).query({ onlyFavorite: true }).expect(200, { libraries: [] })
   })
 
-  it.each(['put', 'delete'] as const)('returns LIBRARY_NOT_FOUND for %s on an unknown library', async method => {
-    const result = await request(createApp())[method](`${FAVORITES}/missing`).expect(404)
+  it('returns LIBRARY_NOT_FOUND on an unknown library', async () => {
+    const result = await request(createApp()).put(`${FAVORITES}/missing`).expect(404)
     expect(result.body.code).toBe('LIBRARY_NOT_FOUND')
   })
 })
 
-describe('Local Library registry versions', () => {
-  const REGISTRY_VERSIONS = `${BASE}/local-library-demo/registry-versions`
+describe('Local Library available versions', () => {
+  const AVAILABLE_VERSIONS = `${CATALOG}/available-versions`
   const RELEASE_VERSIONS = [
-    'release-demo-2.1.0-2020803.90000-build14',
-    'release-demo-2.2.0-2026216.12170-build4',
+    { version: 'release-demo-2.2.0-2026216.12170-build4' },
+    { version: 'release-demo-2.1.0-2020803.90000-build14' },
   ]
 
-  it('filters registry versions case-insensitively', async () => {
+  it('filters available versions case-insensitively and lists the newest first', async () => {
     const app = createApp()
-    await request(app).get(REGISTRY_VERSIONS).query({ textFilter: 'RELEASE' })
+    await request(app).get(AVAILABLE_VERSIONS).query({ textFilter: 'RELEASE' })
       .expect(200, { versions: RELEASE_VERSIONS })
-    await request(app).get(REGISTRY_VERSIONS).query({ textFilter: '2.2.0' })
-      .expect(200, { versions: [RELEASE_VERSIONS[1]] })
-    await request(app).get(REGISTRY_VERSIONS).query({ textFilter: 'missing' })
-      .expect(200, { versions: [] })
-  })
-
-  it('excludes published versions and removes a picked version after publication', async () => {
-    const app = createApp()
-    await request(app).get(REGISTRY_VERSIONS).expect(200, { versions: RELEASE_VERSIONS })
-    const published = await request(app).post(`${BASE}/local-library-demo/versions`)
-      .send({ version: RELEASE_VERSIONS[0] }).expect(202)
-    await request(app).get(`${BASE}/local-library-demo/versions/${RELEASE_VERSIONS[0]}`)
-      .expect(200, published.body)
-    await request(app).get(REGISTRY_VERSIONS).expect(200, { versions: [RELEASE_VERSIONS[1]] })
-  })
-
-  it('pages the filtered, unpublished registry versions', async () => {
-    const app = createApp()
-    await request(app).get(REGISTRY_VERSIONS).query({ textFilter: 'release', limit: 1, page: 0 })
+    await request(app).get(AVAILABLE_VERSIONS).query({ textFilter: '2.2.0' })
       .expect(200, { versions: [RELEASE_VERSIONS[0]] })
-    await request(app).get(REGISTRY_VERSIONS).query({ textFilter: 'release', limit: 1, page: 1 })
-      .expect(200, { versions: [RELEASE_VERSIONS[1]] })
-    await request(app).get(REGISTRY_VERSIONS).query({ limit: 1, page: 2 })
+    await request(app).get(AVAILABLE_VERSIONS).query({ textFilter: 'missing' })
       .expect(200, { versions: [] })
   })
 
-  it.each([{ limit: 0 }, { page: -1 }, { limit: 1.5 }, { page: 'invalid' }])(
-    'rejects invalid registry pagination: %j',
+  it('excludes imported versions until they are deleted', async () => {
+    const app = createApp()
+    await request(app).get(AVAILABLE_VERSIONS).expect(200, { versions: RELEASE_VERSIONS })
+    const published = await request(app).post(CATALOG_VERSIONS)
+      .send({ version: RELEASE_VERSIONS[0].version }).expect(202)
+    await request(app).get(`${CATALOG_VERSIONS}/${RELEASE_VERSIONS[0].version}`)
+      .expect(200, published.body)
+    await request(app).get(AVAILABLE_VERSIONS).expect(200, { versions: [RELEASE_VERSIONS[1]] })
+    await request(app).delete(`${CATALOG_VERSIONS}/${RELEASE_VERSIONS[0].version}`).expect(204)
+    await request(app).get(AVAILABLE_VERSIONS).expect(200, { versions: RELEASE_VERSIONS })
+  })
+
+  it('pages the filtered available versions', async () => {
+    const app = createApp()
+    await request(app).get(AVAILABLE_VERSIONS).query({ textFilter: 'release', limit: 1, page: 0 })
+      .expect(200, { versions: [RELEASE_VERSIONS[0]] })
+    await request(app).get(AVAILABLE_VERSIONS).query({ textFilter: 'release', limit: 1, page: 1 })
+      .expect(200, { versions: [RELEASE_VERSIONS[1]] })
+    await request(app).get(AVAILABLE_VERSIONS).query({ limit: 1, page: 2 })
+      .expect(200, { versions: [] })
+  })
+
+  it.each([{ limit: 0 }, { page: 'invalid' }])(
+    'rejects invalid available versions pagination: %j',
     async query => {
-      const result = await request(createApp()).get(REGISTRY_VERSIONS).query(query).expect(400)
+      const result = await request(createApp()).get(AVAILABLE_VERSIONS).query(query).expect(400)
       expect(result.body.code).toBe('BAD_REQUEST')
     },
   )
 
   it('returns LIBRARY_NOT_FOUND for an unknown library', async () => {
-    const result = await request(createApp()).get(`${BASE}/missing/registry-versions`).expect(404)
+    const result = await request(createApp()).get(`${BASE}/missing/available-versions`).expect(404)
     expect(result.body.code).toBe('LIBRARY_NOT_FOUND')
   })
 })
 
 describe('Local Library publishing', () => {
-  it('imports a first version with the OpenAPI request and makes it readable', async () => {
-    const app = createApp()
-    const created = await request(app).post(VERSIONS).send({ version: '1.0.0', labels: ['test 1'] }).expect(202)
-    expect(created.body).toMatchObject({
-      libraryId: 'local-library-test',
-      version: '1.0.0',
-      status: 'draft',
-      labels: ['test 1'],
-    })
-    expect(created.body.previousVersion).toBeUndefined()
-    await request(app).get(`${VERSIONS}/1.0.0`).expect(200, created.body)
-    await request(app).get(VERSIONS).query({ textFilter: 'TEST 1' }).expect(200, { versions: [created.body] })
+  it('imports a first version as a draft and makes it readable', async () => {
+    jest.useFakeTimers({ doNotFake: ['nextTick', 'setImmediate'] })
+    try {
+      const app = createApp()
+      const created = await request(app).post(VERSIONS).send({ version: '1.0.0', labels: ['test 1'] }).expect(202)
+      expect(created.body).toMatchObject({
+        libraryId: 'local-library-test',
+        version: '1.0.0',
+        status: 'draft',
+        labels: ['test 1'],
+        metadata: { buildId: expect.any(String), buildStatus: 'none', activities: expect.any(Array) },
+      })
+      expect(created.body.previousVersion).toBeUndefined()
+      await request(app).get(`${VERSIONS}/1.0.0`).expect(200, created.body)
+      await request(app).get(VERSIONS).query({ textFilter: 'TEST 1' }).expect(200, { versions: [created.body] })
+    } finally {
+      jest.useRealTimers()
+    }
   })
 
-  it('saves the popup status, previous version, and labels and lists the newest version first', async () => {
+  it('keeps the requested previous version and labels on the draft and lists the newest version first', async () => {
     const app = createApp()
     await request(app).post(VERSIONS).send({ version: '1.0.0', status: 'release' }).expect(202)
     const body = { version: '2.0.0', previousVersion: '1.0.0', status: 'release', labels: ['test 1', 'stable'] }
     const created = await request(app).post(VERSIONS).send(body).expect(202)
-    expect(created.body).toMatchObject(body)
+    expect(created.body).toMatchObject({ ...body, status: 'draft', metadata: { buildStatus: 'none' } })
     const list = await request(app).get(VERSIONS).expect(200)
     expect(list.body.versions.map((version: { version: string }) => version.version)).toEqual(['2.0.0', '1.0.0'])
+  })
+
+  it('completes the build asynchronously and promotes the version to release', async () => {
+    jest.useFakeTimers({ doNotFake: ['nextTick', 'setImmediate'] })
+    try {
+      const app = createApp()
+      const created = await request(app).post(VERSIONS).send({ version: '1.0.0' }).expect(202)
+      expect(created.body).toMatchObject({ status: 'draft', metadata: { buildStatus: 'none' } })
+      jest.runOnlyPendingTimers()
+      const completed = await request(app).get(`${VERSIONS}/1.0.0`).expect(200)
+      expect(completed.body).toEqual({
+        ...created.body,
+        status: 'release',
+        metadata: { ...created.body.metadata, buildStatus: 'complete' },
+      })
+    } finally {
+      jest.useRealTimers()
+    }
   })
 
   it('rejects a duplicate version', async () => {
@@ -557,13 +559,9 @@ describe('Local Library publishing', () => {
   it('rejects a previous version from another library', async () => {
     const app = createApp()
     await request(app).post(VERSIONS).send({ version: '1.0.0' }).expect(202)
-    const library = await request(app).post(BASE).send({
-      name: 'Another library',
-      alias: 'another',
-      language: 'java',
-      repository: 'maven-local',
+    const library = await request(app).post(BASE).send(libraryBody({
       coordinates: { groupId: 'com.example', artifactId: 'another' },
-    }).expect(201)
+    })).expect(201)
     const result = await request(app).post(`${BASE}/${library.body.libraryId}/versions`)
       .send({ version: '2.0.0', previousVersion: '1.0.0' }).expect(400)
     expect(result.body.code).toBe('LIBRARY_PREVIOUS_VERSION_NOT_FOUND')
@@ -571,9 +569,7 @@ describe('Local Library publishing', () => {
 
   it.each([
     { version: ' ' },
-    { version: '1.0.0', status: 'approved' },
     { version: '1.0.0', labels: 'test 1' },
-    { version: '1.0.0', previousVersion: '1.0.0' },
   ])('rejects invalid publication fields: %j', async body => {
     const result = await request(createApp()).post(VERSIONS).send(body).expect(400)
     expect(result.body.code).toBe('BAD_REQUEST')

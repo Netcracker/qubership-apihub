@@ -1,14 +1,22 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useEffect, useRef } from 'react'
 
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
-import { API_V1 } from '@netcracker/qubership-apihub-ui-shared/utils/requests'
 
-import type { LibraryVersionDto, LibraryVersionsDto, LibraryVersionUpdateDto } from '@portal/entities/libraries'
-import { useRemoveLibraryRegistryVersions } from '@portal/routes/root/LibraryPage/useLibraryRegistryVersions'
+import {
+  LibraryVersionBuildStatuses,
+  type LibraryVersionDto,
+  type LibraryVersionsDto,
+  type LibraryVersionUpdateDto,
+} from '@portal/entities/libraries'
+import { useInvalidateLibraryJavaApi } from '@portal/routes/root/LibraryPage/LibraryVersionPage/useLibraryJavaApi'
+import { useRemoveLibraryAvailableVersions } from '@portal/routes/root/LibraryPage/useLibraryAvailableVersions'
 import { useInvalidateLibraries } from '@portal/routes/root/useLibraries'
 import { useInvalidateLibrary } from '@portal/routes/root/useLibrary'
 import { fetchAllPages } from '@portal/utils/pagination'
-import { portalRequestJson, portalRequestVoid } from '@portal/utils/requests'
+import { LIBRARIES_API_BASE_PATH, portalRequestJson, portalRequestVoid } from '@portal/utils/requests'
+
+const LIBRARY_VERSION_REFETCH_INTERVAL = 5000
 
 type LibraryVersionsResult = {
   versions: LibraryVersionDto[]
@@ -49,7 +57,12 @@ export function useLibraryVersions(libraryId: Key, enabled = true): LibraryVersi
     queryKey: libraryVersionsQueryKey(libraryId),
     queryFn: ({ signal }) => getLibraryVersions(libraryId, signal),
     enabled: enabled && !!libraryId,
+    refetchInterval: (data, query) => {
+      if (query.state.status === 'error') return false
+      return data?.versions.some(isLibraryVersionBuilding) ? LIBRARY_VERSION_REFETCH_INTERVAL : false
+    },
   })
+  useRefreshAfterFinishedBuilds(libraryId, data?.versions.some(isLibraryVersionBuilding) ?? false)
 
   return { versions: data?.versions ?? [], isLoading: isInitialLoading, error: error }
 }
@@ -59,17 +72,22 @@ export function useLibraryVersion(libraryId: Key, versionId: string): LibraryVer
     queryKey: ['library-version', libraryId, versionId],
     queryFn: ({ signal }) => getLibraryVersion(libraryId, versionId, signal),
     enabled: !!libraryId && !!versionId,
+    refetchInterval: (data, query) => {
+      if (query.state.status === 'error') return false
+      return isLibraryVersionBuilding(data) ? LIBRARY_VERSION_REFETCH_INTERVAL : false
+    },
   })
+  useRefreshAfterFinishedBuilds(libraryId, isLibraryVersionBuilding(data))
   return { version: data, isLoading: isLoading, error: error }
 }
 
 export function useInvalidateLibraryVersions(libraryId: Key): InvalidateLibraryVersions {
   const queryClient = useQueryClient()
-  const removeRegistryVersions = useRemoveLibraryRegistryVersions(libraryId)
+  const removeAvailableVersions = useRemoveLibraryAvailableVersions(libraryId)
   const invalidateLibraries = useInvalidateLibraries()
   const invalidateLibrary = useInvalidateLibrary()
   return async () => {
-    removeRegistryVersions()
+    removeAvailableVersions()
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: libraryVersionsQueryKey(libraryId) }),
       queryClient.invalidateQueries({ queryKey: ['library-version', libraryId] }),
@@ -97,6 +115,29 @@ export function useDeleteLibraryVersion(libraryId: Key): DeleteLibraryVersionRes
   return { deleteVersion: mutate, isLoading: isLoading, isSuccess: isSuccess, error: error }
 }
 
+export function isLibraryVersionBuilding(version: LibraryVersionDto | undefined): boolean {
+  return version?.metadata?.buildStatus === LibraryVersionBuildStatuses.NOT_STARTED
+}
+
+function useRefreshAfterFinishedBuilds(libraryId: Key, isBuilding: boolean): void {
+  const wasBuilding = useRef(isBuilding)
+  const invalidateLibraries = useInvalidateLibraries()
+  const invalidateLibrary = useInvalidateLibrary()
+  const invalidateLibraryJavaApi = useInvalidateLibraryJavaApi()
+
+  useEffect(() => {
+    // The QueryClient never refetches on mount or focus, so build completion must refresh dependent queries.
+    if (wasBuilding.current && !isBuilding) {
+      void Promise.all([
+        invalidateLibraries(),
+        invalidateLibrary(libraryId),
+        invalidateLibraryJavaApi(libraryId),
+      ])
+    }
+    wasBuilding.current = isBuilding
+  }, [libraryId, isBuilding, invalidateLibraries, invalidateLibrary, invalidateLibraryJavaApi])
+}
+
 async function updateLibraryVersion(
   libraryId: Key,
   version: string,
@@ -105,7 +146,7 @@ async function updateLibraryVersion(
   return portalRequestJson<LibraryVersionDto>(
     `/libraries/${encodeURIComponent(libraryId)}/versions/${encodeURIComponent(version)}`,
     { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(value) },
-    { basePath: API_V1 },
+    { basePath: LIBRARIES_API_BASE_PATH },
   )
 }
 
@@ -113,7 +154,7 @@ async function deleteLibraryVersion(libraryId: Key, version: string): Promise<vo
   return portalRequestVoid(
     `/libraries/${encodeURIComponent(libraryId)}/versions/${encodeURIComponent(version)}`,
     { method: 'DELETE' },
-    { basePath: API_V1 },
+    { basePath: LIBRARIES_API_BASE_PATH },
   )
 }
 
@@ -122,7 +163,7 @@ async function getLibraryVersions(libraryId: Key, signal?: AbortSignal): Promise
     const result = await portalRequestJson<LibraryVersionsDto>(
       `/libraries/${encodeURIComponent(libraryId)}/versions?limit=${limit}&page=${page}`,
       { method: 'GET' },
-      { basePath: API_V1 },
+      { basePath: LIBRARIES_API_BASE_PATH },
       signal,
     )
     return result.versions
@@ -134,7 +175,7 @@ async function getLibraryVersion(libraryId: Key, versionId: string, signal?: Abo
   return portalRequestJson<LibraryVersionDto>(
     `/libraries/${encodeURIComponent(libraryId)}/versions/${encodeURIComponent(versionId)}`,
     { method: 'GET' },
-    { basePath: API_V1, ignoreNotFound: true },
+    { basePath: LIBRARIES_API_BASE_PATH, ignoreNotFound: true },
     signal,
   )
 }

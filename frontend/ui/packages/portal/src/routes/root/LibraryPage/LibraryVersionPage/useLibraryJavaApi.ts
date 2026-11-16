@@ -1,12 +1,12 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { JavaApiClassListBuilder, type JavaApiClassListItem } from '@netcracker/qubership-apihub-api-doc-viewer'
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
-import { API_V1 } from '@netcracker/qubership-apihub-ui-shared/utils/requests'
 import { HttpError } from '@netcracker/qubership-apihub-ui-shared/utils/responses'
 
 import type { LibraryJavaApiDocumentDto } from '@portal/entities/libraries'
 import { requestJsonWithError } from '@portal/utils/requestJsonWithError'
+import { LIBRARIES_API_BASE_PATH } from '@portal/utils/requests'
 import { type JavaApiDocumentKind, type PreviousLibraryVersion, setPreviousLibraryVersion } from './javaapi/java-api'
 
 // The 404 code that means "no such document yet", answered with null instead of an error
@@ -26,12 +26,22 @@ type LibraryJavaApiResult = {
   error: Error | null
 }
 
+type InvalidateLibraryJavaApi = (libraryId: Key) => Promise<void>
+
+const libraryJavaApiReportQueryKey = (
+  libraryId: Key | undefined,
+): readonly ['library-java-api-report', Key | undefined] => ['library-java-api-report', libraryId]
+
+const libraryJavaApiDiffQueryKey = (
+  libraryId: Key | undefined,
+): readonly ['library-java-api-diff', Key | undefined] => ['library-java-api-diff', libraryId]
+
 export function useLibraryJavaApiReport(
   libraryId: Key | undefined,
   version: string | undefined,
 ): LibraryJavaApiResult {
   const { data, isLoading, error } = useQuery<LibraryJavaApiData | null, Error>({
-    queryKey: ['library-java-api-report', libraryId, version],
+    queryKey: [...libraryJavaApiReportQueryKey(libraryId), version],
     queryFn: ({ signal }) => getLibraryJavaApi(libraryId!, version!, 'report', undefined, signal),
     enabled: !!libraryId && !!version,
     staleTime: Infinity,
@@ -45,12 +55,26 @@ export function useLibraryJavaApiDiff(
   previous?: PreviousLibraryVersion,
 ): LibraryJavaApiResult {
   const { data, isLoading, error } = useQuery<LibraryJavaApiData | null, Error>({
-    queryKey: ['library-java-api-diff', libraryId, version, previous?.previousLibraryId, previous?.previousVersion],
+    queryKey: [
+      ...libraryJavaApiDiffQueryKey(libraryId),
+      version,
+      previous?.previousLibraryId,
+      previous?.previousVersion,
+    ],
     queryFn: ({ signal }) => getLibraryJavaApi(libraryId!, version!, 'diff', previous, signal),
     enabled: !!libraryId && !!version,
     staleTime: Infinity,
   })
   return { data, isLoading, error }
+}
+
+export function useInvalidateLibraryJavaApi(): InvalidateLibraryJavaApi {
+  const queryClient = useQueryClient()
+  return async libraryId => {
+    const queryKeys = [libraryJavaApiReportQueryKey(libraryId), libraryJavaApiDiffQueryKey(libraryId)]
+    await Promise.all(queryKeys.map(queryKey => queryClient.invalidateQueries({ queryKey })))
+    queryKeys.forEach(queryKey => queryClient.removeQueries({ queryKey: queryKey, type: 'inactive' }))
+  }
 }
 
 async function getLibraryJavaApi(
@@ -68,7 +92,7 @@ async function getLibraryJavaApi(
     document = await requestJsonWithError<LibraryJavaApiDocumentDto>(
       query.size ? `${path}?${query}` : path,
       { method: 'GET' },
-      { basePath: API_V1 },
+      { basePath: LIBRARIES_API_BASE_PATH },
       signal,
     )
   } catch (error) {

@@ -1,10 +1,9 @@
 import { useMutation } from '@tanstack/react-query'
 
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
-import { API_V1 } from '@netcracker/qubership-apihub-ui-shared/utils/requests'
 
 import type { LibraryVersionDto, LibraryVersionPublishDto } from '@portal/entities/libraries'
-import { portalRequestJson } from '@portal/utils/requests'
+import { LIBRARIES_API_BASE_PATH, portalRequestJson } from '@portal/utils/requests'
 import { useInvalidateLibraryVersions } from './useLibraryVersions'
 
 type PublishLibraryVersion = (value: LibraryVersionPublishDto) => void
@@ -34,5 +33,5 @@ async function publishLibraryVersion(libraryId: Key, value: LibraryVersionPublis
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(value),
-  }, { basePath: API_V1 })
+  }, { basePath: LIBRARIES_API_BASE_PATH })
 }

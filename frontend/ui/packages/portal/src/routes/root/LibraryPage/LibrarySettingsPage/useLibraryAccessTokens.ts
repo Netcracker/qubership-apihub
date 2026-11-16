@@ -2,10 +2,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import type { Tokens } from '@netcracker/qubership-apihub-ui-shared/types/tokens'
-import { API_V1 } from '@netcracker/qubership-apihub-ui-shared/utils/requests'
 
 import type { LibraryApiKeyCreateDto, LibraryApiKeyDto, LibraryApiKeysDto } from '@portal/entities/libraries'
-import { portalRequestJson, portalRequestVoid } from '@portal/utils/requests'
+import { LIBRARIES_API_BASE_PATH, portalRequestJson, portalRequestVoid } from '@portal/utils/requests'
 
 type LibraryAccessTokensResult = { tokens: Tokens; isLoading: boolean; error: Error | null }
 type GenerateApiKey = (value: LibraryApiKeyCreateDto) => Promise<LibraryApiKeyDto>
@@ -25,7 +24,7 @@ export function useLibraryAccessTokens(libraryId: Key, enabled = true): LibraryA
       portalRequestJson<LibraryApiKeysDto>(
         `/libraries/${encodeURIComponent(libraryId)}/apiKeys`,
         { method: 'GET' },
-        { basePath: API_V1 },
+        { basePath: LIBRARIES_API_BASE_PATH },
         signal,
       ),
     select: toLibraryAccessTokens,
@@ -45,7 +44,7 @@ export function useGenerateLibraryApiKey(libraryId: Key): GenerateApiKeyResult {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(value),
         },
-        { basePath: API_V1 },
+        { basePath: LIBRARIES_API_BASE_PATH },
       ),
     onSuccess: () => client.invalidateQueries({ queryKey: libraryAccessTokensQueryKey(libraryId), refetchType: 'all' }),
   })
@@ -59,7 +58,7 @@ export function useDeleteLibraryApiKey(libraryId: Key): DeleteApiKeyResult {
       portalRequestVoid(
         `/libraries/${encodeURIComponent(libraryId)}/apiKeys/${encodeURIComponent(key)}`,
         { method: 'DELETE' },
-        { basePath: API_V1 },
+        { basePath: LIBRARIES_API_BASE_PATH },
       ),
     onSuccess: () => client.invalidateQueries({ queryKey: libraryAccessTokensQueryKey(libraryId), refetchType: 'all' }),
   })

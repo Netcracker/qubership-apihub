@@ -13,6 +13,7 @@ import type {
 import { createMockLibraryContent } from './mock-content'
 
 const PUBLIC_LIBRARY_ROLE = 'viewer'
+const LIBRARY_VERSION_BUILD_DELAY_MS = 3000
 // The jdiff samples of api-doc-viewer; its stories and tests read the same files
 const JAVA_API_SAMPLES_DIR = join(__dirname, '../../../../../../api-doc-viewer/packages/samples/javaapi')
 const JAVA_API_REPORT_PATH = join(JAVA_API_SAMPLES_DIR, 'api-report.json')
@@ -318,7 +319,7 @@ export function createLibrariesRouters(): LibrariesRouters {
     res.sendStatus(204)
   })
 
-  router.get('/:libraryId/registry-versions', (req, res) => {
+  router.get('/:libraryId/available-versions', (req, res) => {
     const library = libraries.find(item => item.libraryId === req.params.libraryId)
     if (!library) {
       res.status(404).json({ status: 404, code: 'LIBRARY_NOT_FOUND', message: 'Library not found' })
@@ -334,7 +335,10 @@ export function createLibrariesRouters(): LibrariesRouters {
     const versions = (mock.registryVersions[library.coordinatesKey] ?? []).filter(version =>
       !publishedVersions.has(version) && version.toLowerCase().includes(textFilter),
     )
-    res.json({ versions: versions.slice(paging.offset, paging.offset + paging.limit) })
+    res.json({
+      // The registry lists versions oldest first, like maven-metadata.xml.
+      versions: versions.reverse().slice(paging.offset, paging.offset + paging.limit).map(version => ({ version })),
+    })
   })
 
   router.get('/:libraryId/versions', (req, res) => {
@@ -446,11 +450,13 @@ export function createLibrariesRouters(): LibrariesRouters {
       libraryId: libraryId,
       version: body.version,
       previousVersion: body.previousVersion,
-      status: body.status ?? 'draft',
+      status: 'draft',
       labels: body.labels ?? [],
       createdAt: new Date().toISOString(),
       createdBy: 'local-dev',
       metadata: {
+        buildId: randomUUID(),
+        buildStatus: 'none',
         activities: [{
           id: randomUUID(),
           action: 'Published version',
@@ -461,6 +467,10 @@ export function createLibrariesRouters(): LibrariesRouters {
     }
     libraryVersions.unshift(version)
     res.status(202).json(version)
+    setTimeout(() => {
+      version.status = 'release'
+      version.metadata = { ...version.metadata, buildStatus: 'complete' }
+    }, LIBRARY_VERSION_BUILD_DELAY_MS).unref()
   })
 
   router.patch('/:libraryId/versions/:version', (req, res) => {

@@ -1,10 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 
-import { API_V1 } from '@netcracker/qubership-apihub-ui-shared/utils/requests'
-
 import type { LibrariesDto, MavenLibraryDto } from '@portal/entities/libraries'
 import { fetchAllPages } from '@portal/utils/pagination'
-import { portalRequestJson } from '@portal/utils/requests'
+import { LIBRARIES_API_BASE_PATH, portalRequestJson } from '@portal/utils/requests'
 
 type ComparisonLibrariesResult = { libraries: MavenLibraryDto[]; isLoading: boolean; error: Error | null }
 
@@ -21,7 +19,7 @@ async function getComparisonLibraries(signal?: AbortSignal): Promise<MavenLibrar
     const result = await portalRequestJson<LibrariesDto>(
       `/libraries?language=java&limit=${limit}&page=${page}`,
       { method: 'GET' },
-      { basePath: API_V1 },
+      { basePath: LIBRARIES_API_BASE_PATH },
       signal,
     )
     return result.libraries

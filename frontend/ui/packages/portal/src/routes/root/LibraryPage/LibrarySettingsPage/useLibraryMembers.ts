@@ -1,11 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
-import { API_V1 } from '@netcracker/qubership-apihub-ui-shared/utils/requests'
 
 import type { LibraryMembersDto, LibraryMemberUpdateDto } from '@portal/entities/libraries'
 import type { PackageMembers } from '@portal/routes/root/PortalPage/PackageSettingsPage/package-settings'
-import { portalRequestJson, portalRequestVoid } from '@portal/utils/requests'
+import { LIBRARIES_API_BASE_PATH, portalRequestJson, portalRequestVoid } from '@portal/utils/requests'
 
 type LibraryMembersResult = { members: PackageMembers; isLoading: boolean; isFetching: boolean; error: Error | null }
 type UpdateMember = (userId: Key, value: LibraryMemberUpdateDto) => Promise<void>
@@ -24,7 +23,7 @@ export function useLibraryMembers(libraryId: Key, enabled = true): LibraryMember
       portalRequestJson<LibraryMembersDto>(
         `/libraries/${encodeURIComponent(libraryId)}/members`,
         { method: 'GET' },
-        { basePath: API_V1 },
+        { basePath: LIBRARIES_API_BASE_PATH },
         signal,
       ),
     select: toLibraryMembers,
@@ -46,7 +45,7 @@ export function useUpdateLibraryMember(libraryId: Key): UpdateMemberResult {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(value),
         },
-        { basePath: API_V1 },
+        { basePath: LIBRARIES_API_BASE_PATH },
       ),
     onSuccess: () => client.invalidateQueries({ queryKey: libraryMembersQueryKey(libraryId), refetchType: 'all' }),
   })
@@ -64,7 +63,7 @@ export function useDeleteLibraryMember(libraryId: Key): DeleteMemberResult {
       portalRequestVoid(
         `/libraries/${encodeURIComponent(libraryId)}/members/${encodeURIComponent(userId)}`,
         { method: 'DELETE' },
-        { basePath: API_V1 },
+        { basePath: LIBRARIES_API_BASE_PATH },
       ),
     onSuccess: () => client.invalidateQueries({ queryKey: libraryMembersQueryKey(libraryId), refetchType: 'all' }),
   })

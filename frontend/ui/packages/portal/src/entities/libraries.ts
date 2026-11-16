@@ -82,6 +82,14 @@ export type LibraryVersionPublishDto = Readonly<{
   labels: string[]
 }>
 
+export const LibraryVersionBuildStatuses = {
+  NOT_STARTED: 'none',
+  COMPLETE: 'complete',
+  ERROR: 'error',
+} as const
+
+export type LibraryVersionBuildStatus = typeof LibraryVersionBuildStatuses[keyof typeof LibraryVersionBuildStatuses]
+
 export type LibraryVersionDto =
   & LibraryVersionPublishDto
   & Readonly<{
@@ -89,6 +97,9 @@ export type LibraryVersionDto =
     createdAt?: string
     createdBy?: string
     metadata?: Readonly<{
+      buildId?: string
+      buildStatus?: LibraryVersionBuildStatus
+      buildError?: string
       javaApi?: Readonly<{ classes: number; interfaces: number; enums: number }>
       activities?: ReadonlyArray<Readonly<{ id: string; action: string; createdAt: string; createdBy: string }>>
     }>
@@ -98,8 +109,8 @@ export type LibraryVersionsDto = Readonly<{
   versions: LibraryVersionDto[]
 }>
 
-export type LibraryRegistryVersionsDto = Readonly<{
-  versions: string[]
+export type LibraryAvailableVersionsDto = Readonly<{
+  versions: ReadonlyArray<Readonly<{ version: string }>>
 }>
 
 export type LibraryVersionUpdateDto = Pick<LibraryVersionPublishDto, 'status' | 'labels'>

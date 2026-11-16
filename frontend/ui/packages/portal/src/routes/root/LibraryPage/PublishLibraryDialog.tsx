@@ -31,7 +31,7 @@ import { disableAutocompleteSearch } from '@netcracker/qubership-apihub-ui-share
 
 import type { LibraryVersionDto, LibraryVersionPublishDto, MavenLibraryDto } from '@portal/entities/libraries'
 import { useShowSuccessNotification } from '@portal/routes/root/BasePage/Notification'
-import { useLibraryRegistryVersions } from '@portal/routes/root/LibraryPage/useLibraryRegistryVersions'
+import { useLibraryAvailableVersions } from '@portal/routes/root/LibraryPage/useLibraryAvailableVersions'
 import { useLibraryVersions } from '@portal/routes/root/LibraryPage/useLibraryVersions'
 import { usePublishLibraryVersion } from '@portal/routes/root/LibraryPage/usePublishLibraryVersion'
 import { getManageableVersionStatuses } from './libraryPermissions'
@@ -52,8 +52,8 @@ export const PublishLibraryDialog: FC<PublishLibraryDialogProps> = ({ library, o
   const [inputValue, setInputValue] = useState('')
   const [registryTextFilter, setRegistryTextFilter] = useState('')
   const debouncedSetRegistryTextFilter = useMemo(() => debounce(setRegistryTextFilter, DEFAULT_DEBOUNCE), [])
-  const { versions: registryVersions, isLoading: areRegistryVersionsLoading, error: registryVersionsError } =
-    useLibraryRegistryVersions(libraryId, registryTextFilter)
+  const { versions: availableVersions, isLoading: areAvailableVersionsLoading, error: availableVersionsError } =
+    useLibraryAvailableVersions(libraryId, registryTextFilter)
   const { versions, isLoading: areVersionsLoading, error: versionsError } = useLibraryVersions(libraryId)
   const { publishVersion, version: publishedVersion, isLoading: isPublishing, isSuccess, error } =
     usePublishLibraryVersion(libraryId)
@@ -133,10 +133,10 @@ export const PublishLibraryDialog: FC<PublishLibraryDialogProps> = ({ library, o
               inputIndicator={<SearchOutlinedIcon fontSize="small" sx={{ order: -1 }} />}
               value={field.value || null}
               inputValue={inputValue}
-              options={registryVersions}
+              options={availableVersions}
               filterOptions={disableAutocompleteSearch}
               noOptionsText="No versions found"
-              loading={areRegistryVersionsLoading}
+              loading={areAvailableVersionsLoading}
               disabled={isPublishing}
               renderOption={(props, version) => (
                 <ListItem {...props} key={version}>
@@ -236,8 +236,8 @@ export const PublishLibraryDialog: FC<PublishLibraryDialogProps> = ({ library, o
             />
           )}
         />
-        {(error || versionsError || registryVersionsError) && (
-          <Alert severity="error">{error?.message ?? versionsError?.message ?? registryVersionsError?.message}</Alert>
+        {(error || versionsError || availableVersionsError) && (
+          <Alert severity="error">{error?.message ?? versionsError?.message ?? availableVersionsError?.message}</Alert>
         )}
       </PublishContent>
       <DialogActions>
@@ -245,7 +245,7 @@ export const PublishLibraryDialog: FC<PublishLibraryDialogProps> = ({ library, o
           type="submit"
           variant="contained"
           loading={isPublishing}
-          disabled={areVersionsLoading || areRegistryVersionsLoading || !!versionsError || !!registryVersionsError ||
+          disabled={areVersionsLoading || areAvailableVersionsLoading || !!versionsError || !!availableVersionsError ||
             !selectedVersion || !statuses.length || hasInvalidPreviousVersionStatus}
           data-testid="ConfirmPublishLibraryButton"
         >

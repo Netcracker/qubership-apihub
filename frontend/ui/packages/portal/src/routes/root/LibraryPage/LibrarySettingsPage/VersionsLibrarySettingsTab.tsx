@@ -14,6 +14,7 @@ import {
   TableRow,
   ToggleButton,
   Tooltip,
+  Typography,
 } from '@mui/material'
 import { type FC, useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
@@ -33,11 +34,11 @@ import {
 } from '@netcracker/qubership-apihub-ui-shared/entities/version-status'
 import { DeleteIcon } from '@netcracker/qubership-apihub-ui-shared/icons/DeleteIcon'
 
-import type { LibraryVersionDto, MavenLibraryDto } from '@portal/entities/libraries'
+import { LibraryVersionBuildStatuses, type LibraryVersionDto, type MavenLibraryDto } from '@portal/entities/libraries'
 import { useShowSuccessNotification } from '../../BasePage/Notification'
 import { canManageLibraryVersion, NO_VERSION_PERMISSION_HINT } from '../libraryPermissions'
 import { getLibraryVersionPath } from '../LibraryVersionPage/library-version'
-import { useDeleteLibraryVersion, useLibraryVersions } from '../useLibraryVersions'
+import { isLibraryVersionBuilding, useDeleteLibraryVersion, useLibraryVersions } from '../useLibraryVersions'
 import { EditLibraryVersionDialog } from './EditLibraryVersionDialog'
 
 type VersionsLibrarySettingsTabProps = { library: MavenLibraryDto }
@@ -115,7 +116,31 @@ export const VersionsLibrarySettingsTab: FC<VersionsLibrarySettingsTabProps> = (
                           </Link>
                         </TableCell>
                         <TableCell>
-                          <VersionStatusChip status={version.status} label={PUBLISH_STATUSES.get(version.status)} />
+                          <VersionStatusDetails>
+                            <VersionStatusChip status={version.status} label={PUBLISH_STATUSES.get(version.status)} />
+                            {isLibraryVersionBuilding(version) && (
+                              <Typography
+                                component="span"
+                                variant="caption"
+                                color="text.secondary"
+                                data-testid="LibraryVersionBuildingLabel"
+                              >
+                                Building…
+                              </Typography>
+                            )}
+                            {version.metadata?.buildStatus === LibraryVersionBuildStatuses.ERROR && (
+                              <Tooltip title={version.metadata.buildError ?? ''}>
+                                <Typography
+                                  component="span"
+                                  variant="caption"
+                                  color="error"
+                                  data-testid="LibraryVersionBuildFailedLabel"
+                                >
+                                  Build failed
+                                </Typography>
+                              </Tooltip>
+                            )}
+                          </VersionStatusDetails>
                         </TableCell>
                         <TableCell>
                           <Labels>
@@ -202,6 +227,11 @@ VersionsLibrarySettingsTab.displayName = 'VersionsLibrarySettingsTab'
 
 const VersionControls = styled(Box)(({ theme }) => ({ display: 'flex', alignItems: 'center', gap: theme.spacing(1) }))
 const VersionActions = styled(Box)({ display: 'flex' })
+const VersionStatusDetails = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  gap: theme.spacing(1),
+}))
 const Labels = styled(Box)(({ theme }) => ({ display: 'flex', flexWrap: 'wrap', gap: theme.spacing(0.5) }))
 const LabelChip = styled(Chip)(({ theme }) => ({ maxWidth: theme.spacing(20) }))
 const PreviousVersion = styled(Box)(({ theme }) => ({
