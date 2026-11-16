@@ -29,7 +29,7 @@
     "@netcracker/qubership-apihub-jest-chrome-in-docker-environment": "workspace:^",
     "@schemastore/package": "0.0.4",
     "@stoplight/eslint-config": "2.1.0",
-    "@stoplight/json": "^3.18.1",
+    "@stoplight/json": "^3.21.7",
     "@stoplight/json-schema-ref-parser": "^9.0.5",
     "@stoplight/json-schema-sampler": "^0.2.2",
     "@stoplight/json-schema-tree": "^2.2.1",
