@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useState } from 'react'
 import type { ColumnSizingInfoState } from '@tanstack/react-table'
 
 export type ColumnModel = {
@@ -134,7 +134,8 @@ export function useColumnsSizing(options: {
   const [baseColumnSizing, setBaseColumnSizing] = useState(defaultColumnsSizing)
   const [actualColumnSizing, setActualColumnSizing] = useState(defaultColumnsSizing)
 
-  useEffect(() => {
+  // A layout effect, so the columns match the container width in the frame that changed it, before the browser paints.
+  useLayoutEffect(() => {
     setBaseColumnSizing(defaultColumnsSizing)
     setActualColumnSizing(defaultColumnsSizing)
   }, [defaultColumnsSizing])
