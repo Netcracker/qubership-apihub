@@ -3,10 +3,15 @@ export function toJavaBaseTypeName(type: string): string {
   return type.replace(/(\[\]|\.\.\.)+$/, '')
 }
 
+// `org.example.Outer$Inner[]` -> `org.example.Outer.Inner[]`
+export function toJavaCanonicalTypeName(type: string): string {
+  return type.replaceAll('$', '.')
+}
+
 // `org.example.Outer$Inner[]` -> `Outer.Inner[]`
 export function toJavaSimpleTypeName(type: string): string {
   const base = toJavaBaseTypeName(type)
-  return base.slice(base.lastIndexOf('.') + 1).replaceAll('$', '.') + type.slice(base.length)
+  return toJavaCanonicalTypeName(base.slice(base.lastIndexOf('.') + 1)) + type.slice(base.length)
 }
 
 // `org.example.Outer$Inner` -> `org.example`
@@ -17,7 +22,7 @@ export function toJavaPackageName(className: string): string {
 // `org.example.Outer$Inner` -> `Outer.Inner`
 export function toJavaDisplayName(className: string): string {
   const packageName = toJavaPackageName(className)
-  return className.slice(packageName ? packageName.length + 1 : 0).replaceAll('$', '.')
+  return toJavaCanonicalTypeName(className.slice(packageName ? packageName.length + 1 : 0))
 }
 
 // `org.example.Outer$Inner` -> `org.example.Outer`
