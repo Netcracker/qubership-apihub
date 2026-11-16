@@ -14,8 +14,10 @@ type DiscoveredService = Readonly<{
   baseline?: unknown
 }>
 
-// A service without API documents has a group of its own, whatever its baseline package; the others split by whether
-// a baseline package is linked to them
+/**
+ * A service without API documents has a group of its own, whatever its baseline package; the others split by whether
+ * a baseline package is linked to them.
+ */
 export function discoveredServiceGroupOf({ specs, baseline }: DiscoveredService): DiscoveredServiceGroup {
   if (isEmpty(specs)) {
     return WITHOUT_API_DOCUMENTS_GROUP
