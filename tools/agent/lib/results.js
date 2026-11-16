@@ -59,14 +59,14 @@ async function publishResult(gh, number, { family, human, st, run, newCommand = 
   // GitHub is the source of truth: a caller may hold a state loaded before another job of the same command wrote it.
   const stored = fresh?.results ?? base.results ?? legacyResults(stateComment, fresh ?? base)
 
-  const positionOf = (entry) => {
+  const indexInComments = (entry) => {
     const id = entry.id === 'state' ? stateComment?.id : entry.id
     return comments.findIndex((c) => c.id === id)
   }
-  const existing = stored.filter((e) => positionOf(e) !== -1)
-  const newestPosition = Math.max(-1, ...existing.map(positionOf))
+  const existing = stored.filter((e) => indexInComments(e) !== -1)
+  const newestPosition = Math.max(-1, ...existing.map(indexInComments))
   let entry = existing.find((e) => e.family === family) ?? null
-  if (entry && newCommand && positionOf(entry) < newestPosition) entry = null
+  if (entry && newCommand && indexInComments(entry) < newestPosition) entry = null
   const others = existing.filter((e) => e.family !== family)
 
   // With no result comment at all, the state comment (or the first comment, when none exists) holds the text.

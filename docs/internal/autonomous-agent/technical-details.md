@@ -836,8 +836,9 @@ The job exits non-zero when the analysis or a label call failed (`main` throws `
     author. The analysis touches no other stop label.
   - Failure (model, contract, or label call): the analysis result becomes `### AI analysis failed`; the phase and the
     last `analysis` stay; the failed run is added to `analyses`; the cost is kept; the job fails.
-  - The footer of the analysis result has no cost: `<sub>[Run](<url>) · comment `/agent analyze` to analyze again</sub>`
-    (to try again, after a failure). The signature line follows it (see [the signature](#signature)).
+  - The footer of the analysis result has no cost:
+    ``<sub>[Run](<url>) · comment `/agent analyze` to analyze again</sub>`` (to try again, after a failure).
+    The signature line follows it (see [the signature](#signature)).
   - If a label call fails, the state keeps the earlier ownership of the label (`agentLabelAfter` uses only the
     changes that were applied).
 - **Exports reused by `implement.js`:** `runAnalysis` (the model part, no GitHub call; used by `implement.js work`,
