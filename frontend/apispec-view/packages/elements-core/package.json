@@ -45,7 +45,7 @@
     "@testing-library/dom": "10.4.2",
     "@testing-library/user-event": "14.6.1",
     "@types/har-format": "^1.2.5",
-    "@types/json-schema": "^7.0.11",
+    "@types/json-schema": "^7.0.15",
     "classnames": "^2.2.6",
     "httpsnippet": "^1.24.0",
     "jotai": "1.6.3",

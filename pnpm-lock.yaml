@@ -531,7 +531,7 @@ importers:
         specifier: 6.1.0
         version: 6.1.0
       '@types/json-schema':
-        specifier: ^7.0.12
+        specifier: ^7.0.15
         version: 7.0.15
       '@types/react':
         specifier: ^18.3.31
@@ -1090,7 +1090,7 @@ importers:
         specifier: 6.4.0
         version: 6.4.0
       '@types/json-schema':
-        specifier: ^7.0.11
+        specifier: ^7.0.15
         version: 7.0.15
       '@types/lodash':
         specifier: ^4.14.181
@@ -1427,7 +1427,7 @@ importers:
         specifier: ^1.2.5
         version: 1.2.16
       '@types/json-schema':
-        specifier: ^7.0.11
+        specifier: ^7.0.15
         version: 7.0.15
       classnames:
         specifier: ^2.2.6
@@ -1521,7 +1521,7 @@ importers:
         specifier: ^8.1.11
         version: 8.6.18(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(storybook@8.6.18(prettier@3.9.6)(supports-color@9.4.0))(typescript@6.0.3)
       '@types/json-schema':
-        specifier: ^7.0.11
+        specifier: ^7.0.15
         version: 7.0.15
       '@types/swagger-schema-official':
         specifier: 2.0.22
@@ -1651,7 +1651,7 @@ importers:
         specifier: ^1.2.5
         version: 1.2.16
       '@types/json-schema':
-        specifier: ^7.0.11
+        specifier: ^7.0.15
         version: 7.0.15
       classnames:
         specifier: ^2.2.6
@@ -1729,7 +1729,7 @@ importers:
         specifier: ^13.0.0
         version: 13.20.0
       '@types/json-schema':
-        specifier: ^7.0.11
+        specifier: ^7.0.15
         version: 7.0.15
       classnames:
         specifier: ^2.2.6
@@ -1778,7 +1778,7 @@ importers:
         specifier: ^8.1.11
         version: 8.6.18(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(storybook@8.6.18(prettier@3.9.6)(supports-color@9.4.0))(typescript@6.0.3)
       '@types/json-schema':
-        specifier: ^7.0.11
+        specifier: ^7.0.15
         version: 7.0.15
       classnames:
         specifier: ^2.2.6
@@ -2113,7 +2113,7 @@ importers:
         specifier: 'catalog:'
         version: 30.0.0
       '@types/json-schema':
-        specifier: ^7.0.11
+        specifier: ^7.0.15
         version: 7.0.15
       '@types/node':
         specifier: 'catalog:'
