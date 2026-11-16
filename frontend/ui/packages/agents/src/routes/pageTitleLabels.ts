@@ -13,7 +13,7 @@ import {
 } from './routes'
 
 /** A namespace tab as the title names it: a security report tab replaces the Security Reports tab. */
-export type NamespaceTitleTab =
+type NamespaceTitleTab =
   | typeof SERVICES_PAGE
   | typeof SNAPSHOTS_PAGE
   | typeof AUTOMATION_PAGE

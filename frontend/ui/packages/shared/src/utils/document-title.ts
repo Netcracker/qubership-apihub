@@ -39,3 +39,15 @@ export function buildDocumentTitle(
     ? `${meaningfulSegments.join(segmentSeparator)}${appNameSeparator}${appName}`
     : appName
 }
+
+/**
+ * The title of the tab named in the URL, or nothing for an unknown tab. Only the own keys of `titles` count:
+ * a hand-edited URL such as `.../settings/toString` must not pick up a property of `Object.prototype`.
+ */
+export function toTabTitle<Tab extends string>(
+  titles: Readonly<Record<Tab, string>>,
+  tab: string | undefined,
+): string | undefined {
+  // Not Object.hasOwn: the build targets the Vite defaults, and Safari 14 has no Object.hasOwn.
+  return tab !== undefined && Object.prototype.hasOwnProperty.call(titles, tab) ? titles[tab as Tab] : undefined
+}

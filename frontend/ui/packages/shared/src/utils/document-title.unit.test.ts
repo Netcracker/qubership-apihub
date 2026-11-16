@@ -1,4 +1,4 @@
-import { buildDocumentTitle, type DocumentTitleFormat } from './document-title'
+import { buildDocumentTitle, type DocumentTitleFormat, toTabTitle } from './document-title'
 
 const FORMAT: DocumentTitleFormat = {
   appName: 'APIHUB',
@@ -24,5 +24,20 @@ describe('buildDocumentTitle', () => {
   it('takes separators and the app name from the format', () => {
     expect(buildDocumentTitle(['A', 'B'], { appName: 'App', segmentSeparator: ' / ', appNameSeparator: ' - ' }))
       .toBe('A / B - App')
+  })
+})
+
+describe('toTabTitle', () => {
+  const TITLES = { roles: 'User Roles' }
+
+  it('returns the title of a known tab', () => {
+    expect(toTabTitle(TITLES, 'roles')).toBe('User Roles')
+  })
+
+  it('ignores an unknown tab and the properties of Object.prototype', () => {
+    expect(toTabTitle(TITLES, 'unknown')).toBeUndefined()
+    expect(toTabTitle(TITLES, 'toString')).toBeUndefined()
+    expect(toTabTitle(TITLES, 'constructor')).toBeUndefined()
+    expect(toTabTitle(TITLES, undefined)).toBeUndefined()
   })
 })

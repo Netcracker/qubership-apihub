@@ -15,6 +15,7 @@ import {
   type DocumentTitleFormat,
   type DocumentTitleSegment,
   type DocumentTitleSegments,
+  toTabTitle,
 } from '@netcracker/qubership-apihub-ui-shared/utils/document-title'
 import { APIHUB_APP_NAME } from '@netcracker/qubership-apihub-ui-shared/utils/document-title-labels'
 import { getSplittedVersionKey } from '@netcracker/qubership-apihub-ui-shared/utils/versions'
@@ -27,7 +28,6 @@ import {
   PORTAL_SETTINGS_TAB_TITLES,
   PROFILE_TAB_TITLES,
 } from './pageTitleLabels'
-import type { OverviewPageRoute, PackageSettingsPageRoute, ProfilePageRoute, SettingsPageRoute } from '../routes'
 
 /** A version as the title shows it: the revision is shown only when it is not the latest one, as in the toolbar. */
 type TitleVersion = Partial<{
@@ -72,17 +72,17 @@ export const PAGE_TITLES = {
   group: (groupName?: string): DocumentTitleSegments => [groupName, PAGE_TITLE_LABELS.group],
 
   portalSettings: (tab?: string): DocumentTitleSegments => [
-    PORTAL_SETTINGS_TAB_TITLES[tab as SettingsPageRoute],
+    toTabTitle(PORTAL_SETTINGS_TAB_TITLES, tab),
     PAGE_TITLE_LABELS.portalSettings,
   ],
   profile: (tab?: string): DocumentTitleSegments => [
-    PROFILE_TAB_TITLES[tab as ProfilePageRoute],
+    toTabTitle(PROFILE_TAB_TITLES, tab),
     PAGE_TITLE_LABELS.profile,
   ],
 
   package: (packageName?: string): DocumentTitleSegments => [packageName],
   packageSettings: (tab?: string, packageName?: string): DocumentTitleSegments => [
-    PACKAGE_SETTINGS_TAB_TITLES[tab as PackageSettingsPageRoute],
+    toTabTitle(PACKAGE_SETTINGS_TAB_TITLES, tab),
     packageName ? `${packageName} ${PAGE_TITLE_LABELS.packageSettings}` : PAGE_TITLE_LABELS.packageSettings,
   ],
 
@@ -91,7 +91,7 @@ export const PAGE_TITLES = {
     packageName,
     toTitleVersion(version),
   ],
-  overview: (tab?: string): DocumentTitleSegments => [OVERVIEW_TAB_TITLES[tab as OverviewPageRoute]],
+  overview: (tab?: string): DocumentTitleSegments => [toTabTitle(OVERVIEW_TAB_TITLES, tab)],
   contracts: (apiType?: string): DocumentTitleSegments => [PAGE_TITLE_LABELS.contracts, toApiTypeTitle(apiType)],
   contract: (contractTitle?: string, apiType?: string): DocumentTitleSegments => [
     contractTitle || PAGE_TITLE_LABELS.operation,
@@ -109,20 +109,22 @@ export const PAGE_TITLES = {
     fromTo(params.originOperationTitle, params.changedOperationTitle) ?? PAGE_TITLE_LABELS.operation,
     ...versionsComparisonTitle(params),
   ],
-  groupsComparison: (params: GroupsComparisonTitleParams): DocumentTitleSegments => {
-    const groups = fromTo(params.originGroup, params.changedGroup)
-    return [
-      groups ? `${PAGE_TITLE_LABELS.compareGroups} ${groups}` : PAGE_TITLE_LABELS.compareGroups,
-      params.changed?.packageName,
-      toTitleVersion(params.changed?.version),
-    ]
-  },
-  groupOperationsComparison: (params: GroupOperationsComparisonTitleParams): DocumentTitleSegments => [
-    fromTo(params.originOperationTitle, params.changedOperationTitle) ?? PAGE_TITLE_LABELS.operation,
-    PAGE_TITLE_LABELS.compareGroups,
+  groupsComparison: (params: GroupsComparisonTitleParams): DocumentTitleSegments => [
+    groupsComparisonTitle(params),
     params.changed?.packageName,
     toTitleVersion(params.changed?.version),
   ],
+  groupOperationsComparison: (params: GroupOperationsComparisonTitleParams): DocumentTitleSegments => [
+    fromTo(params.originOperationTitle, params.changedOperationTitle) ?? PAGE_TITLE_LABELS.operation,
+    groupsComparisonTitle(params),
+    params.changed?.packageName,
+    toTitleVersion(params.changed?.version),
+  ],
+}
+
+function groupsComparisonTitle({ originGroup, changedGroup }: GroupsComparisonTitleParams): string {
+  const groups = fromTo(originGroup, changedGroup)
+  return groups ? `${PAGE_TITLE_LABELS.compareGroups} ${groups}` : PAGE_TITLE_LABELS.compareGroups
 }
 
 function toTitleVersion(version: TitleVersion | undefined): string | undefined {

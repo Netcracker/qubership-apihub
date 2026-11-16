@@ -8,9 +8,10 @@ import {
   createDocumentTitleFormat,
   type DocumentTitleFormat,
   type DocumentTitleSegments,
+  toTabTitle,
 } from '@netcracker/qubership-apihub-ui-shared/utils/document-title'
 
-import { AGENTS_APP_NAME, NAMESPACE_TAB_TITLES, type NamespaceTitleTab, PAGE_TITLE_LABELS } from './pageTitleLabels'
+import { AGENTS_APP_NAME, NAMESPACE_TAB_TITLES, PAGE_TITLE_LABELS } from './pageTitleLabels'
 import { SECURITY_REPORTS_PAGE } from './routes'
 
 type WelcomeTitleParams = Partial<{
@@ -37,12 +38,9 @@ export const PAGE_TITLES = {
     agentId,
   ],
   namespace: ({ mode, subTab, namespaceKey, agentId }: NamespaceTitleParams): DocumentTitleSegments => [
-    NAMESPACE_TAB_TITLES[toNamespaceTitleTab(mode, subTab)],
+    // A security report tab replaces the Security Reports tab in the title.
+    toTabTitle(NAMESPACE_TAB_TITLES, mode === SECURITY_REPORTS_PAGE ? subTab : mode),
     namespaceKey,
     agentId,
   ],
-}
-
-function toNamespaceTitleTab(mode: string | undefined, subTab: string | undefined): NamespaceTitleTab {
-  return (mode === SECURITY_REPORTS_PAGE ? subTab : mode) as NamespaceTitleTab
 }

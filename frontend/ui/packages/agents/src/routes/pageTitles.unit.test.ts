@@ -32,5 +32,7 @@ describe('agent page titles', () => {
   it('skips an unknown tab', () => {
     expect(title(PAGE_TITLES.namespace({ mode: 'unknown', namespaceKey: 'billing', agentId: 'cloud-1' })))
       .toBe('billing · cloud-1 | APIHUB Agent')
+    expect(title(PAGE_TITLES.namespace({ mode: 'constructor', namespaceKey: 'billing', agentId: 'cloud-1' })))
+      .toBe('billing · cloud-1 | APIHUB Agent')
   })
 })

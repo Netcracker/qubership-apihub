@@ -17,6 +17,7 @@ describe('portal page titles', () => {
     expect(title(PAGE_TITLES.packageSettings('members', 'Billing Service')))
       .toBe('User Access Control · Billing Service Settings | APIHUB')
     expect(title(PAGE_TITLES.portalSettings('unknown'))).toBe('Portal Settings | APIHUB')
+    expect(title(PAGE_TITLES.overview('constructor'))).toBe('APIHUB')
   })
 
   it('appends the package and the latest version without its revision to a version page', () => {
@@ -78,5 +79,15 @@ describe('portal page titles', () => {
       changedGroup: 'v2',
       changed: { packageName: 'Billing', version: LATEST },
     }))).toBe('Compare Groups v1 → v2 · Billing · 2025.3 | APIHUB')
+  })
+
+  it('shows the compared groups in the title of an operation from a group comparison', () => {
+    expect(title(PAGE_TITLES.groupOperationsComparison({
+      originGroup: 'v1',
+      changedGroup: 'v2',
+      changed: { packageName: 'Billing', version: LATEST },
+      originOperationTitle: 'Get user',
+      changedOperationTitle: 'Get user',
+    }))).toBe('Get user · Compare Groups v1 → v2 · Billing · 2025.3 | APIHUB')
   })
 })
