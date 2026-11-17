@@ -573,8 +573,8 @@ importers:
         specifier: 5.3.0
         version: 5.3.0(supports-color@10.2.2)
       postcss-selector-parser:
-        specifier: 6.1.4
-        version: 6.1.4
+        specifier: 6.1.5
+        version: 6.1.5
       puppeteer:
         specifier: 24.42.0
         version: 24.42.0(supports-color@10.2.2)(typescript@6.0.3)
@@ -19165,8 +19165,8 @@ packages:
     peerDependencies:
       postcss: ^8.1.0
 
-  postcss-selector-parser@6.1.4:
-    resolution: {integrity: sha512-bIoJLOmjCO1S9XdY/DcnR5hJxvrDir1PbGChrzXG3vw0/FOliy/fA3dmdhQ441kah4gKv+TwckGzex6wNS5cnQ==}
+  postcss-selector-parser@6.1.5:
+    resolution: {integrity: sha512-TEHFzb5KRDKaOgJ4TYE+0jyJtFbjLvkdVOu0fZ2b6MTWzoqZd4Le+61aEppWkvTlYePgOX4ATL1wsAIPMLTw6Q==}
     engines: {node: '>=4'}
 
   postcss-selector-parser@7.1.6:
@@ -46906,13 +46906,13 @@ snapshots:
   postcss-calc@8.2.4(postcss@8.5.31):
     dependencies:
       postcss: 8.5.31
-      postcss-selector-parser: 6.1.4
+      postcss-selector-parser: 6.1.5
       postcss-value-parser: 4.2.0
 
   postcss-calc@8.2.4(postcss@8.5.33):
     dependencies:
       postcss: 8.5.33
-      postcss-selector-parser: 6.1.4
+      postcss-selector-parser: 6.1.5
       postcss-value-parser: 4.2.0
     optional: true
 
@@ -47162,7 +47162,7 @@ snapshots:
       caniuse-api: 3.0.0
       cssnano-utils: 3.1.0(postcss@8.5.31)
       postcss: 8.5.31
-      postcss-selector-parser: 6.1.4
+      postcss-selector-parser: 6.1.5
 
   postcss-merge-rules@5.1.4(postcss@8.5.33):
     dependencies:
@@ -47170,7 +47170,7 @@ snapshots:
       caniuse-api: 3.0.0
       cssnano-utils: 3.1.0(postcss@8.5.33)
       postcss: 8.5.33
-      postcss-selector-parser: 6.1.4
+      postcss-selector-parser: 6.1.5
     optional: true
 
   postcss-minify-font-values@5.1.0(postcss@8.5.31):
@@ -47217,12 +47217,12 @@ snapshots:
   postcss-minify-selectors@5.2.1(postcss@8.5.31):
     dependencies:
       postcss: 8.5.31
-      postcss-selector-parser: 6.1.4
+      postcss-selector-parser: 6.1.5
 
   postcss-minify-selectors@5.2.1(postcss@8.5.33):
     dependencies:
       postcss: 8.5.33
-      postcss-selector-parser: 6.1.4
+      postcss-selector-parser: 6.1.5
     optional: true
 
   postcss-modules-extract-imports@2.0.0:
@@ -47237,7 +47237,7 @@ snapshots:
     dependencies:
       icss-utils: 4.1.1
       postcss: 7.0.39
-      postcss-selector-parser: 6.1.4
+      postcss-selector-parser: 6.1.5
       postcss-value-parser: 4.2.0
 
   postcss-modules-local-by-default@4.2.0(postcss@8.5.31):
@@ -47250,7 +47250,7 @@ snapshots:
   postcss-modules-scope@2.2.0:
     dependencies:
       postcss: 7.0.39
-      postcss-selector-parser: 6.1.4
+      postcss-selector-parser: 6.1.5
 
   postcss-modules-scope@3.2.1(postcss@8.5.31):
     dependencies:
@@ -47270,7 +47270,7 @@ snapshots:
   postcss-nested@6.2.0(postcss@8.5.31):
     dependencies:
       postcss: 8.5.31
-      postcss-selector-parser: 6.1.4
+      postcss-selector-parser: 6.1.5
 
   postcss-normalize-charset@5.1.0(postcss@8.5.31):
     dependencies:
@@ -47416,7 +47416,7 @@ snapshots:
       postcss: 8.5.31
       thenby: 1.4.1
 
-  postcss-selector-parser@6.1.4:
+  postcss-selector-parser@6.1.5:
     dependencies:
       cssesc: 3.0.0
       util-deprecate: 1.0.2
@@ -47442,12 +47442,12 @@ snapshots:
   postcss-unique-selectors@5.1.1(postcss@8.5.31):
     dependencies:
       postcss: 8.5.31
-      postcss-selector-parser: 6.1.4
+      postcss-selector-parser: 6.1.5
 
   postcss-unique-selectors@5.1.1(postcss@8.5.33):
     dependencies:
       postcss: 8.5.33
-      postcss-selector-parser: 6.1.4
+      postcss-selector-parser: 6.1.5
     optional: true
 
   postcss-value-parser@4.2.0: {}
@@ -50256,13 +50256,13 @@ snapshots:
     dependencies:
       browserslist: 4.29.4
       postcss: 8.5.31
-      postcss-selector-parser: 6.1.4
+      postcss-selector-parser: 6.1.5
 
   stylehacks@5.1.1(postcss@8.5.33):
     dependencies:
       browserslist: 4.29.4
       postcss: 8.5.33
-      postcss-selector-parser: 6.1.4
+      postcss-selector-parser: 6.1.5
     optional: true
 
   stylis@4.2.0: {}
@@ -50466,7 +50466,7 @@ snapshots:
       postcss-js: 4.1.0(postcss@8.5.31)
       postcss-load-config: 4.0.2(postcss@8.5.31)(ts-node@10.9.2(@types/node@24.19.2)(typescript@6.0.3))
       postcss-nested: 6.2.0(postcss@8.5.31)
-      postcss-selector-parser: 6.1.4
+      postcss-selector-parser: 6.1.5
       resolve: 1.22.12
       sucrase: 3.35.1
     transitivePeerDependencies:
@@ -50493,7 +50493,7 @@ snapshots:
       postcss-js: 4.1.0(postcss@8.5.31)
       postcss-load-config: 5.1.0(jiti@1.21.7)(postcss@8.5.31)(tsx@4.8.1)
       postcss-nested: 6.2.0(postcss@8.5.31)
-      postcss-selector-parser: 6.1.4
+      postcss-selector-parser: 6.1.5
       resolve: 1.22.12
       sucrase: 3.35.1
     transitivePeerDependencies:
