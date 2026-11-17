@@ -61,8 +61,14 @@ const done = {
   verification: 'Added TestBuildNilChangelog; go test ./... passes.',
   notes: 'The nil came from an empty package.',
   blockedReason: '',
+  stopReason: '',
 }
-const blocked = { ...done, status: 'blocked', blockedReason: 'The issue does not say which API to change.' }
+const blocked = {
+  ...done,
+  status: 'blocked',
+  blockedReason: 'The issue does not say which API to change.',
+  stopReason: 'decision-required',
+}
 const approve = { verdict: 'approve', findings: [] }
 const changes = {
   verdict: 'changes',
@@ -93,15 +99,19 @@ function eventsFor(answer) {
 /** A GitHub client that keeps the comments, like the real one, and records every write. */
 function fakeGh({
   issueOverrides = {}, labels = [], comments = [], pulls = {}, threads = [], checkRuns = [], statuses = [],
-  rerunFails = false, behindBy = 3,
+  rerunFails = false, behindBy = 3, prLabels = [],
 } = {}) {
   const calls = []
   const store = comments.map((c) => ({ ...c }))
   let nextId = 1000
+  // The labels of the issue and, with `prLabels`, of its pull request, kept like GitHub keeps them.
+  const labelsOf = { [bug.number]: [...labels] }
+  const labelsAt = (n) => (labelsOf[n] ??= n === bug.number ? [] : [...prLabels])
   return {
     calls,
     store,
-    getIssue: async () => ({ ...bug, ...issueOverrides, labels: labels.map((name) => ({ name })) }),
+    labelsAt,
+    getIssue: async (n) => ({ ...bug, ...issueOverrides, labels: labelsAt(n ?? bug.number).map((name) => ({ name })) }),
     listIssueComments: async () => store.map((c) => ({ ...c })),
     createIssueComment: async (n, body) => {
       const comment = { id: nextId++, user: { login: 'github-actions[bot]' }, body }
@@ -113,8 +123,14 @@ function fakeGh({
       store.find((c) => c.id === id).body = body
       calls.push(['updateIssueComment', id, body])
     },
-    addLabels: async (n, add) => calls.push(['addLabels', n, add]),
-    removeLabel: async (n, label) => calls.push(['removeLabel', n, label]),
+    addLabels: async (n, add) => {
+      labelsAt(n).push(...add.filter((l) => !labelsAt(n).includes(l)))
+      calls.push(['addLabels', n, add])
+    },
+    removeLabel: async (n, label) => {
+      labelsOf[n] = labelsAt(n).filter((l) => l !== label)
+      calls.push(['removeLabel', n, label])
+    },
     getPull: async (n) => pulls[n] ?? { number: n, state: 'closed' },
     compareCommits: async (base, head) => (calls.push(['compareCommits', base, head]), { behind_by: behindBy }),
     listReviewThreads: async (n) => (calls.push(['listReviewThreads', n]), threads.map((t) => ({ ...t }))),
@@ -460,7 +476,7 @@ test('main dispatches to preflight and run, and rejects anything else', async ()
 /** The context of a run on an issue whose analysis is fresh and says suitable. */
 function readyToRun(extra = {}) {
   const st = running(analyzed(suitable, { label: 'ai:suitable' }), false)
-  return { gh: fakeGh({ comments: [botComment(5, st)], labels: ['ai:suitable', 'agent:needs-human'] }), ...extra }
+  return { gh: fakeGh({ comments: [botComment(5, st)], labels: ['ai:suitable', 'needs-human:stuck'] }), ...extra }
 }
 
 test('run, green path: branch, identity, implement, checks, self-review, push, PR, state, labels', async () => {
@@ -505,7 +521,7 @@ test('run, green path: branch, identity, implement, checks, self-review, push, P
     const pull = ctx.patGh.calls[0]
     assert.deepEqual(
       [pull.title, pull.head, pull.base, pull.draft],
-      ['fix(portal-backend): guard the nil changelog', 'bugfix/200-changelog-is-empty-for-a', 'develop', true],
+      ['fix(portal-backend): guard the nil changelog', 'bugfix/200-changelog-is-empty-for-a', 'develop', false],
     )
     assert.match(pull.body, /^## Why\n\nChangelog is empty for a package with no operations\. Guards the nil changelog/)
     assert.match(pull.body, /\nCloses #200\.\n/)
@@ -517,7 +533,7 @@ test('run, green path: branch, identity, implement, checks, self-review, push, P
 
     // State: written once, with the cost of both models; then the labels; no comment to the person.
     assert.deepEqual(ctx.gh.calls.map((c) => c[0]), ['updateIssueComment', 'removeLabel'])
-    assert.equal(ctx.gh.calls[1][2], 'agent:needs-human')
+    assert.equal(ctx.gh.calls[1][2], 'needs-human:stuck')
     const saved = savedState(ctx.gh)
     assert.equal(saved.phase, 'waiting-ci')
     assert.deepEqual(
@@ -563,7 +579,7 @@ test('run: the implementer gets the attachments of the issue, the self-reviewer 
   const st = running(analyzed(suitable, { label: 'ai:suitable' }), false)
   const gh = fakeGh({
     comments: [botComment(5, st)],
-    labels: ['ai:suitable', 'agent:needs-human'],
+    labels: ['ai:suitable', 'needs-human:stuck'],
     issueOverrides: { body: `Steps: publish.\n\n![the empty changelog](${shot})` },
   })
   const agents = { implementer: [done], 'self-reviewer': [approve] }
@@ -643,8 +659,8 @@ test('run: the self-review asks for changes, the second round fixes them, and on
       [saved.phase, saved.attempts[0].rounds, saved.attempts[0].selfReview],
       ['waiting-ci', 2, 'approve'],
     )
-    // Every pull request opens as a draft, whatever the work job reports: only the CI gate marks it ready.
-    assert.equal(ctx.patGh.calls[0].draft, true)
+    // A green attempt opens the pull request ready for review.
+    assert.equal(ctx.patGh.calls[0].draft, false)
     assert.deepEqual(
       ctx.runAgent.runs.map((r) => r.agent),
       ['implementer', 'self-reviewer', 'implementer', 'self-reviewer'],
@@ -681,11 +697,14 @@ test('run: checks red in every round give a draft pull request, needs-human, and
       [saved.attempts[0].result, saved.attempts[0].checks, saved.attempts[0].rounds],
       ['draft', 'red', 2],
     )
-    assert.deepEqual(ctx.gh.calls.map((c) => c[0]), ['updateIssueComment', 'addLabels', 'createIssueComment'])
-    assert.match(ctx.gh.calls[2][2], /^@carol, I opened draft pull request #77, but it is not green yet\./)
+    assert.deepEqual(ctx.gh.calls.map((c) => c[0]), ['updateIssueComment', 'removeLabel', 'addLabels', 'createIssueComment'])
+    assert.match(ctx.gh.calls[3][2], /^@carol, I opened draft pull request #77, but it is not green yet\./)
     assert.match(ctx.gh.store[0].body, /needs a person: draft pull request #77/)
     assert.match(ctx.gh.store[0].body, /Failing check: `pnpm exec nx affected/)
-    assert.match(ctx.gh.store[0].body, /\*\*What I need from you:\*\*/)
+    assert.match(ctx.gh.store[0].body, /\*\*Reason:\*\* `needs-human:budget-exhausted`/)
+    assert.deepEqual(ctx.gh.calls[1], ['removeLabel', 200, 'needs-human:stuck'])
+    assert.deepEqual(ctx.gh.calls[2], ['addLabels', 200, ['needs-human:budget-exhausted']])
+    assert.deepEqual(saved.stops.map((x) => [x.reason, x.on]), [['budget-exhausted', [200]]])
   })
 })
 
@@ -696,7 +715,7 @@ test('run: the self-review still asks for changes after the last round, so the p
     assert.equal(ctx.patGh.calls[0].draft, true)
     assert.match(ctx.patGh.calls[0].body, /changes were still requested after 2 round\(s\)\./)
     assert.match(ctx.patGh.calls[0].body, /- major at `backend\/x\.go:12`: The error is swallowed\./)
-    assert.match(ctx.gh.store[0].body, /- major at `backend\/x\.go:12`: The error is swallowed\./)
+    assert.match(ctx.gh.store[0].body, /\*\*Blocker\.\*\* major at `backend\/x\.go:12`: The error is swallowed\./)
     assert.equal(savedState(ctx.gh).attempts[0].selfReview, 'changes')
   })
 })
@@ -717,10 +736,10 @@ test('run: a blocked implementer pushes nothing, opens nothing, labels the issue
     assert.deepEqual(ctx.exec.git('push'), [])
     assert.deepEqual(ctx.exec.git('commit'), [])
     assert.deepEqual(ctx.patGh.calls, [])
-    assert.deepEqual(ctx.gh.calls.map((c) => c[0]), ['updateIssueComment', 'addLabels', 'createIssueComment'])
-    assert.deepEqual(ctx.gh.calls[1][2], ['agent:needs-human'])
+    assert.deepEqual(ctx.gh.calls.map((c) => c[0]), ['updateIssueComment', 'removeLabel', 'addLabels', 'createIssueComment'])
+    assert.deepEqual(ctx.gh.calls[2], ['addLabels', 200, ['needs-human:decision-required']])
     assert.match(
-      ctx.gh.calls[2][2],
+      ctx.gh.calls[3][2],
       /^@carol, I could not implement this issue: The issue does not say which API to change\./,
     )
     const saved = savedState(ctx.gh)
@@ -729,6 +748,8 @@ test('run: a blocked implementer pushes nothing, opens nothing, labels the issue
     assert.equal(saved.attempts[0].result, 'blocked')
     assert.equal(saved.attempts[0].reason, 'The issue does not say which API to change.')
     assert.match(ctx.gh.store[0].body, /### AI implementation is blocked/)
+    assert.match(ctx.gh.store[0].body, /\*\*Reason:\*\* `needs-human:decision-required`/)
+    assert.deepEqual(saved.stops.map((x) => [x.reason, x.on]), [['decision-required', [200]]])
   })
 })
 
@@ -778,7 +799,7 @@ test('run: an analysis that says needs-info stops the run with the questions, on
     assert.equal(comments.length, 1)
     assert.match(comments[0][2], /^@carol, the issue needs more information/)
     assert.doesNotMatch(comments[0][2], /^@alice, the AI agent needs more information/)
-    assert.deepEqual(gh.calls.find((c) => c[0] === 'addLabels')[2], ['agent:needs-human'])
+    assert.deepEqual(gh.calls.find((c) => c[0] === 'addLabels')[2], ['needs-human:context-missing'])
     assert.equal(savedState(gh).phase, 'needs-info')
     assert.equal(savedState(gh).analysis.verdict, 'needs-info')
   })
@@ -927,8 +948,8 @@ test('run: a failed push is redacted, recorded, and fails the run after the stat
     assert.equal(saved.attempts[0].result, 'error')
     assert.equal(saved.branch, undefined)
     assert.equal(saved.costs.length, 2)
-    assert.deepEqual(ctx.gh.calls.map((c) => c[0]), ['updateIssueComment', 'addLabels', 'createIssueComment'])
-    assert.match(ctx.gh.calls[2][2], /^@carol, the implementation failed: /)
+    assert.deepEqual(ctx.gh.calls.map((c) => c[0]), ['updateIssueComment', 'removeLabel', 'addLabels', 'createIssueComment'])
+    assert.match(ctx.gh.calls[3][2], /^@carol, the implementation failed: /)
   })
 })
 
@@ -961,7 +982,7 @@ test('run in dry-run: commits locally, writes nothing to GitHub, and puts everyt
       /### Pull request \(a draft; only the CI gate marks it ready\)\n\nTitle: fix\(portal-backend\): guard the nil/,
     )
     assert.match(summary, /<!-- ai-autonomous-agent issue=200 -->/)
-    assert.match(summary, /### Labels\n\n- add: none\n- remove: agent:needs-human/)
+    assert.match(summary, /### Labels\n\n- remove: every stop label\n/)
     assert.match(summary, /### State\n\n```json\n\{/)
     assert.match(summary, /"phase": "waiting-ci"/)
     assert.match(summary, /### Diff\n\n```\nbackend\/x\.go \| 2 \+-\n```/)
@@ -1057,7 +1078,7 @@ const BRANCH = 'bugfix/200-changelog-is-empty-for-a'
 const REMOTE = `${sha(900)}\trefs/heads/${BRANCH}\n`
 const openPull = (extra = {}) => ({ 70: { number: 70, state: 'open', draft: false, node_id: 'PR_70', ...extra } })
 const ciFixOptions = (extra = {}) => ({
-  gh: fakeGh({ comments: [botComment(5, ciFixState())], pulls: openPull(), labels: ['agent:needs-human'] }),
+  gh: fakeGh({ comments: [botComment(5, ciFixState())], pulls: openPull(), labels: ['needs-human:stuck'] }),
   env: { AGENT_KIND: 'ci-fix', AGENT_ACTOR: '' },
   exec: fakeExec({ remote: REMOTE }),
   ...extra,
@@ -1146,8 +1167,8 @@ test('run, CI fix: a fix that is not green makes the ready pull request a draft 
     assert.deepEqual(ctx.patGh.edits, [['convertPullToDraft', 'PR_70']])
     const saved = savedState(ctx.gh)
     assert.deepEqual([saved.phase, saved.attempts[1].kind, saved.attempts[1].checks], ['needs-human', 'ci-fix', 'red'])
-    assert.deepEqual(ctx.gh.calls.map((c) => c[0]), ['updateIssueComment', 'addLabels', 'createIssueComment'])
-    assert.match(ctx.gh.calls[2][2], /^@dave, I pushed a fix to pull request #70, but it is not green yet\./)
+    assert.deepEqual(ctx.gh.calls.map((c) => c[0]), ['updateIssueComment', 'removeLabel', 'addLabels', 'createIssueComment'])
+    assert.match(ctx.gh.calls[3][2], /^@dave, I pushed a fix to pull request #70, but it is not green yet\./)
     assert.match(ctx.gh.store[0].body, /### AI implementation needs a person: CI fix for pull request #70/)
   })
 })
@@ -1242,8 +1263,8 @@ test('publish without outcome.json records the failure and the costs found in th
     assert.deepEqual(saved.costs.map((c) => [c.flow, c.role, c.model, c.usd]), [
       ['implement', 'implementer', 'openai/gpt-6.1-sol', 0.01],
     ])
-    assert.deepEqual(ctx.gh.calls.map((c) => c[0]), ['updateIssueComment', 'addLabels', 'createIssueComment'])
-    assert.match(ctx.gh.calls[2][2], /^@carol, the implementation failed: The work step left no outcome/)
+    assert.deepEqual(ctx.gh.calls.map((c) => c[0]), ['updateIssueComment', 'removeLabel', 'addLabels', 'createIssueComment'])
+    assert.match(ctx.gh.calls[3][2], /^@carol, the implementation failed: The work step left no outcome/)
     assert.deepEqual(ctx.exec.git('push'), [])
   })
 })
@@ -1380,7 +1401,7 @@ const handOffState = (extra = {}) => ({
   phase: 'needs-human',
 })
 const personOptions = (kind, { command, st = handOffState(), pulls = openPull(), env = {}, ...rest } = {}) => ({
-  gh: fakeGh({ comments: [botComment(5, st)], pulls, labels: ['agent:needs-human'], ...rest.ghOptions }),
+  gh: fakeGh({ comments: [botComment(5, st)], pulls, labels: ['needs-human:stuck'], ...rest.ghOptions }),
   env: { AGENT_KIND: kind, AGENT_PR: '', AGENT_COMMENT_ID: '9101', ...env },
   exec: rest.exec ?? fakeExec({ remote: REMOTE }),
   agents: rest.agents ?? { implementer: [done], 'self-reviewer': [approve] },
@@ -1575,7 +1596,7 @@ test('preflight of a retry: continues the open pull request, a fresh budget, no 
     ...personOptions('human', { st, command: { name: 'retry', force: false, notes: 'try the other parser' } }),
   }
   options.gh = fakeGh({
-    comments: [botComment(5, st)], pulls: openPull(), labels: ['ai:unsuitable', 'agent:needs-human'],
+    comments: [botComment(5, st)], pulls: openPull(), labels: ['ai:unsuitable', 'needs-human:stuck'],
     issueOverrides: { updated_at: '2026-10-09T00:00:00Z' },
   })
   await withContext(options, async (ctx) => {
@@ -1683,7 +1704,7 @@ test('a retry after the pull request closed: a new branch with a new name, a new
     // The branch of the earlier attempt was not ours to touch any more: a plain push of the new one.
     assert.ok(ctx.exec.git('push')[0].args.at(-1).endsWith(`:refs/heads/${BRANCH}-v2`))
     assert.ok(!ctx.exec.git('push')[0].args.some((a) => a.startsWith('--force-with-lease')))
-    assert.deepEqual([ctx.patGh.calls[0].head, ctx.patGh.calls[0].draft], [`${BRANCH}-v2`, true])
+    assert.deepEqual([ctx.patGh.calls[0].head, ctx.patGh.calls[0].draft], [`${BRANCH}-v2`, false])
     const saved = savedState(ctx.gh)
     assert.deepEqual([saved.branch, saved.pr, saved.phase], [`${BRANCH}-v2`, 77, 'waiting-ci'])
     assert.equal(saved.attempts.length, 2)
@@ -1989,7 +2010,8 @@ test('publish measures the diff of the bundle itself: a change over the limit is
     assert.deepEqual([saved.phase, saved.attempts[0].result], ['needs-human', 'blocked'])
     assert.match(saved.attempts[0].reason, /outgrown the issue: 40 files and 3000 changed lines/)
     assert.equal(saved.branch, undefined)
-    assert.ok(ctx.gh.calls.some((c) => c[0] === 'addLabels' && c[2].includes('agent:needs-human')))
+    assert.ok(ctx.gh.calls.some((c) => c[0] === 'addLabels' && c[2].includes('needs-human:scope-review-required')))
+    assert.deepEqual(saved.stops.map((x) => x.reason), ['scope-review-required'])
     const note = ctx.gh.calls.find((c) => c[0] === 'createIssueComment' && /^@carol, I could not implement/.test(c[2]))
     assert.match(note[2], /outgrown/)
     // The diff was measured from the branch point to the commit the bundle holds.
@@ -2028,7 +2050,7 @@ test('publish blocks a change of an existing pull request too, and leaves the pu
   })
 })
 
-test('publish never opens a pull request ready for review, whatever the outcome says', async () => {
+test('publish opens the pull request of a green attempt ready for review', async () => {
   const agents = { implementer: [done], 'self-reviewer': [approve] }
   await withContext({ ...readyToRun(), agents }, async (ctx) => {
     await writeContext(ctx.env, ctx.deps)
@@ -2036,10 +2058,10 @@ test('publish never opens a pull request ready for review, whatever the outcome 
     assert.equal(outcome.result, 'pr-opened')
     await publish(ctx.env, ctx.deps)
     assert.equal(ctx.patGh.calls.length, 1)
-    assert.equal(ctx.patGh.calls[0].draft, true)
+    assert.equal(ctx.patGh.calls[0].draft, false)
     assert.match(ctx.patGh.calls[0].body, /Local checks passed, as reported by the work job/)
     assert.match(ctx.patGh.calls[0].body, /Self-review by a second model, as reported by the work job: approved/)
-    // The state still waits for CI: the gate marks the pull request ready after real CI is green.
+    // The state still waits for CI: the CI gate decides the attempt after real CI is green.
     assert.equal(savedState(ctx.gh).phase, 'waiting-ci')
   })
 })
@@ -2089,7 +2111,7 @@ const unrelatedOptions = (ghOptions = {}, extra = {}) => ({
   gh: fakeGh({
     comments: [botComment(5, ciFixState({ ciGate: { sha: HEAD_SHA, decided: true, at: 't', run: 'r' } }))],
     pulls: openPull({ head: { sha: HEAD_SHA } }),
-    labels: ['agent:needs-human'],
+    labels: ['needs-human:stuck'],
     checkRuns: [e2eCheck(), greenCheck()],
     ...ghOptions,
   }),
@@ -2132,7 +2154,7 @@ test('run, CI fix, unrelated: no commit, no checks, no bundle, no push; the fail
       ['removeLabel', 200],
       ['createIssueComment', 70],
     ])
-    assert.deepEqual(ctx.gh.calls[2], ['removeLabel', 200, 'agent:needs-human'])
+    assert.deepEqual(ctx.gh.calls[2], ['removeLabel', 200, 'needs-human:stuck'])
     const saved = savedState(ctx.gh)
     assert.deepEqual([saved.phase, saved.ciGate, saved.implementing, saved.pr], ['waiting-ci', undefined, undefined, 70])
     assert.equal(saved.attempts.length, 2)
@@ -2195,14 +2217,18 @@ test('publish, unrelated, nothing to rerun: handed over as blocked with the ways
     assert.match(saved.attempts[1].reason, /^Two smoke requests answered 401 after a timeout\. This change touches no auth code\. I think this change does not cause the failure, but I found no failed check that I can rerun\.$/)
     assert.deepEqual(ctx.gh.calls.map((c) => c.slice(0, 2)), [
       ['updateIssueComment', 5],
+      ['removeLabel', 200],
       ['addLabels', 200],
       ['createIssueComment', 200],
     ])
+    assert.deepEqual(ctx.gh.calls[2], ['addLabels', 200, ['needs-human:verification-blocked']])
     const body = ctx.gh.store[0].body
     assert.match(body, /### AI implementation needs a person: CI is red\n\nI stopped without changing pull request #70\./)
     assert.match(body, /\n- Failed checks: `license\/cla`\.\n- First error, in `license\/cla`: `Error: CLA not signed`\.\n- Why I stopped: /)
-    assert.match(body, /What you can do:\n\n- If the failure is not caused by the change .*`\/agent rerun`.*\n- To try another fix/)
-    const note = ctx.gh.calls[2][2]
+    assert.match(body, /\*\*Reason:\*\* `needs-human:verification-blocked`\n\n\*\*Blocker\.\*\* Two smoke requests/)
+    assert.match(body, /\*\*Required action\.\*\* If the failure is not caused by the change .*`\/agent rerun`.* To try another fix/)
+    assert.match(body, /\*\*Resume condition\.\*\* Comment `\/agent rerun` to rerun the checks, or `\/agent retry`/)
+    const note = ctx.gh.calls[3][2]
     assert.match(note, /^@dave, I could not fix CI on #70\.\n\n- Failed checks: `license\/cla`\.\n/)
     assert.match(note, /\n- To try another fix, comment `\/agent retry` with guidance\.$/)
   })
@@ -2405,7 +2431,7 @@ test('an update without conflicts: no model, no checks, a merge commit, a lease 
     )
     // No comment to the person: the state comment tells, and CI on GitHub goes on.
     assert.deepEqual(ctx.gh.calls.filter((c) => c[0] !== 'addReaction').map((c) => c[0]), [
-      'compareCommits', 'updateIssueComment', 'updateIssueComment', 'removeLabel',
+      'compareCommits', 'updateIssueComment', 'removeLabel', 'updateIssueComment',
     ])
     assert.deepEqual(reactionsOf(ctx), ['eyes', 'rocket'])
   })
@@ -2496,17 +2522,22 @@ test('an update with conflicts: a conflict marker left in a file blocks the atte
     const last = saved.attempts.at(-1)
     assert.deepEqual([saved.phase, last.result, last.reason], ['needs-human', 'blocked', reason])
     const body = ctx.gh.store[0].body
-    hasText(body, '### AI update is blocked\n\n', `I did not change pull request #70: ${reason}\n`)
     hasText(
       body,
-      '**What I need from you:** resolve the conflicts by hand, or comment `/agent update` with guidance.',
+      '### AI update is blocked\n\nI did not change pull request #70.\n\n',
+      '**Reason:** `needs-human:conflict-unresolved`\n\n',
+      `**Blocker.** ${reason}\n\n`,
     )
+    hasText(body, '**Required action.** Resolve the conflicts by hand.')
     assert.match(ctx.gh.store[0].body, /on the pull request to try again<\/sub>/)
     assert.deepEqual(
       ctx.gh.calls.filter((c) => c[0] === 'createIssueComment'),
       [['createIssueComment', 200, `@carol, I could not update #70: ${reason}`]],
     )
-    assert.deepEqual(ctx.gh.calls.find((c) => c[0] === 'addLabels'), ['addLabels', 200, ['agent:needs-human']])
+    assert.deepEqual(
+      ctx.gh.calls.find((c) => c[0] === 'addLabels'),
+      ['addLabels', 200, ['needs-human:conflict-unresolved']],
+    )
     assert.deepEqual(reactionsOf(ctx), ['eyes', 'confused'])
   })
 })
@@ -2581,5 +2612,153 @@ test('an update in dry-run commits locally, pushes nothing, and says in the summ
     assert.match(summary, /\nWould push the merge of develop to `bugfix\/200-changelog-is-empty-for-a`\.\n/)
     assert.doesNotMatch(summary, /### Commit message|### Pull request/)
     assert.match(summary, /"phase": "waiting-ci"/)
+  })
+})
+
+// ------------------------------------------------------------------------------- stop labels and result comments
+
+const RESULT_MARKER = '<!-- ai-autonomous-result family=implementation -->'
+const stopHistory = (ctx) => savedState(ctx.gh).stops.map((x) => [x.reason, x.on, x.resumedAt ? 'resumed' : 'open'])
+
+test('stop reason per result: a model block, a script block, a spent budget, and a failure each name their own', async () => {
+  // A blocked answer: the reason of the model.
+  await withContext({ ...readyToRun(), agents: { implementer: [blocked] } }, async (ctx) => {
+    await run(ctx.env, ctx.deps)
+    assert.deepEqual(ctx.gh.labelsAt(200), ['ai:suitable', 'needs-human:decision-required'])
+    assert.deepEqual(stopHistory(ctx), [['decision-required', [200], 'open']])
+    assert.match(ctx.gh.store[0].body, /\*\*Reason:\*\* `needs-human:decision-required`/)
+  })
+  // The model names another reason: the label follows it.
+  const risky = { ...blocked, stopReason: 'risk-found' }
+  await withContext({ ...readyToRun(), agents: { implementer: [risky] } }, async (ctx) => {
+    await run(ctx.env, ctx.deps)
+    assert.deepEqual(ctx.gh.labelsAt(200), ['ai:suitable', 'needs-human:risk-found'])
+  })
+  // Done, but with no change in the working tree: the script finds the block, and the reason is `stuck`.
+  const noChange = { ...readyToRun(), exec: fakeExec({ porcelain: [''] }), agents: { implementer: [done] } }
+  await withContext(noChange, async (ctx) => {
+    await run(ctx.env, ctx.deps)
+    assert.deepEqual(ctx.gh.labelsAt(200), ['ai:suitable', 'needs-human:stuck'])
+    assert.equal(outcomeOf(ctx).stopReason, 'stuck')
+  })
+  // Rounds spent without a green result: a draft, and the budget is exhausted.
+  const draft = { ...readyToRun(), exec: fakeExec({ checks: [1, 1] }), agents: {
+    implementer: [done, done], 'self-reviewer': [approve, approve],
+  } }
+  await withContext(draft, async (ctx) => {
+    await run(ctx.env, ctx.deps)
+    assert.deepEqual(ctx.gh.labelsAt(200), ['ai:suitable', 'needs-human:budget-exhausted'])
+    assert.deepEqual(stopHistory(ctx), [['budget-exhausted', [200], 'open']])
+  })
+  // A failed attempt: the environment.
+  const failing = { ...readyToRun(), exec: fakeExec({ pushFails: true }), agents: {
+    implementer: [done], 'self-reviewer': [approve],
+  } }
+  await withContext(failing, async (ctx) => {
+    await assert.rejects(run(ctx.env, ctx.deps))
+    assert.deepEqual(ctx.gh.labelsAt(200), ['ai:suitable', 'needs-human:environment-blocked'])
+    assert.deepEqual(stopHistory(ctx), [['environment-blocked', [200], 'open']])
+  })
+  // A green result and an unrelated verdict leave no stop label and no open stop.
+  await withContext({ ...readyToRun(), agents: { implementer: [done], 'self-reviewer': [approve] } }, async (ctx) => {
+    await run(ctx.env, ctx.deps)
+    assert.deepEqual(ctx.gh.labelsAt(200), ['ai:suitable'])
+    assert.equal(savedState(ctx.gh).stops, undefined)
+  })
+  await withContext(unrelatedOptions(), async (ctx) => {
+    await run(ctx.env, ctx.deps)
+    assert.deepEqual(ctx.gh.labelsAt(200), [])
+  })
+})
+
+test('a stop that follows an open stop closes it, and a new stop label replaces the old one', async () => {
+  const st = { ...handOffState(), stops: [{ reason: 'stuck', at: 't0', run: 'r0', on: [200] }] }
+  const options = personOptions('human', { st, command: { name: 'retry', force: false, notes: '' } })
+  await withContext({ ...options, agents: { implementer: [blocked] } }, async (ctx) => {
+    await runPerson(ctx)
+    // The preflight closed the first stop; the blocked attempt opened a second one.
+    assert.deepEqual(stopHistory(ctx), [['stuck', [200], 'resumed'], ['decision-required', [200], 'open']])
+    assert.deepEqual(ctx.gh.labelsAt(200), ['needs-human:decision-required'])
+  })
+})
+
+test('preflight of a new attempt clears the stop labels of the issue and the pull request, and closes the stop', async () => {
+  const st = { ...handOffState(), stops: [{ reason: 'stuck', at: 't0', run: 'r0', on: [200, 70] }] }
+  const options = personOptions('human', {
+    st, command: { name: 'retry', force: false, notes: '' }, ghOptions: { prLabels: ['needs-human:stuck', 'ai:l1-executor'] },
+  })
+  await withContext(options, async (ctx) => {
+    const result = await preflight(ctx.env, ctx.deps)
+    assert.equal(result.proceed, true)
+    assert.deepEqual(ctx.gh.labelsAt(200), [])
+    assert.deepEqual(ctx.gh.labelsAt(70), ['ai:l1-executor'])
+    assert.deepEqual(
+      ctx.gh.calls.filter((c) => c[0] === 'removeLabel'),
+      [['removeLabel', 200, 'needs-human:stuck'], ['removeLabel', 70, 'needs-human:stuck']],
+    )
+    const saved = savedState(ctx.gh)
+    assert.equal(saved.stops[0].resumedRun, RUN)
+    assert.equal(saved.phase, 'implementing')
+  })
+  // A dry run changes no label.
+  const dry = personOptions('human', { st, command: { name: 'retry', force: false, notes: '' }, env: { AGENT_DRY_RUN: 'true' } })
+  await withContext(dry, async (ctx) => {
+    await preflight(ctx.env, ctx.deps)
+    assert.deepEqual(ctx.gh.calls.filter((c) => c[0] !== 'addReaction'), [])
+  })
+})
+
+test('a new implementation comment follows an analysis comment, and publish edits that comment', async () => {
+  const analysis = { ...analyzed(suitable, { label: 'ai:suitable' }), results: [{ family: 'analysis', id: 'state', runs: [] }] }
+  const comments = [botComment(5, analysis, '### AI analysis: suitable\n\nPlan.')]
+  await withContext({ gh: fakeGh({ comments }), agents: { implementer: [done], 'self-reviewer': [approve] } }, async (ctx) => {
+    await preflight(ctx.env, ctx.deps)
+    // The analysis comment stays as it is; the run starts its own comment, and the state comment keeps the list.
+    const started = ctx.gh.store.filter((c) => c.body.startsWith(RESULT_MARKER))
+    assert.equal(started.length, 1)
+    assert.match(started[0].body, /### AI implementation is running/)
+    assert.match(ctx.gh.store[0].body, /^<!-- ai-autonomous-state -->\n### AI analysis: suitable/)
+    const resultId = started[0].id
+    assert.deepEqual(savedState(ctx.gh).results, [
+      { family: 'analysis', id: 'state', runs: [] },
+      { family: 'implementation', id: resultId, runs: [RUN] },
+    ])
+
+    // The publish step edits the same comment, signs it with the cost of the run, and creates no other one.
+    const { AGENT_PAT: _pat, GITHUB_TOKEN: _token, ...workEnv } = ctx.env
+    await work(workEnv, { exec: ctx.deps.exec, runAgent: ctx.deps.runAgent })
+    ctx.gh.calls.length = 0
+    await publish(ctx.env, ctx.deps)
+    assert.equal(ctx.gh.calls.filter((c) => c[0] === 'createIssueComment').length, 0)
+    const edited = ctx.gh.store.find((c) => c.id === resultId)
+    assert.match(edited.body, /### AI implementation: pull request #77 is open/)
+    assert.match(edited.body, /\n\n<sub>🤖 gpt-6\.1-sol high in=200 cached=100 out=40 usd=0\.02<\/sub>\n$/)
+    assert.doesNotMatch(ctx.gh.store[0].body, /AI implementation/)
+    assert.deepEqual(savedState(ctx.gh).results.map((r) => r.family), ['analysis', 'implementation'])
+  })
+})
+
+test('a state comment without an owner holds the implementation text, and publish edits it after other comments', async () => {
+  const comments = [botComment(5, analyzed(suitable, { label: 'ai:suitable' }))]
+  const gh = fakeGh({ comments })
+  await withContext({ gh, agents: { implementer: [done], 'self-reviewer': [approve] } }, async (ctx) => {
+    await preflight(ctx.env, ctx.deps)
+    gh.store.push({ id: 7000, user: { login: 'alice' }, body: 'Thanks!' })
+    const { AGENT_PAT: _pat, GITHUB_TOKEN: _token, ...workEnv } = ctx.env
+    await work(workEnv, { exec: ctx.deps.exec, runAgent: ctx.deps.runAgent })
+    await publish(ctx.env, ctx.deps)
+    assert.equal(gh.store.filter((c) => c.body.startsWith(RESULT_MARKER)).length, 0)
+    assert.match(gh.store[0].body, /### AI implementation: pull request #77 is open/)
+    assert.deepEqual(savedState(gh).results, [{ family: 'implementation', id: 'state', runs: [RUN] }])
+  })
+})
+
+test('publishing a dry run shows the signed text of the run and writes nothing', async () => {
+  const options = { ...readyToRun(), agents: { implementer: [done], 'self-reviewer': [approve] } }
+  await withContext({ ...options, env: { AGENT_DRY_RUN: 'true' } }, async (ctx) => {
+    await run(ctx.env, ctx.deps)
+    assert.match(ctx.summary(), /### AI implementation: pull request #\(dry run\)|ready for a pull request/)
+    assert.match(ctx.summary(), /<sub>🤖 gpt-6\.1-sol high in=200 cached=100 out=40 usd=0\.02<\/sub>/)
+    assert.deepEqual(ctx.gh.calls, [])
   })
 })

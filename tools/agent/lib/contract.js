@@ -11,6 +11,11 @@
  * `maxItems`.
  */
 
+const { REASONS } = require('./stops')
+
+/** The stop reasons the implementer may name: every reason but `approval-required`, which the CI gate sets. */
+const IMPLEMENTER_STOP_REASONS = REASONS.filter((reason) => reason !== 'approval-required')
+
 class ContractError extends Error {
   /** @param {string} message @param {string[]} [problems] one entry per problem, with its path */
   constructor(message, problems = []) {
@@ -217,6 +222,8 @@ const SCHEMAS = {
     notes: str,
     // The explanation for `blocked` and for `unrelated`; empty otherwise.
     blockedReason: str,
+    // Why a `blocked` answer stops: one of the stop reasons; empty otherwise. Checked in implement.js.
+    stopReason: { type: 'string', enum: [...IMPLEMENTER_STOP_REASONS, ''] },
   }),
   // Output of the self-reviewer (Flow C).
   selfReview: strictObject({
@@ -246,4 +253,4 @@ function validate(schemaName, value) {
   return value
 }
 
-module.exports = { ContractError, extractJson, validate, SCHEMAS }
+module.exports = { ContractError, extractJson, validate, SCHEMAS, IMPLEMENTER_STOP_REASONS }

@@ -135,7 +135,7 @@
     "test:skip": "jest"
   },
   "dependencies": {
-    "@stoplight/json": "^3.18.1",
+    "@stoplight/json": "^3.21.7",
     "@stoplight/json-schema-generator": "1.0.1",
     "@stoplight/types": "^13.20.0",
     "@types/json-schema": "^7.0.15",

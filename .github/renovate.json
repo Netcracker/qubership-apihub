@@ -5,7 +5,9 @@
     "The commit prefix `chore: deps:` stays (release decision R4): the release tooling gives such a commit a patch bump for its module at the next release."
   ],
   "extends": ["github>Netcracker/renovate-config:org-inherited-config"],
-  "dependencyDashboard": false,
+  "dependencyDashboard": {
+    "enabled": false
+  },
   "enabledManagers": ["github-actions", "npm", "gomod", "maven", "dockerfile", "docker-compose"],
   "includePaths": [
     ".github/workflows/**",

@@ -23,14 +23,14 @@
     "fnv-plus": "1.3.1"
   },
   "devDependencies": {
-    "@stoplight/json": "^3.18.1",
+    "@stoplight/json": "^3.21.7",
     "@stoplight/json-schema-tree": "^2.2.1",
     "@stoplight/markdown-viewer": "^5.4.7",
     "@stoplight/mosaic": "^1.40.0",
     "@stoplight/mosaic-code-viewer": "^1.24.4",
     "@stoplight/react-error-boundary": "^2.0.0",
     "@stoplight/types": "^13.0.0",
-    "@types/json-schema": "^7.0.11",
+    "@types/json-schema": "^7.0.15",
     "classnames": "^2.2.6",
     "jotai": "1.6.3",
     "lodash": "^4.17.21",

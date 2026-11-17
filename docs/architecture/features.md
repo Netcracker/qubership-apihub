@@ -14,7 +14,8 @@
   processing pipeline
 - **Markdown** — Document-level support: parsing, rendering, versioning; no operations
 - **DDLAPI** — Database-schema contracts with an end-to-end DDLAPI pipeline: normalization, diff/changelog, processor,
-  document viewer, and Portal contract views.
+  document viewer, and Portal contract views. Tables can be placed in manual groups, and the Excel export of
+  entities and changes includes the group.
 - **MCP contracts** — MCP endpoint metadata and tools, prompts, and resources can be published and browsed in the Portal
   Contracts tab. They are catalog contracts, not an operation `ApiType`.
 - **Unknown / Generic** — Fallback: any file can be stored and versioned as an unknown document
@@ -259,7 +260,8 @@
 
 ### 7.4 Export Capabilities
 
-- **Excel reports**: API changes export to Excel (via excelize)
+- **Excel reports**: API changes export to Excel (via excelize). DDL entity and change exports include
+  table-group membership, and the changes export adds a summary sheet.
 - **Async export**: Large export jobs with progress tracking
 - **Multiple formats**: Version export, document export, operations group export
 - **Custom templates**: Template-based export with group-specific templates

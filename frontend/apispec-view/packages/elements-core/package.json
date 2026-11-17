@@ -27,7 +27,7 @@
   "devDependencies": {
     "@fortawesome/free-solid-svg-icons": "^6.1.1",
     "@netcracker/qubership-apihub-api-unifier": "workspace:^",
-    "@stoplight/json": "^3.18.1",
+    "@stoplight/json": "^3.21.7",
     "@stoplight/json-schema-ref-parser": "^9.0.5",
     "@stoplight/json-schema-sampler": "^0.2.2",
     "@stoplight/markdown-viewer": "^5.4.7",
@@ -38,7 +38,7 @@
     "@stoplight/types": "^13.0.0",
     "@stoplight/yaml": "^4.2.3",
     "@types/har-format": "^1.2.5",
-    "@types/json-schema": "^7.0.11",
+    "@types/json-schema": "^7.0.15",
     "classnames": "^2.2.6",
     "httpsnippet": "^1.24.0",
     "jotai": "1.6.3",
