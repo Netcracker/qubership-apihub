@@ -75,7 +75,7 @@
     "@mui/private-theming": "5.11.9",
     "@netcracker/qubership-apihub-http-spec": "workspace:^",
     "@stoplight/eslint-config": "3.0.0",
-    "@stoplight/json": "^3.18.1",
+    "@stoplight/json": "^3.21.7",
     "@stoplight/json-schema-sampler": "^0.2.2",
     "@stoplight/markdown-viewer": "^5.5.0",
     "@stoplight/mosaic": "^1.40.0",
