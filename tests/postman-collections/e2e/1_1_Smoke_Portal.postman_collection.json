@@ -9295,6 +9295,148 @@
                             "protocolProfileBehavior": {}
                         },
                         {
+                            "name": "4.4.51 Sort package versions by 'firstPublishedAt' descending",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test(\"Status code is 200\", function () {\r",
+                                            "    pm.response.to.have.status(200);\r",
+                                            "});\r",
+                                            "\r",
+                                            "var data = pm.response.json();\r",
+                                            "\r",
+                                            "pm.test(\"Versions are sorted by first publication date\", function () {\r",
+                                            "    var names = data.versions.map(function (v) { return v.version.split(\"@\")[0]; });\r",
+                                            "    pm.expect(names).to.eql([\"0001.2\", \"0001.1\"]);\r",
+                                            "});"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v3/packages/{{package_1}}/versions?status=release&sortBy=firstPublishedAt&sortOrder=desc",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v3",
+                                        "packages",
+                                        "{{package_1}}",
+                                        "versions"
+                                    ],
+                                    "query": [
+                                        {
+                                            "key": "status",
+                                            "value": "release"
+                                        },
+                                        {
+                                            "key": "sortBy",
+                                            "value": "firstPublishedAt"
+                                        },
+                                        {
+                                            "key": "sortOrder",
+                                            "value": "desc"
+                                        }
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    }
+                                ]
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "4.4.52 Sort package versions by 'firstPublishedAt' ascending",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test(\"Status code is 200\", function () {\r",
+                                            "    pm.response.to.have.status(200);\r",
+                                            "});\r",
+                                            "\r",
+                                            "var data = pm.response.json();\r",
+                                            "\r",
+                                            "pm.test(\"Versions are sorted by first publication date\", function () {\r",
+                                            "    var names = data.versions.map(function (v) { return v.version.split(\"@\")[0]; });\r",
+                                            "    pm.expect(names).to.eql([\"0001.1\", \"0001.2\"]);\r",
+                                            "});"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v3/packages/{{package_1}}/versions?status=release&sortBy=firstPublishedAt&sortOrder=asc",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v3",
+                                        "packages",
+                                        "{{package_1}}",
+                                        "versions"
+                                    ],
+                                    "query": [
+                                        {
+                                            "key": "status",
+                                            "value": "release"
+                                        },
+                                        {
+                                            "key": "sortBy",
+                                            "value": "firstPublishedAt"
+                                        },
+                                        {
+                                            "key": "sortOrder",
+                                            "value": "asc"
+                                        }
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    }
+                                ]
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
                             "name": "4.4.53 Get list of operations filtered by 'groups' query parameter",
                             "event": [
                                 {
