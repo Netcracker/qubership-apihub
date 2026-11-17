@@ -50,7 +50,7 @@
     "@netcracker/qubership-apihub-rest-playground": "workspace:^",
     "@remix-run/router": "1.23.4",
     "@stoplight/json": "3.21.7",
-    "@stoplight/json-ref-resolver": "3.1.4",
+    "@stoplight/json-ref-resolver": "3.1.6",
     "@stoplight/spectral-core": "1.16.1",
     "@stoplight/types": "13.20.0",
     "@tanstack/query-core": "^4.43.0",
