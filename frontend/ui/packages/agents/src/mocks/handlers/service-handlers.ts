@@ -44,7 +44,6 @@ export const serviceHandlers = [
   ),
 ]
 
-// Without the key, or with another value, the result of the backend stays
 function withMockDiscoveryResult(data: ServicesDto): ServicesDto {
   const mockResult = MOCK_DISCOVERY_RESULTS[localStorage.getItem(MOCK_DISCOVERY_KEY) ?? '']
   return mockResult ? mockResult(data) : data

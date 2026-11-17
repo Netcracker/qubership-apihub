@@ -53,8 +53,7 @@ const EmptyStateScroll = styled(Box)({
   overflowY: 'auto',
 })
 
-// `minHeight` centers the content, and the box grows past the scroll box when the content is taller. The padding
-// gives the scroll its gap below the action
+// A state shorter than the content area is centered in it, and a taller one scrolls with a gap below the action
 const EmptyStateBox = styled(Box)(({ theme }) => ({
   minHeight: '100%',
   padding: theme.spacing(3, 0),
@@ -79,8 +78,8 @@ const EmptyStateText = styled(Box)(({ theme }) => ({
   textAlign: 'center',
 }))
 
-// The theme has no 20 px variant, so the title sets the size on h5, as the titles of ErrorPage and
-// PackageRedirectPage do
+// The theme has no 20 px medium variant, so the title sets the size and the weight on h5; ErrorPage and
+// PackageRedirectPage set the same size on h5 for their titles
 const EmptyStateTitle = styled(Box)(({ theme }) => ({
   ...theme.typography.h5,
   fontSize: 20,

@@ -24,7 +24,7 @@ export type DiscoveryView =
   | typeof NO_SERVICES_DISCOVERY_VIEW
   | typeof SERVICES_DISCOVERY_VIEW
 
-/** What Discover Services shows; the footer and the next step of the wizard depend on it too. */
+/** Returns the view of Discover Services for the services query of the page, by {@link discoveryViewOf}. */
 export function useDiscoveryView(): DiscoveryView {
   const [discovery, isLoading, isError] = useServices()
   const startView = useDiscoveryStartView()
@@ -32,9 +32,10 @@ export function useDiscoveryView(): DiscoveryView {
 }
 
 /**
- * The view of Discover Services for a services response. A running discovery shows the services it found so far;
- * until it finds one, the view stays `startView`, the view of the step when the discovery started, or `not-run` when
- * that is not known. A services request that failed with no result shows the failed discovery.
+ * Returns the view of Discover Services for a services response. While a discovery runs, the view lists the
+ * services found so far; until the first one arrives, it is `startView`, the view of the step when the discovery
+ * started, or `not-run` when `startView` is undefined. A services request that failed with no result gives the
+ * failed view.
  */
 export function discoveryViewOf(
   { status, services }: Services,

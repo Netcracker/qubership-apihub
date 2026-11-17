@@ -2,7 +2,7 @@ import type { FC } from 'react'
 import { memo } from 'react'
 import type { Row } from '@tanstack/react-table'
 import { getFormattedLabel, type Service } from '@agents/entities/services'
-import { Box, styled, type SxProps, type Theme } from '@mui/material'
+import { Box, styled } from '@mui/material'
 import { OverflowTooltip } from '@netcracker/qubership-apihub-ui-shared/components/OverflowTooltip'
 import { CustomChip } from '@netcracker/qubership-apihub-ui-shared/components/CustomChip'
 import { isEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
@@ -19,7 +19,7 @@ export const ServiceLabelsTableCell: FC<ServiceLabelsTableCellProps> = memo<Serv
   if (service && service.labels) {
     const labels = Object.entries(service.labels)
     // A service without API documents is drawn grey, as its name is
-    const chipSx = isEmpty(service.specs) ? DISABLED_LABEL_CHIP_SX : undefined
+    const Chip = isEmpty(service.specs) ? DisabledLabelChip : LabelChip
 
     return (
         <Box>
@@ -28,9 +28,8 @@ export const ServiceLabelsTableCell: FC<ServiceLabelsTableCellProps> = memo<Serv
               key={getFormattedLabel(key, value)}
               sx={{ mr: 1, mb: 0.5 }}
             >
-              <LabelChip
+              <Chip
                 value={getFormattedLabel(key, value)}
-                sx={chipSx}
                 label={
                   <OverflowTooltip title={getFormattedLabel(key, value)}>
                     <Box sx={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -53,7 +52,7 @@ const LabelChip = styled(CustomChip)({
   cursor: 'inherit',
 })
 
-const DISABLED_LABEL_CHIP_SX: SxProps<Theme> = {
-  color: 'action.disabled',
-  backgroundColor: 'action.hover',
-}
+const DisabledLabelChip = styled(LabelChip)(({ theme }) => ({
+  color: theme.palette.action.disabled,
+  backgroundColor: theme.palette.action.hover,
+}))
