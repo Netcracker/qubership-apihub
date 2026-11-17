@@ -63,24 +63,24 @@ lists them).
 1. While the user stays in entity **N**, the UI watches for new `publish_new_version` and `publish_new_revision` events
    for **N** only.
    - API to read package activity — GET /api/v4/packages/{packageId}/activity:
-     - packageId = \<current entity id from URL>
+     - packageId = id of the current entity from the URL
      - types = new_version, package_version (filter as today for publish events)
    - If another entity **M** is published while the user is in **N**, the system does **not** show a publication toast.
 2. When a new version is published in **N**, the system enqueues one publication toast:
    - **Header:** **New version published**
    - **Body:** Published **{version}** version in {status} status in the {packageName} {kind} (same template as
      Activity history; {version} is a link to that version Summary).
-   - UI (Mockup): [New version published](https://www.figma.com/design/Yh7cjYj1FpHeDWt1hYMAkT/-APIHUB--Tasks?node-id=7846-556078)
+   - UI (Mockup): see [Mockups](#mockups) (new version published).
 3. When a new revision is published in **N**, the system enqueues one publication toast:
    - **Header:** **New revision published**
-   - **Body:** Published **{@revision}** revision of **{versionKey}** version in {status} status in the {packageName}
-     {kind} (same links as Activity history for `{@revision}` and `{versionKey}`).
-   - UI (Mockup): [New revision published](https://www.figma.com/design/Yh7cjYj1FpHeDWt1hYMAkT/-APIHUB--Tasks?node-id=7846-556962)
+   - **Body:** Published **{@revision}** revision of {versionKey} version in {status} status in the {packageName}
+     {kind} (same links as Activity history: `{@revision}` → revision Summary; `{packageName}` → package).
+   - UI (Mockup): see [Mockups](#mockups) (new revision published).
 4. Each toast uses the **info** icon (blue).
 5. If several publishes occur in **N**, the system shows at most **three** toasts at once, stacked (**newest on top**).
    Further events wait in a queue. When the user dismisses one visible toast, the next queued event appears so up to three
    remain visible.
-   - UI (Mockup): [Stack of publication toasts](https://www.figma.com/design/Yh7cjYj1FpHeDWt1hYMAkT/-APIHUB--Tasks?node-id=7937-568550)
+   - UI (Mockup): see [Mockups](#mockups) (stack of publication toasts).
 6. User may keep working on the version/revision they already opened; the toast does not switch context automatically.
 7. User closes one publication toast with **X**; only that toast is removed; others stay (Flow 1, step 5).
 8. User clicks a **version** or **revision** link in the toast body. The system navigates to the linked Summary (same
