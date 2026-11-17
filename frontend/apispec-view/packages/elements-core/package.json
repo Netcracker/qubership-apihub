@@ -33,7 +33,7 @@
     "@stoplight/markdown-viewer": "^5.4.7",
     "@stoplight/mosaic": "^1.40.0",
     "@stoplight/mosaic-code-editor": "^1.19.1",
-    "@stoplight/mosaic-code-viewer": "^1.24.4",
+    "@stoplight/mosaic-code-viewer": "^1.53.6",
     "@stoplight/react-error-boundary": "^2.0.0",
     "@stoplight/types": "^13.0.0",
     "@stoplight/yaml": "^4.2.3",
