@@ -57,7 +57,7 @@
     "@types/classnames": "^2.2.10",
     "@types/enzyme": "3.x.x",
     "@types/expect-puppeteer": "5.0.6",
-    "@types/file-saver": "^2.0.5",
+    "@types/file-saver": "^2.0.7",
     "@types/fontfaceobserver": "2.1.0",
     "@types/har-format": "^1.2.5",
     "@types/httpsnippet": "^1.23.0",
