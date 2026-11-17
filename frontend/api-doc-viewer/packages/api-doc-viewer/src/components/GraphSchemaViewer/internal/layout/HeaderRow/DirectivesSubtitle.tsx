@@ -1,3 +1,4 @@
+import { cn } from '@apihub/utils/common/cn'
 import { DiffRecord, isDiff, isDiffMetaRecord } from "@netcracker/qubership-apihub-api-data-model"
 import { DiffAction } from '@netcracker/qubership-apihub-api-diff'
 import type { FC, ReactNode } from 'react'
@@ -32,7 +33,7 @@ export const DirectivesSubtitle: FC<DirectivesSubtitleProps> = (props) => {
   const diffForAllDirectives = $metaChanges?.directives
 
   return (
-    <div className="flex gap-2">
+    <div className={cn("flex gap-2")}>
       {values.map(directive => {
         const diffForCurrentDirective = isDiffMetaRecord(diffForAllDirectives)
           ? diffForAllDirectives[directive]
@@ -116,7 +117,7 @@ const Value: FC<ValueProps> = props => {
     colorSchema = DEFAULT_DIRECTIVE_COLOR_SCHEMA,
   } = props
   return (
-    <div key={value} className={`inline-block text-xs ${colorSchema}`}>
+    <div key={value} className={cn(`inline-block text-xs ${colorSchema}`)}>
       {`@${value}`}
     </div>
   )

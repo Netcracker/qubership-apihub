@@ -1,3 +1,3 @@
 CREATE TABLE t (
-  label text DEFAULT '''fixed'''
+  display_text text DEFAULT '''fixed'''
 );

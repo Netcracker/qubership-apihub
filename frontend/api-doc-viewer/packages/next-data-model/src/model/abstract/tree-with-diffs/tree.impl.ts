@@ -48,9 +48,11 @@ export class TreeWithDiffs<
     sourceNode: ITreeNodeWithDiffs<V, K, M, D>,
     cloneId: NodeId,
     cloneKey: NodeKey,
+    cloneKind: K,
     cloneParent: ITreeNodeWithDiffs<V, K, M, D> | null,
+    cloneMeta?: M,
   ): ITreeNodeWithDiffs<V, K, M, D> {
-    const node = sourceNode.createCycledClone(cloneId, cloneKey, cloneParent)
+    const node = sourceNode.createCycledClone(cloneId, cloneKey, cloneKind, cloneParent, cloneMeta)
     this.nodes.set(cloneId, node)
     return node
   }

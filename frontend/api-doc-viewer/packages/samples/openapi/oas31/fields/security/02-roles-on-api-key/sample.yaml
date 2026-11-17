@@ -1,0 +1,20 @@
+openapi: 3.1.0
+info:
+  title: Orders
+  version: 1.0.0
+paths:
+  /orders:
+    post:
+      security:
+        - api_key:
+            - admin
+            - auditor
+      responses:
+        "200":
+          description: ""
+components:
+  securitySchemes:
+    api_key:
+      type: apiKey
+      in: header
+      name: X-API-Key

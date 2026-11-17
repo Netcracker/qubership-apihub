@@ -1,3 +1,4 @@
+import { cn } from '@apihub/utils/common/cn'
 import { DiffNodeMeta, DiffNodeValue, IModelTreeNode } from '@netcracker/qubership-apihub-api-data-model'
 import type { FC } from 'react'
 import { useEffect, useState } from 'react'
@@ -96,7 +97,7 @@ export const GraphPropNodeViewer: FC<GraphPropNodeViewerProps> = (props) => {
       <NoSubHeaderSideProvider value={noSubHeaderSide} setValue={setGlobalNoSubHeaderSide}>
         <div
           data-name="GraphNode"
-          className="flex flex-col grow"
+          className={cn("flex flex-col grow")}
         >
           <GraphPropNodeBody
             state={state}

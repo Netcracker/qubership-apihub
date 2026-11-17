@@ -35,6 +35,9 @@ dependencies:
     - ./frontend/api-diff/agent-packages/api-diff-testing
     # frontend/api-doc-viewer
     - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-authoring
+    - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-baseline-comparison
+    - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-ci-linters
+    - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-feature-test-plan
     - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-review-session
     - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-reviewing
     - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-testing

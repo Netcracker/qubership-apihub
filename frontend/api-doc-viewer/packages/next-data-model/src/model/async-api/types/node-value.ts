@@ -1,3 +1,5 @@
+import { SecurityTreeNodeKind } from "../../security/types/node-kind"
+import { SecurityTreeNodeValue } from "../../security/types/node-value"
 import { SpecificationExtensionKey } from "../../specification-extension-key"
 import { AsyncApiTreeNodeKind, AsyncApiTreeNodeKinds } from "./node-kind"
 
@@ -20,6 +22,8 @@ export type AsyncApiTreeNodeValue<T extends AsyncApiTreeNodeKind> =
   ? AsyncApiTreeNodeValueTypeMessagePayload
   : T extends typeof AsyncApiTreeNodeKinds.SERVER
   ? AsyncApiTreeNodeValueTypeServer
+  : T extends SecurityTreeNodeKind
+  ? SecurityTreeNodeValue<T>
   : never
 
 export interface AsyncApiTreeNodeValueBase {

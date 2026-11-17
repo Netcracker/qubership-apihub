@@ -4,6 +4,6 @@ import { BaseComponent } from '@shared/components/base'
 export class DiffDocView extends BaseComponent {
 
   constructor(readonly page: Page) {
-    super(page.locator('diff-operation-view').or(page.locator('operation-view')), 'Diff Doc view')
+    super(page.getByTestId('openapi-operation-diffs-viewer'), 'Diff Doc view')
   }
 }

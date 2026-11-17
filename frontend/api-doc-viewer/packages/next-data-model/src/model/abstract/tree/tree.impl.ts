@@ -47,9 +47,11 @@ export class Tree<
     sourceNode: ITreeNode<V, K, M>,
     cloneId: NodeId,
     cloneKey: NodeKey,
+    cloneKind: K,
     cloneParent: ITreeNode<V, K, M> | null,
+    cloneMeta?: M,
   ): ITreeNode<V, K, M> {
-    const node = sourceNode.createCycledClone(cloneId, cloneKey, cloneParent)
+    const node = sourceNode.createCycledClone(cloneId, cloneKey, cloneKind, cloneParent, cloneMeta)
     this.nodes.set(cloneId, node)
     return node
   }

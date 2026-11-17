@@ -80,7 +80,7 @@ jobs:
             ' "$affected" "${@}"
           }
 
-          shots="$(pick api-doc-viewer apispec-view class-view)"
+          shots="$(pick api-doc-viewer class-view)"
 
           # The Go set comes from the lang:go tag, never a list. `nx affected` does not accept
           # --projects: it passes the flag to the task (`malformed import path "--projects=tag:lang:go"`).
@@ -421,7 +421,7 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
-  # The only real test coverage api-doc-viewer, apispec-view, and class-view have. Each suite builds
+  # The only real test coverage api-doc-viewer and class-view have. Each suite builds
   # its Storybook, serves it, and drives Chrome in a container through jest. It does not wait for
   # `js`: `screenshot-test` depends on `build` and `^build`, so a broken build fails here.
   # Gap G24: the library build and the showcase build need opposite externals settings, and both

@@ -19,21 +19,21 @@ describe("JSON Schema Diffs Suite/String Validation/Pattern", () => {
 
   it("001-pattern-added", async () => {
     story = await storyPage(page, `json-schema-diffs-suite-string-validation-pattern--case-001-pattern-added`);
-    await waitForJsonSchemaDiffsViewer(page, { switchCombinerVariant: true });
+    await waitForJsonSchemaDiffsViewer(page);
     component = await story.viewComponent();
     expect(await component.captureScreenshot()).toMatchImageSnapshot();
   });
 
   it("002-pattern-removed", async () => {
     story = await storyPage(page, `json-schema-diffs-suite-string-validation-pattern--case-002-pattern-removed`);
-    await waitForJsonSchemaDiffsViewer(page, { switchCombinerVariant: true });
+    await waitForJsonSchemaDiffsViewer(page);
     component = await story.viewComponent();
     expect(await component.captureScreenshot()).toMatchImageSnapshot();
   });
 
   it("003-pattern-replaced", async () => {
     story = await storyPage(page, `json-schema-diffs-suite-string-validation-pattern--case-003-pattern-replaced`);
-    await waitForJsonSchemaDiffsViewer(page, { switchCombinerVariant: true });
+    await waitForJsonSchemaDiffsViewer(page);
     component = await story.viewComponent();
     expect(await component.captureScreenshot()).toMatchImageSnapshot();
   });

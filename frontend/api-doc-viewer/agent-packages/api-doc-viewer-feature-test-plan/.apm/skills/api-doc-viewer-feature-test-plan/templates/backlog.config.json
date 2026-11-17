@@ -1,0 +1,20 @@
+{
+  "github": {
+    "owner": "Netcracker",
+    "repos": ["qubership-apihub", "qubership-apihub-ui", "qubership-apihub-api-doc-viewer"],
+    "projects": [9]
+  },
+  "gitlab": {
+    "host": "https://<gitlab-host>",
+    "tokenEnv": "GITLAB_TOKEN",
+    "projects": ["<group>/<project>"]
+  },
+  "shortNamePrefix": "qubership-",
+  "minScore": 4,
+  "unrelatedTeam": "BE",
+  "keywords": {
+    "strong": ["api-doc-viewer", "viewer", "render", "displayed", "not shown", "comparison", "compare", "diff(s)?\\b"],
+    "domain": ["<words of the content the changed viewers show>"],
+    "exclude": ["linter", "helm", "docker", "deploy", "pipeline"]
+  }
+}

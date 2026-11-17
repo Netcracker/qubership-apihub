@@ -1,10 +1,10 @@
-import { AbstractNodeDiffsSeveritiesAggregator } from "@apihub/next-data-model/building-service/abstract/tree-with-diffs/node-diffs-data/node-diffs-severities-aggregator";
 import { NODE_LEVEL_DIFF_KEY, NodeDiffs, NodeDiffsSeverities, NodeDiffsSeverityPlacemennt } from "@apihub/next-data-model/model/abstract/tree-with-diffs/tree-node.interface";
 import { DDL_INDEX_FLAG_DIFF_KEYS } from "@apihub/next-data-model/model/ddlapi/tree-with-diffs/property-row-diffs";
 import { DdlApiIndexPropertyRowDiffs } from "@apihub/next-data-model/model/ddlapi/tree-with-diffs/property-row-diffs.types";
 import { DdlApiTreeNodeKind } from "@apihub/next-data-model/model/ddlapi/types/node-kind";
 import { DdlApiTreeNodeValue } from "@apihub/next-data-model/model/ddlapi/tree/node-value";
 import { DdlApiNodeDiffsSeveritiesAggregatorKindAny } from "./kind-any";
+import { DiffTypeOrder } from "@apihub/next-data-model/model/abstract/tree-with-diffs/diff-type-order";
 
 export class DdlApiNodeDiffsSeveritiesAggregatorKindIndex
   extends DdlApiNodeDiffsSeveritiesAggregatorKindAny {
@@ -38,7 +38,7 @@ export class DdlApiNodeDiffsSeveritiesAggregatorKindIndex
       ...Object.values(indexDiffs.partNameDiffs ?? {}),
     ]
 
-    const maxPropertyDiff = AbstractNodeDiffsSeveritiesAggregator.maxChangedPropertyMetaDataByDiffType(
+    const maxPropertyDiff = DiffTypeOrder.strongestChangedPropertyMetaData(
       ...titleRowDiffs,
     )
     if (!maxPropertyDiff) {

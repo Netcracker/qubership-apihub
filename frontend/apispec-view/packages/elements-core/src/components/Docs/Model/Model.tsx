@@ -1,4 +1,3 @@
-import { JsonSchemaViewer } from '@netcracker/qubership-apihub-api-doc-viewer';
 import { Extensions } from '../Extensions';
 import { useSearchPhrase, useExtensions, useOperationSchemaOptionsMode } from '../../../index';
 import { SectionSubtitle } from '../Sections';
@@ -7,11 +6,10 @@ import { CodeViewer } from '@stoplight/mosaic-code-viewer';
 import { ErrorBoundaryProps, withErrorBoundary } from '@stoplight/react-error-boundary';
 import cn from 'classnames';
 import { JSONSchema7 } from 'json-schema';
-import { JsonSchemaViewer as OldJsonSchemaViewer } from '@netcracker/qubership-apihub-apispec-view-json-schema-viewer';
+import { JsonSchemaViewer } from '@netcracker/qubership-apihub-apispec-view-json-schema-viewer';
 import * as React from 'react';
 import { Marker } from 'react-mark.js';
 
-import { JSON_SCHEMA_VIEWER_CUSTOMIZATION_OPTIONS } from '../../../constants';
 import { useInlineRefResolver, useResolvedObject } from '../../../context/InlineRefResolver';
 import { useIsCompact } from '../../../hooks/useIsCompact';
 import { exceedsSize, generateExamplesFromJsonSchema } from '../../../utils/exampleGeneration/exampleGeneration';
@@ -36,7 +34,7 @@ const ModelComponent: React.FC<ModelProps> = ({
   const resolveRef = useInlineRefResolver();
   const data = useResolvedObject(unresolvedData) as JSONSchema7;
   const [extensions] = useExtensions(data);
-  const { schemaViewMode, defaultSchemaDepth, oldRenderer } = useOperationSchemaOptionsMode();
+  const { schemaViewMode } = useOperationSchemaOptionsMode();
 
   const { ref: layoutRef, isCompact } = useIsCompact(layoutOptions);
 
@@ -81,20 +79,11 @@ const ModelComponent: React.FC<ModelProps> = ({
           </Box>
         )}
 
-        {oldRenderer ? (
-          <OldJsonSchemaViewer
-            resolveRef={resolveRef}
-            schema={getOriginalObject(data)}
-            schemaViewMode={schemaViewMode}
-          />
-        ) : (
-          <JsonSchemaViewer
-            schema={getOriginalObject(data)}
-            displayMode={schemaViewMode}
-            expandedDepth={defaultSchemaDepth}
-            customizationOptions={JSON_SCHEMA_VIEWER_CUSTOMIZATION_OPTIONS}
-          />
-        )}
+        <JsonSchemaViewer
+          resolveRef={resolveRef}
+          schema={getOriginalObject(data)}
+          schemaViewMode={schemaViewMode}
+        />
       </Marker>
 
       {isCompact && modelExamples}

@@ -11,7 +11,7 @@
   "homepage": "https://github.com/Netcracker/qubership-apihub#readme",
   "private": true,
   "description": "Qubership APIHUB monorepo: every component, its deployment, and its docs.",
-  "packageManager": "pnpm@12.4.2",
+  "packageManager": "pnpm@12.16.1",
   "devDependencies": {
     "@nx-go/nx-go": "4.1.1",
     "@nx/js": "23.2.0",

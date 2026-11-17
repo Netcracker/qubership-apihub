@@ -1,0 +1,36 @@
+openapi: 3.0.3
+info:
+  title: Orders
+  version: 1.0.0
+paths:
+  /orders:
+    post:
+      responses:
+        "404":
+          description: ""
+          headers:
+            X-Request-Id:
+              required: true
+              schema:
+                type: string
+                format: uuid
+            X-Rate-Limit-Remaining:
+              schema:
+                type: integer
+            X-Legacy-Token:
+              deprecated: true
+              schema:
+                type: string
+            X-Filter:
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      status:
+                        type: string
+                      from:
+                        type: string
+                        format: date
+        default:
+          description: ""

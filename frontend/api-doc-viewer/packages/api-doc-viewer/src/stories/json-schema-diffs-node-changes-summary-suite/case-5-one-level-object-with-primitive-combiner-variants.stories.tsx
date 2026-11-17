@@ -7,7 +7,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import {
   NodeChangesSummarySampleStory,
-  createNodeChangesSummaryCaseStoryWithChangedVariant,
+  createNodeChangesSummaryCaseStory,
 } from "./node-changes-summary-utils";
 
 const CASE_SLUG = "5-oneof-properties";
@@ -22,8 +22,5 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-// Unlike cases 6/7, neither story here exists specifically to demonstrate the combiner's
-// default/unswitched selection -- both are plain expand-depth variants -- so both safely use
-// the changed-variant factory (a no-op wherever a case's diff isn't combiner-option-level).
-export const Expanded_root: Story = createNodeChangesSummaryCaseStoryWithChangedVariant(CASE_SLUG, "Expanded root", 1);
-export const Collapsed_root: Story = createNodeChangesSummaryCaseStoryWithChangedVariant(CASE_SLUG, "Collapsed root", 0);
+export const Expanded_root: Story = createNodeChangesSummaryCaseStory(CASE_SLUG, "Expanded root", 1);
+export const Collapsed_root: Story = createNodeChangesSummaryCaseStory(CASE_SLUG, "Collapsed root", 0);

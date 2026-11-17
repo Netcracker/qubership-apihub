@@ -1,0 +1,14 @@
+openapi: 3.0.3
+info:
+  title: Orders
+  version: 1.0.0
+paths:
+  /orders:
+    post:
+      operationId: updateOrder
+      x-rate-limit: 100
+      x-audience:
+        visibility: public
+      responses:
+        "200":
+          description: ""

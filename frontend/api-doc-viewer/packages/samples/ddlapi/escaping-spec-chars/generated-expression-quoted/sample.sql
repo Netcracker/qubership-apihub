@@ -1,3 +1,3 @@
 CREATE TABLE t (
-  label text GENERATED ALWAYS AS ('''fixed''') STORED
+  display_text text GENERATED ALWAYS AS ('''fixed''') STORED
 );

@@ -1,14 +1,12 @@
-import { JsonSchemaViewer } from '@netcracker/qubership-apihub-api-doc-viewer';
 import { Extension, Extensions } from '../Extensions';
 import { useSearchPhrase, useOperationSchemaOptionsMode } from '../../../index';
 import { Box, Flex, IntentVals, Tab, TabList, TabPanel, TabPanels, Tabs, VStack } from '@stoplight/mosaic';
 import { IHttpOperationResponse } from '@stoplight/types';
-import { JsonSchemaViewer as OldJsonSchemaViewer } from '@netcracker/qubership-apihub-apispec-view-json-schema-viewer';
+import { JsonSchemaViewer } from '@netcracker/qubership-apihub-apispec-view-json-schema-viewer';
 import { isEmpty, sortBy, uniqBy } from 'lodash';
 import * as React from 'react';
 import { Marker } from 'react-mark.js';
 
-import { JSON_SCHEMA_VIEWER_CUSTOMIZATION_OPTIONS } from '../../../constants';
 import { useInlineRefResolver } from '../../../context/InlineRefResolver';
 import { getOriginalObject } from '../../../utils/ref-resolving/resolvedObject';
 import { MarkdownViewer } from '../../MarkdownViewer';
@@ -82,7 +80,7 @@ const Response = ({ response, onMediaTypeChange, extensions }: ResponseProps) =>
 
   const responseContent = contents[chosenContent];
   const schema = responseContent?.schema;
-  const { schemaViewMode, defaultSchemaDepth, oldRenderer } = useOperationSchemaOptionsMode();
+  const { schemaViewMode, defaultSchemaDepth } = useOperationSchemaOptionsMode();
 
   React.useEffect(() => {
     responseContent && onMediaTypeChange(responseContent.mediaType);
@@ -132,25 +130,17 @@ const Response = ({ response, onMediaTypeChange, extensions }: ResponseProps) =>
               </Flex>
             </SectionSubtitle>
 
-            {schema &&
-              (oldRenderer ? (
-                <OldJsonSchemaViewer
-                  schema={getOriginalObject(schema)}
-                  resolveRef={refResolver}
-                  viewMode="read"
-                  parentCrumbs={['responses', response.code]}
-                  schemaViewMode={schemaViewMode}
-                  defaultExpandedDepth={defaultSchemaDepth}
-                  renderRootTreeLines
-                />
-              ) : (
-                <JsonSchemaViewer
-                  schema={getOriginalObject(schema!)}
-                  displayMode={schemaViewMode}
-                  expandedDepth={defaultSchemaDepth}
-                  customizationOptions={JSON_SCHEMA_VIEWER_CUSTOMIZATION_OPTIONS}
-                />
-              ))}
+            {schema && (
+              <JsonSchemaViewer
+                schema={getOriginalObject(schema)}
+                resolveRef={refResolver}
+                viewMode="read"
+                parentCrumbs={['responses', response.code]}
+                schemaViewMode={schemaViewMode}
+                defaultExpandedDepth={defaultSchemaDepth}
+                renderRootTreeLines
+              />
+            )}
           </>
         )}
       </Marker>

@@ -1,3 +1,4 @@
+import { cn } from '@apihub/utils/common/cn'
 import type { FC } from 'react'
 import { memo, MouseEventHandler } from 'react'
 import { ArrowDownIcon } from '../../../kit/icons/ArrowDownIcon'
@@ -12,7 +13,7 @@ export type ExpandingCaretProps = {
 export const ExpandingCaret: FC<ExpandingCaretProps> = memo<ExpandingCaretProps>(props => {
   const { onToggle, expanded, testId } = props
   return (
-    <div className="hover:cursor-pointer" onClick={onToggle} data-testid={testId}>
+    <div className={cn("hover:cursor-pointer")} onClick={onToggle} data-testid={testId}>
       {expanded ? <ArrowDownIcon/> : <ArrowRightIcon/>}
     </div>
   )
