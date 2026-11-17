@@ -25,8 +25,22 @@ describe('discoveryViewOf', () => {
     expect(discoveryViewOf({ status: NONE_DISCOVERY_STATUS, services: [] }, false, false)).toBe(NOT_RUN_DISCOVERY_VIEW)
   })
 
-  it('shows the services of a running discovery, also before it finds one', () => {
+  it('keeps the view of the start until a running discovery finds a service', () => {
+    expect(discoveryViewOf({ status: RUNNING_DISCOVERY_STATUS, services: [] }, false, false, FAILED_DISCOVERY_VIEW))
+      .toBe(FAILED_DISCOVERY_VIEW)
+    expect(discoveryViewOf({ status: RUNNING_DISCOVERY_STATUS, services: [] }, false, false, SERVICES_DISCOVERY_VIEW))
+      .toBe(SERVICES_DISCOVERY_VIEW)
+  })
+
+  it('offers to run a discovery while one runs with no known start and no service found', () => {
     expect(discoveryViewOf({ status: RUNNING_DISCOVERY_STATUS, services: [] }, false, false))
+      .toBe(NOT_RUN_DISCOVERY_VIEW)
+  })
+
+  it('shows the services of a running discovery once it finds one', () => {
+    expect(
+      discoveryViewOf({ status: RUNNING_DISCOVERY_STATUS, services: [SERVICE] }, false, false, NOT_RUN_DISCOVERY_VIEW),
+    )
       .toBe(SERVICES_DISCOVERY_VIEW)
   })
 

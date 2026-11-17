@@ -1,5 +1,4 @@
-import { LoadingButton } from '@mui/lab'
-import { Box } from '@mui/material'
+import { Box, Button } from '@mui/material'
 import { type FC, memo, useEffect, useState } from 'react'
 
 import { SearchBar, type SearchValue } from '@netcracker/qubership-apihub-ui-shared/components/SearchBar'
@@ -22,14 +21,14 @@ export const DiscoverServicesStepToolbar: FC<DiscoverServicesStepToolbarProps> =
 
   return (
     <Box display="flex" gap={2} pt={1}>
-      <LoadingButton
+      <Button
         data-testid="RestartDiscoveryButton"
         variant="outlined"
-        loading={isDiscoveryRunning}
+        disabled={isDiscoveryRunning}
         onClick={onRestartDiscovery}
       >
         Restart Discovery
-      </LoadingButton>
+      </Button>
       <Box sx={{ alignSelf: 'center', ml: 'auto' }}>
         <SearchBar
           value={searchValue}

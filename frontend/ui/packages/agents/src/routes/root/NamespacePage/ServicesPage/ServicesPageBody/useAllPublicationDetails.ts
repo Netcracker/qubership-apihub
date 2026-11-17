@@ -3,6 +3,7 @@ import { useInvalidateSnapshotPublicationInfo } from '../../useSnapshotPublicati
 import { useCreateSnapshotPublicationOptions } from '../ServicesPageProvider/ServicesPublicationOptionsProvider'
 import { useInvalidateSnapshots, useSnapshots } from '../../useSnapshots'
 import { useMemo } from 'react'
+import { isEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
 import {
   EMPTY_ALL_PUBLISH_DETAILS,
   getPublishDetails,
@@ -46,30 +47,7 @@ export function useAllPublishDetailsStatus(options?: Partial<{
     invalidateSnapshots()
   })
 
-  const isRunning = useMemo(
-    () => allPublishDetails?.find(({ status }) => status === RUNNING_PUBLISH_STATUS),
-    [allPublishDetails],
-  )
-  const isSuccess = useMemo(
-    () => allPublishDetails?.every(({ status }) => status === COMPLETE_PUBLISH_STATUS),
-    [allPublishDetails],
-  )
-  const isFailed = useMemo(
-    () => allPublishDetails?.find(({ status }) => status === ERROR_PUBLISH_STATUS),
-    [allPublishDetails],
-  )
-
-  if (isRunning) {
-    return RUNNING_PUBLISH_STATUS
-  }
-  if (isSuccess) {
-    return COMPLETE_PUBLISH_STATUS
-  }
-  if (isFailed) {
-    return ERROR_PUBLISH_STATUS
-  }
-
-  return NONE_PUBLISH_STATUS
+  return publishStatusOf(allPublishDetails, getPublishIds(config))
 }
 
 function useAllPublicationDetailsQuery(
@@ -90,7 +68,7 @@ function useAllPublicationDetailsQuery(
       return finalCount < publishIds.length ? STATUS_REFETCH_INTERVAL : false
     },
     onSuccess: data => {
-      if (isEveryPublicationComplete(data, publishIds)) {
+      if (publishStatusOf(data, publishIds) === COMPLETE_PUBLISH_STATUS) {
         onComplete?.()
       }
     },
@@ -111,6 +89,26 @@ function getPublishIds(config: PublishConfig | undefined): PublishKey[] {
   return snapshotPublishId ? [...publishIds, snapshotPublishId] : publishIds
 }
 
-function isEveryPublicationComplete(data: PublishDetails[] | null, publishIds: PublishKey[]): boolean {
-  return publishIds.every(publishId => !!data?.some(item => item.publishId === publishId && item.status === COMPLETE_PUBLISH_STATUS))
+/**
+ * The status of the publications of a config: `none` without a publication, `complete` when every publication
+ * completed, `error` when every one ended and one failed, and `running` otherwise. A publication that the response
+ * lacks counts as `none`, so a started config is `running` before its first status arrives.
+ */
+export function publishStatusOf(
+  allPublishDetails: ReadonlyArray<PublishDetails>,
+  publishIds: ReadonlyArray<PublishKey>,
+): PublishStatus {
+  if (isEmpty(publishIds)) {
+    return NONE_PUBLISH_STATUS
+  }
+  const statuses = publishIds.map(publishId =>
+    allPublishDetails.find(details => details.publishId === publishId)?.status ?? NONE_PUBLISH_STATUS,
+  )
+  if (statuses.every(status => status === COMPLETE_PUBLISH_STATUS)) {
+    return COMPLETE_PUBLISH_STATUS
+  }
+  if (statuses.every(status => FINAL_PUBLISH_STATUSES.includes(status))) {
+    return ERROR_PUBLISH_STATUS
+  }
+  return RUNNING_PUBLISH_STATUS
 }

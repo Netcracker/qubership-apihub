@@ -1,45 +1,47 @@
-import { LoadingButton } from '@mui/lab'
+import { Button } from '@mui/material'
 import { type FC, memo, type ReactElement, useCallback, useEffect } from 'react'
 
 import { LoadingIndicator } from '@netcracker/qubership-apihub-ui-shared/components/LoadingIndicator'
-import type { IsLoading } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
+import type { IsError, IsLoading } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
 
 import {
   EmptyState,
   FAILED_EMPTY_STATE_VARIANT,
   NO_DATA_EMPTY_STATE_VARIANT,
 } from '@agents/components/EmptyState/EmptyState'
-import { ERROR_DISCOVERY_STATUS, RUNNING_DISCOVERY_STATUS } from '@agents/entities/statuses'
+import { type DiscoveryStatus, ERROR_DISCOVERY_STATUS, RUNNING_DISCOVERY_STATUS } from '@agents/entities/statuses'
 import { useShowErrorNotification } from '../../../../BasePage/NotificationHandler'
 import { useServices } from '../../../useServices'
+import { useSetDiscoveryStartView } from '../../ServicesPageProvider/DiscoveryStartViewProvider'
 import { useCreateSnapshotPublicationOptions } from '../../ServicesPageProvider/ServicesPublicationOptionsProvider'
 import { DISCOVER_SERVICES_STEP_KEY } from '../../ServicesPageProvider/servicesSteps'
 import { useResetStepsAfter, useSetStepStatus } from '../../ServicesPageProvider/ServicesStepsProvider'
 import { DiscoveredServices } from './DiscoveredServices'
 import {
-  discoveryViewOf,
+  type DiscoveryView,
   FAILED_DISCOVERY_VIEW,
   LOADING_DISCOVERY_VIEW,
   NO_SERVICES_DISCOVERY_VIEW,
   NOT_RUN_DISCOVERY_VIEW,
   SERVICES_DISCOVERY_VIEW,
+  useDiscoveryView,
 } from './useDiscoveryView'
 import { useRunDiscovery } from './useRunDiscovery'
 
 type StartDiscovery = () => void
 
 export const DiscoverServicesStep: FC = memo((): ReactElement => {
-  const [discovery, isLoading, isError] = useServices()
-  const { status, services } = discovery
+  const [{ status, services }, , isError] = useServices()
+  const view = useDiscoveryView()
   const setStepStatus = useSetStepStatus()
-  const [startDiscovery, isStarting] = useStartDiscovery()
+  const [startDiscovery, isStarting] = useStartDiscovery(view)
 
-  // A failed services request shows "Discovery failed", so the tab of the step shows "Failed" with it
-  const stepStatus = isError ? ERROR_DISCOVERY_STATUS : status
-  // Every view writes the status, so the tab of the step follows the discovery in the empty states too
+  // The start request counts as the run, so the tab spins and the buttons stay disabled from the click on
+  const isDiscoveryRunning = isStarting || status === RUNNING_DISCOVERY_STATUS
+  const stepStatus = getStepStatus(status, isDiscoveryRunning, isError)
   useEffect(() => setStepStatus(DISCOVER_SERVICES_STEP_KEY, stepStatus), [setStepStatus, stepStatus])
 
-  switch (discoveryViewOf(discovery, isLoading, isError)) {
+  switch (view) {
     case LOADING_DISCOVERY_VIEW:
       return <LoadingIndicator/>
     case NOT_RUN_DISCOVERY_VIEW:
@@ -49,14 +51,14 @@ export const DiscoverServicesStep: FC = memo((): ReactElement => {
           title="No Services Discovered Yet"
           lines={['Run discovery to load services and API documents from the selected cluster']}
           action={
-            <LoadingButton
+            <Button
               variant="contained"
-              loading={isStarting}
+              disabled={isDiscoveryRunning}
               onClick={startDiscovery}
               data-testid="RunDiscoveryButton"
             >
               Run Discovery
-            </LoadingButton>
+            </Button>
           }
           data-testid="DiscoveryNotRunState"
         />
@@ -71,14 +73,14 @@ export const DiscoverServicesStep: FC = memo((): ReactElement => {
             'Check that the agent is running in the selected cluster and try again',
           ]}
           action={
-            <LoadingButton
+            <Button
               variant="contained"
-              loading={isStarting}
+              disabled={isDiscoveryRunning}
               onClick={startDiscovery}
               data-testid="RetryDiscoveryButton"
             >
               Try Again
-            </LoadingButton>
+            </Button>
           }
           data-testid="DiscoveryFailedState"
         />
@@ -99,7 +101,7 @@ export const DiscoverServicesStep: FC = memo((): ReactElement => {
       return (
         <DiscoveredServices
           services={services}
-          isDiscoveryRunning={isStarting || status === RUNNING_DISCOVERY_STATUS}
+          isDiscoveryRunning={isDiscoveryRunning}
           onRestartDiscovery={startDiscovery}
         />
       )
@@ -108,19 +110,29 @@ export const DiscoverServicesStep: FC = memo((): ReactElement => {
 
 DiscoverServicesStep.displayName = 'DiscoverServicesStep'
 
-function useStartDiscovery(): [StartDiscovery, IsLoading] {
+function useStartDiscovery(view: DiscoveryView): [StartDiscovery, IsLoading] {
   const { resetCreateSnapshotPublicationOptions } = useCreateSnapshotPublicationOptions()
   const resetStepsAfter = useResetStepsAfter()
+  const setStartView = useSetDiscoveryStartView()
   const showErrorNotification = useShowErrorNotification()
-  // The Agents SPA shows no failed request by itself, so a failed start would leave the step without a sign
+  // The Agents SPA reports no failed request on its own, so the error of a failed start is shown here
   const [runDiscovery, isStarting] = useRunDiscovery(error => showErrorNotification({ message: error.message }))
 
   const startDiscovery = useCallback(() => {
-    // Steps 2 and 3 start over, since their snapshot and promotion came from the last result of the discovery
+    // Steps 2 and 3 start over, since their snapshot and promotion used the services of the previous discovery
     resetCreateSnapshotPublicationOptions()
     resetStepsAfter(DISCOVER_SERVICES_STEP_KEY)
+    setStartView(view)
     runDiscovery()
-  }, [resetCreateSnapshotPublicationOptions, resetStepsAfter, runDiscovery])
+  }, [resetCreateSnapshotPublicationOptions, resetStepsAfter, runDiscovery, setStartView, view])
 
   return [startDiscovery, isStarting]
+}
+
+function getStepStatus(status: DiscoveryStatus, isDiscoveryRunning: boolean, isError: IsError): DiscoveryStatus {
+  if (isDiscoveryRunning) {
+    return RUNNING_DISCOVERY_STATUS
+  }
+  // A failed services request shows "Discovery failed", so the tab of the step shows "Failed" with it
+  return isError ? ERROR_DISCOVERY_STATUS : status
 }

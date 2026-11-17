@@ -3,7 +3,6 @@ import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import { Autocomplete, Box, Button, TextField, Typography } from '@mui/material'
 import type { Control, FieldErrors } from 'react-hook-form'
 import { Controller, useForm } from 'react-hook-form'
-import { LoadingButton } from '@mui/lab'
 import type { CreateSnapshot } from './useCreateSnapshot'
 import { useCreateSnapshot } from './useCreateSnapshot'
 import { useCreateSnapshotStepStatus } from './useCreateSnapshotStepStatus'
@@ -35,7 +34,7 @@ import type { ServiceKey } from '@netcracker/qubership-apihub-ui-shared/entities
 import { checkVersionRestrictedSymbols } from '@netcracker/qubership-apihub-ui-shared/utils/validations'
 
 export const CreateSnapshotStep: FC = memo(() => {
-  const [createSnapshot, isLoading] = useCreateSnapshot()
+  const [createSnapshot, isCreating] = useCreateSnapshot()
   const [
     control,
     nameOptions,
@@ -48,7 +47,7 @@ export const CreateSnapshotStep: FC = memo(() => {
     isCreateSnapshotFinished,
     baseline,
     formErrors,
-  ] = useToolbarData(createSnapshot)
+  ] = useToolbarData(createSnapshot, isCreating)
 
   const baselineFlags = baselineOptions.flagsByVersionKey.get(baseline)
   const baselineProblem = useVersionProblemDetails({
@@ -180,19 +179,23 @@ export const CreateSnapshotStep: FC = memo(() => {
             Reset
           </Button>
 
-          <LoadingButton
+          <Button
             data-testid="CreateSnapshotButton"
             sx={{ width: 156 }}
-            disabled={!isCreateSnapshotAvailable || isCreateSnapshotSuccess || baselineProblem.isBlocking}
+            disabled={
+              !isCreateSnapshotAvailable ||
+              isCreateSnapshotRunning ||
+              isCreateSnapshotSuccess ||
+              baselineProblem.isBlocking
+            }
             variant={isCreateSnapshotSuccess ? 'outlined' : 'contained'}
-            loading={isLoading || isCreateSnapshotRunning}
             onClick={() => {
               setIsTableSelectable(false)
             }}
             type="submit"
           >
             Create Snapshot
-          </LoadingButton>
+          </Button>
         </Box>
 
         <Box sx={{ alignSelf: 'center', ml: 'auto' }}>
@@ -245,6 +248,7 @@ type IsCreateFinished = boolean
 
 function useToolbarData(
   createSnapshot: CreateSnapshot,
+  isCreating: IsLoading,
 ): [
   Control<FormData>,
   NameOptions,
@@ -292,7 +296,9 @@ function useToolbarData(
   })
 
   const setStepStatus = useSetStepStatus()
-  const status = useCreateSnapshotStepStatus()
+  const publishStatus = useCreateSnapshotStepStatus()
+  // The create request counts as the run, so the tab spins and the controls stay disabled from the click on
+  const status = isCreating ? RUNNING_STEP_STATUS : publishStatus
   useEffect(() => setStepStatus(CREATE_SNAPSHOT_STEP_KEY, status), [setStepStatus, status])
 
   const onReset = useCallback(() => {

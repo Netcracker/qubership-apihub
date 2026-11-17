@@ -41,7 +41,14 @@ export function usePromoteVersion(): [PromoteVersion, IsLoading, IsSuccess, IsEr
       return toPublishConfig(config, builderId)
     },
     onSuccess: (config, { version, previousVersion, status, serviceKeys }) => {
-      setPromotePublicationOptions({ version, previousVersion, status, serviceKeys, config })
+      setPromotePublicationOptions(({ isPromoted }) => ({
+        version,
+        previousVersion,
+        status,
+        serviceKeys,
+        config,
+        isPromoted,
+      }))
     },
   })
 

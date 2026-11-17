@@ -34,6 +34,8 @@ export type PromoteVersionPublicationOptions = {
   status: VersionStatus
   serviceKeys: ServiceKey[]
   config?: PublishConfig
+  /** The current promotion followed a completed one, so the step offers a re-promotion whatever its status. */
+  isPromoted?: boolean
 }
 
 const EMPTY_CREATE_SNAPSHOT_PUBLICATION_OPTIONS: CreateSnapshotPublicationOptions = {

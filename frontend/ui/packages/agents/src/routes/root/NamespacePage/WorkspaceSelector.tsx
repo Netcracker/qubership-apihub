@@ -10,6 +10,7 @@ import { PackageSelector } from '@netcracker/qubership-apihub-ui-shared/componen
 import { useActiveTabs } from '@netcracker/qubership-apihub-ui-shared/hooks/pathparams/useActiveTabs'
 import { SERVICES_PAGE } from '../../routes'
 import { useInvalidateServices } from './useServices'
+import { useSetDiscoveryStartView } from './ServicesPage/ServicesPageProvider/DiscoveryStartViewProvider'
 import { DISCOVER_SERVICES_STEP_KEY } from './ServicesPage/ServicesPageProvider/servicesSteps'
 import { useResetStepsAfter } from './ServicesPage/ServicesPageProvider/ServicesStepsProvider'
 import {
@@ -27,6 +28,7 @@ export const WorkspaceSelector: FC = memo(() => {
 
   const { resetCreateSnapshotPublicationOptions } = useCreateSnapshotPublicationOptions()
   const resetStepsAfter = useResetStepsAfter()
+  const setDiscoveryStartView = useSetDiscoveryStartView()
 
   const invalidateServices = useInvalidateServices()
 
@@ -54,14 +56,22 @@ export const WorkspaceSelector: FC = memo(() => {
         [WORKSPACE_SEARCH_PARAM]: workspaceId,
       })
 
-      // Only the buttons of Discover Services start a discovery, so Step 1 shows what is stored for the workspace
+      // The snapshot, the promotion, and the view a discovery started from belong to the previous workspace
       if (activeTab === SERVICES_PAGE) {
         invalidateServices()
         resetCreateSnapshotPublicationOptions()
         resetStepsAfter(DISCOVER_SERVICES_STEP_KEY)
+        setDiscoveryStartView(undefined)
       }
     }
-  }, [activeTab, invalidateServices, resetCreateSnapshotPublicationOptions, resetStepsAfter, setSearchParams])
+  }, [
+    activeTab,
+    invalidateServices,
+    resetCreateSnapshotPublicationOptions,
+    resetStepsAfter,
+    setDiscoveryStartView,
+    setSearchParams,
+  ])
 
   const onSelectWorkspace = useCallback(
     (workspace: Package | null) => setWorkspace(workspace?.key),

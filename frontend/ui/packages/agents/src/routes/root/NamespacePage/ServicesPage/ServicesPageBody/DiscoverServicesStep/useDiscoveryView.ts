@@ -9,6 +9,7 @@ import {
   RUNNING_DISCOVERY_STATUS,
 } from '@agents/entities/statuses'
 import { useServices } from '../../../useServices'
+import { useDiscoveryStartView } from '../../ServicesPageProvider/DiscoveryStartViewProvider'
 
 export const LOADING_DISCOVERY_VIEW = 'loading'
 export const NOT_RUN_DISCOVERY_VIEW = 'not-run'
@@ -16,7 +17,7 @@ export const FAILED_DISCOVERY_VIEW = 'failed'
 export const NO_SERVICES_DISCOVERY_VIEW = 'no-services'
 export const SERVICES_DISCOVERY_VIEW = 'services'
 
-type DiscoveryView =
+export type DiscoveryView =
   | typeof LOADING_DISCOVERY_VIEW
   | typeof NOT_RUN_DISCOVERY_VIEW
   | typeof FAILED_DISCOVERY_VIEW
@@ -26,17 +27,20 @@ type DiscoveryView =
 /** What Discover Services shows; the footer and the next step of the wizard depend on it too. */
 export function useDiscoveryView(): DiscoveryView {
   const [discovery, isLoading, isError] = useServices()
-  return discoveryViewOf(discovery, isLoading, isError)
+  const startView = useDiscoveryStartView()
+  return discoveryViewOf(discovery, isLoading, isError, startView)
 }
 
 /**
- * The view of Discover Services for a services response. A running discovery shows the services it found so far,
- * and a services request that failed with no result shows the failed discovery.
+ * The view of Discover Services for a services response. A running discovery shows the services it found so far;
+ * until it finds one, the view stays `startView`, the view of the step when the discovery started, or `not-run` when
+ * that is not known. A services request that failed with no result shows the failed discovery.
  */
 export function discoveryViewOf(
   { status, services }: Services,
   isLoading: IsLoading,
   isError: IsError,
+  startView?: DiscoveryView,
 ): DiscoveryView {
   if (isLoading) {
     return LOADING_DISCOVERY_VIEW
@@ -48,7 +52,7 @@ export function discoveryViewOf(
     case NONE_DISCOVERY_STATUS:
       return NOT_RUN_DISCOVERY_VIEW
     case RUNNING_DISCOVERY_STATUS:
-      return SERVICES_DISCOVERY_VIEW
+      return isEmpty(services) ? startView ?? NOT_RUN_DISCOVERY_VIEW : SERVICES_DISCOVERY_VIEW
     case COMPLETE_DISCOVERY_STATUS:
       return isEmpty(services) ? NO_SERVICES_DISCOVERY_VIEW : SERVICES_DISCOVERY_VIEW
     case ERROR_DISCOVERY_STATUS:

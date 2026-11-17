@@ -1,11 +1,10 @@
 import { type FC, memo, useCallback, useEffect, useMemo, useState } from 'react'
-import { Autocomplete, Box, Checkbox, FormControlLabel, MenuItem, styled, TextField, Typography } from '@mui/material'
+import { Autocomplete, Box, Button, Checkbox, FormControlLabel, MenuItem, styled, TextField, Typography } from '@mui/material'
 import { useServices } from '../../../useServices'
 import type { Control, FieldErrors } from 'react-hook-form'
 import { Controller, useForm } from 'react-hook-form'
-import { LoadingButton } from '@mui/lab'
 
-import type { IsLoading, IsSuccess } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
+import type { IsLoading } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
 
 import { PromoteVersionStepSections } from './PromoteVersionStepSections'
 import type { PromoteVersion } from './usePromoteVersion'
@@ -50,20 +49,20 @@ import { useSetStepStatus } from '../../ServicesPageProvider/ServicesStepsProvid
 import { useSnapshotPublicationInfo } from '../../../useSnapshotPublicationInfo'
 
 export const PromoteVersionStep: FC = memo(() => {
-  const [promoteVersion, isLoading] = usePromoteVersion()
+  const [promoteVersion, isPromoting] = usePromoteVersion()
   const [
     control,
     nameOptions,
     baselineOptions,
     onSubmit,
-    isCreateSnapshotRunning,
-    isCreateSnapshotSuccess,
+    isPromotionRunning,
+    isRepromotion,
     isPromoteAvailable,
     status,
     previousVersion,
     formErrors,
     isReleaseRefused,
-  ] = useToolbarData(promoteVersion)
+  ] = useToolbarData(promoteVersion, isPromoting)
 
   const previousVersionFlags = baselineOptions.flagsByVersionKey.get(previousVersion)
   const previousVersionProblem = useVersionProblemDetails({
@@ -75,13 +74,7 @@ export const PromoteVersionStep: FC = memo(() => {
     app: agent,
   })
 
-  const areControlsDisabled = isLoading || isCreateSnapshotRunning
-  const [repromoteEnabled, setRepromoteEnabled] = useState(false)
-  useEffect(() => {
-    if (!repromoteEnabled && isCreateSnapshotSuccess) {
-      setRepromoteEnabled(true)
-    }
-  }, [repromoteEnabled, isCreateSnapshotSuccess, setRepromoteEnabled])
+  const areControlsDisabled = isPromotionRunning
   const [{ services }, isServicesLoading] = useServices({ onlyWithSpecs: true })
 
   const [searchValue, setSearchValue] = useState('')
@@ -198,16 +191,15 @@ export const PromoteVersionStep: FC = memo(() => {
         />
 
         <Box sx={{ ml: 'auto', alignSelf: 'baseline', mt: 1 }}>
-          <LoadingButton
-            data-testid={repromoteEnabled ? 'RePromoteVersionButton' : 'PromoteVersionButton'}
-            sx={{ width: repromoteEnabled ? 180 : 160 }}
+          <Button
+            data-testid={isRepromotion ? 'RePromoteVersionButton' : 'PromoteVersionButton'}
+            sx={{ width: isRepromotion ? 180 : 160 }}
             disabled={areControlsDisabled || !isPromoteAvailable || previousVersionProblem.isBlocking || isReleaseRefused}
-            variant={repromoteEnabled ? 'outlined' : 'contained'}
-            loading={isLoading || isCreateSnapshotRunning}
+            variant={isRepromotion ? 'outlined' : 'contained'}
             type="submit"
           >
-            {repromoteEnabled ? 'Re-promote Version' : 'Promote Version'}
-          </LoadingButton>
+            {isRepromotion ? 'Re-promote Version' : 'Promote Version'}
+          </Button>
         </Box>
 
         <Box sx={{ alignSelf: 'center', ml: 'auto' }}>
@@ -291,6 +283,7 @@ type FormData = {
 type VersionOptions = string[]
 type OnSubmit = () => void
 type IsPromoteAvailable = boolean
+type IsRepromotion = boolean
 type IsReleaseRefused = boolean
 
 const StatusValue = styled(Box)(({ theme }) => ({
@@ -301,13 +294,14 @@ const StatusValue = styled(Box)(({ theme }) => ({
 
 function useToolbarData(
   promoteVersion: PromoteVersion,
+  isPromoting: IsLoading,
 ): [
   Control<FormData>,
   VersionOptions,
   BaselineOptions,
   OnSubmit,
   IsLoading,
-  IsSuccess,
+  IsRepromotion,
   IsPromoteAvailable,
   VersionStatus,
   FormData['previousVersion'],
@@ -321,7 +315,9 @@ function useToolbarData(
       serviceKeys,
       status,
       version,
+      isPromoted,
     },
+    setPromotePublicationOptions,
   } = usePromoteVersionPublicationOptions()
 
   const defaultValues: FormData = useMemo(() => ({
@@ -335,16 +331,24 @@ function useToolbarData(
 
   useEffect(() => reset(defaultValues), [defaultValues, reset])
 
+  const setStepStatus = useSetStepStatus()
+  const publishStatus = usePromoteVersionStepStatus()
+  // The promote request counts as the run, so the tab spins and the controls stay disabled from the click on
+  const stepStatus = isPromoting ? RUNNING_STEP_STATUS : publishStatus
+  useEffect(() => setStepStatus(PROMOTE_VERSION_STEP_KEY, stepStatus), [setStepStatus, stepStatus])
+
   const onSubmit = useMemo(
-    () => handleSubmit(promotionOptions => promoteVersion(promotionOptions)),
-    [handleSubmit, promoteVersion],
+    () => handleSubmit(promotionOptions => {
+      // Once this promotion starts, the step status no longer shows that the last one completed, so the options keep it
+      if (stepStatus === COMPLETE_STEP_STATUS) {
+        setPromotePublicationOptions(options => ({ ...options, isPromoted: true }))
+      }
+      promoteVersion(promotionOptions)
+    }),
+    [handleSubmit, promoteVersion, setPromotePublicationOptions, stepStatus],
   )
 
   const versionOptions = useVersionOptions()
-
-  const setStepStatus = useSetStepStatus()
-  const stepStatus = usePromoteVersionStepStatus()
-  useEffect(() => setStepStatus(PROMOTE_VERSION_STEP_KEY, stepStatus), [setStepStatus, stepStatus])
 
   const {
     previousVersion: previousVersionForm,
@@ -370,7 +374,7 @@ function useToolbarData(
     previousVersionOptions,
     onSubmit,
     stepStatus === RUNNING_STEP_STATUS,
-    stepStatus === COMPLETE_STEP_STATUS,
+    !!isPromoted || stepStatus === COMPLETE_STEP_STATUS,
     isPromoteVersionAvailable,
     statusForm,
     previousVersionForm,
