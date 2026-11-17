@@ -1,0 +1,11 @@
+/* stylelint-disable selector-class-pattern -- modifier classes shared with TS/TSX */
+
+.java-type-reference_link {
+  color: #0068ff;
+  text-decoration: none;
+}
+
+.java-type-reference_link:hover {
+  color: #747bff;
+  text-decoration: underline;
+}

@@ -18,7 +18,7 @@ import { ErrorBoundary } from "../services/ErrorBoundary"
 import { ErrorBoundaryFallback } from "../services/ErrorBoundaryFallback"
 import '../shared-styles/diffs/index.css'
 import { DdlTableViewerContext } from "./DdlTableViewerContext"
-import { DefaultNavigationLink, type NavigationLinkComponent } from "./DefaultNavigationLink"
+import { DefaultNavigationLink, type NavigationLinkComponent } from "../shared-components/DefaultNavigationLink/DefaultNavigationLink"
 import './styles/index.css'
 import { TableNodeViewerWithDiffs } from "./TableNodeViewerWithDiffs"
 

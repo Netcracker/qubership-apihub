@@ -9,7 +9,7 @@ import { WithListLastRowProps, WithPrecededByProps } from "../WithPrecededByProp
 
 export enum AdditionalInfoRowUsage {
   Default = 'default',
-  DdlApiProperty = 'ddlapi-property',
+  PropertyTableEntry = 'property-table-entry',
   JsonSchemaValidation = 'json-schema-validation',
 }
 

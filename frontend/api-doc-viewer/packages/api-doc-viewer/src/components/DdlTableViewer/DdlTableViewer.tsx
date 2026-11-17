@@ -13,7 +13,7 @@ import '../../index.css'
 import { ErrorBoundary } from "../services/ErrorBoundary"
 import { ErrorBoundaryFallback } from "../services/ErrorBoundaryFallback"
 import { DdlTableViewerContext } from "./DdlTableViewerContext"
-import { DefaultNavigationLink, type NavigationLinkComponent } from "./DefaultNavigationLink"
+import { DefaultNavigationLink, type NavigationLinkComponent } from "../shared-components/DefaultNavigationLink/DefaultNavigationLink"
 import './styles/index.css'
 import { TableNodeViewer } from "./TableNodeViewer"
 
