@@ -43,7 +43,7 @@ The next free number is computed from every ID that appears in a title or in a b
 
 | Area | Code | Folder | Items | Next free number |
 |------|------|--------|-------|------------------|
-| General features | GF | `general/` | 12 | `DI-Portal-GF-011` |
+| General features | GF | `general/` | 13 | `DI-Portal-GF-012` |
 | Package version | PKGVER | `package-version/` | 24 | `DI-Portal-PKGVER-025` |
 | Package settings | PS | `package-settings/` | 7 | `DI-Portal-PS-008` |
 | Global settings | GS | `global-settings/` | 7 | `DI-Portal-GS-009` |
@@ -122,6 +122,7 @@ Use `-` after `Related Design Items:` and `Related API:` when there is nothing t
 - Relevance of API-Processor Versions ([GF-009](./general/di-portal-gf-009-relevance-of-api-processor-versions.md))
 - Global Search v4 (newer revision of GF-010) ([GF-010](./general/di-portal-gf-010-global-search-v4.md))
 - Global Search ([GF-010](./general/di-portal-gf-010-global-search.md))
+- New version notification in UI ([GF-011](./general/di-portal-gf-011-new-version-notification-in-ui.md))
 - Search Scope for REST API ([GS-007](./general/di-portal-gs-007-search-scope-for-rest-api.md))
 
 ### Package version
