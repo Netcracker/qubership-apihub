@@ -1,4 +1,4 @@
-import type { FC } from 'react'
+import type { FC, ReactNode } from 'react'
 import { useMemo } from 'react'
 import type { Row } from '@tanstack/react-table'
 import { Box, IconButton, Link, Tooltip, Typography } from '@mui/material'
@@ -22,6 +22,7 @@ export type ServiceOrDocumentationTableCellProps = {
   value: Row<CellData>
   isPromoteStep?: boolean
   promoteStatus?: VersionStatus
+  serviceNameAdornment?: ReactNode
 }
 
 type CellData = Partial<{
@@ -44,6 +45,7 @@ export const ServiceOrDocumentationTableCell: FC<ServiceOrDocumentationTableCell
     },
     isPromoteStep,
     promoteStatus,
+    serviceNameAdornment,
   },
 ) => {
   const { agentId, namespaceKey } = useParams()
@@ -56,9 +58,12 @@ export const ServiceOrDocumentationTableCell: FC<ServiceOrDocumentationTableCell
 
   if (service && isEmpty(service.specs)) {
     return (
-      <OverflowTooltip title={service.key}>
-        <Typography noWrap variant="inherit" color="action.disabled" pl={3}>{service.key}</Typography>
-      </OverflowTooltip>
+      <ServiceName>
+        <OverflowTooltip title={service.key}>
+          <Typography noWrap variant="inherit" color="action.disabled" pl={3}>{service.key}</Typography>
+        </OverflowTooltip>
+        {serviceNameAdornment}
+      </ServiceName>
     )
   }
 
@@ -76,10 +81,13 @@ export const ServiceOrDocumentationTableCell: FC<ServiceOrDocumentationTableCell
         </IconButton>
       )}
       {service && (<>
-          <OverflowTooltip title={service.key}>
-            <Typography noWrap color={isPromoteStep && !promotable ? '#8F9EB4' : 'inherit'}
-                        variant="inherit">{service.key}</Typography>
-          </OverflowTooltip>
+          <ServiceName>
+            <OverflowTooltip title={service.key}>
+              <Typography noWrap color={isPromoteStep && !promotable ? '#8F9EB4' : 'inherit'}
+                          variant="inherit">{service.key}</Typography>
+            </OverflowTooltip>
+            {serviceNameAdornment}
+          </ServiceName>
           {snapshotHasErrors && (
             <ServiceDocumentErrorsDot color="error" data-testid="ServiceDocumentErrorsIndicator"/>
           )}
@@ -116,3 +124,10 @@ export const ServiceOrDocumentationTableCell: FC<ServiceOrDocumentationTableCell
 const ServiceDocumentErrorsDot = styled(DotIndicator)({
   alignSelf: 'flex-start',
 })
+
+const ServiceName = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  gap: theme.spacing(0.5),
+  minWidth: 0,
+}))

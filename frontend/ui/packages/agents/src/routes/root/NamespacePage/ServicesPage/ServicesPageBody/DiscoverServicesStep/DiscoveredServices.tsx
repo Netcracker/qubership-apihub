@@ -24,6 +24,7 @@ import {
   WITHOUT_BASELINE_PACKAGE_GROUP,
 } from './discoveredServiceGroups'
 import { DiscoverServicesStepToolbar } from './DiscoverServicesStepToolbar'
+import { ServiceLabelWarningIndicator } from './ServiceLabelWarningIndicator'
 
 type DiscoveredServiceRow = Partial<{
   service: Service
@@ -68,7 +69,12 @@ const DISCOVERED_SERVICE_COLUMNS: ReadonlyArray<ServiceTableColumn<DiscoveredSer
   {
     id: SERVICE_OR_DOCUMENTATION_COLUMN_ID,
     header: 'Service / Documentation',
-    cell: row => <ServiceOrDocumentationTableCell value={row} />,
+    cell: row => (
+      <ServiceOrDocumentationTableCell
+        value={row}
+        serviceNameAdornment={row.original.service && <ServiceLabelWarningIndicator service={row.original.service} />}
+      />
+    ),
   },
   {
     id: SERVICE_LABELS_COLUMN_ID,

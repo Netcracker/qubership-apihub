@@ -5,7 +5,7 @@ import { type FC, memo } from 'react'
 import { CheckCircleIcon } from '../icons/CheckCircleIcon'
 import { ErrorIcon } from '../icons/ErrorIcon'
 import { InfoFilledIcon } from '../icons/InfoFilledIcon'
-import { WarningIconMui } from '../icons/WarningIconMui'
+import { WarningFilledIcon } from '../icons/WarningFilledIcon'
 import { ALERT_SEVERITY, type AlertSeverity } from '../themes/alert'
 
 export type AlertCustomProps = {
@@ -26,7 +26,7 @@ const alertConfig: Record<AlertSeverity, AlertCustomConfig> = {
     color: (theme) => theme.palette.secondary,
   },
   [ALERT_SEVERITY.WARNING]: {
-    icon: WarningIconMui,
+    icon: WarningFilledIcon,
     color: (theme) => theme.palette.warning,
   },
   [ALERT_SEVERITY.ERROR]: {

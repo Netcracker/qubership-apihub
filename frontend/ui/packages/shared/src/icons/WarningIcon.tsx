@@ -1,4 +1,3 @@
-import { useTheme } from '@mui/material/styles'
 import type { FC } from 'react'
 import { memo } from 'react'
 
@@ -49,12 +48,3 @@ export const RedWarningIcon: FC = memo(() => {
     <WarningIcon color="#FF5260" fill={true}/>
   )
 })
-
-export const DisabledWarningIcon: FC = memo(() => {
-  const { palette } = useTheme()
-  return (
-    <WarningIcon color={palette.action.disabled} fill={false}/>
-  )
-})
-
-DisabledWarningIcon.displayName = 'DisabledWarningIcon'

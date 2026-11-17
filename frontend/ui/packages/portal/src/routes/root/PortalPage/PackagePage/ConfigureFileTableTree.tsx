@@ -39,7 +39,7 @@ import {
 } from '@netcracker/qubership-apihub-ui-shared/hooks/table-resizing/useColumnResizing'
 import { McpEndpointIcon } from '@netcracker/qubership-apihub-ui-shared/icons/McpEndpointIcon'
 import { ErrorIcon } from '@netcracker/qubership-apihub-ui-shared/icons/ErrorIcon'
-import { WarningIconMui } from '@netcracker/qubership-apihub-ui-shared/icons/WarningIconMui'
+import { WarningFilledIcon } from '@netcracker/qubership-apihub-ui-shared/icons/WarningFilledIcon'
 import { isNotEmptyRecord } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
 import { createComponents } from '@netcracker/qubership-apihub-ui-shared/utils/components'
 import { DEFAULT_NUMBER_SKELETON_ROWS } from '@netcracker/qubership-apihub-ui-shared/utils/constants'
@@ -500,7 +500,7 @@ const McpEndpointValidationMarkers: FC<McpEndpointValidationMarkersProps> = memo
       {endpointValidation.warning && !endpointValidation.error && (
         <Tooltip title={endpointValidation.warning} placement="right">
           <ValidationMarkerBox data-testid="YellowWarningIcon">
-            <WarningIconMui color="warning" fontSize="extra-small" />
+            <WarningFilledIcon color="warning" fontSize="extra-small" />
           </ValidationMarkerBox>
         </Tooltip>
       )}

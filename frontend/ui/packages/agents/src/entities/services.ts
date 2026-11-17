@@ -73,6 +73,8 @@ export const EMPTY_SERVICES: Services = {
 
 export type ServiceLabels = Record<string, string>
 
+export const SERVICE_COMPONENT_LABEL_KEY = 'app.kubernetes.io/component'
+
 /** Formats a label of a service as `key: value`, the form the table shows and the search matches. */
 export function getFormattedLabel(key: string, value: string): string {
   return `${key}: ${value}`

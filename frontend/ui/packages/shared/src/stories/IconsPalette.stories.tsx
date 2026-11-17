@@ -105,8 +105,9 @@ import { UploadIcon } from '../icons/UploadIcon'
 import { UploadImageIcon } from '../icons/UploadImageIcon'
 import { VersionIcon } from '../icons/VersionIcon'
 import { RedWarningCircleIcon, YellowWarningCircleIcon } from '../icons/WarningCircleIcon'
+import { WarningFilledIcon } from '../icons/WarningFilledIcon'
 import { DefaultWarningIcon, RedWarningIcon, YellowWarningIcon } from '../icons/WarningIcon'
-import { WarningIconMui } from '../icons/WarningIconMui'
+import { WarningOutlinedIcon } from '../icons/WarningOutlinedIcon'
 
 type CustomIconComponent = React.FC<{ color?: string; size?: number }>
 type MuiIconComponent = React.FC<SvgIconProps>
@@ -228,7 +229,8 @@ const MUI_ICONS_REGISTRY: readonly IconItem<MuiIconComponent>[] = [
   { name: 'ShareableIcon', component: ShareabilityShareableIcon },
   { name: 'StopIcon', component: StopIcon },
   { name: 'UnknownShareabilityIcon', component: ShareabilityUnknownIcon },
-  { name: 'WarningIconMui', component: WarningIconMui },
+  { name: 'WarningFilledIcon', component: WarningFilledIcon },
+  { name: 'WarningOutlinedIcon', component: WarningOutlinedIcon },
 ] as const
 
 const BACKGROUND_COLORS: Record<BackgroundColor, string> = {

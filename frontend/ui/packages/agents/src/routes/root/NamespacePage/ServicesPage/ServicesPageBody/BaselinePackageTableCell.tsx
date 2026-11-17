@@ -3,7 +3,8 @@ import type { Row } from '@tanstack/react-table'
 import { type FC, memo } from 'react'
 
 import { OverflowTooltip } from '@netcracker/qubership-apihub-ui-shared/components/OverflowTooltip'
-import { DisabledWarningIcon, YellowWarningIcon } from '@netcracker/qubership-apihub-ui-shared/icons/WarningIcon'
+import { WarningFilledIcon } from '@netcracker/qubership-apihub-ui-shared/icons/WarningFilledIcon'
+import { WarningOutlinedIcon } from '@netcracker/qubership-apihub-ui-shared/icons/WarningOutlinedIcon'
 import { isEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
 
 import type { Service } from '@agents/entities/services'
@@ -30,7 +31,9 @@ export const BaselinePackageTableCell: FC<BaselinePackageTableCellProps> = memo<
   if (!service.baseline) {
     return (
       <NoBaselinePackage>
-        {disabled ? <DisabledWarningIcon/> : <YellowWarningIcon/>}
+        {disabled
+          ? <WarningOutlinedIcon color="disabled" fontSize="small"/>
+          : <WarningFilledIcon color="warning" fontSize="small"/>}
         <Typography noWrap variant="inherit" color={color}>No baseline package</Typography>
       </NoBaselinePackage>
     )
