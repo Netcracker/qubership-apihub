@@ -63,7 +63,7 @@
     "@types/httpsnippet": "^1.23.0",
     "@types/jest": "catalog:",
     "@types/jest-image-snapshot": "6.4.0",
-    "@types/json-schema": "^7.0.11",
+    "@types/json-schema": "^7.0.15",
     "@types/lodash": "^4.14.181",
     "@types/node": "catalog:",
     "@types/prop-types": "^15.7.3",
