@@ -243,7 +243,11 @@ paths:
         Returns an aggregated validation summary for the specified package version, including the ruleset
         used and issue counts grouped by severity. If the package version contains multiple documents,
         the summary is aggregated across all validated documents. Use GET
-        /api/v2/packages/{packageId}/versions/{version}/validation/summary for multi-linter support.
+        /api/v3/packages/{packageId}/versions/{version}/validation/summary for multi-linter support;
+        it returns the lint result without waiting for the scoring.
+        The status is inProgress, with empty details, until the lint and the scoring of the validation run
+        that wrote it are both finished, so a success or error status means that the score of the same run
+        is ready.
       operationId: getPackageVersionValidationSummary
       deprecated: true
       parameters:
@@ -287,12 +291,66 @@ paths:
     get:
       tags:
         - Validation Result
+      summary: Get validation summary for a package version (v2)
+      description: >
+        Returns a summary of the validation status for the specified package version,
+        including the rulesets used and issue counts grouped by severity.
+        Supports multiple linters (Spectral, ai_linter) per document.
+        The status is inProgress, with empty details, until the lint and the scoring of the validation run
+        that wrote it are both finished, so a success or error status means that the score of the same run
+        is ready. Use GET /api/v3/packages/{packageId}/versions/{version}/validation/summary instead;
+        it returns the lint result without waiting for the scoring.
+      operationId: getPackageVersionValidationSummaryV2
+      deprecated: true
+      parameters:
+        - name: packageId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationSummary"
+
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/v3/packages/{packageId}/versions/{version}/validation/summary:
+    get:
+      tags:
+        - Validation Result
       summary: Get validation summary for a package version
       description: >
         Returns a summary of the validation status for the specified package version,
         including the rulesets used and issue counts grouped by severity.
         Supports multiple linters (Spectral, ai_linter) per document.
-      operationId: getPackageVersionValidationSummaryV2
+        The status and the details are the lint result as soon as the lint is ready; the endpoint does not
+        wait for the scoring. Read the score from GET /api/v2/packages/{packageId}/versions/{version}/scoring.
+      operationId: getPackageVersionValidationSummaryV3
       parameters:
         - name: packageId
           in: path
@@ -544,11 +602,14 @@ paths:
       description: >
         Manually triggers validation for a specific package version. Used when the linter service was
         deployed after version publication. Returns 202 Accepted with an empty body when the validation
-        task is queued. Poll GET /api/v2/packages/{packageId}/versions/{version}/validation/summary
-        (or the v1 equivalent) until status is no longer inProgress to observe completion. Repeating
+        task is queued. Poll GET /api/v3/packages/{packageId}/versions/{version}/validation/summary
+        until status is no longer inProgress to observe the lint result, and read the score from
+        GET /api/v2/packages/{packageId}/versions/{version}/scoring. Repeating
         the request with recalculate=false is idempotent when cached results exist; recalculate=true
-        forces a fresh run. Requires the manage_draft_version permission on the target package (or
-        system administrator access).
+        forces a fresh run. Runs of the same revision are queued and executed one after another, in the
+        order they were requested. A run that waits for its turn leaves the stored results unchanged, so the
+        summary and the score keep showing those of the previous run.
+        Requires the manage_draft_version permission on the target package (or system administrator access).
       operationId: runPackageVersionValidation
       parameters:
         - name: packageId

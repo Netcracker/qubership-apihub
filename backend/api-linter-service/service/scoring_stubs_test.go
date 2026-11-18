@@ -28,10 +28,10 @@ func (s *inMemoryScore) get() *entity.VersionScore {
 	return detachedScore(s.row)
 }
 
-func (s *inMemoryScore) replaceTaskId(taskId string) {
+func (s *inMemoryScore) replaceProcessId(validationProcessId string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.row.ScoringTaskId = taskId
+	s.row.ValidationProcessId = validationProcessId
 }
 
 func (s *inMemoryScore) delete() {
@@ -228,7 +228,7 @@ func (r *scoringTaskRepoStub) withOwnedScore(task entity.VersionScoringTask, wri
 	}
 	score.mu.Lock()
 	defer score.mu.Unlock()
-	if score.row == nil || score.row.ScoringTaskId != task.Id {
+	if score.row == nil || score.row.ValidationProcessId != task.ValidationProcessId {
 		return nil, nil
 	}
 	row := detachedScore(score.row)
@@ -336,32 +336,33 @@ type versionLintTaskRepoStub struct {
 	reads map[string]int
 }
 
-func (r *versionLintTaskRepoStub) readCount(taskId string) int {
+func (r *versionLintTaskRepoStub) readCount(validationProcessId string) int {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	return r.reads[taskId]
+	return r.reads[validationProcessId]
 }
 
-func (r *versionLintTaskRepoStub) GetTaskById(_ context.Context, taskId string) (*entity.VersionLintTask, error) {
+func (r *versionLintTaskRepoStub) GetTaskByValidationProcessId(_ context.Context, validationProcessId string) (*entity.VersionLintTask, error) {
 	r.mu.Lock()
 	if r.reads == nil {
 		r.reads = map[string]int{}
 	}
-	r.reads[taskId]++
+	r.reads[validationProcessId]++
 	r.mu.Unlock()
-	if taskId == testLintTaskId && r.beforeRead != nil {
+	if validationProcessId == testValidationProcessId && r.beforeRead != nil {
 		if err := r.beforeRead(); err != nil {
 			return nil, err
 		}
 	}
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	task, ok := r.tasks[taskId]
-	if !ok {
-		return nil, nil
+	for _, task := range r.tasks {
+		if task.ValidationProcessId == validationProcessId {
+			copied := *task
+			return &copied, nil
+		}
 	}
-	copied := *task
-	return &copied, nil
+	return nil, nil
 }
 
 type docLintTaskRepoStub struct {

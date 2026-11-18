@@ -40,10 +40,13 @@ func (r *scoringTaskRepositoryImpl) ClaimFreeScoringTask(ctx context.Context, ex
 	var result *entity.VersionScoringTask
 	err := r.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
 		var ents []entity.VersionScoringTask
-		_, err := tx.Query(&ents, `select * from version_scoring_task t
+		_, err := tx.Query(&ents, `select t.*
+			from version_scoring_task t
+			join version_validation_process r on r.id = t.validation_process_id
 			where (t.status = ? or (t.status = ? and t.last_active < now() - ? * interval '1 second'))
-			order by t.created_at asc limit 1 for no key update skip locked`,
-			view.TaskStatusNotStarted, view.TaskStatusProcessing, buildKeepaliveTimeoutSec)
+				and r.status = ?
+			order by t.created_at asc limit 1 for no key update of t skip locked`,
+			view.TaskStatusNotStarted, view.TaskStatusProcessing, buildKeepaliveTimeoutSec, view.ValidationProcessProcessing)
 		if err != nil {
 			return fmt.Errorf("failed to claim free scoring task: %w", err)
 		}
@@ -173,7 +176,7 @@ func (r *scoringTaskRepositoryImpl) ScoringFailed(ctx context.Context, task enti
 }
 
 // withOwnedScoreTx locks the task row, then the score row, and runs write only while the task is still
-// owned by this executor and the score row still names it. Otherwise it writes nothing and returns nil.
+// owned by this executor and the score row still names its validation process. Otherwise it writes nothing and returns nil.
 func (r *scoringTaskRepositoryImpl) withOwnedScoreTx(ctx context.Context, task entity.VersionScoringTask, write func(tx *pg.Tx, score *entity.VersionScore) error) (*entity.VersionScore, error) {
 	var result *entity.VersionScore
 	err := r.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
@@ -194,7 +197,7 @@ func (r *scoringTaskRepositoryImpl) withOwnedScoreTx(ctx context.Context, task e
 			}
 			return fmt.Errorf("failed to lock score row: %w", err)
 		}
-		if score.ScoringTaskId != task.Id {
+		if score.ValidationProcessId != task.ValidationProcessId {
 			return nil
 		}
 

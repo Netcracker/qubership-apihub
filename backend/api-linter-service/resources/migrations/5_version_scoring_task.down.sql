@@ -2,7 +2,7 @@ delete from version_score
 where process_status <> 'completed';
 
 alter table version_score
-    drop column if exists scoring_task_id,
+    drop column if exists validation_process_id,
     drop column if exists process_status,
     drop column if exists publication_integrity_status,
     drop column if exists publication_integrity_error,
@@ -11,4 +11,12 @@ alter table version_score
     drop column if exists quality_check_status,
     drop column if exists quality_check_error;
 
+alter table linted_version
+    drop column if exists validation_process_id;
+
 drop table if exists version_scoring_task;
+
+alter table version_lint_task
+    drop column if exists validation_process_id;
+
+drop table if exists version_validation_process;

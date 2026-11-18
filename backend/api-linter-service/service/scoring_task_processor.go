@@ -161,6 +161,8 @@ func (p *scoringTaskProcessorImpl) processTick(ctx context.Context) {
 		log.Errorf("Failed to get owned scoring tasks: %s", err)
 		return
 	}
+	// TODO: limit the number of concurrent attempts. Each attempt queries the database and APIHUB, so a burst of tasks can
+	// exhaust the connection pool and delay the lease refreshes of all task types.
 	for _, task := range tasks {
 		p.runningTasksMu.Lock()
 		running := p.runningTasks[task.Id]
@@ -204,8 +206,8 @@ func (p *scoringTaskProcessorImpl) runAttempt(ctx context.Context, taskId string
 	var lost string
 	if score == nil {
 		lost = "score row missing"
-	} else if score.ScoringTaskId != task.Id {
-		lost = fmt.Sprintf("superseded by scoring task %s", score.ScoringTaskId)
+	} else if score.ValidationProcessId != task.ValidationProcessId {
+		lost = fmt.Sprintf("superseded by validation process %s", score.ValidationProcessId)
 	}
 	if lost != "" {
 		if err := p.scoringTaskRepo.CloseLostTask(ctx, task.Id, p.executorId, lost); err != nil {
@@ -251,7 +253,7 @@ func (p *scoringTaskProcessorImpl) runAttempt(ctx context.Context, taskId string
 		return fmt.Errorf("failed to get score after the parts: %w", err)
 	}
 	// A lost row is left to the lost check of the next attempt.
-	if score == nil || score.ScoringTaskId != task.Id || !score.PartsFinished() {
+	if score == nil || score.ValidationProcessId != task.ValidationProcessId || !score.PartsFinished() {
 		return nil
 	}
 	completed, err := p.scoringTaskRepo.CompleteScoring(ctx, *task, recomputeOverallStatus)
@@ -274,9 +276,9 @@ func recoverPanicAsError(taskId string, err *error) {
 func (p *scoringTaskProcessorImpl) runQualityCheck(ctx context.Context, task entity.VersionScoringTask, score entity.VersionScore) (refused bool, err error) {
 	defer recoverPanicAsError(task.Id, &err)
 
-	lintTask, err := p.verTaskRepo.GetTaskById(ctx, task.VersionLintTaskId)
+	lintTask, err := p.verTaskRepo.GetTaskByValidationProcessId(ctx, task.ValidationProcessId)
 	if err != nil {
-		return false, fmt.Errorf("failed to get lint task %s: %w", task.VersionLintTaskId, err)
+		return false, fmt.Errorf("failed to get lint task of validation process %s: %w", task.ValidationProcessId, err)
 	}
 	var docTasks []entity.DocumentLintTask
 	if lintTask != nil {

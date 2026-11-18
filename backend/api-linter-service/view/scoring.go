@@ -22,7 +22,7 @@ type VersionScore struct {
 
 type ScoringProcess struct {
 	Status                 ScoringProcessStatus `json:"status"`
-	PublicationIntegrity   ScoringProcessStatus `json:"publicationIntegrity"`
+	PublicationIntegrity   ScoringProcessStatus `json:"publicationIntegrity"` //TODO: add error
 	BackwardsCompatibility ScoringProcessStatus `json:"backwardsCompatibility"`
 	QualityCheck           ScoringProcessStatus `json:"qualityCheck"`
 }
@@ -30,7 +30,7 @@ type ScoringProcess struct {
 type ScoringProcessStatus string
 
 const (
-	ScoringProcessPending    ScoringProcessStatus = "pending"
+	ScoringProcessPending    ScoringProcessStatus = "pending" //TODO: align with existing linter process statuses
 	ScoringProcessInProgress ScoringProcessStatus = "in_progress"
 	ScoringProcessCompleted  ScoringProcessStatus = "completed"
 	ScoringProcessError      ScoringProcessStatus = "error"
@@ -66,6 +66,7 @@ type BackwardCompatibilityDetails struct {
 	External2Unknown  int `json:"external2Unknown"`
 }
 
+// TODO: add fileId to response
 type QualityCheckDetails struct {
 	Linter        Linter        `json:"linter"`
 	Status        ScoringStatus `json:"status"`

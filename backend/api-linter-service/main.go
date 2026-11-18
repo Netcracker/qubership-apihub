@@ -142,6 +142,7 @@ func main() {
 	lintResultRepository := repository.NewLintResultRepository(cp)
 	scoringRepository := repository.NewScoringRepository(cp)
 	scoringTaskRepository := repository.NewScoringTaskRepository(cp)
+	validationProcessRepository := repository.NewValidationProcessRepository(cp)
 
 	linterConfigService := service.NewLinterConfigService(systemInfoService)
 	linterSelectorService := service.NewLinterSelectorService(ruleSetRepository, linterConfigService)
@@ -150,8 +151,10 @@ func main() {
 	docTaskNotify := make(chan struct{}, 1)
 	versionTaskNotify := make(chan struct{}, 1)
 	scoringTaskNotify := make(chan struct{}, 1)
-	service.NewVersionTaskProcessor(versionLintTaskRepository, docLintTaskRepository, versionResultRepository, apihubClient, linterSelectorService, linterConfigService, executorId, docTaskNotify, versionTaskNotify)
+	validationProcessNotify := make(chan struct{}, 1)
+	service.NewVersionTaskProcessor(versionLintTaskRepository, docLintTaskRepository, apihubClient, linterSelectorService, linterConfigService, executorId, docTaskNotify, versionTaskNotify)
 	service.NewScoringTaskProcessor(scoringTaskRepository, scoringRepository, versionLintTaskRepository, docLintTaskRepository, versionResultRepository, lintResultRepository, ruleSetRepository, linterConfigService, apihubClient, executorId, scoringTaskNotify)
+	service.NewValidationProcessWorker(validationProcessRepository, validationProcessNotify, versionTaskNotify, scoringTaskNotify)
 	spectralExecutor, err := service.NewSpectralExecutor(systemInfoService.GetSpectralBinPath()) // TODO: use linters config
 	if err != nil {
 		log.Fatalf("Failed to create Spectral executor: %s", err.Error())
@@ -164,7 +167,7 @@ func main() {
 
 	docTaskProcessor := service.NewDocTaskProcessor(docLintTaskRepository, ruleSetRepository, docResultRepository, lintResultRepository, apihubClient, spectralExecutor, aiOasExecutor, executorId, systemInfoService.GetSpectralLinterWorkers(), systemInfoService.GetAiLinterWorkers(), docTaskNotify)
 
-	validationService := service.NewValidationService(versionLintTaskRepository, versionResultRepository, lintResultRepository, ruleSetRepository, docLintTaskRepository, apihubClient, executorId, versionTaskNotify, scoringTaskNotify)
+	validationService := service.NewValidationService(validationProcessRepository, versionLintTaskRepository, versionResultRepository, lintResultRepository, ruleSetRepository, docLintTaskRepository, apihubClient, executorId, validationProcessNotify)
 	publishEventListener := service.NewPublishEventListener(olricProvider, validationService)
 	rulesetService := service.NewRulesetService(ruleSetRepository)
 	cleanupService := service.NewCleanupService(cp)
@@ -191,7 +194,8 @@ func main() {
 
 	// Validation result
 	r.HandleFunc("/api/v1/packages/{packageId}/versions/{version}/validation/summary", authenticator.Secure(validationResultController.GetValidationSummaryForVersion_deprecated)).Methods(http.MethodGet)
-	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/validation/summary", authenticator.Secure(validationResultController.GetValidationSummaryForVersion)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/validation/summary", authenticator.Secure(validationResultController.GetValidationSummaryForVersion_deprecated_2)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v3/packages/{packageId}/versions/{version}/validation/summary", authenticator.Secure(validationResultController.GetValidationSummaryForVersion)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v1/packages/{packageId}/versions/{version}/validation/documents/{slug}/details", authenticator.Secure(validationResultController.GetValidationResultForDocument_deprecated)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/validation/documents/{slug}/details", authenticator.Secure(validationResultController.GetValidationResultForDocument)).Methods(http.MethodGet)
 

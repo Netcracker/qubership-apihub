@@ -24,10 +24,10 @@ type VersionScore struct {
 	PublicationIntegrityDetails  *view.PublicationIntegrityDetails                    `pg:"publication_integrity_details,type:jsonb"`
 
 	//TODO: rework ???
-	ScoringTaskId               string                    `pg:"scoring_task_id,type:varchar"`
+	ValidationProcessId         string                    `pg:"validation_process_id,type:varchar"`
 	ProcessStatus               view.ScoringProcessStatus `pg:"process_status,type:varchar,notnull"`
 	PublicationIntegrityStatus  view.ScoringProcessStatus `pg:"publication_integrity_status,type:varchar,notnull"`
-	PublicationIntegrityError   string                    `pg:"publication_integrity_error,type:varchar"`
+	PublicationIntegrityError   string                    `pg:"publication_integrity_error,type:varchar"` //TODO: investigate why we need a separate error column
 	BackwardCompatibilityStatus view.ScoringProcessStatus `pg:"backward_compatibility_status,type:varchar,notnull"`
 	BackwardCompatibilityError  string                    `pg:"backward_compatibility_error,type:varchar"`
 	QualityCheckStatus          view.ScoringProcessStatus `pg:"quality_check_status,type:varchar,notnull"`

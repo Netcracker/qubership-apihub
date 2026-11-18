@@ -36,8 +36,10 @@ const (
 	testOtherRevision      = testRevision + 1
 	testQualityPanic       = "unexpected document task"
 
-	testSupersedingTaskId = "scoring-2"
-	testSupersededDetails = "superseded by scoring task " + testSupersedingTaskId
+	testValidationProcessId      = "process-1"
+	testOtherValidationProcessId = "process-other"
+	testSupersedingProcessId     = "process-2"
+	testSupersededDetails        = "superseded by validation process " + testSupersedingProcessId
 
 	testWaitTimeout               = 5 * time.Second
 	testPollInterval              = time.Millisecond
@@ -74,7 +76,7 @@ func newProcessorFixture() *processorFixture {
 			Status:                      "",
 			Reasons:                     []string{},
 			Debug:                       []string{},
-			ScoringTaskId:               testScoringTaskId,
+			ValidationProcessId:         testValidationProcessId,
 			ProcessStatus:               view.ScoringProcessInProgress,
 			PublicationIntegrityStatus:  view.ScoringProcessPending,
 			BackwardCompatibilityStatus: view.ScoringProcessPending,
@@ -98,13 +100,13 @@ func newProcessorFixture() *processorFixture {
 		scores: scores,
 		tasks: map[string]*entity.VersionScoringTask{
 			testScoringTaskId: {
-				Id:                testScoringTaskId,
-				VersionLintTaskId: testLintTaskId,
-				PackageId:         testPackageId,
-				Version:           testVersion,
-				Revision:          testRevision,
-				Status:            view.TaskStatusProcessing,
-				ExecutorId:        testExecutorId,
+				Id:                  testScoringTaskId,
+				ValidationProcessId: testValidationProcessId,
+				PackageId:           testPackageId,
+				Version:             testVersion,
+				Revision:            testRevision,
+				Status:              view.TaskStatusProcessing,
+				ExecutorId:          testExecutorId,
 			},
 		},
 	}
@@ -395,7 +397,7 @@ func TestProcessTick_ClosesLostTasks(t *testing.T) {
 	}{
 		{
 			name:        "superseded row",
-			modify:      func(score *inMemoryScore) { score.row.ScoringTaskId = testSupersedingTaskId },
+			modify:      func(score *inMemoryScore) { score.row.ValidationProcessId = testSupersedingProcessId },
 			wantDetails: testSupersededDetails,
 		},
 		{
@@ -406,7 +408,7 @@ func TestProcessTick_ClosesLostTasks(t *testing.T) {
 		{
 			name:         "exhausted task, superseded row",
 			restartCount: repository.MaxScoringTaskRestarts,
-			modify:       func(score *inMemoryScore) { score.row.ScoringTaskId = testSupersedingTaskId },
+			modify:       func(score *inMemoryScore) { score.row.ValidationProcessId = testSupersedingProcessId },
 			wantDetails:  testSupersededDetails,
 		},
 		{
@@ -477,7 +479,7 @@ func TestProcessTick_RefusedWriteIsNotCountedAndTheNextTickClosesTheTask(t *test
 			stale := *f.score.get()
 			currentReads := f.processor.scoringRepo
 			f.processor.scoringRepo = &scoringRepoStub{scores: map[int]*inMemoryScore{testRevision: {row: &stale}}}
-			f.score.row.ScoringTaskId = testSupersedingTaskId
+			f.score.row.ValidationProcessId = testSupersedingProcessId
 			newer := *f.score.get()
 
 			f.processor.processTick(context.Background())
@@ -512,7 +514,7 @@ func TestRunIntegrityAndBwc_RefusedIntegrityWriteStopsAndTheNextTickClosesTheTas
 		return &view.VersionChangesView{}, nil
 	}
 	snapshot := *f.score.get()
-	f.score.row.ScoringTaskId = testSupersedingTaskId
+	f.score.row.ValidationProcessId = testSupersedingProcessId
 
 	refused, err := f.processor.runIntegrityAndBwcChecks(context.Background(), f.task(), snapshot)
 
@@ -538,7 +540,7 @@ func TestRunIntegrityAndBwc_RefusedIntegrityWriteStopsAndTheNextTickClosesTheTas
 func TestRunIntegrityAndBwc_RefusedBwcWriteIsNotCounted(t *testing.T) {
 	f := newProcessorFixture()
 	f.apihub.getVersionChanges = func(int) (*view.VersionChangesView, error) {
-		f.score.row.ScoringTaskId = testSupersedingTaskId
+		f.score.row.ValidationProcessId = testSupersedingProcessId
 		return &view.VersionChangesView{}, nil
 	}
 
@@ -885,6 +887,7 @@ func TestAcquireTasks_ClaimsEveryFreeTask(t *testing.T) {
 				task := &entity.VersionScoringTask{Id: fmt.Sprintf("free-%02d", i), Status: view.TaskStatusNotStarted}
 				if i < tt.exhaustedFree {
 					task.Id = testScoringTaskId
+					task.ValidationProcessId = testValidationProcessId
 					task.Revision = testRevision
 					task.RestartCount = repository.MaxScoringTaskRestarts
 				}
@@ -942,7 +945,7 @@ func TestAcquireTasks_ExhaustedLostTaskIsClosedByTheNextTick(t *testing.T) {
 	task.ExecutorId = ""
 	task.RestartCount = repository.MaxScoringTaskRestarts
 	f.tasks.free = []string{testScoringTaskId}
-	f.score.row.ScoringTaskId = testSupersedingTaskId
+	f.score.row.ValidationProcessId = testSupersedingProcessId
 
 	f.processor.acquireTasks(context.Background())
 
@@ -1045,12 +1048,13 @@ func TestProcessTick_TaskPanicIsCountedAndOtherTasksContinue(t *testing.T) {
 
 func lintTask(status view.TaskStatus, details string) *entity.VersionLintTask {
 	return &entity.VersionLintTask{
-		Id:        testLintTaskId,
-		PackageId: testPackageId,
-		Version:   testVersion,
-		Revision:  testRevision,
-		Status:    status,
-		Details:   details,
+		Id:                  testLintTaskId,
+		PackageId:           testPackageId,
+		Version:             testVersion,
+		Revision:            testRevision,
+		Status:              status,
+		Details:             details,
+		ValidationProcessId: testValidationProcessId,
 	}
 }
 
@@ -1424,15 +1428,16 @@ func (f *processorFixture) addOtherTask() *inMemoryScore {
 	otherLintTask := lintTask(view.TaskStatusWaitingForDocs, "")
 	otherLintTask.Id = testOtherLintTaskId
 	otherLintTask.Revision = testOtherRevision
+	otherLintTask.ValidationProcessId = testOtherValidationProcessId
 	f.lintTasks.tasks[testOtherLintTaskId] = otherLintTask
 	f.tasks.tasks[testOtherScoringTaskId] = &entity.VersionScoringTask{
-		Id:                testOtherScoringTaskId,
-		VersionLintTaskId: testOtherLintTaskId,
-		PackageId:         testPackageId,
-		Version:           testVersion,
-		Revision:          testOtherRevision,
-		Status:            view.TaskStatusProcessing,
-		ExecutorId:        testExecutorId,
+		Id:                  testOtherScoringTaskId,
+		ValidationProcessId: testOtherValidationProcessId,
+		PackageId:           testPackageId,
+		Version:             testVersion,
+		Revision:            testOtherRevision,
+		Status:              view.TaskStatusProcessing,
+		ExecutorId:          testExecutorId,
 	}
 	otherScore := &inMemoryScore{row: &entity.VersionScore{
 		PackageId:                   testPackageId,
@@ -1440,7 +1445,7 @@ func (f *processorFixture) addOtherTask() *inMemoryScore {
 		Revision:                    testOtherRevision,
 		Reasons:                     []string{},
 		Debug:                       []string{},
-		ScoringTaskId:               testOtherScoringTaskId,
+		ValidationProcessId:         testOtherValidationProcessId,
 		ProcessStatus:               view.ScoringProcessInProgress,
 		PublicationIntegrityStatus:  view.ScoringProcessPending,
 		BackwardCompatibilityStatus: view.ScoringProcessPending,
@@ -1582,13 +1587,13 @@ func TestAttempt_BlockedBwcHoldsNeitherQualityNorOtherTasks(t *testing.T) {
 	if row := f.score.get(); row.BackwardCompatibilityStatus != view.ScoringProcessPending {
 		t.Fatalf("BWC = %s, want pending while it is blocked", row.BackwardCompatibilityStatus)
 	}
-	qualityReads := f.lintTasks.readCount(testLintTaskId)
+	qualityReads := f.lintTasks.readCount(testValidationProcessId)
 
 	f.processor.processTick(ctx)
 	time.Sleep(testSettleDelay)
 
-	if bwcStarts.Load() != 1 || f.lintTasks.readCount(testLintTaskId) != qualityReads {
-		t.Fatalf("BWC started %d times, quality reads %d, want one start and %d reads: a second attempt ran", bwcStarts.Load(), f.lintTasks.readCount(testLintTaskId), qualityReads)
+	if bwcStarts.Load() != 1 || f.lintTasks.readCount(testValidationProcessId) != qualityReads {
+		t.Fatalf("BWC started %d times, quality reads %d, want one start and %d reads: a second attempt ran", bwcStarts.Load(), f.lintTasks.readCount(testValidationProcessId), qualityReads)
 	}
 
 	f.docTasks.setTasks([]entity.DocumentLintTask{docTask("d1", "a.yaml", view.SpectralLinter, testSpectralRuleset, view.TaskStatusSuccess)})
@@ -1750,12 +1755,12 @@ func TestAttempt_ATickWithAStaleListReadsTheFreshRow(t *testing.T) {
 	assertHandledIds(t, f, "d1")
 
 	f.tasks.tasks[testScoringTaskId].RestartCount = repository.MaxScoringTaskRestarts
-	reads := f.lintTasks.readCount(testLintTaskId)
+	reads := f.lintTasks.readCount(testValidationProcessId)
 
 	f.processor.processTick(ctx)
 
 	assertAttemptEnded(t, f, view.TaskStatusError, repository.MaxScoringTaskRestarts)
-	if f.lintTasks.readCount(testLintTaskId) != reads {
+	if f.lintTasks.readCount(testValidationProcessId) != reads {
 		t.Fatal("an exhausted task must be failed, not worked on")
 	}
 }
@@ -1785,8 +1790,8 @@ func TestAttempt_FailedReadsCountOnceAndRunNoPart(t *testing.T) {
 			f.processor.processTick(context.Background())
 
 			assertAttemptEnded(t, f, view.TaskStatusProcessing, 1)
-			if bwcStarted || f.lintTasks.readCount(testLintTaskId) != 0 || f.score.writes != 0 {
-				t.Fatalf("a part ran: BWC %t, quality reads %d, writes %d", bwcStarted, f.lintTasks.readCount(testLintTaskId), f.score.writes)
+			if bwcStarted || f.lintTasks.readCount(testValidationProcessId) != 0 || f.score.writes != 0 {
+				t.Fatalf("a part ran: BWC %t, quality reads %d, writes %d", bwcStarted, f.lintTasks.readCount(testValidationProcessId), f.score.writes)
 			}
 		})
 	}
@@ -1848,12 +1853,12 @@ func TestAttempt_FailedIncrementHoldsTheSlotUntilItIsWritten(t *testing.T) {
 	f.processor.processTick(context.Background())
 
 	waitFor(t, "the retry of the increment", func() bool { return increments.Load() == 2 })
-	reads := f.lintTasks.readCount(testLintTaskId)
+	reads := f.lintTasks.readCount(testValidationProcessId)
 	f.processor.processTick(context.Background())
 	time.Sleep(testSettleDelay)
-	if f.lintTasks.readCount(testLintTaskId) != reads || !f.slotTaken(testScoringTaskId) || f.task().RestartCount != 0 {
+	if f.lintTasks.readCount(testValidationProcessId) != reads || !f.slotTaken(testScoringTaskId) || f.task().RestartCount != 0 {
 		t.Fatalf("quality reads %d (want %d), slot taken %t, %d restarts: an attempt started while a failure was unrecorded",
-			f.lintTasks.readCount(testLintTaskId), reads, f.slotTaken(testScoringTaskId), f.task().RestartCount)
+			f.lintTasks.readCount(testValidationProcessId), reads, f.slotTaken(testScoringTaskId), f.task().RestartCount)
 	}
 
 	close(release)
@@ -2069,7 +2074,7 @@ func TestAttempt_ScoreReadAfterTheParts(t *testing.T) {
 				f.lintTasks.tasks[testLintTaskId].Status = view.TaskStatusSuccess
 				f.scoreReads.beforeRead = func(read int) error {
 					if read == 2 {
-						f.score.replaceTaskId(testSupersedingTaskId)
+						f.score.replaceProcessId(testSupersedingProcessId)
 					}
 					return nil
 				}
@@ -2082,7 +2087,7 @@ func TestAttempt_ScoreReadAfterTheParts(t *testing.T) {
 			arrange: func(f *processorFixture) {
 				f.lintTasks.tasks[testLintTaskId].Status = view.TaskStatusSuccess
 				f.tasks.beforeComplete = func() error {
-					f.score.replaceTaskId(testSupersedingTaskId)
+					f.score.replaceProcessId(testSupersedingProcessId)
 					return nil
 				}
 			},
@@ -2114,7 +2119,7 @@ func TestAttempt_SupersededWhileRunningIsCountedAndClosedByTheNextAttempt(t *tes
 	f := newProcessorFixture()
 	f.score.row.QualityCheckStatus = view.ScoringProcessCompleted
 	f.beforeBwc = func() error {
-		f.score.replaceTaskId(testSupersedingTaskId)
+		f.score.replaceProcessId(testSupersedingProcessId)
 		return errors.New("APIHUB unavailable")
 	}
 
@@ -2291,7 +2296,7 @@ func TestAcquireTasks_ExpiredLeaseCountsAsAnAttempt(t *testing.T) {
 			if f.task().Details != tt.wantDetails {
 				t.Fatalf("details = %q, want %q", f.task().Details, tt.wantDetails)
 			}
-			if f.lintTasks.readCount(testLintTaskId) != 0 {
+			if f.lintTasks.readCount(testValidationProcessId) != 0 {
 				t.Fatal("the acquire loop must start no attempt")
 			}
 		})

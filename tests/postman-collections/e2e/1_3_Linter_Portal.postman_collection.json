@@ -969,9 +969,16 @@
                                     "const attempts = parseInt(pm.environment.get('scoringBwcAttempts') || '0') + 1;",
                                     "pm.environment.set('scoringBwcAttempts', attempts);",
                                     "",
-                                    "pm.test(\"Status code is 200\", function () {",
-                                    "    pm.response.to.have.status(200);",
-                                    "});",
+                                    "// The score row of the revision exists only after its validation process has started.",
+                                    "const scoreMissing = pm.response.code === 404 && attempts < maxAttempts;",
+                                    "if (scoreMissing) {",
+                                    "    console.log('Score is not created yet, retrying in 3s...');",
+                                    "    setTimeout(() => postman.setNextRequest(pm.info.requestName), 3000);",
+                                    "} else {",
+                                    "    pm.test(\"Status code is 200\", function () {",
+                                    "        pm.response.to.have.status(200);",
+                                    "    });",
+                                    "}",
                                     "",
                                     "if (pm.response.code === 200) {",
                                     "    const data = pm.response.json();",
@@ -993,7 +1000,7 @@
                                     "            pm.expect(data.backwardsCompatibilityDetails).to.be.an('object').that.is.empty;",
                                     "        });",
                                     "    }",
-                                    "} else {",
+                                    "} else if (!scoreMissing) {",
                                     "    pm.environment.unset('scoringBwcAttempts');",
                                     "}"
                                 ]
@@ -1037,7 +1044,7 @@
                             "script": {
                                 "type": "text/javascript",
                                 "exec": [
-                                    "const maxAttempts = 10;",
+                                    "const maxAttempts = 30;",
                                     "const attempts = parseInt(pm.environment.get('validationAttempts') || '0') + 1;",
                                     "pm.environment.set('validationAttempts', attempts);",
                                     "",
@@ -1154,6 +1161,57 @@
                                 "api-linter",
                                 "api",
                                 "v2",
+                                "packages",
+                                "{{project_lt}}",
+                                "versions",
+                                "0000.1",
+                                "validation",
+                                "summary"
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "api-key",
+                                "value": "{{at-api-key}}",
+                                "type": "default"
+                            }
+                        ]
+                    },
+                    "response": [],
+                    "protocolProfileBehavior": {}
+                },
+                {
+                    "name": "4.3.0 Get Validation Summary (v3)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status code is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "",
+                                    "pm.test(\"v3 summary has the lint status of v2 and a document list\", function () {",
+                                    "    const data = pm.response.json();",
+                                    "    pm.expect(data.status).to.eql(pm.environment.get('validationStatus'));",
+                                    "    pm.expect(data).to.have.property('documents').that.is.an('array');",
+                                    "});"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "url": {
+                            "raw": "{{SERVER_HOST}}/api-linter/api/v3/packages/{{project_lt}}/versions/0000.1/validation/summary",
+                            "host": [
+                                "{{SERVER_HOST}}"
+                            ],
+                            "path": [
+                                "api-linter",
+                                "api",
+                                "v3",
                                 "packages",
                                 "{{project_lt}}",
                                 "versions",

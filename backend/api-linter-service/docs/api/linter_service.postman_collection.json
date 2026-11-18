@@ -425,7 +425,7 @@
 					"response": []
 				},
 				{
-					"name": "GET Validation Summary (v2)",
+					"name": "GET Validation Summary (v2 - deprecated)",
 					"request": {
 						"method": "GET",
 						"header": [
@@ -455,6 +455,48 @@
 							"path": [
 								"api",
 								"v2",
+								"packages",
+								"{{packageId}}",
+								"versions",
+								"{{version}}",
+								"validation",
+								"summary"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET Validation Summary (v3)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{bearerToken}}",
+								"type": "text",
+								"disabled": true
+							},
+							{
+								"key": "api-key",
+								"value": "{{apiKey}}",
+								"type": "text",
+								"disabled": true
+							},
+							{
+								"key": "X-Personal-Access-Token",
+								"value": "{{personalAccessToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v3/packages/{{packageId}}/versions/{{version}}/validation/summary",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v3",
 								"packages",
 								"{{packageId}}",
 								"versions",

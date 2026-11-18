@@ -89,17 +89,30 @@ When a change affects REST contracts or integration behaviour, update the neighb
 ### Validation pipeline
 
 1. **Trigger** — POST validation, bulk validation, or Olric `"version-published"` event (`PublishEventListener`).
-   Each one calls `ValidationService.ValidateVersion`, which inserts the version lint task and its scoring task and
-   resets the `version_score` row of the revision in one transaction.
-2. **Version task** — `VersionTaskProcessor` loads documents from APIHUB, creates per-document lint tasks per enabled linter/ruleset.
-3. **Document task** — `DocTaskProcessor` worker pool downloads raw spec, runs Spectral and/or AI linter, caches by content hash + ruleset, persists results.
-4. **Scoring** — `ScoringTaskProcessor` (`service/scoring_task_processor.go`) runs the `version_scoring_task` rows
+   Each one calls `ValidationService.ValidateVersion`, which inserts a `version_validation_process` row in
+   `not_started` with its version lint task and its scoring task in one transaction. It resets no result row.
+2. **Validation process** — the worker in `service/validation_process_worker.go` runs on every pod, on a 5-second
+   tick and on the signal of a trigger. A pass finishes the processes in `processing` whose two tasks are in
+   `success` or `error`: the process gets `success` when both tasks are in `success`, otherwise `error`. The pass then
+   starts the earliest `not_started` process of each revision that has none in `processing`;
+   one transaction per revision sets the process to `processing` and resets the `version_score` and
+   `linted_version` rows to it. A partial unique index allows one process in `processing` per revision. When a
+   process starts, the worker signals the lint and scoring processors. The lint and scoring tasks are claimed only
+   while their process is in `processing`, so the runs of a revision go one after another and both result rows
+   always come from one run.
+3. **Version task** — `VersionTaskProcessor` loads documents from APIHUB, creates per-document lint tasks per enabled linter/ruleset.
+   The lint writes are fenced by the status of the lint task: an executor completes or fails the task only while it
+   owns it in `processing`, `checkDocReady` only while it is in `waiting_for_docs` and none of its document tasks
+   runs, and a document task writes its result only while its lint task is in `waiting_for_docs` (otherwise it is
+   closed with `lint task is already finished`). A refused write does not count as a restart.
+4. **Document task** — `DocTaskProcessor` worker pool downloads raw spec, runs Spectral and/or AI linter, caches by content hash + ruleset, persists results.
+5. **Scoring** — `ScoringTaskProcessor` (`service/scoring_task_processor.go`) runs the `version_scoring_task` rows
    next to the lint, with a lease and a heartbeat, and gives a task up after two failed attempts, as for the lint
    tasks; a claim of a task whose lease expired counts as a failed attempt. It writes three parts of the `version_score` row: publication integrity
    and backwards compatibility as soon as APIHUB returns the version, and quality from the finished document tasks of
-   the linked lint task (final when the lint task is). Each finished document task is scored once: the task row keeps
-   the ids of the document tasks whose entries are committed, and an attempt writes the quality part only when it
-   scores new document tasks or the status of the part changes.
+   the lint task of the same validation process (final when the lint task is). Each finished document task is scored
+   once: the task row keeps the ids of the document tasks whose entries are committed, and an attempt writes the
+   quality part only when it scores new document tasks or the status of the part changes.
 
    A task runs one attempt at a time on an executor (`runAttempt`). The attempt re-reads the task and the score, runs
    integrity and BWC in a child goroutine and quality in its own, joins them, and increments the restart count once
@@ -114,10 +127,14 @@ When a change affects REST contracts or integration behaviour, update the neighb
 
    Part updates and the completion or failure of the score go through `withOwnedScoreTx` (`repository/scoring_task.go`):
    it updates the task only while `executor_id` is this executor and the status is `processing`, then locks the score
-   row and checks that `scoring_task_id` still names the task. A refused write returns no score and does not count as
-   a failed attempt; a later attempt closes a task whose score row was replaced or deleted. The claim, the lease
-   refresh, the retry increment, and `CloseLostTask` are separate statements, each fenced by its own condition on the
-   task row. `SaveVersionTask` writes the initial reset together with the lint task.
+   row and checks that its `validation_process_id` is the one of the task. A refused write returns no score and does
+   not count as a failed attempt; a later attempt closes a task whose score row was replaced or deleted. The claim,
+   the lease refresh, the retry increment, and `CloseLostTask` are separate statements, each fenced by its own
+   condition on the task row. The score row is reset by the start of the validation process.
+
+   The deprecated v1 and v2 validation summaries show `inProgress` with empty details while the validation process
+   named by the `linted_version` row is in `processing`, so a final lint status means that the score of the same run
+   is ready. The v3 summary and the MCP tool report the lint status as stored, without waiting for the scoring.
 
 ### Linter engines
 
@@ -158,7 +175,8 @@ Detailed rules apply via deployed `.cursor/rules/` and `.claude/rules/` (from AP
 ## REST API and OpenAPI
 
 - Follow **API-first**: update `docs/api/linter_service_api.yaml` (and `admin_api.yaml` if admin endpoints change) when REST contract changes.
-- Prefer **v2** endpoints for new summary/detail behaviour; v1 paths marked deprecated in code — do not extend deprecated handlers unless fixing a bug.
+- Add new behaviour to the current versions: **v3** for the validation summary, **v2** for the document details.
+  Do not extend deprecated handlers unless fixing a bug.
 - Service exposes its own specs via api-spec-exposer from `technicalParameters.apiSpecDirectory`; if it is empty, the service uses `<technicalParameters.basePath>/api` (see `main.go` discovery block).
 - Avoid breaking public API changes without explicit product approval.
 
