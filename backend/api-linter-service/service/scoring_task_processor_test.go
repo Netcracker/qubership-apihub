@@ -15,6 +15,7 @@ import (
 
 	"github.com/Netcracker/qubership-apihub/backend/api-linter-service/entity"
 	"github.com/Netcracker/qubership-apihub/backend/api-linter-service/repository"
+	"github.com/Netcracker/qubership-apihub/backend/api-linter-service/utils"
 	"github.com/Netcracker/qubership-apihub/backend/api-linter-service/view"
 )
 
@@ -45,6 +46,7 @@ const (
 	testPollInterval              = time.Millisecond
 	testSettleDelay               = 20 * time.Millisecond
 	testRestartCountRetryInterval = time.Millisecond
+	testAttemptTimeout            = 50 * time.Millisecond
 )
 
 var testVersionWithRevision = fmt.Sprintf("%s@%d", testVersion, testRevision)
@@ -110,7 +112,7 @@ func newProcessorFixture() *processorFixture {
 			},
 		},
 	}
-	f.apihub = &apihubClientStub{getVersion: func(packageId, version string) (*view.VersionContent, error) {
+	f.apihub = &apihubClientStub{getVersion: func(_ context.Context, packageId, version string) (*view.VersionContent, error) {
 		if version == testPreviousVersion {
 			if f.previousVersionErr != nil {
 				return nil, f.previousVersionErr
@@ -141,7 +143,9 @@ func newProcessorFixture() *processorFixture {
 		apihubClient:              f.apihub,
 		executorId:                testExecutorId,
 		runningTasks:              make(map[string]bool),
+		attemptSlots:              make(chan struct{}, maxConcurrentScoringAttempts),
 		startRun:                  func(run func()) { run() },
+		attemptTimeout:            scoringAttemptTimeout,
 		restartCountRetryInterval: testRestartCountRetryInterval,
 	}
 	return f
@@ -295,7 +299,7 @@ func TestProcessTick_MissingChangesPageIsAnAttemptError(t *testing.T) {
 
 func TestRunIntegrityAndBwc_FetchErrorWritesNothing(t *testing.T) {
 	f := newProcessorFixture()
-	f.apihub.getVersion = func(string, string) (*view.VersionContent, error) { return nil, nil }
+	f.apihub.getVersion = func(context.Context, string, string) (*view.VersionContent, error) { return nil, nil }
 
 	refused, err := f.processor.runIntegrityAndBwcChecks(context.Background(), f.task(), *f.score.get())
 
@@ -309,7 +313,7 @@ func TestRunIntegrityAndBwc_FetchErrorWritesNothing(t *testing.T) {
 
 func TestRunIntegrityAndBwc_PanicIsReturnedAsAnError(t *testing.T) {
 	f := newProcessorFixture()
-	f.apihub.getVersion = func(string, string) (*view.VersionContent, error) { panic("unexpected response") }
+	f.apihub.getVersion = func(context.Context, string, string) (*view.VersionContent, error) { panic("unexpected response") }
 
 	refused, err := f.processor.runIntegrityAndBwcChecks(context.Background(), f.task(), *f.score.get())
 
@@ -1455,16 +1459,45 @@ func (f *processorFixture) addOtherTask() *inMemoryScore {
 	return otherScore
 }
 
+// startRunsInBackground starts the attempts with utils.SafeAsync, as production does, so a panic after the attempt
+// is recovered instead of crashing the test binary.
 func (f *processorFixture) startRunsInBackground() (join func()) {
 	var runs sync.WaitGroup
 	f.processor.startRun = func(run func()) {
 		runs.Add(1)
-		go func() {
+		utils.SafeAsync(func() {
 			defer runs.Done()
 			run()
-		}()
+		})
 	}
 	return runs.Wait
+}
+
+func (f *processorFixture) startTick() (done <-chan struct{}) {
+	tickDone := make(chan struct{})
+	go func() {
+		defer close(tickDone)
+		f.processor.processTick(context.Background())
+	}()
+	return tickDone
+}
+
+func waitClosed(t *testing.T, what string, done <-chan struct{}) {
+	t.Helper()
+	select {
+	case <-done:
+	case <-time.After(testWaitTimeout):
+		t.Fatalf("timed out waiting for %s", what)
+	}
+}
+
+func returned(done <-chan struct{}) bool {
+	select {
+	case <-done:
+		return true
+	default:
+		return false
+	}
 }
 
 func (f *processorFixture) slotTaken(taskId string) bool {
@@ -1838,32 +1871,44 @@ func TestAttempt_CompletionFailureIsCountedAndTheNextAttemptCompletes(t *testing
 
 func TestAttempt_FailedIncrementHoldsTheSlotUntilItIsWritten(t *testing.T) {
 	f := newProcessorFixture()
+	f.processor.attemptSlots = make(chan struct{}, 1)
+	otherScore := f.addOtherTask()
 	f.beforeBwc = returning(errors.New("APIHUB unavailable"))
-	release := make(chan struct{})
+	gate := make(chan struct{})
+	release := sync.OnceFunc(func() { close(gate) })
+	defer release()
 	var increments atomic.Int32
 	f.tasks.beforeInc = func() error {
 		if increments.Add(1) == 1 {
 			return errors.New("connection reset")
 		}
-		<-release
+		<-gate
 		return nil
 	}
 	join := f.startRunsInBackground()
 
-	f.processor.processTick(context.Background())
+	tickDone := f.startTick()
 
 	waitFor(t, "the retry of the increment", func() bool { return increments.Load() == 2 })
+	waitFor(t, "the first tick to mark the other task", func() bool { return f.slotTaken(testOtherScoringTaskId) })
 	reads := f.lintTasks.readCount(testValidationProcessId)
-	f.processor.processTick(context.Background())
+	waitClosed(t, "the second tick, which skips both running tasks", f.startTick())
 	time.Sleep(testSettleDelay)
 	if f.lintTasks.readCount(testValidationProcessId) != reads || !f.slotTaken(testScoringTaskId) || f.task().RestartCount != 0 {
 		t.Fatalf("quality reads %d (want %d), slot taken %t, %d restarts: an attempt started while a failure was unrecorded",
 			f.lintTasks.readCount(testValidationProcessId), reads, f.slotTaken(testScoringTaskId), f.task().RestartCount)
 	}
+	if otherScore.writeCount() != 0 || returned(tickDone) {
+		t.Fatalf("other score written %d times, tick returned %t; want the other task to wait for the attempt slot", otherScore.writeCount(), returned(tickDone))
+	}
 
-	close(release)
+	release()
+	waitClosed(t, "the tick", tickDone)
 	join()
 	assertAttemptEnded(t, f, view.TaskStatusProcessing, 1)
+	if row := otherScore.get(); row.BackwardCompatibilityStatus != view.ScoringProcessCompleted {
+		t.Fatalf("other BWC = %s, want the other task to run after the increment is written", row.BackwardCompatibilityStatus)
+	}
 }
 
 func TestAttempt_RefusedIncrementEndsTheAttempt(t *testing.T) {
@@ -2300,5 +2345,174 @@ func TestAcquireTasks_ExpiredLeaseCountsAsAnAttempt(t *testing.T) {
 				t.Fatal("the acquire loop must start no attempt")
 			}
 		})
+	}
+}
+
+func TestProcessTick_WaitsForAFreeAttemptSlot(t *testing.T) {
+	f := newProcessorFixture()
+	f.processor.attemptSlots = make(chan struct{}, 1)
+	otherScore := f.addOtherTask()
+	bwcStarted := make(chan struct{})
+	gate := make(chan struct{})
+	release := sync.OnceFunc(func() { close(gate) })
+	defer release()
+	f.beforeBwc = func() error {
+		close(bwcStarted)
+		<-gate
+		return nil
+	}
+	join := f.startRunsInBackground()
+
+	tickDone := f.startTick()
+
+	waitClosed(t, "the BWC of the first task", bwcStarted)
+	time.Sleep(testSettleDelay)
+	if f.lintTasks.readCount(testOtherValidationProcessId) != 0 || otherScore.writeCount() != 0 || returned(tickDone) {
+		t.Fatalf("other quality reads %d, other score writes %d, tick returned %t; want no attempt of the other task while the slot is taken",
+			f.lintTasks.readCount(testOtherValidationProcessId), otherScore.writeCount(), returned(tickDone))
+	}
+
+	release()
+	waitClosed(t, "the tick", tickDone)
+	join()
+	assertAttemptEnded(t, f, view.TaskStatusProcessing, 0)
+	if row := otherScore.get(); row.BackwardCompatibilityStatus != view.ScoringProcessCompleted {
+		t.Fatalf("other BWC = %s, want the other task scored after the release", row.BackwardCompatibilityStatus)
+	}
+	if taken := len(f.processor.attemptSlots); taken != 0 {
+		t.Fatalf("%d attempt slots taken, want 0", taken)
+	}
+}
+
+func TestProcessTick_FailedAttemptFreesItsSlot(t *testing.T) {
+	tests := []struct {
+		name  string
+		fails func() error
+	}{
+		{"error", returning(errors.New("APIHUB unavailable"))},
+		{"panic", panicking("unexpected response")},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			f := newProcessorFixture()
+			f.processor.attemptSlots = make(chan struct{}, 1)
+			otherScore := f.addOtherTask()
+			f.beforeBwc = tt.fails
+			join := f.startRunsInBackground()
+
+			waitClosed(t, "the tick", f.startTick())
+			join()
+
+			assertAttemptEnded(t, f, view.TaskStatusProcessing, 1)
+			if row := otherScore.get(); row.BackwardCompatibilityStatus != view.ScoringProcessCompleted {
+				t.Fatalf("other BWC = %s, want the other task scored in the same pass", row.BackwardCompatibilityStatus)
+			}
+
+			waitClosed(t, "the second tick", f.startTick())
+			join()
+
+			assertAttemptEnded(t, f, view.TaskStatusProcessing, repository.MaxScoringTaskRestarts)
+			if taken := len(f.processor.attemptSlots); taken != 0 {
+				t.Fatalf("%d attempt slots taken, want 0", taken)
+			}
+		})
+	}
+}
+
+func TestProcessTick_PanicAfterTheAttemptFreesItsSlot(t *testing.T) {
+	f := newProcessorFixture()
+	f.processor.attemptSlots = make(chan struct{}, 1)
+	otherScore := f.addOtherTask()
+	f.beforeBwc = returning(errors.New("APIHUB unavailable"))
+	f.tasks.beforeInc = panicking("unexpected nil row")
+	join := f.startRunsInBackground()
+
+	waitClosed(t, "the tick", f.startTick())
+	join()
+
+	assertAttemptEnded(t, f, view.TaskStatusProcessing, 0)
+	if incs := f.tasks.incCallCount(testScoringTaskId); incs != 1 {
+		t.Fatalf("restart write tried %d times, want once: the panic must come from attemptFailed", incs)
+	}
+	if taken := len(f.processor.attemptSlots); taken != 0 {
+		t.Fatalf("%d attempt slots taken, want 0", taken)
+	}
+	if row := otherScore.get(); row.BackwardCompatibilityStatus != view.ScoringProcessCompleted {
+		t.Fatalf("other BWC = %s, want the next task scored", row.BackwardCompatibilityStatus)
+	}
+}
+
+func TestProcessTick_TaskLostWhileItWaitsForASlot(t *testing.T) {
+	f := newProcessorFixture()
+	f.processor.attemptSlots = make(chan struct{}, 1)
+	otherScore := f.addOtherTask()
+	bwcStarted := make(chan struct{})
+	gate := make(chan struct{})
+	release := sync.OnceFunc(func() { close(gate) })
+	defer release()
+	f.beforeBwc = func() error {
+		close(bwcStarted)
+		<-gate
+		return nil
+	}
+	join := f.startRunsInBackground()
+
+	tickDone := f.startTick()
+	waitClosed(t, "the BWC of the first task", bwcStarted)
+	waitFor(t, "the tick to mark the other task", func() bool { return f.slotTaken(testOtherScoringTaskId) })
+	time.Sleep(testSettleDelay)
+	if reads := f.tasks.taskReadCount(testOtherScoringTaskId); reads != 0 || returned(tickDone) {
+		t.Fatalf("other task read %d times, tick returned %t; want the task waiting for a slot when it is lost", reads, returned(tickDone))
+	}
+	f.tasks.setOwner(testOtherScoringTaskId, testOtherExecutorId)
+	if reads := f.tasks.taskReadCount(testOtherScoringTaskId); reads != 0 {
+		t.Fatalf("other task read %d times before the release, want 0", reads)
+	}
+
+	release()
+	waitClosed(t, "the tick", tickDone)
+	join()
+
+	if reads := f.tasks.taskReadCount(testOtherScoringTaskId); reads != 1 {
+		t.Fatalf("other task read %d times, want one fresh read after the move", reads)
+	}
+	otherVersion := fmt.Sprintf("%s@%d", testVersion, testOtherRevision)
+	if incs, requests := f.tasks.incCallCount(testOtherScoringTaskId), f.apihub.requestCount(otherVersion); incs != 0 || requests != 0 {
+		t.Fatalf("other task: %d restart writes tried, %d APIHUB requests; want neither for a task the executor no longer owns", incs, requests)
+	}
+	if f.lintTasks.readCount(testOtherValidationProcessId) != 0 || otherScore.writeCount() != 0 {
+		t.Fatalf("other quality reads %d, other score writes %d; want no part of a task the executor no longer owns",
+			f.lintTasks.readCount(testOtherValidationProcessId), otherScore.writeCount())
+	}
+	if other := f.tasks.task(testOtherScoringTaskId); other.RestartCount != 0 {
+		t.Fatalf("other task has %d restarts, want 0", other.RestartCount)
+	}
+	if f.slotTaken(testOtherScoringTaskId) {
+		t.Fatal("the slot of the lost task must be free")
+	}
+}
+
+func TestAttempt_DeadlineCountsAsAFailedAttempt(t *testing.T) {
+	f := newProcessorFixture()
+	f.processor.attemptTimeout = testAttemptTimeout
+	testEnded := make(chan struct{})
+	defer close(testEnded)
+	f.apihub.getVersion = func(ctx context.Context, _, _ string) (*view.VersionContent, error) {
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		case <-testEnded:
+			return nil, errors.New("the test ended before the attempt deadline")
+		}
+	}
+
+	waitClosed(t, "the tick", f.startTick())
+
+	assertAttemptEnded(t, f, view.TaskStatusProcessing, 1)
+	if details := f.task().Details; !strings.Contains(details, context.DeadlineExceeded.Error()) {
+		t.Fatalf("details = %q, want the deadline in them", details)
+	}
+	if taken := len(f.processor.attemptSlots); taken != 0 {
+		t.Fatalf("%d attempt slots taken, want 0", taken)
 	}
 }

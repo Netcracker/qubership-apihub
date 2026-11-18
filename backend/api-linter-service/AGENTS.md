@@ -120,6 +120,20 @@ When a change affects REST contracts or integration behaviour, update the neighb
    scored by the next attempt. The slot of the task stays taken until the restart count is updated or the update is
    refused.
 
+   An executor runs at most `maxConcurrentScoringAttempts` (5) attempts at once, one per attempt slot: an attempt checks
+   out up to two connections from the connection pool of the pod and calls APIHUB, and the same pool serves the lease
+   refreshes of all task types. The work loop lists the owned tasks in `processing` on a 5-second ticker, skips a task
+   whose attempt still runs, and takes the others in `created_at` order: it takes an attempt slot before it starts an
+   attempt and waits while all are taken. A pass can take longer than 5 seconds; the ticker then drops the ticks it
+   misses. The heartbeat and the claim loop do not wait for a slot. An attempt runs under a deadline of
+   `scoringAttemptTimeout` (10 minutes), and a timeout that `runAttempt` returns is a failed attempt. The deadline
+   covers the statements and the APIHUB requests of an attempt, but not the `COMMIT` or `ROLLBACK` of a transaction,
+   because go-pg drops the context there: a database that stops answering at that moment holds the slot and its
+   connection until the connection ends. While the restart count cannot be written, the attempt retries the write every
+   5 seconds and keeps its slot, until the write succeeds or the repository refuses it. The write fails while the
+   database fails, or when PostgreSQL rejects the update for one task; the scoring of the pod pauses while all five
+   slots are held this way.
+
    `recomputeOverallStatus` (`service/scoring_task_processor.go`) recomputes `status`,
    `reasons`, and `debug` from the parts on every write; the row keeps an empty `status` until every part is
    terminal, and the v2 body omits the field until then. `GET /api/v2/.../scoring` returns the row at any time with

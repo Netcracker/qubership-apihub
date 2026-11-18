@@ -24,6 +24,8 @@ const (
 	scoringTaskPollInterval      = 5 * time.Second
 	scoringTaskHeartbeatInterval = 5 * time.Second
 	scoringTaskWorkInterval      = 5 * time.Second
+	maxConcurrentScoringAttempts = 5
+	scoringAttemptTimeout        = 10 * time.Minute
 
 	versionContentMissingError = "version content not available"
 
@@ -67,7 +69,9 @@ func NewScoringTaskProcessor(
 		apihubClient:              apihubClient,
 		executorId:                executorId,
 		runningTasks:              make(map[string]bool),
+		attemptSlots:              make(chan struct{}, maxConcurrentScoringAttempts),
 		startRun:                  func(run func()) { utils.SafeAsync(run) },
+		attemptTimeout:            scoringAttemptTimeout,
 		restartCountRetryInterval: scoringTaskWorkInterval,
 		scoringTaskNotify:         scoringTaskNotify,
 	}
@@ -131,7 +135,9 @@ type scoringTaskProcessorImpl struct {
 
 	runningTasksMu            sync.Mutex
 	runningTasks              map[string]bool
+	attemptSlots              chan struct{}
 	startRun                  func(run func())
+	attemptTimeout            time.Duration
 	restartCountRetryInterval time.Duration
 
 	scoringTaskNotify <-chan struct{}
@@ -161,8 +167,6 @@ func (p *scoringTaskProcessorImpl) processTick(ctx context.Context) {
 		log.Errorf("Failed to get owned scoring tasks: %s", err)
 		return
 	}
-	// TODO: limit the number of concurrent attempts. Each attempt queries the database and APIHUB, so a burst of tasks can
-	// exhaust the connection pool and delay the lease refreshes of all task types.
 	for _, task := range tasks {
 		p.runningTasksMu.Lock()
 		running := p.runningTasks[task.Id]
@@ -171,14 +175,20 @@ func (p *scoringTaskProcessorImpl) processTick(ctx context.Context) {
 		if running {
 			continue
 		}
+		// Waits for a free slot: the attempts share the connection pool with the lease refreshes of all task types.
+		p.attemptSlots <- struct{}{}
 		p.startRun(func() {
 			// The slot stays taken until the restart count is updated, so no attempt of this task starts while a failure is unrecorded.
 			defer func() {
 				p.runningTasksMu.Lock()
 				delete(p.runningTasks, task.Id)
 				p.runningTasksMu.Unlock()
+				<-p.attemptSlots
 			}()
-			if err := p.runAttempt(ctx, task.Id); err != nil {
+			attemptCtx, cancel := context.WithTimeout(ctx, p.attemptTimeout)
+			defer cancel()
+			// attemptFailed gets the context without the deadline, so an attempt that timed out still records its failure.
+			if err := p.runAttempt(attemptCtx, task.Id); err != nil {
 				p.attemptFailed(ctx, task.Id, err)
 			}
 		})

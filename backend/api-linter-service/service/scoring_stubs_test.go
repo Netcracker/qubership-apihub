@@ -102,6 +102,8 @@ type scoringTaskRepoStub struct {
 	scoringFailedErrs []error
 
 	listedTasks        []entity.VersionScoringTask
+	taskReads          map[string]int
+	incCalls           map[string]int
 	beforeGetTask      func() error
 	beforeInc          func() error
 	beforeComplete     func() error
@@ -119,6 +121,18 @@ func (r *scoringTaskRepoStub) setOwner(taskId string, executorId string) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.tasks[taskId].ExecutorId = executorId
+}
+
+func (r *scoringTaskRepoStub) taskReadCount(taskId string) int {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return r.taskReads[taskId]
+}
+
+func (r *scoringTaskRepoStub) incCallCount(taskId string) int {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return r.incCalls[taskId]
 }
 
 func (r *scoringTaskRepoStub) task(id string) entity.VersionScoringTask {
@@ -168,6 +182,10 @@ func (r *scoringTaskRepoStub) GetProcessingTask(_ context.Context, taskId string
 	}
 	r.mu.Lock()
 	defer r.mu.Unlock()
+	if r.taskReads == nil {
+		r.taskReads = map[string]int{}
+	}
+	r.taskReads[taskId]++
 	task := r.ownedLocked(taskId, executorId)
 	if task == nil {
 		return nil, nil
@@ -188,7 +206,18 @@ func (r *scoringTaskRepoStub) ownedLocked(taskId string, executorId string) *ent
 	return task
 }
 
-func (r *scoringTaskRepoStub) IncRestartCount(_ context.Context, taskId string, executorId string, details string) (bool, error) {
+func (r *scoringTaskRepoStub) IncRestartCount(ctx context.Context, taskId string, executorId string, details string) (bool, error) {
+	r.mu.Lock()
+	if r.incCalls == nil {
+		r.incCalls = map[string]int{}
+	}
+	r.incCalls[taskId]++
+	r.mu.Unlock()
+	// go-pg fails a statement with an expired context. The stub refuses it instead, so a test that passes the wrong
+	// context sees no restart rather than an endless retry.
+	if ctx.Err() != nil {
+		return false, nil
+	}
 	if r.beforeInc != nil {
 		if err := r.beforeInc(); err != nil {
 			return false, err
@@ -303,16 +332,36 @@ func (r *scoringTaskRepoStub) ScoringFailed(_ context.Context, task entity.Versi
 type apihubClientStub struct {
 	client.ApihubClient
 
-	getVersion        func(packageId, version string) (*view.VersionContent, error)
+	getVersion        func(ctx context.Context, packageId, version string) (*view.VersionContent, error)
 	getVersionChanges func(page int) (*view.VersionChangesView, error)
 	getOperationsList func(version string, page int) (*view.CommonOperations, error)
+
+	mu       sync.Mutex
+	requests map[string]int
 }
 
-func (c *apihubClientStub) GetVersion(_ context.Context, id, version string, _ bool, _ bool) (*view.VersionContent, error) {
-	return c.getVersion(id, version)
+func (c *apihubClientStub) countRequest(version string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.requests == nil {
+		c.requests = map[string]int{}
+	}
+	c.requests[version]++
 }
 
-func (c *apihubClientStub) GetVersionChanges(_ context.Context, _ string, _ string, _ string, _ string, _ string, _ int, page int) (*view.VersionChangesView, error) {
+func (c *apihubClientStub) requestCount(version string) int {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.requests[version]
+}
+
+func (c *apihubClientStub) GetVersion(ctx context.Context, id, version string, _ bool, _ bool) (*view.VersionContent, error) {
+	c.countRequest(version)
+	return c.getVersion(ctx, id, version)
+}
+
+func (c *apihubClientStub) GetVersionChanges(_ context.Context, _ string, version string, _ string, _ string, _ string, _ int, page int) (*view.VersionChangesView, error) {
+	c.countRequest(version)
 	if c.getVersionChanges == nil {
 		return &view.VersionChangesView{}, nil
 	}
@@ -320,6 +369,7 @@ func (c *apihubClientStub) GetVersionChanges(_ context.Context, _ string, _ stri
 }
 
 func (c *apihubClientStub) GetOperationsList(_ context.Context, _ string, version string, _ view.OpApiType, req view.OperationListRequest) (*view.CommonOperations, error) {
+	c.countRequest(version)
 	if c.getOperationsList == nil {
 		return &view.CommonOperations{}, nil
 	}
