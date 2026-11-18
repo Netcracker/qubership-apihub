@@ -1,13 +1,11 @@
-import type { FC } from 'react'
+import type { FC, SyntheticEvent } from 'react'
 import * as React from 'react'
-import { memo, useMemo, useState } from 'react'
+import { memo, useMemo } from 'react'
 import { Autocomplete, Box, TextField } from '@mui/material'
 import { useParams } from 'react-router-dom'
 import { useNavigation } from '../../NavigationProvider'
 import { useAgents } from './useAgents'
 import type { Agent } from '@netcracker/qubership-apihub-ui-shared/entities/agents'
-import { EMPTY_AGENT } from '@netcracker/qubership-apihub-ui-shared/entities/agents'
-import { includes } from '@netcracker/qubership-apihub-ui-shared/utils/filters'
 import { WORKSPACE_SEARCH_PARAM } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
 import { useSearchParam } from '@netcracker/qubership-apihub-ui-shared/hooks/searchparams/useSearchParam'
 import { OptionItem } from '@netcracker/qubership-apihub-ui-shared/components/OptionItem'
@@ -20,22 +18,29 @@ export const AgentsSelector: FC = memo(() => {
 
   const [, setIdpAuthToken] = useLocalIdpAuthToken()
 
-  const [searchValue, setSearchValue] = useState('')
-
   const [agents, isLoading] = useAgents()
-  const selectedAgent = useMemo(() => {
-      return agents?.find(agent => agent.agentId === agentId) ?? EMPTY_AGENT
-    },
+  const selectedAgent = useMemo(
+    () => agents.find(agent => agent.agentId === agentId) ?? null,
     [agentId, agents],
   )
-  const filteredAgents = useMemo(() => agents.filter(({ agentId }) => includes([agentId], searchValue)), [agents, searchValue])
+
+  const handleAgentChange = (_: SyntheticEvent, value: Agent | null): void => {
+    if (!value) {
+      return
+    }
+    setIdpAuthToken('')
+    navigateToAgent({
+      agentId: value.agentId,
+      search: { [WORKSPACE_SEARCH_PARAM]: { value: workspace } },
+    })
+  }
 
   return (
     <Box width={240}>
-      <Autocomplete<Agent, false, true>
+      <Autocomplete<Agent, false, boolean>
         loading={isLoading}
         value={selectedAgent}
-        options={filteredAgents}
+        options={agents}
         forcePopupIcon={true}
         renderOption={(props, option) => (
           <OptionItem
@@ -53,16 +58,7 @@ export const AgentsSelector: FC = memo(() => {
             sx={{ m: 0, '& .MuiInputBase-root': { pt: '1px', pb: '1px' } }}
           />
         )}
-        onInputChange={(event, value, reason) =>
-          setSearchValue(reason === 'input' ? value : '')
-        }
-        onChange={(_, value) => {
-          setIdpAuthToken('')
-          navigateToAgent({
-            agentId: value.agentId ?? agentId,
-            search: { [WORKSPACE_SEARCH_PARAM]: { value: workspace } },
-          })
-        }}
+        onChange={handleAgentChange}
         data-testid="AgentsSelector"
       />
     </Box>

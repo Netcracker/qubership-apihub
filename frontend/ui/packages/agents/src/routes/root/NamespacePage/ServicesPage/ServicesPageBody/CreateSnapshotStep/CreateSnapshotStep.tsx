@@ -102,6 +102,13 @@ export const CreateSnapshotStep: FC = memo(() => {
               freeSolo
               value={value}
               options={nameOptions}
+              renderOption={(props, name) => (
+                <OptionItem
+                  key={name}
+                  props={props}
+                  title={name}
+                />
+              )}
               renderInput={(params) => (
                 <TextField
                   {...params}

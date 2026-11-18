@@ -1,5 +1,6 @@
 import type { FC, HTMLAttributes, ReactNode } from 'react'
 import { memo } from 'react'
+import omit from 'lodash-es/omit'
 import type { BoxProps, TooltipProps } from '@mui/material'
 import { Box, ListItem, Tooltip } from '@mui/material'
 import { TextWithOverflowTooltip } from './TextWithOverflowTooltip'
@@ -32,6 +33,8 @@ export const OptionItem: FC<OptionItemProps> = memo<OptionItemProps>(({
   'data-testid': dataTestId,
 }) => {
   const resolvedOverflowTooltipText = overflowTooltipText ?? (typeof title === 'string' ? title : '')
+  // MUI puts the option key into the props of renderOption, and the caller already sets it on this component
+  const listItemProps = omit(props, 'key')
 
   return (
     <Tooltip
@@ -41,7 +44,7 @@ export const OptionItem: FC<OptionItemProps> = memo<OptionItemProps>(({
     >
       <Box>
         <ListItem
-          {...props}
+          {...listItemProps}
           data-testid={dataTestId}
           // todo 'disabled' prop is deprecated and does not work properly, transition to ListItemButton is required
           sx={{ pointerEvents: disabled ? 'none' : 'auto' }}

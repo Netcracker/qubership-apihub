@@ -13,12 +13,6 @@ export type AgentDto = Readonly<{
 }>
 
 export const EMPTY_AGENTS: Agents = []
-export const EMPTY_AGENT: Agent = {
-  agentId: '',
-  agentDeploymentCloud: '',
-  name: '',
-  status: '',
-}
 
 export async function getAgents(prefix: string): Promise<Agents> {
   return await requestJson<Agents>('/agents', {

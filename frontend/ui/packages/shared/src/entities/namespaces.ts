@@ -13,11 +13,6 @@ export type NamespacesDto = Readonly<{
   namespaces: ReadonlyArray<Key>
 }>
 
-export const EMPTY_NAMESPACE: Namespace = {
-  cloudKey: '',
-  namespaceKey: '',
-}
-
 export const EMPTY_NAMESPACES: Namespaces = []
 
 export function toNamespaces(value: NamespacesDto): Namespaces {

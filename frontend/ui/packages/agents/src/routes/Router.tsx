@@ -11,6 +11,12 @@ import { SystemConfigurationProvider } from './root/NamespacePage/SystemConfigur
 import { WelcomePage } from './root/WelcomePage'
 import { AUTHENTICATION_REPORTS_PAGE, SECURITY_REPORTS_PAGE, SERVICES_PAGE } from './routes'
 
+// Opts in to two behaviors of React Router 7: navigation updates run in `startTransition`, and a relative path inside a
+// splat route resolves from the whole matched path. React Router names the flags in snake case.
+// TODO: remove the flags with the move to React Router 7, where this behavior is the default and the flags are gone.
+// eslint-disable-next-line camelcase
+const ROUTER_FUTURE_FLAGS = { v7_startTransition: true, v7_relativeSplatPath: true }
+
 const SecurityReportsRedirect: FC = memo(() => {
   const location = useLocation()
   return <Navigate to={{ pathname: AUTHENTICATION_REPORTS_PAGE, search: location.search }} replace />
@@ -20,7 +26,7 @@ export const Router: FC = memo(() => {
   return (
     <SystemConfigurationProvider>
       <EventBusProvider>
-        <BrowserRouter>
+        <BrowserRouter future={ROUTER_FUTURE_FLAGS}>
           <NavigationProvider>
             <Routes>
               <Route path="/login" element={<LoginPage applicationName={'APIHUB NC Custom Service'} />} />

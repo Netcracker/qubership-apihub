@@ -1,13 +1,11 @@
 import type { FC } from 'react'
-import { memo, useMemo, useState } from 'react'
+import { memo, useMemo } from 'react'
 import { Autocomplete, Box, TextField, Tooltip } from '@mui/material'
 import { useNamespaces } from './useNamespaces'
 import { useParams } from 'react-router-dom'
 import { SERVICES_NAMESPACE_PAGE_MODE } from './NamespacePage'
 import { useNavigation } from '../../NavigationProvider'
 import type { Namespace } from '@netcracker/qubership-apihub-ui-shared/entities/namespaces'
-import { EMPTY_NAMESPACE } from '@netcracker/qubership-apihub-ui-shared/entities/namespaces'
-import { includes } from '@netcracker/qubership-apihub-ui-shared/utils/filters'
 import { useSearchParam } from '@netcracker/qubership-apihub-ui-shared/hooks/searchparams/useSearchParam'
 import { WORKSPACE_SEARCH_PARAM } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
 import { OptionItem } from '@netcracker/qubership-apihub-ui-shared/components/OptionItem'
@@ -16,14 +14,15 @@ import { useLocalIdpAuthToken } from './useLocalIdpAuthToken'
 export const NamespaceSelector: FC = memo(() => {
   const { agentId, namespaceKey = '', namespaceMode } = useParams()
   const { navigateToNamespace } = useNavigation()
-  const [searchValue, setSearchValue] = useState('')
   const workspace = useSearchParam(WORKSPACE_SEARCH_PARAM)
 
   const [, setIdpAuthToken] = useLocalIdpAuthToken()
 
   const [namespaces, isLoading] = useNamespaces()
-  const selectedNamespace = useMemo(() => namespaces?.find(namespace => namespace.namespaceKey === namespaceKey) ?? EMPTY_NAMESPACE, [namespaceKey, namespaces])
-  const filteredNamespaces = useMemo(() => namespaces.filter(({ namespaceKey }) => includes([namespaceKey], searchValue)), [namespaces, searchValue])
+  const selectedNamespace = useMemo(
+    () => namespaces.find(namespace => namespace.namespaceKey === namespaceKey) ?? null,
+    [namespaceKey, namespaces],
+  )
 
   return (
     <Tooltip title={!agentId && 'Select the Cloud first to select the Namespace'} placement="right">
@@ -33,7 +32,7 @@ export const NamespaceSelector: FC = memo(() => {
           forcePopupIcon={true}
           disabled={!agentId}
           value={selectedNamespace}
-          options={filteredNamespaces}
+          options={namespaces}
           renderOption={(props, option) => (
             <OptionItem
               props={props}
@@ -50,9 +49,6 @@ export const NamespaceSelector: FC = memo(() => {
               sx={{ m: 0, '& .MuiInputBase-root': { pt: '1px', pb: '1px' } }}
             />
           )}
-          onInputChange={(event, value, reason) =>
-            setSearchValue(reason === 'input' ? value : '')
-          }
           onChange={(_, value) => {
             setIdpAuthToken('')
             navigateToNamespace({
@@ -63,7 +59,7 @@ export const NamespaceSelector: FC = memo(() => {
             })
           }}
           data-testid="NamespaceSelector"
-          disableClearable={!selectedNamespace.namespaceKey}
+          disableClearable={!selectedNamespace}
         />
       </Box>
     </Tooltip>

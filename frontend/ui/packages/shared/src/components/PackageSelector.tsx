@@ -1,6 +1,6 @@
 import type { FC, SyntheticEvent } from 'react'
 import * as React from 'react'
-import { memo, useCallback } from 'react'
+import { memo, useCallback, useMemo } from 'react'
 import { Autocomplete, Box, debounce, InputLabel, TextField } from '@mui/material'
 import type { AutocompleteValue } from '@mui/base'
 import type { TestableProps } from './Testable'
@@ -42,6 +42,12 @@ export const PackageSelector: FC<PackageSelectorProps> = memo<PackageSelectorPro
     [onSelect],
   )
 
+  // The backend search can leave the chosen package out of the options, and MUI warns about a value it cannot find
+  const optionsWithValue = useMemo(
+    () => (value && !options.some(option => option.key === value.key) ? [value, ...options] : options),
+    [options, value],
+  )
+
   return (
     <Box width={240}>
       {title && <InputLabel sx={{ mb: 1 }}>{title}</InputLabel>}
@@ -50,7 +56,7 @@ export const PackageSelector: FC<PackageSelectorProps> = memo<PackageSelectorPro
         forcePopupIcon={true}
         value={value}
         disabled={disabled}
-        options={options}
+        options={optionsWithValue}
         renderOption={(props, dashboard) => (
           <OptionItem
             key={dashboard.key}
