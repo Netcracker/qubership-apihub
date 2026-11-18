@@ -48,6 +48,5 @@ export function toTabTitle<Tab extends string>(
   titles: Readonly<Record<Tab, string>>,
   tab: string | undefined,
 ): string | undefined {
-  // Not Object.hasOwn: the build targets the Vite defaults, and Safari 14 has no Object.hasOwn.
-  return tab !== undefined && Object.prototype.hasOwnProperty.call(titles, tab) ? titles[tab as Tab] : undefined
+  return tab !== undefined && Object.hasOwn(titles, tab) ? titles[tab as Tab] : undefined
 }
