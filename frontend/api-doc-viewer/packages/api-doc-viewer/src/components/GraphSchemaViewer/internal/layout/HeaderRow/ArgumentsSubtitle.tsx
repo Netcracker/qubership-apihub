@@ -1,3 +1,4 @@
+import { cn } from '@apihub/utils/common/cn'
 import { DiffNodeMeta, GraphApiDiffTreeNode, GraphApiTreeNode } from '@netcracker/qubership-apihub-api-data-model'
 import { DiffAction } from '@netcracker/qubership-apihub-api-diff'
 import { IModelStatePropNode } from '@netcracker/qubership-apihub-api-state-model'
@@ -42,7 +43,7 @@ export const ArgumentsSubTitle: FC<ArgumentsSubTitleProps> = props => {
       : values.length
 
   return (
-    <div className="text-xs font-normal text-slate-500">
+    <div className={cn("text-xs font-normal text-slate-500")}>
       {'('}
       {values.map((arg, index) => {
         const key = arg.node.id
@@ -166,7 +167,7 @@ const Value: FC<ValueProps> = props => {
     $metaChanges
   } = props
   return <>
-    <div className={`inline ${colorSchema}`}>
+    <div className={cn(`inline ${colorSchema}`)}>
       <NodeTitle
         {...data}
         layoutMode={layoutMode}

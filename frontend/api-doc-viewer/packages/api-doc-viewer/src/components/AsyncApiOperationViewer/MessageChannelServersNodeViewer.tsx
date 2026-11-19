@@ -1,3 +1,4 @@
+import { cn } from "@apihub/utils/common/cn";
 import { isServerNode } from "@apihub/utils/async-api/node-type-checkers";
 import { AsyncApiTreeNode, AsyncApiTreeNodeWithDiffs } from "@netcracker/qubership-apihub-next-data-model/model/async-api/types/aliases";
 import { AsyncApiTreeNodeKinds } from "@netcracker/qubership-apihub-next-data-model/model/async-api/types/node-kind";
@@ -35,7 +36,7 @@ export const MessageChannelServersNodeViewer: FC<MessageChannelServersNodeViewer
   }, [node])
 
   return (
-    <div className='flex flex-col'>
+    <div className={cn('flex flex-col')}>
       <TitleRow
         data-precededby={precededBy}
         value='Servers'

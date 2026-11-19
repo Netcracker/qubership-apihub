@@ -1,0 +1,157 @@
+/* stylelint-disable selector-class-pattern -- modifier classes shared with TS/TSX */
+
+/* ─── `Optional` badge of the Security title row (anonymous access `{}`). Class names:
+   `consts/tags.ts`. The size class stays in the diff look (default badge + green / red border). ── */
+
+.openapi-security-optional-badge {
+  background-color: #4C87EC;
+  box-shadow: inset 0 0 0 1px #4C87EC;
+  color: white;
+}
+
+.ux-badge.openapi-security-optional-badge-size {
+  font-size: 15px;
+}
+
+/* ─── HTTP method badge (address row). Text is white (`AddressRow`). Mapping method → class:
+   `utils/openapi/http-method-badge-config.ts`. ───────────────────────────────────────────── */
+
+.openapi-http-method-badge_get {
+  background-color: #00BB5B;
+}
+
+.openapi-http-method-badge_post {
+  background-color: #4FC0F8;
+}
+
+.openapi-http-method-badge_put,
+.openapi-http-method-badge_patch {
+  background-color: #FFB02E;
+}
+
+.openapi-http-method-badge_delete {
+  background-color: #FF5260;
+}
+
+.openapi-http-method-badge_head {
+  background-color: #A855F7;
+}
+
+.openapi-http-method-badge_options {
+  background-color: #6366F1;
+}
+
+.openapi-http-method-badge_trace,
+.openapi-http-method-badge_default {
+  background-color: #64748B;
+}
+
+/* ─── Response-code selector options (`Selector` tone classes). Mapping code class → class:
+   `utils/openapi/response-code-tone.ts`; `default` / unknown codes keep the neutral `Selector` look.
+   Each tone: untouched = transparent background + tone text and border; hovered = pale tint of the
+   tone; selected = solid fill + white text (never a pale tint: pale green / red / yellow backgrounds
+   mean "added" / "removed" / "changed" in diffs). Selectors are qualified with
+   `button.button-selector-option` so they outrank `Selector.css` whatever the bundle order; within a
+   tone `.selected` comes after `:hover`, so a hovered selected option stays solid. ─────────── */
+
+/* 1XX Informational: violet, distinct from 3XX blue and from the neutral grey of `default`. */
+button.button-selector-option.openapi-response-code_1xx {
+  background-color: transparent;
+  border-color: #9B7BF7;
+  color: #9B7BF7;
+}
+
+button.button-selector-option.openapi-response-code_1xx:hover {
+  background-color: #ECE6FE;
+  border-color: #9B7BF7;
+  color: #9B7BF7;
+}
+
+button.button-selector-option.openapi-response-code_1xx.selected {
+  background-color: #9B7BF7;
+  border-color: #9B7BF7;
+  color: #FFF;
+}
+
+/* 2XX Success: green. */
+button.button-selector-option.openapi-response-code_2xx {
+  background-color: transparent;
+  border-color: #00BB5B;
+  color: #00BB5B;
+}
+
+button.button-selector-option.openapi-response-code_2xx:hover {
+  background-color: #D0FAD4;
+  border-color: #00BB5B;
+  color: #00BB5B;
+}
+
+button.button-selector-option.openapi-response-code_2xx.selected {
+  background-color: #00BB5B;
+  border-color: #00BB5B;
+  color: #FFF;
+}
+
+/* 3XX Redirection: sky blue, the POST badge color. */
+button.button-selector-option.openapi-response-code_3xx {
+  background-color: transparent;
+  border-color: #4FC0F8;
+  color: #4FC0F8;
+}
+
+button.button-selector-option.openapi-response-code_3xx:hover {
+  background-color: #D6F2FE;
+  border-color: #4FC0F8;
+  color: #4FC0F8;
+}
+
+button.button-selector-option.openapi-response-code_3xx.selected {
+  background-color: #4FC0F8;
+  border-color: #4FC0F8;
+  color: #FFF;
+}
+
+/* 4XX Client error: amber. */
+button.button-selector-option.openapi-response-code_4xx {
+  background-color: transparent;
+  border-color: #FFB02E;
+  color: #FFB02E;
+}
+
+button.button-selector-option.openapi-response-code_4xx:hover {
+  background-color: #FFF4CC;
+  border-color: #FFB02E;
+  color: #FFB02E;
+}
+
+button.button-selector-option.openapi-response-code_4xx.selected {
+  background-color: #FFB02E;
+  border-color: #FFB02E;
+  color: #FFF;
+}
+
+/* 5XX Server error: red. */
+button.button-selector-option.openapi-response-code_5xx {
+  background-color: transparent;
+  border-color: #FF5260;
+  color: #FF5260;
+}
+
+button.button-selector-option.openapi-response-code_5xx:hover {
+  background-color: #FFC8C1;
+  border-color: #FF5260;
+  color: #FF5260;
+}
+
+button.button-selector-option.openapi-response-code_5xx.selected {
+  background-color: #FF636F;
+  border-color: #FF636F;
+  color: #FFF;
+}
+
+/* A yellow-highlighted option title (renamed response code / media type, `OptionKeyText`) is always
+   black: the inherited white of a selected tone is invisible on the highlighter. OpenAPI titles only:
+   other selectors (JSON Schema combiner options) keep the button's own text color on the highlighter. */
+button.button-selector-option .openapi-option-key-text.diffs-highlighter_yellow {
+  color: black;
+}

@@ -1,3 +1,4 @@
+import { cn } from '@apihub/utils/common/cn'
 import { DiffNodeValue, isDiff } from '@netcracker/qubership-apihub-api-data-model'
 import { Diff, DiffAction, DiffType } from '@netcracker/qubership-apihub-api-diff'
 import { DiffsClassesBuilder } from '@netcracker/qubership-apihub-next-data-model/building-service/abstract/tree-with-diffs/node-diffs-data/utilities'
@@ -103,14 +104,14 @@ export const SelectNestedNodeRow: FC<SelectNestedNodeRowProps> = (props) => {
     const width = isSideBySideDiffsLayoutMode ? 'w-1/2' : 'w-full'
 
     return (
-      <div className={`flex flex-col ${width}`}>
-        <div className="flex flex-row">
+      <div className={cn(`flex flex-col ${width}`)}>
+        <div className={cn("flex flex-row")}>
           <LevelIndicator level={level} lastInvisible={true} />
           <NestingIndicatorTitle>{combiner}</NestingIndicatorTitle>
         </div>
-        <div className="flex flex-row gap-5">
+        <div className={cn("flex flex-row gap-5")}>
           <LevelIndicator level={level} />
-          <div className="flex flex-row flex-wrap gap-2 my-2">
+          <div className={cn("flex flex-row flex-wrap gap-2 my-2")}>
             {Object.entries(nodesTypeData).map(([id, data]) => {
               const nestedNodeChangesSummary = $nestedChangesSummary?.[id]
               const diffTypeBySummary = maxDiffTypeFromNodeSummary(nestedNodeChangesSummary)
@@ -142,7 +143,7 @@ export const SelectNestedNodeRow: FC<SelectNestedNodeRowProps> = (props) => {
 
   if (isDocumentLayoutMode) {
     return (
-      <div className="flex flex-row">
+      <div className={cn("flex flex-row")}>
         <Content layoutSide={CHANGED_LAYOUT_SIDE} />
       </div>
     )
@@ -151,14 +152,14 @@ export const SelectNestedNodeRow: FC<SelectNestedNodeRowProps> = (props) => {
   if (isInlineDiffsLayoutMode) {
     if (!isNodeChanged && !isContentChanged && !isDescendantsChanged) {
       return (
-        <div className="flex flex-row">
+        <div className={cn("flex flex-row")}>
           <Content layoutSide={ORIGIN_LAYOUT_SIDE} />
         </div>
       )
     }
 
     return (
-      <div className={`flex flex-row relative ${diffTypeIncluded ? diffBackground : ''}`}>
+      <div className={cn(`flex flex-row relative ${diffTypeIncluded ? diffBackground : ''}`)}>
         {diffTypeIncluded && <UxDiffFloatingBadge variant={diffType!} message={diffTypeCause} />}
         <Content layoutSide={ORIGIN_LAYOUT_SIDE} />
       </div>
@@ -168,7 +169,7 @@ export const SelectNestedNodeRow: FC<SelectNestedNodeRowProps> = (props) => {
   if (isSideBySideDiffsLayoutMode) {
     if (!isNodeChanged && !isContentChanged && !isDescendantsChanged) {
       return (
-        <div className="flex flex-row">
+        <div className={cn("flex flex-row")}>
           <Content layoutSide={ORIGIN_LAYOUT_SIDE} />
           <Content layoutSide={CHANGED_LAYOUT_SIDE} />
         </div>
@@ -176,7 +177,7 @@ export const SelectNestedNodeRow: FC<SelectNestedNodeRowProps> = (props) => {
     }
 
     return (
-      <div className={`flex flex-row relative ${diffTypeIncluded ? diffBackground : ''}`}>
+      <div className={cn(`flex flex-row relative ${diffTypeIncluded ? diffBackground : ''}`)}>
         {diffTypeIncluded && <UxDiffFloatingBadge variant={diffType!} message={diffTypeCause} />}
         {isContentChanged || isDescendantsChanged || isNodeChanged && nodeRemoved
           ? <Content layoutSide={ORIGIN_LAYOUT_SIDE} />
@@ -265,10 +266,10 @@ const DiffButton: FC<DiffButtonProps> = (props) => {
   ) return null
 
   return (
-    <div className="relative">
+    <div className={cn("relative")}>
       <button
         key={`nested-${currentNodeId}`}
-        className={classes}
+        className={cn(classes)}
         onClick={() => onSelect(currentNodeId)}
         data-testid={`legacy-combiner-option-${currentNodeId}`}
       >

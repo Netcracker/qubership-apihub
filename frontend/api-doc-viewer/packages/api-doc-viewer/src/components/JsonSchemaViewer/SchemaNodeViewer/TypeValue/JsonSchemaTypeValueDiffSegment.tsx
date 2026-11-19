@@ -1,3 +1,4 @@
+import { cn } from "@apihub/utils/common/cn"
 import { resolveDiffSideStyle } from "@apihub/utils/diffs/resolve-diff-side-style"
 import { LayoutSide } from "@apihub/types/internal/LayoutSide"
 import { DiffsClassesBuilder } from "@netcracker/qubership-apihub-next-data-model/building-service/abstract/tree-with-diffs/node-diffs-data/utilities"
@@ -27,6 +28,6 @@ export const JsonSchemaTypeValueDiffSegment: FC<JsonSchemaTypeValueDiffSegmentPr
   ].filter(Boolean).join(" ")
 
   return (
-    <JsonSchemaTypeValueText text={text} color={color} className={className || undefined} />
+    <JsonSchemaTypeValueText text={text} color={color} className={cn(className || undefined)} />
   )
 })

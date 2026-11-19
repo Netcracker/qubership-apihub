@@ -68,7 +68,10 @@ const { loadConfig } = require('./lib/config')
 const { createClient } = require('./lib/github')
 const state = require('./lib/state')
 const usage = require('./lib/usage')
-const { ContractError, validate } = require('./lib/contract')
+const { ContractError, validate, IMPLEMENTER_STOP_REASONS } = require('./lib/contract')
+const stops = require('./lib/stops')
+const { renderStop } = stops
+const results = require('./lib/results')
 const { callAgent } = require('./lib/agent-call')
 const { SECRET_ENV } = require('./lib/opencode')
 const { untrusted } = require('./lib/prompt')
@@ -88,7 +91,6 @@ const log = require('./lib/log')
 
 const LABEL_UNSUITABLE = 'ai:unsuitable'
 const LABEL_SUITABLE = 'ai:suitable'
-const LABEL_NEEDS_HUMAN = 'agent:needs-human'
 const BASE_BRANCH = 'develop'
 /** A fresh start looks for a free branch name up to `<name>-v9`. */
 const MAX_BRANCH_VERSION = 9
@@ -419,8 +421,8 @@ function commitMessage({ type, scope, title, number, runUrl }) {
 
 /**
  * The semantic rules of the implementer's answer that the schema cannot express: a `bug-fix` is a `fix`, a blocked
- * or unrelated answer says why, and `unrelated` (the failure is not caused by the change) is for a CI fix only. Throws
- * `ContractError`; returns the answer otherwise.
+ * or unrelated answer says why, a blocked answer names its stop reason (and no other answer does), and `unrelated`
+ * (the failure is not caused by the change) is for a CI fix only. Throws `ContractError`; returns the answer otherwise.
  *
  * @param {'initial'|'human'|'ci-fix'|'review'|'update'} [kind] why the attempt runs; an update commits a merge, so its
  *   commit type is not used and the playbook rule does not apply
@@ -432,6 +434,12 @@ function checkImplementation(output, playbook, kind) {
   }
   if (output.status === 'blocked' && output.blockedReason.trim() === '') {
     problems.push('blockedReason: a blocked answer needs a reason')
+  }
+  if (output.status === 'blocked' && output.stopReason === '') {
+    problems.push('stopReason: a blocked answer needs a stop reason')
+  }
+  if (output.status !== 'blocked' && output.stopReason !== '') {
+    problems.push(`stopReason: only a blocked answer has a stop reason, got '${output.stopReason}'`)
   }
   if (output.status === 'unrelated') {
     if (kind !== 'ci-fix') problems.push("status: 'unrelated' is allowed only on a CI fix")
@@ -787,8 +795,11 @@ function prBody({ number, issueTitle, implementation, checks, review, rounds, ac
   return out.join('\n')
 }
 
-const costLine = (runUrl, totalUsd, hint) =>
-  `<sub>[Run](${runUrl}) · AI cost of this issue so far: $${usage.formatUsd(totalUsd)} · ${hint}</sub>`
+/**
+ * The last line of a comment of the agent: the link to the run and a hint on what happens next. The cost of the run
+ * is in the signature that `results.publishResult` adds.
+ */
+const footerLine = (runUrl, hint) => `<sub>[Run](${runUrl}) · ${hint}</sub>`
 
 /** The two ways on after a hand-off on a red CI: a rerun of the failed checks, or another fix. */
 const WAY_RERUN = 'If the failure is not caused by the change (a flaky test, an outage), comment `/agent rerun`: it ' +
@@ -797,6 +808,29 @@ const WAY_RETRY = 'To try another fix, comment `/agent retry` with guidance.'
 
 /** The lines that close a hand-off on a red CI. */
 const waysOnLines = () => ['What you can do:', '', `- ${WAY_RERUN}`, `- ${WAY_RETRY}`]
+
+/**
+ * The stop reason of a result that hands the work to a person, or `null` for a result that does not. A `blocked`
+ * result takes the reason the model named (or the script, for a block it found itself), and falls back to `stuck`.
+ */
+function stopReasonOf(result, stopReason) {
+  if (result === 'draft') return 'budget-exhausted'
+  if (result === 'error') return 'environment-blocked'
+  if (result === 'blocked') return IMPLEMENTER_STOP_REASONS.includes(stopReason) ? stopReason : 'stuck'
+  return null
+}
+
+/** The stop record of the CI hand-off texts (the CI gate shares it): the way on is a rerun or another fix. */
+function ciStopLines({ reason, blocker, done }) {
+  return renderStop({
+    reason,
+    blocker,
+    done,
+    action: `${WAY_RERUN} ${WAY_RETRY}`,
+    resume: 'Comment `/agent rerun` to rerun the checks, or `/agent retry` with guidance. The CI gate decides again ' +
+      'when the checks end.',
+  })
+}
 
 /**
  * The bullets of a hand-off on a red CI that the agent knows only from the CI report in the state: the failed checks,
@@ -810,21 +844,28 @@ function ciHandOffLines(report, reason) {
   return [...lines, `Why I stopped: ${inline(reason)}`].map((line) => `- ${line}`)
 }
 
+/** `text` with its first letter in upper case. */
+const capital = (text) => text.charAt(0).toUpperCase() + text.slice(1)
+
 /**
- * The human part of the state comment after the run.
+ * The human part of the state comment after the run. A hand-off (`blocked`, `draft`, `error`) ends with the stop
+ * record: the reason label, the blocker, the work completed, the required action, and the resume condition.
  *
  * @param {object} input
  * @param {'pr-opened'|'draft'|'blocked'|'unrelated'|'error'} input.result
+ * @param {string} [input.stopReason] the reason of a `blocked` result; the other hand-offs have a fixed reason
  * @param {string} [input.ciReport] the CI report of a CI fix, for the hand-off texts
  * @param {{ names: string, counted: number, max: number }} [input.rerun] for `unrelated`: the failed checks (as
  *   `checkNames` writes them), the attempts counted so far, and the limit
  * @param {string[]} [input.conflicts] for an `update`: the files that had merge conflicts
  */
 function renderOutcome({ result, number, pr, branch, attempt, implementation, checks, review, reason, message, runUrl,
-  totalUsd, kind, ciReport, rerun, conflicts = [] }) {
+  kind, ciReport, rerun, stopReason, conflicts = [] }) {
   const retry = kind === 'update'
     ? UPDATE_RETRY
     : 'comment `/agent implement` with guidance to try again'
+  const stop = stopReasonOf(result, stopReason)
+  const tried = attempt?.notes || undefined
   if (result === 'unrelated') {
     return [
       '### AI implementation: CI failed, but not because of this change',
@@ -836,7 +877,7 @@ function renderOutcome({ result, number, pr, branch, attempt, implementation, ch
       `I reran the failed checks (attempt ${rerun.counted} of ${rerun.max}). No code changed; the CI gate decides ` +
         'again.',
       '',
-      costLine(runUrl, totalUsd, 'the result of the rerun decides'),
+      footerLine(runUrl, 'the result of the rerun decides'),
     ].join('\n')
   }
   if (result === 'error') {
@@ -845,12 +886,20 @@ function renderOutcome({ result, number, pr, branch, attempt, implementation, ch
       '',
       `The implementation did not finish: ${inline(message)}`,
       '',
-      costLine(runUrl, totalUsd, retry),
+      ...renderStop({
+        reason: stop,
+        blocker: inline(message),
+        done: tried,
+        action: 'Read the job log and fix the cause of the failure.',
+        resume: `${capital(retry)}.`,
+      }),
+      '',
+      footerLine(runUrl, retry),
     ].join('\n')
   }
   if (kind === 'update' && (result === 'pr-opened' || result === 'draft' || result === 'blocked')) {
     return renderUpdateOutcome({
-      result, number, pr, branch, attempt, implementation, checks, review, reason, runUrl, totalUsd, conflicts,
+      result, number, pr, branch, attempt, implementation, checks, review, reason, runUrl, conflicts, stopReason: stop,
     })
   }
   if (result === 'blocked' && kind === 'ci-fix') {
@@ -861,22 +910,26 @@ function renderOutcome({ result, number, pr, branch, attempt, implementation, ch
       '',
       ...ciHandOffLines(ciReport, reason),
       '',
-      ...(attempt.notes ? ['**What I tried**', '', inline(attempt.notes), ''] : []),
-      ...waysOnLines(),
+      ...ciStopLines({ reason: stop, blocker: inline(reason), done: tried }),
       '',
-      costLine(runUrl, totalUsd, 'comment `/agent rerun` to rerun the checks, or `/agent retry` with guidance'),
+      footerLine(runUrl, 'comment `/agent rerun` to rerun the checks, or `/agent retry` with guidance'),
     ].join('\n')
   }
   if (result === 'blocked') {
     return [
       '### AI implementation is blocked',
       '',
-      `I stopped without a pull request: ${inline(reason)}`,
+      'I stopped without a pull request.',
       '',
-      ...(attempt.notes ? ['**What I tried**', '', inline(attempt.notes), ''] : []),
-      '**What I need from you:** decide or add what is missing, then comment `/agent implement` with guidance.',
+      ...renderStop({
+        reason: stop,
+        blocker: inline(reason),
+        done: tried,
+        action: 'Decide or add what is missing.',
+        resume: 'Comment `/agent implement` with guidance, and I start a new attempt.',
+      }),
       '',
-      costLine(runUrl, totalUsd, retry),
+      footerLine(runUrl, retry),
     ].join('\n')
   }
   const rounds = `${attempt.rounds} round(s)`
@@ -884,8 +937,7 @@ function renderOutcome({ result, number, pr, branch, attempt, implementation, ch
   const lead = result === 'pr-opened'
     ? [ciFix ? `### AI implementation: CI fix pushed to pull request #${pr}`
       : pr ? `### AI implementation: pull request #${pr} is open` : '### AI implementation: ready for a pull request',
-    '', `Branch \`${branch}\`. ${rounds}. CI runs ${ciFix ? 'again ' : ''}on the pull request. It stays a draft ` +
-      'until CI is green on GitHub.']
+    '', `Branch \`${branch}\`. ${rounds}. CI runs ${ciFix ? 'again ' : ''}on the pull request.`]
     : [ciFix ? `### AI implementation needs a person: CI fix for pull request #${pr}`
       : pr ? `### AI implementation needs a person: draft pull request #${pr}` : '### AI implementation needs a person',
     '', `Branch \`${branch}\`. I stopped after ${rounds} without a green result.`]
@@ -899,13 +951,16 @@ function renderOutcome({ result, number, pr, branch, attempt, implementation, ch
     '',
   ]
   if (result === 'draft') {
-    out.push('**What I tried**', '', inline(attempt.notes || implementation.notes || 'No notes.'), '')
-    out.push('**What is open**', '', ...openItems(checks, review))
     const what = ciFix ? 'pull request' : 'draft pull request'
-    out.push('', `**What I need from you:** review the ${what}, push a fix to the branch, or comment ` +
-      '`/agent implement` with guidance for another attempt.', '')
+    out.push(...renderStop({
+      reason: stop,
+      blocker: openSentence(checks, review),
+      done: attempt.notes || implementation.notes || 'No notes.',
+      action: `Review the ${what} and push a fix to the branch.`,
+      resume: 'Comment `/agent implement` with guidance, and I start another attempt.',
+    }), '')
   }
-  out.push(costLine(runUrl, totalUsd, `closes #${number} when merged`))
+  out.push(footerLine(runUrl, `closes #${number} when merged`))
   return out.join('\n')
 }
 
@@ -923,6 +978,9 @@ function openItems(checks, review) {
   return out
 }
 
+/** The open items of a draft as one paragraph, for the blocker field of the stop record. */
+const openSentence = (checks, review) => openItems(checks, review).map((item) => item.slice(2)).join(' ')
+
 const UPDATE_RETRY = 'comment `/agent update` on the pull request to try again'
 
 /**
@@ -930,17 +988,22 @@ const UPDATE_RETRY = 'comment `/agent update` on the pull request to try again'
  * that the implementer resolved, or a hand-off. `attempt.rounds` is 0 for a clean merge.
  */
 function renderUpdateOutcome({ result, number, pr, branch, attempt, implementation, checks, review, reason, runUrl,
-  totalUsd, conflicts }) {
+  conflicts, stopReason }) {
   if (result === 'blocked') {
     return [
       '### AI update is blocked',
       '',
-      `I did not change pull request #${pr}: ${inline(reason)}`,
+      `I did not change pull request #${pr}.`,
       '',
-      ...(attempt.notes ? ['**What I tried**', '', inline(attempt.notes), ''] : []),
-      '**What I need from you:** resolve the conflicts by hand, or comment `/agent update` with guidance.',
+      ...renderStop({
+        reason: stopReason,
+        blocker: inline(reason),
+        done: attempt.notes || undefined,
+        action: 'Resolve the conflicts by hand.',
+        resume: 'Comment `/agent update` with guidance, and I start a new attempt.',
+      }),
       '',
-      costLine(runUrl, totalUsd, UPDATE_RETRY),
+      footerLine(runUrl, UPDATE_RETRY),
     ].join('\n')
   }
   if (result === 'pr-opened' && attempt.rounds === 0) {
@@ -949,7 +1012,7 @@ function renderUpdateOutcome({ result, number, pr, branch, attempt, implementati
       '',
       `Branch \`${branch}\`. The merge had no conflicts, so no model ran. CI runs again on the pull request.`,
       '',
-      costLine(runUrl, totalUsd, `closes #${number} when merged`),
+      footerLine(runUrl, `closes #${number} when merged`),
     ].join('\n')
   }
   const rounds = `${attempt.rounds} round(s)`
@@ -970,12 +1033,15 @@ function renderUpdateOutcome({ result, number, pr, branch, attempt, implementati
     '',
   ]
   if (result === 'draft') {
-    out.push('**What I tried**', '', inline(attempt.notes || implementation.notes || 'No notes.'), '')
-    out.push('**What is open**', '', ...openItems(checks, review))
-    out.push('', '**What I need from you:** review the pull request, push a fix to the branch, or comment ' +
-      '`/agent update` with guidance for another attempt.', '')
+    out.push(...renderStop({
+      reason: stopReason,
+      blocker: openSentence(checks, review),
+      done: attempt.notes || implementation.notes || 'No notes.',
+      action: 'Review the pull request and push a fix to the branch.',
+      resume: 'Comment `/agent update` with guidance, and I start another attempt.',
+    }), '')
   }
-  out.push(costLine(runUrl, totalUsd, `closes #${number} when merged`))
+  out.push(footerLine(runUrl, `closes #${number} when merged`))
   return out.join('\n')
 }
 
@@ -1366,7 +1432,7 @@ async function preflight(env = process.env, deps = {}) {
   await react({ gh, commentId, content: 'eyes', dryRun: config.dryRun })
 
   const loaded = await log.group('Load the issue, its comments, and its state', () => loadIssue(gh, number))
-  const { issue, existing, st } = loaded
+  const { issue, st } = loaded
   if (ciFix) {
     requireCiFixState(st)
     const actor = st.implementing.actor || envActor
@@ -1436,9 +1502,11 @@ async function preflight(env = process.env, deps = {}) {
     resolveIdentity({ env, repo: env.GITHUB_REPOSITORY, deps, dryRun: config.dryRun }),
   )
   const at = new Date().toISOString()
-  const marked = person
+  const started = person
     ? markedPersonState(st, { runUrl, actor, kind, pr: prNumber, fresh: decision.fresh, threads, at })
     : { ...st, phase: 'implementing', implementing: { run: runUrl, actor, at, analyzeFirst } }
+  // A new attempt starts: the stop of the earlier one is over.
+  let marked = stops.recordResume(started, { at, run: runUrl })
   const markTitle = config.dryRun ? 'Mark the issue (dry run: nothing written)' : 'Mark the issue as being implemented'
   await log.group(markTitle, async () => {
     if (config.dryRun) {
@@ -1447,10 +1515,17 @@ async function preflight(env = process.env, deps = {}) {
       return
     }
     const human = `### AI implementation is running\n\n[The run](${runUrl}) was started by @${actor}.`
-    const body = state.render(human, await state.withFreshCosts(gh, number, marked))
-    if (existing) await gh.updateIssueComment(existing.id, body)
-    else await gh.createIssueComment(number, body)
-    log.info('state comment written', { phase: 'implementing', id: existing ? existing.id : 'new' })
+    const written = await results.publishResult(gh, number, {
+      family: 'implementation',
+      human,
+      st: marked,
+      run: runUrl,
+      newCommand: true,
+      emptyState: () => state.emptyIssueState(number),
+    })
+    marked = written.st
+    log.info('state comment written', { phase: 'implementing', id: written.commentId })
+    await stops.clearStops(gh, [number, st.pr, prNumber].filter((n, i, all) => n && all.indexOf(n) === i))
   })
   saveContext({
     out, number, ciFix: false, kind, actor, command, runUrl, analyzeFirst, loaded, st: marked, identity,
@@ -1606,7 +1681,7 @@ async function runChecks({ exec, base }) {
  * An `update` attempt resolves merge conflicts: `ctx.conflicts` names the files, and its one commit is the merge
  * commit (`ctx.commitMessage`), which git creates because the merge is still open. No round commits conflict markers.
  *
- * @returns {Promise<{ status: 'done'|'blocked'|'unrelated', rounds: number, reason?: string,
+ * @returns {Promise<{ status: 'done'|'blocked'|'unrelated', rounds: number, reason?: string, stopReason?: string,
  *   implementation: object|null, checks: object|null, review: object|null, head: string|null }>}
  */
 async function implementRounds(ctx) {
@@ -1667,7 +1742,8 @@ async function implementRounds(ctx) {
     if (implementation.status === 'blocked') {
       log.info('decision', { stage: 'implement', action: 'blocked', reason: implementation.blockedReason })
       const reason = implementation.blockedReason
-      return { status: 'blocked', rounds: round, reason, implementation, checks, review, head }
+      const stopReason = implementation.stopReason
+      return { status: 'blocked', rounds: round, reason, stopReason, implementation, checks, review, head }
     }
     if (implementation.status === 'unrelated') {
       // The failure is not caused by the change: commit nothing, keep nothing of the working tree, run no checks.
@@ -1687,7 +1763,8 @@ async function implementRounds(ctx) {
       if (left.length > 0) {
         const reason = `Conflict markers are left in ${left.join(', ')}.`
         log.info('decision', { stage: 'commit', action: 'blocked', reason })
-        return { status: 'blocked', rounds: round, reason, implementation, checks, review, head }
+        const stopReason = 'conflict-unresolved'
+        return { status: 'blocked', rounds: round, reason, stopReason, implementation, checks, review, head }
       }
     }
 
@@ -1720,6 +1797,7 @@ async function implementRounds(ctx) {
         status: 'blocked',
         rounds: round,
         reason: 'The implementer reported done, but the working tree has no changes.',
+        stopReason: 'stuck',
         implementation,
         checks,
         review,
@@ -1820,6 +1898,7 @@ async function work(env = process.env, deps = {}) {
     failure: null,
     result: null,
     blockedReason: null,
+    stopReason: null,
     rounds: 0,
     implementation: null,
     checks: null,
@@ -1987,6 +2066,7 @@ async function workOnIssue(ctx) {
   }
 
   let blockedReason = rounds.status === 'blocked' ? rounds.reason : null
+  let stopReason = rounds.status === 'blocked' ? rounds.stopReason ?? null : null
   if (!blockedReason) {
     await log.group('Diff size', async () => {
       const shortstat = await git(exec, ['diff', '--shortstat', base, 'HEAD'])
@@ -2001,6 +2081,7 @@ async function workOnIssue(ctx) {
         agentFiles: touchedAgentFiles(nameOnly),
       })
       blockedReason = diffBlockReason({ stat, nameOnly, playbook: ctx.playbook })
+      if (blockedReason) stopReason = 'scope-review-required'
     })
   }
   const green = !blockedReason &&
@@ -2024,6 +2105,7 @@ async function workOnIssue(ctx) {
   return {
     result,
     blockedReason,
+    stopReason: result === 'blocked' ? stopReason : null,
     rounds: rounds.rounds,
     implementation: rounds.implementation,
     checks: rounds.checks,
@@ -2078,6 +2160,7 @@ function failedOutcome({ kind, attemptNo, message, costs }) {
     failure: { message, stage: 'work' },
     result: null,
     blockedReason: null,
+    stopReason: null,
     rounds: 0,
     implementation: null,
     checks: null,
@@ -2129,6 +2212,9 @@ function outcomeProblems({ outcome, st, issue, number, kind = outcome.kind }) {
     if (kind !== 'ci-fix') problems.push("result 'unrelated' is allowed only on a CI fix")
     if (String(outcome.blockedReason ?? '').trim() === '') problems.push('an unrelated result needs a reason')
     if (outcome.bundle) problems.push('an unrelated result carries no code')
+  }
+  if (outcome.stopReason != null && !IMPLEMENTER_STOP_REASONS.includes(outcome.stopReason)) {
+    problems.push(`stopReason '${outcome.stopReason}' is unknown`)
   }
   if (outcome.stopped !== null && outcome.stopped !== 'refuse-needs-info' && outcome.stopped !== 'refuse-unsuitable') {
     problems.push(`stopped '${outcome.stopped}' is unknown`)
@@ -2338,7 +2424,7 @@ async function publishAttempt(env, deps) {
   }
 
   return finish({
-    config, env, deps, gh, exec, issue, st, commentId: loaded.existing?.id ?? null, costs, outcome, failure, progress,
+    config, env, deps, gh, exec, issue, st, costs, outcome, failure, progress,
     attemptNo, kind, actor, runUrl, number, at, out, repo,
     changesPull: changesOpenPull(kind, command),
   })
@@ -2384,8 +2470,7 @@ async function publishStop(ctx) {
   const { config, env, gh, loaded, issue, outcome, actor, runUrl, number, out, failure } = ctx
   const state0 = ctx.st
   const { implementing: _running, ...st } = state0
-  const totalUsd = sum(st.costs, 'usd')
-  const human = renderAnalysis({ analysis: outcome.analysis, runUrl, totalUsd })
+  const human = renderAnalysis({ analysis: outcome.analysis, runUrl })
   const reply = refusalReply({ outcome: outcome.stopped, actor, issue, state: st })
   fs.writeFileSync(path.join(out, 'summary.md'), human)
   await log.group(config.dryRun ? 'Reply (dry run: job summary only)' : 'Reply', async () => {
@@ -2394,10 +2479,14 @@ async function publishStop(ctx) {
         ...reply.split('\n').map((l) => `> ${l}`), ''].join('\n'))
       return
     }
-    const body = state.render(human, await state.withFreshCosts(gh, number, st))
-    if (loaded.existing) await gh.updateIssueComment(loaded.existing.id, body)
-    else await gh.createIssueComment(number, body)
-    log.info('state comment written', { phase: st.phase })
+    const written = await results.publishResult(gh, number, {
+      family: 'implementation',
+      human,
+      st,
+      run: runUrl,
+      emptyState: () => state.emptyIssueState(number),
+    })
+    log.info('state comment written', { phase: st.phase, id: written.commentId })
     await gh.createIssueComment(number, reply)
     log.info('reply posted', { mention: actor, outcome: outcome.stopped })
   })
@@ -2436,12 +2525,11 @@ async function finish(ctx) {
   let st = ctx.st
   // The threads that the implementer of a review attempt saw: the preflight recorded them in the state.
   const threads = st.implementing?.threads ?? []
-  let commentId = ctx.commentId
-  const existing = commentId !== null
 
   // Pull request: opened after the push, so a failure of either leaves the state with what exists.
   let pr = progress.pr
-  // Every pull request opens as a draft: only the CI gate marks one ready, after real CI is green on GitHub.
+  // A green attempt opens the pull request ready for review, so its reviewers are asked at once; any other result
+  // opens it as a draft. An open draft leaves draft only through the CI gate, after real CI is green on GitHub.
   const published = { title: null, body: null, draft: true, toDraft: false }
   const hasCode = !failure && (outcome.result === 'pr-opened' || outcome.result === 'draft')
 
@@ -2467,6 +2555,7 @@ async function finish(ctx) {
     }
     // An open pull request that is ready stays so after a green attempt and goes back to draft after any other.
     published.toDraft = outcome.result !== 'pr-opened'
+    published.draft = outcome.result !== 'pr-opened'
     if (config.dryRun) return
     let blockedBy = null
     await log.group('Push the branch', async () => {
@@ -2483,7 +2572,8 @@ async function finish(ctx) {
       log.info('branch pushed', { branch: branchInfo.branch, leased: Boolean(branchInfo.previousSha) })
     })
     if (blockedBy) {
-      outcome = { ...outcome, result: 'blocked', blockedReason: blockedBy, bundle: false }
+      outcome = { ...outcome, result: 'blocked', blockedReason: blockedBy, stopReason: 'scope-review-required',
+        bundle: false }
       return
     }
     await log.group('Pull request', async () => {
@@ -2547,14 +2637,17 @@ async function finish(ctx) {
       result: 'blocked',
       blockedReason: `${why}. I think this change does not cause the failure, but I found no failed check that I ` +
         'can rerun.',
+      stopReason: 'verification-blocked',
     }
     log.info('decision', { stage: 'publish', action: 'unrelated, but nothing to rerun: hand over as blocked' })
   }
   const ciReport = st.lastCiReport ?? ''
 
+  const result = error ? 'error' : outcome.result
+  // The reason of a hand-off: the label, the stop record, and the stop block of the text.
+  const stopReason = stopReasonOf(result, outcome.stopReason)
   const human = await log.group('Prepare the state', async () => {
     const totalUsd = sum(st.costs, 'usd')
-    const result = error ? 'error' : outcome.result
     const reason = outcome.blockedReason
     const notes = error
       ? `The attempt failed: ${error.message}`
@@ -2587,6 +2680,9 @@ async function finish(ctx) {
       forced: Boolean(outcome.forced) || Boolean(st.forced),
       attempts: [...(st.attempts ?? []), entry],
     }
+    st = stopReason
+      ? stops.recordStop(st, { reason: stopReason, at, run: runUrl, on: [number] })
+      : stops.recordResume(st, { at, run: runUrl })
     log.info('state', { phase: st.phase, result, attempts: st.attempts.length, branch: st.branch, pr: st.pr })
     log.info('cost', { thisRun: usage.formatUsd(sum(costs, 'usd')), total: usage.formatUsd(totalUsd) })
     const text = renderOutcome({
@@ -2601,7 +2697,7 @@ async function finish(ctx) {
       reason,
       message: error?.message,
       runUrl,
-      totalUsd,
+      stopReason,
       kind,
       ciReport,
       conflicts: outcome.merge?.conflicts ?? [],
@@ -2617,10 +2713,6 @@ async function finish(ctx) {
     return text
   })
 
-  const result = error ? 'error' : outcome.result
-  const labelChanges = result === 'pr-opened' || result === 'unrelated'
-    ? { add: [], remove: [LABEL_NEEDS_HUMAN] }
-    : { add: [LABEL_NEEDS_HUMAN], remove: [] }
   const note = result === 'pr-opened' || result === 'unrelated'
     ? null
     : actorComment({ result, actor, pr, reason: outcome.blockedReason, message: error?.message, kind, ciReport })
@@ -2632,7 +2724,8 @@ async function finish(ctx) {
 
   if (config.dryRun) {
     await log.group('Write the dry-run report', async () => {
-      const report = [`## Dry run: AI implementation of #${number}`, '', human, '']
+      const shown = results.previewResult({ family: 'implementation', human, st, run: runUrl })
+      const report = [`## Dry run: AI implementation of #${number}`, '', shown, '']
       if (published.title) {
         report.push('### Commit message', '', fence(commitMessage({
           type: outcome.implementation.commitType,
@@ -2648,8 +2741,9 @@ async function finish(ctx) {
         }
       }
       if (kind === 'update' && hasCode) report.push(`Would push the merge of develop to \`${progress.branch}\`.`, '')
-      report.push('### Labels', '', `- add: ${labelChanges.add.join(', ') || 'none'}`,
-        `- remove: ${labelChanges.remove.join(', ') || 'none'}`, '')
+      report.push('### Labels', '', stopReason
+        ? `- add: ${stops.labelOf(stopReason)} (replaces any other stop label)`
+        : '- remove: every stop label', '')
       if (result === 'unrelated') {
         report.push(`Would rerun the failed jobs of workflow run(s) ${rerun.targets.join(', ')}.`, '')
         report.push(quoted(`### Comment that would go on pull request #${pr}`, prNote))
@@ -2667,22 +2761,21 @@ async function finish(ctx) {
     // The state first: it holds the cost record and the pull request number, which must survive a failed label call.
     await log.group('Write the state comment', async () => {
       // Read again right before the write: chat may have added a cost record since the state was loaded.
-      const merged = await state.withFreshCosts(gh, number, st)
-      const text = state.render(human, merged)
-      if (existing) {
-        await gh.updateIssueComment(commentId, text)
-      } else {
-        commentId = (await gh.createIssueComment(number, text))?.id ?? null
-      }
-      log.info('state comment written', { id: commentId ?? 'new' })
+      const written = await results.publishResult(gh, number, {
+        family: 'implementation',
+        human,
+        st,
+        run: runUrl,
+        emptyState: () => state.emptyIssueState(number),
+      })
+      log.info('state comment written', { id: written.commentId })
     })
     await log.group('Apply the labels', async () => {
-      if (labelChanges.add.length) await gh.addLabels(number, labelChanges.add)
-      for (const label of labelChanges.remove) await gh.removeLabel(number, label)
-      log.info('labels applied', {
-        add: labelChanges.add.join(',') || 'none',
-        remove: labelChanges.remove.join(',') || 'none',
-      })
+      const failed = stopReason
+        ? await stops.setStop(gh, [number], stopReason)
+        : await stops.clearStops(gh, [number])
+      log.info('labels applied', { stop: stopReason ? stops.labelOf(stopReason) : 'cleared' })
+      if (failed) throw failed
     })
     if (note) {
       await log.group('Tell the person who asked', async () => {
@@ -2776,7 +2869,11 @@ module.exports = {
   appendSummary,
   writeOutputs,
   quoted,
-  costLine,
+  footerLine,
+  stopReasonOf,
+  ciStopLines,
+  WAY_RERUN,
+  WAY_RETRY,
   waysOnLines,
   BUSY_MS,
   loadIssue,

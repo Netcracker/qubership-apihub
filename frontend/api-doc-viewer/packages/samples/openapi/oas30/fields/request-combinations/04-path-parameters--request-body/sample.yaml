@@ -1,0 +1,56 @@
+openapi: 3.0.3
+info:
+  title: Orders
+  version: 1.0.0
+paths:
+  /orders/{orderId}/lines/{lineId}/legacy/{legacyId}/filter/{filter}:
+    post:
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: lineId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+        - name: legacyId
+          in: path
+          required: true
+          deprecated: true
+          schema:
+            type: string
+        - name: filter
+          in: path
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  from:
+                    type: string
+                    format: date
+      requestBody:
+        description: New order state.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: string
+                status:
+                  type: string
+                  enum:
+                    - new
+                    - paid
+      responses:
+        "200":
+          description: ""

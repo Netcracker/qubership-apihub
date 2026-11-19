@@ -1,0 +1,48 @@
+.address-row {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+span.binding-version {
+  font-size: 13px;
+  font-weight: 400;
+}
+
+/*
+ * Address value: shrinks from the base to the minimum font size (`--address-value-font-size`, set
+ * by `AddressRow` from `utils/common/address-value-fit.ts`, the same on both sides), then wraps.
+ * The HTTP method / action badge keeps its size.
+ */
+.address-row-value {
+  position: relative;
+  min-width: 0;
+}
+
+.address-row-value h4.text-value {
+  font-size: var(--address-value-font-size);
+  overflow-wrap: anywhere;
+}
+
+.address-row-value[data-wrapped="true"] h4.text-value {
+  line-height: 1.25;
+}
+
+/* Zero-size, clipped frame: the probe never takes room or adds scrollable overflow. */
+.address-row-value-probe-frame {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+/* The value on one line at the base size, measured by `AddressRow`. */
+.address-row-value-probe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  white-space: nowrap;
+  visibility: hidden;
+  pointer-events: none;
+}

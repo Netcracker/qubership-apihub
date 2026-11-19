@@ -262,7 +262,7 @@ output, else `ci-fix` after the gate, else `initial`), `AGENT_PR`, and `AGENT_CO
 
 Every script in `tools/agent/` is a CommonJS entry point with a `main` that the tests can call with fake clients. Every
 script reads `lib/config.js` first and does nothing while `AGENT_ENABLED` is not `true`, and writes to the job summary
-instead of GitHub while `AGENT_DRY_RUN` is not `false`. The label scripts `labels.sh` and `labels.ps1` create the nine
+instead of GitHub while `AGENT_DRY_RUN` is not `false`. The label scripts `labels.sh` and `labels.ps1` create the 22
 labels once:
 
 | Label | Color | Description |
@@ -274,8 +274,21 @@ labels once:
 | `ai:l2-agent` | `3B7DD8` | AI picked the task, implemented it, and opened the PR; a person reviewed and accepted it |
 | `ai:l3-autonomous` | `0B4F9C` | AI picked, implemented, merged, and closed the task without a person |
 | `agent:completed` | `0E8A16` | The agent finished and every required check passed; a person may not have accepted it yet |
-| `agent:needs-human` | `FBCA04` | The agent needs a person: a decision, more context, permissions, or troubleshooting |
 | `agent:pr-reviewed` | `D4C5F9` | The AI review of this pull request is published; its findings may still be open |
+| `needs-human:approval-required` | `BFD4F2` | The agent finished and its pull request waits for a person to review and approve it |
+| `needs-human:risk-found` | `FBCA04` | The agent found a risk (security, data loss, compatibility) and needs a person to accept it |
+| `needs-human:decision-required` | `FBCA04` | A product or design choice is open and a person must decide |
+| `needs-human:context-missing` | `FBCA04` | The task lacks information the agent needs; a person must answer its questions |
+| `needs-human:access-missing` | `FBCA04` | The agent lacks a permission, token, or access it needs |
+| `needs-human:verification-blocked` | `FBCA04` | The agent cannot verify the change: a check cannot run or is not trustworthy |
+| `needs-human:environment-blocked` | `FBCA04` | The tooling, runner, or environment failed and the agent cannot go on |
+| `needs-human:external-dependency` | `FBCA04` | The work waits on another team, release, or change outside this repository |
+| `needs-human:conflict-unresolved` | `FBCA04` | A merge conflict or contradicting changes the agent cannot resolve safely |
+| `needs-human:scope-review-required` | `FBCA04` | The change grew beyond the issue scope and a person must confirm the scope |
+| `needs-human:invalid` | `FBCA04` | The task looks like a duplicate, is already fixed, or describes intended behavior |
+| `needs-human:stuck` | `FBCA04` | The agent tried and made no progress, for example the same failure again |
+| `needs-human:disagreement` | `FBCA04` | The agent and a reviewer or check disagree and a person must settle it |
+| `needs-human:budget-exhausted` | `FBCA04` | The agent used its attempt, time, or cost budget before it finished |
 
 ### `tools/agent/route.js`
 
@@ -568,7 +581,7 @@ and that is not an already reviewed `ready_for_review`. The sweep names no count
 below. The count searches only what the agent leaves behind, newest first:
 
 ```text
-repo:<repo> is:issue label:"ai:suitable","ai:unsuitable","agent:needs-human" updated:>=<now - 24 hours> sort:updated-desc
+repo:<repo> is:issue label:"ai:suitable","ai:unsuitable","needs-human:context-missing" updated:>=<now - 24 hours> sort:updated-desc
 repo:<repo> is:pr label:"agent:pr-reviewed" updated:>=<now - 24 hours> sort:updated-desc
 ```
 
@@ -656,13 +669,14 @@ instruction files of the pull request with the trusted ones. The job has one con
   - Cost records (flow `review`, roles `pr-reviewer` and `verifier`) go to the `costs` list before anything can throw.
 - **GitHub reads (`GITHUB_TOKEN`):** `getPull` (`GET /repos/{repo}/pulls/{n}`), `listPullFiles`
   (`GET /repos/{repo}/pulls/{n}/files`), `listIssueComments` (`GET /repos/{repo}/issues/{n}/comments`, to find the state
-  comment, and again inside `state.withFreshCosts` right before the write). Git commands:
+  comment, and again inside `publishResult` right before the write). Git commands:
   `git fetch --no-tags origin <base>`, `git merge-base FETCH_HEAD HEAD`, `git rev-parse HEAD`.
 - **GitHub writes (`GITHUB_TOKEN`, permissions `issues: write`, `pull-requests: write`):**
-  - The state comment of the pull request, with `lib/state.js`: `updateIssueComment`
-    (`PATCH /repos/{repo}/issues/comments/{id}`) or `createIssueComment` (`POST /repos/{repo}/issues/{n}/comments`). The
-    comment
-    is written first because it holds the cost record, which must survive a failed review post.
+  - The review result comment of the pull request, with `lib/results.js` (`publishResult`, family `review`, a new
+    command): `updateIssueComment` (`PATCH /repos/{repo}/issues/comments/{id}`) or `createIssueComment`
+    (`POST /repos/{repo}/issues/{n}/comments`), then the state comment is updated with the new `results` and `costs`.
+    The comment is written first because it holds the cost record, which must survive a failed review post. See
+    [the result comments](#result-comments) below.
   - The review: `createReview` (`POST /repos/{repo}/pulls/{n}/reviews`) with `commit_id` set to the head SHA and the
     event `COMMENT` (the agent never approves or requests changes). The review body is
     `AI review of <sha7>: <n> inline finding(s). The summary is in the AI review comment of this pull request.` Each
@@ -684,15 +698,17 @@ instruction files of the pull request with the trusted ones. The job has one con
   5. `verifier` checks each finding. `selectFindings` drops `rejected` findings, marks a finding without a verdict as
      `plausible`, and sorts by severity. `placeFindings` puts a finding inline when its file has a patch and its line is
      in `commentableLines(patch)` (`lib/diff.js`); the others go to the summary.
-  6. Publish: state comment, review, label (in dry-run, only the job summary).
-- **The size skip** (`skipForSize`): no model call, no label, no inline review. The human part of the state comment is
+  6. Publish: result comment, review, label (in dry-run, only the job summary).
+- **The size skip** (`skipForSize`): no model call, no label, no inline review. The human part of the review result is
   `### AI review of <sha7> skipped`, then "The diff has N changed lines in M files (lock files not counted), above the
   limit of L lines or F files (AGENT_REVIEW_MAX_LINES, AGENT_REVIEW_MAX_FILES). An AI review of a diff this large costs
   much and finds little. Comment `/agent review force` to review it anyway." (`renderSkip`), with the run link. The
   state keeps its cost records and gets `{ sha, run, at, skipped: 'size', lines, files, trigger }` in `reviews`, so
   `ready_for_review` does not try again. The sha is the head of the pull request from `getPull`.
-- **The summary comment:** it is the human part of the state comment (`state.render(human, state)`), so there is one
-  comment, with the hidden JSON state under it. `renderSummary` builds it:
+- **The summary comment:** it is the review result comment (`publishResult`, family `review`, `newCommand: true`). It
+  is edited only when it is the newest result comment of the agent on the pull request; otherwise a new one is
+  created. When the review result is the only result comment, it is the state comment itself, with the hidden JSON
+  state under it. `renderSummary` builds the human part:
   - `### AI review of <sha7>`, the `summary` text, and `**Risk: <risk>.** <riskReason>`.
   - A table `| Impact | |` with Modules, Images, REST API, Database, Deployment (each `changed: yes/no` and, for REST
     and Database, `breaking: yes/no`, plus the notes), and E2E (collections and notes). Model text is put in one line,
@@ -701,13 +717,14 @@ instruction files of the pull request with the trusted ones. The job has one con
     confirmed), Z rejected (not shown). The text above was written before that check." Empty without findings.
   - `<n> finding(s) are inline comments on the diff.`, then `**Findings outside the diff lines**` with a list item per
     finding, or `No findings.`
-  - The cost line, in a `<sub>` footer: a link to the run, "AI cost of this pull request so far: $X", and the hint
-    to comment `/agent review` or `/agent cost`. `<usd>` is the sum of all cost records of the state plus this run,
-    formatted by `usage.formatUsd`.
+  - A `<sub>` footer without a cost: a link to the run and the hint to comment `/agent review` or `/agent cost`.
+    `publishResult` then appends the signature line (see [the signature](#signature)), which sums the runs listed in
+    this comment. The inline review carries no signature.
   - An inline finding reads `<icon> **<severity>**[ (plausible, not confirmed)]: <title>` and the body. Icons: blocker
     `🛑`, major `🔴`, minor `🟡`, nit `⚪`.
   - On failure the summary is `### AI review failed`, the reason, and a footer with the run link and the hint to comment
-    `/agent review`. The job then fails after it has written the state and the failure text.
+    `/agent review`. The job then fails after it has written the state and the failure text. The failure text and the
+    size skip text are written through `publishResult` too.
 - **State written:** the cost records of this run are added to `costs`, also after a failure. On success an entry
   `{ sha, run, at, trigger }` is added to `reviews`; `trigger` is `command` when `AGENT_COMMAND` is set and `auto`
   otherwise. A failed review adds the same entry with `failed: true`, because it cost model calls. The router reads
@@ -718,14 +735,14 @@ instruction files of the pull request with the trusted ones. The job has one con
   - No findings -> the verifier is not called.
   - A finding the verifier did not mention -> kept, marked `plausible`.
   - A finding with `line` null, a file outside the diff, or a line outside the hunks -> goes to the summary, not inline.
-  - A failed review or verification -> failure text in the state comment, no label, a `reviews` entry with
+  - A failed review or verification -> failure text in the review result comment, no label, a `reviews` entry with
     `failed: true`, the job fails.
-  - A failed inline review post -> the label is not added, the job fails (the state comment is already written).
+  - A failed inline review post -> the label is not added, the job fails (the result comment is already written).
   - `AGENT_DRY_RUN` is not `false` -> job summary only, no write to GitHub.
   - A diff above a size limit without `force` -> the size skip above; with `force` -> the normal review.
 - **Tests:** `tools/agent/review.test.js` covers `selectFindings`, `placeFindings`, `findingBody`, `renderSummary` (the
-  table, empty lists, the cost line), and `verificationLine`. `tools/agent/review.main.test.js` runs `main` over a fake
-  GitHub client for the size skip (state comment text, the `reviews` entry, kept costs, no label and no review, no
+  table, empty lists, the footer), and `verificationLine`. `tools/agent/review.main.test.js` runs `main` over a fake
+  GitHub client for the size skip (result comment text, the `reviews` entry, kept costs, no label and no review, no
   facts, dry-run). `lib/review-size.test.js` covers the count, the lock files, the limits, and `force`. The path that
   runs the models needs Git and opencode and has no `main` test.
 
@@ -746,7 +763,7 @@ The job exits non-zero when the analysis or a label call failed (`main` throws `
 - **Outputs:** no step outputs.
   - Under `AGENT_OUT`: `analysis-input.md` (the analyst input), `attachments/` (the images and text files of the
     issue, when it links any), the opencode events and answer files written by `callAgent`, and `summary.md` (the human
-    part of the state comment). The job uploads the folder as the artifact
+    part of the analysis result). The job uploads the folder as the artifact
     `ai-autonomous-analysis-<number>-<run_attempt>`.
   - In dry-run: a `## Dry run: AI analysis of #<n>` block in the job summary (the text, the labels to add and remove,
     and the comment that would notify the author).
@@ -760,13 +777,16 @@ The job exits non-zero when the analysis or a label call failed (`main` throws `
     labels as they are then.
   - `gh.listIssueComments` (`GET /repos/{repo}/issues/{n}/comments`, paginated). The state comment is taken out of the
     list by `state.findStateComment` and not shown to the analyst.
-  - `state.withFreshCosts` lists the comments once more right before the state write.
+  - `results.publishResult` lists the comments once more right before the write.
 - **GitHub writes** (all with `GITHUB_TOKEN`; nothing in dry-run):
   - Labels, applied before the state: `gh.addLabels` (`POST /repos/{repo}/issues/{n}/labels`) once for all labels to
     add, then `gh.removeLabel` (`DELETE /repos/{repo}/issues/{n}/labels/{name}`, 404 is not an error) per label.
     `applyLabels` logs a failed call and goes on; the first error is returned as `failure`.
-  - State comment: `gh.updateIssueComment` (`PATCH /repos/{repo}/issues/comments/{id}`) when a state comment exists,
-    else `gh.createIssueComment` (`POST /repos/{repo}/issues/{n}/comments`). The body is `state.render(human, state)`.
+  - The analysis result comment, through `results.publishResult` (family `analysis`, `newCommand: true`):
+    `gh.updateIssueComment` (`PATCH /repos/{repo}/issues/comments/{id}`) or `gh.createIssueComment`
+    (`POST /repos/{repo}/issues/{n}/comments`), then the state comment is updated with the new `results`. The comment
+    of the family is edited only when it is the newest result comment of the agent on the issue; otherwise a new one
+    is created. See [the result comments](#result-comments).
   - For `needs-info` only: a separate comment from `questionsComment` that starts with `@<author>`, because only a new
     comment notifies. `analyze(env, deps, { askAuthor: false })` leaves it out.
 - **State fields written** (`nextState`, `failedState`):
@@ -777,6 +797,8 @@ The job exits non-zero when the analysis or a label call failed (`main` throws `
   - `analyses`: one entry per run `{ at, run, verdict, trigger }`; a failed run appends `verdict: 'failed'`. The router
     counts this array against `AGENT_MAX_ANALYSES`.
   - `costs`: the cost records of the run (`state.addCost`), also when the analysis failed.
+  - `stops`: a `needs-info` verdict records a `context-missing` stop (`stops.recordStop`, `on: [<issue>]`); any other
+    verdict closes the open stop (`stops.recordResume`).
 - **Triggers** (decided in `route.js`, passed as `AGENT_TRIGGER`):
 
   | Trigger | Event | Rule |
@@ -804,13 +826,19 @@ The job exits non-zero when the analysis or a label call failed (`main` throws `
     `analysis.label` equals it. Any other `ai:suitable` or `ai:unsuitable` on the issue is a person's decision, and
     then the agent adds and removes no decision label. The labels are read again after the model call, so a label set
     during the run wins.
-  - `suitable`: add `ai:suitable`, remove `ai:unsuitable` and `agent:needs-human`. The comment ends with
+  - `suitable`: add `ai:suitable`, remove `ai:unsuitable` and `needs-human:context-missing`. The comment ends with
     "Comment `/agent implement` to start the implementation."
-  - `unsuitable`: add `ai:unsuitable`, remove `ai:suitable` and `agent:needs-human`. Same implement hint.
-  - `needs-info`: add `agent:needs-human`, keep both `ai:*` labels, set the phase `needs-info`, list the numbered
-    questions in the state comment, and post the separate mention comment to the issue author.
-  - Failure (model, contract, or label call): the state comment becomes `### AI analysis failed`; the phase and the
+  - `unsuitable`: add `ai:unsuitable`, remove `ai:suitable` and `needs-human:context-missing`. Same implement hint.
+  - `needs-info`: add `needs-human:context-missing` (`LABEL_NEEDS_HUMAN`), keep both `ai:*` labels, set the phase
+    `needs-info`, list the numbered questions and the stop block (`stops.renderStop`: the reason, the blocker, the
+    required action "Answer the numbered questions.", and the resume condition "An answer in a comment or an edit of
+    the issue; the agent analyzes again.") in the analysis result, and post the separate mention comment to the issue
+    author. The analysis touches no other stop label.
+  - Failure (model, contract, or label call): the analysis result becomes `### AI analysis failed`; the phase and the
     last `analysis` stay; the failed run is added to `analyses`; the cost is kept; the job fails.
+  - The footer of the analysis result has no cost:
+    ``<sub>[Run](<url>) · comment `/agent analyze` to analyze again</sub>`` (to try again, after a failure).
+    The signature line follows it (see [the signature](#signature)).
   - If a label call fails, the state keeps the earlier ownership of the label (`agentLabelAfter` uses only the
     changes that were applied).
 - **Exports reused by `implement.js`:** `runAnalysis` (the model part, no GitHub call; used by `implement.js work`,
@@ -902,7 +930,7 @@ Decides whether the issue may be implemented, marks the state, and saves the fac
   - `getPull` (`GET /repos/{owner}/{repo}/pulls/{n}`) for the pull request named in the state, for `human` and `review`.
   - `listReviewThreads` (GraphQL query `repository.pullRequest.reviewThreads(first: 100)` with the first 20 comments
     of each) for `review`.
-  - `withFreshCosts` re-reads the issue comments right before the state write.
+  - `publishResult` re-reads the issue comments right before the state write.
 - **GitHub reads (`AGENT_PAT`):** `getAuthenticatedUser` (`GET /user`) in `resolveIdentity`, built with
   `createClient({ token: readPat(env), repo })`. This is the only use of the PAT before `publish`. In dry-run
   without a PAT, the identity is `github-actions[bot]` with the no-reply address of that bot.
@@ -911,8 +939,13 @@ Decides whether the issue may be implemented, marks the state, and saves the fac
   - `addReaction` (`POST /repos/{owner}/{repo}/issues/comments/{id}/reactions`): `eyes` at the start, `confused` on a
     refusal.
   - On a refusal: `createIssueComment` (`POST .../issues/{n}/comments`) with the reply.
-  - On `proceed`: `updateIssueComment` (`PATCH .../issues/comments/{id}`) or `createIssueComment` for the state
-    comment.
+  - On `proceed`: the "is running" text goes through `results.publishResult` (family `implementation`,
+    `newCommand: true`): `updateIssueComment` (`PATCH .../issues/comments/{id}`) or `createIssueComment`, and the state
+    comment is updated. The comment of the family is edited only when it is the newest result comment of the agent;
+    otherwise a new one is created (see [the result comments](#result-comments)).
+  - On `proceed`: `clearStops` removes every stop label from the issue, from the pull request of the state (`st.pr`),
+    and from `AGENT_PR`, because a new attempt ends the earlier stop (`getIssue` reads the labels first,
+    `removeLabel` per stop label).
   - In dry-run nothing is written; the reply or the decision goes to the job summary
     (`## Dry run: AI implementation of #<n> refused` or `... may proceed`).
 
@@ -948,9 +981,9 @@ reaction.
 - `human` and `review` -> output `outcome=proceed`; `analyzeFirst` is always false. `fresh` is true for a retry or an
   answer when the state has a `pr` and that pull request is not open.
 
-**State written (non-dry-run, not `ci-fix`).** The state comment is created or updated with the human text
-`### AI implementation is running` and ``[The run](<run URL>) was started by @<actor>.``. The state is the previous
-one with `phase: 'implementing'` and:
+**State written (non-dry-run, not `ci-fix`).** The implementation result comment is created or updated with the human
+text `### AI implementation is running` and ``[The run](<run URL>) was started by @<actor>.``. The state is the
+previous one with `phase: 'implementing'`, the open entry of `stops` closed (`stops.recordResume`), and:
 
 ```json
 {
@@ -1011,10 +1044,12 @@ Runs one attempt without GitHub. It reads `context.json` and writes `outcome.jso
 All three go through `callAgent` (`lib/agent-call.js`), which writes the event stream, the final answer, and a cost
 record into `costs` before anything can throw. `implementation` has `status` (`done`, `blocked`, or `unrelated`),
 `summary`,
-`commitType`, `scope`, `title` (at most 72 characters), `verification`, `notes`, `blockedReason`. `selfReview` has
+`commitType`, `scope`, `title` (at most 72 characters), `verification`, `notes`, `blockedReason`, `stopReason` (one of
+the stop reasons without `approval-required`, or an empty string). `selfReview` has
 `verdict` (`approve` or `changes`) and `findings` (at most 20; `severity` is `blocker`, `major`, or `minor`; `file`,
 `line`, `body`). Extra rules (`checkImplementation`, `checkSelfReview`): a `bug-fix` must use `commitType: 'fix'`, a
-`blocked` or `unrelated` answer needs a non-empty `blockedReason`, `unrelated` is allowed on a `ci-fix` attempt only, a
+`blocked` or `unrelated` answer needs a non-empty `blockedReason`, a `blocked` answer needs a non-empty `stopReason` and
+no other answer may have one, `unrelated` is allowed on a `ci-fix` attempt only, a
 `changes` verdict needs at least one finding, and an `approve`
 cannot carry a `blocker`. A broken contract throws and ends the attempt with `failure`.
 
@@ -1056,14 +1091,16 @@ cannot carry a `blocker`. A broken contract throws and ends the attempt with `fa
 5. **Rounds** (`implementRounds`), from round 1 up to `AGENT_MAX_REVIEW_ROUNDS` (default 2):
    1. Write `implement-input.md` (`renderImplementInput`, with the `## Attachments` section) and call `implementer`
       with the attachment files as extra `--file` arguments. If `status` is `blocked`, the attempt
-      is blocked with `implementation.blockedReason`. If `status` is `unrelated` (only on a `ci-fix` attempt; the
+      is blocked with `implementation.blockedReason` and the stop reason `implementation.stopReason`. If `status` is
+      `unrelated` (only on a `ci-fix` attempt; the
       `check` of the call is `checkImplementation(output, playbook, kind)`, so any other kind is a contract failure and
       the repair prompt goes back to the model), `work` commits nothing, runs `git checkout -- .` and `git clean -fd` to
       discard the working tree, and runs no checks, no self-review, no diff limit, and no bundle. The outcome is
       `result: 'unrelated'` with `blockedReason` set to the reason, `checks` and `review` `null`, and `bundle: false`.
       For a CI fix, `renderImplementInput` tells the implementer about the verdict (`UNRELATED_HINT`) next to the task.
    2. Commit: `git status --porcelain`. No changes in round 1 means blocked with
-      `The implementer reported done, but the working tree has no changes.` No new changes in a later round keeps the
+      `The implementer reported done, but the working tree has no changes.` (stop reason `stuck`). No new changes in a
+      later round keeps the
       earlier commit. Otherwise
       `git add -A` and `git commit --no-verify -m <message>`; later rounds add `--amend`, so an attempt is one commit.
    3. Local checks (`runChecks`, below).
@@ -1093,7 +1130,9 @@ cannot carry a `blocker`. A broken contract throws and ends the attempt with `fa
    - `.github/workflows/` (the PAT has no Workflows permission).
    - The agent's own files: `.claude/`, `.cursor/`, `tools/agent/`, `agent-packages/` at the start of the path, and
      any `AGENTS.md` or `CLAUDE.md` at any depth.
-8. **Result.** `blocked` when the implementer said so, the tree was clean, or step 7 gave a reason. `pr-opened` when
+8. **Result.** `blocked` when the implementer said so, the tree was clean, or step 7 gave a reason (stop reason
+   `scope-review-required`). On an `update` attempt, conflict markers left in the conflicted files block with
+   `conflict-unresolved`. `pr-opened` when
    not blocked, the checks passed, and the effective verdict is `approve`. Otherwise `draft` (checks red or changes
    still requested after the last round).
 9. **Bundle and diff preview**, only for `pr-opened` and `draft`:
@@ -1140,6 +1179,7 @@ cannot carry a `blocker`. A broken contract throws and ends the attempt with `fa
 | `failure` | `{ message, stage }` with stage `setup`, `analysis`, or `implementation`; or `null` |
 | `result` | `blocked`, `pr-opened`, `draft`, `unrelated` (a CI fix only), or `null` |
 | `blockedReason` | Text, or `null` |
+| `stopReason` | The stop reason of a `blocked` result (the model's `stopReason`, or the one the script chose), else `null` |
 | `rounds` | Rounds run |
 | `implementation`, `checks`, `review` | Output of the last implementer round; `{ passed, results }`; output of the last self-review |
 | `branchInfo` | `{ branch, continuing, previousSha, base, head }` |
@@ -1164,7 +1204,7 @@ labels, and mentions the person who asked. It runs no model and no repository co
 - **Outputs:** `summary.md` in `AGENT_OUT` (uploaded as `ai-autonomous-publish-<number>-<run_attempt>`), and the job
   summary in dry-run. No `$GITHUB_OUTPUT` keys.
 - **Model calls:** none.
-- **GitHub reads (`GITHUB_TOKEN`):** `getIssue`, `listIssueComments` (through `loadIssue` and `withFreshCosts`).
+- **GitHub reads (`GITHUB_TOKEN`):** `getIssue`, `listIssueComments` (through `loadIssue` and `publishResult`).
 - **GitHub reads (`GITHUB_TOKEN`):** also `getPull` (`GET .../pulls/{n}`) for the pull request of the state.
 - **GitHub writes:**
 
@@ -1175,12 +1215,13 @@ labels, and mentions the person who asked. It runs no model and no repository co
 | `updatePull` | `PATCH /repos/{owner}/{repo}/pulls/{n}` (title, body) | `AGENT_PAT` |
 | `convertPullToDraft` | GraphQL mutation `convertPullRequestToDraft` | `AGENT_PAT` |
 | `createIssueComment`, `updateIssueComment` | `POST .../issues/{n}/comments`, `PATCH .../issues/comments/{id}` | `GITHUB_TOKEN` |
-| `addLabels`, `removeLabel` | `POST .../issues/{n}/labels`, `DELETE .../issues/{n}/labels/{name}` | `GITHUB_TOKEN` |
+| `addLabels`, `removeLabel` (also `getIssue`, to read the stop labels first) | `POST .../issues/{n}/labels`, `DELETE .../issues/{n}/labels/{name}` | `GITHUB_TOKEN` |
 | `replyToReviewComment` | `POST .../pulls/{n}/comments/{commentId}/replies` | `GITHUB_TOKEN` |
 | `addReaction` | `POST .../issues/comments/{id}/reactions` | `GITHUB_TOKEN` |
 
-The PAT opens and edits the pull request so that its events start the workflows of the repository. `publish` never
-marks a pull request ready; only the CI gate does, after CI is green on GitHub.
+The PAT opens and edits the pull request so that its events start the workflows of the repository. `publish` opens
+the pull request of a green attempt ready for review and any other as a draft. It never marks an open draft ready; only
+the CI gate does, after CI is green on GitHub.
 
 **Flow of `publishAttempt`:**
 
@@ -1198,6 +1239,7 @@ marks a pull request ready; only the CI gate does, after CI is green on GitHub.
      `refuse-unsuitable`.
    - `result` `unrelated` is accepted only for the kind that `publish` derives itself (`ci-fix`; `outcomeProblems` takes
      `kind`, else the outcome's own claim), needs a non-blank `blockedReason`, and carries no bundle.
+   - `stopReason`, when set, must be one of `IMPLEMENTER_STOP_REASONS` (`lib/contract.js`).
    - **Branch derivation:** `branchInfo.branch` must equal `st.branch`, else `branchName(type, number, title)`. A
      fresh start (no `st.branch`) may also use `<expected>-v<digits>` (`branchAllowed`).
    - `branchInfo.head` (and `previousSha`) must match `^[0-9a-f]{40,64}$`.
@@ -1208,13 +1250,14 @@ marks a pull request ready; only the CI gate does, after CI is green on GitHub.
    `The outcome of the work step is not trusted: <problems>`), keeping only cost records that have a numeric `usd`.
 4. **Stopped by a person.** When the state phase is `stopped` and `implementing.run` equals `AGENT_RUN_URL`,
    `publishStopped` records the costs and an attempt with `result: 'stopped'` (notes
-   `@<stoppedBy> stopped this attempt.`), removes `implementing`, keeps the phase `stopped`, writes the state comment,
-   and posts nothing else.
+   `@<stoppedBy> stopped this attempt.`), removes `implementing`, keeps the phase `stopped`, writes the state comment
+   (`state.replaceState`, the human part stays), and posts nothing else. It sets no stop label.
 5. **Analysis of this run.** If `outcome.failure.stage === 'analysis'`, the state goes through `failedState`. If
    `outcome.analysis` exists, `labelChanges` and `applyLabels` apply the analysis labels (`ai:suitable`,
    `ai:unsuitable`; not in dry-run), and `nextState` records the analysis. Costs are added with `state.addCost`.
-6. **Stop after the analysis** (`outcome.stopped`; `publishStop`). The state loses `implementing`, the state comment
-   shows the analysis (`renderAnalysis`), and a second comment carries the refusal reply (`refusalReply` for
+6. **Stop after the analysis** (`outcome.stopped`; `publishStop`). The state loses `implementing`, the implementation
+   result comment shows the analysis (`renderAnalysis`, through `publishResult`), and a second comment carries the
+   refusal reply (`refusalReply` for
    `refuse-needs-info` or `refuse-unsuitable`, mentioning the actor). The phase stays what the analysis set
    (`needs-info` or `analyzed`). If `outcome.failure` is set, `publish` throws after writing.
 7. **`finish`**, for the rest:
@@ -1223,8 +1266,8 @@ marks a pull request ready; only the CI gate does, after CI is green on GitHub.
       check runs (`relevantChecks` of `ci-gate.js`, loaded lazily because `ci-gate.js` requires this module), and its
       statuses, take the failed ones that belong to a workflow run, and call `gh.rerunFailedJobs` for each run
       (`rerunTargets`). In dry-run nothing is called. With no workflow run to rerun, the attempt is recorded as
-      `blocked`, and the reason gets the sentence "I think this change does not cause the failure, but I found no
-      failed check that I can rerun."
+      `blocked` with the stop reason `verification-blocked`, and the reason gets the sentence "I think this change does
+      not cause the failure, but I found no failed check that I can rerun."
    1. When there is code (`hasCode`: no failure, result is `pr-opened` or `draft`): build the title, the body, and
       `toDraft = (result !== 'pr-opened')`. In dry-run, nothing more happens here.
    2. **Push** (`Push the branch`): `git fetch --no-tags <AGENT_OUT>/branch.bundle HEAD`; the fetched commit must
@@ -1232,7 +1275,8 @@ marks a pull request ready; only the CI gate does, after CI is green on GitHub.
    3. **Re-measure the diff** (`pushedDiffProblem`): `git merge-base origin/develop <head>`, then
       `git diff --shortstat <base> <head>` and `git diff --name-only <base> <head>` and the same `diffBlockReason`
       as `work` (20 files or 600 lines for `bug-fix`, 30 files or 1000 lines for `task`, workflow files, agent files).
-      A reason means no push, and the attempt becomes `blocked` with that `blockedReason` and `bundle: false`.
+      A reason means no push, and the attempt becomes `blocked` with that `blockedReason`, the stop reason
+      `scope-review-required`, and `bundle: false`.
    4. `pushBranch` with `--force-with-lease=refs/heads/<branch>:<previousSha>` when the branch of an earlier attempt
       is continued; a new branch and a `ci-fix` push without it. Never a plain `--force`. `--no-verify` is always set.
    5. **Pull request** (`Pull request`): if the state's `pr` is open, `updateOpenPull` runs: it calls `updatePull` with
@@ -1240,12 +1284,13 @@ marks a pull request ready; only the CI gate does, after CI is green on GitHub.
       when
       the attempt is not `pr-opened` and the pull request is not a draft. Otherwise, for `ci-fix` and for a change
       request it throws `Pull request #<n> is not open, so the CI fix|change has no place to go`. Otherwise it
-      opens a new pull request: `createPull({ title, head, base: 'develop', body, draft: true })`. Every pull request
-      opens as a draft.
+      opens a new pull request: `createPull({ title, head, base: 'develop', body, draft })`. `draft` is `false`
+      for a `pr-opened` attempt, so the pull request is ready for review at once, and `true` for any other result.
    6. **State.** The attempt record is appended, `implementing` is removed, and the fields below are set.
-   7. Write the state comment (`state.render(human, merged)`; `merged` re-reads the cost records right before the
-      write), apply labels, post the mention comment, and reply in review threads.
-8. A failure of the work step or of the publishing throws after the state comment is written, so the job turns red and
+   7. Write the implementation result comment (`results.publishResult`, family `implementation`, not a new command: it
+      re-reads the comments and the cost records right before the write), apply the labels, post the mention comment,
+      and reply in review threads.
+8. A failure of the work step or of the publishing throws after the result comment is written, so the job turns red and
    the state records what exists.
 
 **Commit message** (`commitMessage`): the commit that `work` made, in this shape:
@@ -1289,6 +1334,8 @@ request title is the first line (`commitTitle`).
 | `forced` | `outcome.forced` or the earlier `forced` |
 | `attempts` | The old list plus the new record |
 | `costs` | Old cost records plus the costs of this run |
+| `stops` | A hand-off (`blocked`, `draft`, `error`) appends `{ reason, at, run, on: [<issue>] }` (`stops.recordStop`); `pr-opened` and `unrelated` close the open entry (`stops.recordResume`) |
+| `results` | Added by `publishResult`: the result comments of the families (see [the result comments](#result-comments)) |
 
 Other phases come from other scripts. This script also leaves `analyzed` or `needs-info` (analysis stops), and
 `stopped` (kept as is) in the state.
@@ -1309,39 +1356,57 @@ Other phases come from other scripts. This script also leaves `analyzed` or `nee
 | `notes` | `The attempt failed: <message>` for `error`; otherwise the implementer's `notes`, else the block reason |
 | `at` | ISO time of the attempt (from `outcome.at`) |
 
+**Stop reason of a result** (`stopReasonOf`):
+
+| Result | Stop reason |
+|--------|-------------|
+| `blocked` | `stopReason` of the outcome: the model's `stopReason`, or the one the script chose (`stuck` for no changes after `done`, `scope-review-required` for a diff limit or a protected path, `conflict-unresolved` for conflict markers left by an `update`, `verification-blocked` for an `unrelated` result with nothing to rerun); `stuck` when the value is not a known reason |
+| `draft` | `budget-exhausted` |
+| `error` | `environment-blocked` (also a work step that left no outcome, and an untrusted outcome) |
+| `pr-opened`, `unrelated` | none |
+
 **Labels** (`GITHUB_TOKEN`; the issue):
 
-- `pr-opened` and `unrelated` (with a rerun): remove `agent:needs-human` from the issue (`removeLabel` treats a 404 as
-  already done).
-- Any other result (`draft`, `blocked`, `error`): add `agent:needs-human`.
+- A result with a stop reason (`draft`, `blocked`, `error`): `stops.setStop` adds `needs-human:<reason>` to the issue
+  and
+  removes any other stop label it carries.
+- `pr-opened` and `unrelated` (with a rerun): `stops.clearStops` removes every stop label from the issue (`removeLabel`
+  treats a 404 as already done).
 - The labels `ai:suitable` and `ai:unsuitable` are touched only by the analysis step (step 5).
 
 **Comments** (non-dry-run):
 
-1. The state comment: the human text plus the machine-readable state. The human text is built by `renderOutcome`
-   (the same text goes to `summary.md`):
+1. The implementation result comment (`publishResult`: the human text, the signature, and the machine-readable state
+   in the state comment). The human text is built by `renderOutcome` (the same text goes to `summary.md`):
    - `error`: `### AI implementation failed`.
-   - `blocked`: `### AI implementation is blocked`, with "What I tried" and "What I need from you". For a CI fix:
+   - `blocked`: `### AI implementation is blocked`, then the stop block (`renderStop`, see below). For a CI fix:
      `### AI implementation needs a person: CI is red`, with the failed checks (at most 5, then "and N more"), the
      first error line, and the reason, all read from the CI report in the state (`ciHandOffLines`, which uses
-     `reportFacts` and `failureLines` of `ci-gate.js`), then "What I tried" and the two ways on (`waysOnLines`).
+     `reportFacts` and `failureLines` of `ci-gate.js`), then the stop block with the two ways on (`ciStopLines`: the
+     required action is `WAY_RERUN` and `WAY_RETRY`).
    - `unrelated`: `### AI implementation: CI failed, but not because of this change`, with the failed checks, why the
      agent thinks the change does not cause them, and "I reran the failed checks (attempt N of M)", where the
      attempt number counts the attempts of the budget (`countedAttempts`).
    - `pr-opened`: `### AI implementation: pull request #<n> is open` (a CI fix:
-     `### AI implementation: CI fix pushed to pull request #<n>`), with the branch, the rounds, and "It stays a draft
-     until CI is green on GitHub."
+     `### AI implementation: CI fix pushed to pull request #<n>`), with the branch, the rounds, and "CI runs on the pull
+     request."
    - `draft`: `### AI implementation needs a person: draft pull request #<n>` (a CI fix:
-     `... needs a person: CI fix for pull request #<n>`), with "What I tried", "What is open" (failing checks and open
-     findings), and "What I need
-     from you".
-   Each ends with ``<sub>[Run](<run URL>) · AI cost of this issue so far: $<usd> · <hint>``.
+     `... needs a person: CI fix for pull request #<n>`), then the stop block.
+
+   A hand-off (`blocked`, `draft`, `error`) carries the stop block of `renderStop` (`lib/stops.js`): the line
+   ``**Reason:** `needs-human:<reason>` ``, then the paragraphs **Blocker.**, **Work completed.**, **Required action.**,
+   and **Resume condition.** (an empty field is left out). The blocker is the reason or, for a draft, the open items
+   (failing checks and open findings); the work completed is the attempt notes; the required action is the old "What I
+   need from you" text; the resume condition is the command that continues the work (`/agent implement` or
+   `/agent update` with guidance, or `/agent rerun` and `/agent retry` for a CI fix).
+   Each text ends with `<sub>[Run](<run URL>) · <hint></sub>`, without a cost (`footerLine`), and `publishResult` adds
+   the signature line.
 2. The mention comment (`actorComment`, a new comment so that the person is notified; none for `pr-opened`):
    - `draft`: ``@<actor>, I opened draft pull request #<n>, but it is not green yet. The AI implementation comment on
      this issue says what is open.`` (a CI fix: `I pushed a fix to pull request #<n>, but it is not green yet. ...`).
    - `blocked`:
      `@<actor>, I could not implement this issue: <reason> The AI implementation comment on this issue has the details.`
-     (a CI fix: `@<actor>, I could not fix CI on #<n>.` and the same bullets and ways on as the state comment).
+     (a CI fix: `@<actor>, I could not fix CI on #<n>.` and the same bullets and ways on as the result comment).
    - `unrelated`: none to the actor (`actorComment` has a text for the result, but `finish` posts none). Instead, one
      comment on the pull request, without a mention: "CI failed in X, which this change does not cause: Y.
      I reran the failed checks; the CI gate decides again."
@@ -1356,8 +1421,9 @@ Other phases come from other scripts. This script also leaves `analyzed` or `nee
 **Reactions** (on `AGENT_COMMENT_ID`, in a `finally` block): `rocket` when the result is `pr-opened` or an `unrelated`
 with a rerun, otherwise `confused`. A failed reaction is a warning only.
 
-**Dry-run** (`AGENT_DRY_RUN` is not `false`): nothing is pushed or written. The job summary shows the state comment
-text, the commit message, the pull request title and body (labelled as a draft), the labels, the mention comment, the
+**Dry-run** (`AGENT_DRY_RUN` is not `false`): nothing is pushed or written. The job summary shows the result comment
+text with its signature (`results.previewResult`, the records of this run only), the commit message, the pull request
+title and body (labelled as a draft), the labels, the mention comment, the
 state as JSON, the diff stat, and the first 300 lines of the diff.
 
 **Attempt `result` values (exact strings):** `pr-opened`, `draft`, `blocked`, `unrelated`, `error` (the work or the
@@ -1409,10 +1475,13 @@ issue is in the phase `waiting-ci` at that commit. The job checks out `tools/age
   - `gh.listCheckRuns` (`GET /repos/{repo}/commits/{sha}/check-runs?filter=latest`, paginated).
   - `gh.getCombinedStatus` (`GET /repos/{repo}/commits/{sha}/status`, paginated; only the single `statuses` count).
   - `gh.getJobLog` (`GET /repos/{repo}/actions/jobs/{id}/logs`, follows the redirect) for failed Actions jobs.
-  - `gh.listIssueComments` once more in `phaseMovedOn` and in `state.withFreshCosts`.
+  - `gh.listIssueComments` once more in `phaseMovedOn` and in `results.publishResult`; `gh.getIssue` in `stops`, to
+    read the stop labels before it changes them.
 - **GitHub writes:**
-  - `GITHUB_TOKEN`: `gh.updateIssueComment` or `gh.createIssueComment` for the state; `gh.addLabels` and
-    `gh.removeLabel`; `gh.createIssueComment` for the message to the person; `gh.rerunFailedJobs`
+  - `GITHUB_TOKEN`: `gh.updateIssueComment` or `gh.createIssueComment` for the implementation result comment and
+    the state (`writeState` calls `results.publishResult`, family `implementation`, never a new command: the gate
+    edits the comment its command uses); `gh.addLabels` and `gh.removeLabel` (through `stops.setStop` and
+    `stops.clearStops`); `gh.createIssueComment` for the message to the person; `gh.rerunFailedJobs`
     (`POST /repos/{repo}/actions/runs/{id}/rerun-failed-jobs`).
   - `AGENT_PAT`: `markPullReady` (GraphQL mutation `markPullRequestReadyForReview`), through a second client. Reason:
     a ready-for-review event made by the job token does not start the repository workflows.
@@ -1443,12 +1512,15 @@ issue is in the phase `waiting-ci` at that commit. The job checks out `tools/age
 - **Green** (`handleGreen`):
   - If the pull request is a draft and not dry-run: `markPullReady(pull.node_id)` with `AGENT_PAT`. A failure is kept
     as `readyError` (also when `AGENT_PAT` is missing); the rest is still written, and the job fails at the end.
-  - State: `greenState` sets `phase: 'completed'`, the last attempt `result: 'ci-green'`, removes `lastCiReport`, and
-    sets `ciGate: { sha, decided: true, at, run }`. `withLastAttempt`, which `greenState`, `stoppedState`, and
+  - State: `greenState` sets `phase: 'completed'`, the last attempt `result: 'ci-green'`, removes `lastCiReport`, closes
+    the open stop (`stops.recordResume`), and sets `ciGate: { sha, decided: true, at, run }`. `withLastAttempt`, which
+    `greenState`, `stoppedState`, and
     `nextAttemptState` use, keeps `unrelated: true` on a last attempt whose result was `unrelated` when the CI verdict
     replaces it. Header `### AI implementation: CI is green on pull request #<n>`.
-  - Labels: pull request gets `agent:completed` and `ai:l1-executor`; issue gets `agent:completed`; both lose
-    `agent:needs-human`.
+  - Labels: pull request gets `agent:completed` and `ai:l1-executor`; issue gets `agent:completed`. Then
+    `stops.clearStops` removes every stop label from both, and `stops.setStop` adds `needs-human:approval-required` to
+    the pull request only: a person reviews it. `levels.js` removes that label when the pull request is merged. The
+    stop history does not record `approval-required`.
   - Comment on the issue: `@<actor>, CI is green on #<pr>. A person reviews and merges it.`
   - Order of writes: state, labels, comment. Outcome `green`.
 - **Red** (`handleRed`):
@@ -1486,7 +1558,7 @@ issue is in the phase `waiting-ci` at that commit. The job checks out `tools/age
      result has no such fallback, so a cancelled check of another app never reruns an unrelated workflow): call
      `gh.rerunFailedJobs` per run (that includes the run of `ci-ok`, which depends on the E2E job), set `e2eRerun` to
      `{ sha, count }` in the state (`rerunState`; a new commit starts at 1, and an old `e2eReruns` field is deleted),
-     and write the state comment (`### AI implementation: waiting for CI on pull request #<n>`; it says "Only E2E jobs
+     and write the result comment (`### AI implementation: waiting for CI on pull request #<n>`; it says "Only E2E jobs
      failed" or "The failed checks were cancelled, so nothing really failed", see `renderRerun`). The one free rerun per
      commit covers both cases and keeps the field name `e2eRerun`. The phase stays `waiting-ci`, `ciGate` is not set,
      and the outcome is `rerun`. The next result is decided like any red result. The state is written only when GitHub
@@ -1501,15 +1573,19 @@ issue is in the phase `waiting-ci` at that commit. The job checks out `tools/age
      Counted attempts (`countedAttempts`) are the attempts of kind `initial` or `ci-fix` from index `state.budgetFrom`
      on, so a person's `retry`, answer, or change request gives a fresh budget.
   9. Stop: `stoppedState` sets `phase: 'needs-human'`, the last attempt `result: 'ci-red'` and `signature`,
-     `lastCiReport`, and `ciGate`. The state comment (`### AI implementation needs a person`) starts with the failed
+     `lastCiReport`, and `ciGate`, and records the stop in `stops` (`on: [<issue>, <pull request>]`). The stop reason
+     comes from the decision (`STOP_REASON`): `same-failure` gives `stuck`, `budget` gives `budget-exhausted`,
+     `rerun-rejected` and `cancelled` give `environment-blocked`. The result comment
+     (`### AI implementation needs a person`) starts with the failed
      checks (`checkNames`: at most 5, then "and N more"), the first error line of the first failed check
-     (`failureLines`), and the reason, then the two ways on (`waysOnLines`: `/agent rerun` for a failure the change does
-     not cause, `/agent retry` with guidance for another fix), then the attempts table (`#`, `Kind`, `Result`,
-     `Signature`, `Notes`), the current failure, and the report in a `<details>` block (cut to 3,000 characters). Then
-     `agent:needs-human` is added to the issue and to the pull request, and a comment mentions the actor with the same
-     three facts and the two ways on. Outcome `stopped`, with `reason`.
+     (`failureLines`), then the stop block (`ciStopLines`: the reason label, the blocker from `reasonSentence`, the work
+     completed "N attempt(s), listed below.", the two ways on `/agent rerun` for a failure the change does not cause and
+     `/agent retry` with guidance for another fix, and the resume condition), then the attempts table (`#`, `Kind`,
+     `Result`, `Signature`, `Notes`), the current failure, and the report in a `<details>` block (cut to 3,000
+     characters). Then `stops.setStop` adds `needs-human:<reason>` to the issue and to the pull request, and a comment
+     mentions the actor with the same three facts and the two ways on. Outcome `stopped`, with `reason`.
   10. Next attempt: `nextAttemptState` sets `phase: 'implementing'`, `implementing: { run, actor, at, kind: 'ci-fix' }`,
-      the last attempt `result: 'ci-red'` and `signature`, `lastCiReport`, and `ciGate`. It writes the state
+      the last attempt `result: 'ci-red'` and `signature`, `lastCiReport`, and `ciGate`. It writes the result
       comment (`Attempt <n> of <max> fixes it`) and returns outcome `next-attempt` with `next=implement`.
 - **Rerun mode** is described [below](#rerun-mode-agent-rerun).
 - **Exit outcomes** (the `outcome` step output and the return value): `skipped`, `waiting`, `already-decided`,
@@ -1558,17 +1634,19 @@ is no attempt: it neither spends nor resets the attempt budget.
      one, the reply names them, the state stays as it is, and the outcome is `refused`.
   4. Read the state comment again and refuse if it now fails `rerunRefusal` (a stop came in).
   5. With failed checks: rerun them first (`gh.rerunFailedJobs` per run), before any write. When GitHub rejects every
-     rerun, nothing is written, `agent:needs-human` stays, and the reply says why (outcome `refused`): no workflow run
+     rerun, nothing is written, the stop labels stay, and the reply says why (outcome `refused`): no workflow run
      would wake the gate otherwise. When it rejects some of them, the reply names how many.
-  6. Write the state (`rerunRequestState`): `phase: 'waiting-ci'`, `ciGate` and `implementing` deleted, and an entry
-     `{ at, actor, sha, runs, run }` appended to `reruns` (`runs` are the workflow runs that were rerun). The state
-     comment is `### AI implementation: waiting for CI on pull request #<n>`. `agent:needs-human` is removed from the
-     issue and the pull request.
+  6. Write the state (`rerunRequestState`): `phase: 'waiting-ci'`, `ciGate` and `implementing` deleted, the open stop
+     closed (`stops.recordResume`), and an entry `{ at, actor, sha, runs, run }` appended to `reruns` (`runs` are the
+     workflow runs that were rerun). The result comment (`publishResult`, family `implementation`, not a new command)
+     is `### AI implementation: waiting for CI on pull request #<n>`. `stops.clearStops` removes every stop label from
+     the issue and the pull request.
   7. The reply by the checks: failed checks rerun (which checks, and that no new attempt and no model call follow);
      checks still pending (CI still runs; the gate decides); nothing failed and only the verdict check `ci-ok` is
      missing (`stillRunning` is empty: the reply says that no CI verdict is reported, not that CI still runs; both are
      outcome `pending`); all green (`handleGreen` of the gate: the pull request
-     leaves draft, `agent:completed` and `ai:l1-executor`, phase `completed`, and its comment, which is the only reply).
+     leaves draft, `agent:completed`, `ai:l1-executor`, and `needs-human:approval-required`, phase `completed`, and its
+     comment, which is the only reply).
   8. The reply goes where the comment was written (the pull request when `AGENT_PR` is set, else the issue), the green
      comment too (`commentNumber`). Reaction `rocket` at the end, `confused` on a refusal or an error; an error also
      fails the job.
@@ -1602,8 +1680,9 @@ job uses the group `ai-autonomous-chat-<number>`.
 - **GitHub writes** (`GITHUB_TOKEN`): reactions through `lib/reactions.js` (`gh.addReaction`,
   `POST /repos/{repo}/issues/comments/{id}/reactions`): `eyes` at the start, then `rocket` when the command returned
   `ok`, else `confused` (also on an error). A failed reaction only logs a warning. The reply is
-  `gh.createIssueComment`. `stop` also uses `gh.updateIssueComment`, `gh.cancelRun`
-  (`POST /repos/{repo}/actions/runs/{id}/cancel`, 409 returns `false`), and `gh.removeLabel`. A question uses
+  `gh.createIssueComment`. `stop` also uses `gh.updateIssueComment` (through `results.publishResult`), `gh.cancelRun`
+  (`POST /repos/{repo}/actions/runs/{id}/cancel`, 409 returns `false`), and `gh.removeLabel` (through
+  `stops.clearStops`, which reads the labels with `gh.getIssue` first). A question uses
   `gh.updateIssueComment` or `gh.createIssueComment` to record its cost.
 - **Target loading** (`loadTarget`): the issue or pull request plus its state comment. For a pull request,
   `agentIssueOf(body)` reads the marker in the description, and the issue counts only when its own state has
@@ -1636,11 +1715,12 @@ job uses the group `ai-autonomous-chat-<number>`.
      reply "already stopped" (`ok: false`).
   3. Compute `runId` from `implementing.run` (a run link) only when the phase is `implementing`, and only when the link
      names this repository (`runIdOf`).
-  4. Write the state first (`gh.updateIssueComment`): `stoppedState` sets `phase: 'stopped'`, `stoppedBy`, `stoppedAt`
-     and keeps `implementing`, so `implement.js publish` of the cancelled run can see that a person stopped it. The
-     human text is `### AI implementation was stopped`.
+  4. Write the state first (`results.publishResult`, family `implementation`; the stop continues the running
+     command, so it edits that result comment): `stoppedState` sets `phase: 'stopped'`, `stoppedBy`, `stoppedAt` and
+     keeps `implementing`, so `implement.js publish` of the cancelled run can see that a person stopped it. The open
+     entry of `stops` is closed (`stops.recordResume`). The human text is `### AI implementation was stopped`.
   5. Cancel the run (`gh.cancelRun(runId)`). A failed cancel is kept as `cancelError`.
-  6. Remove `agent:needs-human` from the issue and from `state.pr` (`gh.removeLabel`).
+  6. Remove every stop label (`needs-human:*`) from the issue and from `state.pr` (`stops.clearStops`).
   7. Reply with what was stopped (`stoppedWhat`, per phase: `implementing`, `waiting-ci`, `needs-human`, other) and
      how to start again (`/agent implement` or `/agent retry` with guidance). When the cancel failed, the reply says
      so, and the job rethrows the error after the reply.
@@ -1655,8 +1735,10 @@ job uses the group `ai-autonomous-chat-<number>`.
   user text in tables and sentences goes through `inline()`. The reply starts with `@<asker>`.
 - **Cost of an answer:** `recordCosts` reads the state comment again, adds the cost records, and writes with
   `state.replaceState` (the human part stays). With no state comment it creates one. This happens also when the answer
-  failed. The reply ends with a `<sub>` line: run link, the cost of this answer, the total on the issue or pull
-  request, and a hint for `/agent cost`. A failed answer replies `I could not answer: ...` and then fails the job.
+  failed. The reply ends with a `<sub>` footer (the run link and the hint for `/agent cost`, `answerCostLine`) and
+  the signature line of the cost records of this answer only (role `assistant`; no signature when there are none).
+  The total on the issue or pull request is in `/agent cost`. A failed answer replies `I could not answer: ...` and then
+  fails the job.
 - **Decisions:**
   - `help`, `cost` -> reply only; no state write.
   - `stop` on a pull request not of the agent -> refuse; nothing to stop or already stopped -> refuse (`ok: false`,
@@ -1712,7 +1794,8 @@ flaky failure back to the CI gate, the state comment of the issue. So it uses th
      two cancelled `run-lint`, a failed `js`, and a failed `ci-ok`, and the rerun of step 6 covers the runs of the
      cancelled checks too.
   4. Run the `ci-triager`. When the call or its contract fails, record the cost, reply "I could not finish the CI
-     check:" followed by the error message, add the cost line, and throw (the job fails, the reaction is `confused`). A
+     check:" followed by the error message, add the footer and the signature, and throw (the job fails, the reaction is
+     `confused`). A
      `change` verdict without a fix breaks the contract.
   5. Find out whether the pull request is the agent's (`loadAgent`): `AGENT_ISSUE` is set, the marker in the
      description names that issue, and the state of the issue has `pr` equal to this pull request.
@@ -1724,20 +1807,23 @@ flaky failure back to the CI gate, the state comment of the issue. So it uses th
      `state.replaceState`; a state comment is created when there is none).
   8. After an accepted rerun on the agent's pull request, when the state of the issue (read again right before the
      write) has the phase `needs-human` or `waiting-ci` and `pr` equal to this pull request: write
-     `rerunRequestState` (phase `waiting-ci`, `ciGate` and `implementing` deleted, an entry in `reruns`) and remove
-     `agent:needs-human` from the issue and the pull request, so the CI gate decides when the checks end. Any other
-     phase is left alone.
+     `rerunRequestState` (phase `waiting-ci`, `ciGate` and `implementing` deleted, an entry in `reruns`, the open stop
+     closed), write the implementation result comment of the issue (`publishResult`, not a new command), and clear the
+     stop labels (`stops.clearStops`) from the issue and the pull request, so the CI gate decides when the checks end.
+     Any other phase is left alone.
   9. Reply (`renderTriage`) and react with `rocket`.
 - **Reply:** the verdict sentence with the confidence, the root cause, the places to fix (when there are any), the
-  evidence in a `text` fence (when there is any), what the agent did, a hint, and the cost line. All model text goes
-  through `inline` or `defuseMentions`, and a backtick in a code span becomes an apostrophe. Hints: `change` on the
+  evidence in a `text` fence (when there is any), what the agent did, a hint, the footer `<sub>[Run](<url>)</sub>`, and
+  the signature line of the cost records of this check (role `ci-triager`; no signature without records). All model
+  text goes through `inline` or `defuseMentions`, and a backtick in a code span becomes an apostrophe. Hints: `change`
+  on the
   agent's pull request suggests `/agent retry` with the guidance; `unknown` (also a low-confidence `flaky` or `infra`)
   suggests `/agent rerun` on the agent's pull request and a rerun from the Actions page elsewhere, because
   `/agent rerun` works only on the agent's pull requests.
 - **GitHub writes** (`GITHUB_TOKEN`): the reply (`gh.createIssueComment`), the state comment of the pull request
   (`gh.updateIssueComment` or `gh.createIssueComment`), the rerun
-  (`POST /repos/{repo}/actions/runs/{id}/rerun-failed-jobs`), the state comment of the issue and `gh.removeLabel` (the
-  hand-back), and the reactions.
+  (`POST /repos/{repo}/actions/runs/{id}/rerun-failed-jobs`), the implementation result comment and state of the issue
+  (`results.publishResult`) and `gh.removeLabel` through `stops.clearStops` (the hand-back), and the reactions.
 - **Dry-run:** the model still runs. Nothing is written, rerun, or reacted with. The job summary shows the reply
   (`## Dry run: reply to #<n>`), the workflow runs that would be rerun, and the hand-back that would happen.
 - **Tests:**
@@ -1775,7 +1861,9 @@ with `ai:l`. It checks out only `tools/agent` of the base branch and never runs 
 - **GitHub writes (`GITHUB_TOKEN`; `issues: write`, `pull-requests: write`):** `addLabels`
   (`POST /repos/{repo}/issues/{n}/labels`) and `removeLabel` (`DELETE /repos/{repo}/issues/{n}/labels/{name}`, 404 is
   ignored) on each closed issue, and `createIssueComment` (`POST /repos/{repo}/issues/{n}/comments`) on the pull
-  request.
+  request. On the merged pull request itself, `stops.clearStops` removes every stop label (`needs-human:*`, so also
+  `needs-human:approval-required`, which the CI gate set); it reads the labels with `getIssue` first and runs before
+  the author check of `AGENT_ALLOWED_ACTORS`.
   Nothing is written in dry-run.
 - **The level computation:**
   - The labels are `LEVELS`, from least to most autonomous: `ai:l0-assistant`, `ai:l1-executor`, `ai:l2-agent`,
@@ -1846,11 +1934,12 @@ The weekly report: how far the team has come toward autonomy, in numbers. It use
 - **Metrics (sections of the report):**
   - Issues created: `Bug` and `Task` issues created (unique by number); suitable (`ai:suitable`); unsuitable
     (`ai:unsuitable`; an issue with both labels counts as unsuitable); not assessed; waiting for a person now
-    (`agent:needs-human`, on top of the other counts).
+    (any stop label `needs-human:*` except `needs-human:approval-required`, on top of the other counts).
   - Merged pull requests by execution level: a row per level in `LEVELS` order (imported from `levels.js`) and a row
     `No level`, with count and share (percent of the merged total); the lowest level counts for a pull request with two.
-  - Pull requests of the agent: opened in the period; reached `agent:completed`; draft or `agent:needs-human`; merged
-    (`merged_at`); reviewed by the agent (`agent:pr-reviewed`).
+  - Pull requests of the agent: opened in the period; reached `agent:completed`; draft or a stop label `needs-human:*`
+    other than `approval-required`; waiting for approval (`needs-human:approval-required`); merged (`merged_at`);
+    reviewed by the agent (`agent:pr-reviewed`).
   - Attempts: the `attempts` entries of the states of issues (states with `kind: 'pull'` are left out) whose `at` is in
     the period, by `result` (`pr-opened`, `draft`, `blocked`, `unrelated`, `ci-green`, `ci-red`, `error`, `stopped`,
     then others), and how many belong to an issue marked `forced`. An attempt with `unrelated: true` counts as
@@ -2069,10 +2158,10 @@ The GitHub REST and GraphQL client.
 | `getPull(n)` | `GET /repos/{repo}/pulls/{n}` | `chat.js`, `ci-gate.js`, `implement.js`, `levels.js`, `review.js`, `route.js` |
 | `listPullFiles(n)` | `GET /repos/{repo}/pulls/{n}/files` (paginated) | `review.js` |
 | `listPullCommits(n)` | `GET /repos/{repo}/pulls/{n}/commits` (paginated) | `levels.js` |
-| `getIssue(n)` | `GET /repos/{repo}/issues/{n}` | `analyze.js`, `chat.js`, `implement.js` |
-| `listIssueComments(n)` | `GET /repos/{repo}/issues/{n}/comments` (paginated) | `analyze.js`, `chat.js`, `ci-gate.js`, `implement.js`, `levels.js`, `report.js`, `review.js`, `route.js`; also `state.withFreshCosts` |
+| `getIssue(n)` | `GET /repos/{repo}/issues/{n}` | `analyze.js`, `chat.js`, `implement.js`; `lib/stops.js` (the labels, before it changes them) |
+| `listIssueComments(n)` | `GET /repos/{repo}/issues/{n}/comments` (paginated) | `analyze.js`, `chat.js`, `ci-gate.js`, `implement.js`, `levels.js`, `report.js`, `review.js`, `route.js`; also `state.withFreshCosts` and `results.publishResult` |
 | `createIssueComment(n, body)` | `POST /repos/{repo}/issues/{n}/comments` | `analyze.js`, `chat.js`, `ci-gate.js`, `implement.js`, `levels.js`, `report.js`, `review.js`, `route.js` (the decline) |
-| `updateIssueComment(id, body)` | `PATCH /repos/{repo}/issues/comments/{id}` | `analyze.js`, `chat.js`, `ci-gate.js`, `implement.js`, `review.js` |
+| `updateIssueComment(id, body)` | `PATCH /repos/{repo}/issues/comments/{id}` | `analyze.js`, `chat.js`, `ci-gate.js`, `implement.js`, `review.js`; `results.publishResult` |
 | `addLabels(n, labels)` | `POST /repos/{repo}/issues/{n}/labels` | `analyze.js`, `ci-gate.js`, `implement.js`, `levels.js`, `review.js` |
 | `removeLabel(n, label)` | `DELETE /repos/{repo}/issues/{n}/labels/{label}`; a 404 is not an error | `analyze.js`, `chat.js`, `ci-gate.js`, `implement.js`, `levels.js` |
 | `createReview(n, ...)` | `POST /repos/{repo}/pulls/{n}/reviews`, `event: 'COMMENT'` always, comments with `side: 'RIGHT'` | `review.js` |
@@ -2159,6 +2248,23 @@ Runs one opencode agent headless and keeps its JSON event stream.
 - **Used by:** `chat.js` and `implement.js` (`AGENT_COMMENT_ID`).
 - **Tests:** `reactions.test.js`.
 
+### `tools/agent/lib/results.js`
+
+The result comment of each command family. See [Result comments](#result-comments).
+
+- **Exports:** `PLACEHOLDER`, `resultMarker(family)`, `legacyResults(stateComment, st)`, `publishResult`,
+  `previewResult`.
+- **Used by:** `analyze.js`, `implement.js`, `ci-gate.js`, `ci-check.js`, `chat.js` (`stop`), and `review.js`.
+- **Tests:** `results.test.js` covers the legacy inference, the newest-comment rule, a deleted comment, the placeholder
+  takeover, the first write on an empty issue, the summing of several runs, and the cost merge.
+
+### `tools/agent/lib/signature.js`
+
+The signature line of a comment. See [Signature](#signature).
+
+- **Exports:** `MAIN_ROLE`, `modelName`, `tokens`, `usd`, `signatureLine`, `recordsOfRuns`, `sign`.
+- **Tests:** `signature.test.js`.
+
 ### `tools/agent/lib/state.js`
 
 The hidden state block in one comment per issue or pull request. See "State comment" below.
@@ -2179,6 +2285,16 @@ The hidden state block in one comment per issue or pull request. See "State comm
   `withFreshCosts` re-reads the comment right before a write.
 - `actorOf(state)` returns `implementing.actor`, else the actor of the last attempt, else `null`. The CI gate uses it.
 - **Tests:** `state.test.js` covers round trip, dash escaping, damaged blocks, author check, empty shapes, cost merging.
+
+### `tools/agent/lib/stops.js`
+
+The stop labels and the stop record. See [Stop labels and the stop record](#stop-labels-and-the-stop-record).
+
+- **Exports:** `REASONS` (the 14 reasons), `PREFIX`, `labelOf`, `isStopLabel`, `stopLabels`, `setStop`, `clearStops`,
+  `recordStop`, `recordResume`, `renderStop`.
+- `labelOf` throws on an unknown reason. `setStop(gh, numbers, reason)` and `clearStops(gh, numbers, { keep })` read the
+  labels with `gh.getIssue`, skip falsy numbers, go on after an error, and return the first error (logged) or `null`.
+- **Tests:** `stops.test.js`.
 
 ### `tools/agent/lib/text.js`
 
@@ -2317,8 +2433,13 @@ Changes the working tree for a Bug or Task issue.
   checks through Nx.
 - **Output:** the `implementation` contract: `status` (`done`, `blocked`, `unrelated`), `summary`, `commitType`,
   `scope`,
-  `title` (at most 72 characters), `verification`, `notes`, `blockedReason`. `implement.js` adds rules: a `bug-fix` must
-  use `fix`, `blocked` and `unrelated` need a non-empty `blockedReason`, and `unrelated` is for a CI fix only.
+  `title` (at most 72 characters), `verification`, `notes`, `blockedReason`, `stopReason`. `implement.js` adds rules: a
+  `bug-fix` must use `fix`, `blocked` and `unrelated` need a non-empty `blockedReason`, `blocked` needs a `stopReason`
+  (and no other status has one), and `unrelated` is for a CI fix only.
+- **`stopReason`:** the section "When you are blocked" of the prompt lists the reasons and tells the role to pick the
+  first one that fits: `risk-found`, `decision-required`, `context-missing`, `access-missing`, `verification-blocked`,
+  `environment-blocked`, `external-dependency`, `conflict-unresolved`, `scope-review-required`, `invalid`, `stuck`,
+  `disagreement`, `budget-exhausted`. `approval-required` is not the role's: the CI gate sets it.
 - **`unrelated`:** on a CI fix, when the evidence shows that the failure is not caused by the change (a flaky or
   infrastructure failure, a test the change does not touch), the role changes no code and puts the evidence in
   `blockedReason`: which checks failed and why the change cannot cause them. `blocked` stays for "I cannot continue".
@@ -2433,7 +2554,9 @@ copies from the workflow's own ref, so a pull request cannot change the skills o
 The state is one comment per issue or pull request, written by `github-actions[bot]` (the `GITHUB_TOKEN` of the job).
 The body is `<!-- ai-autonomous-state -->`, Markdown for people, and the JSON block described under `lib/state.js`.
 `findStateComment` takes the first bot comment that starts with the marker. Scripts that replace the comment read it
-again first and merge cost records (`withFreshCosts`), so `chat` and `publish` do not drop each other's records.
+again first and merge cost records (`withFreshCosts`, or `publishResult`, which does the same), so `chat` and `publish`
+do not drop each other's records. The state comment holds the human text of one command family at most; the others
+have their own result comments (see [Result comments](#result-comments)).
 
 **Shapes.**
 
@@ -2444,6 +2567,88 @@ again first and merge cost records (`withFreshCosts`), so `chat` and `publish` d
 
 **Phase values of an issue.** `null` (no work yet), `needs-info` and `analyzed` (after an analysis), `implementing`,
 `waiting-ci`, `completed`, `needs-human`, `stopped`.
+
+### Stop labels and the stop record
+
+`agent:needs-human` no longer exists. When the agent stops and waits for a person, it puts one label
+`needs-human:<reason>` on the issue, on the pull request, or on both (the places the old hand-off label went). An
+issue or a pull request carries one stop label at a time: `stops.setStop` adds the new one and removes the others. The
+reasons and their colors are in the label table of `labels.sh`. `lib/stops.js` owns them.
+
+| Reason | Set by |
+|---|---|
+| `context-missing` | `analyze.js` (verdict `needs-info`) |
+| Any reason except `approval-required` | the implementer, in a `blocked` answer (`stopReason`); an unknown value becomes `stuck` |
+| `budget-exhausted` | `implement.js publish`: the result `draft`; `ci-gate.js`: the attempts are spent (`budget`) |
+| `environment-blocked` | `implement.js publish`: the result `error`; `ci-gate.js`: `rerun-rejected` or `cancelled` |
+| `stuck` | `ci-gate.js`: the same failure again (`same-failure`); `implement.js work`: no changes after `done` |
+| `scope-review-required` | `implement.js`: a diff limit or a protected path |
+| `conflict-unresolved` | `implement.js work`: conflict markers left by an `update` attempt |
+| `verification-blocked` | `implement.js publish`: an `unrelated` CI fix with no failed check to rerun |
+| `approval-required` | `ci-gate.js`, on the pull request only, when CI is green; not a stop of the agent, so not recorded in `stops` |
+
+Clearing: a new attempt (`implement.js preflight` of a person's command), `/agent rerun`, an accepted rerun of
+`/agent ci_check`, `/agent stop`, a `pr-opened` or `unrelated` result, a green CI gate (before it sets
+`approval-required`), and the merge of the pull request (`levels.js`) call `stops.clearStops`. `analyze.js` removes
+only `needs-human:context-missing`, when the verdict is no longer `needs-info`.
+
+`stops.recordStop` appends `{ reason, at, run, on }` to `stops` and closes an open entry first (`resumedAt`).
+`stops.recordResume` closes the open entry with `resumedAt` and `resumedRun`. A hand-off comment carries the stop
+block of `stops.renderStop`: the line ``**Reason:** `needs-human:<reason>` ``, then the paragraphs **Blocker.**,
+**Work completed.**, **Required action.**, and **Resume condition.** (a field that is empty is left out).
+
+### Result comments
+
+Each command family has its own result comment, so a later command does not overwrite the result of an earlier one.
+The families are `analysis` (`/agent analyze`, the sweep, and the other analysis triggers), `implementation`
+(`/agent implement`, `fix`, `retry`, `update`, `rerun`, the CI gate, the CI-fix attempts, `/agent stop`), and `review`
+(`/agent review` on a pull request). Chat answers and `/agent ci_check` replies are not result comments: each is a new
+comment, signed with its own cost.
+
+`state.results` lists them as `{ family, id, runs }`. `id` is the comment id, or the string `'state'` when the state
+comment itself holds the text (then the human part of the state comment belongs to that family). `runs` are the
+workflow run URLs whose cost records the comment shows. A result comment that is not the state comment starts with
+`<!-- ai-autonomous-result family=<family> -->`, never with the state marker, so `findStateComment` never takes it.
+
+`results.publishResult(gh, number, { family, human, st, run, newCommand, emptyState })` writes `human` as the result of
+`family` and writes the state:
+
+1. It lists the comments, finds the state comment, and merges its cost records into `st`.
+2. It reads `results` from the state comment. A state from before `results` existed has none: the owner of the state
+   comment comes from the heading of its human part (`### AI analysis` is `analysis`; `### AI implementation` or
+   `### AI update` is `implementation`; `### AI review` is `review`; any other heading, such as the placeholder
+   `### AI Autonomous agent` that chat and `ci-check` write, has no owner), and its runs are the distinct runs of the
+   cost records that are neither `chat` nor `ci-check`.
+3. The entry of the family is dropped when its comment is gone, or when `newCommand` is true and the entry is not the
+   newest result comment (compared by position in the comment list, oldest first; the state comment counts when an
+   entry uses `'state'`).
+4. With no entry and no result of another family, the state comment takes the text (`id: 'state'`). Otherwise a new
+   result comment is created.
+5. `run` is added to the runs of the entry, and the text is signed with the cost records of those runs (see
+   [Signature](#signature)).
+6. The comment is updated or created, then the state comment is updated with the new `results` (`state.replaceState`),
+   or created with the placeholder text `### AI Autonomous agent` when it is still missing.
+
+A new command (`newCommand: true`: `analyze.js`, the preflight of a person's command in `implement.js`, `review.js`)
+edits the comment of its family only when it is the newest result comment; otherwise it creates a new one. A write that
+continues a running command (`publish`, the CI gate, a CI-fix attempt, `rerun`, `/agent stop`) always edits the comment
+its command uses. `results.previewResult` gives a dry run the text signed with the records of the current run.
+
+### Signature
+
+The last line of a comment that reports the result of an AI run, built by `lib/signature.js`:
+
+```text
+<sub>🤖 gpt-6.1-sol high in=12k cached=40k out=3k usd=0.083</sub>
+```
+
+The model name has no provider prefix. `in` is the sum of `input`, `cached` the sum of `cached`, `out` the sum of
+`output` and `reasoning`, and `usd` the sum of `usd` over the cost records of the runs the comment shows. A result
+comment shows several runs, so it signs their sum, and each run is counted in one comment only. Model and effort come
+from the newest record whose role is the main role of the family (`analyst`, `implementer`, `pr-reviewer`; `assistant`
+for chat, `ci-triager` for `ci-check`), else from the newest record. A field with no value on any record is left out.
+Tokens print as `950`, `12k`, `12.5k`, `970k`; USD has two significant digits. A comment without cost records has no
+signature. The cumulative "AI cost of this issue so far" text is gone; `/agent cost` keeps the full table.
 
 ### Issue state fields
 
@@ -2469,6 +2674,8 @@ again first and merge cost records (`withFreshCosts`), so `chat` and `publish` d
 | `lastCiReport` | string | `ci-gate.js` (red) | the CI report of the last red run; the next CI-fix attempt gets it as input; removed on green |
 | `e2eRerun` | object | `ci-gate.js` | `{ sha, count }`: the free reruns used for the head commit `sha` (limit 1 per commit), for an E2E-only or a cancelled-only failure; the two share the budget. An old number field `e2eReruns` is ignored and deleted on write |
 | `reruns` | array | `ci-gate.js rerun`, `ci-check.js` | one entry per `/agent rerun`, and per rerun that `/agent ci_check` made on a `flaky` or `infra` verdict: `{ at, actor, sha, runs, run }` (the commit, the workflow run ids that were rerun, and the URL of the workflow run of the command) |
+| `stops` | array | `analyze.js`, `implement.js publish`, `ci-gate.js`, `ci-check.js`, `chat.js` (`stop`); `lib/stops.js` | the history of the stops of the agent: `{ reason, at, run, on: [numbers], resumedAt?, resumedRun? }`; see [Stop labels](#stop-labels-and-the-stop-record) |
+| `results` | array | `lib/results.js` (`publishResult`) | the result comments of the command families: `{ family, id, runs: [run URLs] }`; see [Result comments](#result-comments) |
 | `stoppedBy` | string | `chat.js` (`stop`) | login that sent `/agent stop` |
 | `stoppedAt` | string | `chat.js` (`stop`) | ISO time of the stop |
 
@@ -2498,6 +2705,7 @@ Built by `attemptRecord` in `implement.js`:
 | Field | Type | Writer | Meaning |
 |---|---|---|---|
 | `schema`, `kind`, `number`, `phase`, `costs` | as above | `state.js`, `review.js` | `kind` is `pull`; `phase` stays `null` |
+| `results` | array | `review.js` through `lib/results.js` | the result comment of the `review` family, as for an issue |
 | `reviews` | array | `review.js` | one `{ sha, run, at, trigger }` per finished review (`trigger` is `auto` for a `pull_request` event and `command` for `/agent review`; an entry from before it existed has none and counts as automatic); a review skipped for its size adds `{ sha, run, at, trigger, skipped: 'size', lines, files }`; a failed review adds `{ sha, run, at, trigger, failed: true }` |
 | `ciChecks` | array | `ci-check.js` | one `{ at, actor, sha, verdict, confidence, runs }` per finished `/agent ci_check` on a red CI; `verdict` and `confidence` are what the model said, and `runs` are the workflow runs that were rerun (empty when none). A failed call adds only its cost record |
 
@@ -2566,9 +2774,12 @@ key is allowed (`additionalProperties: false`), except the `plan` object of `ana
 | `scope` | string (module name, or empty for several modules) |
 | `title` | string, 1 to 72 characters |
 | `verification`, `notes`, `blockedReason` | string; `blockedReason` explains `blocked` and `unrelated`, and is empty otherwise |
+| `stopReason` | string; one of the 13 stop reasons without `approval-required` (`IMPLEMENTER_STOP_REASONS` of `lib/contract.js`), or an empty string |
 
 `checkImplementation(output, playbook, kind)`: the `bug-fix` playbook requires `commitType` `fix`; `status: blocked` and
-`status: unrelated` require a non-blank `blockedReason`; `status: unrelated` is allowed only when `kind` is `ci-fix`.
+`status: unrelated` require a non-blank `blockedReason`; `status: blocked` requires a `stopReason` and any other status
+requires it empty (a violation is a contract error, like the others); `status: unrelated` is allowed only when `kind` is
+`ci-fix`.
 
 ### `selfReview`
 
@@ -2629,8 +2840,8 @@ The tests use the Node.js test runner and no other dependency. Run them from the
 node --test "tools/agent/**/*.test.js"
 ```
 
-`pnpm test:tools` runs them with the tests of `tools/release` and `tools/ci`. There are 36 test files: 20 next to the
-scripts and 16 next to the library modules.
+`pnpm test:tools` runs them with the tests of `tools/release` and `tools/ci`. There are 41 test files: 21 next to the
+scripts and 20 next to the library modules.
 
 - `<script>.test.js` and `lib/<module>.test.js` test the pure functions.
 - `<script>.main.test.js` run a whole `main` over fake GitHub, Git, and opencode clients (`analyze`, `chat`, `ci-check`,

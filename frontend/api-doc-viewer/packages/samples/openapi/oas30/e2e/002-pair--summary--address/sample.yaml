@@ -1,0 +1,11 @@
+openapi: 3.0.3
+info:
+  title: Orders
+  version: 1.0.0
+paths:
+  /api/v2/stores/main-store/orders/pending/export-requests:
+    post:
+      summary: Update an order
+      responses:
+        "200":
+          description: ""

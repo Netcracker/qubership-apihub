@@ -1,0 +1,8 @@
+---
+description: Build a manual QA test plan for an api-doc-viewer feature branch.
+applyTo: "frontend/api-doc-viewer/**/*"
+---
+
+When the user asks for a manual QA or end-to-end test plan of a feature, a fix, or a branch that changes the
+api-doc-viewer viewers (or of their use in the portal), or runs `/api-doc-viewer-feature-test-plan`, apply the
+`api-doc-viewer-feature-test-plan` skill.

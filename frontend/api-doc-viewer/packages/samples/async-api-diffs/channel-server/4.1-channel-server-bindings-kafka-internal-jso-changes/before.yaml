@@ -16,7 +16,7 @@ operations:
     channel:
       $ref: '#/channels/testChannel'
     messages:
-      - $ref: '#/components/messages/TestMessage'
+      - $ref: '#/channels/testChannel/messages/TestMessage'
 components:
   messages:
     TestMessage:
@@ -34,8 +34,8 @@ servers:
     protocol: kafka
     bindings:
       kafka:
-        bindingVersion: 1.0.0
-        arbitraryJso:
+        bindingVersion: 0.4.0
+        x-arbitraryJso:
           unchanged: keep
           removed: bye
           changed: 111

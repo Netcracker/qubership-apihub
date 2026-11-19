@@ -1,0 +1,14 @@
+owner: team-a
+schema:
+  type: object
+  properties:
+    p1:
+      type: string
+    p2:
+      type: integer
+      description: Before
+    p3:
+      type: boolean
+    p4:
+      type: string
+version: null

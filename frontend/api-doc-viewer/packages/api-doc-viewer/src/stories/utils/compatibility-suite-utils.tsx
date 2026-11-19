@@ -1,27 +1,35 @@
 /* eslint-disable react-refresh/only-export-components */
+import { FONT_FAMILY_INTER_NAME } from '@apihub/constants/fonts'
 import { DiffMetaKeys } from '@netcracker/qubership-apihub-api-data-model'
 import { Diff, DIFF_META_KEY, DiffReplace, DIFFS_AGGREGATED_META_KEY } from '@netcracker/qubership-apihub-api-diff'
 import { stringifyCyclicJso } from '@netcracker/qubership-apihub-api-unifier'
-import { getCompatibilitySuite, TestSpecType } from '@netcracker/qubership-apihub-compatibility-suites'
+import { getCompatibilitySuite, SpecificationVersionPair, TestSpecType } from '@netcracker/qubership-apihub-compatibility-suites'
 import type { Realm } from '@netcracker/qubership-apihub-ddlapi'
 import type { TableKey } from '@netcracker/qubership-apihub-next-data-model/shared/ddlapi/types/table-key'
 import FontFaceObserver from 'fontfaceobserver'
 import { buildSchema, findBreakingChanges, findDangerousChanges } from 'graphql'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { DdlTableDiffsViewer } from '../../components/DdlTableViewer/DdlTableDiffsViewer'
 import { GraphQLOperationDiffViewer } from '../../components/GraphQLOperationViewer/GraphQLOperationDiffViewer'
+import { OpenApiOperationDiffsViewer } from '../../components/OpenApiOperationViewer/OpenApiOperationDiffsViewer'
 import { buildGraphApiSchema } from '../../mocks/utils/graph-api-transformers'
+import { DETAILED_DISPLAY_MODE, DisplayMode } from '../../types/DisplayMode'
 import { SIDE_BY_SIDE_DIFFS_LAYOUT_MODE } from '../../types/LayoutMode'
 import { ArrayUtils } from '../../utils/common/arrays'
 import { ddlStoryNavigationLinkBuilder } from '../ddlapi-suite/ddl-story-navigation'
+import { AUTO_SWITCH_DEFAULT_ARGS, type AutoSwitchArgs } from '../shared/auto-switch'
 import { TEST_DIFF_META_KEYS } from '../shared/test-diff-meta-keys'
 import {
   prepareDdlCompatibilitySuiteMergedSource,
   resolveDdlCompatibilitySuiteTableKey,
 } from './compatibility-suite-utils-ddl'
+import { mergeOpenApiDocuments } from '../preprocess'
+import { resolveOpenApiCompatibilitySuiteOperationKeys } from './compatibility-suite-utils-openapi'
 import { getCompareResult } from './merged-document'
+import { parseYamlSource } from './parse-yaml-source'
 
-const FONT_FAMILIES: string[] = ['Inter']
+// The renamed @font-face family (CSS isolation): waiting for plain 'Inter' never resolves.
+const FONT_FAMILIES: string[] = [FONT_FAMILY_INTER_NAME]
 
 function useFontLoaded(): boolean {
   const [fontLoaded, setFontLoaded] = useState(false)
@@ -127,6 +135,55 @@ export function getDdlStoryArgs(
 ): DdlCompatibilitySuiteStoryArgs {
   const [before, after] = getCompatibilitySuite(suiteType, suiteId, testId)
   return { before, after }
+}
+
+// OpenAPI
+
+export type OpenApiCompatibilitySuiteStoryArgs = AutoSwitchArgs & {
+  before: string
+  after: string
+  displayMode: DisplayMode
+  /** `false`: every row shows, as in the OpenAPI Operation Diffs Suite. */
+  hideUnchangedNodes: boolean
+}
+
+/**
+ * One operation of the merged case (the added / removed one when the case has two), side by side.
+ * Design: docs/design/openapi/features/compatibility-suite.md
+ */
+export function OpenApiStoryComponent({ before, after, displayMode, hideUnchangedNodes }: OpenApiCompatibilitySuiteStoryArgs) {
+  const { mergedSource, operationKeys } = useMemo(() => {
+    const merged = mergeOpenApiDocuments(parseYamlSource(before), parseYamlSource(after))
+    return { mergedSource: merged, operationKeys: resolveOpenApiCompatibilitySuiteOperationKeys(merged) }
+  }, [before, after])
+
+  const fontLoaded = useFontLoaded()
+
+  if (!fontLoaded) {
+    return <></>
+  }
+
+  return (
+    <OpenApiOperationDiffsViewer
+      mergedSource={mergedSource}
+      operationKeys={operationKeys}
+      diffMetaKeys={DIFF_META_KEYS}
+      displayMode={displayMode}
+      hideUnchangedNodes={hideUnchangedNodes}
+      devMode
+    />
+  )
+}
+
+/** `specificationVersionPair`: the OAS versions the case is patched to (its version-pair group). */
+export function getOpenApiStoryArgs(
+  suiteType: TestSpecType,
+  suiteId: string,
+  testId: string,
+  specificationVersionPair?: SpecificationVersionPair,
+): OpenApiCompatibilitySuiteStoryArgs {
+  const [before, after] = getCompatibilitySuite(suiteType, suiteId, testId, specificationVersionPair)
+  return { before, after, displayMode: DETAILED_DISPLAY_MODE, hideUnchangedNodes: false, ...AUTO_SWITCH_DEFAULT_ARGS }
 }
 
 // Debug helpers

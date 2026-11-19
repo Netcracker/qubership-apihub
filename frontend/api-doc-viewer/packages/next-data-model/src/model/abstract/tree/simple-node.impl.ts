@@ -46,9 +46,11 @@ export class SimpleTreeNode<
   public createCycledClone(
     id: NodeId,
     key: NodeKey,
+    kind: K,
     parent: ITreeNode<V, K, M> | null,
+    meta?: M,
   ): ITreeNode<V, K, M> {
-    const clonedNode = new SimpleTreeNode<V, K, M>(id, key, this.kind, true, {
+    const clonedNode = new SimpleTreeNode<V, K, M>(id, key, kind, true, {
       type: this.type,
       parent: parent,
       container: null,
@@ -56,7 +58,7 @@ export class SimpleTreeNode<
       value: this._value !== null
         ? (typeof this._value === "object" ? { ...(this._value as object) } as V : this._value)
         : null,
-      meta: { ...this._meta },
+      meta: meta ?? { ...this._meta },
     });
     // Share the same children/nested arrays so later additions to the source are visible on the clone.
     clonedNode._childrenNodes = this._childrenNodes;
@@ -118,6 +120,10 @@ export class SimpleTreeNode<
 
   public addNestedNode(node: ITreeNode<V, K, M>): void {
     this._nestedNodes.push(node);
+  }
+
+  public sortNestedNodes(compare: (a: ITreeNode<V, K, M>, b: ITreeNode<V, K, M>) => number): void {
+    this._nestedNodes.sort(compare);
   }
 
 }

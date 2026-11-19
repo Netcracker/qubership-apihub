@@ -1,0 +1,20 @@
+openapi: 3.0.3
+info:
+  title: Orders
+  version: 1.0.0
+paths:
+  /orders:
+    post:
+      responses:
+        "200":
+          description: ""
+          headers:
+            ETag:
+              schema:
+                type: string
+                description: Schema text v2.
+              description: Entry text v1.
+            X-Request-Id:
+              schema:
+                type: string
+                format: uuid

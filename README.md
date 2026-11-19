@@ -8,6 +8,8 @@ related specifications into one catalog, with versioning, comparison, linting, a
 clusters.
 
 This repository holds the source of every component, its deployment assets, and its documentation.
+The latest product release is [2.17.0](https://github.com/Netcracker/qubership-apihub/releases/tag/2.17.0)
+(November 13, 2026).
 
 | | |
 |--|--|

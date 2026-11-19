@@ -1,3 +1,4 @@
+import { cn } from "@apihub/utils/common/cn"
 import { NestingIndicatorTitleRow } from "@apihub/components/shared-components/NestingIndicatorTitleRow/NestingIndicatorTitleRow"
 import { NestingIndicatorTitleRowUsage } from "@apihub/components/shared-components/NestingIndicatorTitleRow/types"
 import { useAsyncLevelContext } from "@apihub/contexts/AsyncLevelContext/AsyncLevelContext"
@@ -68,7 +69,7 @@ export const JsonSchemaExtensionsSection: FC<JsonSchemaExtensionsSectionProps> =
   return (
     <LevelContext.Provider value={nestedLevel}>
       <AsyncLevelContextProvider beforeLevel={nextBeforeLevel} afterLevel={nextAfterLevel}>
-        <div className="flex flex-col">
+        <div className={cn("flex flex-col")}>
           <NestingIndicatorTitleRow
             title="Extensions"
             usage={NestingIndicatorTitleRowUsage.JsonSchema}

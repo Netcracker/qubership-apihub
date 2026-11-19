@@ -1,4 +1,5 @@
-import { X_AXIS_PADDING_ROWS_ASYNC_API, X_AXIS_PADDING_ROWS_DDL_API_PROPERTIES } from "@apihub/components/shared-styles/tailwind-classnames"
+import { cn } from "@apihub/utils/common/cn"
+import { X_AXIS_PADDING_ROWS, X_AXIS_PADDING_ROWS_DDL_API_PROPERTIES } from "@apihub/components/shared-styles/tailwind-classnames"
 import { useLevelContext } from "@apihub/contexts/LevelContext"
 import { CHANGED_LAYOUT_SIDE, ORIGIN_LAYOUT_SIDE } from "@apihub/types/internal/LayoutSide"
 import { DiffsClassesBuilder } from "@netcracker/qubership-apihub-next-data-model/building-service/abstract/tree-with-diffs/node-diffs-data/utilities"
@@ -19,13 +20,13 @@ const TEXT_ROW_ADDITIONAL_CLASSES_BY_USAGE: Partial<Record<TextRowUsage, string[
 }
 
 function getTextRowClassesByUsage(usage: TextRowUsage): string {
-  const xAxisPaddingClass = TEXT_ROW_X_AXIS_PADDING_BY_USAGE[usage] ?? X_AXIS_PADDING_ROWS_ASYNC_API
+  const xAxisPaddingClass = TEXT_ROW_X_AXIS_PADDING_BY_USAGE[usage] ?? X_AXIS_PADDING_ROWS
   const additionalClasses = TEXT_ROW_ADDITIONAL_CLASSES_BY_USAGE[usage] ?? []
   return [xAxisPaddingClass, ...additionalClasses].join(' ')
 }
 
 export const TextRowContent: FC<TextRowContentProps> = memo<TextRowContentProps>((props) => {
-  const { value, variant, layoutSide, usage = TextRowUsage.Default, hideLevelIndicatorWhenSideEmpty = false } = props
+  const { value, variant, layoutSide, usage = TextRowUsage.Default, hideLevelIndicatorWhenSideEmpty = false, trailing } = props
 
   // value/font specific
   const { label, labelFontWeight, textFontWeight, labelColor, textColor } = props
@@ -83,21 +84,23 @@ export const TextRowContent: FC<TextRowContentProps> = memo<TextRowContentProps>
   return (
     <div
       data-precededby={precededBy}
-      className={`text-row-content flex w-full h-full ${isDdlApiPropertyRow ? 'items-stretch' : ''} ${usageDrivenClasses} gap-2 ${diffsStyleClasses.join(' ')}`}
+      data-frame-position={props.framePosition?.(layoutSide)}
+      className={cn(`text-row-content flex w-full h-full ${isDdlApiPropertyRow ? 'items-stretch' : trailing ? 'items-center' : ''} ${usageDrivenClasses} gap-2 ${diffsStyleClasses.join(' ')}`)}
     >
       {showsLevelIndent && (
-        <div data-precededby={precededBy} className="level-indicator-column flex items-stretch self-stretch">
+        <div data-precededby={precededBy} className={cn("level-indicator-column flex items-stretch self-stretch")}>
           <LevelIndicator level={level} />
-          <div className="w-4" aria-hidden="true" />
+          <div className={cn("w-4")} aria-hidden="true" />
         </div>
       )}
       {isDdlApiPropertyRow ? (
-        <div className="ddlapi-property-row-body flex min-w-0 flex-1 items-center gap-2">
+        <div className={cn("ddlapi-property-row-body flex min-w-0 flex-1 items-center gap-2")}>
           {textValue}
         </div>
       ) : (
         textValue
       )}
+      {trailing && <div className={cn("flex items-center")}>{trailing(layoutSide)}</div>}
     </div>
   )
 })

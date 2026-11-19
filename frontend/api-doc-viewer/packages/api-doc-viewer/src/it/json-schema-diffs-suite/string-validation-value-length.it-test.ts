@@ -19,112 +19,112 @@ describe("JSON Schema Diffs Suite/String Validation/String Validation Value Leng
 
   it("001-min-length-added", async () => {
     story = await storyPage(page, `json-schema-diffs-suite-string-validation-string-validation-value-length--case-001-min-length-added`);
-    await waitForJsonSchemaDiffsViewer(page, { switchCombinerVariant: true });
+    await waitForJsonSchemaDiffsViewer(page);
     component = await story.viewComponent();
     expect(await component.captureScreenshot()).toMatchImageSnapshot();
   });
 
   it("002-min-length-removed", async () => {
     story = await storyPage(page, `json-schema-diffs-suite-string-validation-string-validation-value-length--case-002-min-length-removed`);
-    await waitForJsonSchemaDiffsViewer(page, { switchCombinerVariant: true });
+    await waitForJsonSchemaDiffsViewer(page);
     component = await story.viewComponent();
     expect(await component.captureScreenshot()).toMatchImageSnapshot();
   });
 
   it("003-min-length-replaced", async () => {
     story = await storyPage(page, `json-schema-diffs-suite-string-validation-string-validation-value-length--case-003-min-length-replaced`);
-    await waitForJsonSchemaDiffsViewer(page, { switchCombinerVariant: true });
+    await waitForJsonSchemaDiffsViewer(page);
     component = await story.viewComponent();
     expect(await component.captureScreenshot()).toMatchImageSnapshot();
   });
 
   it("004-max-length-added", async () => {
     story = await storyPage(page, `json-schema-diffs-suite-string-validation-string-validation-value-length--case-004-max-length-added`);
-    await waitForJsonSchemaDiffsViewer(page, { switchCombinerVariant: true });
+    await waitForJsonSchemaDiffsViewer(page);
     component = await story.viewComponent();
     expect(await component.captureScreenshot()).toMatchImageSnapshot();
   });
 
   it("005-max-length-removed", async () => {
     story = await storyPage(page, `json-schema-diffs-suite-string-validation-string-validation-value-length--case-005-max-length-removed`);
-    await waitForJsonSchemaDiffsViewer(page, { switchCombinerVariant: true });
+    await waitForJsonSchemaDiffsViewer(page);
     component = await story.viewComponent();
     expect(await component.captureScreenshot()).toMatchImageSnapshot();
   });
 
   it("006-max-length-replaced", async () => {
     story = await storyPage(page, `json-schema-diffs-suite-string-validation-string-validation-value-length--case-006-max-length-replaced`);
-    await waitForJsonSchemaDiffsViewer(page, { switchCombinerVariant: true });
+    await waitForJsonSchemaDiffsViewer(page);
     component = await story.viewComponent();
     expect(await component.captureScreenshot()).toMatchImageSnapshot();
   });
 
   it("007-min-max-length-added", async () => {
     story = await storyPage(page, `json-schema-diffs-suite-string-validation-string-validation-value-length--case-007-min-max-length-added`);
-    await waitForJsonSchemaDiffsViewer(page, { switchCombinerVariant: true });
+    await waitForJsonSchemaDiffsViewer(page);
     component = await story.viewComponent();
     expect(await component.captureScreenshot()).toMatchImageSnapshot();
   });
 
   it("008-min-max-length-removed", async () => {
     story = await storyPage(page, `json-schema-diffs-suite-string-validation-string-validation-value-length--case-008-min-max-length-removed`);
-    await waitForJsonSchemaDiffsViewer(page, { switchCombinerVariant: true });
+    await waitForJsonSchemaDiffsViewer(page);
     component = await story.viewComponent();
     expect(await component.captureScreenshot()).toMatchImageSnapshot();
   });
 
   it("009-min-length-added-max-length-removed", async () => {
     story = await storyPage(page, `json-schema-diffs-suite-string-validation-string-validation-value-length--case-009-min-length-added-max-length-removed`);
-    await waitForJsonSchemaDiffsViewer(page, { switchCombinerVariant: true });
+    await waitForJsonSchemaDiffsViewer(page);
     component = await story.viewComponent();
     expect(await component.captureScreenshot()).toMatchImageSnapshot();
   });
 
   it("010-min-length-removed-max-length-added", async () => {
     story = await storyPage(page, `json-schema-diffs-suite-string-validation-string-validation-value-length--case-010-min-length-removed-max-length-added`);
-    await waitForJsonSchemaDiffsViewer(page, { switchCombinerVariant: true });
+    await waitForJsonSchemaDiffsViewer(page);
     component = await story.viewComponent();
     expect(await component.captureScreenshot()).toMatchImageSnapshot();
   });
 
   it("011-both-lengths-replace-min", async () => {
     story = await storyPage(page, `json-schema-diffs-suite-string-validation-string-validation-value-length--case-011-both-lengths-replace-min`);
-    await waitForJsonSchemaDiffsViewer(page, { switchCombinerVariant: true });
+    await waitForJsonSchemaDiffsViewer(page);
     component = await story.viewComponent();
     expect(await component.captureScreenshot()).toMatchImageSnapshot();
   });
 
   it("012-both-lengths-replace-max", async () => {
     story = await storyPage(page, `json-schema-diffs-suite-string-validation-string-validation-value-length--case-012-both-lengths-replace-max`);
-    await waitForJsonSchemaDiffsViewer(page, { switchCombinerVariant: true });
+    await waitForJsonSchemaDiffsViewer(page);
     component = await story.viewComponent();
     expect(await component.captureScreenshot()).toMatchImageSnapshot();
   });
 
   it("013-both-lengths-replaced", async () => {
     story = await storyPage(page, `json-schema-diffs-suite-string-validation-string-validation-value-length--case-013-both-lengths-replaced`);
-    await waitForJsonSchemaDiffsViewer(page, { switchCombinerVariant: true });
+    await waitForJsonSchemaDiffsViewer(page);
     component = await story.viewComponent();
     expect(await component.captureScreenshot()).toMatchImageSnapshot();
   });
 
   it("014-unchanged-min-length", async () => {
     story = await storyPage(page, `json-schema-diffs-suite-string-validation-string-validation-value-length--case-014-unchanged-min-length`);
-    await waitForJsonSchemaDiffsViewer(page, { switchCombinerVariant: true });
+    await waitForJsonSchemaDiffsViewer(page);
     component = await story.viewComponent();
     expect(await component.captureScreenshot()).toMatchImageSnapshot();
   });
 
   it("015-unchanged-max-length", async () => {
     story = await storyPage(page, `json-schema-diffs-suite-string-validation-string-validation-value-length--case-015-unchanged-max-length`);
-    await waitForJsonSchemaDiffsViewer(page, { switchCombinerVariant: true });
+    await waitForJsonSchemaDiffsViewer(page);
     component = await story.viewComponent();
     expect(await component.captureScreenshot()).toMatchImageSnapshot();
   });
 
   it("016-unchanged-min-max-length", async () => {
     story = await storyPage(page, `json-schema-diffs-suite-string-validation-string-validation-value-length--case-016-unchanged-min-max-length`);
-    await waitForJsonSchemaDiffsViewer(page, { switchCombinerVariant: true });
+    await waitForJsonSchemaDiffsViewer(page);
     component = await story.viewComponent();
     expect(await component.captureScreenshot()).toMatchImageSnapshot();
   });

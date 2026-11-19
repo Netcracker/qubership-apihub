@@ -1,0 +1,24 @@
+openapi: 3.0.3
+info:
+  title: Orders
+  version: 1.0.0
+paths:
+  /orders:
+    post:
+      responses:
+        "101":
+          description: ""
+        "201":
+          description: ""
+        "302":
+          description: ""
+        "404":
+          description: ""
+        "500":
+          description: ""
+        4XX:
+          description: ""
+        default:
+          description: ""
+        2XX:
+          description: ""

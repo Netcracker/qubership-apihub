@@ -1,0 +1,20 @@
+openapi: 3.0.3
+info:
+  title: Orders
+  version: 1.0.0
+paths:
+  /orders:
+    post:
+      summary: Update an order
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  status:
+                    type: string

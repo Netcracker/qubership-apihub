@@ -3,6 +3,7 @@ import { NODE_LEVEL_DIFF_KEY, NodeDiffs, NodeDiffsSeverities, NodeDiffsSeverity,
 import { DdlApiTreeNodeKind } from "@apihub/next-data-model/model/ddlapi/types/node-kind";
 import { DdlApiTreeNodeValue } from "@apihub/next-data-model/model/ddlapi/tree/node-value";
 import { isDiffAdd, isDiffRemove, isDiffReplace } from "@netcracker/qubership-apihub-api-diff";
+import { DiffTypeOrder } from "@apihub/next-data-model/model/abstract/tree-with-diffs/diff-type-order";
 
 export class DdlApiNodeDiffsSeveritiesAggregatorKindAny
   extends AbstractNodeDiffsSeveritiesAggregator<DdlApiTreeNodeValue<DdlApiTreeNodeKind> | null> {
@@ -55,7 +56,7 @@ export class DdlApiNodeDiffsSeveritiesAggregatorKindAny
     const propertyDiffs = propertyKeys.map(
       (propertyKey) => (nodeDiffs as Record<string, ChangedPropertyMetaData | undefined>)[propertyKey],
     )
-    const maxPropertyDiff = AbstractNodeDiffsSeveritiesAggregator.maxChangedPropertyMetaDataByDiffType(
+    const maxPropertyDiff = DiffTypeOrder.strongestChangedPropertyMetaData(
       ...propertyDiffs,
     )
     if (!maxPropertyDiff) {

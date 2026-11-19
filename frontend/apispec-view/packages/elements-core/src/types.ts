@@ -1,12 +1,8 @@
-import { IAsyncOperation } from '@netcracker/qubership-apihub-http-spec';
 import type { IMarkdownViewerProps } from '@stoplight/markdown-viewer';
 import { IHttpOperation, IHttpService, NodeType } from '@stoplight/types';
 import { JSONSchema4, JSONSchema6, JSONSchema7 } from 'json-schema';
 
 export type JSONSchema = JSONSchema4 | JSONSchema6 | JSONSchema7;
-
-export const ASYNC_OPERATION_NODE_TYPE = 'async_operation';
-export type NodeTypeAsyncOperation = typeof ASYNC_OPERATION_NODE_TYPE;
 
 export type ParsedNode =
   | {
@@ -16,10 +12,6 @@ export type ParsedNode =
   | {
       type: NodeType.HttpOperation;
       data: IHttpOperation;
-    }
-  | {
-      type: NodeTypeAsyncOperation;
-      data: IAsyncOperation;
     }
   | {
       type: NodeType.HttpService;

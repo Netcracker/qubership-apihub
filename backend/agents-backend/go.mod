@@ -15,7 +15,7 @@ require (
 	github.com/sirupsen/logrus v1.10.2
 	github.com/spf13/viper v1.21.0
 	github.com/xuri/excelize/v2 v2.11.1-0.20261003002531-6258dcebc4e2
-	golang.org/x/sync v0.24.0
+	golang.org/x/sync v0.25.0
 	gopkg.in/resty.v1 v1.12.0
 	gopkg.in/square/go-jose.v2 v2.6.0
 )
@@ -53,10 +53,10 @@ require (
 	github.com/xuri/efp v0.0.2 // indirect
 	github.com/xuri/nfp v0.0.2-0.20250530014748-2ddeb826f9a9 // indirect
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
-	golang.org/x/crypto v0.58.0 // indirect
+	golang.org/x/crypto v0.59.0 // indirect
 	golang.org/x/net v0.62.0 // indirect
-	golang.org/x/sys v0.49.0 // indirect
-	golang.org/x/text v0.43.0 // indirect
+	golang.org/x/sys v0.50.0 // indirect
+	golang.org/x/text v0.44.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	mellium.im/sasl v0.3.1 // indirect
 )

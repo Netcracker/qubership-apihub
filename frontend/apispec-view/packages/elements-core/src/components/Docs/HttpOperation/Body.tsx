@@ -1,11 +1,9 @@
-import { JsonSchemaViewer } from '@netcracker/qubership-apihub-api-doc-viewer';
 import { useOperationSchemaOptionsMode } from '../../../index';
 import { Box, Flex, VStack } from '@stoplight/mosaic';
 import { IHttpOperationRequestBody } from '@stoplight/types';
-import { JsonSchemaViewer as OldJsonSchemaViewer } from '@netcracker/qubership-apihub-apispec-view-json-schema-viewer';
+import { JsonSchemaViewer } from '@netcracker/qubership-apihub-apispec-view-json-schema-viewer';
 import * as React from 'react';
 
-import { JSON_SCHEMA_VIEWER_CUSTOMIZATION_OPTIONS } from '../../../constants';
 import { useInlineRefResolver } from '../../../context/InlineRefResolver';
 import { isJSONSchema } from '../../../utils/guards';
 import { getOriginalObject } from '../../../utils/ref-resolving/resolvedObject';
@@ -28,7 +26,7 @@ export const isBodyEmpty = (body?: BodyProps['body']) => {
 export const Body = ({ body, onChange }: BodyProps) => {
   const [chosenContent, setChosenContent] = React.useState(0);
   const refResolver = useInlineRefResolver();
-  const { schemaViewMode, defaultSchemaDepth, oldRenderer } = useOperationSchemaOptionsMode();
+  const { schemaViewMode, defaultSchemaDepth } = useOperationSchemaOptionsMode();
 
   React.useEffect(() => {
     onChange(chosenContent);
@@ -72,24 +70,16 @@ export const Body = ({ body, onChange }: BodyProps) => {
 
       {description && <MarkdownViewer markdown={description} />}
 
-      {isJSONSchema(schema) &&
-        (oldRenderer ? (
-          <OldJsonSchemaViewer
-            resolveRef={refResolver}
-            schema={getOriginalObject(schema)}
-            viewMode="write"
-            renderRootTreeLines
-            schemaViewMode={schemaViewMode}
-            defaultExpandedDepth={defaultSchemaDepth}
-          />
-        ) : (
-          <JsonSchemaViewer
-            schema={getOriginalObject(schema!)}
-            displayMode={schemaViewMode}
-            expandedDepth={defaultSchemaDepth}
-            customizationOptions={JSON_SCHEMA_VIEWER_CUSTOMIZATION_OPTIONS}
-          />
-        ))}
+      {isJSONSchema(schema) && (
+        <JsonSchemaViewer
+          resolveRef={refResolver}
+          schema={getOriginalObject(schema)}
+          viewMode="write"
+          renderRootTreeLines
+          schemaViewMode={schemaViewMode}
+          defaultExpandedDepth={defaultSchemaDepth}
+        />
+      )}
     </VStack>
   );
 };

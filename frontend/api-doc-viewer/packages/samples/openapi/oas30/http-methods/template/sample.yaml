@@ -1,0 +1,11 @@
+# Method template: stories serve the only operation of this document as the case's HTTP method.
+openapi: 3.0.3
+info:
+  title: Orders
+  version: 1.0.0
+paths:
+  /orders:
+    get:
+      responses:
+        "200":
+          description: ""

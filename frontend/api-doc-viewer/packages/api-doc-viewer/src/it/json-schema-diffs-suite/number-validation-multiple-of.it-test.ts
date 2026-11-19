@@ -19,21 +19,21 @@ describe("JSON Schema Diffs Suite/Number Validation/Multiple Of", () => {
 
   it("001-multiple-of-added", async () => {
     story = await storyPage(page, `json-schema-diffs-suite-number-validation-multiple-of--case-001-multiple-of-added`);
-    await waitForJsonSchemaDiffsViewer(page, { switchCombinerVariant: true });
+    await waitForJsonSchemaDiffsViewer(page);
     component = await story.viewComponent();
     expect(await component.captureScreenshot()).toMatchImageSnapshot();
   });
 
   it("002-multiple-of-removed", async () => {
     story = await storyPage(page, `json-schema-diffs-suite-number-validation-multiple-of--case-002-multiple-of-removed`);
-    await waitForJsonSchemaDiffsViewer(page, { switchCombinerVariant: true });
+    await waitForJsonSchemaDiffsViewer(page);
     component = await story.viewComponent();
     expect(await component.captureScreenshot()).toMatchImageSnapshot();
   });
 
   it("003-multiple-of-replaced", async () => {
     story = await storyPage(page, `json-schema-diffs-suite-number-validation-multiple-of--case-003-multiple-of-replaced`);
-    await waitForJsonSchemaDiffsViewer(page, { switchCombinerVariant: true });
+    await waitForJsonSchemaDiffsViewer(page);
     component = await story.viewComponent();
     expect(await component.captureScreenshot()).toMatchImageSnapshot();
   });
