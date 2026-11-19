@@ -266,12 +266,25 @@ func (p *scoringTaskProcessorImpl) runAttempt(ctx context.Context, taskId string
 	if score == nil || score.ValidationProcessId != task.ValidationProcessId || !score.PartsFinished() {
 		return nil
 	}
-	completed, err := p.scoringTaskRepo.CompleteScoring(ctx, *task, recomputeOverallStatus)
+	var partErrs []string
+	status, err := p.scoringTaskRepo.CompleteScoring(ctx, *task, func(row *entity.VersionScore) {
+		row.ProcessStatus = view.ScoringProcessSuccess
+		if row.PublicationIntegrityStatus == view.ScoringProcessError ||
+			row.BackwardCompatibilityStatus == view.ScoringProcessError ||
+			row.QualityCheckStatus == view.ScoringProcessError {
+			row.ProcessStatus = view.ScoringProcessError
+		}
+		recomputeOverallStatus(row)
+		partErrs = row.Debug
+	})
 	if err != nil {
 		return err
 	}
-	if completed {
+	switch status {
+	case view.ScoringProcessSuccess:
 		log.Infof("Scoring task %s for [ %s | %s@%d ] is completed", task.Id, task.PackageId, task.Version, task.Revision)
+	case view.ScoringProcessError:
+		log.Errorf("Scoring task %s for [ %s | %s@%d ] failed: %s", task.Id, task.PackageId, task.Version, task.Revision, strings.Join(partErrs, "; "))
 	}
 	return nil
 }
@@ -359,7 +372,7 @@ func (p *scoringTaskProcessorImpl) runIntegrityAndBwcChecks(ctx context.Context,
 		written, err := p.scoringTaskRepo.UpdateScore(ctx, task, func(row *entity.VersionScore) {
 			if !row.PublicationIntegrityStatus.IsTerminal() {
 				row.PublicationIntegrityDetails = &integrity
-				row.PublicationIntegrityStatus = view.ScoringProcessCompleted
+				row.PublicationIntegrityStatus = view.ScoringProcessSuccess
 			}
 			recomputeOverallStatus(row)
 		})
@@ -382,7 +395,7 @@ func (p *scoringTaskProcessorImpl) runIntegrityAndBwcChecks(ctx context.Context,
 	written, err := p.scoringTaskRepo.UpdateScore(ctx, task, func(row *entity.VersionScore) {
 		if !row.BackwardCompatibilityStatus.IsTerminal() {
 			row.BackwardCompatibilityDetails = bwc
-			row.BackwardCompatibilityStatus = view.ScoringProcessCompleted
+			row.BackwardCompatibilityStatus = view.ScoringProcessSuccess
 		}
 		recomputeOverallStatus(row)
 	})
@@ -399,7 +412,7 @@ func (p *scoringTaskProcessorImpl) runIntegrityAndBwcChecks(ctx context.Context,
 func (p *scoringTaskProcessorImpl) failScoringTask(ctx context.Context, task entity.VersionScoringTask, details string) {
 	partErr := fmt.Sprintf("scoring task failed: %s", details)
 	failed, err := p.scoringTaskRepo.ScoringFailed(ctx, task, details, func(row *entity.VersionScore) {
-		// BWC runs only after the version content was read for integrity, so a pending integrity part means the
+		// BWC runs only after the version content was read for integrity, so an unfinished integrity part means the
 		// content never arrived.
 		bwcErr := partErr
 		if !row.PublicationIntegrityStatus.IsTerminal() {
@@ -415,8 +428,11 @@ func (p *scoringTaskProcessorImpl) failScoringTask(ctx context.Context, task ent
 			row.QualityCheckStatus = view.ScoringProcessError
 			row.QualityCheckError = partErr
 		}
-		row.ProcessStatus = view.ScoringProcessCompleted
+		row.ProcessStatus = view.ScoringProcessError
 		recomputeOverallStatus(row)
+		if !slices.Contains(row.Debug, partErr) {
+			row.Debug = append(row.Debug, partErr)
+		}
 	})
 	if err != nil {
 		log.Errorf("Failed to mark scoring task %s as failed, retrying on the next tick: %s", task.Id, err)
@@ -449,11 +465,11 @@ func (p *scoringTaskProcessorImpl) calculateQualityCheck(ctx context.Context, li
 		return nil, view.ScoringProcessError, "lint task not found", nil
 	}
 
-	status := view.ScoringProcessInProgress
+	status := view.ScoringProcessProcessing
 	partErr := ""
 	switch lintTask.Status {
 	case view.TaskStatusSuccess:
-		status = view.ScoringProcessCompleted
+		status = view.ScoringProcessSuccess
 	case view.TaskStatusError:
 		status = view.ScoringProcessError
 		partErr = fmt.Sprintf("lint task failed: %s", lintTask.Details)
@@ -877,7 +893,7 @@ func recomputeOverallStatus(score *entity.VersionScore) {
 
 	score.Status = ""
 	score.Reasons = []string{}
-	if score.ProcessStatus != view.ScoringProcessCompleted {
+	if !score.ProcessStatus.IsTerminal() {
 		return
 	}
 

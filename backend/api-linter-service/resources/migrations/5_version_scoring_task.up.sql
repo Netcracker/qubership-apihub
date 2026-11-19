@@ -55,11 +55,46 @@ alter table version_score
     add column quality_check_status          varchar,
     add column quality_check_error           varchar;
 
-update version_score
-set process_status                = 'completed',
-    publication_integrity_status  = 'completed',
-    backward_compatibility_status = 'completed',
-    quality_check_status          = 'completed';
+with markers as (
+    select
+        package_id,
+        version, -- noqa: RF04
+        revision,
+        nullif(publication_integrity_details, 'null'::jsonb) is null as before_integrity,
+        coalesce(
+            publication_integrity_details ->> 'reason' = 'Internal error: failed to get version content.', false
+        ) as integrity_failed,
+        coalesce(
+            'Internal error: failed to calculate backwards compatibility details.' = any(reasons), false
+        ) as bwc_message,
+        coalesce(
+            'Internal error: failed to calculate quality check details.' = any(reasons), false
+        ) as quality_message,
+        nullif(backward_compatibility_details, 'null'::jsonb) is null as bwc_missing,
+        nullif(quality_check_details, 'null'::jsonb) is null as quality_missing
+    from version_score
+),
+
+outcomes as (
+    select
+        package_id,
+        version, -- noqa: RF04
+        revision,
+        integrity_failed,
+        integrity_failed or (bwc_message and (not before_integrity or bwc_missing)) as bwc_failed,
+        quality_message or (before_integrity and bwc_message and quality_missing) as quality_failed
+    from markers
+)
+
+update version_score as s
+set publication_integrity_status  = case when o.integrity_failed then 'error' else 'success' end,
+    backward_compatibility_status = case when o.bwc_failed then 'error' else 'success' end,
+    quality_check_status          = case when o.quality_failed then 'error' else 'success' end,
+    process_status                = case
+        when o.integrity_failed or o.bwc_failed or o.quality_failed then 'error' else 'success'
+    end
+from outcomes as o
+where (s.package_id, s.version, s.revision) = (o.package_id, o.version, o.revision); -- noqa: RF04
 
 alter table version_score
     alter column process_status set not null,

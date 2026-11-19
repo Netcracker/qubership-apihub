@@ -30,14 +30,14 @@ type ScoringProcess struct {
 type ScoringProcessStatus string
 
 const (
-	ScoringProcessPending    ScoringProcessStatus = "pending" //TODO: align with existing linter process statuses
-	ScoringProcessInProgress ScoringProcessStatus = "in_progress"
-	ScoringProcessCompleted  ScoringProcessStatus = "completed"
+	ScoringProcessNotStarted ScoringProcessStatus = "not_started"
+	ScoringProcessProcessing ScoringProcessStatus = "processing"
+	ScoringProcessSuccess    ScoringProcessStatus = "success"
 	ScoringProcessError      ScoringProcessStatus = "error"
 )
 
 func (s ScoringProcessStatus) IsTerminal() bool {
-	return s == ScoringProcessCompleted || s == ScoringProcessError
+	return s == ScoringProcessSuccess || s == ScoringProcessError
 }
 
 type ScoringStatus string

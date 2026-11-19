@@ -41,7 +41,7 @@ func (s *scoringServiceImpl) GetScoringForVersion_deprecated(ctx context.Context
 	if err != nil {
 		return nil, err
 	}
-	if ent == nil || ent.ProcessStatus == view.ScoringProcessInProgress {
+	if ent == nil || !ent.ProcessStatus.IsTerminal() {
 		return nil, nil
 	}
 	return entity.MakeVersionScoreView_deprecated(ent), nil

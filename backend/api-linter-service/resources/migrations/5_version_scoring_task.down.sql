@@ -1,5 +1,5 @@
 delete from version_score
-where process_status <> 'completed';
+where process_status not in ('success', 'error');
 
 alter table version_score
     drop column if exists validation_process_id,

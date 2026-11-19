@@ -79,10 +79,10 @@ func newProcessorFixture() *processorFixture {
 			Reasons:                     []string{},
 			Debug:                       []string{},
 			ValidationProcessId:         testValidationProcessId,
-			ProcessStatus:               view.ScoringProcessInProgress,
-			PublicationIntegrityStatus:  view.ScoringProcessPending,
-			BackwardCompatibilityStatus: view.ScoringProcessPending,
-			QualityCheckStatus:          view.ScoringProcessPending,
+			ProcessStatus:               view.ScoringProcessProcessing,
+			PublicationIntegrityStatus:  view.ScoringProcessNotStarted,
+			BackwardCompatibilityStatus: view.ScoringProcessNotStarted,
+			QualityCheckStatus:          view.ScoringProcessNotStarted,
 		}},
 		lintTasks: &versionLintTaskRepoStub{tasks: map[string]*entity.VersionLintTask{
 			testLintTaskId: lintTask(view.TaskStatusWaitingForDocs, ""),
@@ -186,8 +186,8 @@ func TestProcessTick_IntegrityIsPersistedBeforeBwcStarts(t *testing.T) {
 		t.Fatal("BWC did not request the changes")
 	}
 	for _, status := range integrityAtBwcStart {
-		if status != view.ScoringProcessCompleted {
-			t.Fatalf("integrity was %s in the stored row when BWC started, want completed", status)
+		if status != view.ScoringProcessSuccess {
+			t.Fatalf("integrity was %s in the stored row when BWC started, want success", status)
 		}
 	}
 }
@@ -199,8 +199,8 @@ func TestProcessTick_BwcAttemptErrorIsRetriedOnTheNextTick(t *testing.T) {
 	f.processor.processTick(context.Background())
 
 	row := f.score.get()
-	if row.BackwardCompatibilityStatus != view.ScoringProcessPending || row.BackwardCompatibilityDetails != nil {
-		t.Fatalf("BWC = %s %#v, want pending without a section after an attempt error", row.BackwardCompatibilityStatus, row.BackwardCompatibilityDetails)
+	if row.BackwardCompatibilityStatus != view.ScoringProcessNotStarted || row.BackwardCompatibilityDetails != nil {
+		t.Fatalf("BWC = %s %#v, want not_started without a section after an attempt error", row.BackwardCompatibilityStatus, row.BackwardCompatibilityDetails)
 	}
 	if f.task().RestartCount != 1 {
 		t.Fatalf("restart count = %d, want 1", f.task().RestartCount)
@@ -210,7 +210,7 @@ func TestProcessTick_BwcAttemptErrorIsRetriedOnTheNextTick(t *testing.T) {
 	f.processor.processTick(context.Background())
 
 	row = f.score.get()
-	if row.BackwardCompatibilityStatus != view.ScoringProcessCompleted || row.BackwardCompatibilityDetails == nil {
+	if row.BackwardCompatibilityStatus != view.ScoringProcessSuccess || row.BackwardCompatibilityDetails == nil {
 		t.Fatalf("BWC must be written on the next tick: %#v", row)
 	}
 }
@@ -250,7 +250,7 @@ func TestProcessTick_OperationListErrorIsAnAttemptError(t *testing.T) {
 			f.processor.processTick(context.Background())
 
 			row := f.score.get()
-			if row.BackwardCompatibilityStatus != view.ScoringProcessPending || row.BackwardCompatibilityDetails != nil {
+			if row.BackwardCompatibilityStatus != view.ScoringProcessNotStarted || row.BackwardCompatibilityDetails != nil {
 				t.Fatalf("BWC = %s %#v, want no verdict after an operation list error", row.BackwardCompatibilityStatus, row.BackwardCompatibilityDetails)
 			}
 			if f.task().RestartCount != 1 {
@@ -287,7 +287,7 @@ func TestProcessTick_MissingChangesPageIsAnAttemptError(t *testing.T) {
 			f.processor.processTick(context.Background())
 
 			row := f.score.get()
-			if row.BackwardCompatibilityStatus != view.ScoringProcessPending || row.BackwardCompatibilityDetails != nil {
+			if row.BackwardCompatibilityStatus != view.ScoringProcessNotStarted || row.BackwardCompatibilityDetails != nil {
 				t.Fatalf("BWC = %s %#v, want no verdict after a missing changes page", row.BackwardCompatibilityStatus, row.BackwardCompatibilityDetails)
 			}
 			if f.task().RestartCount != 1 {
@@ -325,12 +325,12 @@ func TestRunIntegrityAndBwc_PanicIsReturnedAsAnError(t *testing.T) {
 	}
 }
 
-func TestProcessTick_ExhaustedTaskFailsPendingPartsAndKeepsTerminalOnes(t *testing.T) {
+func TestProcessTick_ExhaustedTaskFailsUnfinishedPartsAndKeepsTerminalOnes(t *testing.T) {
 	f := newProcessorFixture()
 	f.tasks.tasks[testScoringTaskId].RestartCount = repository.MaxScoringTaskRestarts
 	f.tasks.tasks[testScoringTaskId].Details = "failed to get version content: timeout"
 	qualityDetails := map[view.OpApiType][]view.QualityCheckDetails{view.RestApiType: {{Linter: view.SpectralLinter, Status: view.ScoringPassed}}}
-	f.score.row.QualityCheckStatus = view.ScoringProcessCompleted
+	f.score.row.QualityCheckStatus = view.ScoringProcessSuccess
 	f.score.row.QualityCheckDetails = qualityDetails
 
 	f.processor.processTick(context.Background())
@@ -341,8 +341,11 @@ func TestProcessTick_ExhaustedTaskFailsPendingPartsAndKeepsTerminalOnes(t *testi
 		t.Fatalf("task = %s %q, want error %q", task.Status, task.Details, wantDetails)
 	}
 	row := f.score.get()
-	if row.ProcessStatus != view.ScoringProcessCompleted {
-		t.Fatalf("process status = %s, want completed", row.ProcessStatus)
+	if row.ProcessStatus != view.ScoringProcessError {
+		t.Fatalf("process status = %s, want error", row.ProcessStatus)
+	}
+	if wantDebug := []string{"scoring task failed: " + wantDetails, versionContentMissingError}; !slices.Equal(row.Debug, wantDebug) {
+		t.Fatalf("debug = %#v, want %#v with the failure text once", row.Debug, wantDebug)
 	}
 	if row.PublicationIntegrityStatus != view.ScoringProcessError || row.PublicationIntegrityError != "scoring task failed: "+wantDetails {
 		t.Fatalf("integrity = %s %q", row.PublicationIntegrityStatus, row.PublicationIntegrityError)
@@ -353,11 +356,69 @@ func TestProcessTick_ExhaustedTaskFailsPendingPartsAndKeepsTerminalOnes(t *testi
 	if row.BackwardCompatibilityStatus != view.ScoringProcessError || row.BackwardCompatibilityError != versionContentMissingError {
 		t.Fatalf("BWC = %s %q", row.BackwardCompatibilityStatus, row.BackwardCompatibilityError)
 	}
-	if row.QualityCheckStatus != view.ScoringProcessCompleted || len(row.QualityCheckDetails[view.RestApiType]) != 1 {
+	if row.QualityCheckStatus != view.ScoringProcessSuccess || len(row.QualityCheckDetails[view.RestApiType]) != 1 {
 		t.Fatalf("a terminal quality part must be kept: %s %#v", row.QualityCheckStatus, row.QualityCheckDetails)
 	}
 	if row.Status != view.ScoringNotPassed {
 		t.Fatalf("status = %q, want not_passed", row.Status)
+	}
+}
+
+func TestProcessTick_ExhaustedTaskWithFinishedPartsEndsInError(t *testing.T) {
+	const lastError = "failed to complete the score: connection reset"
+	const failureText = "scoring task failed: restart count exceeded limit, last error: " + lastError
+	tests := []struct {
+		name       string
+		modify     func(row *entity.VersionScore)
+		wantStatus view.ScoringStatus
+		wantDebug  []string
+	}{
+		{
+			name:       "all parts success",
+			modify:     func(row *entity.VersionScore) {},
+			wantStatus: view.ScoringPassed,
+			wantDebug:  []string{failureText},
+		},
+		{
+			name: "quality error with another text",
+			modify: func(row *entity.VersionScore) {
+				row.QualityCheckStatus = view.ScoringProcessError
+				row.QualityCheckError = "lint task failed: x"
+			},
+			wantStatus: view.ScoringNotPassed,
+			wantDebug:  []string{"lint task failed: x", failureText},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			f := newProcessorFixture()
+			f.tasks.tasks[testScoringTaskId].RestartCount = repository.MaxScoringTaskRestarts
+			f.tasks.tasks[testScoringTaskId].Details = lastError
+			finished := finishedScore()
+			f.score.row.PublicationIntegrityStatus = finished.PublicationIntegrityStatus
+			f.score.row.PublicationIntegrityDetails = finished.PublicationIntegrityDetails
+			f.score.row.BackwardCompatibilityStatus = finished.BackwardCompatibilityStatus
+			f.score.row.BackwardCompatibilityDetails = finished.BackwardCompatibilityDetails
+			f.score.row.QualityCheckStatus = finished.QualityCheckStatus
+			f.score.row.QualityCheckDetails = finished.QualityCheckDetails
+			tt.modify(f.score.row)
+
+			f.processor.processTick(context.Background())
+
+			if task := f.task(); task.Status != view.TaskStatusError {
+				t.Fatalf("task status = %s, want error", task.Status)
+			}
+			row := f.score.get()
+			if row.ProcessStatus != view.ScoringProcessError {
+				t.Fatalf("process status = %s, want error", row.ProcessStatus)
+			}
+			if row.Status != tt.wantStatus {
+				t.Fatalf("status = %q, want %q computed from the parts", row.Status, tt.wantStatus)
+			}
+			if !slices.Equal(row.Debug, tt.wantDebug) {
+				t.Fatalf("debug = %#v, want %#v", row.Debug, tt.wantDebug)
+			}
+		})
 	}
 }
 
@@ -378,17 +439,34 @@ func TestProcessTick_ScoringFailedIsRetriedOnTheNextTick(t *testing.T) {
 }
 
 func TestProcessTick_CompletesScoringWhenAllPartsAreTerminal(t *testing.T) {
-	f := newProcessorFixture()
-	f.lintTasks.tasks[testLintTaskId].Status = view.TaskStatusSuccess
-
-	f.processor.processTick(context.Background())
-
-	if f.task().Status != view.TaskStatusSuccess {
-		t.Fatalf("task status = %s, want success", f.task().Status)
+	tests := []struct {
+		name         string
+		lintErrors   float64
+		wantStatus   view.ScoringStatus
+		retryDetails string
+	}{
+		{name: "passed", wantStatus: view.ScoringPassed},
+		{name: "not passed after a failed attempt", lintErrors: 2, wantStatus: view.ScoringNotPassed, retryDetails: "failed to get version content: timeout"},
 	}
-	row := f.score.get()
-	if row.ProcessStatus != view.ScoringProcessCompleted || row.Status != view.ScoringPassed {
-		t.Fatalf("score = %s %q, want completed and passed", row.ProcessStatus, row.Status)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			f := newProcessorFixture()
+			f.lintTasks.tasks[testLintTaskId].Status = view.TaskStatusSuccess
+			f.docTasks.tasks = []entity.DocumentLintTask{docTask("d1", "a.yaml", view.SpectralLinter, testSpectralRuleset, view.TaskStatusSuccess)}
+			f.addLintedDocument("a.yaml", testSpectralRuleset, "hash-a", tt.lintErrors, 0)
+			f.tasks.tasks[testScoringTaskId].RestartCount = 1
+			f.tasks.tasks[testScoringTaskId].Details = tt.retryDetails
+
+			f.processor.processTick(context.Background())
+
+			if task := f.task(); task.Status != view.TaskStatusSuccess || task.Details != "" {
+				t.Fatalf("task = %s %q, want success with empty details", task.Status, task.Details)
+			}
+			row := f.score.get()
+			if row.ProcessStatus != view.ScoringProcessSuccess || row.Status != tt.wantStatus {
+				t.Fatalf("score = %s %q, want success and %s", row.ProcessStatus, row.Status, tt.wantStatus)
+			}
+		})
 	}
 }
 
@@ -453,8 +531,8 @@ func TestProcessTick_RefusedWriteIsNotCountedAndTheNextTickClosesTheTask(t *test
 			name: "quality",
 			prepare: func(f *processorFixture) {
 				f.lintTasks.tasks[testLintTaskId].Status = view.TaskStatusSuccess
-				f.score.row.PublicationIntegrityStatus = view.ScoringProcessCompleted
-				f.score.row.BackwardCompatibilityStatus = view.ScoringProcessCompleted
+				f.score.row.PublicationIntegrityStatus = view.ScoringProcessSuccess
+				f.score.row.BackwardCompatibilityStatus = view.ScoringProcessSuccess
 				f.docTasks.tasks = append(f.docTasks.tasks, docTask("d1", "a.yaml", view.SpectralLinter, testSpectralRuleset, view.TaskStatusSuccess))
 				f.addLintedDocument("a.yaml", testSpectralRuleset, "hash-a", 0, 0)
 			},
@@ -462,9 +540,9 @@ func TestProcessTick_RefusedWriteIsNotCountedAndTheNextTickClosesTheTask(t *test
 		{
 			name: "completion",
 			prepare: func(f *processorFixture) {
-				f.score.row.PublicationIntegrityStatus = view.ScoringProcessCompleted
-				f.score.row.BackwardCompatibilityStatus = view.ScoringProcessCompleted
-				f.score.row.QualityCheckStatus = view.ScoringProcessCompleted
+				f.score.row.PublicationIntegrityStatus = view.ScoringProcessSuccess
+				f.score.row.BackwardCompatibilityStatus = view.ScoringProcessSuccess
+				f.score.row.QualityCheckStatus = view.ScoringProcessSuccess
 			},
 		},
 		{
@@ -554,7 +632,7 @@ func TestRunIntegrityAndBwc_RefusedBwcWriteIsNotCounted(t *testing.T) {
 		t.Fatalf("refused = %t, err = %v, want a refusal", refused, err)
 	}
 	row := f.score.get()
-	if f.score.writes != 1 || row.BackwardCompatibilityStatus != view.ScoringProcessPending {
+	if f.score.writes != 1 || row.BackwardCompatibilityStatus != view.ScoringProcessNotStarted {
 		t.Fatalf("score written %d times with BWC %s, want only the integrity write", f.score.writes, row.BackwardCompatibilityStatus)
 	}
 	if task := f.task(); task.Status != view.TaskStatusProcessing || task.RestartCount != 0 {
@@ -585,7 +663,7 @@ func TestRunIntegrityAndBwc_TerminalPartIsNeverRewritten(t *testing.T) {
 	f := newProcessorFixture()
 	stale := *f.score.get()
 	written := &view.PublicationIntegrityDetails{Status: view.ScoringNotPassed, Reason: "written first"}
-	f.score.row.PublicationIntegrityStatus = view.ScoringProcessCompleted
+	f.score.row.PublicationIntegrityStatus = view.ScoringProcessSuccess
 	f.score.row.PublicationIntegrityDetails = written
 
 	if _, err := f.processor.runIntegrityAndBwcChecks(context.Background(), f.task(), stale); err != nil {
@@ -599,8 +677,8 @@ func TestRunIntegrityAndBwc_TerminalPartIsNeverRewritten(t *testing.T) {
 
 func newQualityFixture() *processorFixture {
 	f := newProcessorFixture()
-	f.score.row.PublicationIntegrityStatus = view.ScoringProcessCompleted
-	f.score.row.BackwardCompatibilityStatus = view.ScoringProcessCompleted
+	f.score.row.PublicationIntegrityStatus = view.ScoringProcessSuccess
+	f.score.row.BackwardCompatibilityStatus = view.ScoringProcessSuccess
 	return f
 }
 
@@ -625,8 +703,8 @@ func TestProcessTick_ScoresEachDocTaskOnce(t *testing.T) {
 
 	f.processor.processTick(ctx)
 	row := f.score.get()
-	if row.QualityCheckStatus != view.ScoringProcessInProgress || row.QualityCheckDetails == nil || len(row.QualityCheckDetails) != 0 {
-		t.Fatalf("tick 1: quality = %s %#v, want in_progress with an empty map", row.QualityCheckStatus, row.QualityCheckDetails)
+	if row.QualityCheckStatus != view.ScoringProcessProcessing || row.QualityCheckDetails == nil || len(row.QualityCheckDetails) != 0 {
+		t.Fatalf("tick 1: quality = %s %#v, want processing with an empty map", row.QualityCheckStatus, row.QualityCheckDetails)
 	}
 	if f.score.writes != 1 {
 		t.Fatalf("tick 1: score written %d times, want 1", f.score.writes)
@@ -646,11 +724,11 @@ func TestProcessTick_ScoresEachDocTaskOnce(t *testing.T) {
 	f.addLintedDocument("a.yaml", testSpectralRuleset, "hash-a", 0, 1)
 	f.processor.processTick(ctx)
 	row = f.score.get()
-	if row.QualityCheckStatus != view.ScoringProcessInProgress || len(row.QualityCheckDetails[view.RestApiType]) != 1 {
-		t.Fatalf("tick 3: quality = %s %#v, want in_progress with one entry", row.QualityCheckStatus, row.QualityCheckDetails)
+	if row.QualityCheckStatus != view.ScoringProcessProcessing || len(row.QualityCheckDetails[view.RestApiType]) != 1 {
+		t.Fatalf("tick 3: quality = %s %#v, want processing with one entry", row.QualityCheckStatus, row.QualityCheckDetails)
 	}
-	if row.ProcessStatus != view.ScoringProcessInProgress || row.Status != "" {
-		t.Fatalf("tick 3: score = %s %q, want in_progress with an empty status", row.ProcessStatus, row.Status)
+	if row.ProcessStatus != view.ScoringProcessProcessing || row.Status != "" {
+		t.Fatalf("tick 3: score = %s %q, want processing with an empty status", row.ProcessStatus, row.Status)
 	}
 	if f.score.writes != 2 {
 		t.Fatalf("tick 3: score written %d times, want 2", f.score.writes)
@@ -670,8 +748,8 @@ func TestProcessTick_ScoresEachDocTaskOnce(t *testing.T) {
 	f.lintTasks.tasks[testLintTaskId].Status = view.TaskStatusSuccess
 	f.processor.processTick(ctx)
 	row = f.score.get()
-	if row.QualityCheckStatus != view.ScoringProcessCompleted || len(row.QualityCheckDetails[view.RestApiType]) != 2 {
-		t.Fatalf("tick 5: quality = %s %#v, want completed with two entries", row.QualityCheckStatus, row.QualityCheckDetails)
+	if row.QualityCheckStatus != view.ScoringProcessSuccess || len(row.QualityCheckDetails[view.RestApiType]) != 2 {
+		t.Fatalf("tick 5: quality = %s %#v, want success with two entries", row.QualityCheckStatus, row.QualityCheckDetails)
 	}
 	if f.score.writes != 4 {
 		t.Fatalf("tick 5: score written %d times, want 4 with the quality and the completion writes", f.score.writes)
@@ -692,11 +770,11 @@ func TestProcessTick_LintSuccessWithNoNewDocumentWritesTheStatusOnly(t *testing.
 	f.processor.processTick(ctx)
 
 	row := f.score.get()
-	if row.QualityCheckStatus != view.ScoringProcessCompleted || row.QualityCheckDetails == nil || len(row.QualityCheckDetails) != 0 {
-		t.Fatalf("quality = %s %#v, want completed with an empty map", row.QualityCheckStatus, row.QualityCheckDetails)
+	if row.QualityCheckStatus != view.ScoringProcessSuccess || row.QualityCheckDetails == nil || len(row.QualityCheckDetails) != 0 {
+		t.Fatalf("quality = %s %#v, want success with an empty map", row.QualityCheckStatus, row.QualityCheckDetails)
 	}
 	if f.score.writes != 3 {
-		t.Fatalf("score written %d times, want 3: in_progress, completed, and the completion", f.score.writes)
+		t.Fatalf("score written %d times, want 3: processing, success, and the completion", f.score.writes)
 	}
 	if f.task().Status != view.TaskStatusSuccess {
 		t.Fatalf("task status = %s, want success", f.task().Status)
@@ -722,8 +800,50 @@ func TestProcessTick_LintErrorKeepsStoredEntries(t *testing.T) {
 	if len(row.QualityCheckDetails[view.RestApiType]) != 1 {
 		t.Fatalf("details = %#v, want the stored entry", row.QualityCheckDetails)
 	}
+	if row.ProcessStatus != view.ScoringProcessError {
+		t.Fatalf("process status = %s, want error", row.ProcessStatus)
+	}
+	if task := f.task(); task.Status != view.TaskStatusError || task.Details != row.QualityCheckError {
+		t.Fatalf("task = %s %q, want error %q", task.Status, task.Details, row.QualityCheckError)
+	}
 	assertHandledIds(t, f, "d1")
 	assertQualityReads(t, f, 1, 1, 1)
+}
+
+func TestProcessTick_LintErrorOnTheTickOfTheLastDocumentsScoresThemAndEndsInError(t *testing.T) {
+	f := newQualityFixture()
+	ctx := context.Background()
+	f.docTasks.tasks = []entity.DocumentLintTask{
+		docTask("d1", "a.yaml", view.SpectralLinter, testSpectralRuleset, view.TaskStatusProcessing),
+		docTask("d2", "b.yaml", view.SpectralLinter, testSpectralRuleset, view.TaskStatusProcessing),
+	}
+	f.addLintedDocument("a.yaml", testSpectralRuleset, "hash-a", 0, 0)
+	f.addLintedDocument("b.yaml", testSpectralRuleset, "hash-b", 0, 1)
+
+	f.processor.processTick(ctx)
+	f.docTasks.setTasks([]entity.DocumentLintTask{
+		docTask("d1", "a.yaml", view.SpectralLinter, testSpectralRuleset, view.TaskStatusSuccess),
+		docTask("d2", "b.yaml", view.SpectralLinter, testSpectralRuleset, view.TaskStatusSuccess),
+	})
+	f.lintTasks.tasks[testLintTaskId].Status = view.TaskStatusError
+	f.lintTasks.tasks[testLintTaskId].Details = "restart count exceeded"
+	f.processor.processTick(ctx)
+
+	const wantPartErr = "lint task failed: restart count exceeded"
+	row := f.score.get()
+	if row.QualityCheckStatus != view.ScoringProcessError || row.QualityCheckError != wantPartErr {
+		t.Fatalf("quality = %s %q, want error %q", row.QualityCheckStatus, row.QualityCheckError, wantPartErr)
+	}
+	if len(row.QualityCheckDetails[view.RestApiType]) != 2 {
+		t.Fatalf("details = %#v, want both entries", row.QualityCheckDetails)
+	}
+	if row.ProcessStatus != view.ScoringProcessError {
+		t.Fatalf("process status = %s, want error", row.ProcessStatus)
+	}
+	if task := f.task(); task.Status != view.TaskStatusError || task.Details != wantPartErr {
+		t.Fatalf("task = %s %q, want error %q", task.Status, task.Details, wantPartErr)
+	}
+	assertHandledIds(t, f, "d1", "d2")
 }
 
 func TestProcessTick_LintFailureWithNoEntryStoresNullDetails(t *testing.T) {
@@ -937,8 +1057,8 @@ func TestAcquireTasks_FailsAnExhaustedTask(t *testing.T) {
 	if f.task().Status != view.TaskStatusError {
 		t.Fatalf("task status = %s, want error", f.task().Status)
 	}
-	if f.score.get().ProcessStatus != view.ScoringProcessCompleted {
-		t.Fatalf("the score of an exhausted task must be completed with failed parts")
+	if f.score.get().ProcessStatus != view.ScoringProcessError {
+		t.Fatalf("the score of an exhausted task must end in error")
 	}
 }
 
@@ -995,7 +1115,7 @@ func TestWorkLoop_ContinuesAfterAPanickingTick(t *testing.T) {
 	if repo.calls != 2 {
 		t.Fatalf("processTick ran %d times, want 2", repo.calls)
 	}
-	if f.score.get().PublicationIntegrityStatus != view.ScoringProcessCompleted {
+	if f.score.get().PublicationIntegrityStatus != view.ScoringProcessSuccess {
 		t.Fatal("the tick after the panic must process the owned task")
 	}
 }
@@ -1041,8 +1161,8 @@ func TestProcessTick_TaskPanicIsCountedAndOtherTasksContinue(t *testing.T) {
 		if task.Status != view.TaskStatusError || task.Details != wantDetails {
 			t.Fatalf("tick %d: task = %s %q, want error %q", tick, task.Status, task.Details, wantDetails)
 		}
-		if f.score.get().ProcessStatus != view.ScoringProcessCompleted {
-			t.Fatalf("the score of the exhausted task must be completed with failed parts")
+		if f.score.get().ProcessStatus != view.ScoringProcessError {
+			t.Fatalf("the score of the exhausted task must end in error")
 		}
 	}
 	if other := f.tasks.task(testOtherScoringTaskId); other.Status != view.TaskStatusProcessing || other.RestartCount != 0 {
@@ -1091,8 +1211,8 @@ func TestQualityCheck_SuccessTasksWithRowsAndSummaries(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %s", err)
 	}
-	if status != view.ScoringProcessCompleted || partErr != "" {
-		t.Fatalf("status = %s, partErr = %q, want completed and no error", status, partErr)
+	if status != view.ScoringProcessSuccess || partErr != "" {
+		t.Fatalf("status = %s, partErr = %q, want success and no error", status, partErr)
 	}
 	want := []view.QualityCheckDetails{
 		{Linter: view.SpectralLinter, Status: view.ScoringPassedWithDefects, Reason: "Version contain 3 warnings for linter spectral.", WarningsCount: 3},
@@ -1163,8 +1283,8 @@ func TestQualityCheck_FailedTasks(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %s", err)
 	}
-	if status != view.ScoringProcessCompleted {
-		t.Fatalf("status = %s, want completed", status)
+	if status != view.ScoringProcessSuccess {
+		t.Fatalf("status = %s, want success", status)
 	}
 	want := []view.QualityCheckDetails{
 		{Linter: view.AiLinter, Status: view.ScoringPassed, Optional: true, InternalError: optional.Details},
@@ -1215,7 +1335,7 @@ func TestQualityCheck_LintTaskStates(t *testing.T) {
 		{
 			name:           "lint running with an empty batch",
 			lintTask:       lintTask(view.TaskStatusWaitingForDocs, ""),
-			wantStatus:     view.ScoringProcessInProgress,
+			wantStatus:     view.ScoringProcessProcessing,
 			wantNilDetails: true,
 		},
 		{
@@ -1228,7 +1348,7 @@ func TestQualityCheck_LintTaskStates(t *testing.T) {
 		{
 			name:           "lint success with an empty batch",
 			lintTask:       lintTask(view.TaskStatusSuccess, ""),
-			wantStatus:     view.ScoringProcessCompleted,
+			wantStatus:     view.ScoringProcessSuccess,
 			wantNilDetails: true,
 		},
 		{
@@ -1270,12 +1390,12 @@ func TestQualityCheck_LintTaskStates(t *testing.T) {
 	}
 }
 
-func completedScore() *entity.VersionScore {
+func finishedScore() *entity.VersionScore {
 	return &entity.VersionScore{
-		ProcessStatus:               view.ScoringProcessCompleted,
-		PublicationIntegrityStatus:  view.ScoringProcessCompleted,
-		BackwardCompatibilityStatus: view.ScoringProcessCompleted,
-		QualityCheckStatus:          view.ScoringProcessCompleted,
+		ProcessStatus:               view.ScoringProcessSuccess,
+		PublicationIntegrityStatus:  view.ScoringProcessSuccess,
+		BackwardCompatibilityStatus: view.ScoringProcessSuccess,
+		QualityCheckStatus:          view.ScoringProcessSuccess,
 		PublicationIntegrityDetails: &view.PublicationIntegrityDetails{Status: view.ScoringPassed},
 		BackwardCompatibilityDetails: map[view.OpApiType]view.BackwardCompatibilityDetails{
 			view.RestApiType: {Status: view.ScoringPassed},
@@ -1322,6 +1442,13 @@ func TestOverallStatus(t *testing.T) {
 			wantDebug:   []string{},
 		},
 		{
+			name:        "overall error with all parts success builds the verdict",
+			modify:      func(score *entity.VersionScore) { score.ProcessStatus = view.ScoringProcessError },
+			wantStatus:  view.ScoringPassed,
+			wantReasons: []string{},
+			wantDebug:   []string{},
+		},
+		{
 			name: "integrity not passed",
 			modify: func(score *entity.VersionScore) {
 				score.PublicationIntegrityDetails = &view.PublicationIntegrityDetails{Status: view.ScoringNotPassed, Reason: integrityReason, HasErrors: true}
@@ -1355,10 +1482,10 @@ func TestOverallStatus(t *testing.T) {
 			wantDebug:   []string{"bwc failed", "lint task failed: x"},
 		},
 		{
-			name: "in progress keeps status and reasons empty while debug is filled",
+			name: "processing keeps status and reasons empty while debug is filled",
 			modify: func(score *entity.VersionScore) {
-				score.ProcessStatus = view.ScoringProcessInProgress
-				score.QualityCheckStatus = view.ScoringProcessInProgress
+				score.ProcessStatus = view.ScoringProcessProcessing
+				score.QualityCheckStatus = view.ScoringProcessProcessing
 				score.BackwardCompatibilityStatus = view.ScoringProcessError
 				score.BackwardCompatibilityError = "bwc failed"
 				score.Status = view.ScoringPassed
@@ -1398,7 +1525,7 @@ func TestOverallStatus(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			score := completedScore()
+			score := finishedScore()
 			tt.modify(score)
 			recomputeOverallStatus(score)
 
@@ -1416,7 +1543,7 @@ func TestOverallStatus(t *testing.T) {
 }
 
 func TestOverallStatus_IntegrityErrorKeepsComputedSection(t *testing.T) {
-	score := completedScore()
+	score := finishedScore()
 	score.PublicationIntegrityStatus = view.ScoringProcessError
 	section := &view.PublicationIntegrityDetails{Status: view.ScoringPassed}
 	score.PublicationIntegrityDetails = section
@@ -1450,10 +1577,10 @@ func (f *processorFixture) addOtherTask() *inMemoryScore {
 		Reasons:                     []string{},
 		Debug:                       []string{},
 		ValidationProcessId:         testOtherValidationProcessId,
-		ProcessStatus:               view.ScoringProcessInProgress,
-		PublicationIntegrityStatus:  view.ScoringProcessPending,
-		BackwardCompatibilityStatus: view.ScoringProcessPending,
-		QualityCheckStatus:          view.ScoringProcessPending,
+		ProcessStatus:               view.ScoringProcessProcessing,
+		PublicationIntegrityStatus:  view.ScoringProcessNotStarted,
+		BackwardCompatibilityStatus: view.ScoringProcessNotStarted,
+		QualityCheckStatus:          view.ScoringProcessNotStarted,
 	}}
 	f.tasks.scores[testOtherRevision] = otherScore
 	return otherScore
@@ -1587,7 +1714,7 @@ func TestAttempt_TwoPartFailuresCountOnceAndTheNextAttemptRetriesBoth(t *testing
 				f.processor.processTick(context.Background())
 
 				assertAttemptEnded(t, f, view.TaskStatusSuccess, 1)
-				if row := f.score.get(); !row.PartsFinished() || row.ProcessStatus != view.ScoringProcessCompleted {
+				if row := f.score.get(); !row.PartsFinished() || row.ProcessStatus != view.ScoringProcessSuccess {
 					t.Fatalf("both parts must be retried, got %#v", row)
 				}
 			})
@@ -1612,13 +1739,13 @@ func TestAttempt_BlockedBwcHoldsNeitherQualityNorOtherTasks(t *testing.T) {
 	f.processor.processTick(ctx)
 
 	waitFor(t, "the quality snapshot behind a blocked BWC", func() bool {
-		return f.score.get().QualityCheckStatus == view.ScoringProcessInProgress
+		return f.score.get().QualityCheckStatus == view.ScoringProcessProcessing
 	})
 	waitFor(t, "the other task", func() bool {
-		return otherScore.get().BackwardCompatibilityStatus == view.ScoringProcessCompleted && !f.slotTaken(testOtherScoringTaskId)
+		return otherScore.get().BackwardCompatibilityStatus == view.ScoringProcessSuccess && !f.slotTaken(testOtherScoringTaskId)
 	})
-	if row := f.score.get(); row.BackwardCompatibilityStatus != view.ScoringProcessPending {
-		t.Fatalf("BWC = %s, want pending while it is blocked", row.BackwardCompatibilityStatus)
+	if row := f.score.get(); row.BackwardCompatibilityStatus != view.ScoringProcessNotStarted {
+		t.Fatalf("BWC = %s, want not_started while it is blocked", row.BackwardCompatibilityStatus)
 	}
 	qualityReads := f.lintTasks.readCount(testValidationProcessId)
 
@@ -1658,7 +1785,7 @@ func TestAttempt_BlockedQualityHoldsCompletionAndTheSlot(t *testing.T) {
 	f.processor.processTick(context.Background())
 
 	waitFor(t, "BWC", func() bool {
-		return f.score.get().BackwardCompatibilityStatus == view.ScoringProcessCompleted
+		return f.score.get().BackwardCompatibilityStatus == view.ScoringProcessSuccess
 	})
 	time.Sleep(testSettleDelay)
 	if task := f.task(); task.Status != view.TaskStatusProcessing || task.RestartCount != 0 || !f.slotTaken(testScoringTaskId) {
@@ -1704,7 +1831,7 @@ func TestAttempt_EarlyQualityFailureWaitsForTheBlockedBwc(t *testing.T) {
 			close(release)
 			join()
 			assertAttemptEnded(t, f, view.TaskStatusProcessing, 1)
-			if row := f.score.get(); row.BackwardCompatibilityStatus != view.ScoringProcessCompleted {
+			if row := f.score.get(); row.BackwardCompatibilityStatus != view.ScoringProcessSuccess {
 				t.Fatalf("BWC = %s, want the part of the child kept", row.BackwardCompatibilityStatus)
 			}
 		})
@@ -1762,8 +1889,8 @@ func TestAttempt_EveryPartWriteOrderKeepsAllPartsAndCompletes(t *testing.T) {
 			if row.PublicationIntegrityDetails == nil || row.BackwardCompatibilityDetails == nil || len(row.QualityCheckDetails[view.RestApiType]) != 1 {
 				t.Fatalf("a part was overwritten: %#v", row)
 			}
-			if row.ProcessStatus != view.ScoringProcessCompleted || row.Status != view.ScoringPassedWithDefects {
-				t.Fatalf("score = %s %q, want completed and passed_with_defects", row.ProcessStatus, row.Status)
+			if row.ProcessStatus != view.ScoringProcessSuccess || row.Status != view.ScoringPassedWithDefects {
+				t.Fatalf("score = %s %q, want success and passed_with_defects", row.ProcessStatus, row.Status)
 			}
 			if !reflect.DeepEqual(row.Reasons, []string{"Version contain 1 warnings for linter spectral."}) || len(row.Debug) != 0 {
 				t.Fatalf("reasons = %#v, debug = %#v", row.Reasons, row.Debug)
@@ -1906,7 +2033,7 @@ func TestAttempt_FailedIncrementHoldsTheSlotUntilItIsWritten(t *testing.T) {
 	waitClosed(t, "the tick", tickDone)
 	join()
 	assertAttemptEnded(t, f, view.TaskStatusProcessing, 1)
-	if row := otherScore.get(); row.BackwardCompatibilityStatus != view.ScoringProcessCompleted {
+	if row := otherScore.get(); row.BackwardCompatibilityStatus != view.ScoringProcessSuccess {
 		t.Fatalf("other BWC = %s, want the other task to run after the increment is written", row.BackwardCompatibilityStatus)
 	}
 }
@@ -1951,7 +2078,7 @@ func TestAttempt_RefusedIncrementEndsTheAttempt(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			f := newProcessorFixture()
-			f.score.row.QualityCheckStatus = view.ScoringProcessCompleted
+			f.score.row.QualityCheckStatus = view.ScoringProcessSuccess
 			var increments atomic.Int32
 			f.tasks.beforeInc = func() error {
 				increments.Add(1)
@@ -2052,14 +2179,14 @@ func TestAttempt_PartDatabaseErrorIsNotARefusal(t *testing.T) {
 
 func TestAttempt_QualityWithNothingNewKeepsTheScoreAndTheAttemptContinues(t *testing.T) {
 	f := newProcessorFixture()
-	f.score.row.QualityCheckStatus = view.ScoringProcessInProgress
+	f.score.row.QualityCheckStatus = view.ScoringProcessProcessing
 	f.score.row.QualityCheckDetails = map[view.OpApiType][]view.QualityCheckDetails{view.RestApiType: {{Linter: view.SpectralLinter, Status: view.ScoringPassed}}}
 
 	f.processor.processTick(context.Background())
 
 	assertAttemptEnded(t, f, view.TaskStatusProcessing, 0)
 	row := f.score.get()
-	if row.BackwardCompatibilityStatus != view.ScoringProcessCompleted || len(row.QualityCheckDetails[view.RestApiType]) != 1 {
+	if row.BackwardCompatibilityStatus != view.ScoringProcessSuccess || len(row.QualityCheckDetails[view.RestApiType]) != 1 {
 		t.Fatalf("score = %#v, want BWC written and the quality entry kept", row)
 	}
 	if f.scoreReads.reads != 2 {
@@ -2162,7 +2289,7 @@ func TestAttempt_ScoreReadAfterTheParts(t *testing.T) {
 
 func TestAttempt_SupersededWhileRunningIsCountedAndClosedByTheNextAttempt(t *testing.T) {
 	f := newProcessorFixture()
-	f.score.row.QualityCheckStatus = view.ScoringProcessCompleted
+	f.score.row.QualityCheckStatus = view.ScoringProcessSuccess
 	f.beforeBwc = func() error {
 		f.score.replaceProcessId(testSupersedingProcessId)
 		return errors.New("APIHUB unavailable")
@@ -2234,8 +2361,8 @@ func TestAttempt_TaskExhaustedByATakeoverWhileAlive(t *testing.T) {
 			f.processor.acquireTasks(context.Background())
 
 			row := f.score.get()
-			if tt.terminalPart(row) != view.ScoringProcessCompleted || tt.blockedPart(row) != view.ScoringProcessError {
-				t.Fatalf("terminal part = %s, blocked part = %s, want completed and error", tt.terminalPart(row), tt.blockedPart(row))
+			if tt.terminalPart(row) != view.ScoringProcessSuccess || tt.blockedPart(row) != view.ScoringProcessError {
+				t.Fatalf("terminal part = %s, blocked part = %s, want success and error", tt.terminalPart(row), tt.blockedPart(row))
 			}
 			writes := f.score.writeCount()
 
@@ -2262,8 +2389,8 @@ func TestAttempt_TaskExhaustedByATakeoverWhileAlive(t *testing.T) {
 			join()
 
 			assertAttemptEnded(t, f, view.TaskStatusSuccess, repository.MaxScoringTaskRestarts)
-			if row := f.score.get(); tt.terminalPart(row) != view.ScoringProcessCompleted || tt.blockedPart(row) != view.ScoringProcessCompleted {
-				t.Fatalf("terminal part = %s, blocked part = %s, want both completed", tt.terminalPart(row), tt.blockedPart(row))
+			if row := f.score.get(); tt.terminalPart(row) != view.ScoringProcessSuccess || tt.blockedPart(row) != view.ScoringProcessSuccess {
+				t.Fatalf("terminal part = %s, blocked part = %s, want both success", tt.terminalPart(row), tt.blockedPart(row))
 			}
 		})
 	}
@@ -2274,7 +2401,7 @@ func TestAttempt_TaskExhaustedByATakeoverWhileAlive(t *testing.T) {
 		f.lintTasks.tasks[testLintTaskId].Status = view.TaskStatusWaitingForDocs
 		f.lintTasks.mu.Unlock()
 		f.score.mu.Lock()
-		f.score.row.QualityCheckStatus = view.ScoringProcessInProgress
+		f.score.row.QualityCheckStatus = view.ScoringProcessProcessing
 		f.score.mu.Unlock()
 		f.tasks.scoringFailedErrs = []error{errors.New("connection reset")}
 
@@ -2283,7 +2410,7 @@ func TestAttempt_TaskExhaustedByATakeoverWhileAlive(t *testing.T) {
 		close(release)
 		join()
 		assertAttemptEnded(t, f, view.TaskStatusProcessing, repository.MaxScoringTaskRestarts)
-		if row := f.score.get(); row.BackwardCompatibilityStatus != view.ScoringProcessCompleted {
+		if row := f.score.get(); row.BackwardCompatibilityStatus != view.ScoringProcessSuccess {
 			t.Fatalf("BWC = %s, want the surviving attempt to write it", row.BackwardCompatibilityStatus)
 		}
 
@@ -2376,7 +2503,7 @@ func TestProcessTick_WaitsForAFreeAttemptSlot(t *testing.T) {
 	waitClosed(t, "the tick", tickDone)
 	join()
 	assertAttemptEnded(t, f, view.TaskStatusProcessing, 0)
-	if row := otherScore.get(); row.BackwardCompatibilityStatus != view.ScoringProcessCompleted {
+	if row := otherScore.get(); row.BackwardCompatibilityStatus != view.ScoringProcessSuccess {
 		t.Fatalf("other BWC = %s, want the other task scored after the release", row.BackwardCompatibilityStatus)
 	}
 	if taken := len(f.processor.attemptSlots); taken != 0 {
@@ -2404,7 +2531,7 @@ func TestProcessTick_FailedAttemptFreesItsSlot(t *testing.T) {
 			join()
 
 			assertAttemptEnded(t, f, view.TaskStatusProcessing, 1)
-			if row := otherScore.get(); row.BackwardCompatibilityStatus != view.ScoringProcessCompleted {
+			if row := otherScore.get(); row.BackwardCompatibilityStatus != view.ScoringProcessSuccess {
 				t.Fatalf("other BWC = %s, want the other task scored in the same pass", row.BackwardCompatibilityStatus)
 			}
 
@@ -2437,7 +2564,7 @@ func TestProcessTick_PanicAfterTheAttemptFreesItsSlot(t *testing.T) {
 	if taken := len(f.processor.attemptSlots); taken != 0 {
 		t.Fatalf("%d attempt slots taken, want 0", taken)
 	}
-	if row := otherScore.get(); row.BackwardCompatibilityStatus != view.ScoringProcessCompleted {
+	if row := otherScore.get(); row.BackwardCompatibilityStatus != view.ScoringProcessSuccess {
 		t.Fatalf("other BWC = %s, want the next task scored", row.BackwardCompatibilityStatus)
 	}
 }

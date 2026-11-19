@@ -162,10 +162,10 @@ func (r *validationProcessRepositoryImpl) StartNextProcess(ctx context.Context, 
 				quality_check_status           = excluded.quality_check_status,
 				quality_check_error            = excluded.quality_check_error`,
 			packageId, version, revision, now,
-			processId, view.ScoringProcessInProgress,
-			view.ScoringProcessPending,
-			view.ScoringProcessPending,
-			view.ScoringProcessPending)
+			processId, view.ScoringProcessProcessing,
+			view.ScoringProcessNotStarted,
+			view.ScoringProcessNotStarted,
+			view.ScoringProcessNotStarted)
 		if err != nil {
 			return fmt.Errorf("failed to reset the score of validation process %s: %w", processId, err)
 		}

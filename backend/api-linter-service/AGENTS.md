@@ -134,10 +134,23 @@ When a change affects REST contracts or integration behaviour, update the neighb
    database fails, or when PostgreSQL rejects the update for one task; the scoring of the pod pauses while all five
    slots are held this way.
 
+   The score row and its three parts use the status words of the other tasks and processes. The parts start in
+   `not_started`, quality is in `processing` while the lint runs, and each part ends in `success` or `error`. The
+   overall `process_status` is `processing` until the scoring task ends, even after a part has failed. It is set
+   once, in the transaction that ends the scoring task: `error` when a part is in `error` or the scoring task failed,
+   `success` otherwise. The scoring task ends with the same status. For a task that ends through `CompleteScoring`:
+   on `error`, the task `details` list the error texts of the failed parts in the order integrity, BWC, quality,
+   joined by `; `; on `success` they are empty. A task given up after the restart limit keeps the restart diagnostic
+   (`restart count exceeded limit, last error: ...`) in its `details`. It ends the score in `error` even when the three
+   parts are in `success`: `failScoringTask` appends its failure text to `debug`, and the verdict stays the one
+   computed from the parts. The statuses report whether the work ran; the verdict (`status`) reports what the checks
+   found, so a score with breaking changes in external operations ends in `success` with `not_passed`.
+
    `recomputeOverallStatus` (`service/scoring_task_processor.go`) recomputes `status`,
-   `reasons`, and `debug` from the parts on every write; the row keeps an empty `status` until every part is
-   terminal, and the v2 body omits the field until then. `GET /api/v2/.../scoring` returns the row at any time with
-   the state of each part; the deprecated `GET /api/v1/.../scoring` returns 404 until the score is complete.
+   `reasons`, and `debug` from the parts on every write; the row keeps an empty `status` until the overall status is
+   `success` or `error`, and the v2 body omits the field until then. `GET /api/v2/.../scoring` returns the row at any
+   time with the state of each part; the deprecated `GET /api/v1/.../scoring` returns 404 until the overall status is
+   `success` or `error`.
 
    Part updates and the completion or failure of the score go through `withOwnedScoreTx` (`repository/scoring_task.go`):
    it updates the task only while `executor_id` is this executor and the status is `processing`, then locks the score

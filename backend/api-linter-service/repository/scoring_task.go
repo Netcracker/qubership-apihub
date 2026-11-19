@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/Netcracker/qubership-apihub/backend/api-linter-service/db"
@@ -24,7 +25,7 @@ type ScoringTaskRepository interface {
 
 	UpdateScore(ctx context.Context, task entity.VersionScoringTask, apply func(score *entity.VersionScore)) (*entity.VersionScore, error)
 	UpdateQualityCheck(ctx context.Context, task entity.VersionScoringTask, handledDocTaskIds []string, apply func(score *entity.VersionScore)) (*entity.VersionScore, error)
-	CompleteScoring(ctx context.Context, task entity.VersionScoringTask, recompute func(score *entity.VersionScore)) (completed bool, err error)
+	CompleteScoring(ctx context.Context, task entity.VersionScoringTask, complete func(score *entity.VersionScore)) (view.ScoringProcessStatus, error)
 	ScoringFailed(ctx context.Context, task entity.VersionScoringTask, details string, apply func(score *entity.VersionScore)) (failed bool, err error)
 }
 
@@ -142,25 +143,24 @@ func (r *scoringTaskRepositoryImpl) UpdateQualityCheck(ctx context.Context, task
 	})
 }
 
-func (r *scoringTaskRepositoryImpl) CompleteScoring(ctx context.Context, task entity.VersionScoringTask, recompute func(score *entity.VersionScore)) (bool, error) {
-	completed := false
+func (r *scoringTaskRepositoryImpl) CompleteScoring(ctx context.Context, task entity.VersionScoringTask, complete func(score *entity.VersionScore)) (view.ScoringProcessStatus, error) {
+	var status view.ScoringProcessStatus
 	_, err := r.withOwnedScoreTx(ctx, task, func(tx *pg.Tx, score *entity.VersionScore) error {
 		if !score.PartsFinished() {
 			return nil
 		}
-		score.ProcessStatus = view.ScoringProcessCompleted
-		recompute(score)
+		complete(score)
 		if _, err := tx.Exec("update version_scoring_task set status = ?, details = ?, last_active = now() where id = ? and executor_id = ? and status = ?",
-			view.TaskStatusSuccess, "", task.Id, task.ExecutorId, view.TaskStatusProcessing); err != nil {
+			view.TaskStatus(score.ProcessStatus), strings.Join(score.Debug, "; "), task.Id, task.ExecutorId, view.TaskStatusProcessing); err != nil {
 			return fmt.Errorf("failed to complete scoring task %s: %w", task.Id, err)
 		}
-		completed = true
+		status = score.ProcessStatus
 		return nil
 	})
 	if err != nil {
-		return false, err
+		return "", err
 	}
-	return completed, nil
+	return status, nil
 }
 
 func (r *scoringTaskRepositoryImpl) ScoringFailed(ctx context.Context, task entity.VersionScoringTask, details string, apply func(score *entity.VersionScore)) (bool, error) {

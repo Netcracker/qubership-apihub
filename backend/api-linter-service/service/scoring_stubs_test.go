@@ -5,6 +5,7 @@ import (
 	"maps"
 	"slices"
 	"sort"
+	"strings"
 	"sync"
 
 	"github.com/Netcracker/qubership-apihub/backend/api-linter-service/client"
@@ -294,24 +295,24 @@ func (r *scoringTaskRepoStub) UpdateQualityCheck(_ context.Context, task entity.
 	})
 }
 
-func (r *scoringTaskRepoStub) CompleteScoring(_ context.Context, task entity.VersionScoringTask, recompute func(score *entity.VersionScore)) (bool, error) {
+func (r *scoringTaskRepoStub) CompleteScoring(_ context.Context, task entity.VersionScoringTask, complete func(score *entity.VersionScore)) (view.ScoringProcessStatus, error) {
 	if r.beforeComplete != nil {
 		if err := r.beforeComplete(); err != nil {
-			return false, err
+			return "", err
 		}
 	}
-	completed := false
+	var status view.ScoringProcessStatus
 	_, err := r.withOwnedScore(task, func(row *entity.VersionScore, owned *entity.VersionScoringTask) error {
 		if !row.PartsFinished() {
 			return nil
 		}
-		row.ProcessStatus = view.ScoringProcessCompleted
-		recompute(row)
-		owned.Status = view.TaskStatusSuccess
-		completed = true
+		complete(row)
+		owned.Status = view.TaskStatus(row.ProcessStatus)
+		owned.Details = strings.Join(row.Debug, "; ")
+		status = row.ProcessStatus
 		return nil
 	})
-	return completed, err
+	return status, err
 }
 
 func (r *scoringTaskRepoStub) ScoringFailed(_ context.Context, task entity.VersionScoringTask, details string, apply func(score *entity.VersionScore)) (bool, error) {
