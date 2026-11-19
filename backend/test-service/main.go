@@ -5,9 +5,8 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 	"os"
-	"path"
+	"path/filepath"
 	"runtime/debug"
-	"strings"
 	"time"
 
 	"github.com/Netcracker/qubership-apihub/backend/test-service/controller"
@@ -20,12 +19,9 @@ import (
 )
 
 func init() {
-	basePath := os.Getenv("BASE_PATH")
-	if basePath == "" {
-		basePath = "."
-	}
+	logFile := filepath.Join(os.TempDir(), "apihub_test_service.log")
 	mw := io.MultiWriter(os.Stderr, &lumberjack.Logger{
-		Filename: basePath + "/logs/apihub_test_service.log",
+		Filename: logFile,
 		MaxSize:  10, // megabytes
 	})
 	log.SetFormatter(logging.NewFormatter())
@@ -39,50 +35,24 @@ func init() {
 }
 
 func main() {
-	basePath := os.Getenv("BASE_PATH")
-	if basePath == "" {
-		basePath = "."
-	}
-
-	openapiController := controller.NewOpenapiController(basePath)
-	graphqlController := controller.NewGraphqlController(basePath)
-	swaggerConfigController := controller.NewSwaggerConfigController(basePath)
-	asyncapiController := controller.NewAsyncapiController(basePath)
 	tryitController := controller.NewTryitController()
 
 	r := mux.NewRouter().SkipClean(true).UseEncodedPath()
 	r.Use(logging.RequestIDMiddleware)
 
-	r.HandleFunc("/v3/api-docs", openapiController.GetOpenapiSpec).Methods(http.MethodGet)
-	r.HandleFunc("/v3/api-docs/yaml", openapiController.GetOpenapiYamlSpec).Methods(http.MethodGet)
-	r.HandleFunc("/v3/api-docs/md", openapiController.GetMdFile).Methods(http.MethodGet)
-	r.HandleFunc("/v3/api-docs/json", openapiController.GetJsonSample).Methods(http.MethodGet)
-	r.HandleFunc("/v3/api-docs/async", asyncapiController.GetAsyncapiYamlSpec).Methods(http.MethodGet)
-	r.HandleFunc("/v3/api-docs/async/json", asyncapiController.GetAsyncapiJsonSpec).Methods(http.MethodGet)
-	r.HandleFunc("/graphql", graphqlController.GetGraphqlSpec).Methods(http.MethodGet)
-	r.HandleFunc("/api/graphql-server/schema", graphqlController.GetGraphqlIntrospection).Methods(http.MethodPost)
-
-	r.HandleFunc("/v3/api-docs/swagger-config", swaggerConfigController.GetSwaggerConfig).Methods(http.MethodGet)
-	r.HandleFunc("/v3/api-docs/apihub-swagger-config", swaggerConfigController.GetCustomSwaggerConfig).Methods(http.MethodGet)
-
 	//for tryit tests
 	r.HandleFunc("/api/v2/escaped/{escaped}/text/{text}", tryitController.Get).Methods(http.MethodGet)
 	r.HandleFunc("/api/v2/escaped/{escaped}/text/{text}", tryitController.Post).Methods(http.MethodPost)
 
-	debug.SetGCPercent(30)
-
-	fs := http.FileServer(http.Dir(basePath + "/static"))
-
-	r.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/" {
-			fullPath := basePath + "/static/" + strings.TrimPrefix(path.Clean(r.URL.Path), "/")
-			_, err := os.Stat(fullPath)
-			if err != nil { // Redirect unknown requests to frontend
-				r.URL.Path = "/"
-			}
+			http.NotFound(w, r)
+			return
 		}
-		fs.ServeHTTP(w, r)
+		w.WriteHeader(http.StatusOK)
 	})
+
+	debug.SetGCPercent(30)
 
 	listenAddr := os.Getenv("LISTEN_ADDRESS")
 	if listenAddr == "" {

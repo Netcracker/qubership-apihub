@@ -28,7 +28,6 @@ ENV GIT_HASH=$GIT_HASH
 WORKDIR /app/qubership-apihub-test-service
 
 COPY --from=builder /workspace/test-service/qubership-apihub-test-service ./qubership-apihub-test-service
-COPY test-service/static ./static
 
 RUN chmod -R a+rwx /app
 
