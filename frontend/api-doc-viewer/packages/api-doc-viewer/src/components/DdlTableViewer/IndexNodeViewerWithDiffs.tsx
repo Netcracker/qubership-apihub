@@ -1,3 +1,4 @@
+import { cn } from "@apihub/utils/common/cn"
 import { useDisplayMode } from "@apihub/contexts/DisplayModeContext"
 import { takeIndexFlagDiffs } from "@apihub/utils/ddlapi/column-row-badges"
 import {
@@ -90,7 +91,7 @@ export const IndexNodeViewerWithDiffs: FC<IndexNodeViewerWithDiffsProps> = (prop
       const shouldRenderPartNames = value.partNames.length > 0
 
       return (
-        <div className="flex flex-wrap items-center gap-2">
+        <div className={cn("flex flex-wrap items-center gap-2")}>
           {shouldRenderPartNames && renderPartNames(layoutSide)}
           <ColumnRowBadgesContent
             columnId={node.id}
@@ -111,7 +112,7 @@ export const IndexNodeViewerWithDiffs: FC<IndexNodeViewerWithDiffsProps> = (prop
   }
 
   return (
-    <div data-testid="ddl-index-node-viewer" className="flex flex-col ddlapi-property">
+    <div data-testid="ddl-index-node-viewer" className={cn("flex flex-col ddlapi-property")}>
       <TitleRow
         data-precededby={precededBy}
         {...{ [ATTRIBUTE_DDL_LIST_LAST_ROW]: listLastRowFlags.isTitleListLastRow || undefined }}

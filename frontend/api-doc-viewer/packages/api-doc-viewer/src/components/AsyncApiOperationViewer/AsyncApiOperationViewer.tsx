@@ -1,3 +1,6 @@
+import { cn } from '@apihub/utils/common/cn'
+import { LayoutSpacingContext } from "@apihub/contexts/LayoutSpacingContext"
+import { DEFAULT_LAYOUT_SPACING_CONFIG } from "@netcracker/qubership-apihub-next-data-model/model/abstract/layout"
 import { DEFAULT_DISPLAY_MODE } from "@apihub/constants/configuration";
 import { DisplayModeContext } from "@apihub/contexts/DisplayModeContext";
 import { LayoutModeContext } from "@apihub/contexts/LayoutModeContext";
@@ -74,10 +77,14 @@ const AsyncApiOperationViewerInner: FC<AsyncApiOperationViewerProps> =
         <DisplayModeContext.Provider value={displayMode}>
           <LayoutModeContext.Provider value={DOCUMENT_LAYOUT_MODE}> {/* Now only 1 layout mode is supported */}
             <LevelContext.Provider value={0}>
-              <MessageNodeViewer
-                node={messageNode}
-                noHeading={noHeading}
-              />
+              <LayoutSpacingContext.Provider value={DEFAULT_LAYOUT_SPACING_CONFIG}>
+                <div className={cn('root')}>
+                  <MessageNodeViewer
+                    node={messageNode}
+                    noHeading={noHeading}
+                  />
+                </div>
+              </LayoutSpacingContext.Provider>
             </LevelContext.Provider>
           </LayoutModeContext.Provider>
         </DisplayModeContext.Provider>

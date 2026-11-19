@@ -1,3 +1,4 @@
+import { cn } from "@apihub/utils/common/cn";
 import React from "react";
 import { FC, PropsWithChildren, ReactNode } from "react";
 
@@ -30,7 +31,7 @@ export const Wrapper: FC<WrapperProps> = (props) => {
 
 export class DefaultWrappers {
   public static readonly DivGap2: FC<PropsWithChildren> = ({ children }) => (
-    <div className="flex flex-row items-start gap-2">
+    <div className={cn("flex flex-row items-start gap-2")}>
       {children}
     </div>
   )

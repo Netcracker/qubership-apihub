@@ -1,6 +1,6 @@
 {
   "name": "@netcracker/qubership-apihub-http-spec",
-  "version": "5.6.0",
+  "version": "5.6.1",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Netcracker/qubership-apihub.git",
@@ -135,7 +135,7 @@
     "test:skip": "jest"
   },
   "dependencies": {
-    "@stoplight/json": "^3.18.1",
+    "@stoplight/json": "^3.21.7",
     "@stoplight/json-schema-generator": "1.0.1",
     "@stoplight/types": "^13.20.0",
     "@types/json-schema": "^7.0.15",

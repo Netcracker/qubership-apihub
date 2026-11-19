@@ -5,6 +5,9 @@ description: Review a just-finished api-doc-viewer session for unexpected behavi
 
 # Reviewing an api-doc-viewer session
 
+**CI linters:** load the `api-doc-viewer-ci-linters` skill before you write or change a file of this module.
+CI lints every file a pull request touches as a whole: Markdown, CSS, SQL fixtures, and more.
+
 Use this after finishing a non-trivial task in this module — on request,
 or proactively before ending a session that involved real exploration,
 debugging, or back-and-forth with the user.

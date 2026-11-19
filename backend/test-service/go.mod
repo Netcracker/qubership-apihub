@@ -12,7 +12,7 @@ require (
 
 require (
 	github.com/felixge/httpsnoop v1.1.0 // indirect
-	golang.org/x/sys v0.49.0 // indirect
+	golang.org/x/sys v0.50.0 // indirect
 )
 
 replace github.com/Netcracker/qubership-apihub/backend/commons-go => ../commons-go

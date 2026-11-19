@@ -360,8 +360,8 @@ flowchart TB
 
         subgraph libs ["Rendering web components / libraries (npm @netcracker/*)"]
             direction LR
-            apispec["<b>apispec-view</b><br/>&lt;apispec-view&gt; &lt;operation-view&gt;<br/>&lt;diff-operation-view&gt;"]:::lib
-            docviewer["<b>api-doc-viewer</b><br/>JsonSchemaViewer,<br/>GraphQLOperationViewer (+diff)"]:::lib
+            apispec["<b>apispec-view</b><br/>&lt;apispec-view&gt;<br/>whole OpenAPI documents"]:::lib
+            docviewer["<b>api-doc-viewer</b><br/>OpenAPI, AsyncAPI, GraphQL, DDL<br/>operation viewers (+diff),<br/>JsonSchemaViewer"]:::lib
             playground["<b>rest-playground</b><br/>&lt;rest-playground&gt; TryIt"]:::lib
             classview["<b>class-view</b><br/>UML class diagrams (D3 + ELK)"]:::lib
             processor_ui["<b>api-processor / api-diff / api-unifier</b><br/>client-side build &amp; compare"]:::lib
@@ -1135,20 +1135,19 @@ flowchart TB
     subgraph wc ["Web components (Shadow DOM, React inside)"]
         direction LR
         w1["&lt;apispec-view&gt;"]:::lib
-        w2["&lt;operation-view&gt; / &lt;diff-operation-view&gt;"]:::lib
         w3["&lt;rest-playground&gt; / &lt;rest-examples&gt;"]:::lib
         w4["&lt;class-view-component&gt;"]:::lib
     end
     subgraph react ["React libraries"]
         direction LR
-        rv["JsonSchemaViewer · GraphQLOperationViewer<br/>(+ diff variants) — api-doc-viewer"]:::lib
+        rv["Operation viewers (OpenAPI, AsyncAPI, GraphQL, DDL) ·<br/>JsonSchemaViewer (+ diff variants) — api-doc-viewer"]:::lib
         monaco["Monaco editor 0.52"]:::lib
         graphiql["GraphiQL 3"]:::lib
         md["react-markdown + Mermaid"]:::lib
     end
     portal --> shared
     agents --> shared
-    portal --> w1 & w2 & w3 & w4 & rv & monaco & graphiql & md
+    portal --> w1 & w3 & w4 & rv & monaco & graphiql & md
     classDef comp fill:#3b82f6,stroke:#1e40af,color:#fff
     classDef lib fill:#0d9488,stroke:#0f766e,color:#fff
     style mono fill:#eff6ff,stroke:#2563eb
@@ -1485,10 +1484,10 @@ flowchart LR
 
 | Type | Backend `ApiType` / contract | api-processor builder | `SpecType` (unifier/diff) | Agent runner | Linter | UI rendering |
 |---|---|---|---|---|---|---|
-| OpenAPI 3.0 / 3.1 | `rest` | `restApiBuilder` | `openapi-3.0`, `openapi-3.1` | REST | Spectral + AI | apispec-view, playground, class-view |
+| OpenAPI 3.0 / 3.1 | `rest` | `restApiBuilder` | `openapi-3.0`, `openapi-3.1` | REST | Spectral + AI | api-doc-viewer, apispec-view, playground, class-view |
 | Swagger 2.0 | `rest` (converted) | `restApiBuilder` (swagger2openapi) | → OAS 3 | REST | Spectral + AI | same as OAS |
 | GraphQL | `graphql` | `graphqlApiBuilder` | `graphapi` | GraphQL | — | GraphQLOperationViewer, GraphiQL |
-| AsyncAPI 3 (2.x converted) | `asyncapi` | `asyncApiBuilder` | `asyncapi-3` | AsyncAPI | Spectral | apispec-view |
+| AsyncAPI 3 (2.x converted) | `asyncapi` | `asyncApiBuilder` | `asyncapi-3` | AsyncAPI | Spectral | api-doc-viewer |
 | JSON Schema 04/06/07 | document | via REST/unknown | `json-schema-0x` | JSON Schema | — | JsonSchemaViewer |
 | Markdown / text | document | `textApiBuilder` | — | Markdown | — | MarkdownViewer (+ Mermaid) |
 | Protobuf / gRPC | `protobuf` (stub) | — | — | — | — | raw |

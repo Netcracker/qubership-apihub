@@ -58,7 +58,7 @@ const printStoryFile = (suite, cases) => {
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import {
   ${suite.storyComponent},
-  createJsonSchemaDiffCaseStoryFactoryWithChangedVariant,
+  createJsonSchemaDiffCaseStoryFactory,
   jsonSchemaDiffSampleReadonlyArgTypes,
 } from "./json-schema-diffs-utils";
 import { createSampleById } from "../utils/sample-cases";
@@ -78,7 +78,7 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-const createCaseStory = createJsonSchemaDiffCaseStoryFactoryWithChangedVariant(
+const createCaseStory = createJsonSchemaDiffCaseStoryFactory(
   ${suite.storyComponent},
   sampleById,
 );
@@ -100,7 +100,7 @@ const printTestFile = (suite, cases) => {
         return `
   it("${sampleCase.caseId}", async () => {
     story = await storyPage(page, \`${metaId}--${storySlug}\`);
-    await waitForJsonSchemaDiffsViewer(page, { switchCombinerVariant: true });
+    await waitForJsonSchemaDiffsViewer(page);
     component = await story.viewComponent();
     expect(await component.captureScreenshot()).toMatchImageSnapshot();
   });`;

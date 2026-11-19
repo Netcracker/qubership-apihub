@@ -2,9 +2,16 @@ import {
   type AsyncApiOperationDiffsViewerProps
 } from "@apihub/components/AsyncApiOperationViewer/AsyncApiOperationDiffsViewer";
 import type { ArgTypes } from "@storybook/react-vite";
-import { userEvent, within } from "storybook/test";
 import { TEST_REFERENCE_NAME_PROPERTY } from "../async-api-suite/shared-test-data";
 import { prepareAsyncApiDiffsDocument } from "../preprocess";
+import {
+  AUTO_SWITCH_ARG_TYPES,
+  AUTO_SWITCH_DEFAULT_ARGS,
+  type AutoSwitchArgs,
+  type AutoSwitchParameters,
+  autoSwitchParameters,
+  playAutoSwitch,
+} from "../shared/auto-switch";
 import { parseYamlSource } from "../utils/parse-yaml-source";
 import { TEST_DIFF_META_KEYS } from "../shared/test-diff-meta-keys";
 
@@ -17,7 +24,7 @@ export type AsyncApiDiffSampleCase = {
 export type AsyncApiCaseStoryComponentProps = Pick<
   AsyncApiDiffSampleCase,
   "caseId" | "beforeYaml" | "afterYaml"
->;
+> & AutoSwitchArgs;
 
 export const asyncApiDiffSampleReadonlyArgTypes = {
   beforeYaml: {
@@ -32,6 +39,7 @@ export const asyncApiDiffSampleReadonlyArgTypes = {
     description:
       "After sample YAML for reference. The viewer always uses the bundled fixture for the selected case.",
   },
+  ...AUTO_SWITCH_ARG_TYPES,
 } satisfies Partial<ArgTypes<AsyncApiCaseStoryComponentProps>>;
 
 type AsyncApiCaseStoryArgs = {
@@ -39,7 +47,8 @@ type AsyncApiCaseStoryArgs = {
   args: AsyncApiCaseStoryComponentProps;
   argTypes: typeof asyncApiDiffSampleReadonlyArgTypes;
   render: (args: AsyncApiCaseStoryComponentProps) => JSX.Element;
-  play?: (context: { canvasElement: HTMLElement }) => Promise<void>;
+  parameters: AutoSwitchParameters;
+  play: typeof playAutoSwitch;
 };
 
 export const createAsyncApiSource = (sourceText: string): Record<string, unknown> =>
@@ -74,52 +83,41 @@ export const createAsyncApiViewerArgs = (
   diffMetaKeys: TEST_DIFF_META_KEYS,
 });
 
+/**
+ * One story per sample case. On load, the story selects `sectionTestId` (the message section tab
+ * the suite covers, e.g. `message-channel`) and then every changed selector option
+ * (`playAutoSwitch`).
+ */
 export const createAsyncApiCaseStoryFactory = (
   StoryComponent: (props: AsyncApiCaseStoryComponentProps) => JSX.Element,
   sampleById: Record<string, AsyncApiDiffSampleCase>,
-  playTestId?: string,
-) => {
-  const baseFactory = (caseId: string): AsyncApiCaseStoryArgs => {
-    const sample = sampleById[caseId];
-    if (!sample) {
-      throw new Error(`Sample case not found: ${caseId}`);
-    }
-
-    return {
-      name: caseId,
-      args: {
-        caseId,
-        beforeYaml: sample.beforeYaml,
-        afterYaml: sample.afterYaml,
-      },
-      argTypes: asyncApiDiffSampleReadonlyArgTypes,
-      render: (args) => {
-        const sample = sampleById[args.caseId];
-        return (
-          <StoryComponent
-            caseId={args.caseId}
-            beforeYaml={sample.beforeYaml}
-            afterYaml={sample.afterYaml}
-          />
-        );
-      },
-    };
-  };
-
-  if (playTestId === undefined) {
-    return baseFactory;
+  sectionTestId?: string,
+) => (caseId: string): AsyncApiCaseStoryArgs => {
+  const sample = sampleById[caseId];
+  if (!sample) {
+    throw new Error(`Sample case not found: ${caseId}`);
   }
 
-  return (caseId: string): AsyncApiCaseStoryArgs => ({
-    ...baseFactory(caseId),
-    play: async ({ canvasElement }) => {
-      const canvas = within(canvasElement);
-      const buttons = await canvas.findAllByTestId(playTestId);
-
-      if (buttons.length > 0) {
-        await userEvent.click(buttons[0]);
-      }
+  return {
+    name: caseId,
+    args: {
+      caseId,
+      beforeYaml: sample.beforeYaml,
+      afterYaml: sample.afterYaml,
+      ...AUTO_SWITCH_DEFAULT_ARGS,
     },
-  });
+    argTypes: asyncApiDiffSampleReadonlyArgTypes,
+    render: (args) => {
+      const sample = sampleById[args.caseId];
+      return (
+        <StoryComponent
+          caseId={args.caseId}
+          beforeYaml={sample.beforeYaml}
+          afterYaml={sample.afterYaml}
+        />
+      );
+    },
+    parameters: autoSwitchParameters(sectionTestId === undefined ? [] : [sectionTestId]),
+    play: playAutoSwitch,
+  };
 };
-

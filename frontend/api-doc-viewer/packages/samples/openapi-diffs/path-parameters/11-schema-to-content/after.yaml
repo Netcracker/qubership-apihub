@@ -1,0 +1,19 @@
+openapi: 3.0.3
+info:
+  title: Orders
+  version: 1.0.0
+paths:
+  /orders/{orderId}:
+    post:
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          content:
+            application/json:
+              schema:
+                type: boolean
+                description: Boolean flag.
+      responses:
+        "200":
+          description: ""

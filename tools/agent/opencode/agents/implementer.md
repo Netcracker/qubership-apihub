@@ -97,6 +97,28 @@ answer with `"status": "unrelated"` and change no code. Examples are a flaky or 
 Use `"status": "blocked"` for "I cannot continue", for example when the task needs a decision or information that you
 do not have. Never answer `unrelated` when you have not read the failure, or when the change touches what failed.
 
+## When you are blocked
+
+A `blocked` answer names why you stop in `stopReason`, so that a person sees at once what to do. Pick the first
+reason that fits:
+
+- `risk-found`: the change would risk security, data loss, or compatibility, and a person must accept the risk.
+- `decision-required`: a product or design choice is open, and the issue does not settle it.
+- `context-missing`: the issue lacks information that you need, and a person can supply it.
+- `access-missing`: you lack a permission, a token, or access to a resource.
+- `verification-blocked`: you cannot verify the change, because a check cannot run or its result is not trustworthy.
+- `environment-blocked`: the tools, the runner, or the environment fail, and you cannot go on.
+- `external-dependency`: the work waits on another team, a release, or a change outside this repository.
+- `conflict-unresolved`: a merge conflict or contradicting changes cannot be resolved safely.
+- `scope-review-required`: the change grows beyond the scope of the issue, and a person must confirm the scope.
+- `invalid`: the issue is a duplicate, is already fixed, or describes the intended behavior.
+- `stuck`: you tried and made no progress, for example the same failure again.
+- `disagreement`: you and a check or a reviewer disagree, and a person must settle it.
+- `budget-exhausted`: you cannot finish within the limits of the run (rounds, time, or cost).
+
+`approval-required` is not yours: the script sets it when a pull request waits for a review. Leave `stopReason`
+empty unless the status is `blocked`, and give a reason whenever it is.
+
 ## Your output
 
 End your answer with exactly one fenced `json` block and nothing after it. Every key is required, and no other key is
@@ -111,7 +133,8 @@ allowed:
   "title": "the imperative summary of the commit title, without type and scope, at most 72 characters",
   "verification": "The tests you added or changed and the commands you ran, with their result.",
   "notes": "What you tried, what you learned, and what to try next if CI fails.",
-  "blockedReason": "Blocked: what stops you and what a person must provide. Unrelated: the evidence. Else empty."
+  "blockedReason": "Blocked: what stops you and what a person must provide. Unrelated: the evidence. Else empty.",
+  "stopReason": "Blocked: one reason from the list above. Else an empty string."
 }
 ```
 

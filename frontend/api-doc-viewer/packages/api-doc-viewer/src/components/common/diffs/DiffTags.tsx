@@ -1,3 +1,4 @@
+import { cn } from '@apihub/utils/common/cn'
 import { applyDiffReplaceAlias, applyDiffReplaceAliasBooleanProperty, DiffNodeMeta, DiffNodeValue, inverDiffAction, isDiff, NodeChange } from '@netcracker/qubership-apihub-api-data-model'
 import { Diff } from "@netcracker/qubership-apihub-api-diff"
 import type { FC } from 'react'
@@ -66,7 +67,7 @@ export const DiffTags: FC<DiffTagsProps> = (props) => {
 
   return <>
     {(requiredChanged || nullableChanged || showReadOnly || showWriteOnly || showDeprecated || showDeprecationReason) && (
-      <div className="flex flex-row gap-2 justify-between">
+      <div className={cn("flex flex-row gap-2 justify-between")}>
         {(requiredChanged || nullableChanged) && (
           <DiffBadge
             label={REQUIRED_TAG}

@@ -155,6 +155,9 @@ Detailed rules apply via `.cursor/rules/` and `.claude/rules/` when matching fil
 - Use the next unused numeric prefix; **no duplicate migration numbers**.
 - Provide paired `.up.sql` and `.down.sql` when applicable.
 - After adding migrations, run the migration check script (see `apihub-backend-developer` skill; bash on Linux/WSL/Git Bash, or PowerShell on native Windows).
+- If the new table/entity has a `package_id` column (or another column scoped to a package, e.g. a workspace id or
+  a derived key that embeds the package id), check whether package move needs to handle it too — see
+  [`repository/AGENTS.md`](repository/AGENTS.md#a-new-table-keyed-by-package_id-is-invisible-to-package-move-until-you-add-it-there).
 
 ## Documentation
 

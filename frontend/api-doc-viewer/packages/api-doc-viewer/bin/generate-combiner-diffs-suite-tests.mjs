@@ -33,15 +33,12 @@ mkdirSync(testsOutDir, { recursive: true });
  * @param {ReturnType<typeof listCombinerDiffCases>} cases
  */
 const printTestFile = (suite, cases) => {
-  // allOf has no variant selector (all sub-schemas apply simultaneously) -- nothing to switch.
-  const includesChangedVariantSwitch = suite.combinerKind !== "allOf";
-  const waitOptions = includesChangedVariantSwitch ? ", { switchCombinerVariant: true }" : "";
   const tests = cases
     .map(
       (sampleCase) => `
   it("${sampleCase.caseId}", async () => {
     story = await storyPage(page, \`${suite.metaKebab}--case-${sampleCase.caseId}\`);
-    await waitForJsonSchemaDiffsViewer(page${waitOptions});
+    await waitForJsonSchemaDiffsViewer(page);
     component = await story.viewComponent();
     expect(await component.captureScreenshot()).toMatchImageSnapshot();
   });`,

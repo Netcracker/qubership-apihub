@@ -73,6 +73,7 @@ const triage = (extra = {}) => ({
  */
 function fakeGh({
   targets, checkRuns = red(), statuses = [], logs = { 11: failingLog }, rerunFails = false, noCiOk = false,
+  labels = { 200: ['needs-human:stuck'], 70: ['needs-human:stuck'] },
 }) {
   const calls = []
   let nextId = 1000
@@ -83,6 +84,7 @@ function fakeGh({
   return {
     calls,
     targets,
+    getIssue: async (n) => ({ number: n, labels: (labels[n] ?? []).map((name) => ({ name })) }),
     getPull: async (n) => ({
       number: n,
       state: 'open',
@@ -292,7 +294,8 @@ test('red and change: no rerun, the cost and the check are recorded, the reply s
     assert.ok(reply.includes('Error: expected 1 to be 2'))
     assert.ok(reply.includes('**What I did.** Nothing: the change causes the failure'))
     assert.ok(!reply.includes('/agent retry'), 'a pull request of a person gets no retry hint')
-    assert.ok(reply.includes('this check cost $0.25 · AI cost of this pull request so far: $0.25'))
+    assert.ok(!reply.includes('AI cost of this pull request'), 'the cumulative cost text is gone')
+    assert.ok(reply.endsWith(`<sub>[Run](${RUN})</sub>\n\n<sub>🤖 gpt-6.1-sol medium in=100 cached=50 out=20 usd=0.25</sub>`))
     assert.deepEqual(reactions(ctx.gh), ['eyes', 'rocket'])
 
     // The files of the run.
@@ -432,7 +435,7 @@ test('red and infra on the agent pull request in needs-human: rerun, then the is
     assert.match(ctx.gh.targets[200].comments[0].body, /^<!-- ai-autonomous-state -->\n### AI implementation: waiting for CI on pull request #70/)
     assert.deepEqual(
       ctx.gh.calls.filter((c) => c[0] === 'removeLabel'),
-      [['removeLabel', 200, 'agent:needs-human'], ['removeLabel', 70, 'agent:needs-human']],
+      [['removeLabel', 200, 'needs-human:stuck'], ['removeLabel', 70, 'needs-human:stuck']],
     )
     const [, , reply] = replies(ctx.gh, 70)[0]
     assert.ok(reply.includes('I reran the failed jobs (`ci-ok`, `e2e / smoke`). The CI gate decides again when they end.'))
@@ -552,7 +555,7 @@ test('a broken contract: the reply says so, the cost stays, the reaction is conf
     assert.equal(saved.ciChecks, undefined)
     const [, , reply] = replies(ctx.gh, 123)[0]
     assert.ok(reply.startsWith('@carol, I could not finish the CI check: '))
-    assert.ok(reply.includes('this check cost $0.25'))
+    assert.ok(reply.endsWith('<sub>🤖 gpt-6.1-sol medium in=100 cached=50 out=20 usd=0.25</sub>'))
     assert.deepEqual(reactions(ctx.gh), ['eyes', 'confused'])
     assert.deepEqual(ctx.gh.calls.filter((c) => c[0] === 'rerunFailedJobs'), [])
   })
@@ -584,7 +587,8 @@ test('the cost is added to the state comment that exists, and the human part sta
     assert.match(ctx.gh.targets[123].comments[0].body, /^<!-- ai-autonomous-state -->\nThe review\./)
     const saved = stateOf(ctx.gh.targets, 123)
     assert.deepEqual(saved.costs.map((c) => c.flow), ['review', 'ci-check'])
-    assert.ok(replies(ctx.gh, 123)[0][2].includes('AI cost of this pull request so far: $2.25'))
+    // The signature sums the records of this check only, not the review that cost $2.
+    assert.ok(replies(ctx.gh, 123)[0][2].endsWith('usd=0.25</sub>'))
   })
 })
 
@@ -606,7 +610,7 @@ test('dry run: the model runs, nothing is written, rerun, or reacted with, and t
     assert.ok(summary.includes('> **What I did.** I reran the failed jobs (`ci-ok`, `e2e / smoke`). The CI gate decides again'))
     assert.ok(summary.includes('Would rerun the failed jobs of workflow run(s) 900.'))
     assert.ok(summary.includes('Would put #200 back to `waiting-ci`'))
-    assert.ok(ctx.out('reply.md').includes('this check cost $0.25'))
+    assert.ok(ctx.out('reply.md').endsWith('usd=0.25</sub>'))
   })
 })
 
@@ -650,5 +654,34 @@ test('a comment without an id gets no reactions', async () => {
   await withContext({ checkRuns: [], env: { AGENT_COMMENT_ID: '' } }, async (ctx) => {
     await ciCheck(ctx.env, ctx.deps)
     assert.deepEqual(reactions(ctx.gh), [])
+  })
+})
+
+test('a reply without a model call has no signature, because no cost record exists', async () => {
+  const checkRuns = [checkRun('build', 'success')]
+  await withContext({ checkRuns }, async (ctx) => {
+    assert.equal((await ciCheck(ctx.env, ctx.deps)).outcome, 'green')
+    const [, , reply] = replies(ctx.gh, 123)[0]
+    assert.ok(!reply.includes('🤖'), reply)
+  })
+})
+
+test('a rerun on the agent pull request closes the open stop record and clears the stop labels', async () => {
+  const stops = [{ reason: 'stuck', at: 't0', run: 'r0', on: [200, 70] }]
+  const answer = triage({ verdict: 'infra', confidence: 'high', fixes: [], rootCause: 'The registry returned 503.' })
+  const targets = agentPulls('needs-human', { stops })
+  await withContext({ targets, number: 70, issue: 200, answers: [answer] }, async (ctx) => {
+    await ciCheck(ctx.env, ctx.deps)
+    const issue = stateOf(ctx.gh.targets, 200)
+    assert.equal(issue.stops.length, 1)
+    assert.equal(issue.stops[0].resumedRun, RUN)
+    assert.match(issue.stops[0].resumedAt, /^\d{4}-\d\d-\d\dT/)
+    // The hand-back text is the implementation result: the state comment holds it, and the family owns it.
+    assert.deepEqual(issue.results, [{ family: 'implementation', id: 'state', runs: [] }])
+    assert.deepEqual(
+      ctx.gh.calls.filter((c) => c[0] === 'removeLabel').map((c) => c.slice(1)),
+      [[200, 'needs-human:stuck'], [70, 'needs-human:stuck']],
+    )
+    assert.doesNotMatch(JSON.stringify(ctx.gh.calls), /agent:needs-human/)
   })
 })

@@ -133,6 +133,7 @@ export class JsonSchemaTreeBuilder extends TreeBuilder<
       isSimpleNode: (node) => this.isSimpleTreeNode(node),
       isComplexNode: (node) => this.isComplexTreeNode(node),
       resolveNodeKey: (key, value) => this.resolveNodeKey(key, value),
+      createCycleCloneMeta: (sourceNode, key, parent) => this.createCycleCloneMeta(sourceNode, key, parent),
       isDisallowedValue: (value) => value === undefined || value === null,
       shouldSkipNodeCreation: (value) => isArray(value),
       lazy: this.materializeDepth === undefined
@@ -245,6 +246,15 @@ export class JsonSchemaTreeBuilder extends TreeBuilder<
   ): JsonSchemaTreeNodeMeta {
     const { value, parent } = params
     return this.nodeDataBuilder.buildNodeMeta(value, key, parent, false)
+  }
+
+  /** Meta of a cycle node: the source's schema, with `required` from the cycle node's own parent. */
+  protected createCycleCloneMeta(
+    sourceNode: JsonSchemaTreeNode,
+    key: NodeKey,
+    parent: JsonSchemaTreeNode,
+  ): JsonSchemaTreeNodeMeta {
+    return this.nodeDataBuilder.buildNodeMeta(sourceNode.meta()._fragment, key, parent, true)
   }
 
   protected createNodeValue(

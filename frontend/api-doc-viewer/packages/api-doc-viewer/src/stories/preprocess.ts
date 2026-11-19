@@ -715,3 +715,9 @@ export function prepareJsoDiffsDocument(options: JsoDiffsDocumentOptions): unkno
   storyName && console.debug('[JSO Diffs] Merged source:', mergedSource)
   return mergedSource
 }
+
+/** Plain OpenAPI document as `OpenApiOperationViewer` expects it: `normalize` + `denormalize`, `components` kept. */
+export function prepareOpenApiDocument(source: unknown): unknown {
+  const options: NormalizeOptions = { ...DEFAULT_NORMALIZE_OPTIONS, source }
+  return denormalize(normalize(source, options), options)
+}

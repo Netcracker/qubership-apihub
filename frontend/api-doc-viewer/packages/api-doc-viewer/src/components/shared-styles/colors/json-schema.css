@@ -1,0 +1,19 @@
+/* stylelint-disable selector-class-pattern -- modifier classes shared with TS/TSX */
+
+/* ─── Meta-flag tags (`UxBadge` color schemas). Class names: `consts/tags.ts`. Rendered by
+   `TagsWithDiffs` (JSON Schema properties, the OpenAPI operation `deprecated` tag) and by the legacy
+   GraphQL viewers. ──────────────────────────────────────────────────────────────────────── */
+
+/* readOnly, writeOnly */
+.ux-badge_tag-blue {
+  background-color: #00C1FF;
+  border-color: #00C1FF;
+  color: white;
+}
+
+/* deprecated */
+.ux-badge_tag-amber {
+  background-color: #EF9206;
+  box-shadow: inset 0 0 0 1px #EF9206;
+  color: white;
+}
