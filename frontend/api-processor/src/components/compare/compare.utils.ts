@@ -1,19 +1,3 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import {
   ApiBuilder,
   ApiDocument,
@@ -214,7 +198,8 @@ export function pairByKey<T>(
  * Whether an entity belongs to the document pair being compared, given its document on each side.
  *
  * An entity both versions have belongs only to the pair of its two documents; an added or removed one belongs to
- * the pair holding its document. In any other pair the entity was moved between documents, not changed.
+ * the pair holding its document. Any other pair holds either a copy of the entity in a document that does not own
+ * it, or one side of an entity that moved between documents.
  */
 export function belongsToPair<T>(
   home: { previous?: T; current?: T },
@@ -228,6 +213,19 @@ export function belongsToPair<T>(
   if (isNonNullable(current)) { return current === currentDocument }
   if (isNonNullable(previous)) { return previous === previousDocument }
   return false
+}
+
+/** Whether the compared pair owns the operation; any other pair holds a copy of it or one side of a move. */
+export function isOperationOwnedByPair(
+  { previous, current }: OperationPair,
+  previousDocument: ResolvedVersionDocument | undefined,
+  currentDocument: ResolvedVersionDocument | undefined,
+): boolean {
+  return belongsToPair(
+    { previous: previous?.documentId, current: current?.documentId },
+    previousDocument?.slug,
+    currentDocument?.slug,
+  )
 }
 
 export const createPairOperationsMap = (

@@ -29,6 +29,8 @@ export interface ITree<
     sourceNode: ITreeNode<V, K, M>,
     cloneId: NodeId,
     cloneKey: NodeKey,
+    cloneKind: K,
     cloneParent: ITreeNode<V, K, M> | null,
+    cloneMeta?: M,
   ): ITreeNode<V, K, M>
 }

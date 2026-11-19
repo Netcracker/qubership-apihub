@@ -1,22 +1,7 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import type { CompareResult, Diff } from '@netcracker/qubership-apihub-api-diff'
 import { apiDiff, COMPARE_MODE_OPERATION } from '@netcracker/qubership-apihub-api-diff'
 import { removeComponents } from '@netcracker/qubership-apihub-api-processor'
+import { isGraphApi } from '@netcracker/qubership-apihub-graphapi'
 import { isObject } from 'lodash-es'
 import type { Dispatch, SetStateAction } from 'react'
 import type { OperationChange } from '../entities/operation-changelog'
@@ -43,8 +28,8 @@ export const getApiDiffResult = (options: DiffResultOptions): CompareResult | un
     setApiDiffLoading?.(false)
     return undefined
   }
-  let beforeOperation = removeComponents(beforeData)
-  let afterOperation = removeComponents(afterData)
+  let beforeOperation = removeGraphApiComponents(beforeData)
+  let afterOperation = removeGraphApiComponents(afterData)
 
   if (!beforeData && afterData) {
     beforeOperation = getCopyWithEmptyPath(afterOperation)
@@ -71,6 +56,11 @@ export const getApiDiffResult = (options: DiffResultOptions): CompareResult | un
   // but BE has not yet sent semi-breaking changes
   setTimeout(() => setApiDiffLoading?.(false), 50)
   return diffResult
+}
+
+// OpenAPI / AsyncAPI keep `components`: operation viewers read security scheme definitions (and their diffs) from them
+function removeGraphApiComponents(data: object | undefined): unknown {
+  return isGraphApi(data) ? removeComponents(data) : data
 }
 
 function getCopyWithEmptyPath(template: unknown): unknown {

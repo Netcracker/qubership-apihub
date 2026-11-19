@@ -1,0 +1,29 @@
+openapi: 3.0.3
+info:
+  title: Orders
+  version: 1.0.0
+paths:
+  /orders:
+    post:
+      summary: Update an order
+      responses:
+        "200":
+          description: ""
+          headers:
+            ETag:
+              schema:
+                type: string
+            X-Rate-Limit-Remaining:
+              description: Requests left in the window.
+              schema:
+                type: integer
+        "400":
+          description: ""
+          headers:
+            ETag:
+              schema:
+                type: string
+            X-Rate-Limit-Remaining:
+              description: Requests left in the window.
+              schema:
+                type: integer

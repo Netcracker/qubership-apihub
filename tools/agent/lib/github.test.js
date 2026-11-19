@@ -190,6 +190,13 @@ test('getPull, getIssue, and the file and comment lists use the expected paths',
   )
 })
 
+test('compareCommits reads the comparison of two commits', async () => {
+  const { client, calls } = setup([json({ behind_by: 0, ahead_by: 2 })])
+  assert.deepEqual(await client.compareCommits('develop', 'abc123'), { behind_by: 0, ahead_by: 2 })
+  assert.equal(calls[0].url, 'https://api.github.com/repos/acme/widgets/compare/develop...abc123')
+  assert.equal(calls[0].init.method, 'GET')
+})
+
 test('listPullCommits reads the commits of a pull request', async () => {
   const { client, calls } = setup([json([{ sha: 'a', commit: { message: 'x' } }])])
   assert.deepEqual(await client.listPullCommits(8), [{ sha: 'a', commit: { message: 'x' } }])

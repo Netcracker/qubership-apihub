@@ -4,8 +4,10 @@ import (
 	"context"
 	"net/http"
 	"os"
+	"os/signal"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/Netcracker/qubership-apihub/backend/api-linter-service/client"
@@ -29,6 +31,9 @@ import (
 
 	_ "net/http/pprof"
 )
+
+// olricShutdownTimeout must stay below the pod termination grace period, which is 30 seconds by default.
+const olricShutdownTimeout = 10 * time.Second
 
 func init() {
 	log.SetFormatter(logging.NewFormatter())
@@ -119,6 +124,7 @@ func main() {
 		log.Error("Failed to create olricProvider: " + err.Error())
 		panic("Failed to create olricProvider: " + err.Error())
 	}
+	leaveOlricClusterOnTermination(olricProvider)
 
 	apihubClient, err := client.NewApihubClient(systemInfoService.GetAPIHubUrl(), systemInfoService.GetApihubAccessToken())
 	if err != nil {
@@ -275,6 +281,26 @@ func main() {
 	srv := makeServer(systemInfoService, r)
 
 	log.Fatalf("%v", srv.ListenAndServe())
+}
+
+// leaveOlricClusterOnTermination makes the node leave the Olric cluster before the process exits on SIGTERM or
+// SIGINT. A node that exits without leaving stays in the routing table of the other members until their failure
+// detector notices that it is gone, and cache requests routed to it time out in the meantime.
+func leaveOlricClusterOnTermination(olricProvider client.OlricProvider) {
+	signals := make(chan os.Signal, 1)
+	signal.Notify(signals, syscall.SIGTERM, os.Interrupt)
+	go func() {
+		sig := <-signals
+		log.Infof("Received signal %s, leaving the Olric cluster", sig)
+		ctx, cancel := context.WithTimeout(context.Background(), olricShutdownTimeout)
+		err := olricProvider.Shutdown(ctx)
+		cancel()
+		if err != nil {
+			log.Errorf("Failed to leave the Olric cluster: %v", err)
+			os.Exit(1)
+		}
+		os.Exit(0)
+	}()
 }
 
 func makeServer(systemInfoService service.SystemInfoService, r *mux.Router) *http.Server {

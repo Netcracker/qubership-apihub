@@ -18,7 +18,8 @@ A task issue says what to achieve, rarely how to check it. Start by writing that
 4. **Check.** Run the module's tests and build through Nx (`pnpm exec nx run <project>:test`, `:build`). For a
    documentation change, follow `english-developer-style` and `markdown-line-length-120`, and keep links resolvable.
 5. **Follow-ups in the same change**, as for a bug: OpenAPI and Postman for a REST change, Helm, Compose, and
-   `docs/configuration-reference.md` for configuration, the migration rule for SQL.
+   `docs/configuration-reference.md` for configuration, the migration rule for SQL. When the issue makes a decision
+   that needs an ADR (`apihub-adr`), the ADR is one of the done criteria; write it with the status `Proposed`.
 
 ## The commit type
 

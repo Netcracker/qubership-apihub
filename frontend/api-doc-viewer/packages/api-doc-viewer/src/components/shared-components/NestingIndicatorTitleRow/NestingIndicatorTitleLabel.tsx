@@ -1,3 +1,4 @@
+import { cn } from "@apihub/utils/common/cn"
 import { FC, memo, ReactNode } from "react"
 
 type NestingIndicatorTitleLabelProps = {
@@ -9,7 +10,7 @@ export const NestingIndicatorTitleLabel: FC<NestingIndicatorTitleLabelProps> = m
 
   return (
     <div
-      className="nesting-indicator-title-label text-xs text-slate-400 border-b border-slate-400 w-max pt-1"
+      className={cn("nesting-indicator-title-label text-xs text-slate-400 border-b border-slate-400 w-max pt-1")}
       style={{ marginLeft: "-1px" }}
     >
       {title}

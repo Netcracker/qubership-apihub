@@ -1,5 +1,4 @@
 import { DisplayMode } from "@apihub/next-data-model/model/abstract/display-mode"
-import { isDetailedDisplayMode } from "@apihub/next-data-model/model/abstract/guards/display-mode"
 import { JsonSchemaTreeNodeWithDiffs } from "@apihub/next-data-model/model/json-schema/types/aliases"
 import { JsonSchemaTreeNodeKinds } from "@apihub/next-data-model/model/json-schema/types/node-kind"
 import {
@@ -9,9 +8,8 @@ import {
   JSON_SCHEMA_VALIDATION_ROW_SOURCE_KEYS,
   JsonSchemaValidationRowKey,
 } from "@apihub/next-data-model/model/json-schema/tree-with-diffs/validation-row-source-keys"
-import { resolveValidationKeysForType } from "@apihub/next-data-model/model/json-schema/validation-keys"
-import { asJsonSchemaTypedNodeValue } from "@apihub/next-data-model/shared/json-schema/guards/schema-value"
 import {
+  JsonSchemaPropertyContentRowPresence,
   PlainPropertyNodeVisibilityManager,
   resolvePlainPropertyAdditionalInfoRowUsesAfterRowPrecededBy,
   resolvePlainPropertyListLastRowFlags,
@@ -23,10 +21,6 @@ import type {
 } from "../../tree/node-visibility-data/types"
 
 const plainPropertyNodeVisibilityManager = new PlainPropertyNodeVisibilityManager()
-
-function hasDefinedValue(value: unknown): boolean {
-  return value !== undefined && value !== null
-}
 
 function hasValidationRowDiffs(
   node: JsonSchemaTreeNodeWithDiffs<typeof JsonSchemaTreeNodeKinds.PROPERTY>,
@@ -44,54 +38,30 @@ export class JsonSchemaNodeVisibilityManagerKindProperty {
     displayMode: DisplayMode,
   ): JsonSchemaPropertyRowVisibility {
     const value = node.value()
-    const typedValue = asJsonSchemaTypedNodeValue(value)
-    const plainVisibility = plainPropertyNodeVisibilityManager.resolveNodeVisibility(value, displayMode)
-    const detailed = isDetailedDisplayMode(displayMode)
-
-    const showDescription = detailed
-      && (!!typedValue?.description || !!node.diffs.description)
-    const showEnumValuesRow = detailed && (
-      plainVisibility.showEnumValuesRow
-      || !!JsonSchemaRowDiffs.Enum.takeDiff(node)
-      || !!JsonSchemaRowDiffs.Enum.takeValueDiffs(node)
-      || !!JsonSchemaRowDiffs.Enum.takeRowColorizingDiff(node)
-    )
-    const showDefaultRow = detailed && (
-      hasDefinedValue(typedValue?.default)
-      || !!JsonSchemaRowDiffs.Default.takeDiff(node)
-      || !!JsonSchemaRowDiffs.Default.takeRowColorizingDiff(node)
-    )
-    const showExamplesRow = detailed && (
-      plainVisibility.showExamplesRow
-      || !!JsonSchemaRowDiffs.Examples.takeDiff(node)
-      || !!JsonSchemaRowDiffs.Examples.takeValueDiffs(node)
-      || !!JsonSchemaRowDiffs.Examples.takeRowColorizingDiff(node)
-    )
-    const showValidationsSection = detailed && (
-      resolveValidationKeysForType(value).length > 0
-      || hasValidationRowDiffs(node)
-    )
-    const showCustomAnnotationsRow = detailed && (
-      plainVisibility.showCustomAnnotationsRow
-      || JsonSchemaRowDiffs.CustomAnnotations.hasAnyDiff(node)
-    )
-    const showAnyAdditionalInfoRow = showDefaultRow || showExamplesRow || showEnumValuesRow
-      || showValidationsSection || plainVisibility.showExtensionsRow || showCustomAnnotationsRow
-    const showContentSection = showDescription
-      || plainVisibility.showDeprecationReasonRow
-      || showAnyAdditionalInfoRow
-
-    return {
-      ...plainVisibility,
-      showDescription,
-      showDefaultRow,
-      showExamplesRow,
-      showEnumValuesRow,
-      showValidationsSection,
-      showCustomAnnotationsRow,
-      showContentSection,
-      showAnyAdditionalInfoRow,
+    const plainPresence = plainPropertyNodeVisibilityManager.resolveRowPresence(value)
+    // A row also shows when only its diff exists (the value is gone on the merged side).
+    const presence: JsonSchemaPropertyContentRowPresence = {
+      ...plainPresence,
+      description: plainPresence.description || !!node.diffs.description,
+      enumValues: plainPresence.enumValues
+        || !!JsonSchemaRowDiffs.Enum.takeDiff(node)
+        || !!JsonSchemaRowDiffs.Enum.takeValueDiffs(node)
+        || !!JsonSchemaRowDiffs.Enum.takeRowColorizingDiff(node),
+      default: plainPresence.default
+        || !!JsonSchemaRowDiffs.Default.takeDiff(node)
+        || !!JsonSchemaRowDiffs.Default.takeRowColorizingDiff(node),
+      examples: plainPresence.examples
+        || !!JsonSchemaRowDiffs.Examples.takeDiff(node)
+        || !!JsonSchemaRowDiffs.Examples.takeValueDiffs(node)
+        || !!JsonSchemaRowDiffs.Examples.takeRowColorizingDiff(node),
+      validations: plainPresence.validations || hasValidationRowDiffs(node),
+      customAnnotations: plainPresence.customAnnotations || JsonSchemaRowDiffs.CustomAnnotations.hasAnyDiff(node),
     }
+    return plainPropertyNodeVisibilityManager.resolveVisibilityFromPresence(
+      presence,
+      plainPropertyNodeVisibilityManager.resolveDeprecationReason(value),
+      displayMode,
+    )
   }
 
   public resolveListLastRowFlags(

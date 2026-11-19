@@ -1,19 +1,4 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+import { cn } from '@apihub/utils/common/cn'
 import {
   DiffNodeMeta,
   DiffNodeValue,
@@ -125,7 +110,7 @@ export const GraphPropNodeBody: FC<GraphPropNodeBodyProps> = (props) => {
   const reserveExpanderSpace = isRoot || isOperation
 
   return (
-    <div className="flex flex-col">
+    <div className={cn("flex flex-col")}>
       {!isDisabledHeaderRow && (
         <HeaderRow
           shift={isOperation}
@@ -167,9 +152,9 @@ export const GraphPropNodeBody: FC<GraphPropNodeBodyProps> = (props) => {
 
       {/* Content */}
       {isDetailedDisplayMode && expanded && hasContent && (
-        <div data-name="Body" className="flex flex-col grow">
+        <div data-name="Body" className={cn("flex flex-col grow")}>
           {hasValidationsOrAnnotations && (
-            <div data-name="Content" className="flex flex-col">
+            <div data-name="Content" className={cn("flex flex-col")}>
               {/* TODO 01.11.23 // "shift" is a WA, find way better */}
               <Annotations
                 shift={reserveExpanderSpace}

@@ -150,7 +150,7 @@ jobs:
       # dependencies. Nx loads the @nx/maven plugin for every command, so Java 21 and Maven are
       # needed even here (Maven comes with the runner image).
       - if: steps.need.outputs.any == 'true'
-        uses: pnpm/action-setup@v6.1.0
+        uses: pnpm/action-setup@v6.1.1
         with:
           run_install: false
 

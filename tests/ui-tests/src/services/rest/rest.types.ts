@@ -12,6 +12,7 @@ export type RestPublishConfig = {
   packageId: string
   version: string
   previousVersion?: string
+  previousVersionPackageId?: string
   status: VersionStatuses
   refs?: { refId: string; version: string }[] | []
   files?: RestPublishFile[]

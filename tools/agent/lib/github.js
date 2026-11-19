@@ -193,6 +193,8 @@ function createClient({
   }
 
   const getPull = (n) => request('GET', `/repos/{repo}/pulls/${n}`)
+  /** The comparison of two commits: `behind_by` is the number of commits `base` has that `head` lacks. */
+  const compareCommits = (base, head) => request('GET', `/repos/{repo}/compare/${base}...${head}`)
   const listPullFiles = (n) => paginate(`/repos/{repo}/pulls/${n}/files`)
   const listPullCommits = (n) => paginate(`/repos/{repo}/pulls/${n}/commits`)
   const getIssue = (n) => request('GET', `/repos/{repo}/issues/${n}`)
@@ -379,6 +381,7 @@ function createClient({
     searchIssues,
     graphql,
     getPull,
+    compareCommits,
     listPullFiles,
     listPullCommits,
     getIssue,

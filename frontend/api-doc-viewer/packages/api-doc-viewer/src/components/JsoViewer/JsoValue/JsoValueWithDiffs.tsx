@@ -1,3 +1,4 @@
+import { cn } from "@apihub/utils/common/cn"
 import { HighlightVariant } from "@apihub/next-data-model/model/abstract/tree-with-diffs/tree-node.interface"
 import { FC, memo } from "react"
 import { JsoValueBase } from "./JsoValueBase"
@@ -30,7 +31,7 @@ export const JsoValueWithDiffs: FC<JsoValueWithDiffsProps> = memo<JsoValueWithDi
     <JsoValueBase
       isVisible={isVisible}
       value={value}
-      className={className}
+      className={cn(className)}
     />
   )
 })

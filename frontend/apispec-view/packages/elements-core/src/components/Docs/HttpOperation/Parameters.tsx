@@ -1,18 +1,12 @@
-import { JsonSchemaViewer } from '@netcracker/qubership-apihub-api-doc-viewer';
 import { useOperationSchemaOptionsMode } from '../../../index';
 import { HttpParamStyles, IHttpContent, IHttpParam } from '@stoplight/types';
 import type { JSONSchema7Object } from 'json-schema';
-import { JsonSchemaViewer as OldJsonSchemaViewer } from '@netcracker/qubership-apihub-apispec-view-json-schema-viewer';
+import { JsonSchemaViewer } from '@netcracker/qubership-apihub-apispec-view-json-schema-viewer';
 import { isObject, sortBy } from 'lodash';
 import * as React from 'react';
 
-import { JSON_SCHEMA_VIEWER_CUSTOMIZATION_OPTIONS } from '../../../constants';
 import { isNodeExample } from '../../../utils/http-spec/examples';
 import {useMemo} from "react";
-
-type ParameterKey = string
-type ParameterMediaType = string
-type ParametersMediaTypeMap = Record<ParameterKey, ParameterMediaType> | undefined
 
 type ParameterType = 'query' | 'header' | 'path' | 'cookie';
 
@@ -43,29 +37,20 @@ const defaultStyle = {
 } as const;
 
 export const Parameters: React.FunctionComponent<ParametersProps> = ({ parameters, parameterType }) => {
-  // FIXME 18.06.24 // Get rid of "parametersMediaTypes" when future wonderful AMT+ADV are ready!
-  const [schema, parametersMediaTypes] = useMemo(
+  const schema = useMemo(
     () => httpOperationParamsToSchema({ parameters, parameterType }),
     [parameters, parameterType],
   );
-  const { schemaViewMode, defaultSchemaDepth, oldRenderer } = useOperationSchemaOptionsMode();
+  const { schemaViewMode, defaultSchemaDepth } = useOperationSchemaOptionsMode();
 
   if (!schema) return null;
 
-  return oldRenderer ? (
-    <OldJsonSchemaViewer
+  return (
+    <JsonSchemaViewer
       schema={schema}
       schemaViewMode={schemaViewMode}
       defaultExpandedDepth={defaultSchemaDepth}
       disableCrumbs
-    />
-  ) : (
-    <JsonSchemaViewer
-      schema={schema}
-      displayMode={schemaViewMode}
-      expandedDepth={defaultSchemaDepth}
-      customizationOptions={JSON_SCHEMA_VIEWER_CUSTOMIZATION_OPTIONS}
-      topLevelPropsMediaTypes={parametersMediaTypes}
     />
   );
 };
@@ -73,9 +58,9 @@ Parameters.displayName = 'HttpOperation.Parameters';
 
 const httpOperationParamsToSchema = (
   { parameters, parameterType }: ParametersProps
-): [JSONSchema7Object | null, ParametersMediaTypeMap] => {
+): JSONSchema7Object | null => {
   if (!parameters || !parameters.length) {
-    return [null, undefined];
+    return null;
   }
 
   const schema = {
@@ -83,7 +68,6 @@ const httpOperationParamsToSchema = (
     properties: {},
     required: [],
   };
-  let parametersMediaTypesMap: ParametersMediaTypeMap = undefined
 
   const sortedParams = sortBy(parameters, ['required', 'name']);
 
@@ -97,10 +81,7 @@ const httpOperationParamsToSchema = (
     if (isObject(paramContent) && paramContent !== paramSchema) {
       const paramContentKeys = Object.keys(paramContent);
       if (paramContentKeys.length > 0) {
-        const mediaType = paramContentKeys[0]
-        paramSchema = paramContent[mediaType].schema
-        parametersMediaTypesMap ??= {}
-        parametersMediaTypesMap[p.name] = mediaType
+        paramSchema = paramContent[paramContentKeys[0]].schema
       }
     }
 
@@ -135,5 +116,5 @@ const httpOperationParamsToSchema = (
     }
   }
 
-  return [schema, parametersMediaTypesMap];
+  return schema;
 };

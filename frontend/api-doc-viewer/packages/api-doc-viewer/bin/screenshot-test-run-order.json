@@ -1,0 +1,136 @@
+[
+  {
+    "testRun": "jso-suite",
+    "storybookTitle": "JSO Suite"
+  },
+  {
+    "testRun": "jso-diffs-suite",
+    "storybookTitle": "JSO Diffs Suite"
+  },
+  {
+    "testRun": "jso-diffs-hiding-unchanged-nodes-suite",
+    "storybookTitle": "JSO Diffs Suite (Hiding Unchanged Nodes)"
+  },
+  {
+    "testRun": "json-schema-suite",
+    "storybookTitle": "JSON Schema Suite"
+  },
+  {
+    "testRun": "json-schema-extensions-suite",
+    "storybookTitle": "JSON Schema Suite (Extensions)"
+  },
+  {
+    "testRun": "json-schema-display-mode-simple-suite",
+    "storybookTitle": "JSON Schema Suite (Display Mode = simple)"
+  },
+  {
+    "testRun": "json-schema-diffs-suite",
+    "storybookTitle": "JSON Schema Diffs Suite"
+  },
+  {
+    "testRun": "json-schema-diffs-extensions-suite",
+    "storybookTitle": "JSON Schema Diffs Suite (Extensions)"
+  },
+  {
+    "testRun": "json-schema-diffs-hiding-unchanged-nodes-suite",
+    "storybookTitle": "JSON Schema Diffs Suite (Hiding Unchanged Nodes)"
+  },
+  {
+    "testRun": "json-schema-diffs-node-changes-summary-suite",
+    "storybookTitle": "JSON Schema Diffs Suite (Node Changes Summary)"
+  },
+  {
+    "testRun": "json-schema-diffs-display-mode-simple-suite",
+    "storybookTitle": "JSON Schema Diffs Suite (Display Mode = simple)"
+  },
+  {
+    "testRun": "async-api-suite",
+    "storybookTitle": "Async API Suite"
+  },
+  {
+    "testRun": "async-api-display-mode-simple-suite",
+    "storybookTitle": "Async API Suite (Display Mode = simple)"
+  },
+  {
+    "testRun": "async-api-diffs-suite",
+    "storybookTitle": "Async API Diffs Suite"
+  },
+  {
+    "testRun": "async-api-diffs-display-mode-simple-suite",
+    "storybookTitle": "Async API Diffs Suite (Display Mode = simple)"
+  },
+  {
+    "testRun": "openapi-suite",
+    "storybookTitle": "OpenAPI Operation Suite"
+  },
+  {
+    "testRun": "openapi-arrow-buttons-suite",
+    "storybookTitle": "OpenAPI Operation Suite (Arrow Buttons)"
+  },
+  {
+    "testRun": "openapi-display-mode-simple-suite",
+    "storybookTitle": "OpenAPI Operation Suite (Display Mode = simple)"
+  },
+  {
+    "testRun": "openapi-diffs-suite",
+    "storybookTitle": "OpenAPI Operation Diffs Suite"
+  },
+  {
+    "testRun": "openapi-diffs-hiding-unchanged-nodes-suite",
+    "storybookTitle": "OpenAPI Operation Diffs Suite (Hiding Unchanged Nodes)"
+  },
+  {
+    "testRun": "openapi-diffs-arrow-buttons-suite",
+    "storybookTitle": "OpenAPI Operation Diffs Suite (Arrow Buttons)"
+  },
+  {
+    "testRun": "openapi-diffs-display-mode-simple-suite",
+    "storybookTitle": "OpenAPI Operation Diffs Suite (Display Mode = simple)"
+  },
+  {
+    "testRun": "openapi-compatibility-suite-30-30",
+    "storybookTitle": "OpenAPI Compatibility Suite/OAS 3.0 vs OAS 3.0",
+    "compatibility": true
+  },
+  {
+    "testRun": "openapi-compatibility-suite-30-31",
+    "storybookTitle": "OpenAPI Compatibility Suite/OAS 3.0 vs OAS 3.1",
+    "compatibility": true
+  },
+  {
+    "testRun": "openapi-compatibility-suite-31-30",
+    "storybookTitle": "OpenAPI Compatibility Suite/OAS 3.1 vs OAS 3.0",
+    "compatibility": true
+  },
+  {
+    "testRun": "openapi-compatibility-suite-31-31",
+    "storybookTitle": "OpenAPI Compatibility Suite/OAS 3.1 vs OAS 3.1",
+    "compatibility": true
+  },
+  {
+    "testRun": "ddlapi-suite",
+    "storybookTitle": "DDL API Suite"
+  },
+  {
+    "testRun": "ddlapi-display-mode-simple-suite",
+    "storybookTitle": "DDL API Suite (Display Mode = simple)"
+  },
+  {
+    "testRun": "ddlapi-diffs-suite",
+    "storybookTitle": "DDL API Diffs Suite"
+  },
+  {
+    "testRun": "ddlapi-diffs-display-mode-simple-suite",
+    "storybookTitle": "DDL API Diffs Suite (Display Mode = simple)"
+  },
+  {
+    "testRun": "ddlapi-compatibility-suite",
+    "storybookTitle": "DDL API Compatibility Suite",
+    "compatibility": true
+  },
+  {
+    "testRun": "graphql-compatibility-suite",
+    "storybookTitle": "GraphQL Compatibility Suite",
+    "compatibility": true
+  }
+]

@@ -29,7 +29,9 @@ type CycleCloneFactory<
     sourceNode: N,
     cloneId: NodeId,
     cloneKey: NodeKey,
+    cloneKind: K,
     cloneParent: N | null,
+    cloneMeta?: M,
   ) => N
 }
 
@@ -74,6 +76,11 @@ export interface TreeBuildingHooksFactoryParams<
   isSimpleNode: (node: N) => boolean
   isComplexNode: (node: N) => boolean
   resolveNodeKey: (key: NodeKey, value: unknown) => NodeKey
+  /**
+   * The meta of a cycle node at its own position, for an API type whose meta depends on the
+   * position (JSON Schema `required`). Without it, the cycle node copies the source's meta.
+   */
+  createCycleCloneMeta?: (source: N, key: NodeKey, parent: N) => M
   isDisallowedValue?: (value: unknown) => boolean
   /** When true, descend into value without creating a tree node (legacy JSON Schema tuple `items`). */
   shouldSkipNodeCreation?: (value: unknown, rules: R) => boolean
@@ -116,17 +123,31 @@ export function createTreeBuildingHooks<
     isSimpleNode,
     isComplexNode,
     resolveNodeKey,
+    createCycleCloneMeta,
     isDisallowedValue = defaultIsDisallowedValue,
     shouldSkipNodeCreation,
     shouldStopAfterNodeCreation,
     lazy,
   } = params;
 
-  const preventInfiniteLoopHook: SyncCrawlHook<S, R> = ({ value, state, key, path }) => {
+  // A transformer may return a copy of the crawled value (`transformJsonSchemaExtensions` copies
+  // every schema with an extension). The cycle guard looks up the raw value, so the ancestors and
+  // the lazy fragments are keyed by the raw value the copy came from.
+  const rawValuesOfCopies = new WeakMap<object, object>();
+  const resolveRawValue = (value: object): object => rawValuesOfCopies.get(value) ?? value;
+
+  const preventInfiniteLoopHook: SyncCrawlHook<S, R> = ({ value, state, key, path, rules }) => {
     if (typeof key === "symbol") {
       return;
     }
     if (!isObject(value) && !isArray(value)) {
+      return { value };
+    }
+    // A cycle is shown as a node, so only a position that holds a node can be one; elsewhere
+    // `createNodesHook` decides. Below a transformer's wrapper (`{ rawValues: value }`,
+    // `{ schema: value }`) the crawl meets the raw value its node is registered by: not a cycle.
+    const cloneKind = rules?.kind;
+    if (!cloneKind || !supportedNodeKinds.includes(cloneKind)) {
       return { value };
     }
 
@@ -148,7 +169,10 @@ export function createTreeBuildingHooks<
 
     const nodeId = buildNodeId(pathPrefix, path);
     const nodeKey = resolveNodeKey(key, value);
-    const cycledClone = tree.createCycledClone(alreadyExisted, nodeId, nodeKey, parent);
+    // The clone repeats the source at another position, so it takes that position's kind (an
+    // `items` badge, a property title) and position-dependent meta, not the source's.
+    const cloneMeta = createCycleCloneMeta?.(alreadyExisted, nodeKey, parent);
+    const cycledClone = tree.createCycledClone(alreadyExisted, nodeId, nodeKey, cloneKind, parent, cloneMeta);
     if (container) {
       container.addNestedNode(cycledClone);
     } else if (parent) {
@@ -167,6 +191,9 @@ export function createTreeBuildingHooks<
       (accumulatedTransformedValue, transform) => transform(key, accumulatedTransformedValue, source, path, state),
       value
     );
+    if (transformedValue !== value && isObject(value) && isObject(transformedValue)) {
+      rawValuesOfCopies.set(transformedValue, resolveRawValue(value));
+    }
 
     return { value: transformedValue };
   };
@@ -205,8 +232,11 @@ export function createTreeBuildingHooks<
       parent.addChildNode(treeNode);
     }
 
-    if (lazy && (isObject(value) || isArray(value))) {
-      lazy.state.rememberFragment(nodeId, value as object);
+    const shouldTrackAncestor = isObject(value) || isArray(value);
+    const ancestorKey = shouldTrackAncestor ? resolveRawValue(value as object) : value;
+
+    if (lazy && shouldTrackAncestor) {
+      lazy.state.rememberFragment(nodeId, ancestorKey as object);
     }
 
     // TODO 22.05.2026 // This is NOT shared logic! It's only diffs-related logic!
@@ -250,9 +280,8 @@ export function createTreeBuildingHooks<
       });
     }
 
-    const shouldTrackAncestor = isObject(value) || isArray(value);
     if (shouldTrackAncestor) {
-      ancestors.enter(value, treeNode);
+      ancestors.enter(ancestorKey, treeNode);
     }
 
     let newState: S;
@@ -273,7 +302,7 @@ export function createTreeBuildingHooks<
       return {
         done: true,
         exitHook: shouldTrackAncestor
-          ? () => { ancestors.leave(value) }
+          ? () => { ancestors.leave(ancestorKey) }
           : undefined,
       };
     }
@@ -282,7 +311,7 @@ export function createTreeBuildingHooks<
       value: nextCrawlValue,
       state: newState,
       exitHook: shouldTrackAncestor
-        ? () => { ancestors.leave(value) }
+        ? () => { ancestors.leave(ancestorKey) }
         : undefined,
     };
   };

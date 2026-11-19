@@ -1,3 +1,4 @@
+import { cn } from "@apihub/utils/common/cn"
 import { BadgeWithDiffs } from "@apihub/components/shared-components/diffs/BadgeWithDiffs"
 import { useLayoutMode } from "@apihub/contexts/LayoutModeContext"
 import { LayoutSide, ORIGIN_LAYOUT_SIDE } from "@apihub/types/internal/LayoutSide"
@@ -20,7 +21,7 @@ import { ColumnRowBadgesContentProps, ColumnRowBadgesFlagDiffs } from "./types"
 
 /** Keeps side-by-side columns aligned when a flag badge is hidden on one side. */
 function emptyBadgePlaceholder(): ReactNode {
-  return <span className="inline-block min-h-[19px]" aria-hidden="true" />
+  return <span className={cn("inline-block min-h-[19px]")} aria-hidden="true" />
 }
 
 function isFlagBadgeVisible(
@@ -99,7 +100,7 @@ function renderForeignKeyTargetBadge(options: {
   const textHighlighterColor = style.textHighlighterColor
 
   if (targetDiff && !isContentVisibleOnSide(targetDiff, layoutSide)) {
-    return <span key={badgeKey} className="inline-block min-h-[19px]" aria-hidden="true" />
+    return <span key={badgeKey} className={cn("inline-block min-h-[19px]")} aria-hidden="true" />
   }
 
   if (!targetDiff) {
@@ -121,7 +122,7 @@ function renderForeignKeyTargetBadge(options: {
   const diff = targetDiff.data
 
   return (
-    <div key={badgeKey} className="ddlapi-foreign-key inline-flex flex-row items-center gap-1">
+    <div key={badgeKey} className={cn("ddlapi-foreign-key inline-flex flex-row items-center gap-1")}>
       <BadgeWithDiffs
         label="FK"
         colorSchema={DDL_API_FOREIGN_KEY_BADGE_COLOR_SCHEMA}
@@ -239,7 +240,7 @@ export const ColumnRowBadgesContent: FC<ColumnRowBadgesContentProps> = memo<Colu
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className={cn("flex flex-wrap items-center gap-2")}>
       {badges}
     </div>
   )

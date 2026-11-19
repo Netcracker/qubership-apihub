@@ -1,0 +1,4 @@
+name: api-doc-viewer-feature-test-plan
+version: 1.0.0
+description: Build a manual end-to-end QA test plan for an api-doc-viewer feature or fix in a branch — interview, analysis of the change, packed test data, case lists, backlog retest, results sheet, and the QA start page.
+author: Qubership APIHUB

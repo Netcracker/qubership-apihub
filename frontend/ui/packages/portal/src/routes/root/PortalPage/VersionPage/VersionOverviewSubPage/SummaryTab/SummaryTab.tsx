@@ -1,19 +1,3 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import { getOverviewPath } from '@portal/routes/NavigationProvider'
 import { Box, Link, Typography } from '@mui/material'
 import { CustomChip } from '@netcracker/qubership-apihub-ui-shared/components/CustomChip'
@@ -43,7 +27,7 @@ import { getSplittedVersionKey } from '@netcracker/qubership-apihub-ui-shared/ut
 import type { FC, ReactNode } from 'react'
 import { memo, useMemo } from 'react'
 import { NavLink, useParams } from 'react-router-dom'
-import { OVERVIEW_PAGE, REVISION_HISTORY_PAGE } from '../../../../../../routes'
+import { REVISION_HISTORY_PAGE } from '../../../../../../routes'
 import { usePackageVersionContent } from '../../../../usePackageVersionContent'
 import { useDocuments } from '../../useDocuments'
 import { ContractsSummary } from './ContractsSummary'
@@ -195,9 +179,7 @@ export const SummaryTab: FC = memo(() => {
           <Typography sx={{ gridArea: 'revisionsCount' }} variant="body2" data-testid="RevisionTypography">
             <Link
               component={NavLink}
-              to={{
-                pathname: `./${OVERVIEW_PAGE}/${REVISION_HISTORY_PAGE}`,
-              }}
+              to={getOverviewPath({ packageKey: packageId!, versionKey: versionId!, tab: REVISION_HISTORY_PAGE })}
             >
               {revisionsCount}
             </Link>

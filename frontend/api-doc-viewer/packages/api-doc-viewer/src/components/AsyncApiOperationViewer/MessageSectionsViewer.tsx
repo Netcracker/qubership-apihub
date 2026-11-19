@@ -1,3 +1,4 @@
+import { cn } from "@apihub/utils/common/cn"
 import { useDisplayMode } from "@apihub/contexts/DisplayModeContext";
 import { useLayoutMode } from "@apihub/contexts/LayoutModeContext";
 import { CHANGED_LAYOUT_SIDE, LayoutSide, ORIGIN_LAYOUT_SIDE } from "@apihub/types/internal/LayoutSide";
@@ -15,7 +16,7 @@ import { SideBySideLayout } from "../shared-components/Layout/SideBySideLayout";
 import { ATTRIBUTE_PRECEDED_BY, PrecededBy, WithPrecededByProps } from "../shared-components/WithPrecededByProps";
 import { isMessageSectionNodeWithDiffs, isMessageSectionSelectorNodeWithDiffs } from "../shared-utilities/tree-node-guards";
 import '../shared-styles/preceded-by.css';
-import { X_AXIS_PADDING_ROWS_ASYNC_API } from "../shared-styles/tailwind-classnames";
+import { X_AXIS_PADDING_ROWS } from "../shared-styles/tailwind-classnames";
 import { MessageSectionViewer } from "./MessageSectionViewer";
 import { Selector, SelectorOption } from "@apihub/components/shared-components/Selector/Selector"
 import { SelectorVariant } from "@apihub/components/shared-components/Selector/types"
@@ -108,7 +109,7 @@ export const MessageSectionsViewer: FC<MessageSectionsViewerProps> = (props) => 
     return (
       <div
         data-precededby={precededBy}
-        className={`message-sections-selector ${X_AXIS_PADDING_ROWS_ASYNC_API} h-full ${Array.from(diffsStyles).join(' ')}`}
+        className={cn(`message-sections-selector ${X_AXIS_PADDING_ROWS} w-full h-full ${Array.from(diffsStyles).join(' ')}`)}
       >
         <Selector
           options={sectionSelectorOptions}
@@ -147,7 +148,7 @@ export const MessageSectionsViewer: FC<MessageSectionsViewerProps> = (props) => 
   }, [diffType, diffTypeCause, layoutMode, renderSelector])
 
   return (
-    <div className="flex flex-col">
+    <div className={cn("flex flex-col")}>
       {renderSelectorRow()}
       {selectedSection && isMessageSectionNode(selectedSection.node) && (
         <div data-testid={`${selectedSection.testId}-section`}>

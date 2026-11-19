@@ -71,6 +71,12 @@ Rules:
   (`DefaultRow`, `EnumRow`, `ExamplesRow`, `ValueLengthRow`, `ValuePatternRow`, `ValueRangeRow`,
   `ValueMultipleOfRow`, `PropertiesCountRow`, `ItemsCountRow`, `UniqueItemsRow`), built only from
   that row's own diffs.
+- **`example` is the Examples row.** A schema with the `example` keyword (OAS 3.0, AsyncAPI) and
+  no own `examples` shows that value as the single Examples item (`transformExample`), so the
+  `example` diff drives the row: add / remove is a whole-row add / remove (value on one side only),
+  replace is a yellow row with item `0` replaced. With an own `examples` list an `example` change
+  has no row. A change nested inside a complex example value stays unmarked, as for an `examples`
+  item. Unit tests: `json-schema-example-keyword-diffs.test.ts`.
 - **Every node kind is diffed.** `items`, `additionalProperties`, and combiner variants get the same
   row diffs as properties.
 - **Diff-only rows.** A row whose fields exist only on one side (for example after a type change)

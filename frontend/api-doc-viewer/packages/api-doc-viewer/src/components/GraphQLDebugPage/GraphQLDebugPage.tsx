@@ -1,19 +1,4 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+import { cn } from '@apihub/utils/common/cn'
 import type { FC } from 'react'
 import { useState, useMemo, useCallback } from 'react'
 import { DiffEditor } from '@monaco-editor/react'
@@ -206,15 +191,15 @@ export const GraphQLDebugPage: FC = () => {
 
 
   return (
-    <div className="graphql-debug-page">
-      <div className="debug-page-header">
+    <div className={cn("root graphql-debug-page")}>
+      <div className={cn("debug-page-header")}>
         <h1>GraphQL Debug Page</h1>
       </div>
 
-      <div className="debug-page-content">
-         <div className="input-section">
+      <div className={cn("debug-page-content")}>
+         <div className={cn("input-section")}>
            <h2>GraphQL Specifications (Before/After)</h2>
-           <div className="diff-editor-container">
+           <div className={cn("diff-editor-container")}>
             <DiffEditor
               height="400px"
               language="graphql"
@@ -269,11 +254,11 @@ export const GraphQLDebugPage: FC = () => {
           </div>
         </div>
 
-        <div className="preview-section">
-          <div className="preview-header">
+        <div className={cn("preview-section")}>
+          <div className={cn("preview-header")}>
             <h2>GraphQL Schema Preview (Rendered with api-doc-viewer)</h2>
-            <div className="preview-controls">
-              <div className="expand-depth-control">
+            <div className={cn("preview-controls")}>
+              <div className={cn("expand-depth-control")}>
                 <label htmlFor="preview-depth">Expand Depth:</label>
                 <select 
                   id="preview-depth"
@@ -290,33 +275,33 @@ export const GraphQLDebugPage: FC = () => {
               </div>
             </div>
           </div>
-          <div className="preview-panels">
-            <div className="preview-panel">
+          <div className={cn("preview-panels")}>
+            <div className={cn("preview-panel")}>
               <h3>Before Schema</h3>
-              <div className="preview-container">
+              <div className={cn("preview-container")}>
                 {transformedData.before.graphapiSchema ? (
                   <GraphQLOperationViewer 
                     source={transformedData.before.graphapiSchema}
                     expandedDepth={previewExpandedDepth}
                   />
                 ) : (
-                  <div className="preview-placeholder">
+                  <div className={cn("preview-placeholder")}>
                     {beforeSchema.trim() ? 'Error processing schema' : 'No schema provided'}
                   </div>
                 )}
               </div>
             </div>
             
-            <div className="preview-panel">
+            <div className={cn("preview-panel")}>
               <h3>After Schema</h3>
-              <div className="preview-container">
+              <div className={cn("preview-container")}>
                 {transformedData.after.graphapiSchema ? (
                   <GraphQLOperationViewer 
                     source={transformedData.after.graphapiSchema}
                     expandedDepth={previewExpandedDepth}
                   />
                 ) : (
-                  <div className="preview-placeholder">
+                  <div className={cn("preview-placeholder")}>
                     {afterSchema.trim() ? 'Error processing schema' : 'No schema provided'}
                   </div>
                 )}
@@ -326,14 +311,14 @@ export const GraphQLDebugPage: FC = () => {
         </div>
 
 
-        <div className="output-section">
-          <div className="output-header">
+        <div className={cn("output-section")}>
+          <div className={cn("output-header")}>
             <h2>
               Transformed Output Diff ({outputFormat.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())})
-              {isTransforming && <span className="transforming-indicator"> 🔄 Transforming...</span>}
+              {isTransforming && <span className={cn("transforming-indicator")}> 🔄 Transforming...</span>}
             </h2>
-            <div className="output-controls">
-              <div className="format-selector">
+            <div className={cn("output-controls")}>
+              <div className={cn("format-selector")}>
                 <label htmlFor="output-format">Output Format:</label>
                 <select 
                   id="output-format"
@@ -346,7 +331,7 @@ export const GraphQLDebugPage: FC = () => {
                 </select>
               </div>
               
-              <div className="view-mode-selector">
+              <div className={cn("view-mode-selector")}>
                 <label htmlFor="output-view-mode">Output View:</label>
                 <select 
                   id="output-view-mode"
@@ -359,7 +344,7 @@ export const GraphQLDebugPage: FC = () => {
               </div>
             </div>
           </div>
-          <div className="output-diff-container">
+          <div className={cn("output-diff-container")}>
             <DiffEditor
               height="600px"
               language="json"

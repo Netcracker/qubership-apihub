@@ -1,3 +1,3 @@
 CREATE TABLE t (
-  label text DEFAULT E'column-one\tcolumn-two'
+  display_text text DEFAULT E'column-one\tcolumn-two'
 );

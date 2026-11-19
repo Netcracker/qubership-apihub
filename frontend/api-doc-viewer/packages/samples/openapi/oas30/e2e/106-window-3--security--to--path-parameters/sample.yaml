@@ -1,0 +1,38 @@
+openapi: 3.0.3
+info:
+  title: Orders
+  version: 1.0.0
+paths:
+  /orders/{orderId}:
+    post:
+      security:
+        - oauth:
+            - orders:write
+        - api_key: []
+      x-rate-limit: 100
+      x-audience:
+        visibility: public
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          description: Order identifier.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""
+components:
+  securitySchemes:
+    oauth:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: https://auth.example.com/token
+          scopes:
+            orders:read: Read orders
+            orders:write: Modify orders
+    api_key:
+      type: apiKey
+      in: header
+      name: X-API-Key

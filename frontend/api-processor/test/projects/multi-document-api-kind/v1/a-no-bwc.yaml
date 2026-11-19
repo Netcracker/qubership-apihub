@@ -1,0 +1,21 @@
+openapi: 3.0.3
+info:
+  title: a-no-bwc
+  version: v1
+  x-api-kind: no-BWC
+paths:
+  /items:
+    get:
+      parameters:
+        - name: filter
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+  /a-no-bwc:
+    get:
+      responses:
+        '200':
+          description: OK

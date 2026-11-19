@@ -442,7 +442,7 @@ func (m mcpService) ExecuteGetOperationDiffTool(ctx context.Context, req mcp.Cal
 
 	log.Debugf("get_api_operation_diff: apiType=%s, operationId=%s, packageId=%s, version=%s, previousVersion=%s", apiType, operationId, packageId, version, previousVersion)
 
-	operationChangesView, err := m.operationService.GetOperationChanges(ctx, packageId, version, operationId, packageId, previousVersion, []string{})
+	operationChangesView, err := m.operationService.GetOperationChanges(ctx, packageId, version, operationId, packageId, previousVersion, "", []string{})
 	if err != nil {
 		return nil, err
 	}

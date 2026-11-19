@@ -99,6 +99,14 @@ func (p packageServiceImpl) CreatePackage(ctx context.Context, packg view.Simple
 				Params:  map[string]interface{}{"parentId": packg.ParentId},
 			}
 		}
+		if existingEnt.Kind != entity.KIND_WORKSPACE && existingEnt.Kind != entity.KIND_GROUP {
+			return nil, &exception.CustomError{
+				Status:  http.StatusBadRequest,
+				Code:    exception.IncorrectPackageKind,
+				Message: exception.IncorrectPackageParentKindMsg,
+				Params:  map[string]interface{}{"parentId": packg.ParentId, "kind": existingEnt.Kind},
+			}
+		}
 		packg.Id = packg.ParentId + "." + packg.Alias
 
 		if packg.ExcludeFromSearch == nil {

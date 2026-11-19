@@ -270,15 +270,16 @@ The analysis runs again on `/agent analyze`, and on an edit of the issue or a co
 waits for information. It runs for every author, because it changes nothing but a label and a comment.
 
 1. **Skip** when a person has already set `ai:suitable` or `ai:unsuitable`.
-2. **Analyze** (`analyst`, light model). Reads the issue, its comments, and the code it points at, and follows the new
-   `apihub-issue-analysis` skill. The result is one of three:
+2. **Analyze** (`analyst`, light model). Reads the issue, its comments, its attachments (screenshots and text files),
+   and the code it points at, and follows the new `apihub-issue-analysis` skill. The result is one of three:
    - `suitable`: the issue holds enough to implement it, and the change fits the agent's tools and checks. The output
      adds a short plan: modules, approach, tests, risk.
    - `unsuitable`: a reason the agent cannot overcome, such as a decision that belongs to people, access the agent
      does not have, a change too large for one pull request, or work outside the repository.
    - `needs-info`: concrete questions whose answers would make the issue suitable.
-3. **Publish.** `ai:suitable` or `ai:unsuitable`, or `agent:needs-human` with the questions in a comment. The state
-   comment of the issue shows the verdict, the reason, and the plan; Flow C starts from that plan.
+3. **Publish.** `ai:suitable` or `ai:unsuitable`, or `needs-human:context-missing` with the questions in a comment. The
+   analysis result comment of the issue shows the verdict, the reason, and the plan; Flow C starts from that plan. For
+   `needs-info` it ends with a stop block: the reason, the blocker, the required action, and what resumes the work.
 
 The agent never starts an implementation from the analysis. A person reads the verdict and decides with
 `/agent implement`.
@@ -305,13 +306,13 @@ then show how often a forced attempt succeeds, which tells how good the analysis
 Branch names follow the [development workflow](../../development/workflow.md); the scope is the module name.
 
 ```text
- /agent implement ─► analysis fresh? ─┬─ needs-info ─────────────────────────────► questions, agent:needs-human
+ /agent implement ─► analysis fresh? ─┬─ needs-info ─────────────────────────────► questions, needs-human:context-missing
                      (else Flow B)     └─ suitable ─► implement ─► local checks ─► self-review ─┬─ approve ─► push, PR ─► CI
                                                          ▲          │ red          │ changes   │
                                                          └──────────┴──────────────┘ ≤ 2 rounds └─ still changes ─► draft PR,
- CI done ─► ci-gate ─┬─ green ─► agent:completed, ai:l1-executor, PR ready for review                   agent:needs-human
+ CI done ─► ci-gate ─┬─ green ─► agent:completed, ai:l1-executor, PR ready for review                   needs-human:<reason>
                      ├─ red, attempts left, new failure ─► next attempt with the CI report
-                     └─ red, attempts spent or the same failure again ─► agent:needs-human
+                     └─ red, attempts spent or the same failure again ─► needs-human:budget-exhausted or stuck
 ```
 
 One `implement` job runs one attempt and exits; nothing waits on a runner for CI.
@@ -326,21 +327,22 @@ One `implement` job runs one attempt and exits; nothing waits on a runner for CI
    checks of the changed languages. A red result goes back to the implementer as a review round.
 5. **Self-review** (`self-reviewer`, the other model). Reviews the diff against the issue and the module's
    self-review skill. `changes` goes back to the implementer with the findings. After two rounds without approval, the
-   pull request opens as a draft, with the open findings in its description, and gets `agent:needs-human`.
+   pull request opens as a draft, with the open findings in its description, and gets `needs-human:budget-exhausted`.
 6. **Publish, by script.** The publish job does not trust the work job. It measures the diff of the commits in the
    bundle itself, from the branch point, and applies the diff limits and the protected paths again; a violation means
    no push and a blocked attempt. Then it pushes one Conventional Commit with the `Agent-Run` trailer with
-   `AGENT_PAT`. The pull request into `develop` always opens as a draft. It follows the repository template (Why, What,
-   How to verify), says `Closes #<issue>`, labels the local check and self-review results as reported by the work job,
-   and carries the agent marker. The state comment of the issue links it. The run ends in the phase `waiting-ci`. Only
-   the CI gate marks the pull request ready.
+   `AGENT_PAT`. The pull request into `develop` opens ready for review after a green attempt and as a draft
+   otherwise. It follows the repository template (Why, What, How to verify), says `Closes #<issue>`, labels the local
+   check and self-review results as reported by the work job, and carries the agent marker. The state comment of the
+   issue links it. The run ends in the phase `waiting-ci`. Only the CI gate takes a draft out of draft.
 
 **The CI gate.** `workflow_run` `completed` of `CI`, `Lint: Code base`, `PR: Title`, and `PR: Commit messages` starts
 `ci-gate` when the head branch belongs to an open pull request of the agent. The gate reads every check run of the
 head commit and exits while any is still running, so it decides once.
 
-- **All green:** the pull request leaves draft (this is the only place where that happens), gets `agent:completed`
-  and `ai:l1-executor`, and the issue gets a short report. The gate writes nothing when a newer commit is on the
+- **All green:** a draft pull request leaves draft (this is the only place where that happens), gets `agent:completed`,
+  `ai:l1-executor`, and `needs-human:approval-required` (a person reviews it), and the issue gets a short report. The
+  gate writes nothing when a newer commit is on the
   branch than the one it collected the checks for; that commit gets its own gate run.
 - **Red:** `ci-report.js` collects the failed jobs, the failing step logs (`gh run view --log-failed`, cut to the
   first error blocks), and the names of the E2E reports. The report and its failure signature go to the state. If the
@@ -356,20 +358,46 @@ repository. It ignores every other comment and every comment of a bot, its own i
 | `/agent analyze` | issue | Runs Flow B again |
 | `/agent implement [notes]`, `/agent fix [notes]` | `Bug` or `Task` issue | Starts Flow C; the notes become hints. On an `ai:unsuitable` issue, replies with the reasons instead |
 | `/agent implement force [notes]` | `ai:unsuitable` issue | Starts Flow C despite the label |
-| `/agent retry [notes]` | issue or agent PR in `agent:needs-human` | Resumes Flow C with a fresh attempt budget |
+| `/agent retry [notes]` | issue or agent PR with a `needs-human:*` stop label | Resumes Flow C with a fresh attempt budget |
+| `/agent update [notes]` | agent PR | Merges the latest `develop` into the branch; on conflicts, `implementer` resolves them, see [Updating the branch](#updating-the-branch) |
 | `/agent stop` | issue or agent PR | Stops the flow; the phase becomes `stopped`; no further runs until `/agent implement` or `/agent retry` |
 | `/agent review` | pull request | Runs Flow A |
 | `/agent cost` | issue or pull request | Replies with the cost table, see [Cost reporting](#cost-reporting) |
 | `/agent <text>` | issue, or a pull request of a person | `assistant` answers; nothing is changed |
 | `/agent <text>` | pull request of the agent | `implementer` treats the text as a change request: one attempt on the PR branch |
 
-**The human answer.** The framework requires the agent to notice when a person answers an `agent:needs-human` request.
+**The human answer.** The framework requires the agent to notice when a person answers a request that carries a
+`needs-human:*` label.
 Any comment of a user with write access on such an issue or pull request resumes the flow, with or without `/agent`,
 and counts as one extra attempt. In Flow B, the issue author's comment is enough, because the analysis writes nothing
 but a label and a comment. A review with change requests on the agent's pull request resumes it too: the implementer
 gets every unresolved thread, and the publish step replies in each thread with what it changed.
 
 The agent never pushes to a branch of a person. On those pull requests it reviews and answers.
+
+### Updating the branch
+
+`/agent update` brings a pull request of the agent up to date with `develop` when it has fallen behind or has
+conflicts. Conflicts stop CI from running on the pull request at all, so the CI gate never sees them and a person must
+ask. The attempt has the kind `update` and gives the CI loop a fresh budget, like `/agent retry`.
+
+- **Merge, not rebase.** The script runs `git merge --no-ff origin/develop` and pushes the merge commit on top of the
+  branch, with the lease of any person's attempt. A rebase would need a force push, which could drop a commit that a
+  person pushed to the branch and would detach the review comments. Pull requests are squash-merged, so the merge
+  commit does not reach `develop`.
+- **Already up to date.** The preflight asks GitHub how far the head is behind `develop`. At zero it replies that
+  there is nothing to update and changes no state.
+- **A clean merge runs no model.** The script commits the merge, and the publish job pushes it. The run ends in
+  `waiting-ci`, and the CI gate takes over: a red CI starts the usual CI fix.
+- **Conflicts go to the implementer.** The working tree stays in the merge, and the input lists the files with
+  conflict markers; the notes after the command are guidance. The rounds, the local checks, and the self-review run as
+  in Flow C, and every round commits the merge commit (later rounds amend it). A file that still has a conflict marker
+  blocks the attempt.
+- **The diff limits measure the pull request only.** After the merge, the branch point is the merged `develop`, so the
+  diff from it holds the change of the pull request and not the commits of `develop`.
+- **Workflow files.** `AGENT_PAT` has no Workflows permission, and GitHub refuses a push whose commits change
+  `.github/workflows/`, even when the change comes from `develop`. The agent still tries. On that refusal, the attempt
+  fails with a message that says why: update the branch by hand, or give the token the Workflows permission.
 
 ## Budgets and the stop rule
 
@@ -378,22 +406,36 @@ loops, not spending.
 
 | Limit | Default (repository variable) | When reached |
 |---|---|---|
-| Attempts per issue after the pull request opens | 3 (`AGENT_MAX_ATTEMPTS`) | `agent:needs-human` |
-| Self-review and local-check rounds per attempt | 2 (`AGENT_MAX_REVIEW_ROUNDS`) | draft pull request, `agent:needs-human` |
+| Attempts per issue after the pull request opens | 3 (`AGENT_MAX_ATTEMPTS`) | `needs-human:budget-exhausted` |
+| Self-review and local-check rounds per attempt | 2 (`AGENT_MAX_REVIEW_ROUNDS`) | draft pull request, `needs-human:budget-exhausted` |
 | Analyses per issue | 5 (`AGENT_MAX_ANALYSES`) | the agent stops answering edits; `/agent analyze` still works |
 | Model steps per opencode run | per role, in the agent file (`steps`) | the run ends, and the attempt fails |
 | Job time | 60 minutes (`timeout-minutes`) | the attempt fails |
-| Diff size | per playbook, see [Flow C](#flow-c-implementation-of-a-bug-or-a-task) | `agent:needs-human`: the change has outgrown the issue |
+| Diff size | per playbook, see [Flow C](#flow-c-implementation-of-a-bug-or-a-task) | `needs-human:scope-review-required`: the change has outgrown the issue |
 | Free reruns of a failed E2E job | 1 per pull request | counted as an attempt after that |
 
 **No progress means stop.** The failure signature is a hash of the failed job names and the normalized first error
 lines. When an attempt ends with the signature of the attempt before it, the agent stops at once, whatever the budget:
-the same fix twice would burn tokens for the same red run.
+the same fix twice would burn tokens for the same red run. The stop gets the label `needs-human:stuck`.
 
 **The hand-off comment** says what the agent tried in each attempt, the current failure, its best hypothesis, and one
 concrete question or request. A person can then answer in a comment and the flow resumes.
 
+**The stop reason.** A stop never uses a bare "needs a person" label. Each stop carries one of 14 labels
+`needs-human:<reason>` (the table under [Labels](#labels)), so a person sees at once what to do. The hand-off comment
+ends with a stop block: the reason label, the blocker, the work completed, the required action, and the resume
+condition. The implementer names the reason of its own `blocked` answer (`stopReason`); the scripts choose the others:
+`budget-exhausted` for a draft or spent attempts, `stuck` for the same failure again, `environment-blocked` for an error
+or CI that cannot run, `scope-review-required` for a diff over the limit or a protected path. The scripts also keep the
+history in `stops` of the state. A green pull request gets `needs-human:approval-required`: it is no stop of the agent,
+only a request for a review, and it is removed when the pull request is merged or the agent starts a new attempt.
+
 ## Cost reporting
+
+The comment that reports an AI run ends with a signature line, for example
+`<sub>🤖 gpt-6.1-sol high in=12k cached=40k out=3k usd=0.083</sub>`: the model without its provider prefix, the effort,
+the tokens, and the cost in USD. A comment that shows the results of several runs signs the sum of them, and each run
+is counted in one comment only. The comments no longer repeat a running total; `/agent cost` has the full table.
 
 Every opencode run reports tokens and cost per message in its JSON events. `cost.js` adds them up per run and writes
 one record to the state of the issue or pull request: the flow, the role, the model, the input, cached, and output
@@ -413,6 +455,7 @@ look.
 |---|---|---|
 | Labels | the phase that people and reports read: `agent:*`, `ai:*` | visible in every list; the issue timeline keeps each label change with its time |
 | The state comment | one comment by `github-actions[bot]` per issue and per pull request, edited in place: a status table for people and a hidden JSON block for the scripts | durable, versioned by GitHub, readable without tools |
+| Result comments | one comment per command family (analysis, implementation, review), listed in `results` of the state; the first one is the state comment itself | a new command does not overwrite the result of an earlier one; see below |
 | Run artifacts | the opencode session export (`opencode export --sanitize`), the prompt inputs, the CI report | for debugging; 30-day retention; never read back |
 | The branch | the code of the attempts | already the source of truth |
 
@@ -437,6 +480,13 @@ The hidden block of an issue looks like this:
     { "run": "...", "flow": "implement", "role": "implementer", "model": "openai/gpt-6.1-sol",
       "input": 1480000, "cached": 1310000, "output": 96000, "usd": 1.45 }
   ],
+  "stops": [
+    { "reason": "stuck", "at": "2026-10-23T11:40:00Z", "run": "https://github.com/.../actions/runs/...", "on": [1234, 1240] }
+  ],
+  "results": [
+    { "family": "analysis", "id": "state", "runs": ["https://github.com/.../actions/runs/..."] },
+    { "family": "implementation", "id": 987654400, "runs": ["https://github.com/.../actions/runs/..."] }
+  ],
   "lastHumanCommentId": 987654321
 }
 ```
@@ -449,7 +499,11 @@ Rules for the state:
 - The workflow runs one job per issue or pull request at a time (`concurrency` keyed by the number), so two writes do
   not race.
 - The `attempts` list keeps every failure, so `agent:completed` at the end does not erase the history, as the
-  framework requires.
+  framework requires. The `stops` list keeps every stop and when it was resumed.
+- Each command family has its own result comment. A new command (an analysis, an implementation command, a review)
+  edits the comment of its family only when it is the newest result comment of the agent on the issue or pull
+  request; otherwise it writes a new one, so the newest result is always the last comment. A write that continues a
+  running command (the publish step, the CI gate, a CI fix, a rerun, a stop) edits the comment its command uses.
 - The next run rebuilds the model's context from the issue, its comments, the pull request, the CI report, the
   analysis plan, and the `notes` of each attempt. That keeps runs reproducible and cheap, and does not depend on an
   artifact that expires.
@@ -470,14 +524,16 @@ no colors for the execution labels, so the script picks them.
 | `ai:l2-agent`, `ai:l3-autonomous` | never for now | need an implementation without a command, and auto-merge for L3 |
 | `ai:l0-assistant` | never | describes human work |
 | `agent:completed` | issue and pull request | CI is green and the self-review approved |
-| `agent:needs-human` | issue or pull request | a `needs-info` analysis, a stop from [Budgets](#budgets-and-the-stop-rule), or an error the agent cannot fix |
+| `needs-human:<reason>` | issue or pull request | a `needs-info` analysis, a stop from [Budgets](#budgets-and-the-stop-rule), or an error the agent cannot fix; the reason says why (14 labels, color `FBCA04`) |
+| `needs-human:approval-required` | pull request | CI is green and a person reviews it (color `BFD4F2`); removed at the merge |
 | `agent:pr-reviewed` | pull request | after Flow A publishes |
 
 The framework says that only a person sets `ai:unsuitable`; Flow B sets it too, a deliberate
 [deviation](#deviations-from-the-framework). A person overrides the agent by changing the label.
 
-`agent:needs-human` and `agent:completed` exclude each other. When a person resumes the flow, the agent removes
-`agent:needs-human`; the timeline keeps the earlier label.
+An issue or pull request carries at most one `needs-human:*` label, and a stop label other than `approval-required` and
+`agent:completed` exclude each other. When a person resumes the flow, the agent removes the stop labels; the timeline
+keeps the earlier label.
 
 ### Execution labels on issues
 
@@ -555,11 +611,15 @@ The repository is public, so issue text, comments, and fork code are untrusted i
   that may lie: it pushes only to the branch it derives itself from the state, checks that the bundle holds the commit
   the outcome names, validates every answer against its contract, and measures the diff of the bundle itself, so the
   diff limits and the protected paths (workflow files, the agent's own files) hold whatever the outcome says. It opens
-  every pull request as a draft and never marks one ready. Only the `ci-gate` job does, after real CI on GitHub is
-  green, so a forged "checks passed" from the work job cannot reach a reviewer as a ready pull request. The local check
-  and self-review results stay in the state and the description, labeled as reported by the work job. The OpenAI key
-  stays reachable by the code under test in the work job. The proof of concept accepts that; give the key its own
-  OpenAI project and a budget on it.
+  the pull request of a green attempt ready for review, so its reviewers are asked at once, and never marks an open
+  draft ready. Only the `ci-gate` job does, after real CI on GitHub is green. A forged "checks passed" from the work
+  job can therefore open a ready pull request, but it cannot merge one: CI and a person's review still decide. The
+  local check and self-review results stay in the state and the description, labeled as reported by the work job. The
+  OpenAI key stays reachable by the code under test in the work job. The proof of concept accepts that; give the key its
+  own OpenAI project and a budget on it.
+- **Attachments are untrusted too.** The analyst and the implementer read the screenshots and text files that an issue
+  links. The scripts download them, not the model: only GitHub attachment hosts are allowed, every redirect must stay
+  on them, and no credential is sent. The prompts treat an attachment like the issue text, including text in an image.
 - **Only maintainers start write flows.** Every command, every answer to a hand-off, and every review with change
   requests needs write access. The marker in the description of a pull request counts only when the state of the issue
   names that pull request. A review event runs the workflow file of the pull request, so the jobs name the default

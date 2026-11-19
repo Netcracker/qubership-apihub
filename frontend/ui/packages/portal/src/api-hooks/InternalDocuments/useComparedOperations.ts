@@ -93,7 +93,8 @@ export function useComparedOperations(options: Options): QueryResultWithNoIntern
     if (!deserializedComparisonInternalDocument) {
       return undefined
     }
-    // Leave the only operation with necessary path because ASV displays only 1 operation at the time
+    // Leave the only operation with necessary path: the operation diffs viewer resolves its keys
+    // from this one-operation document (see `resolveOpenApiOperationKeys`)
     if (isOpenApiSpecification(deserializedComparisonInternalDocument)) {
       return handleOpenApiComparisonInternalDocument({
         oasInternalDocument: deserializedComparisonInternalDocument,

@@ -1,20 +1,3 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-import type { PathMatch } from 'react-router'
 import { matchPath } from 'react-router-dom'
 import { SEARCH_PARAM_NO_AUTO_LOGIN, SEARCH_PARAM_REDIRECT_URI } from './constants'
 import type { FetchRedirectDetails } from './requests'
@@ -57,13 +40,27 @@ export function getPackageRedirectDetails<P extends PackagePathPattern>(
   pathPattern: P,
 ): FetchRedirectDetails | null {
   const redirectedUrl = new URL(response.url)
-  const match = matchPath(`${API_BASE_PATH_PATTERN}${pathPattern}`, redirectedUrl.pathname) as PathMatch<'packageId'> | null
-  return match && match.params.packageId
+  const pattern = `${API_BASE_PATH_PATTERN}${pathPattern}`
+  if (!matchPath(pattern, redirectedUrl.pathname)) {
+    return null
+  }
+  // The segment is read and decoded here because react-router versions differ in how matchPath decodes parameters.
+  const packageIdSegment = redirectedUrl.pathname.split('/')[pattern.split('/').indexOf(':packageId')]
+  return packageIdSegment
     ? {
       redirectType: FETCH_REDIRECT_TYPE_PACKAGE,
-      id: match.params.packageId,
+      id: decodePathSegment(packageIdSegment),
     }
     : null
+}
+
+// A malformed escape cannot be decoded, so the segment is kept as it is, which is what react-router does too.
+function decodePathSegment(segment: string): string {
+  try {
+    return decodeURIComponent(segment)
+  } catch {
+    return segment
+  }
 }
 
 export function isSameOriginUrl(uri: string): boolean {

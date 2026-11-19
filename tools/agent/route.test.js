@@ -430,6 +430,16 @@ test('/agent review on a Dependabot pull request is skipped, whoever asks', () =
   assert.equal(route('issue_comment', plain, { actorPermission: 'write' }).action, 'skip')
 })
 
+test('/agent review on a Renovate pull request is skipped, for each form of the login', () => {
+  for (const login of ['renovate[bot]', 'renovate']) {
+    const plain = fixture('issue_comment.pr-dependabot')
+    plain.issue.user = { login, type: 'Bot' }
+    const result = route('issue_comment', plain, { actorPermission: 'write' })
+    assert.deepEqual([result.action, result.number], ['skip', 124], login)
+    assert.equal(result.reason, 'dependency update pull requests are not reviewed', login)
+  }
+})
+
 test('/agent review on a pull request of a person is still reviewed', () => {
   const result = route('issue_comment', fixture('issue_comment.pr'), { actorPermission: 'write' })
   assert.equal(result.action, 'review')

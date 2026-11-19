@@ -1,19 +1,4 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+import { cn } from "@apihub/utils/common/cn"
 import type { FC } from 'react'
 import { ExpandingCaret } from './ExpandingCaret'
 import { NestingHorizontalIndicator } from "../../NestingHorizontalIndicator"
@@ -36,13 +21,13 @@ export const Expander: FC<ExpanderProps> = (props) => {
   let expanderElement = null
   if (isExpandable) {
     expanderElement = (
-      <div data-name="Expander" className="flex flex-row items-center gap-0.5 w-full">
+      <div data-name="Expander" className={cn("flex flex-row items-center gap-0.5 w-full")}>
         {!isRoot && <NestingHorizontalIndicator short />}
         <ExpandingCaret onToggle={onToggleExpander} expanded={expanded} testId={testId} />
       </div>
     )
   } else if (isRoot) {
-    expanderElement = <div className="w-5" />
+    expanderElement = <div className={cn("w-5")} />
   } else if (!isRoot && !isOperation) {
     expanderElement = <NestingHorizontalIndicator />
   }
@@ -52,7 +37,7 @@ export const Expander: FC<ExpanderProps> = (props) => {
       {expanderElement && (
         <div
           data-name="ExpanderContainer"
-          className='flex flex-row items-center pt-1.5'
+          className={cn('flex flex-row items-center pt-1.5')}
           // onContextMenu={defaultOnContextMenu(isExpandable, onToggleContextMenu)}
         >
           {expanderElement}

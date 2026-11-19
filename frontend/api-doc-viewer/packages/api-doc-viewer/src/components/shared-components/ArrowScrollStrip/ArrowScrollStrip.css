@@ -1,0 +1,21 @@
+/* Native scrollbar hidden: the arrows replace it (the strip still scrolls natively). */
+.arrow-scroll-strip-viewport {
+  scrollbar-width: none;
+}
+
+.arrow-scroll-strip-viewport::-webkit-scrollbar {
+  display: none;
+}
+
+/* Room after the last option at the right edge: the line's gap (8px in `Selector`) before a 1px
+   spacer. The last option's own end margin would not do: it does not count toward the scroll width. */
+.arrow-scroll-strip-viewport > div > :only-child::after {
+  content: "";
+  flex: 0 0 1px;
+}
+
+/* 24 × 24 with the 8 × 12 chevron. Colors, hover, radius: shared-styles/colors/icon-buttons.css. */
+button.icon-button.arrow-scroll-strip-arrow {
+  flex-shrink: 0;
+  padding: 6px 8px;
+}

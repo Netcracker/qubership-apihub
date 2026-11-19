@@ -11,6 +11,8 @@ const API_PROCESSOR = '@netcracker/qubership-apihub-api-processor'
 
 const APPS = ['portal', 'agents'] as const
 
+type App = (typeof APPS)[number]
+
 // Only an image has build info: its entrypoint writes the file from GIT_BRANCH, GIT_HASH, and COMMIT_TIME.
 const BUILD_INFO_PATH = /^\/(portal|agents)\/build-info\.json$/
 
@@ -88,9 +90,13 @@ function versionDataFor(app: string): VersionData | null {
 }
 
 /**
- * Writes `dist/version.json`, which the running application surfaces, and serves the same
+ * Writes `dist/version.json` of `app`, which the running application surfaces, and serves the same
  * payload from the dev server. The dev server has no dist folder. The preview server serves the
  * file from dist, and both servers answer 404 for build-info.json.
+ *
+ * A build writes the file of its own app only. The bundle and the file must come from one build: Nx can restore the
+ * dist of one app from its cache while it builds the other, and a file written by the other build would carry a
+ * version the restored bundle does not have, so the page would ask for a reload on every load.
  *
  * `apiProcessorVersion` is the stamped version of api-processor, `<version>+<build id>`: its build rewrites
  * `dist/cjs/package.json`, the first manifest that `installedVersion` finds. The build-task-consumer reports the same
@@ -102,7 +108,7 @@ function versionDataFor(app: string): VersionData | null {
  * own version, and an installed dependency's carries its. The files are read on every
  * request, so a relinked api-processor needs no server restart.
  */
-export default function createVersionJsonFilePlugin(): Plugin {
+export default function createVersionJsonFilePlugin(app: App): Plugin {
   return {
     name: 'create-version-json-file',
     configureServer: function(server) {
@@ -134,16 +140,14 @@ export default function createVersionJsonFilePlugin(): Plugin {
         this.error(`Version not found: could not read a version for ${API_PROCESSOR} from its installed manifest`)
       }
 
-      for (const app of APPS) {
-        const frontendVersion = appVersion(app)
-        if (!frontendVersion) {
-          this.error(`Version not found: packages/${app}/package.json declares no version`)
-        }
-
-        const outputPath = path.resolve(UI_ROOT, 'packages', app, 'dist/version.json')
-        fs.mkdirSync(path.dirname(outputPath), { recursive: true })
-        fs.writeFileSync(outputPath, JSON.stringify({ frontendVersion, apiProcessorVersion }, null, 2))
+      const frontendVersion = appVersion(app)
+      if (!frontendVersion) {
+        this.error(`Version not found: packages/${app}/package.json declares no version`)
       }
+
+      const outputPath = path.resolve(UI_ROOT, 'packages', app, 'dist/version.json')
+      fs.mkdirSync(path.dirname(outputPath), { recursive: true })
+      fs.writeFileSync(outputPath, JSON.stringify({ frontendVersion, apiProcessorVersion }, null, 2))
     },
   }
 }

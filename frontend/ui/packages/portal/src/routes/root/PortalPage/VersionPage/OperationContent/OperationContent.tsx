@@ -1,19 +1,3 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import type { OpenApiData } from '@portal/entities/operation-structure'
 import {
   useApiDiffResult,
@@ -55,7 +39,6 @@ import {
   isAsyncApiOperation,
   isGraphQlOperation,
 } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
-import { useSystemInfo } from '@netcracker/qubership-apihub-ui-shared/features/system-info'
 import {
   useSeverityFiltersSearchParam,
 } from '@netcracker/qubership-apihub-ui-shared/hooks/change-severities/useSeverityFiltersSearchParam'
@@ -204,8 +187,6 @@ export const OperationContent: FC<OperationContentProps> = wrapOperationContentE
       enabled: isRawViewMode && isGraphQLOperation,
     })
 
-    const { productionMode } = useSystemInfo()
-
     const setChangesLoadingStatus = useSetChangesLoadingStatus()
     useEffect(() => {
       setChangesLoadingStatus && setChangesLoadingStatus(isLoading)
@@ -343,9 +324,7 @@ export const OperationContent: FC<OperationContentProps> = wrapOperationContentE
           {isDocViewMode && !!mergedDocument && (
             <OperationView
               apiType={apiType as ApiType}
-              displayMode={displayMode}
               comparisonMode={comparisonMode}
-              productionMode={productionMode}
               mergedDocument={mergedDocument}
               // diffs specific
               filters={filters}
@@ -383,10 +362,7 @@ export const OperationContent: FC<OperationContentProps> = wrapOperationContentE
               <OperationView
                 apiType={apiType as ApiType}
                 schemaViewMode={schemaViewMode}
-                hideTryIt
-                hideExamples
                 comparisonMode={comparisonMode}
-                productionMode={productionMode}
                 navigationDetails={navigationDetails}
                 operationModels={operationModels}
                 mergedDocument={mergedDocument}

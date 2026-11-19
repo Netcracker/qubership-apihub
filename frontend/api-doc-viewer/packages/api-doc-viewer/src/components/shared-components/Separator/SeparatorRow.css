@@ -1,0 +1,12 @@
+/* Inside a framed card the separator continues the side borders (data-frame-position="middle"),
+   but its bands must fill the whole side: no frame padding on it. `.layout-separator[…]` outranks
+   frame.css's `div[data-frame-position]`. */
+.layout-separator[data-frame-position] {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.layout-separator-band {
+  flex: none;
+  width: 100%;
+}

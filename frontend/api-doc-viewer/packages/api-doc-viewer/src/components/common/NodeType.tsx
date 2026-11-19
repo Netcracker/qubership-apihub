@@ -1,19 +1,4 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+import { cn } from '@apihub/utils/common/cn'
 import { isDiff } from '@netcracker/qubership-apihub-api-data-model'
 import { Diff, DiffAction } from '@netcracker/qubership-apihub-api-diff'
 import type { FC, ReactNode } from 'react'
@@ -147,7 +132,7 @@ export const NodeType: FC<NodeTypeProps> = (props) => {
             )
           )
           actualType =
-            <div className={`inline ${diffStyles}`}>
+            <div className={cn(`inline ${diffStyles}`)}>
               {type}
             </div>
         }
@@ -157,7 +142,7 @@ export const NodeType: FC<NodeTypeProps> = (props) => {
             INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.replace]
           )
           actualType =
-            <div className={`inline ${diffStyles}`}>
+            <div className={cn(`inline ${diffStyles}`)}>
               {UNKNOWN_TYPE_TEXT}
             </div>
         }
@@ -171,7 +156,7 @@ export const NodeType: FC<NodeTypeProps> = (props) => {
             )
           )
           actualType =
-            <div className={`inline ${diffStyles}`}>
+            <div className={cn(`inline ${diffStyles}`)}>
               {UNKNOWN_TYPE_TEXT}
             </div>
         }
@@ -181,7 +166,7 @@ export const NodeType: FC<NodeTypeProps> = (props) => {
             INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.replace]
           )
           actualType =
-            <div className={`inline ${diffStyles}`}>
+            <div className={cn(`inline ${diffStyles}`)}>
               {type}
             </div>
         }
@@ -195,7 +180,7 @@ export const NodeType: FC<NodeTypeProps> = (props) => {
             )
           )
           actualType =
-            <div className={`inline ${diffStyles}`}>
+            <div className={cn(`inline ${diffStyles}`)}>
               {diffReplace($typeChange) ? `${$typeChange.beforeValue}` : null}
             </div>
         }
@@ -205,7 +190,7 @@ export const NodeType: FC<NodeTypeProps> = (props) => {
             INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.replace]
           )
           actualType =
-            <div className={`inline ${diffStyles}`}>
+            <div className={cn(`inline ${diffStyles}`)}>
               {type}
             </div>
         }
@@ -227,10 +212,10 @@ export const NodeType: FC<NodeTypeProps> = (props) => {
           INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.replace]
         )
         actualType = <>
-          <div className={`inline ${diffStylesBefore}`}>
+          <div className={cn(`inline ${diffStylesBefore}`)}>
             {type}
           </div>
-          <div className={`inline ${diffStylesAfter}`}>
+          <div className={cn(`inline ${diffStylesAfter}`)}>
             {UNKNOWN_TYPE_TEXT}
           </div>
         </>
@@ -247,10 +232,10 @@ export const NodeType: FC<NodeTypeProps> = (props) => {
           INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.replace]
         )
         actualType = <>
-          <div className={`inline ${diffStylesBefore}`}>
+          <div className={cn(`inline ${diffStylesBefore}`)}>
             {UNKNOWN_TYPE_TEXT}
           </div>
-          <div className={`inline ${diffStylesAfter}`}>
+          <div className={cn(`inline ${diffStylesAfter}`)}>
             {type}
           </div>
         </>
@@ -267,10 +252,10 @@ export const NodeType: FC<NodeTypeProps> = (props) => {
           INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.replace]
         )
         actualType = <>
-          <div className={`inline ${diffStylesBefore}`}>
+          <div className={cn(`inline ${diffStylesBefore}`)}>
             {diffReplace($typeChange) ? `${$typeChange.beforeValue}` : null}
           </div>
-          <div className={`inline ${diffStylesAfter}`}>
+          <div className={cn(`inline ${diffStylesAfter}`)}>
             {type}
           </div>
         </>
@@ -289,7 +274,7 @@ export const NodeType: FC<NodeTypeProps> = (props) => {
               )
             )
             actualNullable =
-              <div className={`inline ${diffStyles}`}>
+              <div className={cn(`inline ${diffStyles}`)}>
                 {NULLABLE_TYPE_SUFFIX_TEXT}
               </div>
           }
@@ -307,7 +292,7 @@ export const NodeType: FC<NodeTypeProps> = (props) => {
               INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.add]
             )
             actualNullable =
-              <div className={`inline ${diffStyles}`}>
+              <div className={cn(`inline ${diffStyles}`)}>
                 {NULLABLE_TYPE_SUFFIX_TEXT}
               </div>
           }
@@ -323,7 +308,7 @@ export const NodeType: FC<NodeTypeProps> = (props) => {
             )
           )
           actualNullable =
-            <div className={`inline ${diffStylesBefore}`}>
+            <div className={cn(`inline ${diffStylesBefore}`)}>
               {NULLABLE_TYPE_SUFFIX_TEXT}
             </div>
         }
@@ -333,7 +318,7 @@ export const NodeType: FC<NodeTypeProps> = (props) => {
             INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.add]
           )
           actualNullable =
-            <div className={`inline ${diffStylesAfter}`}>
+            <div className={cn(`inline ${diffStylesAfter}`)}>
               {NULLABLE_TYPE_SUFFIX_TEXT}
             </div>
         }
@@ -379,10 +364,10 @@ export const NodeType: FC<NodeTypeProps> = (props) => {
   }
 
   return (
-    <div className="inline-flex flex-row gap-1 items-center">
+    <div className={cn("inline-flex flex-row gap-1 items-center")}>
       {brokenRef && <WarningIcon />}
-      {actualType && <div className="inline">{actualType}{actualQualifier}{actualTitle} {showNullable ? actualNullable : null}</div>}
-      {combiner && <div className="inline">({combiner})</div>}
+      {actualType && <div className={cn("inline")}>{actualType}{actualQualifier}{actualTitle} {showNullable ? actualNullable : null}</div>}
+      {combiner && <div className={cn("inline")}>({combiner})</div>}
     </div>
   )
 }
@@ -419,18 +404,18 @@ function partStyles(
 }
 
 function styledText(text: string, cls: string): ReactNode {
-  return <span className={`inline ${cls}`.trimEnd()}>{text}</span>
+  return <span className={cn(`inline ${cls}`.trimEnd())}>{text}</span>
 }
 
 function joinInlineFragments(fragments: ReactNode[]): ReactNode {
   const out: ReactNode[] = []
   fragments.forEach((fragment, index) => {
     if (index > 0) {
-      out.push(<span key={`gap-${index}`} className="inline">{' '}</span>)
+      out.push(<span key={`gap-${index}`} className={cn("inline")}>{' '}</span>)
     }
-    out.push(<span key={`frag-${index}`} className="inline">{fragment}</span>)
+    out.push(<span key={`frag-${index}`} className={cn("inline")}>{fragment}</span>)
   })
-  return <span className="inline">{out}</span>
+  return <span className={cn("inline")}>{out}</span>
 }
 
 // Renders a single decorated scalar token (the title `<...>` or the qualifier `(...)`),

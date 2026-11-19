@@ -7,12 +7,13 @@
  *
  *   1. load the issue, its comments, and its state comment; for the trigger `sweep`, stop here without a model call when
  *      the issue already has an analysis or a decision label, is closed, or is no longer a Bug or Task;
- *   2. `analyst` (the light model) reads the issue and the code and answers with `analysis` JSON;
- *   3. publish: the `ai:suitable` or `ai:unsuitable` label (or `agent:needs-human` for missing information), read
- *      again after the model call so that a label a person set meanwhile wins; then the state comment of the issue
- *      rewritten with the verdict and with the labels that were really changed; and, for `needs-info`, a separate
- *      comment that mentions the author, because only a new comment notifies people. In dry-run, the job summary
- *      instead.
+ *   2. download the attachments of the issue (lib/attachments.js); `analyst` (the light model) reads the issue, its
+ *      attachments, and the code and answers with `analysis` JSON;
+ *   3. publish: the `ai:suitable` or `ai:unsuitable` label (or `needs-human:context-missing` for missing
+ *      information), read again after the model call so that a label a person set meanwhile wins; then the
+ *      analysis result comment of the issue (lib/results.js) rewritten with the verdict, and the state with the
+ *      labels that were really changed; and, for `needs-info`, a separate comment that mentions the author, because
+ *      only a new comment notifies people. In dry-run, the job summary instead.
  *
  * The cost of the run is recorded in the state, also when the analysis or a label call fails. The agent never
  * changes an `ai:suitable` or `ai:unsuitable` label that a person set. `implement.js` calls `analyze` when the issue
@@ -30,15 +31,18 @@ const { loadConfig } = require('./lib/config')
 const { createClient } = require('./lib/github')
 const state = require('./lib/state')
 const usage = require('./lib/usage')
+const stops = require('./lib/stops')
+const results = require('./lib/results')
 const { ContractError } = require('./lib/contract')
 const { callAgent } = require('./lib/agent-call')
 const { inline, clip: clipText } = require('./lib/text')
 const { untrusted } = require('./lib/prompt')
+const { issueAttachments, renderAttachments, attachedNote } = require('./lib/attachments')
 const log = require('./lib/log')
 
 const LABEL_SUITABLE = 'ai:suitable'
 const LABEL_UNSUITABLE = 'ai:unsuitable'
-const LABEL_NEEDS_HUMAN = 'agent:needs-human'
+const LABEL_NEEDS_HUMAN = stops.labelOf('context-missing')
 const DECISION_LABELS = [LABEL_SUITABLE, LABEL_UNSUITABLE]
 /** One comment or description longer than this is cut, so a pasted log cannot fill the model's context. */
 const MAX_TEXT = 20000
@@ -162,10 +166,17 @@ async function applyLabels(gh, number, changes) {
   return { applied, error }
 }
 
-/** The state of the issue after a finished analysis. The input is not changed. */
+/**
+ * The state of the issue after a finished analysis. A `needs-info` verdict records a `context-missing` stop in
+ * `stops`; another verdict closes the open stop. The input is not changed.
+ */
 function nextState(st, { analysis, label, issueUpdatedAt, run, at, trigger }) {
+  // A needs-info verdict is a stop of the agent; any other verdict ends the wait for an answer.
+  const history = analysis.verdict === 'needs-info'
+    ? stops.recordStop(st, { reason: 'context-missing', at, run, on: [st.number] })
+    : stops.recordResume(st, { at, run })
   return {
-    ...st,
+    ...history,
     phase: analysis.verdict === 'needs-info' ? 'needs-info' : 'analyzed',
     analysis: {
       verdict: analysis.verdict,
@@ -195,11 +206,12 @@ const questionLines = (questions) =>
   questions.filter((q) => q.trim() !== '').map((q, i) => `${i + 1}. ${inline(q)}`)
 
 /**
- * The human part of the state comment: verdict, reason, then the plan or the questions, and the cost so far.
+ * The human part of the analysis result: verdict, reason, then the plan, or the questions with the stop record.
+ * The signature with the cost is added when the comment is published (lib/results.js). `totalUsd` is ignored.
  *
- * @param {{ analysis: object, runUrl: string, totalUsd: number }} input
+ * @param {{ analysis: object, runUrl: string, totalUsd?: number }} input
  */
-function renderAnalysis({ analysis, runUrl, totalUsd }) {
+function renderAnalysis({ analysis, runUrl }) {
   const out = ['### AI analysis', '', `**${VERDICT_WORDS[analysis.verdict]}.** ${inline(analysis.reason)}`, '']
   if (analysis.verdict === 'suitable' && analysis.plan) {
     const plan = analysis.plan
@@ -215,26 +227,30 @@ function renderAnalysis({ analysis, runUrl, totalUsd }) {
   }
   if (analysis.verdict === 'needs-info') {
     out.push('**Questions**', '', ...questionLines(analysis.questions), '')
-    out.push('Answer in a comment or edit the issue; the agent reads it again.', '')
+    out.push(
+      ...stops.renderStop({
+        reason: 'context-missing',
+        blocker: inline(analysis.reason),
+        action: 'Answer the numbered questions.',
+        resume: 'An answer in a comment or an edit of the issue; the agent analyzes again.',
+      }),
+      '',
+    )
   } else {
     out.push('Comment `/agent implement` to start the implementation.', '')
   }
-  out.push(
-    `<sub>[Run](${runUrl}) · AI cost of this issue so far: $${usage.formatUsd(totalUsd)} · ` +
-      'comment `/agent analyze` to analyze again</sub>',
-  )
+  out.push(`<sub>[Run](${runUrl}) · comment \`/agent analyze\` to analyze again</sub>`)
   return out.join('\n')
 }
 
-/** The state comment text for an analysis that did not finish. */
-function renderFailure({ message, runUrl, totalUsd }) {
+/** The analysis result text for an analysis that did not finish. */
+function renderFailure({ message, runUrl }) {
   return [
     '### AI analysis failed',
     '',
     `The analysis did not finish: ${inline(message)}`,
     '',
-    `<sub>[Run](${runUrl}) · AI cost of this issue so far: $${usage.formatUsd(totalUsd)} · ` +
-      'comment `/agent analyze` to try again</sub>',
+    `<sub>[Run](${runUrl}) · comment \`/agent analyze\` to try again</sub>`,
   ].join('\n')
 }
 
@@ -254,9 +270,10 @@ const clip = (text) => clipText(text, MAX_TEXT)
 
 /**
  * The text of `analysis-input.md`: facts of the issue, then everything people wrote inside `<untrusted>` blocks, then
- * what the agent concluded and asked the last time. `comments` must not hold the state comment.
+ * the list of the attachments (`attachments`: the entries of lib/attachments.js), then what the agent concluded and
+ * asked the last time. `comments` must not hold the state comment.
  */
-function renderInput({ issue, comments, st, trigger }) {
+function renderInput({ issue, comments, st, trigger, attachments = [] }) {
   const prior = st?.analysis
   const out = [
     `# Issue #${issue.number}`,
@@ -279,6 +296,7 @@ function renderInput({ issue, comments, st, trigger }) {
     out.push(`Written by ${c.user?.login ?? 'unknown'} on ${c.created_at ?? 'an unknown date'}.`, '')
     out.push(untrusted(clip(c.body)), '')
   }
+  out.push(...renderAttachments(attachments))
   if (prior) {
     // The reason and the questions are model output, written after reading people's text: they may echo it.
     out.push('## Previous analysis', '')
@@ -295,15 +313,19 @@ function renderInput({ issue, comments, st, trigger }) {
  * The model part of an analysis, without any call to GitHub: writes the analyst input, runs the analyst (the light
  * model), and returns its validated output. The cost record goes to `costs` also when the call fails. The
  * implementation job calls it (`implement.js work`), where no GitHub token exists, and publishes the result later.
+ * The attachments are downloaded here unless the caller passes the ones it downloaded (`attachments`).
  *
  * @param {{ issue: object, comments: object[], st: object, trigger: string, config: object, out: string,
- *   costs: object[], runUrl: string, deps?: { runAgent?: Function } }} input `comments` hold no state comment
+ *   costs: object[], runUrl: string, attachments?: { entries: object[], files: string[] },
+ *   deps?: { runAgent?: Function, fetch?: Function } }} input `comments` hold no state comment
  */
-async function runAnalysis({ issue, comments, st, trigger, config, out, costs, runUrl, deps = {} }) {
+async function runAnalysis({ issue, comments, st, trigger, config, out, costs, runUrl, attachments, deps = {} }) {
   fs.mkdirSync(out, { recursive: true })
   const inputFile = path.join(out, 'analysis-input.md')
+  const found = attachments ??
+    (await log.group('Download the attachments', () => issueAttachments({ issue, comments, out, deps })))
   await log.group('Build the analyst input', async () => {
-    const text = renderInput({ issue, comments, st, trigger })
+    const text = renderInput({ issue, comments, st, trigger, attachments: found.entries })
     fs.writeFileSync(inputFile, text)
     log.info('input written', { file: inputFile, characters: text.length })
   })
@@ -313,8 +335,10 @@ async function runAnalysis({ issue, comments, st, trigger, config, out, costs, r
       role: 'analyst',
       agent: 'analyst',
       model: config.models.light,
-      message: `Analyze issue #${issue.number}. Your input is the attached analysis-input.md.`,
+      message: `Analyze issue #${issue.number}. Your input is the attached analysis-input.md.` +
+        attachedNote(found.files),
       inputFile,
+      files: found.files,
       out,
       costs,
       runUrl,
@@ -415,11 +439,11 @@ async function analyze(env = process.env, deps = {}, { askAuthor = true } = {}) 
     let text
     if (failure) {
       st = failedState(st, { run: runUrl, at, trigger })
-      text = renderFailure({ message: failure.message, runUrl, totalUsd })
+      text = renderFailure({ message: failure.message, runUrl })
     } else {
       const label = agentLabelAfter(labelsNow, st, applied)
       st = nextState(st, { analysis, label, issueUpdatedAt: issue.updated_at, at, run: runUrl, trigger })
-      text = renderAnalysis({ analysis, runUrl, totalUsd })
+      text = renderAnalysis({ analysis, runUrl })
     }
     log.info('state', { phaseBefore, phaseAfter: st.phase, label: st.analysis?.label, analyses: st.analyses.length })
     const runUsd = costs.reduce((sum, c) => sum + c.usd, 0)
@@ -434,7 +458,8 @@ async function analyze(env = process.env, deps = {}, { askAuthor = true } = {}) 
 
   if (config.dryRun) {
     await log.group('Write the dry-run report', async () => {
-      const report = [`## Dry run: AI analysis of #${number}`, '', human, '']
+      const shown = results.previewResult({ family: 'analysis', human, st, run: runUrl })
+      const report = [`## Dry run: AI analysis of #${number}`, '', shown, '']
       report.push(`- labels to add: ${changes.add.join(', ') || 'none'}`)
       report.push(`- labels to remove: ${changes.remove.join(', ') || 'none'}`)
       if (questions) {
@@ -444,15 +469,20 @@ async function analyze(env = process.env, deps = {}, { askAuthor = true } = {}) 
       log.info('dry run: nothing written to GitHub')
     })
   } else {
-    await log.group('Write the state comment', async () => {
-      // Read again right before the write: chat may have added a cost record since the state was loaded.
-      const body = state.render(human, await state.withFreshCosts(gh, number, st))
-      if (existing) {
-        await gh.updateIssueComment(existing.id, body)
-      } else {
-        commentId = (await gh.createIssueComment(number, body))?.id ?? null
-      }
-      log.info('state comment written', { id: commentId ?? 'new' })
+    await log.group('Write the analysis result', async () => {
+      // The comment of the analysis family is reused only when it is the newest result comment of the agent. The
+      // write reads the state comment again, so a cost record that chat added since the state was loaded survives.
+      const published = await results.publishResult(gh, number, {
+        family: 'analysis',
+        human,
+        st,
+        run: runUrl,
+        newCommand: true,
+        emptyState: () => state.emptyIssueState(number),
+      })
+      st = published.st
+      commentId = published.commentId
+      log.info('analysis result written', { id: commentId ?? 'new' })
     })
     if (questions) {
       await log.group('Ask the author', async () => {

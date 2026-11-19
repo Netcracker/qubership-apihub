@@ -1,25 +1,9 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import { DefaultDomainMeta, DomainMeta, PropertyObject, RelationObject } from 'main/domain/object/meta'
 import { ClassViewComponent } from 'main/component'
-import { StoryFn } from '@storybook/html'
-import { action } from '@storybook/addon-actions'
-import { useChannel } from '@storybook/addons'
-import { RESET_STORY_ARGS } from '@storybook/core-events'
+import { StoryFn } from '@storybook/html-vite'
+import { action } from 'storybook/actions'
+import { useChannel } from 'storybook/preview-api'
+import { RESET_STORY_ARGS } from 'storybook/internal/core-events'
 import {
   ClassViewApi,
   EVENT_LAYOUT_FINISH,
