@@ -2,52 +2,39 @@
     "configUrl": "/v3/api-docs/apihub-swagger-config",
     "urls": [
         {
-            "url":"/v3/api-docs",
-            "name":"OpenAPI json specification",
-            "x-api-kind":"no-BWC",
+            "url":"/publication-errors/rest-a-petstore.yaml",
+            "name":"rest-a-petstore",
             "type":"openapi-3-0"
         },
         {
-            "url":"/v3/api-docs/yaml",
-            "name":"OpenAPI yaml specification",
-            "x-api-kind":"no-BWC",
+            "url":"/publication-errors/rest-b-warehouse.yaml",
+            "name":"rest-b-warehouse",
             "type":"openapi-3-0"
         },
         {
-            "url":"/v3/api-docs/md",
-            "name":"markdown-sample",
-            "x-api-kind":"no-BWC",
-            "type": "markdown"
+            "url":"/publication-errors/rest-c-warnings.yaml",
+            "name":"rest-c-warnings",
+            "type":"openapi-3-0"
         },
         {
-            "url":"/v3/api-docs/json",
-            "name":"json-sample",
-            "x-api-kind":"no-BWC",
-            "type":"json-schema"
-        },
-        {
-            "url":"/graphql",
-            "name":"graphql",
-            "x-api-kind":"no-BWC",
+            "url":"/publication-errors/graphql-a-petstore.graphql",
+            "name":"graphql-a-petstore",
             "type":"graphql"
         },
         {
-            "url":"/api/graphql-server/schema",
-            "name":"introspection",
-            "x-api-kind":"no-BWC",
-            "type":"introspection"
+            "url":"/publication-errors/graphql-b-warehouse.graphql",
+            "name":"graphql-b-warehouse",
+            "type":"graphql"
         },
         {
-            "url":"/v3/api-docs/async",
-            "name":"AsyncAPI yaml specification",
-            "x-api-kind":"no-BWC",
+            "url":"/publication-errors/asyncapi-a-shop-orders.yaml",
+            "name":"asyncapi-a-shop-orders",
             "type":"asyncapi-3-0"
         },
         {
-          "url":"/v3/api-docs/async/json",
-          "name":"AsyncAPI json specification",
-          "x-api-kind":"no-BWC",
-          "type":"asyncapi-3-0"
+            "url":"/publication-errors/asyncapi-b-warehouse-stock.yaml",
+            "name":"asyncapi-b-warehouse-stock",
+            "type":"asyncapi-3-0"
         }
     ]
 }

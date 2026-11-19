@@ -8,7 +8,6 @@ import (
 )
 
 type SwaggerConfigController interface {
-	GetSwaggerConfig(w http.ResponseWriter, r *http.Request)
 	GetCustomSwaggerConfig(w http.ResponseWriter, r *http.Request)
 }
 
@@ -22,22 +21,6 @@ type swaggerConfigControllerImpl struct {
 
 func (s swaggerConfigControllerImpl) GetCustomSwaggerConfig(w http.ResponseWriter, r *http.Request) {
 	bytes, err := os.ReadFile(s.basePath + "/static/custom_swagger_config.json")
-	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
-			Status:  http.StatusInternalServerError,
-			Code:    exception.FailedToReadSpecFile,
-			Message: exception.FailedToReadSpecFileMsg,
-			Debug:   err.Error(),
-		})
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(bytes)
-}
-
-func (s swaggerConfigControllerImpl) GetSwaggerConfig(w http.ResponseWriter, r *http.Request) {
-	bytes, err := os.ReadFile(s.basePath + "/static/swagger_config.json")
 	if err != nil {
 		RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusInternalServerError,

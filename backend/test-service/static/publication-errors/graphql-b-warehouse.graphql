@@ -1,0 +1,7 @@
+# Intentionally malformed GraphQL schema for partial publication error testing.
+# petstore.graphql succeeds, but this file fails GraphQL SDL parsing.
+
+type Query {
+  listItems(sku: String): [WarehouseItem!]
+  # SYNTAX ERROR: unclosed type definition and invalid tokens:
+  brokenQueryField(

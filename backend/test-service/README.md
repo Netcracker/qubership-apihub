@@ -6,8 +6,9 @@ the [agent](../agent/README.md) and the E2E suites have something to discover. T
 `qubership-apihub-test-service`.
 
 Use it to check the discovery of the agent, specification parsing, endpoint registration, and the exposure of several
-API types at once. It sits outside the product: see the [architecture overview](../../docs/architecture/overview.md)
-for the services it stands in for.
+API types at once. The documents under `static/publication-errors/` are meant to fail or warn on publication, so the
+Agent wizard can publish a version with errors without mocks. It sits outside the product: see the
+[architecture overview](../../docs/architecture/overview.md) for the services it stands in for.
 
 ## Build, test, and lint
 
@@ -24,8 +25,10 @@ The service does not use `commons-go`, so it builds from its own folder. For the
 ## Run and debug locally
 
 Run `go run .` in this folder. The service listens on `:8080`; set `LISTEN_ADDRESS` to change the address. The
-specifications it serves are in [`static/`](static/). To debug it, see
-[Debugging: Go service](../../docs/development/debugging.md#go-service).
+specifications it serves are in [`static/publication-errors/`](static/publication-errors/), a bundle that publishes
+with errors or warnings on purpose. The agent reaches them through the URLs of
+[`static/custom_swagger_config.json`](static/custom_swagger_config.json), and the static file server answers those
+URLs. To debug it, see [Debugging: Go service](../../docs/development/debugging.md#go-service).
 
 ## Configuration
 

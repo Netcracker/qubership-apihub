@@ -1,0 +1,139 @@
+asyncapi: 3.0.0
+info:
+  title: Shop Events A
+  version: 1.0.0
+  description: Order and user events for package A (shop domain).
+channels:
+  orderPlaced:
+    address: shop/orders/placed
+    messages:
+      OrderPlaced:
+        $ref: '#/components/messages/OrderPlaced'
+  userRegistered:
+    address: shop/users/registered
+    messages:
+      UserRegistered:
+        $ref: '#/components/messages/UserRegistered'
+operations:
+  publishOrderPlaced:
+    action: send
+    channel:
+      $ref: '#/channels/orderPlaced'
+    messages:
+      - $ref: '#/channels/orderPlaced/messages/OrderPlaced'
+  publishUserRegistered:
+    action: send
+    channel:
+      $ref: '#/channels/userRegistered'
+    messages:
+      - $ref: '#/channels/userRegistered/messages/UserRegistered'
+components:
+  messages:
+    OrderPlaced:
+      title: Order Placed
+      description: Order placed event payload
+      payload:
+        type: object
+        required:
+          - orderId
+          - userId
+        properties:
+          orderId:
+            type: string
+          userId:
+            type: string
+          total:
+            type: number
+          meta01:
+            type: string
+          meta02:
+            type: string
+          meta03:
+            type: string
+          meta04:
+            type: string
+          meta05:
+            type: string
+          meta06:
+            type: string
+          meta07:
+            type: string
+          meta08:
+            type: string
+          meta09:
+            type: string
+          meta10:
+            type: string
+          meta11:
+            type: string
+          meta12:
+            type: string
+          meta13:
+            type: string
+          meta14:
+            type: string
+          meta15:
+            type: string
+          meta16:
+            type: string
+          meta17:
+            type: string
+          meta18:
+            type: string
+          meta19:
+            type: string
+          meta20:
+            type: string
+          meta21:
+            type: string
+          meta22:
+            type: string
+          meta23:
+            type: string
+          meta24:
+            type: string
+          meta25:
+            type: string
+          meta26:
+            type: string
+          meta27:
+            type: string
+          meta28:
+            type: string
+          meta29:
+            type: string
+          meta30:
+            type: string
+          meta31:
+            type: string
+          meta32:
+            type: string
+          meta33:
+            type: string
+          meta34:
+            type: string
+          meta35:
+            type: string
+          meta36:
+            type: string
+          meta37:
+            type: string
+          meta38:
+            type: string
+          meta39:
+            type: string
+          meta40:
+            type: string
+    UserRegistered:
+      title: User Registered
+      payload:
+        type: object
+        required:
+          - userId
+          - email
+        properties:
+          userId:
+            type: string
+          email:
+            type: string
+            format: email

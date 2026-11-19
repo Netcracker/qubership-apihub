@@ -1,0 +1,185 @@
+#All Directives
+
+directive @deprecated( reason: String = "No longer supported" ) on OBJECT | INPUT_OBJECT | FIELD_DEFINITION | INPUT_FIELD_DEFINITION | ARGUMENT_DEFINITION | UNION | ENUM_VALUE
+
+type Query
+{
+  """Get list of Pets"""
+  listPets(listId: String):[Pet!]
+
+  """Get Pet by ID"""
+  getPet(id: String!): Pet
+
+  """Get list of Users"""
+  listUsers(listId: String):[User!]
+
+  """Get User by ID"""
+  getUser(
+  id: String!
+  meta01: String
+  meta02: String
+  meta03: String
+  meta04: String
+  meta05: String
+  meta06: String
+  meta07: String
+  meta08: String
+  meta09: String
+  meta10: String
+  meta11: String
+  meta12: String
+  meta13: String
+  meta14: String
+  meta15: String
+  meta16: String
+  meta17: String
+  meta18: String
+  meta19: String
+  meta20: String
+  meta21: String
+  meta22: String
+  meta23: String
+  meta24: String
+  meta25: String
+  meta26: String
+  meta27: String
+  meta28: String
+  meta29: String
+  meta30: String
+  meta31: String
+  meta32: String
+  meta33: String
+  meta34: String
+  meta35: String
+  meta36: String
+  meta37: String
+  meta38: String
+  meta39: String
+  meta40: String
+  ): UserDetail @deprecated (reason: "New query is developed")
+}
+
+type Mutation {
+  """Pet availability check"""
+  petAvailabilityCheck(input: AvailabilityCheckRequest): [AvailabilityCheckResult!]
+}
+
+"""Availability Check Request"""
+input AvailabilityCheckRequest {
+
+  """Pet Unique identifiers"""
+  petId: [String!]
+}
+
+"""Availability Check Result"""
+type AvailabilityCheckResult {
+  """Pet Unique identifier"""
+  petId: String
+
+  """Result of the availability check"""
+  availabilityCheckResult: String
+
+  """Availability check message"""
+  availabilityCheckResultMessage: String
+}
+
+"""The entity represents a Pet"""
+type Pet {
+  """Unique identifier"""
+  id: String
+
+  """Name"""
+  name: String
+
+  """Category"""
+  category: Category
+
+  """ Status """
+  status: String
+
+  """Age"""
+  age: String  @deprecated (reason: "To be deleted")
+}
+
+"""The entity represents a Category"""
+type Category {
+  """Unique identifier"""
+  id: String
+
+  """Name"""
+  name: String
+}
+
+"""The entity represents a User"""
+type User {
+
+  """Unique identifier"""
+  id: String
+
+  """Name"""
+  username: String
+
+  """First name"""
+  firstName: String
+
+  """Last name"""
+  lastName: String
+}
+
+"""Detailed user payload for getUser scroll testing"""
+type UserDetail {
+  id: String
+  username: String
+  firstName: String
+  lastName: String
+  detail01: String
+  detail02: String
+  detail03: String
+  detail04: String
+  detail05: String
+  detail06: String
+  detail07: String
+  detail08: String
+  detail09: String
+  detail10: String
+  detail11: String
+  detail12: String
+  detail13: String
+  detail14: String
+  detail15: String
+  detail16: String
+  detail17: String
+  detail18: String
+  detail19: String
+  detail20: String
+  detail21: String
+  detail22: String
+  detail23: String
+  detail24: String
+  detail25: String
+  detail26: String
+  detail27: String
+  detail28: String
+  detail29: String
+  detail30: String
+  detail31: String
+  detail32: String
+  detail33: String
+  detail34: String
+  detail35: String
+  detail36: String
+  detail37: String
+  detail38: String
+  detail39: String
+  detail40: String
+  detail41: String
+  detail42: String
+  detail43: String
+  detail44: String
+  detail45: String
+  detail46: String
+  detail47: String
+  detail48: String
+  detail49: String
+  detail50: String
+}

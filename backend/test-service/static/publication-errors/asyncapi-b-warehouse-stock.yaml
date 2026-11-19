@@ -1,0 +1,68 @@
+asyncapi: 3.0.0
+info:
+  title: Warehouse Events API B
+  version: 1.0.0
+  description: >-
+    Produces both severities the api-processor emits for an AsyncAPI document that builds: an error
+    (AsyncDuplicateOperation) and a warning (RefHasSiblings). The api-processor recognizes only
+    AsyncAPI 3.x, and any error the AsyncAPI parser reports fails the whole file, so information and
+    hint notifications cannot come from this document.
+channels:
+  stockUpdates:
+    address: warehouse/stock/updates
+    description: Warehouse stock level broadcast topic
+    messages:
+      StockUpdate:
+        name: StockUpdate
+        title: Stock update
+        payload:
+          $ref: "#/components/schemas/StockLevel"
+          description: >-
+            Warning RefHasSiblings, a description next to $ref in a payload schema.
+  stockAdjustments:
+    address: warehouse/stock/adjustments
+    description: Warehouse stock adjustment audit topic
+    messages:
+      StockAdjustment:
+        name: StockAdjustment
+        title: Stock adjustment
+        payload:
+          type: object
+          properties:
+            sku:
+              type: string
+            delta:
+              type: integer
+operations:
+  stock/updated:
+    action: send
+    summary: Emit a stock level change
+    channel:
+      $ref: "#/channels/stockUpdates"
+    messages:
+      - $ref: "#/channels/stockUpdates/messages/StockUpdate"
+  stock-updated:
+    action: receive
+    summary: >-
+      Error AsyncDuplicateOperation, the key slugifies to the same APIHUB operation ID as
+      stock/updated (stock-updated-StockUpdate).
+    channel:
+      $ref: "#/channels/stockUpdates"
+    messages:
+      - $ref: "#/channels/stockUpdates/messages/StockUpdate"
+  stock/adjusted:
+    action: receive
+    summary: Receive a stock adjustment
+    channel:
+      $ref: "#/channels/stockAdjustments"
+    messages:
+      - $ref: "#/channels/stockAdjustments/messages/StockAdjustment"
+components:
+  schemas:
+    StockLevel:
+      type: object
+      properties:
+        sku:
+          type: string
+        newQuantity:
+          type: integer

@@ -1,0 +1,66 @@
+openapi: 3.0.3
+info:
+  title: Warehouse API C (Warnings Only)
+  description: Specification containing valid syntax and OpenAPI schema, but triggering diagnostic warnings (RefHasSiblings, DoubleSlashPath, EmptyPathParameter, DuplicateOperationId).
+  version: 1.0.0
+servers:
+  - url: https://warehouse.example.com/api/v1
+paths:
+  //warehouse/audit-log:
+    get:
+      summary: Audit log with double slash in path
+      description: Triggers DoubleSlashPath warning.
+      operationId: getAuditLog
+      tags:
+        - audit
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuditLogEntry"
+                description: Sibling description next to $ref triggers RefHasSiblings warning.
+  /warehouse/{}/history:
+    get:
+      summary: History with empty path parameter name
+      description: Triggers EmptyPathParameter warning.
+      operationId: getEmptyParamHistory
+      tags:
+        - history
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+  /warehouse/pets:
+    get:
+      summary: Cross-document operationId collision
+      description: Re-declares operationId findPetsByStatus from rest-a-petstore.yaml, triggering DuplicateOperationId warning.
+      operationId: findPetsByStatus
+      tags:
+        - pets
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+components:
+  schemas:
+    AuditLogEntry:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        action:
+          type: string

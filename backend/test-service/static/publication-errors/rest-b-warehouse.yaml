@@ -1,0 +1,92 @@
+openapi: 3.0.3
+info:
+  title: Warehouse API B
+  description: >-
+    Specification that produces REST notifications of both severities the api-processor emits for REST:
+    errors (RefNotFound, RestDuplicateOperation) and warnings (DoubleSlashPath, EmptyPathParameter,
+    RefHasSiblings, and an InvalidTextFile schema violation). The api-processor never grades a REST
+    notification as information or hint.
+  version: 1.0.0
+servers:
+  - url: https://warehouse.example.com/api/v1
+paths:
+  /warehouse/items:
+    get:
+      summary: List warehouse items
+      description: Error RefNotFound, the item schema points to a component that does not exist.
+      operationId: listWarehouseItems
+      tags:
+        - items
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/NonExistentWarehouseSchema"
+    post:
+      summary: Create warehouse item
+      description: Warning RefHasSiblings, the request body schema has a description next to $ref.
+      operationId: createWarehouseItem
+      tags:
+        - items
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WarehouseItemInput"
+              description: Sibling description next to $ref.
+      responses:
+        "201":
+          description: Created
+  //warehouse/items:
+    get:
+      summary: List warehouse items through a double slash
+      description: >-
+        Warning DoubleSlashPath for the path itself. Error RestDuplicateOperation, because the path
+        derives the same APIHUB operation ID as GET /warehouse/items (api-v1-warehouse-items-get).
+      operationId: listWarehouseItemsDoubleSlash
+      tags:
+        - items
+      responses:
+        "200":
+          description: OK
+  /warehouse/items/{}/moves:
+    get:
+      summary: Item moves with an empty path parameter name
+      description: Warning EmptyPathParameter, the path parameter has no name.
+      operationId: getItemMoves
+      tags:
+        - moves
+      responses:
+        "200":
+          description: OK
+  /warehouse/items/{sku}:
+    delete:
+      summary: Delete warehouse item
+      description: >-
+        Warning InvalidTextFile, the 204 response has no description, which the OpenAPI 3.0 schema
+        requires.
+      operationId: deleteWarehouseItem
+      tags:
+        - items
+      parameters:
+        - name: sku
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204": {}
+components:
+  schemas:
+    WarehouseItemInput:
+      type: object
+      properties:
+        sku:
+          type: string
+        quantity:
+          type: integer

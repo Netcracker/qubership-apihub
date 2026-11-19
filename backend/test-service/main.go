@@ -44,25 +44,13 @@ func main() {
 		basePath = "."
 	}
 
-	openapiController := controller.NewOpenapiController(basePath)
-	graphqlController := controller.NewGraphqlController(basePath)
 	swaggerConfigController := controller.NewSwaggerConfigController(basePath)
-	asyncapiController := controller.NewAsyncapiController(basePath)
 	tryitController := controller.NewTryitController()
 
 	r := mux.NewRouter().SkipClean(true).UseEncodedPath()
 	r.Use(logging.RequestIDMiddleware)
 
-	r.HandleFunc("/v3/api-docs", openapiController.GetOpenapiSpec).Methods(http.MethodGet)
-	r.HandleFunc("/v3/api-docs/yaml", openapiController.GetOpenapiYamlSpec).Methods(http.MethodGet)
-	r.HandleFunc("/v3/api-docs/md", openapiController.GetMdFile).Methods(http.MethodGet)
-	r.HandleFunc("/v3/api-docs/json", openapiController.GetJsonSample).Methods(http.MethodGet)
-	r.HandleFunc("/v3/api-docs/async", asyncapiController.GetAsyncapiYamlSpec).Methods(http.MethodGet)
-	r.HandleFunc("/v3/api-docs/async/json", asyncapiController.GetAsyncapiJsonSpec).Methods(http.MethodGet)
-	r.HandleFunc("/graphql", graphqlController.GetGraphqlSpec).Methods(http.MethodGet)
-	r.HandleFunc("/api/graphql-server/schema", graphqlController.GetGraphqlIntrospection).Methods(http.MethodPost)
-
-	r.HandleFunc("/v3/api-docs/swagger-config", swaggerConfigController.GetSwaggerConfig).Methods(http.MethodGet)
+	// The APIHUB config lists the documents of static/publication-errors, which the static file server below serves
 	r.HandleFunc("/v3/api-docs/apihub-swagger-config", swaggerConfigController.GetCustomSwaggerConfig).Methods(http.MethodGet)
 
 	//for tryit tests
