@@ -10,10 +10,14 @@ import type { MavenLibraryDto } from '@portal/entities/libraries'
 // A library carries package permissions; the backend still checks every request
 export const NO_VERSION_PERMISSION_HINT = 'You do not have permission to manage versions with this status'
 
+// TODO(libraries-backend): GET /libraries/{libraryId} omits permissions, so all actions stay hidden.
+// Wait for the caller's effective permissions from the service.
 export function hasLibraryPermission(library: MavenLibraryDto, permission: PackagePermission): boolean {
   return !!library.permissions?.includes(permission)
 }
 
+// TODO(libraries-backend): The service checks only manage_draft_version for import and version deletion,
+// even though imports release automatically. Keep this stricter status rule until it checks manage_release_version.
 export function canManageLibraryVersion(library: MavenLibraryDto, status: VersionStatus): boolean {
   return hasLibraryPermission(library, VERSION_STATUS_MANAGE_PERMISSIONS[status])
 }

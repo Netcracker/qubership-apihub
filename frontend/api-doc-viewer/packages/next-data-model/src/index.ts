@@ -3,6 +3,8 @@ export { AsyncApiTreeWithDiffsBuilder } from "./building-service/async-api/tree-
 export { DdlApiTreeBuilder } from "./building-service/ddlapi/tree/builder"
 export { DdlApiTreeWithDiffsBuilder } from "./building-service/ddlapi/tree-with-diffs/builder"
 export { JavaApiClassListBuilder } from "./building-service/javaapi/class-list/builder"
+export { JavaApiChangesClassListBuilder } from "./building-service/javaapi/changes-class-list/builder"
+export type { JavaApiChangeRow, JavaApiChangesClassListBuilderParams } from "./building-service/javaapi/changes-class-list/builder"
 export { JavaApiTreeBuilder } from "./building-service/javaapi/tree/builder"
 export { JsonSchemaTreeBuilder } from "./building-service/json-schema/tree/builder"
 export { JsonSchemaTreeWithDiffsBuilder } from "./building-service/json-schema/tree-with-diffs/builder"
@@ -24,10 +26,11 @@ export type {
   DdlApiTreeBuilderParams,
   DdlApiTreeWithDiffsBuilderParams,
 } from "./shared/ddlapi/types/tree-builder-params"
-export { JavaApiChangeActions } from "./model/javaapi/class-list/class-list-item"
+export { JavaApiChangeActions, JavaApiChangeRowTypes } from "./model/javaapi/class-list/class-list-item"
 export type {
   JavaApiChangeAction,
   JavaApiChangeDescription,
+  JavaApiChangeRowType,
   JavaApiClassListItem,
   JavaApiMemberCountKind,
   JavaApiRawElement,

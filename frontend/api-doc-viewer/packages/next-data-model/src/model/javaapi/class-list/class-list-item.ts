@@ -9,6 +9,13 @@ export const JavaApiChangeActions = {
 
 export type JavaApiChangeAction = typeof JavaApiChangeActions[keyof typeof JavaApiChangeActions]
 
+// `changeType` of a libraries-backend change row: the change actions plus deprecation
+export const JavaApiChangeRowTypes = {
+  ...JavaApiChangeActions,
+  DEPRECATED: 'deprecated',
+} as const
+export type JavaApiChangeRowType = typeof JavaApiChangeRowTypes[keyof typeof JavaApiChangeRowTypes]
+
 /* One human-readable change line, e.g. `[Removed] method 'getIds()'` */
 export type JavaApiChangeDescription = {
   readonly severity: JavaApiChangeSeverity

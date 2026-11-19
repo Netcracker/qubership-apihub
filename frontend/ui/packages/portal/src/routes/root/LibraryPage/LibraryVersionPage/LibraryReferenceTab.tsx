@@ -1,9 +1,10 @@
 import MenuOutlinedIcon from '@mui/icons-material/MenuOutlined'
 import { Alert } from '@mui/material'
 import type { ResizeCallback } from 're-resizable'
-import { type FC, useRef, useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { type FC, memo, useCallback, useRef, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 
+import type { JavaApiClassListItem } from '@netcracker/qubership-apihub-api-doc-viewer'
 import { LoadingIndicator } from '@netcracker/qubership-apihub-ui-shared/components/LoadingIndicator'
 import { RichFiltersLayout } from '@netcracker/qubership-apihub-ui-shared/components/PageLayouts/RichFiltersLayout'
 import { ListBox } from '@netcracker/qubership-apihub-ui-shared/components/Panels/ListBox'
@@ -16,13 +17,14 @@ import {
 } from '@netcracker/qubership-apihub-ui-shared/types/views'
 import { NAVIGATION_MAX_WIDTH } from '@netcracker/qubership-apihub-ui-shared/utils/page-layouts'
 
-import type { LibraryVersionDto } from '@portal/entities/libraries'
+import { type LibraryVersion, LibraryVersionBuildStatuses } from '@portal/entities/libraries'
 import { useSetBackwardLocationContext } from '@portal/routes/BackwardLocationProvider'
 import { usePortalPageSettingsContext } from '@portal/routes/PortalPageSettingsProvider'
 import { filterJavaClasses, getJavaClassPageLink } from './javaapi/java-api'
 import { JavaClassListView } from './javaapi/JavaClassListView'
 import { JavaClassListWithPreview } from './javaapi/JavaClassListWithPreview'
 import { JavaTypeFilter, useJavaTypeFilter } from './javaapi/JavaTypeFilter'
+import { LibraryVersionBuildError } from './LibraryVersionBuildError'
 import { useLibraryJavaApiReport } from './useLibraryJavaApi'
 
 const VIEW_OPTIONS = [
@@ -31,7 +33,7 @@ const VIEW_OPTIONS = [
 ]
 const SUBPAGE_MARGIN = 24
 
-export const LibraryReferenceTab: FC<{ version: LibraryVersionDto }> = ({ version }) => {
+export const LibraryReferenceTab: FC<Readonly<{ version: LibraryVersion }>> = memo(({ version }) => {
   const [searchValue, setSearchValue] = useState('')
   const { data, isLoading, error } = useLibraryJavaApiReport(version.libraryId, version.version)
   const [javaType] = useJavaTypeFilter()
@@ -46,14 +48,16 @@ export const LibraryReferenceTab: FC<{ version: LibraryVersionDto }> = ({ versio
   const bodyRef = useRef<HTMLDivElement | null>(null)
   const [bodyWidth, setBodyWidth] = useState<number>()
   useResizeObserver(bodyRef, setBodyWidth)
-  const navigate = useNavigate()
   const { pathname, search } = useLocation()
   const setBackwardLocation = useSetBackwardLocationContext()
   const classes = filterJavaClasses(data?.classes ?? [], searchValue, javaType)
-  const openClass = (className: string): void => {
+  const prepareLinkFn = useCallback(
+    (javaClass: JavaApiClassListItem) => getJavaClassPageLink(version.libraryId, version.version, javaClass.className),
+    [version.libraryId, version.version],
+  )
+  const onLinkClick = useCallback((): void => {
     setBackwardLocation(previous => ({ ...previous, fromOperation: { pathname, search } }))
-    navigate(getJavaClassPageLink(version.libraryId, version.version, className))
-  }
+  }, [pathname, search, setBackwardLocation])
   const onResize: ResizeCallback = (_, __, ___, delta) => togglePreviewSize(previewSize + delta.width)
   const maxPreviewWidth = bodyWidth !== undefined
     ? bodyWidth - SUBPAGE_MARGIN
@@ -61,10 +65,12 @@ export const LibraryReferenceTab: FC<{ version: LibraryVersionDto }> = ({ versio
 
   let body = (
     <ListBox>
-      <JavaClassListView classes={classes} onOpen={openClass} />
+      <JavaClassListView classes={classes} prepareLinkFn={prepareLinkFn} onLinkClick={onLinkClick} />
     </ListBox>
   )
-  if (isLoading) body = <LoadingIndicator />
+  if (version.metadata?.buildStatus === LibraryVersionBuildStatuses.ERROR) {
+    body = <LibraryVersionBuildError version={version} />
+  } else if (isLoading) body = <LoadingIndicator />
   else if (error) body = <Alert severity="error">{error.message}</Alert>
   else if (!data) body = <Alert severity="info">No JavaAPI report is available for this version.</Alert>
   else if (operationsViewMode === DETAILED_OPERATIONS_VIEW_MODE) {
@@ -72,8 +78,8 @@ export const LibraryReferenceTab: FC<{ version: LibraryVersionDto }> = ({ versio
       <JavaClassListWithPreview
         document={data.document}
         classes={classes}
-        allClasses={data.classes}
-        onOpen={openClass}
+        prepareLinkFn={prepareLinkFn}
+        onLinkClick={onLinkClick}
         initialSize={previewSize}
         handleResize={onResize}
         maxPreviewWidth={maxPreviewWidth}
@@ -99,5 +105,5 @@ export const LibraryReferenceTab: FC<{ version: LibraryVersionDto }> = ({ versio
       data-testid="LibraryReferenceTab"
     />
   )
-}
+})
 LibraryReferenceTab.displayName = 'LibraryReferenceTab'

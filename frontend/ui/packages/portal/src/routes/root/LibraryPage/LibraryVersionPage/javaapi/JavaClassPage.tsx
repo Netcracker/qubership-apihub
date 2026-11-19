@@ -18,6 +18,7 @@ import { ToolbarTitle } from '@netcracker/qubership-apihub-ui-shared/components/
 
 import { useBackwardLocationContext } from '@portal/routes/BackwardLocationProvider'
 import { useSpecViewMode } from '@portal/routes/root/PortalPage/VersionPage/DocumentPreviewPage/useSpecViewMode'
+import { API_CHANGES_PAGE, CONTRACTS_PAGE } from '../../../../../routes'
 import { useLibrary } from '../../../useLibrary'
 import { LibraryBreadcrumbs } from '../../LibraryBreadcrumbs'
 import { useLibraryVersion } from '../../useLibraryVersions'
@@ -58,7 +59,7 @@ export const JavaClassPage: FC = () => {
   const handleBackClick = (): void => {
     const origin = backwardLocation.fromOperation
     const versionPath = getLibraryVersionPath(libraryId, versionId, '')
-    const tabPath = getLibraryVersionPath(libraryId, versionId, kind === 'diff' ? 'changes' : 'reference')
+    const tabPath = getLibraryVersionPath(libraryId, versionId, kind === 'diff' ? API_CHANGES_PAGE : CONTRACTS_PAGE)
     const params = new URLSearchParams()
     setPreviousLibraryVersion(params, { previousLibraryId, previousVersion })
     navigate(origin?.pathname.startsWith(versionPath) ? origin : { pathname: tabPath, search: `?${params}` })
@@ -91,9 +92,7 @@ export const JavaClassPage: FC = () => {
   else if (!data) {
     content = (
       <Alert severity="info">
-        {kind === 'diff'
-          ? 'No comparison has been computed for this version pair.'
-          : 'No JavaAPI report is available for this version.'}
+        Class details are not available for this version yet
       </Alert>
     )
   } else if (javaClass) {

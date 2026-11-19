@@ -17,6 +17,7 @@ import {
   LIBRARY_PAGE_PATH_PATTERN,
   LIBRARY_SETTINGS_PAGE_PATH_PATTERN,
   LIBRARY_VERSION_PAGE_PATH_PATTERN,
+  LIBRARY_JAVA_CLASS_PAGE_PATH_PATTERN,
   PACKAGE_SETTINGS_PAGE,
   PREVIEW_PAGE,
   PRIVATE_PAGE,
@@ -85,7 +86,7 @@ export const router = createBrowserRouter(
         <Route path={LIBRARY_PAGE_PATH_PATTERN} element={<LibraryPage/>}/>
         <Route path={`${LIBRARY_SETTINGS_PAGE_PATH_PATTERN}*`} element={<LibrarySettingsPage/>}/>
         <Route path={`${LIBRARY_VERSION_PAGE_PATH_PATTERN}/*`} element={<LibraryVersionPage/>}/>
-        <Route path={`${LIBRARY_VERSION_PAGE_PATH_PATTERN}/classes/:className`} element={<JavaClassPage/>}/>
+        <Route path={LIBRARY_JAVA_CLASS_PAGE_PATH_PATTERN} element={<JavaClassPage/>}/>
         <Route path="packages/:packageId">
           <Route index element={<PackagePage/>}/>
           <Route path={`${SPECIAL_VERSION_KEY}/${PACKAGE_SETTINGS_PAGE}/*`} element={<PackageSettingsPage/>}/>

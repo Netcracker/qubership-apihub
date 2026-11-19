@@ -10,13 +10,18 @@ export type { JavaElementIconKind } from './components/JavaClassViewer/JavaEleme
 export { JAVA_API_TYPE_KIND_TITLES } from './components/JavaClassViewer/consts'
 export {
   JavaApiChangeActions,
+  JavaApiChangeRowTypes,
   JavaApiChangeSeverities,
   JavaApiClassListBuilder,
+  JavaApiChangesClassListBuilder,
 } from '@netcracker/qubership-apihub-next-data-model'
 export type {
   ClassKey as JavaClassKey,
   JavaApiChangeAction,
   JavaApiChangeDescription,
+  JavaApiChangeRow,
+  JavaApiChangeRowType,
+  JavaApiChangesClassListBuilderParams,
   JavaApiChangeSeverity,
   JavaApiClassListItem,
   JavaApiMemberCountKind,

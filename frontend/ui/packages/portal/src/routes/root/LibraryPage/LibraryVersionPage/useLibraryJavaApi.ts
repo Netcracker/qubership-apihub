@@ -1,19 +1,14 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { JavaApiClassListBuilder, type JavaApiClassListItem } from '@netcracker/qubership-apihub-api-doc-viewer'
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
-import { API_V1 } from '@netcracker/qubership-apihub-ui-shared/utils/requests'
 import { HttpError } from '@netcracker/qubership-apihub-ui-shared/utils/responses'
 
 import type { LibraryJavaApiDocumentDto } from '@portal/entities/libraries'
 import { requestJsonWithError } from '@portal/utils/requestJsonWithError'
+import { LIBRARIES_API_BASE_PATH } from '@portal/utils/requests'
 import { type JavaApiDocumentKind, type PreviousLibraryVersion, setPreviousLibraryVersion } from './javaapi/java-api'
-
-// The 404 code that means "no such document yet", answered with null instead of an error
-const NOT_FOUND_ERROR_CODES: Record<JavaApiDocumentKind, string> = {
-  report: 'LIBRARY_JAVA_API_REPORT_NOT_FOUND',
-  diff: 'LIBRARY_COMPARISON_NOT_FOUND',
-}
+import { useInvalidateLibraryChanges } from './useLibraryChanges'
 
 type LibraryJavaApiData = {
   document: LibraryJavaApiDocumentDto
@@ -26,12 +21,22 @@ type LibraryJavaApiResult = {
   error: Error | null
 }
 
+type InvalidateLibraryJavaApi = (libraryId: Key) => Promise<void>
+
+const libraryJavaApiReportQueryKey = (
+  libraryId: Key | undefined,
+): readonly ['library-java-api-report', Key | undefined] => ['library-java-api-report', libraryId]
+
+const libraryJavaApiDiffQueryKey = (
+  libraryId: Key | undefined,
+): readonly ['library-java-api-diff', Key | undefined] => ['library-java-api-diff', libraryId]
+
 export function useLibraryJavaApiReport(
   libraryId: Key | undefined,
   version: string | undefined,
 ): LibraryJavaApiResult {
   const { data, isLoading, error } = useQuery<LibraryJavaApiData | null, Error>({
-    queryKey: ['library-java-api-report', libraryId, version],
+    queryKey: [...libraryJavaApiReportQueryKey(libraryId), version],
     queryFn: ({ signal }) => getLibraryJavaApi(libraryId!, version!, 'report', undefined, signal),
     enabled: !!libraryId && !!version,
     staleTime: Infinity,
@@ -45,12 +50,29 @@ export function useLibraryJavaApiDiff(
   previous?: PreviousLibraryVersion,
 ): LibraryJavaApiResult {
   const { data, isLoading, error } = useQuery<LibraryJavaApiData | null, Error>({
-    queryKey: ['library-java-api-diff', libraryId, version, previous?.previousLibraryId, previous?.previousVersion],
+    queryKey: [
+      ...libraryJavaApiDiffQueryKey(libraryId),
+      version,
+      previous?.previousLibraryId,
+      previous?.previousVersion,
+    ],
     queryFn: ({ signal }) => getLibraryJavaApi(libraryId!, version!, 'diff', previous, signal),
     enabled: !!libraryId && !!version,
     staleTime: Infinity,
   })
   return { data, isLoading, error }
+}
+
+export function useInvalidateLibraryJavaApi(): InvalidateLibraryJavaApi {
+  const queryClient = useQueryClient()
+  const invalidateLibraryChanges = useInvalidateLibraryChanges()
+  return async libraryId => {
+    const queryKeys = [libraryJavaApiReportQueryKey(libraryId), libraryJavaApiDiffQueryKey(libraryId)]
+    // Remove inactive entries first: refetchOnMount is off, so a cache that only went stale would be shown again
+    queryKeys.forEach(queryKey => queryClient.removeQueries({ queryKey: queryKey, type: 'inactive' }))
+    await Promise.all(queryKeys.map(queryKey => queryClient.invalidateQueries({ queryKey })))
+    await invalidateLibraryChanges(libraryId)
+  }
 }
 
 async function getLibraryJavaApi(
@@ -62,19 +84,19 @@ async function getLibraryJavaApi(
 ): Promise<LibraryJavaApiData | null> {
   const query = new URLSearchParams()
   setPreviousLibraryVersion(query, previous)
+  // TODO(libraries-backend): The service serves no jdiff report/diff document or class content.
+  // API Reference and the class page show "not available" on 404/421 until these are served.
   const path = `/libraries/${encodeURIComponent(libraryId)}/versions/${encodeURIComponent(version)}/java-api/${kind}`
   let document: LibraryJavaApiDocumentDto
   try {
     document = await requestJsonWithError<LibraryJavaApiDocumentDto>(
       query.size ? `${path}?${query}` : path,
       { method: 'GET' },
-      { basePath: API_V1 },
+      { basePath: LIBRARIES_API_BASE_PATH },
       signal,
     )
   } catch (error) {
-    if (error instanceof HttpError && error.status === 404 && error.code === NOT_FOUND_ERROR_CODES[kind]) {
-      return null
-    }
+    if (error instanceof HttpError && (error.status === 404 || error.status === 421)) return null
     throw error
   }
   const classes = new JavaApiClassListBuilder({ source: document }).build()

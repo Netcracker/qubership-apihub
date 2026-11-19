@@ -13,6 +13,7 @@ export const PACKAGE_PAGE_PATH_PATTERN = '/portal/packages/:packageId'
 export const LIBRARY_PAGE_PATH_PATTERN = '/portal/libraries/:libraryId'
 export const LIBRARY_SETTINGS_PAGE_PATH_PATTERN = `${LIBRARY_PAGE_PATH_PATTERN}/settings/`
 export const LIBRARY_VERSION_PAGE_PATH_PATTERN = `${LIBRARY_PAGE_PATH_PATTERN}/versions/:versionId`
+export const LIBRARY_JAVA_CLASS_PAGE_PATH_PATTERN = `${LIBRARY_VERSION_PAGE_PATH_PATTERN}/classes/:className`
 
 // Package tabs
 export const OVERVIEW_PAGE = 'overview'

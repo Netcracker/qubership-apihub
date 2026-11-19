@@ -1,5 +1,6 @@
 import { Box, styled } from '@mui/material'
-import { type FC, useMemo, useState } from 'react'
+import type { Path } from '@remix-run/router'
+import { type FC, memo, useMemo, useState } from 'react'
 
 import {
   type JavaApiClassListItem,
@@ -20,19 +21,21 @@ import { JavaClassNavigationLink } from './JavaClassNavigationLink'
 import { JavaClassTitleWithMeta } from './JavaClassTitleWithMeta'
 import { JavaClassViewModeToggler } from './JavaClassViewModeToggler'
 
-type JavaClassPreviewProps = {
+type JavaClassPreviewProps = Readonly<{
   document: LibraryJavaApiDocumentDto
   javaClass: JavaApiClassListItem | undefined
   navigationLinkBuilder: JavaApiNavigationLinkBuilder
-  onOpen: (className: string) => void
+  link?: Partial<Path>
+  onLinkClick: () => void
   maxWidthHeaderToolbar: number
-}
+}>
 
-export const JavaClassPreview: FC<JavaClassPreviewProps> = ({
+export const JavaClassPreview: FC<JavaClassPreviewProps> = memo<JavaClassPreviewProps>(({
   document,
   javaClass,
   navigationLinkBuilder,
-  onOpen,
+  link,
+  onLinkClick,
   maxWidthHeaderToolbar,
 }) => {
   const [viewMode, setViewMode] = useState<SpecViewMode>(DOC_SPEC_VIEW_MODE)
@@ -47,7 +50,8 @@ export const JavaClassPreview: FC<JavaClassPreviewProps> = ({
         <JavaClassTitleWithMeta
           onlyTitle
           javaClass={javaClass}
-          onTitleClick={() => onOpen(javaClass.className)}
+          link={link}
+          onLinkClick={onLinkClick}
         />
       )}
       action={<JavaClassViewModeToggler mode={viewMode} onChange={setViewMode} />}
@@ -71,7 +75,7 @@ export const JavaClassPreview: FC<JavaClassPreviewProps> = ({
         )}
     </ContractPreviewPanel>
   )
-}
+})
 JavaClassPreview.displayName = 'JavaClassPreview'
 
 const ViewerBox = styled(Box)(({ theme }) => ({

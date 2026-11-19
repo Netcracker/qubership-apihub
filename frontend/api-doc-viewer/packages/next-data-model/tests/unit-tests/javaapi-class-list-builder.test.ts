@@ -75,14 +75,14 @@ describe('JavaApiClassListBuilder', () => {
         displayName: 'Order',
         typeKind: 'CLASS',
         memberKindCounts: { FIELD: 0, CONSTRUCTOR: 2, METHOD: 2 },
-        changeCounts: { breaking: 3, 'non-breaking': 1 },
+        changeCounts: { breaking: 3, 'non-breaking': 1, annotation: 0 },
         changeAction: 'changed',
       },
       {
         displayName: 'Order.OrderBuilder',
         typeKind: 'CLASS',
         memberKindCounts: { FIELD: 0, CONSTRUCTOR: 0, METHOD: 1 },
-        changeCounts: { breaking: 1, 'non-breaking': 0 },
+        changeCounts: { breaking: 1, 'non-breaking': 0, annotation: 0 },
         changeAction: 'changed',
       },
     ])
@@ -120,7 +120,7 @@ describe('JavaApiClassListBuilder', () => {
     }).build()
 
     expect(item.compatibility?.severity).toBe(severity)
-    expect(item.changeCounts).toEqual({ breaking: 0, 'non-breaking': 0, [severity]: 1 })
+    expect(item.changeCounts).toEqual({ breaking: 0, 'non-breaking': 0, annotation: 0, [severity]: 1 })
     expect(item.changes).toEqual([expect.objectContaining({ severity })])
   })
 
@@ -161,7 +161,7 @@ describe('JavaApiClassListBuilder', () => {
       expect(item?.compatibility?.severity).toBeUndefined()
     }
     expect(classes.find(item => item.displayName === 'Details')?.changeCounts)
-      .toEqual({ breaking: 0, 'non-breaking': 1 })
+      .toEqual({ breaking: 0, 'non-breaking': 1, annotation: 0 })
   })
 
   it.each([

@@ -13,6 +13,7 @@ import type {
 import { createMockLibraryContent } from './mock-content'
 
 const PUBLIC_LIBRARY_ROLE = 'viewer'
+const LIBRARY_VERSION_BUILD_DELAY_MS = 3000
 // The jdiff samples of api-doc-viewer; its stories and tests read the same files
 const JAVA_API_SAMPLES_DIR = join(__dirname, '../../../../../../api-doc-viewer/packages/samples/javaapi')
 const JAVA_API_REPORT_PATH = join(JAVA_API_SAMPLES_DIR, 'api-report.json')
@@ -69,7 +70,32 @@ export function createLibrariesRouters(): LibrariesRouters {
   const router = Router()
   const favoritesRouter = Router()
   const mock = createMockLibraryContent()
-  const sampleBreakingChangesCount = countBreakingChanges(JAVA_API_DIFF_PATH)
+  const sampleChanges = createChanges(JAVA_API_DIFF_PATH)
+  const sampleBreakingChangesCount =
+    sampleChanges.filter(change => change.details.member && change.severity === 'breaking').length
+  const changeCounts = {
+    breaking: 0,
+    'non-breaking': 0,
+    annotation: 0,
+    added: 0,
+    removed: 0,
+    changed: 0,
+    deprecated: 0,
+  }
+  sampleChanges.forEach(change => {
+    changeCounts[change.severity]++
+    changeCounts[change.changeType]++
+  })
+  const comparison = {
+    comparisonId: 'local-library-comparison',
+    libraryId: mock.versions[0].libraryId,
+    version: mock.versions[0].version,
+    previousLibraryId: mock.versions[1].libraryId,
+    previousVersion: mock.versions[1].version,
+    changeCounts: changeCounts,
+    openCount: sampleChanges.length,
+    noContent: sampleChanges.length === 0,
+  }
   const libraryMembers = new Map(Object.entries(mock.members))
   const libraryApiKeys = new Map<string, LibraryApiKey[]>()
   const libraryVersions: LibraryVersion[] = [...mock.versions]
@@ -318,7 +344,7 @@ export function createLibrariesRouters(): LibrariesRouters {
     res.sendStatus(204)
   })
 
-  router.get('/:libraryId/registry-versions', (req, res) => {
+  router.get('/:libraryId/available-versions', (req, res) => {
     const library = libraries.find(item => item.libraryId === req.params.libraryId)
     if (!library) {
       res.status(404).json({ status: 404, code: 'LIBRARY_NOT_FOUND', message: 'Library not found' })
@@ -334,7 +360,10 @@ export function createLibrariesRouters(): LibrariesRouters {
     const versions = (mock.registryVersions[library.coordinatesKey] ?? []).filter(version =>
       !publishedVersions.has(version) && version.toLowerCase().includes(textFilter),
     )
-    res.json({ versions: versions.slice(paging.offset, paging.offset + paging.limit) })
+    res.json({
+      // The registry lists versions oldest first, like maven-metadata.xml.
+      versions: versions.reverse().slice(paging.offset, paging.offset + paging.limit).map(version => ({ version })),
+    })
   })
 
   router.get('/:libraryId/versions', (req, res) => {
@@ -374,7 +403,7 @@ export function createLibrariesRouters(): LibrariesRouters {
   })
 
   // Answers 404 itself and returns false when the version or its comparison does not exist
-  const checkComparison = (req: Request, res: Response): boolean => {
+  const checkComparison = (req: Request, res: Response, code = 'LIBRARY_COMPARISON_NOT_FOUND'): boolean => {
     const current = libraryVersions.find(item =>
       item.libraryId === req.params.libraryId && item.version === req.params.version,
     )
@@ -391,7 +420,7 @@ export function createLibrariesRouters(): LibrariesRouters {
     if (!hasComparison(current, previousLibraryId, previousVersion)) {
       res.status(404).json({
         status: 404,
-        code: 'LIBRARY_COMPARISON_NOT_FOUND',
+        code: code,
         message: 'No comparison has been computed for this version pair',
       })
       return false
@@ -401,6 +430,35 @@ export function createLibrariesRouters(): LibrariesRouters {
 
   router.get('/:libraryId/versions/:version/java-api/diff', (req, res) => {
     if (checkComparison(req, res)) res.sendFile(JAVA_API_DIFF_PATH)
+  })
+
+  router.get('/:libraryId/versions/:version/changes/summary', (req, res) => {
+    if (checkComparison(req, res, '3200')) res.json(comparison)
+  })
+
+  router.get('/:libraryId/versions/:version/changes', (req, res) => {
+    const paging = getPaging(req, res)
+    if (!paging) return
+    if (paging.limit > 100) {
+      res.status(400).json({ status: 400, code: 'BAD_REQUEST', message: 'Limit must be between 1 and 100' })
+      return
+    }
+    const changeTypes = queryValues(req.query.changeType)
+    const severities = queryValues(req.query.severity)
+    if (
+      changeTypes.some(type => !['added', 'removed', 'changed', 'deprecated'].includes(type)) ||
+      severities.some(severity => !['breaking', 'non-breaking', 'annotation'].includes(severity))
+    ) {
+      res.status(400).json({ status: 400, code: 'BAD_REQUEST', message: 'Invalid change filter' })
+      return
+    }
+    if (!checkComparison(req, res, '3200')) return
+    const changes = sampleChanges.filter(change =>
+      (!changeTypes.length || changeTypes.includes(change.changeType)) &&
+      (!severities.length || severities.includes(change.severity)) &&
+      (!req.query.classId || change.classId === req.query.classId),
+    )
+    res.json({ comparison: comparison, changes: changes.slice(paging.offset, paging.offset + paging.limit) })
   })
 
   router.get('/:libraryId/versions/:version', (req, res) => {
@@ -446,11 +504,13 @@ export function createLibrariesRouters(): LibrariesRouters {
       libraryId: libraryId,
       version: body.version,
       previousVersion: body.previousVersion,
-      status: body.status ?? 'draft',
+      status: 'draft',
       labels: body.labels ?? [],
       createdAt: new Date().toISOString(),
       createdBy: 'local-dev',
       metadata: {
+        buildId: randomUUID(),
+        buildStatus: 'none',
         activities: [{
           id: randomUUID(),
           action: 'Published version',
@@ -461,6 +521,10 @@ export function createLibrariesRouters(): LibrariesRouters {
     }
     libraryVersions.unshift(version)
     res.status(202).json(version)
+    setTimeout(() => {
+      version.status = 'release'
+      version.metadata = { ...version.metadata, buildStatus: 'complete' }
+    }, LIBRARY_VERSION_BUILD_DELAY_MS).unref()
   })
 
   router.patch('/:libraryId/versions/:version', (req, res) => {
@@ -525,17 +589,61 @@ export function createLibrariesRouters(): LibrariesRouters {
   return { libraries: router, favorites: favoritesRouter }
 }
 
-type JdiffRow = { member?: string; status: string; breaking: boolean }
+type JdiffRow = {
+  className: string
+  elementType: string
+  member?: string
+  status: string
+  breaking: boolean
+  changeTypes?: string[]
+  semver: string
+  details?: string
+  binaryCompatible?: boolean
+  sourceCompatible?: boolean
+}
 type JdiffDocument = { artifacts: { changes: JdiffRow[] }[] }
 
-// Breaking rows of a jdiff diff as the UI counts them: changed members with jdiff's `breaking` verdict.
-// The sample's type rows only reflect their members' changes, so they are left out.
-function countBreakingChanges(path: string): number {
+type LibraryChange = {
+  changeId: string
+  classId: string
+  methodId?: string
+  changeType: 'added' | 'removed' | 'changed' | 'deprecated'
+  severity: 'breaking' | 'non-breaking' | 'annotation'
+  description: string
+  details: Omit<JdiffRow, 'className' | 'breaking'>
+}
+
+function createChanges(path: string): LibraryChange[] {
   const document = JSON.parse(readFileSync(path, 'utf8')) as JdiffDocument
   return document.artifacts
     .flatMap(artifact => artifact.changes)
-    .filter(row => row.member && row.status !== 'UNCHANGED' && row.breaking)
-    .length
+    .filter(row => row.status !== 'UNCHANGED' || !!row.changeTypes?.length)
+    .map(({ className, breaking, ...details }, index): LibraryChange => {
+      const { status, member, elementType, changeTypes = [] } = details
+      const changeType = status === 'NEW' ? 'added' : status === 'REMOVED'
+        ? 'removed'
+        : changeTypes.includes('ANNOTATION_DEPRECATED_ADDED')
+        ? 'deprecated'
+        : 'changed'
+      const severity = breaking
+        ? 'breaking'
+        : changeTypes.length && changeTypes.every(code => code.startsWith('ANNOTATION_'))
+        ? 'annotation'
+        : 'non-breaking'
+      const signature = member?.slice(0, member.indexOf('(')).trim().split(' ').pop()
+      const methodId = member && (elementType === 'METHOD' || elementType === 'CONSTRUCTOR')
+        ? `${signature}${member.slice(member.indexOf('('))}`
+        : undefined
+      return {
+        changeId: `sample-change-${index}`,
+        classId: className,
+        methodId: methodId,
+        changeType: changeType,
+        severity: severity,
+        description: `${className}${member ? `#${member}` : ''} ${status.toLowerCase()}`,
+        details: details,
+      }
+    })
 }
 
 function setMemberDirectRoles(members: LibraryMember[], userId: string, roleIds: string[]): void {

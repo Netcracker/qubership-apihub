@@ -1,17 +1,30 @@
-import { Table, TableBody, TableCell, TableHead, TableRow } from '@mui/material'
-import type { FC } from 'react'
+import { Box, styled, Table, TableBody, TableCell, TableHead, TableRow, Typography } from '@mui/material'
+import { type FC, memo, useState } from 'react'
 
 import { BodyCard } from '@netcracker/qubership-apihub-ui-shared/components/BodyCard'
 import { FormattedDate } from '@netcracker/qubership-apihub-ui-shared/components/FormattedDate'
+import { SearchBar } from '@netcracker/qubership-apihub-ui-shared/components/SearchBar'
 import { UserView } from '@netcracker/qubership-apihub-ui-shared/components/Users/UserView'
 
-import type { LibraryVersionDto } from '@portal/entities/libraries'
+import type { LibraryVersion } from '@portal/entities/libraries'
+import { filterLibraryActivities } from './libraryActivities'
 
-export const LibraryActivityTab: FC<{ version: LibraryVersionDto }> = ({ version }) => {
-  const activities = version.metadata?.activities ?? []
+export const LibraryActivityTab: FC<Readonly<{ version: LibraryVersion }>> = memo(({ version }) => {
+  const [textFilter, setTextFilter] = useState('')
+  const activities = filterLibraryActivities(version.metadata?.activities ?? [], textFilter)
   return (
     <BodyCard
-      header="Activity History"
+      header={
+        <ActivityHeader>
+          <Typography variant="inherit">Activity History</Typography>
+          <SearchBar
+            placeholder="Search"
+            value={textFilter}
+            onValueChange={setTextFilter}
+            data-testid="SearchInHistory"
+          />
+        </ActivityHeader>
+      }
       body={
         <Table aria-label="Library activity history">
           <TableHead>
@@ -31,7 +44,9 @@ export const LibraryActivityTab: FC<{ version: LibraryVersionDto }> = ({ version
             ))}
             {!activities.length && (
               <TableRow>
-                <TableCell colSpan={3}>No activity has been recorded for this version.</TableCell>
+                <TableCell colSpan={3}>
+                  {textFilter ? 'No search results' : 'No activity has been recorded for this version.'}
+                </TableCell>
               </TableRow>
             )}
           </TableBody>
@@ -39,5 +54,12 @@ export const LibraryActivityTab: FC<{ version: LibraryVersionDto }> = ({ version
       }
     />
   )
-}
+})
 LibraryActivityTab.displayName = 'LibraryActivityTab'
+
+const ActivityHeader = styled(Box)(({ theme }) => ({
+  display: 'grid',
+  gap: theme.spacing(1),
+  gridTemplateColumns: '1fr auto',
+  alignItems: 'center',
+}))

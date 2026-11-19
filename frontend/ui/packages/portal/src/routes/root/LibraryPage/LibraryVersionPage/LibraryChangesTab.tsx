@@ -1,8 +1,8 @@
 import { Alert, Link } from '@mui/material'
-import { type FC, useState } from 'react'
-import { NavLink, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
+import { type FC, memo, useCallback, useState } from 'react'
+import { NavLink, useLocation, useSearchParams } from 'react-router-dom'
 
-import type { JavaApiChangeDescription } from '@netcracker/qubership-apihub-api-doc-viewer'
+import type { JavaApiChangeDescription, JavaApiClassListItem } from '@netcracker/qubership-apihub-api-doc-viewer'
 import { ChangeSeverityFilters } from '@netcracker/qubership-apihub-ui-shared/components/ChangeSeverityFilters'
 import { CATEGORY_OPERATION } from '@netcracker/qubership-apihub-ui-shared/components/ChangesTooltip'
 import { LoadingIndicator } from '@netcracker/qubership-apihub-ui-shared/components/LoadingIndicator'
@@ -14,7 +14,7 @@ import {
   useSeverityFiltersSearchParam,
 } from '@netcracker/qubership-apihub-ui-shared/hooks/change-severities/useSeverityFiltersSearchParam'
 
-import type { LibraryVersionDto } from '@portal/entities/libraries'
+import { type LibraryVersion, LibraryVersionBuildStatuses } from '@portal/entities/libraries'
 import { useSetBackwardLocationContext } from '@portal/routes/BackwardLocationProvider'
 import { usePortalPageSettingsContext } from '@portal/routes/PortalPageSettingsProvider'
 import {
@@ -22,47 +22,58 @@ import {
   getJavaClassPageLink,
   getPreviousLibraryVersion,
   JAVA_CHANGE_SEVERITIES,
-  sumChangesSummaries,
 } from './javaapi/java-api'
 import { JavaChangesTable } from './javaapi/JavaChangesTable'
 import { JavaTypeFilter, useJavaTypeFilter } from './javaapi/JavaTypeFilter'
 import { getLibraryVersionPath } from './library-version'
-import { useLibraryJavaApiDiff } from './useLibraryJavaApi'
+import { LibraryVersionBuildError } from './LibraryVersionBuildError'
+import { useLibraryChanges, useLibraryChangesSummary } from './useLibraryChanges'
 
-export const LibraryChangesTab: FC<{ version: LibraryVersionDto }> = ({ version }) => {
+export const LibraryChangesTab: FC<Readonly<{ version: LibraryVersion }>> = memo(({ version }) => {
   const [query] = useSearchParams()
   const previous = getPreviousLibraryVersion(query)
-  const { data, isLoading, error } = useLibraryJavaApiDiff(version.libraryId, version.version, previous)
+  const { data, isLoading, error } = useLibraryChanges(version.libraryId, version.version, previous)
+  const { data: changesSummary, error: summaryError } = useLibraryChangesSummary(
+    version.libraryId,
+    version.version,
+    previous,
+  )
   const [searchValue, setSearchValue] = useState('')
   const [javaType] = useJavaTypeFilter()
   const [severityFilters, setSeverityFilters] = useSeverityFiltersSearchParam()
   const { hideFiltersPanel, toggleHideFiltersPanel } = usePortalPageSettingsContext()
-  const navigate = useNavigate()
   const { pathname, search } = useLocation()
   const setBackwardLocation = useSetBackwardLocationContext()
   const matchingClasses = filterJavaClasses(data?.classes ?? [], searchValue, javaType)
-  // TODO(api-doc-viewer): drop the annotation once its .d.ts includes the next-data-model types
   const classes = severityFilters.length
-    ? matchingClasses.filter(({ changes }) =>
-      changes.some(({ severity }: JavaApiChangeDescription) => severityFilters.includes(severity)),
-    )
+    ? matchingClasses.filter(({ changes }) => {
+      return changes.some(({ severity }: JavaApiChangeDescription) => severityFilters.includes(severity))
+    })
     : matchingClasses
-  const changesSummary = sumChangesSummaries(matchingClasses)
   // the server compares with these defaults when the query names no other version
   const previousLibraryId = previous.previousLibraryId ?? version.libraryId
   const previousVersion = previous.previousVersion ?? version.previousVersion
-  const openClass = (className: string): void => {
+  const prepareLinkFn = useCallback(
+    (javaClass: JavaApiClassListItem) =>
+      getJavaClassPageLink(version.libraryId, version.version, javaClass.className, 'diff', {
+        previousLibraryId: previous.previousLibraryId,
+        previousVersion: previous.previousVersion,
+      }),
+    [version.libraryId, version.version, previous.previousLibraryId, previous.previousVersion],
+  )
+  const onLinkClick = useCallback((): void => {
     setBackwardLocation(current => ({ ...current, fromOperation: { pathname, search } }))
-    navigate(getJavaClassPageLink(version.libraryId, version.version, className, 'diff', previous))
-  }
+  }, [pathname, search, setBackwardLocation])
 
   let body = (
     <ListBox>
-      <JavaChangesTable classes={classes} onOpen={openClass} />
+      <JavaChangesTable classes={classes} prepareLinkFn={prepareLinkFn} onLinkClick={onLinkClick} />
     </ListBox>
   )
-  if (isLoading) body = <LoadingIndicator />
-  else if (error) body = <Alert severity="error">{error.message}</Alert>
+  if (version.metadata?.buildStatus === LibraryVersionBuildStatuses.ERROR) {
+    body = <LibraryVersionBuildError version={version} />
+  } else if (isLoading) body = <LoadingIndicator />
+  else if (error || summaryError) body = <Alert severity="error">{error?.message ?? summaryError?.message}</Alert>
   else if (!data) body = <Alert severity="info">No comparison has been computed for this version pair.</Alert>
 
   return (
@@ -91,7 +102,7 @@ export const LibraryChangesTab: FC<{ version: LibraryVersionDto }> = ({ version 
       filters={<JavaTypeFilter />}
       hideViewToggle
       hideExport
-      additionalActions={data && (
+      additionalActions={changesSummary && (
         <ChangeSeverityFilters
           changes={changesSummary}
           changeSeverities={JAVA_CHANGE_SEVERITIES}
@@ -104,5 +115,5 @@ export const LibraryChangesTab: FC<{ version: LibraryVersionDto }> = ({ version 
       data-testid="LibraryChangesTab"
     />
   )
-}
+})
 LibraryChangesTab.displayName = 'LibraryChangesTab'

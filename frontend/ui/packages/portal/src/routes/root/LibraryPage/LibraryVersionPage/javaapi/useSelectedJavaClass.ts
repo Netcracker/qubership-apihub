@@ -7,12 +7,11 @@ export const JAVA_CLASS_SEARCH_PARAM = 'javaClass'
 type SelectJavaClass = (className: string) => void
 
 export function useSelectedJavaClass(
-  classes: ReadonlyArray<JavaApiClassListItem>,
   filteredClasses: ReadonlyArray<JavaApiClassListItem>,
 ): [JavaApiClassListItem | undefined, SelectJavaClass] {
   const [searchParams, setSearchParams] = useSearchParams()
   const selectedName = searchParams.get(JAVA_CLASS_SEARCH_PARAM)
-  const selectedClass = classes.find(({ className }) => className === selectedName) ?? filteredClasses[0]
+  const selectedClass = filteredClasses.find(({ className }) => className === selectedName) ?? filteredClasses[0]
   const selectClass: SelectJavaClass = useCallback(className => {
     setSearchParams(params => {
       params.set(JAVA_CLASS_SEARCH_PARAM, className)

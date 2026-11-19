@@ -11,6 +11,7 @@ const EXTENSION_VERSION_STALE_TIME = 30 * 1000
 const VERSIONED_EXTENSION_NAMES = [
   SystemExtensionNames.apiLinter,
   SystemExtensionNames.agentsBackend,
+  SystemExtensionNames.librariesBackend,
 ] as const
 
 export type VersionedExtensionName = typeof VERSIONED_EXTENSION_NAMES[number]

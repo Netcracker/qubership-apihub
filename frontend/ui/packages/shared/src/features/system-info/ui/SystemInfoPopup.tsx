@@ -22,6 +22,7 @@ type SystemInfoPopupProps = {
 const EXTENSION_TITLES: Record<VersionedExtensionName, string> = {
   'api-linter': 'API Linter',
   'agents-backend': 'Agents Backend',
+  'libraries-backend': 'Libraries Backend',
 }
 const VERSION_PENDING_TEXT = '...'
 const VERSION_NO_DATA_TEXT = 'no data'
@@ -86,6 +87,8 @@ export const SystemInfoPopup: FC<SystemInfoPopupProps> = memo(({
 
             <VersionRow title="Backend" version={backendVersionKey} data-testid="SystemInfoBackendVersion"/>
 
+            {/* TODO(libraries-backend): Add a "Java Processor" row once libraries-backend reports its version (UC27).
+                No endpoint exposes the Java task processor version yet. */}
             {extensionVersions.map(state => (
               <VersionRow
                 key={state.name}

@@ -1,5 +1,6 @@
 import type { JavaApiClassListItem } from '@netcracker/qubership-apihub-api-doc-viewer'
 import {
+  ANNOTATION_CHANGE_SEVERITY,
   BREAKING_CHANGE_SEVERITY,
   type ChangeSeverity,
   type ChangesSummary,
@@ -18,6 +19,7 @@ export const PREVIOUS_VERSION_SEARCH_PARAM = 'previousVersion'
 export const JAVA_CHANGE_SEVERITIES: ReadonlySet<ChangeSeverity> = new Set([
   BREAKING_CHANGE_SEVERITY,
   NON_BREAKING_CHANGE_SEVERITY,
+  ANNOTATION_CHANGE_SEVERITY,
 ])
 
 export type JavaTypeFilterValue = 'CLASS' | 'INTERFACE' | 'ENUM' | 'ANNOTATION'
@@ -76,15 +78,8 @@ export function toChangesSummary(counts: JavaApiClassListItem['changeCounts']): 
     ...EMPTY_CHANGE_SUMMARY,
     [BREAKING_CHANGE_SEVERITY]: counts.breaking,
     [NON_BREAKING_CHANGE_SEVERITY]: counts['non-breaking'],
+    [ANNOTATION_CHANGE_SEVERITY]: counts.annotation,
   }
-}
-
-export function sumChangesSummaries(classes: ReadonlyArray<JavaApiClassListItem>): ChangesSummary {
-  return classes.reduce<ChangesSummary>((total, { changeCounts }) => ({
-    ...total,
-    [BREAKING_CHANGE_SEVERITY]: total[BREAKING_CHANGE_SEVERITY] + changeCounts.breaking,
-    [NON_BREAKING_CHANGE_SEVERITY]: total[NON_BREAKING_CHANGE_SEVERITY] + changeCounts['non-breaking'],
-  }), EMPTY_CHANGE_SUMMARY)
 }
 
 export function countJavaTypes(classes: ReadonlyArray<JavaApiClassListItem>): Record<JavaTypeFilterValue, number> {

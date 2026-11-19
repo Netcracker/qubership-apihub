@@ -1,5 +1,17 @@
 import { styled, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material'
-import { type FC, Fragment, memo, useCallback, useMemo, useState } from 'react'
+import type { Path } from '@remix-run/router'
+import {
+  type ColumnDef,
+  type ColumnSizingInfoState,
+  type ColumnSizingState,
+  type ExpandedState,
+  flexRender,
+  getCoreRowModel,
+  getExpandedRowModel,
+  type OnChangeFn,
+  useReactTable,
+} from '@tanstack/react-table'
+import { type FC, Fragment, memo, useEffect, useMemo, useRef, useState } from 'react'
 
 import {
   type JavaApiChangeAction,
@@ -8,6 +20,7 @@ import {
   type JavaApiClassListItem,
 } from '@netcracker/qubership-apihub-api-doc-viewer'
 import { Changes } from '@netcracker/qubership-apihub-ui-shared/components/Changes'
+import { ColumnDelimiter } from '@netcracker/qubership-apihub-ui-shared/components/ColumnDelimiter'
 import { CustomTableHeadCell } from '@netcracker/qubership-apihub-ui-shared/components/CustomTableHeadCell'
 import { ExpandableItem } from '@netcracker/qubership-apihub-ui-shared/components/ExpandableItem'
 import { TextWithOverflowTooltip } from '@netcracker/qubership-apihub-ui-shared/components/TextWithOverflowTooltip'
@@ -19,14 +32,26 @@ import {
   REPLACE_ACTION_TYPE,
 } from '@netcracker/qubership-apihub-ui-shared/entities/change-severities'
 import type { OperationChanges } from '@netcracker/qubership-apihub-ui-shared/entities/operation-changelog'
+import { useResizeObserver } from '@netcracker/qubership-apihub-ui-shared/hooks/common/useResizeObserver'
 import {
-  ChangesSubTable,
-} from '@netcracker/qubership-apihub-ui-shared/widgets/ChangesViewWidget/components/ChangesSubTable'
+  type ColumnModel,
+  DEFAULT_CONTAINER_WIDTH,
+  useColumnsSizing,
+} from '@netcracker/qubership-apihub-ui-shared/hooks/table-resizing/useColumnResizing'
+import { sortChanges } from '@netcracker/qubership-apihub-ui-shared/utils/api-changes'
+import { ChangesSubTable } from '@netcracker/qubership-apihub-ui-shared/widgets/ChangesViewWidget/components/ChangesSubTable'
 
 import { toChangesSummary } from './java-api'
 import { JavaClassTitleWithMeta } from './JavaClassTitleWithMeta'
 
-const COLUMN_COUNT = 3
+const JAVA_TYPES_COLUMN_ID = 'java-types'
+const MEMBERS_COLUMN_ID = 'members'
+const CHANGES_COLUMN_ID = 'changes'
+const COLUMN_MODELS: ColumnModel[] = [
+  { name: JAVA_TYPES_COLUMN_ID },
+  { name: MEMBERS_COLUMN_ID, width: 260 },
+  { name: CHANGES_COLUMN_ID, width: 218 },
+]
 
 const CHANGE_ACTION_TYPES: Record<JavaApiChangeAction, ActionType> = {
   [JavaApiChangeActions.ADDED]: ADD_ACTION_TYPE,
@@ -40,50 +65,106 @@ const MEMBER_KIND_TITLES = [
   ['METHOD', 'method', 'methods'],
 ] as const
 
-type JavaChangesTableProps = {
+type JavaChangesTableProps = Readonly<{
   classes: ReadonlyArray<JavaApiClassListItem>
-  onOpen: (className: string) => void
-}
+  prepareLinkFn: (javaClass: JavaApiClassListItem) => Partial<Path>
+  onLinkClick: () => void
+}>
 
-export const JavaChangesTable: FC<JavaChangesTableProps> = memo<JavaChangesTableProps>(({ classes, onOpen }) => {
-  const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set())
-  const toggle = useCallback((className: string) =>
-    setExpanded(current => {
-      const next = new Set(current)
-      if (next.has(className)) next.delete(className)
-      else next.add(className)
-      return next
-    }), [])
+export const JavaChangesTable: FC<JavaChangesTableProps> = memo(({ classes, prepareLinkFn, onLinkClick }) => {
+  const [containerWidth, setContainerWidth] = useState(DEFAULT_CONTAINER_WIDTH)
+  const [columnSizingInfo, setColumnSizingInfo] = useState<ColumnSizingInfoState>()
+  const [, setHandlingColumnSizing] = useState<ColumnSizingState>({})
+  const [expanded, setExpanded] = useState<ExpandedState>({})
+  const tableContainerRef = useRef<HTMLDivElement>(null)
+  useResizeObserver(tableContainerRef, setContainerWidth)
+  const actualColumnSizing = useColumnsSizing({
+    containerWidth: containerWidth,
+    columnModels: COLUMN_MODELS,
+    columnSizingInfo: columnSizingInfo,
+    defaultMinColumnSize: 60,
+  })
+  const columns: ColumnDef<JavaApiClassListItem>[] = useMemo(() => [
+    {
+      id: JAVA_TYPES_COLUMN_ID,
+      header: () => <CustomTableHeadCell title="Java types" />,
+      cell: ({ row }) => (
+        <ExpandableItem
+          expanded={row.getIsExpanded()}
+          showToggler={row.getCanExpand()}
+          onToggle={row.getToggleExpandedHandler()}
+        >
+          <JavaClassTitleWithMeta
+            javaClass={row.original}
+            link={prepareLinkFn(row.original)}
+            onLinkClick={onLinkClick}
+          />
+        </ExpandableItem>
+      ),
+    },
+    {
+      id: MEMBERS_COLUMN_ID,
+      header: () => <CustomTableHeadCell title="Members" />,
+      cell: ({ row: { original } }) => {
+        const members = formatMemberCounts(original.memberKindCounts)
+        return <TextWithOverflowTooltip tooltipText={members}>{members}</TextWithOverflowTooltip>
+      },
+    },
+    {
+      id: CHANGES_COLUMN_ID,
+      header: () => <CustomTableHeadCell title="Changes summary" />,
+      cell: ({ row: { original } }) => <Changes value={toChangesSummary(original.changeCounts)} mode="compact" />,
+    },
+  ], [prepareLinkFn, onLinkClick])
+  const data = useMemo(() => [...classes], [classes])
+  const { getHeaderGroups, getRowModel, setColumnSizing } = useReactTable({
+    data: data,
+    columns: columns,
+    state: { expanded },
+    getRowId: javaClass => javaClass.className,
+    getRowCanExpand: row => row.original.changes.length > 0,
+    onExpandedChange: setExpanded,
+    getCoreRowModel: getCoreRowModel(),
+    getExpandedRowModel: getExpandedRowModel(),
+    columnResizeMode: 'onChange',
+    onColumnSizingChange: setHandlingColumnSizing,
+    onColumnSizingInfoChange: setColumnSizingInfo as OnChangeFn<ColumnSizingInfoState>,
+  })
+  useEffect(() => setColumnSizing(actualColumnSizing), [setColumnSizing, actualColumnSizing])
 
   return (
-    <TableContainer>
+    <TableContainer ref={tableContainerRef}>
       <Table aria-label="JavaAPI changes">
         <TableHead>
-          <TableRow>
-            <TableCell>
-              <CustomTableHeadCell title="Java types" />
-            </TableCell>
-            <TableCell width={260}>
-              <CustomTableHeadCell title="Members" />
-            </TableCell>
-            <TableCell width={218}>
-              <CustomTableHeadCell title="Changes summary" />
-            </TableCell>
-          </TableRow>
+          {getHeaderGroups().map(headerGroup => (
+            <TableRow key={headerGroup.id}>
+              {headerGroup.headers.map((headerColumn, index) => (
+                <ResizableHeadCell key={headerColumn.id} align="left" width={actualColumnSizing[headerColumn.id]}>
+                  {flexRender(headerColumn.column.columnDef.header, headerColumn.getContext())}
+                  {index !== headerGroup.headers.length - 1 && <ColumnDelimiter header={headerColumn} resizable />}
+                </ResizableHeadCell>
+              ))}
+            </TableRow>
+          ))}
         </TableHead>
         <TableBody>
-          {classes.map(javaClass => (
-            <JavaChangesRow
-              key={javaClass.className}
-              javaClass={javaClass}
-              isExpanded={expanded.has(javaClass.className)}
-              onToggle={toggle}
-              onOpen={onOpen}
-            />
+          {getRowModel().rows.map(row => (
+            <Fragment key={row.id}>
+              <ActionTableRow
+                action={row.original.changeAction ? CHANGE_ACTION_TYPES[row.original.changeAction] : undefined}
+              >
+                {row.getVisibleCells().map(cell => (
+                  <TableCell key={cell.id} data-testid={`Cell-${cell.column.id}`}>
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </TableCell>
+                ))}
+              </ActionTableRow>
+              {row.getIsExpanded() && <JavaChangesSubTable changes={row.original.changes} />}
+            </Fragment>
           ))}
           {!classes.length && (
             <TableRow>
-              <TableCell colSpan={COLUMN_COUNT}>No changes match your filters.</TableCell>
+              <TableCell colSpan={COLUMN_MODELS.length}>No changes match your filters.</TableCell>
             </TableRow>
           )}
         </TableBody>
@@ -91,68 +172,27 @@ export const JavaChangesTable: FC<JavaChangesTableProps> = memo<JavaChangesTable
     </TableContainer>
   )
 })
-
 JavaChangesTable.displayName = 'JavaChangesTable'
 
-type JavaChangesRowProps = {
-  javaClass: JavaApiClassListItem
-  isExpanded: boolean
-  onToggle: (className: string) => void
-  onOpen: (className: string) => void
-}
+const JavaChangesSubTable: FC<Readonly<{ changes: ReadonlyArray<JavaApiChangeDescription> }>> = memo(({ changes }) => {
+  const changeLines: OperationChanges = useMemo(() =>
+    sortChanges(changes.map(({ severity, description }, index) => ({
+      description: description,
+      severity: severity,
+      action: REPLACE_ACTION_TYPE,
+      scope: `${index}`,
+    }))), [changes])
+  return <ChangesSubTable changes={changeLines} isLoading={false} columnCount={COLUMN_MODELS.length} />
+})
+JavaChangesSubTable.displayName = 'JavaChangesSubTable'
 
-const JavaChangesRow: FC<JavaChangesRowProps> = memo<JavaChangesRowProps>(
-  ({ javaClass, isExpanded, onToggle, onOpen }) => {
-    const { className, changeAction, changes, changeCounts, memberKindCounts } = javaClass
-    const changesSummary = useMemo(() => toChangesSummary(changeCounts), [changeCounts])
-    const members = useMemo(() => formatMemberCounts(memberKindCounts), [memberKindCounts])
-    const changeLines: OperationChanges = useMemo(
-      () =>
-        // TODO(api-doc-viewer): drop the annotations once its .d.ts includes the next-data-model types, which
-        // resolve to any in the portal today
-        changes.map(({ severity, description }: JavaApiChangeDescription, index: number) => ({
-          description: description,
-          severity: severity,
-          action: REPLACE_ACTION_TYPE,
-          scope: `${index}`,
-        })),
-      [changes],
-    )
+const ResizableHeadCell = styled(TableCell)(({ theme }) => ({
+  '&:hover': { borderRight: `2px solid ${theme.palette.divider}` },
+}))
 
-    return (
-      <Fragment>
-        <ActionTableRow action={changeAction ? CHANGE_ACTION_TYPES[changeAction] : undefined}>
-          <TableCell data-testid="Cell-java-types">
-            <ExpandableItem
-              expanded={isExpanded}
-              showToggler={changes.length > 0}
-              onToggle={() => onToggle(className)}
-            >
-              <JavaClassTitleWithMeta javaClass={javaClass} onTitleClick={() => onOpen(className)} />
-            </ExpandableItem>
-          </TableCell>
-          <TableCell data-testid="Cell-members">
-            <TextWithOverflowTooltip tooltipText={members}>{members}</TextWithOverflowTooltip>
-          </TableCell>
-          <TableCell data-testid="Cell-changes">
-            <Changes value={changesSummary} mode="compact" />
-          </TableCell>
-        </ActionTableRow>
-        {isExpanded && <ChangesSubTable changes={changeLines} isLoading={false} columnCount={COLUMN_COUNT} />}
-      </Fragment>
-    )
-  },
-)
-
-JavaChangesRow.displayName = 'JavaChangesRow'
-
-type ActionTableRowProps = {
-  action: ActionType | undefined
-}
-
-const ActionTableRow = styled(TableRow, {
-  shouldForwardProp: (prop) => prop !== 'action',
-})<ActionTableRowProps>(({ action }) => ({
+const ActionTableRow = styled(TableRow, { shouldForwardProp: prop => prop !== 'action' })<
+  Readonly<{ action: ActionType | undefined }>
+>(({ action }) => ({
   backgroundColor: action ? ACTION_TYPE_COLOR_MAP[action] : undefined,
 }))
 

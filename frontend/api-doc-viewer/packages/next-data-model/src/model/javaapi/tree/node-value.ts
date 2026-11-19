@@ -65,6 +65,7 @@ export const JAVA_API_MEMBER_KIND_TITLES: Record<JavaApiMemberKind, string> = {
 export const JavaApiChangeSeverities = {
   BREAKING: 'breaking',
   NON_BREAKING: 'non-breaking',
+  ANNOTATION: 'annotation',
 } as const
 
 export type JavaApiChangeSeverity = typeof JavaApiChangeSeverities[keyof typeof JavaApiChangeSeverities]

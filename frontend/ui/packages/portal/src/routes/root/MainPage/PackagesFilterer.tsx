@@ -73,6 +73,8 @@ export const PackagesFilterer: FC<PackagesFiltererProps> = memo<PackagesFilterer
   const CREATE_BUTTON_OPTIONS = [
     { key: GROUP_KIND, label: 'Group', method: showCreateGroupDialogHandle, 'data-testid': 'GroupMenuItem' },
     { key: PACKAGE_KIND, label: 'Package', method: showCreatePackageDialogHandle, 'data-testid': 'PackageMenuItem' },
+    // TODO(libraries-backend): Gate Create -> Library on the Java task processor version (UC27).
+    // Until libraries-backend exposes it, show the item when the extension is registered.
     ...(areLibrariesEnabled
       ? [{
         key: 'library',

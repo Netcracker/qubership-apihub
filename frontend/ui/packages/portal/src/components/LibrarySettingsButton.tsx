@@ -5,7 +5,7 @@ import { generatePath, NavLink, useLocation } from 'react-router-dom'
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import { SettingIcon } from '@netcracker/qubership-apihub-ui-shared/icons/SettingIcon'
 
-import { LIBRARY_SETTINGS_PAGE_PATH_PATTERN } from '../routes'
+import { GENERAL_PAGE, LIBRARY_SETTINGS_PAGE_PATH_PATTERN } from '../routes'
 import { useSetBackwardLocationContext } from '../routes/BackwardLocationProvider'
 
 type LibrarySettingsButtonProps = { libraryId: Key; visible?: boolean }
@@ -13,7 +13,7 @@ type LibrarySettingsButtonProps = { libraryId: Key; visible?: boolean }
 export const LibrarySettingsButton: FC<LibrarySettingsButtonProps> = ({ libraryId, visible = false }) => {
   const { pathname, search } = useLocation()
   const setBackwardLocation = useSetBackwardLocationContext()
-  const settingsPath = generatePath(`${LIBRARY_SETTINGS_PAGE_PATH_PATTERN}general`, {
+  const settingsPath = generatePath(`${LIBRARY_SETTINGS_PAGE_PATH_PATTERN}${GENERAL_PAGE}`, {
     libraryId: encodeURIComponent(libraryId),
   })
   const rememberLocation = (): void =>

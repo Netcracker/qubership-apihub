@@ -1,5 +1,7 @@
 import { Box, Link, styled, Typography } from '@mui/material'
+import type { Path } from '@remix-run/router'
 import { type FC, memo } from 'react'
+import { NavLink } from 'react-router-dom'
 
 import {
   JAVA_API_TYPE_KIND_TITLES,
@@ -10,14 +12,15 @@ import { DdlSchemaChip } from '@netcracker/qubership-apihub-ui-shared/components
 import { OverflowTooltip } from '@netcracker/qubership-apihub-ui-shared/components/OverflowTooltip'
 import { TextWithOverflowTooltip } from '@netcracker/qubership-apihub-ui-shared/components/TextWithOverflowTooltip'
 
-type JavaClassTitleWithMetaProps = {
+type JavaClassTitleWithMetaProps = Readonly<{
   javaClass: JavaApiClassListItem
-  onTitleClick?: () => void
+  link?: Partial<Path>
+  onLinkClick?: () => void
   onlyTitle?: boolean
-}
+}>
 
 export const JavaClassTitleWithMeta: FC<JavaClassTitleWithMetaProps> = memo<JavaClassTitleWithMetaProps>((
-  { javaClass, onTitleClick, onlyTitle = false },
+  { javaClass, link, onLinkClick, onlyTitle = false },
 ) => {
   const { className, displayName, packageName, typeKind, memberCount } = javaClass
   const subtitle = `${JAVA_API_TYPE_KIND_TITLES[typeKind]} · ${memberCount} ${memberCount === 1 ? 'member' : 'members'}`
@@ -27,16 +30,16 @@ export const JavaClassTitleWithMeta: FC<JavaClassTitleWithMetaProps> = memo<Java
       <TitleRow>
         <JavaElementIcon kind={typeKind} />
         <OverflowTooltip title={className.replaceAll('$', '.')}>
-          {onTitleClick
+          {link
             ? (
               <Typography noWrap variant="subtitle1">
                 <Link
-                  component="button"
+                  component={NavLink}
+                  to={link}
                   onClick={(event) => {
                     event.stopPropagation()
-                    onTitleClick()
+                    onLinkClick?.()
                   }}
-                  sx={{ font: 'inherit', verticalAlign: 'baseline' }}
                 >
                   {displayName}
                 </Link>

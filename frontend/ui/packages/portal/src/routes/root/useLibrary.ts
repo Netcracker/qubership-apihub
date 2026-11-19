@@ -1,11 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
-import { API_V1 } from '@netcracker/qubership-apihub-ui-shared/utils/requests'
 
 import type { MavenLibraryCreateDto, MavenLibraryDto, MavenLibraryUpdateDto } from '@portal/entities/libraries'
 import { requestJsonWithError } from '@portal/utils/requestJsonWithError'
-import { portalRequestJson, portalRequestVoid } from '@portal/utils/requests'
+import { LIBRARIES_API_BASE_PATH, portalRequestJson, portalRequestVoid } from '@portal/utils/requests'
 import { useInvalidateLibraries } from './useLibraries'
 
 type LibraryResult = {
@@ -149,7 +148,7 @@ export function useInvalidateLibrary(): InvalidateLibrary {
 
 async function favorLibrary(libraryId: Key): Promise<void> {
   return portalRequestVoid(`/favorites/libraries/${encodeURIComponent(libraryId)}`, { method: 'PUT' }, {
-    basePath: API_V1,
+    basePath: LIBRARIES_API_BASE_PATH,
   })
 }
 
@@ -157,7 +156,7 @@ async function disfavorLibrary(libraryId: Key): Promise<void> {
   return portalRequestVoid(
     `/favorites/libraries/${encodeURIComponent(libraryId)}`,
     { method: 'DELETE' },
-    { basePath: API_V1 },
+    { basePath: LIBRARIES_API_BASE_PATH },
   )
 }
 
@@ -166,7 +165,7 @@ async function createLibrary(value: MavenLibraryCreateDto): Promise<MavenLibrary
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(value),
-  }, { basePath: API_V1 })
+  }, { basePath: LIBRARIES_API_BASE_PATH })
 }
 
 async function updateLibrary(libraryId: Key, value: MavenLibraryUpdateDto): Promise<MavenLibraryDto> {
@@ -174,11 +173,13 @@ async function updateLibrary(libraryId: Key, value: MavenLibraryUpdateDto): Prom
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(value),
-  }, { basePath: API_V1 })
+  }, { basePath: LIBRARIES_API_BASE_PATH })
 }
 
 async function deleteLibrary(libraryId: Key): Promise<void> {
-  return portalRequestVoid(`/libraries/${encodeURIComponent(libraryId)}`, { method: 'DELETE' }, { basePath: API_V1 })
+  return portalRequestVoid(`/libraries/${encodeURIComponent(libraryId)}`, { method: 'DELETE' }, {
+    basePath: LIBRARIES_API_BASE_PATH,
+  })
 }
 
 async function getLibrary(libraryId: Key, signal?: AbortSignal): Promise<MavenLibraryDto> {
@@ -187,7 +188,7 @@ async function getLibrary(libraryId: Key, signal?: AbortSignal): Promise<MavenLi
     {
       method: 'GET',
     },
-    { basePath: API_V1, ignoreNotFound: true },
+    { basePath: LIBRARIES_API_BASE_PATH, ignoreNotFound: true },
     signal,
   )
 }

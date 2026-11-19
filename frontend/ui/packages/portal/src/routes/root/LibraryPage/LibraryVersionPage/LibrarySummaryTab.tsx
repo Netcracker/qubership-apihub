@@ -1,48 +1,41 @@
 import { Alert, Box, IconButton, Link, styled, type Theme, Tooltip, Typography, useMediaQuery } from '@mui/material'
-import { type FC, Fragment, type ReactNode } from 'react'
+import { type FC, Fragment, memo, type ReactNode } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useCopyToClipboard } from 'react-use'
 
 import { BodyCard } from '@netcracker/qubership-apihub-ui-shared/components/BodyCard'
+import { Changes } from '@netcracker/qubership-apihub-ui-shared/components/Changes'
 import { CustomChip } from '@netcracker/qubership-apihub-ui-shared/components/CustomChip'
 import { FormattedDate } from '@netcracker/qubership-apihub-ui-shared/components/FormattedDate'
+import { OverflowTooltip } from '@netcracker/qubership-apihub-ui-shared/components/OverflowTooltip'
 import { UserView } from '@netcracker/qubership-apihub-ui-shared/components/Users/UserView'
-import {
-  BREAKING_CHANGE_SEVERITY,
-  CHANGE_SEVERITY_COLOR_MAP,
-  NON_BREAKING_CHANGE_SEVERITY,
-} from '@netcracker/qubership-apihub-ui-shared/entities/change-severities'
 import { CopyIcon } from '@netcracker/qubership-apihub-ui-shared/icons/CopyIcon'
 
-import type { LibraryVersionDto, MavenLibraryDto } from '@portal/entities/libraries'
+import { LibraryVersionBuildStatuses } from '@portal/entities/libraries'
 import { useShowSuccessNotification } from '@portal/routes/root/BasePage/Notification'
 import { FrontTruncatedText } from '@portal/routes/root/LibraryPage/FrontTruncatedText'
 import { ContractsSummary } from '@portal/routes/root/PortalPage/VersionPage/VersionOverviewSubPage/SummaryTab/ContractsSummary'
 import { SummaryPanels } from '@portal/routes/root/PortalPage/VersionPage/VersionOverviewSubPage/SummaryTab/SummaryPanel'
 import { SummarySection } from '@portal/routes/root/PortalPage/VersionPage/VersionOverviewSubPage/SummaryTab/SummarySection'
-import { countJavaTypes, sumChangesSummaries } from './javaapi/java-api'
-import { getLibraryVersionPath } from './library-version'
-import { useLibraryJavaApiDiff, useLibraryJavaApiReport } from './useLibraryJavaApi'
+import { countJavaTypes } from './javaapi/java-api'
+import { getLibraryVersionPath, type LibraryVersionPageProps } from './library-version'
+import { LibraryVersionBuildError } from './LibraryVersionBuildError'
+import { useLibraryChangesSummary } from './useLibraryChanges'
+import { useLibraryJavaApiReport } from './useLibraryJavaApi'
 
-type LibrarySummaryTabProps = { library: MavenLibraryDto; version: LibraryVersionDto }
 type SummaryMetric = { id: string; label: string; value: ReactNode }
 
 const LOADING_VALUE = 'Loading…'
 const EMPTY_VALUE = '—'
-const CHANGE_SEVERITIES = [
-  { severity: BREAKING_CHANGE_SEVERITY, title: 'Breaking changes' },
-  { severity: NON_BREAKING_CHANGE_SEVERITY, title: 'Non-breaking changes' },
-] as const
 
-export const LibrarySummaryTab: FC<LibrarySummaryTabProps> = ({ library, version }) => {
+export const LibrarySummaryTab: FC<LibraryVersionPageProps> = memo<LibraryVersionPageProps>(({ library, version }) => {
   const [, copyToClipboard] = useCopyToClipboard()
   const showSuccessNotification = useShowSuccessNotification()
-  const { data: diff, isLoading, error } = useLibraryJavaApiDiff(library.libraryId, version.version)
+  const { data: changesSummary, isLoading, error } = useLibraryChangesSummary(library.libraryId, version.version)
   const { data: report, isLoading: isReportLoading, error: reportError } = useLibraryJavaApiReport(
     library.libraryId,
     version.version,
   )
-  const changesSummary = diff ? sumChangesSummaries(diff.classes) : undefined
   const metrics = report ? countJavaTypes(report.classes) : undefined
   const isCompact = useMediaQuery((theme: Theme) => theme.breakpoints.down('lg'))
   const renderChangeCounts = (): ReactNode => {
@@ -50,16 +43,9 @@ export const LibrarySummaryTab: FC<LibrarySummaryTabProps> = ({ library, version
     if (isLoading) return LOADING_VALUE
     if (!changesSummary) return EMPTY_VALUE
     return (
-      <ChangeCounts component="span">
-        {CHANGE_SEVERITIES.map(({ severity, title }) => (
-          <Tooltip key={severity} title={title}>
-            <ChangeCount component="span">
-              <ChangeDot component="span" severity={severity} />
-              {changesSummary[severity]}
-            </ChangeCount>
-          </Tooltip>
-        ))}
-      </ChangeCounts>
+      <Box display="flex" alignItems="center">
+        <Changes value={changesSummary} mode="compact" zeroView />
+      </Box>
     )
   }
   const validations = {
@@ -118,7 +104,17 @@ export const LibrarySummaryTab: FC<LibrarySummaryTabProps> = ({ library, version
       body={
         <Box>
           <Labels data-testid="VersionLabels">
-            {version.labels.map(label => <SummaryLabel key={label} value={label} />)}
+            {version.labels.map(label => (
+              <SummaryLabel
+                key={label}
+                value={label}
+                label={
+                  <OverflowTooltip title={label}>
+                    <LabelText>{label}</LabelText>
+                  </OverflowTooltip>
+                }
+              />
+            ))}
           </Labels>
           <VersionSummary>
             <Typography variant="subtitle1">Version summary</Typography>
@@ -135,46 +131,50 @@ export const LibrarySummaryTab: FC<LibrarySummaryTabProps> = ({ library, version
           </VersionSummary>
           {error && <Alert severity="error">{error.message}</Alert>}
           {reportError && <Alert severity="error">{reportError.message}</Alert>}
-          <JavaSummary data-testid="LibraryJavaSummary">
-            <ContractsSummary>
-              <SummarySection>
-                <SummaryPanels
-                  numbers={{
-                    title: 'JavaAPI',
-                    metrics: [
-                      {
-                        label: 'Total number of classes',
-                        value: isReportLoading ? LOADING_VALUE : metrics?.CLASS ?? EMPTY_VALUE,
-                      },
-                      {
-                        label: 'Total number of interfaces',
-                        value: isReportLoading ? LOADING_VALUE : metrics?.INTERFACE ?? EMPTY_VALUE,
-                      },
-                      {
-                        label: 'Total number of enums',
-                        value: isReportLoading ? LOADING_VALUE : metrics?.ENUM ?? EMPTY_VALUE,
-                      },
-                      {
-                        label: 'Total number of annotation types',
-                        value: isReportLoading ? LOADING_VALUE : metrics?.ANNOTATION ?? EMPTY_VALUE,
-                      },
-                    ],
-                  }}
-                  validations={isCompact ? undefined : validations}
-                />
-              </SummarySection>
-              {isCompact && (
-                <SummarySection>
-                  <SummaryPanels numbers={validations} />
-                </SummarySection>
-              )}
-            </ContractsSummary>
-          </JavaSummary>
+          {version.metadata?.buildStatus === LibraryVersionBuildStatuses.ERROR
+            ? <LibraryVersionBuildError version={version} />
+            : (
+              <JavaSummary data-testid="LibraryJavaSummary">
+                <ContractsSummary>
+                  <SummarySection>
+                    <SummaryPanels
+                      numbers={{
+                        title: 'JavaAPI',
+                        metrics: [
+                          {
+                            label: 'Total number of classes',
+                            value: isReportLoading ? LOADING_VALUE : metrics?.CLASS ?? EMPTY_VALUE,
+                          },
+                          {
+                            label: 'Total number of interfaces',
+                            value: isReportLoading ? LOADING_VALUE : metrics?.INTERFACE ?? EMPTY_VALUE,
+                          },
+                          {
+                            label: 'Total number of enums',
+                            value: isReportLoading ? LOADING_VALUE : metrics?.ENUM ?? EMPTY_VALUE,
+                          },
+                          {
+                            label: 'Total number of annotation types',
+                            value: isReportLoading ? LOADING_VALUE : metrics?.ANNOTATION ?? EMPTY_VALUE,
+                          },
+                        ],
+                      }}
+                      validations={isCompact ? undefined : validations}
+                    />
+                  </SummarySection>
+                  {isCompact && (
+                    <SummarySection>
+                      <SummaryPanels numbers={validations} />
+                    </SummarySection>
+                  )}
+                </ContractsSummary>
+              </JavaSummary>
+            )}
         </Box>
       }
     />
   )
-}
+})
 LibrarySummaryTab.displayName = 'LibrarySummaryTab'
 
 const Labels = styled(Box)({ whiteSpace: 'break-spaces', width: 'calc(100% - 60px)' })
@@ -215,13 +215,4 @@ const GavValue = styled(Box)(({ theme }) => ({
 const JavaSummary = styled(Box)(({ theme }) => ({
   [theme.breakpoints.down('lg')]: { '& > div': { gridTemplateColumns: 'max-content minmax(0, 1fr)' } },
 }))
-const ChangeCounts = styled(Box)(({ theme }) => ({ display: 'flex', gap: theme.spacing(1), alignItems: 'center' }))
-const ChangeCount = styled(Box)(({ theme }) => ({ display: 'flex', alignItems: 'center', gap: theme.spacing(1) }))
-const ChangeDot = styled(Box, {
-  shouldForwardProp: prop => prop !== 'severity',
-})<{ severity: typeof CHANGE_SEVERITIES[number]['severity'] }>(({ theme, severity }) => ({
-  width: theme.spacing(1),
-  height: theme.spacing(1),
-  borderRadius: '50%',
-  backgroundColor: CHANGE_SEVERITY_COLOR_MAP[severity],
-}))
+const LabelText = styled(Box)({ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' })

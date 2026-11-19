@@ -10,14 +10,13 @@ import { useAvailablePackageRoles } from '@netcracker/qubership-apihub-ui-shared
 import type { DeleteApiKeyData, GenerateApiKeyValue } from '@netcracker/qubership-apihub-ui-shared/types/tokens'
 import { HttpError } from '@netcracker/qubership-apihub-ui-shared/utils/responses'
 
-import type { MavenLibraryDto } from '@portal/entities/libraries'
 import { useShowErrorNotification, useShowSuccessNotification } from '@portal/routes/root/BasePage/Notification'
 import { useUsers } from '@portal/routes/root/useUsers'
 import { useDeleteLibraryApiKey, useGenerateLibraryApiKey, useLibraryAccessTokens } from './useLibraryAccessTokens'
 
-type AccessTokensLibrarySettingsTabProps = { library: MavenLibraryDto }
+import type { LibrarySettingsTabProps } from './library-settings'
 
-export const AccessTokensLibrarySettingsTab: FC<AccessTokensLibrarySettingsTabProps> = ({ library }) => {
+export const AccessTokensLibrarySettingsTab: FC<LibrarySettingsTabProps> = ({ library }) => {
   const hasPermission = !!library.permissions?.includes(ACCESS_TOKEN_MANAGEMENT_PERMISSION)
   const [user] = useUser()
   const [userSearch, setUserSearch] = useState('')

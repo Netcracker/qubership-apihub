@@ -28,6 +28,8 @@ type LibraryDialogFormProps =
   }
 
 const MAVEN_FIELDS = [
+  // TODO(libraries-backend): Repository stays free text because GET /repositories is for system administrators only.
+  // Offer a dropdown once the service opens it to users who may create a library.
   { name: 'repository', label: 'Maven Repository Name', testId: 'MavenRepositoryNameTextField' },
   { name: 'coordinates.groupId', label: 'Maven GroupId', testId: 'MavenGroupIdTextField' },
   { name: 'coordinates.artifactId', label: 'Maven ArtifactId', testId: 'MavenArtifactIdTextField' },
@@ -69,6 +71,8 @@ export const LibraryDialogForm: FC<LibraryDialogFormProps> = ({
             language: 'java',
             parentPackageId: value.parentGroup,
             description: value.description,
+            // TODO(libraries-backend): Omitting defaultRole makes the service store "Viewer", which matches no role id
+            // (viewer), so the default role grants nothing. Wait for the service to store a valid role id.
             defaultRole: value.isPrivate ? PRIVATE_PACKAGE_ROLE : undefined,
             repository: value.repository.trim(),
             coordinates: {

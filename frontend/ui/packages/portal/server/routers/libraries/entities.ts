@@ -39,6 +39,9 @@ export type LibraryVersion = LibraryVersionPublish & {
   createdAt: string
   createdBy: string
   metadata?: {
+    buildId?: string
+    buildStatus?: 'none' | 'complete' | 'error'
+    buildError?: string
     activities?: { id: string; action: string; createdAt: string; createdBy: string }[]
   }
 }

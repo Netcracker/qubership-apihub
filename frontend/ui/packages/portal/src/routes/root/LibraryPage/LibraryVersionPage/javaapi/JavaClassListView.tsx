@@ -1,3 +1,4 @@
+import type { Path } from '@remix-run/router'
 import type { ColumnDef } from '@tanstack/table-core'
 import { type FC, memo, useCallback, useMemo } from 'react'
 
@@ -16,14 +17,15 @@ type JavaClassListViewRow = {
   javaClass: JavaApiClassListItem
 }
 
-type JavaClassListViewProps = {
+type JavaClassListViewProps = Readonly<{
   classes: ReadonlyArray<JavaApiClassListItem>
-  onOpen: (className: string) => void
+  prepareLinkFn: (javaClass: JavaApiClassListItem) => Partial<Path>
+  onLinkClick: () => void
   isLoading?: boolean
-}
+}>
 
 export const JavaClassListView: FC<JavaClassListViewProps> = memo<JavaClassListViewProps>(
-  ({ classes, onOpen, isLoading = false }) => {
+  ({ classes, prepareLinkFn, onLinkClick, isLoading = false }) => {
     const columns: ColumnDef<JavaClassListViewRow>[] = useMemo(() => [
       {
         id: JAVA_TYPES_COLUMN_ID,
@@ -31,11 +33,12 @@ export const JavaClassListView: FC<JavaClassListViewProps> = memo<JavaClassListV
         cell: ({ row: { original: { javaClass } } }) => (
           <JavaClassTitleWithMeta
             javaClass={javaClass}
-            onTitleClick={() => onOpen(javaClass.className)}
+            link={prepareLinkFn(javaClass)}
+            onLinkClick={onLinkClick}
           />
         ),
       },
-    ], [onOpen])
+    ], [prepareLinkFn, onLinkClick])
 
     const data: JavaClassListViewRow[] = useMemo(() => classes.map(javaClass => ({ javaClass })), [classes])
     const resolveRowId = useCallback((row: JavaClassListViewRow) => row.javaClass.className, [])

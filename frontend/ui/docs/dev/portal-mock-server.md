@@ -5,12 +5,9 @@ the routes below will move there.
 
 Express app under `packages/portal/server/`. Default listen URL: `http://localhost:3003` (`NODEJS_PORT` to override).
 
-The local Library API (`server/routers/libraries/`) is a provisional contract written before the libraries-backend.
-The service now exists (branch `lib_be_impl`) and differs from the mock in error codes, members, Java API document
-endpoints, API keys, permissions, and version PATCH. The mock keeps libraries, versions, members, and API keys in memory
-and serves the jdiff samples of api-doc-viewer as Java API reports and diffs. It is an exception to the MSW rule above:
-its routes depend on each other's state (a published version becomes readable), and
-`server/__tests__/libraries.spec.ts` covers the mock's own behavior. It moves to MSW with the other routes.
+The local Library API (`server/routers/libraries/`) is a provisional mock of the libraries-backend. It keeps libraries,
+versions, members, and API keys in memory and serves the jdiff samples of api-doc-viewer as Java API reports and diffs.
+It derives paged Library changes and summary responses from the same diff sample.
 Set `VITE_LOCAL_LIBRARIES=true` in the ignored `packages/portal/.env.local` and restart Vite: in proxy mode
 `/api/v1/libraries` and `/api/v1/favorites/libraries` then go to this server, and the Library UI shows without the
 `libraries-backend` extension.

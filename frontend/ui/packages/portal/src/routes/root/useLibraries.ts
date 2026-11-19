@@ -3,11 +3,10 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import { GROUP_KIND, type Package } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
 import { getPackages } from '@netcracker/qubership-apihub-ui-shared/hooks/packages/usePackages'
-import { API_V1 } from '@netcracker/qubership-apihub-ui-shared/utils/requests'
 
 import type { LibrariesDto, MavenLibraryDto } from '@portal/entities/libraries'
 import { fetchAllPages } from '@portal/utils/pagination'
-import { portalRequestJson } from '@portal/utils/requests'
+import { LIBRARIES_API_BASE_PATH, portalRequestJson } from '@portal/utils/requests'
 import { useLibrariesEnabled } from './useLibrariesEnabled'
 import { PACKAGES_QUERY_KEY } from './usePackages'
 
@@ -36,6 +35,8 @@ type LibrariesQueryResult = LibrariesResult & {
   error: Error | null
 }
 
+// TODO(libraries-backend): The service does not filter lists, favorites, or search by read permission, so private
+// libraries are listed to every user. No UI change is needed once the service filters them.
 export function useLibraries({
   parentPackageId,
   includeDescendants = false,
@@ -120,7 +121,7 @@ async function getParentLibraries({
     const result = await portalRequestJson<LibrariesDto>(
       `/libraries?${query}`,
       { method: 'GET' },
-      { basePath: API_V1 },
+      { basePath: LIBRARIES_API_BASE_PATH },
       signal,
     )
     return result.libraries
