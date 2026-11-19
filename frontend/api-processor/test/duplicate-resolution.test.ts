@@ -3,7 +3,7 @@ import { documentOf, Editor, notificationsInCategory, LocalRegistry, operationOf
 import { setReportingDuplicate } from '../src/utils'
 import { operationKey } from '../src/components/operations'
 import { reportCollisions } from '../src/components/duplicate-resolution'
-import { REST_API_TYPE, BUILD_TYPE, MESSAGE_CATEGORY, MESSAGE_SEVERITY, VERSION_STATUS } from '../src/consts'
+import { BUILD_TYPE, MESSAGE_CATEGORY, MESSAGE_SEVERITY, VERSION_STATUS } from '../src/consts'
 import { BuildConfig, BuildResult, MessageSeverity } from '../src/types'
 import { NotificationMessage } from '../src/types/package/notifications'
 
@@ -23,8 +23,10 @@ import { NotificationMessage } from '../src/types/package/notifications'
  * release verdict of each duplicate diagnostic are rows in `notification-catalogue.test.ts`.
  */
 
-/** The two REST documents that both derive `res-data-post` — the cross-document collision fixture. */
-const restKey = (operationId: string): string => operationKey({ apiType: REST_API_TYPE, operationId })
+/**
+ * The two REST documents that both derive `res-data-post`, differing in a response description so the content
+ * check keeps the collision. The identical pair of the same shape is `duplicate-resolution`.
+ */
 const CONTESTED_PAIR = 'operation-id-collisions/same-path-different-documents'
 
 const publishContestedPair = (): Promise<BuildResult> =>
@@ -394,15 +396,14 @@ describe('The editor preview compares the documents behind a REST collision', ()
     `Duplicated operationId 'res-data-post' found in different documents: 'spec1' and 'spec2'. The documents ${reason}.`
 
   const collisionsIn = ({ notifications }: { notifications: NotificationMessage[] }): Array<Partial<NotificationMessage>> =>
-    notifications
-      .filter(({ category }) => category === MESSAGE_CATEGORY.DuplicateOperationId)
+    notificationsInCategory(notifications, MESSAGE_CATEGORY.DuplicateOperationId)
       .map(({ documentId, severity, message }) => ({ documentId, severity, message }))
       .sort((left, right) => (left.documentId ?? '').localeCompare(right.documentId ?? ''))
 
   // an identical pair raises nothing and publishes as a release, because nothing is left for the gate to refuse
   test.each([
     ['identical documents', 'duplicate-resolution', files, undefined],
-    ['different content', 'operation-id-collisions/same-path-different-documents', files,
+    ['different content', CONTESTED_PAIR, files,
       collisionMessage('describe the operation differently')],
     // a label never reaches the operation subtree, so only the operation metadata tells the documents apart
     ['different api kinds', 'duplicate-resolution', filesWithNoBwcLabel, collisionMessage('disagree on apiKind')],
@@ -436,7 +437,7 @@ describe('The editor preview compares the documents behind a REST collision', ()
       expect(collisionsIn(published)).toEqual(expected)
       expect(collisionsIn(rebuilt)).toEqual(expected)
       // the smallest slug owns the id whether or not the documents agree
-      expect(published.operations.get(restKey('res-data-post'))?.documentId).toBe('spec1')
+      expect(operationOf(published, 'res-data-post').documentId).toBe('spec1')
     },
     90000,
   )

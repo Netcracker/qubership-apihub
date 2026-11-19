@@ -19,7 +19,7 @@ import { Diff } from '@netcracker/qubership-apihub-api-diff'
 import { OpenAPIV3 } from 'openapi-types'
 import { parse } from 'yaml'
 import { changelogOperationDiffs, contestedOperationDiffs, diffRestDocuments } from '../src/apitypes/rest/rest.utils'
-import { restSpec } from './helpers/factories'
+import { restSpec } from './helpers'
 
 /*
  * What a comparison reads to decide whether one operation changed. Each case changes one thing between two

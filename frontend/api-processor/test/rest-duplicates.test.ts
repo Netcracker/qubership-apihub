@@ -24,22 +24,23 @@ import {
   DocumentClaim,
   findContestedOperationConflicts,
 } from '../src/components/contested-operations'
-import { Claims, collectClaim } from '../src/components/duplicate-resolution'
+import { Claims } from '../src/components/duplicate-resolution'
+import { collectOperationClaim } from '../src/components/operations'
 import { VersionDocument } from '../src/types'
-import { restOperation, restSpec, RestSpecOptions, versionDocument } from './helpers/factories'
+import { restOperation, restSpec, RestSpecOptions, versionDocument } from './helpers'
 
 const ANCHOR_SLUG = 'spec1'
 const OTHER_SLUG = 'spec2'
 
 const servedUnder = (basePath: string): RestSpecOptions => ({ root: `servers: [{ url: 'https://host${basePath}' }]\n` })
 
-const documentOf = (slug: string, yaml: string): VersionDocument =>
+const documentFrom = (slug: string, yaml: string): VersionDocument =>
   versionDocument(slug, { data: parse(yaml) as OpenAPIV3.Document })
 
 /** The comparison reads only the contested ids off the operations, so the operations carry nothing else. */
 const pairOf = (anchorYaml: string, otherYaml: string, operationIds: string[]): ContestedDocumentPair => ({
-  anchorDocument: documentOf(ANCHOR_SLUG, anchorYaml),
-  otherDocument: documentOf(OTHER_SLUG, otherYaml),
+  anchorDocument: documentFrom(ANCHOR_SLUG, anchorYaml),
+  otherDocument: documentFrom(OTHER_SLUG, otherYaml),
   operations: operationIds.map(operationId => ({
     operationId,
     anchorOperation: restOperation({ operationId }),
@@ -143,15 +144,16 @@ describe('compareContestedOperations', () => {
 // the engine and the REST comparison together, on the case the feature exists for: one slug, two endpoints
 test('should refuse two documents that derive one contested id from different paths', () => {
   const contestedId = 'res-data-get'
-  const claimOf = (slug: string, path: string, summary: string): DocumentClaim => ({
-    document: documentOf(slug, restSpec({ [path]: summary })),
-    documentId: slug,
-    operation: restOperation({ operationId: contestedId, documentId: slug }),
-  })
-
   const claims: Claims<DocumentClaim> = new Map()
-  collectClaim(claims, contestedId, claimOf(ANCHOR_SLUG, '/res/data', 'Read the resource'))
-  collectClaim(claims, contestedId, claimOf(OTHER_SLUG, '/res-data', 'Delete everything'))
+  const collect = (slug: string, path: string, summary: string): void =>
+    collectOperationClaim(
+      claims,
+      documentFrom(slug, restSpec({ [path]: summary })),
+      restOperation({ operationId: contestedId }),
+    )
+
+  collect(ANCHOR_SLUG, '/res/data', 'Read the resource')
+  collect(OTHER_SLUG, '/res-data', 'Delete everything')
 
   expect(findContestedOperationConflicts(claims, compareContestedOperations))
     .toEqual([{ operationId: contestedId, contentDiffers: true, differingFields: [] }])

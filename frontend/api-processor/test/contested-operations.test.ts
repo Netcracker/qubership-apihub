@@ -28,7 +28,7 @@ import {
 import { Claims, collectClaim } from '../src/components/duplicate-resolution'
 import { APIHUB_API_COMPATIBILITY_KIND_BWC, APIHUB_API_COMPATIBILITY_KIND_NO_BWC } from '../src/consts'
 import { API_AUDIENCE_EXTERNAL, API_AUDIENCE_INTERNAL, OperationId, VersionDocument } from '../src/types'
-import { restOperation, RestOperationOverrides, versionDocument } from './helpers/factories'
+import { restOperation, RestOperationOverrides, versionDocument } from './helpers'
 
 /*
  * The comparison of documents is a parameter, so these cases state the engine's own behavior with a stub: how the
