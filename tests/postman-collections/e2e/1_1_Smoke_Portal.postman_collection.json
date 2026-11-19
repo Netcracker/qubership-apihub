@@ -9378,7 +9378,8 @@
                                             "pm.test(\"Build is complete\", function () {\r",
                                             "    pm.response.to.have.status(200);\r",
                                             "    pm.expect(data.status).to.eql(\"complete\");\r",
-                                            "});"
+                                            "});\r",
+                                            "pm.environment.set(\"version_1\", pm.environment.get(\"version_1_2\") + \"@2\");"
                                         ]
                                     }
                                 },
