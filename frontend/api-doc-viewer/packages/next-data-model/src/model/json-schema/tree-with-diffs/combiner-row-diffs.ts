@@ -6,6 +6,7 @@ import {
   NodeDiffsSeverities,
   NodeDiffsSeverity,
   NodeDiffsSeverityPlacemennt,
+  NodeDiffsSummary,
 } from '@apihub/next-data-model/model/abstract/tree-with-diffs/tree-node.interface'
 import {
   JsonSchemaTreeNode,
@@ -225,6 +226,24 @@ export class JsonSchemaCombinerSelectorRowResolver {
       return undefined
     }
     return this.resolveUniformNestedNodesAction(combinerNode)
+  }
+
+  /** Circular reference clones can lack their own rollup while direct children retain subtree summaries. */
+  public static resolveDirectNodeChangesSummary(
+    node: JsonSchemaTreeNode | JsonSchemaTreeNodeWithDiffs,
+  ): NodeDiffsSummary {
+    const summary: NodeDiffsSummary = new Set()
+    const nodes = [node, ...node.childrenNodes(), ...node.nestedNodes()]
+    for (const current of nodes) {
+      if (!isJsonSchemaTreeNodeWithDiffs(current)) {
+        continue
+      }
+      const nodeChangesSummary = JsonSchemaRowDiffs.NodeLevel.takeNodeChangesSummary(current)
+      for (const diffType of nodeChangesSummary ?? []) {
+        summary.add(diffType)
+      }
+    }
+    return summary
   }
 
   private static nestedNodeHasDiffSignals(node: JsonSchemaTreeNodeWithDiffs): boolean {

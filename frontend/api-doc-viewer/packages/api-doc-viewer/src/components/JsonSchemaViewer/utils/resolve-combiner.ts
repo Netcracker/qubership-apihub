@@ -5,6 +5,7 @@ import { resolvePlainPropertyIsExpandable } from "@netcracker/qubership-apihub-n
 import { TreeNodeComplexityTypes } from "@netcracker/qubership-apihub-next-data-model/model/abstract/tree/tree-node.interface"
 import { resolveJsonSchemaTypeLabel } from "@netcracker/qubership-apihub-next-data-model/model/json-schema/type-label"
 import { JsonSchemaRowDiffs } from "@netcracker/qubership-apihub-next-data-model/model/json-schema/tree-with-diffs/property-row-diffs"
+import { JsonSchemaCombinerSelectorRowResolver } from "@netcracker/qubership-apihub-next-data-model/model/json-schema/tree-with-diffs/combiner-row-diffs"
 import { JsonSchemaTreeNode, JsonSchemaTreeNodeWithDiffs } from "@netcracker/qubership-apihub-next-data-model/model/json-schema/types/aliases"
 import { JsonSchemaTreeNodeKind } from "@netcracker/qubership-apihub-next-data-model/model/json-schema/types/node-kind"
 import { JsonSchemaTreeNodeValue } from "@netcracker/qubership-apihub-next-data-model/model/json-schema/types/node-value"
@@ -261,6 +262,7 @@ class NodeDiffs extends JsonSchemaCombinerBase {
     }
 
     const whollyAddedOrRemoved = JsonSchemaRowDiffs.NodeLevel.isWholePropertyAddOrRemove(nestedNode)
+    const hasStandardSummary = nestedNode.diffsSummary.size > 0 || nestedNode.descendantDiffsSummary.size > 0
 
     return {
       ...baseOption,
@@ -269,7 +271,9 @@ class NodeDiffs extends JsonSchemaCombinerBase {
         ? {}
         : {
           diffsSummary: nestedNode.diffsSummary,
-          descendantDiffsSummary: nestedNode.descendantDiffsSummary,
+          descendantDiffsSummary: hasStandardSummary
+            ? nestedNode.descendantDiffsSummary
+            : JsonSchemaCombinerSelectorRowResolver.resolveDirectNodeChangesSummary(nestedNode),
         }),
     }
   }
