@@ -2984,8 +2984,16 @@ func (p publishedRepositoryImpl) GetReadonlyPackageVersionsWithLimit(ctx context
 		select pv.*, get_latest_revision(coalesce(pv.previous_version_package_id,pv.package_id), pv.previous_version) as previous_version_revision,
 			usr.name as prl_usr_name, usr.email as prl_usr_email, usr.avatar_url as prl_usr_avatar_url,
 			apikey.id as prl_apikey_id, apikey.name as prl_apikey_name,
-			case when coalesce(usr.name, apikey.name)  is null then pv.created_by else usr.user_id end prl_usr_id
+			case when coalesce(usr.name, apikey.name)  is null then pv.created_by else usr.user_id end prl_usr_id,
+			fp.first_published_at
 			from published_version pv
+			inner join (
+							select version, min(published_at) as first_published_at
+								from published_version
+								where package_id = ?package_id
+								group by version
+						) fp
+			on pv.version = fp.version
 			left join user_data usr on usr.user_id = pv.created_by
 			left join apihub_api_keys apikey on apikey.id = pv.created_by
 			where pv.deleted_at is null
@@ -3039,6 +3047,13 @@ func (p publishedRepositoryImpl) GetReadonlyPackageVersionsWithLimit(ctx context
 				case "asc":
 					return result[i].Version < result[j].Version
 				}
+			case entity.VersionSortByFirstPublishedAtPG:
+				switch searchQuery.SortOrder {
+				case "desc", "":
+					return result[i].FirstPublishedAt.After(result[j].FirstPublishedAt)
+				case "asc":
+					return result[i].FirstPublishedAt.Before(result[j].FirstPublishedAt)
+				}
 			}
 			return result[i].PublishedAt.Unix() > result[j].PublishedAt.Unix()
 		})
@@ -3054,10 +3069,11 @@ func (p publishedRepositoryImpl) GetReadonlyPackageVersionsWithLimit(ctx context
 			select pv.*, get_latest_revision(coalesce(pv.previous_version_package_id,pv.package_id), pv.previous_version) as previous_version_revision,
 				usr.name as prl_usr_name, usr.email as prl_usr_email, usr.avatar_url as prl_usr_avatar_url,
 				apikey.id as prl_apikey_id, apikey.name as prl_apikey_name,
-				case when coalesce(usr.name, apikey.name) is null then pv.created_by else usr.user_id end prl_usr_id
+				case when coalesce(usr.name, apikey.name) is null then pv.created_by else usr.user_id end prl_usr_id,
+				mx.first_published_at
 				from published_version pv
 			inner join (
-							select package_id, version, max(revision) as revision
+							select package_id, version, max(revision) as revision, min(published_at) as first_published_at
 								from published_version
 								where (package_id = ?package_id)
 								group by package_id, version
@@ -3071,12 +3087,16 @@ func (p publishedRepositoryImpl) GetReadonlyPackageVersionsWithLimit(ctx context
 			and (?statuses = '{}' or pv.status = ANY(?statuses))
 			and (?label = '' or ?label = any(pv.labels))
 			and pv.deleted_at is %s null
-			order by pv.%s %s
+			order by %s %s
 			limit ?limit
 			offset ?offset
 	`
+		sortColumn := "pv." + searchQuery.SortBy
+		if searchQuery.SortBy == entity.VersionSortByFirstPublishedAtPG {
+			sortColumn = "mx." + searchQuery.SortBy
+		}
 		_, err := p.cp.GetConnection().WithContext(ctx).Model(&searchQuery).
-			Query(&ents, fmt.Sprintf(query, notCondition, searchQuery.SortBy, searchQuery.SortOrder))
+			Query(&ents, fmt.Sprintf(query, notCondition, sortColumn, searchQuery.SortOrder))
 		if err != nil {
 			if err == pg.ErrNoRows {
 				return nil, nil
