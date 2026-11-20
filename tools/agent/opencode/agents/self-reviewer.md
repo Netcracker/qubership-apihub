@@ -36,6 +36,10 @@ in it), the analysis plan, the implementer's summary, and the base and head comm
    `apihub-go-self-review` for other Go modules, and for other modules the review guidance of `apihub-pr-review`.
 3. Judge three things: does the change do what the issue asks, is it correct, and does it stay inside the issue (no
    unrelated changes, no weakened tests or checks)?
+4. When review threads are supplied, verify every request against the current code, including unchanged files.
+   Check the implementer's outcome for each numbered thread. A missing outcome or an unaddressed request is a major
+   finding and requires `changes`, even when the original issue and tests pass. A resolved thread supplied by an
+   explicit inline command is still part of this attempt.
 
 Approve a change that is correct and complete even when you would have written it differently. Ask for changes only
 for problems a maintainer would block on.

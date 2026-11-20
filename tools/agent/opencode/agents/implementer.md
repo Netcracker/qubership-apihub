@@ -137,13 +137,18 @@ empty unless the status is `blocked`, and give a reason whenever it is.
 
 ## Your output
 
+When review threads are supplied, account for every numbered thread in `summary`, even when no code change is needed.
+State whether it is fixed (and how), already satisfied (with code evidence), or blocked (and why). Unresolved feedback
+belongs to repeated implementation attempts too. An inline command refers to the supplied thread conversation, not
+only the short command text. Leave thread resolution to a person.
+
 End your answer with exactly one fenced `json` block and nothing after it. Every key is required, and no other key is
 allowed:
 
 ```json
 {
   "status": "done | blocked | unrelated",
-  "summary": "What you changed and why, in two to five sentences, for the pull request description.",
+  "summary": "What you changed and why, plus the outcome for each supplied review thread.",
   "commitType": "fix | feat | perf | refactor | revert | build | chore | style | docs | test | ci",
   "scope": "the module name, or an empty string when the change spans several modules",
   "title": "the imperative summary of the commit title, without type and scope, at most 72 characters",

@@ -1,0 +1,18 @@
+{
+  "action": "created",
+  "comment": {
+    "id": 4643082805,
+    "in_reply_to_id": 4640053409,
+    "body": "/agent check this comment",
+    "user": { "login": "carol", "type": "User" }
+  },
+  "pull_request": {
+    "number": 70,
+    "state": "open",
+    "body": "<!-- ai-autonomous-agent issue=200 -->",
+    "user": { "login": "agent-owner", "type": "User" },
+    "head": { "repo": { "full_name": "o/r" } },
+    "base": { "repo": { "full_name": "o/r" } }
+  },
+  "repository": { "full_name": "o/r" }
+}

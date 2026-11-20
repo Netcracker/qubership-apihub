@@ -605,7 +605,7 @@ async function chat(env = process.env, deps = {}) {
   const gh = deps.gh ?? createClient({ token: env.GITHUB_TOKEN, repo: env.GITHUB_REPOSITORY })
   const commentId = commentIdOf(env.AGENT_COMMENT_ID)
   log.info('chat starts', { number, command: command.name, actor, dryRun: config.dryRun })
-  await react({ gh, commentId, content: 'eyes', dryRun: config.dryRun })
+  await react({ gh, commentId, content: 'eyes', dryRun: config.dryRun, eventName: env.GITHUB_EVENT_NAME })
 
   const ctx = { config, env, gh, number, actor, command, runUrl, out, deps }
   let content = 'confused'
@@ -615,7 +615,7 @@ async function chat(env = process.env, deps = {}) {
     if (result.ok) content = 'rocket'
     return { command: command.name, ok: result.ok }
   } finally {
-    await react({ gh, commentId, content, dryRun: config.dryRun })
+    await react({ gh, commentId, content, dryRun: config.dryRun, eventName: env.GITHUB_EVENT_NAME })
   }
 }
 

@@ -136,6 +136,7 @@ function fakeGh({
     listReviewThreads: async (n) => (calls.push(['listReviewThreads', n]), threads.map((t) => ({ ...t }))),
     replyToReviewComment: async (n, id, body) => calls.push(['replyToReviewComment', n, id, body]),
     addReaction: async (id, content) => calls.push(['addReaction', id, content]),
+    addReviewCommentReaction: async (id, content) => calls.push(['addReviewCommentReaction', id, content]),
     listCheckRuns: async () => checkRuns.map((r) => ({ ...r })),
     getCombinedStatus: async () => ({ state: 'failure', statuses }),
     rerunFailedJobs: async (id) => {
@@ -1801,6 +1802,98 @@ test('preflight of a review: only the unresolved threads go to the context and t
     assert.deepEqual(context.reviewThreads.map((t) => t.id), ['T1', 'T3'])
     assert.equal(context.kind, 'review')
     assert.deepEqual(reactionsOf(ctx), [])
+  })
+})
+
+test('repeated /agent implement on a completed issue reloads feedback for both models and publication', async () => {
+  const options = reviewOptions({
+    command: { name: 'implement', force: false, notes: '' },
+    env: { AGENT_KIND: 'initial', AGENT_PR: '', AGENT_COMMENT_ID: '9101' },
+    st: { ...handOffState(), phase: 'completed' },
+  })
+  await withContext(options, async (ctx) => {
+    assert.equal((await runPerson(ctx)).result, 'pr-opened')
+    const inputs = ctx.runAgent.runs.filter((r) => ['implementer', 'self-reviewer'].includes(r.agent))
+    assert.equal(inputs.length, 2)
+    for (const model of inputs) {
+      assert.match(model.inputText, /carol: Check nil\./)
+      assert.match(model.inputText, /Location: y\.go/)
+      assert.match(model.inputText, /Thread 1 of 2/)
+      assert.doesNotMatch(model.inputText, /Thread 3/)
+    }
+    assert.match(inputs[1].inputText, /unaddressed request or a missing outcome is a major/)
+    assert.deepEqual(ctx.gh.calls.filter((c) => c[0] === 'replyToReviewComment').map((c) => c[2]), [501, 503])
+    assert.deepEqual(ctx.gh.calls.filter((c) => c[0] === 'listReviewThreads'), [['listReviewThreads', 70]])
+  })
+})
+
+test('an inline command supplies the referenced conversation to both models and reacts on that comment', async () => {
+  const target = thread('TERMS', 4640053409, {
+    path: 'backend/portal-backend/docs/api/Admin API.yaml', line: 944,
+    comments: [
+      { author: 'karpov-aleksandr', body: 'Replace folder with workspace or group.', databaseId: 4640053409 },
+      { author: 'carol', body: '/agent check this comment', databaseId: 4643082805 },
+    ],
+  })
+  const options = reviewOptions({
+    command: { name: 'chat', force: false, notes: 'check this comment', reviewCommentId: 4640053409 },
+    env: { AGENT_KIND: 'human', AGENT_PR: '70', AGENT_COMMENT_ID: '4643082805',
+      GITHUB_EVENT_NAME: 'pull_request_review_comment' },
+    ghOptions: { threads: [thread('OTHER', 501), target] },
+  })
+  await withContext(options, async (ctx) => {
+    assert.equal((await runPerson(ctx)).result, 'pr-opened')
+    for (const model of ctx.runAgent.runs) {
+      assert.match(model.inputText, /karpov-aleksandr: Replace folder with workspace or group\./)
+      assert.match(model.inputText, /Admin API\.yaml:944/)
+      assert.doesNotMatch(model.inputText, /carol: Check nil\./)
+    }
+    assert.deepEqual(ctx.gh.calls.filter((c) => c[0] === 'replyToReviewComment').map((c) => c[2]), [4640053409])
+    assert.deepEqual(ctx.gh.calls.filter((c) => c[0] === 'addReviewCommentReaction'), [
+      ['addReviewCommentReaction', 4643082805, 'eyes'], ['addReviewCommentReaction', 4643082805, 'rocket'],
+    ])
+    assert.deepEqual(reactionsOf(ctx), [])
+  })
+})
+
+test('inline commands can revisit a resolved thread, and never substitute another thread for a missing target', async () => {
+  const command = { name: 'chat', notes: 'check this comment', reviewCommentId: 502 }
+  await withContext(reviewOptions({ command }), async (ctx) => {
+    await preflight(ctx.env, ctx.deps)
+    const context = JSON.parse(fs.readFileSync(path.join(ctx.env.AGENT_OUT, 'context.json'), 'utf8'))
+    assert.deepEqual(context.reviewThreads.map((t) => t.id), ['T2'])
+  })
+  await withContext(reviewOptions({ command: { ...command, reviewCommentId: 999 } }), async (ctx) => {
+    await assert.rejects(preflight(ctx.env, ctx.deps), /Review thread for comment 999 was not found on #70/)
+    assert.deepEqual(ctx.runAgent.runs, [])
+  })
+})
+
+test('self-review findings about omitted feedback reach the next implementation round', async () => {
+  const missed = { verdict: 'changes', findings: [
+    { severity: 'major', file: 'backend/x.go', line: 12, body: 'Thread 1 is still unaddressed: check nil.' },
+  ] }
+  const options = reviewOptions({ agents: { implementer: [done, done], 'self-reviewer': [missed, approve] } })
+  await withContext(options, async (ctx) => {
+    assert.equal((await runPerson(ctx)).result, 'pr-opened')
+    const implementations = ctx.runAgent.runs.filter((r) => r.agent === 'implementer')
+    assert.equal(implementations.length, 2)
+    assert.match(implementations[1].inputText, /Thread 1 is still unaddressed/)
+    for (const reviewer of ctx.runAgent.runs.filter((r) => r.agent === 'self-reviewer')) {
+      assert.match(reviewer.inputText, /carol: Check nil\./)
+    }
+  })
+})
+
+test('update remains merge-only even when open review threads exist', async () => {
+  const options = reviewOptions({ command: { name: 'update', notes: '' },
+    pulls: openPull({ head: { sha: sha(900) } }),
+    env: { AGENT_KIND: 'update', AGENT_PR: '70' } })
+  await withContext(options, async (ctx) => {
+    await preflight(ctx.env, ctx.deps)
+    assert.deepEqual(ctx.gh.calls.filter((c) => c[0] === 'listReviewThreads'), [])
+    const context = JSON.parse(fs.readFileSync(path.join(ctx.env.AGENT_OUT, 'context.json'), 'utf8'))
+    assert.deepEqual(context.reviewThreads, [])
   })
 })
 

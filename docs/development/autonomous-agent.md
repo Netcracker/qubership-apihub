@@ -247,8 +247,18 @@ agent posts the hand-off on the pull request as well as its issue. The pull requ
 blocker, and distinguishes unpublished work from a pushed update. For a review attempt, it links the threads included
 in the attempt and reports whether an update was published; the threads stay open for a person to review. Omitted
 threads are counted separately. A worker crash or timeout produces the same notice from the publish job.
-`/agent retry` and answers to a hand-off on an open pull request reload unresolved review threads, so a continuation
-keeps the reviewer feedback even when the blocked attempt published no code.
+Repeated `/agent implement`, `/agent retry`, answers to a hand-off, and general change requests reload unresolved
+threads of the linked open pull request. Feedback stays in scope even when the blocked attempt published no code.
+The implementer and self-reviewer receive the same threads. The implementer reports an outcome for each thread in its
+summary; self-review treats missing outcomes and unaddressed requests as major findings.
+
+You can also write `/agent <change request>` inside an inline review thread, for example `/agent check this comment`.
+That command starts one attempt over the referenced conversation, including the original review comment, rather than
+only the short command text. This also works in a resolved thread when you explicitly ask the agent to revisit it.
+The command needs write access and an allowed actor, on a pull request of the agent from this repository. Ordinary
+inline comments stay passive; a submitted review with "changes requested" or an explicit command starts work.
+An inline command uses the same busy check and reactions as a PR conversation command. `/agent update` keeps its
+merge-only scope and does not load review feedback.
 
 `agent:completed` describes the current work, so a new attempt removes it from the issue and its open pull request.
 Blocked work, red CI, a CI rerun, and `/agent stop` also clear it. Execution-level labels such as `ai:l1-executor` stay.
