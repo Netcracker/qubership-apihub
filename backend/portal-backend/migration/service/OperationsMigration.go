@@ -50,6 +50,7 @@ func (d *dbMigrationServiceImpl) StartMigrateOperations(ctx context.Context, req
 		if err != nil {
 			return err
 		}
+		log.Infof("Migration %s: resolved package scopes %v to packages %v", migrationId, req.PackageIds, packageIds)
 
 		var lastSeqNum int
 		_, err = tx.Query(pg.Scan(&lastSeqNum), "SELECT COALESCE(MAX(sequence_number), 0) FROM migration_run")

@@ -14,7 +14,7 @@ import (
 	"github.com/go-pg/pg/v10/orm"
 )
 
-const migrationFolderScopeSuffix = ".*"
+const migrationScopeSuffix = ".*"
 
 func resolveMigrationPackageIds(ctx context.Context, tx *pg.Tx, packageIds []string) ([]string, error) {
 	roots := make([]string, 0)
@@ -22,7 +22,7 @@ func resolveMigrationPackageIds(ctx context.Context, tx *pg.Tx, packageIds []str
 		if !strings.Contains(id, "*") {
 			continue
 		}
-		root := strings.TrimSuffix(id, migrationFolderScopeSuffix)
+		root := strings.TrimSuffix(id, migrationScopeSuffix)
 		if root == id || root == "" || strings.Contains(root, "*") ||
 			strings.HasPrefix(root, ".") || strings.HasSuffix(root, ".") || strings.Contains(root, "..") {
 			return nil, &exception.CustomError{
@@ -41,7 +41,7 @@ func resolveMigrationPackageIds(ctx context.Context, tx *pg.Tx, packageIds []str
 	var descendants []string
 	query := migrationDescendantsQuery(tx.ModelContext(ctx, (*entity.PackageEntity)(nil)), roots)
 	if err := query.Select(&descendants); err != nil {
-		return nil, fmt.Errorf("failed to resolve migration folder scopes: %w", err)
+		return nil, fmt.Errorf("failed to resolve migration workspace or group scopes: %w", err)
 	}
 	return expandMigrationPackageIds(packageIds, descendants)
 }
@@ -61,11 +61,11 @@ func migrationDescendantsQuery(query *orm.Query, roots []string) *orm.Query {
 func expandMigrationPackageIds(packageIds, descendants []string) ([]string, error) {
 	resolved := make(map[string]struct{})
 	for _, id := range packageIds {
-		if !strings.HasSuffix(id, migrationFolderScopeSuffix) {
+		if !strings.HasSuffix(id, migrationScopeSuffix) {
 			resolved[id] = struct{}{}
 			continue
 		}
-		prefix := strings.TrimSuffix(id, migrationFolderScopeSuffix) + "."
+		prefix := strings.TrimSuffix(id, migrationScopeSuffix) + "."
 		matched := false
 		for _, descendant := range descendants {
 			if strings.HasPrefix(descendant, prefix) {

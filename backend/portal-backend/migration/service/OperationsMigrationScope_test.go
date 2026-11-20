@@ -12,7 +12,7 @@ import (
 )
 
 func TestExpandMigrationPackageIds(t *testing.T) {
-	const folderScope = "workspace.rest.*"
+	const groupScope = "workspace.rest.*"
 	const directPackage = "workspace.rest.petstore"
 	const nestedPackage = "workspace.rest.nested.orders"
 	const exactPackage = "workspace.async.events"
@@ -26,8 +26,8 @@ func TestExpandMigrationPackageIds(t *testing.T) {
 		want  []string
 	}{
 		{
-			name:  "folder includes nested descendants but excludes siblings and root",
-			scope: []string{folderScope},
+			name:  "group includes nested descendants but excludes siblings and root",
+			scope: []string{groupScope},
 			want:  []string{"workspace.rest.dashboard", nestedPackage, directPackage},
 		},
 		{
@@ -37,7 +37,7 @@ func TestExpandMigrationPackageIds(t *testing.T) {
 		},
 		{
 			name:  "mixed and overlapping scopes are deduplicated",
-			scope: []string{folderScope, exactPackage, directPackage, "workspace.rest.nested.*", folderScope},
+			scope: []string{groupScope, exactPackage, directPackage, "workspace.rest.nested.*", groupScope},
 			want:  []string{exactPackage, "workspace.rest.dashboard", nestedPackage, directPackage},
 		},
 	}
@@ -68,7 +68,18 @@ func TestExpandMigrationPackageIdsRejectsUnmatchedScope(t *testing.T) {
 	}
 }
 
-func TestMigrationFolderScopeUsesLiteralPrefix(t *testing.T) {
+func TestMigrationWorkspaceScopeIncludesNestedGroups(t *testing.T) {
+	const directPackage = "workspace.rest.petstore"
+	const nestedPackage = "workspace.rest.nested.orders"
+	const dashboard = "workspace.dashboard"
+	got, err := expandMigrationPackageIds([]string{"workspace.*"}, []string{
+		directPackage, nestedPackage, dashboard, "workspaceOther.rest.petstore",
+	})
+	require.NoError(t, err)
+	require.Equal(t, []string{dashboard, nestedPackage, directPackage}, got)
+}
+
+func TestMigrationScopeUsesLiteralPrefix(t *testing.T) {
 	const literalPackage = "workspace.api_%.nested.package"
 	got, err := expandMigrationPackageIds([]string{"workspace.api_%.*"}, []string{
 		literalPackage, "workspace.api_other.package", "workspace.apiX.package",

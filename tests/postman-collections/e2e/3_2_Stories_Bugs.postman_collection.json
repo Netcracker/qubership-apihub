@@ -1150,8 +1150,8 @@
             ]
         },
         {
-            "name": "9. Issue 1057 - Partial migration by folder scopes",
-            "description": "Uses throwaway unpublished packages and a dashboard to check folder scope lookup and request validation. The CI collections run sequentially, so this test can use the exclusive migration slot. Go tests assert the resolved ID list; this scenario checks HTTP acceptance, rejection, and completion without rebuilding shared test data.",
+            "name": "9. Issue 1057 - Partial migration by workspace or group scopes",
+            "description": "Uses throwaway unpublished packages and a dashboard to check workspace or group scope lookup and request validation. The CI collections run sequentially, so this test can use the exclusive migration slot. Go tests assert the resolved ID list; this scenario checks HTTP acceptance, rejection, and completion without rebuilding shared test data.",
             "auth": {
                 "type": "apikey",
                 "apikey": [
@@ -1223,7 +1223,7 @@
                         "header": [{ "key": "Content-Type", "value": "application/json" }],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"alias\":\"{{migrationScopeAlias}}\",\"kind\":\"workspace\",\"name\":\"Migration folder scope test\"}",
+                            "raw": "{\"alias\":\"{{migrationScopeAlias}}\",\"kind\":\"workspace\",\"name\":\"Migration workspace and group scope test\"}",
                             "options": { "raw": { "language": "json" } }
                         },
                         "url": "{{SERVER_HOST}}/api/v2/packages"
@@ -1260,7 +1260,7 @@
                             }
                         },
                         {
-                            "name": "1057 - An empty folder does not become a full migration",
+                            "name": "1057 - An empty group does not become a full migration",
                             "request": {
                                 "method": "POST",
                                 "header": [{ "key": "Content-Type", "value": "application/json" }],
@@ -1273,7 +1273,7 @@
                             }
                         },
                         {
-                            "name": "1057 - Valid entries do not hide an unmatched folder",
+                            "name": "1057 - Valid entries do not hide an unmatched group scope",
                             "request": {
                                 "method": "POST",
                                 "header": [{ "key": "Content-Type", "value": "application/json" }],
@@ -1299,7 +1299,7 @@
                             }
                         },
                         {
-                            "name": "1057 - A wildcard without a folder ID is rejected",
+                            "name": "1057 - A wildcard without a workspace or group ID is rejected",
                             "request": {
                                 "method": "POST",
                                 "header": [{ "key": "Content-Type", "value": "application/json" }],
@@ -1325,7 +1325,7 @@
                             }
                         },
                         {
-                            "name": "1057 - A folder scope does not hide a malformed wildcard",
+                            "name": "1057 - A group scope does not hide a malformed wildcard",
                             "request": {
                                 "method": "POST",
                                 "header": [{ "key": "Content-Type", "value": "application/json" }],
