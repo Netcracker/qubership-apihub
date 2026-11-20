@@ -19,9 +19,20 @@ const migrationFolderScopeSuffix = ".*"
 func resolveMigrationPackageIds(ctx context.Context, tx *pg.Tx, packageIds []string) ([]string, error) {
 	roots := make([]string, 0)
 	for _, id := range packageIds {
-		if strings.HasSuffix(id, migrationFolderScopeSuffix) {
-			roots = append(roots, strings.TrimSuffix(id, migrationFolderScopeSuffix))
+		if !strings.Contains(id, "*") {
+			continue
 		}
+		root := strings.TrimSuffix(id, migrationFolderScopeSuffix)
+		if root == id || root == "" || strings.Contains(root, "*") ||
+			strings.HasPrefix(root, ".") || strings.HasSuffix(root, ".") || strings.Contains(root, "..") {
+			return nil, &exception.CustomError{
+				Status:  http.StatusBadRequest,
+				Code:    exception.InvalidParameterValue,
+				Message: exception.MigrationPackageScopeInvalidMsg,
+				Params:  map[string]interface{}{"value": id},
+			}
+		}
+		roots = append(roots, root)
 	}
 	if len(roots) == 0 {
 		return packageIds, nil

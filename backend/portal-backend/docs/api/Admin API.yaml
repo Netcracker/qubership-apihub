@@ -947,6 +947,8 @@ paths:
                     `workspace.restOther`. Exact IDs keep their existing behavior and can be mixed with folder scopes.
                     Folder scopes are resolved once when the migration starts; the resolved IDs are reused after a restart.
                     A folder scope with no eligible descendants returns HTTP 400, even when other entries match.
+                    The only wildcard syntax is a nonempty folder ID followed by `.*`. Other uses of `*`,
+                    or folder IDs with empty hierarchy segments, return HTTP 400 before scope resolution.
                     If omitted or empty, no package filter is applied. The versions filter still applies if provided.
                   example: ["workspace.rest.*", "workspace.async.events"]
                 versions:

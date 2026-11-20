@@ -85,6 +85,32 @@ func TestResolveMigrationPackageIdsWithoutWildcards(t *testing.T) {
 	}
 }
 
+func TestResolveMigrationPackageIdsRejectsMalformedWildcardsBeforeQuery(t *testing.T) {
+	const validScope = "workspace.rest.*"
+	for _, id := range []string{
+		"*", ".*", "workspace*", "workspace.rest*", "workspace.*.package",
+		"workspace.**", "workspace.*.*", "workspace..*", ".workspace.*", "workspace..rest.*",
+	} {
+		t.Run(id, func(t *testing.T) {
+			for _, scope := range [][]string{
+				{id},
+				{"workspace.exact", id},
+				{validScope, id},
+				{id, validScope},
+			} {
+				got, err := resolveMigrationPackageIds(context.Background(), nil, scope)
+				require.Nil(t, got)
+				var customErr *exception.CustomError
+				require.ErrorAs(t, err, &customErr)
+				require.Equal(t, http.StatusBadRequest, customErr.Status)
+				require.Equal(t, exception.InvalidParameterValue, customErr.Code)
+				require.Equal(t, exception.MigrationPackageScopeInvalidMsg, customErr.Message)
+				require.Equal(t, id, customErr.Params["value"])
+			}
+		})
+	}
+}
+
 func TestMigrationDescendantsQuery(t *testing.T) {
 	query := migrationDescendantsQuery(orm.NewQuery(nil, (*entity.PackageEntity)(nil)), []string{"workspace.rest", "workspace.async"})
 	sql, err := orm.NewSelectQuery(query).AppendQuery(orm.NewFormatter(), nil)
