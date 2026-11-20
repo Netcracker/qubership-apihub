@@ -12,7 +12,8 @@ that namespace.
 
 Someone starts the discovery through the agent API for one namespace. The agent then:
 
-1. Retrieves the list of all services in the namespace from the Kubernetes API.
+1. Retrieves the list of all services in the namespace from the Kubernetes API. The label filters of the agent
+   configuration (`discovery.excludeLabels` and `discovery.includeLabels`) can narrow this list.
 2. Queries several REST endpoints of each service, in parallel.
 3. Downloads the API specification files it finds.
 

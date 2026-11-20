@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"slices"
 	"strconv"
 	"sync"
 	"time"
@@ -33,6 +34,7 @@ func NewDiscoveryService(
 	agentNamespace string,
 	apihubUrl string,
 	excludeWithLabels []string,
+	includeLabels []string,
 	groupingLabels []string,
 	namespaceListCache NamespaceListCache,
 	serviceListCache ServiceListCache,
@@ -50,6 +52,7 @@ func NewDiscoveryService(
 		agentNamespace:            agentNamespace,
 		apihubUrl:                 apihubUrl,
 		excludeWithLabels:         excludeWithLabels,
+		includeLabels:             includeLabels,
 		groupingLabels:            groupingLabelsMap,
 		namespaceListCache:        namespaceListCache,
 		serviceListCache:          serviceListCache,
@@ -64,6 +67,7 @@ type discoveryServiceImpl struct {
 	agentNamespace    string
 	apihubUrl         string
 	excludeWithLabels []string
+	includeLabels     []string
 	groupingLabels    map[string]struct{}
 	discoveryUrls     config.ApiTypeUrlsConfig
 
@@ -182,6 +186,17 @@ func (d discoveryServiceImpl) runDiscovery(secCtx secctx.SecurityContext, namesp
 			}
 		}
 		if exclude {
+			continue
+		}
+		include := len(d.includeLabels) == 0
+		for k, v := range labels {
+			if slices.Contains(d.includeLabels, k+"="+v) {
+				include = true
+				break
+			}
+		}
+		if !include {
+			log.Infof("Service %s is skipped: it has none of the labels in discovery.includeLabels", srv.Name)
 			continue
 		}
 
@@ -343,7 +358,7 @@ func getPodsForSelector(allPods []entity.Pod, selector map[string]string) []enti
 	for _, pod := range allPods {
 		matchSelectors := 0
 		for k, v := range selector {
-			if pod.Labels[k] == v {
+			if podValue, ok := pod.Labels[k]; ok && podValue == v {
 				matchSelectors++
 			}
 		}
@@ -359,7 +374,7 @@ func getDeploymentForService(allDeployments []entity.Deployment, selector map[st
 	for _, deployment := range allDeployments {
 		matchSelectors := 0
 		for k, v := range selector {
-			if deployment.Labels[k] == v {
+			if deploymentValue, ok := deployment.Labels[k]; ok && deploymentValue == v {
 				matchSelectors++
 			}
 		}

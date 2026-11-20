@@ -288,8 +288,9 @@ paths:
         (`none`, `running`, `complete`, `error`, `failed`), passing the same services list in the
         `services` query parameter to address this run's result.
 
-        By default the whole namespace is discovered. Send the optional request body to limit the
-        run to a well-known list of services.
+        By default the run is not limited to a list of service names. Send the optional request
+        body to limit it to a well-known list of services. In both cases the agent applies its
+        label filters (`discovery.excludeLabels` and `discovery.includeLabels`).
 
         Each distinct services list has its own stored result. Discoveries started with different
         lists run and are stored independently, so a scoped run never overwrites the unscoped one;
@@ -611,9 +612,14 @@ paths:
                       type: string
                     description: |
                       The services list the addressed discovery result was started with. Absent on
-                      the default (unscoped) result, where the whole namespace was discovered. Diff
-                      it against `services[].serviceName` to find requested services that were not
-                      found in the namespace.
+                      the default (unscoped) result, which is not limited to a list of service names.
+                      The agent still applies its label filters (`discovery.excludeLabels` and
+                      `discovery.includeLabels`) to that result. Once `status` is `complete`,
+                      diff it against `services[].serviceName` to find requested services that were
+                      not discovered. The label filters apply to each Kubernetes service separately,
+                      so a requested name is missing from `services` only when none of its blue-green
+                      variants was discovered: the name is absent from the namespace, or every variant
+                      was filtered out by label.
                     example:
                       - apihub-be
                       - apihub-fe
@@ -1650,7 +1656,8 @@ components:
       description: |
         Optional body of a discovery request, used to limit the discovery scope to a well-known
         list of services. An empty body and an empty `services` list are also accepted and both mean
-        whole-namespace discovery, stored as the default (unscoped) result.
+        whole-namespace discovery, stored as the default (unscoped) result. In every case the label
+        filters of the agent configuration apply.
 
         Each distinct services list has its own stored result; the list is treated as a set, so
         order and duplicates do not affect which result the discovery writes to. Read the result
@@ -1677,9 +1684,11 @@ components:
             here. An entry that is empty or carries leading or trailing whitespace can match no
             service and is rejected with 400.
 
-            A name not present in the namespace, or one naming a service the agent excludes from
-            discovery by label, is ignored; compare `requestedServices` against
-            `services[].serviceName` in the services listing to find them.
+            The label filters of the agent configuration (`discovery.excludeLabels` and
+            `discovery.includeLabels`) apply to each Kubernetes service separately, so a name is
+            missing from the services listing only when it is not present in the namespace or every
+            blue-green variant it selects is filtered out by label. Once `status` is `complete`,
+            compare `requestedServices` against `services[].serviceName` to find them.
           example:
             - apihub-be
             - apihub-fe

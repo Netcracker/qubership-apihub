@@ -47,6 +47,10 @@ above when in doubt.
 
 **Kubernetes agent** (optional extension, not started by default Compose bundle): configured like the backend pattern —
 **`config.yaml`** from [`config.template.yaml`](../backend/agent/config.template.yaml), plus Ingress for **`agentUrl`**.
+`discovery.excludeLabels` and `discovery.includeLabels` (Helm: `qubershipApihubAgent.env.discovery.*`) limit which
+services the agent discovers. Namespace security checks and snapshots cover only the discovered services: a check can
+complete with zero services, and a snapshot fails when no eligible service remains. The agent reads its config at
+startup, so restart the agent pod after you change these lists.
 
 ---
 

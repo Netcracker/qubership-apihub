@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	log "github.com/sirupsen/logrus"
+	"k8s.io/apimachinery/pkg/api/validate/content"
 )
 
 var slugPattern = regexp.MustCompile(`^[a-zA-Z0-9_-]+$`)
@@ -19,6 +20,11 @@ func validateSlugOnlyCharacters(fl validator.FieldLevel) bool {
 		return true
 	}
 	return slugPattern.MatchString(value)
+}
+
+func validateLabelKeyValue(fl validator.FieldLevel) bool {
+	key, value, found := strings.Cut(fl.Field().String(), "=")
+	return found && len(content.IsLabelKey(key)) == 0 && len(content.IsLabelValue(value)) == 0
 }
 
 func ValidateConfig(object interface{}) error {
@@ -50,6 +56,7 @@ func getValidator() *validator.Validate {
 	if v == nil {
 		v = validator.New()
 		v.RegisterValidation("slug_only_characters", validateSlugOnlyCharacters)
+		v.RegisterValidation("label_key_value", validateLabelKeyValue)
 	}
 	return v
 }

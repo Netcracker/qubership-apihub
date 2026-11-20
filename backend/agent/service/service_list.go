@@ -141,6 +141,8 @@ func (l listServiceImpl) ListServiceItems(namespace string) ([]view.ServiceItem,
 		if exclude {
 			continue
 		}
+		// TODO: should discovery.includeLabels filter this list too, as discovery.excludeLabels does?
+		// Only runDiscovery applies it (Netcracker/qubership-apihub-backend#611).
 		serviceId := srv.Name
 		serviceName := getServiceName(serviceId)
 		baseUrl := buildBaseurl(srv)
