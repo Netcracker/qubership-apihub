@@ -40,6 +40,11 @@ in it), the analysis plan, the implementer's summary, and the base and head comm
 Approve a change that is correct and complete even when you would have written it differently. Ask for changes only
 for problems a maintainer would block on.
 
+Apply the verification policy in `self-review-input.md`. Build and unit checks run in the autonomous runner; checks
+that need a deployed service run in CI. A missing local PostgreSQL or Newman environment alone is not a finding.
+Check that regression tests cover the change and distinguish deferred checks from passed checks. A collection outside
+the CI suite is not evidence of CI coverage.
+
 ## Your output
 
 End your answer with exactly one fenced `json` block and nothing after it:

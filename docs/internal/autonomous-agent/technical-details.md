@@ -2291,9 +2291,12 @@ The hidden state block in one comment per issue or pull request. See "State comm
 The stop labels and the stop record. See [Stop labels and the stop record](#stop-labels-and-the-stop-record).
 
 - **Exports:** `REASONS` (the 14 reasons), `PREFIX`, `labelOf`, `isStopLabel`, `stopLabels`, `setStop`, `clearStops`,
-  `recordStop`, `recordResume`, `renderStop`.
+  `clearCompleted`, `recordStop`, `recordResume`, `renderStop`.
 - `labelOf` throws on an unknown reason. `setStop(gh, numbers, reason)` and `clearStops(gh, numbers, { keep })` read the
   labels with `gh.getIssue`, skip falsy numbers, go on after an error, and return the first error (logged) or `null`.
+- `setStop` clears `agent:completed` for every reason except `approval-required`. `clearCompleted` removes that label
+  from distinct targets when an attempt resumes, CI turns red or runs again, or a person stops work. Execution-level
+  labels are preserved. The CI gate restores completion only for a green published commit.
 - **Tests:** `stops.test.js`.
 
 ### `tools/agent/lib/text.js`
@@ -2452,7 +2455,10 @@ than the implementer (`lib/config.js` enforces that).
 - **Frontmatter:** `steps: 60`; `edit: deny`, `webfetch: deny`, `skill: allow`.
 - **Bash:** `"*": deny`; allowed `git diff*`, `git log*`, `git show*`, `git blame*`, `git grep*`; the same four denials.
 - **Input:** `self-review-input.md` (the issue inside `<untrusted>`, the plan, the implementer's summary, base and
-  head).
+  head, the implementer's verification report, and the orchestrator's local check results).
+- Both implementation and self-review inputs include the same autonomous verification policy. Available builds and
+  unit tests run in the runner; live service checks are deferred to CI. A missing local integration environment alone
+  does not block the attempt. Reports distinguish deferred checks, CI coverage gaps, and actual failures.
 - **Task:** read `git diff <base> <head>`; load `apihub-backend-self-review` for `backend/portal-backend`,
   `apihub-go-self-review` for other Go modules, and the review guidance of `apihub-pr-review` for the rest. Judge
   whether the change does what the issue asks, is correct, and stays inside the issue.

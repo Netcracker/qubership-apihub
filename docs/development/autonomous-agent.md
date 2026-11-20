@@ -242,6 +242,34 @@ once in each thread the implementer saw, with the short commit id, and in no oth
 person does. The title and the description of the pull request stay, and the pull request goes back to a draft when
 the new result is not green.
 
+When an attempt to update an existing pull request blocks, fails, or ends with incomplete checks or self-review, the
+agent posts the hand-off on the pull request as well as its issue. The pull request notice links the run, names the
+blocker, and distinguishes unpublished work from a pushed update. For a review attempt, it links the threads included
+in the attempt and reports whether an update was published; the threads stay open for a person to review. Omitted
+threads are counted separately. A worker crash or timeout produces the same notice from the publish job.
+`/agent retry` and answers to a hand-off on an open pull request reload unresolved review threads, so a continuation
+keeps the reviewer feedback even when the blocked attempt published no code.
+
+`agent:completed` describes the current work, so a new attempt removes it from the issue and its open pull request.
+Blocked work, red CI, a CI rerun, and `/agent stop` also clear it. Execution-level labels such as `ai:l1-executor` stay.
+Only the CI gate restores completion after the checks of the published head commit pass. A completed pull request may
+also carry `needs-human:approval-required` while it waits for human review.
+
+### Verification in autonomous jobs
+
+CI on the published head commit is the final verification gate. The autonomous runner runs the available builds and
+unit tests through Nx and fixes failures caused by the change. Its implementer and self-reviewer receive the same
+verification policy for initial work, review changes, retries, CI fixes, and conflict resolution.
+
+The runner has no prepared backend, PostgreSQL, or live Newman environment. Module instructions that require these
+services apply to a prepared development environment. In an autonomous job, the agent prepares regression tests for
+the applicable CI suite and records live checks as deferred to CI. A collection under `backend/portal-backend/tests/api`
+does not run in CI automatically; the report must identify actual CI coverage and any gaps.
+
+The missing local integration environment alone does not block publication. Deferred checks are never reported as
+passed, and local success does not establish CI success. A real implementation blocker, a failed local check, an open
+self-review finding, or essential verification unavailable both locally and in CI still follows the hand-off rules.
+
 ## Implement an issue
 
 Comment `/agent implement` on a `Bug` or `Task` issue. `/agent fix` does the same. The agent runs one attempt and ends
