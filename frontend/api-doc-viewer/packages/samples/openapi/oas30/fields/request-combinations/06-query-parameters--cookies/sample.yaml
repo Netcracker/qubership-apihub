@@ -1,0 +1,67 @@
+openapi: 3.0.3
+info:
+  title: Orders
+  version: 1.0.0
+paths:
+  /orders:
+    post:
+      parameters:
+        - name: limit
+          in: query
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+        - name: cursor
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          deprecated: true
+          schema:
+            type: integer
+        - name: filter
+          in: query
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  from:
+                    type: string
+                    format: date
+        - name: session
+          in: cookie
+          required: true
+          schema:
+            type: string
+        - name: theme
+          in: cookie
+          schema:
+            type: string
+            enum:
+              - light
+              - dark
+        - name: legacy_session
+          in: cookie
+          deprecated: true
+          schema:
+            type: string
+        - name: prefs
+          in: cookie
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  from:
+                    type: string
+                    format: date
+      responses:
+        "200":
+          description: ""

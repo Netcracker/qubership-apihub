@@ -1,19 +1,3 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import type { AgentKey, NamespaceKey, PackageKey, ServiceKey, VersionKey, WorkspaceKey } from './keys'
 import type { PublishConfigDto } from './publish-config'
 import type { VersionStatus } from '@netcracker/qubership-apihub-ui-shared/entities/version-status'
@@ -86,20 +70,6 @@ export const NO_PREVIOUS_VERSION_OPTION: VersionKey = '[ No previous version ]'
 
 export function calculatePreviousVersion(value: string): VersionKey {
   return value === NO_PREVIOUS_VERSION_OPTION ? '' : value
-}
-
-/**
- * Returns the version that Create Snapshot publishes for a snapshot name. The name is sent URI-encoded and stored as
- * is, so a name with a space or a non-ASCII character gets a version that differs from the name.
- */
-// TODO(agents-backend): publish the plain name, as Promote Version does, and remove this function. The encoding works
-//  around a defect of the agents-backend: its router keeps path parameters encoded (UseEncodedPath), and
-//  GET .../snapshots/{version} reads the version without decoding it, so it finds a snapshot only when the stored
-//  version equals the encoded path parameter. The encoded version breaks the snapshot links in the portal, which
-//  decodes path parameters twice. Once GetSnapshot decodes the version, also encode the snapshot name in the
-//  GetSnapshot path.
-export function toSnapshotVersionKey(name: string): VersionKey {
-  return encodeURI(name)
 }
 
 export async function publishSnapshot(

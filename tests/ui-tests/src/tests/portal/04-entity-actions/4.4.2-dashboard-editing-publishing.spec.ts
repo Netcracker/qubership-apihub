@@ -2,6 +2,7 @@ import { test } from '@fixtures'
 import { PortalPage } from '@portal/pages/PortalPage'
 import { expect } from '@services/expect-decorator'
 import {
+  D11,
   D12,
   D121,
   D122,
@@ -11,10 +12,12 @@ import {
   V_P_DSH_CONFLICT_PKG_NESTED_R,
   V_P_DSH_DRAFT_N,
   V_P_DSH_OVERVIEW_NESTED_R,
+  V_P_DSH_OVERVIEW_R,
   V_P_DSH_RELEASE_N,
   V_P_DSH_REPUBLISH_N,
   V_P_PKG_FOR_DASHBOARDS_REST_BASE_R,
 } from '@test-data/portal'
+import type { Version } from '@test-data/props'
 import { PUBLISH_TIMEOUT, TICKET_BASE_URL } from '@test-setup'
 
 test.describe('4.4.2 Dashboard editing/publishing', () => {
@@ -303,4 +306,53 @@ test.describe('4.4.2 Dashboard editing/publishing', () => {
       await expect(overviewTab.summaryTab.body.summary.currentVersion).toHaveText(V_P_DSH_DRAFT_N.version)
       await expect(confPackagesTab.notExistAlertIcon).toBeHidden()
     })
+
+  test.describe('Previous version package', () => {
+    const URL_ANNOTATION = { type: 'URL', description: 'https://github.com/Netcracker/qubership-apihub/issues/815' }
+    const MSG_OPTION_OTHER_DASHBOARD_RELEASE = `${V_P_DSH_OVERVIEW_R.version} ${V_P_DSH_OVERVIEW_R.status}`
+
+    /** Published by P-PUDSH-12 with a previous version from D11. */
+    const V_P_DSH_FOREIGN_PREV_N: Version = {
+      pkg: D123,
+      version: 'with-foreign-prev-version',
+      status: 'draft',
+    }
+
+    test('[P-PUDSH-12] Publishing a dashboard version with a previous version from another dashboard',
+      {
+        annotation: URL_ANNOTATION,
+      },
+      async ({ sysadminPage: page }) => {
+
+        const portalPage = new PortalPage(page)
+        const { versionDashboardPage: versionPage } = portalPage
+        const { configureVersionTab, overviewTab } = versionPage
+        const { publishVersionDialog } = configureVersionTab
+        const { summary } = overviewTab.summaryTab.body
+
+        await portalPage.gotoVersionEditing(V_P_DSH_DRAFT_N)
+        await configureVersionTab.publishBtn.click()
+        await publishVersionDialog.fillForm({
+          version: V_P_DSH_FOREIGN_PREV_N.version,
+          status: V_P_DSH_FOREIGN_PREV_N.status,
+          previousVersionPackage: D11,
+          previousVersion: MSG_OPTION_OTHER_DASHBOARD_RELEASE,
+        })
+        await publishVersionDialog.publishBtn.click()
+
+        await test.step('Verify the version is published into the current dashboard with the previous version', async () => {
+          await expect(publishVersionDialog.publishBtn).toBeHidden({ timeout: PUBLISH_TIMEOUT })
+          await expect(versionPage.toolbar.title).toHaveText(D123.name)
+          await expect.soft(versionPage.toolbar.versionSlt).toHaveText(V_P_DSH_FOREIGN_PREV_N.version)
+          await expect.soft(summary.previousVersion).toHaveText(V_P_DSH_OVERVIEW_R.version)
+        })
+
+        await summary.previousVersionLink.click()
+
+        await test.step('Verify the previous version opens in another dashboard', async () => {
+          await expect(versionPage.toolbar.title).toHaveText(D11.name)
+          await expect.soft(versionPage.toolbar.versionSlt).toHaveText(V_P_DSH_OVERVIEW_R.version)
+        })
+      })
+  })
 })

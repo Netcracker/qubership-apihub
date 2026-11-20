@@ -80,14 +80,20 @@ function fakeGh({
   logs = {},
   pull = {},
   rerunFails = false,
+  labels = {},
+  comments = [],
 } = {}) {
   const calls = []
-  const store = st ? [botComment(5, st)] : []
+  const store = [...(st ? [botComment(5, st)] : []), ...comments.map((c) => ({ ...c }))]
   let nextId = 1000
+  // The labels of the issue (200) and the pull request (70), kept like GitHub keeps them.
+  const labelsOf = Object.fromEntries(Object.entries(labels).map(([n, list]) => [n, [...list]]))
+  const labelsAt = (n) => (labelsOf[n] ??= [])
   return {
     calls,
     store,
-    getIssue: async () => ({ ...issue }),
+    labelsAt,
+    getIssue: async (n) => ({ ...issue, labels: labelsAt(n ?? 200).map((name) => ({ name })) }),
     listIssueComments: async () => store.map((c) => ({ ...c })),
     createIssueComment: async (n, body) => {
       const comment = { id: nextId++, user: { login: 'github-actions[bot]' }, body }
@@ -99,8 +105,14 @@ function fakeGh({
       store.find((c) => c.id === id).body = body
       calls.push(['updateIssueComment', id, body])
     },
-    addLabels: async (n, labels) => calls.push(['addLabels', n, labels]),
-    removeLabel: async (n, label) => calls.push(['removeLabel', n, label]),
+    addLabels: async (n, add) => {
+      labelsAt(n).push(...add.filter((l) => !labelsAt(n).includes(l)))
+      calls.push(['addLabels', n, add])
+    },
+    removeLabel: async (n, label) => {
+      labelsOf[n] = labelsAt(n).filter((l) => l !== label)
+      calls.push(['removeLabel', n, label])
+    },
     getPull: async (n) => ({
       number: n, state: 'open', draft: false, node_id: 'PR_70', head: { sha: SHA }, ...pull,
     }),
@@ -274,6 +286,7 @@ test('green: the pull request leaves draft, labels go to both, the state complet
     ],
     statuses: [{ context: 'license/cla', state: 'success' }],
     pull: { draft: true },
+    labels: { 200: ['needs-human:stuck'], 70: ['needs-human:stuck'] },
   })
   await withContext({ gh }, async (ctx) => {
     const result = await gate(ctx.env, ctx.deps)
@@ -283,18 +296,33 @@ test('green: the pull request leaves draft, labels go to both, the state complet
     assert.deepEqual(gh.calls.map((c) => c.slice(0, 3)), [
       ['updateIssueComment', 5, gh.calls[0][2]],
       ['addLabels', 70, ['agent:completed', 'ai:l1-executor']],
-      ['removeLabel', 70, 'agent:needs-human'],
       ['addLabels', 200, ['agent:completed']],
-      ['removeLabel', 200, 'agent:needs-human'],
+      ['removeLabel', 200, 'needs-human:stuck'],
+      ['removeLabel', 70, 'needs-human:stuck'],
+      ['addLabels', 70, ['needs-human:approval-required']],
       ['createIssueComment', 200, '@carol, CI is green on #70. A person reviews and merges it.'],
     ])
+    // The stops are gone; the pull request waits for a person's approval, and the issue carries no stop.
+    assert.deepEqual(gh.labelsAt(70), ['agent:completed', 'ai:l1-executor', 'needs-human:approval-required'])
+    assert.deepEqual(gh.labelsAt(200), ['agent:completed'])
     const saved = savedState(gh)
     assert.equal(saved.phase, 'completed')
     assert.equal(saved.attempts[0].result, 'ci-green')
     assert.equal(saved.lastCiReport, undefined)
     assert.deepEqual([saved.ciGate.sha, saved.ciGate.decided, saved.ciGate.run], [SHA, true, RUN])
     assert.equal(saved.attempts.length, 1)
+    assert.equal(saved.stops, undefined, 'approval-required is no stop of the agent')
     assert.match(gh.store[0].body, /### AI implementation: CI is green on pull request #70/)
+  })
+})
+
+test('green after a stop: the open stop is closed in the history, and approval-required stays on the pull request', async () => {
+  const stopped = waitingState({ stops: [{ reason: 'stuck', at: 't0', run: 'r0', on: [200, 70] }] })
+  await withContext({ gh: fakeGh({ st: stopped, labels: { 70: ['needs-human:stuck'] } }) }, async (ctx) => {
+    await gate(ctx.env, ctx.deps)
+    const saved = savedState(ctx.gh)
+    assert.deepEqual(saved.stops.map((x) => [x.reason, x.resumedAt !== undefined]), [['stuck', true]])
+    assert.deepEqual(ctx.gh.labelsAt(70), ['agent:completed', 'ai:l1-executor', 'needs-human:approval-required'])
   })
 })
 
@@ -357,18 +385,22 @@ test('red with the same failure as the attempt before: needs-human at once, with
     { n: 1, kind: 'initial', actor: 'carol', result: 'ci-red', signature, notes: 'Tried a guard.' },
     { n: 2, kind: 'ci-fix', actor: 'dave', result: 'pr-opened', notes: 'Tried a test.' },
   ] })
-  await withContext({ gh: fakeGh(red({ st })) }, async (ctx) => {
+  await withContext({ gh: fakeGh(red({ st, labels: { 70: ['needs-human:approval-required'] } })) }, async (ctx) => {
     const result = await gate(ctx.env, ctx.deps)
     assert.deepEqual(result, { outcome: 'stopped', reason: 'same-failure' })
     assert.equal(ctx.outputs(), 'outcome=stopped\nnext=\n')
     assert.deepEqual(ctx.gh.calls.map((c) => c.slice(0, 2)), [
       ['updateIssueComment', 5],
       ['addLabels', 200],
+      ['removeLabel', 70],
       ['addLabels', 70],
       ['createIssueComment', 200],
     ])
-    assert.deepEqual(ctx.gh.calls[1][2], ['agent:needs-human'])
+    assert.deepEqual(ctx.gh.calls[1], ['addLabels', 200, ['needs-human:stuck']])
+    assert.deepEqual(ctx.gh.calls[2], ['removeLabel', 70, 'needs-human:approval-required'])
+    assert.deepEqual(ctx.gh.labelsAt(70), ['needs-human:stuck'])
     const saved = savedState(ctx.gh)
+    assert.deepEqual(saved.stops.map((x) => [x.reason, x.on]), [['stuck', [200, 70]]])
     assert.deepEqual(
       [saved.phase, saved.attempts[1].result, saved.attempts[1].signature],
       ['needs-human', 'ci-red', signature],
@@ -376,12 +408,12 @@ test('red with the same failure as the attempt before: needs-human at once, with
     assert.equal(saved.implementing, undefined)
     const body = ctx.gh.store[0].body
     assert.match(body, /\n- Failed checks: `build`\.\n- First error, in `build`: `FAIL packages\/x\/a\.test\.ts \(3\.2 s\)`\.\n/)
-    assert.match(body, /- Why I stopped: The last attempt failed in the same way as the one before it/)
-    assert.match(body, /What you can do:\n\n- If the failure is not caused by the change .*comment `\/agent rerun`/)
+    assert.match(body, /\*\*Reason:\*\* `needs-human:stuck`\n\n\*\*Blocker\.\*\* The last attempt failed in the same way/)
+    assert.match(body, /\*\*Required action\.\*\* If the failure is not caused by the change .*comment `\/agent rerun`/)
     assert.match(body, /\| 1 \| initial \| ci-red \| `[0-9a-f]{12}` \| Tried a guard\. \|/)
     assert.match(body, /\| 2 \| ci-fix \| ci-red \| `[0-9a-f]{12}` \| Tried a test\. \|/)
     assert.match(body, /<details><summary>CI report<\/summary>/)
-    const note = ctx.gh.calls[3][2]
+    const note = ctx.gh.calls[4][2]
     assert.match(note, /^@dave, I stopped on #70: CI is red\.\n\n- Failed checks: `build`\.\n/)
     assert.match(note, /- First error, in `build`: `FAIL packages\/x\/a\.test\.ts \(3\.2 s\)`\.\n/)
     assert.match(note, /- Why I stopped: The last attempt failed in the same way/)
@@ -408,6 +440,8 @@ test('red with the attempts spent: needs-human with the reason budget, also for 
   await withContext({ gh: fakeGh(red({ st: two })), env: { AGENT_MAX_ATTEMPTS: '2' } }, async (ctx) => {
     assert.equal((await gate(ctx.env, ctx.deps)).reason, 'budget')
     assert.match(ctx.gh.store[0].body, /I used all 2 attempts/)
+    assert.deepEqual(ctx.gh.labelsAt(200), ['needs-human:budget-exhausted'])
+    assert.deepEqual(ctx.gh.labelsAt(70), ['needs-human:budget-exhausted'])
   })
 })
 
@@ -618,7 +652,11 @@ test('the free rerun is shared with E2E: once used, cancelled-only checks hand o
     assert.equal(saved.attempts.length, 1)
     assert.notEqual(ctx.outputs(), 'outcome=next-attempt\nnext=implement\n')
     const labels = ctx.gh.calls.filter((c) => c[0] === 'addLabels')
-    assert.deepEqual(labels, [['addLabels', 200, ['agent:needs-human']], ['addLabels', 70, ['agent:needs-human']]])
+    assert.deepEqual(labels, [
+      ['addLabels', 200, ['needs-human:environment-blocked']],
+      ['addLabels', 70, ['needs-human:environment-blocked']],
+    ])
+    assert.deepEqual(savedState(ctx.gh).stops.map((x) => x.reason), ['environment-blocked'])
     const note = ctx.gh.calls.find((c) => c[0] === 'createIssueComment')
     assert.match(note[2], /The checks were cancelled again and nothing failed/)
     assert.match(note[2], /`run-lint` \(cancelled\)/)
@@ -695,7 +733,10 @@ test('dry run, green and stop: the labels, the comment, and the state are in the
     assert.deepEqual(ctx.gh.calls, [])
     assert.deepEqual(ctx.patGh.calls, [])
     assert.match(ctx.summary(), /pull request leaves draft/)
-    assert.match(ctx.summary(), /labels on #70: add agent:completed, ai:l1-executor; remove agent:needs-human/)
+    assert.match(
+      ctx.summary(),
+      /labels on #70: add agent:completed, ai:l1-executor, needs-human:approval-required; remove every other stop label/,
+    )
     assert.match(ctx.summary(), /> @carol, CI is green on #70\./)
     assert.match(ctx.summary(), /"phase": "completed"/)
   })
@@ -709,7 +750,7 @@ test('dry run, green and stop: the labels, the comment, and the state are in the
   await withContext({ gh: fakeGh(red({ st: spent })), env: { AGENT_DRY_RUN: 'true' } }, async (ctx) => {
     assert.deepEqual(await gate(ctx.env, ctx.deps), { outcome: 'stopped', reason: 'budget' })
     assert.deepEqual(ctx.gh.calls, [])
-    assert.match(ctx.summary(), /labels on #70 and #200: add agent:needs-human/)
+    assert.match(ctx.summary(), /labels on #70 and #200: add needs-human:budget-exhausted/)
   })
   await withContext({ gh: fakeGh(e2eRed()), env: { AGENT_DRY_RUN: 'true' } }, async (ctx) => {
     assert.equal((await gate(ctx.env, ctx.deps)).outcome, 'rerun')
@@ -908,7 +949,8 @@ test('rerun: the failed checks run again, the state waits for CI, the label goes
   const labelled = handedOff({
     implementing: { run: 'old', actor: 'carol', at: '2020-01-01T00:00:00Z', kind: 'ci-fix' },
   })
-  await withContext({ gh: fakeGh(e2eRed({ st: labelled })), env: rerunEnv() }, async (ctx) => {
+  const stopLabels = { 200: ['needs-human:stuck'], 70: ['needs-human:stuck'] }
+  await withContext({ gh: fakeGh(e2eRed({ st: labelled, labels: stopLabels })), env: rerunEnv() }, async (ctx) => {
     const result = await rerunCommand(ctx.env, ctx.deps)
     assert.deepEqual([result.ok, result.outcome], [true, 'rerun'])
     // The rerun comes first: a rejected rerun must leave the state and the label as they are.
@@ -924,8 +966,9 @@ test('rerun: the failed checks run again, the state waits for CI, the label goes
     assert.deepEqual(reactions(ctx.gh), ['eyes', 'rocket'])
     assert.deepEqual(
       ctx.gh.calls.filter((c) => c[0] === 'removeLabel').map((c) => c[2]),
-      ['agent:needs-human', 'agent:needs-human'],
+      ['needs-human:stuck', 'needs-human:stuck'],
     )
+    assert.deepEqual([ctx.gh.labelsAt(200), ctx.gh.labelsAt(70)], [[], []])
     const saved = savedState(ctx.gh)
     assert.equal(saved.phase, 'waiting-ci')
     assert.equal(saved.ciGate, undefined)
@@ -1109,7 +1152,7 @@ test('rerun when CI is green: the green path of the gate runs, and there is one 
     assert.equal(saved.attempts[0].result, 'ci-green')
     assert.deepEqual(
       ctx.gh.calls.filter((c) => c[0] === 'addLabels').map((c) => [c[1], c[2]]),
-      [[70, ['agent:completed', 'ai:l1-executor']], [200, ['agent:completed']]],
+      [[70, ['agent:completed', 'ai:l1-executor']], [200, ['agent:completed']], [70, ['needs-human:approval-required']]],
     )
     assert.equal(replies(ctx.gh).length, 1)
     assert.equal(replies(ctx.gh)[0][2], '@erin, CI is green on #70. A person reviews and merges it.')
@@ -1190,5 +1233,59 @@ test('main dispatches the rerun mode and refuses an unknown one; no token reache
     assert.equal((await main(['rerun'], ctx.env, ctx.deps)).outcome, 'rerun')
     assert.ok(!JSON.stringify([ctx.gh.calls, logged, ctx.summary()]).includes(PAT))
     await assert.rejects(main(['bogus'], ctx.env, ctx.deps), /Usage: node tools\/agent\/ci-gate\.js \[rerun\]/)
+  })
+})
+
+// ------------------------------------------------------------------------------------ result comments and signatures
+
+const SIGNED = /\n\n<sub>🤖 gpt-6\.1-sol high in=300 cached=30 out=60 usd=0\.03<\/sub>\n/
+const costOf = (run, role) => ({
+  run, flow: 'implement', role, model: 'openai/gpt-6.1-sol', variant: 'high', input: 100, cached: 10, output: 20,
+  reasoning: 0, usd: 0.01, at: run,
+})
+const botResult = (id, family, text = 'old') => ({
+  id, user: { login: 'github-actions[bot]' }, body: `<!-- ai-autonomous-result family=${family} -->\n${text}\n`,
+})
+
+test('the gate edits the result comment of the implementation family, and the signature sums its runs', async () => {
+  // The implementation comment is its own comment, and a later comment of a person follows it.
+  const result = botResult(9000, 'implementation')
+  const person = { id: 9001, user: { login: 'alice' }, body: 'Looks good.' }
+  const st = waitingState({
+    results: [{ family: 'analysis', id: 'state', runs: ['r0'] }, { family: 'implementation', id: 9000, runs: ['r1', 'r2'] }],
+    costs: [costOf('r0', 'analyst'), costOf('r1', 'implementer'), costOf('r1', 'self-reviewer'), costOf('r2', 'implementer')],
+  })
+  const gh = fakeGh({ st, comments: [result, person] })
+  await withContext({ gh }, async (ctx) => {
+    assert.deepEqual(await gate(ctx.env, ctx.deps), { outcome: 'green' })
+    // The result comment is edited in place; the state comment only gets the new state. The only new comment is the
+    // mention of the person who asked.
+    const edits = gh.calls.filter((c) => c[0] === 'updateIssueComment').map((c) => c[1])
+    assert.deepEqual(edits, [9000, 5])
+    assert.deepEqual(gh.calls.filter((c) => c[0] === 'createIssueComment').map((c) => c[1]), [200])
+    const edited = gh.store.find((c) => c.id === 9000)
+    assert.match(edited.body, /^<!-- ai-autonomous-result family=implementation -->\n### AI implementation: CI is green/)
+    // The runs r1 and r2 are summed: three records, not the analysis run.
+    assert.match(edited.body, SIGNED)
+    assert.ok(!gh.store[0].body.includes('CI is green on pull request'))
+    const saved = savedState(gh)
+    assert.deepEqual(saved.results.map((r) => [r.family, r.id]), [['analysis', 'state'], ['implementation', 9000]])
+  })
+})
+
+test('a CI-fix attempt is no new command: the gate adds its run to the comment it edits and creates none', async () => {
+  const same = { ...waitingState().attempts[0], result: 'ci-red', signature: 'x' }
+  const st = waitingState({
+    results: [{ family: 'implementation', id: 9000, runs: ['r1'] }],
+    costs: [costOf('r1', 'implementer'), costOf('r1', 'self-reviewer'), costOf(RUN, 'implementer')],
+    attempts: [same, { ...same, n: 2, kind: 'ci-fix', result: 'pr-opened', signature: undefined }],
+  })
+  await withContext({ gh: fakeGh(red({ st, comments: [botResult(9000, 'implementation')] })) }, async (ctx) => {
+    const outcome = await gate(ctx.env, ctx.deps)
+    assert.equal(outcome.outcome, 'next-attempt')
+    const saved = savedState(ctx.gh)
+    assert.deepEqual(saved.results, [{ family: 'implementation', id: 9000, runs: ['r1', RUN] }])
+    assert.match(ctx.gh.store.find((c) => c.id === 9000).body, /<sub>🤖 gpt-6\.1-sol high in=300 /)
+    assert.equal(ctx.gh.calls.filter((c) => c[0] === 'createIssueComment').length, 0)
   })
 })

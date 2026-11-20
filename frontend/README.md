@@ -48,11 +48,12 @@ and `ui`. Nx builds dependencies first.
 Storybook. [Debugging](../docs/development/debugging.md) lists the start commands and ports. CI publishes the Storybook
 of each branch on GitHub Pages under `storybook/<component>/<branch>/`.
 
-`api-doc-viewer`, `apispec-view`, and `class-view` also run screenshot tests. They drive Chrome in a container through
+`api-doc-viewer` and `class-view` also run screenshot tests. They drive Chrome in a container through
 [`jest-chrome-in-docker-environment`](../tools/README.md#jest-chrome-in-docker-environment), so every machine renders
-the same pixels. Install Podman to run them locally. Regenerate snapshots only with the containerized configuration,
-for example `pnpm --filter @netcracker/qubership-apihub-api-doc-viewer run regenerate-screenshots`. A failed CI run
-uploads the diffs as `screenshot-diffs-<project>`.
+the same pixels. Install Podman to run them locally, or use Docker or `wslc` on Windows. Regenerate snapshots only
+with the containerized configuration, for example
+`pnpm --filter @netcracker/qubership-apihub-api-doc-viewer run regenerate-screenshots`. A failed CI run uploads the
+diffs as `screenshot-diffs-<project>`.
 
 ## Publishing to npm
 

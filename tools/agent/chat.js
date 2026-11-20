@@ -10,7 +10,7 @@
  *   cost      replies with the table of the AI calls recorded in the states of the issue and its pull request.
  *   stop      writes the phase `stopped` to the state of the issue first, then cancels the workflow run of a running
  *             attempt (`implement.js publish` finds the phase and records the attempt as stopped), removes
- *             `agent:needs-human`, and says what was stopped and how to start again.
+ *             the stop labels (`needs-human:*`), and says what was stopped and how to start again.
  *   question  the `assistant` (the light model, read-only) answers from the issue or pull request, its last comments,
  *             and the code; for a pull request it also sees the diff against the pull request head, which is fetched
  *             but never checked out. The answer is a reply comment that mentions the person who asked.
@@ -35,15 +35,17 @@ const { loadConfig } = require('./lib/config')
 const { createClient } = require('./lib/github')
 const state = require('./lib/state')
 const usage = require('./lib/usage')
+const stops = require('./lib/stops')
+const results = require('./lib/results')
+const { sign, MAIN_ROLE } = require('./lib/signature')
 const { callAgent } = require('./lib/agent-call')
 const { inline, defuseMentions, clip } = require('./lib/text')
 const { untrusted } = require('./lib/prompt')
 const { react, commentIdOf } = require('./lib/reactions')
 const { agentIssueOf } = require('./route')
-const { appendSummary, quoted, costLine } = require('./implement')
+const { appendSummary, quoted } = require('./implement')
 const log = require('./lib/log')
 
-const LABEL_NEEDS_HUMAN = 'agent:needs-human'
 const MAX_TABLE_ROWS = 50
 const MAX_COMMENTS = 20
 const MAX_TEXT = 20000
@@ -88,6 +90,9 @@ const HELP = {
   agentPull: [
     ['`/agent review [notes]`', REVIEW_WHAT],
     ['`/agent retry [notes]`', 'Try again after a hand-off, with a fresh attempt budget. The notes are guidance.'],
+    ['`/agent update [notes]`',
+      'Merge the latest `develop` into this pull request; on conflicts, the agent resolves them. ' +
+        'The notes are guidance.'],
     ['`/agent rerun`', "Rerun the failed CI checks of the agent's pull request; no new attempt, no model."],
     ['`/agent ci_check [notes]`', CI_CHECK_WHAT],
     ['`/agent stop`', 'Stop the work of the agent on this pull request and its issue.'],
@@ -97,7 +102,7 @@ const HELP = {
 }
 
 const HELP_NOTES = {
-  issue: 'A comment without a command answers a hand-off (`agent:needs-human`) and starts the next attempt.',
+  issue: 'A comment without a command answers a hand-off (a `needs-human:*` label) and starts the next attempt.',
   pull: 'Only a person with write access can use these commands.',
   agentPull: 'A review with change requests makes the agent address every unresolved thread. A comment without a ' +
     'command answers a hand-off and starts the next attempt.',
@@ -217,8 +222,8 @@ function stoppedWhat(phase, { cancelled, runId, pr }) {
 
 const RESTART = 'To start again, comment `/agent implement` on the issue, or `/agent retry` with guidance.'
 
-/** The human part of the state comment of a stopped issue. */
-function renderStopped({ actor, what, runUrl, totalUsd }) {
+/** The human part of the implementation result of a stopped issue. `totalUsd` is ignored. */
+function renderStopped({ actor, what, runUrl }) {
   return [
     '### AI implementation was stopped',
     '',
@@ -226,7 +231,7 @@ function renderStopped({ actor, what, runUrl, totalUsd }) {
     '',
     RESTART,
     '',
-    costLine(runUrl, totalUsd, 'comment `/agent retry` to start again'),
+    `<sub>[Run](${runUrl}) · comment \`/agent retry\` to start again</sub>`,
   ].join('\n')
 }
 
@@ -307,25 +312,31 @@ function renderChatInput({ where, target, question, asker, comments, st, refs })
   return out.join('\n')
 }
 
-/** The cost line at the end of an answer. */
-function answerCostLine({ runUrl, answerUsd, totalUsd, noun }) {
-  return `<sub>[Run](${runUrl}) · This answer: $${usage.formatUsd(answerUsd)} · ` +
-    `all AI calls on this ${noun} so far: $${usage.formatUsd(totalUsd)} · comment \`/agent cost\` for the table</sub>`
+/** The footer of an answer: the run and the hint for the cost table. The cost is in the signature. */
+function answerCostLine({ runUrl }) {
+  return `<sub>[Run](${runUrl}) · comment \`/agent cost\` for the table</sub>`
 }
 
-/** The reply that carries the answer of the model: it starts with the mention of the asker and ends with the cost. */
-function answerReply({ asker, answer, runUrl, answerUsd, totalUsd, noun }) {
-  return [`@${asker}`, '', defuseMentions(answer.trim()), '', answerCostLine({ runUrl, answerUsd, totalUsd, noun })]
-    .join('\n')
+/** `text` signed with the cost records of this answer (role `assistant`); without records it stays unsigned. */
+const signedAnswer = (text, costs) => sign(text, costs ?? [], { mainRole: MAIN_ROLE.chat })
+
+/**
+ * The reply that carries the answer of the model: it starts with the mention of the asker and ends with the footer and
+ * the signature of `costs`, the cost records of this answer. `answerUsd`, `totalUsd`, and `noun` are ignored.
+ */
+function answerReply({ asker, answer, runUrl, costs }) {
+  const text = [`@${asker}`, '', defuseMentions(answer.trim()), '', answerCostLine({ runUrl })].join('\n')
+  return signedAnswer(text, costs)
 }
 
 /** The reply when the assistant gave no usable answer. */
-function failedAnswerReply({ asker, message, runUrl, answerUsd, totalUsd, noun }) {
-  return [
+function failedAnswerReply({ asker, message, runUrl, costs }) {
+  const text = [
     `@${asker}, I could not answer: ${inline(message)} Ask again, or rephrase the question.`,
     '',
-    answerCostLine({ runUrl, answerUsd, totalUsd, noun }),
+    answerCostLine({ runUrl }),
   ].join('\n')
+  return signedAnswer(text, costs)
 }
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -442,7 +453,9 @@ async function doStop(ctx, loaded) {
     return { ok: false }
   }
   const before = fresh.st
-  const next = stoppedState(before, { actor, at: new Date().toISOString() })
+  const at = new Date().toISOString()
+  // A person's stop ends the wait of the agent, so an open stop record is closed.
+  const next = stops.recordResume(stoppedState(before, { actor, at }), { at, run: runUrl })
   const runId = before.phase === 'implementing' ? runIdOf(before.implementing?.run, env.GITHUB_REPOSITORY) : null
   log.info('stop', { issue: issueNumber, phase: before.phase, run: runId ?? 'none', dryRun: config.dryRun })
 
@@ -450,13 +463,18 @@ async function doStop(ctx, loaded) {
   let cancelError = null
   if (!config.dryRun) {
     // The phase first: the publish job of the cancelled run reads it to see that a person stopped the run.
-    await log.group('Write the state comment', async () => {
+    await log.group('Write the result comment', async () => {
       const human = renderStopped({
         actor, what: stoppedWhat(before.phase, { cancelled: true, runId, pr: before.pr }), runUrl,
-        totalUsd: sum(next.costs ?? [], 'usd'),
       })
-      await gh.updateIssueComment(fresh.existing.id, state.render(human, next))
-      log.info('state comment written', { phase: next.phase })
+      // The stop ends the running implementation command, so its result comment is edited.
+      await results.publishResult(gh, issueNumber, {
+        family: 'implementation',
+        human,
+        st: next,
+        emptyState: () => state.emptyIssueState(issueNumber),
+      })
+      log.info('result comment written', { phase: next.phase })
     })
     if (runId !== null) {
       await log.group('Cancel the running attempt', async () => {
@@ -469,11 +487,10 @@ async function doStop(ctx, loaded) {
         }
       })
     }
-    await log.group('Remove the hand-off label', async () => {
-      await gh.removeLabel(issueNumber, LABEL_NEEDS_HUMAN)
-      if (before.pr) await gh.removeLabel(before.pr, LABEL_NEEDS_HUMAN)
+    await log.group('Clear the stop labels', async () => {
+      await stops.clearStops(gh, [issueNumber, before.pr])
       const on = before.pr ? `#${issueNumber} and #${before.pr}` : `#${issueNumber}`
-      log.info('label removed', { label: LABEL_NEEDS_HUMAN, on })
+      log.info('stop labels cleared', { on })
     })
   }
   const what = stoppedWhat(before.phase, { cancelled, runId, pr: before.pr })
@@ -555,7 +572,7 @@ async function doQuestion(ctx, loaded) {
   const answerUsd = sum(costs, 'usd')
   const totalUsd = sum(st.costs ?? [], 'usd')
   log.info('cost', { thisAnswer: usage.formatUsd(answerUsd), total: usage.formatUsd(totalUsd) })
-  const shared = { asker: actor, runUrl, answerUsd, totalUsd, noun: where }
+  const shared = { asker: actor, runUrl, costs }
   await reply(ctx, failure
     ? failedAnswerReply({ ...shared, message: failure.message })
     : answerReply({ ...shared, answer: answer.answer }))

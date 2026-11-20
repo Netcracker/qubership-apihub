@@ -52,10 +52,14 @@ export async function rGetPackageById(rc: APIRequestContext, params: { packageId
 export async function rGetPackagesList(rc: APIRequestContext, params: {
   kind?: string
   textFilter?: string
+  limit?: number
+  page?: number
 }): Promise<APIResponse> {
   const _textFilter = params.textFilter ? encodeURIComponent(params.textFilter) : ''
   const _kind = params.kind ? params.kind : ''
-  return await rc.get(`/api/v2/packages?kind=${_kind}&textFilter=${_textFilter}`)
+  const _limit = params.limit ? `&limit=${params.limit}` : ''
+  const _page = params.page ? `&page=${params.page}` : ''
+  return await rc.get(`/api/v2/packages?kind=${_kind}&textFilter=${_textFilter}${_limit}${_page}`)
 }
 
 export async function rCreatePackageApiKey(rc: APIRequestContext, params: RestPackageApiKey): Promise<APIResponse> {

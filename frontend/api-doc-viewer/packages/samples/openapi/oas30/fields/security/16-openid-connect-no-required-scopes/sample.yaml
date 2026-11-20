@@ -1,0 +1,22 @@
+openapi: 3.0.3
+info:
+  title: Orders
+  version: 1.0.0
+paths:
+  /orders:
+    post:
+      security:
+        - stub_key: []
+        - openid-connect: []
+      responses:
+        "200":
+          description: ""
+components:
+  securitySchemes:
+    stub_key:
+      type: apiKey
+      in: header
+      name: X-Stub-Key
+    openid-connect:
+      type: openIdConnect
+      openIdConnectUrl: https://auth.example.com/.well-known/openid-configuration

@@ -94,8 +94,8 @@ Everyone is welcome to the code reviews.
 ### Reviewer's checklist
 
 - Changes cover all requirements of the story.
-- Changes are syntaxically and logically correct.
-- Changes in code mathes changes in API if applicable.
+- Changes are syntactically and logically correct.
+- Changes in code matches changes in API if applicable.
 - No commented code with some rare and justified exceptions.
 - Error handling should be implemented.
 - New code should contain necessary logs(see Logging chapter).

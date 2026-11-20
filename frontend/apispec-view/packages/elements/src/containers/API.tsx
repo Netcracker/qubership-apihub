@@ -23,7 +23,6 @@ import { APIWithPartialLayout } from '../components/API/APIWithPartialLayout';
 import { APIWithSidebarLayout } from '../components/API/APIWithSidebarLayout';
 import { APIWithStackedLayout } from '../components/API/APIWithStackedLayout';
 import { useExportDocumentProps } from '../hooks/useExportDocumentProps';
-import { isAsyncApi, transformAsyncApiToServiceNode } from '../utils/asyncapi';
 import { transformOasToServiceNode } from '../utils/oas';
 import {
   OperationSchemaOptions,
@@ -147,20 +146,13 @@ export const APIImpl: React.FC<APIProps> = props => {
   const document = apiDescriptionDocument || fetchedDocument || '';
   const parsedDocument = useParsedValue(document);
   const bundledDocument = useBundleRefsIntoDocument(parsedDocument, { baseUrl: apiDescriptionUrl });
-  const serviceNode = React.useMemo(() => {
-    if (isAsyncApi(bundledDocument)) {
-      return transformAsyncApiToServiceNode(bundledDocument);
-    }
-
-    return transformOasToServiceNode(bundledDocument);
-  }, [bundledDocument]);
+  const serviceNode = React.useMemo(() => transformOasToServiceNode(bundledDocument), [bundledDocument]);
   const exportProps = useExportDocumentProps({ originalDocument: document, bundledDocument });
 
   const schemaOptions: OperationSchemaOptions = useMemo(
     () => ({
       schemaViewMode: schemaViewMode,
       defaultSchemaDepth: undefined,
-      oldRenderer: true,
     }),
     [schemaViewMode],
   );

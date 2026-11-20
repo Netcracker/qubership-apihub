@@ -16,7 +16,7 @@ CI yet. Follow the root [`AGENTS.md`](../../AGENTS.md) and [`backend/AGENTS.md`]
 
 Nothing builds here yet. When the module is created, use the `apihub-add-go-service` skill. It lists every place
 that names a service: `go.work`, `backend/.go-version`, the `Dockerfile`, `config.template.yaml`, the CI image
-matrix, release registration, CODEOWNERS, Dependabot, Helm, Compose, and `docs/configuration-reference.md`.
+matrix, release registration, CODEOWNERS, Renovate, Helm, Compose, and `docs/configuration-reference.md`.
 
 ## Traps
 

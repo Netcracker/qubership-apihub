@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"context"
 	"encoding/gob"
 	"fmt"
 	"math/rand"
@@ -19,6 +20,8 @@ import (
 type OlricProvider interface {
 	Get() *olric.Olric
 	GetBindAddr() string
+	// Shutdown makes the node leave the Olric cluster and stops its background servers.
+	Shutdown(ctx context.Context) error
 }
 
 const olricBindAddr = "0.0.0.0"
@@ -70,6 +73,10 @@ func (op *olricProviderImpl) Get() *olric.Olric {
 func (op *olricProviderImpl) GetBindAddr() string {
 	op.wg.Wait()
 	return op.cfg.BindAddr
+}
+
+func (op *olricProviderImpl) Shutdown(ctx context.Context) error {
+	return op.olricC.Shutdown(ctx)
 }
 
 func getConfig(olricConfig sysconfig.OlricConfig) (*config.Config, error) {

@@ -1,4 +1,4 @@
-import type { Locator } from '@playwright/test'
+import type { Locator, Page } from '@playwright/test'
 import { Button, Checkbox, Link, TableCell, TableRow } from '@shared/components/base'
 import { ChangesTableCell } from '@shared/components/custom'
 import { hoverableOpening } from '@shared/helpers'
@@ -27,8 +27,10 @@ export class AgentServiceRow extends TableRow {
     await hoverableOpening(this, this.viewPackageLnk, 'View Package')
   }
 
-  async viewSnapshot(): Promise<void> {
+  async viewSnapshot(): Promise<Page> {
+    const pagePromise = this.page.context().waitForEvent('page')
     await hoverableOpening(this, this.viewSnapshotLnk, 'View Snapshot')
+    return await pagePromise
   }
 
   async viewChanges(): Promise<void> {

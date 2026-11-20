@@ -15,6 +15,7 @@ import { optionalSearchParams, REF_SEARCH_PARAM } from '@netcracker/qubership-ap
 
 import type { Document } from '@portal/entities/documents'
 import { useEventBus } from '@portal/routes/EventBusProvider'
+import { getDocumentPath } from '@portal/routes/NavigationProvider'
 import { usePackageParamsWithRef } from '@portal/routes/root/PortalPage/usePackageParamsWithRef'
 import { usePackageVersionConfig } from '@portal/routes/root/PortalPage/usePackageVersionConfig'
 import { useVersionWithRevision } from '../../../useVersionWithRevision'
@@ -29,7 +30,6 @@ export type DocumentListProps = Readonly<{
 
 export const DocumentList: FC<DocumentListProps> = memo<DocumentListProps>(({ documents, isLoading }) => {
   const { packageId: packageKey, versionId: versionKey, documentId } = useParams()
-  const escapedVersionKey = encodeURIComponent(versionKey ?? '')
   const ref = useSearchParam(REF_SEARCH_PARAM)
   const [versionConfig] = usePackageVersionConfig(packageKey, versionKey)
 
@@ -43,7 +43,7 @@ export const DocumentList: FC<DocumentListProps> = memo<DocumentListProps>(({ do
     navigate(pathToNavigate)
   }, [navigate])
 
-  const { showDocumentErrorsDialog } = useEventBus()
+  const { showDocumentNotificationsDialog } = useEventBus()
   const [documentsPackageKey, documentsPackageVersion] = usePackageParamsWithRef()
   const { fullVersion } = useVersionWithRevision(documentsPackageVersion, documentsPackageKey)
 
@@ -65,13 +65,13 @@ export const DocumentList: FC<DocumentListProps> = memo<DocumentListProps>(({ do
     if (!documentsPackageKey || !fullVersion) {
       return
     }
-    showDocumentErrorsDialog({
+    showDocumentNotificationsDialog({
       packageKey: documentsPackageKey,
       versionKey: fullVersion,
       documentId: slug,
       documentTitle: title,
     })
-  }, [documentsPackageKey, fullVersion, showDocumentErrorsDialog])
+  }, [documentsPackageKey, fullVersion, showDocumentNotificationsDialog])
 
   const renderDocumentRow = useCallback((document: Document) => {
     const { key, type, title, version, slug, format, shareabilityStatus, hasErrors } = document
@@ -91,7 +91,7 @@ export const DocumentList: FC<DocumentListProps> = memo<DocumentListProps>(({ do
           selected={documentId === slug}
           onClick={() => {
             navigateToSelectedDocument({
-              pathname: `/portal/packages/${packageKey}/${escapedVersionKey}/documents/${slug}`,
+              ...getDocumentPath({ packageKey: packageKey!, versionKey: versionKey!, documentKey: slug }),
               search: `${search}`,
             })
           }}
@@ -119,11 +119,11 @@ export const DocumentList: FC<DocumentListProps> = memo<DocumentListProps>(({ do
     )
   }, [
     documentId,
-    escapedVersionKey,
     handleDocumentErrorIndicatorClick,
     navigateToSelectedDocument,
     packageKey,
     search,
+    versionKey,
   ])
 
   if (isLoading) {

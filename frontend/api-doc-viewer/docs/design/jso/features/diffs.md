@@ -89,6 +89,9 @@ already highlighted directly.
   `diffsSeverities`.
 - `JsoDiffsViewer` installs its own `DiffMetaKeysContext`, `DiffTypesContext`,
   `DisplayModeContext`, and `LayoutModeContext`, overriding the host's providers.
+- Hiding unchanged nodes: [hiding-unchanged-nodes.md](hiding-unchanged-nodes.md). `JsoDiffsViewer`
+  installs its own `UnchangedBlocksContext`, whose mode follows the host's when the
+  `hideUnchangedNodes` prop is omitted.
 
 ## Acceptance criteria
 
@@ -120,7 +123,9 @@ already highlighted directly.
 2. **Open** — Should the reserved `value` key be removed from severity aggregation and
    propagation, or start being produced for primitive → primitive replaces?
 3. **Open** — Should `JsoDiffsViewer` stop overriding host contexts when embedded, so future
-   host-level filters (hiding unchanged rows, diff-type filters) reach JSO subtrees?
+   host-level filters (diff-type filters) reach JSO subtrees? Hiding unchanged rows already reaches
+   them: the viewer reads the host's `UnchangedBlocksContext` mode
+   ([hiding-unchanged-nodes.md](hiding-unchanged-nodes.md)).
 
 ## Out of scope
 

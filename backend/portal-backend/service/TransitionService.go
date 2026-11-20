@@ -202,7 +202,7 @@ func (p transitionServiceImpl) MoveOrRenamePackage(ctx context.Context, fromId s
 		return id, nil
 	case entity.KIND_PACKAGE:
 		if toWorkspace {
-			return "", fmt.Errorf("convertation of package %s to workspace %s is not supported", fromId, toId)
+			return "", fmt.Errorf("conversion of package %s to workspace %s is not supported", fromId, toId)
 		} else {
 			if isMove && isRename {
 				trType = "move_and_rename_package"
@@ -248,7 +248,7 @@ func (p transitionServiceImpl) MoveOrRenamePackage(ctx context.Context, fromId s
 		return id, nil
 	case entity.KIND_DASHBOARD:
 		if toWorkspace {
-			return "", fmt.Errorf("convertation of dashboard %s to workspace %s is not supported", fromId, toId)
+			return "", fmt.Errorf("conversion of dashboard %s to workspace %s is not supported", fromId, toId)
 		} else {
 			if isMove && isRename {
 				trType = "move_and_rename_dashboard"

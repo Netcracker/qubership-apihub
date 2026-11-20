@@ -1,19 +1,3 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import { buildOperationPairKey, HandledOperationPairsProvider } from '@portal/components/HandledOperationPairsProvider'
 import { OperationContent } from '@portal/routes/root/PortalPage/VersionPage/OperationContent/OperationContent'
 import {
@@ -276,7 +260,7 @@ export const DifferentOperationVersionsComparisonPage: FC = memo(() => {
         const firstOperation = firstOperationPair.currentOperation ?? firstOperationPair.previousOperation!
         const firstOperationId = firstOperation.operationKey
 
-        const newPathName = `/portal/packages/${changedPackageKey}/${changedVersionKey}/compare/${apiTypeParam}/${firstOperationId}`
+        const newPathName = `/portal/packages/${encodeURIComponent(changedPackageKey!)}/${encodeURIComponent(changedVersionKey!)}/compare/${apiTypeParam}/${encodeURIComponent(firstOperationId)}`
         const searchParams = optionalSearchParams({
           [PACKAGE_SEARCH_PARAM]: { value: originPackageKey },
           [VERSION_SEARCH_PARAM]: { value: originVersionKey },

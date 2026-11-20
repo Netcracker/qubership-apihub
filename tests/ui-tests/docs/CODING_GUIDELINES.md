@@ -27,6 +27,8 @@ This document provides a comprehensive guide to the coding standards and best pr
 - **Variables/methods:** `camelCase`
 - **Classes:** `PascalCase`
 - **Test IDs:** Portal `P-FEATURE-1`, Agent `A-FEATURE-1` (when adding new tests, always ensure the test ID is unique)
+- **Regression test IDs:** add `BUG-<issue number>` to the ID of a test that covers a fixed bug, such as
+  `A-SNP-5-BUG-837` in a feature spec or `P-BUG-706` under `src/tests/portal/99-bugs/`.
 
 ### Test Entity Constant Naming Pattern
 
@@ -77,6 +79,9 @@ const RUL_INACTIVE_OAS30_N = { id: '...', name: '...' }
 - **Structure tests using Given-When-Then or Arrange-Act-Assert patterns**
 - **Add tags (`@smoke`, `@flaky`, `@<feature-name>`) for test categorization**
 - **Include ticket references:** `{ annotation: { type: 'Test Case', description: 'URL' } }`
+- **Link a fixed bug with `type: 'URL'`:** `{ annotation: { type: 'URL', description: '<issue URL>' } }`.
+  Use `type: 'Issue'` only on a test that is skipped or failing because of an open bug. The custom reporter
+  counts a passed test with an `Issue` annotation as affected, not as passed.
 - **Ensure test independence through proper isolation**
 - **Group related scenarios within the same describe block**
 
@@ -578,7 +583,10 @@ Test data is categorized into two types based on reusability and lifecycle:
   - `beforeEach`/`afterEach` → per-test setup/cleanup
   - `beforeAll`/`afterAll` → suite-level fixtures (create data here; prefer global teardown for deletion)
 - When using API-based managers, wrap the calls in these hooks so that failures are easier to trace and cleanup always runs, even if the test fails early.
-- `createPackage` is already idempotent. Prefer `apihubTDM.publishVersionIfMissing(...)` only for **reusable** (`_R`) versions that must stay stable across runs/retries. For **non-reusable** (`_N`) data that must be fresh on each retry, do **not** reuse an existing version — give it a unique name (for example include `test.info().retry`) and call `publishVersion`.
+- `createPackage` is already idempotent. Data that tests only read can be created in `beforeAll` with
+  `apihubTDM.publishVersionIfMissing(...)`, for `_R` and `_N` versions alike. Create data in the test itself when
+  the test changes it or checks its revisions, and put `test.info().retry` into its name: the retry index is unique
+  for each attempt of a test, but not for each run of a `beforeAll`.
 
 ### Hook Timeouts
 

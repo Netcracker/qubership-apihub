@@ -1,19 +1,3 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import path from "path"
 import fs from "fs"
 import os from "os"
@@ -21,7 +5,7 @@ import findNodeModules from "find-node-modules"
 
 import colors from "colors";
 import type { ChromeArg, JestPuppeteerConfig } from "../index.types"
-import { CHROME_INTERNAL_PORT, CONSOLE_PREFIX, DEFAULT_CHROME_FLAGS, DEFAULT_PROTOCOL_TIMEOUT } from "./defaults"
+import { CHROME_INTERNAL_PORT, CONSOLE_PREFIX, DEFAULT_CHROME_FLAGS, DEFAULT_PROTOCOL_TIMEOUT, isWslcBinary } from "./defaults"
 
 const {bgYellow, black, yellow} = colors;
 
@@ -159,6 +143,11 @@ export async function initPuppeteerWithChromeInDockerConfig(): Promise<JestPuppe
     }
     setChromeArgs(mergedConfig, "connect")
     mergedConfig.connect.args.push(`--remote-debugging-port=${CHROME_INTERNAL_PORT}`)
+    if (isWslcBinary()) {
+        // Tests open pages on host.docker.internal, and some snapshots show the page origin (a request sample URL).
+        // wslc does not define that name, so Chrome resolves it as host.wslc.internal, the Windows host under wslc.
+        mergedConfig.connect.args.push(`--host-resolver-rules="MAP host.docker.internal host.wslc.internal"`)
+    }
     setAutoOpenDevtoolsForTabsFromLaunch(mergedConfig)
     setSowMoFromLaunch(mergedConfig)
     setProtocolTimeout(mergedConfig)

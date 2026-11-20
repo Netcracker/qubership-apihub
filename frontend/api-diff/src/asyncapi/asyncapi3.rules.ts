@@ -28,7 +28,7 @@ import { bindingsRules } from './asyncapi3.bindings'
 import { ASYNCAPI_ACTION_SEND } from '@netcracker/qubership-apihub-api-unifier'
 
 /**
- * Keep consisten ordering for the rules
+ * Keep consistent ordering for the rules
  * - Classify rule ($) for the node itself first
  * - Other rules for the node itself in the order they listed in specification
  * - Children: specific keys, then prefix rules, then '/*', then '/**' *

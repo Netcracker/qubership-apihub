@@ -56,7 +56,7 @@ half-way.
 | `charts` | always | lints and validates the product chart and the agent chart |
 | `go` | a Go module is affected | builds and tests the affected Go modules and checks that the binaries exist |
 | `java` | a Java project is affected | builds and tests the Maven reactor through `nx run java-task-consumer:build` |
-| `screenshot-tests` | `api-doc-viewer`, `apispec-view`, or `class-view` is affected | builds the Storybook and compares screenshots in a Chrome container |
+| `screenshot-tests` | `api-doc-viewer` or `class-view` is affected | builds the Storybook and compares screenshots in a Chrome container |
 | `js-images`, `go-images`, `java-images` | the run may publish | build or retag the eight images after the tests of their language pass |
 | `e2e` | the E2E tier is not `none` | runs `e2e-tests-kind.yml` against this run's images |
 | `storybooks` | push (not a pull request) that may publish | stores the six Storybooks in `ghcr.io` |
@@ -64,8 +64,9 @@ half-way.
 | `ci-ok` | always | the verdict |
 | `release-artifacts` | `main`, after `ci-ok`, when the commit carries release tags | publishes the release |
 
-"The run may publish" is false for a pull request from a fork and for every Dependabot run: their token cannot
-write packages, so the image, E2E, and Storybook jobs are skipped.
+"The run may publish" is false only for a pull request from a fork: its token cannot write packages, so the image
+jobs build without pushing, and the E2E and Storybook jobs are skipped. A run of a dependency bot (Renovate or
+Dependabot) publishes its images and runs E2E, but skips the Storybook jobs.
 
 ## The required check: `ci-ok`
 

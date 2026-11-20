@@ -1,0 +1,16 @@
+openapi: 3.0.3
+info:
+  title: Orders
+  version: 1.0.0
+paths:
+  /orders:
+    post:
+      responses:
+        "200":
+          description: ""
+      parameters:
+        - name: limit
+          in: query
+          description: Maximum number of items
+          schema:
+            type: integer

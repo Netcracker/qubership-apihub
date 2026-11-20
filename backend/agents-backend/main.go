@@ -18,6 +18,7 @@ import (
 	"github.com/Netcracker/qubership-apihub/backend/agents-backend/security"
 	exposer "github.com/Netcracker/qubership-apihub/backend/commons-go/api-spec-exposer"
 	"github.com/Netcracker/qubership-apihub/backend/commons-go/api-spec-exposer/config"
+	"github.com/Netcracker/qubership-apihub/backend/commons-go/logging"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 
@@ -27,6 +28,8 @@ import (
 )
 
 func init() {
+	log.SetFormatter(logging.NewFormatter())
+	logging.RedirectStandardLog()
 	setLogLevel(os.Getenv("LOG_LEVEL"))
 }
 
@@ -43,6 +46,7 @@ func main() {
 
 	basePath := systemInfoService.GetBasePath()
 	r := mux.NewRouter().SkipClean(true).UseEncodedPath()
+	r.Use(logging.RequestIDMiddleware)
 	r.Use(midldleware.WriteDeadlineMiddleware)
 
 	dbCreds := systemInfoService.GetDBCreds()

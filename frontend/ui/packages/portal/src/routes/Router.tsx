@@ -1,21 +1,5 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-import type { ReactNode } from 'react'
-import { type RouteObject, createBrowserRouter, createRoutesFromElements, Navigate, Route } from 'react-router-dom'
+import { type FC, memo, type ReactNode } from 'react'
+import { type RouteObject, createBrowserRouter, createRoutesFromElements, Navigate, Route, useParams } from 'react-router-dom'
 
 import { ErrorPage, NOT_FOUND_TITLE } from '@netcracker/qubership-apihub-ui-shared/components/ErrorPage'
 import { SPECIAL_VERSION_KEY } from '@netcracker/qubership-apihub-ui-shared/entities/versions'
@@ -34,11 +18,10 @@ import {
   PREVIEW_PAGE,
   PRIVATE_PAGE,
   SHARED_PAGE,
-  SUMMARY_ROUTE,
   VERSION_ID,
   WORKSPACES_PAGE,
 } from '../routes'
-import { NavigationProvider } from './NavigationProvider'
+import { getOverviewPath, NavigationProvider } from './NavigationProvider'
 import { SettingsPage } from './root/SettingsPage/SettingsPage'
 import { ConfigurePage } from './root/PortalPage/ConfigurePage'
 import { BasePage } from '@portal/routes/root/BasePage/BasePage'
@@ -65,6 +48,13 @@ import {
 } from '@portal/routes/root/PortalPage/VersionPage/OperationsComparisonPage/DifferentOperationGroupsComparisonPage'
 import { ProfilePage } from './root/ProfilePage/ProfilePage'
 
+// The target is absolute: a relative one resolves against the decoded URL, which since react-router 6.22 decodes
+// '?' and '#' too, so a '?', '#', or '%' in a version (agent snapshot versions contain '%') produces a wrong path.
+const VersionIndexRedirect: FC = memo(() => {
+  const { packageId, versionId } = useParams()
+  return <Navigate to={getOverviewPath({ packageKey: packageId!, versionKey: versionId! })} replace/>
+})
+
 export const router = createBrowserRouter(
   createRoutes([
     <Route path="/" element={
@@ -90,7 +80,7 @@ export const router = createBrowserRouter(
           <Route path={`${SPECIAL_VERSION_KEY}/${PACKAGE_SETTINGS_PAGE}/*`} element={<PackageSettingsPage/>}/>
           <Route path={`:${VERSION_ID}/*`}>
             <Route element={<VersionPage/>}/>
-            <Route index element={<Navigate to={SUMMARY_ROUTE} replace/>}/>
+            <Route index element={<VersionIndexRedirect/>}/>
             <Route path="*" element={<VersionPage/>}/>
             <Route path={`${API_CHANGES_PAGE}/:apiType`} element={<VersionPage/>}/>
             <Route path={`${CONTRACTS_PAGE}/:apiType`}>

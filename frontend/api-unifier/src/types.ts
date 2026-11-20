@@ -190,7 +190,7 @@ export interface MergeContext {
   allMergeItemsWithOrigins: ValueWithOrigins<JsonSchema>[],
   mergeRules: NormalizationRules
   mergeError: MergeError
-  // need structure that allows to get allOfItems for merge and association with passed indeces
+  // need structure that allows to get allOfItems for merge and association with passed indices
 }
 
 export type MergeResolver<T> = (args: ValueWithOrigins<T>[], ctx: MergeContext) => ValueWithOrigins<T> | undefined

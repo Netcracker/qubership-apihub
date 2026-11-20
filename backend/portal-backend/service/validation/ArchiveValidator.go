@@ -125,7 +125,7 @@ func ValidatePublishBuildResult(buildArc *archive.BuildResultArchive) error {
 			Status:  http.StatusBadRequest,
 			Code:    exception.FileMissing,
 			Message: exception.FileMissingMsg,
-			Params:  map[string]interface{}{"fileIds": missing, "location": archive.DocumentsRootFolder + " folder in achive"},
+			Params:  map[string]interface{}{"fileIds": missing, "location": archive.DocumentsRootFolder + " folder in archive"},
 		}
 	}
 
@@ -148,7 +148,7 @@ func ValidatePublishBuildResult(buildArc *archive.BuildResultArchive) error {
 			Status:  http.StatusBadRequest,
 			Code:    exception.FileMissing,
 			Message: exception.FileMissingMsg,
-			Params:  map[string]interface{}{"fileIds": missing, "location": archive.OperationFilesRootFolder + " folder in achive"},
+			Params:  map[string]interface{}{"fileIds": missing, "location": archive.OperationFilesRootFolder + " folder in archive"},
 		}
 	}
 
@@ -171,7 +171,7 @@ func ValidatePublishBuildResult(buildArc *archive.BuildResultArchive) error {
 			Status:  http.StatusBadRequest,
 			Code:    exception.FileMissing,
 			Message: exception.FileMissingMsg,
-			Params:  map[string]interface{}{"fileIds": missing, "location": archive.ComparisonsRootFolder + " folder in achive"},
+			Params:  map[string]interface{}{"fileIds": missing, "location": archive.ComparisonsRootFolder + " folder in archive"},
 		}
 	}
 
@@ -194,7 +194,7 @@ func ValidatePublishBuildResult(buildArc *archive.BuildResultArchive) error {
 			Status:  http.StatusBadRequest,
 			Code:    exception.FileMissing,
 			Message: exception.FileMissingMsg,
-			Params:  map[string]interface{}{"fileIds": missing, "location": archive.VersionInternalDocumentsRootFolder + " folder in achive"},
+			Params:  map[string]interface{}{"fileIds": missing, "location": archive.VersionInternalDocumentsRootFolder + " folder in archive"},
 		}
 	}
 
@@ -217,7 +217,7 @@ func ValidatePublishBuildResult(buildArc *archive.BuildResultArchive) error {
 			Status:  http.StatusBadRequest,
 			Code:    exception.FileMissing,
 			Message: exception.FileMissingMsg,
-			Params:  map[string]interface{}{"fileIds": missing, "location": archive.ComparisonInternalDocumentsRootFolder + " folder in achive"},
+			Params:  map[string]interface{}{"fileIds": missing, "location": archive.ComparisonInternalDocumentsRootFolder + " folder in archive"},
 		}
 	}
 
@@ -240,7 +240,7 @@ func ValidatePublishBuildResult(buildArc *archive.BuildResultArchive) error {
 			Status:  http.StatusBadRequest,
 			Code:    exception.FileMissing,
 			Message: exception.FileMissingMsg,
-			Params:  map[string]interface{}{"fileIds": missing, "location": archive.ContractsDdlRootFolder + " folder in achive"},
+			Params:  map[string]interface{}{"fileIds": missing, "location": archive.ContractsDdlRootFolder + " folder in archive"},
 		}
 	}
 
@@ -263,7 +263,7 @@ func ValidatePublishBuildResult(buildArc *archive.BuildResultArchive) error {
 			Status:  http.StatusBadRequest,
 			Code:    exception.FileMissing,
 			Message: exception.FileMissingMsg,
-			Params:  map[string]interface{}{"fileIds": missing, "location": archive.ContractsMcpRootFolder + " folder in achive"},
+			Params:  map[string]interface{}{"fileIds": missing, "location": archive.ContractsMcpRootFolder + " folder in archive"},
 		}
 	}
 
@@ -286,7 +286,7 @@ func ValidatePublishBuildResult(buildArc *archive.BuildResultArchive) error {
 			Status:  http.StatusBadRequest,
 			Code:    exception.FileMissing,
 			Message: exception.FileMissingMsg,
-			Params:  map[string]interface{}{"fileIds": missing, "location": archive.ContractsDdlComparisonsRootFolder + " folder in achive"},
+			Params:  map[string]interface{}{"fileIds": missing, "location": archive.ContractsDdlComparisonsRootFolder + " folder in archive"},
 		}
 	}
 

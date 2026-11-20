@@ -13,7 +13,7 @@ describe("Should build the same graphapi from printed graphql schema", () => {
     expect(graphapi1).toMatchObject(graphapi2)
   })
 
-  it("overriden default directive", async () => {
+  it("overridden default directive", async () => {
     const source1 = loadFile("overriden_default_directive.graphql")
     const graphapi1 = buildGraphApi(source1)
 

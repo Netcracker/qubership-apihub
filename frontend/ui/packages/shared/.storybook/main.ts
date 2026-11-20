@@ -1,26 +1,10 @@
 // This file has been automatically migrated to valid ESM format by Storybook.
 import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import type { StorybookConfig } from '@storybook/react-vite'
 
 import { dirname, join, resolve } from 'path'
-import { mergeConfig } from 'vite'
+import { mergeConfig, normalizePath, type Plugin, type PluginOption } from 'vite'
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -34,6 +18,38 @@ function getAbsolutePath(value: string): any {
   return dirname(require.resolve(join(value, 'package.json')))
 }
 
+const DOCGEN_PLUGIN = 'storybook:react-docgen-plugin'
+const uiPackagesDir = `${normalizePath(resolve(__dirname, '../..'))}/`
+
+/* The react-docgen plugin of Storybook reads the props of each component. Storybook builds the Controls panel of
+   a story from them, and actions.argTypesRegex in preview.tsx turns every on* prop into a logged action.
+
+   The plugin parses every module outside node_modules. pnpm links the workspace libraries by their real path
+   (frontend/api-processor/dist/...), so the plugin also parsed their bundles, which took most of the build time.
+   The stories show only components of frontend/ui, so the plugin now parses only the files under
+   frontend/ui/packages, and the docgen data stays the same. */
+function limitDocgenToUiPackages(plugins: PluginOption[] = []): PluginOption[] {
+  return plugins.map(plugin => {
+    if (!isNamedPlugin(plugin) || plugin.name !== DOCGEN_PLUGIN) {
+      return plugin
+    }
+    const { transform } = plugin
+    if (typeof transform !== 'function') {
+      throw new Error(`${DOCGEN_PLUGIN} has no transform function: update limitDocgenToUiPackages`)
+    }
+    return {
+      ...plugin,
+      transform(code, id, options) {
+        return id.startsWith(uiPackagesDir) ? transform.call(this, code, id, options) : undefined
+      },
+    } satisfies Plugin
+  })
+}
+
+function isNamedPlugin(plugin: PluginOption): plugin is Plugin {
+  return typeof plugin === 'object' && plugin !== null && 'name' in plugin
+}
+
 const config: StorybookConfig = {
   stories: [
     '../src/**/*.mdx',
@@ -44,7 +60,6 @@ const config: StorybookConfig = {
 
   addons: [
     getAbsolutePath('@storybook/addon-links'),
-    getAbsolutePath('@storybook/addon-onboarding'),
     getAbsolutePath("@storybook/addon-docs")
   ],
 
@@ -60,7 +75,7 @@ const config: StorybookConfig = {
   },
 
   viteFinal: (config) => {
-    return mergeConfig(config, {
+    return mergeConfig({ ...config, plugins: limitDocgenToUiPackages(config.plugins) }, {
       define: {
         'process.env': {},
       },

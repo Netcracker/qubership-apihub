@@ -3,3 +3,13 @@ patches/*.patch text eol=lf
 *.sh text eol=lf
 *.yml text eol=lf
 *.yaml text eol=lf
+
+# apm copies package sources byte for byte into .agents/, .claude/, and .cursor/, where they are committed with LF.
+# A CRLF checkout of a source (backend/*/.gitattributes sets text=auto) would make apm install rewrite every copy.
+**/agent-packages/** text eol=lf
+
+# The copies need LF on disk as well: apm compares their bytes with the hashes in apm.lock.yaml, and a CRLF copy
+# fails the check, so apm install skips the file and then deletes it as stale.
+.agents/** text eol=lf
+.claude/** text eol=lf
+.cursor/** text eol=lf

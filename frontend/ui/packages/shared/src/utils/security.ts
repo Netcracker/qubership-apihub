@@ -130,7 +130,7 @@ async function handleUnauthorizedByProvider(identityProvider: IdentityProviderDt
     const url = response.url.replace(location.origin, '')
     redirectTo(url)
     /**
-     * TL;DR: Redirections are asyncronous global tasks
+     * TL;DR: Redirections are asynchronous global tasks
      * Details:
      * - https://html.spec.whatwg.org/multipage/browsing-the-web.html#navigate
      * - Some part of navigation algorithm is run synchronously until the point 8 from specs.

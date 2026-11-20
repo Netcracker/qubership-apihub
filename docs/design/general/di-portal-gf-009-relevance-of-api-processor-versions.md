@@ -11,16 +11,16 @@
 
 **Revision History:**  
 
-| Date           | Description                         |
-| -------------- | ----------------------------------- |
-| 22.05.2025     | Initial version for <https://github.com/Netcracker/qubership-apihub/issues/229>, <https://github.com/Netcracker/qubership-apihub/issues/230>|
+| Date       | Description                                                                                                                                  |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| 22.05.2025 | Initial version for <https://github.com/Netcracker/qubership-apihub/issues/229>, <https://github.com/Netcracker/qubership-apihub/issues/230> |
 
 ## Assumptions
 
 1. The requirements are applicable to both packages and dashboards; further using the word package will mean both
    packages and dashboards.
 2. Currently, there are cases when new api-processor version was released, but no migration was performed. So in this
-   case api-processor version of builded revision will not be the same as actual one. Therefore, it was decided to
+   case api-processor version of built revision will not be the same as actual one. Therefore, it was decided to
    perform migration every time when new version of api-processor released.
 3. Current story consider cases when downgrade of api-processor version is possible.
 4. The requirements are applicable only to the state when migration is **not** running.
@@ -28,16 +28,16 @@
 ## Requirements
 
 1. The system shall be able to check api-processor version on the client for relevance and shall be able to verify that
-   the package version (revision) was builded by the current version of the api-processor.
+   the package version (revision) was built by the current version of the api-processor.
      1. The system shall perform these checks only if migration is not in progress.
           - API to check if migration is in progress - GET /api/v1/system/info:
               - if migrationInProgress = false, then migration is not currently in progress.
      2. Cases of api-processor versions mismatch see in "Cases with api-processor versions mismatch" section.
-     3. API to get api-processor version with which package version was builded:
+     3. API to get api-processor version with which package version was built:
           - in specific version - GET /api/v3/packages/{packageId}/versions/{version}.
           - in package versions list - GET /api/v3/packages/{packageId}/versions.
 2. The system shall warn the user about problems if the current version of the api-processor on the client is not
-   up-to-date or if the current version of the package was builded by an out-of-date version of the api-processor.
+   up-to-date or if the current version of the package was built by an out-of-date version of the api-processor.
      1. Appropriate locations where warning messages shall be displayed see in section "Locations where warning messages
         are displayed".
 

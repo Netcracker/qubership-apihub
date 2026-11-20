@@ -1,0 +1,33 @@
+openapi: 3.0.3
+info:
+  title: Orders
+  version: 1.0.0
+paths:
+  /orders:
+    post:
+      x-rate-limit: 100
+      x-audience:
+        visibility: public
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  status:
+                    type: string
+        "400":
+          description: ""
+          content:
+            application/problem+json:
+              schema:
+                type: object
+                properties:
+                  title:
+                    type: string
+                  detail:
+                    type: string

@@ -11,9 +11,24 @@
   "homepage": "https://github.com/Netcracker/qubership-apihub/tree/main/frontend/api-doc-viewer#readme",
   "license": "Apache-2.0",
   "private": true,
+  "//scripts": [
+    "Aliases of the package scripts, as the module had before the monorepo (there via lerna run). They are not",
+    "Nx targets: nx.includedScripts keeps them out of the graph, so nx affected and CI never run them twice.",
+    "An alias goes through Nx where the package target builds the in-repo dependencies first (dependsOn), and",
+    "through pnpm --filter otherwise; arguments after the alias reach the package script."
+  ],
   "scripts": {
     "lint:check": "eslint -c .eslintrc.json . --ext .js,.cjs,.ts,.json --ignore-path .gitignore --max-warnings 0 --report-unused-disable-directives",
-    "lint:fix": "pnpm run lint:check -- --fix"
+    "lint:fix": "pnpm run lint:check -- --fix",
+    "build": "pnpm exec nx run-many -t build -p \"api-doc-viewer*\"",
+    "test": "pnpm exec nx run-many -t test -p \"api-doc-viewer*\"",
+    "build:showcase": "pnpm exec nx run-many -t build:showcase -p api-doc-viewer",
+    "screenshot-test": "pnpm exec nx run api-doc-viewer:screenshot-test",
+    "generate-compatibility-suite": "pnpm --filter @netcracker/qubership-apihub-api-doc-viewer run generate-stories && pnpm --filter @netcracker/qubership-apihub-api-doc-viewer run generate-tests",
+    "screenshot-test-single-suite": "pnpm --filter @netcracker/qubership-apihub-api-doc-viewer run screenshot-test-single-suite",
+    "regenerate-screenshots": "pnpm --filter @netcracker/qubership-apihub-api-doc-viewer run regenerate-screenshots",
+    "regenerate-screenshots-single-suite": "pnpm --filter @netcracker/qubership-apihub-api-doc-viewer run regenerate-screenshots-single-suite",
+    "development:storybook": "pnpm --filter @netcracker/qubership-apihub-api-doc-viewer run development:storybook"
   },
   "dependencies": {
     "@netcracker/qubership-apihub-api-diff": "workspace:^",
@@ -25,10 +40,10 @@
   "devDependencies": {
     "@netcracker/qubership-apihub-compatibility-suites": "workspace:^",
     "@netcracker/qubership-apihub-jest-chrome-in-docker-environment": "workspace:^",
-    "@types/jest": "30.0.0",
+    "@types/jest": "catalog:",
     "@types/jest-image-snapshot": "6.1.0",
     "@types/lodash-es": "^4.17.12",
-    "@types/node": "^24.19.2",
+    "@types/node": "catalog:",
     "@types/react": "^18.3.31",
     "@typescript-eslint/eslint-plugin": "6.0.0",
     "@typescript-eslint/parser": "6.0.0",
@@ -36,9 +51,9 @@
     "eslint": "8.48.0",
     "eslint-plugin-react-hooks": "4.6.0",
     "eslint-plugin-react-refresh": "0.4.3",
-    "eslint-plugin-storybook": "10.6.3",
-    "lodash-es": "^4.17.21",
-    "typescript": "6.0.3",
+    "eslint-plugin-storybook": "catalog:",
+    "lodash-es": "^4.18.1",
+    "typescript": "catalog:",
     "yaml": "2.9.0"
   },
   "eslintConfig": {
@@ -49,6 +64,8 @@
     "jest-mock": "30.4.1"
   },
   "nx": {
-    "name": "api-doc-viewer-root"
-  }
+    "name": "api-doc-viewer-root",
+    "includedScripts": ["lint:check", "lint:fix"]
+  },
+  "version": "4.0.1"
 }

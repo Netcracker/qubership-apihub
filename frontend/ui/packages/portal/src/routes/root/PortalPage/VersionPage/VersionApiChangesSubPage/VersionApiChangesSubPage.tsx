@@ -20,6 +20,7 @@ import {
 import { isEmptyTag } from '@netcracker/qubership-apihub-ui-shared/utils/tags'
 import { getSplittedVersionKey } from '@netcracker/qubership-apihub-ui-shared/utils/versions'
 import {
+  usePreviousReleasePackageKey,
   usePreviousReleaseVersion,
 } from '@netcracker/qubership-apihub-ui-shared/widgets/ChangesViewWidget/components/PreviousReleaseOptionsProvider'
 
@@ -47,8 +48,7 @@ import { ApiChangesNavigation } from './ApiChangesNavigation'
 
 // High Order Component //
 export const VersionApiChangesSubPage: FC = memo(() => {
-  const { packageId, apiType = DEFAULT_API_TYPE } = useParams<{
-    packageId: string
+  const { apiType = DEFAULT_API_TYPE } = useParams<{
     versionId: string
     apiType?: ApiType | ContractType
   }>()
@@ -70,6 +70,8 @@ export const VersionApiChangesSubPage: FC = memo(() => {
   const emptyTag = isEmptyTag(selectedTag)
 
   const previousReleaseVersion = usePreviousReleaseVersion()
+  const previousReleasePackageKey = usePreviousReleasePackageKey()
+  const [previousReleasePackage] = usePackage({ packageKey: previousReleasePackageKey, showParents: true })
   const { versionKey: previousReleaseVersionKey } = getSplittedVersionKey(previousReleaseVersion)
 
   const [searchValue, setSearchValue] = useState('')
@@ -83,7 +85,7 @@ export const VersionApiChangesSubPage: FC = memo(() => {
   const { hideFiltersPanel, toggleHideFiltersPanel } = usePortalPageSettingsContext()
 
   const versionElement = useMemo(() => {
-    if (!previousReleaseVersion || !packageId) {
+    if (!previousReleaseVersion || !previousReleasePackageKey) {
       return null
     }
 
@@ -97,7 +99,7 @@ export const VersionApiChangesSubPage: FC = memo(() => {
           <Link
             component={NavLink}
             to={getVersionPath({
-              packageKey: packageId,
+              packageKey: previousReleasePackageKey,
               versionKey: previousReleaseVersion,
             })}
             data-testid="ComparedToLink"
@@ -106,14 +108,14 @@ export const VersionApiChangesSubPage: FC = memo(() => {
           </Link>
         </TextWithOverflowTooltip>
         <VersionErrorIndicatorWithFetch
-          packageKey={packageId}
+          packageKey={previousReleasePackageKey}
           versionKey={previousReleaseVersion}
-          kind={packageObject?.kind}
+          kind={previousReleasePackage?.kind}
           data-testid="PreviousVersionErrorIndicator"
         />
       </VersionLinkContainer>
     )
-  }, [packageId, packageObject?.kind, previousReleaseVersion, previousReleaseVersionKey])
+  }, [previousReleasePackage?.kind, previousReleasePackageKey, previousReleaseVersion, previousReleaseVersionKey])
 
   return (
     <ChangesSummaryProvider>

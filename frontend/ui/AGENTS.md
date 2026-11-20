@@ -29,8 +29,10 @@ pnpm exec nx run ui-portal:lint:check
 ```
 
 Dev servers: `pnpm --filter @netcracker/qubership-apihub-ui-portal run dev:proxy` (Vite against a running
-backend) or `dev:proxy:msw` (mock service worker). Run `pnpm --filter @netcracker/qubership-apihub-ui run
-msw:init` once to create the mock worker files. Portal `build` runs `tsc` and `vite build` with a large heap.
+backend) or `dev:proxy:msw` (the same with the MSW mocks, `docs/dev/msw-mocks.md`). MSW is the main way to mock the
+backend: add new mocks there, not to the deprecated Express servers in `server/`. The mock worker files are committed;
+after an upgrade of `msw`, refresh them with `pnpm --filter @netcracker/qubership-apihub-ui run msw:init`. Portal
+`build` runs `tsc` and `vite build` with a large heap.
 
 ## Traps
 

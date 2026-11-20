@@ -1,13 +1,13 @@
 /**
  * Auto-generated screenshot tests for DDL API Suite/Column Types stories.
- * Regenerate: npm run generate-tests (from packages/api-doc-viewer).
+ * Regenerate: pnpm run generate-tests (from packages/api-doc-viewer).
  */
 import path from 'path'
 import { storyPage } from '../service/storybook-service'
 import { waitForDdlTableViewer } from '../service/viewer-waits'
 
 const META_ID = 'ddlapi-suite-column-types'
-const SNAPSHOTS_DIR = path.resolve(__dirname, '..', '__image_snapshots__')
+const SNAPSHOTS_DIR = path.resolve(__dirname, '__image_snapshots__')
 
 const TEST_IDS: string[] = [
   'bigint',

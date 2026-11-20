@@ -1,19 +1,4 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+import { cn } from '@apihub/utils/common/cn'
 import { LevelIndicator } from '@apihub/components/shared-components/LevelIndicator'
 import { DiffNodeMeta, DiffNodeValue, isDiff } from '@netcracker/qubership-apihub-api-data-model'
 import { Diff, DiffAction } from '@netcracker/qubership-apihub-api-diff'
@@ -118,7 +103,7 @@ export const NestingIndicatorTitleRow: FC<NestingIndicatorTitleRowProps> = (prop
   if (isInlineDiffsLayoutMode) {
     const layoutSide = CHANGED_LAYOUT_SIDE
     return (
-      <div className={`flex flex-row relative ${diffTypeIncluded ? diffBackground : ''}`}>
+      <div className={cn(`flex flex-row relative ${diffTypeIncluded ? diffBackground : ''}`)}>
         {diffType && diffTypeIncluded && (isNodeChanged || isContentChanged) && (
           <UxDiffFloatingBadge variant={diffType} message={diffTypeCause} />
         )}
@@ -143,7 +128,7 @@ export const NestingIndicatorTitleRow: FC<NestingIndicatorTitleRowProps> = (prop
   if (isSideBySideDiffsLayoutMode) {
     if (!isNodeChanged || nodeRenamed && !isContentChanged) {
       return (
-        <div className="flex flex-row relative">
+        <div className={cn("flex flex-row relative")}>
           <Content
             shift={shift}
             layoutSide={ORIGIN_LAYOUT_SIDE}
@@ -173,7 +158,7 @@ export const NestingIndicatorTitleRow: FC<NestingIndicatorTitleRowProps> = (prop
     }
 
     return (
-      <div className={`flex flex-row relative ${diffTypeIncluded ? diffBackground : ''}`}>
+      <div className={cn(`flex flex-row relative ${diffTypeIncluded ? diffBackground : ''}`)}>
         {diffType && diffTypeIncluded && (isNodeChanged || isContentChanged) && (
           <UxDiffFloatingBadge variant={diffType} message={diffTypeCause} />
         )}
@@ -241,9 +226,9 @@ const Content: FC<NestingIndicatorTitleRowContentProps> = (props) => {
   const width = isSideBySideDiffsLayoutMode ? 'w-1/2' : 'w-full'
 
   return (
-    <div className={`flex flex-row ${width}`}>
+    <div className={cn(`flex flex-row ${width}`)}>
       <LevelIndicator level={level} lastInvisible={true} />
-      <div className="text-xs text-slate-400 border-b border-slate-400 w-max pt-1"
+      <div className={cn("text-xs text-slate-400 border-b border-slate-400 w-max pt-1")}
         style={{ marginLeft: '-1px' }}
       >
         {children}

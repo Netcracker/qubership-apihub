@@ -1,19 +1,3 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import type { FC } from 'react'
 import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import { Autocomplete, Box, Button, TextField, Typography } from '@mui/material'
@@ -32,6 +16,7 @@ import { SearchBar } from '@netcracker/qubership-apihub-ui-shared/components/Sea
 import { VersionSelectorAutocomplete } from '@netcracker/qubership-apihub-ui-shared/components/Autocompletes/VersionSelectorAutocomplete'
 import { VersionErrorFormMessage } from '@netcracker/qubership-apihub-ui-shared/components/ErrorIndicators/VersionErrorFormMessage'
 import { VersionErrorIndicator } from '@netcracker/qubership-apihub-ui-shared/components/ErrorIndicators/VersionErrorIndicator'
+import { VersionFieldErrorIndicator } from '@netcracker/qubership-apihub-ui-shared/components/ErrorIndicators/VersionFieldErrorIndicator'
 import { agent } from '@netcracker/qubership-apihub-ui-shared/utils/version-info'
 import { OptionItem } from '@netcracker/qubership-apihub-ui-shared/components/OptionItem'
 import { useVersionProblemDetails } from '@netcracker/qubership-apihub-ui-shared/hooks/versions/useVersionProblemDetails'
@@ -68,16 +53,13 @@ export const CreateSnapshotStep: FC = memo(() => {
   ] = useToolbarData(createSnapshot)
 
   const baselineFlags = baselineOptions.flagsByVersionKey.get(baseline)
-  const {
-    hasProblems: baselineHasProblems,
-    isBlocking: isBaselineBlocking,
-    formHelperText: baselineErrorMessage,
-  } = useVersionProblemDetails({
+  const baselineProblem = useVersionProblemDetails({
     versionKey: baseline,
     hasErrors: baselineFlags?.hasErrors,
     changelogHasErrors: baselineFlags?.changelogHasErrors,
     apiProcessorVersion: baselineFlags?.apiProcessorVersion,
     surface: VERSION_PROBLEM_DIALOG_SURFACE.PUBLISH_PREVIOUS_VERSION,
+    app: agent,
   })
 
   const isTableSelectable = useSnapshotTableSelectable()
@@ -144,14 +126,8 @@ export const CreateSnapshotStep: FC = memo(() => {
               freeSolo
               value={value}
               options={baselineOptions.versionKeys}
-              inputIndicator={baselineHasProblems && baselineFlags && (
-                <VersionErrorIndicator
-                  app={agent}
-                  versionKey={baseline}
-                  hasErrors={baselineFlags.hasErrors}
-                  changelogHasErrors={baselineFlags.changelogHasErrors}
-                  apiProcessorVersion={baselineFlags.apiProcessorVersion}
-                />
+              inputIndicator={baselineProblem.hasProblems && (
+                <VersionFieldErrorIndicator problem={baselineProblem}/>
               )}
               renderOption={(props, versionKey) => {
                 const flags = baselineOptions.flagsByVersionKey.get(versionKey)
@@ -180,7 +156,7 @@ export const CreateSnapshotStep: FC = memo(() => {
                   required
                   label="Baseline (Release Version)"
                   variant="outlined"
-                  error={isBaselineBlocking}
+                  error={baselineProblem.isBlocking}
                   onChange={onChange}
                 />
               )}
@@ -206,7 +182,7 @@ export const CreateSnapshotStep: FC = memo(() => {
           <LoadingButton
             data-testid="CreateSnapshotButton"
             sx={{ width: 156 }}
-            disabled={!isCreateSnapshotAvailable || isCreateSnapshotSuccess || isBaselineBlocking}
+            disabled={!isCreateSnapshotAvailable || isCreateSnapshotSuccess || baselineProblem.isBlocking}
             variant={isCreateSnapshotSuccess ? 'outlined' : 'contained'}
             loading={isLoading || isCreateSnapshotRunning}
             onClick={() => {
@@ -234,7 +210,7 @@ export const CreateSnapshotStep: FC = memo(() => {
         {formErrors.name?.message}
       </Typography>
       <VersionErrorFormMessage
-        message={baselineErrorMessage}
+        message={baselineProblem.formHelperText}
         data-testid="BaselineErrorMessage"
       />
 

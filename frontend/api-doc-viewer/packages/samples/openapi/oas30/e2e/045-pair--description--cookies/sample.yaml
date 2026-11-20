@@ -1,0 +1,28 @@
+openapi: 3.0.3
+info:
+  title: Orders
+  version: 1.0.0
+paths:
+  /orders:
+    post:
+      description: |-
+        Replaces the order with the given state.
+
+        - Validates the **status** transition.
+        - Returns the stored order.
+      parameters:
+        - name: session
+          in: cookie
+          required: true
+          schema:
+            type: string
+        - name: theme
+          in: cookie
+          schema:
+            type: string
+            enum:
+              - light
+              - dark
+      responses:
+        "200":
+          description: ""

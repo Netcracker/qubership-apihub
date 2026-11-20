@@ -333,23 +333,23 @@ func VersionHasAnyErrors(ctx context.Context, publishedRepo repository.Published
 }
 
 func (p publishedServiceImpl) GetVersionStatus(ctx context.Context, packageId string, versionName string) (status string, hasErrors bool, found bool, err error) {
-	version, _, err := SplitVersionRevision(versionName)
+	_, _, err = SplitVersionRevision(versionName)
 	if err != nil {
 		return "", false, false, err
 	}
 
-	latestEnt, err := p.publishedRepo.GetVersion(ctx, packageId, version)
+	versionEnt, err := p.publishedRepo.GetVersion(ctx, packageId, versionName)
 	if err != nil {
 		return "", false, false, err
 	}
-	if latestEnt == nil {
+	if versionEnt == nil {
 		return "", false, false, nil
 	}
-	hasErrors, err = VersionHasAnyErrors(ctx, p.publishedRepo, latestEnt.PackageId, latestEnt.Version, latestEnt.Revision)
+	hasErrors, err = VersionHasAnyErrors(ctx, p.publishedRepo, versionEnt.PackageId, versionEnt.Version, versionEnt.Revision)
 	if err != nil {
 		return "", false, false, err
 	}
-	return latestEnt.Status, hasErrors, true, nil
+	return versionEnt.Status, hasErrors, true, nil
 }
 
 func (p publishedServiceImpl) CheckNoReleaseDependentVersions(ctx context.Context, packageId string, version string) error {

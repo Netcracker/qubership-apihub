@@ -1,4 +1,3 @@
-import { AsyncOperation } from './AsyncOperation';
 import { IServer } from '../../utils/http-spec/IServer';
 import { NodeType } from '@stoplight/types';
 import { Location } from 'history';
@@ -110,7 +109,7 @@ interface BaseDocsProps {
 
     /**
      * Provide a number to trigger compact mode when the component is within that pixel width,
-     * or a boolean to enable or diable compact mode.
+     * or a boolean to enable or disable compact mode.
      * @default false
      * @example 600
      */
@@ -172,8 +171,6 @@ export const ParsedDocs = ({ node, layoutOptions, ...commonProps }: ParsedDocsPr
         return <Article data={node.data} layoutOptions={layoutOptions} {...commonProps} />;
       case 'http_operation':
         return <HttpOperation data={node.data} layoutOptions={layoutOptions} {...commonProps} />;
-      case 'async_operation':
-        return <AsyncOperation data={node.data} layoutOptions={layoutOptions} {...commonProps} />;
       case 'http_service':
         return <HttpService data={node.data} layoutOptions={layoutOptions} {...commonProps} />;
       case 'model':

@@ -23,9 +23,13 @@ comments. It is a proof of concept; the design is in [the internal docs](../inte
   issue up in a sweep that runs every 10 minutes. It analyzes at most 5 issues per sweep. The sweep needs
   `AGENT_DRY_RUN=false`: a dry-run analysis writes no state, so the same issues would come up again and again. In dry
   run the sweep does nothing; comment `/agent analyze` to try the analysis. When the issue lacks
-  information, it asks the author and sets `agent:needs-human`; the author's answer in a comment, or an edit of the
+  information, it asks the author and sets `needs-human:context-missing`; the author's answer in a comment, or an edit
+  of the
   issue, starts the analysis again at once. Comment `/agent analyze` to run it again yourself. The agent never changes
   an `ai:*` label that a person set.
+- **Reads attachments.** The analysis and the implementation read the screenshots (PNG, JPEG, GIF, WebP) and the text
+  files (specs, logs, samples) that the description and the comments link, up to 10 images of 5 MB and 10 text files of
+  1 MB. ZIP archives and videos are not read, so attach the files themselves or a screenshot.
 - **Caps its automatic work.** In any 24 hours the agent starts at most `AGENT_DAILY_ANALYSES` analyses of new issues
   (default 10) and `AGENT_DAILY_REVIEWS` reviews of new pull requests (default 15), so a flood of issues or pull
   requests cannot run up a bill. Commands, answers of an author, and edits do not count and are never capped. The job
@@ -42,10 +46,11 @@ comments. It is a proof of concept; the design is in [the internal docs](../inte
   without a level gets a reminder comment. This is the workflow `AI Autonomous: Execution levels`.
 - **Reports weekly** on the progress toward autonomy. See [Weekly report](#weekly-report).
 
-The agent never approves or requests changes; its review is a comment. The review comment ends with what the AI calls
-on the pull request have cost so far. Dependabot pull requests are never reviewed, also not with `/agent review`: a
-dependency bump has nothing to review, and a review costs money. The only command the agent takes on a Dependabot pull
-request is `/agent ci_check`.
+The agent never approves or requests changes; its review is a comment. The review comment ends with a signature line
+that names the model and the cost of the AI calls it reports (see [Signatures](#signatures)). Dependency update pull
+requests (Renovate or Dependabot) are never reviewed,
+also not with `/agent review`: a dependency bump has nothing to review, and a review costs money. The only command the
+agent takes on a dependency update pull request is `/agent ci_check`.
 
 Who can use it: anyone who opens a pull request or a `Bug` or `Task` issue gets the automatic review and the automatic
 analysis. A command, an answer to a hand-off, and an implementation need a user with write access to the repository,
@@ -55,9 +60,9 @@ bots.
 ## Commands
 
 A command is a comment whose first non-empty line starts with `/agent`. Only a user with write access can give one, and
-only the users in `AGENT_ALLOWED_ACTORS` while it is set. The agent ignores bots and Dependabot pull requests, except
-for `/agent ci_check` on a Dependabot pull request. It reacts to your comment with an eyes emoji when it starts, then
-with a rocket when it ends well or a confused face when it refuses or fails.
+only the users in `AGENT_ALLOWED_ACTORS` while it is set. The agent ignores bots and dependency update pull requests
+(Renovate or Dependabot), except for `/agent ci_check` on a dependency update pull request. It reacts to your comment
+with an eyes emoji when it starts, then with a rocket when it ends well or a confused face when it refuses or fails.
 
 | Command | Where | What happens |
 |---|---|---|
@@ -66,6 +71,7 @@ with a rocket when it ends well or a confused face when it refuses or fails.
 | `/agent stop` | issue or pull request of the agent | The agent stops its work on the issue. |
 | `/agent retry [notes]` | issue or pull request of the agent | A new attempt with a fresh budget; the notes are guidance. |
 | `/agent rerun [notes]` | issue or pull request of the agent | Reruns the failed CI checks; no new attempt, no model. |
+| `/agent update [notes]` | pull request of the agent | Merges the latest `develop`; on conflicts, the agent resolves them. See [Update the branch](#update-the-branch). |
 | `/agent ci_check [notes]` | pull request | Finds the root cause of a red CI; reruns the failed jobs when it is flaky or an outage. |
 | `/agent <question>` | issue, or pull request of a person | The assistant answers in a comment and changes nothing. |
 | `/agent <text>` | pull request of the agent | A change request: one attempt on the branch of the pull request. |
@@ -101,7 +107,8 @@ review) and an older run of the workflow still works on the same number, the age
 `/agent <question>` starts the assistant. It uses the light model, reads the issue or pull request, its last 20
 comments, a short summary of what the agent did, and the code. For a pull request it also reads the diff of the pull
 request, which it fetches but never checks out. It cannot edit files or run anything but read-only Git commands. The
-answer is a reply that starts with a mention of you and ends with its cost. Mentions inside the answer are defused, so
+answer is a reply that starts with a mention of you and ends with a signature line with the cost of the answer.
+Mentions inside the answer are defused, so
 the answer notifies nobody else.
 
 ### Cost
@@ -115,7 +122,8 @@ estimates from the price table of opencode. The OpenAI bill is the authority.
 ### Stop
 
 `/agent stop` writes the phase `stopped` to the state of the issue, cancels the workflow run of a running attempt,
-removes `agent:needs-human`, and replies with what it stopped. The cancelled attempt records its cost and ends as
+removes the stop labels (`needs-human:*`), and replies with what it stopped. The cancelled attempt records its cost and
+ends as
 `stopped`: it pushes nothing and posts nothing. The CI gate ignores a stopped issue: when you stop the work while the
 gate reads the checks, the gate finds the new phase before it writes anything and exits. To start again, comment
 `/agent implement` on the issue, or `/agent retry`.
@@ -132,8 +140,8 @@ and when the issue is closed or is not a `Bug` or a `Task`.
 - **`/agent retry [notes]`** continues the pull request of the earlier attempt when it is open. When that pull request
   is closed or merged, the attempt starts a new branch (the old name with `-v2` if it is still taken) and a new pull
   request. The notes reach the implementer as "The maintainer's guidance".
-- **An answer.** When the agent hands over (`agent:needs-human` after a blocked, draft, or failed attempt, or after a
-  red CI), the first comment of a person with write access, with or without `/agent`, resumes the flow. The whole
+- **An answer.** When the agent hands over (a `needs-human:*` label after a blocked, draft, or failed attempt, or after
+  a red CI), the first comment of a person with write access, with or without `/agent`, resumes the flow. The whole
   comment is the guidance. A second comment while the attempt runs changes nothing.
 - **A change request.** `/agent <text>` on a pull request of the agent makes one attempt on its branch with the text
   as guidance. It needs a branch that an earlier attempt pushed and an open pull request.
@@ -147,7 +155,8 @@ It checks the CI of the pull request of the agent again: it reruns the failed ch
 issue back to waiting for CI, so the [CI gate](#the-ci-loop) decides when they end. It is not an attempt and calls no
 model, so it costs nothing and does not touch the attempt budget. Any text after the command is ignored.
 
-- It removes `agent:needs-human` from the issue and the pull request, and it records the request in the state.
+- It removes the stop labels (`needs-human:*`) from the issue and the pull request, and it records the request in the
+  state.
 - It replies and refuses, with a confused face, when there is no pull request of the agent to rerun CI for, when an
   attempt is running (a record older than two hours counts as dead), when the work is stopped, when the pull request
   is not open, or when the only failed checks are commit statuses or checks of another app, which the agent cannot
@@ -159,6 +168,23 @@ model, so it costs nothing and does not touch the attempt budget. Any text after
   wait for an approval of the workflows of a fork), instead of "CI still runs".
 - Cancelled checks are rerun like failed ones.
 - It runs in its own job `rerun`, which holds `AGENT_PAT` only to take a green pull request out of draft.
+
+### Update the branch
+
+`/agent update [notes]` on a pull request of the agent merges the latest `develop` into its branch. Use it when the
+pull request has conflicts, because then CI does not run and the CI gate cannot help, or when it has fallen behind.
+The agent merges and pushes the merge commit on top of the branch; it never rebases or force-pushes.
+
+- **No conflicts:** no model runs and the command costs nothing. CI runs again on the new head, and the
+  [CI loop](#the-ci-loop) goes on from there.
+- **Conflicts:** the implementer resolves them, and the local checks and the self-review run as in any attempt. The
+  notes are guidance for the resolution. When a conflict needs a decision, the agent hands over to you.
+- **Up to date:** when the branch already contains the latest `develop`, the agent replies that there is nothing to
+  update.
+- **Workflow files:** when `develop` changed files under `.github/workflows/` since the branch point, GitHub refuses
+  the push of the agent's token. The agent says so; use the **Update branch** button of the pull request, or merge by
+  hand.
+- It counts as a person's attempt: the CI loop gets a fresh budget.
 
 ### CI check
 
@@ -194,8 +220,8 @@ The verdict is one of four:
 A `flaky` or `infra` verdict with low confidence counts as `unknown`: the agent does not rerun on a guess, and the
 reply says so. A `change` verdict always names at least one place to fix.
 
-- On the pull request of the agent, when its issue waits for a person (`agent:needs-human`) or for CI, an accepted
-  rerun also puts the issue back to waiting for CI and removes `agent:needs-human`, as `/agent rerun` does, so the
+- On the pull request of the agent, when its issue waits for a person (a `needs-human:*` label) or for CI, an accepted
+  rerun also puts the issue back to waiting for CI and removes the stop labels, as `/agent rerun` does, so the
   CI gate decides again when the checks end. In any other phase the state stays as it is.
 - When GitHub rejects the rerun, the reply says so and nothing else changes. The reaction is a confused face.
 - The cost of the call goes to the state of the pull request (flow `ci-check`), also when the call fails, together
@@ -257,13 +283,17 @@ forced attempt succeeds. `force` has no effect on the other refusals.
 
 ### What it posts
 
-- **A comment on the issue** that the agent keeps up to date. It shows the outcome, what was tried, what is open, and
-  what the AI calls of the issue have cost so far.
-- **A pull request into `develop`.** It always opens as a draft. Its description gives the result of the local checks
-  and of the self-review, labeled as reported by the work job, and lists the failing checks and the open findings
-  when there are any. The CI gate takes it out of draft after the checks on GitHub are green, and only then.
-- **The label `agent:needs-human`** on the issue when the pull request is a draft or when the agent could not finish.
-  A green result removes the label.
+- **A result comment on the issue** for the implementation. It shows the outcome, what was tried, and what is open,
+  and ends with a signature line with the cost of the runs it reports. A new command edits it only when it is the
+  newest result comment of the agent on the issue; otherwise the agent writes a new one (see
+  [Result comments](#result-comments)).
+- **A pull request into `develop`.** It opens ready for review when the attempt is green, and as a draft otherwise.
+  Its description gives the result of the local checks and of the self-review, labeled as reported by the work job, and
+  lists the failing checks and the open findings when there are any. The CI gate takes a draft out of draft after the
+  checks on GitHub are green, and only then.
+- **A stop label `needs-human:<reason>`** on the issue when the pull request is a draft or when the agent could not
+  finish. The reason says why: `budget-exhausted` for a draft, `environment-blocked` for an error, or the reason the
+  implementer named for a block. A green result removes the label. See [Stop labels](#stop-labels).
 - **A short comment that mentions you** when the result is a draft, a block, or an error, because an edit of the
   state comment notifies nobody.
 
@@ -273,8 +303,8 @@ no changes, or when the change is too large. The reason is in the comment on the
 A person merges the pull request. The agent never merges.
 
 A later attempt on an issue that already has an open pull request updates that pull request: it gets the new title and
-description. A ready pull request goes back to a draft when the new result is not green; `publish` never marks a
-pull request ready.
+description. A ready pull request goes back to a draft when the new result is not green; `publish` never marks an
+open draft ready.
 
 ### Two jobs, so that model code never sees a token
 
@@ -290,10 +320,11 @@ environment of such a step could be read by that code. So the attempt runs in tw
   artifact, checks the outcome (the branch must be the one it derives itself from the state, and the answers must
   match their contracts), and measures the diff of the commits in the bundle itself, from the branch point. The diff
   size limit and the protected paths (workflow files, the agent's own instructions and tools) apply again to that
-  diff, whatever the outcome says; a violation means no push, a blocked attempt, and `agent:needs-human`. Then it
-  pushes the bundle, opens or updates the pull request as a draft, and writes the state, the labels, and the
-  comments. When the work job crashed or timed out and left no outcome, `publish` records the failure and the costs it
-  can find in the event files, sets `agent:needs-human`, and tells you.
+  diff, whatever the outcome says; a violation means no push, a blocked attempt, and
+  `needs-human:scope-review-required`. Then it pushes the bundle, opens or updates the pull request (ready after a
+  green attempt, else a draft), and writes the state, the labels, and the comments. When the work job crashed or timed
+  out and left no outcome, `publish` records the failure and the costs it can find in the event files, sets
+  `needs-human:environment-blocked`, and tells you.
 
 The OpenAI key itself stays reachable by the code under test in the work job. That is accepted for the proof of
 concept: give the key its own OpenAI project and set a budget on that project.
@@ -314,10 +345,11 @@ forks.
    anything, the gate reads the pull request and the state again. When a newer commit is on the branch, it writes
    nothing and exits as `superseded`; the checks of the newer commit start their own gate run. When the issue is no
    longer in the phase `waiting-ci` (for example after `/agent stop`), it writes nothing and exits as `state-changed`.
-3. **Green:** every check succeeded, was neutral, or was skipped. The pull request leaves draft (the gate is the only
-   place where that happens), gets `agent:completed` and `ai:l1-executor`, and the issue gets `agent:completed`.
-   `agent:needs-human` goes away from both. The agent comments on the issue and mentions the person who asked: a
-   person reviews and merges the pull request.
+3. **Green:** every check succeeded, was neutral, or was skipped. A draft pull request leaves draft (the gate is the
+   only place where that happens). The pull request gets `agent:completed` and `ai:l1-executor`, and the issue gets
+   `agent:completed`. Every stop label goes away from both, and the pull request gets `needs-human:approval-required`: a
+   person reviews it. The agent comments on the issue and mentions the person who asked: a person reviews and merges the
+   pull request. The merge removes the approval label.
 4. **Red:** the gate reads the logs of the failed jobs, cuts them to the error blocks, and builds a CI report of at
    most 12,000 characters. Its failure signature is a hash of the failed check names and the first normalized error
    lines, so timestamps, run IDs, and durations do not change it. Cancelled checks are left out of the hash when any
@@ -332,19 +364,20 @@ forks.
    only cancelled checks remain, nothing failed, so the agent does not start a CI fix: it hands over as in the next
    step, saying that the checks were cancelled again, and `/agent rerun` is the way on. In any other red result the
    stop rule below decides.
-6. **The stop rule.** The agent stops, sets `agent:needs-human` on the issue and the pull request, and hands over when
-   the failure has the same signature as the attempt before (the same fix twice would only spend money), or when
-   `AGENT_MAX_ATTEMPTS` attempts are spent (default 3, counting the first attempt and every CI fix). The state comment
+6. **The stop rule.** The agent stops, sets a stop label on the issue and the pull request, and hands over when
+   the failure has the same signature as the attempt before (the same fix twice would only spend money; the label is
+   `needs-human:stuck`), or when `AGENT_MAX_ATTEMPTS` attempts are spent (default 3, counting the first attempt and
+   every CI fix; the label is `needs-human:budget-exhausted`). The state comment
    lists every attempt with its result, signature, and notes, and shows the current failure. See
    [What a hand-off says](#what-a-hand-off-says).
 7. **Otherwise the next attempt starts.** The `implement` job runs a CI fix: it continues the branch of the pull
    request, reads the CI report, adds one new commit, and pushes without force. The local checks, the self-review, the
    diff size limit, and the workflow-file block apply to the whole pull request, measured from its branch point. A
-   green result moves the issue back to waiting for CI; anything else is a draft and `agent:needs-human`.
+   green result moves the issue back to waiting for CI; anything else is a draft and `needs-human:budget-exhausted`.
 8. **The CI fix may find that the change is not the cause.** When the CI report shows a flaky or infrastructure
    failure, or a test that the change does not touch, the implementer answers `unrelated` with its evidence and
    changes no code. The agent then pushes nothing: it reruns the failed checks, puts the issue back to waiting for CI,
-   removes `agent:needs-human` from the issue, and comments on the pull request, without a mention, which checks
+   removes the stop labels from the issue, and comments on the pull request, without a mention, which checks
    failed and why it thinks the change does not cause it. The attempt counts toward `AGENT_MAX_ATTEMPTS`, so a flake
    loop ends, and a rerun that fails the same way ends by the stop rule. When no failed check can be rerun, the
    agent hands over as for a blocked attempt.
@@ -352,11 +385,57 @@ forks.
 The log excerpts in the CI report leave out the echo of the step scripts that Actions prints before each step, so a
 command such as `echo "::error::..."` in a workflow does not look like a failure.
 
+### Stop labels
+
+When the agent stops and waits for you, it sets one label `needs-human:<reason>` on the issue, the pull request, or
+both.
+An issue or pull request carries one at a time. The label replaces the old `agent:needs-human`. The reasons:
+
+| Label | Meaning |
+|---|---|
+| `needs-human:approval-required` | The pull request is green and waits for your review. It is no failure; the merge removes it. |
+| `needs-human:risk-found` | The agent found a risk (security, data loss, compatibility) that you must accept. |
+| `needs-human:decision-required` | A product or design choice is open. |
+| `needs-human:context-missing` | The task lacks information; answer the questions of the agent. |
+| `needs-human:access-missing` | The agent lacks a permission, token, or access. |
+| `needs-human:verification-blocked` | The agent cannot verify the change. |
+| `needs-human:environment-blocked` | The tooling, the runner, or the environment failed, or CI cannot run again. |
+| `needs-human:external-dependency` | The work waits on another team, a release, or a change outside this repository. |
+| `needs-human:conflict-unresolved` | A merge conflict or contradicting changes cannot be resolved safely. |
+| `needs-human:scope-review-required` | The change outgrew the issue, or touches a protected path; confirm the scope. |
+| `needs-human:invalid` | The task is a duplicate, is already fixed, or describes the intended behavior. |
+| `needs-human:stuck` | The agent made no progress, for example the same failure again. |
+| `needs-human:disagreement` | The agent and a reviewer or a check disagree. |
+| `needs-human:budget-exhausted` | The attempts, the time, or the review rounds ran out; a draft pull request is open. |
+
+The implementer picks the reason of its own `blocked` answer. The scripts pick the others. A hand-off comment ends
+with a stop block: the reason label, the blocker, the work completed, the required action, and the resume condition,
+the command that continues the work. The state keeps the history in `stops`. A new attempt, `/agent rerun`,
+`/agent stop`, a green CI, and the merge of the pull request remove the stop labels. `labels.sh` and `labels.ps1`
+create the labels.
+
+### Result comments
+
+Each kind of command has its own result comment on the issue or pull request: the analysis (`/agent analyze` and the
+sweep), the implementation (`/agent implement`, `fix`, `retry`, `update`, `rerun`, the CI gate, the CI fixes, and
+`/agent stop`), and the review (`/agent review`). A new command edits the comment of its kind only when it is the
+newest result comment of the agent; otherwise it writes a new comment, so the newest result is always the last one. A
+step that continues a running command, such as `publish`, the CI gate, or a CI fix, edits the comment that command
+uses. Answers to questions and the replies of `/agent ci_check` are always new comments.
+
+### Signatures
+
+A comment that reports the result of an AI run ends with one line, for example
+`<sub>🤖 gpt-6.1-sol high in=12k cached=40k out=3k usd=0.083</sub>`: the model without its provider prefix, the
+effort, the input, cached, and output tokens (`k` for thousands), and the cost in USD. A comment that shows the results
+of several runs signs the sum of all of them. A comment without a cost record has no signature. The inline comments of
+a review have none. The comments do not show a running total any more; `/agent cost` shows the full table.
+
 ### What a hand-off says
 
 When the agent hands over on a red CI, after the stop rule or after a blocked CI fix, the comment lists, in this order:
-the failed checks (at most five, then "and N more"), the first error line of the first failed check, and the reason of
-the agent. It then offers two ways on:
+the failed checks (at most five, then "and N more") and the first error line of the first failed check. It then gives
+the stop block (see [Stop labels](#stop-labels)) with the reason of the agent, and two ways on:
 
 - If the failure is not caused by the change, comment `/agent rerun`: it reruns the failed checks, with no new attempt
   and no model cost.
@@ -377,7 +456,9 @@ input. It uses no model and costs nothing. It counts, for the last `AGENT_REPORT
 
 - the `Bug` and `Task` issues created, and how many are `ai:suitable`, `ai:unsuitable`, or not assessed yet;
 - the pull requests merged, by execution level and with the share of each level;
-- the pull requests the agent opened, and how many are `agent:completed`, draft or `agent:needs-human`, or merged;
+- the pull requests the agent opened, and how many are `agent:completed`, draft or stopped (`needs-human:*` except
+  `approval-required`), waiting for approval
+  (`needs-human:approval-required`), or merged;
 - the pull requests the agent reviewed;
 - the attempts by result, and how many were forced;
 - the AI calls and their estimated cost, by flow and by model, from the state comments.

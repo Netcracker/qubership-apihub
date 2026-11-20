@@ -161,6 +161,15 @@ test('the oldest of several busy runs is named', async () => {
   assert.equal(result.reason, 'busy: run 4000 works on #200')
 })
 
+test('/agent update on the agent pull request is declined with its own words', async () => {
+  const payload = comment('issue_comment.chat.agent-pr', '/agent update')
+  const extra = { ...write, agentFacts: agentFacts() }
+  const { decision, result, calls } = await check({ payload, extra, runs: [run(4000, 200)] })
+  assert.deepEqual([decision.action, decision.number, decision.pr, decision.kind], ['implement', 200, 70, 'update'])
+  assert.equal(result.reason, 'busy: run 4000 works on #200')
+  assert.match(calls.comments[0].body, /did not start `\/agent update`\. Comment it again when that run ends\./)
+})
+
 test('a command on the agent pull request counts its issue as the same piece of work', async () => {
   const payload = comment('issue_comment.chat.agent-pr', '/agent retry use the second parser')
   const extra = { ...write, agentFacts: agentFacts() }

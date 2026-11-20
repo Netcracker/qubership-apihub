@@ -19,6 +19,8 @@ export type JsoEmbeddedSchemaDiffsComponentProps = {
   displayMode?: DisplayMode
   diffMetaKeys: DiffMetaKeys
   diffTypes?: ReadonlyArray<DiffType>
+  /** The embedding `JsoDiffsViewer`'s own mode, so the schema hides unchanged nodes exactly when JSO does. */
+  hideUnchangedNodes?: boolean
   customizationOptions?: CustomizationOptions
 }
 

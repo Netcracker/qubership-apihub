@@ -95,7 +95,7 @@ function findItem(collection: Collection, method: string, path: string): Item | 
   return found;
 }
 
-// this func ensures that both this securityScheme and the one in HttpService share exactly the sme keys
+// this func ensures that both this securityScheme and the one in HttpService share exactly the same keys
 function findPostmanSecurityScheme(auth: RequestAuth, securitySchemes: PostmanSecurityScheme[]) {
   const securityScheme = transformSecurityScheme(auth, () => '1');
   if (!securityScheme) return;

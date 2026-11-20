@@ -120,7 +120,7 @@ export const deepEqualsWithEmptySchema: ReverseMatcherFunction = (value, extraIg
       }, {} as Record<PropertyKey, unknown>),
     },
   }
-  return deepCircularEqualsWithPropertyFilter(value, {}/*means value absolutly empty and ready to cleanup*/, compareConfig)
+  return deepCircularEqualsWithPropertyFilter(value, {}/*means value absolutely empty and ready to cleanup*/, compareConfig)
 }
 export const deepEqualsWithInvertedEmptySchema: ReverseMatcherFunction = (value, extraIgnoreProperties, opts) => {
   const compareConfig: CompareMeta = {
@@ -135,7 +135,7 @@ export const deepEqualsWithInvertedEmptySchema: ReverseMatcherFunction = (value,
       }, {} as Record<PropertyKey, unknown>),
     },
   }
-  return deepCircularEqualsWithPropertyFilter(value, {}/*means value absolutly empty and ready to cleanup*/, compareConfig)
+  return deepCircularEqualsWithPropertyFilter(value, {}/*means value absolutely empty and ready to cleanup*/, compareConfig)
 }
 
 const JSON_SCHEMA_REPLACES_COMMON: Record<string, ReplaceMapping> = {

@@ -54,7 +54,7 @@ The next free number is computed from every ID that appears in a title or in a b
 | Custom OpenAPI extensions | COE | `custom-openapi-extensions/` | 1 | `DI-Portal-COE-002` |
 | VS Code extension | VCE | `vscode-extension/` | 1 | `DI-Portal-VCE-002` |
 | Agent | - | `agent/` | 2 | `DI-Agent-003` |
-| Contract types | - | `contract-types/` | 3 | no IDs |
+| Contract types | - | `contract-types/` | 4 | no IDs |
 | AI assistant | - | `ai-assistant/` | 3 | no IDs |
 
 `PKGVER-021` is reserved: the "AI Recommendations Tab" item has an ID but its page is not in the repository yet.
@@ -225,6 +225,7 @@ Use `-` after `Related Design Items:` and `Related API:` when there is nothing t
 - [AsyncAPI 3.0 - DocView](./contract-types/asyncapi-doc-view.md)
 - [AsyncAPI Publishing](./contract-types/asyncapi-publishing.md)
 - [AsyncAPI](./contract-types/asyncapi.md)
+- [JavaAPI](./contract-types/javaapi.md)
 
 ### AI assistant
 

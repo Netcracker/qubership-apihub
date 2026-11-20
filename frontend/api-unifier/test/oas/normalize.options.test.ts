@@ -223,7 +223,7 @@ describe('normalize options', () => {
     expect(result).toEqual(data)
   })
 
-  it('mark synthethic allOf', () => {
+  it('mark synthetic allOf', () => {
     const data = {
       openapi: '3.0.0',
       paths: {

@@ -1,19 +1,3 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import type { ReactElement } from 'react'
 import React, { useMemo } from 'react'
 import { useForm } from 'react-hook-form'
@@ -22,6 +6,8 @@ import type { VersionStatus } from '../entities/version-status'
 import { DRAFT_VERSION_STATUS, NO_PREVIOUS_RELEASE_VERSION_OPTION } from '../entities/version-status'
 import type { VersionDialogFormProps, VersionFormData } from '../components/VersionDialogForm'
 import { VersionDialogForm } from '../components/VersionDialogForm'
+import type { Package } from '../entities/packages'
+import { DASHBOARD_KIND, PACKAGE_KIND } from '../entities/packages'
 
 const meta: Meta<typeof VersionDialogForm> = {
   component: VersionDialogForm,
@@ -64,6 +50,29 @@ export const DefaultStory: Story = {
     isPublishing: false,
     hideDescriptorField: true,
     hideDescriptorVersionField: true,
+  },
+  render: StoryComponent,
+}
+
+const CURRENT_PACKAGE: Package = {
+  key: 'QS.WS.CURRENT',
+  alias: 'CURRENT',
+  name: 'Current package',
+  kind: PACKAGE_KIND,
+}
+
+export const WithPreviousVersionPackageStory: Story = {
+  name: 'With previous version package',
+  args: {
+    ...DefaultStory.args,
+    packageObj: CURRENT_PACKAGE,
+    previousVersionsPackageKey: CURRENT_PACKAGE.key,
+    previousVersionPackages: [
+      CURRENT_PACKAGE,
+      { key: 'QS.WS.OTHER', alias: 'OTHER', name: 'Other package', kind: PACKAGE_KIND },
+      { key: 'QS.WS.DASHBOARD', alias: 'DASHBOARD', name: 'Some dashboard', kind: DASHBOARD_KIND },
+    ],
+    hidePreviousVersionPackageField: false,
   },
   render: StoryComponent,
 }

@@ -1,0 +1,15 @@
+left:
+  keep: 1
+  inner:
+    keep: 2
+    value: l2
+middle:
+  keep: 3
+  inner:
+    keep: 4
+    value: same
+right:
+  keep: 5
+  inner:
+    keep: 6
+    value: r2

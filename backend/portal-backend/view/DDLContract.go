@@ -41,6 +41,10 @@ type DdlChangedEntityView struct {
 	ComparisonInternalDocumentId string         `json:"comparisonInternalDocumentId"`
 	DdlEntityData                *DdlEntityData `json:"ddlEntityData,omitempty"`
 	PreviousDdlEntityData        *DdlEntityData `json:"previousDdlEntityData,omitempty"`
+	// Changes is populated only for callers that set DdlChangesReq.IncludeChanges (the xlsx export).
+	// The list endpoint leaves it empty and serves per-entity changes from
+	// GET /ddl/entities/{ddlEntityId}/changes instead.
+	Changes []interface{} `json:"changes,omitempty"`
 }
 
 type DdlChangedEntitiesView struct {
@@ -58,6 +62,8 @@ type DdlChangesReq struct {
 	TextFilter               string
 	Limit                    int
 	Offset                   int
+	// IncludeChanges makes the result carry each entity's individual changes.
+	IncludeChanges bool
 }
 
 const DdlKindTable = "table"

@@ -1,21 +1,6 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import { Editor, exportDocumentMatcher, exportDocumentsMatcher, loadFileAsString, LocalRegistry } from './helpers'
 import {
+  _TemplateResolver,
   BUILD_TYPE,
   ExportRestOperationsGroupBuildConfig,
   FILE_FORMAT_HTML,
@@ -24,6 +9,7 @@ import {
   TRANSFORMATION_KIND_MERGED,
   TRANSFORMATION_KIND_REDUCED,
 } from '../src'
+import { generateHtmlPage, generateIndexHtmlPage, generateLegalStatementPage } from '../src/utils/export'
 import { loadYaml } from '@netcracker/qubership-apihub-api-unifier'
 // import fs from 'fs/promises'
 // import AdmZip = require('adm-zip')
@@ -436,3 +422,58 @@ describe('Export test', () => {
     expect(await result.exportDocuments[0].data.text()).toEqual(expectedResult)
   })
 })
+
+describe('Export template values', () => {
+  // In a replacement string of String.replace, $& expands to the placeholder.
+  const VALUE = 'a$&b'
+
+  test('should keep a dollar sign before an escaped character of the document in the html page', async () => {
+    const page = await generateHtmlPage('\'$\'', 'title', 'package', 'version', templateResolver({
+      'page.html': '{{spec}}',
+    }))
+
+    expect(await page.text()).toEqual('&#39;$&#39;')
+  })
+
+  test('should keep a replacement pattern in the values of the html page', async () => {
+    const page = await generateHtmlPage('{}', VALUE, VALUE, VALUE, templateResolver({
+      'page.html': '{{fileTitle}}|{{packageName}}|{{version}}|{{breadcrumbs}}',
+    }))
+
+    expect(await page.text()).toEqual(
+      `${VALUE}|${VALUE}|${VALUE}|` +
+      `<div class="breadcrumbs"><a href="index.html">Table of contents</a> > <span>${VALUE}</span></div>`,
+    )
+  })
+
+  test('should keep a replacement pattern in the values of the index page', async () => {
+    const blob = await generateIndexHtmlPage(
+      VALUE,
+      VALUE,
+      [{ filename: `${VALUE}.html`, data: new Blob() }],
+      templateResolver({
+        'index.html': '{{packageName}}|{{version}}|{{markdownItScript}}|{{readmeHtml}}|{{htmlList}}',
+        'scripts/markdown-it.min.js': VALUE,
+      }),
+      VALUE,
+    )
+
+    const page = await blob.text()
+
+    expect(page.startsWith(`${VALUE}|${VALUE}|<script>${VALUE}</script>|`)).toBe(true)
+    expect(page).toContain(`md.render("${VALUE}")`)
+    expect(page).toContain(`<li><a href="${VALUE}.html">${VALUE}</a></li>`)
+  })
+
+  test('should keep a replacement pattern in the values of the legal statement page', async () => {
+    const template = new Blob(['{{packageName}}|{{version}}|{{backLinkFilename}}'])
+
+    const page = await generateLegalStatementPage(VALUE, VALUE, template, VALUE)
+
+    expect(await page.text()).toEqual(`${VALUE}|${VALUE}|${VALUE}`)
+  })
+})
+
+function templateResolver(templates: Record<string, string>): _TemplateResolver {
+  return async templatePath => new Blob([templates[templatePath] ?? ''])
+}

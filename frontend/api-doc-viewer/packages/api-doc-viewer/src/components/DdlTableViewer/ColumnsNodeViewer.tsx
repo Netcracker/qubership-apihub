@@ -1,3 +1,4 @@
+import { cn } from "@apihub/utils/common/cn"
 import { useDisplayMode } from "@apihub/contexts/DisplayModeContext"
 import { LevelContext, useLevelContext } from "@apihub/contexts/LevelContext"
 import { buildRowDiffProps, toNodeDiffState } from "@apihub/components/shared-components/diffs/node-diff-props"
@@ -103,7 +104,7 @@ const ColumnsNodePlainViewer: FC<ColumnsNodePlainViewerProps> = (props) => {
   }
 
   return (
-    <div data-testid="ddl-columns-node-viewer" className="flex flex-col">
+    <div data-testid="ddl-columns-node-viewer" className={cn("flex flex-col")}>
       <TitleRow
         data-precededby={precededBy}
         value={value?.title ?? 'Columns'}
@@ -160,7 +161,7 @@ const ColumnsNodeWithDiffsViewer: FC<ColumnsNodeWithDiffsViewerProps> = (props) 
   }
 
   return (
-    <div data-testid="ddl-columns-node-viewer" className="flex flex-col">
+    <div data-testid="ddl-columns-node-viewer" className={cn("flex flex-col")}>
       <TitleRow
         data-precededby={precededBy}
         value={value?.title ?? 'Columns'}

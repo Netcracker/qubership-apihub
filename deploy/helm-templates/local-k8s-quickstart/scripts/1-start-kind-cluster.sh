@@ -13,6 +13,6 @@ nodes:
     hostPort: 443
     protocol: TCP
 EOF
-echo "---Start Ingres Controler set up---"
+echo "---Start Ingress Controller set up---"
 kubectl apply -f https://kind.sigs.k8s.io/examples/ingress/deploy-ingress-nginx.yaml
 echo "---Complete Kind cluster set up---"

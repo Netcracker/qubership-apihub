@@ -1,5 +1,7 @@
+import { cn } from "@apihub/utils/common/cn"
 import { isBindingsNode, isExtensionsNode, isMessageChannelParametersNode, isServersNode } from "@apihub/utils/async-api/node-type-checkers"
-import { shouldBeDisplayed } from "@apihub/utils/async-api/visibility-checkers"
+import { resolveAsyncApiTextRowVisibility, shouldBeDisplayed } from "@apihub/utils/async-api/visibility-checkers"
+import { useDisplayMode } from "@apihub/contexts/DisplayModeContext"
 import { NodeDiffsSeverityPlacemennt } from "@netcracker/qubership-apihub-next-data-model/model/abstract/tree-with-diffs/tree-node.interface"
 import { AsyncApiTreeNode, AsyncApiTreeNodeWithDiffs } from "@netcracker/qubership-apihub-next-data-model/model/async-api/types/aliases"
 import { AsyncApiTreeNodeKinds } from "@netcracker/qubership-apihub-next-data-model/model/async-api/types/node-kind"
@@ -59,11 +61,14 @@ export const MessageChannelNodeViewer: FC<MessageChannelNodeViewerProps> = (prop
   )
 
   const isTitleDisplayed = useMemo(() => shouldBeDisplayed<AsyncApiTreeNodeValueTypeMessageChannel>(value, nodeDiffs, 'title'), [value, nodeDiffs])
-  const isDescriptionDisplayed = useMemo(() => shouldBeDisplayed<AsyncApiTreeNodeValueTypeMessageChannel>(value, nodeDiffs, 'description'), [value, nodeDiffs])
-  const isSummaryDisplayed = useMemo(() => shouldBeDisplayed<AsyncApiTreeNodeValueTypeMessageChannel>(value, nodeDiffs, 'summary'), [value, nodeDiffs])
+  const displayMode = useDisplayMode()
+  const { showDescription: isDescriptionDisplayed, showSummary: isSummaryDisplayed } = useMemo(
+    () => resolveAsyncApiTextRowVisibility<AsyncApiTreeNodeValueTypeMessageChannel>(value, nodeDiffs, displayMode),
+    [value, nodeDiffs, displayMode],
+  )
 
   return (
-    <div className="flex flex-col">
+    <div className={cn("flex flex-col")}>
       {isTitleDisplayed && (
         <TitleRow
           data-precededby={precededBy}
@@ -114,7 +119,7 @@ export const MessageChannelNodeViewer: FC<MessageChannelNodeViewerProps> = (prop
       )}
 
       {children.length > 0 && (
-        <div className="flex flex-col">
+        <div className={cn("flex flex-col")}>
           {parametersChild && (
             <MessageChannelParametersNodeViewer
               data-precededby={

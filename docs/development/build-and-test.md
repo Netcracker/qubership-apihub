@@ -25,8 +25,9 @@ pnpm exec nx affected -t build test
 - **Project names.** TypeScript projects are named in the `nx.name` field of their `package.json`, for example
   `ui-portal` for `frontend/ui/packages/portal`. Go projects take the module directory name (`portal-backend`). The
   Maven plugin names Java projects `<groupId>:<artifactId>`; the parent project is renamed `java-task-consumer`.
-- **Targets.** A TypeScript project's targets are the scripts of its `package.json`. Go targets come from the
-  `@nx-go/nx-go` plugin, Java targets from `@nx/maven`.
+- **Targets.** A TypeScript project's targets are the scripts of its `package.json`, or only those listed in its
+  `nx.includedScripts`: `api-doc-viewer-root` keeps its convenience aliases out of the graph that way. Go targets
+  come from the `@nx-go/nx-go` plugin, Java targets from `@nx/maven`.
 - **Dependencies.** `build` and `test` build the in-repo dependencies first (`dependsOn: ["^build"]` in
   [`nx.json`](../../nx.json)), so `nx run api-processor:test` builds `api-unifier`, `api-diff`, and the rest before it
   runs the tests.
@@ -120,8 +121,8 @@ They use `podman`; `docker` takes the same arguments.
 | `qubership-apihub-backend` | nothing | `podman build -f backend/portal-backend/Dockerfile backend` |
 | `qubership-api-linter-service` | nothing | `podman build -f backend/api-linter-service/Dockerfile backend` |
 | `qubership-apihub-agents-backend` | nothing | `podman build -f backend/agents-backend/Dockerfile backend` |
-| `qubership-apihub-agent` | nothing | `podman build -f backend/agent/Dockerfile backend/agent` |
-| `qubership-apihub-test-service` | nothing | `podman build -f backend/test-service/Dockerfile backend/test-service` |
+| `qubership-apihub-agent` | nothing | `podman build -f backend/agent/Dockerfile backend` |
+| `qubership-apihub-test-service` | nothing | `podman build -f backend/test-service/Dockerfile backend` |
 | `qubership-apihub-ui` | `pnpm exec nx run-many -t build -p ui-portal,ui-agents` | `podman build -f frontend/ui/Dockerfile .` |
 | `qubership-apihub-build-task-consumer` | `pnpm exec nx run build-task-consumer:build`, then `pnpm deploy --filter=./frontend/build-task-consumer --prod .deploy/build-task-consumer` | `podman build -f frontend/build-task-consumer/Dockerfile .` |
 | `qubership-apihub-java-task-consumer` | `pnpm exec nx run java-task-consumer:build` | `podman build backend/java-task-consumer` |
@@ -153,7 +154,7 @@ configuration `showcase`. The list of published Storybooks is
 
 ## Screenshot tests
 
-`api-doc-viewer`, `apispec-view`, and `class-view` have screenshot tests. Each run builds the Storybook, serves it,
+`api-doc-viewer` and `class-view` have screenshot tests. Each run builds the Storybook, serves it,
 opens every story in Chrome, and compares the result with the reference images committed next to the tests. Chrome
 runs in a container, so the pixels match CI on any operating system.
 
@@ -165,9 +166,13 @@ pnpm exec nx run class-view:screenshot-test
   ([`tools/jest-chrome-in-docker-environment`](../../tools/jest-chrome-in-docker-environment/)) starts Chrome with the
   `podman` command. Set `DOCKER_BINARY=docker` to use Docker instead. On Windows, run Podman Desktop with its WSL
   machine.
+- **WSL containers work on Windows too.** Set `DOCKER_BINARY=wslc` to start Chrome with `wslc.exe`, which WSL 3.0
+  and later include. Run the tests from PowerShell or Git Bash: `wslc` cannot be called from inside a WSL
+  distribution. `wslc` keeps its own images, so the first run pulls the test image again. Headful runs need host
+  networking, which `wslc` does not support, so keep `headless: true` in the Puppeteer config.
 - **Chrome in the container must reach the host.** The environment looks up the host address from inside the
-  container (`host.docker.internal`, then the container gateway) and checks it on the Storybook port. When none
-  answers, the run stops in `globalSetup` with `Could not resolve IP address of host machine`.
+  container (`host.docker.internal`, the container gateway, then `host.wslc.internal`) and checks it on the Storybook
+  port. When none answers, the run stops in `globalSetup` with `Could not resolve IP address of host machine`.
 - **Update the reference images** after an intended visual change with the `regenerate-screenshots` script, for
   example `pnpm --filter @netcracker/qubership-apihub-class-view run regenerate-screenshots`. Commit the new images
   with the change and look at each one before you do.

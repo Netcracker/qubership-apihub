@@ -1,19 +1,3 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import { buildFromDdl } from '@netcracker/qubership-apihub-ddlapi/parser'
 import type { Realm } from '@netcracker/qubership-apihub-ddlapi'
 import { Diff } from '@netcracker/qubership-apihub-api-diff'
@@ -37,6 +21,7 @@ import {
 import { collectTableDescriptors } from '../../apitypes/ddl/ddl.entities'
 import { DDL_DOCUMENT_TYPE } from '../../apitypes/ddl/ddl.consts'
 import {
+  belongsToPair,
   calculateTotalImpactedSummary,
   createChangeBase,
   createComparisonDocument,
@@ -102,25 +87,6 @@ function indexByEntityId(docInfos: DdlDocInfo[]): Record<DdlEntityId, DdlDocInfo
     }
   }
   return index
-}
-
-/**
- * Whether entity `home` (its global `ddlEntityId` pairing) belongs to the doc pair `[prevDoc, currDoc]`.
- * A changed/moved entity (both sides defined) belongs only to its exact pair; a pure add/remove (one
- * side defined) belongs to whichever surviving pair carries its defined side — its partial doc pair was
- * absorbed by `removeRedundantPartialPairs`. This keeps a cross-file-moved table from being double-counted
- * as remove+add across the two pairs it touches.
- */
-function belongsToPair(
-  home: { previous?: DdlDocInfo; current?: DdlDocInfo },
-  prevDoc: DdlDocInfo | undefined,
-  currDoc: DdlDocInfo | undefined,
-): boolean {
-  const { previous, current } = home
-  if (previous && current) { return previous === prevDoc && current === currDoc }
-  if (current) { return current === currDoc }
-  if (previous) { return previous === prevDoc }
-  return false
 }
 
 function createDdlChange(

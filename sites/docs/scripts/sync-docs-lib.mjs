@@ -7,7 +7,7 @@ import { posix } from 'node:path';
 export const REPO_URL = 'https://github.com/Netcracker/qubership-apihub';
 // Edit links always open develop, where changes land. The other GitHub links (files outside docs/,
 // docs/internal/) show the ref the site is built from: DOCS_GITHUB_REF, which pages.yml sets to the
-// site's ref (main or develop, or SITE_REF), and develop when it is unset.
+// site's ref (develop, or SITE_REF when that variable is set). An unset value also means develop.
 export const EDIT_REF = 'develop';
 export const DEFAULT_GITHUB_REF = 'develop';
 

@@ -1,0 +1,29 @@
+# Super-linter reads this file instead of its own template, so the template's skip list is kept at the start.
+[codespell]
+check-hidden =
+# Template defaults, then lock files, generated and vendored code, and test data that is not prose:
+# generated performance specs, large third-party API samples, api-processor test projects (inputs and expected
+# results), bundled viewer scripts, the MSW worker, SVG path data, and the textlint list of misspellings to replace.
+skip = package-lock.json,*/package-lock.json,*/go.mod,*/go.sum,*.log,.git,
+  pnpm-lock.yaml,*/pnpm-lock.yaml,
+  */performance/*,
+  */api-diff/test/helper/resources/*,
+  */api-processor/test/projects/*,
+  */packages/samples/*,
+  */__fixtures__/*,
+  */templates/scripts/*,
+  *.min.js,
+  */mockServiceWorker.js,
+  *.svg,
+  */.textlintrc
+# Words that are correct here (lowercase, as codespell compares them case-insensitively):
+# - identifiers: pres (pptxgenjs presentation), ot (operation type), afterall (Jest hook), ststr, pasttime, anc (SQL
+#   alias), nd, inh, strat, observ (Mermaid node), archiType (draw.io attribute), operatione, clienta;
+# - PostgreSQL BRIN indexes: brin;
+# - valid English spellings and words: dependant, statics, re-declares, re-declared, pre-empting, unparseable;
+# - deliberate sample text: pares (lorem ipsum), tomatoe (a Markdown sample joke);
+# - other: couldn (from Couldn\'t), copys (Docker COPY instructions).
+ignore-words-list = pres,ot,afterall,ststr,pasttime,anc,nd,inh,strat,observ,architype,operatione,clienta,brin,
+  dependant,statics,re-declares,re-declared,pre-empting,unparseable,pares,tomatoe,couldn,copys
+# The escaped path example te%20xt in the API specs, and base64 blobs in the Postman collections.
+ignore-regex = te.20xt|[A-Za-z0-9+/]{80,}={0,2}

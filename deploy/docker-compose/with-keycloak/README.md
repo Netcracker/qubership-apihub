@@ -83,7 +83,7 @@ For database access connect to localhost:5432 postgres/postgres
 
 **NOTE:** you can use `generate_jwt_pkey.sh` script for generation a value for JWT_PRIVATE_KEY
 
-**NOTE2:** about `SAML_CRT`, `SAML_KEY`, `SAML_CRT_KEYCLOAK` and `SAML_KEY_KEYCLOAK`. You need to generate private key and self-signed certificate in PEM format. For `SAML_CRT` and `SAML_KEY` provide base64 encoded values. For `SAML_CRT_KEYCLOAK` and `SAML_KEY_KEYCLOAK` provide orignial values but with removed first and last lines and removed `\n`
+**NOTE2:** about `SAML_CRT`, `SAML_KEY`, `SAML_CRT_KEYCLOAK` and `SAML_KEY_KEYCLOAK`. You need to generate private key and self-signed certificate in PEM format. For `SAML_CRT` and `SAML_KEY` provide base64 encoded values. For `SAML_CRT_KEYCLOAK` and `SAML_KEY_KEYCLOAK` provide original values but with removed first and last lines and removed `\n`
 
 ### Optional: custom CA for backend HTTPS
 
