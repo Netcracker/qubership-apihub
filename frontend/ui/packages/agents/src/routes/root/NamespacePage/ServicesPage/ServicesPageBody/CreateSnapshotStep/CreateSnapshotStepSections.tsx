@@ -117,7 +117,7 @@ export const CreateSnapshotStepSections: FC<CreateSnapshotStepSectionsProps> = m
   const { createSnapshotPublicationOptions: { config } } = useCreateSnapshotPublicationOptions()
   const [allPublishDetails] = useAllPublicationDetails({ config })
 
-  const rowOf = useCallback((service: Service): SnapshotServiceRow => {
+  const toSnapshotServiceRow = useCallback((service: Service): SnapshotServiceRow => {
     const serviceConfig = config?.serviceConfigs.find(({ serviceId }) => serviceId === service.key)
     const publishDetails = allPublishDetails.find(({ publishId }) => publishId === serviceConfig?.publishId) ??
       EMPTY_PUBLISH_DETAILS
@@ -143,7 +143,7 @@ export const CreateSnapshotStepSections: FC<CreateSnapshotStepSectionsProps> = m
         tooltip: SERVICES_FROM_DISCOVERY_TOOLTIP,
         columns: SNAPSHOT_SERVICE_COLUMNS,
         link: serviceLink,
-        rows: services.map(rowOf),
+        rows: services.map(toSnapshotServiceRow),
       }]
     }
     return [
@@ -153,19 +153,19 @@ export const CreateSnapshotStepSections: FC<CreateSnapshotStepSectionsProps> = m
         tooltip: MATCHING_BASELINE_VERSION_TOOLTIP,
         columns: config ? SNAPSHOT_SERVICE_COLUMNS_WITH_PUBLISH_STATUS : SNAPSHOT_SERVICE_COLUMNS,
         link: serviceLink,
-        rows: split.matching.map(rowOf),
+        rows: split.matching.map(toSnapshotServiceRow),
         selection: { selected: selected, onSelect: onSelect, isSelectable: isSelectable },
       },
       {
         id: NOT_MATCHING_BASELINE_VERSION_SECTION_ID,
         title: 'Not Matching Baseline Version',
         tooltip: NOT_MATCHING_BASELINE_VERSION_TOOLTIP,
-        columns: notMatchingColumnsOf(baselineVersion),
+        columns: getNotMatchingColumns(baselineVersion),
         link: serviceLink,
-        rows: split.notMatching.map(rowOf),
+        rows: split.notMatching.map(toSnapshotServiceRow),
       },
     ]
-  }, [baselineVersion, config, isSelectable, onSelect, rowOf, selected, services, split])
+  }, [baselineVersion, config, isSelectable, onSelect, toSnapshotServiceRow, selected, services, split])
 
   return <ServiceSections sections={sections} searchValue={searchValue} isLoading={areServicesLoading} />
 })
@@ -198,7 +198,7 @@ const CreateSnapshotDetailsTableCell: FC<CreateSnapshotDetailsTableCellProps> = 
 CreateSnapshotDetailsTableCell.displayName = 'CreateSnapshotDetailsTableCell'
 
 // The warning of a service without a baseline package names the version that the service cannot be compared with
-function notMatchingColumnsOf(baselineVersion: VersionKey): ReadonlyArray<ServiceTableColumn<SnapshotServiceRow>> {
+function getNotMatchingColumns(baselineVersion: VersionKey): ReadonlyArray<ServiceTableColumn<SnapshotServiceRow>> {
   const noBaselinePackageTooltip =
     `No baseline package matches this service for baseline version ${baselineVersion}. This service cannot be selected for this snapshot. To link a package, set the service name in the baseline package settings.`
   return [

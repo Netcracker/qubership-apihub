@@ -20,7 +20,6 @@ import {
 
 import { VersionSelectorAutocomplete } from '@netcracker/qubership-apihub-ui-shared/components/Autocompletes/VersionSelectorAutocomplete'
 import { ErrorIndicator } from '@netcracker/qubership-apihub-ui-shared/components/ErrorIndicators/ErrorIndicator'
-import { VersionErrorFormMessage } from '@netcracker/qubership-apihub-ui-shared/components/ErrorIndicators/VersionErrorFormMessage'
 import { VersionErrorIndicator } from '@netcracker/qubership-apihub-ui-shared/components/ErrorIndicators/VersionErrorIndicator'
 import { VersionFieldErrorIndicator } from '@netcracker/qubership-apihub-ui-shared/components/ErrorIndicators/VersionFieldErrorIndicator'
 import { InfoHint } from '@netcracker/qubership-apihub-ui-shared/components/InfoHint'
@@ -47,7 +46,7 @@ import {
 } from '../../ServicesPageProvider/servicesSteps'
 import { useResetStepsAfter, useSetStepStatus } from '../../ServicesPageProvider/ServicesStepsProvider'
 import { CreateSnapshotStepSections } from './CreateSnapshotStepSections'
-import { snapshotVersionErrorOf, splitByBaselineVersion } from './snapshotForm'
+import { getSnapshotVersionError, splitByBaselineVersion } from './snapshotForm'
 import { useCreateSnapshot } from './useCreateSnapshot'
 import { useCreateSnapshotStepStatus } from './useCreateSnapshotStepStatus'
 import { useSnapshotBaseline } from './useSnapshotBaseline'
@@ -84,7 +83,7 @@ export const CreateSnapshotStep: FC = memo(() => {
 
   const isRunning = status === RUNNING_STEP_STATUS
   const isFinished = status === COMPLETE_STEP_STATUS || status === ERROR_STEP_STATUS
-  const nameError = snapshotVersionErrorOf(name, baseline)
+  const nameError = getSnapshotVersionError(name, baseline)
   // Until the search of the selected version answers, a package that holds the version can lack it, and the split
   // would put its services under "Not Matching Baseline Version"
   const isSplitShown = name !== '' && baseline !== '' && isBaselineChecked
@@ -253,11 +252,6 @@ export const CreateSnapshotStep: FC = memo(() => {
         </Search>
       </Toolbar>
 
-      <VersionErrorFormMessage
-        message={baselineErrorMessageOf(problem, isBaselineCheckFailed)}
-        data-testid="BaselineErrorMessage"
-      />
-
       <CreateSnapshotStepSections
         services={services}
         areServicesLoading={areServicesLoading}
@@ -286,8 +280,9 @@ const BaselineFieldIndicator: FC<BaselineFieldIndicatorProps> = memo<BaselineFie
   isCheckFailed,
   descriptionId,
 }) => {
+  // Every problem of a baseline version blocks it, so the tooltip asks for another version whatever the problem is
   if (problem.hasProblems) {
-    return <VersionFieldErrorIndicator problem={problem} />
+    return <VersionFieldErrorIndicator problem={problem} tooltip={problem.formHelperText} />
   }
   if (isCheckFailed) {
     return <ErrorIndicator hasProblems tooltip={BASELINE_CHECK_ERROR} data-testid="BaselineCheckErrorIndicator" />
@@ -346,11 +341,4 @@ function useCreateSnapshotStatus(isCreating: boolean): StepStatus {
   const status = isCreating ? RUNNING_STEP_STATUS : publishStatus
   useEffect(() => setStepStatus(CREATE_SNAPSHOT_STEP_KEY, status), [setStepStatus, status])
   return status
-}
-
-function baselineErrorMessageOf(problem: VersionProblemDetails, isCheckFailed: boolean): string | undefined {
-  if (problem.hasProblems) {
-    return problem.formHelperText
-  }
-  return isCheckFailed ? BASELINE_CHECK_ERROR : undefined
 }

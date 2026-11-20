@@ -30,7 +30,7 @@ type ServiceBaseline = NonNullable<Service['baseline']>
  * Returns the error of a snapshot version, or `undefined` for a valid one. An empty version has no error: the field is
  * required, and "Create Snapshot" stays disabled while it is empty.
  */
-export function snapshotVersionErrorOf(snapshotVersion: VersionKey, baselineVersion: VersionKey): string | undefined {
+export function getSnapshotVersionError(snapshotVersion: VersionKey, baselineVersion: VersionKey): string | undefined {
   const restrictedSymbolsCheck = checkVersionRestrictedSymbols(snapshotVersion)
   if (typeof restrictedSymbolsCheck === 'string') {
     return restrictedSymbolsCheck
@@ -68,7 +68,7 @@ export function baselineSearchesForText(
   if (searchText === '') {
     return []
   }
-  return fullBaselinesOf(services).map(({ packageKey }) => ({ packageKey: packageKey, textFilter: searchText }))
+  return getFullBaselines(services).map(({ packageKey }) => ({ packageKey: packageKey, textFilter: searchText }))
 }
 
 /**
@@ -83,7 +83,7 @@ export function baselineSearchesForVersion(
   if (versionKey === '' || versionKey === NO_PREVIOUS_VERSION_OPTION) {
     return []
   }
-  return fullBaselinesOf(services)
+  return getFullBaselines(services)
     .filter(baseline => !holdsVersion(baseline, versionKey))
     .map(({ packageKey }) => ({ packageKey: packageKey, textFilter: versionKey }))
 }
@@ -123,7 +123,7 @@ function holdsVersion(baseline: ServiceBaseline | undefined, versionKey: Version
 }
 
 // Several services can share a baseline package; each package is searched once
-function fullBaselinesOf(services: ReadonlyArray<Service>): ReadonlyArray<ServiceBaseline> {
+function getFullBaselines(services: ReadonlyArray<Service>): ReadonlyArray<ServiceBaseline> {
   const fullBaselinesByPackageKey = new Map<PackageKey, ServiceBaseline>()
   for (const { baseline } of services) {
     if (baseline && baseline.versions.length >= BASELINE_VERSIONS_PAGE_SIZE) {
