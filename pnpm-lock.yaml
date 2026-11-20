@@ -522,8 +522,8 @@ importers:
         specifier: 'catalog:'
         version: 10.6.7(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(rollup@4.63.1)(storybook@10.6.3(@types/react@18.3.31)(prettier@3.9.6)(react@18.3.1))(supports-color@10.2.2)(typescript@6.0.3)(vite@8.3.4(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.8.1)(yaml@2.9.0))
       '@types/fontfaceobserver':
-        specifier: 2.1.0
-        version: 2.1.0
+        specifier: 2.1.3
+        version: 2.1.3
       '@types/jest':
         specifier: 'catalog:'
         version: 30.0.0
@@ -1485,7 +1485,7 @@ importers:
         specifier: ^7.4.3
         version: 7.4.3
       '@types/fontfaceobserver':
-        specifier: ^2.1.2
+        specifier: ^2.1.3
         version: 2.1.3
       '@types/jest':
         specifier: 'catalog:'
@@ -9770,9 +9770,6 @@ packages:
 
   '@types/find-node-modules@2.1.2':
     resolution: {integrity: sha512-5hRcqDclY6MTkHXJBc5q79z5luG+IJRlGR01wluMVMM9lYogYc2sfclXTVU5Edp0Ja4viIOCDI1lXhFRlsNTKA==}
-
-  '@types/fontfaceobserver@2.1.0':
-    resolution: {integrity: sha512-Vqf183RAiFdIjUi4asKqogf2HIfLDnxn+dQo9GCpnsU5QrrsLMA2bkJU1dHRudQlizLybWD61Csd1zAgUQ3JKQ==}
 
   '@types/fontfaceobserver@2.1.3':
     resolution: {integrity: sha512-AewfFg9iUfoUZ4EfKxhBaEuzY2TUS+Hm0vXWMPcJRY7C4wC9XtW20lPVYHTcWVZYq1uthCEa5APl7RAX7jr2Xg==}
@@ -33531,8 +33528,6 @@ snapshots:
   '@types/file-saver@2.0.7': {}
 
   '@types/find-node-modules@2.1.2': {}
-
-  '@types/fontfaceobserver@2.1.0': {}
 
   '@types/fontfaceobserver@2.1.3': {}
 
