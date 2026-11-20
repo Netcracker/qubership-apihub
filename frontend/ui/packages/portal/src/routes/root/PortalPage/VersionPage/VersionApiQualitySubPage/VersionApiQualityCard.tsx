@@ -16,7 +16,7 @@ import { JSON_FILE_FORMAT, YAML_FILE_FORMAT } from '@netcracker/qubership-apihub
 import { usePublishedDocumentRaw } from '@netcracker/qubership-apihub-ui-shared/hooks/documents/usePublishedDocumentRaw'
 import type { SpecItemUri } from '@netcracker/qubership-apihub-ui-shared/utils/specifications'
 import type { FC, ReactNode } from 'react'
-import { memo, useCallback, useMemo, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import { useParams } from 'react-router'
 import type { OriginalDocumentFileFormat } from './types'
 import { useTransformedRawDocumentByFormat } from './utilities/hooks'
@@ -116,11 +116,9 @@ export const VersionApiQualityCard: FC<VersionApiQualityCardProps> = memo((props
 
   const [selectedRulesets, setSelectedRulesets] = useState<Set<RulesetMetadata>>(new Set())
   const [issueSeverityFilters, setIssueSeverityFilters] = useState<IssueSeverity[]>([])
-  const [previousDocumentSlug, setPreviousDocumentSlug] = useState(selectedDocument?.slug)
-  if (selectedDocument?.slug !== previousDocumentSlug) {
-    setPreviousDocumentSlug(selectedDocument?.slug)
+  useEffect(() => {
     setIssueSeverityFilters([])
-  }
+  }, [selectedDocument?.slug])
   const originalValidationIssues = useMemo(() => flatMapValidationIssues(validationDetails), [validationDetails])
   const validationIssuesFilteredByRulesets = useMemo(() => {
     return filterBySelectedRulesets(originalValidationIssues, selectedRulesets)
