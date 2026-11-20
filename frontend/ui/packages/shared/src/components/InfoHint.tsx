@@ -1,8 +1,9 @@
+import type { PopperProps } from '@mui/material/Popper'
 import type { CSSObject } from '@mui/material/styles'
 import { styled } from '@mui/material/styles'
 import type { SvgIconProps } from '@mui/material/SvgIcon'
 import Tooltip from '@mui/material/Tooltip'
-import { type FC, memo } from 'react'
+import { type FC, memo, type SyntheticEvent } from 'react'
 
 import { InfoContextIcon } from '../icons/InfoContextIcon'
 import type { TestableProps } from './Testable'
@@ -21,6 +22,14 @@ export const VISIBLE_ON_HOVER_HOST_STYLES: CSSObject = {
     },
 }
 
+// In the host, a click in the tooltip would fold a section or switch a step, and a press would start the ripple of a
+// tab or, in a text field, keep the tooltip text from being selected
+const stopPropagation = (event: SyntheticEvent): void => event.stopPropagation()
+const TOOLTIP_POPPER_PROPS: Partial<PopperProps> = {
+  onClick: stopPropagation,
+  onMouseDown: stopPropagation,
+}
+
 type InfoHintProps = {
   tooltip: string
   fontSize?: SvgIconProps['fontSize']
@@ -35,9 +44,9 @@ type InfoHintProps = {
 
 /**
  * An info icon with a tooltip, hidden until its host shows it with {@link VISIBLE_ON_HOVER_HOST_STYLES} or a table
- * row is hovered, unless `alwaysVisible` is set. Unlike `ErrorIndicator`, the icon takes no keyboard focus: it stands
- * inside a control such as a tab, an accordion summary, or a text field, which keeps the focus and carries the text as
- * its description through `descriptionId`.
+ * row is hovered, unless `alwaysVisible` is set. A press or a click in the tooltip does not reach the host. Unlike
+ * `ErrorIndicator`, the icon takes no keyboard focus: it stands inside a control such as a tab, an accordion summary,
+ * or a text field, which keeps the focus and carries the text as its description through `descriptionId`.
  */
 export const InfoHint: FC<InfoHintProps> = memo<InfoHintProps>(({
   tooltip,
@@ -47,7 +56,7 @@ export const InfoHint: FC<InfoHintProps> = memo<InfoHintProps>(({
   'data-testid': dataTestId,
 }) => (
   <>
-    <Tooltip title={tooltip}>
+    <Tooltip title={tooltip} PopperProps={TOOLTIP_POPPER_PROPS}>
       <HintIcon
         className={VISIBLE_ON_HOVER_CLASS_NAME}
         fontSize={fontSize}
@@ -66,4 +75,5 @@ const HintIcon = styled(InfoContextIcon, {
   shouldForwardProp: prop => prop !== 'alwaysVisible',
 })<{ alwaysVisible: boolean }>(({ alwaysVisible }) => ({
   visibility: alwaysVisible ? 'visible' : 'hidden',
+  cursor: 'default',
 }))

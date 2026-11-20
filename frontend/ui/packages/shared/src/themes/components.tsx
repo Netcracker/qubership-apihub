@@ -390,7 +390,7 @@ export function createComponents(): Components<Theme> {
             border: '1px solid #0068FF',
           },
           '&.Mui-error': {
-            border: '2px solid #FF5260',
+            border: '1px solid #FF5260',
           },
           '&.Mui-disabled:before': {
             borderBottomStyle: 'none',

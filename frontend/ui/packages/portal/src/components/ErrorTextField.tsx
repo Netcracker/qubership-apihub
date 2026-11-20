@@ -1,4 +1,4 @@
-import { InputAdornment, styled, TextField, type TextFieldProps } from '@mui/material'
+import { InputAdornment, TextField, type TextFieldProps } from '@mui/material'
 import type { ControllerFieldState, ControllerRenderProps, FieldPath, FieldValues } from 'react-hook-form'
 
 import { ErrorIcon } from '@netcracker/qubership-apihub-ui-shared/icons/ErrorIcon'
@@ -27,7 +27,7 @@ export const ErrorTextField = <
   ...textFieldProps
 }: ErrorTextFieldProps<TFieldValues, TName>): JSX.Element => {
   return (
-    <StyledTextField
+    <TextField
       {...field}
       {...textFieldProps}
       inputProps={{
@@ -55,10 +55,3 @@ export const ErrorTextField = <
 }
 
 ErrorTextField.displayName = 'ErrorTextField'
-
-// Theme uses 2px error vs 1px focus; keep 1px so the field does not jump.
-const StyledTextField = styled(TextField)({
-  '& .MuiFilledInput-root.Mui-error': {
-    borderWidth: 1,
-  },
-})
