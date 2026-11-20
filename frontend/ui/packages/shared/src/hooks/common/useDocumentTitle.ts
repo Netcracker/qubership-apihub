@@ -22,9 +22,9 @@ export const DocumentTitleFormatContext = createContext<DocumentTitleFormat>(cre
  * would overwrite the title set by its child.
  */
 export function useDocumentTitle(segments: DocumentTitleSegments): void {
-  const format = useContext(DocumentTitleFormatContext)
-  const title = buildDocumentTitle(segments, format)
-  const { appName } = format
+  const formatParameters = useContext(DocumentTitleFormatContext)
+  const title = buildDocumentTitle(segments, formatParameters)
+  const { appName } = formatParameters
 
   useEffect(() => {
     document.title = title
