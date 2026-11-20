@@ -1711,8 +1711,8 @@ importers:
         specifier: ^3.21.7
         version: 3.21.7
       '@stoplight/json-schema-generator':
-        specifier: 1.0.1
-        version: 1.0.1
+        specifier: 1.0.2
+        version: 1.0.2(encoding@0.1.13)
       '@stoplight/types':
         specifier: ^13.20.0
         version: 13.20.0
@@ -8732,8 +8732,8 @@ packages:
     resolution: {integrity: sha512-YNcWv3R3n3U6iQYBsFOiWSuRGE5su1tJSiX6pAPRVk7dP0L7lqCteXGzuVRQ0gMZqUl8v1P0+fAKxF6PLo9B5A==}
     engines: {node: '>=8.3.0'}
 
-  '@stoplight/json-schema-generator@1.0.1':
-    resolution: {integrity: sha512-b9WT8Z5M7Nc/O6+JVEMvOdkLR1fePbCHnPlOpnRFxp+pkfM+VRwLaD4toWRpnpBlHXphRfDxFj5/zxcVvqeKDA==}
+  '@stoplight/json-schema-generator@1.0.2':
+    resolution: {integrity: sha512-FzSLFoIZc6Lmw3oRE7kU6YUrl5gBmUs//rY59jdFipBoSyTPv5NyqeyTg5mvT6rY1F3qTLU3xgzRi/9Pb9eZpA==}
     hasBin: true
 
   '@stoplight/json-schema-merge-allof@0.7.8':
@@ -31222,13 +31222,15 @@ snapshots:
       tslib: 2.8.1
       urijs: 1.19.11
 
-  '@stoplight/json-schema-generator@1.0.1':
+  '@stoplight/json-schema-generator@1.0.2(encoding@0.1.13)':
     dependencies:
+      cross-fetch: 3.2.0(encoding@0.1.13)
       json-promise: 1.1.8
       minimist: 1.2.6
       mkdirp: 0.5.6
       pretty-data: 0.40.0
-      request: 2.88.2
+    transitivePeerDependencies:
+      - encoding
 
   '@stoplight/json-schema-merge-allof@0.7.8':
     dependencies:
