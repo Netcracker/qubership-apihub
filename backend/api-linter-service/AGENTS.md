@@ -134,23 +134,57 @@ When a change affects REST contracts or integration behaviour, update the neighb
    database fails, or when PostgreSQL rejects the update for one task; the scoring of the pod pauses while all five
    slots are held this way.
 
-   The score row and its three parts use the status words of the other tasks and processes. The parts start in
-   `not_started`, quality is in `processing` while the lint runs, and each part ends in `success` or `error`. The
-   overall `process_status` is `processing` until the scoring task ends, even after a part has failed. It is set
-   once, in the transaction that ends the scoring task: `error` when a part is in `error` or the scoring task failed,
-   `success` otherwise. The scoring task ends with the same status. For a task that ends through `CompleteScoring`:
-   on `error`, the task `details` list the error texts of the failed parts in the order integrity, BWC, quality,
-   joined by `; `; on `success` they are empty. A task given up after the restart limit keeps the restart diagnostic
-   (`restart count exceeded limit, last error: ...`) in its `details`. It ends the score in `error` even when the three
-   parts are in `success`: `failScoringTask` appends its failure text to `debug`, and the verdict stays the one
-   computed from the parts. The statuses report whether the work ran; the verdict (`status`) reports what the checks
-   found, so a score with breaking changes in external operations ends in `success` with `not_passed`.
+   The `version_score` row stores `status` (the verdict: `passed`, `passed_with_defects`, `not_passed`), `reasons`,
+   `debug`, and one `process_details` jsonb column of type `view.ScoringProcessDetails`, the same type as
+   `processDetails` of the v2 body. `processStatus` always names the state of the work (`not_started`, `processing`,
+   `success`, `error`): at the top of `process_details` and in each of the three checks `publicationIntegrity`,
+   `backwardsCompatibility`, and `qualityCheck`, each `{processStatus, details}`. A check without `details` has no
+   committed result: it has not started, it ended in `error` before a result was committed, or it is a check in
+   `success` of a score calculated before the upgrade that stored none. Empty `details` (`{}`) are a committed
+   result with nothing to report. The start of a validation process resets the row: `processing` with three checks
+   in `not_started`, empty `status`, `reasons`, and `debug`.
 
-   `recomputeOverallStatus` (`service/scoring_task_processor.go`) recomputes `status`,
-   `reasons`, and `debug` from the parts on every write; the row keeps an empty `status` until the overall status is
-   `success` or `error`, and the v2 body omits the field until then. `GET /api/v2/.../scoring` returns the row at any
-   time with the state of each part; the deprecated `GET /api/v1/.../scoring` returns 404 until the overall status is
-   `success` or `error`.
+   The checks start in `not_started`, quality is in `processing` while the lint runs, and each check ends in
+   `success` or `error`. The overall `processStatus` is `processing` until the scoring task ends, even after a check
+   has failed. It is set once, in the transaction that ends the scoring task: `error` when a check is in `error` or
+   the scoring task failed, `success` otherwise. The scoring task ends with the same status as the score of its
+   validation process; a task whose score row was replaced or deleted closes on its own. The statuses report
+   whether the work ran; the verdict reports what the checks found, so a score with breaking changes in external
+   operations ends in `success` with `not_passed`.
+
+   Quality ends in `error` when the lint task is in `error` or is missing, and also when the lint task is final and
+   the merged quality details hold an unavailable required result: a required entry in `not_passed` with no errors,
+   written when a required linter failed internally on a document (a failed document task or a failed linted
+   document). The lint task keeps its own outcome. The quality entry of a failed linter stays `not_passed` (required)
+   or `passed` (optional) with zero counts and the diagnostic in `internalErrors`; that text is not copied to
+   `debug`. A new entry takes its `fileId` from its document task; entries of scores calculated before the upgrade
+   have none, and an empty value is omitted.
+
+   `debug` holds the internal failures in commit order; the transaction that moves a check or the task to `error`
+   appends its line, and `recomputeOverallStatus` never rebuilds it. A line whose cause belongs to one check starts
+   with the check name: `qualityCheck: lint task not found`, `qualityCheck: lint task failed: <details>`,
+   `qualityCheck: <N> required lint result(s) unavailable` (after the lint line when both apply; N counts the
+   unavailable required results, so two required linters that fail on one document give two). `failScoringTask`
+   appends `scoring task failed: <details>` once per give-up. A task that ends through `CompleteScoring` writes the
+   joined `debug` lines (`; `) to its `details`: empty on `success`. A task given up after the restart limit keeps
+   the restart diagnostic (`restart count exceeded limit, last error: ...`) in its `details`, and its error log adds
+   the `debug` lines of the row. A give-up ends the score in `error` even when the three checks are in `success`,
+   with the verdict computed from the checks.
+
+   `recomputeOverallStatus` (`service/scoring_task_processor.go`) recomputes `status` and `reasons` from the row on
+   every write; the row keeps an empty `status` until the overall status is `success` or `error`, and the v2 body
+   omits the field until then. A check in `error` sets `not_passed` and adds a fixed sentence in the order BWC,
+   quality, integrity, before the reasons of the details. The quality sentence is left out when the details hold an
+   unavailable required result, whose entry reason already says what failed. Integrity in `error` has no details in
+   the row or in v2.
+
+   `GET /api/v2/.../scoring` returns the row once it exists, during processing too; before the first queued run of
+   the revision starts, it returns 404. The deprecated `GET /api/v1/.../scoring` returns 404 until the overall status
+   is `success` or `error`, and `MakeVersionScoreView_deprecated` projects the released v1 shape from the row:
+   `status`, `reason`, and `debug` as stored, the details of the three checks, no `fileId`, and the legacy integrity
+   section (`not_passed`, `Internal error: failed to get version content.`, both flags `false`) for integrity in
+   `error` without details. Rows written before the upgrade keep their verdict, `reasons`, and `debug`; migration 5
+   classifies their checks by the legacy markers.
 
    Part updates and the completion or failure of the score go through `withOwnedScoreTx` (`repository/scoring_task.go`):
    it updates the task only while `executor_id` is this executor and the status is `processing`, then locks the score

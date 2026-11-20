@@ -27,15 +27,12 @@ const (
 	maxConcurrentScoringAttempts = 5
 	scoringAttemptTimeout        = 10 * time.Minute
 
-	versionContentMissingError = "version content not available"
-
 	changelogUnreliableBwcReason = "Changelog against the previous version has errors, so the backwards compatibility result is unreliable."
 
 	versionChangesPageLimit = 100
 
-	bwcInternalErrorReason            = "Internal error: failed to calculate backwards compatibility details."
-	qualityInternalErrorReason        = "Internal error: failed to calculate quality check details."
-	versionContentInternalErrorReason = "Internal error: failed to get version content."
+	bwcInternalErrorReason     = "Internal error: failed to calculate backwards compatibility details."
+	qualityInternalErrorReason = "Internal error: failed to calculate quality check details."
 
 	changelogHasErrorsReason          = "Changelog against the previous version has errors."
 	versionHasPublicationErrorsReason = "Version has publication errors."
@@ -235,14 +232,14 @@ func (p *scoringTaskProcessorImpl) runAttempt(ctx context.Context, taskId string
 	var bwcRun sync.WaitGroup
 	var bwcRefused, qualityRefused bool
 	var bwcErr, qualityErr error
-	if !score.PublicationIntegrityStatus.IsTerminal() || !score.BackwardCompatibilityStatus.IsTerminal() {
+	if !score.ProcessDetails.PublicationIntegrity.ProcessStatus.IsTerminal() || !score.ProcessDetails.BackwardsCompatibility.ProcessStatus.IsTerminal() {
 		bwcRun.Add(1)
 		go func() {
 			defer bwcRun.Done()
 			bwcRefused, bwcErr = p.runIntegrityAndBwcChecks(ctx, *task, *score)
 		}()
 	}
-	if !score.QualityCheckStatus.IsTerminal() {
+	if !score.ProcessDetails.QualityCheck.ProcessStatus.IsTerminal() {
 		qualityRefused, qualityErr = p.runQualityCheck(ctx, *task, *score)
 	}
 	bwcRun.Wait()
@@ -266,16 +263,17 @@ func (p *scoringTaskProcessorImpl) runAttempt(ctx context.Context, taskId string
 	if score == nil || score.ValidationProcessId != task.ValidationProcessId || !score.PartsFinished() {
 		return nil
 	}
-	var partErrs []string
+	var debugLines []string
 	status, err := p.scoringTaskRepo.CompleteScoring(ctx, *task, func(row *entity.VersionScore) {
-		row.ProcessStatus = view.ScoringProcessSuccess
-		if row.PublicationIntegrityStatus == view.ScoringProcessError ||
-			row.BackwardCompatibilityStatus == view.ScoringProcessError ||
-			row.QualityCheckStatus == view.ScoringProcessError {
-			row.ProcessStatus = view.ScoringProcessError
+		checks := &row.ProcessDetails
+		checks.ProcessStatus = view.ScoringProcessSuccess
+		if checks.PublicationIntegrity.ProcessStatus == view.ScoringProcessError ||
+			checks.BackwardsCompatibility.ProcessStatus == view.ScoringProcessError ||
+			checks.QualityCheck.ProcessStatus == view.ScoringProcessError {
+			checks.ProcessStatus = view.ScoringProcessError
 		}
 		recomputeOverallStatus(row)
-		partErrs = row.Debug
+		debugLines = row.Debug
 	})
 	if err != nil {
 		return err
@@ -284,7 +282,7 @@ func (p *scoringTaskProcessorImpl) runAttempt(ctx context.Context, taskId string
 	case view.ScoringProcessSuccess:
 		log.Infof("Scoring task %s for [ %s | %s@%d ] is completed", task.Id, task.PackageId, task.Version, task.Revision)
 	case view.ScoringProcessError:
-		log.Errorf("Scoring task %s for [ %s | %s@%d ] failed: %s", task.Id, task.PackageId, task.Version, task.Revision, strings.Join(partErrs, "; "))
+		log.Errorf("Scoring task %s for [ %s | %s@%d ] failed: %s", task.Id, task.PackageId, task.Version, task.Revision, strings.Join(debugLines, "; "))
 	}
 	return nil
 }
@@ -322,26 +320,36 @@ func (p *scoringTaskProcessorImpl) runQualityCheck(ctx context.Context, task ent
 		newTasks = append(newTasks, docTask)
 		handledIds = append(handledIds, docTask.Id)
 	}
-	details, status, partErr, err := p.calculateQualityCheck(ctx, lintTask, newTasks)
+	details, status, cause, err := p.calculateQualityCheck(ctx, lintTask, newTasks)
 	if err != nil {
 		return false, fmt.Errorf("failed to calculate quality check: %w", err)
 	}
-	if len(newTasks) == 0 && status == score.QualityCheckStatus {
+	if len(newTasks) == 0 && status == score.ProcessDetails.QualityCheck.ProcessStatus {
 		return false, nil
 	}
+	lintFinished := lintTask != nil && status.IsTerminal()
 	written, err := p.scoringTaskRepo.UpdateQualityCheck(ctx, task, handledIds, func(row *entity.VersionScore) {
-		if !row.QualityCheckStatus.IsTerminal() {
-			if row.QualityCheckDetails == nil {
-				row.QualityCheckDetails = map[view.OpApiType][]view.QualityCheckDetails{}
+		quality := &row.ProcessDetails.QualityCheck
+		if !quality.ProcessStatus.IsTerminal() {
+			if quality.Details == nil {
+				quality.Details = map[view.OpApiType][]view.QualityCheckDetails{}
 			}
 			for apiType, entries := range details {
-				row.QualityCheckDetails[apiType] = append(row.QualityCheckDetails[apiType], entries...)
+				quality.Details[apiType] = append(quality.Details[apiType], entries...)
 			}
-			if status == view.ScoringProcessError && len(row.QualityCheckDetails) == 0 {
-				row.QualityCheckDetails = nil
+			quality.ProcessStatus = status
+			if status == view.ScoringProcessError {
+				row.Debug = append(row.Debug, "qualityCheck: "+cause)
 			}
-			row.QualityCheckStatus = status
-			row.QualityCheckError = partErr
+			if lintFinished {
+				if unavailable := unavailableRequiredResults(quality.Details); unavailable > 0 {
+					quality.ProcessStatus = view.ScoringProcessError
+					row.Debug = append(row.Debug, fmt.Sprintf("qualityCheck: %d required lint result(s) unavailable", unavailable))
+				}
+			}
+			if quality.ProcessStatus == view.ScoringProcessError && len(quality.Details) == 0 {
+				quality.Details = nil
+			}
 		}
 		recomputeOverallStatus(row)
 	})
@@ -367,12 +375,12 @@ func (p *scoringTaskProcessorImpl) runIntegrityAndBwcChecks(ctx context.Context,
 		return false, fmt.Errorf("failed to get version content: %w", err)
 	}
 
-	if !score.PublicationIntegrityStatus.IsTerminal() {
+	if !score.ProcessDetails.PublicationIntegrity.ProcessStatus.IsTerminal() {
 		integrity := calculatePublicationIntegrity(versionContent)
 		written, err := p.scoringTaskRepo.UpdateScore(ctx, task, func(row *entity.VersionScore) {
-			if !row.PublicationIntegrityStatus.IsTerminal() {
-				row.PublicationIntegrityDetails = &integrity
-				row.PublicationIntegrityStatus = view.ScoringProcessSuccess
+			if check := &row.ProcessDetails.PublicationIntegrity; !check.ProcessStatus.IsTerminal() {
+				check.Details = &integrity
+				check.ProcessStatus = view.ScoringProcessSuccess
 			}
 			recomputeOverallStatus(row)
 		})
@@ -385,7 +393,7 @@ func (p *scoringTaskProcessorImpl) runIntegrityAndBwcChecks(ctx context.Context,
 		}
 	}
 
-	if score.BackwardCompatibilityStatus.IsTerminal() {
+	if score.ProcessDetails.BackwardsCompatibility.ProcessStatus.IsTerminal() {
 		return false, nil
 	}
 	bwc, err := p.calculateBackwardsCompatibility(ctx, task.PackageId, version, versionContent)
@@ -393,9 +401,9 @@ func (p *scoringTaskProcessorImpl) runIntegrityAndBwcChecks(ctx context.Context,
 		return false, err
 	}
 	written, err := p.scoringTaskRepo.UpdateScore(ctx, task, func(row *entity.VersionScore) {
-		if !row.BackwardCompatibilityStatus.IsTerminal() {
-			row.BackwardCompatibilityDetails = bwc
-			row.BackwardCompatibilityStatus = view.ScoringProcessSuccess
+		if check := &row.ProcessDetails.BackwardsCompatibility; !check.ProcessStatus.IsTerminal() {
+			check.Details = bwc
+			check.ProcessStatus = view.ScoringProcessSuccess
 		}
 		recomputeOverallStatus(row)
 	})
@@ -410,29 +418,22 @@ func (p *scoringTaskProcessorImpl) runIntegrityAndBwcChecks(ctx context.Context,
 }
 
 func (p *scoringTaskProcessorImpl) failScoringTask(ctx context.Context, task entity.VersionScoringTask, details string) {
-	partErr := fmt.Sprintf("scoring task failed: %s", details)
+	var debugLines []string
 	failed, err := p.scoringTaskRepo.ScoringFailed(ctx, task, details, func(row *entity.VersionScore) {
-		// BWC runs only after the version content was read for integrity, so an unfinished integrity part means the
-		// content never arrived.
-		bwcErr := partErr
-		if !row.PublicationIntegrityStatus.IsTerminal() {
-			bwcErr = versionContentMissingError
-			row.PublicationIntegrityStatus = view.ScoringProcessError
-			row.PublicationIntegrityError = partErr
+		checks := &row.ProcessDetails
+		if !checks.PublicationIntegrity.ProcessStatus.IsTerminal() {
+			checks.PublicationIntegrity.ProcessStatus = view.ScoringProcessError
 		}
-		if !row.BackwardCompatibilityStatus.IsTerminal() {
-			row.BackwardCompatibilityStatus = view.ScoringProcessError
-			row.BackwardCompatibilityError = bwcErr
+		if !checks.BackwardsCompatibility.ProcessStatus.IsTerminal() {
+			checks.BackwardsCompatibility.ProcessStatus = view.ScoringProcessError
 		}
-		if !row.QualityCheckStatus.IsTerminal() {
-			row.QualityCheckStatus = view.ScoringProcessError
-			row.QualityCheckError = partErr
+		if !checks.QualityCheck.ProcessStatus.IsTerminal() {
+			checks.QualityCheck.ProcessStatus = view.ScoringProcessError
 		}
-		row.ProcessStatus = view.ScoringProcessError
+		checks.ProcessStatus = view.ScoringProcessError
+		row.Debug = append(row.Debug, fmt.Sprintf("scoring task failed: %s", details))
 		recomputeOverallStatus(row)
-		if !slices.Contains(row.Debug, partErr) {
-			row.Debug = append(row.Debug, partErr)
-		}
+		debugLines = row.Debug
 	})
 	if err != nil {
 		log.Errorf("Failed to mark scoring task %s as failed, retrying on the next tick: %s", task.Id, err)
@@ -442,7 +443,7 @@ func (p *scoringTaskProcessorImpl) failScoringTask(ctx context.Context, task ent
 		log.Infof("Scoring task %s: failure write refused; task ownership was lost or the score row was replaced or deleted", task.Id)
 		return
 	}
-	log.Errorf("Scoring task %s for [ %s | %s@%d ] failed: %s", task.Id, task.PackageId, task.Version, task.Revision, details)
+	log.Errorf("Scoring task %s for [ %s | %s@%d ] failed: %s; debug: %s", task.Id, task.PackageId, task.Version, task.Revision, details, strings.Join(debugLines, "; "))
 }
 
 func (p *scoringTaskProcessorImpl) attemptFailed(ctx context.Context, taskId string, err error) {
@@ -460,22 +461,21 @@ func (p *scoringTaskProcessorImpl) attemptFailed(ctx context.Context, taskId str
 	}
 }
 
-func (p *scoringTaskProcessorImpl) calculateQualityCheck(ctx context.Context, lintTask *entity.VersionLintTask, tasks []entity.DocumentLintTask) (map[view.OpApiType][]view.QualityCheckDetails, view.ScoringProcessStatus, string, error) {
+func (p *scoringTaskProcessorImpl) calculateQualityCheck(ctx context.Context, lintTask *entity.VersionLintTask, tasks []entity.DocumentLintTask) (details map[view.OpApiType][]view.QualityCheckDetails, status view.ScoringProcessStatus, cause string, err error) {
 	if lintTask == nil {
 		return nil, view.ScoringProcessError, "lint task not found", nil
 	}
 
-	status := view.ScoringProcessProcessing
-	partErr := ""
+	status = view.ScoringProcessProcessing
 	switch lintTask.Status {
 	case view.TaskStatusSuccess:
 		status = view.ScoringProcessSuccess
 	case view.TaskStatusError:
 		status = view.ScoringProcessError
-		partErr = fmt.Sprintf("lint task failed: %s", lintTask.Details)
+		cause = fmt.Sprintf("lint task failed: %s", lintTask.Details)
 	}
 	if len(tasks) == 0 {
-		return nil, status, partErr, nil
+		return nil, status, cause, nil
 	}
 
 	var rulesetIds []string
@@ -508,7 +508,7 @@ func (p *scoringTaskProcessorImpl) calculateQualityCheck(ctx context.Context, li
 		lintedDocMap[lintedDocKey{fileId: doc.FileId, rulesetId: doc.RulesetId}] = doc
 	}
 
-	details := map[view.OpApiType][]view.QualityCheckDetails{}
+	details = map[view.OpApiType][]view.QualityCheckDetails{}
 	for _, task := range tasks {
 		opApiType := view.ApiTypeToOpApiType(task.APIType)
 		if opApiType == "" {
@@ -518,6 +518,7 @@ func (p *scoringTaskProcessorImpl) calculateQualityCheck(ctx context.Context, li
 		var vd view.QualityCheckDetails
 		if task.Status == view.TaskStatusError {
 			vd = view.QualityCheckDetails{
+				FileId:        task.FileId,
 				Linter:        task.Linter,
 				Status:        view.ScoringPassed,
 				Optional:      p.linterConfigService.IsLinterOptional(task.Linter),
@@ -536,11 +537,12 @@ func (p *scoringTaskProcessorImpl) calculateQualityCheck(ctx context.Context, li
 			if err != nil {
 				return nil, "", "", err
 			}
+			vd.FileId = task.FileId
 		}
 		details[opApiType] = append(details[opApiType], vd)
 	}
 
-	return details, status, partErr, nil
+	return details, status, cause, nil
 }
 
 func (p *scoringTaskProcessorImpl) buildValidationDetails(ctx context.Context, doc entity.LintedDocument, ruleset entity.Ruleset) (view.QualityCheckDetails, error) {
@@ -884,36 +886,43 @@ var forbiddenTransitions = map[string]stringList{
 }
 
 func recomputeOverallStatus(score *entity.VersionScore) {
-	score.Debug = []string{}
-	for _, partErr := range []string{score.PublicationIntegrityError, score.BackwardCompatibilityError, score.QualityCheckError} {
-		if partErr != "" {
-			score.Debug = append(score.Debug, partErr)
-		}
-	}
-
 	score.Status = ""
 	score.Reasons = []string{}
-	if !score.ProcessStatus.IsTerminal() {
+	checks := score.ProcessDetails
+	if !checks.ProcessStatus.IsTerminal() {
 		return
 	}
 
 	score.Status = view.ScoringPassed
-	// applyScoringDetails derives the status and the reason from this section.
-	if score.PublicationIntegrityStatus == view.ScoringProcessError && score.PublicationIntegrityDetails == nil {
-		score.PublicationIntegrityDetails = &view.PublicationIntegrityDetails{
-			Status: view.ScoringNotPassed,
-			Reason: versionContentInternalErrorReason,
-		}
-	}
-	if score.BackwardCompatibilityStatus == view.ScoringProcessError {
+	if checks.BackwardsCompatibility.ProcessStatus == view.ScoringProcessError {
 		score.Status = view.ScoringNotPassed
 		score.Reasons = append(score.Reasons, bwcInternalErrorReason)
 	}
-	if score.QualityCheckStatus == view.ScoringProcessError {
+	if checks.QualityCheck.ProcessStatus == view.ScoringProcessError {
 		score.Status = view.ScoringNotPassed
-		score.Reasons = append(score.Reasons, qualityInternalErrorReason)
+		if unavailableRequiredResults(checks.QualityCheck.Details) == 0 {
+			score.Reasons = append(score.Reasons, qualityInternalErrorReason)
+		}
+	}
+	if checks.PublicationIntegrity.ProcessStatus == view.ScoringProcessError {
+		score.Status = view.ScoringNotPassed
+		score.Reasons = append(score.Reasons, entity.VersionContentInternalErrorReason)
 	}
 	applyScoringDetails(score)
+}
+
+// For entries committed by this scorer, a required not_passed entry with no errors is an internal failure: a linter that
+// ran and found errors has a non-zero count, and a failed optional linter is passed.
+func unavailableRequiredResults(details map[view.OpApiType][]view.QualityCheckDetails) int {
+	count := 0
+	for _, entries := range details {
+		for _, entry := range entries {
+			if !entry.Optional && entry.Status == view.ScoringNotPassed && entry.ErrorsCount == 0 {
+				count++
+			}
+		}
+	}
+	return count
 }
 
 func calculatePublicationIntegrity(vc *view.VersionContent) view.PublicationIntegrityDetails {
@@ -967,16 +976,16 @@ func publicationIntegrityReasons(operationTypes []view.VersionOperationType, det
 }
 
 func applyScoringDetails(score *entity.VersionScore) {
-	if score.PublicationIntegrityDetails != nil {
-		if score.PublicationIntegrityDetails.Status == view.ScoringNotPassed {
+	if integrity := score.ProcessDetails.PublicationIntegrity.Details; integrity != nil {
+		if integrity.Status == view.ScoringNotPassed {
 			score.Status = view.ScoringNotPassed
 		}
-		if score.PublicationIntegrityDetails.Reason != "" {
-			score.Reasons = append(score.Reasons, score.PublicationIntegrityDetails.Reason)
+		if integrity.Reason != "" {
+			score.Reasons = append(score.Reasons, integrity.Reason)
 		}
 	}
 
-	for _, bwc := range score.BackwardCompatibilityDetails {
+	for _, bwc := range score.ProcessDetails.BackwardsCompatibility.Details {
 		if bwc.Status == view.ScoringNotPassed {
 			score.Status = view.ScoringNotPassed
 		}
@@ -988,7 +997,7 @@ func applyScoringDetails(score *entity.VersionScore) {
 		}
 	}
 
-	for _, qcArr := range score.QualityCheckDetails {
+	for _, qcArr := range score.ProcessDetails.QualityCheck.Details {
 		for _, qc := range qcArr {
 			if qc.Status == view.ScoringNotPassed {
 				score.Status = view.ScoringNotPassed

@@ -1,30 +1,41 @@
 package view
 
 type VersionScore_deprecated struct {
-	Status                       ScoringStatus                              `json:"status"`
-	Reasons                      []string                                   `json:"reason"`
-	Debug                        []string                                   `json:"debug"`
-	PublicationIntegrityDetails  *PublicationIntegrityDetails               `json:"publicationIntegrityDetails,omitempty"`
-	BackwardCompatibilityDetails map[OpApiType]BackwardCompatibilityDetails `json:"backwardsCompatibilityDetails"`
-	QualityCheckDetails          map[OpApiType][]QualityCheckDetails        `json:"qualityCheckDetails"`
+	Status                       ScoringStatus                                  `json:"status"`
+	Reasons                      []string                                       `json:"reason"`
+	Debug                        []string                                       `json:"debug"`
+	PublicationIntegrityDetails  *PublicationIntegrityDetails                   `json:"publicationIntegrityDetails,omitempty"`
+	BackwardCompatibilityDetails map[OpApiType]BackwardCompatibilityDetails     `json:"backwardsCompatibilityDetails"`
+	QualityCheckDetails          map[OpApiType][]QualityCheckDetails_deprecated `json:"qualityCheckDetails"`
 }
 
 type VersionScore struct {
-	Status  ScoringStatus `json:"status,omitempty"`
-	Reasons []string      `json:"reason"`
-	Debug   []string      `json:"debug"`
-	//TODO: unite ScoringProcess and details ?
-	PublicationIntegrityDetails  *PublicationIntegrityDetails               `json:"publicationIntegrityDetails,omitempty"`
-	BackwardCompatibilityDetails map[OpApiType]BackwardCompatibilityDetails `json:"backwardsCompatibilityDetails"`
-	QualityCheckDetails          map[OpApiType][]QualityCheckDetails        `json:"qualityCheckDetails"`
-	Process                      ScoringProcess                             `json:"process"`
+	Status         ScoringStatus         `json:"status,omitempty"`
+	Reasons        []string              `json:"reason"`
+	Debug          []string              `json:"debug"`
+	ProcessDetails ScoringProcessDetails `json:"processDetails"`
 }
 
-type ScoringProcess struct {
-	Status                 ScoringProcessStatus `json:"status"`
-	PublicationIntegrity   ScoringProcessStatus `json:"publicationIntegrity"` //TODO: add error
-	BackwardsCompatibility ScoringProcessStatus `json:"backwardsCompatibility"`
-	QualityCheck           ScoringProcessStatus `json:"qualityCheck"`
+type ScoringProcessDetails struct {
+	ProcessStatus          ScoringProcessStatus        `json:"processStatus"`
+	PublicationIntegrity   PublicationIntegrityCheck   `json:"publicationIntegrity"`
+	BackwardsCompatibility BackwardsCompatibilityCheck `json:"backwardsCompatibility"`
+	QualityCheck           QualityCheck                `json:"qualityCheck"`
+}
+
+type PublicationIntegrityCheck struct {
+	ProcessStatus ScoringProcessStatus         `json:"processStatus"`
+	Details       *PublicationIntegrityDetails `json:"details,omitzero"`
+}
+
+type BackwardsCompatibilityCheck struct {
+	ProcessStatus ScoringProcessStatus                       `json:"processStatus"`
+	Details       map[OpApiType]BackwardCompatibilityDetails `json:"details,omitzero"`
+}
+
+type QualityCheck struct {
+	ProcessStatus ScoringProcessStatus                `json:"processStatus"`
+	Details       map[OpApiType][]QualityCheckDetails `json:"details,omitzero"`
 }
 
 type ScoringProcessStatus string
@@ -66,8 +77,18 @@ type BackwardCompatibilityDetails struct {
 	External2Unknown  int `json:"external2Unknown"`
 }
 
-// TODO: add fileId to response
 type QualityCheckDetails struct {
+	FileId        string        `json:"fileId,omitempty"`
+	Linter        Linter        `json:"linter"`
+	Status        ScoringStatus `json:"status"`
+	Optional      bool          `json:"optional"`
+	Reason        string        `json:"reason"`
+	ErrorsCount   int           `json:"errorsCount"`
+	WarningsCount int           `json:"warningsCount"`
+	InternalError string        `json:"internalErrors,omitempty"`
+}
+
+type QualityCheckDetails_deprecated struct {
 	Linter        Linter        `json:"linter"`
 	Status        ScoringStatus `json:"status"`
 	Optional      bool          `json:"optional"`

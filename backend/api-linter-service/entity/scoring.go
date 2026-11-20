@@ -6,6 +6,8 @@ import (
 	"github.com/Netcracker/qubership-apihub/backend/api-linter-service/view"
 )
 
+const VersionContentInternalErrorReason = "Internal error: failed to get version content."
+
 type VersionScore struct {
 	tableName struct{} `pg:"version_score"`
 
@@ -13,44 +15,62 @@ type VersionScore struct {
 	Version   string `pg:"version,pk,type:varchar,notnull"`
 	Revision  int    `pg:"revision,pk,type:integer,notnull"`
 
-	ScoredAt time.Time `pg:"scored_at,type:timestamp without time zone,notnull"`
+	ScoredAt            time.Time `pg:"scored_at,type:timestamp without time zone,notnull"`
+	ValidationProcessId string    `pg:"validation_process_id,type:varchar"`
 
-	Status  view.ScoringStatus `pg:"status,type:varchar,notnull,use_zero"`
-	Reasons []string           `pg:"reasons,type:character varying ARRAY,array"`
-	Debug   []string           `pg:"debug,type:character varying ARRAY,array"`
-
-	BackwardCompatibilityDetails map[view.OpApiType]view.BackwardCompatibilityDetails `pg:"backward_compatibility_details,type:jsonb"`
-	QualityCheckDetails          map[view.OpApiType][]view.QualityCheckDetails        `pg:"quality_check_details,type:jsonb"`
-	PublicationIntegrityDetails  *view.PublicationIntegrityDetails                    `pg:"publication_integrity_details,type:jsonb"`
-
-	//TODO: rework ???
-	ValidationProcessId         string                    `pg:"validation_process_id,type:varchar"`
-	ProcessStatus               view.ScoringProcessStatus `pg:"process_status,type:varchar,notnull"`
-	PublicationIntegrityStatus  view.ScoringProcessStatus `pg:"publication_integrity_status,type:varchar,notnull"`
-	PublicationIntegrityError   string                    `pg:"publication_integrity_error,type:varchar"` //TODO: investigate why we need a separate error column
-	BackwardCompatibilityStatus view.ScoringProcessStatus `pg:"backward_compatibility_status,type:varchar,notnull"`
-	BackwardCompatibilityError  string                    `pg:"backward_compatibility_error,type:varchar"`
-	QualityCheckStatus          view.ScoringProcessStatus `pg:"quality_check_status,type:varchar,notnull"`
-	QualityCheckError           string                    `pg:"quality_check_error,type:varchar"`
+	Status         view.ScoringStatus         `pg:"status,type:varchar,notnull,use_zero"`
+	Reasons        []string                   `pg:"reasons,type:character varying ARRAY,array"`
+	Debug          []string                   `pg:"debug,type:character varying ARRAY,array"`
+	ProcessDetails view.ScoringProcessDetails `pg:"process_details,type:jsonb,notnull"`
 }
 
 func (s *VersionScore) PartsFinished() bool {
-	return s.PublicationIntegrityStatus.IsTerminal() &&
-		s.BackwardCompatibilityStatus.IsTerminal() &&
-		s.QualityCheckStatus.IsTerminal()
+	return s.ProcessDetails.PublicationIntegrity.ProcessStatus.IsTerminal() &&
+		s.ProcessDetails.BackwardsCompatibility.ProcessStatus.IsTerminal() &&
+		s.ProcessDetails.QualityCheck.ProcessStatus.IsTerminal()
 }
 
 func MakeVersionScoreView_deprecated(ent *VersionScore) *view.VersionScore_deprecated {
 	if ent == nil {
 		return nil
 	}
+	integrity := ent.ProcessDetails.PublicationIntegrity
+	integrityDetails := integrity.Details
+	if integrityDetails == nil && integrity.ProcessStatus == view.ScoringProcessError {
+		integrityDetails = &view.PublicationIntegrityDetails{
+			Status: view.ScoringNotPassed,
+			Reason: VersionContentInternalErrorReason,
+		}
+	}
+	var qualityDetails map[view.OpApiType][]view.QualityCheckDetails_deprecated
+	if ent.ProcessDetails.QualityCheck.Details != nil {
+		qualityDetails = make(map[view.OpApiType][]view.QualityCheckDetails_deprecated, len(ent.ProcessDetails.QualityCheck.Details))
+		for apiType, entries := range ent.ProcessDetails.QualityCheck.Details {
+			var deprecatedEntries []view.QualityCheckDetails_deprecated
+			if entries != nil {
+				deprecatedEntries = make([]view.QualityCheckDetails_deprecated, 0, len(entries))
+			}
+			for _, entry := range entries {
+				deprecatedEntries = append(deprecatedEntries, view.QualityCheckDetails_deprecated{
+					Linter:        entry.Linter,
+					Status:        entry.Status,
+					Optional:      entry.Optional,
+					Reason:        entry.Reason,
+					ErrorsCount:   entry.ErrorsCount,
+					WarningsCount: entry.WarningsCount,
+					InternalError: entry.InternalError,
+				})
+			}
+			qualityDetails[apiType] = deprecatedEntries
+		}
+	}
 	return &view.VersionScore_deprecated{
 		Status:                       ent.Status,
 		Reasons:                      ent.Reasons,
 		Debug:                        ent.Debug,
-		PublicationIntegrityDetails:  ent.PublicationIntegrityDetails,
-		BackwardCompatibilityDetails: ent.BackwardCompatibilityDetails,
-		QualityCheckDetails:          ent.QualityCheckDetails,
+		PublicationIntegrityDetails:  integrityDetails,
+		BackwardCompatibilityDetails: ent.ProcessDetails.BackwardsCompatibility.Details,
+		QualityCheckDetails:          qualityDetails,
 	}
 }
 
@@ -59,18 +79,10 @@ func MakeVersionScoreView(ent *VersionScore) *view.VersionScore {
 		return nil
 	}
 	return &view.VersionScore{
-		Status:                       ent.Status,
-		Reasons:                      emptyIfNil(ent.Reasons),
-		Debug:                        emptyIfNil(ent.Debug),
-		PublicationIntegrityDetails:  ent.PublicationIntegrityDetails,
-		BackwardCompatibilityDetails: ent.BackwardCompatibilityDetails,
-		QualityCheckDetails:          ent.QualityCheckDetails,
-		Process: view.ScoringProcess{
-			Status:                 ent.ProcessStatus,
-			PublicationIntegrity:   ent.PublicationIntegrityStatus,
-			BackwardsCompatibility: ent.BackwardCompatibilityStatus,
-			QualityCheck:           ent.QualityCheckStatus,
-		},
+		Status:         ent.Status,
+		Reasons:        emptyIfNil(ent.Reasons),
+		Debug:          emptyIfNil(ent.Debug),
+		ProcessDetails: ent.ProcessDetails,
 	}
 }
 

@@ -151,10 +151,10 @@ func (r *scoringTaskRepositoryImpl) CompleteScoring(ctx context.Context, task en
 		}
 		complete(score)
 		if _, err := tx.Exec("update version_scoring_task set status = ?, details = ?, last_active = now() where id = ? and executor_id = ? and status = ?",
-			view.TaskStatus(score.ProcessStatus), strings.Join(score.Debug, "; "), task.Id, task.ExecutorId, view.TaskStatusProcessing); err != nil {
+			view.TaskStatus(score.ProcessDetails.ProcessStatus), strings.Join(score.Debug, "; "), task.Id, task.ExecutorId, view.TaskStatusProcessing); err != nil {
 			return fmt.Errorf("failed to complete scoring task %s: %w", task.Id, err)
 		}
-		status = score.ProcessStatus
+		status = score.ProcessDetails.ProcessStatus
 		return nil
 	})
 	if err != nil {

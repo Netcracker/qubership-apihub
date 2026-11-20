@@ -46,14 +46,8 @@ create index version_scoring_task_executor_index on version_scoring_task (execut
 where status = 'processing';
 
 alter table version_score
-    add column validation_process_id         varchar,
-    add column process_status                varchar,
-    add column publication_integrity_status  varchar,
-    add column publication_integrity_error   varchar,
-    add column backward_compatibility_status varchar,
-    add column backward_compatibility_error  varchar,
-    add column quality_check_status          varchar,
-    add column quality_check_error           varchar;
+    add column validation_process_id varchar,
+    add column process_details       jsonb;
 
 with markers as (
     select
@@ -87,20 +81,36 @@ outcomes as (
 )
 
 update version_score as s
-set publication_integrity_status  = case when o.integrity_failed then 'error' else 'success' end,
-    backward_compatibility_status = case when o.bwc_failed then 'error' else 'success' end,
-    quality_check_status          = case when o.quality_failed then 'error' else 'success' end,
-    process_status                = case
-        when o.integrity_failed or o.bwc_failed or o.quality_failed then 'error' else 'success'
+set process_details = jsonb_build_object(
+    'processStatus',
+    case when o.integrity_failed or o.bwc_failed or o.quality_failed then 'error' else 'success' end,
+    'publicationIntegrity',
+    jsonb_build_object('processStatus', case when o.integrity_failed then 'error' else 'success' end)
+    || case
+        when o.integrity_failed or nullif(s.publication_integrity_details, 'null'::jsonb) is null then '{}'::jsonb
+        else jsonb_build_object('details', s.publication_integrity_details)
+    end,
+    'backwardsCompatibility',
+    jsonb_build_object('processStatus', case when o.bwc_failed then 'error' else 'success' end)
+    || case
+        when nullif(s.backward_compatibility_details, 'null'::jsonb) is null then '{}'::jsonb
+        else jsonb_build_object('details', s.backward_compatibility_details)
+    end,
+    'qualityCheck',
+    jsonb_build_object('processStatus', case when o.quality_failed then 'error' else 'success' end)
+    || case
+        when nullif(s.quality_check_details, 'null'::jsonb) is null then '{}'::jsonb
+        else jsonb_build_object('details', s.quality_check_details)
     end
+)
 from outcomes as o
 where (s.package_id, s.version, s.revision) = (o.package_id, o.version, o.revision); -- noqa: RF04
 
 alter table version_score
-    alter column process_status set not null,
-    alter column publication_integrity_status set not null,
-    alter column backward_compatibility_status set not null,
-    alter column quality_check_status set not null;
+    alter column process_details set not null,
+    drop column publication_integrity_details,
+    drop column backward_compatibility_details,
+    drop column quality_check_details;
 
 alter table linted_version
     add column validation_process_id varchar;

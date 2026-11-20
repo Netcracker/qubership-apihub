@@ -34,8 +34,8 @@ tags:
   - name: Scoring
     description: >
       API for retrieving version scoring (publication integrity, backwards compatibility, and quality).
-      Every validation of a version starts a scoring process next to the lint; the score is built part by
-      part, and the v2 operation returns the progress of each part.
+      Every validation of a version starts a scoring process next to the lint; the score is built check by
+      check, and the v2 operation returns the progress of each check.
 paths:
   /api/v1/system/version:
     get:
@@ -395,18 +395,22 @@ paths:
       summary: Get scoring for a package version (v1)
       description: >
         Returns the scoring result for the specified package version: overall status, human-readable
-        reasons and optional debug messages, publicationIntegrityDetails, backwardsCompatibilityDetails
+        reasons, debug messages, publicationIntegrityDetails, backwardsCompatibilityDetails
         per API kind (rest, graphql, protobuf, asyncapi), and qualityCheckDetails with linter results
         per API kind. Publication integrity, backwards compatibility, and quality checks are independent;
         overall status is the worst of the three. An unsound published version (APIHUB hasErrors or
         changelogHasErrors) cannot have overall status passed or passed_with_defects.
         The version parameter may include revision (e.g., 1.0.0@1) or omit it to resolve the latest revision.
 
-        Returns 404 until the score is final, that is until process.status of the v2 body is success or error.
-        A queued validation of a version that already has a score resets the score when it starts, so from
-        that moment this operation returns 404 again until the new score is final. When the
-        version content cannot be read from APIHUB, the response has one more reason ("Internal error:
-        failed to calculate backwards compatibility details.") and one more debug line than before.
+        Returns 404 until the score is final, that is until processDetails.processStatus of the v2 body is
+        success or error. A queued validation of a version that already has a score resets the score when it
+        starts, so from that moment this operation returns 404 again until the new score is final. The body is
+        projected from the same score as the v2 body: status, reason, and debug as stored, the details of the
+        three checks, and quality entries without fileId. reason and debug are always present; for a score
+        calculated before the upgrade they can be null, while v2 returns empty arrays for the same score.
+        A scoring task given up while publication integrity and backwards compatibility were both unfinished
+        adds "Internal error: failed to calculate backwards compatibility details." to reason. A score calculated
+        before the upgrade keeps the reasons and lines it has stored.
         Use GET /api/v2/packages/{packageId}/versions/{version}/scoring to read a score while it is being
         built.
       operationId: getScoringForVersion
@@ -462,16 +466,23 @@ paths:
         - Scoring
       summary: Get scoring for a package version
       description: >
-        Returns the score of the specified package version at any time after a validation has started,
-        together with the process state of each part in process. Publication integrity and backwards
-        compatibility are computed as soon as APIHUB returns the version; quality grows while the
-        document lint tasks finish and becomes final when the lint of the version is final. Quality is
-        sampled once per scoring attempt, so an update can wait for the backwards compatibility attempt
-        in flight. While process.status is processing, status is absent and reason is an empty array; both
-        are set when the scoring ends. process.status then becomes error when a part is in error or the
-        scoring task failed, and success otherwise. The process states report whether the work ran; status
-        reports what the checks found. A part that failed for good has the state error; its error text is in
-        debug, and a final score with a failed part has status not_passed.
+        Returns the score of the specified package version once its score row exists, during processing too:
+        the row is created when the first validation process of the revision starts. Before that, while the
+        first validation is still queued, the operation returns 404.
+        processDetails holds the work state of the scoring and the state and result of each check. Read
+        processDetails.processStatus first: processing means that the score is still being built, so read it
+        again later; error means an internal failure, described in debug; success means that status is the
+        verdict of the checks. While processDetails.processStatus is processing, status is absent and reason
+        is an empty array; both are set when the scoring ends. processDetails.processStatus then becomes error
+        when a check is in error or the scoring task failed, and success otherwise. A scoring task that failed
+        after the three checks ended in success gives error, with a verdict computed from the checks. The
+        processStatus values report whether the work ran; status reports what the checks found, so a score
+        with breaking changes in external operations ends in success with not_passed. A final score with a
+        check in error has status not_passed.
+        Publication integrity and backwards compatibility are computed as soon as APIHUB returns the version;
+        quality grows while the document lint tasks finish and becomes final when the lint of the version is
+        final. Quality is sampled once per scoring attempt, so an update can wait for the backwards
+        compatibility attempt in flight.
         The version parameter may include revision (e.g., 1.0.0@1) or omit it to resolve the latest revision.
       operationId: getScoringForVersionV2
       parameters:
@@ -496,120 +507,166 @@ paths:
               schema:
                 $ref: "#/components/schemas/VersionScore"
               examples:
-                bwcDoneQualityRunning:
-                  summary: Integrity and backwards compatibility are known; the lint is still running
-                  value:
-                    reason: []
-                    debug: []
-                    publicationIntegrityDetails:
-                      status: passed
-                      hasErrors: false
-                      changelogHasErrors: false
-                      apiTypes:
-                        rest:
-                          hasErrors: false
-                    backwardsCompatibilityDetails:
-                      rest:
-                        status: passed
-                        reason: ""
-                        breaking: 0
-                        breakingInternal: 0
-                        breakingExternal: 0
-                        breakingUnknown: 0
-                        internal2Unknown: 0
-                        external2Internal: 0
-                        external2Unknown: 0
-                    qualityCheckDetails:
-                      rest:
-                        - linter: spectral
-                          status: passed_with_defects
-                          optional: false
-                          reason: Version contain 3 warnings for linter spectral.
-                          errorsCount: 0
-                          warningsCount: 3
-                    process:
-                      status: processing
-                      publicationIntegrity: success
-                      backwardsCompatibility: success
-                      qualityCheck: processing
-                success:
-                  summary: Every part succeeded
-                  value:
-                    status: passed_with_defects
-                    reason:
-                      - Version contains breaking change(s) in internal(2) operation(s).
-                      - Version contain 3 warnings for linter spectral.
-                    debug: []
-                    publicationIntegrityDetails:
-                      status: passed
-                      hasErrors: false
-                      changelogHasErrors: false
-                      apiTypes:
-                        rest:
-                          hasErrors: false
-                    backwardsCompatibilityDetails:
-                      rest:
-                        status: passed_with_defects
-                        reason: Version contains breaking change(s) in internal(2) operation(s).
-                        breaking: 2
-                        breakingInternal: 2
-                        breakingExternal: 0
-                        breakingUnknown: 0
-                        internal2Unknown: 0
-                        external2Internal: 0
-                        external2Unknown: 0
-                    qualityCheckDetails:
-                      rest:
-                        - linter: spectral
-                          status: passed_with_defects
-                          optional: false
-                          reason: Version contain 3 warnings for linter spectral.
-                          errorsCount: 0
-                          warningsCount: 3
-                    process:
-                      status: success
-                      publicationIntegrity: success
-                      backwardsCompatibility: success
-                      qualityCheck: success
-                error:
-                  summary: The lint of the version failed, so the quality part and the score end in error
+                finding:
+                  summary: Every check succeeded and found breaking changes
                   value:
                     status: not_passed
                     reason:
-                      - "Internal error: failed to calculate quality check details."
-                    debug:
-                      - "lint task failed: failed to save version lint finished status: context deadline exceeded"
-                    publicationIntegrityDetails:
-                      status: passed
-                      hasErrors: false
-                      changelogHasErrors: false
-                      apiTypes:
-                        rest:
-                          hasErrors: false
-                    backwardsCompatibilityDetails:
-                      rest:
-                        status: passed
-                        reason: ""
-                        breaking: 0
-                        breakingInternal: 0
-                        breakingExternal: 0
-                        breakingUnknown: 0
-                        internal2Unknown: 0
-                        external2Internal: 0
-                        external2Unknown: 0
-                    qualityCheckDetails:
-                      rest:
-                        - linter: spectral
+                      - Version contains 2 breaking change(s) in external operation(s).
+                    debug: []
+                    processDetails:
+                      processStatus: success
+                      publicationIntegrity:
+                        processStatus: success
+                        details:
                           status: passed
-                          optional: false
-                          reason: ""
-                          errorsCount: 0
-                          warningsCount: 0
-                    process:
-                      status: error
-                      publicationIntegrity: success
-                      backwardsCompatibility: success
-                      qualityCheck: error
+                          hasErrors: false
+                          changelogHasErrors: false
+                      backwardsCompatibility:
+                        processStatus: success
+                        details:
+                          rest:
+                            status: not_passed
+                            reason: Version contains 2 breaking change(s) in external operation(s).
+                            breaking: 2
+                            breakingInternal: 0
+                            breakingExternal: 2
+                            breakingUnknown: 0
+                            internal2Unknown: 0
+                            external2Internal: 0
+                            external2Unknown: 0
+                      qualityCheck:
+                        processStatus: success
+                        details:
+                          rest:
+                            - fileId: orders.yaml
+                              linter: spectral
+                              optional: false
+                              status: passed
+                              reason: ""
+                              errorsCount: 0
+                              warningsCount: 0
+                bwcInternalError:
+                  summary: The scoring task was given up while backwards compatibility was unfinished
+                  value:
+                    status: not_passed
+                    reason:
+                      - "Internal error: failed to calculate backwards compatibility details."
+                      - Version contain 3 warnings for linter spectral.
+                    debug:
+                      - "scoring task failed: restart count exceeded limit, last error: failed to get changes summary: 500 Internal Server Error"
+                    processDetails:
+                      processStatus: error
+                      publicationIntegrity:
+                        processStatus: success
+                        details:
+                          status: passed
+                          hasErrors: false
+                          changelogHasErrors: false
+                      backwardsCompatibility:
+                        processStatus: error
+                      qualityCheck:
+                        processStatus: success
+                        details:
+                          rest:
+                            - fileId: orders.yaml
+                              linter: spectral
+                              optional: false
+                              status: passed_with_defects
+                              reason: Version contain 3 warnings for linter spectral.
+                              errorsCount: 0
+                              warningsCount: 3
+                requiredLinterFailed:
+                  summary: A required linter failed on a document, so quality and the score end in error
+                  value:
+                    status: not_passed
+                    reason:
+                      - Version contain 1 errors for linter spectral.
+                      - Validation internal error for linter spectral.
+                    debug:
+                      - "qualityCheck: 1 required lint result(s) unavailable"
+                    processDetails:
+                      processStatus: error
+                      publicationIntegrity:
+                        processStatus: success
+                        details:
+                          status: passed
+                          hasErrors: false
+                          changelogHasErrors: false
+                      backwardsCompatibility:
+                        processStatus: success
+                        details: {}
+                      qualityCheck:
+                        processStatus: error
+                        details:
+                          rest:
+                            - fileId: billing.yaml
+                              linter: spectral
+                              status: not_passed
+                              optional: false
+                              reason: Version contain 1 errors for linter spectral.
+                              errorsCount: 1
+                              warningsCount: 0
+                            - fileId: orders.yaml
+                              linter: ai_linter
+                              status: passed
+                              optional: true
+                              reason: ""
+                              errorsCount: 0
+                              warningsCount: 0
+                              internalErrors: AI linter timed out
+                            - fileId: orders.yaml
+                              linter: spectral
+                              status: not_passed
+                              optional: false
+                              reason: Validation internal error for linter spectral.
+                              errorsCount: 0
+                              warningsCount: 0
+                              internalErrors: "spectral: process exited with code 2"
+                integrityNotStarted:
+                  summary: The scoring task was given up while integrity and backwards compatibility were unfinished
+                  value:
+                    status: not_passed
+                    reason:
+                      - "Internal error: failed to calculate backwards compatibility details."
+                      - "Internal error: failed to get version content."
+                    debug:
+                      - "scoring task failed: restart count exceeded limit, last error: failed to get version content: 503 Service Unavailable"
+                    processDetails:
+                      processStatus: error
+                      publicationIntegrity:
+                        processStatus: error
+                      backwardsCompatibility:
+                        processStatus: error
+                      qualityCheck:
+                        processStatus: success
+                        details: {}
+                processing:
+                  summary: Integrity is known; backwards compatibility has not started and the lint is running
+                  value:
+                    reason: []
+                    debug: []
+                    processDetails:
+                      processStatus: processing
+                      publicationIntegrity:
+                        processStatus: success
+                        details:
+                          status: passed
+                          hasErrors: false
+                          changelogHasErrors: false
+                      backwardsCompatibility:
+                        processStatus: not_started
+                      qualityCheck:
+                        processStatus: processing
+                        details:
+                          rest:
+                            - fileId: orders.yaml
+                              linter: spectral
+                              optional: false
+                              status: passed
+                              reason: ""
+                              errorsCount: 0
+                              warningsCount: 0
         "401":
           description: Unauthorized
           content:
@@ -626,7 +683,7 @@ paths:
           description: >
             The package version has no score row (error code 2300): it has never been validated, or its first
             validation is queued and its validation process has not started yet. A version whose score is still
-            being built is returned with 200 and process.status processing.
+            being built is returned with 200 and processDetails.processStatus processing.
           content:
             application/json:
               schema:
@@ -1321,22 +1378,37 @@ components:
             - passed_with_defects
             - not_passed
         reason:
-          description: Human-readable reasons for the overall status.
+          description: >
+            Human-readable reasons for the overall status, as stored with the score. Always present; null for
+            some scores calculated before the upgrade, for which v2 returns an empty array.
           type: array
+          nullable: true
           items:
             type: string
         debug:
-          description: Diagnostic messages for troubleshooting.
+          description: >
+            Diagnostic lines, as stored with the score: the same lines as debug of the v2 body for the same
+            score. Always present; null for some scores calculated before the upgrade, for which v2 returns an
+            empty array.
           type: array
+          nullable: true
           items:
             type: string
         publicationIntegrityDetails:
-          $ref: "#/components/schemas/PublicationIntegrityDetails"
+          allOf:
+            - $ref: "#/components/schemas/PublicationIntegrityDetails"
+            - description: >
+                For a check in error without a committed result, v1 returns the released section: status
+                not_passed, reason "Internal error: failed to get version content.", and both flags false, so a
+                failed check is never mistaken for a sound publication. Absent for a score calculated before the
+                upgrade that has no integrity result.
         backwardsCompatibilityDetails:
           description: >
             Backwards compatibility breakdown per API kind. A property is present only when that API type
-            exists for the version. Supported kinds are rest, graphql, protobuf, and asyncapi.
+            exists for the version. Supported kinds are rest, graphql, protobuf, and asyncapi. Null when the
+            check has no result.
           type: object
+          nullable: true
           properties:
             rest:
               $ref: "#/components/schemas/BackwardsCompatibilityDetails"
@@ -1347,46 +1419,51 @@ components:
             asyncapi:
               $ref: "#/components/schemas/BackwardsCompatibilityDetails"
         qualityCheckDetails:
-          description: Quality check results from each linter, grouped by API kind.
+          description: >
+            Quality check results from each linter, grouped by API kind. Null when the check has no result.
           type: object
+          nullable: true
           properties:
             rest:
               type: array
+              nullable: true
               items:
-                $ref: "#/components/schemas/QualityCheckDetails"
+                $ref: "#/components/schemas/QualityCheckDetails_deprecated"
             graphql:
               type: array
+              nullable: true
               items:
-                $ref: "#/components/schemas/QualityCheckDetails"
+                $ref: "#/components/schemas/QualityCheckDetails_deprecated"
             protobuf:
               type: array
+              nullable: true
               items:
-                $ref: "#/components/schemas/QualityCheckDetails"
+                $ref: "#/components/schemas/QualityCheckDetails_deprecated"
             asyncapi:
               type: array
+              nullable: true
               items:
-                $ref: "#/components/schemas/QualityCheckDetails"
+                $ref: "#/components/schemas/QualityCheckDetails_deprecated"
     VersionScore:
       description: >
-        Score of a package version together with the process state of each part. For a score calculated
-        by this version of the service, the body of a final score has the same fields and values as the v1
-        body, plus process. For a score calculated before the upgrade, v1 returns reason and debug as
-        stored, so they can be null, while v2 returns empty arrays.
+        Score of a package version. v2 nests the results of the checks under processDetails, next to the work
+        state of each check, and has no status until processDetails.processStatus is success or error. A score
+        calculated before the upgrade keeps its stored reason and debug, and can have a check in success
+        without details; v1 returns reason and debug as stored, so they can be null, while v2 returns empty
+        arrays.
       type: object
       required:
         - reason
         - debug
-        - backwardsCompatibilityDetails
-        - qualityCheckDetails
-        - process
+        - processDetails
       properties:
         status:
           description: >
             Overall scoring status derived from publication integrity, backwards-compatibility, and
-            quality-check results; the worst of the three. Absent while process.status is processing;
-            one of the three values once process.status is success or error. passed — no blocking issues;
-            passed_with_defects — non-blocking warnings or minor defects; not_passed — blocking errors,
-            breaking changes, unsound publication (hasErrors or changelogHasErrors), or a part in error.
+            quality-check results; the worst of the three. Absent until processDetails.processStatus is success
+            or error. passed — no blocking issues; passed_with_defects — non-blocking warnings or minor
+            defects; not_passed — blocking errors, breaking changes, unsound publication (hasErrors or
+            changelogHasErrors), or a check in error.
           type: string
           enum:
             - passed
@@ -1394,82 +1471,44 @@ components:
             - not_passed
         reason:
           description: >
-            Human-readable reasons for the overall status. An empty array while process.status is
-            processing.
+            Human-readable reasons for the overall status. An empty array while processDetails.processStatus
+            is processing.
           type: array
           items:
             type: string
         debug:
           description: >
-            Diagnostic messages for troubleshooting: the error texts of the failed parts, in the order
-            publication integrity, backwards compatibility, quality, and the failure text of the scoring task
-            when the task failed. A part error is listed as soon as the part fails.
+            Diagnostic lines of internal failures, in the order in which they were written. A line whose cause
+            belongs to one check starts with the name of the check. The lines are
+            "qualityCheck: lint task not found", "qualityCheck: lint task failed: <details>",
+            "qualityCheck: <N> required lint result(s) unavailable" (N required lint results are missing because
+            their linters failed internally; two required linters that fail on one document give two), and
+            "scoring task failed: <details>" (the scoring task was given up; once per give-up). The failure texts of
+            linters on documents are not copied here; they are in internalErrors of the quality entries. A score
+            calculated before the upgrade keeps its stored lines.
           type: array
           items:
             type: string
-        publicationIntegrityDetails:
-          $ref: "#/components/schemas/PublicationIntegrityDetails"
-        backwardsCompatibilityDetails:
-          description: >
-            Backwards compatibility breakdown per API kind. A property is present only when that API type
-            exists for the version. Supported kinds are rest, graphql, protobuf, and asyncapi. Null while
-            process.backwardsCompatibility is not_started or error.
-          type: object
-          nullable: true
-          properties:
-            rest:
-              $ref: "#/components/schemas/BackwardsCompatibilityDetails"
-            graphql:
-              $ref: "#/components/schemas/BackwardsCompatibilityDetails"
-            protobuf:
-              $ref: "#/components/schemas/BackwardsCompatibilityDetails"
-            asyncapi:
-              $ref: "#/components/schemas/BackwardsCompatibilityDetails"
-        qualityCheckDetails:
-          description: >
-            Quality check results from each linter, grouped by API kind. While process.qualityCheck is
-            processing, it lists the documents whose lint has finished; an empty object when none has. Null
-            while process.qualityCheck is not_started, and when the lint of the version failed before any document
-            lint finished.
-          type: object
-          nullable: true
-          properties:
-            rest:
-              type: array
-              items:
-                $ref: "#/components/schemas/QualityCheckDetails"
-            graphql:
-              type: array
-              items:
-                $ref: "#/components/schemas/QualityCheckDetails"
-            protobuf:
-              type: array
-              items:
-                $ref: "#/components/schemas/QualityCheckDetails"
-            asyncapi:
-              type: array
-              items:
-                $ref: "#/components/schemas/QualityCheckDetails"
-        process:
-          $ref: "#/components/schemas/ScoringProcess"
-    ScoringProcess:
+        processDetails:
+          $ref: "#/components/schemas/ScoringProcessDetails"
+    ScoringProcessDetails:
       description: >
-        Process state of a score. The states report whether the work ran, not what the checks found: a
-        score with breaking changes in external operations ends in success with the status not_passed.
-        publicationIntegrityDetails is absent while publicationIntegrity is not_started. A part in error
-        failed for good; its error text is in debug.
+        Work state of a score and the state and result of each check. The processStatus values report whether
+        the work ran, not what the checks found: a score with breaking changes in external operations ends in
+        success with the status not_passed. processStatus error on a check means that the check ended in error
+        and is not retried; the cause is in debug.
       type: object
       required:
-        - status
+        - processStatus
         - publicationIntegrity
         - backwardsCompatibility
         - qualityCheck
       properties:
-        status:
+        processStatus:
           description: >
             processing until the scoring ends. The final value is set once, when the scoring task ends: error
-            when a part is in error or the scoring task failed, success otherwise. Three parts in success can
-            go with error when the scoring task failed after the parts; the cause is then in debug. The verdict
+            when a check is in error or the scoring task failed, success otherwise. Three checks in success can
+            go with error when the scoring task failed after the checks; the cause is then in debug. The verdict
             (status of VersionScore) is present and reason is set once this state is success or error.
           type: string
           enum:
@@ -1477,33 +1516,112 @@ components:
             - success
             - error
         publicationIntegrity:
-          type: string
-          enum:
-            - not_started
-            - success
-            - error
+          $ref: "#/components/schemas/PublicationIntegrityCheck"
         backwardsCompatibility:
+          $ref: "#/components/schemas/BackwardsCompatibilityCheck"
+        qualityCheck:
+          $ref: "#/components/schemas/QualityCheck"
+    PublicationIntegrityCheck:
+      description: State and result of the publication integrity check.
+      type: object
+      required:
+        - processStatus
+      properties:
+        processStatus:
           type: string
           enum:
             - not_started
             - success
             - error
-        qualityCheck:
-          description: processing while the lint of the version is running.
+        details:
+          allOf:
+            - $ref: "#/components/schemas/PublicationIntegrityDetails"
+            - description: >
+                Absent while the check has no committed result: processStatus is not_started, the check ended in
+                error before an integrity result was committed, or the check is in success on a score calculated
+                before the upgrade that stored no result.
+    BackwardsCompatibilityCheck:
+      description: State and result of the backwards compatibility check.
+      type: object
+      required:
+        - processStatus
+      properties:
+        processStatus:
+          type: string
+          enum:
+            - not_started
+            - success
+            - error
+        details:
+          description: >
+            Backwards compatibility breakdown per API kind. A property is present only when that API type
+            exists for the version. Supported kinds are rest, graphql, protobuf, and asyncapi. Absent while the
+            check has no committed result: processStatus is not_started, the check ended in error before a result
+            was committed, or the check is in success on a score calculated before the upgrade that stored no
+            result. An empty object when the version has no previous version.
+          type: object
+          properties:
+            rest:
+              $ref: "#/components/schemas/BackwardsCompatibilityDetails"
+            graphql:
+              $ref: "#/components/schemas/BackwardsCompatibilityDetails"
+            protobuf:
+              $ref: "#/components/schemas/BackwardsCompatibilityDetails"
+            asyncapi:
+              $ref: "#/components/schemas/BackwardsCompatibilityDetails"
+    QualityCheck:
+      description: State and result of the quality check.
+      type: object
+      required:
+        - processStatus
+      properties:
+        processStatus:
+          description: >
+            processing while the lint of the version is running. error when the lint of the version failed or
+            was not found, when a required linter failed internally on a document, or when the scoring task was
+            given up before the check ended; the cause is in debug.
           type: string
           enum:
             - not_started
             - processing
             - success
             - error
+        details:
+          description: >
+            Quality check results from each linter, grouped by API kind. Absent before any quality result is
+            written, when the lint of the version failed or was not found before any document lint finished, and
+            on a check in success of a score calculated before the upgrade that stored no result. An empty object
+            after a scoring attempt sampled a lint with no finished document, and for a version with no document
+            to lint. Otherwise the stored entries, which grow while processStatus is processing. A give-up of the
+            scoring task also ends the check in error and keeps whatever was stored, an empty object included.
+          type: object
+          properties:
+            rest:
+              type: array
+              nullable: true
+              items:
+                $ref: "#/components/schemas/QualityCheckDetails"
+            graphql:
+              type: array
+              nullable: true
+              items:
+                $ref: "#/components/schemas/QualityCheckDetails"
+            protobuf:
+              type: array
+              nullable: true
+              items:
+                $ref: "#/components/schemas/QualityCheckDetails"
+            asyncapi:
+              type: array
+              nullable: true
+              items:
+                $ref: "#/components/schemas/QualityCheckDetails"
     PublicationIntegrityDetails:
       description: >
         Publication integrity for a package version, derived from APIHUB version flags
         (hasErrors, changelogHasErrors, operationTypes[].hasErrors, contractsSummary.*.hasErrors).
-        Independent of qualityCheckDetails and backwardsCompatibilityDetails. Unsound versions
-        have status not_passed so overall scoring cannot be passed. The section also reports
-        not_passed when the flags could not be read from APIHUB, with the failure named in reason,
-        so a failed check is never mistaken for a sound publication.
+        Independent of the quality and backwards compatibility results. Unsound versions
+        have status not_passed so overall scoring cannot be passed.
       type: object
       required:
         - status
@@ -1570,9 +1688,9 @@ components:
                 some endpoint has publication errors without identifying which one.
     BackwardsCompatibilityDetails:
       description: >
-        Backwards compatibility analysis for one API kind. When the version's changelog has errors
-        (publicationIntegrityDetails.changelogHasErrors), the comparison is incomplete: the status is
-        not_passed and reason says so, while the counts are kept for context only.
+        Backwards compatibility analysis for one API kind. When the version's changelog has errors (the
+        changelogHasErrors flag of the publication integrity result), the comparison is incomplete: the status
+        is not_passed and reason says so, while the counts are kept for context only.
       type: object
       required:
         - status
@@ -1608,6 +1726,51 @@ components:
           type: integer
           description: Number of changes where the audience changed from external to unknown.
     QualityCheckDetails:
+      description: Quality check result from a single linter for one document of one API kind.
+      type: object
+      required:
+        - linter
+        - status
+        - errorsCount
+        - warningsCount
+      properties:
+        fileId:
+          type: string
+          description: >
+            ID of the linted document, taken from its document lint task. Absent on scores calculated before the
+            upgrade; omitted when empty.
+        linter:
+          type: string
+          enum:
+            - spectral
+            - ai_linter
+        status:
+          type: string
+          enum:
+            - passed
+            - passed_with_defects
+            - not_passed
+        optional:
+          description: >
+            Whether this linter is non-blocking. When true, an internal/execution failure of the linter
+            (see internalErrors) does not push the overall score to not_passed; issues found on a
+            successful run still count.
+          type: boolean
+        reason:
+          type: string
+          description: Summary reason for this linter's result.
+        errorsCount:
+          type: integer
+        warningsCount:
+          type: integer
+        internalErrors:
+          type: string
+          description: >
+            Diagnostic of an internal failure of the linter on this document (for example, a runtime or
+            configuration error) instead of validation issues. Omitted when empty. Visible to authenticated
+            API clients with access to scoring results; intended for operators and integrators, not for
+            display in end-user interfaces. The API does not redact or truncate this field in any environment.
+    QualityCheckDetails_deprecated:
       description: Quality check result from a single linter for one API kind.
       type: object
       required:

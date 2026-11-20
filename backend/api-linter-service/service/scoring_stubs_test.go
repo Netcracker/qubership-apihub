@@ -52,14 +52,15 @@ func detachedScore(row *entity.VersionScore) *entity.VersionScore {
 	detached := *row
 	detached.Reasons = slices.Clone(row.Reasons)
 	detached.Debug = slices.Clone(row.Debug)
-	detached.BackwardCompatibilityDetails = maps.Clone(row.BackwardCompatibilityDetails)
-	detached.QualityCheckDetails = maps.Clone(row.QualityCheckDetails)
-	for apiType, entries := range detached.QualityCheckDetails {
-		detached.QualityCheckDetails[apiType] = slices.Clone(entries)
+	checks := &detached.ProcessDetails
+	checks.BackwardsCompatibility.Details = maps.Clone(row.ProcessDetails.BackwardsCompatibility.Details)
+	checks.QualityCheck.Details = maps.Clone(row.ProcessDetails.QualityCheck.Details)
+	for apiType, entries := range checks.QualityCheck.Details {
+		checks.QualityCheck.Details[apiType] = slices.Clone(entries)
 	}
-	if row.PublicationIntegrityDetails != nil {
-		integrity := *row.PublicationIntegrityDetails
-		detached.PublicationIntegrityDetails = &integrity
+	if row.ProcessDetails.PublicationIntegrity.Details != nil {
+		integrity := *row.ProcessDetails.PublicationIntegrity.Details
+		checks.PublicationIntegrity.Details = &integrity
 	}
 	return &detached
 }
@@ -307,9 +308,9 @@ func (r *scoringTaskRepoStub) CompleteScoring(_ context.Context, task entity.Ver
 			return nil
 		}
 		complete(row)
-		owned.Status = view.TaskStatus(row.ProcessStatus)
+		owned.Status = view.TaskStatus(row.ProcessDetails.ProcessStatus)
 		owned.Details = strings.Join(row.Debug, "; ")
-		status = row.ProcessStatus
+		status = row.ProcessDetails.ProcessStatus
 		return nil
 	})
 	return status, err

@@ -19,7 +19,7 @@ func TestGetScoringForVersionDeprecated_ReturnsOnlyAFinalScore(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(string(tt.status), func(t *testing.T) {
 			score := finishedScore()
-			score.ProcessStatus = tt.status
+			score.ProcessDetails.ProcessStatus = tt.status
 			score.Status = view.ScoringPassed
 			repo := &scoringRepoStub{scores: map[int]*inMemoryScore{testRevision: {row: score}}}
 			service := NewScoringService(repo, nil)

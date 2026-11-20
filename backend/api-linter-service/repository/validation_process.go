@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -132,40 +133,28 @@ func (r *validationProcessRepositoryImpl) StartNextProcess(ctx context.Context, 
 			return err
 		}
 
+		processDetails, err := json.Marshal(view.ScoringProcessDetails{
+			ProcessStatus:          view.ScoringProcessProcessing,
+			PublicationIntegrity:   view.PublicationIntegrityCheck{ProcessStatus: view.ScoringProcessNotStarted},
+			BackwardsCompatibility: view.BackwardsCompatibilityCheck{ProcessStatus: view.ScoringProcessNotStarted},
+			QualityCheck:           view.QualityCheck{ProcessStatus: view.ScoringProcessNotStarted},
+		})
+		if err != nil {
+			return fmt.Errorf("failed to encode the initial score of validation process %s: %w", processId, err)
+		}
 		now := time.Now()
+		// A []byte parameter is formatted as bytea, so the JSON is bound as text.
 		_, err = tx.Exec(`insert into version_score (package_id, version, revision, scored_at, status, reasons, debug,
-				backward_compatibility_details, quality_check_details, publication_integrity_details,
-				validation_process_id, process_status,
-				publication_integrity_status, publication_integrity_error,
-				backward_compatibility_status, backward_compatibility_error,
-				quality_check_status, quality_check_error)
-			values (?, ?, ?, ?, '', '{}', '{}',
-				null, null, null,
-				?, ?,
-				?, null,
-				?, null,
-				?, null)
+				validation_process_id, process_details)
+			values (?, ?, ?, ?, '', '{}', '{}', ?, ?::jsonb)
 			on conflict (package_id, version, revision) do update
-			set scored_at                      = excluded.scored_at,
-				status                         = excluded.status,
-				reasons                        = excluded.reasons,
-				debug                          = excluded.debug,
-				backward_compatibility_details = excluded.backward_compatibility_details,
-				quality_check_details          = excluded.quality_check_details,
-				publication_integrity_details  = excluded.publication_integrity_details,
-				validation_process_id          = excluded.validation_process_id,
-				process_status                 = excluded.process_status,
-				publication_integrity_status   = excluded.publication_integrity_status,
-				publication_integrity_error    = excluded.publication_integrity_error,
-				backward_compatibility_status  = excluded.backward_compatibility_status,
-				backward_compatibility_error   = excluded.backward_compatibility_error,
-				quality_check_status           = excluded.quality_check_status,
-				quality_check_error            = excluded.quality_check_error`,
-			packageId, version, revision, now,
-			processId, view.ScoringProcessProcessing,
-			view.ScoringProcessNotStarted,
-			view.ScoringProcessNotStarted,
-			view.ScoringProcessNotStarted)
+			set scored_at             = excluded.scored_at,
+				status                = excluded.status,
+				reasons               = excluded.reasons,
+				debug                 = excluded.debug,
+				validation_process_id = excluded.validation_process_id,
+				process_details       = excluded.process_details`,
+			packageId, version, revision, now, processId, string(processDetails))
 		if err != nil {
 			return fmt.Errorf("failed to reset the score of validation process %s: %w", processId, err)
 		}
