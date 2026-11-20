@@ -9,11 +9,13 @@ import { ActionsIcon } from '../icons/ActionsIcon'
 import { AddIcon } from '../icons/AddIcon'
 import { AddSquareIcon } from '../icons/AddSquareIcon'
 import { BackArrowIcon } from '../icons/BackArrowIcon'
+import { BlockIcon } from '../icons/BlockIcon'
 import { ApiIcon } from '../icons/ApiIcon'
 import { ArrowDown } from '../icons/ArrowDown'
 import { ArrowUp } from '../icons/ArrowUp'
 import { AutomationIcon } from '../icons/AutomationIcon'
 import { CalendarIcon } from '../icons/CalendarIcon'
+import { CancelCircleIcon } from '../icons/CancelCircleIcon'
 import { CertifiedFileIcon } from '../icons/CertifiedFileIcon'
 import { CheckboxCheckedIcon } from '../icons/CheckboxCheckedIcon'
 import { CheckboxDisabledCheckedIcon } from '../icons/CheckboxDisabledCheckedIcon'
@@ -22,6 +24,7 @@ import { CheckboxIcon } from '../icons/CheckboxIcon'
 import { CheckCircleIcon } from '../icons/CheckCircleIcon'
 import { CheckIcon } from '../icons/CheckIcon'
 import { CheckIconMui } from '../icons/CheckIconMui'
+import { ChevronDownIcon } from '../icons/ChevronDownIcon'
 import { ClockBackwardIcon } from '../icons/ClockBackwardIcon'
 import { CloseIcon } from '../icons/CloseIcon'
 import { CloudIcon } from '../icons/CloudIcon'
@@ -81,9 +84,11 @@ import { PlusIcon } from '../icons/PlusIcon'
 import { PortalSettingsIcon } from '../icons/PortalSettingsIcon'
 import { ProtobufIcon } from '../icons/ProtobufIcon'
 import { PublishIcon } from '../icons/PublishIcon'
+import { RequiredMarkIcon } from '../icons/RequiredMarkIcon'
 import { RestApiIcon } from '../icons/RestApiIcon'
 import { RobotFilledIcon } from '../icons/RobotFilledIcon'
 import { RobotIcon } from '../icons/RobotIcon'
+import { SearchIcon } from '../icons/SearchIcon'
 import { SegmentItemIcon } from '../icons/SegmentItemIcon'
 import { SendIcon } from '../icons/SendIcon'
 import { ServicesIcon } from '../icons/ServicesIcon'
@@ -198,8 +203,11 @@ const CUSTOM_ICONS_REGISTRY: readonly IconItem<CustomIconComponent>[] = [
 const MUI_ICONS_REGISTRY: readonly IconItem<MuiIconComponent>[] = [
   { name: 'ActionsIcon', component: ActionsIcon },
   { name: 'BackArrowIcon', component: BackArrowIcon },
+  { name: 'BlockIcon', component: BlockIcon },
+  { name: 'CancelCircleIcon', component: CancelCircleIcon },
   { name: 'CheckCircleIcon', component: CheckCircleIcon },
   { name: 'CheckIconMui', component: CheckIconMui },
+  { name: 'ChevronDownIcon', component: ChevronDownIcon },
   { name: 'ClockBackwardIcon', component: ClockBackwardIcon },
   { name: 'CloseIcon', component: CloseIcon },
   { name: 'CloudUploadIcon', component: CloudUploadIcon },
@@ -223,8 +231,10 @@ const MUI_ICONS_REGISTRY: readonly IconItem<MuiIconComponent>[] = [
   { name: 'PinIcon', component: PinIcon },
   { name: 'PlayIcon', component: PlayIcon },
   { name: 'PlusIcon', component: PlusIcon },
+  { name: 'RequiredMarkIcon', component: RequiredMarkIcon },
   { name: 'RobotFilledIcon', component: RobotFilledIcon },
   { name: 'RobotIcon', component: RobotIcon },
+  { name: 'SearchIcon', component: SearchIcon },
   { name: 'SendIcon', component: SendIcon },
   { name: 'ShareableIcon', component: ShareabilityShareableIcon },
   { name: 'StopIcon', component: StopIcon },

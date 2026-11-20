@@ -5,7 +5,7 @@ import { Autocomplete, Box, debounce, InputLabel } from '@mui/material'
 import type { AutocompleteValue } from '@mui/base'
 import type { TestableProps } from './Testable'
 import { OptionItem } from './OptionItem'
-import { LargeTextField } from './LargeTextField'
+import { DefaultTextField } from './TextFields/DefaultTextField'
 import { DEFAULT_DEBOUNCE } from '../utils/constants'
 import type { Package, Packages } from '../entities/packages'
 import type { AutocompleteInputChangeReason } from '@mui/base/AutocompleteUnstyled/useAutocomplete'
@@ -69,10 +69,9 @@ export const PackageSelector: FC<PackageSelectorProps> = memo<PackageSelectorPro
         isOptionEqualToValue={(option, value) => option.key === value.key}
         getOptionLabel={(option) => option?.name ?? ''}
         renderInput={(params) => (
-          <LargeTextField
+          <DefaultTextField
             {...params}
             placeholder={placeholder}
-            margin="none"
           />
         )}
         onInputChange={debounce(onInputChange, DEFAULT_DEBOUNCE)}

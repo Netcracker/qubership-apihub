@@ -25,7 +25,7 @@ import {
   checkVersionNotEqualToPrevious,
   checkVersionRestrictedSymbols,
 } from '@netcracker/qubership-apihub-ui-shared/utils/validations'
-import { BorderedTextField } from '@netcracker/qubership-apihub-ui-shared/components/BorderedTextField'
+import { OutlinedTextField } from '@netcracker/qubership-apihub-ui-shared/components/TextFields/OutlinedTextField'
 import { SearchBar } from '@netcracker/qubership-apihub-ui-shared/components/SearchBar'
 import { VersionSelectorAutocomplete } from '@netcracker/qubership-apihub-ui-shared/components/Autocompletes/VersionSelectorAutocomplete'
 import { VersionErrorFormMessage } from '@netcracker/qubership-apihub-ui-shared/components/ErrorIndicators/VersionErrorFormMessage'
@@ -126,12 +126,11 @@ export const PromoteVersionStep: FC = memo(() => {
               value={value}
               options={nameOptions}
               renderInput={(params) => (
-                <BorderedTextField
+                <OutlinedTextField
                   {...params}
                   data-testid="VersionAutocomplete"
                   required
                   label="Version"
-                  margin="none"
                   onChange={onChange}
                   error={!!formErrors.version}
                 />
@@ -154,12 +153,11 @@ export const PromoteVersionStep: FC = memo(() => {
                 <VersionFieldErrorIndicator problem={previousVersionProblem}/>
               )}
               renderInput={(params) => (
-                <BorderedTextField
+                <OutlinedTextField
                   {...params}
                   data-testid="PreviousVersionAutocomplete"
                   required
                   label="Previous Version"
-                  margin="none"
                   error={previousVersionProblem.isBlocking}
                   onChange={onChange}
                 />
@@ -173,21 +171,20 @@ export const PromoteVersionStep: FC = memo(() => {
           name="status"
           control={control}
           render={({ field }) => (
-            <BorderedTextField
+            <OutlinedTextField
               {...field}
               data-testid="StatusSelect"
               select required
               type="select"
               disabled={areControlsDisabled}
               label="Status"
-              margin="none"
               SelectProps={{
                 renderValue: () => <StatusSelectValue status={status} isReleaseRefused={isReleaseRefused}/>,
               }}
             >
               <MenuItem value={DRAFT_VERSION_STATUS}>Draft</MenuItem>
               <MenuItem value={RELEASE_VERSION_STATUS}>Release</MenuItem>
-            </BorderedTextField>
+            </OutlinedTextField>
           )}
         />
 

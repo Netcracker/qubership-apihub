@@ -9,7 +9,7 @@ import type { Namespace } from '@netcracker/qubership-apihub-ui-shared/entities/
 import { useSearchParam } from '@netcracker/qubership-apihub-ui-shared/hooks/searchparams/useSearchParam'
 import { WORKSPACE_SEARCH_PARAM } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
 import { OptionItem } from '@netcracker/qubership-apihub-ui-shared/components/OptionItem'
-import { LargeTextField } from '@netcracker/qubership-apihub-ui-shared/components/LargeTextField'
+import { DefaultTextField } from '@netcracker/qubership-apihub-ui-shared/components/TextFields/DefaultTextField'
 import { useLocalIdpAuthToken } from './useLocalIdpAuthToken'
 
 export const NamespaceSelector: FC = memo(() => {
@@ -44,10 +44,9 @@ export const NamespaceSelector: FC = memo(() => {
           isOptionEqualToValue={(option, value) => option.namespaceKey === value.namespaceKey}
           getOptionLabel={(option) => option?.namespaceKey ?? ''}
           renderInput={(params) => (
-            <LargeTextField
+            <DefaultTextField
               {...params}
               placeholder={'Namespace'}
-              margin="none"
             />
           )}
           onChange={(_, value) => {

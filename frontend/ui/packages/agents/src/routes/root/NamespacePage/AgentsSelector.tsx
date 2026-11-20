@@ -9,7 +9,7 @@ import type { Agent } from '@netcracker/qubership-apihub-ui-shared/entities/agen
 import { WORKSPACE_SEARCH_PARAM } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
 import { useSearchParam } from '@netcracker/qubership-apihub-ui-shared/hooks/searchparams/useSearchParam'
 import { OptionItem } from '@netcracker/qubership-apihub-ui-shared/components/OptionItem'
-import { LargeTextField } from '@netcracker/qubership-apihub-ui-shared/components/LargeTextField'
+import { DefaultTextField } from '@netcracker/qubership-apihub-ui-shared/components/TextFields/DefaultTextField'
 import { useLocalIdpAuthToken } from './useLocalIdpAuthToken'
 
 export const AgentsSelector: FC = memo(() => {
@@ -53,10 +53,9 @@ export const AgentsSelector: FC = memo(() => {
         isOptionEqualToValue={(option, value) => option.agentId === value.agentId}
         getOptionLabel={(option) => option?.agentId ?? ''}
         renderInput={(params) => (
-          <LargeTextField
+          <DefaultTextField
             {...params}
             placeholder={'Cloud'}
-            margin="none"
           />
         )}
         onChange={handleAgentChange}
