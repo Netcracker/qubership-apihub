@@ -96,6 +96,7 @@ import {
 import { ShareIcon } from '../icons/ShareIcon'
 import { SliderIcon } from '../icons/SliderIcon'
 import { SnapshotsIcon } from '../icons/SnapshotsIcon'
+import { SortIcon } from '../icons/SortIcon'
 import { StopIcon } from '../icons/StopIcon'
 import { SwaggerIcon } from '../icons/SwaggerIcon'
 import { ToLeftIcon } from '../icons/ToLeftIcon'
@@ -183,6 +184,7 @@ const CUSTOM_ICONS_REGISTRY: readonly IconItem<CustomIconComponent>[] = [
   { name: 'ShareIcon', component: ShareIcon },
   { name: 'SliderIcon', component: SliderIcon },
   { name: 'SnapshotsIcon', component: SnapshotsIcon },
+  { name: 'SortIcon', component: SortIcon },
   { name: 'SwaggerIcon', component: SwaggerIcon },
   { name: 'ToLeftIcon', component: ToLeftIcon },
   { name: 'ToRightIcon', component: ToRightIcon },
