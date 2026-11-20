@@ -3,7 +3,12 @@ import { http, HttpResponse, passthrough } from 'msw'
 import { getMockVersionFlags } from '@netcracker/qubership-apihub-ui-shared/mocks/mock-version-flags'
 import { patchJsonResponse } from '@netcracker/qubership-apihub-ui-shared/mocks/patch-json-response'
 
-import type { BaselineVersionDto, ServiceDto, ServicesDto } from '@agents/entities/services'
+import {
+  BASELINE_VERSIONS_PAGE_SIZE,
+  type BaselineVersionDto,
+  type ServiceDto,
+  type ServicesDto,
+} from '@agents/entities/services'
 import {
   COMPLETE_DISCOVERY_STATUS,
   ERROR_DISCOVERY_STATUS,
@@ -14,6 +19,11 @@ import {
 // discovery result, and `start-error` fails the start of a discovery
 const MOCK_DISCOVERY_KEY = 'msw-discovery'
 const MOCK_DISCOVERY_START_ERROR = 'start-error'
+
+// The value `true` of this local storage key fills the version list of each baseline package up to the 100 versions
+// that discovery lists, with versions the portal does not have; the other release versions of the package are then
+// found only by the search of "Baseline Version"
+const MOCK_BASELINE_100_VERSIONS_KEY = 'msw-baseline-100-versions'
 
 const MOCK_DISCOVERY_RESULTS: Record<string, (data: ServicesDto) => ServicesDto> = {
   none: data => ({ ...data, status: NONE_DISCOVERY_STATUS, services: [] }),
@@ -39,7 +49,7 @@ export const serviceHandlers = [
     '*/api/v2/agents/:agentId/namespaces/:namespaceId/workspaces/:workspaceKey/services',
     ({ request }) => patchJsonResponse<ServicesDto>(request, data => withMockDiscoveryResult({
       ...data,
-      services: data.services.map(withMockBaselineFlags),
+      services: data.services.map(service => withMock100BaselineVersions(withMockBaselineFlags(service))),
     })),
   ),
 ]
@@ -60,6 +70,18 @@ function withMockBaselineFlags(service: ServiceDto): ServiceDto {
       versions: service.baseline.versions.map(withMockVersionFlags),
     },
   }
+}
+
+function withMock100BaselineVersions(service: ServiceDto): ServiceDto {
+  if (!service.baseline || localStorage.getItem(MOCK_BASELINE_100_VERSIONS_KEY) !== 'true') {
+    return service
+  }
+  const newestVersions = service.baseline.versions.slice(0, 1)
+  const fillerVersions = Array.from(
+    { length: BASELINE_VERSIONS_PAGE_SIZE - newestVersions.length },
+    (_, index) => `mock-${index + 1}`,
+  )
+  return { ...service, baseline: { ...service.baseline, versions: [...newestVersions, ...fillerVersions] } }
 }
 
 // A plain version name has no fields to override.

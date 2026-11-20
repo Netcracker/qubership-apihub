@@ -2,7 +2,6 @@ import type { SxProps, Theme } from '@mui/material'
 import type { FC } from 'react'
 import { memo } from 'react'
 import { ServicesPageHeader } from './ServicesPageHeader'
-import { SnapshotTableProvider } from './SnapshotTableProvider'
 import { ChangeViewDialog } from '../../../../widgets/ChangeViewDialog/ChangeViewDialog'
 import { AgentSpecificationDialog } from './AgentSpecificationDialog/AgentSpecificationDialog'
 import { AgentPublicationErrorReportDialog } from './AgentPublicationErrorReportDialog'
@@ -22,7 +21,7 @@ export const ServicesPage: FC = memo(() => {
       <BodyCard
         header={<ServicesPageHeader/>}
         overrideHeaderSx={SERVICES_PAGE_HEADER_SX}
-        body={<SnapshotTableProvider><ServicesPageBody/></SnapshotTableProvider>}
+        body={<ServicesPageBody/>}
       />
       <AgentSpecificationDialog/>
       <ChangeViewDialog/>

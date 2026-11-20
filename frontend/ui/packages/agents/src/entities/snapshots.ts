@@ -66,7 +66,7 @@ export type PublishSnapshotRequestDto = {
   services: ServiceKey[]
   status?: 'draft' | 'release'
 }
-export const NO_PREVIOUS_VERSION_OPTION: VersionKey = '[ No previous version ]'
+export const NO_PREVIOUS_VERSION_OPTION: VersionKey = 'No previous version'
 
 export function calculatePreviousVersion(value: string): VersionKey {
   return value === NO_PREVIOUS_VERSION_OPTION ? '' : value

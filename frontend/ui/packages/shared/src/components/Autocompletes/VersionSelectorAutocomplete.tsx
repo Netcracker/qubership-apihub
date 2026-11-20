@@ -114,8 +114,12 @@ function appendIndicatorToAutocompleteEndAdornment(
     return indicator
   }
 
-  return cloneElement(autocompleteEndAdornment, undefined, [
+  // Separate arguments, not one array: React asks for a key on each element of an array of children, and the
+  // indicator has none
+  return cloneElement(
+    autocompleteEndAdornment,
+    undefined,
     ...Children.toArray(autocompleteEndAdornment.props.children),
     indicator,
-  ])
+  )
 }

@@ -100,3 +100,13 @@ case; `localStorage.removeItem('msw-discovery')` and a reload bring back the res
 | `error` | The discovery failed |
 | `empty` | The discovery succeeded and found no services |
 | `start-error` | The request that starts a discovery fails with status 500 |
+
+## Baseline versions of the Agent
+
+Discovery lists at most 100 release versions of a baseline package, and the "Baseline Version" field of Create
+Snapshot finds the older ones by a search in the portal. A backend needs a package with more than 100 release
+versions to show that search, so the handler of the Agent services reads the local storage key
+`msw-baseline-100-versions`. `localStorage.setItem('msw-baseline-100-versions', 'true')` and a reload keep the newest
+version of each baseline package and fill its list up to 100 with the versions `mock-1`, `mock-2`, and so on, which
+the portal does not have. The other release versions of the package are then found only by the search.
+`localStorage.removeItem('msw-baseline-100-versions')` and a reload bring back the lists of the backend.

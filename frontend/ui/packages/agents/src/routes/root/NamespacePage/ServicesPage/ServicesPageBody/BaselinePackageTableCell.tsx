@@ -1,4 +1,4 @@
-import { Box, styled, Typography } from '@mui/material'
+import { Box, styled, Tooltip, Typography } from '@mui/material'
 import type { Row } from '@tanstack/react-table'
 import { type FC, memo } from 'react'
 
@@ -11,6 +11,7 @@ import type { Service } from '@agents/entities/services'
 
 export type BaselinePackageTableCellProps = {
   value: Row<CellData>
+  noBaselinePackageTooltip?: string
 }
 
 type CellData = Partial<{
@@ -18,7 +19,7 @@ type CellData = Partial<{
 }>
 
 export const BaselinePackageTableCell: FC<BaselinePackageTableCellProps> = memo<BaselinePackageTableCellProps>((
-  { value: { original: { service } } },
+  { value: { original: { service } }, noBaselinePackageTooltip },
 ) => {
   if (!service) {
     return null
@@ -29,11 +30,19 @@ export const BaselinePackageTableCell: FC<BaselinePackageTableCellProps> = memo<
   const color = disabled ? 'action.disabled' : 'inherit'
 
   if (!service.baseline) {
+    const warningIcon = disabled
+      ? <WarningOutlinedIcon color="disabled" fontSize="small"/>
+      : <WarningFilledIcon color="warning" fontSize="small"/>
     return (
       <NoBaselinePackage>
-        {disabled
-          ? <WarningOutlinedIcon color="disabled" fontSize="small"/>
-          : <WarningFilledIcon color="warning" fontSize="small"/>}
+        {noBaselinePackageTooltip
+          ? (
+            // The tooltip sets its text as the aria-label of the box, and the role makes a screen reader read it
+            <Tooltip title={noBaselinePackageTooltip}>
+              <WarningIconBox role="img" data-testid="NoBaselinePackageWarning">{warningIcon}</WarningIconBox>
+            </Tooltip>
+          )
+          : warningIcon}
         <Typography noWrap variant="inherit" color={color}>No baseline package</Typography>
       </NoBaselinePackage>
     )
@@ -54,3 +63,8 @@ const NoBaselinePackage = styled(Box)(({ theme }) => ({
   alignItems: 'center',
   gap: theme.spacing(0.5),
 }))
+
+const WarningIconBox = styled(Box)({
+  display: 'flex',
+  flexShrink: 0,
+})

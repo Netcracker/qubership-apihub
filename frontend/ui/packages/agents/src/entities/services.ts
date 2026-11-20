@@ -75,6 +75,12 @@ export type ServiceLabels = Record<string, string>
 
 export const SERVICE_COMPONENT_LABEL_KEY = 'app.kubernetes.io/component'
 
+/**
+ * The number of release versions that discovery lists for a baseline package: the agent reads one page of this size,
+ * newest first. A package that lists fewer has no other release version.
+ */
+export const BASELINE_VERSIONS_PAGE_SIZE = 100
+
 /** Formats a label of a service as `key: value`, the form the table shows and the search matches. */
 export function getFormattedLabel(key: string, value: string): string {
   return `${key}: ${value}`

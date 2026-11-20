@@ -1,4 +1,5 @@
 import { useHasPromotableServices } from './ServicesPageBody/CreateSnapshotStep/useHasPromotableServices'
+import { useSnapshotBaseline } from './ServicesPageBody/CreateSnapshotStep/useSnapshotBaseline'
 import { SERVICES_DISCOVERY_VIEW, useDiscoveryView } from './ServicesPageBody/DiscoverServicesStep/useDiscoveryView'
 import {
   COMPLETE_STEP_STATUS,
@@ -23,12 +24,14 @@ export function useOpenableSteps(): ReadonlyArray<boolean> {
     step => step.key === CREATE_SNAPSHOT_STEP_KEY && step.status === COMPLETE_STEP_STATUS,
   )
   const hasPromotableServices = useHasPromotableServices(isSnapshotComplete)
+  const { problem: snapshotBaselineProblem } = useSnapshotBaseline()
 
   const isLeavableByStepKey: Record<StepKey, boolean> = {
     // Create Snapshot lists the discovered services, so a discovery that found none leaves it nothing
     [DISCOVER_SERVICES_STEP_KEY]: discoveryView === SERVICES_DISCOVERY_VIEW,
-    // Promote Version lists only the services of the snapshot that have a baseline package
-    [CREATE_SNAPSHOT_STEP_KEY]: hasPromotableServices,
+    // Promote Version lists only the services of the snapshot that have a baseline package, and a baseline version
+    // with errors in the fields of Create Snapshot blocks it
+    [CREATE_SNAPSHOT_STEP_KEY]: hasPromotableServices && !snapshotBaselineProblem.isBlocking,
     [PROMOTE_VERSION_STEP_KEY]: false,
   }
   const isLeavable = ({ key, status }: Step): boolean => status === COMPLETE_STEP_STATUS && isLeavableByStepKey[key]

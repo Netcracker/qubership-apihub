@@ -53,6 +53,9 @@ export default {
     // true under a workspace or an isolated linker. jest resolves the bare specifier the
     // way the runtime would, and reports it loudly if it cannot.
     '^lodash-es/isPlainObject$': 'lodash/isPlainObject',
+    // The version rules of `utils/validations` import `lodash-es` through `utils/files`, and jest leaves the ES
+    // modules of node_modules untransformed; the CommonJS `lodash` has the same helpers.
+    '^lodash-es$': 'lodash',
   },
   modulePaths: ['<rootDir>/src', '<rootDir>/../portal/src'],
   reporters: [

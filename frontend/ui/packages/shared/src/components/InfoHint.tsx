@@ -29,17 +29,21 @@ type InfoHintProps = {
    * itself is hidden from screen readers.
    */
   descriptionId: string
+  /** Shows the icon at all times, where it otherwise waits for its host or a hovered table row. */
+  alwaysVisible?: boolean
 } & TestableProps
 
 /**
  * An info icon with a tooltip, hidden until its host shows it with {@link VISIBLE_ON_HOVER_HOST_STYLES} or a table
- * row is hovered. Unlike `ErrorIndicator`, the icon takes no keyboard focus: it stands inside buttons such as a tab or
- * an accordion summary, which keep the focus and carry the text as their description through `descriptionId`.
+ * row is hovered, unless `alwaysVisible` is set. Unlike `ErrorIndicator`, the icon takes no keyboard focus: it stands
+ * inside a control such as a tab, an accordion summary, or a text field, which keeps the focus and carries the text as
+ * its description through `descriptionId`.
  */
 export const InfoHint: FC<InfoHintProps> = memo<InfoHintProps>(({
   tooltip,
   fontSize = 'small',
   descriptionId,
+  alwaysVisible = false,
   'data-testid': dataTestId,
 }) => (
   <>
@@ -48,6 +52,7 @@ export const InfoHint: FC<InfoHintProps> = memo<InfoHintProps>(({
         className={VISIBLE_ON_HOVER_CLASS_NAME}
         fontSize={fontSize}
         color="disabled"
+        alwaysVisible={alwaysVisible}
         data-testid={dataTestId}
       />
     </Tooltip>
@@ -57,6 +62,8 @@ export const InfoHint: FC<InfoHintProps> = memo<InfoHintProps>(({
 
 InfoHint.displayName = 'InfoHint'
 
-const HintIcon = styled(InfoContextIcon)({
-  visibility: 'hidden',
-})
+const HintIcon = styled(InfoContextIcon, {
+  shouldForwardProp: prop => prop !== 'alwaysVisible',
+})<{ alwaysVisible: boolean }>(({ alwaysVisible }) => ({
+  visibility: alwaysVisible ? 'visible' : 'hidden',
+}))

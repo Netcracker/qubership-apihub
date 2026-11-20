@@ -7,31 +7,37 @@ import {
   type PublishDetails,
 } from '@netcracker/qubership-apihub-ui-shared/utils/packages-builder'
 
+import type { VersionKey } from '@agents/entities/keys'
 import type { ServiceConfig } from '@agents/entities/publish-config'
 import { EMPTY_PUBLISH_DETAILS } from '@agents/entities/publish-details'
 import type { Service } from '@agents/entities/services'
-import { useServices } from '../../../useServices'
 import { useCreateSnapshotPublicationOptions } from '../../ServicesPageProvider/ServicesPublicationOptionsProvider'
 import { BaselinePackageTableCell } from '../BaselinePackageTableCell'
 import { PublicationActionTableCell } from '../PublicationActionTableCell'
 import { PublishStatusTableCell } from '../PublishStatusTableCell'
-import { ServiceLabelsTableCell } from '../ServiceLabelsTableCell'
 import { ServiceOrDocumentationTableCell } from '../ServiceOrDocumentationTableCell'
 import type { ServiceSectionModel } from '../ServiceSections/ServiceSection'
 import { ServiceSections } from '../ServiceSections/ServiceSections'
 import {
   BASELINE_PACKAGE_COLUMN_ID,
-  SERVICE_LABELS_COLUMN_ID,
   SERVICE_OR_DOCUMENTATION_COLUMN_ID,
   type ServiceTableColumn,
   type ServiceTableLink,
 } from '../ServiceSections/ServiceTable'
 import { useAllPublicationDetails } from '../useAllPublicationDetails'
+import { ViewPackageTableCell } from '../ViewPackageTableCell'
+import type { BaselineVersionSplit } from './snapshotForm'
 import { useServicePublishDetails } from './useServicePublishDetails'
 
 const SERVICES_FROM_DISCOVERY_SECTION_ID = 'services-from-discovery'
+const MATCHING_BASELINE_VERSION_SECTION_ID = 'matching-baseline-version'
+const NOT_MATCHING_BASELINE_VERSION_SECTION_ID = 'not-matching-baseline-version'
 const SERVICES_FROM_DISCOVERY_TOOLTIP =
   'These services have API documents from the Discover Services step. Enter snapshot and baseline versions above to see which services match and can be selected.'
+const MATCHING_BASELINE_VERSION_TOOLTIP =
+  'These services have a baseline package for the selected baseline version. Select them to include in this snapshot.'
+const NOT_MATCHING_BASELINE_VERSION_TOOLTIP =
+  'These services have no baseline package for the selected baseline version. They cannot be selected for a snapshot until you link a baseline package in the settings.'
 const PUBLISH_STATUS_COLUMN_ID = 'publish-status'
 
 type SnapshotServiceRow = Partial<{
@@ -45,22 +51,26 @@ type SnapshotServiceRow = Partial<{
   snapshotPackageKey: PackageKey
 }>
 
+const SERVICE_OR_DOCUMENTATION_COLUMN: ServiceTableColumn<SnapshotServiceRow> = {
+  id: SERVICE_OR_DOCUMENTATION_COLUMN_ID,
+  header: 'Service / Documentation',
+  cell: row => <ServiceOrDocumentationTableCell value={row} />,
+}
+
+const BASELINE_PACKAGE_COLUMN: ServiceTableColumn<SnapshotServiceRow> = {
+  id: BASELINE_PACKAGE_COLUMN_ID,
+  header: 'Baseline Package',
+  cell: row => <BaselinePackageTableCell value={row} />,
+}
+
 const SNAPSHOT_SERVICE_COLUMNS: ReadonlyArray<ServiceTableColumn<SnapshotServiceRow>> = [
-  {
-    id: SERVICE_OR_DOCUMENTATION_COLUMN_ID,
-    header: 'Service / Documentation',
-    cell: row => <ServiceOrDocumentationTableCell value={row} />,
-  },
-  {
-    id: SERVICE_LABELS_COLUMN_ID,
-    header: 'Labels',
-    cell: row => <ServiceLabelsTableCell value={row} />,
-  },
-  {
-    id: BASELINE_PACKAGE_COLUMN_ID,
-    header: 'Baseline Package',
-    cell: row => <BaselinePackageTableCell value={row} />,
-  },
+  SERVICE_OR_DOCUMENTATION_COLUMN,
+  BASELINE_PACKAGE_COLUMN,
+]
+
+// The services of the created snapshot show their publication in the section they were selected in
+const SNAPSHOT_SERVICE_COLUMNS_WITH_PUBLISH_STATUS: ReadonlyArray<ServiceTableColumn<SnapshotServiceRow>> = [
+  ...SNAPSHOT_SERVICE_COLUMNS,
   {
     id: PUBLISH_STATUS_COLUMN_ID,
     header: 'Publish Status',
@@ -68,62 +78,96 @@ const SNAPSHOT_SERVICE_COLUMNS: ReadonlyArray<ServiceTableColumn<SnapshotService
   },
 ]
 
-const snapshotLink: ServiceTableLink<SnapshotServiceRow> = ({ original: { serviceConfig, publishDetails } }) => (
-  <PublicationActionTableCell
-    serviceConfig={serviceConfig}
-    publishDetails={publishDetails ?? EMPTY_PUBLISH_DETAILS}
-    versionLinkLabel="View Snapshot"
-    data-testid="ViewSnapshotButton"
-  />
+// A service of the created snapshot links to the snapshot, and any other service to its baseline package
+const serviceLink: ServiceTableLink<SnapshotServiceRow> = row => (
+  row.original.serviceConfig
+    ? (
+      <PublicationActionTableCell
+        serviceConfig={row.original.serviceConfig}
+        publishDetails={row.original.publishDetails ?? EMPTY_PUBLISH_DETAILS}
+        versionLinkLabel="View Snapshot"
+        data-testid="ViewSnapshotButton"
+      />
+    )
+    : <ViewPackageTableCell value={row} />
 )
 
 type CreateSnapshotStepSectionsProps = {
+  services: ReadonlyArray<Service>
+  areServicesLoading: boolean
+  /** The services split by the baseline version; `undefined` until both versions are entered. */
+  split: BaselineVersionSplit | undefined
+  baselineVersion: VersionKey
   selectable: boolean
-  selected: ServiceKey[]
+  selected: ReadonlyArray<ServiceKey>
   onSelect: (selected: ServiceKey[]) => void
   searchValue: string
 }
 
 export const CreateSnapshotStepSections: FC<CreateSnapshotStepSectionsProps> = memo<CreateSnapshotStepSectionsProps>(({
+  services,
+  areServicesLoading,
+  split,
+  baselineVersion,
   selectable,
   selected,
   onSelect,
   searchValue,
 }) => {
-  const [{ services }, isServicesLoading] = useServices({ onlyWithSpecs: true })
   const { createSnapshotPublicationOptions: { config } } = useCreateSnapshotPublicationOptions()
   const [allPublishDetails] = useAllPublicationDetails({ config })
 
-  const rows = useMemo<SnapshotServiceRow[]>(() =>
-    services.map(service => {
-      const serviceConfig = config?.serviceConfigs.find(({ serviceId }) => serviceId === service.key)
-      const publishDetails = allPublishDetails.find(({ publishId }) => publishId === serviceConfig?.publishId) ??
-        EMPTY_PUBLISH_DETAILS
+  const rowOf = useCallback((service: Service): SnapshotServiceRow => {
+    const serviceConfig = config?.serviceConfigs.find(({ serviceId }) => serviceId === service.key)
+    const publishDetails = allPublishDetails.find(({ publishId }) => publishId === serviceConfig?.publishId) ??
+      EMPTY_PUBLISH_DETAILS
 
-      return {
-        service: service,
-        serviceConfig: serviceConfig,
-        publishDetails: publishDetails,
-        children: service.specs?.map(spec => ({ spec })),
-        builderId: config?.builderId,
-        snapshotHasErrors: publishDetails.status === COMPLETE_PUBLISH_STATUS && (publishDetails.hasErrors ?? false),
-        snapshotPackageKey: serviceConfig?.packageId,
-      }
-    }), [allPublishDetails, config?.builderId, config?.serviceConfigs, services])
+    return {
+      service: service,
+      serviceConfig: serviceConfig,
+      publishDetails: publishDetails,
+      children: service.specs?.map(spec => ({ spec })),
+      builderId: config?.builderId,
+      snapshotHasErrors: publishDetails.status === COMPLETE_PUBLISH_STATUS && (publishDetails.hasErrors ?? false),
+      snapshotPackageKey: serviceConfig?.packageId,
+    }
+  }, [allPublishDetails, config])
 
   const isSelectable = useCallback(() => selectable, [selectable])
 
-  const sections = useMemo<ReadonlyArray<ServiceSectionModel<SnapshotServiceRow>>>(() => [{
-    id: SERVICES_FROM_DISCOVERY_SECTION_ID,
-    title: 'Services From Discovery',
-    tooltip: SERVICES_FROM_DISCOVERY_TOOLTIP,
-    columns: SNAPSHOT_SERVICE_COLUMNS,
-    link: snapshotLink,
-    rows: rows,
-    selection: { selected: selected, onSelect: onSelect, isSelectable: isSelectable },
-  }], [isSelectable, onSelect, rows, selected])
+  const sections = useMemo<ReadonlyArray<ServiceSectionModel<SnapshotServiceRow>>>(() => {
+    if (!split) {
+      return [{
+        id: SERVICES_FROM_DISCOVERY_SECTION_ID,
+        title: 'Services From Discovery',
+        tooltip: SERVICES_FROM_DISCOVERY_TOOLTIP,
+        columns: SNAPSHOT_SERVICE_COLUMNS,
+        link: serviceLink,
+        rows: services.map(rowOf),
+      }]
+    }
+    return [
+      {
+        id: MATCHING_BASELINE_VERSION_SECTION_ID,
+        title: 'Matching Baseline Version',
+        tooltip: MATCHING_BASELINE_VERSION_TOOLTIP,
+        columns: config ? SNAPSHOT_SERVICE_COLUMNS_WITH_PUBLISH_STATUS : SNAPSHOT_SERVICE_COLUMNS,
+        link: serviceLink,
+        rows: split.matching.map(rowOf),
+        selection: { selected: selected, onSelect: onSelect, isSelectable: isSelectable },
+      },
+      {
+        id: NOT_MATCHING_BASELINE_VERSION_SECTION_ID,
+        title: 'Not Matching Baseline Version',
+        tooltip: NOT_MATCHING_BASELINE_VERSION_TOOLTIP,
+        columns: notMatchingColumnsOf(baselineVersion),
+        link: serviceLink,
+        rows: split.notMatching.map(rowOf),
+      },
+    ]
+  }, [baselineVersion, config, isSelectable, onSelect, rowOf, selected, services, split])
 
-  return <ServiceSections sections={sections} searchValue={searchValue} isLoading={isServicesLoading} />
+  return <ServiceSections sections={sections} searchValue={searchValue} isLoading={areServicesLoading} />
 })
 
 CreateSnapshotStepSections.displayName = 'CreateSnapshotStepSections'
@@ -152,3 +196,16 @@ const CreateSnapshotDetailsTableCell: FC<CreateSnapshotDetailsTableCellProps> = 
 })
 
 CreateSnapshotDetailsTableCell.displayName = 'CreateSnapshotDetailsTableCell'
+
+// The warning of a service without a baseline package names the version that the service cannot be compared with
+function notMatchingColumnsOf(baselineVersion: VersionKey): ReadonlyArray<ServiceTableColumn<SnapshotServiceRow>> {
+  const noBaselinePackageTooltip =
+    `No baseline package matches this service for baseline version ${baselineVersion}. This service cannot be selected for this snapshot. To link a package, set the service name in the baseline package settings.`
+  return [
+    SERVICE_OR_DOCUMENTATION_COLUMN,
+    {
+      ...BASELINE_PACKAGE_COLUMN,
+      cell: row => <BaselinePackageTableCell value={row} noBaselinePackageTooltip={noBaselinePackageTooltip} />,
+    },
+  ]
+}
