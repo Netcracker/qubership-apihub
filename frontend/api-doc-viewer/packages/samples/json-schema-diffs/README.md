@@ -9,7 +9,7 @@ Design baseline: `docs/design/json-schema/display-coverage.md`.
 
 | Category | Cases | Source | Catalogue |
 | --- | ---: | --- | --- |
-| `type-changes/` | 507 YAML + 110 programmatic value range | generated YAML (`generate-json-schema-type-changes-samples.mjs`), programmatic value range | [type-changes/README.md](type-changes/README.md), [Value range](#value-range) |
+| `type-changes/` | 508 YAML + 110 programmatic value range | generated YAML (`generate-json-schema-type-changes-samples.mjs`), programmatic value range | [type-changes/README.md](type-changes/README.md), [Value range](#value-range) |
 | `oneOf/`, `anyOf/`, `allOf/` | 177 each | programmatic | category READMEs |
 | `extensions/` | 104 | hand-written YAML | [extensions/README.md](extensions/README.md) |
 | `hiding-unchanged-rows/` | 18 | hand-written YAML | [hiding-unchanged-rows/README.md](hiding-unchanged-rows/README.md) |

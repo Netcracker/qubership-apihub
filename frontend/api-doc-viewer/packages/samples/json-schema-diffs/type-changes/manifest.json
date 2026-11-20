@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-09-18T10:02:23.966Z",
-  "totalCases": 507,
+  "generatedAt": "2026-11-20T09:42:33.875Z",
+  "totalCases": 508,
   "suites": [
     {
       "globPath": "type-flags",
@@ -84,7 +84,7 @@
     },
     {
       "globPath": "circular",
-      "caseCount": 12
+      "caseCount": 13
     },
     {
       "globPath": "type-value-changes",

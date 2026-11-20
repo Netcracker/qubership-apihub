@@ -162,7 +162,7 @@ state is precomputed by next-data-model; the viewer reads it through `JsonSchema
 | `JSON Schema Suite` (types, validations, value range, combiners, circular, description) | 519 | `packages/samples/json-schema/` |
 | `JSON Schema Suite (Extensions)` | 13 | `packages/samples/json-schema/extensions/` |
 | `JSON Schema Suite (Performance)` | 1 | `packages/samples/json-schema/performance-tests/` |
-| `JSON Schema Diffs Suite` | 1148 | `packages/samples/json-schema-diffs/` |
+| `JSON Schema Diffs Suite` | 1149 | `packages/samples/json-schema-diffs/` |
 | `JSON Schema Diffs Suite (Extensions)` | 104 | `packages/samples/json-schema-diffs/extensions/` |
 | `JSON Schema Diffs Suite (Hiding Unchanged Nodes)` | 18 | `packages/samples/json-schema-diffs/hiding-unchanged-rows/` |
 | `JSON Schema Diffs Suite (Node Changes Summary)` | 18 | `packages/samples/json-schema-diffs/node-changes-summary/` |
