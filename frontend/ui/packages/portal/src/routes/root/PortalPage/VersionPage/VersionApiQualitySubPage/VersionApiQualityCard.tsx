@@ -116,6 +116,11 @@ export const VersionApiQualityCard: FC<VersionApiQualityCardProps> = memo((props
 
   const [selectedRulesets, setSelectedRulesets] = useState<Set<RulesetMetadata>>(new Set())
   const [issueSeverityFilters, setIssueSeverityFilters] = useState<IssueSeverity[]>([])
+  const [previousDocumentSlug, setPreviousDocumentSlug] = useState(selectedDocument?.slug)
+  if (selectedDocument?.slug !== previousDocumentSlug) {
+    setPreviousDocumentSlug(selectedDocument?.slug)
+    setIssueSeverityFilters([])
+  }
   const originalValidationIssues = useMemo(() => flatMapValidationIssues(validationDetails), [validationDetails])
   const validationIssuesFilteredByRulesets = useMemo(() => {
     return filterBySelectedRulesets(originalValidationIssues, selectedRulesets)
