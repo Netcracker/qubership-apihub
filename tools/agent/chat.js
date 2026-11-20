@@ -489,6 +489,8 @@ async function doStop(ctx, loaded) {
     }
     await log.group('Clear the stop labels', async () => {
       await stops.clearStops(gh, [issueNumber, before.pr])
+      const error = await stops.clearCompleted(gh, [issueNumber, before.pr])
+      if (error) throw error
       const on = before.pr ? `#${issueNumber} and #${before.pr}` : `#${issueNumber}`
       log.info('stop labels cleared', { on })
     })
