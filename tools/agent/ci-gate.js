@@ -1290,7 +1290,7 @@ async function rerunCommand(env = process.env, deps = {}) {
   const gh = deps.gh ?? createClient({ token: env.GITHUB_TOKEN, repo })
   const commentId = commentIdOf(env.AGENT_COMMENT_ID)
   log.info('rerun starts', { issue: number, pr: prHint ?? 'from the state', actor, dryRun: config.dryRun })
-  await react({ gh, commentId, content: 'eyes', dryRun: config.dryRun })
+  await react({ gh, commentId, content: 'eyes', dryRun: config.dryRun, eventName: env.GITHUB_EVENT_NAME })
 
   const ctx = { config, env, deps, gh, number, prHint, actor, runUrl, out, repo, replyNumber: prHint ?? number }
   let content = 'confused'
@@ -1299,7 +1299,7 @@ async function rerunCommand(env = process.env, deps = {}) {
     if (result.ok) content = 'rocket'
     return result
   } finally {
-    await react({ gh, commentId, content, dryRun: config.dryRun })
+    await react({ gh, commentId, content, dryRun: config.dryRun, eventName: env.GITHUB_EVENT_NAME })
   }
 }
 

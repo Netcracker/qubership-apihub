@@ -582,7 +582,7 @@ function limitThreads(threads) {
  * conversation; outside it stands only a counter. `omitted` threads were left out by `limitThreads`.
  */
 function renderReviewThreads(threads, omitted = 0) {
-  const out = ['## Unresolved review threads', '']
+  const out = [threads.some((t) => t.isResolved) ? '## Review threads' : '## Unresolved review threads', '']
   if (threads.length === 0) return [...out, 'No thread is unresolved. The review text above is all there is.', '']
   if (omitted > 0) {
     out.push(
@@ -616,7 +616,7 @@ function renderReviewThreads(threads, omitted = 0) {
  * @param {number} input.round 1, or more after a self-review or a failed check
  * @param {{ findings: object[], checks: object|null }|null} input.previous the previous round's open results
  * @param {string} [input.ciReport] the CI report of a `ci-fix` attempt, with the log text of failed jobs
- * @param {object[]} [input.reviewThreads] the unresolved review threads of a `review` attempt that the implementer sees
+ * @param {object[]} [input.reviewThreads] the review threads selected for this continuation
  * @param {number} [input.omittedThreads] how many more unresolved threads were left out
  * @param {string[]} [input.conflicts] the files with merge conflicts of an `update` attempt
  */
@@ -684,6 +684,9 @@ function renderImplementInput({
   if (notes) out.push(`## ${NOTES_HEADING[kind] ?? NOTES_HEADING.initial}`, '', untrusted(notes), '')
   if (kind === 'review' || (reviewThreads?.length ?? 0) > 0) {
     out.push('Unresolved reviewer feedback remains part of this continuation.', '',
+      'Address every supplied thread. In your summary, report the outcome for each numbered thread: ' +
+      'fixed (with the change), already satisfied (with code evidence), or blocked (with the reason). ' +
+      'Do not silently skip feedback. If a requested change needs a maintainer decision, return blocked.', '',
       ...renderReviewThreads(reviewThreads ?? [], omittedThreads))
   }
   if ((attempts ?? []).length > 0) {
@@ -719,7 +722,7 @@ function renderConflictFiles(conflicts) {
 
 /** The text of `self-review-input.md`: the issue, the plan, the implementer's summary, and the commits to compare. */
 function renderSelfReviewInput({ issue, plan, analysis, notes, summary, verification = '', checks,
-  base, head, kind, conflicts = [] }) {
+  base, head, kind, conflicts = [], reviewThreads = [], omittedThreads = 0 }) {
   return [
     `# Self-review of the change for issue #${issue.number}`,
     '',
@@ -742,6 +745,12 @@ function renderSelfReviewInput({ issue, plan, analysis, notes, summary, verifica
     untrusted(`Title: ${issue.title}\n\n${clipText(issue.body)}`),
     '',
     ...(notes ? ['## Notes of the maintainer', '', untrusted(notes), ''] : []),
+    ...(reviewThreads.length > 0 ? [
+      'Check every supplied review thread against the current code, including comments on unchanged files. ' +
+      'The summary must account for each numbered thread. An unaddressed request or a missing outcome is a major ' +
+      'finding: return changes, even when the original issue and tests pass.', '',
+      ...renderReviewThreads(reviewThreads, omittedThreads),
+    ] : []),
     '## Plan of the analysis',
     '',
     ...renderPlan(plan, analysis),
@@ -1341,7 +1350,7 @@ function writeOutputs(env, outputs) {
  * @param {object} input.st the state to work from (the marked one)
  * @param {boolean} [input.fresh] start a new branch and pull request: the one of the earlier attempt is closed
  * @param {boolean} [input.changes] the attempt changes the open pull request (a change request or a review)
- * @param {object[]} [input.reviewThreads] the unresolved review threads of a `review` attempt that the implementer sees
+ * @param {object[]} [input.reviewThreads] the review threads selected for this continuation
  * @param {number} [input.omittedThreads] how many more unresolved threads were left out
  * @param {{ name: string, email: string }} input.identity
  */
@@ -1464,7 +1473,7 @@ async function preflight(env = process.env, deps = {}) {
   const gh = deps.gh ?? createClient({ token: env.GITHUB_TOKEN, repo: env.GITHUB_REPOSITORY })
   log.info('preflight starts', { issue: number, actor: envActor || 'from the state', force: command.force, kind,
     pr: prNumber ?? 'none', dryRun: config.dryRun })
-  await react({ gh, commentId, content: 'eyes', dryRun: config.dryRun })
+  await react({ gh, commentId, content: 'eyes', dryRun: config.dryRun, eventName: env.GITHUB_EVENT_NAME })
 
   const loaded = await log.group('Load the issue, its comments, and its state', () => loadIssue(gh, number))
   const { issue, st } = loaded
@@ -1520,18 +1529,25 @@ async function preflight(env = process.env, deps = {}) {
       await gh.createIssueComment(number, reply)
       log.info('reply posted', { mention: actor, outcome: decision.outcome })
     })
-    await react({ gh, commentId, content: 'confused', dryRun: config.dryRun })
+    await react({ gh, commentId, content: 'confused', dryRun: config.dryRun, eventName: env.GITHUB_EVENT_NAME })
     writeOutputs(env, { proceed: 'false', outcome: decision.outcome })
     return { proceed: false, ...decision }
   }
 
   const analyzeFirst = !person && decision.outcome === 'analyze-first'
-  const resumeFeedback = kind === 'human' && pull?.state === 'open' &&
-    (command.name === 'retry' || command.name === 'answer')
-  const unresolved = kind === 'review' || resumeFeedback
-    ? (await log.group('Read the review threads', () => gh.listReviewThreads(prNumber || st.pr)))
-      .filter((t) => !t.isResolved)
-    : []
+  // Repeated `implement` still arrives as `initial`. Feedback follows the linked open PR, not the command name.
+  if (!person && st.pr) pull = await gh.getPull(st.pr)
+  const resumeFeedback = kind !== 'update' && pull?.state === 'open'
+  let unresolved = []
+  if (resumeFeedback) {
+    const all = await log.group('Read the review threads', () => gh.listReviewThreads(st.pr))
+    if (command.reviewCommentId) {
+      const target = all.find((t) => t.comments.some((c) => c.databaseId === command.reviewCommentId))
+      if (!target) throw new Error(`Review thread for comment ${command.reviewCommentId} was not found on #${st.pr}`)
+      // An explicit inline command refers to this conversation, even when somebody already resolved it.
+      unresolved = [target]
+    } else unresolved = all.filter((t) => !t.isResolved)
+  }
   // Only the threads the implementer sees are recorded, so `publish` replies in exactly those.
   const { shown: threads, omitted: omittedThreads } = limitThreads(unresolved)
   if (kind === 'review' || resumeFeedback) {
@@ -1544,7 +1560,13 @@ async function preflight(env = process.env, deps = {}) {
   const at = new Date().toISOString()
   const started = person
     ? markedPersonState(st, { runUrl, actor, kind, pr: prNumber, fresh: decision.fresh, threads, omittedThreads, at })
-    : { ...st, phase: 'implementing', implementing: { run: runUrl, actor, at, analyzeFirst } }
+    : { ...st, phase: 'implementing', implementing: {
+      run: runUrl, actor, at, analyzeFirst,
+      ...(threads.length > 0 ? {
+        threads: threads.map((t) => ({ id: t.id, commentId: t.comments[0]?.databaseId ?? null })),
+      } : {}),
+      ...(omittedThreads > 0 ? { omittedThreads } : {}),
+    } }
   // A new attempt starts: the stop of the earlier one is over.
   let marked = stops.recordResume(started, { at, run: runUrl })
   const markTitle = config.dryRun ? 'Mark the issue (dry run: nothing written)' : 'Mark the issue as being implemented'
@@ -1864,6 +1886,8 @@ async function implementRounds(ctx) {
         notes: ctx.command.notes ?? '',
         summary: implementation.summary,
         verification: implementation.verification,
+        reviewThreads: ctx.reviewThreads ?? [],
+        omittedThreads: ctx.omittedThreads ?? 0,
         checks,
         base,
         head,
@@ -2380,7 +2404,8 @@ async function publish(env = process.env, deps = {}) {
     if (result.result === 'pr-opened' || result.result === 'unrelated') content = 'rocket'
     return result
   } finally {
-    await react({ gh, commentId: commentIdOf(env.AGENT_COMMENT_ID), content, dryRun: config.dryRun })
+    await react({ gh, commentId: commentIdOf(env.AGENT_COMMENT_ID), content, dryRun: config.dryRun,
+      eventName: env.GITHUB_EVENT_NAME })
   }
 }
 
