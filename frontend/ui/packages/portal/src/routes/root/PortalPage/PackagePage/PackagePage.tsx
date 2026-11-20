@@ -15,7 +15,7 @@
  */
 
 import type { FC } from 'react'
-import { memo } from 'react'
+import { memo, useMemo } from 'react'
 import { Navigate } from 'react-router-dom'
 import { usePackage } from '../../usePackage'
 import { PackagePagePlaceholder } from './PackagePagePlaceholder'
@@ -36,7 +36,7 @@ export const PackagePage: FC = memo(() => {
   useDocumentTitle(PAGE_TITLES.package(packageObject?.name))
   const { kind = PACKAGE_KIND } = packageObject ?? {}
 
-  const overviewRedirect = getPackageOverviewRedirect(packageObject)
+  const overviewRedirect = useMemo(() => getPackageOverviewRedirect(packageObject), [packageObject])
   if (overviewRedirect) {
     return <Navigate to={getOverviewPath(overviewRedirect)} replace/>
   }

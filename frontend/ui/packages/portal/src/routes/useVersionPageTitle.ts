@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { useParams } from 'react-router-dom'
 
 import { useDocumentTitle } from '@netcracker/qubership-apihub-ui-shared/hooks/common/useDocumentTitle'
@@ -30,14 +31,17 @@ export function useComparisonTitleSides(params: ComparisonParams): VersionsCompa
   const origin = useVersionWithRevision(params.originVersionKey, params.originPackageKey)
   const changed = useVersionWithRevision(params.changedVersionKey, params.changedPackageKey)
 
-  return {
-    origin: {
-      packageName: params.originPackage?.name,
-      version: { fullVersion: origin.fullVersion, latestRevision: origin.latestRevision },
-    },
-    changed: {
-      packageName: params.changedPackage?.name,
-      version: { fullVersion: changed.fullVersion, latestRevision: changed.latestRevision },
-    },
-  }
+  return useMemo(
+    () => ({
+      origin: {
+        packageName: params.originPackage?.name,
+        version: { fullVersion: origin.fullVersion, latestRevision: origin.latestRevision },
+      },
+      changed: {
+        packageName: params.changedPackage?.name,
+        version: { fullVersion: changed.fullVersion, latestRevision: changed.latestRevision },
+      },
+    }),
+    [changed, origin, params.changedPackage?.name, params.originPackage?.name],
+  )
 }
