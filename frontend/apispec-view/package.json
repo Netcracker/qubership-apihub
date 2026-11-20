@@ -32,7 +32,7 @@
     "@storybook/theming": "^8.6.14",
     "@types/classnames": "^2.2.10",
     "@types/file-saver": "^2.0.7",
-    "@types/har-format": "^1.2.5",
+    "@types/har-format": "^1.2.16",
     "@types/httpsnippet": "^1.23.0",
     "@types/json-schema": "^7.0.15",
     "@types/lodash": "^4.14.181",

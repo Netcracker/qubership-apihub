@@ -37,7 +37,7 @@
     "@stoplight/react-error-boundary": "^2.0.0",
     "@stoplight/types": "^13.0.0",
     "@stoplight/yaml": "^4.2.3",
-    "@types/har-format": "^1.2.5",
+    "@types/har-format": "^1.2.16",
     "@types/json-schema": "^7.0.15",
     "classnames": "^2.2.6",
     "httpsnippet": "^1.24.0",
