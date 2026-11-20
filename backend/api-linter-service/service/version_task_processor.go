@@ -270,7 +270,7 @@ func (v versionTaskProcessorImpl) checkDocReady() {
 	ctx := secctx.MakeSysadminContext(context.Background())
 
 	for range t.C {
-		verLintTasks, err := v.verRepo.GetWaitingForDocTasks(ctx, v.executorId) // FIXME: problem with dead executor here!!
+		verLintTasks, err := v.verRepo.GetWaitingForDocTasks(ctx, v.executorId)
 		if err != nil {
 			log.Errorf("Failed to get version tasks in waiting for docs status: %s", err)
 			continue
