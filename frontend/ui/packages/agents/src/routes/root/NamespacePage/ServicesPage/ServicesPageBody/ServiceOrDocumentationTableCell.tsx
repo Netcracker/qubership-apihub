@@ -36,7 +36,6 @@ type CellData = Partial<{
 export const ServiceOrDocumentationTableCell: FC<ServiceOrDocumentationTableCellProps> = (
   {
     value: {
-      depth,
       getCanExpand,
       getToggleExpandedHandler,
       getIsExpanded,
@@ -58,12 +57,12 @@ export const ServiceOrDocumentationTableCell: FC<ServiceOrDocumentationTableCell
 
   if (service && isEmpty(service.specs)) {
     return (
-      <ServiceName>
+      <ItemName>
         <OverflowTooltip title={service.key}>
           <Typography noWrap variant="inherit" color="action.disabled" pl={3}>{service.key}</Typography>
         </OverflowTooltip>
         {serviceNameAdornment}
-      </ServiceName>
+      </ItemName>
     )
   }
 
@@ -72,7 +71,7 @@ export const ServiceOrDocumentationTableCell: FC<ServiceOrDocumentationTableCell
     : undefined
 
   return (
-    <Box display="flex" alignItems="center" gap={1} pl={3 + depth * 2} height={19}>
+    <Box display="flex" alignItems="center" gap={1} pl={3} height={19}>
       {getCanExpand() && (
         <IconButton sx={{ p: 0, ml: -3 }} onClick={getToggleExpandedHandler()}>
           {getIsExpanded()
@@ -81,13 +80,13 @@ export const ServiceOrDocumentationTableCell: FC<ServiceOrDocumentationTableCell
         </IconButton>
       )}
       {service && (<>
-          <ServiceName>
+          <ItemName>
             <OverflowTooltip title={service.key}>
               <Typography noWrap color={isPromoteStep && !promotable ? '#8F9EB4' : 'inherit'}
                           variant="inherit">{service.key}</Typography>
             </OverflowTooltip>
             {serviceNameAdornment}
-          </ServiceName>
+          </ItemName>
           {snapshotHasErrors && (
             <ServiceDocumentErrorsDot color="error" data-testid="ServiceDocumentErrorsIndicator"/>
           )}
@@ -98,25 +97,27 @@ export const ServiceOrDocumentationTableCell: FC<ServiceOrDocumentationTableCell
           )}
         </>
       )}
-      {spec && <>
-        <SpecLogo value={spec.type}/>
-        <OverflowTooltip title={spec.name}>
-          <Link
-            noWrap
-            onClick={() => showSpecificationDialog({
-              spec: spec,
-              agentId: agentId,
-              namespaceKey: namespaceKey,
-              service: parentRow?.original.service,
-            })}
-          >
-            {spec.name}
-          </Link>
-        </OverflowTooltip>
-        {documentErrorsPackageKey && (
-          <SnapshotDocumentErrorIndicator specKey={spec.key} snapshotPackageKey={documentErrorsPackageKey}/>
-        )}
-      </>}
+      {spec && (
+        <ItemName>
+          <SpecLogo value={spec.type}/>
+          <OverflowTooltip title={spec.name}>
+            <Link
+              noWrap
+              onClick={() => showSpecificationDialog({
+                spec: spec,
+                agentId: agentId,
+                namespaceKey: namespaceKey,
+                service: parentRow?.original.service,
+              })}
+            >
+              {spec.name}
+            </Link>
+          </OverflowTooltip>
+          {documentErrorsPackageKey && (
+            <SnapshotDocumentErrorIndicator specKey={spec.key} snapshotPackageKey={documentErrorsPackageKey}/>
+          )}
+        </ItemName>
+      )}
     </Box>
   )
 }
@@ -125,7 +126,7 @@ const ServiceDocumentErrorsDot = styled(DotIndicator)({
   alignSelf: 'flex-start',
 })
 
-const ServiceName = styled(Box)(({ theme }) => ({
+const ItemName = styled(Box)(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
   gap: theme.spacing(0.5),

@@ -20,7 +20,7 @@ export const DiscoverServicesStepToolbar: FC<DiscoverServicesStepToolbarProps> =
   useEffect(() => onSearch(searchValue), [onSearch, searchValue])
 
   return (
-    <Box display="flex" gap={2} pt={1}>
+    <Box display="flex" gap={2}>
       <Button
         data-testid="RestartDiscoveryButton"
         variant="outlined"

@@ -1,5 +1,5 @@
 import { type FC, memo, useCallback, useEffect, useMemo, useState } from 'react'
-import { Autocomplete, Box, Button, Checkbox, FormControlLabel, MenuItem, styled, TextField, Typography } from '@mui/material'
+import { Autocomplete, Box, Button, Checkbox, FormControlLabel, MenuItem, styled, Typography } from '@mui/material'
 import { useServices } from '../../../useServices'
 import type { Control, FieldErrors } from 'react-hook-form'
 import { Controller, useForm } from 'react-hook-form'
@@ -25,6 +25,7 @@ import {
   checkVersionNotEqualToPrevious,
   checkVersionRestrictedSymbols,
 } from '@netcracker/qubership-apihub-ui-shared/utils/validations'
+import { BorderedTextField } from '@netcracker/qubership-apihub-ui-shared/components/BorderedTextField'
 import { SearchBar } from '@netcracker/qubership-apihub-ui-shared/components/SearchBar'
 import { VersionSelectorAutocomplete } from '@netcracker/qubership-apihub-ui-shared/components/Autocompletes/VersionSelectorAutocomplete'
 import { VersionErrorFormMessage } from '@netcracker/qubership-apihub-ui-shared/components/ErrorIndicators/VersionErrorFormMessage'
@@ -125,12 +126,12 @@ export const PromoteVersionStep: FC = memo(() => {
               value={value}
               options={nameOptions}
               renderInput={(params) => (
-                <TextField
+                <BorderedTextField
                   {...params}
                   data-testid="VersionAutocomplete"
                   required
                   label="Version"
-                  variant="outlined"
+                  margin="none"
                   onChange={onChange}
                   error={!!formErrors.version}
                 />
@@ -153,12 +154,12 @@ export const PromoteVersionStep: FC = memo(() => {
                 <VersionFieldErrorIndicator problem={previousVersionProblem}/>
               )}
               renderInput={(params) => (
-                <TextField
+                <BorderedTextField
                   {...params}
                   data-testid="PreviousVersionAutocomplete"
                   required
                   label="Previous Version"
-                  variant="outlined"
+                  margin="none"
                   error={previousVersionProblem.isBlocking}
                   onChange={onChange}
                 />
@@ -172,25 +173,25 @@ export const PromoteVersionStep: FC = memo(() => {
           name="status"
           control={control}
           render={({ field }) => (
-            <TextField
+            <BorderedTextField
               {...field}
               data-testid="StatusSelect"
               select required
               type="select"
               disabled={areControlsDisabled}
               label="Status"
-              variant="outlined"
+              margin="none"
               SelectProps={{
                 renderValue: () => <StatusSelectValue status={status} isReleaseRefused={isReleaseRefused}/>,
               }}
             >
               <MenuItem value={DRAFT_VERSION_STATUS}>Draft</MenuItem>
               <MenuItem value={RELEASE_VERSION_STATUS}>Release</MenuItem>
-            </TextField>
+            </BorderedTextField>
           )}
         />
 
-        <Box sx={{ ml: 'auto', alignSelf: 'baseline', mt: 1 }}>
+        <Box sx={{ ml: 'auto', alignSelf: 'center' }}>
           <Button
             data-testid={isRepromotion ? 'RePromoteVersionButton' : 'PromoteVersionButton'}
             sx={{ width: isRepromotion ? 180 : 160 }}

@@ -1,5 +1,5 @@
 import type { PaletteOptions } from '@mui/material/styles/createPalette'
-import { DEFAULT_TEXT_COLOR, SECONDARY_TEXT_COLOR } from './colors'
+import { DEFAULT_TEXT_COLOR, HINT_COLOR, SECONDARY_TEXT_COLOR } from './colors'
 
 export function createPalette(): PaletteOptions {
   return {
@@ -35,7 +35,7 @@ export function createPalette(): PaletteOptions {
     },
     ...{
       hint: {
-        main: '#B4BFCF',
+        main: HINT_COLOR,
       },
       information: { // because 'info' is already taken by MUI
         main: '#61AAF2',

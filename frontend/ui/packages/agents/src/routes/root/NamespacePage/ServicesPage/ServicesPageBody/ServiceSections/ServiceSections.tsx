@@ -9,11 +9,13 @@ import {
 import { isNotEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
 import { genericMemo } from '@netcracker/qubership-apihub-ui-shared/utils/components'
 
+import { STEP_CONTENT_SPACING } from '../../servicesPageLayout'
 import { filterRowsBySearch } from './serviceRows'
 import { ServiceSection, type ServiceSectionModel } from './ServiceSection'
 import type { ServiceTableRow } from './ServiceTable'
 
 const NO_SERVICES = 'No services'
+const SECTION_LIST_PADDING = 1
 
 type ServiceSectionsProps<TRow extends ServiceTableRow<TRow>> = {
   sections: ReadonlyArray<ServiceSectionModel<TRow>>
@@ -62,7 +64,8 @@ const SectionList = styled(Box)(({ theme }) => ({
   gap: theme.spacing(2),
   // The focus ring is drawn outside the header, and overflow-y clips it. The padding holds the
   // ring; the negative margin keeps the sections in line with the toolbar.
-  padding: theme.spacing(1),
-  marginLeft: theme.spacing(-1),
-  marginRight: theme.spacing(-1),
+  padding: theme.spacing(SECTION_LIST_PADDING),
+  marginTop: theme.spacing(STEP_CONTENT_SPACING - SECTION_LIST_PADDING),
+  marginLeft: theme.spacing(-SECTION_LIST_PADDING),
+  marginRight: theme.spacing(-SECTION_LIST_PADDING),
 }))

@@ -63,7 +63,7 @@ const MIN_COLUMN_WIDTH: Pixel = 180
 // The controls that a service row renders: the chevron, "View Package" and the other links, and "Error Details"
 const ROW_CONTROL_SELECTOR = 'a, button'
 
-const SELECTION_COLUMN_MODEL: ColumnModel = { name: SELECTION_COLUMN_ID, fixedWidth: 60 }
+const SELECTION_COLUMN_MODEL: ColumnModel = { name: SELECTION_COLUMN_ID, fixedWidth: 32 }
 const LINK_COLUMN_MODEL: ColumnModel = { name: LINK_COLUMN_ID, fixedWidth: 180 }
 
 /** A row of a service, or of one of its API documents under it. */
@@ -331,8 +331,7 @@ const RowSkeleton: FC<TableSkeletonProps> = ({ columnIds }) => (
 RowSkeleton.displayName = 'RowSkeleton'
 
 const CompactCheckbox = styled(Checkbox)({
-  paddingTop: 0,
-  paddingBottom: 0,
+  padding: 0,
 })
 
 const BodyTableCell = styled(TableCell, {

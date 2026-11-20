@@ -7,6 +7,7 @@ import { AgentSpecificationDialog } from './AgentSpecificationDialog/AgentSpecif
 import { AgentPublicationErrorReportDialog } from './AgentPublicationErrorReportDialog'
 import { BodyCard } from '@netcracker/qubership-apihub-ui-shared/components/BodyCard'
 import { ServicesPageBody } from './ServicesPageBody/ServicesPageBody'
+import { STEP_CONTENT_SPACING } from './servicesPageLayout'
 
 // The focus ring is drawn outside the tab, and the card header clips overflow
 const SERVICES_PAGE_HEADER_SX: SxProps<Theme> = {
@@ -14,6 +15,7 @@ const SERVICES_PAGE_HEADER_SX: SxProps<Theme> = {
   '& .MuiCardHeader-content': { overflow: 'visible' },
   '&& .MuiCardHeader-title': { overflow: 'visible' },
 }
+const SERVICES_PAGE_BODY_SX: SxProps<Theme> = { pt: STEP_CONTENT_SPACING }
 
 export const ServicesPage: FC = memo(() => {
   return (
@@ -22,6 +24,7 @@ export const ServicesPage: FC = memo(() => {
         header={<ServicesPageHeader/>}
         overrideHeaderSx={SERVICES_PAGE_HEADER_SX}
         body={<ServicesPageBody/>}
+        overrideBodySx={SERVICES_PAGE_BODY_SX}
       />
       <AgentSpecificationDialog/>
       <ChangeViewDialog/>

@@ -4,7 +4,6 @@ import {
   Button,
   debounce,
   styled,
-  TextField,
 } from '@mui/material'
 import {
   type FC,
@@ -22,6 +21,7 @@ import { VersionSelectorAutocomplete } from '@netcracker/qubership-apihub-ui-sha
 import { ErrorIndicator } from '@netcracker/qubership-apihub-ui-shared/components/ErrorIndicators/ErrorIndicator'
 import { VersionErrorIndicator } from '@netcracker/qubership-apihub-ui-shared/components/ErrorIndicators/VersionErrorIndicator'
 import { VersionFieldErrorIndicator } from '@netcracker/qubership-apihub-ui-shared/components/ErrorIndicators/VersionFieldErrorIndicator'
+import { BorderedTextField } from '@netcracker/qubership-apihub-ui-shared/components/BorderedTextField'
 import { InfoHint } from '@netcracker/qubership-apihub-ui-shared/components/InfoHint'
 import { OptionItem } from '@netcracker/qubership-apihub-ui-shared/components/OptionItem'
 import { SearchBar } from '@netcracker/qubership-apihub-ui-shared/components/SearchBar'
@@ -176,7 +176,13 @@ export const CreateSnapshotStep: FC = memo(() => {
             <OptionItem key={snapshotName} props={props} title={snapshotName} />
           )}
           renderInput={(params) => (
-            <TextField {...params} required label="Snapshot Version" error={nameError !== undefined} />
+            <BorderedTextField
+              {...params}
+              required
+              label="Snapshot Version"
+              margin="none"
+              error={nameError !== undefined}
+            />
           )}
           onInputChange={handleNameInputChange}
         />
@@ -216,10 +222,11 @@ export const CreateSnapshotStep: FC = memo(() => {
             )
           }}
           renderInput={(params) => (
-            <TextField
+            <BorderedTextField
               {...params}
               required
               label="Baseline Version"
+              margin="none"
               error={problem.isBlocking || isBaselineCheckFailed}
               inputProps={{
                 ...params.inputProps,
