@@ -1,10 +1,11 @@
 import type { FC, SyntheticEvent } from 'react'
 import * as React from 'react'
 import { memo, useCallback, useMemo } from 'react'
-import { Autocomplete, Box, debounce, InputLabel, TextField } from '@mui/material'
+import { Autocomplete, Box, debounce, InputLabel } from '@mui/material'
 import type { AutocompleteValue } from '@mui/base'
 import type { TestableProps } from './Testable'
 import { OptionItem } from './OptionItem'
+import { LargeTextField } from './LargeTextField'
 import { DEFAULT_DEBOUNCE } from '../utils/constants'
 import type { Package, Packages } from '../entities/packages'
 import type { AutocompleteInputChangeReason } from '@mui/base/AutocompleteUnstyled/useAutocomplete'
@@ -68,10 +69,10 @@ export const PackageSelector: FC<PackageSelectorProps> = memo<PackageSelectorPro
         isOptionEqualToValue={(option, value) => option.key === value.key}
         getOptionLabel={(option) => option?.name ?? ''}
         renderInput={(params) => (
-          <TextField
+          <LargeTextField
             {...params}
             placeholder={placeholder}
-            sx={{ m: 0, '& .MuiInputBase-root': { pt: '1px', pb: '1px' } }}
+            margin="none"
           />
         )}
         onInputChange={debounce(onInputChange, DEFAULT_DEBOUNCE)}

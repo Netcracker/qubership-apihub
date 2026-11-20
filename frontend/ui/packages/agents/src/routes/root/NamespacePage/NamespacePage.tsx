@@ -12,7 +12,6 @@ import { NamespaceNavigationMenu } from './NamespaceNavigationMenu'
 import { useActiveTabs } from '@netcracker/qubership-apihub-ui-shared/hooks/pathparams/useActiveTabs'
 import { ServicesPageProvider } from './ServicesPage/ServicesPageProvider/ServicesPageProvider'
 import { LayoutWithToolbar } from '@netcracker/qubership-apihub-ui-shared/components/PageLayouts/LayoutWithToolbar'
-import { Toolbar } from '@netcracker/qubership-apihub-ui-shared/components/Toolbar'
 import { ServicesPage } from './ServicesPage/ServicesPage'
 import { LayoutWithTabs } from '@netcracker/qubership-apihub-ui-shared/components/PageLayouts/LayoutWithTabs'
 import { WelcomePage } from '../WelcomePage'
@@ -32,7 +31,7 @@ export const NamespacePage: FC = memo(() => {
         ? (
           <IdpUrlContextProvider>
             <LayoutWithToolbar
-              toolbar={<Toolbar header={<NamespaceToolbar />} />}
+              toolbar={<NamespaceToolbar />}
               body={<NamespacePageBody menuItem={namespaceMode as NamespacePageRoute} />}
             />
           </IdpUrlContextProvider>

@@ -1,7 +1,6 @@
 import { type FC, memo } from 'react'
 
 import { PageLayout } from '@netcracker/qubership-apihub-ui-shared/components/PageLayout'
-import { Toolbar } from '@netcracker/qubership-apihub-ui-shared/components/Toolbar'
 
 import { EmptyState, NO_DATA_EMPTY_STATE_VARIANT } from '@agents/components/EmptyState/EmptyState'
 import { NamespaceToolbar } from './NamespacePage/NamespaceToolbar'
@@ -10,9 +9,7 @@ export const WelcomePage: FC = memo(() => {
   return (
     <PageLayout
       toolbar={
-        <Toolbar
-          header={<NamespaceToolbar />}
-        />
+        <NamespaceToolbar />
       }
       body={
         <EmptyState

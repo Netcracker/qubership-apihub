@@ -10,6 +10,10 @@ export type ToolbarProps = {
   header?: ReactNode
   action?: ReactNode
   size?: ToolbarSize
+  /** The height of the header row, 28px by default; a row of form fields needs more. */
+  headerHeight?: number
+  /** The side padding in theme spacing units, 4 (32px) by default. */
+  paddingX?: number
   maxWidthHeaderToolbar?: number
 } & TestableProps
 
@@ -18,13 +22,15 @@ export const Toolbar: FC<ToolbarProps> = memo<ToolbarProps>(({
   header,
   action,
   size = SMALL_TOOLBAR_SIZE,
+  headerHeight = DEFAULT_HEADER_HEIGHT,
+  paddingX = DEFAULT_PADDING_X,
   maxWidthHeaderToolbar,
   'data-testid': dataTestId,
 }) => {
   return (
     <Card>
       <CardHeader
-        sx={{ height: TOOLBAR_HEIGHT[breadcrumbs ? LARGE_TOOLBAR_SIZE : size], px: 4, maxWidth: maxWidthHeaderToolbar }}
+        sx={{ height: TOOLBAR_HEIGHT[breadcrumbs ? LARGE_TOOLBAR_SIZE : size], px: paddingX, maxWidth: maxWidthHeaderToolbar }}
         title={breadcrumbs}
         subheader={
           <Box
@@ -32,7 +38,7 @@ export const Toolbar: FC<ToolbarProps> = memo<ToolbarProps>(({
             maxWidth="55vw"
             gap={1}
             alignItems="baseline"
-            height={28}
+            height={headerHeight}
           >
             {header}
           </Box>
@@ -48,6 +54,9 @@ export const Toolbar: FC<ToolbarProps> = memo<ToolbarProps>(({
     </Card>
   )
 })
+
+const DEFAULT_HEADER_HEIGHT = 28
+const DEFAULT_PADDING_X = 4
 
 export const SMALL_TOOLBAR_SIZE = 'small'
 export const MEDIUM_TOOLBAR_SIZE = 'medium'

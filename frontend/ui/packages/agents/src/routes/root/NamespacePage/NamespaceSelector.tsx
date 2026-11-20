@@ -1,6 +1,6 @@
 import type { FC } from 'react'
 import { memo, useMemo } from 'react'
-import { Autocomplete, Box, TextField, Tooltip } from '@mui/material'
+import { Autocomplete, Box, Tooltip } from '@mui/material'
 import { useNamespaces } from './useNamespaces'
 import { useParams } from 'react-router-dom'
 import { SERVICES_NAMESPACE_PAGE_MODE } from './NamespacePage'
@@ -9,6 +9,7 @@ import type { Namespace } from '@netcracker/qubership-apihub-ui-shared/entities/
 import { useSearchParam } from '@netcracker/qubership-apihub-ui-shared/hooks/searchparams/useSearchParam'
 import { WORKSPACE_SEARCH_PARAM } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
 import { OptionItem } from '@netcracker/qubership-apihub-ui-shared/components/OptionItem'
+import { LargeTextField } from '@netcracker/qubership-apihub-ui-shared/components/LargeTextField'
 import { useLocalIdpAuthToken } from './useLocalIdpAuthToken'
 
 export const NamespaceSelector: FC = memo(() => {
@@ -43,10 +44,10 @@ export const NamespaceSelector: FC = memo(() => {
           isOptionEqualToValue={(option, value) => option.namespaceKey === value.namespaceKey}
           getOptionLabel={(option) => option?.namespaceKey ?? ''}
           renderInput={(params) => (
-            <TextField
+            <LargeTextField
               {...params}
               placeholder={'Namespace'}
-              sx={{ m: 0, '& .MuiInputBase-root': { pt: '1px', pb: '1px' } }}
+              margin="none"
             />
           )}
           onChange={(_, value) => {
