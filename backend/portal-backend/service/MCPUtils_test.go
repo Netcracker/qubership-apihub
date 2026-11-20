@@ -179,7 +179,7 @@ func TestGetOperationDiffSchemaAcceptsSeverityFilter(t *testing.T) {
 		Properties map[string]struct {
 			Type  string `json:"type"`
 			Items struct {
-				Enum []string `json:"enum"`
+				Enum []view.Severity `json:"enum"`
 			} `json:"items"`
 		} `json:"properties"`
 		Required []string `json:"required"`
@@ -189,7 +189,7 @@ func TestGetOperationDiffSchemaAcceptsSeverityFilter(t *testing.T) {
 	severity, ok := schema.Properties["severity"]
 	require.True(t, ok, "get_api_operation_diff schema must declare severity")
 	require.Equal(t, "array", severity.Type)
-	require.ElementsMatch(t, mcpSeverities, severity.Items.Enum)
+	require.ElementsMatch(t, view.Severities, severity.Items.Enum)
 	require.NotContains(t, schema.Required, "severity")
 }
 
