@@ -141,8 +141,8 @@ type stubVersionResultRepo struct {
 	docs []entity.LintedDocument
 }
 
-func (s stubVersionResultRepo) GetLintedVersion(context.Context, string, string, int) (*entity.LintedVersion, error) {
-	return nil, nil
+func (s stubVersionResultRepo) GetVersionWithProcessAndDocsSummary_deprecated(context.Context, string, string, int) (*entity.LintedVersionWithProcess_deprecated, []entity.LintedDocument, error) {
+	return nil, nil, nil
 }
 
 func (s stubVersionResultRepo) GetVersionAndDocsSummary(context.Context, string, string, int) (*entity.LintedVersion, []entity.LintedDocument, error) {
