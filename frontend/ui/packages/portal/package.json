@@ -75,7 +75,7 @@
     "react-mark.js": "9.0.7",
     "react-markdown": "^8.0.7",
     "react-multi-date-picker": "4.1.1",
-    "react-router": "6.30.6",
+    "react-router": "7.18.0",
     "react-router-dom": "6.30.6",
     "react-use": "^17.6.0",
     "react-virtualized-auto-sizer": "1.0.24",
