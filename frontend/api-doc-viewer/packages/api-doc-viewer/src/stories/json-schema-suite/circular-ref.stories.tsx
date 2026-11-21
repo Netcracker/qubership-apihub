@@ -83,7 +83,6 @@ const OFFERING_REF = "#/components/schemas/Offering"
 function createCircularCase(
   caseId: string,
   offering: Record<string, unknown>,
-  expandedDepth = JSON_SCHEMA_SUITE_EXPANDED_DEPTH,
 ): Story {
   const schema = { $ref: OFFERING_REF }
   const components = { schemas: { Offering: offering } }
@@ -94,7 +93,7 @@ function createCircularCase(
       sampleYaml: toSampleYaml({ schema, additionalComponents: components }),
     },
     render: () => (
-      <JsonSchemaViewer schema={prepared} expandedDepth={expandedDepth} />
+      <JsonSchemaViewer schema={prepared} expandedDepth={JSON_SCHEMA_SUITE_EXPANDED_DEPTH} />
     ),
   }
 }
@@ -166,7 +165,8 @@ export const CycledThroughOneOf: Story = {
   ...createCircularCase(
     "cycled-through-one-of",
     offeringSchema({}, ONE_OF_CYCLE_PROPERTIES),
-    3,
   ),
+  // Auto-switch selects the second option (the `allOf` branch with the circular $ref) so the
+  // screenshot shows the circular node inside the non-default branch.
   parameters: autoSwitchParameters(["json-schema-combiner-option-1"]),
 }
