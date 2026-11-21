@@ -354,7 +354,7 @@ calls for them. A decision that does nothing has the action `skip` (there is no 
 
 1. `AGENT_ENABLED` is not `true` -> `skip` (`AGENT_ENABLED is not true`), for every event. `gather` then makes no call.
 2. The event is not in `EVENT_HANDLERS` -> `skip`. The handled events are `pull_request`, `issue_comment`, `issues`,
-   `workflow_run`, `pull_request_review`, and `schedule`.
+   `workflow_run`, `pull_request_review`, `pull_request_review_comment`, and `schedule`.
 3. Bot: a login that ends in `[bot]` (case-insensitive) is skipped for the author of a pull request, the author of an
    issue, the author of a comment, and the author of a review. A comment of a bot also costs no GitHub call.
 4. Actor allowed (`isActorAllowed`): the login is in `AGENT_ALLOWED_ACTORS` (compared in lower case), or the variable
@@ -510,6 +510,19 @@ from a branch of this repository, and the PR body holds `ai-autonomous-agent iss
 default branch, never the pull request: without a `ref`, a `pull_request` event would check out the merge ref and a
 `pull_request_review` event the pull request itself.
 
+**Event `pull_request_review_comment`** (`created`)
+
+The workflow also accepts explicit `/agent` commands inside inline review threads. The fast filter requires a human
+commenter, a branch from this repository, and the agent marker. The router verifies write access, allowed actors, and
+the issue state that names this PR. It uses the existing PR command handlers and busy check. Ordinary inline comments
+stay passive, including replies while the issue waits for a hand-off.
+
+For an implementation command, `command.reviewCommentId` carries `comment.in_reply_to_id`, or `comment.id` for a new
+thread. Preflight finds that thread and passes the conversation to both models, even if the thread is resolved. A
+missing target fails explicitly; another thread is never substituted. `/agent update` carries no thread target.
+Reactions use `POST /repos/{repo}/pulls/comments/{id}/reactions`, with the triggering reply ID, while thread replies
+use the root comment ID. Other PR commands keep their existing behavior.
+
 - **Decisions:** see the tables above. Two filters sit in the workflow, not in the router: the `if:` of the `route` job
   (bot and Dependabot actors, forks of `workflow_run`, comments without `/agent` on a pull request that is not an agent
   pull request, and reviews that are not change requests) and the list of workflows in the `workflow_run` trigger.
@@ -538,7 +551,8 @@ concurrency group `ai-autonomous-<number>` with `cancel-in-progress: false`, and
 pending job per group and cancels older pending ones without a word. The groups stay, because they guard the state
 comment. The busy check makes the drop explicit and puts the decline where the person sees it.
 
-- **Which decisions.** `isWorkerCommand`: the event is `issue_comment` or `pull_request_review`, the decision has a
+- **Which decisions.** `isWorkerCommand`: the event is `issue_comment`, `pull_request_review`, or
+  `pull_request_review_comment`, the decision has a
   `command`, and its action is `review`, `analyze`, `implement`, `rerun`, `ci-check`, or `chat` with
   `command.name === 'chat'` (a question). That covers a parsed command, the answer to a hand-off (`answer`), and a
   change request in a review (`review-changes`). `stop`, `help`, `cost`, a `skip`, and every automatic event
@@ -927,9 +941,13 @@ Decides whether the issue may be implemented, marks the state, and saves the fac
 - **GitHub reads (`GITHUB_TOKEN`):**
   - `getIssue` (`GET /repos/{owner}/{repo}/issues/{n}`).
   - `listIssueComments` (`GET /repos/{owner}/{repo}/issues/{n}/comments`, paginated), through `loadIssue`.
-  - `getPull` (`GET /repos/{owner}/{repo}/pulls/{n}`) for the pull request named in the state, for `human` and `review`.
+  - `getPull` (`GET /repos/{owner}/{repo}/pulls/{n}`) for the pull request named in the state, including a repeated
+    `implement` command that still arrives with `kind: initial`.
   - `listReviewThreads` (GraphQL query `repository.pullRequest.reviewThreads(first: 100)` with the first 20 comments
-    of each) for `review`.
+    of each) for attempts continuing an open PR, except `update` and automatic CI fixes. An inline command selects its
+    referenced thread; other implementation commands select unresolved threads, at most 30, with the rest counted.
+    The selected threads go to both the implementer and self-reviewer. Each thread needs an outcome in the summary;
+    self-review returns a major finding for an unaddressed request or a missing outcome.
   - `publishResult` re-reads the issue comments right before the state write.
 - **GitHub reads (`AGENT_PAT`):** `getAuthenticatedUser` (`GET /user`) in `resolveIdentity`, built with
   `createClient({ token: readPat(env), repo })`. This is the only use of the PAT before `publish`. In dry-run
@@ -2291,9 +2309,12 @@ The hidden state block in one comment per issue or pull request. See "State comm
 The stop labels and the stop record. See [Stop labels and the stop record](#stop-labels-and-the-stop-record).
 
 - **Exports:** `REASONS` (the 14 reasons), `PREFIX`, `labelOf`, `isStopLabel`, `stopLabels`, `setStop`, `clearStops`,
-  `recordStop`, `recordResume`, `renderStop`.
+  `clearCompleted`, `recordStop`, `recordResume`, `renderStop`.
 - `labelOf` throws on an unknown reason. `setStop(gh, numbers, reason)` and `clearStops(gh, numbers, { keep })` read the
   labels with `gh.getIssue`, skip falsy numbers, go on after an error, and return the first error (logged) or `null`.
+- `setStop` clears `agent:completed` for every reason except `approval-required`. `clearCompleted` removes that label
+  from distinct targets when an attempt resumes, CI turns red or runs again, or a person stops work. Execution-level
+  labels are preserved. The CI gate restores completion only for a green published commit.
 - **Tests:** `stops.test.js`.
 
 ### `tools/agent/lib/text.js`
@@ -2452,7 +2473,10 @@ than the implementer (`lib/config.js` enforces that).
 - **Frontmatter:** `steps: 60`; `edit: deny`, `webfetch: deny`, `skill: allow`.
 - **Bash:** `"*": deny`; allowed `git diff*`, `git log*`, `git show*`, `git blame*`, `git grep*`; the same four denials.
 - **Input:** `self-review-input.md` (the issue inside `<untrusted>`, the plan, the implementer's summary, base and
-  head).
+  head, the implementer's verification report, and the orchestrator's local check results).
+- Both implementation and self-review inputs include the same autonomous verification policy. Available builds and
+  unit tests run in the runner; live service checks are deferred to CI. A missing local integration environment alone
+  does not block the attempt. Reports distinguish deferred checks, CI coverage gaps, and actual failures.
 - **Task:** read `git diff <base> <head>`; load `apihub-backend-self-review` for `backend/portal-backend`,
   `apihub-go-self-review` for other Go modules, and the review guidance of `apihub-pr-review` for the rest. Judge
   whether the change does what the issue asks, is correct, and stays inside the issue.
@@ -2662,7 +2686,7 @@ signature. The cumulative "AI cost of this issue so far" text is gone; `/agent c
 | `analysis` | object | `analyze.js`, `implement.js publish` (analyze-first run) | last analysis: `verdict`, `reason`, `questions`, `plan`, `label` (`ai:suitable`, `ai:unsuitable`, or `null`), `labelSetBy` (`agent` or `null`), `issueUpdatedAt` (the issue's `updated_at` when analyzed), `at`, `run` |
 | `analyses` | array | `analyze.js`, `implement.js publish` | one entry per analysis run: `at`, `run`, `verdict` (`suitable`, `unsuitable`, `needs-info`, or `failed`), `trigger`. Counted against `AGENT_MAX_ANALYSES` |
 | `implementing` | object | `implement.js preflight` (initial: `run`, `actor`, `at`, `analyzeFirst`; person: `run`, `actor`, `at`, `kind`, `analyzeFirst: false`, optional `pr`, optional `threads`); `ci-gate.js` (`run`, `actor`, `at`, `kind: 'ci-fix'`) | the running attempt. Removed by `publish` and `publishStopped`. A new run within the busy window refuses with `refuse-busy` |
-| `implementing.threads` | array | `implement.js preflight` | for a `review` attempt: `{ id, commentId }` of each unresolved review thread the implementer sees, so `publish` replies only in those |
+| `implementing.threads` | array | `implement.js preflight` | `{ id, commentId }` of each review thread both models see, including repeated `implement` and inline commands, so `publish` replies only in those |
 | `budgetFrom` | number | `implement.js preflight` (person attempts) | index in `attempts` where the CI loop budget (`AGENT_MAX_ATTEMPTS`) starts counting; `ci-gate.js` reads it |
 | `attempts` | array | `implement.js publish`, `publishStopped`; `ci-gate.js` patches the last entry | one entry per attempt, see below |
 | `branch` | string | `implement.js publish` | branch of the agent, set only once it exists on the remote (not after a dry run or a blocked attempt) |

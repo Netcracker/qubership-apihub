@@ -44,7 +44,7 @@ The next free number is computed from every ID that appears in a title or in a b
 | Area | Code | Folder | Items | Next free number |
 |------|------|--------|-------|------------------|
 | General features | GF | `general/` | 12 | `DI-Portal-GF-011` |
-| Package version | PKGVER | `package-version/` | 24 | `DI-Portal-PKGVER-025` |
+| Package version | PKGVER | `package-version/` | 25 | `DI-Portal-PKGVER-027` |
 | Package settings | PS | `package-settings/` | 7 | `DI-Portal-PS-008` |
 | Global settings | GS | `global-settings/` | 7 | `DI-Portal-GS-009` |
 | Operation view | OPVIEW | `operation-view/` | 3 | `DI-Portal-OPVIEW-004` |
@@ -158,6 +158,8 @@ Use `-` after `Related Design Items:` and `Related API:` when there is nothing t
   ([PKGVER-023](./package-version/di-portal-pkgver-023-export-document-from-package-version.md))
 - Export List of Deprecated Operations in Excel
   ([PKGVER-024](./package-version/di-portal-pkgver-024-export-list-of-deprecated-operations-in-excel.md))
+- Browser Page Title and History
+  ([PKGVER-026](./package-version/di-portal-pkgver-026-browser-page-title-and-history.md))
 - [Document Shareability](./package-version/document-shareability.md)
 
 ### Package settings

@@ -74,6 +74,22 @@ in a test, write its content into a fixture of the module: the attachment file i
 3. Do not commit, switch branches, or push: the script does that after you finish, and runs the affected checks of
    the whole repository again.
 
+## Verification in the autonomous runner
+
+The verification policy in `implement-input.md` applies to initial implementations, review changes, retries, CI fixes,
+and conflict resolution. It defines which checks run here and which run in CI when a module's development instructions
+require a local service or database. The runner can build code and run unit tests; it has no prepared application,
+PostgreSQL, or Newman environment. Keep the command permissions as configured.
+
+Run the available build and unit checks and fix failures caused by your change. Prepare regression tests for the CI
+suites that cover the change. Record checks that need a deployed service as deferred to CI, with their coverage and any
+gaps. A collection outside the CI suite does not run in CI just because you created it.
+
+An unavailable local integration environment alone is not `verification-blocked`. When the code and regression tests
+are ready, report `done` with the deferred checks in `verification`. The orchestrator publishes the change and waits
+for CI on the new commit. Report a real blocker when the change needs a decision, cannot be implemented, or cannot be
+checked by either the runner or the available CI. Never report a deferred check as passed.
+
 ## When the attempt merges develop
 
 The script has started `git merge` of `origin/develop` into the branch of the pull request, and the merge stopped on
@@ -121,13 +137,18 @@ empty unless the status is `blocked`, and give a reason whenever it is.
 
 ## Your output
 
+When review threads are supplied, account for every numbered thread in `summary`, even when no code change is needed.
+State whether it is fixed (and how), already satisfied (with code evidence), or blocked (and why). Unresolved feedback
+belongs to repeated implementation attempts too. An inline command refers to the supplied thread conversation, not
+only the short command text. Leave thread resolution to a person.
+
 End your answer with exactly one fenced `json` block and nothing after it. Every key is required, and no other key is
 allowed:
 
 ```json
 {
   "status": "done | blocked | unrelated",
-  "summary": "What you changed and why, in two to five sentences, for the pull request description.",
+  "summary": "What you changed and why, plus the outcome for each supplied review thread.",
   "commitType": "fix | feat | perf | refactor | revert | build | chore | style | docs | test | ci",
   "scope": "the module name, or an empty string when the change spans several modules",
   "title": "the imperative summary of the commit title, without type and scope, at most 72 characters",

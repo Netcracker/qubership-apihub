@@ -306,8 +306,8 @@ test('stop with a running attempt: the phase first, then the cancel, the labels,
 test('stop on a pull request of the agent stops the flow of its issue', async () => {
   const waiting = issueState({ phase: 'waiting-ci' })
   const targets = {
-    200: { issue, comments: [botComment(6, waiting)] },
-    70: { issue: agentPull, comments: [] },
+    200: { issue, comments: [botComment(6, waiting)], labels: ['agent:completed'] },
+    70: { issue: agentPull, comments: [], labels: ['agent:completed', 'ai:l1-executor'] },
   }
   await withContext({ targets, number: 70, command: cmd('stop') }, async (ctx) => {
     await chat(ctx.env, ctx.deps)
@@ -316,12 +316,15 @@ test('stop on a pull request of the agent stops the flow of its issue', async ()
     const reply = writes(ctx.gh).at(-1)
     assert.deepEqual(reply.slice(0, 2), ['createIssueComment', 70])
     assert.match(reply[2], /stopped waiting for CI on pull request #70/)
+    assert.deepEqual(writes(ctx.gh).filter((c) => c[0] === 'removeLabel'), [
+      ['removeLabel', 200, 'agent:completed'], ['removeLabel', 70, 'agent:completed'],
+    ])
   })
 })
 
 test('stop: a finished run (409) is no error; a run of another repository is not cancelled', async () => {
   const running = issueState({ phase: 'implementing', implementing: { run: RUNNING, actor: 'carol', at: 't' } })
-  const finished = { 200: { issue, comments: [botComment(6, running)] } }
+  const finished = { 200: { issue, comments: [botComment(6, running)] }, 70: { issue: agentPull, comments: [] } }
   await withContext({ targets: finished, command: cmd('stop'), cancel: false }, async (ctx) => {
     await chat(ctx.env, ctx.deps)
     assert.match(writes(ctx.gh).at(-1)[2], /The run 555 had already finished\./)
@@ -329,7 +332,9 @@ test('stop: a finished run (409) is no error; a run of another repository is not
   const foreign = issueState({
     phase: 'implementing', implementing: { run: 'https://github.com/other/repo/actions/runs/9', at: 't' },
   })
-  await withContext({ targets: { 200: { issue, comments: [botComment(6, foreign)] } }, command: cmd('stop') },
+  await withContext({ targets: {
+    200: { issue, comments: [botComment(6, foreign)] }, 70: { issue: agentPull, comments: [] },
+  }, command: cmd('stop') },
     async (ctx) => {
       await chat(ctx.env, ctx.deps)
       assert.ok(writes(ctx.gh).every((c) => c[0] !== 'cancelRun'))
@@ -339,7 +344,7 @@ test('stop: a finished run (409) is no error; a run of another repository is not
 
 test('stop: a failed cancel is reported in the reply, the state is already stopped, and the job fails', async () => {
   const running = issueState({ phase: 'implementing', implementing: { run: RUNNING, actor: 'carol', at: 't' } })
-  const targets = { 200: { issue, comments: [botComment(6, running)] } }
+  const targets = { 200: { issue, comments: [botComment(6, running)] }, 70: { issue: agentPull, comments: [] } }
   const cancelError = new GitHubError('GitHub POST failed with 403: nope', { status: 403 })
   await withContext({ targets, command: cmd('stop'), cancelError }, async (ctx) => {
     await assert.rejects(chat(ctx.env, ctx.deps), /403/)
