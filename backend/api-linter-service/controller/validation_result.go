@@ -11,6 +11,7 @@ import (
 
 type ValidationResultController interface {
 	GetValidationSummaryForVersion(w http.ResponseWriter, r *http.Request)
+	GetValidationSummaryForVersion_deprecated_2(w http.ResponseWriter, r *http.Request)
 	GetValidationSummaryForVersion_deprecated(w http.ResponseWriter, r *http.Request)
 	GetValidationResultForDocument(w http.ResponseWriter, r *http.Request)
 	GetValidationResultForDocument_deprecated(w http.ResponseWriter, r *http.Request)
@@ -61,6 +62,53 @@ func (v validationResultControllerImpl) GetValidationSummaryForVersion(w http.Re
 	}
 
 	result, err := v.validationService.GetVersionSummary(ctx, packageId, versionName)
+	if err != nil {
+		v.responder.RespondWithError(w, "Failed to get version summary", err)
+		return
+	}
+	if result == nil {
+		v.responder.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusNotFound,
+			Code:    exception.LintResultNotFound,
+			Message: exception.LintResultNotFoundMsg,
+			Params:  map[string]interface{}{"packageId": packageId, "version": versionName},
+		})
+		return
+	}
+	v.responder.RespondWithJson(w, http.StatusOK, result)
+}
+
+func (v validationResultControllerImpl) GetValidationSummaryForVersion_deprecated_2(w http.ResponseWriter, r *http.Request) {
+	packageId := getStringParam(r, "packageId")
+
+	ctx := secctx.MakeUserContext(r)
+	sufficientPrivileges, err := v.authorizationService.HasReadPackagePermission(ctx, packageId)
+	if err != nil {
+		v.responder.RespondWithError(w, "Failed to check permissions", err)
+		return
+	}
+	if !sufficientPrivileges {
+		v.responder.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusForbidden,
+			Code:    exception.InsufficientPrivileges,
+			Message: exception.InsufficientPrivilegesMsg,
+		})
+		return
+	}
+
+	versionName, err := getUnescapedStringParam(r, "version")
+	if err != nil {
+		v.responder.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidURLEscape,
+			Message: exception.InvalidURLEscapeMsg,
+			Params:  map[string]interface{}{"param": "version"},
+			Debug:   err.Error(),
+		})
+		return
+	}
+
+	result, err := v.validationService.GetVersionSummary_deprecated_2(ctx, packageId, versionName)
 	if err != nil {
 		v.responder.RespondWithError(w, "Failed to get version summary", err)
 		return

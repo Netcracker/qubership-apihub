@@ -10,8 +10,8 @@ import (
 )
 
 type VersionResultRepository interface {
-	GetLintedVersion(ctx context.Context, packageId, version string, revision int) (*entity.LintedVersion, error)
 	GetVersionAndDocsSummary(ctx context.Context, packageId, version string, revision int) (*entity.LintedVersion, []entity.LintedDocument, error)
+	GetVersionWithProcessAndDocsSummary_deprecated(ctx context.Context, packageId, version string, revision int) (*entity.LintedVersionWithProcess_deprecated, []entity.LintedDocument, error)
 	GetLintedDocuments(ctx context.Context, packageId, version string, revision int, slug string) ([]entity.LintedDocument, error)
 }
 
@@ -21,22 +21,6 @@ func NewVersionResultRepository(cp db.ConnectionProvider) VersionResultRepositor
 
 type versionResultRepositoryImpl struct {
 	cp db.ConnectionProvider
-}
-
-func (v versionResultRepositoryImpl) GetLintedVersion(ctx context.Context, packageId, version string, revision int) (*entity.LintedVersion, error) {
-	var verEnt entity.LintedVersion
-	err := v.cp.GetConnection().ModelContext(ctx, &verEnt).
-		Where("package_id = ?", packageId).
-		Where("version = ?", version).
-		Where("revision = ?", revision).
-		Select()
-	if err != nil {
-		if errors.As(err, &pg.ErrNoRows) {
-			return nil, nil
-		}
-		return nil, err
-	}
-	return &verEnt, nil
 }
 
 func (v versionResultRepositoryImpl) GetVersionAndDocsSummary(ctx context.Context, packageId, version string, revision int) (*entity.LintedVersion, []entity.LintedDocument, error) {
@@ -49,7 +33,7 @@ func (v versionResultRepositoryImpl) GetVersionAndDocsSummary(ctx context.Contex
 		Where("revision = ?", revision).
 		Select()
 	if err != nil {
-		if errors.As(err, &pg.ErrNoRows) {
+		if errors.Is(err, pg.ErrNoRows) {
 			return nil, nil, nil
 		}
 		return nil, nil, err
@@ -63,9 +47,37 @@ func (v versionResultRepositoryImpl) GetVersionAndDocsSummary(ctx context.Contex
 		Order("slug ASC").
 		Select()
 	if err != nil {
-		if errors.As(err, &pg.ErrNoRows) {
+		if errors.Is(err, pg.ErrNoRows) {
 			return nil, nil, nil
 		}
+		return nil, nil, err
+	}
+
+	return &verEnt, docs, nil
+}
+
+func (v versionResultRepositoryImpl) GetVersionWithProcessAndDocsSummary_deprecated(ctx context.Context, packageId, version string, revision int) (*entity.LintedVersionWithProcess_deprecated, []entity.LintedDocument, error) {
+	var verEnt entity.LintedVersionWithProcess_deprecated
+	_, err := v.cp.GetConnection().QueryOneContext(ctx, &verEnt, `select lv.*, p.status as validation_process_status
+		from linted_version lv
+		left join version_validation_process p on p.id = lv.validation_process_id
+		where lv.package_id = ? and lv.version = ? and lv.revision = ?`,
+		packageId, version, revision)
+	if err != nil {
+		if errors.Is(err, pg.ErrNoRows) {
+			return nil, nil, nil
+		}
+		return nil, nil, err
+	}
+
+	var docs []entity.LintedDocument
+	err = v.cp.GetConnection().ModelContext(ctx, &docs).
+		Where("package_id = ?", packageId).
+		Where("version = ?", version).
+		Where("revision = ?", revision).
+		Order("slug ASC").
+		Select()
+	if err != nil {
 		return nil, nil, err
 	}
 
@@ -81,7 +93,7 @@ func (v versionResultRepositoryImpl) GetLintedDocuments(ctx context.Context, pac
 		Where("slug = ?", slug).
 		Select()
 	if err != nil {
-		if errors.As(err, &pg.ErrNoRows) {
+		if errors.Is(err, pg.ErrNoRows) {
 			return nil, nil
 		}
 		return nil, err

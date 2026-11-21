@@ -958,6 +958,87 @@
                     "protocolProfileBehavior": {}
                 },
                 {
+                    "name": "4.1.1 Wait for Scoring Backwards Compatibility (v2)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const maxAttempts = 20;",
+                                    "const attempts = parseInt(pm.environment.get('scoringBwcAttempts') || '0') + 1;",
+                                    "pm.environment.set('scoringBwcAttempts', attempts);",
+                                    "",
+                                    "// The score row of the revision exists only after its validation process has started.",
+                                    "const scoreMissing = pm.response.code === 404 && attempts < maxAttempts;",
+                                    "if (scoreMissing) {",
+                                    "    console.log('Score is not created yet, retrying in 3s...');",
+                                    "    setTimeout(() => postman.setNextRequest(pm.info.requestName), 3000);",
+                                    "} else {",
+                                    "    pm.test(\"Status code is 200\", function () {",
+                                    "        pm.response.to.have.status(200);",
+                                    "    });",
+                                    "}",
+                                    "",
+                                    "if (pm.response.code === 200) {",
+                                    "    const data = pm.response.json();",
+                                    "    const processDetails = data.processDetails || {};",
+                                    "    if (processDetails.processStatus === 'processing') {",
+                                    "        pm.test(\"Status is absent while the score is processing\", function () {",
+                                    "            pm.expect(data).to.not.have.property('status');",
+                                    "        });",
+                                    "    }",
+                                    "    const bwc = processDetails.backwardsCompatibility || {};",
+                                    "    const state = bwc.processStatus;",
+                                    "    if (state !== 'success' && state !== 'error' && attempts < maxAttempts) {",
+                                    "        console.log('Backwards compatibility is ' + state + ', retrying in 3s...');",
+                                    "        setTimeout(() => postman.setNextRequest(pm.info.requestName), 3000);",
+                                    "    } else {",
+                                    "        pm.environment.unset('scoringBwcAttempts');",
+                                    "        pm.test(\"Backwards compatibility returns a result for the version without a predecessor\", function () {",
+                                    "            pm.expect(state, 'processDetails.backwardsCompatibility.processStatus after ' + attempts + ' attempts').to.eql('success');",
+                                    "            pm.expect(processDetails.publicationIntegrity.details).to.be.an('object');",
+                                    "            // 0000.1 has no previous version, so the result is empty.",
+                                    "            pm.expect(bwc.details).to.be.an('object').that.is.empty;",
+                                    "        });",
+                                    "    }",
+                                    "} else if (!scoreMissing) {",
+                                    "    pm.environment.unset('scoringBwcAttempts');",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "url": {
+                            "raw": "{{SERVER_HOST}}/api-linter/api/v2/packages/{{project_lt}}/versions/0000.1/scoring",
+                            "host": [
+                                "{{SERVER_HOST}}"
+                            ],
+                            "path": [
+                                "api-linter",
+                                "api",
+                                "v2",
+                                "packages",
+                                "{{project_lt}}",
+                                "versions",
+                                "0000.1",
+                                "scoring"
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "api-key",
+                                "value": "{{at-api-key}}",
+                                "type": "default"
+                            }
+                        ]
+                    },
+                    "response": [],
+                    "protocolProfileBehavior": {}
+                },
+                {
                     "name": "4.2 Wait for Validation to Complete",
                     "event": [
                         {
@@ -965,24 +1046,34 @@
                             "script": {
                                 "type": "text/javascript",
                                 "exec": [
-                                    "pm.test(\"Wait for validation to complete\", function () {",
+                                    "const maxAttempts = 30;",
+                                    "const attempts = parseInt(pm.environment.get('validationAttempts') || '0') + 1;",
+                                    "pm.environment.set('validationAttempts', attempts);",
+                                    "",
+                                    "pm.test(\"Status code is 200\", function () {",
                                     "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "",
+                                    "if (pm.response.code === 200) {",
                                     "    const data = pm.response.json();",
                                     "    const status = data.status;",
-                                    "",
-                                    "    if (status === 'inProgress') {",
+                                    "    if (status === 'inProgress' && attempts < maxAttempts) {",
                                     "        console.log('Validation in progress, retrying in 3s...');",
                                     "        setTimeout(() => postman.setNextRequest(pm.info.requestName), 3000);",
-                                    "        return;",
+                                    "    } else {",
+                                    "        pm.environment.unset('validationAttempts');",
+                                    "        pm.test(\"Validation is completed\", function () {",
+                                    "            pm.expect(status, 'validation status after ' + attempts + ' attempts').to.be.oneOf(['success', 'error']);",
+                                    "        });",
+                                    "        pm.environment.set('validationStatus', status);",
+                                    "        if (status === 'error') {",
+                                    "            console.log('Validation failed:', data.details);",
+                                    "        }",
+                                    "        postman.setNextRequest('4.3 Get Validation Summary');",
                                     "    }",
-                                    "",
-                                    "    pm.expect(status).to.be.oneOf(['success', 'error'], 'Validation must be completed');",
-                                    "    pm.environment.set('validationStatus', status);",
-                                    "    if (status === 'error') {",
-                                    "        console.log('Validation failed:', data.details);",
-                                    "    }",
+                                    "} else {",
                                     "    pm.environment.unset('validationAttempts');",
-                                    "});"
+                                    "}"
                                 ]
                             }
                         },
@@ -991,15 +1082,7 @@
                             "script": {
                                 "type": "text/javascript",
                                 "exec": [
-                                    "let attempts = parseInt(pm.environment.get('validationAttempts') || '0');",
-                                    "if (attempts >= 10) {",
-                                    "    console.log('Max validation attempts reached (10)');",
-                                    "    pm.environment.unset('validationAttempts');",
-                                    "    postman.setNextRequest('4.3 Get Validation Summary (Final)');",
-                                    "    return;",
-                                    "}",
-                                    "pm.environment.set('validationAttempts', attempts + 1);",
-                                    "console.log('Validation check attempt:', attempts + 1);"
+                                    ""
                                 ]
                             }
                         }
@@ -1086,6 +1169,230 @@
                                 "0000.1",
                                 "validation",
                                 "summary"
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "api-key",
+                                "value": "{{at-api-key}}",
+                                "type": "default"
+                            }
+                        ]
+                    },
+                    "response": [],
+                    "protocolProfileBehavior": {}
+                },
+                {
+                    "name": "4.3.0 Get Validation Summary (v3)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status code is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "",
+                                    "pm.test(\"v3 summary has the lint status of v2 and a document list\", function () {",
+                                    "    const data = pm.response.json();",
+                                    "    pm.expect(data.status).to.eql(pm.environment.get('validationStatus'));",
+                                    "    pm.expect(data).to.have.property('documents').that.is.an('array');",
+                                    "});"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "url": {
+                            "raw": "{{SERVER_HOST}}/api-linter/api/v3/packages/{{project_lt}}/versions/0000.1/validation/summary",
+                            "host": [
+                                "{{SERVER_HOST}}"
+                            ],
+                            "path": [
+                                "api-linter",
+                                "api",
+                                "v3",
+                                "packages",
+                                "{{project_lt}}",
+                                "versions",
+                                "0000.1",
+                                "validation",
+                                "summary"
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "api-key",
+                                "value": "{{at-api-key}}",
+                                "type": "default"
+                            }
+                        ]
+                    },
+                    "response": [],
+                    "protocolProfileBehavior": {}
+                },
+                {
+                    "name": "4.3.1 Wait for Scoring to Complete (v2)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const maxAttempts = 20;",
+                                    "const attempts = parseInt(pm.environment.get('scoringAttempts') || '0') + 1;",
+                                    "pm.environment.set('scoringAttempts', attempts);",
+                                    "",
+                                    "pm.test(\"Status code is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "",
+                                    "if (pm.response.code === 200) {",
+                                    "    const data = pm.response.json();",
+                                    "    const processDetails = data.processDetails || {};",
+                                    "    const state = processDetails.processStatus;",
+                                    "    if (state !== 'success' && state !== 'error' && attempts < maxAttempts) {",
+                                    "        console.log('Scoring is ' + state + ', retrying in 3s...');",
+                                    "        setTimeout(() => postman.setNextRequest(pm.info.requestName), 3000);",
+                                    "    } else {",
+                                    "        pm.environment.unset('scoringAttempts');",
+                                    "        pm.test(\"Scoring ends in success or error\", function () {",
+                                    "            const checks = [processDetails.publicationIntegrity, processDetails.backwardsCompatibility, processDetails.qualityCheck]",
+                                    "                .map((check) => check.processStatus);",
+                                    "            pm.expect(state, 'processDetails.processStatus after ' + attempts + ' attempts').to.be.oneOf(['success', 'error']);",
+                                    "            checks.forEach((check) => pm.expect(check).to.be.oneOf(['success', 'error']));",
+                                    "            if (state === 'success') {",
+                                    "                pm.expect(checks, 'processStatus of the checks of a score in success').to.eql(['success', 'success', 'success']);",
+                                    "            }",
+                                    "            if (checks.includes('error')) {",
+                                    "                pm.expect(state, 'processDetails.processStatus with a check in error').to.eql('error');",
+                                    "            }",
+                                    "            pm.expect(data.status).to.be.oneOf(['passed', 'passed_with_defects', 'not_passed']);",
+                                    "            pm.expect(data.reason).to.be.an('array');",
+                                    "            pm.expect(data.debug).to.be.an('array');",
+                                    "        });",
+                                    "        pm.environment.set('scoringV2', JSON.stringify(data));",
+                                    "    }",
+                                    "} else {",
+                                    "    pm.environment.unset('scoringAttempts');",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "url": {
+                            "raw": "{{SERVER_HOST}}/api-linter/api/v2/packages/{{project_lt}}/versions/0000.1/scoring",
+                            "host": [
+                                "{{SERVER_HOST}}"
+                            ],
+                            "path": [
+                                "api-linter",
+                                "api",
+                                "v2",
+                                "packages",
+                                "{{project_lt}}",
+                                "versions",
+                                "0000.1",
+                                "scoring"
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "api-key",
+                                "value": "{{at-api-key}}",
+                                "type": "default"
+                            }
+                        ]
+                    },
+                    "response": [],
+                    "protocolProfileBehavior": {}
+                },
+                {
+                    "name": "4.3.2 Get Scoring (v1) and Compare with v2",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status code is 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "",
+                                    "if (pm.response.code === 200) {",
+                                    "    const v1 = pm.response.json();",
+                                    "    const v2 = JSON.parse(pm.environment.get('scoringV2') || '{}');",
+                                    "    const checks = v2.processDetails || {};",
+                                    "    const integrity = checks.publicationIntegrity || {};",
+                                    "    const bwc = checks.backwardsCompatibility || {};",
+                                    "    const quality = checks.qualityCheck || {};",
+                                    "    // v1 rebuilds the released section for an integrity check that failed before any result.",
+                                    "    let expectedIntegrity;",
+                                    "    if (integrity.details !== undefined) {",
+                                    "        expectedIntegrity = integrity.details;",
+                                    "    } else if (integrity.processStatus === 'error') {",
+                                    "        expectedIntegrity = {",
+                                    "            status: 'not_passed',",
+                                    "            reason: 'Internal error: failed to get version content.',",
+                                    "            hasErrors: false,",
+                                    "            changelogHasErrors: false",
+                                    "        };",
+                                    "    }",
+                                    "    let expectedQuality = null;",
+                                    "    if (quality.details !== undefined) {",
+                                    "        expectedQuality = {};",
+                                    "        Object.keys(quality.details).forEach((apiKind) => {",
+                                    "            const entries = quality.details[apiKind];",
+                                    "            expectedQuality[apiKind] = entries === null ? null : entries.map((entry) => {",
+                                    "                const withoutFileId = Object.assign({}, entry);",
+                                    "                delete withoutFileId.fileId;",
+                                    "                return withoutFileId;",
+                                    "            });",
+                                    "        });",
+                                    "    }",
+                                    "    pm.test(\"v1 returns the projected score\", function () {",
+                                    "        pm.expect(v1).to.not.have.property('process');",
+                                    "        pm.expect(v1).to.not.have.property('processDetails');",
+                                    "        pm.expect(v1.status).to.eql(v2.status);",
+                                    "        pm.expect(v1.reason).to.eql(v2.reason);",
+                                    "        pm.expect(v1.debug).to.eql(v2.debug);",
+                                    "        if (expectedIntegrity === undefined) {",
+                                    "            pm.expect(v1).to.not.have.property('publicationIntegrityDetails');",
+                                    "        } else {",
+                                    "            pm.expect(v1.publicationIntegrityDetails).to.eql(expectedIntegrity);",
+                                    "        }",
+                                    "        pm.expect(v1.backwardsCompatibilityDetails).to.eql(bwc.details === undefined ? null : bwc.details);",
+                                    "        pm.expect(v1.qualityCheckDetails).to.eql(expectedQuality);",
+                                    "        Object.values(v1.qualityCheckDetails || {}).forEach((entries) => {",
+                                    "            (entries || []).forEach((entry) => pm.expect(entry).to.not.have.property('fileId'));",
+                                    "        });",
+                                    "    });",
+                                    "}",
+                                    "pm.environment.unset('scoringV2');"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "url": {
+                            "raw": "{{SERVER_HOST}}/api-linter/api/v1/packages/{{project_lt}}/versions/0000.1/scoring",
+                            "host": [
+                                "{{SERVER_HOST}}"
+                            ],
+                            "path": [
+                                "api-linter",
+                                "api",
+                                "v1",
+                                "packages",
+                                "{{project_lt}}",
+                                "versions",
+                                "0000.1",
+                                "scoring"
                             ]
                         },
                         "method": "GET",

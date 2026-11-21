@@ -425,7 +425,7 @@
 					"response": []
 				},
 				{
-					"name": "GET Validation Summary (v2)",
+					"name": "GET Validation Summary (v2 - deprecated)",
 					"request": {
 						"method": "GET",
 						"header": [
@@ -455,6 +455,48 @@
 							"path": [
 								"api",
 								"v2",
+								"packages",
+								"{{packageId}}",
+								"versions",
+								"{{version}}",
+								"validation",
+								"summary"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET Validation Summary (v3)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{bearerToken}}",
+								"type": "text",
+								"disabled": true
+							},
+							{
+								"key": "api-key",
+								"value": "{{apiKey}}",
+								"type": "text",
+								"disabled": true
+							},
+							{
+								"key": "X-Personal-Access-Token",
+								"value": "{{personalAccessToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v3/packages/{{packageId}}/versions/{{version}}/validation/summary",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v3",
 								"packages",
 								"{{packageId}}",
 								"versions",
@@ -600,7 +642,21 @@
 			"name": "Scoring",
 			"item": [
 				{
-					"name": "GET Scoring for Version",
+					"name": "GET Scoring for Version_deprecated",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
 					"request": {
 						"method": "GET",
 						"header": [
@@ -630,6 +686,61 @@
 							"path": [
 								"api",
 								"v1",
+								"packages",
+								"{{packageId}}",
+								"versions",
+								"{{version}}",
+								"scoring"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET Scoring for Version (v2)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{bearerToken}}",
+								"type": "text",
+								"disabled": true
+							},
+							{
+								"key": "api-key",
+								"value": "{{apiKey}}",
+								"type": "text",
+								"disabled": true
+							},
+							{
+								"key": "X-Personal-Access-Token",
+								"value": "{{personalAccessToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v2/packages/{{packageId}}/versions/{{version}}/scoring",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v2",
 								"packages",
 								"{{packageId}}",
 								"versions",

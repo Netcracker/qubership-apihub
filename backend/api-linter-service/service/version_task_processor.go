@@ -16,19 +16,19 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const versionTaskHeartbeatInterval = 5 * time.Second
+
 type VersionTaskProcessor interface {
 	StartVersionLintTask(taskId string) error
 }
 
-func NewVersionTaskProcessor(verRepo repository.VersionLintTaskRepository, docRepo repository.DocLintTaskRepository, verResRepo repository.VersionResultRepository, cl client.ApihubClient, linterSelectorService LinterSelectorService, linterConfigService LinterConfigService, scoringService ScoringService, executorId string, docTaskNotify chan<- struct{}, versionTaskNotify <-chan struct{}) VersionTaskProcessor {
+func NewVersionTaskProcessor(verRepo repository.VersionLintTaskRepository, docRepo repository.DocLintTaskRepository, cl client.ApihubClient, linterSelectorService LinterSelectorService, linterConfigService LinterConfigService, executorId string, docTaskNotify chan<- struct{}, versionTaskNotify <-chan struct{}) VersionTaskProcessor {
 	svc := &versionTaskProcessorImpl{
 		verRepo:               verRepo,
 		docRepo:               docRepo,
-		verResRepo:            verResRepo,
 		cl:                    cl,
 		linterSelectorService: linterSelectorService,
 		linterConfigService:   linterConfigService,
-		scoringService:        scoringService,
 		executorId:            executorId,
 		docTaskNotify:         docTaskNotify,
 		versionTaskNotify:     versionTaskNotify,
@@ -48,11 +48,9 @@ func NewVersionTaskProcessor(verRepo repository.VersionLintTaskRepository, docRe
 type versionTaskProcessorImpl struct {
 	verRepo               repository.VersionLintTaskRepository
 	docRepo               repository.DocLintTaskRepository
-	verResRepo            repository.VersionResultRepository
 	cl                    client.ApihubClient
 	linterSelectorService LinterSelectorService
 	linterConfigService   LinterConfigService
-	scoringService        ScoringService
 	executorId            string
 	docTaskNotify         chan<- struct{}
 	versionTaskNotify     <-chan struct{}
@@ -81,17 +79,34 @@ func (v versionTaskProcessorImpl) processVersionLintTask(taskId string) {
 		return
 	}
 
-	// TODO: update last_active for version task periodically in goroutine?
+	// Keeps the lease while the documents are loaded, so another executor does not claim the task and fan out
+	// a second set of document tasks.
+	stopHeartbeat := make(chan struct{})
+	defer close(stopHeartbeat)
+	utils.SafeAsync(func() {
+		t := time.NewTicker(versionTaskHeartbeatInterval)
+		defer t.Stop()
+		for {
+			select {
+			case <-stopHeartbeat:
+				return
+			case <-t.C:
+				if err := v.verRepo.UpdateLastActive(ctx, taskId, v.executorId); err != nil {
+					log.Errorf("Failed to update last_active of version lint task %s: %s", taskId, err)
+				}
+			}
+		}
+	})
 
 	version := fmt.Sprintf("%s@%d", task.Version, task.Revision)
 
 	docs, err := v.cl.GetVersionDocuments(ctx, task.PackageId, version)
 	if err != nil {
-		v.handleProcessingFailed(ctx, *task, fmt.Errorf("failed to get version documents: %s", err))
+		v.handleOwnedTaskFailed(ctx, *task, fmt.Errorf("failed to get version documents: %s", err))
 		return
 	}
 	if docs == nil {
-		v.handleProcessingFailed(ctx, *task, fmt.Errorf("failed to get version documents: not found"))
+		v.handleOwnedTaskFailed(ctx, *task, fmt.Errorf("failed to get version documents: not found"))
 		return
 	}
 
@@ -127,7 +142,7 @@ func (v versionTaskProcessorImpl) processVersionLintTask(taskId string) {
 
 			if lr.Linter == view.UnknownLinter {
 				if lr.Err != nil {
-					v.handleProcessingFailed(ctx, *task, fmt.Errorf("failed to select linter: %w", lr.Err))
+					v.handleOwnedTaskFailed(ctx, *task, fmt.Errorf("failed to select linter: %w", lr.Err))
 					return
 				}
 				log.Infof("Skipping document %s for [ %s | %s ] with unsupported api type: %s", doc.Slug, task.PackageId, task.Version, doc.Type)
@@ -167,34 +182,13 @@ func (v versionTaskProcessorImpl) processVersionLintTask(taskId string) {
 	}
 
 	if len(docTasks) == 0 {
-		lintedVerEnt := entity.LintedVersion{
-			PackageId:   task.PackageId,
-			Version:     task.Version,
-			Revision:    task.Revision,
-			LintStatus:  view.VersionStatusSuccess,
-			LintDetails: "No linted documents",
-			LintedAt:    time.Now(),
-		}
-
-		score, err := v.scoringService.CalculateScore(ctx, task.PackageId, task.Version, task.Revision)
+		completed, err := v.verRepo.CompleteOwnedLint(ctx, task.Id, v.executorId, view.VersionStatusSuccess, "No linted documents")
 		if err != nil {
-			log.Errorf("Version scoring failed: %s. (task = %s)", err, taskId)
-			lintedVerEnt.LintStatus = view.VersionStatusError
-			lintedVerEnt.LintDetails = fmt.Sprintf("scoring failed: %s", err)
+			v.handleOwnedTaskFailed(ctx, *task, err)
+			return
 		}
-		log.Infof("Version scoring status=%s. (task = %s)", score.Status, taskId)
-
-		scoreEnt := entity.NewVersionScore(
-			task.PackageId,
-			task.Version,
-			task.Revision,
-			time.Now(),
-			score,
-		)
-
-		err = v.verRepo.VersionLintCompleted(ctx, task.Id, &lintedVerEnt, &scoreEnt)
-		if err != nil {
-			v.handleProcessingFailed(ctx, *task, err)
+		if !completed {
+			log.Infof("Version lint task %s was not completed: executor %s no longer owns it", taskId, v.executorId)
 			return
 		}
 
@@ -202,9 +196,13 @@ func (v versionTaskProcessorImpl) processVersionLintTask(taskId string) {
 		return
 	}
 
-	err = v.docRepo.SaveDocTasksAndUpdVer(ctx, docTasks, taskId)
+	saved, err := v.docRepo.SaveDocTasksAndUpdVer(ctx, docTasks, taskId, v.executorId)
 	if err != nil {
-		v.handleProcessingFailed(ctx, *task, fmt.Errorf("failed to save doc tasks: %s", err))
+		v.handleOwnedTaskFailed(ctx, *task, fmt.Errorf("failed to save doc tasks: %s", err))
+		return
+	}
+	if !saved {
+		log.Infof("Doc tasks of version lint task %s were not saved: executor %s no longer owns it", taskId, v.executorId)
 		return
 	}
 
@@ -238,8 +236,9 @@ func (v versionTaskProcessorImpl) acquireFreeTasks() {
 			log.Tracef("versionTaskProcessorImpl: woken by version task notify")
 		}
 
+		// Set before the goroutine starts, so a second signal does not start a second loop.
+		running.Store(true)
 		utils.SafeAsync(func() {
-			running.Store(true)
 			for {
 				moreWork := v.processTask()
 				if moreWork == false {
@@ -271,7 +270,7 @@ func (v versionTaskProcessorImpl) checkDocReady() {
 	ctx := secctx.MakeSysadminContext(context.Background())
 
 	for range t.C {
-		verLintTasks, err := v.verRepo.GetWaitingForDocTasks(ctx, v.executorId) // FIXME: problem with dead executor here!!
+		verLintTasks, err := v.verRepo.GetWaitingForDocTasks(ctx, v.executorId)
 		if err != nil {
 			log.Errorf("Failed to get version tasks in waiting for docs status: %s", err)
 			continue
@@ -331,70 +330,80 @@ func (v versionTaskProcessorImpl) checkDocReady() {
 				}
 			} else {
 				// version task is ready
-				lintedVerEnt, err := v.verResRepo.GetLintedVersion(ctx, verLintTask.PackageId, verLintTask.Version, verLintTask.Revision)
-				if err != nil {
-					v.handleProcessingFailed(ctx, verLintTask, err)
-					continue
-				}
-
 				if numFailedOptional > 0 {
 					log.Infof("Version lint (task = %s) has %d optional linter doc task(s) failed; not affecting validation result", verLintTask.Id, numFailedOptional)
 				}
 
-				var score view.VersionScore
+				lintStatus := view.VersionStatusSuccess
+				lintDetails := ""
+				if numFailed > 0 {
+					lintStatus = view.VersionStatusError
+					lintDetails = fmt.Sprintf("%d doc task(s) failed", numFailed)
+				}
+
+				completed, err := v.verRepo.CompleteWaitingLint(ctx, verLintTask.Id, lintStatus, lintDetails)
+				if err != nil {
+					v.handleWaitingTaskFailed(ctx, verLintTask, err)
+					continue
+				}
+				if !completed {
+					log.Debugf("Version lint task %s was not completed: it is no longer waiting for docs or a doc task is running", verLintTask.Id)
+					continue
+				}
 				if numFailed > 0 {
 					log.Infof("Version lint (task = %s) is failed because of failed doc tasks", verLintTask.Id)
-					lintedVerEnt.LintStatus = view.VersionStatusError
-					lintedVerEnt.LintDetails = fmt.Sprintf("%d doc task(s) failed", numFailed)
 				} else {
 					log.Infof("Version lint (task = %s) successfully completed", verLintTask.Id)
-					lintedVerEnt.LintStatus = view.VersionStatusSuccess
-					lintedVerEnt.LintDetails = ""
-				}
-
-				// calculate even for failed lint
-				score, err = v.scoringService.CalculateScore(ctx, verLintTask.PackageId, verLintTask.Version, verLintTask.Revision)
-				if err != nil {
-					log.Errorf("Version scoring failed: %s. (task = %s)", err, verLintTask.Id)
-					lintedVerEnt.LintStatus = view.VersionStatusError
-					lintedVerEnt.LintDetails = fmt.Sprintf("scoring failed: %s", err)
-				}
-				log.Infof("Version scoring status=%s. (task = %s)", score.Status, verLintTask.Id)
-
-				lintedVerEnt.LintedAt = time.Now()
-
-				scoreEnt := entity.NewVersionScore(
-					lintedVerEnt.PackageId,
-					lintedVerEnt.Version,
-					lintedVerEnt.Revision,
-					time.Now(),
-					score,
-				)
-
-				err = v.verRepo.VersionLintCompleted(ctx, verLintTask.Id, lintedVerEnt, &scoreEnt)
-				if err != nil {
-					v.handleProcessingFailed(ctx, verLintTask, err)
-					continue
 				}
 			}
 		}
 	}
 }
 
-func (v versionTaskProcessorImpl) handleProcessingFailed(ctx context.Context, verLintTask entity.VersionLintTask, taskErr error) {
+func (v versionTaskProcessorImpl) handleOwnedTaskFailed(ctx context.Context, verLintTask entity.VersionLintTask, taskErr error) {
 	if verLintTask.RestartCount >= 2 {
 		log.Errorf("Failed to process version task %s with status = %s: %s. No more retries.", verLintTask.Id, verLintTask.Status, taskErr)
-		updErr := v.verRepo.VersionLintFailed(ctx, verLintTask.Id, fmt.Sprintf("failed to save version lint finished status: %s", taskErr))
+		failed, updErr := v.verRepo.FailOwnedLint(ctx, verLintTask.Id, v.executorId, fmt.Sprintf("failed to save version lint finished status: %s", taskErr))
 		if updErr != nil {
 			log.Errorf("Failed to update version lint task %s status to %s: %v", verLintTask.Id, view.TaskStatusError, updErr)
 			return
 		}
-	} else {
-		log.Errorf("Failed to process version task %s with status = %s: %s. Going to retry.", verLintTask.Id, verLintTask.Status, taskErr)
-		updErr := v.verRepo.IncRestartCount(ctx, verLintTask.Id)
-		if updErr != nil {
-			log.Errorf("Failed to increment version lint task %s restart count : %v", verLintTask.Id, updErr)
+		if !failed {
+			log.Infof("Version lint task %s was not failed: executor %s no longer owns it", verLintTask.Id, v.executorId)
 		}
 		return
+	}
+	log.Errorf("Failed to process version task %s with status = %s: %s. Going to retry.", verLintTask.Id, verLintTask.Status, taskErr)
+	owned, updErr := v.verRepo.IncOwnedRestartCount(ctx, verLintTask.Id, v.executorId)
+	if updErr != nil {
+		log.Errorf("Failed to increment version lint task %s restart count : %v", verLintTask.Id, updErr)
+		return
+	}
+	if !owned {
+		log.Infof("Restart count of version lint task %s was not incremented: executor %s no longer owns it", verLintTask.Id, v.executorId)
+	}
+}
+
+func (v versionTaskProcessorImpl) handleWaitingTaskFailed(ctx context.Context, verLintTask entity.VersionLintTask, taskErr error) {
+	if verLintTask.RestartCount >= 2 {
+		log.Errorf("Failed to process version task %s with status = %s: %s. No more retries.", verLintTask.Id, verLintTask.Status, taskErr)
+		failed, updErr := v.verRepo.FailWaitingLint(ctx, verLintTask.Id, fmt.Sprintf("failed to save version lint finished status: %s", taskErr))
+		if updErr != nil {
+			log.Errorf("Failed to update version lint task %s status to %s: %v", verLintTask.Id, view.TaskStatusError, updErr)
+			return
+		}
+		if !failed {
+			log.Debugf("Version lint task %s was not failed: it is no longer waiting for docs or a doc task is running", verLintTask.Id)
+		}
+		return
+	}
+	log.Errorf("Failed to process version task %s with status = %s: %s. Going to retry.", verLintTask.Id, verLintTask.Status, taskErr)
+	waiting, updErr := v.verRepo.IncWaitingRestartCount(ctx, verLintTask.Id)
+	if updErr != nil {
+		log.Errorf("Failed to increment version lint task %s restart count : %v", verLintTask.Id, updErr)
+		return
+	}
+	if !waiting {
+		log.Debugf("Restart count of version lint task %s was not incremented: it is no longer waiting for docs", verLintTask.Id)
 	}
 }

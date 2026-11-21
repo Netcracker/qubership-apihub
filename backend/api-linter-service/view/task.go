@@ -9,3 +9,12 @@ const (
 	TaskStatusSuccess        TaskStatus = "success"
 	TaskStatusError          TaskStatus = "error"
 )
+
+type ValidationProcessStatus string
+
+const (
+	ValidationProcessNotStarted ValidationProcessStatus = "not_started"
+	ValidationProcessProcessing ValidationProcessStatus = "processing"
+	ValidationProcessSuccess    ValidationProcessStatus = "success"
+	ValidationProcessError      ValidationProcessStatus = "error"
+)
