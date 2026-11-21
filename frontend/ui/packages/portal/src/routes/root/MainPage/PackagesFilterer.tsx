@@ -1,5 +1,5 @@
 import type { FC } from 'react'
-import React, { memo, useCallback, useMemo } from 'react'
+import React, { memo, useCallback, useMemo, useRef } from 'react'
 import { Box, Button } from '@mui/material'
 import ListOutlinedIcon from '@mui/icons-material/ListOutlined'
 import { useTextSearchParam } from '../useTextSearchParam'
@@ -37,6 +37,8 @@ export const PackagesFilterer: FC<PackagesFiltererProps> = memo<PackagesFilterer
   const isPrivatePage = useIsPrivateMainPage()
   const setSearchParams = useSetSearchParams()
   const [textFilter] = useTextSearchParam()
+  const [viewMode] = useTableMode(TREE_TABLE_MODE)
+  const viewModeBeforeSearchRef = useRef<TableMode | null>(null)
 
   const [packageObject] = usePackage({ packageKey: rootPackageKey })
   const { showCreatePackageDialog } = useEventBus()
@@ -84,8 +86,13 @@ export const PackagesFilterer: FC<PackagesFiltererProps> = memo<PackagesFilterer
         value={textFilter}
         onValueChange={text => {
           if (!text) {
-            setSearchParams({ text: text }, { replace: true })
+            // Restore the view mode that was active before the search started
+            setSearchParams({ text: text, view: viewModeBeforeSearchRef.current ?? '' }, { replace: true })
+            viewModeBeforeSearchRef.current = null
           } else {
+            if (viewModeBeforeSearchRef.current === null) {
+              viewModeBeforeSearchRef.current = viewMode
+            }
             setSearchParams({ text: text, view: FLAT_TABLE_MODE }, { replace: true })
           }
         }}
