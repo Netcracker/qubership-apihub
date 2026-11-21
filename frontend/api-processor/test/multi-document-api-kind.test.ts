@@ -35,6 +35,8 @@ describe('Duplicate operations with different API kinds', () => {
       await registry.publish(`${folder}/${version}`, {
         packageId,
         version,
+        // the documents differ on the api kind, so the duplicate is an `Error`, which fails a release build
+        status: VERSION_STATUS.DRAFT,
         files: names.map(name => ({ fileId: name })),
       })
     }
@@ -62,7 +64,10 @@ describe('Duplicate operations with different API kinds', () => {
     document: (name: string, apiKind: ApihubApiCompatibilityKind, shared: SharedOperationState) => string
     /** Labels a file needs to carry its api kind, for a type that takes it from labels. */
     labels?: (apiKind: ApihubApiCompatibilityKind) => string[]
-    /** A duplicate AsyncAPI operation id is an `Error` notification, which fails a release build. */
+    /**
+     * A duplicate AsyncAPI operation id, or a REST one whose documents differ, is an `Error` notification, which
+     * fails a release build.
+     */
     status?: BuildConfig['status']
   }
 
@@ -92,6 +97,8 @@ describe('Duplicate operations with different API kinds', () => {
             [`/${name}`]: { get: { responses: OK_RESPONSES } },
           },
         }),
+      // the documents differ on the api kind
+      status: VERSION_STATUS.DRAFT,
     },
     {
       apiType: GRAPHQL_API_TYPE,
