@@ -24,7 +24,7 @@ contract), see [Configuration reference](./configuration-reference.md).
 ## Third-party dependencies
 
 | Name | Version | Required | Notes |
-|------|---------|----------|-------|
+| ---- | ------- | -------- | ----- |
 | **PostgreSQL** | 14+ | Yes | Three logical databases required: `apihub_backend`, `api_linter`, `agents_backend` (names are configurable). Pre-create them before first start — see `scripts/init-db/init.sql` in the Compose folder. |
 | **S3-compatible storage** | Any | Optional | Offloads build artefacts; reduces PG growth. Configure under `s3Storage` in backend `config.yaml` / Helm values. |
 | **SAML / OIDC identity provider** | Any | Optional | Required when `security.productionMode: true`. Keycloak example: [`deploy/docker-compose/with-keycloak/`](../deploy/docker-compose/with-keycloak/). |
@@ -36,8 +36,8 @@ contract), see [Configuration reference](./configuration-reference.md).
 
 Defaults in `values.yaml` and `docker-compose.yml` are enough for sandboxes. For production:
 
-|     | CPU request / limit | RAM request / limit |
-|-----|---------------------|---------------------|
+| Component | CPU request / limit | RAM request / limit |
+| --- | --- | --- |
 | **Backend** (dev/sandbox) | 100m / 1 | — / 512Mi |
 | **Backend** (production) | ~3 / up to ~11 | ~3Gi / 3Gi |
 | **Builder** (any) | 100m / 1.25 | 750Mi / 4200Mi; scale with replicas (3–6 for load) |
@@ -51,7 +51,7 @@ Defaults in `values.yaml` and `docker-compose.yml` are enough for sandboxes. For
 ## Configuration model per service
 
 | Service | Boot configuration | Key env var(s) |
-|---------|-------------------|----------------|
+| ------- | ----------------- | -------------- |
 | **qubership-apihub-backend** | **`config.yaml`** (path set by `APIHUB_CONFIG_FOLDER`, default `./`), same schema as [`config.template.yaml`](../backend/portal-backend/config.template.yaml) | `APIHUB_CONFIG_FOLDER`, `LOG_LEVEL`, `GOMEMLIMIT` |
 | **qubership-apihub-ui** | Env vars only | `APIHUB_BACKEND_ADDRESS`, `APIHUB_NC_SERVICE_ADDRESS`, `API_LINTER_SERVICE_ADDRESS`, `APIHUB_AGENTS_BACKEND_ADDRESS` |
 | **qubership-apihub-build-task-consumer** | Env vars only | `APIHUB_BACKEND_ADDRESS`, `APIHUB_API_KEY`, `LOG_LEVEL`, `FOLDER_STORE`, `OPERATIONS_BUILD_BATCH` |
@@ -70,7 +70,7 @@ The UI and builder receive env vars injected directly by Deployment templates.
 ### Layout
 
 | Folder | Use case |
-|--------|----------|
+| ------ | -------- |
 | [`deploy/docker-compose/apihub-generic/`](../deploy/docker-compose/apihub-generic/) | Full stack + bundled PostgreSQL. Recommended for local development and demos. |
 | [`deploy/docker-compose/with-keycloak/`](../deploy/docker-compose/with-keycloak/) | Same stack + Keycloak pre-configured for SAML and OIDC. |
 
@@ -101,7 +101,7 @@ After start: <http://localhost:8081/login> — Portal UI.
 ### Published ports (generic compose)
 
 | Host port | Service | Purpose |
-|-----------|---------|---------|
+| --------- | ------- | ------- |
 | **8081** | `qubership-apihub-ui` | Portal (browser entry point) |
 | **8090** | `qubership-apihub-backend` | Backend REST API (builder reaches it via `host.docker.internal:8090`) |
 | **8091** | `qubership-api-linter-service` | Linter API |
@@ -219,7 +219,7 @@ Configuration is via **`config.yaml`** (path: `APIHUB_CONFIG_FOLDER`). The annot
 Process-level env vars (the only ones the backend binary reads directly):
 
 | Env var | Mandatory | Default | Description |
-|---------|-----------|---------|-------------|
+| ------- | --------- | ------- | ----------- |
 | `APIHUB_CONFIG_FOLDER` | No | `./` | Directory where the process looks for `config.yaml` |
 | `LOG_LEVEL` | No | `INFO` | Bootstrap log level. Values: `DEBUG`, `INFO`, `WARN`, `ERROR` |
 | `GOMEMLIMIT` | No | `410MiB` (Helm default); `800MiB` (Compose) | Go runtime memory soft limit. Keep below the container memory limit (~80% of limit in chart/Compose defaults). Helm: `qubershipApihubBackend.goMemLimit`. Compose: `docker-compose.yml` `environment`. |
@@ -234,7 +234,7 @@ See [Configuration reference — custom CA Secret](./configuration-reference.md#
 All other parameters are `config.yaml` keys. Most important:
 
 | `config.yaml` key | Mandatory | Default | Description |
-|-------------------|-----------|---------|-------------|
+| ----------------- | --------- | ------- | ----------- |
 | `database.host` | Yes | `localhost` | PostgreSQL host |
 | `database.port` | Yes | `5432` | PostgreSQL port |
 | `database.name` | Yes | `apihub` | Database name (must be pre-created) |
@@ -325,7 +325,7 @@ All other parameters are `config.yaml` keys. Most important:
 All configuration via **environment variables** (nginx config template is populated at container start).
 
 | Env var | Mandatory | Default | Description |
-|---------|-----------|---------|-------------|
+| ------- | --------- | ------- | ----------- |
 | `APIHUB_BACKEND_ADDRESS` | Yes | `apihub-backend:8080` | Internal address of the backend service |
 | `APIHUB_NC_SERVICE_ADDRESS` | Yes | `apihub-backend:8080` | Internal address of the custom add-on service (same pod as backend in typical deployments) |
 | `API_LINTER_SERVICE_ADDRESS` | No | `apihub-backend:8080` | Internal address of the linter service |
@@ -341,7 +341,7 @@ All configuration via **environment variables** (nginx config template is popula
 All configuration via **environment variables**.
 
 | Env var | Mandatory | Default | Description |
-|---------|-----------|---------|-------------|
+| ------- | --------- | ------- | ----------- |
 | `APIHUB_BACKEND_ADDRESS` | Yes | `apihub-backend:8080` | Internal address of the backend service |
 | `APIHUB_API_KEY` | Yes | — | System API token. Must match `zeroDayConfiguration.accessToken` in backend config on initial install |
 | `LOG_LEVEL` | No | `INFO` | Log level: `DEBUG`, `INFO`, `WARN`, `ERROR` |
@@ -364,7 +364,7 @@ All configuration via **`config.yaml`** (path: `LINTER_CONFIG_FOLDER`). Helm ren
 insufficient.
 
 | Config key | Mandatory | Default | Description |
-|------------|-----------|---------|-------------|
+| ---------- | --------- | ------- | ----------- |
 | `database.host` | Yes | `localhost` | PostgreSQL host |
 | `database.port` | Yes | `5432` | PostgreSQL port |
 | `database.name` | Yes | `apihub_linter` | Database name (must be pre-created) |
@@ -379,6 +379,7 @@ insufficient.
 | `linters.spectral.binPath` | Yes | `resources/spectral/linux/spectral` | Path to the Spectral binary inside the container |
 | `linters.spectral.workers` | No | `1` | Number of concurrent Spectral linter workers |
 | `linters.ai.enabled` | No | `false` | Enable the AI-powered OpenAPI linter |
+| `linters.ai.optional` | No | `false` | Treat the AI linter as non-blocking: its failures do not affect the validation result or scoring, and failure details are still stored. The shipped `config.template.yaml` sets `true` |
 | `linters.ai.workers` | No | `1` | Number of concurrent AI linter workers |
 | `linters.ai.excludedPackages` | No | `[]` | Package IDs to exclude from AI linting |
 | `linters.ai.includedPackages` | No | `[]` | Package IDs to include (empty = all) |
@@ -387,9 +388,22 @@ insufficient.
 | `linters.ai.openAI.model` | No | — | OpenAI model to use (e.g. `gpt-4o`) |
 | `linters.ai.openAI.rateLimitRPS` | No | `10` | OpenAI requests per second limit |
 | `linters.ai.openAI.rateLimitBurst` | No | `30` | OpenAI burst limit |
+| `linters.ai.openAI.maxConcurrentRequests` | No | `0` | Maximum LLM requests in flight per instance, shared by the lint and deduplication requests of all AI workers; `0` means unbounded |
+| `linters.ai.openAI.maxRetries` | No | `5` | Number of times one LLM request is sent again after a connection failure or an HTTP 408, 409, 429 or 5xx response; the provider's `x-should-retry` and `Retry-After` headers are honoured; `0` disables retries |
+| `linters.ai.openAI.extraBodyJSON` | No | `''` | String that holds a JSON object; its top-level keys are added to every LLM request body, for provider-specific parameters. Must not contain `messages`, `response_format`, `max_completion_tokens`, or `model`. Example: `extraBodyJSON: '{"thinking":{"type":"disabled"}}'` |
+| `linters.ai.lint.maxCompletionTokens` | No | `12000` | Maximum completion tokens for one lint request of an operation (`max_completion_tokens`); minimum `1000` |
+| `linters.ai.lint.maxRetriesOnInvalidOutput` | No | `2` | Number of times the lint of an operation is sent again after the model output reaches the completion token limit or does not match the response schema; `0` disables these retries. When the retries are exhausted, the document lint fails |
+| `linters.ai.deduplication.criteriaPrompt` | No | Built-in criterion | Rule that decides whether two AI linter issues at the same path describe the same problem; appended to the built-in deduplication instructions |
+| `linters.ai.deduplication.requestTokenBudget` | No | `24000` | Estimated input tokens per deduplication request, including the system prompt; minimum `4000`. Larger groups of issues are split into several requests |
+| `linters.ai.deduplication.maxCompletionTokens` | No | `12000` | Maximum completion tokens for one deduplication request (`max_completion_tokens`); minimum `1000` |
 | `olric.discoveryMode` | No | `local` | Olric discovery: `local` (single pod) or `lan` (multi-pod) |
 | `olric.replicaCount` | No | `1` | Olric replica count |
 | `olric.namespace` | No | — | Olric discovery namespace (set by Helm to the release namespace) |
+
+**Upgrade note:** the linter no longer reads `linters.ai.deduplicationPrompt`, shipped in `api-linter-service/1.3.7`.
+The service still starts with the old key, but a custom prompt in it is ignored. Move your criterion to
+`linters.ai.deduplication.criteriaPrompt` and keep only the criterion: the service adds the response-format
+instructions itself.
 
 ---
 
@@ -401,7 +415,7 @@ All configuration via **`config.yaml`** (path: `AGENTS_BACKEND_CONFIG_FOLDER`). 
 `qubershipApihubAgentsBackend.goMemLimit`).
 
 | Config key | Mandatory | Default | Description |
-|------------|-----------|---------|-------------|
+| ---------- | --------- | ------- | ----------- |
 | `database.host` | Yes | `localhost` | PostgreSQL host |
 | `database.port` | Yes | `5432` | PostgreSQL port |
 | `database.name` | Yes | `apihub_agents_backend` | Database name (must be pre-created) |
@@ -544,7 +558,7 @@ see the [agent chart guide](../backend/agent/helm-templates/README.md).
 `olric.replicaCount` from the release namespace and `replicas` value.
 
 | `values.yaml` section | Mandatory to fill | Maps to |
-|----------------------|-------------------|---------|
+| -------------------- | ----------------- | ------- |
 | `qubershipApihubBackend.env.database.*` | Yes | Backend `config.yaml` `database.*` |
 | `qubershipApihubBackend.env.security.jwt.privateKey` | Yes | Backend `config.yaml` `security.jwt.privateKey` |
 | `qubershipApihubBackend.env.security.apihubExternalUrl` | Yes | Backend `config.yaml` `security.apihubExternalUrl` |
@@ -572,7 +586,7 @@ see the [agent chart guide](../backend/agent/helm-templates/README.md).
 | `qubershipApiLinterService.env.technicalParameters.apihub.url` | No | Default `http://localhost:8090`; in-cluster set to `http://qubership-apihub-ui:8080` |
 | `qubershipApiLinterService.goMemLimit` | No | → `GOMEMLIMIT` (default `800MiB`, ~80% of default `memory.limit` `1000Mi`) |
 | `qubershipApiLinterService.env.linters.spectral.*` | No | Spectral binary path and worker count |
-| `qubershipApiLinterService.env.linters.ai.*` | No | AI linter (OpenAI key, workers, include/exclude lists) |
+| `qubershipApiLinterService.env.linters.ai.*` | No | AI linter (OpenAI key, workers, include/exclude lists, LLM request concurrency, lint token limit and retries, deduplication token budgets) |
 | `qubershipApiLinterService.env.olric.*` | No | Olric discovery mode / replicas (namespace set by Helm) |
 | `qubershipApiLinterService.customCa` | No | Optional Secret mounted at `/tmp/cert` for corporate HTTPS outbound |
 | `qubershipApihubAgentsBackend.env.database.*` | Yes | Agents-backend `config.yaml` `database.*` |
