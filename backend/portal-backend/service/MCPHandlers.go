@@ -435,14 +435,18 @@ func (m mcpService) ExecuteGetOperationDiffTool(ctx context.Context, req mcp.Cal
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
+	severities, err := getMCPSeverities(req)
+	if err != nil {
+		return mcp.NewToolResultError(err.Error()), nil
+	}
 
 	userID := secctx.GetUserId(ctx)
 	m.monitoringService.IncreaseBusinessMetricCounter(userID, metrics.MCPGetDiffToolCalled, mcpMetricKey(ctx, apiType, packageId))
 	observeMCPToolCall(ctx, ToolNameGetOperationDiff, apiType)
 
-	log.Debugf("get_api_operation_diff: apiType=%s, operationId=%s, packageId=%s, version=%s, previousVersion=%s", apiType, operationId, packageId, version, previousVersion)
+	log.Debugf("get_api_operation_diff: apiType=%s, operationId=%s, packageId=%s, version=%s, previousVersion=%s, severity=%v", apiType, operationId, packageId, version, previousVersion, severities)
 
-	operationChangesView, err := m.operationService.GetOperationChanges(ctx, packageId, version, operationId, packageId, previousVersion, "", []string{})
+	operationChangesView, err := m.operationService.GetOperationChanges(ctx, packageId, version, operationId, packageId, previousVersion, "", severities)
 	if err != nil {
 		return nil, err
 	}
@@ -657,12 +661,9 @@ func (m mcpService) ExecuteGetDdlEntityDiffTool(ctx context.Context, req mcp.Cal
 	}
 	previousVersion := req.GetString("previousVersion", "")
 	previousVersionPackageId := req.GetString("previousVersionPackageId", "")
-	severities := req.GetStringSlice("severity", nil)
-	validSeverities := []string{string(view.Annotation), string(view.Breaking), string(view.SemiBreaking), string(view.Deprecated), string(view.NonBreaking), string(view.Unclassified)}
-	for _, severity := range severities {
-		if !view.ValidSeverity(severity) {
-			return mcp.NewToolResultError(fmt.Sprintf("severity must be one of: %v", validSeverities)), nil
-		}
+	severities, err := getMCPSeverities(req)
+	if err != nil {
+		return mcp.NewToolResultError(err.Error()), nil
 	}
 
 	m.monitoringService.IncreaseBusinessMetricCounter(secctx.GetUserId(ctx), metrics.MCPGetDdlEntityDiffToolCalled, mcpMetricKey(ctx, view.ContractTypeDdl, packageId))

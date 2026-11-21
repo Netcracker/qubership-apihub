@@ -519,6 +519,7 @@ Use this tool ONLY when the user explicitly requests changes of a specific REST 
 LLM INSTRUCTIONS:
 - Always pass apiType from the selected search_api_operations result
 - The response contains JSON with list of changes of the specific operation from OpenAPI or AsyncAPI specification from the specific package and version to the previous version
+- If the user asks only for changes of certain severities, pass them in severity, for example ["breaking"] or ["breaking", "semi-breaking"]; omit severity to get all changes
 - If users ask for changes for many operations - call this tool for each operation
 - If the result reports an authorization problem (a message starting with "Failed to check user privileges" or stating you lack "privileges"/access), STOP. Do not retry, call other tools, or search other packages or versions to work around it. Tell the user they do not have access to this package and may need to request it`
 
@@ -786,6 +787,7 @@ Use this tool ONLY when the user explicitly requests changes of a specific REST 
 LLM INSTRUCTIONS:
 - Always pass apiType from the selected search_api_operations result
 - The response contains JSON with list of changes of the specific operation from OpenAPI or AsyncAPI specification from the specific package and version to the previous version
+- If the user asks only for changes of certain severities, pass them in severity, for example ["breaking"] or ["breaking", "semi-breaking"]; omit severity to get all changes
 - If users ask for changes for many operations - call this tool for each operation
 - Format responses in markdown with well-readable markup (headings, lists, tables)`
 
@@ -945,6 +947,13 @@ var (
 			},
 			"previousVersion": {
 				"type": "string"
+			},
+			"severity": {
+				"type": "array",
+				"items": {
+					"type": "string",
+					"enum": ["breaking", "semi-breaking", "deprecated", "non-breaking", "annotation", "unclassified"]
+				}
 			}
 		},
 		"required": ["apiType","operationId","packageId","version","previousVersion"]

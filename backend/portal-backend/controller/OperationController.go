@@ -579,16 +579,14 @@ func (o operationControllerImpl) GetOperationChanges(w http.ResponseWriter, r *h
 		o.responder.RespondWithCustomError(w, customErr)
 		return
 	}
-	for _, severity := range severities {
-		if !view.ValidSeverity(severity) {
-			o.responder.RespondWithCustomError(w, &exception.CustomError{
-				Status:  http.StatusBadRequest,
-				Code:    exception.InvalidParameterValue,
-				Message: exception.InvalidParameterValueMsg,
-				Params:  map[string]interface{}{"param": "severity", "value": severity},
-			})
-			return
-		}
+	if severity, found := view.FindInvalidSeverity(severities); found {
+		o.responder.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidParameterValue,
+			Message: exception.InvalidParameterValueMsg,
+			Params:  map[string]interface{}{"param": "severity", "value": severity},
+		})
+		return
 	}
 	changes, err := o.operationService.GetOperationChanges(ctx, packageId, versionName, operationId, previousVersionPackageId, previousVersion, refPackageId, severities)
 	if err != nil {
@@ -740,18 +738,14 @@ func (o operationControllerImpl) GetOperationsChanges(w http.ResponseWriter, r *
 		o.responder.RespondWithCustomError(w, customErr)
 		return
 	}
-	if len(severities) > 0 {
-		for _, severity := range severities {
-			if !view.ValidSeverity(severity) {
-				o.responder.RespondWithCustomError(w, &exception.CustomError{
-					Status:  http.StatusBadRequest,
-					Code:    exception.InvalidParameterValue,
-					Message: exception.InvalidParameterValueMsg,
-					Params:  map[string]interface{}{"param": "severity", "value": severity},
-				})
-				return
-			}
-		}
+	if severity, found := view.FindInvalidSeverity(severities); found {
+		o.responder.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidParameterValue,
+			Message: exception.InvalidParameterValueMsg,
+			Params:  map[string]interface{}{"param": "severity", "value": severity},
+		})
+		return
 	}
 
 	asyncapiChannel, err := url.QueryUnescape(r.URL.Query().Get("asyncapiChannel"))
