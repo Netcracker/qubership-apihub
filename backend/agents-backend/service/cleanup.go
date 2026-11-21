@@ -91,7 +91,7 @@ func (j snapshotsCleanupJob) Run() {
 	ctx = secctx.MakeSysadminContext(ctx)
 	info, err := j.apihubClient.GetSystemInfo(ctx)
 	if err != nil {
-		log.Errorf("[SnapshotsCleanup] failed to check for running migrations: %s", ctx.Err().Error())
+		log.Errorf("[SnapshotsCleanup] failed to check for running migrations: %s", err.Error())
 		return
 	}
 	if info.MigrationInProgress {
@@ -107,6 +107,10 @@ func (j snapshotsCleanupJob) Run() {
 			return
 		}
 		log.Errorf("[SnapshotsCleanup] failed to get workspaces: %s", err.Error())
+		return
+	}
+	if workspaces == nil {
+		log.Infof("[SnapshotsCleanup] no workspaces found, nothing to clean up")
 		return
 	}
 	retention := time.Now().AddDate(0, 0, -j.ttl)

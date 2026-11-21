@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
+	"sync"
 	"testing"
 
 	"github.com/Netcracker/qubership-apihub/backend/agents-backend/client"
@@ -295,4 +297,129 @@ func assertCustomError(t *testing.T, err error, expectedCode string) *exception.
 		t.Errorf("status = %d, want %d", customErr.Status, http.StatusFailedDependency)
 	}
 	return customErr
+}
+
+type getSnapshotApihubClient struct {
+	client.ApihubClient
+	versionContent *view.VersionContent
+	versionErr     error
+	references     *view.VersionReferences
+	referencesErr  error
+	packagesById   map[string]*view.SimplePackage
+
+	mu                 sync.Mutex
+	requestedVersionOf []string
+}
+
+func (c *getSnapshotApihubClient) GetVersion(_ context.Context, id string, _ string) (*view.VersionContent, error) {
+	c.mu.Lock()
+	c.requestedVersionOf = append(c.requestedVersionOf, id)
+	c.mu.Unlock()
+	return c.versionContent, c.versionErr
+}
+
+func (c *getSnapshotApihubClient) GetVersionReferences(context.Context, string, string) (*view.VersionReferences, error) {
+	return c.references, c.referencesErr
+}
+
+func (c *getSnapshotApihubClient) GetPackageById(_ context.Context, id string) (*view.SimplePackage, error) {
+	if pkg, ok := c.packagesById[id]; ok {
+		return pkg, nil
+	}
+	return nil, nil // 404 from APIHUB: the package does not exist
+}
+
+// Regression for issue #1027: GetVersionReferences returns (nil, nil) on 404
+// and GetSnapshot read len(references.References) without a nil check, so the
+// request ended in a recovered panic (500) instead of a not-found answer.
+func TestGetSnapshotReturnsNilWhenReferencesAreNil(t *testing.T) {
+	s := &snapshotServiceImpl{
+		systemInfoService: fixedUrlSystemInfoService{},
+		apihubClient: &getSnapshotApihubClient{
+			versionContent: &view.VersionContent{Version: "1.0.0"},
+			references:     nil,
+		},
+	}
+
+	snapshot, err := s.GetSnapshot(context.Background(), "ns", "ws", "1.0.0", "cloud")
+	if err != nil {
+		t.Fatalf("err = %v, want nil", err)
+	}
+	if snapshot != nil {
+		t.Fatalf("snapshot = %+v, want nil", snapshot)
+	}
+}
+
+// Regression for issue #1027: when a package referenced by the snapshot has
+// been deleted, GetPackageById returns (nil, nil), and the goroutine went on to
+// request the package version and dereference pkg.Name. utils.SafeAsync
+// recovered the panic, so the response looked the same. The missing package is
+// now skipped before its version is requested, the same way as a missing
+// version, and the rest of the snapshot is returned.
+func TestGetSnapshotSkipsReferencedPackageNotFound(t *testing.T) {
+	references := &view.VersionReferences{
+		References: []view.VersionReference{{PackageRef: "ref-1"}},
+		Packages: map[string]view.PackageVersionRef{
+			"ref-1": {RefPackageId: "deleted-package", RefPackageVersion: "1.0.0"},
+		},
+	}
+	apihubClient := &getSnapshotApihubClient{
+		versionContent: &view.VersionContent{Version: "1.0.0"},
+		references:     references,
+	}
+	s := &snapshotServiceImpl{
+		systemInfoService: fixedUrlSystemInfoService{},
+		apihubClient:      apihubClient,
+	}
+
+	snapshot, err := s.GetSnapshot(context.Background(), "ns", "ws", "1.0.0", "cloud")
+	if err != nil {
+		t.Fatalf("err = %v, want nil", err)
+	}
+	if snapshot == nil {
+		t.Fatal("snapshot = nil, want the snapshot without the missing package")
+	}
+	for _, id := range apihubClient.requestedVersionOf {
+		if id == "deleted-package" {
+			t.Fatal("GetVersion was called for 'deleted-package', want the package skipped first")
+		}
+	}
+	for _, service := range snapshot.Services {
+		if service.PackageId == "deleted-package" {
+			t.Fatalf("snapshot.Services = %+v, want no entry for 'deleted-package'", snapshot.Services)
+		}
+	}
+}
+
+type nilListServicesAgentClient struct {
+	client.AgentClient
+}
+
+func (c nilListServicesAgentClient) ListServices(context.Context, string, string, string, string) (*view.ServiceListResponse, error) {
+	return nil, nil // 404 from the agent
+}
+
+// Regression for issue #1027: ListServices returns (nil, nil) on 404 and
+// CreateSnapshot read serviceListResponse.Status without a nil check, so the
+// request ended in a recovered panic (500).
+func TestCreateSnapshotFailsWhenAgentReturnsNoServices(t *testing.T) {
+	s := &snapshotServiceImpl{
+		apihubClient: &getSnapshotApihubClient{
+			packagesById: map[string]*view.SimplePackage{
+				"ws": {Id: "ws", Kind: string(view.KindWorkspace)},
+			},
+		},
+		agentClient: nilListServicesAgentClient{},
+	}
+
+	resp, err := s.CreateSnapshot(context.Background(), "ns", "ws", "1.0.0", view.CreateSnapshotDTO{})
+	if err == nil {
+		t.Fatal("err = nil, want an error when the agent returns no services")
+	}
+	if !strings.Contains(err.Error(), "agent returned no services") {
+		t.Fatalf("err = %v, want it to say that the agent returned no services", err)
+	}
+	if resp != nil {
+		t.Fatalf("resp = %+v, want nil", resp)
+	}
 }
