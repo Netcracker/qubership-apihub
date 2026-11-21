@@ -3,6 +3,7 @@ import { resolveJsonSchemaTypeLabel } from "@netcracker/qubership-apihub-next-da
 import {
   resolvePlainPropertyExpanderExpanded,
   resolvePlainPropertyInitiallyExpanded,
+  resolvePlainPropertyIsExpandable,
   resolvePlainPropertyNodeVisibility,
 } from "@netcracker/qubership-apihub-next-data-model/building-service/json-schema/tree/node-visibility-data/kind-property"
 import { JsonSchemaTreeNode } from "@netcracker/qubership-apihub-next-data-model/model/json-schema/types/aliases"
@@ -75,7 +76,7 @@ export const CombinerNodeViewer: FC<CombinerNodeViewerProps> = (props) => {
   )
 
   const expandable = useMemo(
-    () => JsonSchemaCombiner.Display.resolveLeafExpandability(activeLeaf),
+    () => resolvePlainPropertyIsExpandable(activeLeaf),
     // treeRevision: lazy materialization mutates tree in place
     // eslint-disable-next-line react-hooks/exhaustive-deps -- treeRevision
     [activeLeaf, treeRevision],

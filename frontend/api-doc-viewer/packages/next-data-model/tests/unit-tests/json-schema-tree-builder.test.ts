@@ -266,6 +266,40 @@ describe("JsonSchemaTreeBuilder", () => {
     expect(builder.materializeChildren(outer, 2)).toBe(false)
   })
 
+  it("defers a oneOf branch's children at the materialization frontier and materializes them on demand", () => {
+    // The viewer relies on this contract when switching combiner options: an option node past the
+    // frontier exists but has no children yet, still resolves as expandable, and materializes its
+    // children (with the cycle terminating in a cycle clone) on demand.
+    const exhibit: { type: string; properties: Record<string, unknown> } = {
+      type: "object",
+      properties: { id: { type: "string" } },
+    }
+    const extendedExhibit = { type: "object", properties: { ribbonText: { type: "string" } } }
+    exhibit.properties.childExhibit = { type: "array", items: { oneOf: [exhibit, extendedExhibit] } }
+    const schema = {
+      type: "object",
+      properties: {
+        data: { type: "object", properties: { ...exhibit.properties, ribbonText: { type: "string" } } },
+      },
+    }
+
+    const builder = new JsonSchemaTreeBuilder({ source: schema, materializeDepth: 3 })
+    const root = builder.build().root!
+    const childExhibit = root.childrenNodes().find((node) => node.key === "data")!
+      .childrenNodes().find((node) => node.key === "childExhibit")!
+    expect(builder.materializeChildren(childExhibit)).toBe(true)
+
+    const items = childExhibit.childrenNodes()[0]
+    const firstBranch = items.nestedNodes()[0]
+    expect(firstBranch.childrenNodes()).toHaveLength(0)
+    expect(resolvePlainPropertyIsExpandable(firstBranch)).toBe(true)
+
+    expect(builder.materializeChildren(firstBranch)).toBe(true)
+    expect(firstBranch.childrenNodes().map((node) => node.key)).toContain("id")
+    expect(firstBranch.childrenNodes().find((node) => node.key === "childExhibit")?.isCycle).toBe(true)
+    expect(builder.materializeChildren(firstBranch)).toBe(false)
+  })
+
   it("creates an items node when items is a schema object", () => {
     const schema = {
       type: "array",

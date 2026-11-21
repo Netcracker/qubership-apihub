@@ -1,7 +1,6 @@
 import { SelectorOption } from "@apihub/components/shared-components/Selector/Selector"
 import { isPlainCombinerNodeKind } from "@netcracker/qubership-apihub-next-data-model/building-service/json-schema/tree/node-visibility-data/kind-combiner"
 import { resolvePlainCombinerNodeVisibility } from "@netcracker/qubership-apihub-next-data-model/building-service/json-schema/tree/node-visibility-data/kind-combiner"
-import { resolvePlainPropertyIsExpandable } from "@netcracker/qubership-apihub-next-data-model/building-service/json-schema/tree/node-visibility-data/kind-property"
 import { TreeNodeComplexityTypes } from "@netcracker/qubership-apihub-next-data-model/model/abstract/tree/tree-node.interface"
 import { resolveJsonSchemaTypeLabel } from "@netcracker/qubership-apihub-next-data-model/model/json-schema/type-label"
 import { JsonSchemaRowDiffs } from "@netcracker/qubership-apihub-next-data-model/model/json-schema/tree-with-diffs/property-row-diffs"
@@ -101,10 +100,6 @@ class Display extends JsonSchemaCombinerBase {
     }
 
     return node.childrenNodes() as N[]
-  }
-
-  public static resolveLeafExpandability(node: JsonSchemaTreeNode): boolean {
-    return resolvePlainPropertyIsExpandable(node)
   }
 }
 

@@ -337,39 +337,3 @@ describe("JsonSchemaCombiner.Selection", () => {
     expect(buildCombinerOptionText(allOfBranch)).toBe("string(ID)<MyString> (allOf)")
   })
 })
-
-describe("JsonSchemaCombiner.Display", () => {
-  it("keeps a deferred circular combiner branch expandable before its children are materialized", () => {
-    const exhibit: { type: string; properties: Record<string, unknown> } = {
-      type: "object",
-      properties: { id: { type: "string" } },
-    }
-    const extendedExhibit = {
-      type: "object",
-      properties: { ribbonText: { type: "string" } },
-    }
-    const polymorphicExhibit = { oneOf: [exhibit, extendedExhibit] }
-    exhibit.properties.childExhibit = { type: "array", items: polymorphicExhibit }
-    const dataExhibit = {
-      type: "object",
-      properties: { ...exhibit.properties, ribbonText: { type: "string" } },
-    }
-
-    const builder = new JsonSchemaTreeBuilder({
-      source: { type: "object", properties: { data: dataExhibit } },
-      materializeDepth: 3,
-    })
-    const root = builder.build().root!
-    const data = root.childrenNodes().find((node) => node.key === "data")!
-    const childExhibit = data.childrenNodes().find((node) => node.key === "childExhibit")!
-    builder.materializeChildren(childExhibit)
-    const items = childExhibit.childrenNodes()[0]
-    const firstBranch = items.nestedNodes()[0]
-
-    expect(firstBranch.childrenNodes()).toHaveLength(0)
-    expect(JsonSchemaCombiner.Display.resolveLeafExpandability(firstBranch)).toBe(true)
-
-    builder.materializeChildren(firstBranch)
-    expect(firstBranch.childrenNodes().some((node) => node.key === "id")).toBe(true)
-  })
-})
