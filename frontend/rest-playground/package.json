@@ -163,7 +163,7 @@
     "typescript": "catalog:",
     "urijs": "^1.19.11",
     "util": "^0.12.4",
-    "webpack": "5.101.3",
+    "webpack": "5.104.1",
     "webpack-cli": "6.0.1",
     "webpack-dev-server": "5.2.6",
     "xml-formatter": "^2.6.1"
