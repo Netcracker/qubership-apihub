@@ -67,6 +67,23 @@ test('clearStops returns the first error', async () => {
   assert.equal((await stops.clearStops(gh, [1, 2])).message, 'boom')
 })
 
+test('blocking stops remove stale completion; waiting for approval preserves completion', async () => {
+  const gh = fakeGh({ 1: ['agent:completed', 'ai:l1-executor'], 2: ['agent:completed'] })
+  await stops.setStop(gh, [1], 'verification-blocked')
+  await stops.setStop(gh, [2], 'approval-required')
+  assert.deepEqual(gh.calls, [
+    ['remove', 1, 'agent:completed'],
+    ['add', 1, 'needs-human:verification-blocked'],
+    ['add', 2, 'needs-human:approval-required'],
+  ])
+})
+
+test('clearCompleted removes only completion, deduplicates targets, and continues after an error', async () => {
+  const gh = fakeGh({ 1: ['agent:completed', 'ai:l1-executor'], 3: ['agent:completed'], 4: [] }, { failOn: 2 })
+  assert.equal((await stops.clearCompleted(gh, [1, 1, null, 2, 3, 4])).message, 'boom')
+  assert.deepEqual(gh.calls, [['remove', 1, 'agent:completed'], ['remove', 3, 'agent:completed']])
+})
+
 test('recordStop appends, closes the open entry, and skips approval-required', () => {
   const first = stops.recordStop({ costs: [] }, { reason: 'stuck', at: 't1', run: 'r1', on: [5, null, 6] })
   assert.deepEqual(first.stops, [{ reason: 'stuck', at: 't1', run: 'r1', on: [5, 6] }])

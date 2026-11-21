@@ -328,6 +328,9 @@ function createClient({
   const addReaction = (commentId, content) =>
     request('POST', `/repos/{repo}/issues/comments/${commentId}/reactions`, { body: { content } })
 
+  const addReviewCommentReaction = (commentId, content) =>
+    request('POST', `/repos/{repo}/pulls/comments/${commentId}/reactions`, { body: { content } })
+
   /**
    * Cancels a workflow run. Returns `true` when GitHub accepted the request and `false` for 409: the run has finished,
    * which is the state the caller wants. Needs `actions: write`.
@@ -404,6 +407,7 @@ function createClient({
     getJobLog,
     rerunFailedJobs,
     addReaction,
+    addReviewCommentReaction,
     cancelRun,
     replyToReviewComment,
     listReviewThreads,

@@ -483,6 +483,14 @@ test('replyToReviewComment posts the body to the replies of the comment', async 
   assert.deepEqual(calls[0].body, { body: 'Pushed abc1234.' })
 })
 
+test('addReviewCommentReaction uses the pull review comment endpoint', async () => {
+  const { client, calls } = setup([json({ id: 1 })])
+  await client.addReviewCommentReaction(4643082805, 'eyes')
+  assert.equal(calls[0].url, 'https://api.github.com/repos/acme/widgets/pulls/comments/4643082805/reactions')
+  assert.equal(calls[0].init.method, 'POST')
+  assert.deepEqual(calls[0].body, { content: 'eyes' })
+})
+
 test('listReviewThreads queries the threads of the pull request and flattens the nodes', async () => {
   const nodes = [
     {
