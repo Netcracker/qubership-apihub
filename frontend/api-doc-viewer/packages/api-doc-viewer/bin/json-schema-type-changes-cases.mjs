@@ -1808,6 +1808,58 @@ const combinerSchema = (description) => ({
   },
 });
 
+const ONE_OF_OFFERING_COMPONENT = "Offering";
+const ONE_OF_OFFERING_SCHEMA_REF = { $ref: `#/components/schemas/${ONE_OF_OFFERING_COMPONENT}` };
+const circularOneOfExtendedVariant = (updated) => {
+  if (!updated) {
+    return {
+      allOf: [
+        ONE_OF_OFFERING_SCHEMA_REF,
+        { type: "object", properties: { description: { type: "string" } } },
+      ],
+    };
+  }
+  return {
+    allOf: [
+      {
+        type: "object",
+        title: ONE_OF_OFFERING_COMPONENT,
+        properties: {
+          id: { type: "integer", description: "Numeric identifier" },
+        },
+      },
+      {
+        type: "object",
+        description: "Extended offering details",
+        required: ["summary"],
+        properties: {
+          summary: { type: "string", description: "Short summary" },
+          priority: { type: "integer" },
+        },
+      },
+    ],
+  };
+};
+const circularOneOfComponents = (updated) => ({
+  schemas: {
+    [ONE_OF_OFFERING_COMPONENT]: {
+      type: "object",
+      properties: {
+        id: { type: "string" },
+        children: {
+          type: "array",
+          items: {
+            oneOf: [
+              ONE_OF_OFFERING_SCHEMA_REF,
+              circularOneOfExtendedVariant(updated),
+            ],
+          },
+        },
+      },
+    },
+  },
+});
+
 /** @param {TypeChangeCase[]} cases */
 const collectCircularCases = (cases) => {
   const dir = "circular";
@@ -1946,6 +1998,14 @@ const collectCircularCases = (cases) => {
     { beforeSchema: combinerSchema(COMBINER_DESCRIPTION), beforeAdditionalComponents: combinerComponents(false) },
     { afterSchema: combinerSchema(COMBINER_DESCRIPTION), afterAdditionalComponents: combinerComponents(true) },
     "Combiner variant cycle: cyclic link added",
+  );
+  pushCase(
+    cases,
+    dir,
+    "one-of-variant-properties-changed",
+    { beforeSchema: ONE_OF_OFFERING_SCHEMA_REF, beforeAdditionalComponents: circularOneOfComponents(false) },
+    { afterSchema: ONE_OF_OFFERING_SCHEMA_REF, afterAdditionalComponents: circularOneOfComponents(true) },
+    "Circular oneOf variant: properties, descriptions, and types changed",
   );
 };
 

@@ -260,9 +260,10 @@ describe("JsonSchemaTreeBuilder", () => {
 
     expect(outer.childrenNodes()).toHaveLength(0)
 
-    builder.materializeChildren(outer, 2)
+    expect(builder.materializeChildren(outer, 2)).toBe(true)
     expect(outer.childrenNodes()).toHaveLength(1)
     expect(outer.childrenNodes()[0].key).toBe("inner")
+    expect(builder.materializeChildren(outer, 2)).toBe(false)
   })
 
   it("creates an items node when items is a schema object", () => {

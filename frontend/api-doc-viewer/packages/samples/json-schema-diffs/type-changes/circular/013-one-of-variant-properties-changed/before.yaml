@@ -1,0 +1,21 @@
+beforeSchema: &a1
+  $ref: "#/components/schemas/Offering"
+beforeAdditionalComponents:
+  schemas:
+    Offering:
+      type: object
+      properties:
+        id:
+          type: string
+        children:
+          type: array
+          items:
+            oneOf:
+              - *a1
+              - allOf:
+                  - *a1
+                  - type: object
+                    properties:
+                      description:
+                        type: string
+

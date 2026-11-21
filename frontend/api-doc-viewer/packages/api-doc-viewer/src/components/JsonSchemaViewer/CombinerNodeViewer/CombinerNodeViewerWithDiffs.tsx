@@ -99,8 +99,10 @@ export const CombinerNodeViewerWithDiffs: FC<CombinerNodeViewerWithDiffsProps> =
   )
 
   const expandable = useMemo(
-    () => leafChildren.length > 0,
-    [leafChildren.length],
+    () => JsonSchemaCombiner.Display.resolveLeafExpandability(activeLeaf),
+    // treeRevision: lazy materialization mutates tree in place
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- treeRevision
+    [activeLeaf, treeRevision],
   )
 
   const initiallyExpanded = useMemo(
@@ -209,13 +211,15 @@ export const CombinerNodeViewerWithDiffs: FC<CombinerNodeViewerWithDiffsProps> =
     combinerNode: JsonSchemaTreeNodeWithDiffs,
     option: SelectorOption<JsonSchemaTreeNodeWithDiffs>,
   ) => {
-    setSelections((previousSelections) => JsonSchemaCombiner.Selection.applySelection(
+    const nextSelections = JsonSchemaCombiner.Selection.applySelection(
       node,
-      previousSelections,
+      selections,
       combinerNode.id,
       option.node.id,
-    ))
-  }, [node])
+    )
+    setSelections(nextSelections)
+    materializeChildren(JsonSchemaCombiner.Selection.resolveActiveLeafNode(node, nextSelections))
+  }, [materializeChildren, node, selections])
 
   if (nestedNodes.length === 0) {
     return null

@@ -9,6 +9,8 @@ import { JsonSchemaTreeNode } from "@netcracker/qubership-apihub-next-data-model
 import { JsonSchemaTreeNodeKinds } from "@netcracker/qubership-apihub-next-data-model/model/json-schema/types/node-kind"
 import { resolveJsonSchemaTypeLabel } from "@netcracker/qubership-apihub-next-data-model/model/json-schema/type-label"
 import { JsonSchemaCombiner } from "../src/components/JsonSchemaViewer/utils/resolve-combiner"
+import { JsonSchemaRowDiffs } from "@netcracker/qubership-apihub-next-data-model/model/json-schema/tree-with-diffs/property-row-diffs"
+import { prepareJsonDiffSchema, RESPONSE_200_BODY_TARGET } from "../src/stories/preprocess"
 
 const DIFF_META_KEYS = {
   diffsMetaKey: DIFF_META_KEY,
@@ -147,6 +149,97 @@ describe("JsonSchemaCombiner.NodeDiffs.buildSelectorOption", () => {
     expect((selectorOption.diffsSummary?.size ?? 0) + (selectorOption.descendantDiffsSummary?.size ?? 0))
       .toBeGreaterThan(0)
   })
+
+  it("exposes a round-marker summary for changes inside a circular variant", () => {
+    const offeringReference = { $ref: "#/components/schemas/Offering" }
+    const beforeOffering = {
+      type: "object",
+      properties: {
+        id: { type: "string" },
+        children: {
+          type: "array",
+          items: {
+            oneOf: [
+              offeringReference,
+              {
+                allOf: [
+                  offeringReference,
+                  {
+                    type: "object",
+                    properties: {
+                      description: { type: "string", description: "Before" },
+                    },
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      },
+    }
+    const afterOffering = {
+      type: "object",
+      properties: {
+        id: { type: "string" },
+        children: {
+          type: "array",
+          items: {
+            oneOf: [
+              offeringReference,
+              {
+                allOf: [
+                  {
+                    type: "object",
+                    title: "Offering",
+                    properties: {
+                      id: { type: "integer", description: "Numeric identifier" },
+                    },
+                  },
+                  {
+                    type: "object",
+                    description: "Extended offering details",
+                    required: ["summary"],
+                    properties: {
+                      summary: { type: "string", description: "Short summary" },
+                      priority: { type: "integer" },
+                    },
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      },
+    }
+
+    const merged = prepareJsonDiffSchema({
+      beforeSchema: offeringReference,
+      afterSchema: offeringReference,
+      beforeAdditionalComponents: { schemas: { Offering: beforeOffering } },
+      afterAdditionalComponents: { schemas: { Offering: afterOffering } },
+      target: RESPONSE_200_BODY_TARGET,
+      circular: true,
+    }) as object
+    const builder = new JsonSchemaTreeWithDiffsBuilder({
+      source: merged,
+      materializeDepth: 6,
+      diffsMetaKeys: DIFF_META_KEYS,
+    })
+    const tree = builder.build()
+    const children = tree.root!.childrenNodes().find((node) => node.key === "children")!
+    const items = children.childrenNodes()[0]!
+    const allOfVariant = items.nestedNodes()[1]!
+    const selections = JsonSchemaCombiner.Selection.applySelection(items, new Map(), items.id, allOfVariant.id)
+    builder.materializeChildren(JsonSchemaCombiner.Selection.resolveActiveLeafNode(items, selections))
+    const circularVariant = items.nestedNodes()[0]!
+    const nestedChildren = circularVariant.childrenNodes().find((node) => node.key === "children")!
+    const nodeChangesSummary = JsonSchemaRowDiffs.NodeLevel.takeNodeChangesSummary(nestedChildren)
+    const selectorOption = JsonSchemaCombiner.NodeDiffs.buildSelectorOption(circularVariant, 0)
+
+    expect(nodeChangesSummary?.size).toBeGreaterThan(0)
+    expect(selectorOption.diffsSummary).toEqual(new Set())
+    expect(selectorOption.descendantDiffsSummary).toEqual(nodeChangesSummary)
+  })
 })
 
 describe("JsonSchemaCombiner.Selection", () => {
@@ -242,5 +335,41 @@ describe("JsonSchemaCombiner.Selection", () => {
     expect(buildCombinerOptionText(twoLevelRoot)).toBe("string(ID)<MyString> (anyOf)")
     // Second-level option (the allOf variant itself) - same resolved leaf, different suffix.
     expect(buildCombinerOptionText(allOfBranch)).toBe("string(ID)<MyString> (allOf)")
+  })
+})
+
+describe("JsonSchemaCombiner.Display", () => {
+  it("keeps a deferred circular combiner branch expandable before its children are materialized", () => {
+    const exhibit: { type: string; properties: Record<string, unknown> } = {
+      type: "object",
+      properties: { id: { type: "string" } },
+    }
+    const extendedExhibit = {
+      type: "object",
+      properties: { ribbonText: { type: "string" } },
+    }
+    const polymorphicExhibit = { oneOf: [exhibit, extendedExhibit] }
+    exhibit.properties.childExhibit = { type: "array", items: polymorphicExhibit }
+    const dataExhibit = {
+      type: "object",
+      properties: { ...exhibit.properties, ribbonText: { type: "string" } },
+    }
+
+    const builder = new JsonSchemaTreeBuilder({
+      source: { type: "object", properties: { data: dataExhibit } },
+      materializeDepth: 3,
+    })
+    const root = builder.build().root!
+    const data = root.childrenNodes().find((node) => node.key === "data")!
+    const childExhibit = data.childrenNodes().find((node) => node.key === "childExhibit")!
+    builder.materializeChildren(childExhibit)
+    const items = childExhibit.childrenNodes()[0]
+    const firstBranch = items.nestedNodes()[0]
+
+    expect(firstBranch.childrenNodes()).toHaveLength(0)
+    expect(JsonSchemaCombiner.Display.resolveLeafExpandability(firstBranch)).toBe(true)
+
+    builder.materializeChildren(firstBranch)
+    expect(firstBranch.childrenNodes().some((node) => node.key === "id")).toBe(true)
   })
 })

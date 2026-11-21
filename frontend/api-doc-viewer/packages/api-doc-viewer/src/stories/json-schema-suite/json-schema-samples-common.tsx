@@ -2,12 +2,13 @@ import { stringify as stringifyYaml } from "yaml";
 import type { DisplayMode } from "@apihub/types/DisplayMode";
 import type { ArgTypes, Meta, StoryObj } from "@storybook/react-vite";
 import { DISPLAY_MODE_ARG_TYPES, DISPLAY_MODE_DEFAULT_ARGS } from "../shared/display-mode-arg-types";
+import type { AutoSwitchArgs } from "../shared/auto-switch";
 import { JsonSchemaViewer } from "@apihub/components/JsonSchemaViewer/JsonSchemaViewer"
 import type { JsonSchemaSampleCase } from "../utils/json-schema-samples-cases"
 
 const JSON_SCHEMA_SUITE_EXPANDED_DEPTH = 5;
 
-export type JsonSchemaCaseStoryComponentProps = {
+export type JsonSchemaCaseStoryComponentProps = AutoSwitchArgs & {
   caseId: string;
   sampleYaml: string;
   displayMode?: DisplayMode;
