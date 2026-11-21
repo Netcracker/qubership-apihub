@@ -1130,8 +1130,8 @@ importers:
         specifier: ^3.21.7
         version: 3.21.7
       '@stoplight/mosaic':
-        specifier: ^1.40.0
-        version: 1.53.5(@react-spectrum/provider@3.11.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        specifier: ^1.53.6
+        version: 1.53.6(@react-spectrum/provider@3.11.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@stoplight/types':
         specifier: ^13.0.0
         version: 13.20.0
@@ -1204,10 +1204,10 @@ importers:
         version: 0.2.3
       '@stoplight/markdown-viewer':
         specifier: ^5.4.7
-        version: 5.7.1(@stoplight/mosaic-code-viewer@1.53.6(@react-spectrum/provider@3.11.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@stoplight/mosaic@1.53.5(@react-spectrum/provider@3.11.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(supports-color@10.2.2)
+        version: 5.7.1(@stoplight/mosaic-code-viewer@1.53.6(@react-spectrum/provider@3.11.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@stoplight/mosaic@1.53.6(@react-spectrum/provider@3.11.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(supports-color@10.2.2)
       '@stoplight/mosaic':
-        specifier: ^1.40.0
-        version: 1.53.5(@react-spectrum/provider@3.11.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        specifier: ^1.53.6
+        version: 1.53.6(@react-spectrum/provider@3.11.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@stoplight/mosaic-code-editor':
         specifier: ^1.19.1
         version: 1.53.5(@react-spectrum/provider@3.11.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -1286,10 +1286,10 @@ importers:
         version: 2.3.1
       '@stoplight/markdown-viewer':
         specifier: ^5.4.7
-        version: 5.7.1(@stoplight/mosaic-code-viewer@1.53.6(@react-spectrum/provider@3.11.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@stoplight/mosaic@1.53.5(@react-spectrum/provider@3.11.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(supports-color@10.2.2)
+        version: 5.7.1(@stoplight/mosaic-code-viewer@1.53.6(@react-spectrum/provider@3.11.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@stoplight/mosaic@1.53.6(@react-spectrum/provider@3.11.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(supports-color@10.2.2)
       '@stoplight/mosaic':
-        specifier: ^1.40.0
-        version: 1.53.5(@react-spectrum/provider@3.11.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        specifier: ^1.53.6
+        version: 1.53.6(@react-spectrum/provider@3.11.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@stoplight/mosaic-code-viewer':
         specifier: ^1.53.6
         version: 1.53.6(@react-spectrum/provider@3.11.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -1930,10 +1930,10 @@ importers:
         version: 0.2.3
       '@stoplight/markdown-viewer':
         specifier: ^5.5.0
-        version: 5.7.1(@stoplight/mosaic-code-viewer@1.53.6(@react-spectrum/provider@3.11.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@stoplight/mosaic@1.53.5(@react-spectrum/provider@3.11.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(supports-color@8.1.1)
+        version: 5.7.1(@stoplight/mosaic-code-viewer@1.53.6(@react-spectrum/provider@3.11.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@stoplight/mosaic@1.53.6(@react-spectrum/provider@3.11.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(supports-color@8.1.1)
       '@stoplight/mosaic':
-        specifier: ^1.40.0
-        version: 1.53.5(@react-spectrum/provider@3.11.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        specifier: ^1.53.6
+        version: 1.53.6(@react-spectrum/provider@3.11.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@stoplight/mosaic-code-editor':
         specifier: ^1.40.0
         version: 1.53.5(@react-spectrum/provider@3.11.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -30307,7 +30307,7 @@ snapshots:
 
   '@react-types/button@3.4.1(react@18.3.1)':
     dependencies:
-      '@react-types/shared': 3.36.1(react@18.3.1)
+      '@react-types/shared': 3.9.0(react@18.3.1)
       react: 18.3.1
 
   '@react-types/checkbox@3.11.0(@react-spectrum/provider@3.11.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
@@ -30323,7 +30323,7 @@ snapshots:
 
   '@react-types/radio@3.1.2(react@18.3.1)':
     dependencies:
-      '@react-types/shared': 3.36.1(react@18.3.1)
+      '@react-types/shared': 3.9.0(react@18.3.1)
       react: 18.3.1
 
   '@react-types/shared@3.36.1(react@18.3.1)':
@@ -30337,7 +30337,7 @@ snapshots:
   '@react-types/switch@3.1.2(@react-spectrum/provider@3.11.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
       '@react-types/checkbox': 3.11.0(@react-spectrum/provider@3.11.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@react-types/shared': 3.36.1(react@18.3.1)
+      '@react-types/shared': 3.9.0(react@18.3.1)
       react: 18.3.1
     transitivePeerDependencies:
       - '@react-spectrum/provider'
@@ -30345,7 +30345,7 @@ snapshots:
 
   '@react-types/textfield@3.3.0(react@18.3.1)':
     dependencies:
-      '@react-types/shared': 3.36.1(react@18.3.1)
+      '@react-types/shared': 3.9.0(react@18.3.1)
       react: 18.3.1
 
   '@rehooks/component-size@1.0.3(react@18.3.1)':
@@ -31288,11 +31288,11 @@ snapshots:
       tslib: 2.8.1
       wolfy87-eventemitter: 5.2.9
 
-  '@stoplight/markdown-viewer@5.7.1(@stoplight/mosaic-code-viewer@1.53.6(@react-spectrum/provider@3.11.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@stoplight/mosaic@1.53.5(@react-spectrum/provider@3.11.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(supports-color@10.2.2)':
+  '@stoplight/markdown-viewer@5.7.1(@stoplight/mosaic-code-viewer@1.53.6(@react-spectrum/provider@3.11.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@stoplight/mosaic@1.53.6(@react-spectrum/provider@3.11.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(supports-color@10.2.2)':
     dependencies:
       '@rehooks/component-size': 1.0.3(react@18.3.1)
       '@stoplight/markdown': 3.2.0(supports-color@10.2.2)
-      '@stoplight/mosaic': 1.53.5(@react-spectrum/provider@3.11.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@stoplight/mosaic': 1.53.6(@react-spectrum/provider@3.11.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@stoplight/mosaic-code-viewer': 1.53.6(@react-spectrum/provider@3.11.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@stoplight/react-error-boundary': 2.0.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       deepmerge: 4.3.1
@@ -31311,11 +31311,11 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@stoplight/markdown-viewer@5.7.1(@stoplight/mosaic-code-viewer@1.53.6(@react-spectrum/provider@3.11.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@stoplight/mosaic@1.53.5(@react-spectrum/provider@3.11.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(supports-color@8.1.1)':
+  '@stoplight/markdown-viewer@5.7.1(@stoplight/mosaic-code-viewer@1.53.6(@react-spectrum/provider@3.11.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@stoplight/mosaic@1.53.6(@react-spectrum/provider@3.11.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(supports-color@8.1.1)':
     dependencies:
       '@rehooks/component-size': 1.0.3(react@18.3.1)
       '@stoplight/markdown': 3.2.0(supports-color@8.1.1)
-      '@stoplight/mosaic': 1.53.5(@react-spectrum/provider@3.11.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@stoplight/mosaic': 1.53.6(@react-spectrum/provider@3.11.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@stoplight/mosaic-code-viewer': 1.53.6(@react-spectrum/provider@3.11.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@stoplight/react-error-boundary': 2.0.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       deepmerge: 4.3.1
