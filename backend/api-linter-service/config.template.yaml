@@ -40,6 +40,8 @@ olric:
   replicaCount: 1
   # Optional; Namespace for Olric discovery. If not set, default value: ""; Example: apihub
   namespace: ''
+  # Optional; Interval in seconds between cluster membership checks used to re-subscribe to the version-published topic after a peer rejoins. If not set, default value: 5; Example: 5
+  membershipPollIntervalSeconds: 5
 
 # Configuration for linters
 linters:
