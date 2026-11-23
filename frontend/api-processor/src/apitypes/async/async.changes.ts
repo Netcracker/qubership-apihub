@@ -35,6 +35,7 @@ import { apiKindReclassificationRule, CUSTOM_SCOPE_ELEMENT_API_KIND } from '../.
 import { v3 as AsyncAPIV3 } from '@asyncapi/parser/esm/spec-types'
 import {
   extractAggregatedDiffs,
+  extractExtensionDiffs,
   extractInfoDiffs,
   extractOwnDiffs,
   extractOwnPropertyDiff,
@@ -165,6 +166,7 @@ export const compareDocuments: DocumentsCompare = async (
             ...extractAggregatedDiffs(operationObject.externalDocs),
             ...extractAggregatedDiffs(operationObject.bindings),
             ...extractAggregatedDiffs(operationObject.reply),
+            ...extractExtensionDiffs(operationObject),
             // traits are merged into operation's own properties by normalization,
             // so trait diffs surface via extractOwnDiffs(operationObject) above.
             // channel subtrees (shared uniformly across operations on the channel):

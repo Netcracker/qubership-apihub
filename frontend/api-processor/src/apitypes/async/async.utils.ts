@@ -388,6 +388,22 @@ export function extractOwnPropertyDiff(obj: object, property: string): Diff[] {
   return diff ? [diff] : []
 }
 
+/**
+ * Diffs rolled up into the object's specification extension (`x-*`) subtrees.
+ * Whole-extension add/remove/replace diffs are point diffs on the object itself
+ * and surface via {@link extractOwnDiffs}; this collects changes inside extension values.
+ */
+export function extractExtensionDiffs(obj: object): Diff[] {
+  const diffs: Diff[] = []
+  for (const [key, value] of Object.entries(obj)) {
+    if (!key.startsWith('x-')) {
+      continue
+    }
+    diffs.push(...extractAggregatedDiffs(value))
+  }
+  return diffs
+}
+
 export function extractInfoDiffs(doc: AsyncAPIV3.AsyncAPIObject): Diff[] {
   return [
     ...extractOwnPropertyDiff(doc, 'info'),
