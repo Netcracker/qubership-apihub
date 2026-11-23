@@ -1763,8 +1763,8 @@ importers:
         specifier: 4.17.20
         version: 4.17.20
       '@types/lodash.isequalwith':
-        specifier: 4.4.6
-        version: 4.4.6
+        specifier: 4.4.9
+        version: 4.4.9
       '@types/lodash.pickby':
         specifier: 4.6.6
         version: 4.6.6
@@ -9856,8 +9856,8 @@ packages:
   '@types/lodash-es@4.17.12':
     resolution: {integrity: sha512-0NgftHUcV4v34VhXm8QBSftKVXtbkBG3ViCjs6+eJ5a6y6Mi/jiFGPc1sC7QK+9BFhWrURE3EOggmWaSxL9OzQ==}
 
-  '@types/lodash.isequalwith@4.4.6':
-    resolution: {integrity: sha512-55fjBOrhse+SLkqGlvUq1yQ/sDvsi93+ngLIG22DPEoeL4c/d1rtWMMK55pP4nKOjkSWv8ks1q0HaXXCgPr81w==}
+  '@types/lodash.isequalwith@4.4.9':
+    resolution: {integrity: sha512-uLXidHwVTfYeaHRipKT/pjl10PFTGM0rHLyfANSSfEJvwtFmRACmQb2y6i8eZbcOCtX+BSxOKa+JzzCTxmQ32g==}
 
   '@types/lodash.pickby@4.6.6':
     resolution: {integrity: sha512-NFa13XxlMd9eFi0UFZFWIztpMpXhozbijrx3Yb1viYZphT7jyopIFVoIRF4eYMjruWNEG1rnyrRmg/8ej9T8Iw==}
@@ -33614,7 +33614,7 @@ snapshots:
     dependencies:
       '@types/lodash': 4.17.20
 
-  '@types/lodash.isequalwith@4.4.6':
+  '@types/lodash.isequalwith@4.4.9':
     dependencies:
       '@types/lodash': 4.17.20
 

@@ -155,7 +155,7 @@
     "@stoplight/scripts": "^9.2.0",
     "@types/jest": "catalog:",
     "@types/lodash": "4.17.20",
-    "@types/lodash.isequalwith": "4.4.6",
+    "@types/lodash.isequalwith": "4.4.9",
     "@types/lodash.pickby": "4.6.6",
     "@types/postman-collection": "^3.5.7",
     "@typescript-eslint/eslint-plugin": "^5.19.0",
