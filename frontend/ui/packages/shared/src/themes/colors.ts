@@ -28,6 +28,10 @@ export const HINT_COLOR = '#B4BFCF'
 
 export const FIELD_BACKGROUND_COLOR = '#F2F3F5'
 
-export const LIST_ITEM_HIGHLIGHT_COLOR = 'rgba(46, 58, 82, 0.09)'
+// "Grey/Cloud" of the palette of the design library
+export const GREY_CLOUD_COLOR = '#F5F5FA'
+
+// "For Elements/Grey Transp./Hover" of the design library, which has no solid color of this shade
+export const GREY_TRANSPARENT_HOVER_COLOR = 'rgba(46, 58, 82, 0.09)'
 
 export const DROPDOWN_SHADOW = '0px 6px 20px rgba(0, 0, 0, 0.15), 0px 0px 2px rgba(0, 0, 0, 0.2)'

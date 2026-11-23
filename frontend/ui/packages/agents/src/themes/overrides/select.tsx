@@ -29,13 +29,10 @@ export function createSelectOverrides(base: SelectOverrides = {}): SelectOverrid
         PaperProps: {
           sx: {
             ...DROPDOWN_PAPER_STYLES,
-            [`& .${root}`]: getListItemStyles([
-              '&:hover',
-              `&.${focusVisible}`,
-              `&.${selected}`,
-              `&.${selected}:hover`,
-              `&.${selected}.${focusVisible}`,
-            ]),
+            [`& .${root}`]: getListItemStyles({
+              hover: ['&:hover', `&.${focusVisible}`],
+              selected: [`&.${selected}`, `&.${selected}:hover`, `&.${selected}.${focusVisible}`],
+            }),
           },
         },
         // MUI pads the list 8px at the top and bottom; in the design only the padding of the paper surrounds the rows

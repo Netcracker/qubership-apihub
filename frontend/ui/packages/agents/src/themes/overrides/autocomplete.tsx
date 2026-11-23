@@ -85,13 +85,16 @@ export function createAutocompleteOverrides(base: AutocompleteOverrides = {}): A
       // MUI pads the list 8px at the top and bottom; in the design only the padding of the paper surrounds the rows
       listbox: extendStyleOverride(base.styleOverrides?.listbox, {
         padding: 0,
-        [`& .${option}`]: getListItemStyles([
-          `&.${focused}`,
-          `&.${OPTION_FOCUS_VISIBLE_CLASS}`,
-          '&[aria-selected="true"]',
-          `&[aria-selected="true"].${focused}`,
-          `&[aria-selected="true"].${OPTION_FOCUS_VISIBLE_CLASS}`,
-        ]),
+        // MUI marks the option under the pointer or reached with the keyboard as focused, and keeps the mark after
+        // the pointer leaves the list, since Enter picks that option
+        [`& .${option}`]: getListItemStyles({
+          hover: [`&.${focused}`],
+          selected: [
+            '&[aria-selected="true"]',
+            `&[aria-selected="true"].${focused}`,
+            `&[aria-selected="true"].${OPTION_FOCUS_VISIBLE_CLASS}`,
+          ],
+        }),
       }),
       // MUI pads a line of text; the design centers the spinner in a row as high as an option
       loading: {
