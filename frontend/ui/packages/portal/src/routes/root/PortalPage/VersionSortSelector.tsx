@@ -1,6 +1,6 @@
 import KeyboardArrowDownOutlinedIcon from '@mui/icons-material/KeyboardArrowDownOutlined'
 import KeyboardArrowUpOutlinedIcon from '@mui/icons-material/KeyboardArrowUpOutlined'
-import { Box, MenuItem } from '@mui/material'
+import { Box, MenuItem, styled } from '@mui/material'
 import { MenuButton } from '@netcracker/qubership-apihub-ui-shared/components/Buttons/MenuButton'
 import { SortIcon } from '@netcracker/qubership-apihub-ui-shared/icons/SortIcon'
 import type { FC } from 'react'
@@ -13,6 +13,8 @@ export type VersionSortSelectorProps = Readonly<{
   onChange: (sort: VersionListSort) => void
   disabled?: boolean
 }>
+
+const MENU_BUTTON_SX = { whiteSpace: 'nowrap' } as const
 
 export const VersionSortSelector: FC<VersionSortSelectorProps> = memo<VersionSortSelectorProps>(({
   value,
@@ -38,24 +40,29 @@ export const VersionSortSelector: FC<VersionSortSelectorProps> = memo<VersionSor
         disabled={disabled}
         onClick={handleOpen}
         onClose={handleClose}
-        sx={{ whiteSpace: 'nowrap' }}
+        sx={MENU_BUTTON_SX}
         data-testid="VersionSortButton"
       >
         {VERSION_LIST_SORT_OPTIONS.map(option => {
           const key = getVersionListSortKey(option)
           return (
-            <MenuItem
+            <VersionSortMenuItem
               key={key}
               selected={isSameVersionListSort(option, value)}
               onClick={() => onChange(option)}
-              sx={{ '&.Mui-selected': { fontWeight: 500 } }}
               data-testid={`VersionSortOption-${key}`}
             >
               {option.label}
-            </MenuItem>
+            </VersionSortMenuItem>
           )
         })}
       </MenuButton>
     </Box>
   )
 })
+
+const VersionSortMenuItem = styled(MenuItem)(({ theme }) => ({
+  '&.Mui-selected': {
+    fontWeight: theme.typography.fontWeightMedium,
+  },
+}))
