@@ -60,6 +60,9 @@ export const BASELINE_PACKAGE_COLUMN_ID = 'baseline-package'
 const SELECTION_COLUMN_ID = 'selection'
 const LINK_COLUMN_ID = 'link'
 const MIN_COLUMN_WIDTH: Pixel = 180
+// The mockups draw a service row about 48 px high; without label chips, it would shrink to one line of text. The rows
+// of its API documents keep the height of their content.
+const SERVICE_ROW_MIN_HEIGHT: Pixel = 48
 // The controls that a service row renders: the chevron, "View Package" and the other links, and "Error Details"
 const ROW_CONTROL_SELECTOR = 'a, button'
 
@@ -196,6 +199,7 @@ function ServiceTableComponent<TRow extends ServiceTableRow<TRow>>({
             <ServiceTableBodyRow
               key={row.id}
               cells={row.getVisibleCells()}
+              documentRow={row.depth > 0}
               expanded={row.getIsExpanded()}
               selected={row.getIsSelected()}
               selectable={row.getCanSelect()}
@@ -244,16 +248,17 @@ SelectAllCheckbox.displayName = 'SelectAllCheckbox'
  */
 type ServiceTableBodyRowProps<TRow> = {
   cells: ReadonlyArray<Cell<TRow, unknown>>
+  documentRow: boolean
   expanded: boolean
   selected: boolean
   selectable: boolean
 }
 
-function ServiceTableBodyRowComponent<TRow>({ cells }: ServiceTableBodyRowProps<TRow>): ReactElement {
+function ServiceTableBodyRowComponent<TRow>({ cells, documentRow }: ServiceTableBodyRowProps<TRow>): ReactElement {
   return (
-    <TableRow>
+    <BodyTableRow documentRow={documentRow}>
       {cells.map(cell => <ServiceTableBodyCell key={cell.column.id} cell={cell} />)}
-    </TableRow>
+    </BodyTableRow>
   )
 }
 
@@ -333,6 +338,13 @@ RowSkeleton.displayName = 'RowSkeleton'
 const CompactCheckbox = styled(Checkbox)({
   padding: 0,
 })
+
+// The height of a table row works as its minimum: taller content still grows the row
+const BodyTableRow = styled(TableRow, {
+  shouldForwardProp: prop => prop !== 'documentRow',
+})<{ documentRow: boolean }>(({ documentRow }) => ({
+  height: documentRow ? undefined : SERVICE_ROW_MIN_HEIGHT,
+}))
 
 const BodyTableCell = styled(TableCell, {
   shouldForwardProp: prop => prop !== 'clickable',
