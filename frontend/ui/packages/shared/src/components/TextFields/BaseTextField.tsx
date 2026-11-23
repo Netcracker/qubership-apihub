@@ -14,7 +14,10 @@ import { FIELD_BACKGROUND_COLOR, HINT_COLOR } from '../../themes/colors'
 
 export type BaseTextFieldProps = Omit<FilledTextFieldProps, 'variant'>
 
-export type TextFieldAppearance = 'default' | 'outlined'
+export const DEFAULT_TEXT_FIELD_APPEARANCE = 'default'
+export const OUTLINED_TEXT_FIELD_APPEARANCE = 'outlined'
+
+type TextFieldAppearance = typeof DEFAULT_TEXT_FIELD_APPEARANCE | typeof OUTLINED_TEXT_FIELD_APPEARANCE
 
 type AppearanceProps = {
   appearance: TextFieldAppearance
@@ -102,7 +105,7 @@ const StyledTextField = styled(TextField, {
   shouldForwardProp: prop => prop !== 'appearance',
 })<AppearanceProps>(({ theme, appearance, size, select, disabled }) => {
   const isSmall = size === 'small'
-  const isOutlined = appearance === 'outlined'
+  const isOutlined = appearance === OUTLINED_TEXT_FIELD_APPEARANCE
   const background = isOutlined ? theme.palette.common.white : FIELD_BACKGROUND_COLOR
   const restBorderColor = isOutlined ? HINT_COLOR : 'transparent'
   const labelTransform = `translate(${LABEL_X}px, ${isSmall ? SMALL_LABEL_Y : MEDIUM_LABEL_Y}px) scale(1)`

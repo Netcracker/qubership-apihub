@@ -3,7 +3,7 @@ import { GREY_LONDON_FOG_COLOR } from '@netcracker/qubership-apihub-ui-shared/th
 
 type ScrollbarSize = Readonly<{
   thumbWidth: number
-  // Between the thumb and the edge of the element that scrolls
+  /** The space between the thumb and the edge of the element that scrolls, in px. */
   gap: number
 }>
 

@@ -60,8 +60,8 @@ export const BASELINE_PACKAGE_COLUMN_ID = 'baseline-package'
 const SELECTION_COLUMN_ID = 'selection'
 const LINK_COLUMN_ID = 'link'
 const MIN_COLUMN_WIDTH: Pixel = 180
-// The mockups draw a service row about 48 px high; without label chips, it would shrink to one line of text. The rows
-// of its API documents keep the height of their content.
+// A service row is about 48 px high, as in the design; without label chips, it would shrink to one line of text.
+// The rows of its API documents keep the height of their content.
 const SERVICE_ROW_MIN_HEIGHT: Pixel = 48
 // The controls that a service row renders: the chevron, "View Package" and the other links, and "Error Details"
 const ROW_CONTROL_SELECTOR = 'a, button'

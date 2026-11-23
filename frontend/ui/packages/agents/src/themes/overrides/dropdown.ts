@@ -32,9 +32,9 @@ export const DROPDOWN_SCROLL_STYLES: CSSObject = {
 }
 
 type ListItemStateSelectors = {
-  // The row under the pointer and the row reached with the keyboard
+  /** The selectors of the row under the pointer and of the row reached with the keyboard. */
   hover: readonly string[]
-  // The selected row in every other state, which keeps the color of the selection
+  /** The selectors of the selected row in each of its states; the row keeps the color of the selection in all. */
   selected: readonly string[]
 }
 

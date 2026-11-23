@@ -149,10 +149,6 @@ export const CreateSnapshotStep: FC = memo(() => {
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>): void => {
     event.preventDefault()
-    // Enter in a field submits the form even while the button is disabled
-    if (!isCreateSnapshotEnabled) {
-      return
-    }
     resetStepsAfter(CREATE_SNAPSHOT_STEP_KEY)
     createSnapshot({ name: name, baseline: baseline, serviceKeys: selectedServiceKeys })
   }

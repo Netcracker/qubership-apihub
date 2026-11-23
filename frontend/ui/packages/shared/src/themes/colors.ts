@@ -34,6 +34,9 @@ export const GREY_CLOUD_COLOR = '#F5F5FA'
 // "Grey/London Fog" of the palette of the design library
 export const GREY_LONDON_FOG_COLOR = '#D5DCE3'
 
+// "Grey/Niagara" of the palette of the design library
+export const GREY_NIAGARA_COLOR = '#8F9EB4'
+
 // "For Elements/Grey Transp./Hover" of the design library, which has no solid color of this shade
 export const GREY_TRANSPARENT_HOVER_COLOR = 'rgba(46, 58, 82, 0.09)'
 

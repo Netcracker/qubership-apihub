@@ -6,9 +6,8 @@ import { WorkspaceSelector } from './WorkspaceSelector'
 import { AgentsSelector } from './AgentsSelector'
 import { CloudIcon } from '@netcracker/qubership-apihub-ui-shared/icons/CloudIcon'
 import { LARGE_TOOLBAR_SIZE, Toolbar } from '@netcracker/qubership-apihub-ui-shared/components/Toolbar'
+import { GREY_LONDON_FOG_COLOR, GREY_NIAGARA_COLOR } from '@netcracker/qubership-apihub-ui-shared/themes/colors'
 
-const LABEL_COLOR = '#8F9EB4'
-const DIVIDER_COLOR = '#D5DCE3'
 const FIELD_HEIGHT = 44
 
 // The large toolbar is 72px high, as in the design, and leaves 14px above and below the 44px fields; the design pads
@@ -30,15 +29,15 @@ export const NamespaceToolbar: FC = memo(() => {
         >
           <Box display="flex" alignItems="center" gap={1}>
             <CloudIcon />
-            <Typography variant="subtitle4" color={LABEL_COLOR}>From</Typography>
+            <Typography variant="subtitle4" color={GREY_NIAGARA_COLOR}>From</Typography>
             <AgentsSelector />
             <NamespaceSelector />
           </Box>
 
-          <Divider variant="fullWidth" flexItem={false} sx={{ height: 24, borderColor: DIVIDER_COLOR }} />
+          <Divider variant="fullWidth" flexItem={false} sx={{ height: 24, borderColor: GREY_LONDON_FOG_COLOR }} />
 
           <Box display="flex" alignItems="center" gap={1}>
-            <Typography variant="subtitle4" color={LABEL_COLOR}>To</Typography>
+            <Typography variant="subtitle4" color={GREY_NIAGARA_COLOR}>To</Typography>
             <WorkspaceSelector />
           </Box>
         </Box>

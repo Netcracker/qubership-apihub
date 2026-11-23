@@ -43,7 +43,7 @@ export function splitByBaselineVersion(
   baselineVersion: VersionKey,
 ): BaselineVersionSplit {
   const isMatching = (service: Service): boolean =>
-    baselineVersion === NO_PREVIOUS_VERSION_OPTION || holdsVersion(service.baseline, baselineVersion)
+    baselineVersion === NO_PREVIOUS_VERSION_OPTION || hasVersion(service.baseline, baselineVersion)
   return {
     matching: services.filter(isMatching),
     notMatching: services.filter(service => !isMatching(service)),
@@ -77,7 +77,7 @@ export function getBaselineSearchesForVersion(
     return []
   }
   return getFullBaselines(services)
-    .filter(baseline => !holdsVersion(baseline, versionKey))
+    .filter(baseline => !hasVersion(baseline, versionKey))
     .map(({ packageKey }) => ({ packageKey: packageKey, textFilter: versionKey }))
 }
 
@@ -101,7 +101,7 @@ export function getServicesWithFoundVersions(
       foundVersions
         .filter(({ packageKey }) => packageKey === baseline.packageKey)
         .flatMap(({ versions }) => versions)
-        .filter(({ versionKey }) => !holdsVersion(baseline, versionKey))
+        .filter(({ versionKey }) => !hasVersion(baseline, versionKey))
         .map(version => [version.versionKey, version] as const),
     )
     if (addedVersions.size === 0) {
@@ -111,7 +111,7 @@ export function getServicesWithFoundVersions(
   })
 }
 
-function holdsVersion(baseline: ServiceBaseline | undefined, versionKey: VersionKey): boolean {
+function hasVersion(baseline: ServiceBaseline | undefined, versionKey: VersionKey): boolean {
   return baseline?.versions.some(version => version.versionKey === versionKey) ?? false
 }
 
