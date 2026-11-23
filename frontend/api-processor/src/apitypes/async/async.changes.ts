@@ -174,6 +174,7 @@ export const compareDocuments: DocumentsCompare = async (
             ...extractAggregatedDiffs(channel.externalDocs),
             ...extractAggregatedDiffs(channel.bindings),
             ...extractAggregatedDiffs(channel.tags),
+            ...extractExtensionDiffs(channel),
             ...asyncApiVersionDiffs,
             ...infoDiffs,
             ...idDiffs,

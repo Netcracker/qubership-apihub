@@ -278,6 +278,14 @@ describe('AsyncAPI 3.0 Changelog tests', () => {
       ]))
     })
 
+    test('should report changed channel extension', async () => {
+      const result = await buildChangelogPackage('asyncapi-changes/channel/change-extension')
+      expectChangesSummary(result, { [UNCLASSIFIED_CHANGE_TYPE]: 3 }, ASYNCAPI_API_TYPE)
+      expect(result).toEqual(operationChangesMatcher([
+        changedOperationMatcher('sendOperation-TestMessage', 'sendOperation-TestMessage'),
+      ]))
+    })
+
     test('should report changed channel tags', async () => {
       const result = await buildChangelogPackage('asyncapi-changes/channel/change-tags')
       expect(result).toEqual(operationChangesMatcher([
