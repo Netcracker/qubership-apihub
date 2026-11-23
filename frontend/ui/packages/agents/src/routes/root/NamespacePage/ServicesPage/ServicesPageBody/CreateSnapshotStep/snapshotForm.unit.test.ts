@@ -26,8 +26,9 @@ describe('snapshotForm', () => {
     expect(getSnapshotVersionError('', '')).toBeUndefined()
   })
 
-  it('accepts "No previous version" as a snapshot version while "No previous version" is the baseline', () => {
-    expect(getSnapshotVersionError(NO_PREVIOUS_VERSION_OPTION, NO_PREVIOUS_VERSION_OPTION)).toBeUndefined()
+  it('rejects the option text as a snapshot version while the baseline is that option', () => {
+    expect(getSnapshotVersionError(NO_PREVIOUS_VERSION_OPTION, NO_PREVIOUS_VERSION_OPTION))
+      .toBe(SNAPSHOT_VERSION_EQUALS_BASELINE_ERROR)
   })
 
   it('matches only the services whose baseline package holds the baseline version', () => {

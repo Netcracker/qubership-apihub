@@ -28,10 +28,6 @@ export function getSnapshotVersionError(snapshotVersion: VersionKey, baselineVer
   if (typeof restrictedSymbolsCheck === 'string') {
     return restrictedSymbolsCheck
   }
-  // The option text is no version, so a snapshot version that reads like it does not equal the baseline
-  if (baselineVersion === NO_PREVIOUS_VERSION_OPTION) {
-    return undefined
-  }
   if (snapshotVersion !== '' && snapshotVersion === baselineVersion) {
     return SNAPSHOT_VERSION_EQUALS_BASELINE_ERROR
   }

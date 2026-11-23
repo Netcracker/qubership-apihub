@@ -14,7 +14,9 @@ export const FILENAME_VALIDATION_RULES: Record<string, (alias: string) => boolea
   restrictedSymbols: filename => !RESTRICTED_FILENAME_SYMBOLS.find(char => filename.includes(char)) || `Next symbols are restricted — "${RESTRICTED_FILENAME_SYMBOLS}"`,
 }
 
-export const RESTRICTED_VERSION_SYMBOLS = ['\\', '/', ':', '*', '?', '"', '<', '>', '|', '#', '&', '^', '@', '!', '$', '%', '(', ')', '+', '=']
+// The characters that a version name may hold: letters, digits, `_`, `.`, `~`, `-`, and the space; the message of
+// the check lists the same set without the space until the design owner settles its text (Q5)
+const VERSION_NAME_PATTERN = /^[A-Za-z0-9_.~\- ]*$/
 
 export function checkReleaseVersionFormat(version: string, versionPattern: string): boolean | string {
   const regexp = new RegExp(versionPattern)
@@ -23,7 +25,7 @@ export function checkReleaseVersionFormat(version: string, versionPattern: strin
 }
 
 export function checkVersionRestrictedSymbols(version: string): boolean | string {
-  return !RESTRICTED_VERSION_SYMBOLS.find(char => version.includes(char)) || 'Only \'A-Za-z0-9_.~-\' characters are allowed'
+  return VERSION_NAME_PATTERN.test(version) || 'Only \'A-Za-z0-9_.~-\' characters are allowed'
 }
 
 export function checkVersionNotEqualToPrevious(version: string, previousVersion: string): boolean | string {
