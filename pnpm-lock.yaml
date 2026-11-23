@@ -718,7 +718,7 @@ importers:
         specifier: 'catalog:'
         version: 24.19.2
       '@types/object-hash':
-        specifier: ^3.0.2
+        specifier: ^3.0.6
         version: 3.0.6
       '@types/slug':
         specifier: ^5.0.3
