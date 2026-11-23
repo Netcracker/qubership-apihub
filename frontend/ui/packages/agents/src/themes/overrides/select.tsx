@@ -5,6 +5,7 @@ import { ChevronDownIcon } from '@netcracker/qubership-apihub-ui-shared/icons/Ch
 import type { FC } from 'react'
 
 import { DROPDOWN_PAPER_STYLES, getListItemStyles } from './dropdown'
+import { getScrollbarStyles, SMALL_SCROLLBAR } from './scrollbar'
 
 type SelectOverrides = NonNullable<NonNullable<Theme['components']>['MuiSelect']>
 
@@ -29,6 +30,8 @@ export function createSelectOverrides(base: SelectOverrides = {}): SelectOverrid
         PaperProps: {
           sx: {
             ...DROPDOWN_PAPER_STYLES,
+            // The paper of a menu scrolls, and its padding stands inside the scrollbar
+            ...getScrollbarStyles('&', SMALL_SCROLLBAR),
             [`& .${root}`]: getListItemStyles({
               hover: ['&:hover', `&.${focusVisible}`],
               selected: [`&.${selected}`, `&.${selected}:hover`, `&.${selected}.${focusVisible}`],

@@ -9,6 +9,7 @@ import type { FC } from 'react'
 
 import {
   DROPDOWN_PAPER_STYLES,
+  DROPDOWN_SCROLL_STYLES,
   getListItemStyles,
   LIST_ITEM_MIN_HEIGHT,
   LIST_ITEM_PADDING,
@@ -81,10 +82,17 @@ export function createAutocompleteOverrides(base: AutocompleteOverrides = {}): A
       paper: extendStyleOverride(base.styleOverrides?.paper, {
         margin: `${DROPDOWN_GAP}px 0`,
         ...DROPDOWN_PAPER_STYLES,
+        // MUI keeps the list of a free solo field open with nothing in it when no option matches the text; the
+        // padding and the shadow of the design would show it as an empty box
+        '&:empty': {
+          display: 'none',
+        },
       }),
       // MUI pads the list 8px at the top and bottom; in the design only the padding of the paper surrounds the rows
+      // The list scrolls inside the paper
       listbox: extendStyleOverride(base.styleOverrides?.listbox, {
         padding: 0,
+        ...DROPDOWN_SCROLL_STYLES,
         // MUI marks the option under the pointer or reached with the keyboard as focused, and keeps the mark after
         // the pointer leaves the list, since Enter picks that option
         [`& .${option}`]: getListItemStyles({

@@ -5,15 +5,30 @@ import {
   GREY_TRANSPARENT_HOVER_COLOR,
 } from '@netcracker/qubership-apihub-ui-shared/themes/colors'
 
+import { getScrollbarStyles, SMALL_SCROLLBAR } from './scrollbar'
+
 export const LIST_ITEM_MIN_HEIGHT = 32
 export const LIST_ITEM_PADDING = '5px 8px'
 export const LIST_LINE_HEIGHT = '20px'
 
+const DROPDOWN_PADDING = 4
+
 // The sizes are strings, since `sx` reads a bare number as theme spacing or as a multiple of the theme radius
 export const DROPDOWN_PAPER_STYLES: CSSObject = {
-  padding: '4px',
+  padding: `${DROPDOWN_PADDING}px`,
   borderRadius: '6px',
   boxShadow: DROPDOWN_SHADOW,
+}
+
+/**
+ * Styles the element that scrolls an open list, inside the padding of the paper, with the small scrollbar. A
+ * scrollbar stands between the padding and the edge of the element, so the element takes the right padding of the
+ * paper as its own: the rows keep their distance from the edge, and the scrollbar stands at the edge of the paper.
+ */
+export const DROPDOWN_SCROLL_STYLES: CSSObject = {
+  marginRight: `-${DROPDOWN_PADDING}px`,
+  paddingRight: `${DROPDOWN_PADDING}px`,
+  ...getScrollbarStyles('&', SMALL_SCROLLBAR),
 }
 
 type ListItemStateSelectors = {
