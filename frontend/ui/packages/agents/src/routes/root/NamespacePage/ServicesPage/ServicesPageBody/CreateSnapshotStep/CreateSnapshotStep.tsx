@@ -167,7 +167,8 @@ export const CreateSnapshotStep: FC = memo(() => {
           data-testid="SnapshotNameAutocomplete"
           freeSolo
           disabled={areFieldsDisabled}
-          value={name}
+          // MUI counts an empty string as a value and would show the clear button in an empty field
+          value={name || null}
           options={snapshotNameOptions}
           inputIndicator={nameError !== undefined && (
             <ErrorIndicator hasProblems tooltip={nameError} data-testid="SnapshotNameErrorIndicator" />
@@ -188,6 +189,9 @@ export const CreateSnapshotStep: FC = memo(() => {
 
         <VersionSelectorAutocomplete
           data-testid="BaselineAutocomplete"
+          // The info icon stays in the field, so the clear button would make three icons with the magnifier. An empty
+          // field shows no clear button anyway, and a literal `true` would not let the empty field take `null`.
+          disableClearable={baseline !== ''}
           disabled={areFieldsDisabled}
           value={baseline || null}
           options={options.versionKeys}

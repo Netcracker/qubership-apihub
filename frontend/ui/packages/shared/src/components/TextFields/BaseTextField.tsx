@@ -166,6 +166,10 @@ const StyledTextField = styled(TextField, {
         top: '50%',
         transform: 'translateY(-50%)',
         color: theme.palette.text.primary,
+        // The centering replaces the transform with which MUI turns the icon over while the menu is open
+        [`&.${selectClasses.iconOpen}`]: {
+          transform: 'translateY(-50%) rotate(180deg)',
+        },
       },
       [`& .${autocompleteClasses.endAdornment}`]: {
         right: CONTENT_OFFSET,
