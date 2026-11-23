@@ -237,6 +237,10 @@ describe("JsonSchemaCombiner.NodeDiffs.buildSelectorOption", () => {
     const selectorOption = JsonSchemaCombiner.NodeDiffs.buildSelectorOption(circularVariant, 0)
 
     expect(nodeChangesSummary?.size).toBeGreaterThan(0)
+    // The option's own rollup is lost by api-diff's `aggregateDiffsWithRollup` for a cycle
+    // back-edge to an in-progress ancestor (see `resolveDirectNodeChangesSummary` and
+    // https://github.com/Netcracker/qubership-apihub/issues/1140); the summary below comes from
+    // the fallback reading the direct children. This contract changes once the rollup is fixed.
     expect(selectorOption.diffsSummary).toEqual(new Set())
     expect(selectorOption.descendantDiffsSummary).toEqual(nodeChangesSummary)
   })

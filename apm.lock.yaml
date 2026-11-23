@@ -1,5 +1,5 @@
 lockfile_version: '1'
-generated_at: '2026-11-21T21:20:32.540289+00:00'
+generated_at: '2026-11-23T11:20:21.514624+00:00'
 apm_version: 0.35.0
 dependencies:
 - repo_url: _local/advanced-verification
@@ -229,15 +229,15 @@ dependencies:
   - .claude/skills/api-doc-viewer-authoring/refactoring-notes.md
   - .cursor/rules/api-doc-viewer-authoring.mdc
   deployed_file_hashes:
-    .agents/skills/api-doc-viewer-authoring/SKILL.md: sha256:0bce57fdda3e7335942439076a00772c2ba330c9f5c48d3c675bb0c249ed7d99
+    .agents/skills/api-doc-viewer-authoring/SKILL.md: sha256:1afd540c847b1edc15f4978c929bcc69dc0a3f9b858c49c183804bfbdb780b4d
     .agents/skills/api-doc-viewer-authoring/refactoring-notes.md: sha256:6e03682401012b6133d38621a31e35644cdd7970f62827295ef1d64e6d2b40e5
     .claude/rules/api-doc-viewer-authoring.md: sha256:77d745d1a570e5e2080795f1721d40dc97a2684c0c6d3f620de96d061086f406
-    .claude/skills/api-doc-viewer-authoring/SKILL.md: sha256:0bce57fdda3e7335942439076a00772c2ba330c9f5c48d3c675bb0c249ed7d99
+    .claude/skills/api-doc-viewer-authoring/SKILL.md: sha256:1afd540c847b1edc15f4978c929bcc69dc0a3f9b858c49c183804bfbdb780b4d
     .claude/skills/api-doc-viewer-authoring/refactoring-notes.md: sha256:6e03682401012b6133d38621a31e35644cdd7970f62827295ef1d64e6d2b40e5
     .cursor/rules/api-doc-viewer-authoring.mdc: sha256:17c23a846bf33344970f822081b12d554c2a3f6bd1e240e8b29c4b6fdd6db481
   source: local
   local_path: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-authoring
-  content_hash: sha256:00482ee4eaeb0bacfb33900c20e0cd2cb021556be47712ccf4f472a06f5c0a8b
+  content_hash: sha256:026247ba5b8aa7b7e24adcc26ab27b89663afc98170505b37f6b02fae7ce590f
 - repo_url: _local/api-doc-viewer-baseline-comparison
   name: api-doc-viewer-baseline-comparison
   version: 1.0.0
@@ -1257,7 +1257,7 @@ dependencies:
   deployed_file_hashes:
     .agents/skills/next-data-model-authoring/SKILL.md: sha256:8ee9be8de77cde08ff70b55a5a6323c51b59352942615adc3a805026537f144b
     .agents/skills/next-data-model-authoring/json-schema/json-schema-meta-flags-and-required.md: sha256:8e6d7f9bb652d770446d6afb7a7968bc42af0a2226a175cc819eb72899ad8d87
-    .agents/skills/next-data-model-authoring/json-schema/json-schema-nesting-indicator-row-diffs.md: sha256:678b65fabc6f610ec90e951856e3797ab259022e24e2976b14e3c7f48f776de7
+    .agents/skills/next-data-model-authoring/json-schema/json-schema-nesting-indicator-row-diffs.md: sha256:6e7a13bf41b12fb5bdbb13d7ac7d059a9b64cec4ffc9557e0d37a82c0e4f2c79
     .agents/skills/next-data-model-authoring/json-schema/json-schema-node-key-rename.md: sha256:cf508d9732c25e06428ea84eee124afb427c6c0de91735271ecd3f9f20254b22
     .agents/skills/next-data-model-authoring/json-schema/json-schema-validation-rows.md: sha256:026fe54366c8c6de4350dc17a4eec5553ab5c026b8367c970d86054a39539058
     .agents/skills/next-data-model-authoring/node-visibility/authoring.md: sha256:715c86a9ea31b91edd7caf625ce82411fdfc88a0175b3f748072d0fde847dad2
@@ -1266,7 +1266,7 @@ dependencies:
     .claude/rules/next-data-model-authoring.md: sha256:40c358121f78527037a130522586d164c81519874b26b6c8355ad5a39a3e56ec
     .claude/skills/next-data-model-authoring/SKILL.md: sha256:8ee9be8de77cde08ff70b55a5a6323c51b59352942615adc3a805026537f144b
     .claude/skills/next-data-model-authoring/json-schema/json-schema-meta-flags-and-required.md: sha256:8e6d7f9bb652d770446d6afb7a7968bc42af0a2226a175cc819eb72899ad8d87
-    .claude/skills/next-data-model-authoring/json-schema/json-schema-nesting-indicator-row-diffs.md: sha256:678b65fabc6f610ec90e951856e3797ab259022e24e2976b14e3c7f48f776de7
+    .claude/skills/next-data-model-authoring/json-schema/json-schema-nesting-indicator-row-diffs.md: sha256:6e7a13bf41b12fb5bdbb13d7ac7d059a9b64cec4ffc9557e0d37a82c0e4f2c79
     .claude/skills/next-data-model-authoring/json-schema/json-schema-node-key-rename.md: sha256:cf508d9732c25e06428ea84eee124afb427c6c0de91735271ecd3f9f20254b22
     .claude/skills/next-data-model-authoring/json-schema/json-schema-validation-rows.md: sha256:026fe54366c8c6de4350dc17a4eec5553ab5c026b8367c970d86054a39539058
     .claude/skills/next-data-model-authoring/node-visibility/authoring.md: sha256:715c86a9ea31b91edd7caf625ce82411fdfc88a0175b3f748072d0fde847dad2
@@ -1275,7 +1275,7 @@ dependencies:
     .cursor/rules/next-data-model-authoring.mdc: sha256:2d1d357104e86960cc240d9cf03e79926b259f9a0a2664f52d8fabc6d9ea66f7
   source: local
   local_path: ./frontend/api-doc-viewer/agent-packages/next-data-model-authoring
-  content_hash: sha256:12d17c7a4b0ccdf185944e244b7dbd196e6d519021f770ca08ac0ab6c2c3aba2
+  content_hash: sha256:6036cc9267b086c3294ae9eb606e1a411a21cd2c21f6db7eed9eee9a035d2c75
 - repo_url: _local/next-data-model-using
   name: next-data-model-using
   version: 1.0.0
@@ -2487,7 +2487,7 @@ deployments:
   owners:
   - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-authoring
   active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-authoring
-  content_hash: sha256:0bce57fdda3e7335942439076a00772c2ba330c9f5c48d3c675bb0c249ed7d99
+  content_hash: sha256:1afd540c847b1edc15f4978c929bcc69dc0a3f9b858c49c183804bfbdb780b4d
 - kind: project-relative
   target: claude
   value: .claude/skills/api-doc-viewer-authoring/refactoring-notes.md
@@ -3900,7 +3900,7 @@ deployments:
   owners:
   - ./frontend/api-doc-viewer/agent-packages/next-data-model-authoring
   active_owner: ./frontend/api-doc-viewer/agent-packages/next-data-model-authoring
-  content_hash: sha256:678b65fabc6f610ec90e951856e3797ab259022e24e2976b14e3c7f48f776de7
+  content_hash: sha256:6e7a13bf41b12fb5bdbb13d7ac7d059a9b64cec4ffc9557e0d37a82c0e4f2c79
 - kind: project-relative
   target: claude
   value: .claude/skills/next-data-model-authoring/json-schema/json-schema-node-key-rename.md
@@ -4368,7 +4368,7 @@ deployments:
   owners:
   - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-authoring
   active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-authoring
-  content_hash: sha256:0bce57fdda3e7335942439076a00772c2ba330c9f5c48d3c675bb0c249ed7d99
+  content_hash: sha256:1afd540c847b1edc15f4978c929bcc69dc0a3f9b858c49c183804bfbdb780b4d
 - kind: project-relative
   target: cursor
   value: .agents/skills/api-doc-viewer-authoring/refactoring-notes.md
@@ -5781,7 +5781,7 @@ deployments:
   owners:
   - ./frontend/api-doc-viewer/agent-packages/next-data-model-authoring
   active_owner: ./frontend/api-doc-viewer/agent-packages/next-data-model-authoring
-  content_hash: sha256:678b65fabc6f610ec90e951856e3797ab259022e24e2976b14e3c7f48f776de7
+  content_hash: sha256:6e7a13bf41b12fb5bdbb13d7ac7d059a9b64cec4ffc9557e0d37a82c0e4f2c79
 - kind: project-relative
   target: cursor
   value: .agents/skills/next-data-model-authoring/json-schema/json-schema-node-key-rename.md

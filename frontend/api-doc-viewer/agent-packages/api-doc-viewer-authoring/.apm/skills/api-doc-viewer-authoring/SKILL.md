@@ -298,6 +298,15 @@ representation (its option buttons render the leaf's type/format/title), so ther
 "leaf title row" to originate a second nesting step from. See session lesson 10 in the same doc
 above.
 
+**Combiner option markers on circular schemas:** when an option's own changes summary is empty,
+`JsonSchemaCombiner.NodeDiffs.buildSelectorOption` falls back to
+`JsonSchemaCombinerSelectorRowResolver.resolveDirectNodeChangesSummary` (direct children's
+summaries only). This papers over an api-diff root cause (`aggregateDiffsWithRollup` drops the
+diffs of an in-progress ancestor on a cycle back-edge) and covers only a back-edge one level
+below the option — deeper cycles still lose markers on the intermediate nodes. Do not extend the
+fallback; name the limit in the comment (done) and fix the rollup in api-diff instead
+(issue #1140, see lesson 11 in the same doc above).
+
 **Overriding a shared row-padding rule without `!important` or inline styles:** shared vertical
 padding for `.json-schema-property-row-body` lives in `shared-styles/preceded-by.css` as a
 two-class compound selector (specificity `(0,2,0)`) — a plain Tailwind utility class (`(0,1,0)`)
