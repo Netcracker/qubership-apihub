@@ -6,21 +6,21 @@ import type { VersionStatus } from '@netcracker/qubership-apihub-ui-shared/entit
 
 export const ServicesPublicationOptionsProvider: FC<PropsWithChildren> = memo(({ children }) => {
   const [createSnapshotPublicationOptions, setCreateSnapshotPublicationOptions] = useState<CreateSnapshotPublicationOptions>(EMPTY_CREATE_SNAPSHOT_PUBLICATION_OPTIONS)
-  const [createSnapshotDraft, setCreateSnapshotDraft] = useState<CreateSnapshotDraft>(EMPTY_CREATE_SNAPSHOT_DRAFT)
+  const [createSnapshotFormData, setCreateSnapshotFormData] = useState<CreateSnapshotFormData>(EMPTY_CREATE_SNAPSHOT_FORM_DATA)
   const [promoteVersionPublicationOptions, setPromoteVersionPublicationOptions] = useState<PromoteVersionPublicationOptions>(EMPTY_PROMOTE_VERSION_PUBLICATION_OPTIONS)
 
   return (
     <CreateSnapshotPublicationOptionsContext.Provider value={createSnapshotPublicationOptions}>
       <SetCreateSnapshotPublicationOptionsContext.Provider value={setCreateSnapshotPublicationOptions}>
-        <CreateSnapshotDraftContext.Provider value={createSnapshotDraft}>
-          <SetCreateSnapshotDraftContext.Provider value={setCreateSnapshotDraft}>
+        <CreateSnapshotFormDataContext.Provider value={createSnapshotFormData}>
+          <SetCreateSnapshotFormDataContext.Provider value={setCreateSnapshotFormData}>
             <PromoteVersionPublicationOptionsContext.Provider value={promoteVersionPublicationOptions}>
               <SetPromoteVersionPublicationOptionsContext.Provider value={setPromoteVersionPublicationOptions}>
                 {children}
               </SetPromoteVersionPublicationOptionsContext.Provider>
             </PromoteVersionPublicationOptionsContext.Provider>
-          </SetCreateSnapshotDraftContext.Provider>
-        </CreateSnapshotDraftContext.Provider>
+          </SetCreateSnapshotFormDataContext.Provider>
+        </CreateSnapshotFormDataContext.Provider>
       </SetCreateSnapshotPublicationOptionsContext.Provider>
     </CreateSnapshotPublicationOptionsContext.Provider>
   )
@@ -34,7 +34,7 @@ export type CreateSnapshotPublicationOptions = {
 }
 
 /** The fields of Create Snapshot that the user has not submitted yet. */
-export type CreateSnapshotDraft = Readonly<
+export type CreateSnapshotFormData = Readonly<
   & Pick<CreateSnapshotPublicationOptions, 'name' | 'baseline' | 'serviceKeys'>
   & { searchValue: string }
 >
@@ -55,7 +55,7 @@ const EMPTY_CREATE_SNAPSHOT_PUBLICATION_OPTIONS: CreateSnapshotPublicationOption
   serviceKeys: [],
 }
 
-const EMPTY_CREATE_SNAPSHOT_DRAFT: CreateSnapshotDraft = {
+const EMPTY_CREATE_SNAPSHOT_FORM_DATA: CreateSnapshotFormData = {
   name: '',
   baseline: '',
   serviceKeys: [],
@@ -71,8 +71,8 @@ const EMPTY_PROMOTE_VERSION_PUBLICATION_OPTIONS: PromoteVersionPublicationOption
 
 const CreateSnapshotPublicationOptionsContext = createContext<CreateSnapshotPublicationOptions>()
 const SetCreateSnapshotPublicationOptionsContext = createContext<Dispatch<SetStateAction<CreateSnapshotPublicationOptions>>>()
-const CreateSnapshotDraftContext = createContext<CreateSnapshotDraft>()
-const SetCreateSnapshotDraftContext = createContext<Dispatch<SetStateAction<CreateSnapshotDraft>>>()
+const CreateSnapshotFormDataContext = createContext<CreateSnapshotFormData>()
+const SetCreateSnapshotFormDataContext = createContext<Dispatch<SetStateAction<CreateSnapshotFormData>>>()
 
 type CreateSnapshotPublicationOptionsContext = {
   createSnapshotPublicationOptions: CreateSnapshotPublicationOptions
@@ -84,15 +84,15 @@ type CreateSnapshotPublicationOptionsContext = {
 export function useCreateSnapshotPublicationOptions(): CreateSnapshotPublicationOptionsContext {
   const options = useContext(CreateSnapshotPublicationOptionsContext)
   const setOptions = useContext(SetCreateSnapshotPublicationOptionsContext)
-  const setDraft = useContext(SetCreateSnapshotDraftContext)
+  const setFormData = useContext(SetCreateSnapshotFormDataContext)
 
   const { resetPromotePublicationOptions } = usePromoteVersionPublicationOptions()
 
   const resetOptions = useCallback(() => {
     setOptions(EMPTY_CREATE_SNAPSHOT_PUBLICATION_OPTIONS)
-    setDraft(EMPTY_CREATE_SNAPSHOT_DRAFT)
+    setFormData(EMPTY_CREATE_SNAPSHOT_FORM_DATA)
     resetPromotePublicationOptions()
-  }, [resetPromotePublicationOptions, setDraft, setOptions])
+  }, [resetPromotePublicationOptions, setFormData, setOptions])
 
   return {
     createSnapshotPublicationOptions: options,
@@ -101,15 +101,15 @@ export function useCreateSnapshotPublicationOptions(): CreateSnapshotPublication
   }
 }
 
-type CreateSnapshotDraftContext = {
-  createSnapshotDraft: CreateSnapshotDraft
-  setCreateSnapshotDraft: Dispatch<SetStateAction<CreateSnapshotDraft>>
+type CreateSnapshotFormDataContext = {
+  createSnapshotFormData: CreateSnapshotFormData
+  setCreateSnapshotFormData: Dispatch<SetStateAction<CreateSnapshotFormData>>
 }
 
-export function useCreateSnapshotDraft(): CreateSnapshotDraftContext {
+export function useCreateSnapshotFormData(): CreateSnapshotFormDataContext {
   return {
-    createSnapshotDraft: useContext(CreateSnapshotDraftContext),
-    setCreateSnapshotDraft: useContext(SetCreateSnapshotDraftContext),
+    createSnapshotFormData: useContext(CreateSnapshotFormDataContext),
+    setCreateSnapshotFormData: useContext(SetCreateSnapshotFormDataContext),
   }
 }
 

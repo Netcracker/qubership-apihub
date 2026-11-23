@@ -107,6 +107,8 @@ Discovery lists at most 100 release versions of a baseline package, and the "Bas
 Snapshot finds the older ones by a search in the portal. A backend needs a package with more than 100 release
 versions to show that search, so the handler of the Agent services reads the local storage key
 `msw-baseline-100-versions`. `localStorage.setItem('msw-baseline-100-versions', 'true')` and a reload keep the newest
-version of each baseline package and fill its list up to 100 with the versions `mock-1`, `mock-2`, and so on, which
-the portal does not have. The other release versions of the package are then found only by the search.
+version of each baseline package and fill its list up to 100 with the versions `mock-1` to `mock-99`, which the
+portal does not have. The other release versions of the package are then found only by the search: type a part of an
+older release version, such as its year. A search for a mock version finds nothing, since the portal does not hold it,
+and a package with one release version has nothing for the search to add.
 `localStorage.removeItem('msw-baseline-100-versions')` and a reload bring back the lists of the backend.

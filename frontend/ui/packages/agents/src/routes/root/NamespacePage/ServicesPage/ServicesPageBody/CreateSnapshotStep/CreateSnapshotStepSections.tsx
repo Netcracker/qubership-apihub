@@ -96,7 +96,7 @@ type CreateSnapshotStepSectionsProps = {
   services: ReadonlyArray<Service>
   areServicesLoading: boolean
   /** The services split by the baseline version; `undefined` until both versions are entered. */
-  split: BaselineVersionSplit | undefined
+  baselineVersionSplit: BaselineVersionSplit | undefined
   baselineVersion: VersionKey
   selectable: boolean
   selected: ReadonlyArray<ServiceKey>
@@ -107,7 +107,7 @@ type CreateSnapshotStepSectionsProps = {
 export const CreateSnapshotStepSections: FC<CreateSnapshotStepSectionsProps> = memo<CreateSnapshotStepSectionsProps>(({
   services,
   areServicesLoading,
-  split,
+  baselineVersionSplit,
   baselineVersion,
   selectable,
   selected,
@@ -136,7 +136,7 @@ export const CreateSnapshotStepSections: FC<CreateSnapshotStepSectionsProps> = m
   const isSelectable = useCallback(() => selectable, [selectable])
 
   const sections = useMemo<ReadonlyArray<ServiceSectionModel<SnapshotServiceRow>>>(() => {
-    if (!split) {
+    if (!baselineVersionSplit) {
       return [{
         id: SERVICES_FROM_DISCOVERY_SECTION_ID,
         title: 'Services From Discovery',
@@ -153,7 +153,7 @@ export const CreateSnapshotStepSections: FC<CreateSnapshotStepSectionsProps> = m
         tooltip: MATCHING_BASELINE_VERSION_TOOLTIP,
         columns: config ? SNAPSHOT_SERVICE_COLUMNS_WITH_PUBLISH_STATUS : SNAPSHOT_SERVICE_COLUMNS,
         link: serviceLink,
-        rows: split.matching.map(toSnapshotServiceRow),
+        rows: baselineVersionSplit.matching.map(toSnapshotServiceRow),
         selection: { selected: selected, onSelect: onSelect, isSelectable: isSelectable },
       },
       {
@@ -162,10 +162,10 @@ export const CreateSnapshotStepSections: FC<CreateSnapshotStepSectionsProps> = m
         tooltip: NOT_MATCHING_BASELINE_VERSION_TOOLTIP,
         columns: getNotMatchingColumns(baselineVersion),
         link: serviceLink,
-        rows: split.notMatching.map(toSnapshotServiceRow),
+        rows: baselineVersionSplit.notMatching.map(toSnapshotServiceRow),
       },
     ]
-  }, [baselineVersion, config, isSelectable, onSelect, toSnapshotServiceRow, selected, services, split])
+  }, [baselineVersion, config, isSelectable, onSelect, toSnapshotServiceRow, selected, services, baselineVersionSplit])
 
   return <ServiceSections sections={sections} searchValue={searchValue} isLoading={areServicesLoading} />
 })

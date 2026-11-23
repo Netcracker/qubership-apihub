@@ -2,22 +2,15 @@ import { isEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
 import { checkVersionRestrictedSymbols } from '@netcracker/qubership-apihub-ui-shared/utils/validations'
 
 import type { PackageKey, VersionKey } from '@agents/entities/keys'
-import { BASELINE_VERSIONS_PAGE_SIZE, type BaselineVersion, type Service } from '@agents/entities/services'
+import {
+  BASELINE_VERSIONS_PAGE_SIZE,
+  type BaselineVersionSearch,
+  type FoundBaselineVersions,
+  type Service,
+} from '@agents/entities/services'
 import { NO_PREVIOUS_VERSION_OPTION } from '@agents/entities/snapshots'
 
 export const SNAPSHOT_VERSION_EQUALS_BASELINE_ERROR = 'Snapshot version must not be the same as Baseline Version'
-
-/** A search of the release versions of one baseline package in the portal. */
-export type BaselineVersionSearch = Readonly<{
-  packageKey: PackageKey
-  textFilter: string
-}>
-
-/** The release versions that a search found in one baseline package. */
-export type FoundBaselineVersions = Readonly<{
-  packageKey: PackageKey
-  versions: ReadonlyArray<BaselineVersion>
-}>
 
 export type BaselineVersionSplit = Readonly<{
   matching: ReadonlyArray<Service>
@@ -61,7 +54,7 @@ export function splitByBaselineVersion(
  * Lists the searches of `searchText` in the baseline packages whose release versions discovery may list only in part:
  * the packages with a full page of versions. An empty text searches nothing.
  */
-export function baselineSearchesForText(
+export function getBaselineSearchesForText(
   services: ReadonlyArray<Service>,
   searchText: string,
 ): ReadonlyArray<BaselineVersionSearch> {
@@ -76,7 +69,7 @@ export function baselineSearchesForText(
  * lists: one for each package with a full page of versions that lacks it. An empty version and "No previous version"
  * search nothing.
  */
-export function baselineSearchesForVersion(
+export function getBaselineSearchesForVersion(
   services: ReadonlyArray<Service>,
   versionKey: VersionKey,
 ): ReadonlyArray<BaselineVersionSearch> {
@@ -92,7 +85,7 @@ export function baselineSearchesForVersion(
  * Adds the found versions of each baseline package to its services, after the versions that discovery lists and
  * without repeating a version. Returns `services` itself when nothing was found, so a memoized consumer keeps it.
  */
-export function withFoundBaselineVersions(
+export function getServicesWithFoundVersions(
   services: ReadonlyArray<Service>,
   foundVersions: ReadonlyArray<FoundBaselineVersions>,
 ): ReadonlyArray<Service> {

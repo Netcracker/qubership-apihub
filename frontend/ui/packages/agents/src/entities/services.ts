@@ -1,9 +1,14 @@
 import type { DiscoveryStatus } from './statuses'
 import { NONE_DISCOVERY_STATUS } from './statuses'
 import type { AgentKey, NamespaceKey, PackageKey, ServiceKey, VersionKey, WorkspaceKey } from './keys'
-import type { VersionStatuses } from '@netcracker/qubership-apihub-ui-shared/entities/version-status'
+import {
+  RELEASE_VERSION_STATUS,
+  type VersionStatuses,
+} from '@netcracker/qubership-apihub-ui-shared/entities/version-status'
+import type { PackageVersion } from '@netcracker/qubership-apihub-ui-shared/entities/versions'
 import type { Spec, SpecDto } from '@netcracker/qubership-apihub-ui-shared/entities/specs'
 import { toSpec } from '@netcracker/qubership-apihub-ui-shared/entities/specs'
+import { getPackageVersionsList } from '@netcracker/qubership-apihub-ui-shared/hooks/versions/usePackageVersions'
 import { isNotEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
 import { API_V2, requestJson, requestVoid } from '@netcracker/qubership-apihub-ui-shared/utils/requests'
 import { getSplittedVersionKey } from '@netcracker/qubership-apihub-ui-shared/utils/versions'
@@ -81,6 +86,18 @@ export const SERVICE_COMPONENT_LABEL_KEY = 'app.kubernetes.io/component'
  */
 export const BASELINE_VERSIONS_PAGE_SIZE = 100
 
+/** A search of the release versions of one baseline package in the portal. */
+export type BaselineVersionSearch = Readonly<{
+  packageKey: PackageKey
+  textFilter: string
+}>
+
+/** The release versions that a search found in one baseline package. */
+export type FoundBaselineVersions = Readonly<{
+  packageKey: PackageKey
+  versions: ReadonlyArray<BaselineVersion>
+}>
+
 /** Formats a label of a service as `key: value`, the form the table shows and the search matches. */
 export function getFormattedLabel(key: string, value: string): string {
   return `${key}: ${value}`
@@ -147,6 +164,44 @@ export async function runServiceDiscovery(
     },
     { basePath: `${prefix}${API_V2}` },
   )
+}
+
+/**
+ * Runs each search in the release versions of its baseline package in the portal. Rejects when one search fails, so
+ * that the query retries them all: a package left out would put its services under "Not Matching Baseline Version"
+ * for a version the package holds.
+ */
+export async function findBaselineVersions(
+  searches: ReadonlyArray<BaselineVersionSearch>,
+  signal?: AbortSignal,
+): Promise<ReadonlyArray<FoundBaselineVersions>> {
+  const versionLists = await Promise.all(searches.map(({ packageKey, textFilter }) =>
+    getPackageVersionsList(
+      packageKey,
+      [RELEASE_VERSION_STATUS],
+      textFilter,
+      undefined,
+      undefined,
+      BASELINE_VERSIONS_PAGE_SIZE,
+      0,
+      signal,
+    ),
+  ))
+  return versionLists.map((versions, index) => ({
+    packageKey: searches[index].packageKey,
+    versions: versions.map(toFoundBaselineVersion),
+  }))
+}
+
+function toFoundBaselineVersion(
+  { key, hasErrors, changelogHasErrors, apiProcessorVersion }: PackageVersion,
+): BaselineVersion {
+  return {
+    versionKey: getSplittedVersionKey(key).versionKey,
+    hasErrors: hasErrors ?? false,
+    changelogHasErrors: changelogHasErrors ?? false,
+    apiProcessorVersion: apiProcessorVersion,
+  }
 }
 
 function toBaselineVersion(value: BaselineVersionDto): BaselineVersion {

@@ -34,7 +34,7 @@ import { agent } from '@netcracker/qubership-apihub-ui-shared/utils/version-info
 import type { VersionKey } from '@agents/entities/keys'
 import { useVersionOptions } from '../../../AutomationPage/useVersionOptions'
 import {
-  useCreateSnapshotDraft,
+  useCreateSnapshotFormData,
   useCreateSnapshotPublicationOptions,
 } from '../../ServicesPageProvider/ServicesPublicationOptionsProvider'
 import {
@@ -57,9 +57,9 @@ const BASELINE_CHECK_ERROR = 'Cannot check which baseline packages hold this ver
 
 export const CreateSnapshotStep: FC = memo(() => {
   const {
-    createSnapshotDraft: { name, baseline, serviceKeys, searchValue },
-    setCreateSnapshotDraft,
-  } = useCreateSnapshotDraft()
+    createSnapshotFormData: { name, baseline, serviceKeys, searchValue },
+    setCreateSnapshotFormData,
+  } = useCreateSnapshotFormData()
   const { resetCreateSnapshotPublicationOptions } = useCreateSnapshotPublicationOptions()
   const [createSnapshot, isCreating] = useCreateSnapshot()
   const resetStepsAfter = useResetStepsAfter()
@@ -79,29 +79,29 @@ export const CreateSnapshotStep: FC = memo(() => {
     isBaselineChecked,
     isBaselineCheckFailed,
     recheckBaseline,
-  } = useSnapshotBaseline(baselineSearch)
+  } = useSnapshotBaseline(baseline, baselineSearch)
 
   const isRunning = status === RUNNING_STEP_STATUS
   const isFinished = status === COMPLETE_STEP_STATUS || status === ERROR_STEP_STATUS
   const nameError = getSnapshotVersionError(name, baseline)
   // Until the search of the selected version answers, a package that holds the version can lack it, and the split
   // would put its services under "Not Matching Baseline Version"
-  const isSplitShown = name !== '' && baseline !== '' && isBaselineChecked
+  const canSplitByBaselineVersion = name !== '' && baseline !== '' && isBaselineChecked
 
-  const split = useMemo(
-    () => (isSplitShown ? splitByBaselineVersion(services, baseline) : undefined),
-    [isSplitShown, baseline, services],
+  const baselineVersionSplit = useMemo(
+    () => (canSplitByBaselineVersion ? splitByBaselineVersion(services, baseline) : undefined),
+    [canSplitByBaselineVersion, baseline, services],
   )
-  // A selected service that left "Matching Baseline Version" stays in the draft and is not sent
+  // A selected service that left "Matching Baseline Version" keeps its key in the form data and is not sent
   const selectedServiceKeys = useMemo(() => {
-    if (!split) {
+    if (!baselineVersionSplit) {
       return []
     }
-    const matchingServiceKeys = new Set(split.matching.map(({ key }) => key))
+    const matchingServiceKeys = new Set(baselineVersionSplit.matching.map(({ key }) => key))
     return serviceKeys.filter(key => matchingServiceKeys.has(key))
-  }, [serviceKeys, split])
+  }, [serviceKeys, baselineVersionSplit])
 
-  const isCreateSnapshotEnabled = split !== undefined &&
+  const isCreateSnapshotEnabled = baselineVersionSplit !== undefined &&
     nameError === undefined &&
     !problem.isBlocking &&
     isNotEmpty(selectedServiceKeys) &&
@@ -109,10 +109,10 @@ export const CreateSnapshotStep: FC = memo(() => {
     status !== COMPLETE_STEP_STATUS
 
   const handleNameInputChange = (_: SyntheticEvent, value: string): void =>
-    setCreateSnapshotDraft(draft => ({ ...draft, name: value }))
+    setCreateSnapshotFormData(formData => ({ ...formData, name: value }))
 
   const handleBaselineChange = (_: SyntheticEvent, value: VersionKey | null): void =>
-    setCreateSnapshotDraft(draft => ({ ...draft, baseline: value ?? '' }))
+    setCreateSnapshotFormData(formData => ({ ...formData, baseline: value ?? '' }))
 
   const handleBaselineInputChange = (
     _: SyntheticEvent,
@@ -135,12 +135,12 @@ export const CreateSnapshotStep: FC = memo(() => {
 
   // The sections are memoized, so the handler keeps its identity
   const handleSelect = useCallback(
-    (selected: ServiceKey[]) => setCreateSnapshotDraft(draft => ({ ...draft, serviceKeys: selected })),
-    [setCreateSnapshotDraft],
+    (selected: ServiceKey[]) => setCreateSnapshotFormData(formData => ({ ...formData, serviceKeys: selected })),
+    [setCreateSnapshotFormData],
   )
 
   const handleSearchValueChange = (value: string): void =>
-    setCreateSnapshotDraft(draft => ({ ...draft, searchValue: value }))
+    setCreateSnapshotFormData(formData => ({ ...formData, searchValue: value }))
 
   const handleResetClick = (): void => {
     resetCreateSnapshotPublicationOptions()
@@ -264,7 +264,7 @@ export const CreateSnapshotStep: FC = memo(() => {
       <CreateSnapshotStepSections
         services={services}
         areServicesLoading={areServicesLoading}
-        split={split}
+        baselineVersionSplit={baselineVersionSplit}
         baselineVersion={baseline}
         selectable={!areFieldsDisabled}
         selected={selectedServiceKeys}

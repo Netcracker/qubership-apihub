@@ -1,12 +1,12 @@
 import { BASELINE_VERSIONS_PAGE_SIZE, type BaselineVersion, type Service } from '@agents/entities/services'
 import { NO_PREVIOUS_VERSION_OPTION } from '@agents/entities/snapshots'
 import {
-  baselineSearchesForText,
-  baselineSearchesForVersion,
+  getBaselineSearchesForText,
+  getBaselineSearchesForVersion,
+  getServicesWithFoundVersions,
   getSnapshotVersionError,
   SNAPSHOT_VERSION_EQUALS_BASELINE_ERROR,
   splitByBaselineVersion,
-  withFoundBaselineVersions,
 } from './snapshotForm'
 
 describe('snapshotForm', () => {
@@ -55,11 +55,11 @@ describe('snapshotForm', () => {
       createService('service-d'),
     ]
 
-    expect(baselineSearchesForText(services, '2021')).toEqual([{ packageKey: 'PKG-A', textFilter: '2021' }])
+    expect(getBaselineSearchesForText(services, '2021')).toEqual([{ packageKey: 'PKG-A', textFilter: '2021' }])
   })
 
   it('searches nothing for an empty text', () => {
-    expect(baselineSearchesForText([createService('service-a', 'PKG-A', createFullPage())], '')).toEqual([])
+    expect(getBaselineSearchesForText([createService('service-a', 'PKG-A', createFullPage())], '')).toEqual([])
   })
 
   it('searches a version in the full packages that do not list it', () => {
@@ -69,27 +69,27 @@ describe('snapshotForm', () => {
       createService('service-c', 'PKG-C', ['1.0']),
     ]
 
-    expect(baselineSearchesForVersion(services, '2021.1')).toEqual([{ packageKey: 'PKG-A', textFilter: '2021.1' }])
+    expect(getBaselineSearchesForVersion(services, '2021.1')).toEqual([{ packageKey: 'PKG-A', textFilter: '2021.1' }])
   })
 
   it('searches nothing without a version or with "No previous version"', () => {
     const services = [createService('service-a', 'PKG-A', createFullPage())]
 
-    expect(baselineSearchesForVersion(services, '')).toEqual([])
-    expect(baselineSearchesForVersion(services, NO_PREVIOUS_VERSION_OPTION)).toEqual([])
+    expect(getBaselineSearchesForVersion(services, '')).toEqual([])
+    expect(getBaselineSearchesForVersion(services, NO_PREVIOUS_VERSION_OPTION)).toEqual([])
   })
 
   it('adds each found version once, after the versions of its package', () => {
     const services = [createService('service-a', 'PKG-A', ['2025.3']), createService('service-b', 'PKG-B', ['1.0'])]
 
-    const [serviceA, serviceB] = withFoundBaselineVersions(services, [
+    const [serviceA, serviceB] = getServicesWithFoundVersions(services, [
       { packageKey: 'PKG-A', versions: createVersions(['2025.3', '2021.1']) },
       { packageKey: 'PKG-A', versions: createVersions(['2021.1']) },
     ])
 
     expect(serviceA.baseline?.versions.map(({ versionKey }) => versionKey)).toEqual(['2025.3', '2021.1'])
     expect(serviceB).toBe(services[1])
-    expect(withFoundBaselineVersions(services, [])).toBe(services)
+    expect(getServicesWithFoundVersions(services, [])).toBe(services)
   })
 })
 

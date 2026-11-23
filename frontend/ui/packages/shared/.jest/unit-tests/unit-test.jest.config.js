@@ -47,15 +47,14 @@ export default {
     // place, so whichever wins the key collision is correct.
     ...pathsToModuleNameMapper(pathsOf('portal'), { prefix: '<rootDir>/../portal/' }),
     ...pathsToModuleNameMapper(pathsOf('agents'), { prefix: '<rootDir>/../agents/' }),
-    // Not an alias - a genuine substitution, so it stays hand-written. Named as a module
-    // rather than as a path: '<rootDir>/../../node_modules/lodash/isPlainObject.js' is
-    // correct only while node_modules sits two levels up from this package, which is not
-    // true under a workspace or an isolated linker. jest resolves the bare specifier the
-    // way the runtime would, and reports it loudly if it cannot.
-    '^lodash-es/isPlainObject$': 'lodash/isPlainObject',
-    // The version rules of `utils/validations` import `lodash-es` through `utils/files`, and jest leaves the ES
-    // modules of node_modules untransformed; the CommonJS `lodash` has the same helpers.
-    '^lodash-es$': 'lodash',
+    // Not an alias - a genuine substitution, so it stays hand-written. jest leaves the ES modules of
+    // node_modules untransformed, so `lodash-es` and each of its subpaths go to the CommonJS `lodash`,
+    // which has the same helpers under the same paths. `ui-shared` does not declare `lodash`, so jest
+    // resolves it only because pnpm hoists the copy of the Portal into node_modules/.pnpm/node_modules:
+    // once no package depends on `lodash`, this mapping breaks.
+    // TODO(ui): move every package from `lodash` to `lodash-es`, and let jest transform `lodash-es`
+    // through `transformIgnorePatterns` instead of mapping it to `lodash`.
+    '^lodash-es(/.*)?$': 'lodash$1',
   },
   modulePaths: ['<rootDir>/src', '<rootDir>/../portal/src'],
   reporters: [
