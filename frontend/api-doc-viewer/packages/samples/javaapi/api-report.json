@@ -1,0 +1,341 @@
+{
+  "tool" : "jdiff",
+  "toolVersion" : "0.1.0",
+  "mode" : "api-report",
+  "generatedAt" : "2026-01-01T00:00:00Z",
+  "input" : {
+    "gav" : "com.example:example-catalog-library:1.1.0"
+  },
+  "artifacts" : [ {
+    "groupId" : "com.example",
+    "artifactId" : "example-catalog-library",
+    "oldVersion" : "1.1.0",
+    "newVersion" : "1.1.0",
+    "changes" : [ {
+      "className" : "com.example.catalog.client.KeyValueClient",
+      "elementType" : "CLASS",
+      "status" : "UNCHANGED",
+      "changeTypes" : [ ],
+      "binaryCompatible" : true,
+      "sourceCompatible" : true,
+      "breaking" : false,
+      "semver" : "NONE"
+    }, {
+      "className" : "com.example.catalog.client.KeyValueClient",
+      "elementType" : "CONSTRUCTOR",
+      "member" : "KeyValueClient(java.lang.String, int)",
+      "status" : "UNCHANGED",
+      "changeTypes" : [ ],
+      "binaryCompatible" : true,
+      "sourceCompatible" : true,
+      "breaking" : false,
+      "semver" : "NONE"
+    }, {
+      "className" : "com.example.catalog.client.KeyValueClient",
+      "elementType" : "FIELD",
+      "member" : "java.lang.String API_PATH",
+      "status" : "UNCHANGED",
+      "changeTypes" : [ ],
+      "binaryCompatible" : true,
+      "sourceCompatible" : true,
+      "breaking" : false,
+      "semver" : "NONE"
+    }, {
+      "className" : "com.example.catalog.client.KeyValueClient",
+      "elementType" : "FIELD",
+      "member" : "java.lang.String TOKEN_HEADER",
+      "status" : "UNCHANGED",
+      "changeTypes" : [ ],
+      "binaryCompatible" : true,
+      "sourceCompatible" : true,
+      "breaking" : false,
+      "semver" : "NONE"
+    }, {
+      "className" : "com.example.catalog.client.KeyValueClient",
+      "elementType" : "FIELD",
+      "member" : "int MAX_BATCH_SIZE",
+      "status" : "UNCHANGED",
+      "changeTypes" : [ ],
+      "binaryCompatible" : true,
+      "sourceCompatible" : true,
+      "breaking" : false,
+      "semver" : "NONE"
+    }, {
+      "className" : "com.example.catalog.client.KeyValueClient",
+      "elementType" : "METHOD",
+      "member" : "java.util.List getValues(java.lang.String, boolean)",
+      "status" : "UNCHANGED",
+      "changeTypes" : [ ],
+      "binaryCompatible" : true,
+      "sourceCompatible" : true,
+      "breaking" : false,
+      "semver" : "NONE"
+    }, {
+      "className" : "com.example.catalog.client.KeyValueClient",
+      "elementType" : "METHOD",
+      "member" : "java.util.Optional findValue(java.lang.String)",
+      "status" : "UNCHANGED",
+      "changeTypes" : [ ],
+      "binaryCompatible" : true,
+      "sourceCompatible" : true,
+      "breaking" : false,
+      "semver" : "NONE"
+    }, {
+      "className" : "com.example.catalog.client.KeyValueClient",
+      "elementType" : "METHOD",
+      "member" : "void putAll(java.util.Map)",
+      "status" : "UNCHANGED",
+      "changeTypes" : [ ],
+      "binaryCompatible" : true,
+      "sourceCompatible" : true,
+      "breaking" : false,
+      "semver" : "NONE"
+    }, {
+      "className" : "com.example.catalog.client.KeyValueClient",
+      "elementType" : "METHOD",
+      "member" : "void delete(java.lang.String)",
+      "status" : "UNCHANGED",
+      "changeTypes" : [ ],
+      "binaryCompatible" : true,
+      "sourceCompatible" : true,
+      "breaking" : false,
+      "semver" : "NONE"
+    }, {
+      "className" : "com.example.catalog.model.OrderStatus",
+      "elementType" : "ENUM",
+      "status" : "UNCHANGED",
+      "changeTypes" : [ ],
+      "binaryCompatible" : true,
+      "sourceCompatible" : true,
+      "breaking" : false,
+      "semver" : "NONE"
+    }, {
+      "className" : "com.example.catalog.model.OrderStatus",
+      "elementType" : "FIELD",
+      "member" : "com.example.catalog.model.OrderStatus NEW",
+      "status" : "UNCHANGED",
+      "changeTypes" : [ ],
+      "binaryCompatible" : true,
+      "sourceCompatible" : true,
+      "breaking" : false,
+      "semver" : "NONE"
+    }, {
+      "className" : "com.example.catalog.model.OrderStatus",
+      "elementType" : "FIELD",
+      "member" : "com.example.catalog.model.OrderStatus PAID",
+      "status" : "UNCHANGED",
+      "changeTypes" : [ ],
+      "binaryCompatible" : true,
+      "sourceCompatible" : true,
+      "breaking" : false,
+      "semver" : "NONE"
+    }, {
+      "className" : "com.example.catalog.model.OrderStatus",
+      "elementType" : "FIELD",
+      "member" : "com.example.catalog.model.OrderStatus SHIPPED",
+      "status" : "UNCHANGED",
+      "changeTypes" : [ ],
+      "binaryCompatible" : true,
+      "sourceCompatible" : true,
+      "breaking" : false,
+      "semver" : "NONE"
+    }, {
+      "className" : "com.example.catalog.model.OrderStatus",
+      "elementType" : "METHOD",
+      "member" : "com.example.catalog.model.OrderStatus valueOf(java.lang.String)",
+      "status" : "UNCHANGED",
+      "changeTypes" : [ ],
+      "binaryCompatible" : true,
+      "sourceCompatible" : true,
+      "breaking" : false,
+      "semver" : "NONE"
+    }, {
+      "className" : "com.example.catalog.model.OrderStatus",
+      "elementType" : "METHOD",
+      "member" : "com.example.catalog.model.OrderStatus[] values()",
+      "status" : "UNCHANGED",
+      "changeTypes" : [ ],
+      "binaryCompatible" : true,
+      "sourceCompatible" : true,
+      "breaking" : false,
+      "semver" : "NONE"
+    }, {
+      "className" : "com.example.catalog.repository.OrderRepository",
+      "elementType" : "INTERFACE",
+      "status" : "UNCHANGED",
+      "changeTypes" : [ ],
+      "binaryCompatible" : true,
+      "sourceCompatible" : true,
+      "breaking" : false,
+      "semver" : "NONE"
+    }, {
+      "className" : "com.example.catalog.repository.OrderRepository",
+      "elementType" : "METHOD",
+      "member" : "com.example.catalog.model.Order findById(java.lang.String)",
+      "status" : "UNCHANGED",
+      "changeTypes" : [ ],
+      "binaryCompatible" : true,
+      "sourceCompatible" : true,
+      "breaking" : false,
+      "semver" : "NONE"
+    }, {
+      "className" : "com.example.catalog.repository.OrderRepository",
+      "elementType" : "METHOD",
+      "member" : "java.util.Optional findOrder(java.lang.String)",
+      "status" : "UNCHANGED",
+      "changeTypes" : [ ],
+      "binaryCompatible" : true,
+      "sourceCompatible" : true,
+      "breaking" : false,
+      "semver" : "NONE"
+    }, {
+      "className" : "com.example.catalog.repository.OrderRepository",
+      "elementType" : "METHOD",
+      "member" : "java.util.List findByStatus(java.lang.String, int)",
+      "status" : "UNCHANGED",
+      "changeTypes" : [ ],
+      "binaryCompatible" : true,
+      "sourceCompatible" : true,
+      "breaking" : false,
+      "semver" : "NONE"
+    }, {
+      "className" : "com.example.catalog.repository.OrderRepository",
+      "elementType" : "METHOD",
+      "member" : "void delete(java.lang.String)",
+      "status" : "UNCHANGED",
+      "changeTypes" : [ ],
+      "binaryCompatible" : true,
+      "sourceCompatible" : true,
+      "breaking" : false,
+      "semver" : "NONE"
+    }, {
+      "className" : "com.example.catalog.model.Order",
+      "elementType" : "CLASS",
+      "status" : "UNCHANGED",
+      "changeTypes" : [ ],
+      "binaryCompatible" : true,
+      "sourceCompatible" : true,
+      "breaking" : false,
+      "semver" : "NONE"
+    }, {
+      "className" : "com.example.catalog.model.Order",
+      "elementType" : "CONSTRUCTOR",
+      "member" : "Order()",
+      "status" : "UNCHANGED",
+      "changeTypes" : [ ],
+      "binaryCompatible" : true,
+      "sourceCompatible" : true,
+      "breaking" : false,
+      "semver" : "NONE"
+    }, {
+      "className" : "com.example.catalog.model.Order",
+      "elementType" : "CONSTRUCTOR",
+      "member" : "Order(java.lang.String, java.lang.Long, java.lang.Boolean)",
+      "status" : "UNCHANGED",
+      "changeTypes" : [ ],
+      "binaryCompatible" : true,
+      "sourceCompatible" : true,
+      "breaking" : false,
+      "semver" : "NONE"
+    }, {
+      "className" : "com.example.catalog.model.Order",
+      "elementType" : "METHOD",
+      "member" : "com.example.catalog.model.Order$OrderBuilder builder()",
+      "status" : "UNCHANGED",
+      "changeTypes" : [ ],
+      "binaryCompatible" : true,
+      "sourceCompatible" : true,
+      "breaking" : false,
+      "semver" : "NONE"
+    }, {
+      "className" : "com.example.catalog.model.Order",
+      "elementType" : "METHOD",
+      "member" : "java.lang.String getId()",
+      "status" : "UNCHANGED",
+      "changeTypes" : [ ],
+      "binaryCompatible" : true,
+      "sourceCompatible" : true,
+      "breaking" : false,
+      "semver" : "NONE"
+    }, {
+      "className" : "com.example.catalog.model.Order",
+      "elementType" : "METHOD",
+      "member" : "java.lang.Long getTotal()",
+      "status" : "UNCHANGED",
+      "changeTypes" : [ ],
+      "binaryCompatible" : true,
+      "sourceCompatible" : true,
+      "breaking" : false,
+      "semver" : "NONE"
+    }, {
+      "className" : "com.example.catalog.model.Order",
+      "elementType" : "METHOD",
+      "member" : "void setId(java.lang.String)",
+      "status" : "UNCHANGED",
+      "changeTypes" : [ ],
+      "binaryCompatible" : true,
+      "sourceCompatible" : true,
+      "breaking" : false,
+      "semver" : "NONE"
+    }, {
+      "className" : "com.example.catalog.model.Order",
+      "elementType" : "METHOD",
+      "member" : "void setTotal(java.lang.Long)",
+      "status" : "UNCHANGED",
+      "changeTypes" : [ ],
+      "binaryCompatible" : true,
+      "sourceCompatible" : true,
+      "breaking" : false,
+      "semver" : "NONE"
+    }, {
+      "className" : "com.example.catalog.model.Order$OrderBuilder",
+      "elementType" : "CLASS",
+      "status" : "UNCHANGED",
+      "changeTypes" : [ ],
+      "binaryCompatible" : true,
+      "sourceCompatible" : true,
+      "breaking" : false,
+      "semver" : "NONE"
+    }, {
+      "className" : "com.example.catalog.model.Order$OrderBuilder",
+      "elementType" : "METHOD",
+      "member" : "com.example.catalog.model.Order build()",
+      "status" : "UNCHANGED",
+      "changeTypes" : [ ],
+      "binaryCompatible" : true,
+      "sourceCompatible" : true,
+      "breaking" : false,
+      "semver" : "NONE"
+    }, {
+      "className" : "com.example.catalog.model.Order$OrderBuilder",
+      "elementType" : "METHOD",
+      "member" : "com.example.catalog.model.Order$OrderBuilder id(java.lang.String)",
+      "status" : "UNCHANGED",
+      "changeTypes" : [ ],
+      "binaryCompatible" : true,
+      "sourceCompatible" : true,
+      "breaking" : false,
+      "semver" : "NONE"
+    }, {
+      "className" : "com.example.catalog.model.Order$OrderBuilder",
+      "elementType" : "METHOD",
+      "member" : "com.example.catalog.model.Order$OrderBuilder total(java.lang.Long)",
+      "status" : "UNCHANGED",
+      "changeTypes" : [ ],
+      "binaryCompatible" : true,
+      "sourceCompatible" : true,
+      "breaking" : false,
+      "semver" : "NONE"
+    }, {
+      "className" : "com.example.catalog.model.Order$OrderBuilder",
+      "elementType" : "METHOD",
+      "member" : "java.lang.String toString()",
+      "status" : "UNCHANGED",
+      "changeTypes" : [ ],
+      "binaryCompatible" : true,
+      "sourceCompatible" : true,
+      "breaking" : false,
+      "semver" : "NONE"
+    } ]
+  } ]
+}

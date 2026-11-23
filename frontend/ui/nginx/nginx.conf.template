@@ -206,6 +206,25 @@ http {
             proxy_intercept_errors off;
         }
 
+        # Special section for libraries-backend (rewrite required). Dynamic upstream resolution
+        location ^~ /libraries-backend {
+            set $libraries_backend_upstream http://${APIHUB_LIBRARIES_BACKEND_ADDRESS};
+
+            add_header Cache-Control "no-store" always;
+            add_header X-Content-Type-Options  "nosniff"                         always;
+            add_header X-XSS-Protection        "0"                               always;
+            add_header Referrer-Policy         "strict-origin-when-cross-origin" always;
+            add_header X-Frame-Options         "DENY"                            always;
+            add_header Content-Security-Policy "frame-ancestors 'none'"          always;
+            rewrite ^/libraries-backend/(.*)$ /$1 break;
+
+            proxy_pass $libraries_backend_upstream;
+
+            proxy_connect_timeout 1s;
+            proxy_next_upstream off;
+            proxy_intercept_errors off;
+        }
+
         location ~ ^/(portal|agents)/version\.json$ {
             root /usr/share/nginx/html;
             add_header Cache-Control "no-store" always;

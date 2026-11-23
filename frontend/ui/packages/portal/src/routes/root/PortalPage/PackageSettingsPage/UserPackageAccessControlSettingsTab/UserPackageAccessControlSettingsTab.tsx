@@ -7,6 +7,8 @@ import {
 } from '@portal/routes/root/PortalPage/PackageSettingsPage/UserPackageAccessControlSettingsTab/UserRolesDialog'
 import {
   useAddPackageMember,
+  useChangePackageMemberRole,
+  useDeletePackageMember,
   usePackageMembers,
 } from '@portal/routes/root/PortalPage/PackageSettingsPage/UserPackageAccessControlSettingsTab/useUserPackageAccess'
 import { useUsers } from '@portal/routes/root/useUsers'
@@ -27,7 +29,7 @@ import type { Role } from '@netcracker/qubership-apihub-ui-shared/types/roles'
 import type { User } from '@netcracker/qubership-apihub-ui-shared/types/user'
 import type { FC } from 'react'
 import { memo, useCallback, useMemo, useState } from 'react'
-import type { PackageSettingsTabProps } from '../package-settings'
+import type { ChangeRoleAction, PackageMember, PackageSettingsTabProps } from '../package-settings'
 
 export const UserPackageAccessControlSettingsTab: FC<PackageSettingsTabProps> = memo<PackageSettingsTabProps>(({ packageObject }) => {
   const { showAddUserDialog, showUserRolesDialog } = useEventBus()
@@ -62,6 +64,23 @@ export const UserPackageAccessControlSettingsTab: FC<PackageSettingsTabProps> = 
   }, [])
 
   const [addPackageMemberRole] = useAddPackageMember()
+  const [deletePackageMember, isDeletingPackageMember] = useDeletePackageMember()
+  const [changePackageMemberRole] = useChangePackageMemberRole()
+  const handleDeleteMember = useCallback((member: PackageMember) => {
+    deletePackageMember({
+      packageKey: packageObject.key,
+      userId: member.user.id,
+      userName: member.user.name ?? '',
+    })
+  }, [deletePackageMember, packageObject.key])
+  const handleChangeRole = useCallback((member: PackageMember, role: Role, action: ChangeRoleAction) => {
+    changePackageMemberRole({
+      packageKey: packageObject.key,
+      userId: member.user.id,
+      roleId: role.key,
+      action: action,
+    })
+  }, [changePackageMemberRole, packageObject.key])
   const handleAddPackageMemberRole = useCallback((users: User[], roles: Role[]) => {
     const emails = users.map(user => user.email ?? '')
     const roleKeys = roles.map(role => role.key)
@@ -111,7 +130,9 @@ export const UserPackageAccessControlSettingsTab: FC<PackageSettingsTabProps> = 
         ) : (
           <Box marginTop="8px" marginBottom="16px" overflow="hidden" height="100%">
             <UserAccessControlTable
-              packageKey={packageObject.key}
+              onDeleteMember={handleDeleteMember}
+              onChangeRole={handleChangeRole}
+              isDeletingMember={isDeletingPackageMember}
               roles={roles}
               availablePackageRoles={availablePackageRoles}
               packageMembers={packageMembers}

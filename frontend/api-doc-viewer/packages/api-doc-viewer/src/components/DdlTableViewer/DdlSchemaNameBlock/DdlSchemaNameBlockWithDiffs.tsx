@@ -16,7 +16,7 @@ import { SideBySideLayout } from "../../shared-components/Layout/SideBySideLayou
 import { ATTRIBUTE_PRECEDED_BY, WithPrecededByProps } from "../../shared-components/WithPrecededByProps"
 import { DEFAULT_SCHEMA_NAME } from "../consts"
 import '../../shared-styles/preceded-by.css'
-import './DdlSchemaNameBlock.css'
+import '../../shared-styles/property-table-subheader.css'
 
 type DdlSchemaNameBlockWithDiffsProps = WithPrecededByProps & {
   schemaName: string
@@ -51,7 +51,7 @@ const DdlSchemaNameBlockSideContent: FC<DdlSchemaNameBlockWithDiffsProps> = memo
     return (
       <div
         data-precededby={precededBy}
-        className={`ddl-schema-name-block-row flex h-full ${X_AXIS_PADDING_ROWS_ASYNC_API} ${diffsStyleClasses.join(' ')}`}
+        className={`property-table-subheader-row flex h-full ${X_AXIS_PADDING_ROWS_ASYNC_API} ${diffsStyleClasses.join(' ')}`}
       />
     )
   }
@@ -59,10 +59,10 @@ const DdlSchemaNameBlockSideContent: FC<DdlSchemaNameBlockWithDiffsProps> = memo
   return (
     <div
       data-precededby={precededBy}
-      className={`ddl-schema-name-block-row flex h-full ${X_AXIS_PADDING_ROWS_ASYNC_API} ${diffsStyleClasses.join(' ')}`}
+      className={`property-table-subheader-row flex h-full ${X_AXIS_PADDING_ROWS_ASYNC_API} ${diffsStyleClasses.join(' ')}`}
     >
       <span
-        className={`ddl-schema-name-block ${textHighlighterColor ? DiffsClassesBuilder.highlighter(textHighlighterColor) : ''}`}
+        className={`property-table-subheader ${textHighlighterColor ? DiffsClassesBuilder.highlighter(textHighlighterColor) : ''}`}
       >
         {schemaName}
       </span>

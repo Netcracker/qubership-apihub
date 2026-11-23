@@ -73,6 +73,7 @@ qubershipApihubUi:
     apihubNcServiceAddress: 'qubership-apihub-backend.qubership-apihub.svc.cluster.local.:8080'
     apiLinterServiceAddress: 'qubership-api-linter-service.qubership-apihub.svc.cluster.local.:8080'
     apihubAgentsBackendAddress: 'qubership-apihub-agents-backend.qubership-apihub.svc.cluster.local.:8080'
+    apihubLibrariesBackendAddress: 'qubership-apihub-libraries-backend.qubership-apihub.svc.cluster.local.:8080'
 
   apihubUrl: 'qubership-apihub.localtest.me'
 

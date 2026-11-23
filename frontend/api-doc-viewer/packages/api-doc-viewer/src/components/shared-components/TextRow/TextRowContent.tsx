@@ -11,11 +11,11 @@ import { ATTRIBUTE_PRECEDED_BY } from "../WithPrecededByProps"
 import { TextRowUsage, type TextRowContentProps } from "./types"
 
 const TEXT_ROW_X_AXIS_PADDING_BY_USAGE: Partial<Record<TextRowUsage, string>> = {
-  [TextRowUsage.DdlApiProperty]: X_AXIS_PADDING_ROWS_DDL_API_PROPERTIES,
+  [TextRowUsage.PropertyTableEntry]: X_AXIS_PADDING_ROWS_DDL_API_PROPERTIES,
 }
 
 const TEXT_ROW_ADDITIONAL_CLASSES_BY_USAGE: Partial<Record<TextRowUsage, string[]>> = {
-  [TextRowUsage.DdlApiProperty]: ['min-h-[26px]'],
+  [TextRowUsage.PropertyTableEntry]: ['min-h-[26px]'],
 }
 
 function getTextRowClassesByUsage(usage: TextRowUsage): string {
@@ -37,12 +37,12 @@ export const TextRowContent: FC<TextRowContentProps> = memo<TextRowContentProps>
   const { diff, descendantDiffs, diffsSeverities } = props
 
   const level = useLevelContext()
-  const isDdlApiPropertyRow = usage === TextRowUsage.DdlApiProperty
+  const isPropertyTableEntryRow = usage === TextRowUsage.PropertyTableEntry
   const isSideContentVisible = useMemo(
     () => !hideLevelIndicatorWhenSideEmpty || DdlApiRowDiffs.PropertyRow.isContentVisible(diff, layoutSide),
     [diff, hideLevelIndicatorWhenSideEmpty, layoutSide],
   )
-  const showsLevelIndent = isDdlApiPropertyRow && level > 0 && isSideContentVisible
+  const showsLevelIndent = isPropertyTableEntryRow && level > 0 && isSideContentVisible
 
   const diffsStyleClasses = useMemo(() => {
     if (!diff) {
@@ -83,7 +83,7 @@ export const TextRowContent: FC<TextRowContentProps> = memo<TextRowContentProps>
   return (
     <div
       data-precededby={precededBy}
-      className={`text-row-content flex w-full h-full ${isDdlApiPropertyRow ? 'items-stretch' : ''} ${usageDrivenClasses} gap-2 ${diffsStyleClasses.join(' ')}`}
+      className={`text-row-content flex w-full h-full ${isPropertyTableEntryRow ? 'items-stretch' : ''} ${usageDrivenClasses} gap-2 ${diffsStyleClasses.join(' ')}`}
     >
       {showsLevelIndent && (
         <div data-precededby={precededBy} className="level-indicator-column flex items-stretch self-stretch">
@@ -91,8 +91,8 @@ export const TextRowContent: FC<TextRowContentProps> = memo<TextRowContentProps>
           <div className="w-4" aria-hidden="true" />
         </div>
       )}
-      {isDdlApiPropertyRow ? (
-        <div className="ddlapi-property-row-body flex min-w-0 flex-1 items-center gap-2">
+      {isPropertyTableEntryRow ? (
+        <div className="property-table-entry-body flex min-w-0 flex-1 items-center gap-2">
           {textValue}
         </div>
       ) : (

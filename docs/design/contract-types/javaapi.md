@@ -290,6 +290,25 @@ Unless noted, **API / Logic** is **TBD** — see [Backend](#backend) (low-level 
 | :---- | :---- | :---- |
 | When installed, About (or equivalent) shows Java task processor version. | Mockup TBD | TBD |
 
+## Data model (next-data-model)
+
+`frontend/api-doc-viewer/packages/next-data-model/src/building-service/javaapi/tree/builder.ts` builds directly
+from the transformer's class-oriented spec: jdiff is flat, sections are a `Map`, and nested classes and enum constants
+are reshaped from other rows. Unlike DDL, Java needs no json-crawl rules, building hooks, or node-data builder.
+There is no plain / with-diffs pair: jdiff supplies finished, one-sided verdicts without before/after documents.
+One tree carries `compatibility`; `JavaApiRowDiffs` derives row diffs, reusing `ChangedPropertyMetaData` and DDL's
+with-diffs title-row highlighting mode on the plain tree.
+`frontend/api-doc-viewer/packages/next-data-model/src/building-service/javaapi/shared/javaapi-spec-transformer.ts`
+keeps severity in a private method that follows libraries-backend's `severityOf` rule.
+
+`frontend/api-doc-viewer/packages/next-data-model/src/building-service/javaapi/shared/jdiff-element-helpers.ts`
+serves both document and backend `/changes` class-list producers, as DDL also shares helpers. Only real type guards
+live in `frontend/api-doc-viewer/packages/next-data-model/src/shared/javaapi/guards/`.
+`frontend/api-doc-viewer/packages/next-data-model/src/model/javaapi/tree/row-diffs.ts` intentionally casts to `Diff`:
+jdiff has no before/after values or declaration paths required by api-diff; row diffs carry only action and severity.
+Info-row visibility stays in the viewer: `severity` gates the block, while `details` and `changeTypes` control
+individual rows; Java has no display modes, unlike DDL's node-visibility rules.
+
 ## Backend
 
 Backend contracts and REST APIs: TBD (low-level design pending).

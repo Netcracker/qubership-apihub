@@ -2,7 +2,18 @@ import type { FC, ReactNode, RefObject } from 'react'
 import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import type { ColumnDef, ColumnSizingInfoState, ColumnSizingState, OnChangeFn } from '@tanstack/react-table'
 import { flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table'
-import { Box, Link, Skeleton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material'
+import {
+  Box,
+  Link,
+  Skeleton,
+  styled,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+} from '@mui/material'
 import { NavLink } from 'react-router-dom'
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import type { PackageKind } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
@@ -41,12 +52,24 @@ export type VersionHistoryTableProps = {
   refObject: RefObject<HTMLDivElement>
   hasNextPage?: boolean
   actionsCell?: (item: PackageVersion | Revision) => ReactNode
+  getVersionPath?: (version: Key) => string
+  statusAdornment?: (version: Key) => ReactNode
   isLoading: boolean
   kind?: PackageKind
 }
 
 export const VersionHistoryTable: FC<VersionHistoryTableProps> = memo<VersionHistoryTableProps>((props) => {
-  const { value, actionsCell, packageKey, hasNextPage, refObject, isLoading, kind } = props
+  const {
+    value,
+    actionsCell,
+    getVersionPath,
+    statusAdornment,
+    packageKey,
+    hasNextPage,
+    refObject,
+    isLoading,
+    kind,
+  } = props
 
   const isVersionsHistoryContent = isVersionsHistory(value)
 
@@ -58,7 +81,11 @@ export const VersionHistoryTable: FC<VersionHistoryTableProps> = memo<VersionHis
   const tableContainerRef = useRef<HTMLDivElement>(null)
   useResizeObserver(tableContainerRef, setContainerWidth)
 
-  const columnsModel = useMemo(() => getColumnsModel(isVersionsHistoryContent), [isVersionsHistoryContent])
+  const hasStatusAdornment = !!statusAdornment
+  const columnsModel = useMemo(
+    () => getColumnsModel(isVersionsHistoryContent, hasStatusAdornment),
+    [isVersionsHistoryContent, hasStatusAdornment],
+  )
   const actualColumnSizing = useColumnsSizing({
     containerWidth: containerWidth,
     columnModels: columnsModel,
@@ -80,7 +107,7 @@ export const VersionHistoryTable: FC<VersionHistoryTableProps> = memo<VersionHis
               <Link
                 component={NavLink}
                 to={{
-                  pathname: format(
+                  pathname: getVersionPath?.(version) ?? format(
                     '/portal/packages/{}/{}',
                     encodeURIComponent(packageKey),
                     encodeURIComponent(isLatestRevision ? getSplittedVersionKey(version).versionKey : version),
@@ -106,7 +133,18 @@ export const VersionHistoryTable: FC<VersionHistoryTableProps> = memo<VersionHis
     {
       id: VERSION_STATUS_COLUMN_ID,
       header: () => <CustomTableHeadCell title="Status"/>,
-      cell: ({ row: { original: { status } } }) => <VersionStatusChip status={status}/>,
+      cell: ({ row: { original: { version, status } } }) => {
+        const chip = <VersionStatusChip status={status}/>
+        if (!statusAdornment) {
+          return chip
+        }
+        return (
+          <VersionStatusDetails>
+            {chip}
+            {statusAdornment(version)}
+          </VersionStatusDetails>
+        )
+      },
     },
     {
       id: LABELS_COLUMN_ID,
@@ -132,7 +170,7 @@ export const VersionHistoryTable: FC<VersionHistoryTableProps> = memo<VersionHis
         <PrincipalView value={createdBy}/>
       ),
     },
-  ], [isVersionsHistoryContent, kind, packageKey])
+  ], [getVersionPath, isVersionsHistoryContent, kind, packageKey, statusAdornment])
 
   const previousVersionColumn: ColumnDef<VersionHistoryItem> = useMemo(() => ({
     id: PREVIOUS_VERSION_COLUMN_ID,
@@ -245,6 +283,12 @@ export const VersionHistoryTable: FC<VersionHistoryTableProps> = memo<VersionHis
   )
 })
 
+const VersionStatusDetails = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  gap: theme.spacing(1),
+}))
+
 const VERSION_COLUMN_ID = 'version'
 const VERSION_STATUS_COLUMN_ID = 'version-status'
 const LABELS_COLUMN_ID = 'labels'
@@ -253,26 +297,36 @@ const PUBLISHED_BY_COLUMN_ID = 'published-by'
 const PREVIOUS_VERSION_COLUMN_ID = 'previous-version'
 const ACTIONS_COLUMN_ID = 'actions'
 
-const BASE_COLUMNS_MODEL: ColumnModel[] = [
-  { name: VERSION_COLUMN_ID },
-  { name: VERSION_STATUS_COLUMN_ID, fixedWidth: 130 },
-  { name: LABELS_COLUMN_ID },
-  { name: PUBLICATION_DATE_COLUMN_ID, fixedWidth: 130 },
-  { name: PUBLISHED_BY_COLUMN_ID },
-]
+const STATUS_COLUMN_WIDTH = 130
+// Room for the status chip plus a short caption, such as a build state
+const STATUS_COLUMN_WITH_ADORNMENT_WIDTH = 160
 
-function getColumnsModel(isVersionsHistory: boolean): ColumnModel[] {
+function getBaseColumnsModel(hasStatusAdornment: boolean): ColumnModel[] {
+  return [
+    { name: VERSION_COLUMN_ID },
+    {
+      name: VERSION_STATUS_COLUMN_ID,
+      fixedWidth: hasStatusAdornment ? STATUS_COLUMN_WITH_ADORNMENT_WIDTH : STATUS_COLUMN_WIDTH,
+    },
+    { name: LABELS_COLUMN_ID },
+    { name: PUBLICATION_DATE_COLUMN_ID, fixedWidth: 130 },
+    { name: PUBLISHED_BY_COLUMN_ID },
+  ]
+}
+
+function getColumnsModel(isVersionsHistory: boolean, hasStatusAdornment: boolean): ColumnModel[] {
   const ACTIONS_COLUMN = { name: ACTIONS_COLUMN_ID, fixedWidth: 70 }
   const PREVIOUS_VERSION_COLUMN = { name: PREVIOUS_VERSION_COLUMN_ID }
+  const baseColumns = getBaseColumnsModel(hasStatusAdornment)
 
   return isVersionsHistory
     ? [
-      ...BASE_COLUMNS_MODEL,
+      ...baseColumns,
       PREVIOUS_VERSION_COLUMN,
       ACTIONS_COLUMN,
     ]
     : [
-      ...BASE_COLUMNS_MODEL,
+      ...baseColumns,
       ACTIONS_COLUMN,
     ]
 }

@@ -4,7 +4,16 @@ import type {
   RequestTextExtraOptions,
   RequestVoidExtraOptions,
 } from '@netcracker/qubership-apihub-ui-shared/utils/requests'
-import { API_V2, requestBlob, requestJson, requestText, requestVoid } from '@netcracker/qubership-apihub-ui-shared/utils/requests'
+import {
+  API_V1,
+  API_V2,
+  requestBlob,
+  requestJson,
+  requestText,
+  requestVoid,
+} from '@netcracker/qubership-apihub-ui-shared/utils/requests'
+
+export const LIBRARIES_API_BASE_PATH = `/libraries-backend${API_V1}`
 
 export function portalRequestJson<T extends object | null>(
   input: RequestInfo | URL,

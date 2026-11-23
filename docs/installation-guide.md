@@ -53,7 +53,7 @@ Defaults in `values.yaml` and `docker-compose.yml` are enough for sandboxes. For
 | Service | Boot configuration | Key env var(s) |
 |---------|-------------------|----------------|
 | **qubership-apihub-backend** | **`config.yaml`** (path set by `APIHUB_CONFIG_FOLDER`, default `./`), same schema as [`config.template.yaml`](../backend/portal-backend/config.template.yaml) | `APIHUB_CONFIG_FOLDER`, `LOG_LEVEL`, `GOMEMLIMIT` |
-| **qubership-apihub-ui** | Env vars only | `APIHUB_BACKEND_ADDRESS`, `APIHUB_NC_SERVICE_ADDRESS`, `API_LINTER_SERVICE_ADDRESS`, `APIHUB_AGENTS_BACKEND_ADDRESS` |
+| **qubership-apihub-ui** | Env vars only | `APIHUB_BACKEND_ADDRESS`, `APIHUB_NC_SERVICE_ADDRESS`, `API_LINTER_SERVICE_ADDRESS`, `APIHUB_AGENTS_BACKEND_ADDRESS`, `APIHUB_LIBRARIES_BACKEND_ADDRESS` |
 | **qubership-apihub-build-task-consumer** | Env vars only | `APIHUB_BACKEND_ADDRESS`, `APIHUB_API_KEY`, `LOG_LEVEL`, `FOLDER_STORE`, `OPERATIONS_BUILD_BATCH` |
 | **qubership-api-linter-service** | **`config.yaml`** (path set by `LINTER_CONFIG_FOLDER`), same schema as [`config.template.yaml`](../backend/api-linter-service/config.template.yaml) | `LINTER_CONFIG_FOLDER`, `LOG_LEVEL`, `GOMEMLIMIT` |
 | **qubership-apihub-agents-backend** | **`config.yaml`** (path set by `AGENTS_BACKEND_CONFIG_FOLDER`), same schema as [`config.template.yaml`](../backend/agents-backend/config.template.yaml) | `AGENTS_BACKEND_CONFIG_FOLDER`, `LOG_LEVEL`, `GOMEMLIMIT` |
@@ -202,6 +202,7 @@ APIHUB_BACKEND_ADDRESS=qubership-apihub-backend:8080
 APIHUB_NC_SERVICE_ADDRESS=qubership-apihub-backend:8080
 API_LINTER_SERVICE_ADDRESS=qubership-api-linter-service:8080
 APIHUB_AGENTS_BACKEND_ADDRESS=qubership-apihub-agents-backend:8080
+APIHUB_LIBRARIES_BACKEND_ADDRESS=qubership-apihub-libraries-backend:8080
 ```
 
 > There is **no `APIHUB_URL` in the UI env file** — the public URL is `security.apihubExternalUrl` in the backend
@@ -330,6 +331,7 @@ All configuration via **environment variables** (nginx config template is popula
 | `APIHUB_NC_SERVICE_ADDRESS` | Yes | `apihub-backend:8080` | Internal address of the custom add-on service (same pod as backend in typical deployments) |
 | `API_LINTER_SERVICE_ADDRESS` | No | `apihub-backend:8080` | Internal address of the linter service |
 | `APIHUB_AGENTS_BACKEND_ADDRESS` | No | `apihub-backend:8080` | Internal address of the agents backend service |
+| `APIHUB_LIBRARIES_BACKEND_ADDRESS` | No | `apihub-backend:8080` | Internal address of the libraries backend service |
 
 > The **browser-facing public URL** is **not** configured here. It is `security.apihubExternalUrl` in the backend
 > `config.yaml`.

@@ -13,8 +13,8 @@ export enum TitleRowUsage {
   Default = 'default',
   AsyncApiJsoSection = 'async-api-jso-section',
   JsoProperty = 'jso-property',
-  DdlApiSection = 'ddlapi-section',
-  DdlApiProperty = 'ddlapi-property',
+  PropertyTableSection = 'property-table-section',
+  PropertyTableEntry = 'property-table-entry',
   JsonSchemaProperty = 'json-schema-property',
 }
 

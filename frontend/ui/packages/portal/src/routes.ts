@@ -10,6 +10,10 @@ export const GROUPS_PAGE = 'groups'
 export const WORKSPACES_PAGE_PATH_PATTERN = '/portal/workspaces/:workspaceId'
 export const GROUPS_PAGE_PATH_PATTERN = '/portal/groups/:groupId'
 export const PACKAGE_PAGE_PATH_PATTERN = '/portal/packages/:packageId'
+export const LIBRARY_PAGE_PATH_PATTERN = '/portal/libraries/:libraryId'
+export const LIBRARY_SETTINGS_PAGE_PATH_PATTERN = `${LIBRARY_PAGE_PATH_PATTERN}/settings/`
+export const LIBRARY_VERSION_PAGE_PATH_PATTERN = `${LIBRARY_PAGE_PATH_PATTERN}/versions/:versionId`
+export const LIBRARY_JAVA_CLASS_PAGE_PATH_PATTERN = `${LIBRARY_VERSION_PAGE_PATH_PATTERN}/classes/:className`
 
 // Package tabs
 export const OVERVIEW_PAGE = 'overview'
@@ -134,6 +138,9 @@ export const PORTAL_PATH_PATTERNS: string[] = [
   WORKSPACES_PAGE_PATH_PATTERN,
   GROUPS_PAGE_PATH_PATTERN,
   PACKAGE_PAGE_PATH_PATTERN,
+  LIBRARY_PAGE_PATH_PATTERN,
+  LIBRARY_SETTINGS_PAGE_PATH_PATTERN,
+  LIBRARY_VERSION_PAGE_PATH_PATTERN,
   OVERVIEW_PATH_PATTERN,
   VERSION_PAGE_PATH_PATTERN,
   CONTRACTS_PAGE_PATH_PATTERN,

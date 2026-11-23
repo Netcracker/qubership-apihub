@@ -4,7 +4,7 @@ import type { PackageSettingsTabProps } from '../package-settings'
 import { PackageVersionsTable } from './PackageVersionsTable'
 import { PackageVersionsSettingsControls } from './PackageVersionsSettingsControls'
 import { EditPackageVersionDialog } from './EditPackageVersionDialog'
-import type { VersionStatus } from '@netcracker/qubership-apihub-ui-shared/entities/version-status'
+import { ALL_VERSION, type VersionStatusFilter } from './versionStatusFilter'
 import { useEventBus } from '@portal/routes/EventBusProvider'
 import type { PackageVersion } from '@netcracker/qubership-apihub-ui-shared/entities/versions'
 import { BodyCard } from '@netcracker/qubership-apihub-ui-shared/components/BodyCard'
@@ -87,6 +87,3 @@ export const VersionsPackageSettingsTab: FC<PackageSettingsTabProps> = memo<Pack
     </>
   )
 })
-
-export const ALL_VERSION = 'All'
-export type VersionStatusFilter = VersionStatus | typeof ALL_VERSION

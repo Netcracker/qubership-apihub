@@ -12,7 +12,7 @@ import { severityOrder } from '../utils/api-changes'
 import type { DiffType } from '@netcracker/qubership-apihub-api-diff'
 
 export type ChangesProps = {
-  value: ChangesSummary | undefined
+  value: Partial<ChangesSummary> | undefined
   mode?: 'default' | 'compact'
   zeroView?: boolean
   category?: ChangesTooltipCategory
@@ -63,10 +63,10 @@ export const Changes: FC<ChangesProps> = memo<ChangesProps>(({
   )
 })
 
-function sortSummaryChanges(value: ChangesSummary): ChangesSummary {
+function sortSummaryChanges(value: Partial<ChangesSummary>): Partial<ChangesSummary> {
   return Object.fromEntries(
     Object.entries(value).sort(
       ([keyA], [keyB]) => severityOrder[keyA as DiffType] - severityOrder[keyB as DiffType],
     ),
-  ) as ChangesSummary
+  ) as Partial<ChangesSummary>
 }

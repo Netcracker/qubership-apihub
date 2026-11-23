@@ -4,8 +4,7 @@ import { Box, ToggleButton, Typography } from '@mui/material'
 import { PUBLISH_STATUSES, VERSION_STATUSES } from '@netcracker/qubership-apihub-ui-shared/entities/version-status'
 import { CustomToggleButtonGroup } from '@netcracker/qubership-apihub-ui-shared/components/Buttons/CustomToggleButtonGroup'
 import { SearchBar } from '@netcracker/qubership-apihub-ui-shared/components/SearchBar'
-import type { VersionStatusFilter } from './VersionsPackageSettingsTab'
-import { ALL_VERSION } from './VersionsPackageSettingsTab'
+import { ALL_VERSION, type VersionStatusFilter } from './versionStatusFilter'
 
 export type PackageVersionsSettingsControlsProps = Readonly<{
   status: VersionStatusFilter

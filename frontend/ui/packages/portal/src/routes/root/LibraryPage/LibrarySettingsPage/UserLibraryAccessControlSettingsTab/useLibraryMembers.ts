@@ -1,0 +1,91 @@
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+
+import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
+
+import type { LibraryMembersDto, LibraryMemberUpdateDto } from '@portal/entities/libraries'
+import type { PackageMembers } from '@portal/routes/root/PortalPage/PackageSettingsPage/package-settings'
+import { LIBRARIES_API_BASE_PATH, portalRequestJson, portalRequestVoid } from '@portal/utils/requests'
+
+type LibraryMembersResult = { members: PackageMembers; isLoading: boolean; isFetching: boolean; error: Error | null }
+type UpdateMember = (userId: Key, value: LibraryMemberUpdateDto) => Promise<void>
+type DeleteMember = (userId: Key) => Promise<void>
+type UpdateMemberResult = { updateMember: UpdateMember; isLoading: boolean }
+type DeleteMemberResult = { deleteMember: DeleteMember; isLoading: boolean }
+
+export const libraryMembersQueryKey = (
+  libraryId: Key,
+): readonly ['library-members', Key] => ['library-members', libraryId]
+
+export function useLibraryMembers(libraryId: Key, enabled = true): LibraryMembersResult {
+  const { data, isInitialLoading, isFetching, error } = useQuery<LibraryMembersDto, Error, PackageMembers>({
+    queryKey: libraryMembersQueryKey(libraryId),
+    queryFn: ({ signal }) =>
+      portalRequestJson<LibraryMembersDto>(
+        `/libraries/${encodeURIComponent(libraryId)}/members`,
+        { method: 'GET' },
+        { basePath: LIBRARIES_API_BASE_PATH },
+        signal,
+      ),
+    select: toLibraryMembers,
+    enabled: enabled,
+  })
+  return { members: data ?? [], isLoading: isInitialLoading, isFetching: isFetching, error: error }
+}
+
+export function useUpdateLibraryMember(libraryId: Key): UpdateMemberResult {
+  const client = useQueryClient()
+  const { mutateAsync, isLoading } = useMutation<void, Error, { userId: Key; value: LibraryMemberUpdateDto }>({
+    mutationKey: libraryMembersQueryKey(libraryId),
+    mutationFn: ({ userId, value }) =>
+      portalRequestVoid(
+        `/libraries/${encodeURIComponent(libraryId)}/members/${encodeURIComponent(userId)}`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(value),
+        },
+        { basePath: LIBRARIES_API_BASE_PATH },
+      ),
+    onSuccess: () => client.invalidateQueries({ queryKey: libraryMembersQueryKey(libraryId), refetchType: 'all' }),
+  })
+  return {
+    updateMember: (userId, value) => mutateAsync({ userId: userId, value: value }),
+    isLoading: isLoading,
+  }
+}
+
+export function useDeleteLibraryMember(libraryId: Key): DeleteMemberResult {
+  const client = useQueryClient()
+  const { mutateAsync, isLoading } = useMutation<void, Error, Key>({
+    mutationKey: libraryMembersQueryKey(libraryId),
+    mutationFn: userId =>
+      portalRequestVoid(
+        `/libraries/${encodeURIComponent(libraryId)}/members/${encodeURIComponent(userId)}`,
+        { method: 'DELETE' },
+        { basePath: LIBRARIES_API_BASE_PATH },
+      ),
+    onSuccess: () => client.invalidateQueries({ queryKey: libraryMembersQueryKey(libraryId), refetchType: 'all' }),
+  })
+  return { deleteMember: mutateAsync, isLoading: isLoading }
+}
+
+function toLibraryMembers(value: LibraryMembersDto): PackageMembers {
+  return value.members.map(({ user, roles }) => ({
+    user: {
+      id: user.userId,
+      name: user.name,
+      gitIntegrationStatus: false,
+      systemRole: '',
+      accessTokenTTLSeconds: null,
+    },
+    // TODO(libraries-backend): The service lists direct members only, without roles inherited from the parent package.
+    // It keeps members with empty roles and returns 204 when deleting a missing member; the mock behaves differently.
+    roles: [...roles.filter(role => !role.inheritedFrom), ...roles.filter(role => role.inheritedFrom)].map(
+      ({ roleId, role, inheritedFrom }) => ({
+        roleId: roleId,
+        role: role,
+        inheritance: inheritedFrom,
+      }),
+    ),
+  }))
+}
