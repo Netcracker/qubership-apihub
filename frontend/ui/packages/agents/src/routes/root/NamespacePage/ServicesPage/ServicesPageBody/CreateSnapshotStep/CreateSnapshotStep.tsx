@@ -165,6 +165,9 @@ export const CreateSnapshotStep: FC = memo(() => {
           disabled={areFieldsDisabled}
           // MUI counts an empty string as a value and would show the clear button in an empty field
           value={name || null}
+          // A free-solo field keeps its text when the value is cleared, so the form data drives the text as well and
+          // "Reset" empties the field
+          inputValue={name}
           options={snapshotNameOptions}
           inputIndicator={nameError !== undefined && (
             <ErrorIndicator hasProblems tooltip={nameError} data-testid="SnapshotNameErrorIndicator" />

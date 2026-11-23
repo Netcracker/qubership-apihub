@@ -26,6 +26,10 @@ describe('snapshotForm', () => {
     expect(getSnapshotVersionError('', '')).toBeUndefined()
   })
 
+  it('accepts "No previous version" as a snapshot version while "No previous version" is the baseline', () => {
+    expect(getSnapshotVersionError(NO_PREVIOUS_VERSION_OPTION, NO_PREVIOUS_VERSION_OPTION)).toBeUndefined()
+  })
+
   it('matches only the services whose baseline package holds the baseline version', () => {
     const holding = createService('service-a', 'PKG-A', ['2025.3'])
     const lacking = createService('service-b', 'PKG-B', ['2025.2'])
@@ -80,15 +84,20 @@ describe('snapshotForm', () => {
   })
 
   it('adds each found version once, after the versions of its package', () => {
-    const services = [createService('service-a', 'PKG-A', ['2025.3']), createService('service-b', 'PKG-B', ['1.0'])]
+    const services = [
+      createService('service-a', 'PKG-A', ['2025.3']),
+      createService('service-b', 'PKG-B', ['1.0']),
+      createService('service-c'),
+    ]
 
-    const [serviceA, serviceB] = getServicesWithFoundVersions(services, [
+    const [serviceA, serviceB, serviceC] = getServicesWithFoundVersions(services, [
       { packageKey: 'PKG-A', versions: createVersions(['2025.3', '2021.1']) },
       { packageKey: 'PKG-A', versions: createVersions(['2021.1']) },
     ])
 
     expect(serviceA.baseline?.versions.map(({ versionKey }) => versionKey)).toEqual(['2025.3', '2021.1'])
     expect(serviceB).toBe(services[1])
+    expect(serviceC).toBe(services[2])
     expect(getServicesWithFoundVersions(services, [])).toBe(services)
   })
 })
