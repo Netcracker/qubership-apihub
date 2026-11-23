@@ -23,6 +23,25 @@ type OlricProvider interface {
 	GetBindAddr() string
 	// Shutdown makes the node leave the Olric cluster and stops its background servers.
 	Shutdown(ctx context.Context) error
+	// ClusterMembers returns the current cluster members as seen by this node, keyed by member ID.
+	// A peer that restarts or rejoins after a network partition gets a new ID,
+	// so consumers can compare snapshots to detect it and re-subscribe to DTopic listeners.
+	// Olric v0.4.7 overwrites MemberlistConfig.Events on start, so membership events cannot be used for this.
+	ClusterMembers() (map[uint64]ClusterMember, error)
+}
+
+// ClusterMember is the identity Olric publishes as memberlist node metadata.
+type ClusterMember struct {
+	Name string
+	// ID is derived from Name and Birthdate, so a restarted process gets a new ID, while a peer
+	// that only lost its network connection returns with the same ID.
+	ID uint64
+	// Birthdate is the start time of the member's Olric node, UNIX nanoseconds.
+	Birthdate int64
+}
+
+func (m ClusterMember) StartedAt() time.Time {
+	return time.Unix(0, m.Birthdate).UTC()
 }
 
 type olricProviderImpl struct {
@@ -34,6 +53,7 @@ type olricProviderImpl struct {
 const olricBindAddr = "0.0.0.0"
 
 func NewOlricProvider(olricConfig sysconfig.OlricConfig, apihubUrl string) (OlricProvider, error) {
+	log.Infof("OlricProvider: initializing (discoveryMode=%s apihubUrl=%s)", olricConfig.DiscoveryMode, apihubUrl)
 	prov := &olricProviderImpl{wg: sync.WaitGroup{}}
 
 	var err error
@@ -42,15 +62,19 @@ func NewOlricProvider(olricConfig sysconfig.OlricConfig, apihubUrl string) (Olri
 	if err != nil {
 		return nil, err
 	}
+	log.Infof("OlricProvider: config built (bindAddr=%s bindPort=%d memberlistBindPort=%d)",
+		prov.cfg.BindAddr, prov.cfg.BindPort, prov.cfg.MemberlistConfig.BindPort)
 
 	prov.wg.Add(1)
 
 	prov.cfg.Started = prov.startCallback
 
+	log.Infof("OlricProvider: creating Olric node")
 	prov.olricC, err = olric.New(prov.cfg)
 	if err != nil {
 		return nil, err
 	}
+	log.Infof("OlricProvider: Olric node created, starting cluster join in background")
 
 	go func() {
 		err = prov.olricC.Start()
@@ -63,11 +87,14 @@ func NewOlricProvider(olricConfig sysconfig.OlricConfig, apihubUrl string) (Olri
 }
 
 func (op *olricProviderImpl) startCallback() {
+	log.Infof("OlricProvider: node joined cluster successfully (bindAddr=%s bindPort=%d)", op.cfg.BindAddr, op.cfg.BindPort)
 	op.wg.Done()
 }
 
 func (op *olricProviderImpl) Get() *olric.Olric {
+	log.Infof("OlricProvider.Get: waiting for node to be ready")
 	op.wg.Wait()
+	log.Infof("OlricProvider.Get: node is ready, returning instance")
 	return op.olricC
 }
 
@@ -78,6 +105,18 @@ func (op *olricProviderImpl) GetBindAddr() string {
 
 func (op *olricProviderImpl) Shutdown(ctx context.Context) error {
 	return op.olricC.Shutdown(ctx)
+}
+
+func (op *olricProviderImpl) ClusterMembers() (map[uint64]ClusterMember, error) {
+	st, err := op.Get().Stats()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get olric stats: %w", err)
+	}
+	members := make(map[uint64]ClusterMember, len(st.ClusterMembers))
+	for id, m := range st.ClusterMembers {
+		members[uint64(id)] = ClusterMember{Name: m.Name, ID: m.ID, Birthdate: m.Birthdate}
+	}
+	return members, nil
 }
 
 func getConfig(olricConfig sysconfig.OlricConfig, apihubUrl string) (*config.Config, error) {

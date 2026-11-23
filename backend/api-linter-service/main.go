@@ -172,7 +172,10 @@ func main() {
 	docTaskProcessor := service.NewDocTaskProcessor(docLintTaskRepository, ruleSetRepository, docResultRepository, lintResultRepository, apihubClient, spectralExecutor, aiOasExecutor, executorId, systemInfoService.GetSpectralLinterWorkers(), systemInfoService.GetAiLinterWorkers(), docTaskNotify)
 
 	validationService := service.NewValidationService(versionLintTaskRepository, versionResultRepository, lintResultRepository, ruleSetRepository, docLintTaskRepository, versionTaskProcessor, apihubClient, executorId, versionTaskNotify)
-	publishEventListener := service.NewPublishEventListener(olricProvider, validationService)
+	publishEventListener := service.NewPublishEventListener(
+		olricProvider,
+		validationService,
+		time.Duration(systemInfoService.GetOlricConfig().MembershipPollIntervalSeconds)*time.Second)
 	rulesetService := service.NewRulesetService(ruleSetRepository)
 	cleanupService := service.NewCleanupService(cp)
 	authorizationService := service.NewAuthorizationService(apihubClient)

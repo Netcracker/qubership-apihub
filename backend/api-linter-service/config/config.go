@@ -37,6 +37,8 @@ type OlricConfig struct {
 	DiscoveryMode string
 	ReplicaCount  int `validate:"gte=1"`
 	Namespace     string
+	// MembershipPollIntervalSeconds is how often cluster membership is checked to detect peer rejoin and re-subscribe to DTopic.
+	MembershipPollIntervalSeconds int `validate:"gte=1"`
 }
 
 type LintersConfig struct {

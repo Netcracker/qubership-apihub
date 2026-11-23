@@ -112,6 +112,7 @@ func setDefaults() {
 	viper.SetDefault("security.showDebugInResponse", false)
 	viper.SetDefault("olric.discoveryMode", "local")
 	viper.SetDefault("olric.replicaCount", 1)
+	viper.SetDefault("olric.membershipPollIntervalSeconds", 5)
 	viper.SetDefault("linters.spectral.workers", 1)
 	viper.SetDefault("linters.spectral.optional", false)
 	viper.SetDefault("linters.ai.enabled", false)
