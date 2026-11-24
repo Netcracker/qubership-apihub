@@ -1,4 +1,19 @@
-/** @typedef {{ sampleDir: string, caseId: string, before: object, after: object, summary: string, displayName?: string }} TypeChangeCase */
+/**
+ * @typedef {{
+ *   sampleDir: string,
+ *   caseId: string,
+ *   before: object,
+ *   after: object,
+ *   summary: string,
+ *   displayName?: string,
+ *   switchTo?: readonly string[],
+ * }} TypeChangeCase
+ *
+ * `switchTo` (rare): selector option test ids the story's `play` selects on load, overriding the
+ * default auto-switch choice for this case only. Used when the default (first) option shows a
+ * change marker itself, so auto-switch pass 2 skips the selector and the case's actual changed
+ * branch never renders in the screenshot.
+ */
 
 const clone = (value) => structuredClone(value);
 
@@ -124,8 +139,9 @@ const dirCounters = {};
  * @param {string} summary
  * @param {string} [displayNameTag] human-readable tag rendered as "Case NNN - <tag>" in Storybook;
  *   when omitted, the story falls back to the default auto-derived display name
+ * @param {{ switchTo?: readonly string[] }} [options] see the TypeChangeCase typedef
  */
-const pushCase = (cases, sampleDir, slug, before, after, summary, displayNameTag) => {
+const pushCase = (cases, sampleDir, slug, before, after, summary, displayNameTag, options) => {
   dirCounters[sampleDir] = (dirCounters[sampleDir] ?? 0) + 1;
   const index = dirCounters[sampleDir];
   const width = 3;
@@ -137,6 +153,7 @@ const pushCase = (cases, sampleDir, slug, before, after, summary, displayNameTag
     after,
     summary,
     displayName: displayNameTag ? `Case ${paddedIndex} - ${displayNameTag}` : undefined,
+    switchTo: options?.switchTo,
   });
 };
 
@@ -1808,6 +1825,58 @@ const combinerSchema = (description) => ({
   },
 });
 
+const ONE_OF_OFFERING_COMPONENT = "Offering";
+const ONE_OF_OFFERING_SCHEMA_REF = { $ref: `#/components/schemas/${ONE_OF_OFFERING_COMPONENT}` };
+const circularOneOfExtendedVariant = (updated) => {
+  if (!updated) {
+    return {
+      allOf: [
+        ONE_OF_OFFERING_SCHEMA_REF,
+        { type: "object", properties: { description: { type: "string" } } },
+      ],
+    };
+  }
+  return {
+    allOf: [
+      {
+        type: "object",
+        title: ONE_OF_OFFERING_COMPONENT,
+        properties: {
+          id: { type: "integer", description: "Numeric identifier" },
+        },
+      },
+      {
+        type: "object",
+        description: "Extended offering details",
+        required: ["summary"],
+        properties: {
+          summary: { type: "string", description: "Short summary" },
+          priority: { type: "integer" },
+        },
+      },
+    ],
+  };
+};
+const circularOneOfComponents = (updated) => ({
+  schemas: {
+    [ONE_OF_OFFERING_COMPONENT]: {
+      type: "object",
+      properties: {
+        id: { type: "string" },
+        children: {
+          type: "array",
+          items: {
+            oneOf: [
+              ONE_OF_OFFERING_SCHEMA_REF,
+              circularOneOfExtendedVariant(updated),
+            ],
+          },
+        },
+      },
+    },
+  },
+});
+
 /** @param {TypeChangeCase[]} cases */
 const collectCircularCases = (cases) => {
   const dir = "circular";
@@ -1946,6 +2015,19 @@ const collectCircularCases = (cases) => {
     { beforeSchema: combinerSchema(COMBINER_DESCRIPTION), beforeAdditionalComponents: combinerComponents(false) },
     { afterSchema: combinerSchema(COMBINER_DESCRIPTION), afterAdditionalComponents: combinerComponents(true) },
     "Combiner variant cycle: cyclic link added",
+  );
+  pushCase(
+    cases,
+    dir,
+    "one-of-variant-properties-changed",
+    { beforeSchema: ONE_OF_OFFERING_SCHEMA_REF, beforeAdditionalComponents: circularOneOfComponents(false) },
+    { afterSchema: ONE_OF_OFFERING_SCHEMA_REF, afterAdditionalComponents: circularOneOfComponents(true) },
+    "Circular oneOf variant: properties, descriptions, and types changed",
+    undefined,
+    // The first (cyclic) option shows a change marker of its own, so auto-switch pass 2 skips
+    // this selector and the changed branch would never render in the screenshot: select the
+    // extended variant explicitly.
+    { switchTo: ["json-schema-combiner-option-1"] },
   );
 };
 

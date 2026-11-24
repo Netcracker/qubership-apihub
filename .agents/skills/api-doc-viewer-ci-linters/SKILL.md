@@ -1,6 +1,6 @@
 ---
 name: api-doc-viewer-ci-linters
-description: The rules of the CI linters (super-linter v9.0.0 and the lychee link checker) that every file of frontend/api-doc-viewer must pass - markdownlint, textlint terminology, stylelint, sqlfluff, codespell, gitleaks, checkov, merge-conflict markers, and the rest - with the configuration each one reads, the mistakes CI has already reported in this module, and how to suppress a finding. Load before writing or changing any file of the module (code, CSS, Markdown, SQL or YAML fixtures, stories, tests, docs), and before a commit.
+description: The rules of the CI linters (super-linter v9.0.0 and the lychee link checker) that every file of frontend/api-doc-viewer must pass - markdownlint, textlint terminology, stylelint, sqlfluff, codespell, gitleaks, checkov, merge-conflict markers, and the rest - with the configuration each one reads, the mistakes CI has already reported in this module, and how to suppress a finding. Load once a feature is finished and before a commit.
 ---
 
 # CI linters for api-doc-viewer

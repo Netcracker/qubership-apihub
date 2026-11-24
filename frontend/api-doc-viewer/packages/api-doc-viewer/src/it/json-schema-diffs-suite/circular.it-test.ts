@@ -100,4 +100,11 @@ describe("JSON Schema Diffs Suite/Circular", () => {
     component = await story.viewComponent();
     expect(await component.captureScreenshot()).toMatchImageSnapshot();
   });
+
+  it("013-one-of-variant-properties-changed", async () => {
+    story = await storyPage(page, `json-schema-diffs-suite-circular--case-013-one-of-variant-properties-changed`);
+    await waitForJsonSchemaDiffsViewer(page);
+    component = await story.viewComponent();
+    expect(await component.captureScreenshot()).toMatchImageSnapshot();
+  });
 });
