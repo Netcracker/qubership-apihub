@@ -1,8 +1,5 @@
 import type { BuildingServiceLogger } from '../../../loggers'
-import type {
-  JavaApiChangeDescription,
-  JavaApiClassListItem,
-} from '../../../model/javaapi/class-list/class-list-item'
+import type { JavaApiChangeDescription, JavaApiClassListItem } from '../../../model/javaapi/class-list/class-list-item'
 import {
   JavaApiChangeSeverities,
   type JavaApiChangeSeverity,
@@ -17,11 +14,7 @@ import {
 import { describeJavaApiElementChanges } from '../../../shared/javaapi/change-descriptions'
 import { isJavaApiTypeKind } from '../../../shared/javaapi/guards'
 import { parseJavaExecutableSignature, parseJavaFieldSignature } from '../../../shared/javaapi/member-signatures'
-import {
-  toJavaDisplayName,
-  toJavaEnclosingClassName,
-  toJavaPackageName,
-} from '../../../shared/javaapi/type-names'
+import { toJavaDisplayName, toJavaEnclosingClassName, toJavaPackageName } from '../../../shared/javaapi/type-names'
 import type { ClassKey } from '../../../shared/javaapi/types/class-key'
 import { JdiffMemberElementTypes } from '../../../shared/javaapi/types/jdiff-member-element-type'
 import { isArray, isObject, isString } from '../../../utilities'
@@ -35,7 +28,7 @@ import {
   orderTypeRowFirst,
   toJavaApiChangeAction,
   toJavaApiTypeKind,
-} from './jdiff-element-helpers'
+} from './jdiff-element-utils'
 
 /* One element row of a jdiff document */
 type JdiffElement = {

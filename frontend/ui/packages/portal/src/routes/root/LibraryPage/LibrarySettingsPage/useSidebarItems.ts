@@ -15,7 +15,7 @@ import {
   USER_ACCESS_CONTROLS_PAGE,
   VERSIONS_PAGE,
 } from '../../../../routes'
-import type { LibrarySettingsNavItemProps } from './librarySettings'
+import type { LibrarySettingsNavItemProps } from './library-settings'
 
 export function useSidebarItems(library: MavenLibraryDto): LibrarySettingsNavItemProps[] {
   const hasPermissions = (userPerms: PackagePermissions, rule: PackagePermissions | undefined): boolean => {

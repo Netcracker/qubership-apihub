@@ -6,7 +6,7 @@
 | **Design Item Name**     | JavaAPI Library Support |
 | **Related Design Items** |                         |
 | **Related API**          |                         |
-| **Revision History**     | 09.11.2026 — Initial version (task 13547, Figma JavaAPI). |
+| **Revision History**     | 09.11.2026 — Initial version (task 13547, Figma JavaAPI); 24.11.2026 — Data collection logic. |
 
 ## Summary
 
@@ -290,24 +290,83 @@ Unless noted, **API / Logic** is **TBD** — see [Backend](#backend) (low-level 
 | :---- | :---- | :---- |
 | When installed, About (or equivalent) shows Java task processor version. | Mockup TBD | TBD |
 
-## Data model (next-data-model)
+## Data collection logic
 
-`frontend/api-doc-viewer/packages/next-data-model/src/building-service/javaapi/tree/builder.ts` builds directly
-from the transformer's class-oriented spec: jdiff is flat, sections are a `Map`, and nested classes and enum constants
-are reshaped from other rows. Unlike DDL, Java needs no json-crawl rules, building hooks, or node-data builder.
-There is no plain / with-diffs pair: jdiff supplies finished, one-sided verdicts without before/after documents.
-One tree carries `compatibility`; `JavaApiRowDiffs` derives row diffs, reusing `ChangedPropertyMetaData` and DDL's
-with-diffs title-row highlighting mode on the plain tree.
-`frontend/api-doc-viewer/packages/next-data-model/src/building-service/javaapi/shared/javaapi-spec-transformer.ts`
-keeps severity in a private method that follows libraries-backend's `severityOf` rule.
+### Source
 
-`frontend/api-doc-viewer/packages/next-data-model/src/building-service/javaapi/shared/jdiff-element-helpers.ts`
-serves both document and backend `/changes` class-list producers, as DDL also shares helpers. Only real type guards
-live in `frontend/api-doc-viewer/packages/next-data-model/src/shared/javaapi/guards/`.
-`frontend/api-doc-viewer/packages/next-data-model/src/model/javaapi/tree/row-diffs.ts` intentionally casts to `Diff`:
-jdiff has no before/after values or declaration paths required by api-diff; row diffs carry only action and severity.
-Info-row visibility stays in the viewer: `severity` gates the block, while `details` and `changeTypes` control
-individual rows; Java has no display modes, unlike DDL's node-visibility rules.
+The UI reads jdiff comparison results through libraries-backend.
+
+| Data | Source | Use |
+| :---- | :---- | :---- |
+| Changes list | `GET /libraries/{libraryId}/versions/{version}/changes` | Each row has `classId` equal to the jdiff `className`, with the jdiff entry in `details`. The UI groups rows by type and uses the supplied `severity` for per-class counts and descriptions. |
+| Changes summary | `GET /libraries/{libraryId}/versions/{version}/changes/summary` | The UI reads `changeCounts` for the comparison summary. |
+
+API Reference and the class report have no backend read endpoint yet. Their read contract is TBD with the backend.
+
+### Type identity
+
+A Java type is keyed by `className`, its binary name, with `$` separating nested types. The UI shows the name within
+the package, joining nested types with `.`, and shows the package name separately.
+
+| Binary name | Display name | Package name |
+| :---- | :---- | :---- |
+| `example.Order$OrderBuilder` | `Order.OrderBuilder` | `example` |
+
+### Row fields
+
+These fields belong to the jdiff entry, which is nested in `details` in a changes-list row.
+
+| Field | UI use |
+| :---- | :---- |
+| `elementType` | Identifies the type kind (`CLASS`, `INTERFACE`, `ENUM`, or `ANNOTATION`) or member kind (`FIELD`, `METHOD`, or `CONSTRUCTOR`); drives grouping, member counts, and description wording. |
+| `member` | Supplies the member signature. Fields provide a name and type; methods and constructors provide a name and parameter types, with a return type for methods. An absent or empty value identifies a type row. |
+| `status` | `NEW`, `REMOVED`, and `MODIFIED` drive added, removed, and changed actions. `UNCHANGED` is reportable only when change codes exist. Status also supplies the description when no change codes exist. |
+| `changeTypes` | Supplies ordered japicmp change codes for descriptions and annotation classification. A missing list is treated as empty. |
+| `details` | Supplies explanatory text; for `MODIFIED` rows without change codes, it is appended to the description in parentheses. It also distinguishes a direct type change from a change only through members. |
+| `breaking` | Determines breaking severity for reportable rows, taking precedence over annotation codes. |
+| `binaryCompatible`, `sourceCompatible` | Retained as compatibility metadata; neither flag determines severity. |
+| `semver` | Retained as element-level semantic version metadata; it does not determine severity or descriptions. |
+
+### Severity
+
+After excluding hidden rows, the class view follows the same severity classification rule as libraries-backend.
+Apply the first matching rule. The API Changes list uses the `severity` supplied by the backend.
+
+| Condition | Severity |
+| :---- | :---- |
+| `breaking` is `true` | `breaking` |
+| `breaking` is `false`, `changeTypes` is nonempty, and every code starts with `ANNOTATION_` | `annotation` |
+| Any other reportable row | `non-breaking` |
+
+Counts represent element rows. A row with several change codes counts once even when it produces several descriptions.
+
+### Hidden rows
+
+A type row with `status` = `MODIFIED`, no `changeTypes`, and no `details` changed only through its members.
+It is neither highlighted nor counted; its member rows carry the changes. A class with no rows left after this
+exclusion is not listed in API Changes.
+
+Rows with `status` = `UNCHANGED` and no change codes are not reportable. An unchanged row with change codes remains
+reportable. These exclusions govern row highlights and per-class counts; the changes summary uses backend counts.
+
+### Change descriptions
+
+Descriptions use the form `[Added|Removed|Changed] <kind> '<name>'`, with wording derived from japicmp change codes
+of the form `<SUBJECT>_<ACTION>[_<QUALIFIER>]`. When a code changes a part of an element, the description names that
+part before the subject; qualifiers follow it. Type names omit the package and join nested types with `.`.
+
+| Element or code | Description |
+| :---- | :---- |
+| Interface `example.Type`, `CLASS_REMOVED` | `[Removed] interface 'Type'` |
+| Field `count`, `FIELD_LESS_ACCESSIBLE` | `[Changed] field 'count': less accessible` |
+| Method `getValue()`, `METHOD_RETURN_TYPE_CHANGED` | `[Changed] return type of method 'getValue()'` |
+| Constructor `Order(java.lang.String, java.lang.Long, java.lang.Boolean)`, `status` = `NEW`, no change codes | `[Added] constructor 'Order(String, Long, Boolean)'` |
+| Method `getValue()`, `ANNOTATION_DEPRECATED_ADDED` | `[Deprecated] method 'getValue()'` |
+
+Each change code produces one line, preserving code order. Without change codes, `NEW`, `REMOVED`, and `MODIFIED`
+produce `[Added]`, `[Removed]`, and `[Changed]` lines, respectively. Special codes have dedicated wording, including
+deprecation. A code with no recognized action or state pattern is shown as plain words after `[Changed]` and the
+subject, as in the field example above.
 
 ## Backend
 

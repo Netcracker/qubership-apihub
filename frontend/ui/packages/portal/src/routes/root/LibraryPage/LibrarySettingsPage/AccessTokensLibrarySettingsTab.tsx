@@ -13,7 +13,7 @@ import { useShowSuccessNotification } from '@portal/routes/root/BasePage/Notific
 import { useUsers } from '@portal/routes/root/useUsers'
 import { useDeleteLibraryApiKey, useGenerateLibraryApiKey, useLibraryAccessTokens } from './useLibraryAccessTokens'
 
-import type { LibrarySettingsTabProps } from './librarySettings'
+import type { LibrarySettingsTabProps } from './library-settings'
 
 export const AccessTokensLibrarySettingsTab: FC<LibrarySettingsTabProps> = memo<LibrarySettingsTabProps>(
   ({ library }) => {

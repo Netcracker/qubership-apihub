@@ -2,7 +2,7 @@ import { Box, List, ListItemButton, ListItemText, Typography } from '@mui/materi
 import { type FC, memo, useCallback } from 'react'
 import { type To, useNavigate } from 'react-router-dom'
 
-import type { LibrarySettingsTabProps } from './librarySettings'
+import type { LibrarySettingsTabProps } from './library-settings'
 import { useActiveTabContentContext, useSetActiveTabContentContext } from './LibrarySettingsPage'
 import { useSidebarItems } from './useSidebarItems'
 

@@ -1,4 +1,4 @@
-import { buildJavaApiRowDiff, javaApiRowBackgroundClass } from '@apihub/utils/javaapi/row-diff'
+import { buildJavaApiRowDiff, javaApiRowBackgroundClass } from '@apihub/utils/javaapi/node-level-diff'
 import {
   JavaApiMemberKinds,
   JavaApiTypeKinds,

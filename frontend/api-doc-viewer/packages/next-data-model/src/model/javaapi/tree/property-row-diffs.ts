@@ -3,7 +3,7 @@ import { type Diff, DiffAction, type DiffType } from '@netcracker/qubership-apih
 import { JdiffStatuses } from '../../../shared/javaapi/types/jdiff-status'
 import {
   type ChangedPropertyMetaData,
-  DIFF_HIGHLIGHTING_MODES_DDL_TITLE_ROW,
+  DIFF_HIGHLIGHTING_MODES_TITLE_ROW,
   type DiffStyles,
   HighlightVariant,
 } from '../../abstract/tree-with-diffs/tree-node.interface'
@@ -53,7 +53,7 @@ export class JavaApiRowDiffs {
         data: { action, type: diffType } as Diff<DiffType>,
         styles: { before: styles, after: styles },
         flags: { before: { increaseLevel: false }, after: { increaseLevel: false } },
-        highlightingMode: DIFF_HIGHLIGHTING_MODES_DDL_TITLE_ROW,
+        highlightingMode: DIFF_HIGHLIGHTING_MODES_TITLE_ROW,
       },
       diffType,
     }

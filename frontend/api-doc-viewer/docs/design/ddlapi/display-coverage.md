@@ -159,7 +159,7 @@ Non-obvious rules (kept in the data layer):
 - Index part names are always rendered as `(c1, c2)` in diffs, including when `partNameDiffs` is absent.
 - Names are never diffed: api-diff matches tables and columns by name, and indexes by name or by
   the columns an unnamed index covers, so a rename is a remove plus an add. DDL title-row diffs
-  carry `DIFF_HIGHLIGHTING_MODES_DDL_TITLE_ROW` (immutable default area), so a replace diff only
+  carry `DIFF_HIGHLIGHTING_MODES_TITLE_ROW` (immutable default area), so a replace diff only
   colors the row and never replaces the column/index name with a diff value.
 - A foreign key that keeps its key while its referenced column or table changes is one **replace**
   target diff keyed by the after target (before target in `beforeValue`): the FK badge stays plain

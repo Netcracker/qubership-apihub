@@ -2,9 +2,9 @@ import { DiffsClassesBuilder } from '@netcracker/qubership-apihub-next-data-mode
 import {
   type JavaApiRowDiff,
   JavaApiRowDiffs,
-} from '@netcracker/qubership-apihub-next-data-model/model/javaapi/tree/row-diffs'
+} from '@netcracker/qubership-apihub-next-data-model/model/javaapi/tree/property-row-diffs'
 
-export type { JavaApiRowDiff } from '@netcracker/qubership-apihub-next-data-model/model/javaapi/tree/row-diffs'
+export type { JavaApiRowDiff } from '@netcracker/qubership-apihub-next-data-model/model/javaapi/tree/property-row-diffs'
 
 export const buildJavaApiRowDiff = JavaApiRowDiffs.takeRowDiff
 

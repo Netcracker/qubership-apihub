@@ -17,7 +17,7 @@ import {
   orderTypeRowFirst,
   toJavaApiChangeAction,
   toJavaApiTypeKind,
-} from '../shared/jdiff-element-helpers'
+} from '../shared/jdiff-element-utils'
 
 export type JavaApiChangeRow = {
   readonly changeId: string

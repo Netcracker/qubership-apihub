@@ -1,7 +1,6 @@
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline'
-import { Alert, Box, IconButton, styled } from '@mui/material'
-import { useQueryClient } from '@tanstack/react-query'
-import { type FC, memo, useState } from 'react'
+import { Alert, Box, IconButton } from '@mui/material'
+import { type FC, memo, useCallback, useMemo, useState } from 'react'
 
 import { BodyCard } from '@netcracker/qubership-apihub-ui-shared/components/BodyCard'
 import { ButtonWithHint } from '@netcracker/qubership-apihub-ui-shared/components/Buttons/ButtonWithHint'
@@ -16,158 +15,104 @@ import { useRoles } from '@netcracker/qubership-apihub-ui-shared/hooks/user-role
 import { AddIcon } from '@netcracker/qubership-apihub-ui-shared/icons/AddIcon'
 import type { Role } from '@netcracker/qubership-apihub-ui-shared/types/roles'
 import type { User } from '@netcracker/qubership-apihub-ui-shared/types/user'
-import { HttpError } from '@netcracker/qubership-apihub-ui-shared/utils/responses'
 
-import type { LibraryMemberDto, LibraryMembersDto } from '@portal/entities/libraries'
 import { useEventBus } from '@portal/routes/EventBusProvider'
-import {
-  useShowErrorNotification,
-  useShowInfoNotification,
-  useShowSuccessNotification,
-} from '@portal/routes/root/BasePage/Notification'
-import {
-  ADD_CHANGE_ROLE_ACTION,
-  type ChangeRoleAction,
-  type PackageMember,
-  REMOVE_CHANGE_ROLE_ACTION,
+import type {
+  ChangeRoleAction,
+  PackageMember,
 } from '@portal/routes/root/PortalPage/PackageSettingsPage/package-settings'
 import { UserAccessControlTable } from '@portal/routes/root/PortalPage/PackageSettingsPage/UserPackageAccessControlSettingsTab/UserAccessControlTable'
 import { UserRolesDialog } from '@portal/routes/root/PortalPage/PackageSettingsPage/UserPackageAccessControlSettingsTab/UserRolesDialog'
 import { useUsers } from '@portal/routes/root/useUsers'
+import type { LibrarySettingsTabProps } from '../library-settings'
 import {
-  libraryMembersQueryKey,
+  useAddLibraryMembers,
+  useChangeLibraryMemberRole,
   useDeleteLibraryMember,
   useLibraryMembers,
-  useUpdateLibraryMember,
 } from './useLibraryMembers'
-
-import type { LibrarySettingsTabProps } from '../librarySettings'
 
 export const UserLibraryAccessControlSettingsTab: FC<LibrarySettingsTabProps> = memo<LibrarySettingsTabProps>(
   ({ library }) => {
-    const hasUserAccessManagementPermission = !!library.permissions?.includes(USER_ACCESS_MANAGEMENT_PERMISSION)
-    const queryClient = useQueryClient()
-    const membersQueryKey = libraryMembersQueryKey(library.libraryId)
     const { showAddUserDialog, showUserRolesDialog } = useEventBus()
-    const showSuccessNotification = useShowSuccessNotification()
-    const showErrorNotification = useShowErrorNotification()
-    const showInfoNotification = useShowInfoNotification()
-    const [user] = useUser()
+
+    const hasUserAccessManagementPermission = useMemo(
+      () => !!library.permissions?.includes(USER_ACCESS_MANAGEMENT_PERMISSION),
+      [library],
+    )
+
     const [searchValue, setSearchValue] = useState('')
-    const [usersSearch, setUsersSearch] = useState('')
-    const { members, isLoading: isMembersLoading, isFetching: isMembersFetching, error: membersError } =
-      useLibraryMembers(
-        library.libraryId,
-        hasUserAccessManagementPermission,
-      )
+    const onChangeSearchValue = useCallback((value: string) => {
+      setSearchValue(value)
+    }, [])
+
+    const [user] = useUser()
     const [availableRoles, isAvailableRolesLoading, availableRolesError] = useAvailablePackageRoles(
       library.parentPackageId ?? '',
       user?.key ?? '',
       !!library.parentPackageId && hasUserAccessManagementPermission,
     )
+    const [members, isMembersLoading, membersError, isMembersFetching] = useLibraryMembers(
+      library.libraryId,
+      hasUserAccessManagementPermission,
+    )
+
     const { data: roles, isLoading: isRolesLoading, error: rolesError } = useRoles(hasUserAccessManagementPermission)
     const [permissions, isPermissionsLoading, permissionsError] = usePermissions(hasUserAccessManagementPermission)
+    const isLoading = useMemo(
+      () => isMembersLoading || isAvailableRolesLoading || isRolesLoading,
+      [isMembersLoading, isAvailableRolesLoading, isRolesLoading],
+    )
+    const error = membersError ?? availableRolesError ?? rolesError ?? permissionsError
+
+    const [usersSearch, setUsersSearch] = useState('')
     const [usersData, isUsersLoading] = useUsers({
       searchValue: usersSearch,
       enabled: hasUserAccessManagementPermission,
     })
-    const { updateMember, isLoading: isUpdating } = useUpdateLibraryMember(library.libraryId)
-    const { deleteMember, isLoading: isDeleting } = useDeleteLibraryMember(library.libraryId)
-    const isLoading = isMembersLoading || isAvailableRolesLoading || isRolesLoading
-    const isMutating = isUpdating || isDeleting
-    const error = membersError ?? availableRolesError ?? rolesError ?? permissionsError
-    const isMembersSettled = !isMutating && !isMembersFetching && !error
-    const canEditMembers = hasUserAccessManagementPermission && isMembersSettled
-    const canManageMembers = canEditMembers && !isLoading
-    const canAddMember = canManageMembers && !!library.parentPackageId && !!availableRoles.length
+    const handleSetUserSearch = useCallback((search: string) => {
+      setUsersSearch(search)
+    }, [])
+
+    const [addLibraryMembers, isAddingMembers] = useAddLibraryMembers()
+    const [deleteLibraryMember, isDeletingLibraryMember] = useDeleteLibraryMember()
+    const [changeLibraryMemberRole, isChangingRole] = useChangeLibraryMemberRole()
+    const handleDeleteMember = useCallback((member: PackageMember) => {
+      deleteLibraryMember({
+        libraryId: library.libraryId,
+        userId: member.user.id,
+        userName: member.user.name ?? '',
+      })
+    }, [deleteLibraryMember, library.libraryId])
+    const handleChangeRole = useCallback((member: PackageMember, role: Role, action: ChangeRoleAction) => {
+      changeLibraryMemberRole({
+        libraryId: library.libraryId,
+        userId: member.user.id,
+        roleId: role.key,
+        action: action,
+      })
+    }, [changeLibraryMemberRole, library.libraryId])
+    const handleAddLibraryMembers = useCallback((users: User[], roles: Role[]) => {
+      addLibraryMembers({
+        libraryId: library.libraryId,
+        userIds: users.map(user => user.key),
+        roleIds: roles.map(role => role.key),
+      })
+    }, [addLibraryMembers, library.libraryId])
+
+    const isMembersSettled = !membersError && !isMembersFetching && !isChangingRole && !isAddingMembers &&
+      !isDeletingLibraryMember
+    const canAddMember = hasUserAccessManagementPermission && isMembersSettled && !!library.parentPackageId &&
+      availableRoles.length > 0
     const addMemberHint = library.parentPackageId
       ? 'You do not have an assignable role in the parent package'
       : 'A parent package is required to assign library roles'
-
-    // A failed request already shows its own snackbar, and a 401 rejects with no error at all;
-    // notify only about the errors the request helpers do not report, such as a network failure
-    const notifyError = (error: unknown): void => {
-      if (!(error instanceof Error) || error instanceof HttpError) return
-      showErrorNotification({ message: error.message })
-    }
-
-    const canWrite = (): boolean => {
-      const queryState = queryClient.getQueryState(membersQueryKey)
-      const hasFreshMembers = queryState?.status === 'success' && queryState.fetchStatus === 'idle'
-      const hasNoPendingWrites = queryClient.isMutating({ mutationKey: membersQueryKey }) === 0
-      return hasUserAccessManagementPermission && hasFreshMembers && hasNoPendingWrites
-    }
-
-    const getCurrentMember = (userId: string): LibraryMemberDto | undefined => {
-      return queryClient.getQueryData<LibraryMembersDto>(membersQueryKey)?.members.find(member => {
-        return member.user.userId === userId
-      })
-    }
-
-    const saveRole = async (userId: string, roleId: string, action: ChangeRoleAction): Promise<void> => {
-      const directRoles = getDirectRoleIds(getCurrentMember(userId))
-      const roleIds = action === ADD_CHANGE_ROLE_ACTION
-        ? [...new Set([...directRoles, roleId])]
-        : directRoles.filter(key => key !== roleId)
-      await updateMember(userId, { roleIds: roleIds })
-    }
-
-    const handleChangeRole = async (member: PackageMember, role: Role, action: ChangeRoleAction): Promise<void> => {
-      if (!canWrite()) return
-      try {
-        await saveRole(member.user.id, role.key, action)
-        showInfoNotification({
-          message: 'The change has been saved',
-          button: {
-            title: 'Undo',
-            onClick: async () => {
-              if (!canWrite()) return
-              try {
-                const oppositeAction = action === ADD_CHANGE_ROLE_ACTION
-                  ? REMOVE_CHANGE_ROLE_ACTION
-                  : ADD_CHANGE_ROLE_ACTION
-                await saveRole(member.user.id, role.key, oppositeAction)
-              } catch (error) {
-                notifyError(error)
-              }
-            },
-          },
-        })
-      } catch (error) {
-        notifyError(error)
-      }
-    }
-
-    const handleDeleteMember = async (member: PackageMember): Promise<void> => {
-      if (!canWrite()) return
-      try {
-        await deleteMember(member.user.id)
-        showSuccessNotification({ message: `Library member ${member.user.name} has been deleted` })
-      } catch (error) {
-        notifyError(error)
-      }
-    }
-
-    const handleAddMembers = async (users: User[], selectedRoles: Role[]): Promise<void> => {
-      if (!canAddMember || !canWrite()) return
-      try {
-        for (const user of users) {
-          if (!canWrite()) return
-          const member = getCurrentMember(user.key)
-          const roleIds = [...new Set([...getDirectRoleIds(member), ...selectedRoles.map(role => role.key)])]
-          await updateMember(user.key, { roleIds: roleIds })
-        }
-        showSuccessNotification({ message: 'Library members have been added' })
-      } catch (error) {
-        notifyError(error)
-      }
-    }
 
     return (
       <Box height="100%" data-testid="UserLibraryAccessControlSettingsTab">
         <BodyCard
           header={
-            <AccessHeader>
+            <Box display="flex" alignItems="center">
               Access Control
               <IconButton
                 onClick={showUserRolesDialog}
@@ -177,10 +122,10 @@ export const UserLibraryAccessControlSettingsTab: FC<LibrarySettingsTabProps> = 
               >
                 <HelpOutlineIcon fontSize="small" color="action" />
               </IconButton>
-            </AccessHeader>
+            </Box>
           }
           action={
-            <AccessActions>
+            <Box sx={{ display: 'flex', mb: 2, gap: 2, order: 1 }}>
               <ButtonWithHint
                 variant="contained"
                 disabled={!canAddMember}
@@ -191,35 +136,37 @@ export const UserLibraryAccessControlSettingsTab: FC<LibrarySettingsTabProps> = 
                 onClick={showAddUserDialog}
                 data-testid="AddUserButton"
               />
-              <SearchContainer>
+              <Box sx={{ flex: 1, maxWidth: 240 }}>
                 <SearchBar
                   placeholder="Search"
-                  onValueChange={setSearchValue}
+                  onValueChange={onChangeSearchValue}
                   disabled={!hasUserAccessManagementPermission}
                   data-testid="SearchUser"
                 />
-              </SearchContainer>
-            </AccessActions>
+              </Box>
+            </Box>
           }
           body={
             <>
               {error && <Alert severity="error">{error.message}</Alert>}
-              {isLoading ? <LoadingIndicator /> : (
-                <MembersContainer>
-                  <UserAccessControlTable
-                    roles={roles}
-                    availablePackageRoles={availableRoles}
-                    packageMembers={members}
-                    hasUserAccessManagementPermission={canEditMembers}
-                    isLoading={isLoading}
-                    searchValue={searchValue}
-                    onDeleteMember={handleDeleteMember}
-                    onChangeRole={handleChangeRole}
-                    isDeletingMember={isMutating || isMembersFetching}
-                    resourceName="library"
-                  />
-                </MembersContainer>
-              )}
+              {isLoading
+                ? <LoadingIndicator />
+                : (
+                  <Box marginTop="8px" marginBottom="16px" overflow="hidden" height="100%">
+                    <UserAccessControlTable
+                      onDeleteMember={handleDeleteMember}
+                      onChangeRole={handleChangeRole}
+                      isDeletingMember={isDeletingLibraryMember}
+                      roles={roles}
+                      availablePackageRoles={availableRoles}
+                      packageMembers={members}
+                      hasUserAccessManagementPermission={hasUserAccessManagementPermission && isMembersSettled}
+                      isLoading={isLoading}
+                      searchValue={searchValue}
+                      resourceName="library"
+                    />
+                  </Box>
+                )}
             </>
           }
         />
@@ -228,8 +175,8 @@ export const UserLibraryAccessControlSettingsTab: FC<LibrarySettingsTabProps> = 
             <AddUserDialog
               users={usersData?.users}
               roles={availableRoles}
-              onConfirm={handleAddMembers}
-              setUserSearch={setUsersSearch}
+              onConfirm={handleAddLibraryMembers}
+              setUserSearch={handleSetUserSearch}
               isUsersLoading={isUsersLoading}
             />
             <UserRolesDialog
@@ -244,22 +191,3 @@ export const UserLibraryAccessControlSettingsTab: FC<LibrarySettingsTabProps> = 
   },
 )
 UserLibraryAccessControlSettingsTab.displayName = 'UserLibraryAccessControlSettingsTab'
-
-const AccessHeader = styled(Box)({ display: 'flex', alignItems: 'center' })
-const AccessActions = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  marginBottom: theme.spacing(2),
-  gap: theme.spacing(2),
-  order: 1,
-}))
-const SearchContainer = styled(Box)({ flex: 1, maxWidth: 240 })
-const MembersContainer = styled(Box)(({ theme }) => ({
-  marginTop: theme.spacing(1),
-  marginBottom: theme.spacing(2),
-  overflow: 'hidden',
-  height: '100%',
-}))
-
-function getDirectRoleIds(member: LibraryMemberDto | undefined): string[] {
-  return member?.roles.filter(role => !role.inheritedFrom).map(role => role.roleId) ?? []
-}

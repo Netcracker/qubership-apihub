@@ -17,7 +17,7 @@ import { useShowSuccessNotification } from '../../../BasePage/Notification'
 import { useDeleteLibrary } from '../../../useLibrary'
 import { usePackage } from '../../../usePackage'
 import { hasLibraryPermission } from '../../libraryPermissions'
-import type { LibrarySettingsTabProps } from '../librarySettings'
+import type { LibrarySettingsTabProps } from '../library-settings'
 import {
   useEditableGeneralLibrarySettingsTabContent,
   useSetEditableGeneralLibrarySettingsTabContent,

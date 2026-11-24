@@ -1,6 +1,6 @@
 import { createContext, type Dispatch, type FC, memo, type SetStateAction, useContext, useState } from 'react'
 
-import type { LibrarySettingsTabProps } from '../librarySettings'
+import type { LibrarySettingsTabProps } from '../library-settings'
 import { GeneralLibrarySettingsTabEditor } from './GeneralLibrarySettingsTabEditor'
 import { GeneralLibrarySettingsTabViewer } from './GeneralLibrarySettingsTabViewer'
 

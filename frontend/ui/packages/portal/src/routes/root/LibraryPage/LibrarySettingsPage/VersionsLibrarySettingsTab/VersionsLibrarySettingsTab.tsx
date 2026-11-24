@@ -13,7 +13,7 @@ import {
 } from '@portal/routes/root/PortalPage/PackageSettingsPage/VersionsPackageSettingsTab/versionStatusFilter'
 import { useShowErrorNotification, useShowSuccessNotification } from '../../../BasePage/Notification'
 import { useDeleteLibraryVersion } from '../../useLibraryVersions'
-import type { LibrarySettingsTabProps } from '../librarySettings'
+import type { LibrarySettingsTabProps } from '../library-settings'
 import { EditLibraryVersionDialog } from './EditLibraryVersionDialog'
 import { LibraryVersionsTable } from './LibraryVersionsTable'
 

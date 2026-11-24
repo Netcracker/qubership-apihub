@@ -12,7 +12,7 @@ import type { MavenLibraryUpdateDto } from '@portal/entities/libraries'
 import { useEventBus } from '@portal/routes/EventBusProvider'
 import { useUpdateLibrary } from '../../../useLibrary'
 import { usePackage } from '../../../usePackage'
-import type { LibrarySettingsTabProps } from '../librarySettings'
+import type { LibrarySettingsTabProps } from '../library-settings'
 import {
   useEditableGeneralLibrarySettingsTabContent,
   useSetEditableGeneralLibrarySettingsTabContent,

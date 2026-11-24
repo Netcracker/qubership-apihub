@@ -88,9 +88,7 @@ export function toJavaApiChangeAction(
 export function describeJdiffSubject(className: string, element: JdiffElementFields): [string, string] {
   const member = element.member
   if (!member) {
-    const kindTitle = isJavaApiTypeKind(element.elementType)
-      ? JAVA_API_TYPE_KIND_TITLES[element.elementType].toLowerCase()
-      : 'type'
+    const kindTitle = JAVA_API_TYPE_KIND_TITLES[toJavaApiTypeKind(element.elementType)].toLowerCase()
     return [
       `${kindTitle} '${toJavaDisplayName(className)}'`,
       JAPICMP_TYPE_CODE_WORD,

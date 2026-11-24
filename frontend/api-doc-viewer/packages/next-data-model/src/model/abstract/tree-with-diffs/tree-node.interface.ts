@@ -75,8 +75,8 @@ export const DIFF_HIGHLIGHTING_MODES_JSO_PROPERTY_CHANGED_INDIRECTLY: DiffHighli
 export const DIFF_HIGHLIGHTING_MODES_DDL_FLAG_BADGE_SIDE_VISIBILITY_ONLY: DiffHighlightingModesByArea = new Map<DiffHiglightingApplicationArea, DiffHighlightingApplicationMode>([
   [DiffHiglightingApplicationArea.Default, DiffHighlightingApplicationMode.Invisible],
 ])
-/** DDL title rows: highlight the row and keep its name, whatever values the diff holds. */
-export const DIFF_HIGHLIGHTING_MODES_DDL_TITLE_ROW: DiffHighlightingModesByArea = new Map<DiffHiglightingApplicationArea, DiffHighlightingApplicationMode>([
+/** Title rows: highlight the row and keep its name, whatever values the diff holds. */
+export const DIFF_HIGHLIGHTING_MODES_TITLE_ROW: DiffHighlightingModesByArea = new Map<DiffHiglightingApplicationArea, DiffHighlightingApplicationMode>([
   [DiffHiglightingApplicationArea.Default, DiffHighlightingApplicationMode.Immutable],
 ])
 

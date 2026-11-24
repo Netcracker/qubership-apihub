@@ -9,7 +9,7 @@ import { ExitIcon } from '@netcracker/qubership-apihub-ui-shared/icons/ExitIcon'
 import { useBackwardLocationContext } from '@portal/routes/BackwardLocationProvider'
 import { LIBRARY_PAGE_PATH_PATTERN } from '../../../../routes'
 import { LibraryBreadcrumbs } from '../LibraryBreadcrumbs'
-import type { LibrarySettingsTabProps } from './librarySettings'
+import type { LibrarySettingsTabProps } from './library-settings'
 
 export const LibrarySettingsToolbar: FC<LibrarySettingsTabProps> = memo<LibrarySettingsTabProps>(({ library }) => {
   const navigate = useNavigate()

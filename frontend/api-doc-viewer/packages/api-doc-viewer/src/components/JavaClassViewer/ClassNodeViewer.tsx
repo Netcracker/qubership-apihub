@@ -1,6 +1,6 @@
 import { X_AXIS_PADDING_ROWS_ASYNC_API } from '@apihub/components/shared-styles/tailwind-classnames'
+import { buildJavaApiRowDiff, javaApiRowBackgroundClass } from '@apihub/utils/javaapi/node-level-diff'
 import { getJavaApiChildNodes, isJavaApiSectionNode } from '@apihub/utils/javaapi/node-type-checkers'
-import { buildJavaApiRowDiff, javaApiRowBackgroundClass } from '@apihub/utils/javaapi/row-diff'
 import { JavaApiTreeNode } from '@netcracker/qubership-apihub-next-data-model/model/javaapi/types/aliases'
 import { JavaApiTreeNodeKinds } from '@netcracker/qubership-apihub-next-data-model/model/javaapi/types/node-kind'
 import { FC, useCallback, useMemo } from 'react'

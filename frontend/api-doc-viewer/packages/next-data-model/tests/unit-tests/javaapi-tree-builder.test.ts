@@ -1,7 +1,7 @@
 import { JavaApiTreeBuilder } from '../../src/building-service/javaapi/tree/builder'
 import { createBuildingServiceLogger } from '../../src/loggers'
-import { DIFF_HIGHLIGHTING_MODES_DDL_TITLE_ROW } from '../../src/model/abstract/tree-with-diffs/tree-node.interface'
-import { JavaApiRowDiffs } from '../../src/model/javaapi/tree/row-diffs'
+import { DIFF_HIGHLIGHTING_MODES_TITLE_ROW } from '../../src/model/abstract/tree-with-diffs/tree-node.interface'
+import { JavaApiRowDiffs } from '../../src/model/javaapi/tree/property-row-diffs'
 import { javaApiDocument, javaApiElement, loadJavaApiSample } from '../helpers/javaapi-fixtures'
 
 // members follow Javadoc section order, with enum constants separate from ordinary fields
@@ -157,7 +157,7 @@ describe('JavaApiTreeBuilder', () => {
         data: { action, type: severity },
         styles: { before: styles, after: styles },
         flags: { before: { increaseLevel: false }, after: { increaseLevel: false } },
-        highlightingMode: DIFF_HIGHLIGHTING_MODES_DDL_TITLE_ROW,
+        highlightingMode: DIFF_HIGHLIGHTING_MODES_TITLE_ROW,
       },
       diffType: severity,
     })
