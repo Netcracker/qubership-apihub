@@ -1,4 +1,4 @@
-/* The setup wizard (SET-21): cards with a small picture of the board in each look. */
+/* The setup wizard: cards with a small picture of the board in each look. */
 .setup-wizard {
   width: min(820px, 100%);
   max-height: calc(100vh - 32px);
@@ -359,7 +359,7 @@
   flex: none;
 }
 
-/* The first-visit card that offers the wizard (SET-21), bottom left, clear of the DEV panel and the load status. */
+/* The first-visit card that offers the wizard, bottom left, clear of the DEV panel and the load status. */
 .wizard-invite {
   position: fixed;
   left: 16px;

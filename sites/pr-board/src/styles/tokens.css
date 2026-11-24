@@ -44,10 +44,10 @@
   --issue-type-pink: #e85aad;
   --issue-type-purple: #a475f9;
 
-  /* The page behind a dialog, dimmed in both themes (SET-18, SET-21). */
+  /* The page behind a dialog, dimmed in both themes. */
   --backdrop: rgb(23 32 38 / 35%);
 
-  /* Tints of the repository groups (TABLE-31), one per group in turn. */
+  /* Tints of the repository groups, one per group in turn. */
   --group-0: #e8f1fc;
   --group-1: #fcf3dc;
   --group-2: #e4f3e8;

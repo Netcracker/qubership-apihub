@@ -93,7 +93,7 @@
   background: var(--surface-2);
 }
 
-/* A repository group in the Repositories menu has its tint inline, as var(--group-N) (TABLE-31). */
+/* A repository group in the Repositories menu has its tint inline, as var(--group-N). */
 .menu label.tinted + label {
   margin-top: 2px;
 }

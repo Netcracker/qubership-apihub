@@ -7,7 +7,7 @@ import type { Page } from '@playwright/test';
 export const MOCK_NOW = '2026-10-28T12:00:00Z';
 export const E2E_PORT = 5174;
 
-export interface BoardOptions {
+interface BoardOptions {
   // A prs.json scenario id from the DEV panel; "mixed" (typical board and corner cases) by default.
   report?: string;
   // A Refresh scenario id; "ok" by default.
@@ -37,7 +37,7 @@ export const test = base.extend<{ pageErrors: string[] }>({
   },
   page: async ({ page }, use) => {
     await page.clock.setFixedTime(MOCK_NOW);
-    // The setup wizard opens on a first visit (SET-21); the tests of other areas start past it.
+    // The setup wizard opens on a first visit; the tests of other areas start past it.
     await page.addInitScript((key) => { if (!sessionStorage.getItem('first-visit')) localStorage.setItem(key, 'done'); }, WIZARD_KEY);
     // The DEV panel is dev tooling, not part of the board, and it covers the bottom-right corner.
     await page.addInitScript(() => document.addEventListener('DOMContentLoaded', () => {
@@ -54,7 +54,7 @@ export { expect };
 
 const WIZARD_KEY = 'apihub-pr-board.wizard';
 
-// Takes back the "wizard done" the shared setup writes, for the first load only, as on a first visit (SET-21).
+// Takes back the "wizard done" the shared setup writes, for the first load only, as on a first visit.
 export async function firstVisit(page: Page) {
   await page.addInitScript((key) => {
     if (sessionStorage.getItem('first-visit')) return;

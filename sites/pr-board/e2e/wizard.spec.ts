@@ -1,7 +1,7 @@
 import { ALL, expect, firstVisit, openBoard, test } from './helpers.ts';
 
 test.describe('setup wizard', () => {
-  test('SET-21: a first visit offers the wizard in a card, each choice applies at once with a picture, and Done closes it', async ({ page }) => {
+  test('a first visit offers the wizard in a card, each choice applies at once with a picture, and Done closes it', async ({ page }) => {
     await firstVisit(page);
     await openBoard(page, { report: 'typical', query: ALL });
     const wizard = page.getByRole('dialog', { name: 'Set up your board' });
@@ -48,7 +48,7 @@ test.describe('setup wizard', () => {
     await expect(wizard).toContainText('Step 2 of 5');
     await wizard.getByRole('button', { name: 'Next' }).click();
 
-    // SET-25: the Reviewers order step offers three ready orders, each with the list it gives.
+    // the Reviewers order step offers three ready orders, each with the list it gives.
     await wizard.getByRole('button', { name: 'Next' }).click();
     await expect(wizard).toContainText('Step 4 of 5');
     const reviewerOrder = wizard.getByRole('group', { name: 'Reviewers order' });
@@ -57,7 +57,7 @@ test.describe('setup wizard', () => {
     await reviewerOrder.getByRole('button', { name: 'Approvals first' }).click();
     await expect(page.locator('.board .reviewers').first().getByRole('listitem').first().getByRole('img', { name: 'approved' })).toBeVisible();
 
-    // SET-23: the Labels step shows the rows with and without labels, and Hide takes them off the table.
+    // the Labels step shows the rows with and without labels, and Hide takes them off the table.
     await wizard.getByRole('button', { name: 'Next' }).click();
     await expect(wizard).toContainText('Step 5 of 5');
     const labels = wizard.getByRole('group', { name: 'Labels' });
@@ -86,7 +86,7 @@ test.describe('setup wizard', () => {
     await expect(page.getByRole('button', { name: /^Settings/ })).toBeFocused();
   });
 
-  test('SET-21 SET-18: the card gives way to the token dialog, and Not now answers it for good', async ({ page }) => {
+  test('the card gives way to the token dialog, and Not now answers it for good', async ({ page }) => {
     await firstVisit(page);
     await page.request.post('/__dev/state', { data: { report: 'missing', refresh: 'ok' } });
     await page.goto('/?repos=acme/gadgets');

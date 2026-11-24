@@ -1,4 +1,4 @@
-// The Reviewers list of a PR as GitHub's sidebar shows it (TABLE-30): each person once, with where their review stands.
+// The Reviewers list of a PR as GitHub's sidebar shows it: each person once, with where their review stands.
 
 import { sameName } from '../names.ts';
 import type { Actor, PullRequest } from '../types.ts';
@@ -15,7 +15,7 @@ export interface ReviewerEntry {
 
 const BY_STATE: Record<string, ReviewerStatus> = { APPROVED: 'approved', CHANGES_REQUESTED: 'changes', DISMISSED: 'dismissed' };
 
-// The groups the list is ordered by (SET-25). Pending and asked again are one group, the reviews not given yet, so
+// The groups the list is ordered by. Pending and asked again are one group, the reviews not given yet, so
 // requests keep GitHub's order within it.
 export type ReviewerGroup = 'changes' | 'waiting' | 'commented' | 'dismissed' | 'approved';
 
@@ -28,7 +28,7 @@ export const REVIEWER_GROUPS: [ReviewerGroup, string][] = [
   ['dismissed', 'Review dismissed'], ['approved', 'Approved'],
 ];
 
-// Three ready orders, for the setup wizard (SET-21): what still holds the PR first, who still owes a review first,
+// Three ready orders, for the setup wizard: what still holds the PR first, who still owes a review first,
 // and how close the PR is to merging.
 export type ReviewerPreset = 'changes' | 'waiting' | 'approved';
 export const REVIEWER_PRESETS: Record<ReviewerPreset, ReviewerGroup[]> = {

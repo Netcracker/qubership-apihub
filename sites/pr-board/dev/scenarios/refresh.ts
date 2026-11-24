@@ -107,12 +107,12 @@ export const REFRESH_SCENARIOS: RefreshScenario[] = [
   { id: 'ok', label: 'Success', respond: ok },
   { id: 'paginated', label: 'Success over several pages', respond: board(mixedEntries, { pageSize: SMALL_PAGE }) },
   { id: 'projects-error', label: 'Partial error: projects forbidden', respond: board(typicalNodes, { projectsError: true }) },
-  // The refusal comes on a later page, so the load reads the repository again from its first page (DATA-25).
+  // The refusal comes on a later page, so the load reads the repository again from its first page.
   { id: 'fields-error', label: 'Partial error: project fields forbidden', respond: board(mixedEntries, { pageSize: SMALL_PAGE, fieldsRefusedAfterFirstPage: true }) },
   { id: 'count-mismatch', label: 'Fewer PRs than totalCount', respond: board(typicalNodes, { totalExtra: MISSING_PRS }) },
   // Only the first page waits, so the delay stays 4 s however many pages the board takes.
   { id: 'slow', label: 'Slow response (4 s)', respond: (v, now) => ({ ...ok(v, now), delayMs: v.after ? 0 : SLOW_REFRESH_MS }) },
-  // Every page waits, so the loading status walks through the pages of each repository (DATA-27).
+  // Every page waits, so the loading status walks through the pages of each repository.
   { id: 'paced', label: 'Pages one by one (0.5 s each)', respond: (v, now) => ({ ...ok(v, now), delayMs: PACED_PAGE_MS }) },
   { id: 'unauthorized', label: '401 Bad credentials', respond: () => ({ status: 401, body: JSON.stringify({ message: 'Bad credentials' }) }) },
   { id: 'server-error', label: '502 from GitHub', respond: () => ({ status: 502, body: 'Server Error' }) },

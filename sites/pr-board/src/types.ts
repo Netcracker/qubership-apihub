@@ -61,7 +61,7 @@ export interface Issue {
   // Null where the organization has no issue types, or in a prs.json written before they were collected.
   type: { name: string; color: NamedColor | null } | null;
   labels: Label[];
-  // The GitHub Projects fields (DATA-25); null when no project sets them or the token cannot read projects.
+  // The GitHub Projects fields; null when no project sets them or the token cannot read projects.
   priority: { name: string; color: NamedColor | null } | null;
   estimate: number | null;
   sprint: Sprint | null;
@@ -110,12 +110,12 @@ export interface PullRequest {
   comments: Comment[];
   // Set only on dev corner cases.
   example?: boolean;
-  // What the corner case shows, under the title (TABLE-6).
+  // What the corner case shows, under the title.
   exampleNote?: string;
 }
 
 export interface Report {
-  // The token owner, on live loads only (DATA-26).
+  // The token owner, on live loads only.
   viewer?: Actor;
   // owner/name of every repository the report covers.
   repos: string[];
@@ -133,14 +133,14 @@ export interface DerivedPullRequest extends PullRequest {
   ageDays: number;
   // Open longer than the stale limit in the viewer's rules.
   stale: boolean;
-  // A linked issue is in the sprint that runs now (TABLE-28).
+  // A linked issue is in the sprint that runs now.
   inCurrentSprint: boolean;
-  // The viewer's review is requested, or requested again after an earlier one (RULE-12).
+  // The viewer's review is requested, or requested again after an earlier one.
   myReview: 'requested' | 'again' | null;
   attention: string[];
   commentText: string;
   searchText: string;
-  // The viewer's note, lowercased, for note: (NOTE-7); absent without a note.
+  // The viewer's note, lowercased, for note:; absent without a note.
   noteText?: string;
 }
 

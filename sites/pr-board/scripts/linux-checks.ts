@@ -10,7 +10,7 @@ const root = resolve(moduleRoot, '../..');
 const pkg = JSON.parse(readFileSync(join(moduleRoot, 'package.json'), 'utf8'));
 const rootPkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
 const image = `mcr.microsoft.com/playwright:v${pkg.devDependencies['@playwright/test']}-noble`;
-const engine = process.env.PR_BOARD_CONTAINER_ENGINE || (process.platform === 'win32' ? 'podman' : 'docker');
+const engine = process.env.DOCKER_BINARY || (process.platform === 'win32' ? 'podman' : 'docker');
 const stage = mkdtempSync(join(tmpdir(), 'pr-board-linux-'));
 const ignored = new Set(['node_modules', 'dist', '.logs', 'test-results', 'playwright-report', '__screenshots__']);
 const snapshots = join(moduleRoot, 'e2e/__screenshots__');

@@ -35,7 +35,7 @@ const listOf = <T>(value: unknown, keep: (entry: Entry) => boolean): T[] =>
 const hasLogin = (entry: Entry) => typeof entry.login === 'string';
 const date = (value: unknown, fallback: string) => (typeof value === 'string' && !Number.isNaN(Date.parse(value)) ? value : fallback);
 
-// Every field a row reads, checked and given a default, so one broken entry cannot blank the page (DATA-5). Fields from
+// Every field a row reads, checked and given a default, so one broken entry cannot blank the page. Fields from
 // before types, labels, or project fields were collected get none.
 function readPullRequest(pr: Entry, repo: string, generatedAt: string): PullRequest {
   const author = isObject(pr.author) && hasLogin(pr.author) ? pr.author as unknown as PullRequest['author'] : null;
@@ -76,7 +76,7 @@ function readPullRequest(pr: Entry, repo: string, generatedAt: string): PullRequ
   };
 }
 
-// What a prs.json snapshot holds: the report without the viewer, whose token did not write it (DATA-26), and the
+// What a prs.json snapshot holds: the report without the viewer, whose token did not write it, and the
 // workflow run that did.
 export function snapshotReport(report: Report, runUrl: string | null): Omit<Report, 'viewer'> {
   const { viewer: _viewer, ...rest } = report;

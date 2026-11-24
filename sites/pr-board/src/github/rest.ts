@@ -65,7 +65,7 @@ async function getAllPages<T>(fetchImpl: Fetch, restUrl: string, url: string, to
     const body: unknown = await response.json().catch(() => null);
     if (!Array.isArray(body)) throw new GitHubError('GitHub API returned a response that is not a list.', response.status);
     items.push(...(body as T[]));
-    // The token goes with every page, so a next link outside the API is not followed (SEC-1).
+    // The token goes with every page, so a next link outside the API is not followed.
     next = nextPage(response.headers.get('link'));
     if (next && !next.startsWith(restUrl + '/')) return { items, complete: false };
   }

@@ -106,7 +106,7 @@
   border-right: 1px solid var(--line);
 }
 
-/* position: relative keeps hidden screen reader text inside its cell, so it never stretches the page (TABLE-21). */
+/* position: relative keeps hidden screen reader text inside its cell, so it never stretches the page. */
 .board > tbody > tr > td {
   position: relative;
   padding: 9px 10px;
@@ -481,7 +481,7 @@
   font-size: 12px;
 }
 
-/* A long name is cut at its start, so the distinctive end shows, such as "…gadgets-ui" (TABLE-26). The name itself
+/* A long name is cut at its start, so the distinctive end shows, such as "…gadgets-ui". The name itself
    stays left to right inside its bdi. */
 .c-repo a {
   display: block;
@@ -493,7 +493,7 @@
   color: var(--muted);
 }
 
-/* The name of a repository in a group sits on the group's tint (TABLE-31). */
+/* The name of a repository in a group sits on the group's tint. */
 .c-repo a.tinted {
   display: inline-block;
   max-width: 100%;
@@ -516,7 +516,7 @@
   justify-content: center;
 }
 
-/* QUAL-11: a code that opens a popover shows an outline and a ▾ at rest, so it reads as a button before hover. */
+/* a code that opens a popover shows an outline and a ▾ at rest, so it reads as a button before hover. */
 .pill.as-button {
   border: 0;
   cursor: pointer;
@@ -573,7 +573,7 @@
   cursor: help;
 }
 
-/* The Issue column (TABLE-8): the type, the number, then the title on up to two lines, and the issue's labels. */
+/* The Issue column: the type, the number, then the title on up to two lines, and the issue's labels. */
 .issue-list {
   display: grid;
   gap: 8px;
@@ -660,7 +660,7 @@
   color: inherit;
 }
 
-/* Notes (NOTE-3, NOTE-4): an icon after the title, shown on row hover and always once the PR has a note. */
+/* Notes: an icon after the title, shown on row hover and always once the PR has a note. */
 .note-wrap {
   display: inline;
 }
@@ -740,7 +740,7 @@
   color: var(--bad);
 }
 
-/* Your reviews (TABLE-29): GitHub's icon after the Review code, the dot in its attention color. */
+/* Your reviews: GitHub's icon after the Review code, the dot in its attention color. */
 .review-wrap .mine {
   display: inline-flex;
   color: var(--accent);
@@ -750,7 +750,7 @@
   color: var(--warn);
 }
 
-/* The Review column as GitHub's Reviewers list (TABLE-30). */
+/* The Review column as GitHub's Reviewers list. */
 .reviewers {
   list-style: none;
   margin: 0;
@@ -838,7 +838,7 @@
   padding: 4px 0;
 }
 
-/* What a live load is doing (DATA-27): in the empty table, or in a corner over the rows. */
+/* What a live load is doing: in the empty table, or in a corner over the rows. */
 .load-status {
   display: inline-flex;
   align-items: flex-start;

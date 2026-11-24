@@ -7,12 +7,13 @@ import type { AuthorGroupId, AuthorsFilter } from './view.ts';
 import { SERVICE_ACCOUNT } from '../defaults.ts';
 
 export const AUTHOR_GROUPS: [AuthorGroupId, string][] = [
-  ['humans', 'Humans'], ['service', SERVICE_ACCOUNT], ['dependabot', 'Dependabot'], ['other-bots', 'Other bots'],
+  ['humans', 'Humans'], ['service', SERVICE_ACCOUNT], ['dependabot', 'Dependabot'], ['renovate', 'Renovate'], ['other-bots', 'Other bots'],
 ];
 
 export function authorGroup(author: AuthorEntry): AuthorGroupId {
   if (sameName(author.login, SERVICE_ACCOUNT)) return 'service';
   if (sameName(author.login, 'dependabot[bot]') || sameName(author.login, 'dependabot')) return 'dependabot';
+  if (sameName(author.login, 'renovate[bot]') || sameName(author.login, 'renovate')) return 'renovate';
   return author.bot ? 'other-bots' : 'humans';
 }
 
@@ -67,7 +68,7 @@ export function authorsSummary(mode: AuthorsFilter, selected: Set<string>): stri
   return selected.size + ' selected';
 }
 
-// The choice after one author is checked or unchecked. Chosen logins without open PRs stay chosen (FILTER-4), and a
+// The choice after one author is checked or unchecked. Chosen logins without open PRs stay chosen, and a
 // choice that equals a preset, with nothing else chosen, becomes that preset.
 export function toggleAuthor(login: string, selected: Set<string>, authors: AuthorEntry[], mode: AuthorsFilter = null): AuthorsFilter {
   const next = new Set(selected);

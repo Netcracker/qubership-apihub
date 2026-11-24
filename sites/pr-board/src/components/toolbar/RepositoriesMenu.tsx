@@ -2,8 +2,8 @@ import { groupColor, groupsSummary } from '../../board/groups.ts';
 import type { RepoGroup } from '../../board/groups.ts';
 import { MenuButton } from '../common/MenuButton.tsx';
 
-// The Repositories menu (FILTER-17): a checkbox per group from Settings, and Ungrouped. It shows only the rows of the
-// checked groups. A group's entry has the tint its repository names show (TABLE-31).
+// The Repositories menu: a checkbox per group from Settings, and Ungrouped. It shows only the rows of the
+// checked groups. A group's entry has the tint its repository names show.
 export function RepositoriesMenu({ groups, options, checked, counts, setChecked }: {
   groups: RepoGroup[];
   options: string[];

@@ -20,7 +20,7 @@ function useStorage(blocked = false) {
 
 afterEach(() => { delete (globalThis as { localStorage?: unknown }).localStorage; });
 
-test('NOTE-1: each PR has one Markdown document; clearing it removes it', () => {
+test('each PR has one Markdown document; clearing it removes it', () => {
   let notes = setNote({}, KEY, '## Promised\n- [ ] fix the tests', NOW);
   assert.deepEqual(notes[KEY], { text: '## Promised\n- [ ] fix the tests', updatedAt: '2026-10-28T12:00:00.000Z' });
   notes = setNote(notes, KEY, '  \n ', NOW);
@@ -28,7 +28,7 @@ test('NOTE-1: each PR has one Markdown document; clearing it removes it', () => 
   assert.equal(setNote({}, KEY, 'x'.repeat(MAX_NOTE_CHARS + 5), NOW)[KEY].text.length, MAX_NOTE_CHARS);
 });
 
-test('NOTE-2: notes from the per-day version become one document, newest day first', () => {
+test('notes from the per-day version become one document, newest day first', () => {
   const text = dayNotesToText([
     { date: '2026-10-27', asked: true, text: 'Fix the tests by noon' },
     { date: '2026-10-28', asked: false, text: 'Waiting for review' },
@@ -38,7 +38,7 @@ test('NOTE-2: notes from the per-day version become one document, newest day fir
   assert.equal(text, '**2026-10-28** Waiting for review\n\n**2026-10-27** ✓ Fix the tests by noon\n\n**2026-10-26** ✓');
 });
 
-test('NOTE-2: stored notes survive a reload, old ones move once, invalid entries are dropped, and blocked storage never throws', () => {
+test('stored notes survive a reload, old ones move once, invalid entries are dropped, and blocked storage never throws', () => {
   const data = useStorage();
   assert.deepEqual(loadNotes(), {});
   const notes = setNote({}, KEY, 'Fix the tests', NOW);
@@ -63,7 +63,7 @@ test('NOTE-2: stored notes survive a reload, old ones move once, invalid entries
   assert.doesNotThrow(() => saveNotes(notes));
 });
 
-test('NOTE-2: a note saved in another tab is read back before writing, and a failed save says so', () => {
+test('a note saved in another tab is read back before writing, and a failed save says so', () => {
   const data = useStorage();
   saveNotes(setNote({}, 'acme/widgets#7', 'from tab B', NOW));
   // Tab A loaded before tab B wrote; it builds its change on what is stored now, not on its own old copy.
@@ -77,7 +77,7 @@ test('NOTE-2: a note saved in another tab is read back before writing, and a fai
   assert.equal(saveNotes({}), false);
 });
 
-test('NOTE-2: changes storage did not take stay over what is stored, a deleted note included', () => {
+test('changes storage did not take stay over what is stored, a deleted note included', () => {
   const stored = { ...setNote({}, KEY, 'old text', NOW), ...setNote({}, 'acme/widgets#8', 'from another tab', NOW) };
   const unsaved = new Map([[KEY, null], ['acme/widgets#9', { text: 'new here', updatedAt: '2026-10-28T12:00:00.000Z' }]]);
   assert.deepEqual(withUnsaved(stored, unsaved), {

@@ -15,7 +15,7 @@ async function refresh(page: Page, scenario: string) {
 }
 
 test.describe('Refresh', () => {
-  test('DATA-6 SET-13: Refresh without a token asks for one, then loads live data', async ({ page }) => {
+  test('Refresh without a token asks for one, then loads live data', async ({ page }) => {
     await openBoard(page, { report: 'typical', query: ALL });
     await page.getByRole('button', { name: 'Refresh', exact: true }).click();
     const tokenField = page.getByRole('dialog', { name: 'Add a GitHub token' }).getByLabel('Token');
@@ -24,16 +24,16 @@ test.describe('Refresh', () => {
     await page.getByRole('button', { name: 'Save and load' }).click();
     await expect(page.locator('.source-button')).toHaveText('live, just now');
     await expect(page.locator('.source-button')).toHaveClass(/\blive\b/);
-    await expect(page.locator('.board > tbody > tr')).toHaveCount(80);
+    await expect(page.locator('.board > tbody > tr')).toHaveCount(81);
   });
 
-  test('DATA-6: a saved token refreshes at once and reads all pages', async ({ page }) => {
+  test('a saved token refreshes at once and reads all pages', async ({ page }) => {
     await refresh(page, 'paginated');
     await expect(page.locator('.source-button')).toHaveText('live, just now');
-    await expect(page.locator('.board > tbody > tr')).toHaveCount(80);
+    await expect(page.locator('.board > tbody > tr')).toHaveCount(81);
   });
 
-  test('DATA-7: Refresh is disabled while it runs', async ({ page }) => {
+  test('Refresh is disabled while it runs', async ({ page }) => {
     await refresh(page, 'slow');
     const button = page.getByRole('button', { name: 'Refreshing…' });
     await expect(button).toBeDisabled();
@@ -41,12 +41,12 @@ test.describe('Refresh', () => {
     await expect(page.getByRole('button', { name: 'Refresh', exact: true })).toBeEnabled();
   });
 
-  test('DATA-14: forbidden projects load with a warning', async ({ page }) => {
+  test('forbidden projects load with a warning', async ({ page }) => {
     await refresh(page, 'projects-error');
     await expect(page.locator('.banner.warn')).toContainText('Project membership is unavailable for this token');
   });
 
-  test('DATA-15: fewer PRs than totalCount give a warning', async ({ page }) => {
+  test('fewer PRs than totalCount give a warning', async ({ page }) => {
     await refresh(page, 'count-mismatch');
     await expect(page.locator('.banner.warn')).toContainText('GitHub reported 39 open pull requests but returned 36.');
   });
@@ -57,7 +57,7 @@ test.describe('Refresh', () => {
     ['repo-not-found', 'GitHub GraphQL error at repository'],
     ['network', 'Cannot reach api.github.com'],
   ]) {
-    test(`DATA-13 TABLE-3: ${scenario} fails with a readable message and keeps the data`, async ({ page }) => {
+    test(`${scenario} fails with a readable message and keeps the data`, async ({ page }) => {
       await refresh(page, scenario);
       await expect(page.locator('.banner.bad')).toContainText('Refresh failed. ' + message);
       await expect(page.locator('.source-button')).toHaveText('updated just now');
@@ -65,7 +65,7 @@ test.describe('Refresh', () => {
     });
   }
 
-  test('DATA-8: hidden CI and Last comment columns drop their parts of the query', async ({ page }) => {
+  test('hidden CI and Last comment columns drop their parts of the query', async ({ page }) => {
     await page.addInitScript(() => localStorage.setItem('apihub-pr-board.settings', JSON.stringify({ hiddenColumns: ['ci', 'comment'] })));
     const sent: Record<string, unknown>[] = [];
     page.on('request', (request) => {
@@ -77,7 +77,7 @@ test.describe('Refresh', () => {
     expect(sent.every((v) => v.withChecks === false && v.withComments === false)).toBe(true);
   });
 
-  test('DATA-6 DATA-4: live data from Refresh is not replaced by a snapshot that arrives later', async ({ page }) => {
+  test('live data from Refresh is not replaced by a snapshot that arrives later', async ({ page }) => {
     await withToken(page);
     await page.request.post('/__dev/state', { data: { report: 'slow', refresh: 'ok' } });
     await page.goto('/?' + ALL);
@@ -89,7 +89,7 @@ test.describe('Refresh', () => {
     await expect(page.locator('.source-button')).toHaveText('live, just now');
   });
 
-  test('DATA-6: rows stay while Refresh runs, and the table keeps its scroll position when the new data arrives', async ({ page }) => {
+  test('rows stay while Refresh runs, and the table keeps its scroll position when the new data arrives', async ({ page }) => {
     await refresh(page, 'slow');
     await expect(page.getByRole('button', { name: 'Refreshing…' })).toBeVisible();
     const wrap = page.locator('.table-wrap');
@@ -97,11 +97,11 @@ test.describe('Refresh', () => {
     await expect(page.locator('.board > tbody > tr')).toHaveCount(36);
     await expect(page.locator('.board .spinner')).toHaveCount(0);
     await expect(page.locator('.source-button')).toHaveText('live, just now', { timeout: 10_000 });
-    await expect(page.locator('.board > tbody > tr')).toHaveCount(80);
+    await expect(page.locator('.board > tbody > tr')).toHaveCount(81);
     expect(await wrap.evaluate((element) => element.scrollTop)).toBe(600);
   });
 
-  test('DATA-26 RULE-12 TABLE-29 FILTER-18: live data names the viewer, marks the PRs that wait for their review, and counts them', async ({ page }) => {
+  test('live data names the viewer, marks the PRs that wait for their review, and counts them', async ({ page }) => {
     await withToken(page);
     await openBoard(page, { report: 'mixed', refresh: 'ok', query: ALL });
     // The snapshot names no viewer, so the tile is not there yet.
@@ -128,7 +128,7 @@ test.describe('Refresh', () => {
     await expect(page.locator('.viewer-badge')).toHaveAttribute('href', 'https://github.com/boris-k');
   });
 
-  test('FILTER-18: a link with the Review requested filter shows every PR until the viewer is known, and keeps the filter', async ({ page }) => {
+  test('a link with the Review requested filter shows every PR until the viewer is known, and keeps the filter', async ({ page }) => {
     await openBoard(page, { report: 'typical', query: ALL + '&quick=mine' });
     await expect(page.locator('.board > tbody > tr')).toHaveCount(36);
     await expect(page).toHaveURL(/[?&]quick=mine(&|$)/);
@@ -139,7 +139,7 @@ test.describe('Refresh', () => {
 });
 
 test.describe('reviewers list', () => {
-  test('SET-20 TABLE-30: the Review column lists the reviewers, a long list folds, and the viewer whose review is due stands out', async ({ page }) => {
+  test('the Review column lists the reviewers, a long list folds, and the viewer whose review is due stands out', async ({ page }) => {
     await withToken(page);
     // A Review width dragged for the code layout does not carry over to the list.
     await page.addInitScript(() => {

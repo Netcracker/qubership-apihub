@@ -7,7 +7,7 @@ import { onEscape } from './escapeStack.ts';
 export function useDismiss(open: boolean, setOpen: Dispatch<SetStateAction<boolean>>) {
   const ref = useRef<HTMLDivElement>(null);
   // When it closes with focus inside, or with focus lost to the page, focus goes back to the button that opened it,
-  // the first button of the wrapper, so the keyboard keeps its place (QUAL-3).
+  // the first button of the wrapper, so the keyboard keeps its place.
   const wasOpen = useRef(false);
   useEffect(() => {
     if (wasOpen.current && !open && ref.current) {

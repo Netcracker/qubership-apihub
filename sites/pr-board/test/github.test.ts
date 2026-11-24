@@ -24,7 +24,7 @@ const baseNode: RawPullRequest = {
   author: { __typename: 'User', login: 'a', avatarUrl: 'x' },
 };
 
-test('RULE-2: requested changes win over approvals', () => {
+test('requested changes win over approvals', () => {
   const result = reviewState([
     { state: 'APPROVED', author: { login: 'a' } },
     { state: 'CHANGES_REQUESTED', author: { login: 'b' } },
@@ -32,11 +32,11 @@ test('RULE-2: requested changes win over approvals', () => {
   assert.equal(result, 'changes_requested');
 });
 
-test('RULE-2: a dismissed review is not an approval', () => {
+test('a dismissed review is not an approval', () => {
   assert.equal(reviewState([{ state: 'DISMISSED', author: { login: 'a' } }]), 'none');
 });
 
-test('DATA-10: recent comments mix issue comments and reviews, newest first, skipping empty bodies', () => {
+test('recent comments mix issue comments and reviews, newest first, skipping empty bodies', () => {
   const list = recentComments(
     [{ createdAt: '2026-10-02T00:00:00Z', body: 'old', author: null }, { createdAt: '2026-10-04T00:00:00Z', body: '  ', author: null }],
     [{ submittedAt: '2026-10-03T00:00:00Z', body: 'review', url: 'r-url', author: { __typename: 'User', login: 'r', avatarUrl: null } }],
@@ -46,7 +46,7 @@ test('DATA-10: recent comments mix issue comments and reviews, newest first, ski
   assert.equal(list[0].url, 'r-url');
 });
 
-test('DATA-10: comments that hold only HTML comment markers are skipped', () => {
+test('comments that hold only HTML comment markers are skipped', () => {
   const list = recentComments(
     [{ createdAt: '2026-10-02T00:00:00Z', body: 'real', author: null }, { createdAt: '2026-10-04T00:00:00Z', body: '<!-- sonar:marker -->\n', author: null }],
     [],
@@ -54,19 +54,19 @@ test('DATA-10: comments that hold only HTML comment markers are skipped', () => 
   assert.deepEqual(list.map((c) => c.body), ['real']);
 });
 
-test('DATA-10: long comment bodies are cut and marked', () => {
+test('long comment bodies are cut and marked', () => {
   const [comment] = recentComments([{ createdAt: '2026-10-02T00:00:00Z', body: 'x'.repeat(COMMENT_BODY_LIMIT + 10), author: null }], []);
   assert.equal(comment.truncated, true);
   assert.equal(comment.body.length, COMMENT_BODY_LIMIT + 1);
 });
 
-test('DATA-11: label colors are validated and lowercased', () => {
+test('label colors are validated and lowercased', () => {
   assert.equal(normalizeLabel({ name: 'a', color: 'D4C5F9' }).color, 'd4c5f9');
   assert.equal(normalizeLabel({ name: 'a', color: 'red' }).color, null);
   assert.equal(normalizeLabel({ name: 'a', color: null }).description, '');
 });
 
-test('DATA-12: missing connections and null entries normalize to safe defaults', () => {
+test('missing connections and null entries normalize to safe defaults', () => {
   const pr = normalizePullRequest({ ...baseNode, author: null, mergeable: null, assignees: { nodes: [null] }, commits: { nodes: [null] } });
   assert.equal(pr.author, null);
   assert.equal(pr.ci, 'none');
@@ -79,14 +79,14 @@ test('DATA-12: missing connections and null entries normalize to safe defaults',
   assert.deepEqual(pr.requestedReviewers, []);
 });
 
-test('RULE-1: check rollup states map to CI states', () => {
+test('check rollup states map to CI states', () => {
   const ci = (state: string) => normalizePullRequest({ ...baseNode, commits: { nodes: [{ commit: { statusCheckRollup: { state } } }] } }).ci;
   assert.equal(ci('SUCCESS'), 'passing');
   assert.equal(ci('ERROR'), 'failing');
   assert.equal(ci('EXPECTED'), 'running');
 });
 
-test('RULE-10: bots are flagged from the GraphQL type name', () => {
+test('bots are flagged from the GraphQL type name', () => {
   const pr = normalizePullRequest({ ...baseNode, author: { __typename: 'Bot', login: 'dependabot', avatarUrl: null } });
   assert.equal(pr.author?.bot, true);
 });
@@ -104,7 +104,7 @@ function mockFetch(scenarioId: string) {
   return { fetchImpl, calls: () => calls };
 }
 
-test('DATA-9: pagination collects every page', async () => {
+test('pagination collects every page', async () => {
   const single = await fetchOpenPullRequests({ token: 't', repositories: [repository], fetchImpl: mockFetch('ok').fetchImpl });
   const paged = mockFetch('paginated');
   const report = await fetchOpenPullRequests({ token: 't', repositories: [repository], fetchImpl: paged.fetchImpl });
@@ -113,18 +113,18 @@ test('DATA-9: pagination collects every page', async () => {
   assert.deepEqual(report.warnings, []);
 });
 
-test('DATA-14: a forbidden projects field becomes a warning and unknown projects', async () => {
+test('a forbidden projects field becomes a warning and unknown projects', async () => {
   const report = await fetchOpenPullRequests({ token: 't', repositories: [repository], fetchImpl: mockFetch('projects-error').fetchImpl });
   assert.equal(report.warnings.length, 1);
   assert.ok(report.prs.every((pr) => pr.projects === null));
 });
 
-test('DATA-15: a short page against totalCount is reported', async () => {
+test('a short page against totalCount is reported', async () => {
   const report = await fetchOpenPullRequests({ token: 't', repositories: [repository], fetchImpl: mockFetch('count-mismatch').fetchImpl });
   assert.match(report.warnings[0], /reported \d+ open pull requests but returned \d+/);
 });
 
-test('DATA-13: HTTP and GraphQL failures throw readable errors', async () => {
+test('HTTP and GraphQL failures throw readable errors', async () => {
   await assert.rejects(fetchOpenPullRequests({ token: 't', repositories: [repository], fetchImpl: mockFetch('unauthorized').fetchImpl }), { status: 401 });
   await assert.rejects(fetchOpenPullRequests({ token: 't', repositories: [repository], fetchImpl: mockFetch('server-error').fetchImpl }), /HTTP 502/);
   await assert.rejects(fetchOpenPullRequests({ token: 't', repositories: [repository], fetchImpl: mockFetch('repo-not-found').fetchImpl }), /at repository/);
@@ -132,7 +132,7 @@ test('DATA-13: HTTP and GraphQL failures throw readable errors', async () => {
   await assert.rejects(fetchOpenPullRequests({ token: '', repositories: [repository] }), /token is required/);
 });
 
-test('RULE-4: failed checks keep real failures and skip cancelled and passing runs', () => {
+test('failed checks keep real failures and skip cancelled and passing runs', () => {
   const result = failedChecks({
     state: 'FAILURE',
     contexts: {
@@ -153,14 +153,14 @@ test('RULE-4: failed checks keep real failures and skip cancelled and passing ru
   assert.equal(failedChecks({ state: 'FAILURE' }), null);
 });
 
-test('DATA-9: checks are attached only to failing PRs', () => {
+test('checks are attached only to failing PRs', () => {
   const contexts = { totalCount: 0, pageInfo: { hasNextPage: false }, nodes: [] };
   const withRollup = (state: string) => normalizePullRequest({ ...baseNode, commits: { nodes: [{ commit: { statusCheckRollup: { state, contexts } } }] } });
   assert.deepEqual(withRollup('FAILURE').checks, { failed: [], total: 0, complete: true });
   assert.equal(withRollup('SUCCESS').checks, null);
 });
 
-test('DATA-8: hidden columns drop their parts of the query', async () => {
+test('hidden columns drop their parts of the query', async () => {
   const sent: Record<string, unknown>[] = [];
   const fetchImpl = async (_url: string, init: RequestInit) => {
     sent.push(JSON.parse(String(init.body)).variables);
@@ -183,7 +183,7 @@ function restFetch(pages: Record<string, { body: unknown; status?: number; heade
   return { fetchImpl, requested };
 }
 
-test('PANEL-10: all comments: issue comments and reviews merge newest first, across pages, without cutting', async () => {
+test('all comments: issue comments and reviews merge newest first, across pages, without cutting', async () => {
   const comments = restUrl + '/repos/acme/widgets/issues/7/comments';
   const reviews = restUrl + '/repos/acme/widgets/pulls/7/reviews';
   const long = 'x'.repeat(COMMENT_BODY_LIMIT + 10);
@@ -205,7 +205,7 @@ test('PANEL-10: all comments: issue comments and reviews merge newest first, acr
   assert.ok(requested.every((r) => r.auth === undefined));
 });
 
-test('PANEL-11: all comments: the token is sent when there is one, and a used-up anonymous limit says to add a token', async () => {
+test('all comments: the token is sent when there is one, and a used-up anonymous limit says to add a token', async () => {
   const limited = { body: { message: 'API rate limit exceeded' }, status: 403, headers: { 'x-ratelimit-remaining': '0' } };
   const comments = restUrl + '/repos/acme/widgets/issues/7/comments?per_page=100';
   const reviews = restUrl + '/repos/acme/widgets/pulls/7/reviews?per_page=100';
@@ -216,7 +216,7 @@ test('PANEL-11: all comments: the token is sent when there is one, and a used-up
   assert.ok(withToken.requested.every((r) => r.auth === 'Bearer t'));
 });
 
-test('RULE-3: mergeability maps to No conflicts, Conflicts, or Checking', () => {
+test('mergeability maps to No conflicts, Conflicts, or Checking', () => {
   const merge = (mergeable: string | null) => normalizePullRequest({ ...baseNode, mergeable }).mergeable;
   assert.equal(merge('MERGEABLE'), 'clean');
   assert.equal(merge('CONFLICTING'), 'conflicts');
@@ -224,12 +224,12 @@ test('RULE-3: mergeability maps to No conflicts, Conflicts, or Checking', () => 
   assert.equal(merge(null), 'unknown');
 });
 
-test('DATA-13: a GraphQL answer that is not JSON fails with a readable message', async () => {
+test('a GraphQL answer that is not JSON fails with a readable message', async () => {
   const fetchImpl = async () => new Response('<html>Gateway</html>', { status: 200 });
   await assert.rejects(fetchOpenPullRequests({ token: 't', repositories: [repository], fetchImpl }), /response that is not JSON/);
 });
 
-test('PANEL-11: the comments panel reports a network failure and other HTTP errors', async () => {
+test('the comments panel reports a network failure and other HTTP errors', async () => {
   const offline = async () => { throw new TypeError('Failed to fetch'); };
   await assert.rejects(fetchAllComments({ number: 7, repository, fetchImpl: offline, restUrl }), /Cannot reach api.github.com: Failed to fetch/);
   const failing = async () => new Response('{}', { status: 500 });
@@ -238,7 +238,7 @@ test('PANEL-11: the comments panel reports a network failure and other HTTP erro
   await assert.rejects(fetchAllComments({ number: 7, repository, fetchImpl: rejected, restUrl }), /rejected the token/);
 });
 
-test('DATA-19: the client names the repository on the report and on every PR', async () => {
+test('the client names the repository on the report and on every PR', async () => {
   const report = await fetchOpenPullRequests({ token: 't', repositories: [repository], fetchImpl: mockFetch('ok').fetchImpl });
   assert.deepEqual(report.repos, ['acme/widgets']);
   assert.ok(report.prs.length > 0);
@@ -246,7 +246,7 @@ test('DATA-19: the client names the repository on the report and on every PR', a
   assert.equal(normalizePullRequest(baseNode, { repo: 'acme/gadgets' }).repo, 'acme/gadgets');
 });
 
-test('DATA-18: every repository is read, and the PRs come newest first across them', async () => {
+test('every repository is read, and the PRs come newest first across them', async () => {
   const report = await fetchOpenPullRequests({ token: 't', repositories: [repository, gadgets], fetchImpl: mockFetch('ok').fetchImpl });
   assert.deepEqual(report.repos, ['acme/widgets', 'acme/gadgets']);
   assert.equal(new Set(report.prs.map((pr) => pr.repo)).size, 2);
@@ -255,7 +255,7 @@ test('DATA-18: every repository is read, and the PRs come newest first across th
   assert.deepEqual(report.warnings, []);
 });
 
-test('DATA-18: a repository that cannot be read is a warning, and the others load', async () => {
+test('a repository that cannot be read is a warning, and the others load', async () => {
   const report = await fetchOpenPullRequests({ token: 't', repositories: [missing, repository], fetchImpl: mockFetch('ok').fetchImpl });
   assert.deepEqual(report.repos, ['acme/widgets']);
   assert.ok(report.prs.length > 0);
@@ -263,7 +263,7 @@ test('DATA-18: a repository that cannot be read is a warning, and the others loa
   await assert.rejects(fetchOpenPullRequests({ token: 't', repositories: [missing], fetchImpl: mockFetch('ok').fetchImpl }), /at repository/);
 });
 
-test('DATA-18: a repository the organization blocks is a warning with the reason GitHub gives, and the others load', async () => {
+test('a repository the organization blocks is a warning with the reason GitHub gives, and the others load', async () => {
   const blocked = { owner: 'acme', name: 'private' };
   const report = await fetchOpenPullRequests({ token: 't', repositories: [repository, blocked], fetchImpl: mockFetch('ok').fetchImpl });
   assert.deepEqual(report.repos, ['acme/widgets']);
@@ -273,12 +273,12 @@ test('DATA-18: a repository the organization blocks is a warning with the reason
   assert.ok(upper.prs.length > 0, 'names compare without case, as on GitHub');
 });
 
-test('DATA-15 DATA-18: with several repositories, a short page names its repository', async () => {
+test('with several repositories, a short page names its repository', async () => {
   const report = await fetchOpenPullRequests({ token: 't', repositories: [repository, gadgets], fetchImpl: mockFetch('count-mismatch').fetchImpl });
   assert.match(report.warnings[0], /^GitHub reported \d+ open pull requests in acme\/widgets but returned \d+\.$/);
 });
 
-test('SEC-1 PANEL-11: the token follows next pages only within the API, and a body that is not a list fails readably', async () => {
+test('the token follows next pages only within the API, and a body that is not a list fails readably', async () => {
   const comments = restUrl + '/repos/acme/widgets/issues/7/comments?per_page=100';
   const reviews = restUrl + '/repos/acme/widgets/pulls/7/reviews?per_page=100';
   const elsewhere = restFetch({
@@ -297,7 +297,7 @@ test('SEC-1 PANEL-11: the token follows next pages only within the API, and a bo
   await assert.rejects(fetchAllComments({ number: 7, repository, fetchImpl: notList.fetchImpl, restUrl }), /not a list/);
 });
 
-test('DATA-9 DATA-13 DATA-27: a page GitHub cannot answer in time is asked again with fewer PRs, down to five', async () => {
+test('a page GitHub cannot answer in time is asked again with fewer PRs, down to five', async () => {
   const sizes: number[] = [];
   const scenario = REFRESH_SCENARIOS.find((s) => s.id === 'ok')!;
   // GitHub times out on pages above 7 PRs: a 504 without CORS headers, which the browser reports as a failed fetch.
@@ -313,7 +313,7 @@ test('DATA-9 DATA-13 DATA-27: a page GitHub cannot answer in time is asked again
   };
   const notes: string[] = [];
   const report = await fetchOpenPullRequests({ token: 't', repositories: [repository], fetchImpl, onProgress: (e) => { if (e.note) notes.push(e.note); } });
-  // DATA-27: the loading status says why the load slows down.
+  // the loading status says why the load slows down.
   // A failed fetch may be a network failure too, so it says less than a 504 does.
   assert.deepEqual(notes, ['GitHub did not answer; asking for 10 pull requests a page', 'GitHub timed out; asking for 5 pull requests a page']);
   const full = await fetchOpenPullRequests({ token: 't', repositories: [repository], fetchImpl: mockFetch('ok').fetchImpl });
@@ -324,7 +324,7 @@ test('DATA-9 DATA-13 DATA-27: a page GitHub cannot answer in time is asked again
   await assert.rejects(fetchOpenPullRequests({ token: 't', repositories: [repository], fetchImpl: never }), /Cannot reach api\.github\.com/);
 });
 
-test('DATA-9 DATA-11: a linked issue keeps its type and labels; an unknown type color and a missing type are handled', () => {
+test('a linked issue keeps its type and labels; an unknown type color and a missing type are handled', () => {
   const pr = normalizePullRequest({
     ...baseNode,
     closingIssuesReferences: { nodes: [
@@ -338,7 +338,7 @@ test('DATA-9 DATA-11: a linked issue keeps its type and labels; an unknown type 
   assert.deepEqual(pr.issues[2].labels, []);
 });
 
-test('DATA-25: the project fields come from the first project that sets each one, and broken values are dropped', () => {
+test('the project fields come from the first project that sets each one, and broken values are dropped', () => {
   const pr = normalizePullRequest({
     ...baseNode,
     closingIssuesReferences: { nodes: [
@@ -358,7 +358,7 @@ test('DATA-25: the project fields come from the first project that sets each one
   ]);
 });
 
-test('DATA-25 DATA-14: project fields the token cannot read are a warning, the page is asked again without them, and issues stay', async () => {
+test('project fields the token cannot read are a warning, the page is asked again without them, and issues stay', async () => {
   const scenario = REFRESH_SCENARIOS.find((s) => s.id === 'ok')!;
   const asked: boolean[] = [];
   const fetchImpl = async (_url: string, init: RequestInit) => {
@@ -384,7 +384,7 @@ test('DATA-25 DATA-14: project fields the token cannot read are a warning, the p
   assert.deepEqual(report.warnings, ['Project fields (Priority, Estimate, Sprint) are unavailable for this token: Resource not accessible by integration']);
 });
 
-test('DATA-18: repositories are read four at a time, and the report keeps their order', async () => {
+test('repositories are read four at a time, and the report keeps their order', async () => {
   const scenario = REFRESH_SCENARIOS.find((s) => s.id === 'ok')!;
   let inFlight = 0;
   let most = 0;
@@ -406,7 +406,7 @@ test('DATA-18: repositories are read four at a time, and the report keeps their 
   assert.deepEqual(report.warnings.map((w) => w.match(/missing-\d/)?.[0]), missing.map((m) => m.name));
 });
 
-test('DATA-18 DATA-13: when one repository fails, the other reads stop instead of going through the whole list', async () => {
+test('when one repository fails, the other reads stop instead of going through the whole list', async () => {
   let fetches = 0;
   const fetchImpl = async (_url: string, init: RequestInit) => {
     fetches += 1;
@@ -421,12 +421,12 @@ test('DATA-18 DATA-13: when one repository fails, the other reads stop instead o
   assert.ok(fetches <= 8, 'only the reads already started finish; got ' + fetches);
 });
 
-test('DATA-26: a live load names the viewer, the token owner, with their avatar', async () => {
+test('a live load names the viewer, the token owner, with their avatar', async () => {
   const report = await fetchOpenPullRequests({ token: 't', repositories: [repository, gadgets], fetchImpl: mockFetch('ok').fetchImpl });
   assert.deepEqual(report.viewer, { login: 'boris-k', avatarUrl: null, bot: false });
 });
 
-test('DATA-27: a live load reports each repository page by page, ending in done', async () => {
+test('a live load reports each repository page by page, ending in done', async () => {
   const events: { repo: string; status: string; read: number; total: number | null }[] = [];
   const report = await fetchOpenPullRequests({
     token: 't', repositories: [repository, gadgets], fetchImpl: mockFetch('ok').fetchImpl,
@@ -442,7 +442,7 @@ test('DATA-27: a live load reports each repository page by page, ending in done'
   }
 });
 
-test('DATA-26: a load for a snapshot does not ask GitHub for the viewer', async () => {
+test('a load for a snapshot does not ask GitHub for the viewer', async () => {
   const asked: unknown[] = [];
   const { fetchImpl } = mockFetch('ok');
   const spy: typeof fetchImpl = (url, init) => { asked.push(JSON.parse(String(init!.body)).variables.withViewer); return fetchImpl(url, init); };
@@ -451,7 +451,7 @@ test('DATA-26: a load for a snapshot does not ask GitHub for the viewer', async 
   assert.ok(asked.length > 0 && asked.every((value) => value === false));
 });
 
-test('DATA-18 DATA-13: a repository being read stops at its next page once another one fails', async () => {
+test('a repository being read stops at its next page once another one fails', async () => {
   const scenario = REFRESH_SCENARIOS.find((s) => s.id === 'paginated')!;
   let inFlight = 0;
   const fetchImpl = async (_url: string, init: RequestInit) => {
@@ -490,7 +490,7 @@ const page = (prs: RawPullRequest[], after: string | null, extra: Record<string,
   data: { repository: { ...extra, pullRequests: { totalCount: 2, pageInfo: { hasNextPage: !!after, endCursor: after }, nodes: prs } } },
 });
 
-test('DATA-25: when project fields are refused on a later page, the repository is read again from the start without them', async () => {
+test('when project fields are refused on a later page, the repository is read again from the start without them', async () => {
   const { fetchImpl, seen } = answering((v) => {
     if (!v.after && v.withProjectFields) return page([{ ...baseNode, number: 2 }], 'p2');
     if (v.after && v.withProjectFields) {
@@ -504,7 +504,7 @@ test('DATA-25: when project fields are refused on a later page, the repository i
   assert.ok(report.warnings.some((w) => w.startsWith('Project fields')));
 });
 
-test('DATA-20: PRs take GitHub\'s spelling of the repository name, and the viewer is asked for on the first page only', async () => {
+test('PRs take GitHub\'s spelling of the repository name, and the viewer is asked for on the first page only', async () => {
   const { fetchImpl, seen } = answering((v) => (v.after ? page([baseNode], null, { nameWithOwner: 'Acme/Widgets' })
     : page([{ ...baseNode, number: 2 }], 'p2', { nameWithOwner: 'Acme/Widgets' })));
   const report = await fetchOpenPullRequests({ token: 't', repositories: [repository], fetchImpl });
@@ -516,7 +516,7 @@ test('DATA-20: PRs take GitHub\'s spelling of the repository name, and the viewe
   assert.deepEqual((await fetchOpenPullRequests({ token: 't', repositories: [repository], fetchImpl: renamed.fetchImpl })).repos, ['acme/widgets']);
 });
 
-test('DATA-18: a repository answered as null without errors is a warning among several, and no repositories is an error', async () => {
+test('a repository answered as null without errors is a warning among several, and no repositories is an error', async () => {
   const { fetchImpl } = answering((v) => (v.repo === 'widgets' ? page([baseNode], null) : { data: { repository: null } }));
   const report = await fetchOpenPullRequests({ token: 't', repositories: [repository, gadgets], fetchImpl });
   assert.deepEqual(report.repos, ['acme/widgets']);
@@ -525,7 +525,7 @@ test('DATA-18: a repository answered as null without errors is a warning among s
   await assert.rejects(fetchOpenPullRequests({ token: 't', repositories: [], fetchImpl }), /No repositories to read/);
 });
 
-test('DATA-7: an aborted load stops reading and says it was replaced', async () => {
+test('an aborted load stops reading and says it was replaced', async () => {
   const controller = new AbortController();
   let calls = 0;
   const fetchImpl = async (_url: string, init: RequestInit) => {
@@ -538,7 +538,7 @@ test('DATA-7: an aborted load stops reading and says it was replaced', async () 
   assert.equal(calls, 1);
 });
 
-test('DATA-9: a mannequin among requested reviewers is skipped, since it has no login', () => {
+test('a mannequin among requested reviewers is skipped, since it has no login', () => {
   const pr = normalizePullRequest({ ...baseNode, reviewRequests: { nodes: [
     { requestedReviewer: { __typename: 'Mannequin' } },
     { requestedReviewer: { __typename: 'User', login: 'boris-k' } },
@@ -546,7 +546,7 @@ test('DATA-9: a mannequin among requested reviewers is skipped, since it has no 
   assert.deepEqual(pr.requestedReviewers.map((r) => r.login), ['boris-k']);
 });
 
-test('SEC-3: a failed check links only to an https address', () => {
+test('a failed check links only to an https address', () => {
   const contexts = { totalCount: 2, nodes: [
     { __typename: 'StatusContext', context: 'gate', state: 'FAILURE', targetUrl: 'javascript:alert(1)' },
     { __typename: 'CheckRun', name: 'build', conclusion: 'FAILURE', detailsUrl: 'https://ci.example/1' },
@@ -555,7 +555,7 @@ test('SEC-3: a failed check links only to an https address', () => {
   assert.deepEqual(checks.failed.map((c) => c.url), [null, 'https://ci.example/1']);
 });
 
-test('DATA-10: a cut body never splits a two-unit character or leaves an HTML comment open', () => {
+test('a cut body never splits a two-unit character or leaves an HTML comment open', () => {
   const emoji = 'x'.repeat(COMMENT_BODY_LIMIT - 1) + '😀tail';
   const [cut] = recentComments([{ createdAt: '2026-10-01T00:00:00Z', body: emoji }], []);
   assert.ok(!/[\ud800-\udbff]…$/.test(cut.body), 'no lone high surrogate before the ellipsis');
@@ -565,7 +565,7 @@ test('DATA-10: a cut body never splits a two-unit character or leaves an HTML co
   assert.equal(open.truncated, true);
 });
 
-test('DATA-25: the mock that refuses project fields on a later page leads to a complete read without them', async () => {
+test('the mock that refuses project fields on a later page leads to a complete read without them', async () => {
   const { fetchImpl } = mockFetch('fields-error');
   const report = await fetchOpenPullRequests({ token: 't', repositories: [repository], fetchImpl });
   const full = await fetchOpenPullRequests({ token: 't', repositories: [repository], fetchImpl: mockFetch('ok').fetchImpl });

@@ -18,7 +18,7 @@ function segment(page: Page, group: string, label: string) {
 }
 
 test.describe('quick filters', () => {
-  test('FILTER-1 FILTER-2: a tile shows its count and filters to exactly those PRs', async ({ page }) => {
+  test('a tile shows its count and filters to exactly those PRs', async ({ page }) => {
     await openBoard(page, { report: 'typical', query: ALL });
     expect(await tileCount(page, 'Open PRs')).toBe(36);
     const failing = await tileCount(page, 'CI failing');
@@ -28,7 +28,7 @@ test.describe('quick filters', () => {
     expect(query(page).quick).toBe('ci');
   });
 
-  test('FILTER-2: active tiles combine with AND, and Open PRs clears them', async ({ page }) => {
+  test('active tiles combine with AND, and Open PRs clears them', async ({ page }) => {
     await openBoard(page, { report: 'typical', query: ALL });
     await tile(page, 'CI failing').click();
     await tile(page, 'Without approval').click();
@@ -40,14 +40,14 @@ test.describe('quick filters', () => {
     expect(query(page).quick).toBeUndefined();
   });
 
-  test('FILTER-2: a tile without matching PRs is dimmed', async ({ page }) => {
+  test('a tile without matching PRs is dimmed', async ({ page }) => {
     await openBoard(page, { report: 'empty' });
     await expect(tile(page, 'CI failing')).toHaveClass(/\bzero\b/);
   });
 });
 
 test.describe('toolbar', () => {
-  test('FILTER-3 FILTER-13 DATA-26: Me selects the token owner and becomes unavailable when the token is forgotten', async ({ page }) => {
+  test('Me selects the token owner and becomes unavailable when the token is forgotten', async ({ page }) => {
     await page.addInitScript(() => localStorage.setItem('apihub-pr-board.token', 'mock-token'));
     await openBoard(page, { report: 'typical', query: ALL });
     await authorsButton(page).click();
@@ -75,7 +75,7 @@ test.describe('toolbar', () => {
     expect(query(page).authors).toBe('me');
   });
 
-  test('FILTER-3 FILTER-13 DATA-26: a shared Me link resolves to the recipient rather than the sender', async ({ page }) => {
+  test('a shared Me link resolves to the recipient rather than the sender', async ({ page }) => {
     await page.addInitScript(() => localStorage.setItem('apihub-pr-board.token', 'mock-token'));
     await page.route('**/__dev/graphql', async (route) => {
       const response = await route.fetch();
@@ -96,7 +96,7 @@ test.describe('toolbar', () => {
     await expect(authorsButton(page)).toContainText('Me');
   });
 
-  test('FILTER-3: People is the default and hides bots; Bots, Everyone, and Clear switch the choice', async ({ page }) => {
+  test('People is the default and hides bots; Bots, Everyone, and Clear switch the choice', async ({ page }) => {
     await openBoard(page, { report: 'typical', query: 'draft=all' });
     await expect(authorsButton(page)).toContainText('People');
     await expect(rows(page).locator('.chip.bot')).toHaveCount(0);
@@ -111,23 +111,23 @@ test.describe('toolbar', () => {
     await expect(page.getByText('No pull requests match this view')).toBeVisible();
   });
 
-  test('FILTER-3 FILTER-4: one author by hand, and every person by hand becomes People', async ({ page }) => {
+  test('one author by hand, and every person by hand becomes People', async ({ page }) => {
     await openBoard(page, { report: 'typical', query: 'draft=all' });
     await authorsButton(page).click();
     await page.getByRole('group', { name: 'Authors' }).getByRole('button', { name: 'Clear' }).click();
     await page.getByRole('group', { name: 'Authors' }).locator('label').filter({ hasText: 'anna-dev' }).click();
     await expect(authorsButton(page)).toContainText('anna-dev');
     expect(new Set(await rows(page).locator('td:nth-child(4) .login').allTextContents())).toEqual(new Set(['anna-dev']));
-    // The typical board has one bot, dependabot; check every other author.
+    // Check every human author.
     for (const label of await page.getByRole('group', { name: 'Authors' }).locator('label.author-option').all()) {
-      const bot = (await label.textContent())!.includes('dependabot');
+      const bot = /dependabot|renovate/.test((await label.textContent())!);
       if (!bot && !(await label.locator('input').isChecked())) await label.click();
     }
     await expect(authorsButton(page)).toContainText('People');
     expect(query(page).authors).toBeUndefined();
   });
 
-  test('FILTER-4: the author list follows a Refresh, and a chosen author without PRs stays in the URL', async ({ page }) => {
+  test('the author list follows a Refresh, and a chosen author without PRs stays in the URL', async ({ page }) => {
     await page.addInitScript(() => localStorage.setItem('apihub-pr-board.token', 'mock-token'));
     await openBoard(page, { report: 'typical', refresh: 'ok', query: 'draft=all&authors=anna-dev,new-contributor-42' });
     await expect(authorsButton(page)).toContainText('anna-dev');
@@ -137,7 +137,7 @@ test.describe('toolbar', () => {
     expect(query(page).authors).toBe('anna-dev,new-contributor-42');
   });
 
-  test('FILTER-5: Ready for review is the default; Drafts and All change it', async ({ page }) => {
+  test('Ready for review is the default; Drafts and All change it', async ({ page }) => {
     await openBoard(page, { report: 'typical', query: 'authors=all' });
     await expect(rows(page).locator('.chip.draft')).toHaveCount(0);
     await segment(page, 'Draft status', 'Drafts').click();
@@ -148,7 +148,7 @@ test.describe('toolbar', () => {
     expect(query(page).draft).toBe('all');
   });
 
-  test('FILTER-6 RULE-11: a PR in both areas shows under BE and FE, and not under Other', async ({ page }) => {
+  test('a PR in both areas shows under BE and FE, and not under Other', async ({ page }) => {
     await openBoard(page, { report: 'corner', query: ALL + '&q=' + encodeURIComponent('missing package version') });
     await expect(rows(page)).toHaveCount(1);
     for (const [area, count] of [['BE', 1], ['UI', 1], ['Other', 0]] as const) {
@@ -157,7 +157,7 @@ test.describe('toolbar', () => {
     }
   });
 
-  test('FILTER-7: Reset view shows only for a changed view and restores the default', async ({ page }) => {
+  test('Reset view shows only for a changed view and restores the default', async ({ page }) => {
     await openBoard(page, { report: 'typical' });
     const reset = page.locator('.toolbar').getByRole('button', { name: 'Reset view' });
     await expect(reset).toHaveCount(0);
@@ -167,7 +167,7 @@ test.describe('toolbar', () => {
     expect(page.url()).not.toContain('?');
   });
 
-  test('FILTER-7: Copy link copies the address and confirms', async ({ page, context }) => {
+  test('Copy link copies the address and confirms', async ({ page, context }) => {
     await context.grantPermissions(['clipboard-read', 'clipboard-write']);
     await openBoard(page, { report: 'typical', query: 'area=fe' });
     await page.getByRole('button', { name: 'Copy link to this view' }).click();
@@ -175,7 +175,7 @@ test.describe('toolbar', () => {
     expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(page.url());
   });
 
-  test('FILTER-7: a blocked clipboard asks to copy the address bar', async ({ page }) => {
+  test('a blocked clipboard asks to copy the address bar', async ({ page }) => {
     await page.addInitScript(() => {
       Object.defineProperty(navigator, 'clipboard', { value: { writeText: () => Promise.reject(new Error('blocked')) } });
     });
@@ -184,7 +184,7 @@ test.describe('toolbar', () => {
     await expect(page.getByRole('button', { name: 'Copy the address bar instead' })).toBeVisible();
   });
 
-  test('FILTER-16: the Priority menu lists the priorities of linked issues and keeps the choice in the address', async ({ page }) => {
+  test('the Priority menu lists the priorities of linked issues and keeps the choice in the address', async ({ page }) => {
     await openBoard(page, { report: 'typical', query: ALL });
     await page.getByRole('button', { name: /^Priority:/ }).click();
     const menu = page.getByRole('group', { name: 'Priority' });

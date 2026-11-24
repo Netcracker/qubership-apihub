@@ -113,6 +113,7 @@ jobs:
             echo "- site: \`$site_ref\` at \`$site_sha\` ($why)"
             echo "- landing: \`$landing_ref\` at \`$landing_sha\`${LANDING_REF:+ (the repository variable LANDING_REF)}"
             echo "- docs site at the ref: $docs"
+            echo "- PR board at the ref: $pr_board"
           } | tee -a "$GITHUB_STEP_SUMMARY"
 
       # A commit's build does not change, so the frequent Storybook dispatches reuse it. The docs
@@ -133,6 +134,7 @@ jobs:
           path: ${{ runner.temp }}/pages-dist/docs
           key: pages-docs-v2-${{ steps.refs.outputs.site_ref }}-${{ steps.refs.outputs.site_sha }}
 
+      # The key has no ref: the build reads only PR_BOARD_* variables, which this workflow does not set.
       - name: restore the PR board build
         id: pr-board-cache
         if: steps.refs.outputs.pr_board == 'true'

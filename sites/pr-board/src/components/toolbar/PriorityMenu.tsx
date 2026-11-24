@@ -1,7 +1,7 @@
 import { NO_PRIORITY } from '../../board/view.ts';
 import { MenuButton } from '../common/MenuButton.tsx';
 
-// The Priority filter (FILTER-16): the priorities of the linked issues, and No priority.
+// The Priority filter: the priorities of the linked issues, and No priority.
 export function PriorityMenu({ priorities, noneCount, selected, setPriority }: {
   priorities: { name: string; count: number }[];
   noneCount: number;

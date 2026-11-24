@@ -5,8 +5,8 @@ import { useDismiss } from './useDismiss.ts';
 const POPOVER_GAP_PX = 6;
 export const POPOVER_EDGE_PX = 16;
 
-// A panel along the right edge of the window, full height, this wide or the window's width when narrower (PANEL-9,
-// NOTE-4). It ignores the trigger's position.
+// A panel along the right edge of the window, full height, this wide or the window's width when narrower.
+// It ignores the trigger's position.
 export function sidePanelStyle(widthPx: number): CSSProperties {
   return {
     top: POPOVER_EDGE_PX, right: POPOVER_EDGE_PX, bottom: POPOVER_EDGE_PX,
@@ -45,7 +45,7 @@ export function usePopover(width: number, enabled = true) {
       setOpen(false);
       return;
     }
-    // It stays inside the window (PANEL-1): never wider than the window, and never taller than the room on its side.
+    // It stays inside the window: never wider than the window, and never taller than the room on its side.
     const rect = event.currentTarget.getBoundingClientRect();
     const fitWidth = Math.min(width, window.innerWidth - 2 * POPOVER_EDGE_PX);
     const horizontal = rect.left + fitWidth > window.innerWidth - POPOVER_EDGE_PX

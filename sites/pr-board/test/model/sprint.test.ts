@@ -7,7 +7,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { isCurrentSprint } from '../../src/model/derive.ts';
 
-test('TABLE-28: a sprint is current from its start date to its last day, in the local calendar of the viewer', () => {
+test('a sprint is current from its start date to its last day, in the local calendar of the viewer', () => {
   const sprint = { title: 'S', startDate: '2026-10-28', duration: 14 };
   // 12:00 UTC on October 27 is already October 28 in Auckland (UTC+13).
   assert.equal(new Date(Date.parse('2026-10-27T12:00:00Z')).getDate(), 28, 'the zone is in effect');

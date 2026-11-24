@@ -20,14 +20,14 @@ export interface LinkSettings {
   bots: string[];
   // Ids of the hidden columns; undefined when the address does not say, so the saved ones apply.
   hidden?: string[];
-  // Every column id in order; undefined when the address does not say, so the saved order applies (SET-24).
+  // Every column id in order; undefined when the address does not say, so the saved order applies.
   order?: string[];
   // The repository groups; undefined when the address does not name them, so the saved ones apply.
   groups?: RepoGroup[];
   criteria?: AreaCriteriaMap;
 }
 
-// Groups in the address: "*Name:owner/name,owner/name;Name:owner/name". Group names hold no ; or , (SET-19).
+// Groups in the address: "*Name:owner/name,owner/name;Name:owner/name". Group names hold no ; or ,.
 function parseLinkGroups(value: string): RepoGroup[] | undefined {
   const parsed = parseGroupLines(value.split(';').join('\n'));
   return 'groups' in parsed ? parsed.groups : undefined;
@@ -102,7 +102,7 @@ export function withDefaultBots(link: LinkSettings, bots: string[], explicitlySe
   return explicitlySet || link.bots.length || !bots.length ? link : { ...link, bots };
 }
 
-// Hidden columns live in this browser and in the address (SET-8). A link that names them wins and is saved; otherwise
+// Hidden columns live in this browser and in the address. A link that names them wins and is saved; otherwise
 // the saved ones go into the address, so a copied link carries the same columns.
 export function applyLinkColumns(settings: Settings, link: LinkSettings): { settings: Settings; link: LinkSettings; changed: boolean } {
   if (link.hidden === undefined) return { settings, link: { ...link, hidden: settings.hiddenColumns }, changed: false };
@@ -121,7 +121,7 @@ export function groupsToSave(next: RepoGroup[], shown: RepoGroup[], saved: RepoG
 }
 
 // The column order works like the hidden columns: a link that names it wins and is saved; otherwise the saved order
-// goes into the address, so a copied link carries the same columns in the same order (SET-24).
+// goes into the address, so a copied link carries the same columns in the same order.
 export function applyLinkOrder(settings: Settings, link: LinkSettings): { settings: Settings; link: LinkSettings; changed: boolean } {
   if (link.order === undefined) return { settings, link: { ...link, order: settings.columnOrder }, changed: false };
   return { settings: { ...settings, columnOrder: link.order }, link, changed: true };

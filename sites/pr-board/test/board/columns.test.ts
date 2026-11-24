@@ -7,7 +7,7 @@ import {
 const sum = (widths: Record<string, number>, ids: string[]) => ids.reduce((total, id) => total + widths[id], 0);
 const ALL_IDS = COLUMNS.map((c) => c.id);
 
-test('TABLE-22: spare width goes to Pull request and Last comment, so the table fills the window', () => {
+test('spare width goes to Pull request and Last comment, so the table fills the window', () => {
   const total = sum(DEFAULT_WIDTHS, ALL_IDS);
   const fitted = fitToWidth(DEFAULT_WIDTHS, total + 101, null, COLUMNS);
   assert.equal(sum(fitted, ALL_IDS), total + 101);
@@ -15,12 +15,12 @@ test('TABLE-22: spare width goes to Pull request and Last comment, so the table 
   assert.equal(fitted.author, DEFAULT_WIDTHS.author);
 });
 
-test('TABLE-22: wider columns than the window are left as they are, and so is an unknown width', () => {
+test('wider columns than the window are left as they are, and so is an unknown width', () => {
   assert.equal(fitToWidth(DEFAULT_WIDTHS, 500, null, COLUMNS), DEFAULT_WIDTHS);
   assert.equal(fitToWidth(DEFAULT_WIDTHS, 0, null, COLUMNS), DEFAULT_WIDTHS);
 });
 
-test('TABLE-22 TABLE-24: the column being resized keeps its width, and the last column fills in when no flexible one can', () => {
+test('the column being resized keeps its width, and the last column fills in when no flexible one can', () => {
   const total = sum(DEFAULT_WIDTHS, ALL_IDS);
   const resizing = fitToWidth(DEFAULT_WIDTHS, total + 40, 'title', COLUMNS);
   assert.equal(resizing.title, DEFAULT_WIDTHS.title);
@@ -30,7 +30,7 @@ test('TABLE-22 TABLE-24: the column being resized keeps its width, and the last 
   assert.equal(lastOnly.assignee, DEFAULT_WIDTHS.assignee + 30);
 });
 
-test('TABLE-5: # and Pull request are always shown; other columns follow the hidden list', () => {
+test('# and Pull request are always shown; other columns follow the hidden list', () => {
   const byId = (id: string) => COLUMNS.find((c) => c.id === id)!;
   assert.equal(isColumnShown(byId('number'), ['number']), true);
   assert.equal(isColumnShown(byId('title'), ['title']), true);
@@ -38,7 +38,7 @@ test('TABLE-5: # and Pull request are always shown; other columns follow the hid
   assert.equal(isColumnShown(byId('ci'), []), true);
 });
 
-test('TABLE-26: the Repository column comes first, and only with more than one repository', () => {
+test('the Repository column comes first, and only with more than one repository', () => {
   const ids = (repoCount: number) => boardColumns(repoCount).map((c) => c.id);
   assert.equal(ids(0).includes('repo'), false);
   assert.equal(ids(1).includes('repo'), false);
@@ -50,7 +50,7 @@ test('TABLE-26: the Repository column comes first, and only with more than one r
   assert.equal(isColumnShown(repo, ['repo']), false);
 });
 
-test('SET-24: an order keeps its known ids once and adds the rest in the default order, and the default keeps nothing', () => {
+test('an order keeps its known ids once and adds the rest in the default order, and the default keeps nothing', () => {
   const full = completeOrder(['author', 'nope', 'title', 'author']);
   assert.deepEqual(full.slice(0, 2), ['author', 'title']);
   assert.equal(full.length, COLUMNS.length);
@@ -59,7 +59,7 @@ test('SET-24: an order keeps its known ids once and adds the rest in the default
   assert.deepEqual(boardColumns(1, ['author']).map((c) => c.id).slice(0, 2), ['author', 'number']);
 });
 
-test('SET-24: a column moves one place among the columns offered, so the hidden Repository column takes no step', () => {
+test('a column moves one place among the columns offered, so the hidden Repository column takes no step', () => {
   const offered = boardColumns(1).map((c) => c.id);
   // # is the first offered column; Repository, before it, is not offered with one repository.
   const up = moveColumn([], 'title', -1, offered);

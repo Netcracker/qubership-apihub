@@ -22,7 +22,7 @@ const STATUS: Record<ReviewerStatus, { icon: OcticonName; label: string }> = {
 const VISIBLE_REVIEWERS = 4;
 const REVIEWERS_POPOVER_PX = 260;
 
-// The Review column as GitHub's Reviewers list (TABLE-30). The viewer's own line stands out when their review is due.
+// The Review column as GitHub's Reviewers list. The viewer's own line stands out when their review is due.
 export function ReviewersList({ pr }: { pr: DerivedPullRequest }) {
   const { viewer, order } = useContext(ReviewViewContext);
   const prName = useContext(PrNameContext);

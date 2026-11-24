@@ -96,7 +96,7 @@ function ReviewCells({ theme, review }: { theme: 'light' | 'dark'; review: Revie
   );
 }
 
-// One PR's reviewers for the Reviewers order step (SET-25): two approvals, requested changes, and two reviews not given
+// One PR's reviewers for the Reviewers order step: two approvals, requested changes, and two reviews not given
 // yet, one of them the made-up viewer's.
 const ORDER_REVIEWERS: { login: string; status: ReviewerStatus; mine?: boolean }[] = [
   { login: 'anna-dev', status: 'approved' },
@@ -155,7 +155,7 @@ export function ReviewCellPreview({ theme, review }: { theme: 'light' | 'dark' |
   );
 }
 
-// A small picture of the board in a given look, for the setup wizard (SET-21). It is decoration: the card's label says
+// A small picture of the board in a given look, for the setup wizard. It is decoration: the card's label says
 // what it shows. "split" is the System theme: the light and the dark board side by side.
 export function ViewPreview({ theme, density, review, labels }: {
   theme: 'light' | 'dark' | 'split';

@@ -176,7 +176,7 @@
   font-weight: 600;
 }
 
-/* The token owner (DATA-26), as GitHub shows the signed-in user. */
+/* The token owner, as GitHub shows the signed-in user. */
 .viewer-badge {
   display: inline-flex;
   align-items: center;

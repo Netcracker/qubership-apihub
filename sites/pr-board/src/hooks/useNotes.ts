@@ -2,8 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { loadNotes, NOTES_KEY, readStoredNotes, saveNotes, setNote, withUnsaved } from '../board/notes.ts';
 import type { UnsavedNotes } from '../board/notes.ts';
 
-// Notes per PR, one Markdown document each (NOTE-1). Another tab may have written since this one loaded, so a change
-// is built on what is stored now, and a storage event from another tab reloads the notes (NOTE-2).
+// Notes per PR, one Markdown document each. Another tab may have written since this one loaded, so a change
+// is built on what is stored now, and a storage event from another tab reloads the notes.
 export function useNotes() {
   const [notes, setNotes] = useState(loadNotes);
   const [saveFailed, setSaveFailed] = useState(false);

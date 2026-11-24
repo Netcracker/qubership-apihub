@@ -1,9 +1,9 @@
-// What a live load is doing, repository by repository, in words for the loading status (DATA-27).
+// What a live load is doing, repository by repository, in words for the loading status.
 
 import type { RepositoryProgress } from '../github/graphql.ts';
 import { MINUTE_MS, plural } from './format.ts';
 
-// How long the summary of a finished live load stays on screen (DATA-27).
+// How long the summary of a finished live load stays on screen.
 export const LOAD_SUMMARY_MS = 5000;
 const SECOND_MS = 1000;
 const TENTH_MS = 100;
@@ -18,7 +18,7 @@ export interface RepoProgress {
   note: string;
 }
 
-// A live load in progress, or the one that just finished (DATA-27).
+// A live load in progress, or the one that just finished.
 export interface LoadState {
   startedAt: number;
   repos: RepoProgress[];

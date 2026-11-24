@@ -26,7 +26,7 @@ const AREAS = [
   { scopes: ['ci', 'docs', 'release'], tag: '', module: '' },
 ];
 const TYPES = ['feat', 'fix', 'refactor', 'test', 'perf', 'docs'];
-// The project fields of a linked issue (DATA-25), rotating: a priority, an estimate, and the current or the last sprint.
+// The project fields of a linked issue, rotating: a priority, an estimate, and the current or the last sprint.
 const PRIORITIES = [{ name: 'High', color: 'RED' }, { name: 'Medium', color: 'YELLOW' }, { name: 'Low', color: 'GRAY' }, null];
 const ESTIMATES = [1, 2, 3, 5, 8, null];
 const SPRINT_DAYS = 14;

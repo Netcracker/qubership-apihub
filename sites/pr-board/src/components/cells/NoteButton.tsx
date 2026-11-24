@@ -10,7 +10,7 @@ import type { DerivedPullRequest } from '../../types.ts';
 const NOTE_PANEL_PX = 560;
 const NOTE_PANEL_STYLE = sidePanelStyle(NOTE_PANEL_PX);
 
-// The note icon in the Pull request cell (NOTE-3): shown on hover, and always once the PR has a note.
+// The note icon in the Pull request cell: shown on hover, and always once the PR has a note.
 export function NoteButton({ pr }: { pr: DerivedPullRequest }) {
   const { notes } = useContext(NotesContext);
   const prName = useContext(PrNameContext);
@@ -27,7 +27,7 @@ export function NoteButton({ pr }: { pr: DerivedPullRequest }) {
   );
 }
 
-// One Markdown document (NOTE-4): Preview renders it like a comment, Edit changes it. The text is saved on blur, on
+// One Markdown document: Preview renders it like a comment, Edit changes it. The text is saved on blur, on
 // Ctrl+Enter, on switching to Preview, and when the panel closes.
 function NotePanel({ pr, prKey, text, onClose }: {
   pr: DerivedPullRequest;
@@ -68,7 +68,7 @@ function NotePanel({ pr, prKey, text, onClose }: {
           onChange={(event) => setDraft(event.target.value)} onBlur={commit}
           onKeyDown={(event) => { if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) commit(); }} />
       ) : draft.trim() ? (
-        // Sanitized by DOMPurify in renderMarkdown, like comments (SEC-4).
+        // Sanitized by DOMPurify in renderMarkdown, like comments.
         <div className="note-preview markdown" dangerouslySetInnerHTML={{ __html: renderMarkdown(draft) }} />
       ) : <p className="muted">No note yet. Switch to Edit to write one.</p>}
       {saveFailed ? <p className="note-foot note-error" role="alert">Not saved: this browser's storage is full or blocked.</p>

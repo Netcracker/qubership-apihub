@@ -18,6 +18,7 @@ needed a meeting to settle, record it. ADRs are written for maintainers who were
 | [0008](./0008-documentation-architecture-and-docs-site.md) | Documentation architecture and the docs site | Accepted |
 | [0009](./0009-pages-published-from-develop.md) | Pages, except the Storybooks, are published from `develop` | Accepted |
 | [0010](./0010-renovate-for-dependency-updates.md) | Renovate for dependency updates | Accepted |
+| [0011](./0011-pr-board-test-stack.md) | PR board test stack | Accepted |
 
 ## Add an ADR
 

@@ -32,7 +32,7 @@ export function SettingsPanel({ settings, onChange, token, setToken, refreshing,
   repositories: RepositorySettings;
   canResetWidths: boolean;
   onResetWidths: () => void;
-  // Opens the setup wizard, which shows these choices with pictures (SET-21).
+  // Opens the setup wizard, which shows these choices with pictures.
   onOpenWizard: () => void;
 }) {
   const { rules } = settings;
@@ -116,7 +116,7 @@ export function SettingsPanel({ settings, onChange, token, setToken, refreshing,
     const bots = parseList(botsDraft);
     if (bots.join(',') !== rules.extraBots.join(',')) setRules({ extraBots: bots });
   };
-  // The order covers every column, including Repository while one repository hides it (SET-24).
+  // The order covers every column, including Repository while one repository hides it.
   const moveTo = (id: string, step: -1 | 1) => onChange({
     ...settings,
     columnOrder: orderToKeep(moveColumn(settings.columnOrder, id, step, columns.map((col) => col.id))),
@@ -261,7 +261,7 @@ export function SettingsPanel({ settings, onChange, token, setToken, refreshing,
             ))}
           </div>
         </div>
-        {/* No <form>: browsers then offer to save the token as a password and sync it outside this browser (SEC-1). */}
+        {/* No <form>: browsers then offer to save the token as a password and sync it outside this browser. */}
         <div className="token-form">
           <p>Refresh queries GitHub directly with your personal token. It stays in this browser and is sent only to api.github.com.</p>
           <p><a href={TOKEN_HELP_URL} target="_blank" rel="noopener">Create a fine-grained token</a> with public repository read access. No extra permissions are needed.</p>

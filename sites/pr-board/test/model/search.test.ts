@@ -20,7 +20,7 @@ function search(query: string, fields: Record<string, unknown>) {
   return matchesQuery(derive(pr(fields), NOW), parseQuery(query));
 }
 
-test('FILTER-8 FILTER-9: search combines words and qualifiers, with negation and quotes', () => {
+test('search combines words and qualifiers, with negation and quotes', () => {
   const fields = {
     title: 'fix(ui): keep filters', labels: [{ name: 'module:ui' }, { name: 'good first issue' }],
     assignees: [{ login: 'Boris-K' }], reviewers: [{ login: 'chen-li', state: 'APPROVED' }], requestedReviewers: [{ login: 'anna-dev' }],
@@ -35,16 +35,16 @@ test('FILTER-8 FILTER-9: search combines words and qualifiers, with negation and
   assert.ok(search('no:issue', { issues: [] }));
 });
 
-test('FILTER-10: a qualifier still being typed does not hide everything', () => {
+test('a qualifier still being typed does not hide everything', () => {
   assert.deepEqual(parseQuery('label:'), { filters: [], words: [] });
   assert.ok(search('label:', {}));
 });
 
-test('FILTER-10: unknown qualifiers are plain words', () => {
+test('unknown qualifiers are plain words', () => {
   assert.deepEqual(parseQuery('foo:bar').words, [{ value: 'foo:bar', negate: false }]);
 });
 
-test('FILTER-11: toggling a label removes it whatever its case or quoting, and leaves other labels alone', () => {
+test('toggling a label removes it whatever its case or quoting, and leaves other labels alone', () => {
   assert.equal(toggleLabelFilter('label:Bug', 'bug'), '');
   assert.equal(toggleLabelFilter('label:bugfix label:bug', 'bug'), 'label:bugfix');
   assert.equal(toggleLabelFilter('label:"bug" ci:failing', 'bug'), 'ci:failing');
@@ -52,20 +52,20 @@ test('FILTER-11: toggling a label removes it whatever its case or quoting, and l
   assert.equal(toggleLabelFilter('ci:failing', 'good first issue'), 'ci:failing label:"good first issue"');
 });
 
-test('FILTER-8: search finds a PR by the number of its linked issue', () => {
+test('search finds a PR by the number of its linked issue', () => {
   const fields = { issues: [{ number: 885, title: '[FE] Show version publication errors in UI', url: 'u' }] };
   assert.ok(search('885', fields));
   assert.ok(search('#885', fields));
   assert.ok(!search('886', fields));
 });
 
-test('FILTER-11: chips are active for labels the search asks for, not for excluded ones', () => {
+test('chips are active for labels the search asks for, not for excluded ones', () => {
   const active = activeLabelFilters(parseQuery('label:Bug -label:wontfix label:"good first issue" ci:failing'));
   assert.deepEqual([...active], ['bug', 'good first issue']);
   assert.deepEqual([...activeLabelFilters(parseQuery(''))], []);
 });
 
-test('FILTER-15: repo: matches the repository name or owner/name, and plain words match it too', () => {
+test('repo: matches the repository name or owner/name, and plain words match it too', () => {
   const fields = { repo: 'acme/gadgets' };
   assert.ok(search('repo:gadgets', fields));
   assert.ok(search('repo:ACME/Gadgets', fields));
@@ -74,7 +74,7 @@ test('FILTER-15: repo: matches the repository name or owner/name, and plain word
   assert.ok(search('gadgets', fields));
 });
 
-test('NOTE-7: note: matches the text of the note, and -note: excludes it', () => {
+test('note: matches the text of the note, and -note: excludes it', () => {
   const fields = { noteText: 'merged soon. fix the tests' };
   assert.ok(search('note:tests', fields));
   assert.ok(search('note:TESTS', fields));
@@ -84,14 +84,14 @@ test('NOTE-7: note: matches the text of the note, and -note: excludes it', () =>
   assert.ok(search('-note:tests', {}));
 });
 
-test('FILTER-8: plain words match the type and labels of a linked issue', () => {
+test('plain words match the type and labels of a linked issue', () => {
   const fields = { issues: [{ number: 5, title: 'Typed', url: 'u', type: { name: 'Bug', color: 'red' }, labels: [{ name: 'customer', color: null, description: '' }] }] };
   assert.ok(search('bug', fields));
   assert.ok(search('customer', fields));
   assert.ok(!search('feature', fields));
 });
 
-test('TABLE-28: priority: and sprint: match the project fields of linked issues', () => {
+test('priority: and sprint: match the project fields of linked issues', () => {
   const issue = { number: 5, title: 'Planned', url: 'u', type: null, labels: [], priority: { name: 'High', color: 'red' }, estimate: 3,
     sprint: { title: 'Sprint 42', startDate: '2026-10-25', duration: 14 } };
   const fields = { issues: [issue] };
@@ -105,7 +105,7 @@ test('TABLE-28: priority: and sprint: match the project fields of linked issues'
   assert.ok(search('high', fields), 'plain words match the priority too');
 });
 
-test('FILTER-18: review:requested and review:again find the PRs that wait for the viewer', () => {
+test('review:requested and review:again find the PRs that wait for the viewer', () => {
   const asked = derive(pr({ requestedReviewers: [{ login: 'boris-k', team: false }], reviewers: [] }), NOW, undefined, 'boris-k');
   const again = derive(pr({ requestedReviewers: [{ login: 'boris-k', team: false }], reviewers: [{ login: 'boris-k', state: 'APPROVED' }] }), NOW, undefined, 'boris-k');
   const other = derive(pr({ requestedReviewers: [], reviewers: [] }), NOW, undefined, 'boris-k');
@@ -115,7 +115,7 @@ test('FILTER-18: review:requested and review:again find the PRs that wait for th
   assert.deepEqual(hits('-review:requested'), [false, false, true]);
 });
 
-test('FILTER-15 FILTER-19: label:, repo:, and priority: match the whole name, and sprint: a whole word of the title', () => {
+test('label:, repo:, and priority: match the whole name, and sprint: a whole word of the title', () => {
   const labels = { labels: [{ name: 'debug' }, { name: 'Module:UI' }] };
   assert.equal(search('label:bug', labels), false);
   assert.ok(search('label:module:ui', labels));

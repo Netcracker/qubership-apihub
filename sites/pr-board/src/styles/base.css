@@ -62,7 +62,7 @@ body {
   color: var(--muted);
 }
 
-/* Every animation and transition stops when the system asks for reduced motion (QUAL-5). */
+/* Every animation and transition stops when the system asks for reduced motion. */
 @media (prefers-reduced-motion: reduce) {
   *,
   ::before,

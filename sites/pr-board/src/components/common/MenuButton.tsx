@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { useDismiss } from '../../hooks/useDismiss.ts';
 
 // A toolbar menu: a button that names the choice, and a group of controls below it that closes on a click outside or
-// on Escape (FILTER-3, FILTER-16, FILTER-17). The controls are built only while it is open.
+// on Escape. The controls are built only while it is open.
 export function MenuButton({ label, summary, children }: { label: string; summary: ReactNode; children: () => ReactNode }) {
   const [open, setOpen] = useState(false);
   const ref = useDismiss(open, setOpen);

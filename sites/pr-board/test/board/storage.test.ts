@@ -18,7 +18,7 @@ function useStorage(blocked = false) {
 
 afterEach(() => { delete (globalThis as { localStorage?: unknown }).localStorage; });
 
-test('SET-11 SEC-1: the token stays in this browser, and an empty token removes it', () => {
+test('the token stays in this browser, and an empty token removes it', () => {
   const data = useStorage();
   assert.equal(readToken(), '');
   storeToken('mock-token');
@@ -27,7 +27,7 @@ test('SET-11 SEC-1: the token stays in this browser, and an empty token removes 
   assert.equal(data.size, 0);
 });
 
-test('SET-11 TABLE-24: column widths survive, invalid ones are dropped, and no widths means no entry', () => {
+test('column widths survive, invalid ones are dropped, and no widths means no entry', () => {
   const data = useStorage();
   writeColumnWidths({ author: 230 });
   assert.deepEqual(readColumnWidths(), { author: 230 });
@@ -39,7 +39,7 @@ test('SET-11 TABLE-24: column widths survive, invalid ones are dropped, and no w
   assert.equal(data.has('apihub-pr-board.columns'), false);
 });
 
-test('SET-11: blocked storage never breaks the page', () => {
+test('blocked storage never breaks the page', () => {
   useStorage(true);
   assert.equal(readToken(), '');
   assert.doesNotThrow(() => storeToken('mock-token'));
@@ -47,7 +47,7 @@ test('SET-11: blocked storage never breaks the page', () => {
   assert.doesNotThrow(() => writeColumnWidths({ author: 230 }));
 });
 
-test('SET-21: the wizard counts as done once closed, and blocked storage never makes it open on every visit', () => {
+test('the wizard counts as done once closed, and blocked storage never makes it open on every visit', () => {
   const data = useStorage();
   assert.equal(readWizardDone(), false);
   storeWizardDone();
@@ -64,7 +64,7 @@ test('SET-21: the wizard counts as done once closed, and blocked storage never m
   assert.doesNotThrow(() => storeWizardDone());
 });
 
-test('SET-11: stored widths keep only own column ids, never inherited names', () => {
+test('stored widths keep only own column ids, never inherited names', () => {
   useStorage().set('apihub-pr-board.columns', JSON.stringify({ toString: 200, constructor: 200, ci: 90 }));
   assert.deepEqual(readColumnWidths(), { ci: 90 });
 });

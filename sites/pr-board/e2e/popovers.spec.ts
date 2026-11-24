@@ -18,7 +18,7 @@ async function expectInsideWindow(page: Page, popover: Locator) {
 }
 
 test.describe('popovers', () => {
-  test('PANEL-1 PANEL-2: attention opens on click and closes on a second click, Escape, or a click outside', async ({ page }) => {
+  test('attention opens on click and closes on a second click, Escape, or a click outside', async ({ page }) => {
     const row = await onlyCase(page, 'WIP export');
     const icon = row.locator('.attn-icon');
     await expect(icon.locator('.attn-count')).toHaveText('3');
@@ -36,7 +36,7 @@ test.describe('popovers', () => {
     await expect(popover).toHaveCount(0);
   });
 
-  test('PANEL-1: page scroll and window resize close a popover, and it stays inside the window', async ({ page }) => {
+  test('page scroll and window resize close a popover, and it stays inside the window', async ({ page }) => {
     await openBoard(page, { report: 'typical', query: ALL });
     const popover = page.getByRole('dialog', { name: /needs attention/ });
     const icons = page.locator('.attn-icon');
@@ -55,7 +55,7 @@ test.describe('popovers', () => {
     await expect(popover).toHaveCount(0);
   });
 
-  test('PANEL-3 PANEL-4 TABLE-14: failed checks group repeats, name the failure kind, and list the summary job last', async ({ page }) => {
+  test('failed checks group repeats, name the failure kind, and list the summary job last', async ({ page }) => {
     const row = await onlyCase(page, 'new package overview layout');
     const button = row.locator('.ci-wrap > button');
     await expect(button).toHaveText('F8');
@@ -73,7 +73,7 @@ test.describe('popovers', () => {
     await expect(popover.getByRole('link', { name: 'All checks on GitHub' })).toHaveAttribute('href', /\/checks$/);
   });
 
-  test('PANEL-5: the checks popover says when details are missing or only partly read', async ({ page }) => {
+  test('the checks popover says when details are missing or only partly read', async ({ page }) => {
     for (const [title, text] of [
       ['handle empty namespace list', 'Check details were not collected for this PR.'],
       ['split the e2e matrix by module', 'no failed check is among the first 100 checks read.'],
@@ -86,7 +86,7 @@ test.describe('popovers', () => {
     await expect(page.getByRole('dialog', { name: /on PR/ })).not.toContainText('Only the first 100');
   });
 
-  test('PANEL-6 TABLE-13: review shows approvers, pending reviewers, and the counts on the code', async ({ page }) => {
+  test('review shows approvers, pending reviewers, and the counts on the code', async ({ page }) => {
     const row = await onlyCase(page, 'remember the last opened package tab');
     await expect(row.locator('.review-wrap > button')).toHaveText('✓2');
     await expect(row.locator('.pending')).toHaveText('◷1');
@@ -97,7 +97,7 @@ test.describe('popovers', () => {
     await expect(popover.getByRole('link', { name: 'Open the PR on GitHub' })).toBeVisible();
   });
 
-  test('PANEL-6: teams show as @team, dismissed reviews get their section, and no reviews says so', async ({ page }) => {
+  test('teams show as @team, dismissed reviews get their section, and no reviews says so', async ({ page }) => {
     let row = await onlyCase(page, 'split the version service');
     await expect(row.locator('.pending')).toHaveText('◷5');
     await row.locator('.review-wrap > button').click();
@@ -112,7 +112,7 @@ test.describe('popovers', () => {
       .toContainText('No reviews yet, and nobody is requested as a reviewer.');
   });
 
-  test('PANEL-7: Rules lists the rules in use, with the defaults when they are custom', async ({ page }) => {
+  test('Rules lists the rules in use, with the defaults when they are custom', async ({ page }) => {
     await openBoard(page, { report: 'typical' });
     await page.getByRole('button', { name: 'Rules', exact: true }).click();
     const popover = page.getByRole('dialog', { name: 'Board rules' });
@@ -126,7 +126,7 @@ test.describe('popovers', () => {
     await expect(popover).toContainText('The team defaults are 10 days');
   });
 
-  test('PANEL-8: the data source shows where the data comes from and its exact time', async ({ page }) => {
+  test('the data source shows where the data comes from and its exact time', async ({ page }) => {
     await openBoard(page, { report: 'typical' });
     await page.locator('.source-button').click();
     const popover = page.getByRole('dialog', { name: 'Data source' });

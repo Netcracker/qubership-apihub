@@ -25,7 +25,7 @@ export function attentionCases(now: number): FixtureEntry[] {
       createdAt: ago(214), updatedAt: ago(160),
       comments: conn([{ createdAt: ago(160), author: user('chen-li'), body: 'Please split this into the parser change and the UI change.' }]),
     }),
-    // The default age limit, so the two cases follow it if it changes (RULE-7).
+    // The default age limit, so the two cases follow it if it changes.
     node('Open exactly ' + STALE_DAYS + ' days: still within the limit.', {
       title: 'fix(builder): keep operation order stable across rebuilds',
       author: user('emil-qa'), createdAt: ago(STALE_DAYS, 2), updatedAt: ago(2),

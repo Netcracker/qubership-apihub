@@ -14,10 +14,10 @@ export const PEOPLE = [
   'a-very-long-github-login-that-keeps-going', 'new-contributor-42',
 ];
 
-// GitHub marks dependabot as a bot; acme-release-bot is a service account that GitHub treats as a regular user.
-export const BOTS = ['dependabot', 'acme-release-bot'];
+// GitHub marks dependabot and renovate as bots; acme-release-bot is a service account that GitHub treats as a regular user.
+export const BOTS = ['dependabot', 'renovate', 'acme-release-bot'];
 
-// The token owner the GraphQL mock reports on Refresh (DATA-26).
+// The token owner the GraphQL mock reports on Refresh.
 export const DEV_VIEWER = 'boris-k';
 
 export const TEAMS = ['widgets-backend', 'widgets-maintainers'];

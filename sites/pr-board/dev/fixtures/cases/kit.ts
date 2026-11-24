@@ -6,7 +6,7 @@ import type { FixtureEntry } from '../builders.ts';
 
 type CornerFields = Partial<RawPullRequest> & Pick<RawPullRequest, 'title' | 'createdAt' | 'updatedAt'>;
 
-export interface CaseKit {
+interface CaseKit {
   // A corner case: the default PR overridden by the given fields, with a note the board shows under the title.
   node: (note: string, fields: CornerFields) => FixtureEntry;
   ago: (days: number, hours?: number, minutes?: number) => string;

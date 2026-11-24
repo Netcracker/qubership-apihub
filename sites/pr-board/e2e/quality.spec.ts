@@ -3,7 +3,7 @@ import { ALL, expect, MOCK_NOW, openBoard, rows, test } from './helpers.ts';
 const MINUTE_MS = 60 * 1000;
 
 test.describe('quality', () => {
-  test('QUAL-1: buttons that show only an icon or a code say what they do', async ({ page }) => {
+  test('buttons that show only an icon or a code say what they do', async ({ page }) => {
     await openBoard(page, { report: 'corner', query: ALL + '&q=' + encodeURIComponent('WIP export') });
     await expect(page.getByRole('button', { name: 'Settings', exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Search syntax' })).toBeVisible();
@@ -12,7 +12,7 @@ test.describe('quality', () => {
     await expect(rows(page).first().getByRole('button', { name: /^No approval on PR #\d+\. Show reviewers$/ })).toBeVisible();
   });
 
-  test('QUAL-2: menus report whether they are open, headers their sort, and toggles whether they are pressed', async ({ page }) => {
+  test('menus report whether they are open, headers their sort, and toggles whether they are pressed', async ({ page }) => {
     await openBoard(page, { report: 'typical' });
     const gear = page.getByRole('button', { name: 'Settings', exact: true });
     await expect(gear).toHaveAttribute('aria-expanded', 'false');
@@ -29,7 +29,7 @@ test.describe('quality', () => {
     await expect(page.getByRole('group', { name: 'Draft status' }).getByRole('button', { name: 'Ready for review' })).toHaveAttribute('aria-pressed', 'true');
   });
 
-  test('QUAL-3: the board works from the keyboard, and focus is always visible', async ({ page }) => {
+  test('the board works from the keyboard, and focus is always visible', async ({ page }) => {
     await openBoard(page, { report: 'typical' });
     const tile = page.locator('.tile').filter({ hasText: 'CI failing' });
     await tile.focus();
@@ -44,7 +44,7 @@ test.describe('quality', () => {
     await expect(page.getByRole('dialog', { name: 'Board rules' })).toHaveCount(0);
   });
 
-  test('QUAL-1 QUAL-3: codes that open nothing carry their full name, and focus returns to the button of a menu closed with Escape', async ({ page }) => {
+  test('codes that open nothing carry their full name, and focus returns to the button of a menu closed with Escape', async ({ page }) => {
     await openBoard(page, { report: 'corner', query: ALL + '&q=' + encodeURIComponent('WIP export') });
     const row = rows(page).first();
     await expect(row.getByRole('img', { name: 'No conflicts' })).toBeVisible();
@@ -58,7 +58,7 @@ test.describe('quality', () => {
     await expect(authors).toBeFocused();
   });
 
-  test('QUAL-5: running checks pulse, and stop when the system asks for reduced motion', async ({ page }) => {
+  test('running checks pulse, and stop when the system asks for reduced motion', async ({ page }) => {
     await openBoard(page, { report: 'typical', query: ALL });
     const running = page.locator('.board .pill.running').first();
     await expect(running).toHaveCSS('animation-name', 'pulse');
@@ -66,13 +66,13 @@ test.describe('quality', () => {
     await expect(running).toHaveCSS('animation-name', 'none');
   });
 
-  test('QUAL-7: text uses IBM Plex Sans and code IBM Plex Mono', async ({ page }) => {
+  test('text uses IBM Plex Sans and code IBM Plex Mono', async ({ page }) => {
     await openBoard(page, { report: 'typical' });
     await expect(page.locator('body')).toHaveCSS('font-family', /^"IBM Plex Sans"/);
     await expect(page.locator('h1 .repo')).toHaveCSS('font-family', /^"IBM Plex Mono"/);
   });
 
-  test('SEC-8 QUAL-7: the page loads its fonts from its own host and makes no request to another one', async ({ page }) => {
+  test('the page loads its fonts from its own host and makes no request to another one', async ({ page }) => {
     const external: string[] = [];
     page.on('request', (request) => {
       if (new URL(request.url()).hostname !== 'localhost') external.push(request.url());
@@ -85,7 +85,7 @@ test.describe('quality', () => {
     expect(external).toEqual([]);
   });
 
-  test('QUAL-11: codes that open a popover show an outline and a ▾ at rest; codes that open nothing stay flat', async ({ page }) => {
+  test('codes that open a popover show an outline and a ▾ at rest; codes that open nothing stay flat', async ({ page }) => {
     await openBoard(page, { report: 'typical', query: ALL });
     const failing = page.locator('.ci-wrap > button.pill').first();
     const passing = page.locator('td.c-state span.pill', { hasText: /^P$/ }).first();
@@ -103,7 +103,7 @@ test.describe('quality', () => {
     expect(await page.locator('.attn-icon').first().evaluate((el) => getComputedStyle(el).boxShadow)).not.toBe('none');
   });
 
-  test('QUAL-10: relative times move on every minute without a reload', async ({ page }) => {
+  test('relative times move on every minute without a reload', async ({ page }) => {
     await openBoard(page, { report: 'typical' });
     const source = page.locator('.source-age');
     await expect(source).toHaveText('updated just now');

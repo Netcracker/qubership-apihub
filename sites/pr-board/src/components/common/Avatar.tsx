@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { initials } from '../../board/format.ts';
 import type { Actor } from '../../types.ts';
 
-// Initials stand in when there is no image or it fails (TABLE-9). The failure belongs to that address, so a cell that
+// Initials stand in when there is no image or it fails. The failure belongs to that address, so a cell that
 // shows another person next does not keep the initials.
 export function Avatar({ actor, small = false }: { actor: Actor | null; small?: boolean }) {
   const [failedUrl, setFailedUrl] = useState<string | null>(null);

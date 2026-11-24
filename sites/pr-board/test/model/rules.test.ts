@@ -15,13 +15,13 @@ function pr(fields: Record<string, unknown> = {}): PullRequest {
   } as unknown as PullRequest;
 }
 
-test('RULE-6: valid Conventional Commits titles pass', () => {
+test('valid Conventional Commits titles pass', () => {
   for (const title of ['feat: add x', 'fix(ui): y', 'feat(api)!: drop v1', 'chore: deps: bump nx in /', 'fix(ui-tests): Guard z', 'revert: undo x']) {
     assert.equal(titleProblem(title), null, title);
   }
 });
 
-test('RULE-6: invalid titles explain what is wrong', () => {
+test('invalid titles explain what is wrong', () => {
   assert.match(titleProblem('WIDGET-1234 Add export') ?? '', /expected "type\(scope\): subject"/);
   assert.match(titleProblem('fix(ui):no space') ?? '', /expected/);
   assert.match(titleProblem('Revert "feat: x"') ?? '', /expected/);
@@ -29,28 +29,28 @@ test('RULE-6: invalid titles explain what is wrong', () => {
   assert.match(titleProblem('Fix: crash') ?? '', /type "Fix" is not allowed/);
 });
 
-test('RULE-7: the age limit triggers only after the limit', () => {
+test('the age limit triggers only after the limit', () => {
   assert.deepEqual(attentionReasons(pr({}), STALE_DAYS), []);
   assert.equal(attentionReasons(pr({}), STALE_DAYS + 1).length, 1);
 });
 
-test('RULE-8: a PR in a project needs no linked issue', () => {
+test('a PR in a project needs no linked issue', () => {
   assert.deepEqual(attentionReasons(pr({ issues: [], projects: ['Sprint'] }), 0), []);
   assert.deepEqual(attentionReasons(pr({ issues: [], projects: [] }), 0), ['No linked issue and not in a GitHub Project']);
 });
 
-test('RULE-8: unknown project membership is reported, not guessed', () => {
+test('unknown project membership is reported, not guessed', () => {
   assert.match(attentionReasons(pr({ issues: [], projects: null }), 0)[0], /could not be checked/);
 });
 
-test('RULE-10: service accounts and [bot] logins count as bots', () => {
+test('service accounts and [bot] logins count as bots', () => {
   assert.equal(isBot({ login: 'acme-release-bot', avatarUrl: null, bot: false }, ['acme-release-bot']), true);
   assert.equal(isBot({ login: 'renovate[bot]', avatarUrl: null, bot: false }), true);
   assert.equal(isBot({ login: 'anna-dev', avatarUrl: null, bot: false }), false);
   assert.equal(isBot(null), false);
 });
 
-test('RULE-5: each rule that fires adds its own reason, in words', () => {
+test('each rule that fires adds its own reason, in words', () => {
   const reasons = attentionReasons(pr({ title: 'WIP', issues: [], projects: [] }), STALE_DAYS + 2);
   assert.deepEqual(reasons, [
     'Title does not follow Conventional Commits: expected "type(scope): subject"',

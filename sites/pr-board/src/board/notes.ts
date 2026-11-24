@@ -1,4 +1,4 @@
-// Notes per PR: one Markdown document each, kept in this browser (NOTE-1, NOTE-2). Storage can be blocked, so every
+// Notes per PR: one Markdown document each, kept in this browser. Storage can be blocked, so every
 // access is guarded, and a stored entry is checked before use. Notes written by the earlier per-day version move into
 // the document once.
 
@@ -31,7 +31,7 @@ export function setNote(notes: Notes, key: string, text: string, now: number): N
   return next;
 }
 
-// Changes storage did not take (NOTE-2), by key; null is a note deleted here. They stay over what is stored until a
+// Changes storage did not take, by key; null is a note deleted here. They stay over what is stored until a
 // save succeeds, so a failed save neither loses an edit nor brings a deleted note back.
 export type UnsavedNotes = Map<string, Note | null>;
 

@@ -8,7 +8,7 @@ const { onEscape } = await import('../../src/hooks/escapeStack.ts');
 
 const escape = () => document.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'Escape' }));
 
-test('QUAL-3: Escape closes only the innermost open layer, then the one around it', () => {
+test('Escape closes only the innermost open layer, then the one around it', () => {
   const closed: string[] = [];
   const removeDialog = onEscape(() => closed.push('dialog'));
   const removeMenu = onEscape(() => closed.push('menu'));

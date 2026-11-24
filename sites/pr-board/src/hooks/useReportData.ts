@@ -1,5 +1,4 @@
-// Loads prs.json once; a live load replaces the data through showLive. The published page has no prs.json
-// (DATA-3): a 404 means no snapshot, and the page then loads live data itself (DATA-23).
+// Loads prs.json once; a live load replaces the data through showLive. The published page has no prs.json: a 404 means no snapshot, and the page then loads live data itself.
 
 import { useCallback, useEffect, useState } from 'react';
 import { parseReport } from '../model/report.ts';

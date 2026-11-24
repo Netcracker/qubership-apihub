@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { MINUTE_MS } from '../board/format.ts';
 
-// The time the board shows ages against. It moves every minute (QUAL-10), and tick() moves it at once, such as when
+// The time the board shows ages against. It moves every minute, and tick() moves it at once, such as when
 // new data arrives.
 export function useClock(): { now: number; tick: () => void } {
   const [now, setNow] = useState(Date.now);

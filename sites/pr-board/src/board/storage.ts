@@ -15,7 +15,7 @@ export function storeToken(token: string) {
   } catch { /* storage is blocked; the token lives only for this page load */ }
 }
 
-// The setup wizard (SET-21) opens by itself until it has been closed once in this browser.
+// The setup wizard opens by itself until it has been closed once in this browser.
 // Blocked storage counts as done, so the wizard never opens on every visit; a refused write counts until a reload.
 const WIZARD_KEY = 'apihub-pr-board.wizard';
 let wizardDoneHere = false;

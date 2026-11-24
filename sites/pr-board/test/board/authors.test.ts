@@ -13,41 +13,50 @@ const AUTHORS: AuthorEntry[] = [
   { login: 'dependabot', actor: null, bot: true, count: 3 },
 ];
 
-test('FILTER-3: authors are counted once each and sorted without regard to case', () => {
+test('authors are counted once each and sorted without regard to case', () => {
   // Plain string order would put "Boris-K" before "anna-dev".
   const authors = collectAuthors([pr('Boris-K'), pr('anna-dev'), pr('Boris-K'), pr('dependabot', true), pr('ghost')]);
   assert.deepEqual(authors.map((a) => [a.login, a.count, a.bot]), [['anna-dev', 1, false], ['Boris-K', 2, false], ['dependabot', 1, true], ['ghost', 1, false]]);
   assert.deepEqual(collectAuthors([]), []);
 });
 
-test('FILTER-3: named author categories combine and include new authors after a refresh', () => {
+test('named author categories combine and include new authors after a refresh', () => {
   const entries = collectAuthors([pr('NetcrackerCLPLCI'), pr('dependabot[bot]', true), pr('renovate[bot]', true), pr('anna-dev')]);
-  assert.deepEqual(entries.map(authorGroup), ['humans', 'dependabot', 'service', 'other-bots']);
+  assert.deepEqual(entries.map(authorGroup), ['humans', 'dependabot', 'service', 'renovate']);
   assert.deepEqual([...selectedAuthors(null, entries)], ['anna-dev']);
   const mode = { groups: ['humans', 'service'] as const };
   const selected = selectedAuthors({ groups: [...mode.groups] }, [...entries, ...collectAuthors([pr('new-person')])]);
   assert.deepEqual([...selected], ['anna-dev', 'NetcrackerCLPLCI', 'new-person']);
   assert.deepEqual(chosenAuthorGroups(null), ['humans']);
-  assert.equal(chosenAuthorGroups('all').length, 4);
-  assert.equal(chosenAuthorGroups('bots').length, 3);
+  assert.equal(chosenAuthorGroups('all').length, 5);
+  assert.equal(chosenAuthorGroups('bots').length, 4);
   assert.deepEqual(chosenAuthorGroups([]), []);
   assert.deepEqual(chosenAuthorGroups({ groups: ['service'] }), ['service']);
   assert.equal(authorsSummary({ groups: [] }, new Set()), 'Nobody');
   assert.equal(authorsSummary({ groups: ['service'] }, new Set()), 'NetcrackerCLPLCI');
 });
 
-test('FILTER-3: People leaves out bots, and Bots and Everyone pick their sets', () => {
+test('Renovate logins have their own category regardless of case or bot flag', () => {
+  for (const login of ['renovate[bot]', 'renovate', 'RENOVATE[bot]', 'Renovate']) {
+    const entries = collectAuthors([pr(login)]);
+    assert.equal(authorGroup(entries[0]), 'renovate');
+    assert.deepEqual([...selectedAuthors({ groups: ['renovate'] }, entries)], [login]);
+  }
+  assert.equal(authorGroup(collectAuthors([pr('another-bot', true)])[0]), 'other-bots');
+});
+
+test('People leaves out bots, and Bots and Everyone pick their sets', () => {
   assert.deepEqual([...selectedAuthors(null, AUTHORS)], ['anna-dev', 'boris-k']);
   assert.deepEqual([...selectedAuthors('bots', AUTHORS)], ['dependabot']);
   assert.deepEqual([...selectedAuthors('all', AUTHORS)], ['anna-dev', 'boris-k', 'dependabot']);
   assert.deepEqual([...selectedAuthors([], AUTHORS)], []);
 });
 
-test('FILTER-4: a chosen author without PRs in the data is left out of the selection', () => {
+test('a chosen author without PRs in the data is left out of the selection', () => {
   assert.deepEqual([...selectedAuthors(['boris-k', 'gone-person'], AUTHORS)], ['boris-k']);
 });
 
-test('FILTER-3: Me follows the current viewer and selects nobody until the viewer is known or when they have no PRs', () => {
+test('Me follows the current viewer and selects nobody until the viewer is known or when they have no PRs', () => {
   assert.deepEqual([...selectedAuthors('me', AUTHORS, 'BORIS-K')], ['boris-k']);
   assert.deepEqual([...selectedAuthors('me', AUTHORS, 'anna-dev')], ['anna-dev']);
   assert.deepEqual([...selectedAuthors('me', AUTHORS)], []);
@@ -56,7 +65,7 @@ test('FILTER-3: Me follows the current viewer and selects nobody until the viewe
   assert.deepEqual(chosenAuthorGroups('me'), []);
 });
 
-test('FILTER-3: the Authors button names the choice', () => {
+test('the Authors button names the choice', () => {
   assert.equal(authorsSummary(null, new Set()), 'People');
   assert.equal(authorsSummary('all', new Set()), 'Everyone');
   assert.equal(authorsSummary('bots', new Set()), 'Bots');
@@ -65,7 +74,7 @@ test('FILTER-3: the Authors button names the choice', () => {
   assert.equal(authorsSummary(['anna-dev', 'boris-k'], new Set(['anna-dev', 'boris-k'])), '2 selected');
 });
 
-test('FILTER-4: checking or unchecking an author keeps a list, or becomes the preset it equals', () => {
+test('checking or unchecking an author keeps a list, or becomes the preset it equals', () => {
   const people = new Set(['anna-dev', 'boris-k']);
   assert.deepEqual(toggleAuthor('boris-k', people, AUTHORS), ['anna-dev']);
   assert.equal(toggleAuthor('boris-k', new Set(['anna-dev']), AUTHORS), null);
@@ -74,7 +83,7 @@ test('FILTER-4: checking or unchecking an author keeps a list, or becomes the pr
   assert.deepEqual(toggleAuthor('anna-dev', new Set(['anna-dev']), AUTHORS), []);
 });
 
-test('FILTER-4: checking an author keeps chosen logins without open PRs, and clearing the last author means nobody', () => {
+test('checking an author keeps chosen logins without open PRs, and clearing the last author means nobody', () => {
   // gone-person has no open PR now, but stays chosen in the address.
   assert.deepEqual(toggleAuthor('boris-k', new Set(['anna-dev']), AUTHORS, ['anna-dev', 'gone-person']), ['anna-dev', 'boris-k', 'gone-person']);
   assert.deepEqual(toggleAuthor('anna-dev', new Set(['anna-dev']), AUTHORS, ['anna-dev', 'gone-person']), ['gone-person']);

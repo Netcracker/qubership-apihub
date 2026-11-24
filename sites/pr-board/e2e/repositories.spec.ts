@@ -3,7 +3,7 @@ import { ALL, expect, openBoard, rows, test } from './helpers.ts';
 const TOKEN_KEY = 'apihub-pr-board.token';
 
 test.describe('several repositories', () => {
-  test('DATA-20 DATA-21: equal numbers from two repositories are two rows', async ({ page, pageErrors }) => {
+  test('equal numbers from two repositories are two rows', async ({ page, pageErrors }) => {
     await openBoard(page, { report: 'two-repos', query: ALL });
     await expect(page.locator('h1 .repo')).toHaveText('acme/widgets, acme/gadgets');
     await expect(rows(page)).toHaveCount(40);
@@ -11,30 +11,30 @@ test.describe('several repositories', () => {
     expect(pageErrors).toEqual([]);
   });
 
-  test('DATA-20: the comments panel reads a PR from its own repository', async ({ page }) => {
+  test('the comments panel reads a PR from its own repository', async ({ page }) => {
     const requests: string[] = [];
     page.on('request', (request) => { if (request.url().includes('/__dev/rest/')) requests.push(new URL(request.url()).pathname); });
     await openBoard(page, { report: 'two-repos', query: ALL + '&q=' + encodeURIComponent('repo:gadgets "version on connect"') });
     await expect(rows(page)).toHaveCount(1);
     await rows(page).first().locator('.comment-preview').click();
-    // With two repositories, the PR is named with its repository (DATA-20).
+    // With two repositories, the PR is named with its repository.
     const panel = page.getByRole('dialog', { name: 'Comments on PR gadgets#101' });
     await expect(panel.locator('article')).toHaveCount(1);
     await expect(panel.locator('article')).toContainText('Tested on the gadget bench');
     expect(requests).toContain('/__dev/rest/repos/acme/gadgets/issues/101/comments');
   });
 
-  test('DATA-18: Refresh reads every repository on the page', async ({ page }) => {
+  test('Refresh reads every repository on the page', async ({ page }) => {
     await page.addInitScript((key) => localStorage.setItem(key, 'mock-token'), TOKEN_KEY);
     await openBoard(page, { report: 'two-repos', refresh: 'ok', query: ALL });
     await page.getByRole('button', { name: 'Refresh', exact: true }).click();
     await expect(page.locator('.source-button')).toHaveText('live, just now');
     // The mixed board of acme/widgets and the four PRs of acme/gadgets.
-    await expect(rows(page)).toHaveCount(84);
+    await expect(rows(page)).toHaveCount(85);
     await expect(page.locator('h1 .repo')).toHaveText('acme/widgets, acme/gadgets');
   });
 
-  test('TABLE-26: one repository has no Repository column and no setting for it', async ({ page }) => {
+  test('one repository has no Repository column and no setting for it', async ({ page }) => {
     await openBoard(page, { report: 'typical', query: ALL });
     await expect(page.locator('.board > thead > tr > th').first()).toHaveText('#');
     await page.getByRole('button', { name: /^Settings/ }).click();
@@ -43,7 +43,7 @@ test.describe('several repositories', () => {
     await expect(settings.getByRole('checkbox', { name: 'Repository' })).toHaveCount(0);
   });
 
-  test('TABLE-26: with two repositories the Repository column comes first, sorts, and can be hidden', async ({ page }) => {
+  test('with two repositories the Repository column comes first, sorts, and can be hidden', async ({ page }) => {
     await openBoard(page, { report: 'two-repos', query: ALL });
     const header = page.locator('.board > thead > tr > th').first();
     await expect(header).toHaveText('Repository');
@@ -59,7 +59,7 @@ test.describe('several repositories', () => {
     await expect(header).toHaveText('#');
   });
 
-  test('TABLE-26 FILTER-17: the Repository column goes when the rows the groups let through come from one repository', async ({ page }) => {
+  test('the Repository column goes when the rows the groups let through come from one repository', async ({ page }) => {
     await openBoard(page, { report: 'two-repos', query: ALL + '&repogroups=Widgets:acme/widgets;Gadgets:acme/gadgets' });
     const first = page.locator('.board > thead > tr > th').first();
     await expect(first).toHaveText('Repository');
@@ -75,7 +75,7 @@ test.describe('several repositories', () => {
     await expect(first).toHaveText('Repository');
   });
 
-  test('FILTER-14: repos in the address narrow the board, and Reset view and Copy link keep them', async ({ page, context }) => {
+  test('repos in the address narrow the board, and Reset view and Copy link keep them', async ({ page, context }) => {
     await context.grantPermissions(['clipboard-read', 'clipboard-write']);
     await openBoard(page, { report: 'two-repos', query: ALL + '&q=pairing&repos=acme/gadgets' });
     await expect(page.locator('h1 .repo')).toHaveText('acme/gadgets');
@@ -87,7 +87,7 @@ test.describe('several repositories', () => {
     expect(await page.evaluate(() => navigator.clipboard.readText())).toMatch(/\?repos=acme\/gadgets$/);
   });
 
-  test('SET-16: the Repositories field writes the address, rejects a bad entry with the reason, and clears', async ({ page }) => {
+  test('the Repositories field writes the address, rejects a bad entry with the reason, and clears', async ({ page }) => {
     await openBoard(page, { report: 'two-repos', query: ALL });
     await page.getByRole('button', { name: /^Settings/ }).click();
     const field = page.getByRole('dialog', { name: 'Settings' }).getByRole('textbox', { name: 'Repositories' });
@@ -109,7 +109,7 @@ test.describe('several repositories', () => {
     expect(page.url()).not.toContain('repos=');
   });
 
-  test('SET-17: bots saved by an earlier version move into the address, and Reset to defaults removes both', async ({ page }) => {
+  test('bots saved by an earlier version move into the address, and Reset to defaults removes both', async ({ page }) => {
     await page.addInitScript(() => {
       if (sessionStorage.getItem('seeded')) return;
       localStorage.setItem('apihub-pr-board.settings', JSON.stringify({ rules: { extraBots: ['acme-release-bot'] } }));
@@ -126,20 +126,20 @@ test.describe('several repositories', () => {
     await expect(page).toHaveURL(/\/$/);
   });
 
-  test('DATA-22: repositories missing from the snapshot get a banner, and Refresh with a token loads them', async ({ page }) => {
+  test('repositories missing from the snapshot get a banner, and Refresh with a token loads them', async ({ page }) => {
     await openBoard(page, { report: 'mixed', refresh: 'ok', query: ALL + '&repos=acme/widgets,acme/gadgets' });
     const banner = page.locator('.banner.warn');
     await expect(banner).toContainText('acme/gadgets is not in the snapshot. Add a GitHub token in Settings, then Refresh loads it.');
-    await expect(rows(page)).toHaveCount(80);
+    await expect(rows(page)).toHaveCount(81);
     await page.getByRole('button', { name: 'Refresh', exact: true }).click();
     await page.getByRole('dialog', { name: 'Add a GitHub token' }).getByLabel('Token').fill('mock-token');
     await page.getByRole('button', { name: 'Save and load' }).click();
     await expect(page.locator('.source-button')).toHaveText('live, just now');
-    await expect(rows(page)).toHaveCount(84);
+    await expect(rows(page)).toHaveCount(85);
     await expect(banner).toHaveCount(0);
   });
 
-  test('DATA-22 SET-16: Refresh reads the repositories set in Settings, and live data names what it lacks', async ({ page }) => {
+  test('Refresh reads the repositories set in Settings, and live data names what it lacks', async ({ page }) => {
     await page.addInitScript((key) => localStorage.setItem(key, 'mock-token'), TOKEN_KEY);
     await openBoard(page, { report: 'mixed', refresh: 'ok', query: ALL });
     await page.getByRole('button', { name: /^Settings/ }).click();
@@ -160,7 +160,7 @@ test.describe('several repositories', () => {
     await expect(banner).toHaveText('acme/widgets is not in the live data. Refresh loads it.');
   });
 
-  test('SET-19 FILTER-17: groups from Settings fill a Repositories menu that filters the rows', async ({ page }) => {
+  test('groups from Settings fill a Repositories menu that filters the rows', async ({ page }) => {
     await openBoard(page, { report: 'two-repos', query: ALL });
     await expect(page.getByRole('button', { name: /^Repositories:/ })).toHaveCount(0);
     await page.getByRole('button', { name: /^Settings/ }).click();
@@ -198,7 +198,7 @@ test.describe('several repositories', () => {
     expect(stored).toEqual([{ name: 'Widgets', repos: ['acme/widgets'] }, { name: 'Gadgets & Co', repos: ['acme/gadgets'], isDefault: true }]);
   });
 
-  test('FILTER-17: repositories in no group are under Ungrouped, and a link checks the groups it names', async ({ page }) => {
+  test('repositories in no group are under Ungrouped, and a link checks the groups it names', async ({ page }) => {
     await page.addInitScript((groups) => localStorage.setItem('apihub-pr-board.settings', JSON.stringify({ repoGroups: groups })), [
       { name: 'Gadgets', repos: ['acme/gadgets'] },
     ]);
@@ -216,7 +216,7 @@ test.describe('several repositories', () => {
     await expect(page).toHaveURL(/[?&]groups=Gadgets(&|$)/);
   });
 
-  test('DATA-18: without repos in the address, Refresh reads only the repositories of the checked groups', async ({ page }) => {
+  test('without repos in the address, Refresh reads only the repositories of the checked groups', async ({ page }) => {
     await page.addInitScript((key) => localStorage.setItem(key, 'mock-token'), TOKEN_KEY);
     await page.addInitScript((groups) => localStorage.setItem('apihub-pr-board.settings', JSON.stringify({ repoGroups: groups })), [
       { name: 'Widgets', repos: ['acme/widgets'] },
@@ -232,7 +232,7 @@ test.describe('several repositories', () => {
     expect(page.url()).not.toContain('repos=');
   });
 
-  test('DATA-18: a reason Refresh cannot start shows on Refresh and goes once the reason does', async ({ page }) => {
+  test('a reason Refresh cannot start shows on Refresh and goes once the reason does', async ({ page }) => {
     await page.addInitScript((key) => localStorage.setItem(key, 'mock-token'), TOKEN_KEY);
     await openBoard(page, { report: 'two-repos', refresh: 'ok', query: ALL + '&groups=&repogroups=Gadgets:acme/gadgets;Widgets:acme/widgets' });
     await expect(page.getByRole('alert')).toHaveCount(0);
@@ -250,7 +250,7 @@ test.describe('several repositories', () => {
     await expect(reason).toHaveCount(0);
   });
 
-  test('DATA-18: groups with more than 40 repositories stop Refresh with the reason', async ({ page }) => {
+  test('groups with more than 40 repositories stop Refresh with the reason', async ({ page }) => {
     await page.addInitScript((key) => localStorage.setItem(key, 'mock-token'), TOKEN_KEY);
     const many = (prefix: string) => Array.from({ length: 21 }, (_, i) => 'acme/' + prefix + i);
     await page.addInitScript((groups) => localStorage.setItem('apihub-pr-board.settings', JSON.stringify({ repoGroups: groups })), [
@@ -264,7 +264,7 @@ test.describe('several repositories', () => {
       + ' Uncheck a group in the Repositories menu.');
   });
 
-  test('FILTER-14 SET-19: a link with repository groups fills the menu without replacing the saved groups', async ({ page }) => {
+  test('a link with repository groups fills the menu without replacing the saved groups', async ({ page }) => {
     const savedGroups = () => page.evaluate(() => JSON.parse(localStorage.getItem('apihub-pr-board.settings') || '{}').repoGroups);
     await page.addInitScript(() => {
       if (sessionStorage.getItem('seeded')) return;
@@ -291,7 +291,7 @@ test.describe('several repositories', () => {
     await expect(page).toHaveURL(/[?&]repogroups=Gadgets:acme\/gadgets(&|$)/);
   });
 
-  test('TABLE-31: repository names and menu entries take the tint of their group, and a repository in no group has none', async ({ page }) => {
+  test('repository names and menu entries take the tint of their group, and a repository in no group has none', async ({ page }) => {
     await openBoard(page, { report: 'two-repos', query: ALL + '&repogroups=Gadgets:acme/gadgets' });
     const names = page.locator('td.c-repo a');
     const tinted = names.filter({ hasText: 'gadgets' });
@@ -305,7 +305,7 @@ test.describe('several repositories', () => {
     await expect(menu.locator('label').filter({ hasText: 'Ungrouped' })).not.toHaveAttribute('style', /--group-/);
   });
 
-  test('DATA-18 FILTER-17: Refresh with Ungrouped checked reads the repositories in no group too', async ({ page }) => {
+  test('Refresh with Ungrouped checked reads the repositories in no group too', async ({ page }) => {
     await page.addInitScript((key) => localStorage.setItem(key, 'mock-token'), TOKEN_KEY);
     await openBoard(page, { report: 'two-repos', refresh: 'ok', query: ALL + '&repogroups=Gadgets:acme/gadgets' });
     const button = page.getByRole('button', { name: /^Repositories:/ });
@@ -313,12 +313,12 @@ test.describe('several repositories', () => {
     await page.getByRole('button', { name: 'Refresh', exact: true }).click();
     await expect(page.locator('.source-button')).toHaveText('live, just now');
     // The mixed board of acme/widgets, which is in no group, and the four PRs of acme/gadgets.
-    await expect(rows(page)).toHaveCount(84);
+    await expect(rows(page)).toHaveCount(85);
     await button.click();
     await expect(page.getByRole('group', { name: 'Repositories' }).getByRole('checkbox', { name: 'Ungrouped' })).toBeChecked();
   });
 
-  test('FILTER-17 DATA-23: with no group checked nothing loads, and unchecking a group loads nothing new', async ({ page }) => {
+  test('with no group checked nothing loads, and unchecking a group loads nothing new', async ({ page }) => {
     await page.addInitScript((key) => localStorage.setItem(key, 'mock-token'), TOKEN_KEY);
     const loads: string[] = [];
     page.on('request', (request) => { if (request.url().includes('/__dev/graphql')) loads.push(request.url()); });
@@ -333,7 +333,7 @@ test.describe('several repositories', () => {
     const menu = page.getByRole('group', { name: 'Repositories' });
     await menu.getByRole('button', { name: 'All' }).click();
     await expect(page.locator('.source-button')).toHaveText('live, just now');
-    await expect(rows(page)).toHaveCount(84);
+    await expect(rows(page)).toHaveCount(85);
     const afterLoad = loads.length;
     await menu.getByRole('checkbox', { name: 'Widgets' }).uncheck();
     await expect(rows(page)).toHaveCount(4);

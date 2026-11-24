@@ -19,7 +19,7 @@ export function ReviewCell({ pr, now }: { pr: DerivedPullRequest; now: number })
   return useContext(ReviewViewContext).list ? <ReviewersList pr={pr} /> : <ReviewCode pr={pr} now={now} />;
 }
 
-// The Review code with its reviewers popover (TABLE-8).
+// The Review code with its reviewers popover.
 function ReviewCode({ pr, now }: { pr: DerivedPullRequest; now: number }) {
   const prName = useContext(PrNameContext);
   const { open, position, ref, toggle } = usePopover(REVIEW_POPOVER_PX);
@@ -29,7 +29,7 @@ function ReviewCode({ pr, now }: { pr: DerivedPullRequest; now: number }) {
   const decided = pr.reviewers.filter((r) => r.state === DECISION_BY_REVIEW[pr.review]).length;
   const accessibleName = state.label + (decided > 1 ? ' by ' + decided + ' reviewers' : '')
     + (waiting.length ? ', ' + plural(waiting.length, 'pending reviewer') : '') + ' on ' + prName + '. Show reviewers';
-  // The decision first, as TABLE-12 asks, then who approved: changes requested by one reviewer and approved by another
+  // The decision first, then who approved: changes requested by one reviewer and approved by another
   // still reads as changes requested.
   const tooltip = [
     pr.review === 'approved' ? 'Approved by ' + approvers.join(', ') : state.label,

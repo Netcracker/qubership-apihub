@@ -21,7 +21,7 @@ async function openPr206(page: Page) {
 const stored = (page: Page) => page.evaluate((key) => JSON.parse(localStorage.getItem(key) || 'null'), NOTES_KEY);
 
 test.describe('notes', () => {
-  test('NOTE-3 NOTE-4 NOTE-2: the icon shows on hover, the note is written in Markdown, previewed, and kept', async ({ page }) => {
+  test('the icon shows on hover, the note is written in Markdown, previewed, and kept', async ({ page }) => {
     const row = await openPr206(page);
     const icon = row.getByRole('button', { name: 'Add a note for PR #206' });
     await page.mouse.move(0, 0);
@@ -46,7 +46,7 @@ test.describe('notes', () => {
     expect((await stored(page))[PR_KEY].text).toBe('## Promised\n- [ ] fix the tests\n- [x] rebase');
   });
 
-  test('NOTE-4: Escape saves the draft, and clearing the note removes it', async ({ page }) => {
+  test('Escape saves the draft, and clearing the note removes it', async ({ page }) => {
     const row = await openPr206(page);
     await row.hover();
     await row.getByRole('button', { name: 'Add a note for PR #206' }).click();
@@ -64,7 +64,7 @@ test.describe('notes', () => {
     await expect(row.getByRole('button', { name: 'Add a note for PR #206' })).toBeAttached();
   });
 
-  test('NOTE-2: notes from the per-day version open as one document', async ({ page }) => {
+  test('notes from the per-day version open as one document', async ({ page }) => {
     await seedNotes(page, { [PR_KEY]: [{ date: '2026-10-27', asked: true, text: 'Fix the tests by noon' }] });
     const row = await openPr206(page);
     await row.getByRole('button', { name: 'Notes for PR #206' }).click();
@@ -73,7 +73,7 @@ test.describe('notes', () => {
     await expect(preview.locator('strong')).toHaveText('2026-10-27');
   });
 
-  test('NOTE-9 SEC-4: the preview drops scripts and handlers, like comments', async ({ page, pageErrors }) => {
+  test('the preview drops scripts and handlers, like comments', async ({ page, pageErrors }) => {
     await seedNotes(page, { [PR_KEY]: { text: 'Safe <script>window.hacked = 1</script><img src="x" onerror="window.hacked = 1">', updatedAt: '2026-10-28T10:00:00.000Z' } });
     const row = await openPr206(page);
     await row.getByRole('button', { name: 'Notes for PR #206' }).click();
@@ -84,14 +84,14 @@ test.describe('notes', () => {
     expect(pageErrors).toEqual([]);
   });
 
-  test('NOTE-7: note: finds PRs by the text of their note', async ({ page }) => {
+  test('note: finds PRs by the text of their note', async ({ page }) => {
     await seedNotes(page, { [PR_KEY]: { text: 'Flaky tests on CI', updatedAt: '2026-10-28T10:00:00.000Z' } });
     await openBoard(page, { report: 'typical', query: ALL + '&q=' + encodeURIComponent('note:flaky') });
     await expect(rows(page)).toHaveCount(1);
     await expect(rows(page).first().getByRole('link', { name: '#206', exact: true })).toBeVisible();
   });
 
-  test('NOTE-2: a note written in another tab shows here and is not lost when this tab writes', async ({ page, context }) => {
+  test('a note written in another tab shows here and is not lost when this tab writes', async ({ page, context }) => {
     const row = await openPr206(page);
     const other = await context.newPage();
     await other.goto('/?' + ALL + '&q=' + encodeURIComponent('#203'));
@@ -113,7 +113,7 @@ test.describe('notes', () => {
     await other.close();
   });
 
-  test('NOTE-2: while storage refuses notes, a deleted note stays deleted when another note changes', async ({ page }) => {
+  test('while storage refuses notes, a deleted note stays deleted when another note changes', async ({ page }) => {
     await seedNotes(page, {
       'acme/widgets#206': { text: 'Old note', updatedAt: '2026-10-27T10:00:00.000Z' },
       'acme/widgets#203': { text: 'Other note', updatedAt: '2026-10-27T10:00:00.000Z' },

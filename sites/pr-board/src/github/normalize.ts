@@ -63,7 +63,7 @@ function clip(body: string): { body: string; truncated: boolean } {
   return { body: cut.trimEnd() + '…', truncated: true };
 }
 
-// Check links come from third-party integrations, so only https ones reach a link on the page (SEC-3).
+// Check links come from third-party integrations, so only https ones reach a link on the page.
 function httpsUrl(url: string | null | undefined): string | null {
   return url && /^https:\/\//i.test(url) ? url : null;
 }
@@ -90,7 +90,7 @@ export function normalizeLabel(label: RawLabel): Label {
   };
 }
 
-// The first project that sets a field gives its value (DATA-25).
+// The first project that sets a field gives its value.
 function projectFields(items: RawProjectItem[]): Pick<Issue, 'priority' | 'estimate' | 'sprint'> {
   const estimate = items.map((item) => item.estimate).find((value) => value && typeof value.number === 'number');
   return {

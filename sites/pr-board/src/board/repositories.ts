@@ -1,5 +1,5 @@
-// Which repositories the board shows, asks for, and loads, from the data, the address, and the repository groups
-// (DATA-18, DATA-22, DATA-23), and what the empty table says. Pure, so App only wires it up.
+// Which repositories the board shows, asks for, and loads, from the data, the address, and the repository groups,
+// and what the empty table says. Pure, so App only wires it up.
 
 import { sameName } from '../names.ts';
 import { MAX_REPOSITORIES } from '../repository.ts';
@@ -21,9 +21,9 @@ export interface RepositoryInput {
   // repos in the address.
   linkRepos: string[];
   groups: RepoGroup[];
-  // groups in the address (FILTER-17).
+  // groups in the address.
   viewGroups: string[] | null;
-  // No snapshot and nothing loaded yet (DATA-23).
+  // No snapshot and nothing loaded yet.
   notLoaded: boolean;
 }
 
@@ -74,14 +74,14 @@ export function loadTargets(plan: RepositoryPlan, reportRepos: string[], buildRe
 const WHERE = { snapshot: 'not in the snapshot', live: 'not in the live data', none: 'not loaded yet' };
 
 // The banner for requested repositories that the page has no data for; only Refresh can load them. 'none' is a page
-// without a snapshot before its first load (DATA-23).
+// without a snapshot before its first load.
 export function missingReposMessage(missing: string[], hasToken: boolean, source: keyof typeof WHERE): string {
   const one = missing.length === 1;
   const action = (hasToken ? 'Refresh' : 'Add a GitHub token in Settings, then Refresh') + ' loads ' + (one ? 'it' : 'them') + '.';
   return missing.join(', ') + (one ? ' is ' : ' are ') + WHERE[source] + '. ' + action;
 }
 
-// What the table body says when it has no rows (TABLE-19, TABLE-20, DATA-23).
+// What the table body says when it has no rows.
 export type TableMessageKind = 'loading' | 'no-repos' | 'no-groups' | 'not-loaded' | 'no-match';
 
 export function emptyTableKind({ loading, notLoaded, failed, plan }: {

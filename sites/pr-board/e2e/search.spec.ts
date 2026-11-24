@@ -17,19 +17,19 @@ async function expectAll(page: Page, check: (row: Element) => boolean) {
 }
 
 test.describe('search', () => {
-  test('FILTER-8: words match the row, without regard to case, and every word must match', async ({ page }) => {
+  test('words match the row, without regard to case, and every word must match', async ({ page }) => {
     await search(page, 'BREADCRUMBS show');
     await expectAll(page, (tr) => /breadcrumbs/i.test(tr.textContent!) && /show/i.test(tr.textContent!));
   });
 
-  test('FILTER-8: an issue number finds its PR, with or without #', async ({ page }) => {
+  test('an issue number finds its PR, with or without #', async ({ page }) => {
     for (const text of ['#400', '400']) {
       await search(page, text);
       await expectAll(page, (tr) => tr.querySelector('.issue-number')?.textContent === '#400');
     }
   });
 
-  test('FILTER-8: a leading minus excludes, and quotes keep spaces', async ({ page }) => {
+  test('a leading minus excludes, and quotes keep spaces', async ({ page }) => {
     await search(page, '-is:draft "good first issue"');
     await expectAll(page, (tr) => !tr.querySelector('.chip.draft')
       && [...tr.querySelectorAll('td.c-title .label-chip')].some((c) => c.textContent === 'good first issue'));
@@ -56,14 +56,14 @@ test.describe('search', () => {
     ['no:assignee', (tr) => tr.querySelector('td:nth-child(9)')!.textContent === 'Unassigned'],
   ];
   for (const [text, check] of QUALIFIERS) {
-    test(`FILTER-9: ${text} keeps only matching PRs`, async ({ page }) => {
+    test(`${text} keeps only matching PRs`, async ({ page }) => {
       await search(page, text);
       const count = await expectAll(page, check);
       expect(count).toBeLessThan(36);
     });
   }
 
-  test('FILTER-9: reviewer: and area: narrow the list', async ({ page }) => {
+  test('reviewer: and area: narrow the list', async ({ page }) => {
     for (const text of ['reviewer:chen-li', 'area:be', 'area:fe', 'area:other']) {
       await search(page, text);
       const count = await rows(page).locator('td.c-num').count();
@@ -72,14 +72,14 @@ test.describe('search', () => {
     }
   });
 
-  test('FILTER-10: a qualifier being typed filters nothing, and an unknown one is a plain word', async ({ page }) => {
+  test('a qualifier being typed filters nothing, and an unknown one is a plain word', async ({ page }) => {
     await search(page, 'label:');
     await expect(rows(page)).toHaveCount(36);
     await search(page, 'colour:blue');
     await expect(page.getByText('No pull requests match this view')).toBeVisible();
   });
 
-  test('FILTER-11: a label chip toggles its filter whatever the case, and highlights while active', async ({ page }) => {
+  test('a label chip toggles its filter whatever the case, and highlights while active', async ({ page }) => {
     await search(page, 'label:BUG -is:draft');
     const chip = rows(page).first().locator('.label-chip', { hasText: 'bug' });
     await expect(chip).toHaveAttribute('aria-pressed', 'true');
@@ -89,13 +89,13 @@ test.describe('search', () => {
     expect(query(page).q).toBe('-is:draft label:bug');
   });
 
-  test('FILTER-11: a label with spaces is added quoted', async ({ page }) => {
+  test('a label with spaces is added quoted', async ({ page }) => {
     await search(page, '');
     await rows(page).locator('.label-chip', { hasText: 'good first issue' }).first().click();
     expect(query(page).q).toBe('label:"good first issue"');
   });
 
-  test('FILTER-12: the ? button lists the syntax, and an example fills the search', async ({ page }) => {
+  test('the ? button lists the syntax, and an example fills the search', async ({ page }) => {
     await openBoard(page, { report: 'typical' });
     await page.getByRole('button', { name: 'Search syntax' }).click();
     const help = page.getByRole('dialog', { name: 'Search syntax' });
@@ -105,7 +105,7 @@ test.describe('search', () => {
     await expect(help).toHaveCount(0);
   });
 
-  test('FILTER-13: the whole view survives a reload, and unknown values fall back', async ({ page }) => {
+  test('the whole view survives a reload, and unknown values fall back', async ({ page }) => {
     await openBoard(page, { report: 'typical', query: 'q=fix&authors=all&draft=drafts&area=fe&quick=ci&sort=title&dir=asc' });
     await page.reload();
     await expect(page.locator('#pr-search')).toHaveValue('fix');

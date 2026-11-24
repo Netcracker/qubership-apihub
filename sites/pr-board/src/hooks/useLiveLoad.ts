@@ -6,7 +6,7 @@ import type { FetchOptions } from '../github/graphql.ts';
 import { repositoryName } from '../repository.ts';
 import type { Report } from '../types.ts';
 
-// A live load from GitHub: whether one runs, what it is doing (DATA-27), and why the last one failed. A newer load,
+// A live load from GitHub: whether one runs, what it is doing, and why the last one failed. A newer load,
 // such as one after a token is saved mid-load, takes over: the older one stops reading, and its results, error, and
 // status are dropped. lastAttempt is when the last load ended, so the next automatic one waits a whole interval.
 export function useLiveLoad() {

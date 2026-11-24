@@ -5,10 +5,10 @@ import type { Actor } from '../types.ts';
 // Relative luminance above which a label background needs dark text.
 const LIGHT_LABEL_LUMINANCE = 0.45;
 
-// Also the unit of the live load interval (SET-22).
+// Also the unit of the live load interval.
 export const MINUTE_MS = 60 * 1000;
 
-// The header names up to this many repositories, then "+N more" (TABLE-27).
+// The header names up to this many repositories, then "+N more".
 export const HEADER_REPOSITORIES = 2;
 
 const nameOf = (repo: string) => repo.slice(repo.indexOf('/') + 1);

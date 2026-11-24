@@ -1,4 +1,4 @@
-// Repository groups (SET-19, FILTER-17): named lists of repositories defined in Settings. The Repositories menu checks
+// Repository groups: named lists of repositories defined in Settings. The Repositories menu checks
 // groups to show only the rows of their repositories; the data itself does not change.
 
 import { checkRepositoryList } from '../repository.ts';
@@ -56,13 +56,13 @@ export function groupsToText(groups: RepoGroup[]): string {
 }
 
 // Every repository of the groups, once, in the order the groups list them. The board loads those of the checked
-// groups when the address names no repositories (DATA-18).
+// groups when the address names no repositories.
 export function groupRepositories(groups: RepoGroup[]): string[] {
   return uniqueNames(groups.flatMap((group) => group.repos));
 }
 
 // The repositories the checked entries load: those of the checked groups, and for Ungrouped those of the data that
-// are in no group (DATA-18).
+// are in no group.
 export function checkedRepositories(groups: RepoGroup[], checked: string[], dataRepos: string[]): string[] {
   const grouped = inAnyGroup(groups);
   const ungrouped = checked.includes(UNGROUPED) ? dataRepos.filter((repo) => !grouped.has(repo.toLowerCase())) : [];
@@ -127,7 +127,7 @@ export function groupCounts(groups: RepoGroup[], options: string[], dataRepos: s
 
 export const GROUP_COLORS = 6;
 
-// The color of a group, by its place in Settings: the six tints in turn (TABLE-31).
+// The color of a group, by its place in Settings: the six tints in turn.
 export function groupColor(groups: RepoGroup[], name: string): number | null {
   const index = groups.findIndex((group) => group.name === name);
   return index < 0 ? null : index % GROUP_COLORS;

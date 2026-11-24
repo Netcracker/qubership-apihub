@@ -35,7 +35,7 @@ export const COLUMNS: Column[] = [
   { id: 'attention', sort: 'attention', label: 'Attention', cls: 'c-attn', width: 104, hint: 'Click an icon to see why the PR needs attention' },
 ];
 export const DEFAULT_WIDTHS: Widths = Object.fromEntries(COLUMNS.map((c) => [c.id, c.width]));
-// The Review column as a list of reviewers (TABLE-30) starts wide enough for an avatar, a login, and an icon.
+// The Review column as a list of reviewers starts wide enough for an avatar, a login, and an icon.
 const REVIEWERS_LIST_PX = 180;
 export const REVIEWERS_LIST_WIDTHS: Widths = { ...DEFAULT_WIDTHS, review: REVIEWERS_LIST_PX };
 
@@ -45,7 +45,7 @@ export const FLEX_COLUMNS = ['title', 'comment'];
 const DEFAULT_ORDER = COLUMNS.map((column) => column.id);
 const isColumnId = (id: string) => DEFAULT_ORDER.includes(id);
 
-// Every column id once: the known ones of the order given, then the rest in the default order (SET-24). An id from a
+// Every column id once: the known ones of the order given, then the rest in the default order. An id from a
 // newer version is dropped, and a column added later goes where it is by default.
 export function completeOrder(order: string[]): string[] {
   const known = [...new Set(order.filter(isColumnId))];

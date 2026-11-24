@@ -1,6 +1,6 @@
-// Screenshots of the visual states, compared with separate Windows and Linux baselines.
-// Run them with `pnpm run test:screenshots`; after an intended change, `pnpm run test:screenshots:update` and review
-// the new images before committing them. CI checks Linux baselines in the pinned Playwright container.
+// Screenshots of the visual states, compared with Linux baselines in the pinned container.
+// Run them with `pnpm run screenshot-test`; after an intended change, `pnpm run regenerate-screenshots` and review
+// the new images before committing them.
 
 import type { Locator, Page } from '@playwright/test';
 import { ALL, expect, firstVisit, openBoard, rows, test } from './helpers.ts';
@@ -26,7 +26,7 @@ async function settle(page: Page) {
 
 test.describe('screenshots', () => {
   for (const theme of ['light', 'dark'] as const) {
-    test(`TABLE-4 TABLE-23: table borders in a short list (${theme})`, async ({ page }) => {
+    test(`table borders in a short list (${theme})`, async ({ page }) => {
       await withSettings(page, { theme });
       await onlyCase(page, 'experimental GraphQL schema diff');
       await settle(page);
@@ -34,7 +34,7 @@ test.describe('screenshots', () => {
     });
 
     for (const density of ['comfortable', 'compact'] as const) {
-      test(`QUAL-6 SET-15: the board in the ${theme} theme, ${density} rows`, async ({ page }) => {
+      test(`the board in the ${theme} theme, ${density} rows`, async ({ page }) => {
         await withSettings(page, { theme, density });
         await openBoard(page, { report: 'typical', query: ALL });
         await settle(page);
@@ -43,13 +43,13 @@ test.describe('screenshots', () => {
     }
   }
 
-  test('TABLE-30 DATA-26: the Review column as a list of reviewers, with the viewer at the top right', async ({ page }) => {
+  test('the Review column as a list of reviewers, with the viewer at the top right', async ({ page }) => {
     await withSettings(page, { reviewColumn: 'list' });
     await page.addInitScript(() => localStorage.setItem('apihub-pr-board.token', 'mock-token'));
     await openBoard(page, { report: 'corner', refresh: 'ok', query: ALL });
     await page.getByRole('button', { name: 'Refresh', exact: true }).click();
     await expect(page.locator('.viewer-badge')).toBeVisible();
-    // The load summary leaves the corner after a few seconds (DATA-27).
+    // The load summary leaves the corner after a few seconds.
     await expect(page.locator('.load-status')).toHaveCount(0, { timeout: 8000 });
     // The PRs that wait for the viewer: one asked again, one with a crowd of reviewers, and a single request.
     await page.getByRole('searchbox').fill('review:requested');
@@ -60,7 +60,7 @@ test.describe('screenshots', () => {
     await expect(page).toHaveScreenshot('board-reviewers-list.png');
   });
 
-  test('SET-21: the first-visit card that offers the wizard, over the board', async ({ page }) => {
+  test('the first-visit card that offers the wizard, over the board', async ({ page }) => {
     await firstVisit(page);
     await openBoard(page, { report: 'typical', query: ALL });
     await expect(page.getByRole('complementary', { name: 'New here?' })).toBeVisible();
@@ -68,7 +68,7 @@ test.describe('screenshots', () => {
     await expect(page).toHaveScreenshot('state-first-visit.png');
   });
 
-  test('SET-21 SET-23 SET-25: the setup wizard with a picture for every theme, the Reviewers order step, and the Labels step', async ({ page }) => {
+  test('the setup wizard with a picture for every theme, the Reviewers order step, and the Labels step', async ({ page }) => {
     await firstVisit(page);
     await openBoard(page, { report: 'typical', query: ALL });
     await page.getByRole('button', { name: 'Take the tour' }).click();
@@ -83,34 +83,34 @@ test.describe('screenshots', () => {
     await expect(page.getByRole('dialog', { name: 'Set up your board' })).toHaveScreenshot('wizard-labels.png');
   });
 
-  test('TABLE-26 TABLE-27: two repositories add the Repository column', async ({ page }) => {
+  test('two repositories add the Repository column', async ({ page }) => {
     await openBoard(page, { report: 'two-repos', query: ALL + '&sort=repo&dir=asc' });
     await settle(page);
     await expect(page).toHaveScreenshot('board-two-repos.png');
   });
 
-  test('PANEL-3: the failed checks popover', async ({ page }) => {
+  test('the failed checks popover', async ({ page }) => {
     const row = await onlyCase(page, 'new package overview layout');
     await row.locator('.ci-wrap > button').click();
     await settle(page);
     await expect(page.getByRole('dialog', { name: /failed checks on PR/ })).toHaveScreenshot('popover-checks.png');
   });
 
-  test('PANEL-6: the reviewers popover', async ({ page }) => {
+  test('the reviewers popover', async ({ page }) => {
     const row = await onlyCase(page, 'remember the last opened package tab');
     await row.locator('.review-wrap > button').click();
     await settle(page);
     await expect(page.getByRole('dialog', { name: /Reviewers of PR/ })).toHaveScreenshot('popover-reviewers.png');
   });
 
-  test('PANEL-2: the attention popover', async ({ page }) => {
+  test('the attention popover', async ({ page }) => {
     const row = await onlyCase(page, 'experimental GraphQL schema diff');
     await row.locator('.attn-icon').click();
     await settle(page);
     await expect(page.getByRole('dialog', { name: /needs attention/ })).toHaveScreenshot('popover-attention.png');
   });
 
-  test('PANEL-7 PANEL-8 FILTER-12: the rules, data source, and search syntax popovers', async ({ page }) => {
+  test('the rules, data source, and search syntax popovers', async ({ page }) => {
     await openBoard(page, { report: 'typical' });
     await settle(page);
     await page.getByRole('button', { name: 'Rules', exact: true }).click();
@@ -121,14 +121,14 @@ test.describe('screenshots', () => {
     await expect(page.getByRole('dialog', { name: 'Search syntax' })).toHaveScreenshot('popover-search.png');
   });
 
-  test('FILTER-3: the authors menu', async ({ page }) => {
+  test('the authors menu', async ({ page }) => {
     await openBoard(page, { report: 'typical' });
     await settle(page);
     await page.getByRole('button', { name: /^Authors:/ }).click();
     await expect(page.getByRole('group', { name: 'Authors' })).toHaveScreenshot('menu-authors.png');
   });
 
-  test('NOTE-1 NOTE-9: the notes panel with what was asked at the standup', async ({ page }) => {
+  test('the notes panel with what was asked at the standup', async ({ page }) => {
     const note = '## Standup\n\n- **Asked:** split the parser change from the UI change\n- **Promised:** a new PR by Friday\n\n'
       + '- [x] Rebased on main\n- [ ] Tests for the empty rule';
     await page.addInitScript(([key, value]) => localStorage.setItem(key, value),
@@ -140,7 +140,7 @@ test.describe('screenshots', () => {
     await expect(page).toHaveScreenshot('panel-notes.png');
   });
 
-  test('PANEL-9 PANEL-10: the comments panel', async ({ page }) => {
+  test('the comments panel', async ({ page }) => {
     const row = await onlyCase(page, 'import packages from an OpenAPI registry');
     await row.locator('.comment-preview').click();
     const panel = page.getByRole('dialog', { name: /^Comments on PR/ });
@@ -149,7 +149,7 @@ test.describe('screenshots', () => {
     await expect(page).toHaveScreenshot('panel-comments.png');
   });
 
-  test('SET-1: the settings panel', async ({ page }) => {
+  test('the settings panel', async ({ page }) => {
     await openBoard(page, { report: 'typical' });
     await settle(page);
     await page.getByRole('button', { name: /^Settings/ }).click();
@@ -157,7 +157,7 @@ test.describe('screenshots', () => {
   });
 
   for (const theme of ['light', 'dark'] as const) {
-    test(`TABLE-31 FILTER-17: repository names tinted by group, with the Repositories menu open, ${theme} theme`, async ({ page }) => {
+    test(`repository names tinted by group, with the Repositories menu open, ${theme} theme`, async ({ page }) => {
       await withSettings(page, { theme });
       await openBoard(page, { report: 'two-repos', query: ALL + '&sort=repo&dir=asc&repogroups=Gadgets:acme/gadgets;Widgets:acme/widgets' });
       await page.getByRole('button', { name: /^Repositories:/ }).click();
@@ -166,32 +166,32 @@ test.describe('screenshots', () => {
     });
   }
 
-  test('TABLE-20: no PR matches the view', async ({ page }) => {
+  test('no PR matches the view', async ({ page }) => {
     await openBoard(page, { report: 'typical', query: 'q=nothing-matches-this' });
     await settle(page);
     await expect(page).toHaveScreenshot('state-empty.png');
   });
 
-  test('DATA-16 DATA-23: no snapshot and no repositories, as the published page opens without a link', async ({ page }) => {
+  test('no snapshot and no repositories, as the published page opens without a link', async ({ page }) => {
     await openBoard(page, { report: 'missing' });
     await settle(page);
     await expect(page).toHaveScreenshot('state-no-repos.png');
   });
 
-  test('DATA-16: prs.json is broken', async ({ page }) => {
+  test('prs.json is broken', async ({ page }) => {
     await openBoard(page, { report: 'broken' });
     await settle(page);
     await expect(page).toHaveScreenshot('state-broken.png');
   });
 
-  test('TABLE-21: a narrow window scrolls the whole page', async ({ page }) => {
+  test('a narrow window scrolls the whole page', async ({ page }) => {
     await page.setViewportSize({ width: 640, height: 800 });
     await openBoard(page, { report: 'typical', query: ALL });
     await settle(page);
     await expect(page).toHaveScreenshot('board-narrow.png');
   });
 
-  test('TABLE-22 SET-8: hidden columns leave the table filling the window', async ({ page }) => {
+  test('hidden columns leave the table filling the window', async ({ page }) => {
     await withSettings(page, { hiddenColumns: ['ci', 'review', 'merge', 'assignee', 'comment'] });
     await openBoard(page, { report: 'typical', query: ALL });
     await settle(page);

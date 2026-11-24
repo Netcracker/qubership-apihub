@@ -15,7 +15,7 @@ interface Choice {
   preview: ReactNode;
 }
 
-// Walks through the look of the board with a picture for every choice (SET-21). Each choice applies at once, so the
+// Walks through the look of the board with a picture for every choice. Each choice applies at once, so the
 // board behind the dialog changes with it.
 export function SetupWizard({ settings, onChange, onClose }: { settings: Settings; onChange: (settings: Settings) => void; onClose: () => void }) {
   const [step, setStep] = useState(0);

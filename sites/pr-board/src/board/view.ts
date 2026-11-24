@@ -20,7 +20,7 @@ export const QUICK: QuickFilter[] = [
   { id: 'review', label: 'Without approval', tone: 'warn', test: (pr) => pr.review !== 'approved' },
   { id: 'conflicts', label: 'Merge conflicts', tone: 'bad', test: (pr) => pr.mergeable === 'conflicts' },
   { id: 'attention', label: 'Need attention', tone: 'bad', test: (pr) => pr.attention.length > 0 },
-  // Shown only with a known viewer (FILTER-18).
+  // Shown only with a known viewer.
   { id: 'mine', label: 'Review requested', tone: 'accent', test: (pr) => pr.myReview !== null },
 ];
 
@@ -52,8 +52,8 @@ export const AREA_OPTIONS: [AreaFilter, string][] = [['all', 'All'], ...AREAS.ma
 export const DRAFT_OPTIONS: [DraftFilter, string][] = [['all', 'All'], ['ready', 'Ready for review'], ['draft', 'Drafts']];
 
 // Authors: null shows people, presets select a category or the viewer, and a list names individual logins.
-export type AuthorGroupId = 'humans' | 'service' | 'dependabot' | 'other-bots';
-export const AUTHOR_GROUP_IDS: AuthorGroupId[] = ['humans', 'service', 'dependabot', 'other-bots'];
+export type AuthorGroupId = 'humans' | 'service' | 'dependabot' | 'renovate' | 'other-bots';
+export const AUTHOR_GROUP_IDS: AuthorGroupId[] = ['humans', 'service', 'dependabot', 'renovate', 'other-bots'];
 export type AuthorsFilter = null | 'all' | 'bots' | 'me' | string[] | { groups: AuthorGroupId[] };
 
 export interface View {
@@ -62,9 +62,9 @@ export interface View {
   draft: DraftFilter;
   area: AreaFilter;
   quick: string[];
-  // Priority names from GitHub Projects, and 'none' for PRs without one (FILTER-16); empty shows every PR.
+  // Priority names from GitHub Projects, and 'none' for PRs without one; empty shows every PR.
   priority: string[];
-  // Checked repository groups (FILTER-17); null keeps the default groups, and an empty list checks none.
+  // Checked repository groups; null keeps the default groups, and an empty list checks none.
   groups: string[] | null;
   sort: SortKey;
   dir: SortDir;
@@ -72,7 +72,7 @@ export interface View {
 
 export const NO_PRIORITY = 'none';
 const MAX_PRIORITIES = 20;
-// The groups and the Ungrouped entry (FILTER-17).
+// The groups and the Ungrouped entry.
 const MAX_GROUP_ENTRIES = MAX_GROUPS + 1;
 const AUTHOR_PRESETS = ['all', 'bots', 'me'];
 
@@ -164,12 +164,12 @@ export function matchesPriority(pr: DerivedPullRequest, selected: string[]): boo
   return own.length ? own.some((name) => wanted.includes(name)) : wanted.includes(NO_PRIORITY);
 }
 
-// The number of PRs whose linked issues have no priority, for No priority in the menu (FILTER-16).
+// The number of PRs whose linked issues have no priority, for No priority in the menu.
 export function countWithoutPriority(prs: DerivedPullRequest[]): number {
   return prs.filter((pr) => !prioritiesOf(pr).length).length;
 }
 
-// Every priority on the board with its number of PRs, in the order they first appear (FILTER-16).
+// Every priority on the board with its number of PRs, in the order they first appear.
 export function collectPriorities(prs: DerivedPullRequest[]): { name: string; count: number }[] {
   const counts = new Map<string, { name: string; count: number }>();
   for (const pr of prs) {

@@ -16,7 +16,7 @@ import type { RawPullRequest, RawResponse } from './raw.ts';
 
 export const GRAPHQL_URL = 'https://api.github.com/graphql';
 
-// What one repository's read is doing, for the loading status (DATA-27).
+// What one repository's read is doing, for the loading status.
 export interface RepositoryProgress {
   repo: string;
   status: 'reading' | 'done' | 'unreadable';
@@ -32,7 +32,7 @@ export interface FetchOptions {
   fetchImpl?: Fetch;
   endpoint?: string;
   onProgress?: (event: RepositoryProgress) => void;
-  // Reads the token owner (DATA-26). A snapshot leaves it out: the workflow's token is not the viewer's.
+  // Reads the token owner. A snapshot leaves it out: the workflow's token is not the viewer's.
   withViewer?: boolean;
   // Stops the reads of a load that a newer one replaced.
   signal?: AbortSignal;

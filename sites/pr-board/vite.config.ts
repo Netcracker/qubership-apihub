@@ -7,7 +7,7 @@ import { resolveBuildDefaults } from './src/build-defaults.ts';
 
 export default defineConfig(({ command, mode }) => {
   // Builds and live mode may name real repositories in PR_BOARD_REPO, as defaults; without it the page takes them from
-  // the link or Settings, like the published page (DATA-1). Mock data is fictional, so the dev server shows the
+  // the link or Settings, like the published page. Mock data is fictional, so the dev server shows the
   // fictional repository whatever the variable says.
   const live = mode === LIVE_MODE;
   const mock = command === 'serve' && !live;

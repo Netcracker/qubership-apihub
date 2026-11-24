@@ -1,5 +1,5 @@
 // Escape closes only the innermost open layer: a menu inside the settings panel, or a popover inside a dialog, closes
-// before the layer around it (QUAL-3). Layers register in the order they open.
+// before the layer around it. Layers register in the order they open.
 
 const layers: (() => void)[] = [];
 

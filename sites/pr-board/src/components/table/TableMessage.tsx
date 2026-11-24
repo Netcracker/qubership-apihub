@@ -8,7 +8,7 @@ export function TableMessage({ kind, colSpan, onResetView, progress }: {
   kind: TableMessageKind;
   colSpan: number;
   onResetView: () => void;
-  // What a live load is doing, in place of the plain loading line (DATA-27).
+  // What a live load is doing, in place of the plain loading line.
   progress?: ReactNode;
 }) {
   return (

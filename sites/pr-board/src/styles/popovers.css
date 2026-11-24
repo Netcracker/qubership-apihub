@@ -1,6 +1,6 @@
 /* Popovers and the comments panel. */
 .popover {
-  /* --popover-room is the height left on the side it opens to (PANEL-1); a popover with its own cap takes the smaller. */
+  /* --popover-room is the height left on the side it opens to; a popover with its own cap takes the smaller. */
   position: fixed;
   z-index: 40;
   max-width: calc(100vw - 32px);

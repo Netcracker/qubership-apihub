@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useModal } from '../../hooks/useModal.ts';
 import { SETTINGS_BUTTON_ID, TOKEN_HELP_URL } from '../common/ids.ts';
 
-// Explains how to create a token and takes it (SET-18). There is no <form>, so browsers do not offer to save the token
+// Explains how to create a token and takes it. There is no <form>, so browsers do not offer to save the token
 // as a password and sync it outside this browser. A click outside does not close it, as with the setup wizard: a stray
 // click would count as Not now and keep it from opening again until a reload.
 export function TokenDialog({ onSave, onClose }: { onSave: (token: string) => void; onClose: () => void }) {

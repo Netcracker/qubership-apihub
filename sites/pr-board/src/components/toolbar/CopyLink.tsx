@@ -19,7 +19,7 @@ export function CopyLink() {
     navigator.clipboard.writeText(window.location.href).then(() => setState('copied'), () => setState('failed'));
   };
   const label = state === 'copied' ? 'Link copied' : state === 'failed' ? 'Copy the address bar instead' : 'Copy link to this view';
-  // A changed button label is not reliably read out, so the outcome is also said in a status region (FILTER-7).
+  // A changed button label is not reliably read out, so the outcome is also said in a status region.
   return (
     <>
       <button type="button" className="btn ghost" onClick={copy}>{label}</button>

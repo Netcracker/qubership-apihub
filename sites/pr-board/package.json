@@ -21,14 +21,14 @@
       "test": {
         "executor": "nx:run-commands",
         "options": {
-          "command": "pnpm run typecheck && pnpm run test:coverage && pnpm run test:requirements",
+          "command": "pnpm run typecheck && pnpm run test:coverage",
           "cwd": "sites/pr-board"
         }
       },
       "test:e2e": {
         "cache": true
       },
-      "test:linux": {
+      "screenshot-test": {
         "cache": false
       }
     }
@@ -49,10 +49,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "test:e2e": "playwright test --project=e2e",
-    "test:linux": "node scripts/linux-checks.ts",
-    "test:screenshots": "playwright test --project=screenshots",
-    "test:screenshots:update": "playwright test --project=screenshots --update-snapshots",
-    "test:requirements": "node scripts/check-requirements.ts",
+    "screenshot-test": "node scripts/linux-checks.ts --project=screenshots",
+    "regenerate-screenshots": "node scripts/linux-checks.ts --project=screenshots --update-snapshots",
     "test:coverage": "node --test --experimental-test-coverage --test-coverage-include=\"src/**/*.ts\" --test-coverage-lines=95 --test-coverage-branches=90 --test-coverage-functions=90"
   },
   "dependencies": {

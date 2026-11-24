@@ -15,7 +15,7 @@ function pr(fields: Record<string, unknown> = {}): PullRequest {
   } as unknown as PullRequest;
 }
 
-test('RULE-11: areas come from module labels, the title scope, [FE]/[BE] tags, and frontend/backend paths', () => {
+test('areas come from module labels, the title scope, [FE]/[BE] tags, and frontend/backend paths', () => {
   assert.deepEqual(areasOf(pr({ labels: [{ name: 'module:portal-backend' }] })), ['be']);
   assert.deepEqual(areasOf(pr({ title: 'fix(api-doc-viewer): x' })), ['fe']);
   assert.deepEqual(areasOf(pr({ title: 'fix: [BE] x', issues: [{ title: '[FE] y' }] })), ['be', 'fe']);
@@ -23,13 +23,13 @@ test('RULE-11: areas come from module labels, the title scope, [FE]/[BE] tags, a
   assert.deepEqual(areasOf(pr({ title: 'chore: deps: bump x in /', labels: [{ name: 'module:ci' }] })), []);
 });
 
-test('RULE-11: a Dependabot directory at the root counts, with or without a path below it', () => {
+test('a Dependabot directory at the root counts, with or without a path below it', () => {
   assert.deepEqual(areasOf(pr({ title: 'chore(deps): bump vite from 8.1 to 8.2 in /frontend' })), ['fe']);
   assert.deepEqual(areasOf(pr({ title: 'chore(deps): bump go in /backend in the go group' })), ['be']);
   assert.deepEqual(areasOf(pr({ title: 'chore(deps): bump x in /frontends' })), []);
 });
 
-test('RULE-11 SET-6: each detection signal is independent, literal, and can be disabled', () => {
+test('each detection signal is independent, literal, and can be disabled', () => {
   const empty = { labels: [], scopes: [], tags: [], directories: [], repositories: [] };
   const cases = [
     ['labels', ['custom label'], { labels: [{ name: 'CUSTOM LABEL' }] }],
@@ -47,7 +47,7 @@ test('RULE-11 SET-6: each detection signal is independent, literal, and can be d
   assert.deepEqual(areasOf(pr({ title: 'fix: /customized/path' }), criteria), []);
 });
 
-test('SET-6 FILTER-14: only semantic changes are shared and empty lists survive normalization', () => {
+test('only semantic changes are shared and empty lists survive normalization', () => {
   assert.equal(areaCriteriaQuery(DEFAULT_AREA_CRITERIA), '');
   const criteria = parseAreaCriteria({ fe: { labels: [' New label ', 'NEW LABEL'], scopes: [], tags: [] } });
   assert.deepEqual(criteria.fe.labels, ['new label']);

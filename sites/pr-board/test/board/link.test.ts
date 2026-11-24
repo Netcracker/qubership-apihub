@@ -7,7 +7,7 @@ import { DEFAULT_SETTINGS } from '../../src/settings.ts';
 import { OFFICIAL_REPO_GROUPS } from '../../src/defaults.ts';
 import { DEFAULT_AREA_CRITERIA, parseAreaCriteria } from '../../src/model/areas.ts';
 
-test('FILTER-14: repos and bots come from the address, and invalid entries are dropped', () => {
+test('repos and bots come from the address, and invalid entries are dropped', () => {
   assert.deepEqual(parseLinkSettings(''), { repos: [], bots: [], hidden: undefined });
   assert.deepEqual(parseLinkSettings('?repos=acme/widgets,../x,ACME/Widgets,,acme/gadgets,gadgets&bots=ci-bot,,release-bot,ci-bot'), {
     repos: ['acme/widgets', 'acme/gadgets'],
@@ -18,7 +18,7 @@ test('FILTER-14: repos and bots come from the address, and invalid entries are d
   assert.equal(parseLinkSettings('?repos=' + tooMany).repos.length, 40);
 });
 
-test('SET-6 FILTER-14: official defaults keep a clean URL, customized criteria override saved defaults', () => {
+test('official defaults keep a clean URL, customized criteria override saved defaults', () => {
   assert.equal(linkSettingsQuery({ repos: [], bots: [], groups: OFFICIAL_REPO_GROUPS, criteria: DEFAULT_AREA_CRITERIA }), '');
   const criteria = parseAreaCriteria({ be: { labels: [], repositories: ['acme/tools'] }, fe: { tags: [] } });
   const encoded = linkSettingsQuery({ repos: [], bots: [], criteria });
@@ -28,7 +28,7 @@ test('SET-6 FILTER-14: official defaults keep a clean URL, customized criteria o
   assert.equal(parseLinkSettings('?criteria=' + 'x'.repeat(30001)).criteria, undefined);
 });
 
-test('FILTER-14: bots in the address must be GitHub logins, and their number is capped', () => {
+test('bots in the address must be GitHub logins, and their number is capped', () => {
   const bots = parseLinkSettings('?bots=' + encodeURIComponent('ci-bot renovate[bot] -lead trail- a--b <x> ' + 'x'.repeat(40))).bots;
   assert.deepEqual(bots, ['ci-bot', 'renovate[bot]', 'a--b']);
   assert.deepEqual(cleanBots(['ci-bot', 'bad login', 'ok', 'CI-Bot']), ['ci-bot', 'ok']);
@@ -36,7 +36,7 @@ test('FILTER-14: bots in the address must be GitHub logins, and their number is 
   assert.equal(parseLinkSettings('?bots=' + many).bots.length, MAX_BOTS);
 });
 
-test('FILTER-14: the address keeps repos and bots readable, leaves them out when empty, and survives the round trip', () => {
+test('the address keeps repos and bots readable, leaves them out when empty, and survives the round trip', () => {
   assert.equal(linkSettingsQuery({ repos: [], bots: [] }), '');
   assert.equal(linkSettingsQuery({ repos: [], bots: [], hidden: [] }), '');
   const link = { repos: ['acme/widgets', 'acme/gadgets'], bots: ['ci-bot', 'odd login&x'] };
@@ -46,7 +46,7 @@ test('FILTER-14: the address keeps repos and bots readable, leaves them out when
   assert.ok(linkSettingsQuery({ repos: forty, bots: [] }).length < 1600, 'forty repositories still make a usable link');
 });
 
-test('SET-17: extra bots saved in this browser move into the address once', () => {
+test('extra bots saved in this browser move into the address once', () => {
   const stored = { ...DEFAULT_SETTINGS, rules: { ...DEFAULT_SETTINGS.rules, extraBots: ['acme-release-bot'] } };
   const moved = moveStoredBots(stored, { repos: ['acme/widgets'], bots: [] });
   assert.deepEqual(moved.link, { repos: ['acme/widgets'], bots: ['acme-release-bot'] });
@@ -60,7 +60,7 @@ test('SET-17: extra bots saved in this browser move into the address once', () =
   assert.equal(nothing.settings, DEFAULT_SETTINGS);
 });
 
-test('DATA-28 FILTER-14 SET-17: URL bots, including none, take precedence over legacy preferences and build defaults', () => {
+test('URL bots, including none, take precedence over legacy preferences and build defaults', () => {
   const defaults = ['ci-bot', 'deploy-bot'];
   const absent = parseLinkSettings('');
   const inherited = withDefaultBots(absent, defaults);
@@ -79,14 +79,14 @@ test('DATA-28 FILTER-14 SET-17: URL bots, including none, take precedence over l
   assert.deepEqual(withDefaultBots(cleared.link, defaults, true).bots, []);
 });
 
-test('FILTER-14 SET-8: legacy hidden-column links are accepted, and appearance is omitted from new links', () => {
+test('legacy hidden-column links are accepted, and appearance is omitted from new links', () => {
   assert.deepEqual(parseLinkSettings('?hide=ci,nope,assignee,ci').hidden, ['ci', 'assignee']);
   assert.deepEqual(parseLinkSettings('?hide=').hidden, [], 'an empty list shows every column');
   assert.equal(parseLinkSettings('?q=x').hidden, undefined);
   assert.equal(linkSettingsQuery({ repos: ['acme/widgets'], bots: [], hidden: ['ci', 'assignee'] }), 'repos=acme/widgets');
 });
 
-test('SET-8 SET-17: a link with hidden columns wins and is kept; without one, the saved columns go into the address', () => {
+test('a link with hidden columns wins and is kept; without one, the saved columns go into the address', () => {
   const stored = { ...DEFAULT_SETTINGS, hiddenColumns: ['ci'] };
   const fromLink = applyLinkColumns(stored, { repos: [], bots: [], hidden: ['assignee'] });
   assert.deepEqual(fromLink.settings.hiddenColumns, ['assignee']);
@@ -103,7 +103,7 @@ const GROUPS = [
   { name: 'Old', repos: ['acme/gadgets'] },
 ];
 
-test('FILTER-14 SET-19: repository groups travel in the address, readable, and a broken list is ignored', () => {
+test('repository groups travel in the address, readable, and a broken list is ignored', () => {
   const query = linkSettingsQuery({ repos: [], bots: [], groups: GROUPS });
   assert.equal(query, 'repogroups=*Monorepo%20%26%20Co:acme/widgets,acme/tools;Old:acme/gadgets');
   assert.deepEqual(parseLinkSettings('?' + query).groups, GROUPS);
@@ -113,7 +113,7 @@ test('FILTER-14 SET-19: repository groups travel in the address, readable, and a
   assert.equal(linkSettingsQuery({ repos: [], bots: [], groups: [] }), 'repogroups=');
 });
 
-test('SET-19: a link with groups shows them without saving; without one, the saved groups go into the address', () => {
+test('a link with groups shows them without saving; without one, the saved groups go into the address', () => {
   const saved = [GROUPS[1]];
   assert.deepEqual(linkWithGroups({ repos: [], bots: [], groups: GROUPS }, saved).groups, GROUPS);
   assert.deepEqual(linkWithGroups({ repos: [], bots: [] }, saved).groups, saved);
@@ -124,14 +124,14 @@ test('SET-19: a link with groups shows them without saving; without one, the sav
   assert.deepEqual(groupsToSave([...GROUPS], GROUPS, saved), GROUPS, 'an explicit reset saves defaults even when a shared link already shows them');
 });
 
-test('FILTER-14 SET-17: a hide list of only unknown ids keeps the saved columns, and bots moved from storage are cleaned', () => {
+test('a hide list of only unknown ids keeps the saved columns, and bots moved from storage are cleaned', () => {
   assert.equal(parseLinkSettings('?hide=bogus,standup').hidden, undefined);
   assert.deepEqual(parseLinkSettings('?hide=').hidden, []);
   const stored = { ...DEFAULT_SETTINGS, rules: { ...DEFAULT_SETTINGS.rules, extraBots: ['ci-bot', 'CI-Bot', 'not a login', 'release_bot'] } };
   assert.deepEqual(moveStoredBots(stored, { repos: [], bots: [] }).link.bots, ['ci-bot']);
 });
 
-test('FILTER-14 SET-24: legacy column order is accepted, a link with it wins, and new links omit it', () => {
+test('legacy column order is accepted, a link with it wins, and new links omit it', () => {
   const order = parseLinkSettings('?cols=author,title,bogus').order!;
   assert.deepEqual(order.slice(0, 2), ['author', 'title']);
   assert.equal(parseLinkSettings('?cols=bogus').order, undefined);

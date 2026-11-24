@@ -32,5 +32,10 @@ export function authorCases(now: number): FixtureEntry[] {
       closingIssuesReferences: conn([]), projectsV2: conn([{ title: 'Widgets sprint' }]),
       commits: rollup(null), createdAt: ago(1), updatedAt: ago(1),
     }),
+    node('A Renovate PR. Bots are hidden until you select them under Authors.', {
+      title: 'chore: deps: Update dependency vite to ^8.3.6',
+      author: bot('renovate'),
+      assignees: conn([]), closingIssuesReferences: conn([]), createdAt: ago(1), updatedAt: ago(1),
+    }),
   ];
 }

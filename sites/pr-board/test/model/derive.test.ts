@@ -22,7 +22,7 @@ test('derive computes age, ghost authors, and search text', () => {
   assert.ok(result.searchText.includes('#1'));
 });
 
-test('RULE-12: a PR waits for the viewer when they are requested in person, and is re-requested when they reviewed before', () => {
+test('a PR waits for the viewer when they are requested in person, and is re-requested when they reviewed before', () => {
   const base = { author: { login: 'anna-dev', avatarUrl: null, bot: false }, reviewers: [], requestedReviewers: [] };
   const person = (login: string) => ({ login, avatarUrl: null, bot: false, team: false });
   const review = (login: string, state: string) => ({ login, avatarUrl: null, bot: false, state, at: null });

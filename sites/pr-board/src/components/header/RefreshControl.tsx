@@ -13,7 +13,7 @@ export function RefreshControl({ token, setToken, refreshing, onRefresh, onAskTo
   setToken: (value: string) => void;
   refreshing: boolean;
   onRefresh: (token: string) => void;
-  // Refresh without a token asks for one (SET-13).
+  // Refresh without a token asks for one.
   onAskToken: () => void;
   settings: Settings;
   onSettingsChange: (settings: Settings) => void;

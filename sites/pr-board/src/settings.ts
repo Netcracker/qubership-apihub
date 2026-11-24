@@ -18,25 +18,25 @@ export type Theme = 'system' | 'light' | 'dark';
 export type Density = 'comfortable' | 'compact';
 export type ReviewColumn = 'code' | 'list';
 
-// Minutes between live loads (SET-22); 0 turns them off.
+// Minutes between live loads; 0 turns them off.
 export type RefreshMinutes = 0 | 2 | 5 | 10 | 30;
 
 export interface Settings {
   rules: Rules;
   theme: Theme;
   density: Density;
-  // The Review column as a code or as GitHub's Reviewers list (SET-20).
+  // The Review column as a code or as GitHub's Reviewers list.
   reviewColumn: ReviewColumn;
-  // The order of the reviewer groups in the Reviewers list (SET-25).
+  // The order of the reviewer groups in the Reviewers list.
   reviewerOrder: ReviewerGroup[];
   refreshMinutes: RefreshMinutes;
-  // Labels of the PR and its linked issues show in the table (SET-23); search finds them either way.
+  // Labels of the PR and its linked issues show in the table; search finds them either way.
   showLabels: boolean;
   // Ids of columns the viewer turned off.
   hiddenColumns: string[];
-  // Every column id in the viewer's order, or empty for the default order (SET-24).
+  // Every column id in the viewer's order, or empty for the default order.
   columnOrder: string[];
-  // Named lists of repositories for the Repositories menu (SET-19).
+  // Named lists of repositories for the Repositories menu.
   repoGroups: RepoGroup[];
 }
 
@@ -103,7 +103,7 @@ export function parseSettings(value: unknown, defaultGroups: RepoGroup[] = OFFIC
     reviewerOrder: Array.isArray(stored.reviewerOrder) ? completeReviewerOrder(stored.reviewerOrder) : DEFAULT_SETTINGS.reviewerOrder,
     refreshMinutes: pick(stored.refreshMinutes, REFRESH_INTERVALS, DEFAULT_SETTINGS.refreshMinutes),
     showLabels: typeof stored.showLabels === 'boolean' ? stored.showLabels : DEFAULT_SETTINGS.showLabels,
-    // An id no column has any more, such as one from an older version, is dropped (SET-8).
+    // An id no column has any more, such as one from an older version, is dropped.
     hiddenColumns: Array.isArray(stored.hiddenColumns)
       ? [...new Set(stored.hiddenColumns.filter((id): id is string => typeof id === 'string' && COLUMNS.some((column) => column.id === id)))]
       : [],
@@ -112,7 +112,7 @@ export function parseSettings(value: unknown, defaultGroups: RepoGroup[] = OFFIC
   };
 }
 
-// The rules behind the Attention count (SET-10). The area lists only sort PRs into BE and FE, so they are left out.
+// The rules behind the Attention count. The area lists only sort PRs into BE and FE, so they are left out.
 export function rulesAreDefault(rules: Rules, defaultBots: string[] = DEFAULT_RULES.extraBots): boolean {
   const attention = ({ staleDays, checkTitle, requireIssue, extraBots }: Rules) => JSON.stringify([
     staleDays, checkTitle, requireIssue, cleanBots(extraBots).map((login) => login.toLowerCase()).sort(),

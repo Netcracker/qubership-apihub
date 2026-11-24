@@ -46,7 +46,7 @@ async function expectTableBorders(page: Page) {
 
 for (const theme of ['light', 'dark']) {
   for (const density of ['comfortable', 'compact']) {
-    test(`TABLE-4 TABLE-23 QUAL-6 SET-15: all table borders (${theme}, ${density})`, async ({ page }) => {
+    test(`all table borders (${theme}, ${density})`, async ({ page }) => {
       await page.addInitScript((settings) => {
         localStorage.setItem('apihub-pr-board.settings', JSON.stringify(settings));
       }, { theme, density });

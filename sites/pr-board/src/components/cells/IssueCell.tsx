@@ -4,7 +4,7 @@ import type { Issue, PullRequest, Sprint } from '../../types.ts';
 
 const VISIBLE_ISSUE_LABELS = 3;
 
-// The Issue column (TABLE-8): the issues the PR closes (the Development field), each with its type and labels. Without
+// The Issue column: the issues the PR closes (the Development field), each with its type and labels. Without
 // one, the project it was added to instead, or "No issue".
 export function IssueCell({ pr, now, showLabels }: { pr: PullRequest; now: number; showLabels: boolean }) {
   if (pr.issues.length) {
@@ -20,7 +20,7 @@ function sprintDates(sprint: Sprint): string {
   return day(first) + ' – ' + day(last);
 }
 
-// Priority, Estimate, and Sprint from GitHub Projects (TABLE-28); a field that is not set does not show.
+// Priority, Estimate, and Sprint from GitHub Projects; a field that is not set does not show.
 function ProjectFields({ issue, now }: { issue: Issue; now: number }) {
   if (!issue.priority && issue.estimate === null && !issue.sprint) return null;
   const current = isCurrentSprint(issue.sprint, now);

@@ -3,7 +3,7 @@ import type { Notes } from '../board/notes.ts';
 import { pullRequestKey } from '../model/report.ts';
 import type { DerivedPullRequest } from '../types.ts';
 
-// Adds each PR's note text for note: (NOTE-7). A PR whose note did not change keeps the same object, so the memoized
+// Adds each PR's note text for note:. A PR whose note did not change keeps the same object, so the memoized
 // rows of the other PRs do not render again.
 export function useNoteText(prs: DerivedPullRequest[], notes: Notes): DerivedPullRequest[] {
   const cache = useRef(new WeakMap<DerivedPullRequest, DerivedPullRequest>());

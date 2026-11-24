@@ -25,7 +25,7 @@ export function CommentCell({ pr, now }: { pr: DerivedPullRequest; now: number }
   const title = full ? plural(full.length, 'comment') : pr.comments.length > 1 ? 'Last ' + pr.comments.length + ' comments' : 'Last comment';
   return (
     <div className="comment-wrap" ref={ref}>
-      {/* The name starts with what it opens and goes on with what the cell shows (TABLE-11), so nothing visible is hidden
+      {/* The name starts with what it opens and goes on with what the cell shows, so nothing visible is hidden
           from screen readers. */}
       <button type="button" className="comment-preview" aria-expanded={open} onClick={toggle}>
         <span className="sr-only">{'Comments on ' + prName + ': '}</span>

@@ -30,7 +30,7 @@ const ascending = (list: number[]) => list.every((v, i) => i === 0 || list[i - 1
 const descending = (list: number[]) => list.every((v, i) => i === 0 || list[i - 1] >= v);
 
 test.describe('sorting', () => {
-  test('TABLE-18: the default sort puts the most attention reasons first, newest PR first on ties', async ({ page }) => {
+  test('the default sort puts the most attention reasons first, newest PR first on ties', async ({ page }) => {
     await openBoard(page, { report: 'typical', query: ALL });
     const counts = await attentionCounts(page);
     const nums = await numbers(page);
@@ -38,7 +38,7 @@ test.describe('sorting', () => {
     expect(counts.every((c, i) => i === 0 || c !== counts[i - 1] || nums[i - 1] > nums[i])).toBe(true);
   });
 
-  test('TABLE-16 FILTER-13: a header click sorts, a second click reverses, and the URL keeps it', async ({ page }) => {
+  test('a header click sorts, a second click reverses, and the URL keeps it', async ({ page }) => {
     await openBoard(page, { report: 'typical', query: ALL });
     await header(page, '#').click();
     expect(query(page)).toMatchObject({ sort: 'number', dir: 'desc' });
@@ -51,7 +51,7 @@ test.describe('sorting', () => {
     await expect(page.locator('.board > thead > tr > th[aria-sort="ascending"]')).toContainText('#');
   });
 
-  test('TABLE-16: title and author sort A to Z first', async ({ page }) => {
+  test('title and author sort A to Z first', async ({ page }) => {
     await openBoard(page, { report: 'typical', query: ALL });
     await header(page, 'Pull request').click();
     const titles = (await columnTexts(page, '.pr-title > a')).map((t) => t.toLowerCase());
@@ -61,13 +61,13 @@ test.describe('sorting', () => {
     expect(authors).toEqual([...authors].sort());
   });
 
-  test('TABLE-16: Assignee and Last comment are not sortable', async ({ page }) => {
+  test('Assignee and Last comment are not sortable', async ({ page }) => {
     await openBoard(page, { report: 'typical', query: ALL });
     await expect(header(page, 'Assignee')).toHaveCount(0);
     await expect(header(page, 'Last comment')).toHaveCount(0);
   });
 
-  test('TABLE-17: CI, Review, and Conflicts sort by their state order', async ({ page }) => {
+  test('CI, Review, and Conflicts sort by their state order', async ({ page }) => {
     await openBoard(page, { report: 'typical', query: ALL });
     await header(page, 'CI').click();
     await header(page, 'CI').click();
@@ -82,7 +82,7 @@ test.describe('sorting', () => {
     expect(ascending(merges)).toBe(true);
   });
 
-  test('TABLE-17: Age sorts by opening time, the oldest PR first', async ({ page }) => {
+  test('Age sorts by opening time, the oldest PR first', async ({ page }) => {
     await openBoard(page, { report: 'typical', query: ALL });
     await header(page, 'Age · activity').click();
     const days = (await columnTexts(page, '.age')).map((t) => (t === 'today' ? 0 : Number(t.split(' ')[0])));

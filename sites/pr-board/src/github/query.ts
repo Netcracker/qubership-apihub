@@ -11,7 +11,7 @@ export const COMMENTS_FETCHED = 5;
 
 export const AVATAR_SIZE = 48;
 
-// The GitHub Projects fields read from each linked issue (DATA-25), by name.
+// The GitHub Projects fields read from each linked issue, by name.
 export const PROJECT_FIELDS = { priority: 'Priority', estimate: 'Estimate', sprint: 'Sprint' };
 export const PROJECT_ITEMS = 3;
 

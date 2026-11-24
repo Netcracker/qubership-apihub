@@ -3,7 +3,7 @@
 import { CHECKS_PAGE_SIZE } from '../github/query.ts';
 import type { FailedCheck } from '../types.ts';
 
-// How many checks of a commit the query reads (DATA-9), for the popover's notes on what was not read.
+// How many checks of a commit the query reads, for the popover's notes on what was not read.
 export const CHECKS_READ = CHECKS_PAGE_SIZE;
 
 // Aggregate jobs that fail whenever anything else fails; listed last so the real cause comes first.

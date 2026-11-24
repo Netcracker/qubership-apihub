@@ -46,11 +46,11 @@ import { pullRequestKey } from './model/report.ts';
 import { activeLabelFilters, parseQuery, toggleLabelFilter } from './model/search.ts';
 import { parseRepository, repositoryName } from './repository.ts';
 
-// The dev server's mocks (DEV); a production build drops the branch, so the token only ever goes to GitHub (SEC-1).
+// The dev server's mocks (DEV); a production build drops the branch, so the token only ever goes to GitHub.
 const DEV = import.meta.env.DEV ? window.PR_BOARD_DEV || null : null;
 const BUILD_REPOS = REPOSITORIES.map(repositoryName);
 
-// Each set of repositories and token loads once by itself (DATA-23).
+// Each set of repositories and token loads once by itself.
 const loadKey = (names: string[], token: string) => names.join(',').toLowerCase() + '|' + token;
 
 export function App() {
@@ -84,19 +84,19 @@ export function App() {
   const onToggleLabel = useCallback((name: string) => {
     setView((prev) => ({ ...prev, q: toggleLabelFilter(prev.q, name) }));
   }, []);
-  // Each Review layout starts at its own default width (SET-20), so a width dragged for one does not squeeze the other.
+  // Each Review layout starts at its own default width, so a width dragged for one does not squeeze the other.
   const changeSettings = (next: typeof settings) => {
     if (next.reviewColumn !== settings.reviewColumn) resize.onReset('review');
     setSettings(next);
   };
-  // The setup wizard (SET-21). A first visit offers it in a small card, so the board shows first; taking the tour or
+  // The setup wizard. A first visit offers it in a small card, so the board shows first; taking the tour or
   // Not now answers the card for good in this browser.
   const [inviting, setInviting] = useState(() => !readWizardDone());
   const [wizardOpen, setWizardOpen] = useState(false);
   const closeWizard = useCallback(() => { storeWizardDone(); setWizardOpen(false); }, []);
   const startTour = useCallback(() => { storeWizardDone(); setInviting(false); setWizardOpen(true); }, []);
   const dismissInvite = useCallback(() => { storeWizardDone(); setInviting(false); }, []);
-  // The token dialog (SET-18). After Not now, or after the token is forgotten, it does not open by itself again until
+  // The token dialog. After Not now, or after the token is forgotten, it does not open by itself again until
   // the page reloads.
   const [askingToken, setAskingToken] = useState(false);
   const tokenDismissed = useRef(false);
@@ -107,7 +107,7 @@ export function App() {
     setTokenState(value);
   };
 
-  // The load that ran for each set of repositories and token, so the automatic load never repeats one (DATA-23).
+  // The load that ran for each set of repositories and token, so the automatic load never repeats one.
   const autoLoaded = useRef({ key: '', token: '' });
   const refresh = (withToken: string) => {
     if (!('names' in targets)) {
@@ -125,7 +125,7 @@ export function App() {
     });
   };
 
-  // Without a snapshot the page loads live data itself (DATA-23). Fewer repositories than the data holds need no load:
+  // Without a snapshot the page loads live data itself. Fewer repositories than the data holds need no load:
   // their rows are already there, and the next load reads only these.
   useEffect(() => {
     const key = loadKey(wanted, token);
@@ -134,7 +134,7 @@ export function App() {
     autoLoaded.current = { key, token };
     if (!covered) refresh(token);
   });
-  // Live data loads again at the chosen interval while the tab is visible and a load can start (DATA-24, SET-22).
+  // Live data loads again at the chosen interval while the tab is visible and a load can start.
   const autoRefresh = data.source === 'live' && !!token && !refreshing && settings.refreshMinutes > 0 && !problem;
   useAutoRefresh(autoRefresh, lastAttempt, settings.refreshMinutes * MINUTE_MS, () => refresh(token));
   useEffect(() => {
@@ -144,7 +144,7 @@ export function App() {
 
   const viewerActor = data.source === 'live' && token && token === reportToken && report && report.viewer ? report.viewer : null;
   const viewer = viewerActor ? viewerActor.login : '';
-  // Without a known viewer the Review requested filter has nobody to count for: it waits, kept in the address (FILTER-18).
+  // Without a known viewer the Review requested filter has nobody to count for: it waits, kept in the address.
   const activeQuick = useMemo(() => (viewer ? view.quick : view.quick.filter((id) => id !== 'mine')), [viewer, view.quick]);
   const derived = useMemo(() => {
     const shown = new Set(repos.map((repo) => repo.toLowerCase()));
@@ -161,7 +161,7 @@ export function App() {
     const shows = groupFilter(groups, checked);
     return allPrs.filter((pr) => shows(pr.repo));
   }, [allPrs, groups, checked]);
-  // The Repository column shows when the rows the groups let through come from more than one repository (TABLE-26);
+  // The Repository column shows when the rows the groups let through come from more than one repository;
   // the search does not count, so the column does not come and go while typing.
   const rowRepoCount = useMemo(() => new Set(prs.map((pr) => pr.repo.toLowerCase())).size, [prs]);
   const offeredColumns = useMemo(() => boardColumns(rowRepoCount, settings.columnOrder), [rowRepoCount, settings.columnOrder]);

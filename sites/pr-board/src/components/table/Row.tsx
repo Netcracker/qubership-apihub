@@ -21,9 +21,9 @@ export const Row = memo(function Row({ pr, now, columns, repos, showLabels, grou
   columns: Column[];
   // Every repository on the board, so the Repository cell can leave out a shared owner.
   repos: string[];
-  // Whether label chips show (SET-23).
+  // Whether label chips show.
   showLabels: boolean;
-  // The tint of the repository name's group (TABLE-31), or undefined outside any group.
+  // The tint of the repository name's group, or undefined outside any group.
   groupColor?: number;
   activeLabels: Set<string>;
   onToggleLabel: (name: string) => void;
