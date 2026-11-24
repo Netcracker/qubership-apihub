@@ -3,8 +3,8 @@ import KeyboardArrowUpOutlinedIcon from '@mui/icons-material/KeyboardArrowUpOutl
 import { Box, MenuItem, styled } from '@mui/material'
 import { MenuButton } from '@netcracker/qubership-apihub-ui-shared/components/Buttons/MenuButton'
 import { SortIcon } from '@netcracker/qubership-apihub-ui-shared/icons/SortIcon'
-import type { FC } from 'react'
-import { memo, useCallback, useState } from 'react'
+import type { FC, KeyboardEvent } from 'react'
+import { memo, useCallback, useMemo, useState } from 'react'
 import type { VersionListSort, VersionListSortOption } from './version-list-sort'
 import { getVersionListSortKey, isSameVersionListSort, VERSION_LIST_SORT_OPTIONS } from './version-list-sort'
 
@@ -15,6 +15,7 @@ export type VersionSortSelectorProps = Readonly<{
 }>
 
 const MENU_BUTTON_SX = { whiteSpace: 'nowrap' } as const
+const SORT_ICON = <SortIcon />
 
 export const VersionSortSelector: FC<VersionSortSelectorProps> = memo<VersionSortSelectorProps>(({
   value,
@@ -25,18 +26,20 @@ export const VersionSortSelector: FC<VersionSortSelectorProps> = memo<VersionSor
 
   const handleOpen = useCallback(() => setOpen(true), [])
   const handleClose = useCallback(() => setOpen(false), [])
+  const handleKeyDown = useCallback((event: KeyboardEvent) => event.stopPropagation(), [])
+  const icon = useMemo(() => (open
+    ? <KeyboardArrowUpOutlinedIcon fontSize="small" />
+    : <KeyboardArrowDownOutlinedIcon fontSize="small" />), [open])
 
   return (
     // The selector lives inside the version selector menu: keyboard navigation of the sort menu
     // must not bubble up and move focus in the outer menu (the same as in SearchBar).
-    <Box onKeyDown={event => event.stopPropagation()}>
+    <Box onKeyDown={handleKeyDown}>
       <MenuButton
         variant="outlined"
         title={value.label}
-        startIcon={<SortIcon />}
-        icon={open
-          ? <KeyboardArrowUpOutlinedIcon fontSize="small" />
-          : <KeyboardArrowDownOutlinedIcon fontSize="small" />}
+        startIcon={SORT_ICON}
+        icon={icon}
         disabled={disabled}
         onClick={handleOpen}
         onClose={handleClose}
