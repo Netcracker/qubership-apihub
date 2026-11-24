@@ -37,7 +37,7 @@ export const PackagesFilterer: FC<PackagesFiltererProps> = memo<PackagesFilterer
   const isPrivatePage = useIsPrivateMainPage()
   const setSearchParams = useSetSearchParams()
   const [textFilter] = useTextSearchParam()
-  const [viewMode] = useTableMode(TREE_TABLE_MODE)
+  const [viewMode] = useTableMode(hideViewSelector ? FLAT_TABLE_MODE : TREE_TABLE_MODE)
   const viewModeBeforeSearchRef = useRef<TableMode | null>(null)
 
   const [packageObject] = usePackage({ packageKey: rootPackageKey })
@@ -86,8 +86,7 @@ export const PackagesFilterer: FC<PackagesFiltererProps> = memo<PackagesFilterer
         value={textFilter}
         onValueChange={text => {
           if (!text) {
-            // Restore the view mode that was active before the search started
-            setSearchParams({ text: text, view: viewModeBeforeSearchRef.current ?? '' }, { replace: true })
+            setSearchParams({ text: text, view: viewModeBeforeSearchRef.current ?? viewMode }, { replace: true })
             viewModeBeforeSearchRef.current = null
           } else {
             if (viewModeBeforeSearchRef.current === null) {
