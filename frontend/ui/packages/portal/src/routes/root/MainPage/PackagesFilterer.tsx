@@ -1,5 +1,5 @@
 import type { FC } from 'react'
-import React, { memo, useCallback, useMemo, useRef } from 'react'
+import React, { memo, useCallback, useEffect, useMemo, useRef } from 'react'
 import { Box, Button } from '@mui/material'
 import { useTextSearchParam } from '../useTextSearchParam'
 import type { TableMode } from '../useTableMode'
@@ -37,8 +37,13 @@ export const PackagesFilterer: FC<PackagesFiltererProps> = memo<PackagesFilterer
   const isPrivatePage = useIsPrivateMainPage()
   const setSearchParams = useSetSearchParams()
   const [textFilter] = useTextSearchParam()
-  const [viewMode] = useTableMode(hideViewSelector ? FLAT_TABLE_MODE : TREE_TABLE_MODE)
+  const defaultViewMode = hideViewSelector ? FLAT_TABLE_MODE : TREE_TABLE_MODE
+  const [viewMode] = useTableMode(defaultViewMode)
   const viewModeBeforeSearchRef = useRef<TableMode | null>(null)
+
+  useEffect(() => {
+    viewModeBeforeSearchRef.current = null
+  }, [rootPackageKey])
 
   const [packageObject] = usePackage({ packageKey: rootPackageKey })
   const { showCreatePackageDialog } = useEventBus()
@@ -86,8 +91,9 @@ export const PackagesFilterer: FC<PackagesFiltererProps> = memo<PackagesFilterer
         value={textFilter}
         onValueChange={text => {
           if (!text) {
-            setSearchParams({ text: text, view: viewModeBeforeSearchRef.current ?? viewMode }, { replace: true })
+            const view = viewModeBeforeSearchRef.current ?? viewMode
             viewModeBeforeSearchRef.current = null
+            setSearchParams({ text: text, view: view === defaultViewMode ? '' : view }, { replace: true })
           } else {
             if (viewModeBeforeSearchRef.current === null) {
               viewModeBeforeSearchRef.current = viewMode
