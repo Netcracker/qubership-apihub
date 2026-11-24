@@ -62,7 +62,7 @@ on:
       postman_collections:
         description: >-
           Comma-separated collections, as paths under tests/postman-collections or bare names of the
-          e2e folder. Empty means the default list.
+          e2e folder. Empty means the default list, including migration tests.
         required: false
         type: string
         default: ''
