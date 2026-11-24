@@ -677,8 +677,8 @@ p.boxed(
     'Rendering web components / libraries (npm @netcracker/*)',
     5,
     [
-        ('apispec', 'apispec-view', 'web component', '<apispec-view> <operation-view> <diff-operation-view>', 'lib'),
-        ('docviewer', 'api-doc-viewer', 'React', 'JsonSchemaViewer, GraphQLOperationViewer (+diff)', 'lib'),
+        ('apispec', 'apispec-view', 'web component', '<apispec-view>: whole OpenAPI documents', 'lib'),
+        ('docviewer', 'api-doc-viewer', 'React', 'OpenAPI, AsyncAPI, GraphQL, DDL operation viewers (+diff), JsonSchemaViewer', 'lib'),
         ('playground', 'rest-playground', 'web component', '<rest-playground> TryIt', 'lib'),
         ('classview', 'class-view', 'web component', 'UML class diagrams (D3 + ELK)', 'lib'),
         ('proc', 'api-processor / api-diff / api-unifier', 'TS libraries', 'client-side build & compare', 'lib'),
@@ -1200,8 +1200,8 @@ layers = [
     (
         'L6 — UI rendering',
         [
-            ('docviewer', 'api-doc-viewer', 'React', 'JsonSchemaViewer, GraphQLOperationViewer (+diff)', 'ext_svc'),
-            ('apispec', 'apispec-view', 'web components', '<apispec-view> <operation-view>', 'ext_svc'),
+            ('docviewer', 'api-doc-viewer', 'React', 'OpenAPI, AsyncAPI, GraphQL, DDL operation viewers (+diff), JsonSchemaViewer', 'ext_svc'),
+            ('apispec', 'apispec-view', 'web component', '<apispec-view>', 'ext_svc'),
             ('playground', 'rest-playground', 'web component', 'TryIt', 'ext_svc'),
             ('classview', 'class-view', 'web component', 'UML (D3 + ELK)', 'ext_svc'),
         ],

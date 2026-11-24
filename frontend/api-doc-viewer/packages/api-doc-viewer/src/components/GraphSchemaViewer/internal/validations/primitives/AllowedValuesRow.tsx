@@ -1,19 +1,4 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+import { cn } from '@apihub/utils/common/cn'
 import { LevelIndicator } from '@apihub/components/shared-components/LevelIndicator'
 import {
   applyDiffReplaceAlias,
@@ -121,7 +106,7 @@ export const AllowedValuesRow: FC<AllowedValuesRowProps> = (props) => {
   const wholeEnumChange = partiallyEnumChanged ? changesToChange(keys.length, valuesChange) : undefined
 
   return (
-    <div className="flex flex-col">
+    <div className={cn("flex flex-col")}>
       <AllowedValuesHeaderRow
         shift={shift}
         nodeChange={$nodeChange}
@@ -204,16 +189,16 @@ const AllowedValuesHeaderRowContent: FC<AllowedValuesHeaderRowProps & ContentPro
     )
   ) {
     labelNode = (
-      <div className="inline text-xs font-normal text-slate-500 pt-1">
+      <div className={cn("inline text-xs font-normal text-slate-500 pt-1")}>
         {ALLOWED_VALUES_LABEL}:
       </div>
     )
   }
 
   return (
-    <div className={rowClasses}>
+    <div className={cn(rowClasses)}>
       <LevelIndicator level={level} />
-      {shift && <div className="w-5" />}
+      {shift && <div className={cn("w-5")} />}
       {labelNode}
     </div>
   )
@@ -253,7 +238,7 @@ const AllowedValuesHeaderRow: FC<AllowedValuesHeaderRowProps> = (props) => {
 
   if (isDocumentLayoutMode) {
     return (
-      <div className="flex flex-row">
+      <div className={cn("flex flex-row")}>
         <AllowedValuesHeaderRowContent {...contentProps} layoutSide={ORIGIN_LAYOUT_SIDE} />
       </div>
     )
@@ -262,14 +247,14 @@ const AllowedValuesHeaderRow: FC<AllowedValuesHeaderRowProps> = (props) => {
   if (isInlineDiffsLayoutMode) {
     if (!nodeChange && !enumChange) {
       return (
-        <div className="flex flex-row">
+        <div className={cn("flex flex-row")}>
           <AllowedValuesHeaderRowContent {...contentProps} layoutSide={ORIGIN_LAYOUT_SIDE} />
         </div>
       )
     }
 
     return (
-      <div className={`flex flex-row relative ${changeTypeIncluded ? changeBackground : ''}`}>
+      <div className={cn(`flex flex-row relative ${changeTypeIncluded ? changeBackground : ''}`)}>
         {changeType && changeTypeIncluded && <UxDiffFloatingBadge variant={changeType} message={changeTypeCause} />}
         <AllowedValuesHeaderRowContent {...contentProps} layoutSide={ORIGIN_LAYOUT_SIDE} />
       </div>
@@ -279,7 +264,7 @@ const AllowedValuesHeaderRow: FC<AllowedValuesHeaderRowProps> = (props) => {
   if (isSideBySideDiffsLayoutMode) {
     if (!nodeChange && !enumChange) {
       return (
-        <div className="flex flex-row">
+        <div className={cn("flex flex-row")}>
           <AllowedValuesHeaderRowContent {...contentProps} layoutSide={ORIGIN_LAYOUT_SIDE} />
           <AllowedValuesHeaderRowContent {...contentProps} layoutSide={CHANGED_LAYOUT_SIDE} />
         </div>
@@ -287,7 +272,7 @@ const AllowedValuesHeaderRow: FC<AllowedValuesHeaderRowProps> = (props) => {
     }
 
     return (
-      <div className={`flex flex-row relative ${changeTypeIncluded ? changeBackground : ''}`}>
+      <div className={cn(`flex flex-row relative ${changeTypeIncluded ? changeBackground : ''}`)}>
         {changeType && changeTypeIncluded && <UxDiffFloatingBadge variant={changeType} message={changeTypeCause} />}
         {!change || diffRemove(change)
           ? <AllowedValuesHeaderRowContent {...contentProps} layoutSide={ORIGIN_LAYOUT_SIDE} />
@@ -478,11 +463,11 @@ const AllowedValueRow: FC<AllowedValueRowProps> = (props) => {
     )
 
     return (
-      <div className={rowClasses}>
+      <div className={cn(rowClasses)}>
         <LevelIndicator level={level} />
-        {shift && <div className="w-5" />}
+        {shift && <div className={cn("w-5")} />}
         {renderedItem && (
-          <div className="flex flex-row items-start gap-2 py-1">
+          <div className={cn("flex flex-row items-start gap-2 py-1")}>
             <DiffBadge
               label={renderedItem}
               layoutMode={layoutMode}
@@ -491,7 +476,7 @@ const AllowedValueRow: FC<AllowedValueRowProps> = (props) => {
               isContentChanged={isItemSelfChanged}
               $changes={itemAdded || itemRemoved ? valueChange : undefined}
             />
-            <div className="flex flex-col items-start text-xs text-slate-600 gap-1">
+            <div className={cn("flex flex-col items-start text-xs text-slate-600 gap-1")}>
               {deprecationComponentsList.length > 0 && (
                 <Deprecation
                   children={deprecationComponentsList}
@@ -520,7 +505,7 @@ const AllowedValueRow: FC<AllowedValueRowProps> = (props) => {
 
   if (isDocumentLayoutMode) {
     return (
-      <div className="flex flex-row">
+      <div className={cn("flex flex-row")}>
         <Content layoutSide={CHANGED_LAYOUT_SIDE} />
       </div>
     )
@@ -529,14 +514,14 @@ const AllowedValueRow: FC<AllowedValueRowProps> = (props) => {
   if (isInlineDiffsLayoutMode) {
     if (!isNodeChanged && !isEnumChanged && !isItemSelfChanged && !isItemDetailsChanged) {
       return (
-        <div className="flex flex-row">
+        <div className={cn("flex flex-row")}>
           <Content layoutSide={ORIGIN_LAYOUT_SIDE} />
         </div>
       )
     }
 
     return (
-      <div className={`flex flex-row relative ${diffTypeIncluded ? diffBackground : ''}`}>
+      <div className={cn(`flex flex-row relative ${diffTypeIncluded ? diffBackground : ''}`)}>
         {diffType && diffTypeIncluded && <UxDiffFloatingBadge variant={diffType} message={diffTypeCause} />}
         <Content layoutSide={ORIGIN_LAYOUT_SIDE} />
       </div>
@@ -546,7 +531,7 @@ const AllowedValueRow: FC<AllowedValueRowProps> = (props) => {
   if (isSideBySideDiffsLayoutMode) {
     if (!isNodeChanged && !isEnumChanged && !isItemSelfChanged && !isItemDetailsChanged) {
       return (
-        <div className="flex flex-row">
+        <div className={cn("flex flex-row")}>
           <Content layoutSide={ORIGIN_LAYOUT_SIDE} />
           <Content layoutSide={CHANGED_LAYOUT_SIDE} />
         </div>
@@ -554,7 +539,7 @@ const AllowedValueRow: FC<AllowedValueRowProps> = (props) => {
     }
 
     return (
-      <div className={`flex flex-row relative ${diffTypeIncluded ? diffBackground : ''}`}>
+      <div className={cn(`flex flex-row relative ${diffTypeIncluded ? diffBackground : ''}`)}>
         {diffType && diffTypeIncluded && <UxDiffFloatingBadge variant={diffType} message={diffTypeCause} />}
         {isItemSelfChanged || isItemDetailsChanged || (isNodeChanged || isEnumChanged) && (nodeRemoved || nodeReplaced)
           ? <Content layoutSide={ORIGIN_LAYOUT_SIDE} />

@@ -1,19 +1,3 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import type { Dispatch, FC, SetStateAction } from 'react'
 import React, { createContext, memo, useContext, useState } from 'react'
 import { SettingsBody } from './SettingsBody'
@@ -24,9 +8,12 @@ import { useActiveTabs } from '@netcracker/qubership-apihub-ui-shared/hooks/path
 import { useSuperAdminCheck } from '@netcracker/qubership-apihub-ui-shared/hooks/user-roles/useSuperAdminCheck'
 import { LayoutWithToolbar } from '@netcracker/qubership-apihub-ui-shared/components/PageLayouts/LayoutWithToolbar'
 import { CONTENT_PLACEHOLDER_AREA, NO_PERMISSION, Placeholder } from '@netcracker/qubership-apihub-ui-shared/components/Placeholder'
+import { useDocumentTitle } from '@netcracker/qubership-apihub-ui-shared/hooks/common/useDocumentTitle'
+import { PAGE_TITLES } from '@portal/routes/pageTitles'
 
 export const SettingsPage: FC = memo(() => {
   const [menuItem] = useActiveTabs()
+  useDocumentTitle(PAGE_TITLES.portalSettings(menuItem))
   const isSuperAdmin = useSuperAdminCheck()
   const [, setActiveTab] = useState<SettingsPageRoute>(USER_ROLES_PAGE)
 

@@ -20,6 +20,8 @@ export enum PrecededBy {
   */
   SERVER_BLOCK = 'server-block',
   SERVER_ADDRESS_ROW = 'server-address-row',
+  /** Follows an AsyncAPI Security section (operation or server): its last card's lower half-gap is already there. */
+  SECURITY_SECTION = 'security-section',
   DDL_TABLE_HEADER_ROW = 'ddl-table-header-row',
   DDL_TABLE_SCHEMA_ROW = 'ddl-table-schema-row',
   DDL_TABLE_DESCRIPTION_ROW = 'ddl-table-description-row',
@@ -28,6 +30,12 @@ export enum PrecededBy {
   /** Follows a sibling column block that ended with an additional-info row. */
   DDL_COLUMN_AFTER_ADDITIONAL_INFO_ROW = 'ddl-column-after-additional-info-row',
   DDL_INDEX_ROW = 'ddl-index-row',
+  /* Separator layout (OpenAPI operation, Security sections of every API type): rows have no vertical
+     padding; every gap is a separator row. Design: docs/design/openapi/features/vertical-gaps.md */
+  /** Any row of a separator layout. */
+  SEPARATOR_LAYOUT_ROW = 'separator-layout-row',
+  /** The first row of a nested JSON Schema / JSO viewer under such a row: keeps its own inset (`--separator-layout-nested-viewer-inset`). */
+  SEPARATOR_LAYOUT_NESTED_VIEWER_START = 'separator-layout-nested-viewer-start',
 }
 
 export type WithPrecededByProps = {

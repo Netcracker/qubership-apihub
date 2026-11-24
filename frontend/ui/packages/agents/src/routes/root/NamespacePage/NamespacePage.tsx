@@ -1,19 +1,3 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import type { FC, ReactNode } from 'react'
 import { memo } from 'react'
 import { useParams } from 'react-router-dom'
@@ -34,6 +18,8 @@ import { LayoutWithTabs } from '@netcracker/qubership-apihub-ui-shared/component
 import { WelcomePage } from '../WelcomePage'
 import { useSearchParam } from '@netcracker/qubership-apihub-ui-shared/hooks/searchparams/useSearchParam'
 import { WORKSPACE_SEARCH_PARAM } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
+import { useDocumentTitle } from '@netcracker/qubership-apihub-ui-shared/hooks/common/useDocumentTitle'
+import { PAGE_TITLES } from '../../pageTitles'
 
 export const NamespacePage: FC = memo(() => {
   const { namespaceKey } = useParams()
@@ -69,7 +55,19 @@ const PATH_PARAM_TO_SUB_PAGE_MAP: Record<NamespacePageRoute, ReactNode> = {
 type NamespacePageBodyProps = {
   menuItem: NamespacePageRoute
 }
+
+// Owns the tab title, not NamespacePage: NamespacePage renders WelcomePage instead of this body until a workspace
+// is selected, and a title set in the parent would overwrite the one of WelcomePage.
 const NamespacePageBody: FC<NamespacePageBodyProps> = memo<NamespacePageBodyProps>(({ menuItem }) => {
+  const { agentId, namespaceKey } = useParams()
+  const [, subTab] = useActiveTabs()
+  useDocumentTitle(PAGE_TITLES.namespace({
+    mode: menuItem,
+    subTab: subTab,
+    namespaceKey: namespaceKey,
+    agentId: agentId,
+  }))
+
   return (
     <LayoutWithTabs
       tabs={<NamespaceNavigationMenu />}

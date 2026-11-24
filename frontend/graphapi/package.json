@@ -1,6 +1,6 @@
 {
   "name": "@netcracker/qubership-apihub-graphapi",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Netcracker/qubership-apihub.git",
@@ -53,7 +53,7 @@
     "@storybook/addon-links": "catalog:",
     "@storybook/react-vite": "catalog:",
     "@types/jest": "catalog:",
-    "@types/json-schema": "^7.0.11",
+    "@types/json-schema": "^7.0.15",
     "@types/node": "catalog:",
     "@typescript-eslint/eslint-plugin": "6.0.0",
     "@typescript-eslint/parser": "6.0.0",

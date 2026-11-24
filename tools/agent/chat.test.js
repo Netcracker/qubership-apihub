@@ -173,10 +173,11 @@ test('stoppedWhat says what was stopped, per phase', () => {
 })
 
 test('renderStopped and stopReply say how to start again', () => {
-  const human = renderStopped({ actor: 'carol', what: 'I cancelled it.', runUrl: 'https://x/runs/1', totalUsd: 1.2 })
+  const human = renderStopped({ actor: 'carol', what: 'I cancelled it.', runUrl: 'https://x/runs/1' })
   assert.match(human, /^### AI implementation was stopped\n\n@carol stopped the agent\. I cancelled it\./)
   assert.match(human, /comment `\/agent implement` on the issue, or `\/agent retry`/)
-  assert.match(human, /AI cost of this issue so far: \$1\.20/)
+  assert.ok(human.endsWith('<sub>[Run](https://x/runs/1) · comment `/agent retry` to start again</sub>'))
+  assert.doesNotMatch(human, /AI cost/)
   const reply = stopReply({ asker: 'carol', what: 'I cancelled it.' })
   assert.match(reply, /^@carol, I stopped\. I cancelled it\./)
   assert.match(reply, /To start again, comment `\/agent implement`/)
@@ -269,25 +270,30 @@ test('answerReply starts with the mention of the asker, defuses mentions, and en
     asker: 'carol',
     answer: 'Ask @bob or @org/team.\n\nSee `a.go`.\n',
     runUrl: 'https://x/runs/1',
-    answerUsd: 0.0123,
-    totalUsd: 1.5,
-    noun: 'issue',
   })
   const lines = text.split('\n')
   assert.equal(lines[0], '@carol')
   assert.equal(lines[2], 'Ask @​bob or @​org/team.')
-  assert.equal(
-    lines.at(-1),
-    '<sub>[Run](https://x/runs/1) · This answer: $0.01 · all AI calls on this issue so far: $1.50 · ' +
-      'comment `/agent cost` for the table</sub>',
-  )
+  assert.equal(lines.at(-1), '<sub>[Run](https://x/runs/1) · comment `/agent cost` for the table</sub>')
+})
+
+test('answerReply signs the answer with the cost records of this answer, and without records it has no signature', () => {
+  const costs = [
+    { role: 'assistant', model: 'openai/gpt-6-luna', variant: 'medium', input: 100, cached: 50, output: 20, usd: 0.01 },
+  ]
+  const text = answerReply({ asker: 'carol', answer: 'Yes.', runUrl: 'https://x/runs/1', costs })
+  assert.ok(text.endsWith(
+    '· comment `/agent cost` for the table</sub>\n\n<sub>🤖 gpt-6-luna medium in=100 cached=50 out=20 usd=0.01</sub>',
+  ))
+  assert.ok(!answerReply({ asker: 'carol', answer: 'Yes.', runUrl: 'r', costs: [] }).includes('🤖'))
+  const failed = failedAnswerReply({ asker: 'carol', message: 'bad', runUrl: 'r', costs })
+  assert.ok(failed.endsWith('usd=0.01</sub>'))
 })
 
 test('failedAnswerReply says the answer failed and still shows the cost', () => {
   const text = failedAnswerReply({
-    asker: 'carol', message: 'The chatAnswer output is invalid:\nanswer: missing', runUrl: 'r', answerUsd: 0.5,
-    totalUsd: 0.5, noun: 'pull request',
+    asker: 'carol', message: 'The chatAnswer output is invalid:\nanswer: missing', runUrl: 'r',
   })
   assert.match(text, /^@carol, I could not answer: The chatAnswer output is invalid: answer: missing Ask again/)
-  assert.match(text, /all AI calls on this pull request so far: \$0\.50/)
+  assert.ok(text.endsWith('<sub>[Run](r) · comment `/agent cost` for the table</sub>'))
 })

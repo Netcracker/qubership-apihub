@@ -8,15 +8,17 @@
  *
  *   1. Collect the check runs and the commit statuses of the head commit; the agent's own jobs do not count.
  *   2. Wait: while any check runs or any status is pending, do nothing; the workflow run that finishes last decides.
- *   3. Green: the pull request leaves draft (`AGENT_PAT`), gets `agent:completed` and `ai:l1-executor`, the issue gets
- *      `agent:completed`, and a comment tells the person who asked.
+ *   3. Green: the pull request leaves draft (`AGENT_PAT`), gets `agent:completed`, `ai:l1-executor`, and
+ *      `needs-human:approval-required` (a person reviews it), the issue gets `agent:completed`, and a comment tells the
+ *      person who asked.
  *   4. Red: read the logs of the failed jobs, cut them to the error blocks, and build the CI report and its failure
  *      signature. A red result made only of E2E jobs, or only of cancelled checks (the verdict check `ci-ok` aside),
  *      is rerun once per commit for free; both share that one rerun. A cancelled check was stopped (a timeout, a
  *      person, a newer run), so it counts as failed, not as pending. When the free rerun is used up and only cancelled
  *      checks remain, the gate hands over to a person: nothing failed, so no CI-fix attempt starts. Otherwise the stop
  *      rule decides: the same signature as the attempt before, or the attempts spent, hands
- *      the issue to a person (`agent:needs-human`, the whole history in the state comment, one concrete request);
+ *      the issue to a person (a `needs-human:<reason>` label, the whole history in the state comment, one concrete
+ *      request);
  *      anything else starts the next attempt (`next=implement` for the `implement` job, which runs with
  *      `AGENT_KIND=ci-fix`).
  *
@@ -44,14 +46,15 @@ const path = require('node:path')
 const { loadConfig } = require('./lib/config')
 const { createClient } = require('./lib/github')
 const state = require('./lib/state')
+const stops = require('./lib/stops')
+const results = require('./lib/results')
 const { inline, clip, stripAnsi } = require('./lib/text')
 const log = require('./lib/log')
 const { react, commentIdOf } = require('./lib/reactions')
 const {
-  fence, appendSummary, writeOutputs, quoted, costLine, loadIssue, refusalReply, waysOnLines, BUSY_MS,
+  fence, appendSummary, writeOutputs, quoted, footerLine, loadIssue, refusalReply, waysOnLines, ciStopLines, BUSY_MS,
 } = require('./implement')
 
-const LABEL_NEEDS_HUMAN = 'agent:needs-human'
 const LABEL_COMPLETED = 'agent:completed'
 const LABEL_L1 = 'ai:l1-executor'
 
@@ -73,7 +76,6 @@ const MAX_E2E_RERUNS = 1
 /** The part of the report that goes into the comment on the issue; the state holds all of it. */
 const COMMENT_REPORT_CHARS = 3000
 
-const sum = (items, field) => items.reduce((total, item) => total + (item[field] ?? 0), 0)
 /** Text for a Markdown code span: one line, no mention, no backtick that could end the span. */
 const code = (text) => inline(text).replace(/`/g, "'")
 /** Text for a table cell. */
@@ -474,17 +476,30 @@ const decided = (sha, at, run) => ({ sha, decided: true, at, run })
 /** Green: the work is done. The report of an earlier failure goes; the attempts keep their history. */
 function greenState(st, { sha, at, run }) {
   const { lastCiReport: _report, ...rest } = withLastAttempt(st, { result: 'ci-green' })
-  return { ...rest, phase: 'completed', ciGate: decided(sha, at, run) }
+  return stops.recordResume({ ...rest, phase: 'completed', ciGate: decided(sha, at, run) }, { at, run })
 }
 
-/** Red and stopped: a person takes over. */
-function stoppedState(st, { signature, report, sha, at, run }) {
-  return {
+/** The stop reason of each way the gate hands over: a repeated failure, no budget, or CI that cannot run again. */
+const STOP_REASON = {
+  'same-failure': 'stuck',
+  budget: 'budget-exhausted',
+  'rerun-rejected': 'environment-blocked',
+  cancelled: 'environment-blocked',
+}
+
+/**
+ * Red and stopped: a person takes over. The stop is recorded in the history, on the issue and the pull request
+ * (`on`), with the reason that belongs to the decision of the gate (`reason`: `same-failure`, `budget`,
+ * `rerun-rejected`, or `cancelled`).
+ */
+function stoppedState(st, { signature, report, sha, at, run, reason, on }) {
+  const stopped = {
     ...withLastAttempt(st, { result: 'ci-red', signature }),
     phase: 'needs-human',
     lastCiReport: report,
     ciGate: decided(sha, at, run),
   }
+  return stops.recordStop(stopped, { reason: STOP_REASON[reason], at, run, on })
 }
 
 /** Red and another attempt: the same phase and shape as the preflight of `implement.js` writes. */
@@ -554,7 +569,7 @@ const failedList = (failed) =>
   })
 
 /** The state comment after a green result. */
-function renderGreen({ pr, headSha, attempts, readyError, runUrl, totalUsd }) {
+function renderGreen({ pr, headSha, attempts, readyError, runUrl }) {
   return [
     `### AI implementation: CI is green on pull request #${pr}`,
     '',
@@ -564,7 +579,7 @@ function renderGreen({ pr, headSha, attempts, readyError, runUrl, totalUsd }) {
       ? ['', `I could not mark the pull request ready for review: ${inline(readyError)} Mark it ready yourself.`]
       : []),
     '',
-    costLine(runUrl, totalUsd, 'the issue closes when the pull request is merged'),
+    footerLine(runUrl, 'the issue closes when the pull request is merged'),
   ].join('\n')
 }
 
@@ -572,14 +587,17 @@ function renderGreen({ pr, headSha, attempts, readyError, runUrl, totalUsd }) {
  * The state comment of the hand-off: the failed checks, the first error, why the agent stopped, the two ways on, then
  * every attempt and the current failure.
  */
-function renderStopped({ pr, reason, max, attempts, failed, errorsByJob = {}, report, runUrl, totalUsd }) {
+function renderStopped({ pr, reason, max, attempts, failed, errorsByJob = {}, report, runUrl }) {
   return [
     `### AI implementation needs a person: CI is red on pull request #${pr}`,
     '',
     ...failureLines(failed, errorsByJob).map((line) => `- ${line}`),
-    `- Why I stopped: ${reasonSentence(reason, max)}`,
     '',
-    ...waysOnLines(),
+    ...ciStopLines({
+      reason: STOP_REASON[reason],
+      blocker: reasonSentence(reason, max),
+      done: `${(attempts ?? []).length} attempt(s), listed below.`,
+    }),
     '',
     '**Attempts**',
     '',
@@ -595,12 +613,12 @@ function renderStopped({ pr, reason, max, attempts, failed, errorsByJob = {}, re
     '',
     '</details>',
     '',
-    costLine(runUrl, totalUsd, 'comment `/agent rerun` to rerun the checks, or `/agent retry` with guidance'),
+    footerLine(runUrl, 'comment `/agent rerun` to rerun the checks, or `/agent retry` with guidance'),
   ].join('\n')
 }
 
 /** The state comment while the next attempt runs. */
-function renderNextAttempt({ pr, n, max, failed, runUrl, totalUsd }) {
+function renderNextAttempt({ pr, n, max, failed, runUrl }) {
   return [
     `### AI implementation: CI is red on pull request #${pr}`,
     '',
@@ -608,12 +626,12 @@ function renderNextAttempt({ pr, n, max, failed, runUrl, totalUsd }) {
     '',
     ...failedList(failed),
     '',
-    costLine(runUrl, totalUsd, `the run of attempt ${n} follows`),
+    footerLine(runUrl, `the run of attempt ${n} follows`),
   ].join('\n')
 }
 
 /** The state comment while the free rerun runs; `kind` is `e2e` (the default) or `cancelled`. */
-function renderRerun({ pr, failed, runUrl, totalUsd, kind = 'e2e' }) {
+function renderRerun({ pr, failed, runUrl, kind = 'e2e' }) {
   const why = kind === 'cancelled'
     ? 'The failed checks were cancelled, so nothing really failed. I reran them once for this commit. ' +
       'The cancelled jobs:'
@@ -625,7 +643,7 @@ function renderRerun({ pr, failed, runUrl, totalUsd, kind = 'e2e' }) {
     '',
     ...failedList(failed),
     '',
-    costLine(runUrl, totalUsd, 'the result of the rerun decides'),
+    footerLine(runUrl, 'the result of the rerun decides'),
   ].join('\n')
 }
 
@@ -808,26 +826,29 @@ async function staleResult(ctx) {
 }
 
 /**
- * Writes the state comment: edits the one that exists, else creates it. The cost records of the comment as it is now
- * are merged in, because chat and publish may have added one since the gate loaded the state.
+ * Writes `human` as the result of the implementation family and the state. The comment of the family is edited: the
+ * gate continues a command that is running or ended, so it never starts a new result comment on its own (a CI-fix
+ * attempt and a rerun are no new commands). The cost records of the comment as it is now are merged in, because chat
+ * and publish may have added one since the gate loaded the state. Returns the state with the updated `results`.
  */
-async function writeState({ gh, number, loaded, human, st: mine }) {
-  const st = await state.withFreshCosts(gh, number, mine)
-  const body = state.render(human, st)
-  if (loaded.existing) {
-    await gh.updateIssueComment(loaded.existing.id, body)
-    log.info('state comment written', { id: loaded.existing.id, phase: st.phase })
-  } else {
-    const created = await gh.createIssueComment(number, body)
-    log.info('state comment written', { id: created?.id ?? 'new', phase: st.phase })
-  }
+async function writeState({ gh, number, human, st: mine, run }) {
+  const { st, commentId } = await results.publishResult(gh, number, {
+    family: 'implementation',
+    human,
+    st: mine,
+    run,
+    newCommand: false,
+    emptyState: () => state.emptyIssueState(number),
+  })
+  log.info('state comment written', { id: commentId, phase: st.phase })
+  return st
 }
 
 async function handleGreen(ctx) {
   const { config, env, deps, gh, number, prNumber, pull, headSha, actor, runUrl, repo, at, out } = ctx
   const labelChanges = {
-    pull: { add: [LABEL_COMPLETED, LABEL_L1], remove: [LABEL_NEEDS_HUMAN] },
-    issue: { add: [LABEL_COMPLETED], remove: [LABEL_NEEDS_HUMAN] },
+    pull: { add: [LABEL_COMPLETED, LABEL_L1], stop: 'approval-required' },
+    issue: { add: [LABEL_COMPLETED], stop: null },
   }
   log.info('decision', { action: 'green', sha: headSha, draft: pull.draft })
   const stale = await staleResult(ctx)
@@ -849,23 +870,23 @@ async function handleGreen(ctx) {
   }
 
   const st = greenState(ctx.st, { sha: headSha, at, run: runUrl })
-  const totalUsd = sum(st.costs ?? [], 'usd')
   const human = renderGreen({
     pr: prNumber,
     headSha,
     attempts: (st.attempts ?? []).length,
     readyError: readyError?.message,
     runUrl,
-    totalUsd,
   })
   const note = greenComment({ actor, pr: prNumber })
   fs.writeFileSync(path.join(out, 'summary.md'), human)
 
   if (config.dryRun) {
-    const report = [`## Dry run: CI gate for #${number}`, '', human, '']
+    const shown = results.previewResult({ family: 'implementation', human, st, run: runUrl })
+    const report = [`## Dry run: CI gate for #${number}`, '', shown, '']
     report.push(`- pull request ${pull.draft ? 'leaves draft' : 'is already ready for review'}`)
-    report.push(`- labels on #${prNumber}: add ${labelChanges.pull.add.join(', ')}; remove ${labelChanges.pull.remove}`)
-    report.push(`- labels on #${number}: add ${labelChanges.issue.add.join(', ')}; remove ${labelChanges.issue.remove}`)
+    report.push(`- labels on #${prNumber}: add ${[...labelChanges.pull.add, stops.labelOf(labelChanges.pull.stop)]
+      .join(', ')}; remove every other stop label`)
+    report.push(`- labels on #${number}: add ${labelChanges.issue.add.join(', ')}; remove every stop label`)
     report.push('')
     report.push(quoted('### Comment that would notify the person who asked', note))
     report.push('### State', '', fence(JSON.stringify(st, null, 2), 'json'), '')
@@ -874,13 +895,15 @@ async function handleGreen(ctx) {
     return { outcome: 'green' }
   }
 
-  await log.group('Write the state comment', () => writeState({ gh, number, loaded: ctx.loaded, human, st }))
+  await log.group('Write the state comment', () => writeState({ gh, number, human, st, run: runUrl }))
   await log.group('Apply the labels', async () => {
     await gh.addLabels(prNumber, labelChanges.pull.add)
-    for (const label of labelChanges.pull.remove) await gh.removeLabel(prNumber, label)
     await gh.addLabels(number, labelChanges.issue.add)
-    for (const label of labelChanges.issue.remove) await gh.removeLabel(number, label)
-    log.info('labels applied', { pr: prNumber, issue: number })
+    // The work is done: no stop of the agent is left. The pull request now waits for a person's review.
+    const cleared = await stops.clearStops(gh, [number, prNumber])
+    const approval = await stops.setStop(gh, [prNumber], labelChanges.pull.stop)
+    log.info('labels applied', { pr: prNumber, issue: number, stop: stops.labelOf(labelChanges.pull.stop) })
+    if (cleared ?? approval) throw cleared ?? approval
   })
   // `/agent rerun` on the pull request answers there; the gate answers on the issue.
   const commentOn = ctx.commentNumber ?? number
@@ -905,7 +928,10 @@ async function handleRed(ctx) {
   const stale = await staleResult(ctx)
   if (stale) return stale
   let st = ctx.st
-  const totalUsd = sum(st.costs ?? [], 'usd')
+  if (!config.dryRun) {
+    const error = await stops.clearCompleted(gh, [number, prNumber])
+    if (error) throw error
+  }
 
   // 1. The free rerun of a red result that only E2E jobs caused, or that only cancelled checks show. One rerun per
   // commit covers both.
@@ -920,7 +946,7 @@ async function handleRed(ctx) {
     const what = freeKind === 'cancelled' ? 'cancelled' : 'E2E'
     log.info('decision', { action: `rerun the failed ${what} jobs once per commit`, runs: targets.join(','), reruns })
     st = rerunState(st, headSha)
-    const human = renderRerun({ pr: prNumber, failed, runUrl, totalUsd, kind: freeKind })
+    const human = renderRerun({ pr: prNumber, failed, runUrl, kind: freeKind })
     if (config.dryRun) {
       appendSummary(env, [`## Dry run: CI gate for #${number}`, '', human, '',
         `Would rerun the failed jobs of workflow run(s) ${targets.join(', ')}.`, ''].join('\n'))
@@ -942,7 +968,7 @@ async function handleRed(ctx) {
       log.info('rerun requested', { runs: accepted.join(',') || 'none', rejected: targets.length - accepted.length })
     })
     if (accepted.length > 0) {
-      await log.group('Write the state comment', () => writeState({ gh, number, loaded: ctx.loaded, human, st }))
+      await log.group('Write the state comment', () => writeState({ gh, number, human, st, run: runUrl }))
       return { outcome: 'rerun' }
     }
     st = ctx.st
@@ -972,25 +998,32 @@ async function handleRed(ctx) {
   const max = config.limits.maxAttempts
 
   if (decision.action === 'stop') {
-    const next = stoppedState(st, { signature, report, sha: headSha, at, run: runUrl })
+    const stopReason = STOP_REASON[decision.reason]
+    const next = stoppedState(st, {
+      signature, report, sha: headSha, at, run: runUrl, reason: decision.reason, on: [number, prNumber],
+    })
     const human = renderStopped({
       pr: prNumber, reason: decision.reason, max, attempts: next.attempts, failed, errorsByJob, report, runUrl,
-      totalUsd,
     })
     const note = stopComment({ actor, pr: prNumber, reason: decision.reason, max, failed, errorsByJob })
+    const prNote = `${note}\n\nNo further fix was published by this CI gate run. ` +
+      `Review threads require human confirmation. [Run](${runUrl}).`
     if (config.dryRun) {
-      const lines = [`## Dry run: CI gate for #${number}`, '', human, '',
-        `- labels on #${prNumber} and #${number}: add ${LABEL_NEEDS_HUMAN}`, '',
+      const shown = results.previewResult({ family: 'implementation', human, st: next, run: runUrl })
+      const lines = [`## Dry run: CI gate for #${number}`, '', shown, '',
+        `- labels on #${prNumber} and #${number}: add ${stops.labelOf(stopReason)}`, '',
         quoted('### Comment that would notify the person who asked', note),
+        quoted(`### Comment that would go on pull request #${prNumber}`, prNote),
         '### State', '', fence(JSON.stringify(next, null, 2), 'json'), '']
       appendSummary(env, lines.join('\n'))
       return { outcome: 'stopped', reason: decision.reason }
     }
-    await log.group('Write the state comment', () => writeState({ gh, number, loaded: ctx.loaded, human, st: next }))
+    await log.group('Write the state comment', () => writeState({ gh, number, human, st: next, run: runUrl }))
+    await log.group('Tell the pull request', () => gh.createIssueComment(prNumber, prNote))
     await log.group('Apply the labels', async () => {
-      await gh.addLabels(number, [LABEL_NEEDS_HUMAN])
-      await gh.addLabels(prNumber, [LABEL_NEEDS_HUMAN])
-      log.info('labels applied', { add: LABEL_NEEDS_HUMAN, on: `#${number} and #${prNumber}` })
+      const failed = await stops.setStop(gh, [number, prNumber], stopReason)
+      log.info('labels applied', { add: stops.labelOf(stopReason), on: `#${number} and #${prNumber}` })
+      if (failed) throw failed
     })
     await log.group('Tell the person who asked', async () => {
       await gh.createIssueComment(number, note)
@@ -1001,14 +1034,15 @@ async function handleRed(ctx) {
 
   const next = nextAttemptState(st, { signature, report, sha: headSha, at, run: runUrl, actor })
   const attemptNo = countedAttempts(st.attempts, st.budgetFrom) + 1
-  const human = renderNextAttempt({ pr: prNumber, n: attemptNo, max, failed, runUrl, totalUsd })
+  const human = renderNextAttempt({ pr: prNumber, n: attemptNo, max, failed, runUrl })
   if (config.dryRun) {
-    appendSummary(env, [`## Dry run: CI gate for #${number}`, '', human, '',
+    const shown = results.previewResult({ family: 'implementation', human, st: next, run: runUrl })
+    appendSummary(env, [`## Dry run: CI gate for #${number}`, '', shown, '',
       'The next attempt would start (`next=implement`); a dry run starts none.', '',
       '### State', '', fence(JSON.stringify(next, null, 2), 'json'), ''].join('\n'))
     return { outcome: 'next-attempt' }
   }
-  await log.group('Write the state comment', () => writeState({ gh, number, loaded: ctx.loaded, human, st: next }))
+  await log.group('Write the state comment', () => writeState({ gh, number, human, st: next, run: runUrl }))
   log.info('next attempt', { attempt: attemptNo, of: max })
   return { outcome: 'next-attempt', next: 'implement' }
 }
@@ -1039,11 +1073,12 @@ function rerunRefusal({ st, actor, issue, prHint, now = Date.now() }) {
  */
 function rerunRequestState(st, { sha, runs, actor, at, run }) {
   const { ciGate: _gate, implementing: _running, ...rest } = st
-  return { ...rest, phase: 'waiting-ci', reruns: [...(st.reruns ?? []), { at, actor, sha, runs, run }] }
+  const next = { ...rest, phase: 'waiting-ci', reruns: [...(st.reruns ?? []), { at, actor, sha, runs, run }] }
+  return stops.recordResume(next, { at, run })
 }
 
 /** The state comment after `/agent rerun`; `failed` is empty when CI still runs. */
-function renderRerunRequest({ pr, sha, actor, failed, pending, runUrl, totalUsd }) {
+function renderRerunRequest({ pr, sha, actor, failed, pending, runUrl }) {
   const running = stillRunning(pending)
   const names = (list) => list.map((p) => `\`${code(p.name)}\``).join(', ')
   const lead = failed.length > 0
@@ -1059,7 +1094,7 @@ function renderRerunRequest({ pr, sha, actor, failed, pending, runUrl, totalUsd 
     '',
     ...lead,
     '',
-    costLine(runUrl, totalUsd, 'the CI gate decides when the checks end'),
+    footerLine(runUrl, 'the CI gate decides when the checks end'),
   ].join('\n')
 }
 
@@ -1192,10 +1227,8 @@ async function rerunRequest(ctx) {
 
   const at = new Date().toISOString()
   const st = rerunRequestState(fresh.st, { sha: headSha, runs: rerun, actor, at, run: runUrl })
-  const human = renderRerunRequest({
-    pr: prNumber, sha, actor, failed: rerunnable, pending, runUrl, totalUsd: sum(st.costs ?? [], 'usd'),
-  })
-  const labelPlan = `remove ${LABEL_NEEDS_HUMAN} from #${prNumber} and #${number}`
+  const human = renderRerunRequest({ pr: prNumber, sha, actor, failed: rerunnable, pending, runUrl })
+  const labelPlan = `remove agent:completed and every stop label from #${prNumber} and #${number}`
   const partial = rerunError
     ? `\n\nGitHub rejected the rerun of ${targets.length - rerun.length} workflow run(s): ${inline(rerunError.message)}`
     : ''
@@ -1204,19 +1237,20 @@ async function rerunRequest(ctx) {
     : pendingReply({ actor, pr: prNumber, sha, pending })
 
   if (config.dryRun) {
-    const lines = [`## Dry run: rerun CI for #${number}`, '', human, '']
+    const shown = results.previewResult({ family: 'implementation', human, st, run: runUrl })
+    const lines = [`## Dry run: rerun CI for #${number}`, '', shown, '']
     if (plan === 'rerun') lines.push(`Would rerun the failed jobs of workflow run(s) ${targets.join(', ')}.`, '')
     if (plan === 'green') lines.push('CI is green: the green path of the CI gate would run.', '')
     lines.push(`- labels: ${labelPlan}`, '', '### State', '', fence(JSON.stringify(st, null, 2), 'json'), '')
     appendSummary(env, lines.join('\n'))
     log.info('dry run: nothing written to GitHub')
   } else {
-    const loadedNow = { ...loaded, existing: fresh.existing ?? loaded.existing }
-    await log.group('Write the state comment', () => writeState({ gh, number, loaded: loadedNow, human, st }))
-    await log.group('Remove the hand-off label', async () => {
-      await gh.removeLabel(number, LABEL_NEEDS_HUMAN)
-      await gh.removeLabel(prNumber, LABEL_NEEDS_HUMAN)
-      log.info('label removed', { label: LABEL_NEEDS_HUMAN, on: `#${number} and #${prNumber}` })
+    await log.group('Write the state comment', () => writeState({ gh, number, human, st, run: runUrl }))
+    await log.group('Remove the stop labels', async () => {
+      const failed = await stops.clearStops(gh, [number, prNumber])
+      const incomplete = await stops.clearCompleted(gh, [number, prNumber])
+      log.info('stop labels removed', { on: `#${number} and #${prNumber}` })
+      if (failed ?? incomplete) throw failed ?? incomplete
     })
   }
 
@@ -1256,7 +1290,7 @@ async function rerunCommand(env = process.env, deps = {}) {
   const gh = deps.gh ?? createClient({ token: env.GITHUB_TOKEN, repo })
   const commentId = commentIdOf(env.AGENT_COMMENT_ID)
   log.info('rerun starts', { issue: number, pr: prHint ?? 'from the state', actor, dryRun: config.dryRun })
-  await react({ gh, commentId, content: 'eyes', dryRun: config.dryRun })
+  await react({ gh, commentId, content: 'eyes', dryRun: config.dryRun, eventName: env.GITHUB_EVENT_NAME })
 
   const ctx = { config, env, deps, gh, number, prHint, actor, runUrl, out, repo, replyNumber: prHint ?? number }
   let content = 'confused'
@@ -1265,7 +1299,7 @@ async function rerunCommand(env = process.env, deps = {}) {
     if (result.ok) content = 'rocket'
     return result
   } finally {
-    await react({ gh, commentId, content, dryRun: config.dryRun })
+    await react({ gh, commentId, content, dryRun: config.dryRun, eventName: env.GITHUB_EVENT_NAME })
   }
 }
 
@@ -1317,6 +1351,7 @@ module.exports = {
   stopDecision,
   greenState,
   stoppedState,
+  STOP_REASON,
   nextAttemptState,
   rerunState,
   e2eRerunLeft,

@@ -14,7 +14,7 @@ runs:
   steps:
     # Reads the pnpm version from `packageManager`. v6.1.0 exactly: pnpm 12 support landed there, and
     # the floating `v6` tag still points at v6.0.10.
-    - uses: pnpm/action-setup@v6.1.0
+    - uses: pnpm/action-setup@v6.1.1
       with:
         run_install: false
 

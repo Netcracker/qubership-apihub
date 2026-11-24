@@ -96,3 +96,35 @@ test('in dry-run the skip goes to the job summary and nothing is written to GitH
   assert.deepEqual(gh.calls, [])
   assert.match(summary, /## Dry run: AI review of #123\n\n### AI review of abcdef0 skipped/)
 })
+
+const botComment = (id, body) => ({ id, user: { login: 'github-actions[bot]' }, body })
+
+test('a review after a newer result comment of another family goes to a new comment', async () => {
+  const results = [{ family: 'review', id: 'state', runs: [] }, { family: 'implementation', id: 10, runs: [] }]
+  const before = { ...state.emptyPullState(123), results }
+  const comments = [
+    botComment(9, state.render('### AI review of 1234567', before)),
+    botComment(10, '<!-- ai-autonomous-result family=implementation -->\nDone.\n'),
+  ]
+  const gh = fakeGh({ files: bigFiles, comments })
+  await run({ gh })
+  assert.deepEqual(gh.calls.map((c) => [c[0], c[1]]), [['createIssueComment', 123], ['updateIssueComment', 9]])
+  assert.match(gh.calls[0][2], /^<!-- ai-autonomous-result family=review -->\n### AI review of abcdef0 skipped/)
+  const saved = state.parse(gh.calls[1][2])
+  assert.deepEqual(saved.results.map((r) => [r.family, r.id]), [['implementation', 10], ['review', 77]])
+  // The state comment keeps its old human part: only the state block is replaced.
+  assert.match(gh.calls[1][2], /^<!-- ai-autonomous-state -->\n### AI review of 1234567/)
+})
+
+test('a review that is the newest result comment edits its own comment', async () => {
+  const results = [{ family: 'implementation', id: 10, runs: [] }, { family: 'review', id: 'state', runs: [] }]
+  const before = { ...state.emptyPullState(123), results }
+  const comments = [
+    botComment(10, '<!-- ai-autonomous-result family=implementation -->\nDone.\n'),
+    botComment(11, state.render('### AI review of 1234567', before)),
+  ]
+  const gh = fakeGh({ files: bigFiles, comments })
+  await run({ gh })
+  assert.deepEqual(gh.calls.map((c) => [c[0], c[1]]), [['updateIssueComment', 11]])
+  assert.match(gh.calls[0][2], /^<!-- ai-autonomous-state -->\n### AI review of abcdef0 skipped/)
+})

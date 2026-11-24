@@ -1,18 +1,20 @@
 import { writeFileSync } from 'fs'
 import { kebabCase } from 'lodash-es'
 import {
+  collectOpenApiCasesByPairGroup,
   exitIfInsideNodeModules,
   makeFilePrefix,
   makeMetaId,
-  resetDirectory,
+  makeOpenApiFilePrefix,
+  makeOpenApiMetaId,
+  removeGeneratedFiles,
 } from './compatibility-suite-generation-utils.mjs'
 
 exitIfInsideNodeModules(import.meta.url)
 
 // Dynamic import: must run after exitIfInsideNodeModules because static import breaks the UI component build
-const { getCompatibilitySuites, TEST_SPEC_TYPE_GRAPH_QL, TEST_SPEC_TYPE_DDL_API } = await import(
-  '@netcracker/qubership-apihub-compatibility-suites'
-)
+const compatibilitySuites = await import('@netcracker/qubership-apihub-compatibility-suites')
+const { getCompatibilitySuites, TEST_SPEC_TYPE_GRAPH_QL, TEST_SPEC_TYPE_DDL_API, TEST_SPEC_TYPE_OPEN_API } = compatibilitySuites
 
 const TESTS_OUT_DIR = './src/it/compatibility-suite'
 
@@ -31,9 +33,13 @@ const TEST_GENERATION_CONFIGS = [
   },
 ]
 
+const OPENAPI_VISIBLE_SELECTOR = '[data-testid="openapi-operation-diffs-viewer"]'
+
 // Storybook sanitizes PascalCase export names to kebab-case story IDs.
 // We pre-compute kebab-case at generation time (like apispec-view).
-const printTestFile = (metaId, testIds, visibleSelector) => {
+// Baselines live per test run (the runner's test-run id = the file prefix):
+// `src/it/compatibility-suite/<test-run>/__image_snapshots__/`.
+const printTestFile = (testRunId, metaId, testIds, visibleSelector) => {
   const testIdsLiteral = testIds.map(id => `  '${kebabCase(id)}',`).join('\n')
   const visibleSelectorLiteral = visibleSelector === undefined ? 'undefined' : JSON.stringify(visibleSelector)
 
@@ -42,7 +48,7 @@ import { storyPage } from '../service/storybook-service'
 import { waitForVisibleSelector } from '../service/viewer-waits'
 
 const META_ID = '${metaId}'
-const SNAPSHOTS_DIR = path.resolve(__dirname, '..', '__image_snapshots__')
+const SNAPSHOTS_DIR = path.resolve(__dirname, '${testRunId}', '__image_snapshots__')
 
 const TEST_IDS: string[] = [
 ${testIdsLiteral}
@@ -66,7 +72,8 @@ for (const testId of TEST_IDS) {
 `
 }
 
-resetDirectory(TESTS_OUT_DIR)
+// Only the generated ITs: the folder also holds the committed baselines.
+removeGeneratedFiles(TESTS_OUT_DIR, '.generated.it-test.ts')
 
 for (const config of TEST_GENERATION_CONFIGS) {
   const suites = getCompatibilitySuites(config.specType)
@@ -76,8 +83,23 @@ for (const config of TEST_GENERATION_CONFIGS) {
     const metaId = makeMetaId(config.specType, suiteId)
     const filtered = testIds.filter(id => !config.skipTestIds || !config.skipTestIds.has(id))
     const filePath = `${TESTS_OUT_DIR}/${makeFilePrefix(config.specType)}-${suiteId}.generated.it-test.ts`
-    writeFileSync(filePath, printTestFile(metaId, filtered, config.visibleSelector))
+    writeFileSync(filePath, printTestFile(makeFilePrefix(config.specType), metaId, filtered, config.visibleSelector))
     generated++
   }
   console.log(`Generated ${generated}/${suites.size} test file(s) for ${config.specType}`)
 }
+
+// OpenAPI: one file per (version-pair group, suite) = one runner suite of test run
+// `openapi-compatibility-suite-<before><after>` (e.g. `-30-31`).
+let openApiFiles = 0
+for (const [group, suites] of collectOpenApiCasesByPairGroup(compatibilitySuites).entries()) {
+  for (const [suiteId, cases] of suites.entries()) {
+    const metaId = makeOpenApiMetaId(TEST_SPEC_TYPE_OPEN_API, group, suiteId)
+    writeFileSync(
+      `${TESTS_OUT_DIR}/${metaId}.generated.it-test.ts`,
+      printTestFile(makeOpenApiFilePrefix(TEST_SPEC_TYPE_OPEN_API, group), metaId, cases.map(({ testId }) => testId), OPENAPI_VISIBLE_SELECTOR),
+    )
+    openApiFiles++
+  }
+}
+console.log(`Generated ${openApiFiles} test file(s) for ${TEST_SPEC_TYPE_OPEN_API}`)

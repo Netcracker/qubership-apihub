@@ -15,7 +15,7 @@
     // Still required for the "baseUrl" below, which TS 6 reports as TS5101.
     "ignoreDeprecations": "6.0",
     // TypeScript 6 defaults "types" to [] rather than every package under typeRoots.
-    "types": ["node", "jest", "react"],
+    "types": ["node", "react"],
     // "baseUrl" CANNOT be removed here yet, though TypeScript 7 removed the option (TS5102).
     // tsconfig-paths-webpack-plugin requires it: without baseUrl the plugin silently applies
     // no mappings, webpack falls through to node_modules, and the published package's
@@ -34,13 +34,7 @@
       "@netcracker/qubership-apihub-apispec-view/*": ["./elements/src/*"],
       "@netcracker/qubership-apihub-apispec-view-elements-core": ["./elements-core/src"],
       "@netcracker/qubership-apihub-apispec-view-elements-core/*": ["./elements-core/src/*"],
-      "@netcracker/qubership-apihub-apispec-view-diff-elements-core": ["./diff-elements-core/src"],
-      "@netcracker/qubership-apihub-apispec-view-diff-elements-core/*": ["./diff-elements-core/src/*"],
-      "@netcracker/qubership-apihub-apispec-view-diff-block": ["./diff-block/src"],
-      "@netcracker/qubership-apihub-apispec-view-json-schema-viewer": ["./json-schema-viewer/src"],
-      "@netcracker/qubership-apihub-apispec-view-json-schema-diff-viewer": ["./json-schema-diff-viewer/src"],
-      "@netcracker/qubership-apihub-apispec-view-samples": ["./samples/src"],
-      "@netcracker/qubership-apihub-apispec-view-samples/*": ["./samples/src/*"]
+      "@netcracker/qubership-apihub-apispec-view-json-schema-viewer": ["./json-schema-viewer/src"]
     }
   }
 }

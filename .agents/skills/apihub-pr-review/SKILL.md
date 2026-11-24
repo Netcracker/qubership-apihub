@@ -46,6 +46,7 @@ guesses.
 | `deploy/**`, `docs/configuration-reference.md` | `apihub-deployment-authoring` | values, templates, Compose, and the reference agree |
 | `sites/landing/**` | `apihub-landing-refresh` | |
 | any Markdown or English text | `english-developer-style`, `markdown-line-length-120` | only real problems: wrong facts, broken links, unreadable text |
+| a new or replaced tool, bot, or service, a CI, release, or deployment flow, a published interface, or the repository layout | `apihub-adr` | an ADR in `docs/internal/adr/`, in this pull request or linked from its description |
 
 The nearest `AGENTS.md` of each module lists its build and test commands and its rules; read it when you review that
 module.
@@ -64,6 +65,8 @@ Answer each one; "no" is a valid answer and says something too.
 - **Deployment.** Do Helm values, templates, Compose files, or `docs/configuration-reference.md` need a change that the
   pull request does not make?
 - **E2E.** Which Newman collections or Playwright tests cover the change? Does a contract change break one of them?
+- **Decision.** Does the change make a decision that needs an ADR (`apihub-adr`)? If it does and no ADR is added or
+  linked, report a `major` finding with `null` as the line.
 - **Risk.** `low`, `medium`, or `high`, with one sentence of reason: what breaks, for whom, and how likely.
 
 ## Findings

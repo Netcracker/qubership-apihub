@@ -1,3 +1,4 @@
+import { cn } from '@apihub/utils/common/cn'
 import { DEFAULT_DISPLAY_MODE } from "@apihub/constants/configuration"
 import { DisplayModeContext } from "@apihub/contexts/DisplayModeContext"
 import { LayoutModeContext } from "@apihub/contexts/LayoutModeContext"
@@ -86,7 +87,7 @@ const JsoViewerInner: FC<JsoViewerProps> = memo<JsoViewerProps>(props => {
       <DisplayModeContext.Provider value={displayMode}>
         <LayoutModeContext.Provider value={layoutMode}> {/* Now only 1 layout mode is supported */}
           <LevelContext.Provider value={initialLevel}>
-            <div data-testid='jso-viewer'>
+            <div className={cn('root')} data-testid='jso-viewer'>
               {jsoProperties.map((jsoProperty, index) => (
                 <JsoPropertyNodeViewer
                   data-precededby={

@@ -1,0 +1,37 @@
+openapi: 3.0.3
+info:
+  title: Orders
+  version: 1.0.0
+paths:
+  /orders:
+    post:
+      responses:
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                deprecated: true
+                properties:
+                  id:
+                    type: string
+                  status:
+                    type: string
+                    enum:
+                      - new
+                      - paid
+            application/xml:
+              schema:
+                type: object
+                deprecated: true
+                properties:
+                  id:
+                    type: string
+                  status:
+                    type: string
+                    enum:
+                      - new
+                      - paid
+        default:
+          description: ""

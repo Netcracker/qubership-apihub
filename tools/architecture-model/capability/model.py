@@ -50,7 +50,7 @@ CAPABILITIES = [
         ('C3.6', 'Contract diff (DDL, Java)', ['LIB', 'JTC'], 'compareDdlApi (ddlapi-1.0); ApiDiffPipeline for jars (planned)', 'new'),
     ]),
     dict(id='C4', name='API Documentation & Consumption', tier='core', desc='Let consumers read, try and export APIs', l2=[
-        ('C4.1', 'Operation documentation rendering', ['UI', 'LIB'], '<apispec-view>, <operation-view>, api-doc-viewer', 'core'),
+        ('C4.1', 'Operation documentation rendering', ['UI', 'LIB'], 'api-doc-viewer operation viewers, <apispec-view>', 'core'),
         ('C4.2', 'Schema & model views', ['UI', 'LIB'], 'JsonSchemaViewer, GraphQLOperationViewer, api-data-model trees', 'core'),
         ('C4.3', 'Class / UML diagrams', ['UI', 'LIB'], '<class-view-component> (D3 + ELK)', 'core'),
         ('C4.4', 'Interactive playground', ['UI', 'BE', 'LIB'], '<rest-playground>, PlaygroundProxyController, allowed hosts', 'core'),

@@ -15,7 +15,11 @@ export type JsoDiffSampleCase = {
 export type JsoCaseStoryComponentProps = Pick<
   JsoDiffSampleCase,
   "caseId" | "beforeYaml" | "afterYaml"
->;
+> & {
+  hideUnchangedNodes: boolean;
+};
+
+export const JSO_DIFFS_SUITE_DEFAULT_HIDE_UNCHANGED_NODES = false;
 
 export const jsoDiffSampleReadonlyArgTypes = {
   beforeYaml: {
@@ -29,6 +33,11 @@ export const jsoDiffSampleReadonlyArgTypes = {
     table: { category: "Sample" },
     description:
       "After sample YAML for reference. The viewer always uses the bundled fixture for the selected case.",
+  },
+  hideUnchangedNodes: {
+    control: { type: "boolean" },
+    table: { category: "Display" },
+    description: "Forwarded to JsoDiffsViewer's hideUnchangedNodes prop.",
   },
 } satisfies Partial<ArgTypes<JsoCaseStoryComponentProps>>;
 
@@ -46,6 +55,7 @@ const createSource = (sourceText: string): Record<string, unknown> => parseYamlS
 export const createJsoViewerArgs = (
   beforeSourceText: string,
   afterSourceText: string,
+  hideUnchangedNodes: boolean,
 ): JsoDiffsViewerProps => ({
   mergedSource: prepareJsoDiffsDocument({
     beforeSource: createSource(beforeSourceText),
@@ -56,11 +66,17 @@ export const createJsoViewerArgs = (
   supportJsonSchema: true,
   embeddedSchemaDiffsComponent: JsonSchemaDiffsViewer,
   diffMetaKeys: TEST_DIFF_META_KEYS,
+  hideUnchangedNodes,
 });
 
+/**
+ * `defaultHideUnchangedNodes` seeds the `hideUnchangedNodes` story arg (default `false`: the property
+ * suites show every row; the "Hiding Unchanged Nodes" suite passes `true`).
+ */
 export const createJsoCaseStoryFactory = (
   StoryComponent: (props: JsoCaseStoryComponentProps) => JSX.Element,
   sampleById: Record<string, JsoDiffSampleCase>,
+  defaultHideUnchangedNodes: boolean = JSO_DIFFS_SUITE_DEFAULT_HIDE_UNCHANGED_NODES,
 ) => (caseId: string): JsoCaseStoryArgs => {
   const sample = sampleById[caseId];
   if (!sample) {
@@ -73,6 +89,7 @@ export const createJsoCaseStoryFactory = (
       caseId,
       beforeYaml: sample.beforeYaml,
       afterYaml: sample.afterYaml,
+      hideUnchangedNodes: defaultHideUnchangedNodes,
     },
     argTypes: jsoDiffSampleReadonlyArgTypes,
     render: (args) => {
@@ -82,6 +99,7 @@ export const createJsoCaseStoryFactory = (
           caseId={args.caseId}
           beforeYaml={resolvedSample.beforeYaml}
           afterYaml={resolvedSample.afterYaml}
+          hideUnchangedNodes={args.hideUnchangedNodes}
         />
       );
     },

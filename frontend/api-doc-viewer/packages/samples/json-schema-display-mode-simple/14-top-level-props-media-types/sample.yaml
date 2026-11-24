@@ -1,0 +1,17 @@
+type: object
+required:
+  - complex
+properties:
+  simple:
+    type: number
+    description: Number param
+  complex:
+    type: string
+    description: String param
+  nested:
+    type: object
+    description: Object param
+    properties:
+      complex:
+        type: string
+        description: Nested property with the same key

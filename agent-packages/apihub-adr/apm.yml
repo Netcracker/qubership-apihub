@@ -1,0 +1,6 @@
+name: apihub-adr
+version: 0.1.0
+description: When a change of the qubership-apihub monorepo needs an architecture decision record, and how to write it
+author: Qubership
+dependencies:
+  apm: []

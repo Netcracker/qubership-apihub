@@ -59,14 +59,17 @@ function fakeGh({ labels = [], laterLabels = null, comments = [], failOn = null,
       return { ...issue, ...issuePatch, labels: current.map((name) => ({ name })) }
     },
     listIssueComments: async () => comments,
-    createIssueComment: async (n, body) => call('createIssueComment', n, body),
+    createIssueComment: async (n, body) => {
+      call('createIssueComment', n, body)
+      return { id: 900 + calls.length }
+    },
     updateIssueComment: async (id, body) => call('updateIssueComment', id, body),
     addLabels: async (n, add) => call('addLabels', n, add),
     removeLabel: async (n, label) => call('removeLabel', n, label),
   }
 }
 
-async function runMain({ answer, exitCode = 0, gh = fakeGh(), env = {} }) {
+async function runMain({ answer, exitCode = 0, gh = fakeGh(), env = {}, fetch }) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'analyze-test-'))
   const agentCalls = []
   const runAgent = async (options) => {
@@ -84,7 +87,7 @@ async function runMain({ answer, exitCode = 0, gh = fakeGh(), env = {} }) {
   }
   let error = null
   try {
-    await main(fullEnv, { gh, runAgent })
+    await main(fullEnv, { gh, runAgent, fetch })
   } catch (err) {
     error = err
   }
@@ -124,11 +127,42 @@ test('a suitable verdict adds the label, then writes the state', async () => {
   assert.deepEqual(files, ['analysis-input.md', 'analyst.final.md', 'summary.md'])
 })
 
+test('the analyst gets the screenshots and the files of the issue next to its input', async () => {
+  const shot = 'https://github.com/user-attachments/assets/9ce68ecc'
+  const spec = 'https://github.com/user-attachments/files/26459320/spec.json'
+  const video = 'https://github.com/user-attachments/assets/b0b0'
+  const bodies = {
+    [shot]: Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1]),
+    [spec]: Buffer.from('{"openapi":"3.0.0"}'),
+    [video]: Buffer.from([0, 0, 0, 0x18, 0x66, 0x74, 0x79, 0x70]),
+  }
+  const fetch = async (url) => new Response(bodies[url], { status: 200 })
+  const comments = [{ id: 1, user: { login: 'bob' }, created_at: '2026-10-02T00:00:00Z', body: `Spec: ${spec}` }]
+  const gh = fakeGh({ comments, issuePatch: { body: `Steps:\n![shot](${shot})\n${video}` } })
+  const { agentCalls, error, files } = await runMain({ answer: suitable, gh, fetch })
+  assert.equal(error, null)
+  const [call] = agentCalls
+  assert.deepEqual(call.files.slice(1).map((f) => path.basename(f)), ['attachment-01.png', 'attachment-03.json'])
+  assert.match(call.message, / The other attached files are the attachments of the issue that it lists\.$/)
+  assert.match(call.inputText, /\n## Attachments\n\nThe description and the comments link 3 attachments\. 2 of them/)
+  assert.match(call.inputText, /- `attachment-03\.json` \(text, 19 B\), in the comment of bob on 2026-10-02T00:00:00Z/)
+  assert.match(call.inputText, /- Not read, in the description: \S+\. Reason: a binary file; the agent reads PNG/)
+  assert.ok(files.includes('attachments'))
+})
+
+test('an issue without attachments attaches only the input', async () => {
+  const fetch = async () => assert.fail('nothing to download')
+  const { agentCalls } = await runMain({ answer: suitable, fetch })
+  assert.equal(agentCalls[0].files.length, 1)
+  assert.doesNotMatch(agentCalls[0].inputText, /## Attachments/)
+  assert.match(agentCalls[0].message, /analysis-input\.md\.$/)
+})
+
 test('needs-info labels the issue and posts a separate comment that mentions the author', async () => {
   const { gh, error } = await runMain({ answer: needsInfo })
   assert.equal(error, null)
   assert.deepEqual(gh.calls.map((c) => c[0]), ['addLabels', 'createIssueComment', 'createIssueComment'])
-  assert.deepEqual(gh.calls[0][2], ['agent:needs-human'])
+  assert.deepEqual(gh.calls[0][2], ['needs-human:context-missing'])
   assert.equal(state.parse(gh.calls[1][2]).phase, 'needs-info')
   assert.match(gh.calls[2][2], /^@alice, /)
   assert.match(gh.calls[2][2], /1\. Which version is affected\?/)
@@ -144,7 +178,7 @@ test('a re-analysis updates the state comment, reads the old verdict, and swaps 
       body: state.render('old', stateAfter(unsuitable, 'ai:unsuitable')),
     },
   ]
-  const gh = fakeGh({ labels: ['ai:unsuitable', 'agent:needs-human'], comments })
+  const gh = fakeGh({ labels: ['ai:unsuitable', 'needs-human:context-missing'], comments })
   const { agentCalls, error } = await runMain({ answer: suitable, gh, env: { AGENT_TRIGGER: 'command' } })
   assert.equal(error, null)
   assert.deepEqual(gh.calls.map((c) => c.slice(0, 2)), [
@@ -153,7 +187,7 @@ test('a re-analysis updates the state comment, reads the old verdict, and swaps 
     ['removeLabel', 200],
     ['updateIssueComment', 77],
   ])
-  assert.deepEqual(gh.calls.slice(1, 3).map((c) => c[2]), ['ai:unsuitable', 'agent:needs-human'])
+  assert.deepEqual(gh.calls.slice(1, 3).map((c) => c[2]), ['ai:unsuitable', 'needs-human:context-missing'])
   const saved = state.parse(gh.calls[3][2])
   assert.deepEqual(saved.analyses.map((a) => a.verdict), ['unsuitable', 'suitable'])
   assert.equal(saved.analyses[1].trigger, 'command')
@@ -178,7 +212,7 @@ test('dry-run writes nothing to GitHub and reports the labels and the comment in
   assert.equal(error, null)
   assert.deepEqual(gh.calls, [])
   assert.match(summary, /^## Dry run: AI analysis of #200\n/)
-  assert.match(summary, /- labels to add: agent:needs-human\n- labels to remove: none/)
+  assert.match(summary, /- labels to add: needs-human:context-missing\n- labels to remove: none/)
   assert.match(summary, /> @alice, /)
   assert.match(summary, /More information needed/)
 })
@@ -341,4 +375,71 @@ test('the re-check is only for the sweep: a command analyzes an issue that has a
   const { error, agentCalls } = await runMain({ answer: suitable, gh, env: { AGENT_TRIGGER: 'command' } })
   assert.equal(error, null)
   assert.equal(agentCalls.length, 1)
+})
+
+test('the analysis result is signed with the cost of the run and has no cumulative cost text', async () => {
+  const { gh } = await runMain({ answer: suitable })
+  const body = gh.calls.find((c) => c[0] === 'createIssueComment')[2]
+  assert.match(body, /<sub>🤖 \S+ (\S+ )?in=\S+ cached=\S+ out=\S+ usd=0\.002<\/sub>/)
+  assert.match(body, /<\/sub>\n\n<!-- ai-autonomous-state-json/)
+  assert.doesNotMatch(body.split('<!-- ai-autonomous-state-json')[0], /AI cost of this issue so far/)
+  const saved = state.parse(body)
+  assert.deepEqual(saved.results, [{ family: 'analysis', id: 'state', runs: [RUN] }])
+})
+
+test('needs-info records the stop, lays out the stop block, and labels with needs-human:context-missing', async () => {
+  const { gh } = await runMain({ answer: needsInfo })
+  const body = gh.calls[1][2]
+  const saved = state.parse(body)
+  assert.equal(saved.stops.length, 1)
+  assert.deepEqual([saved.stops[0].reason, saved.stops[0].run, saved.stops[0].on], ['context-missing', RUN, [200]])
+  assert.match(body, /\*\*Reason:\*\* `needs-human:context-missing`\n\n\*\*Blocker\.\*\* The version is missing\./)
+  assert.match(body, /\*\*Required action\.\*\* Answer the numbered questions\./)
+  assert.doesNotMatch(JSON.stringify(gh.calls), /agent:needs-human/)
+})
+
+test('a later suitable verdict closes the stop that needs-info recorded and removes the label', async () => {
+  const waiting = stateAfter(needsInfo, null)
+  const comments = [botComment(77, waiting)]
+  const gh = fakeGh({ labels: ['needs-human:context-missing'], comments })
+  const { error } = await runMain({ answer: suitable, gh, env: { AGENT_TRIGGER: 'author-reply' } })
+  assert.equal(error, null)
+  assert.deepEqual(gh.calls.slice(0, 2).map((c) => [c[0], c[2]]), [
+    ['addLabels', ['ai:suitable']],
+    ['removeLabel', 'needs-human:context-missing'],
+  ])
+  const saved = state.parse(gh.calls.at(-1)[2])
+  assert.equal(saved.stops.length, 1)
+  assert.equal(saved.stops[0].resumedRun, RUN)
+})
+
+test('an analysis after a newer result comment of another family goes to a new comment', async () => {
+  const old = stateAfter(unsuitable, null)
+  const results = [{ family: 'analysis', id: 'state', runs: [] }, { family: 'implementation', id: 78, runs: [] }]
+  const st = { ...old, results }
+  const comments = [
+    botComment(77, st),
+    {
+      id: 78,
+      user: { login: 'github-actions[bot]' },
+      body: '<!-- ai-autonomous-result family=implementation -->\nDone.\n',
+    },
+  ]
+  const gh = fakeGh({ comments })
+  const { error } = await runMain({ answer: suitable, gh, env: { AGENT_TRIGGER: 'command' } })
+  assert.equal(error, null)
+  const created = gh.calls.filter((c) => c[0] === 'createIssueComment')
+  assert.equal(created.length, 1)
+  assert.match(created[0][2], /^<!-- ai-autonomous-result family=analysis -->\n### AI analysis\n/)
+  const updated = gh.calls.filter((c) => c[0] === 'updateIssueComment')
+  assert.deepEqual(updated.map((c) => c[1]), [77])
+  const saved = state.parse(updated[0][2])
+  assert.deepEqual(saved.results.map((r) => r.family).sort(), ['analysis', 'implementation'])
+  assert.ok(saved.results.find((r) => r.family === 'analysis').id > 900)
+})
+
+test('dry-run shows the signed text and still writes nothing', async () => {
+  const { gh, summary } = await runMain({ answer: suitable, env: { AGENT_DRY_RUN: 'true' } })
+  assert.deepEqual(gh.calls, [])
+  assert.match(summary, /<sub>🤖 .* usd=0\.002<\/sub>/)
 })

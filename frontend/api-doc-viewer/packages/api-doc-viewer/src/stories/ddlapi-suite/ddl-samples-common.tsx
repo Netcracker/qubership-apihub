@@ -1,5 +1,4 @@
 import { DdlTableViewer } from "@apihub/components/DdlTableViewer/DdlTableViewer";
-import type { DisplayMode } from "@apihub/types/DisplayMode";
 import type { Realm } from "@netcracker/qubership-apihub-ddlapi";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { NavigationLinkBuilder } from "@netcracker/qubership-apihub-next-data-model/shared/ddlapi/types/navigation-link-builder";
@@ -10,6 +9,7 @@ import {
   ddlSampleReferenceArgTypes,
 } from "./ddl-samples-utils";
 import { ddlStoryNavigationLinkBuilder } from "./ddl-story-navigation";
+import { DISPLAY_MODE_DEFAULT_ARGS } from "../shared/display-mode-arg-types";
 
 type LoaderData = {
   realm: Realm;
@@ -26,7 +26,6 @@ export const ddlSamplesStoryMetaBase = {
 } satisfies Pick<DdlSamplesStoryMeta, "component" | "argTypes">;
 
 export type DdlCaseStoryFactoryOptions = {
-  displayMode?: DisplayMode;
   perCase?: Partial<Record<string, { noHeading?: boolean }>>;
 };
 
@@ -38,7 +37,7 @@ export const createCaseStoryFactory = (
   sampleById: Record<string, DdlSampleCase>,
   options?: DdlCaseStoryFactoryOptions,
 ) => {
-  const { displayMode: factoryDisplayMode, perCase = {} } = options ?? {};
+  const { perCase = {} } = options ?? {};
 
   return (caseId: string): DdlSamplesStoryObj => {
     const sample = sampleById[caseId];
@@ -53,6 +52,7 @@ export const createCaseStoryFactory = (
       args: {
         caseId,
         sampleSql: sample.ddl,
+        ...DISPLAY_MODE_DEFAULT_ARGS,
       },
       argTypes: ddlSampleReferenceArgTypes,
       loaders: [() => loadRealm(sample.ddl)],
@@ -63,7 +63,7 @@ export const createCaseStoryFactory = (
             source={loaded!.realm}
             tableKey={resolvedSample.tableKey}
             navigationLinkBuilder={ddlStoryNavigationLinkBuilder}
-            displayMode={factoryDisplayMode}
+            displayMode={args.displayMode}
             noHeading={caseOptions.noHeading}
             devMode
           />

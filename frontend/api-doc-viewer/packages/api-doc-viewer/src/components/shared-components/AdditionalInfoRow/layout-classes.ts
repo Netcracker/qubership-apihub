@@ -1,4 +1,4 @@
-import { X_AXIS_PADDING_ROWS_ASYNC_API, X_AXIS_PADDING_ROWS_DDL_API_PROPERTIES, X_AXIS_PADDING_ROWS_JSO } from "@apihub/components/shared-styles/tailwind-classnames"
+import { X_AXIS_PADDING_ROWS, X_AXIS_PADDING_ROWS_DDL_API_PROPERTIES, X_AXIS_PADDING_ROWS_JSO } from "@apihub/components/shared-styles/tailwind-classnames"
 import { AdditionalInfoRowLayoutOverrides, AdditionalInfoRowUsage } from "./types"
 
 const ADDITIONAL_INFO_ROW_X_AXIS_PADDING_BY_USAGE: Partial<Record<AdditionalInfoRowUsage, string>> = {
@@ -30,7 +30,7 @@ export function resolveAdditionalInfoRowLayout(
   return {
     xPaddingClass: overrides.xPaddingClass
       ?? ADDITIONAL_INFO_ROW_X_AXIS_PADDING_BY_USAGE[usage]
-      ?? X_AXIS_PADDING_ROWS_ASYNC_API,
+      ?? X_AXIS_PADDING_ROWS,
     bodyClass: overrides.bodyClass
       ?? ADDITIONAL_INFO_ROW_BODY_CLASS_BY_USAGE[usage]
       ?? 'additional-info-row-body',

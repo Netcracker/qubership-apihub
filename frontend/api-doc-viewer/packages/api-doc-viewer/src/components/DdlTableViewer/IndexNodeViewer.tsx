@@ -1,3 +1,4 @@
+import { cn } from "@apihub/utils/common/cn"
 import { useDisplayMode } from "@apihub/contexts/DisplayModeContext"
 import {
   resolvePlainIndexListLastRowFlags,
@@ -50,7 +51,7 @@ export const IndexNodeViewer: FC<IndexNodeViewerProps> = (props) => {
       const partNamesText = formatIndexPartNames(value.partNames)
 
       return (
-        <div className="flex flex-wrap items-center gap-2">
+        <div className={cn("flex flex-wrap items-center gap-2")}>
           {value.partNames.length > 0 && (
             <SubheaderValue
               isVisible={true}
@@ -76,7 +77,7 @@ export const IndexNodeViewer: FC<IndexNodeViewerProps> = (props) => {
   }
 
   return (
-    <div data-testid="ddl-index-node-viewer" className="flex flex-col ddlapi-property">
+    <div data-testid="ddl-index-node-viewer" className={cn("flex flex-col ddlapi-property")}>
       <TitleRow
         data-precededby={precededBy}
         {...{ [ATTRIBUTE_DDL_LIST_LAST_ROW]: listLastRowFlags.isTitleListLastRow || undefined }}

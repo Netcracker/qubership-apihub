@@ -82,7 +82,10 @@ function fakeGh(targets, { cancel = true, cancelError = null, reactionFails = fa
   return {
     calls,
     targets,
-    getIssue: async (n) => ({ ...at(n).issue }),
+    getIssue: async (n) => ({
+      ...at(n).issue,
+      ...(at(n).labels ? { labels: at(n).labels.map((name) => ({ name })) } : {}),
+    }),
     listIssueComments: async (n) => at(n).comments.map((c) => ({ ...c })),
     getPull: async (n) => (calls.push(['getPull', n]), { number: n, base: { ref: 'develop' }, head: { sha: 'abc' } }),
     createIssueComment: async (n, body) => {
@@ -266,7 +269,11 @@ test('cost with no record says so', async () => {
 
 test('stop with a running attempt: the phase first, then the cancel, the labels, and the reply', async () => {
   const running = issueState({ phase: 'implementing', implementing: { run: RUNNING, actor: 'carol', at: 't' } })
-  const targets = { 200: { issue, comments: [botComment(6, running)] } }
+  const stops = [{ reason: 'stuck', at: 't0', run: 'r0', on: [200, 70] }]
+  const targets = {
+    200: { issue, labels: ['needs-human:stuck'], comments: [botComment(6, { ...running, stops })] },
+    70: { issue: agentPull, labels: ['needs-human:stuck'], comments: [] },
+  }
   await withContext({ targets, command: cmd('stop') }, async (ctx) => {
     assert.deepEqual(await chat(ctx.env, ctx.deps), { command: 'stop', ok: true })
     assert.deepEqual(writes(ctx.gh).map((c) => c[0]), [
@@ -275,6 +282,9 @@ test('stop with a running attempt: the phase first, then the cancel, the labels,
     const saved = state.parse(targets[200].comments[0].body)
     assert.equal(saved.phase, 'stopped')
     assert.equal(saved.stoppedBy, 'carol')
+    // The person's stop closes the open stop record, and the stop text is the implementation result.
+    assert.equal(saved.stops[0].resumedRun, RUN)
+    assert.deepEqual(saved.results, [{ family: 'implementation', id: 'state', runs: [] }])
     assert.match(saved.stoppedAt, /^\d{4}-\d\d-\d\dT/)
     // The running attempt stays in the state: publish compares its run with its own.
     assert.equal(saved.implementing.run, RUNNING)
@@ -284,7 +294,7 @@ test('stop with a running attempt: the phase first, then the cancel, the labels,
     assert.deepEqual(writes(ctx.gh).filter((c) => c[0] === 'cancelRun')[0], ['cancelRun', 555])
     assert.deepEqual(
       writes(ctx.gh).filter((c) => c[0] === 'removeLabel').map((c) => c.slice(1)),
-      [[200, 'agent:needs-human'], [70, 'agent:needs-human']],
+      [[200, 'needs-human:stuck'], [70, 'needs-human:stuck']],
     )
     const reply = writes(ctx.gh).at(-1)[2]
     assert.match(reply, /^@carol, I stopped\. I cancelled the running attempt \(run 555\)\./)
@@ -296,8 +306,8 @@ test('stop with a running attempt: the phase first, then the cancel, the labels,
 test('stop on a pull request of the agent stops the flow of its issue', async () => {
   const waiting = issueState({ phase: 'waiting-ci' })
   const targets = {
-    200: { issue, comments: [botComment(6, waiting)] },
-    70: { issue: agentPull, comments: [] },
+    200: { issue, comments: [botComment(6, waiting)], labels: ['agent:completed'] },
+    70: { issue: agentPull, comments: [], labels: ['agent:completed', 'ai:l1-executor'] },
   }
   await withContext({ targets, number: 70, command: cmd('stop') }, async (ctx) => {
     await chat(ctx.env, ctx.deps)
@@ -306,12 +316,15 @@ test('stop on a pull request of the agent stops the flow of its issue', async ()
     const reply = writes(ctx.gh).at(-1)
     assert.deepEqual(reply.slice(0, 2), ['createIssueComment', 70])
     assert.match(reply[2], /stopped waiting for CI on pull request #70/)
+    assert.deepEqual(writes(ctx.gh).filter((c) => c[0] === 'removeLabel'), [
+      ['removeLabel', 200, 'agent:completed'], ['removeLabel', 70, 'agent:completed'],
+    ])
   })
 })
 
 test('stop: a finished run (409) is no error; a run of another repository is not cancelled', async () => {
   const running = issueState({ phase: 'implementing', implementing: { run: RUNNING, actor: 'carol', at: 't' } })
-  const finished = { 200: { issue, comments: [botComment(6, running)] } }
+  const finished = { 200: { issue, comments: [botComment(6, running)] }, 70: { issue: agentPull, comments: [] } }
   await withContext({ targets: finished, command: cmd('stop'), cancel: false }, async (ctx) => {
     await chat(ctx.env, ctx.deps)
     assert.match(writes(ctx.gh).at(-1)[2], /The run 555 had already finished\./)
@@ -319,7 +332,9 @@ test('stop: a finished run (409) is no error; a run of another repository is not
   const foreign = issueState({
     phase: 'implementing', implementing: { run: 'https://github.com/other/repo/actions/runs/9', at: 't' },
   })
-  await withContext({ targets: { 200: { issue, comments: [botComment(6, foreign)] } }, command: cmd('stop') },
+  await withContext({ targets: {
+    200: { issue, comments: [botComment(6, foreign)] }, 70: { issue: agentPull, comments: [] },
+  }, command: cmd('stop') },
     async (ctx) => {
       await chat(ctx.env, ctx.deps)
       assert.ok(writes(ctx.gh).every((c) => c[0] !== 'cancelRun'))
@@ -329,7 +344,7 @@ test('stop: a finished run (409) is no error; a run of another repository is not
 
 test('stop: a failed cancel is reported in the reply, the state is already stopped, and the job fails', async () => {
   const running = issueState({ phase: 'implementing', implementing: { run: RUNNING, actor: 'carol', at: 't' } })
-  const targets = { 200: { issue, comments: [botComment(6, running)] } }
+  const targets = { 200: { issue, comments: [botComment(6, running)] }, 70: { issue: agentPull, comments: [] } }
   const cancelError = new GitHubError('GitHub POST failed with 403: nope', { status: 403 })
   await withContext({ targets, command: cmd('stop'), cancelError }, async (ctx) => {
     await assert.rejects(chat(ctx.env, ctx.deps), /403/)
@@ -410,9 +425,13 @@ test('a question on an issue: the assistant answers in a reply, and the cost goe
     const lines = second[2].split('\n')
     assert.equal(lines[0], '@carol')
     assert.equal(lines[2], 'The builder returns `null` in `changelog.go`. Ask @​bob.')
-    assert.match(lines.at(-1), /^<sub>\[Run\]\(https:\/\/github.com\/o\/r\/actions\/runs\/7\) · /)
-    assert.match(lines.at(-1), /This answer: \$0\.01 · /)
-    assert.match(lines.at(-1), /all AI calls on this issue so far: \$1\.26 · /)
+    assert.equal(
+      lines.at(-3),
+      '<sub>[Run](https://github.com/o/r/actions/runs/7) · comment `/agent cost` for the table</sub>',
+    )
+    // The signature sums the records of this answer only, not the earlier costs of the issue.
+    assert.equal(lines.at(-1), '<sub>🤖 gpt-6-luna medium in=100 cached=50 out=20 usd=0.01</sub>')
+    assert.doesNotMatch(second[2], /AI calls on this issue so far/)
     assert.deepEqual(reactions(ctx.gh), ['eyes', 'rocket'])
   })
 })
@@ -432,7 +451,7 @@ test('a question on a pull request: the input names the head ref; a pull request
     const saved = state.parse(created[2])
     assert.deepEqual([saved.kind, saved.number, saved.costs.length, saved.reviews], ['pull', 123, 1, []])
     assert.match(created[2], /^<!-- ai-autonomous-state -->\n### AI Autonomous agent\n\nThe agent keeps what/)
-    assert.match(reply[2], /all AI calls on this pull request so far: \$0\.01/)
+    assert.ok(reply[2].endsWith('<sub>🤖 gpt-6-luna medium in=100 cached=50 out=20 usd=0.01</sub>'))
   })
 })
 
@@ -457,7 +476,7 @@ test('an answer that breaks the contract: the cost is recorded, the person is to
     assert.equal(first[0], 'updateIssueComment')
     assert.equal(state.parse(first[2]).costs.length, 3)
     assert.match(second[2], /^@carol, I could not answer: /)
-    assert.match(second[2], /This answer: \$0\.01/)
+    assert.ok(second[2].endsWith('usd=0.01</sub>'))
     assert.deepEqual(reactions(ctx.gh), ['eyes', 'confused'])
   })
   const tooLong = fakeRunAgent([{ answer: 'x'.repeat(6001) }])

@@ -53,8 +53,8 @@ const AGENT_PR_MARKER = '<!-- ai-autonomous-agent '
 const AGENT_PR_ISSUE = /<!--\s*ai-autonomous-agent\s+issue=(\d+)\s*-->/
 
 const isBot = (login) => typeof login === 'string' && /\[bot\]$/i.test(login)
-/** Dependabot, as the login appears in an event (`dependabot[bot]`) or in some API responses (`dependabot`). */
-const isDependabot = (login) => typeof login === 'string' && /^dependabot(\[bot\])?$/i.test(login)
+/** A dependency bot, as the login appears in an event (`renovate[bot]`) or in some API responses (`renovate`). */
+const isDependencyBot = (login) => typeof login === 'string' && /^(dependabot|renovate)(\[bot\])?$/i.test(login)
 const sameRepo = (a, b) => typeof a === 'string' && typeof b === 'string' && a.toLowerCase() === b.toLowerCase()
 
 const sameLogin = (a, b) => typeof a === 'string' && typeof b === 'string' && a.toLowerCase() === b.toLowerCase()
@@ -106,8 +106,8 @@ function agentPullOf(agentFacts, pullNumber) {
   return { issueNumber: agentFacts.issueNumber, issueState: st }
 }
 
-/** Why a command on a Dependabot pull request does nothing. */
-const NO_DEPENDABOT = 'dependency update pull requests are not handled'
+/** Why a command on a dependency bot's pull request does nothing. */
+const NO_DEPENDENCY_BOT = 'dependency update pull requests are not handled'
 
 /** The longest comment or review text the router puts into a job output; the job env has a size limit. */
 const MAX_NOTES = 8000
@@ -176,7 +176,7 @@ const COMMAND_HANDLERS = {
     // Fork pull requests are reviewed only on request: the person who asks has write access.
     if (!isPull) return skip(number, 'review works on pull requests')
     // Nothing to review in a dependency bump, and a review costs money, also when a person asks for it.
-    if (isDependabot(issue?.user?.login)) return skip(number, 'dependency update pull requests are not reviewed')
+    if (isDependencyBot(issue?.user?.login)) return skip(number, 'dependency update pull requests are not reviewed')
     return { action: 'review', number, reason: '/agent review', command }
   },
   analyze: ({ number, isPull, command, issue }) => {
@@ -197,7 +197,7 @@ const COMMAND_HANDLERS = {
   // answers.
   retry: ({ number, isPull, command, issue, agentFacts }) => {
     if (!isPull) return humanAttempt({ number, reason: '/agent retry', command })
-    if (isDependabot(issue?.user?.login)) return skip(number, NO_DEPENDABOT)
+    if (isDependencyBot(issue?.user?.login)) return skip(number, NO_DEPENDENCY_BOT)
     const agent = agentPullOf(agentFacts, number)
     if (!agent) return skip(number, 'retry works on issues and on pull requests of the agent')
     return humanAttempt({ number: agent.issueNumber, pr: number, reason: '/agent retry', command })
@@ -205,7 +205,7 @@ const COMMAND_HANDLERS = {
   // Merge the latest develop into the branch of the pull request of the agent: an attempt of `kind: 'update'`.
   update: ({ number, isPull, command, issue, agentFacts }) => {
     if (!isPull) return skip(number, 'update works on a pull request of the agent')
-    if (isDependabot(issue?.user?.login)) return skip(number, NO_DEPENDABOT)
+    if (isDependencyBot(issue?.user?.login)) return skip(number, NO_DEPENDENCY_BOT)
     const agent = agentPullOf(agentFacts, number)
     if (!agent) return skip(number, 'update works on a pull request of the agent')
     return humanAttempt({
@@ -215,13 +215,13 @@ const COMMAND_HANDLERS = {
   // Rerun the failed checks of the pull request of the agent and let the CI gate decide; no attempt, no model.
   rerun: ({ number, isPull, command, issue, agentFacts }) => {
     if (!isPull) return { action: 'rerun', number, reason: '/agent rerun', command }
-    if (isDependabot(issue?.user?.login)) return skip(number, NO_DEPENDABOT)
+    if (isDependencyBot(issue?.user?.login)) return skip(number, NO_DEPENDENCY_BOT)
     const agent = agentPullOf(agentFacts, number)
     if (!agent) return skip(number, 'rerun works on an issue or a pull request of the agent')
     return { action: 'rerun', number: agent.issueNumber, pr: number, reason: '/agent rerun', command }
   },
   // Read the CI of the head commit of a pull request, find the root cause of a red result, and rerun a flaky one. It
-  // works on any pull request, also a Dependabot one (a red dependency bump is what people ask it about); `issue` is
+  // works on any pull request, also a dependency bot's (a red dependency bump is what people ask it about); `issue` is
   // set when the pull request is the agent's, so the job can hand the decision back to the CI gate.
   'ci-check': ({ number, isPull, command, agentFacts }) => {
     if (!isPull) return skip(number, 'ci_check works on a pull request')
@@ -235,7 +235,7 @@ const COMMAND_HANDLERS = {
     }
   },
   stop: ({ number, isPull, command, issue, agentFacts }) => {
-    if (isPull && isDependabot(issue?.user?.login)) return skip(number, NO_DEPENDABOT)
+    if (isPull && isDependencyBot(issue?.user?.login)) return skip(number, NO_DEPENDENCY_BOT)
     if (isPull && !agentPullOf(agentFacts, number)) {
       return skip(number, 'stop works on issues and on pull requests of the agent')
     }
@@ -246,7 +246,7 @@ const COMMAND_HANDLERS = {
   // Free text: a question for the assistant, or, on a pull request of the agent, a change request.
   chat: ({ number, isPull, command, issue, agentFacts }) => {
     if (!isPull) return { action: 'chat', number, reason: '/agent <question>', command }
-    if (isDependabot(issue?.user?.login)) return skip(number, NO_DEPENDABOT)
+    if (isDependencyBot(issue?.user?.login)) return skip(number, NO_DEPENDENCY_BOT)
     const agent = agentPullOf(agentFacts, number)
     if (agent) {
       return humanAttempt({
@@ -257,9 +257,9 @@ const COMMAND_HANDLERS = {
   },
 }
 
-/** A `chat` decision for a command that only reads: help and cost. A Dependabot pull request stays ignored. */
+/** A `chat` decision for a command that only reads: help and cost. A dependency bot's pull request stays ignored. */
 function answerOnly({ number, isPull, command, issue, reason }) {
-  if (isPull && isDependabot(issue?.user?.login)) return skip(number, NO_DEPENDABOT)
+  if (isPull && isDependencyBot(issue?.user?.login)) return skip(number, NO_DEPENDENCY_BOT)
   return { action: 'chat', number, reason, command }
 }
 
@@ -433,6 +433,30 @@ function decideIssueComment({ payload, config, actorPermission, issueState, agen
   return handler({ number, isPull: Boolean(issue.pull_request), command, issue, agentFacts })
 }
 
+/** Inline commands use the same access rules as PR conversation commands, with their parent thread attached. */
+function decideReviewComment(input) {
+  const { payload, agentFacts } = input
+  const pr = payload.pull_request
+  if (!pr || !payload.comment) throw new TypeError('A review comment needs pull_request and comment payloads')
+  if (payload.action !== 'created') return skip(pr.number, `review comment action '${payload.action}' is not handled`)
+  if (!parseCommand(payload.comment.body)) return skip(pr.number, 'not a command')
+  if (!sameRepo(pr.head?.repo?.full_name, pr.base?.repo?.full_name)) {
+    return skip(pr.number, 'the pull request is from a fork')
+  }
+  const agent = agentPullOf(agentFacts, pr.number)
+  if (!agent || agent.issueNumber !== agentIssueOf(pr.body)) return skip(pr.number, "the pull request is not the agent's")
+  const decision = decideIssueComment({
+    ...input, payload: { ...payload, issue: { ...pr, pull_request: {} } },
+  })
+  if (decision.action === 'implement' && decision.kind !== 'update') {
+    decision.command = {
+      ...decision.command,
+      reviewCommentId: commentIdOf(payload.comment.in_reply_to_id ?? payload.comment.id),
+    }
+  }
+  return decision
+}
+
 /**
  * `workflow_run` events: a CI workflow finished on a branch. The gate acts only on the open pull request that the
  * agent made, that its issue's state names, and that waits for CI at this very commit.
@@ -492,7 +516,7 @@ function decidePullRequestReview({ payload, config, actorPermission, agentFacts 
   if (!sameRepo(pr.head?.repo?.full_name, pr.base?.repo?.full_name)) {
     return skip(number, 'the pull request is from a fork')
   }
-  if (isDependabot(pr.user?.login)) return skip(number, NO_DEPENDABOT)
+  if (isDependencyBot(pr.user?.login)) return skip(number, NO_DEPENDENCY_BOT)
   const agent = agentPullOf(agentFacts, number)
   if (!agent) return skip(number, "the pull request is not the agent's, or its issue does not name it")
   if (!isActorAllowed(config, reviewer)) return skip(number, `reviewer '${reviewer}' is not in AGENT_ALLOWED_ACTORS`)
@@ -510,6 +534,7 @@ const EVENT_HANDLERS = {
   issues: decideIssues,
   workflow_run: decideWorkflowRun,
   pull_request_review: decidePullRequestReview,
+  pull_request_review_comment: decideReviewComment,
   schedule: decideSchedule,
 }
 
@@ -552,7 +577,7 @@ function isChangeRequest(eventName, payload) {
  */
 function needsActorPermission(eventName, payload) {
   if (isChangeRequest(eventName, payload)) return true
-  if (eventName !== 'issue_comment' || payload?.action !== 'created') return false
+  if (!['issue_comment', 'pull_request_review_comment'].includes(eventName) || payload?.action !== 'created') return false
   if (isBot(payload.comment?.user?.login)) return false
   return parseCommand(payload.comment?.body) !== null
 }
@@ -593,6 +618,9 @@ const AGENT_PULL_COMMANDS = new Set(['retry', 'update', 'rerun', 'ci-check', 'st
  */
 function needsAgentFacts(eventName, payload) {
   if (isChangeRequest(eventName, payload)) return agentIssueOf(payload.pull_request?.body) !== null
+  if (eventName === 'pull_request_review_comment') {
+    return needsActorPermission(eventName, payload) && agentIssueOf(payload.pull_request?.body) !== null
+  }
   const issue = payload?.issue
   if (eventName !== 'issue_comment' || payload?.action !== 'created' || !issue?.pull_request) return false
   if (isBot(payload.comment?.user?.login) || agentIssueOf(issue.body) === null) return false
@@ -692,9 +720,9 @@ function dailyCountNeeded(eventName, payload, config, extra) {
 /**
  * The automatic analyses or reviews of the last 24 hours, counted from the state comments of the issues or pull
  * requests that were updated in that time and carry a label the agent leaves behind: `agent:pr-reviewed` for a review,
- * `ai:suitable`, `ai:unsuitable`, or `agent:needs-human` for an analysis (a comma list is an OR in a search). A failed
- * review sets no label, so it is found only on a pull request that an earlier review labeled; the count may miss the
- * others. The newest come first (`sort:updated-desc`). At most `MAX_STATES_READ` of them are read; the log says when
+ * `ai:suitable`, `ai:unsuitable`, or `needs-human:context-missing` for an analysis (a comma list is an OR in a
+ * search). A failed review sets no label, so it is found only on a pull request that an earlier review labeled; the
+ * count may miss the others. The newest come first (`sort:updated-desc`). At most `MAX_STATES_READ` of them are read; the log says when
  * that cap cuts the list.
  *
  * @returns {Promise<number>}
@@ -703,7 +731,7 @@ async function countDaily({ kind, repository, now, getClient }) {
   const gh = getClient()
   const since = daily.windowStart(now)
   const scope = kind === 'analyses'
-    ? 'is:issue label:"ai:suitable","ai:unsuitable","agent:needs-human"'
+    ? 'is:issue label:"ai:suitable","ai:unsuitable","needs-human:context-missing"'
     : 'is:pr label:"agent:pr-reviewed"'
   const found = await gh.searchIssues(
     `repo:${repository} ${scope} updated:>=${daily.toSearchTime(since)} sort:updated-desc`,
@@ -850,7 +878,7 @@ const WORKER_ACTIONS = new Set(['review', 'analyze', 'implement', 'rerun', 'ci-c
  * answered at once. The automatic events carry no command.
  */
 function isWorkerCommand(eventName, decision) {
-  if (eventName !== 'issue_comment' && eventName !== 'pull_request_review') return false
+  if (!['issue_comment', 'pull_request_review', 'pull_request_review_comment'].includes(eventName)) return false
   if (!decision.command || !WORKER_ACTIONS.has(decision.action)) return false
   return decision.action !== 'chat' || decision.command.name === 'chat'
 }
@@ -978,7 +1006,8 @@ async function declineIfBusy({ eventName, payload, decision, config, env, getCli
     log.info('decline posted', { mention: actor, on: `#${target}`, run: busy.run.id })
   }
   // A review has no comment to react to.
-  await react({ gh, commentId: commentIdOf(payload.comment?.id), content: 'confused', dryRun: config.dryRun })
+  await react({ gh, commentId: commentIdOf(payload.comment?.id), content: 'confused', dryRun: config.dryRun,
+    eventName })
   return skip(decision.number, reason)
 }
 

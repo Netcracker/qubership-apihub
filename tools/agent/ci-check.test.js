@@ -81,7 +81,7 @@ test('renderTriage: a change with fixes and evidence', () => {
     '',
     '**What I did.** Nothing: the change causes the failure, so a rerun would fail again.',
     '',
-    `<sub>[Run](${RUN}) · this check cost $0.12 · AI cost of this pull request so far: $1.50</sub>`,
+    `<sub>[Run](${RUN})</sub>`,
   ].join('\n'))
 })
 
@@ -160,13 +160,13 @@ test('renderTriage: a rejected rerun and the hints by verdict and place', () => 
   assert.ok(low.includes('\nIf you think the failure is flaky, comment `/agent rerun`.\n'))
 })
 
-test('failedCheckReply says the check failed and keeps the cost line', () => {
+test('failedCheckReply says the check failed and ends with the run link', () => {
   assert.equal(
-    failedCheckReply({ actor: 'carol', message: 'ci-triager exited with 1: boom\nmore', runUrl: RUN, checkUsd: 0.5, totalUsd: 2 }),
+    failedCheckReply({ actor: 'carol', message: 'ci-triager exited with 1: boom\nmore', runUrl: RUN }),
     [
       '@carol, I could not finish the CI check: ci-triager exited with 1: boom more',
       '',
-      `<sub>[Run](${RUN}) · this check cost $0.50 · AI cost of this pull request so far: $2.00</sub>`,
+      `<sub>[Run](${RUN})</sub>`,
     ].join('\n'),
   )
 })

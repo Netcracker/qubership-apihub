@@ -31,8 +31,8 @@ The scripts `test:compatibility-suites` and `test:human-readable` run subsets (`
 
 - It depends on `api-unifier`, `json-crawl`, `ddlapi`, `graphapi`, and `compatibility-suites` in the workspace. `nx`
   builds them first (`^build`); a stale `dist` of a dependency gives confusing type errors.
-- Consumers: `api-processor`, `api-doc-viewer` (and its `next-data-model`), `apispec-view`, and `ui`. A change to
-  the result shape needs those updated.
+- Consumers: `api-processor`, `api-doc-viewer` (and its `next-data-model`), and `ui`. A change to the result shape
+  needs those updated.
 - Every new rule needs a test for each spec type it affects; see `api-diff-testing`.
 
 ## Agent packages

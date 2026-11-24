@@ -1,0 +1,22 @@
+openapi: 3.0.3
+info:
+  title: Orders
+  version: 1.0.0
+paths:
+  /orders/{orderId}:
+    post:
+      description: |-
+        Replaces the order with the given state.
+
+        - Validates the **status** transition.
+        - Returns the stored order.
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          description: Order identifier.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""

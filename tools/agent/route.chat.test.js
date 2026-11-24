@@ -40,6 +40,71 @@ const issueState = (extra = {}) => ({
 const agentFacts = (st = issueState()) => ({ issueNumber: 200, issueState: st })
 const write = { actorPermission: 'write' }
 
+test('an inline /agent command routes the parent thread to implementation', async () => {
+  const payload = fixture('pull_request_review_comment.command')
+  const client = fakeClient({ comments: { 200: [stateComment(issueState())] } })
+  const facts = await gather({
+    eventName: 'pull_request_review_comment', payload, config: enabled(), getClient: () => client,
+  })
+  const result = route('pull_request_review_comment', payload, facts)
+  assert.deepEqual([result.action, result.number, result.pr, result.kind], ['implement', 200, 70, 'human'])
+  assert.deepEqual(result.command, {
+    name: 'chat', force: false, notes: 'check this comment', reviewCommentId: 4640053409,
+  })
+  assert.deepEqual(client.calls, [['getPermission', 'carol'], ['listIssueComments', 200]])
+  assert.match(formatOutputs(result), /"reviewCommentId":4640053409/)
+})
+
+test('a command in a new inline thread refers to that comment itself', () => {
+  const payload = fixture('pull_request_review_comment.command')
+  delete payload.comment.in_reply_to_id
+  const result = route('pull_request_review_comment', payload, { ...write, agentFacts: agentFacts() })
+  assert.equal(result.command.reviewCommentId, payload.comment.id)
+})
+
+test('inline commands retain actor, fork, agent ownership, and created-only checks', () => {
+  const cases = [
+    [(p) => { p.comment.user.login = 'github-actions[bot]' }, {}, /bot/],
+    [() => {}, { actorPermission: 'read' }, /no write access/],
+    [(p) => { p.pull_request.head.repo.full_name = 'other/fork' }, {}, /fork/],
+    [() => {}, { agentFacts: agentFacts(issueState({ pr: 99 })) }, /not the agent/],
+    [(p) => { p.pull_request.body = '' }, { agentFacts: null }, /not the agent/],
+    [(p) => { p.pull_request.body = '<!-- ai-autonomous-agent issue=999 -->' }, {}, /not the agent/],
+    [(p) => { p.action = 'edited' }, {}, /not handled/],
+  ]
+  for (const [mutate, facts, reason] of cases) {
+    const payload = fixture('pull_request_review_comment.command')
+    mutate(payload)
+    const result = route('pull_request_review_comment', payload, { ...write, agentFacts: agentFacts(), ...facts })
+    assert.equal(result.action, 'skip')
+    assert.match(result.reason, reason)
+  }
+  const result = route('pull_request_review_comment', fixture('pull_request_review_comment.command'),
+    { ...write, agentFacts: agentFacts() }, { AGENT_ALLOWED_ACTORS: 'alice' })
+  assert.match(result.reason, /not in AGENT_ALLOWED_ACTORS/)
+})
+
+test('ordinary inline comments and bot commands do not gather facts or resume a hand-off', async () => {
+  for (const bot of [false, true]) {
+    const payload = fixture('pull_request_review_comment.command')
+    if (bot) payload.comment.user.login = 'github-actions[bot]'
+    else payload.comment.body = 'Please use workspace or group.'
+    assert.equal(needsActorPermission('pull_request_review_comment', payload), false)
+    assert.equal(needsAgentFacts('pull_request_review_comment', payload), false)
+    await gather({ eventName: 'pull_request_review_comment', payload, config: enabled(),
+      getClient: () => assert.fail('ordinary inline comments need no client') })
+    assert.equal(route('pull_request_review_comment', payload, { ...write, agentFacts: agentFacts() }).action, 'skip')
+  }
+})
+
+test('inline update remains merge-only and carries no review-thread target', () => {
+  const payload = fixture('pull_request_review_comment.command')
+  payload.comment.body = '/agent update'
+  const result = route('pull_request_review_comment', payload, { ...write, agentFacts: agentFacts() })
+  assert.equal(result.kind, 'update')
+  assert.equal(result.command.reviewCommentId, undefined)
+})
+
 const comment = (name, body) => {
   const payload = fixture(name)
   payload.comment.body = body
@@ -343,6 +408,18 @@ test('a pull request of Dependabot stays ignored by every new command but ci_che
   for (const body of bodies) {
     const payload = onPersonPull(body)
     payload.issue.user.login = 'dependabot[bot]'
+    const result = route('issue_comment', payload, { ...write, agentFacts: agentFacts() })
+    assert.equal(result.action, 'skip', body)
+    assert.equal(result.reason, 'dependency update pull requests are not handled', body)
+  }
+})
+
+test('a pull request of Renovate stays ignored by every new command but ci_check', () => {
+  const bodies = ['/agent', '/agent cost', '/agent stop', '/agent retry', '/agent update', '/agent rerun',
+    '/agent a question']
+  for (const body of bodies) {
+    const payload = onPersonPull(body)
+    payload.issue.user.login = 'renovate[bot]'
     const result = route('issue_comment', payload, { ...write, agentFacts: agentFacts() })
     assert.equal(result.action, 'skip', body)
     assert.equal(result.reason, 'dependency update pull requests are not handled', body)

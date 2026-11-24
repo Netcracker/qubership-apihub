@@ -1,0 +1,21 @@
+openapi: 3.1.0
+info:
+  title: Orders
+  version: 1.0.0
+paths:
+  /orders:
+    post:
+      security:
+        - stub_key: []
+        - mutual-tls: []
+      responses:
+        "200":
+          description: ""
+components:
+  securitySchemes:
+    stub_key:
+      type: apiKey
+      in: header
+      name: X-Stub-Key
+    mutual-tls:
+      type: mutualTLS

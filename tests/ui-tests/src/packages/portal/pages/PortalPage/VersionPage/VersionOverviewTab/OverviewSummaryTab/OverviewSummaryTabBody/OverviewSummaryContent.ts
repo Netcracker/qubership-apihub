@@ -7,6 +7,7 @@ export class OverviewSummaryContent {
   readonly revision = new Content(this.page.getByTestId('RevisionTypography'), 'Revision')
   readonly revisionLink = new Link(this.page.getByTestId('RevisionTypography').getByRole('link'), 'Revisions Count')
   readonly previousVersion = new Content(this.page.getByTestId('PreviousVersionTypography'), 'Previous Version')
+  readonly previousVersionLink = new Link(this.page.getByTestId('PreviousVersionTypography').getByRole('link'), 'Previous Version')
   readonly publishedBy = new Content(this.page.getByTestId('PublishedByTypography'), 'Published by')
   readonly publicationDate = new Content(this.page.getByTestId('PublicationDateTypography'), 'Publication Date')
 

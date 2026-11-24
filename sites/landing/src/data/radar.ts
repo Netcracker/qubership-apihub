@@ -271,11 +271,11 @@ const RAW: Omit<RadarBlip, 'id'>[] = [
     why: 'Portal uses Monaco for spec editing and request bodies in playground flows.',
   },
   {
-    name: 'Dependabot',
+    name: 'Renovate',
     quadrant: 'tools',
     ring: 'adopt',
     domain: 'engineering',
-    why: 'Go services and several libraries ship dependabot.yml. That is the in-repo dependency bot, not Renovate.',
+    why: 'One .github/renovate.json on the organization defaults updates actions, npm, Go, Maven, and image dependencies.',
   },
   {
     name: 'Super-linter + link-checker',
@@ -345,7 +345,7 @@ const RAW: Omit<RadarBlip, 'id'>[] = [
     quadrant: 'tools',
     ring: 'assess',
     domain: 'engineering',
-    why: 'No renovate.json in product clones. Dependabot is what is wired. Automerge is a process experiment, not current CI.',
+    why: 'Renovate is wired without automerge. Automerge is a process experiment, not current CI.',
   },
   {
     name: 'VS Code extension surface',

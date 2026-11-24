@@ -1,3 +1,4 @@
+import { cn } from '@apihub/utils/common/cn'
 import { DEFAULT_DISPLAY_MODE, DEFAULT_EXPANDED_DEPTH } from '@apihub/constants/configuration'
 import { CustomizationOptions, CustomizationOptionsContext } from '@apihub/contexts/CustomizationOptionsContext'
 import { DiffMetaKeysContext } from '@apihub/contexts/DiffMetaKeysContext'
@@ -27,12 +28,13 @@ import {
 } from './embedding/DefaultJsonSchemaEmbedding'
 import { JsonSchemaEmbeddingContext, JsonSchemaEmbeddingContextValue } from './embedding/JsonSchemaEmbeddingContext'
 import { JsonSchemaViewerContext } from './JsonSchemaViewerContext'
+import { PrecededBy } from '../shared-components/WithPrecededByProps'
 import { JsonSchemaNodeViewerWithDiffs } from './JsonSchemaNodeViewerWithDiffs'
-import { resolveJsonSchemaDiffsNodesVisibilityMode } from './JsonSchemaDiffsNodesVisibilityMode'
+import { resolveDiffsNodesVisibilityMode } from '../shared-components/ShowUnchangedRow/DiffsNodesVisibilityMode'
 import {
   UnchangedBlocksContext,
   useUnchangedBlocksContextValue,
-} from './UnchangedBlocksContext'
+} from '../shared-components/ShowUnchangedRow/UnchangedBlocksContext'
 
 export type JsonSchemaDiffsViewerProps = {
   schema: unknown
@@ -50,11 +52,17 @@ export type JsonSchemaDiffsViewerProps = {
   /**
    * Toggles the "showing/hiding unchanged nodes" feature as a whole: `true` (default) collapses
    * runs of unchanged nodes behind a "Show unchanged" reveal control, `false` shows everything.
-   * Modeled internally as `JsonSchemaDiffsNodesVisibilityMode` (see that file) because a third
+   * Modeled internally as `DiffsNodesVisibilityMode` (see that file) because a third
    * mode - hide nodes whose only diffs fall outside `diffTypes` - is already planned; see
    * refactoring-notes.md (agent-packages/api-doc-viewer-authoring) for the design analysis.
    */
   hideUnchangedNodes?: boolean
+  /**
+   * Opt-in `data-precededby` of the first row (the root's title row, or with a suppressed root nesting
+   * indicator its first child): lets an embedding viewer control the gap above the schema (OpenAPI).
+   * Without it the rows keep their own spacing.
+   */
+  firstRowPrecededBy?: PrecededBy
 }
 
 export const JsonSchemaDiffsViewer: FC<JsonSchemaDiffsViewerProps> = memo((props) => {
@@ -88,7 +96,7 @@ const JsonSchemaDiffsViewerInner: FC<JsonSchemaDiffsViewerProps> = (props) => {
   } = props
 
   const visibilityMode = useMemo(
-    () => resolveJsonSchemaDiffsNodesVisibilityMode(hideUnchangedNodes),
+    () => resolveDiffsNodesVisibilityMode(hideUnchangedNodes),
     [hideUnchangedNodes],
   )
   const unchangedBlocksContext = useUnchangedBlocksContextValue(visibilityMode)
@@ -153,8 +161,8 @@ const JsonSchemaDiffsViewerInner: FC<JsonSchemaDiffsViewerProps> = (props) => {
               <DisplayModeContext.Provider value={displayMode}>
                 <LayoutModeContext.Provider value={SIDE_BY_SIDE_DIFFS_LAYOUT_MODE}>
                   <LevelContext.Provider value={initialLevel}>
-                    <div data-testid="json-schema-diffs-viewer">
-                      <JsonSchemaNodeViewerWithDiffs node={root}/>
+                    <div className={cn('root')} data-testid="json-schema-diffs-viewer">
+                      <JsonSchemaNodeViewerWithDiffs node={root} data-precededby={props.firstRowPrecededBy}/>
                     </div>
                   </LevelContext.Provider>
                 </LayoutModeContext.Provider>

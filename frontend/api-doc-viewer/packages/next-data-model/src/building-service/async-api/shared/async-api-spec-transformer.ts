@@ -3,6 +3,8 @@ import type { v3 } from "@asyncapi/parser/esm/spec-types";
 import { isObject } from "../../../utilities";
 import { UNKNOWN_ADDRESS } from "../json-crawl-entities/transformers/constants/constants";
 import { BuildingServiceLogger } from "../../../loggers";
+import { SecuritySpec } from "../../security/security-spec";
+import { AsyncApiSecuritySpecBuilder } from "./async-api-security-spec-builder";
 
 export interface AsyncApiMessageOrientedSpecDataContent {
   headers?: unknown;
@@ -47,15 +49,50 @@ export interface AsyncApiMessageOrientedSpec {
   description?: string;
   action?: v3.OperationObject["action"];
   address: string;
+  /** The operation's Security section (a child of the message root). */
+  security?: SecuritySpec;
   data: AsyncApiMessageOrientedSpecData;
   [key: string]: unknown;
 }
 
 export class AsyncApiSpecTransformer {
+  private securitySpecBuilder?: AsyncApiSecuritySpecBuilder
+
   constructor(
     protected readonly referenceNamePropertyKey: symbol,
     protected readonly logger: BuildingServiceLogger,
   ) { }
+
+  /** The Security section of an operation or a server (created once per transformer). */
+  protected buildSecurity(source: unknown, owner: unknown): SecuritySpec | undefined {
+    this.securitySpecBuilder ??= this.createSecuritySpecBuilder()
+    return this.securitySpecBuilder.build({ source, owner })
+  }
+
+  protected createSecuritySpecBuilder(): AsyncApiSecuritySpecBuilder {
+    return new AsyncApiSecuritySpecBuilder(this.logger, this.referenceNamePropertyKey)
+  }
+
+  /** The channel servers with their Security sections; the list keeps its own symbol-keyed records (diffs). */
+  private withServersSecurity(source: unknown, servers: (v3.ServerObject | v3.ReferenceObject)[]): (v3.ServerObject | v3.ReferenceObject)[] {
+    const mapped = servers.map(server => this.withServerSecurity(source, server))
+    for (const symbolKey of Object.getOwnPropertySymbols(servers)) {
+      Reflect.set(mapped, symbolKey, Reflect.get(servers, symbolKey))
+    }
+    return mapped
+  }
+
+  /** A channel server with its Security section in place of its raw `security` list. */
+  private withServerSecurity(source: unknown, server: v3.ServerObject | v3.ReferenceObject): v3.ServerObject | v3.ReferenceObject {
+    if (!isObject(server) || !("security" in server)) {
+      return server
+    }
+    const security = this.buildSecurity(source, server)
+    // Object rest keeps the symbol-keyed records (diffs, reference names) of the merged server.
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { security: rawSecurity, ...rest } = server
+    return { ...rest, ...(security ? { security } : {}) } as v3.ServerObject
+  }
 
   protected operationKeysOrDefaults(source: v3.AsyncAPIObject, operationKeys?: OperationKeys): OperationKeys | null {
     let operationKey: string
@@ -155,6 +192,8 @@ export class AsyncApiSpecTransformer {
         : undefined
     }
 
+    const operationSecurity = this.buildSecurity(source, operation)
+
     const messageReferenceNameProperty = pickReferenceNameProperty(operationMessage)
     const channelReferenceNameProperty = pickReferenceNameProperty(operationChannel)
     const operationReferenceNameProperty = pickReferenceNameProperty(operation)
@@ -168,6 +207,7 @@ export class AsyncApiSpecTransformer {
       ...(operationMessage.description ? { description: operationMessage.description } : {}),
       action: operation.action,
       address: operationChannel.address ?? UNKNOWN_ADDRESS,
+      ...(operationSecurity ? { security: operationSecurity } : {}),
       data: {
         content: {
           ...operationMessage.headers ? { headers: operationMessage.headers } : {},
@@ -183,7 +223,7 @@ export class AsyncApiSpecTransformer {
           ...operationChannelExtensions ? { extensions: operationChannelExtensions } : {},
           ...operationChannel.bindings ? { bindings: operationChannel.bindings } : {},
           ...operationChannel.parameters ? { parameters: this.transformParametersToJsonSchema(operationChannel.parameters) } : {},
-          ...operationChannel.servers ? { servers: operationChannel.servers } : {},
+          ...operationChannel.servers ? { servers: this.withServersSecurity(source, operationChannel.servers) } : {},
         },
         operation: {
           ...(operationReferenceNameProperty ?? {}),

@@ -8,7 +8,7 @@ import { ViewComponent } from "../service/view-component";
 import { storyPage } from "../service/storybook-service";
 import { waitForDdlTableDiffsViewer } from "../service/viewer-waits";
 
-const SNAPSHOTS_DIR = path.resolve(__dirname, "..", "__image_snapshots__");
+const SNAPSHOTS_DIR = path.resolve(__dirname, "__image_snapshots__");
 const STORY_META_ID = "ddl-api-diffs-suite-table-description-changes-samples";
 
 describe("DDL API Diffs Suite - Table Description Changes Samples", () => {

@@ -1,19 +1,3 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import { buildOperationPairKey, HandledOperationPairsProvider } from '@portal/components/HandledOperationPairsProvider'
 import { OperationContent } from '@portal/routes/root/PortalPage/VersionPage/OperationContent/OperationContent'
 import {
@@ -52,6 +36,7 @@ import { useFlatVersionChangelog } from '@netcracker/qubership-apihub-ui-shared/
 import {
   usePagedVersionChangelog,
 } from '@netcracker/qubership-apihub-ui-shared/widgets/ChangesViewWidget/api/useCommonPagedVersionChangelog'
+import { useDocumentTitle } from '@netcracker/qubership-apihub-ui-shared/hooks/common/useDocumentTitle'
 import { Box, Typography } from '@mui/material'
 import type { FC } from 'react'
 import { memo, useEffect, useMemo, useState } from 'react'
@@ -79,6 +64,8 @@ import { useOperationSearchParam } from '../useOperationSearchParam'
 import { DdlTableComparisonContent } from '../VersionContractsSubPage/DdlTableContentView'
 import { OperationsSidebarOnComparison } from './OperationsSidebarOnComparison'
 import { useDdlEntityComparisonState } from './useDdlEntityComparisonState'
+import { PAGE_TITLES } from '@portal/routes/pageTitles'
+import { useComparisonTitleSides } from '@portal/routes/useVersionPageTitle'
 
 function getOperationPairsFromPackageChanges(
   packageChanges: ReadonlyArray<OperationChangeBase>,
@@ -334,6 +321,12 @@ export const DifferentOperationVersionsComparisonPage: FC = memo(() => {
   // TODO 01.09.23 // Extract to hook? Can we optimize it and reuse some parameters?
   const versionsComparisonParams = useComparisonParams()
 
+  const comparisonTitleSides = useComparisonTitleSides(versionsComparisonParams)
+  useDocumentTitle(PAGE_TITLES.operationsComparison({
+    ...comparisonTitleSides,
+    originOperationTitle: originOperation?.title,
+    changedOperationTitle: changedOperation?.title,
+  }))
   const [originComparisonObject, changedComparisonObject] = useComparisonObjects({
     ...versionsComparisonParams,
     originOperationKey: operationKey,

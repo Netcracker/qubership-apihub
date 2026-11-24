@@ -1,3 +1,4 @@
+import { cn } from "@apihub/utils/common/cn"
 import { useDisplayMode } from "@apihub/contexts/DisplayModeContext"
 import { LayoutSide } from "@apihub/types/internal/LayoutSide"
 import { isDefined } from "@apihub/utils/common/checkers"
@@ -63,7 +64,7 @@ export const ColumnNodeViewer: FC<ColumnNodeViewerProps> = (props) => {
       }
 
       return (
-        <div className="flex flex-wrap items-center gap-2">
+        <div className={cn("flex flex-wrap items-center gap-2")}>
           <SubheaderValue
             isVisible={true}
             value={value.columnType.label}
@@ -124,7 +125,7 @@ export const ColumnNodeViewer: FC<ColumnNodeViewerProps> = (props) => {
       }
 
       return (
-        <div className="flex flex-wrap items-center gap-2">
+        <div className={cn("flex flex-wrap items-center gap-2")}>
           {value.enumValues.map((enumValue, index) => (
             <AdditionalInfoPiece
               key={`${enumValue}-${index}`}
@@ -143,7 +144,7 @@ export const ColumnNodeViewer: FC<ColumnNodeViewerProps> = (props) => {
   }
 
   return (
-    <div data-testid="ddl-column-node-viewer" className="flex flex-col ddlapi-property">
+    <div data-testid="ddl-column-node-viewer" className={cn("flex flex-col ddlapi-property")}>
       <TitleRow
         data-precededby={precededBy}
         {...{ [ATTRIBUTE_DDL_LIST_LAST_ROW]: listLastRowFlags.isTitleListLastRow || undefined }}
