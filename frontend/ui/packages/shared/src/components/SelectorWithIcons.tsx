@@ -8,6 +8,7 @@ import { genericMemo } from '../utils/components'
 export type SelectorWithIconsProps<T extends string> = {
   mode: T
   onChange?: (event: React.MouseEvent<HTMLElement>, value: T) => void
+  disabled?: boolean
   firstIcon: ReactNode
   firstValue: T
   firstTooltip: string
@@ -20,7 +21,7 @@ export type SelectorWithIconsProps<T extends string> = {
 
 function renderSelector<T extends string>(props: SelectorWithIconsProps<T>): JSX.Element {
   const {
-    mode, onChange,
+    mode, onChange, disabled,
     firstIcon, firstValue, firstTooltip, firstTestId,
     secondIcon, secondValue, secondTooltip, secondTestId,
   } = props
@@ -39,6 +40,7 @@ function renderSelector<T extends string>(props: SelectorWithIconsProps<T>): JSX
         size="small"
         value={mode}
         exclusive
+        disabled={disabled}
         onChange={onChange}
       >
 
