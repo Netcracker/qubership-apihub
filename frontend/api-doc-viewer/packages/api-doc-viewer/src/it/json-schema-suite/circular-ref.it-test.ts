@@ -12,6 +12,7 @@ const TEST_IDS = [
   'cycled-through-all-of',
   'cycled-through-all-of-with-extension',
   'cycled-through-one-of',
+  'cycled-through-one-of-deferred',
 ]
 const SNAPSHOTS_DIR = path.resolve(__dirname, '__image_snapshots__')
 

@@ -173,7 +173,7 @@ rollup is complete in api-diff, the fallback is to be removed.
 
 | Suite | Stories | Fixtures |
 | --- | ---: | --- |
-| `JSON Schema Suite` (types, validations, value range, combiners, circular, description) | 519 | `packages/samples/json-schema/` |
+| `JSON Schema Suite` (types, validations, value range, combiners, circular, description) | 520 | `packages/samples/json-schema/` |
 | `JSON Schema Suite (Extensions)` | 13 | `packages/samples/json-schema/extensions/` |
 | `JSON Schema Suite (Performance)` | 1 | `packages/samples/json-schema/performance-tests/` |
 | `JSON Schema Diffs Suite` | 1149 | `packages/samples/json-schema-diffs/` |

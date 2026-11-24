@@ -83,6 +83,7 @@ const OFFERING_REF = "#/components/schemas/Offering"
 function createCircularCase(
   caseId: string,
   offering: Record<string, unknown>,
+  expandedDepth: number = JSON_SCHEMA_SUITE_EXPANDED_DEPTH,
 ): Story {
   const schema = { $ref: OFFERING_REF }
   const components = { schemas: { Offering: offering } }
@@ -93,7 +94,7 @@ function createCircularCase(
       sampleYaml: toSampleYaml({ schema, additionalComponents: components }),
     },
     render: () => (
-      <JsonSchemaViewer schema={prepared} expandedDepth={JSON_SCHEMA_SUITE_EXPANDED_DEPTH} />
+      <JsonSchemaViewer schema={prepared} expandedDepth={expandedDepth} />
     ),
   }
 }
@@ -170,3 +171,13 @@ export const CycledThroughOneOf: Story = {
   // screenshot shows the circular node inside the non-default branch.
   parameters: autoSwitchParameters(["json-schema-combiner-option-1"]),
 }
+
+// At depth 2 both `oneOf` options of `children.items` sit past the materialization frontier:
+// the selected option has no children yet, so the `items` row gets its chevron only from the
+// fragment-based expandability rule, not from materialized children. No auto-switch selection:
+// selecting an option would materialize it and defeat the case.
+export const CycledThroughOneOfDeferred: Story = createCircularCase(
+  "cycled-through-one-of-deferred",
+  offeringSchema({}, ONE_OF_CYCLE_PROPERTIES),
+  2,
+)
