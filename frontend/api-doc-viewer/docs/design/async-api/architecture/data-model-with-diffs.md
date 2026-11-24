@@ -27,7 +27,9 @@ flowchart TB
       DescSummary["node-descendant-diffs-summary/<br/>KindAny · KindBinding · KindChannel · KindMessageContent · KindOperation<br/>(forward aggregators across tree boundaries)"]
       Summary["node-diffs-summary/KindAny"]
       Severities["node-diffs-severities/KindAny<br/>title · description · summary · address ·<br/>server-address · binding-version rows"]
+      SecurityAgg["security kinds (each factory: isSecurityTreeNodeKind)<br/>→ ASYNC_API_SECURITY_NODE_AGGREGATORS (typed RecordDrivenAggregatorRegistry from SECURITY_AGGREGATION_TABLES, record-driven, shared with OpenAPI)"]
     end
+    SecurityBuilderD["shared/async-api-security-spec-with-diffs-builder.ts<br/>AsyncApiSecuritySpecWithDiffsBuilder + SecuritySpecDiffsDecorator"]
   end
 
   subgraph MODELD["model/async-api/tree-with-diffs"]
@@ -47,6 +49,8 @@ flowchart TB
   Diffs -->|extend| AggAbs
   DescSummary --> Aggregated
   BuilderD --> TreeD
+  BuilderD --> SecurityAgg
+  TransformerD --> SecurityBuilderD
   TreeD --> NodesDAbs
 ```
 
@@ -55,5 +59,8 @@ flowchart TB
 - Bindings, extensions, headers, payload, and parameters are separate trees in the viewer. The
   forward descendant-summary aggregators read `aggregatedDiffsMetaKey` from the merged document so
   that changes inside those trees still mark their AsyncAPI ancestors.
+- Security sections: the with-diffs builder prepares diff records (list items by index, the
+  section's own whole add / remove under `''`); record-driven aggregators map them to rows.
+  Design: [../features/security.md](../features/security.md).
 - Section headers (`Address Parameters`, `Bindings`, `Servers`, `Extensions`) follow
   [../../shared/features/section-header-colorizing.md](../../shared/features/section-header-colorizing.md).

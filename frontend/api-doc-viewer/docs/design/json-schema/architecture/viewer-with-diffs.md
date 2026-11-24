@@ -5,7 +5,7 @@ layer: [../../shared/architecture/viewer-with-diffs.md](../../shared/architectur
 
 ```mermaid
 flowchart TB
-  RootD["JsonSchemaDiffsViewer.tsx<br/>JsonSchemaTreeWithDiffsBuilder · DiffMetaKeysContext · DiffTypesContext ·<br/>UnchangedBlocksContext · JsonSchemaDiffsNodesVisibilityMode"]
+  RootD["JsonSchemaDiffsViewer.tsx<br/>JsonSchemaTreeWithDiffsBuilder · DiffMetaKeysContext · DiffTypesContext ·<br/>UnchangedBlocksContext · DiffsNodesVisibilityMode"]
   DispatchD["JsonSchemaNodeViewerWithDiffs.tsx<br/>same Strategy as plain, typed to JsonSchemaTreeNodeWithDiffs"]
   SchemaNodeD["SchemaNodeViewer/SchemaNodeViewerWithDiffs.tsx"]
   CombinerNodeD["CombinerNodeViewer/CombinerNodeViewerWithDiffs.tsx"]

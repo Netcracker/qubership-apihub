@@ -1,19 +1,3 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 export const REQUIRED_TAG = 'required'
 export const DEPRECATED_TAG = 'deprecated'
 export const READ_ONLY_TAG = 'read-only'
@@ -21,3 +5,7 @@ export const WRITE_ONLY_TAG = 'write-only'
 
 export const BLUE_TAG_COLOR_SCHEMA = 'ux-badge_tag-blue'
 export const AMBER_TAG_COLOR_SCHEMA = 'ux-badge_tag-amber'
+
+/** The `Optional` badge of the OpenAPI Security title row (anonymous access): colors and size, `shared-styles/colors/openapi.css`. */
+export const OPENAPI_SECURITY_OPTIONAL_BADGE_COLOR_SCHEMA = 'openapi-security-optional-badge'
+export const OPENAPI_SECURITY_OPTIONAL_BADGE_SIZE_CLASS = 'openapi-security-optional-badge-size'

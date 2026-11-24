@@ -233,7 +233,7 @@ func (s *ddlContractServiceImpl) GetChangedDdlEntities(ctx context.Context, pack
 	}
 	packageVersions := make(map[string][]string)
 	for _, ent := range entities {
-		result.Entities = append(result.Entities, entity.MakeDdlChangedEntityView(ent))
+		result.Entities = append(result.Entities, entity.MakeDdlChangedEntityView(ent, req.IncludeChanges))
 		if ent.DdlEntityId != "" {
 			packageVersions[ent.PackageId] = append(packageVersions[ent.PackageId], view.MakeVersionRefKey(ent.Version, ent.Revision))
 		}

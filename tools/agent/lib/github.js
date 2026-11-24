@@ -193,6 +193,8 @@ function createClient({
   }
 
   const getPull = (n) => request('GET', `/repos/{repo}/pulls/${n}`)
+  /** The comparison of two commits: `behind_by` is the number of commits `base` has that `head` lacks. */
+  const compareCommits = (base, head) => request('GET', `/repos/{repo}/compare/${base}...${head}`)
   const listPullFiles = (n) => paginate(`/repos/{repo}/pulls/${n}/files`)
   const listPullCommits = (n) => paginate(`/repos/{repo}/pulls/${n}/commits`)
   const getIssue = (n) => request('GET', `/repos/{repo}/issues/${n}`)
@@ -326,6 +328,9 @@ function createClient({
   const addReaction = (commentId, content) =>
     request('POST', `/repos/{repo}/issues/comments/${commentId}/reactions`, { body: { content } })
 
+  const addReviewCommentReaction = (commentId, content) =>
+    request('POST', `/repos/{repo}/pulls/comments/${commentId}/reactions`, { body: { content } })
+
   /**
    * Cancels a workflow run. Returns `true` when GitHub accepted the request and `false` for 409: the run has finished,
    * which is the state the caller wants. Needs `actions: write`.
@@ -379,6 +384,7 @@ function createClient({
     searchIssues,
     graphql,
     getPull,
+    compareCommits,
     listPullFiles,
     listPullCommits,
     getIssue,
@@ -401,6 +407,7 @@ function createClient({
     getJobLog,
     rerunFailedJobs,
     addReaction,
+    addReviewCommentReaction,
     cancelRun,
     replyToReviewComment,
     listReviewThreads,

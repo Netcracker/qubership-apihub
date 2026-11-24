@@ -1,19 +1,3 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import { ElementHandle, Frame, Page } from 'puppeteer'
 import { StoryPage } from '../story-page'
 import { ViewComponentImpl } from './view-component-impl'
@@ -52,7 +36,7 @@ export class StoryPageImpl implements StoryPage {
   }
 
   public async embeddedOptionsControl(name: string): Promise<EmbeddedOptionsControl> {
-    const control = (await this._page.waitForSelector(`::-p-xpath(//td[./span[text()='${name}']]/following-sibling::td//div)`)) as ElementHandle
+    const control = (await this._page.waitForSelector(`::-p-xpath(//td[./span[text()='${name}']]/following-sibling::td//fieldset)`)) as ElementHandle
     if (!control) {
       throw new Error(`Unable to find control ${name}`)
     }
@@ -76,7 +60,7 @@ export class StoryPageImpl implements StoryPage {
   }
 
   public async reset(): Promise<void> {
-    const button = await this._page.waitForSelector('::-p-xpath(//button[@title="Reset controls"])', { timeout: 0 }) as ElementHandle<HTMLButtonElement>
+    const button = await this._page.waitForSelector('::-p-xpath(//button[@aria-label="Reset controls"])', { timeout: 0 }) as ElementHandle<HTMLButtonElement>
     if (!button) {
       throw new Error('Unable to find Reset button')
     }

@@ -23,6 +23,7 @@ const fs = require('node:fs')
 const { loadConfig } = require('./lib/config')
 const { createClient } = require('./lib/github')
 const state = require('./lib/state')
+const stops = require('./lib/stops')
 const usage = require('./lib/usage')
 const log = require('./lib/log')
 const { LEVELS, levelOfLabels } = require('./levels')
@@ -34,7 +35,7 @@ const DAY_MS = 24 * 60 * 60 * 1000
 
 const LABEL_SUITABLE = 'ai:suitable'
 const LABEL_UNSUITABLE = 'ai:unsuitable'
-const LABEL_NEEDS_HUMAN = 'agent:needs-human'
+const LABEL_APPROVAL = stops.labelOf('approval-required')
 const LABEL_COMPLETED = 'agent:completed'
 const LABEL_REVIEWED = 'agent:pr-reviewed'
 
@@ -44,6 +45,8 @@ const RESULTS = ['pr-opened', 'draft', 'blocked', 'unrelated', 'ci-green', 'ci-r
 
 const labelNames = (item) => (item?.labels ?? []).map((l) => (typeof l === 'string' ? l : l?.name))
 const hasLabel = (item, name) => labelNames(item).includes(name)
+/** True when the item carries a stop label that needs a person to act: any but `approval-required`. */
+const isWaiting = (item) => stops.stopLabels(labelNames(item)).some((name) => name !== LABEL_APPROVAL)
 const share = (count, total) => (total === 0 ? 0 : count / total)
 const percent = (fraction) => `${Math.round(fraction * 100)}%`
 const cell = (text) => String(text ?? '').replace(/\s*\n\s*/g, ' ').replace(/\|/g, '\\|')
@@ -87,7 +90,8 @@ function inPeriod(at, period) {
 
 /**
  * What the analysis decided about the issues. An issue with both labels counts as unsuitable: the cautious reading.
- * `needsHuman` counts issues that carry `agent:needs-human` now, whatever their `ai:*` label is.
+ * `needsHuman` counts issues that carry a stop label (`needs-human:*`) now, whatever their `ai:*` label is.
+ * `approval-required` is not counted: it says the agent waits for a review, not that it is stuck.
  *
  * @returns {{ total: number, suitable: number, unsuitable: number, unlabeled: number, needsHuman: number }}
  */
@@ -98,7 +102,7 @@ function issueCounts(issues) {
     if (hasLabel(issue, LABEL_UNSUITABLE)) counts.unsuitable += 1
     else if (hasLabel(issue, LABEL_SUITABLE)) counts.suitable += 1
     else counts.unlabeled += 1
-    if (hasLabel(issue, LABEL_NEEDS_HUMAN)) counts.needsHuman += 1
+    if (isWaiting(issue)) counts.needsHuman += 1
   }
   return counts
 }
@@ -125,14 +129,19 @@ function levelCounts(pulls) {
  * How the pull requests opened by the agent fared. The groups overlap: a pull request can be a draft and merged.
  * `pulls` are search items: `draft` and `pull_request.merged_at` come from the search API.
  *
- * @returns {{ opened: number, completed: number, draftOrNeedsHuman: number, merged: number }}
+ * `draftOrNeedsHuman` counts a draft or a stop label other than `approval-required`; `waitingApproval` counts the
+ * pull requests that wait for a review (`needs-human:approval-required`).
+ *
+ * @returns {{ opened: number, completed: number, draftOrNeedsHuman: number, waitingApproval: number,
+ *   merged: number }}
  */
 function agentPrCounts(pulls) {
-  const counts = { opened: 0, completed: 0, draftOrNeedsHuman: 0, merged: 0 }
+  const counts = { opened: 0, completed: 0, draftOrNeedsHuman: 0, waitingApproval: 0, merged: 0 }
   for (const pull of pulls ?? []) {
     counts.opened += 1
     if (hasLabel(pull, LABEL_COMPLETED)) counts.completed += 1
-    if (pull?.draft === true || hasLabel(pull, LABEL_NEEDS_HUMAN)) counts.draftOrNeedsHuman += 1
+    if (pull?.draft === true || isWaiting(pull)) counts.draftOrNeedsHuman += 1
+    if (hasLabel(pull, LABEL_APPROVAL)) counts.waitingApproval += 1
     if (pull?.pull_request?.merged_at || pull?.merged_at) counts.merged += 1
   }
   return counts
@@ -245,7 +254,7 @@ function renderReport({ period, issues, levels, agentPrs, reviewed, costs, attem
       [`Suitable (\`${LABEL_SUITABLE}\`)`, issues.suitable],
       [`Unsuitable (\`${LABEL_UNSUITABLE}\`)`, issues.unsuitable],
       ['Not assessed yet', issues.unlabeled],
-      [`Waiting for a person now (\`${LABEL_NEEDS_HUMAN}\`)`, issues.needsHuman],
+      ['Waiting for a person now (`needs-human:*`)', issues.needsHuman],
     ]),
     '',
     '### Merged pull requests by execution level',
@@ -262,7 +271,8 @@ function renderReport({ period, issues, levels, agentPrs, reviewed, costs, attem
     ...table(['Measure', 'Count'], [
       ['Opened in the period', agentPrs.opened],
       [`Reached \`${LABEL_COMPLETED}\``, agentPrs.completed],
-      [`Draft or \`${LABEL_NEEDS_HUMAN}\``, agentPrs.draftOrNeedsHuman],
+      ['Draft or `needs-human:*`', agentPrs.draftOrNeedsHuman],
+      [`Waiting for approval (\`${LABEL_APPROVAL}\`)`, agentPrs.waitingApproval ?? 0],
       ['Merged', agentPrs.merged],
       [`Reviewed by the agent (\`${LABEL_REVIEWED}\`)`, reviewed],
     ]),

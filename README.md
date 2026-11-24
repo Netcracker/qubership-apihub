@@ -8,6 +8,8 @@ related specifications into one catalog, with versioning, comparison, linting, a
 clusters.
 
 This repository holds the source of every component, its deployment assets, and its documentation.
+The latest product release is [2.17.0](https://github.com/Netcracker/qubership-apihub/releases/tag/2.17.0)
+(November 13, 2026).
 
 | Resource | Description |
 | --- | --- |
@@ -63,8 +65,8 @@ Read the [architecture overview](docs/architecture/overview.md) for the full pic
 | [`deploy/`](deploy/README.md) | The Helm chart, the local Kubernetes quickstart, and the Docker Compose stacks |
 | [`docs/`](docs/README.md) | Installation, administration, user guide, architecture, design items, and the developer guide |
 | [`tools/`](tools/README.md) | Release scripts, CI helpers, and Nx plugins |
-| `sites/` | Sources of the landing, docs, PR board, and navigation page (`sites/index/`) |
-| `.github/` | Workflows, CODEOWNERS, and Dependabot configuration |
+| `sites/` | Sources of the landing, the documentation site, the PR board, and the navigation page (`sites/index/`) |
+| `.github/` | Workflows, CODEOWNERS, and Renovate configuration |
 
 ## Where the repositories went
 

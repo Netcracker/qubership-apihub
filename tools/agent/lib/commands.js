@@ -9,7 +9,8 @@
  */
 
 const KNOWN = new Set([
-  'review', 'analyze', 'implement', 'fix', 'retry', 'rerun', 'ci_check', 'ci-check', 'stop', 'cost', 'help',
+  'review', 'analyze', 'implement', 'fix', 'retry', 'update', 'rerun', 'ci_check', 'ci-check', 'stop', 'cost',
+  'help',
 ])
 
 /** The names `fix`, `ci_check`, and `ci-check` are spellings of `implement` and `ci-check`. */

@@ -583,7 +583,10 @@ Test data is categorized into two types based on reusability and lifecycle:
   - `beforeEach`/`afterEach` → per-test setup/cleanup
   - `beforeAll`/`afterAll` → suite-level fixtures (create data here; prefer global teardown for deletion)
 - When using API-based managers, wrap the calls in these hooks so that failures are easier to trace and cleanup always runs, even if the test fails early.
-- `createPackage` is already idempotent. Prefer `apihubTDM.publishVersionIfMissing(...)` only for **reusable** (`_R`) versions that must stay stable across runs/retries. For **non-reusable** (`_N`) data that must be fresh on each retry, do **not** reuse an existing version — give it a unique name (for example include `test.info().retry`) and call `publishVersion`.
+- `createPackage` is already idempotent. Data that tests only read can be created in `beforeAll` with
+  `apihubTDM.publishVersionIfMissing(...)`, for `_R` and `_N` versions alike. Create data in the test itself when
+  the test changes it or checks its revisions, and put `test.info().retry` into its name: the retry index is unique
+  for each attempt of a test, but not for each run of a `beforeAll`.
 
 ### Hook Timeouts
 

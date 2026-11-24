@@ -175,7 +175,7 @@ export function useDdlEntityComparisonState(
 
     const entityId = getDdlChangeEntityId(changeEntry)
     return {
-      pathname: `/portal/packages/${changedPackageKey}/${changedVersionKey}/compare/${CONTRACT_TYPE_DDL}/${entityId}`,
+      pathname: `/portal/packages/${encodeURIComponent(changedPackageKey)}/${encodeURIComponent(changedVersionKey)}/compare/${CONTRACT_TYPE_DDL}/${encodeURIComponent(entityId)}`,
       search: `${compareSearchParams}`,
     }
   }, [changedPackageKey, changedVersionKey, compareSearchParams, filteredDdlChanges])
@@ -200,7 +200,7 @@ export function useDdlEntityComparisonState(
     const firstEntityId = getDdlChangeEntityId(firstChangeEntry)
     navigate({
       pathname:
-        `/portal/packages/${changedPackageKey}/${changedVersionKey}/compare/${CONTRACT_TYPE_DDL}/${firstEntityId}`,
+        `/portal/packages/${encodeURIComponent(changedPackageKey!)}/${encodeURIComponent(changedVersionKey!)}/compare/${CONTRACT_TYPE_DDL}/${encodeURIComponent(firstEntityId)}`,
       search: `${compareSearchParams}`,
     })
   }, [

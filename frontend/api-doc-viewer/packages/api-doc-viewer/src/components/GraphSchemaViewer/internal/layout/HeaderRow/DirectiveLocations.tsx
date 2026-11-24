@@ -1,19 +1,4 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+import { cn } from '@apihub/utils/common/cn'
 import { DiffRecord, isDiffMetaRecord } from '@netcracker/qubership-apihub-api-data-model'
 import { Diff, DiffAction } from "@netcracker/qubership-apihub-api-diff"
 import type { FC } from 'react'
@@ -64,7 +49,7 @@ export const DirectiveLocations: FC<DirectiveLocationsProps> = (props) => {
       : values.length
 
   return (
-    <div className="inline">
+    <div className={cn("inline")}>
       {'on '}
       {values.map((location, index) => {
         const diffForLocation = isDiffMetaRecord(diffForLocations)
@@ -182,7 +167,7 @@ export const DirectiveLocations: FC<DirectiveLocationsProps> = (props) => {
             const diffColorSchemaAfter = INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.add]
 
             result =
-              <div className="inline-flex gap-1">
+              <div className={cn("inline-flex gap-1")}>
                 <Value
                   key={before}
                   value={before}
@@ -222,7 +207,7 @@ const Value: FC<ValueProps> = props => {
     colorSchema,
   } = props
   return (
-    <div className={`inline ${colorSchema}`}>
+    <div className={cn(`inline ${colorSchema}`)}>
       {value}
       {index < total - 1 && ', '}
     </div>

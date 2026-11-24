@@ -1,0 +1,17 @@
+openapi: 3.0.3
+info:
+  title: Orders
+  version: 1.0.0
+paths:
+  /orders:
+    post:
+      security:
+        - oidc: []
+      responses:
+        "200":
+          description: ""
+components:
+  securitySchemes:
+    oidc:
+      type: openIdConnect
+      openIdConnectUrl: https://login.example.com/.well-known/openid-configuration

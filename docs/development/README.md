@@ -12,7 +12,7 @@ pull request.
 1. [Getting started](./getting-started.md): the tools and their versions, Git settings, the clone, the first install,
    build, and test, and the Windows notes.
 2. [Development workflow](./workflow.md): issues, branch names, Conventional Commit titles, pull requests, review and
-   merge, features that need frontend and backend changes, and Dependabot pull requests.
+   merge, features that need frontend and backend changes, and Renovate pull requests.
 3. [Build and test](./build-and-test.md): Nx, and how to build and test the TypeScript, Go, and Java modules, the
    images, the Storybooks and screenshot tests, and the E2E suites.
 4. [Local run](./local-run.md): the product in Docker Compose or a local Kubernetes cluster, with released or locally

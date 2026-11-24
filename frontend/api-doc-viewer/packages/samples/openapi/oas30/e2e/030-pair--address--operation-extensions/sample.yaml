@@ -1,0 +1,13 @@
+openapi: 3.0.3
+info:
+  title: Orders
+  version: 1.0.0
+paths:
+  /api/v2/stores/main-store/orders/pending/export-requests:
+    post:
+      x-rate-limit: 100
+      x-audience:
+        visibility: public
+      responses:
+        "200":
+          description: ""

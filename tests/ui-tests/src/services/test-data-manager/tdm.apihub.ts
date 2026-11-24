@@ -395,6 +395,9 @@ export class ApihubTestDataManager {
       files: params.files ? resolveRestPublishFiles(params.files) : [],
       metadata: params.metadata || {},
     }
+    if (params.previousVersionPackageId && params.previousVersionPackageId !== params.pkg.packageId) {
+      config.previousVersionPackageId = params.previousVersionPackageId
+    }
     return JSON.stringify(config)
   }
 

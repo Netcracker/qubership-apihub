@@ -15,8 +15,8 @@ const { runAgent } = require('./opencode')
 const log = require('./log')
 
 /**
- * Runs `agent` with `inputFile` attached and returns its output, validated against the schema `schema` of
- * lib/contract.js.
+ * Runs `agent` with `inputFile` and `files` attached and returns its output, validated against the schema `schema`
+ * of lib/contract.js.
  *
  * @param {object} options
  * @param {string} options.flow `review`, `analyze`, or `implement`, for the cost record
@@ -25,6 +25,7 @@ const log = require('./log')
  * @param {{id: string, variant: string|null}} options.model
  * @param {string} options.message the prompt; the input file is attached next to it
  * @param {string} options.inputFile
+ * @param {string[]} [options.files] attached after the input file: the attachments of the issue
  * @param {string} options.out folder for `<agent><suffix>.jsonl` (events) and `<agent><suffix>.final.md` (answer)
  * @param {object[]} options.costs the cost record of this call is appended here
  * @param {string} options.runUrl
@@ -40,6 +41,7 @@ async function callAgent({
   model,
   message,
   inputFile,
+  files = [],
   out,
   costs,
   runUrl,
@@ -50,7 +52,7 @@ async function callAgent({
 }) {
   const run = deps.runAgent ?? runAgent
   const eventsFile = path.join(out, `${agent}${suffix}.jsonl`)
-  const result = await run({ agent, model, message, files: [inputFile], cwd: process.cwd(), eventsFile })
+  const result = await run({ agent, model, message, files: [inputFile, ...files], cwd: process.cwd(), eventsFile })
   const summary = usage.summarize(usage.parseEvents(result.eventsText))
   costs.push(usage.costRecord({ run: runUrl, flow, role, model: model.id, variant: model.variant, summary }))
   log.info(`${agent} usage`, {

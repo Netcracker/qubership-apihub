@@ -1,26 +1,10 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import { Frame, Page } from 'puppeteer'
 import { StoryPageImpl } from './impl/story-page-impl'
 import { host } from './storybook-functions'
 import { StoryPage } from './story-page'
 import { EventEmitter } from 'events'
 import { EVENT_NAME_UPDATE_FINISH } from './storybook-constant'
-import { EVENT_UPDATE_FINISH } from 'main/component'
+import { type ClassViewComponent, EVENT_UPDATE_FINISH } from 'main/component'
 
 const REPUB_EVENT_UPDATE_FINISH: typeof EVENT_UPDATE_FINISH = 'update-finish'
 
@@ -38,12 +22,9 @@ export async function storyPage(page: Page, storyName: string): Promise<StoryPag
       renderEventTarget.emit(EVENT_NAME_UPDATE_FINISH)
     }
   })
-  await page.evaluateOnNewDocument(() => {
-    localStorage.setItem('storybook-layout', JSON.stringify({
-      resizerPanel: { x: 1300, y: 0 },
-      resizerNav: { x: 200, y: 0 }
-    }))
-  })
+  // The snapshots are 1100x960: the 1800x1000 viewport minus the Storybook 10 defaults, a 300 px sidebar,
+  // a 400 px right panel (manager.ts), and a 40 px toolbar. A Storybook upgrade that changes them changes
+  // every snapshot.
   await page.setViewport({ width: 1800, height: 1000 })
   await page.goto(`${host()}?path=/story/${storyName}&it=true`, { waitUntil: 'networkidle2', timeout: 0 })
   await page.waitForSelector('#storybook-panel-root', { timeout: 0 })
@@ -56,9 +37,9 @@ export async function storyPage(page: Page, storyName: string): Promise<StoryPag
   // a re-render so our freshly attached listener catches the event.
   const waitRenderClear = waitRenderClearInterval(renderEventTarget)
   await storyFrame.evaluate(() => {
-    const el = document.querySelector('class-view')
+    const el = document.querySelector<HTMLElement & Pick<ClassViewComponent, 'invalidate'>>('class-view')
     if (el) {
-      (el as any).invalidate()
+      el.invalidate()
     }
   })
   return new StoryPageImpl(page, storyFrame, renderEventTarget, waitRenderClear)

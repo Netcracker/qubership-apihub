@@ -1,0 +1,24 @@
+asyncapi: 3.0.0
+info:
+  title: Display mode
+  version: 1.0.0
+channels:
+  testChannel:
+    address: events.{region}
+    messages:
+      TestMessage:
+        $ref: "#/components/messages/TestMessage"
+    parameters:
+      region:
+        location: $message.header#/region
+operations:
+  sendOperation:
+    action: send
+    channel:
+      $ref: "#/channels/testChannel"
+    messages:
+      - $ref: "#/channels/testChannel/messages/TestMessage"
+components:
+  messages:
+    TestMessage:
+      name: TestMessage

@@ -482,7 +482,7 @@ paths:
       description: |
         Replace the global role display/order configuration with the submitted ordered list.
 
-        The request must contain each existing role exactly once; missing or duplicate role IDs cause a 400 error. The change is applied atomically.
+        The request must contain each role returned by `GET /api/v2/roles` exactly once; missing or duplicate role IDs cause a 400 error. The system role `none` is not orderable and must be omitted. The change is applied atomically.
       operationId: postRolesChangeOrder
       requestBody:
         description: Ordered list of role IDs representing the complete desired role order.
@@ -490,7 +490,7 @@ paths:
           application/json:
             schema:
               type: object
-              description: Payload containing the complete ordered role list. Order is significant and all existing roles must be present exactly once.
+              description: Payload containing the complete ordered role list. Order is significant and every orderable role must be present exactly once.
               required:
                 - roles
               properties:
@@ -498,7 +498,7 @@ paths:
                   type: array
                   items:
                     type: string
-                  example: [admin, owner, editor, viewer, none]
+                  example: [admin, owner, editor, viewer]
       responses:
         "204":
           description: No content

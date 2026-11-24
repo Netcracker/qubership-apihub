@@ -19,28 +19,28 @@ describe("JSON Schema Diffs Suite/Extended Default", () => {
 
   it("001-default-added-string", async () => {
     story = await storyPage(page, `json-schema-diffs-suite-extended-default--case-001-default-added-string`);
-    await waitForJsonSchemaDiffsViewer(page, { switchCombinerVariant: true });
+    await waitForJsonSchemaDiffsViewer(page);
     component = await story.viewComponent();
     expect(await component.captureScreenshot()).toMatchImageSnapshot();
   });
 
   it("002-default-removed-string", async () => {
     story = await storyPage(page, `json-schema-diffs-suite-extended-default--case-002-default-removed-string`);
-    await waitForJsonSchemaDiffsViewer(page, { switchCombinerVariant: true });
+    await waitForJsonSchemaDiffsViewer(page);
     component = await story.viewComponent();
     expect(await component.captureScreenshot()).toMatchImageSnapshot();
   });
 
   it("003-default-replaced-string", async () => {
     story = await storyPage(page, `json-schema-diffs-suite-extended-default--case-003-default-replaced-string`);
-    await waitForJsonSchemaDiffsViewer(page, { switchCombinerVariant: true });
+    await waitForJsonSchemaDiffsViewer(page);
     component = await story.viewComponent();
     expect(await component.captureScreenshot()).toMatchImageSnapshot();
   });
 
   it("004-default-replaced-boolean", async () => {
     story = await storyPage(page, `json-schema-diffs-suite-extended-default--case-004-default-replaced-boolean`);
-    await waitForJsonSchemaDiffsViewer(page, { switchCombinerVariant: true });
+    await waitForJsonSchemaDiffsViewer(page);
     component = await story.viewComponent();
     expect(await component.captureScreenshot()).toMatchImageSnapshot();
   });

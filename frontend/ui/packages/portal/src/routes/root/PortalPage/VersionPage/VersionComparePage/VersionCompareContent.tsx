@@ -1,19 +1,3 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import { useBackwardLocationContext, useSetBackwardLocationContext } from '@portal/routes/BackwardLocationProvider'
 import { useEventBus } from '@portal/routes/EventBusProvider'
 import { Box, Card, CardContent } from '@mui/material'
@@ -195,7 +179,7 @@ export const VersionCompareContent: FC = memo(() => {
   const handleSwap = useCallback(() => {
     const searchParams = {
       [VERSION_SEARCH_PARAM]: { value: changedVersionKey },
-      [PACKAGE_SEARCH_PARAM]: { value: originPackageKey !== changedPackageKey ? encodeURIComponent(changedPackageKey!) : '' },
+      [PACKAGE_SEARCH_PARAM]: { value: originPackageKey !== changedPackageKey ? changedPackageKey! : '' },
       [REF_SEARCH_PARAM]: { value: isPackageFromDashboard ? refPackageKey : undefined },
       [API_TYPE_SEARCH_PARAM]: { value: apiType },
       [TAG_SEARCH_PARAM]: { value: tag },
@@ -296,7 +280,7 @@ function renderOperationComparisonRow(
   } = operationChange
 
   const comparingSearchParams = optionalSearchParams({
-    [PACKAGE_SEARCH_PARAM]: { value: changedPackageKey === originPackageKey ? '' : encodeURIComponent(originPackageKey) },
+    [PACKAGE_SEARCH_PARAM]: { value: changedPackageKey === originPackageKey ? '' : originPackageKey },
     [VERSION_SEARCH_PARAM]: { value: originVersionKey },
     [REF_SEARCH_PARAM]: { value: refPackageKey },
     [OPERATION_SEARCH_PARAM]: {
@@ -364,7 +348,7 @@ function renderDdlComparisonRow(
   const entityId = getDdlChangeEntityId(ddlChange)
 
   const comparingSearchParams = optionalSearchParams({
-    [PACKAGE_SEARCH_PARAM]: { value: changedPackageKey === originPackageKey ? '' : encodeURIComponent(originPackageKey) },
+    [PACKAGE_SEARCH_PARAM]: { value: changedPackageKey === originPackageKey ? '' : originPackageKey },
     [VERSION_SEARCH_PARAM]: { value: originVersionKey },
     [REF_SEARCH_PARAM]: { value: refPackageKey },
   })

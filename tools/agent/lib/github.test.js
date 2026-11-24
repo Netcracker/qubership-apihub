@@ -190,6 +190,13 @@ test('getPull, getIssue, and the file and comment lists use the expected paths',
   )
 })
 
+test('compareCommits reads the comparison of two commits', async () => {
+  const { client, calls } = setup([json({ behind_by: 0, ahead_by: 2 })])
+  assert.deepEqual(await client.compareCommits('develop', 'abc123'), { behind_by: 0, ahead_by: 2 })
+  assert.equal(calls[0].url, 'https://api.github.com/repos/acme/widgets/compare/develop...abc123')
+  assert.equal(calls[0].init.method, 'GET')
+})
+
 test('listPullCommits reads the commits of a pull request', async () => {
   const { client, calls } = setup([json([{ sha: 'a', commit: { message: 'x' } }])])
   assert.deepEqual(await client.listPullCommits(8), [{ sha: 'a', commit: { message: 'x' } }])
@@ -474,6 +481,14 @@ test('replyToReviewComment posts the body to the replies of the comment', async 
   assert.equal(calls[0].url, 'https://api.github.com/repos/acme/widgets/pulls/70/comments/1234/replies')
   assert.equal(calls[0].init.method, 'POST')
   assert.deepEqual(calls[0].body, { body: 'Pushed abc1234.' })
+})
+
+test('addReviewCommentReaction uses the pull review comment endpoint', async () => {
+  const { client, calls } = setup([json({ id: 1 })])
+  await client.addReviewCommentReaction(4643082805, 'eyes')
+  assert.equal(calls[0].url, 'https://api.github.com/repos/acme/widgets/pulls/comments/4643082805/reactions')
+  assert.equal(calls[0].init.method, 'POST')
+  assert.deepEqual(calls[0].body, { content: 'eyes' })
 })
 
 test('listReviewThreads queries the threads of the pull request and flattens the nodes', async () => {

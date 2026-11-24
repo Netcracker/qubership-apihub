@@ -1,19 +1,3 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import { Box, Grid, Typography } from '@mui/material'
 import { isEmpty } from 'lodash-es'
 import type { FC } from 'react'
@@ -21,8 +5,10 @@ import { memo, useEffect } from 'react'
 import { useSearchParam } from 'react-use'
 import { useUser } from '../../../hooks/authorization'
 import { useSystemConfiguration } from '../../../hooks/authorization/useSystemConfiguration'
+import { useDocumentTitle } from '../../../hooks/common/useDocumentTitle'
 import { isExternalIdentityProvider, isInternalIdentityProvider } from '../../../types/system-configuration'
 import { SEARCH_PARAM_NO_AUTO_LOGIN, SEARCH_PARAM_REDIRECT_URI } from '../../../utils/constants'
+import { LOGIN_PAGE_TITLE } from '../../../utils/document-title-labels'
 import { isSameOriginUrl } from '../../../utils/redirects'
 import { ExternalAuthControls } from './ExternalAuthControls'
 import { InternalAuthForm } from './InternalAuthForm'
@@ -34,6 +20,7 @@ export type LoginPageComponentProps = {
 export const LoginPage: FC<LoginPageComponentProps> = memo(({ applicationName }) => {
   const noAutoLogin = useSearchParam(SEARCH_PARAM_NO_AUTO_LOGIN)
   const redirectUri = useSearchParam(SEARCH_PARAM_REDIRECT_URI)
+  useDocumentTitle([LOGIN_PAGE_TITLE])
 
   const [user] = useUser()
   const [systemConfiguration] = useSystemConfiguration()

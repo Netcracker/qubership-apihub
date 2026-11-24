@@ -1,7 +1,8 @@
 'use strict'
 const { test } = require('node:test')
 const assert = require('node:assert/strict')
-const { ContractError, extractJson, validate, SCHEMAS } = require('./contract')
+const { ContractError, extractJson, validate, SCHEMAS, IMPLEMENTER_STOP_REASONS } = require('./contract')
+const { REASONS } = require('./stops')
 
 const FENCE = '```'
 
@@ -318,6 +319,7 @@ function goodImplementation(extra = {}) {
     verification: 'Added TestBuildNilChangelog; go test ./... passes.',
     notes: 'The nil came from an empty package.',
     blockedReason: '',
+    stopReason: '',
     ...extra,
   }
 }
@@ -326,8 +328,26 @@ test('implementation accepts a done, a blocked, and an unrelated answer', () => 
   assert.doesNotThrow(() => validate('implementation', goodImplementation()))
   const unrelated = goodImplementation({ status: 'unrelated', blockedReason: 'Flaky E2E; the change touches no auth.' })
   assert.doesNotThrow(() => validate('implementation', unrelated))
-  const blocked = goodImplementation({ status: 'blocked', blockedReason: 'The issue does not say which API.' })
+  const blocked = goodImplementation({
+    status: 'blocked',
+    blockedReason: 'The issue does not say which API.',
+    stopReason: 'context-missing',
+  })
   assert.doesNotThrow(() => validate('implementation', blocked))
+})
+
+test('implementation stopReason is required and takes every stop reason but approval-required, or empty', () => {
+  const bad = goodImplementation()
+  delete bad.stopReason
+  assert.deepEqual(problemsOf('implementation', bad), ['stopReason: missing required property'])
+  assert.deepEqual(IMPLEMENTER_STOP_REASONS, REASONS.filter((reason) => reason !== 'approval-required'))
+  for (const reason of IMPLEMENTER_STOP_REASONS) {
+    assert.doesNotThrow(() => validate('implementation', goodImplementation({ stopReason: reason })))
+  }
+  const rejected = problemsOf('implementation', goodImplementation({ stopReason: 'approval-required' }))
+  assert.equal(rejected.length, 1)
+  assert.match(rejected[0], /^stopReason: expected one of /)
+  assert.equal(problemsOf('implementation', goodImplementation({ stopReason: 'busy' })).length, 1)
 })
 
 test('implementation lists every problem with its path, including the title length', () => {

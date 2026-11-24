@@ -1,4 +1,4 @@
-# Creates or updates the ai:* and agent:* labels that the AI Autonomous agent uses.
+# Creates or updates the ai:*, agent:*, and needs-human:* labels that the AI Autonomous agent uses.
 #
 #   pwsh tools/agent/labels.ps1 [-DryRun] [-Repo <owner/repo>]
 #   powershell -NoProfile -File tools/agent/labels.ps1 [-DryRun] [-Repo <owner/repo>]
@@ -22,8 +22,21 @@ $labels = @(
     'ai:l2-agent|3B7DD8|AI picked the task, implemented it, and opened the PR; a person reviewed and accepted it',
     'ai:l3-autonomous|0B4F9C|AI picked, implemented, merged, and closed the task without a person',
     'agent:completed|0E8A16|The agent finished and every required check passed; a person may not have accepted it yet',
-    'agent:needs-human|FBCA04|The agent needs a person: a decision, more context, permissions, or troubleshooting',
-    'agent:pr-reviewed|D4C5F9|The AI review of this pull request is published; its findings may still be open'
+    'agent:pr-reviewed|D4C5F9|The AI review of this pull request is published; its findings may still be open',
+    'needs-human:approval-required|BFD4F2|The agent finished and its pull request waits for a person to review and approve it',
+    'needs-human:risk-found|FBCA04|The agent found a risk (security, data loss, compatibility) and needs a person to accept it',
+    'needs-human:decision-required|FBCA04|A product or design choice is open and a person must decide',
+    'needs-human:context-missing|FBCA04|The task lacks information the agent needs; a person must answer its questions',
+    'needs-human:access-missing|FBCA04|The agent lacks a permission, token, or access it needs',
+    'needs-human:verification-blocked|FBCA04|The agent cannot verify the change: a check cannot run or is not trustworthy',
+    'needs-human:environment-blocked|FBCA04|The tooling, runner, or environment failed and the agent cannot go on',
+    'needs-human:external-dependency|FBCA04|The work waits on another team, release, or change outside this repository',
+    'needs-human:conflict-unresolved|FBCA04|A merge conflict or contradicting changes the agent cannot resolve safely',
+    'needs-human:scope-review-required|FBCA04|The change grew beyond the issue scope and a person must confirm the scope',
+    'needs-human:invalid|FBCA04|The task looks like a duplicate, is already fixed, or describes intended behavior',
+    'needs-human:stuck|FBCA04|The agent tried and made no progress, for example the same failure again',
+    'needs-human:disagreement|FBCA04|The agent and a reviewer or check disagree and a person must settle it',
+    'needs-human:budget-exhausted|FBCA04|The agent used its attempt, time, or cost budget before it finished'
 )
 
 # The check runs for dry runs too, so a missing gh fails the same way in both modes.

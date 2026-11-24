@@ -1,0 +1,16 @@
+openapi: 3.0.3
+info:
+  title: Orders
+  version: 1.0.0
+paths:
+  /orders:
+    post:
+      summary: Update an order
+      description: |-
+        Replaces the order with the given state.
+
+        - Validates the **status** transition.
+        - Returns the stored order.
+      responses:
+        "200":
+          description: ""

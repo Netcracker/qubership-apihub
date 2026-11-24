@@ -1,4 +1,3 @@
-import { AbstractNodeDiffsSeveritiesAggregator } from "@apihub/next-data-model/building-service/abstract/tree-with-diffs/node-diffs-data/node-diffs-severities-aggregator"
 import {
   NodeDiffs,
   NodeDiffsSeverities,
@@ -7,6 +6,7 @@ import {
 import { JsonSchemaKindPropertyNodeDiffs } from "@apihub/next-data-model/model/json-schema/tree-with-diffs/property-row-diffs.types"
 import { JsonSchemaTreeNodeStoredValue } from "@apihub/next-data-model/model/json-schema/types/node-value"
 import { JsonSchemaNodeDiffsSeveritiesAggregatorKindAny } from "./kind-any"
+import { DiffTypeOrder } from "@apihub/next-data-model/model/abstract/tree-with-diffs/diff-type-order"
 
 export class JsonSchemaNodeDiffsSeveritiesAggregatorKindProperty
   extends JsonSchemaNodeDiffsSeveritiesAggregatorKindAny {
@@ -28,7 +28,7 @@ export class JsonSchemaNodeDiffsSeveritiesAggregatorKindProperty
     diffsSeverities: NodeDiffsSeverities,
   ): void {
     const propertyDiffs = nodeDiffs as JsonSchemaKindPropertyNodeDiffs
-    const maxRowDiff = AbstractNodeDiffsSeveritiesAggregator.maxChangedPropertyMetaDataByDiffType(
+    const maxRowDiff = DiffTypeOrder.strongestChangedPropertyMetaData(
       propertyDiffs.default,
       propertyDiffs.defaultRowColorizingDiff,
     )
@@ -45,7 +45,7 @@ export class JsonSchemaNodeDiffsSeveritiesAggregatorKindProperty
     diffsSeverities: NodeDiffsSeverities,
   ): void {
     const propertyDiffs = nodeDiffs as JsonSchemaKindPropertyNodeDiffs
-    const maxRowDiff = AbstractNodeDiffsSeveritiesAggregator.maxChangedPropertyMetaDataByDiffType(
+    const maxRowDiff = DiffTypeOrder.strongestChangedPropertyMetaData(
       propertyDiffs.enumDiff,
       propertyDiffs.enumRowColorizingDiff,
       ...Object.values(propertyDiffs.enumValueDiffs ?? {}),
@@ -63,7 +63,7 @@ export class JsonSchemaNodeDiffsSeveritiesAggregatorKindProperty
     diffsSeverities: NodeDiffsSeverities,
   ): void {
     const propertyDiffs = nodeDiffs as JsonSchemaKindPropertyNodeDiffs
-    const maxRowDiff = AbstractNodeDiffsSeveritiesAggregator.maxChangedPropertyMetaDataByDiffType(
+    const maxRowDiff = DiffTypeOrder.strongestChangedPropertyMetaData(
       propertyDiffs.examplesDiff,
       propertyDiffs.examplesRowColorizingDiff,
       ...Object.values(propertyDiffs.examplesValueDiffs ?? {}),
@@ -84,7 +84,7 @@ export class JsonSchemaNodeDiffsSeveritiesAggregatorKindProperty
     diffsSeverities: NodeDiffsSeverities,
   ): void {
     const propertyDiffs = nodeDiffs as JsonSchemaKindPropertyNodeDiffs
-    const maxRowDiff = AbstractNodeDiffsSeveritiesAggregator.maxChangedPropertyMetaDataByDiffType(
+    const maxRowDiff = DiffTypeOrder.strongestChangedPropertyMetaData(
       propertyDiffs.allowedAdditionalPropertyNamesDiff,
       propertyDiffs.allowedAdditionalPropertyNamesRowColorizingDiff,
       ...Object.values(propertyDiffs.allowedAdditionalPropertyNamesValueDiffs ?? {}),

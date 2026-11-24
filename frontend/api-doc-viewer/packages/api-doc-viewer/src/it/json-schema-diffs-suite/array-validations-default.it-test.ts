@@ -19,35 +19,35 @@ describe("JSON Schema Diffs Suite/Array Validation/Array Validations Default", (
 
   it("001-default-added-empty-array", async () => {
     story = await storyPage(page, `json-schema-diffs-suite-array-validation-array-validations-default--case-001-default-added-empty-array`);
-    await waitForJsonSchemaDiffsViewer(page, { switchCombinerVariant: true });
+    await waitForJsonSchemaDiffsViewer(page);
     component = await story.viewComponent();
     expect(await component.captureScreenshot()).toMatchImageSnapshot();
   });
 
   it("002-default-removed-empty-array", async () => {
     story = await storyPage(page, `json-schema-diffs-suite-array-validation-array-validations-default--case-002-default-removed-empty-array`);
-    await waitForJsonSchemaDiffsViewer(page, { switchCombinerVariant: true });
+    await waitForJsonSchemaDiffsViewer(page);
     component = await story.viewComponent();
     expect(await component.captureScreenshot()).toMatchImageSnapshot();
   });
 
   it("003-default-replaced-empty-to-array", async () => {
     story = await storyPage(page, `json-schema-diffs-suite-array-validation-array-validations-default--case-003-default-replaced-empty-to-array`);
-    await waitForJsonSchemaDiffsViewer(page, { switchCombinerVariant: true });
+    await waitForJsonSchemaDiffsViewer(page);
     component = await story.viewComponent();
     expect(await component.captureScreenshot()).toMatchImageSnapshot();
   });
 
   it("004-default-replaced-array-to-empty", async () => {
     story = await storyPage(page, `json-schema-diffs-suite-array-validation-array-validations-default--case-004-default-replaced-array-to-empty`);
-    await waitForJsonSchemaDiffsViewer(page, { switchCombinerVariant: true });
+    await waitForJsonSchemaDiffsViewer(page);
     component = await story.viewComponent();
     expect(await component.captureScreenshot()).toMatchImageSnapshot();
   });
 
   it("005-default-replaced-array-to-array", async () => {
     story = await storyPage(page, `json-schema-diffs-suite-array-validation-array-validations-default--case-005-default-replaced-array-to-array`);
-    await waitForJsonSchemaDiffsViewer(page, { switchCombinerVariant: true });
+    await waitForJsonSchemaDiffsViewer(page);
     component = await story.viewComponent();
     expect(await component.captureScreenshot()).toMatchImageSnapshot();
   });

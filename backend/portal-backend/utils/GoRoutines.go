@@ -15,16 +15,17 @@ func (f noPanicFunc) run() {
 	f()
 }
 
-func (f noPanicFuncWErr) run() error {
-	var err error
+func (f noPanicFuncWErr) run() (err error) {
 	defer func() {
-		recoverErr := recoverToErr()
-		if recoverErr != nil {
-			err = recoverErr
+		if e := recover(); e != nil {
+			log.Errorf("Request failed with panic: %v", e)
+			log.Tracef("Stacktrace: %v", string(debug.Stack()))
+			debug.PrintStack()
+			err = panicToErr(e)
 		}
 	}()
-	err = f()
-	return err
+
+	return f()
 }
 
 func SafeAsync(function noPanicFunc) {
@@ -44,19 +45,13 @@ func internalRecover() {
 	}
 }
 
-func recoverToErr() error {
-	if e := recover(); e != nil {
-		log.Errorf("Request failed with panic: %v", e)
-		log.Tracef("Stacktrace: %v", string(debug.Stack()))
-		debug.PrintStack()
-		switch x := e.(type) {
-		case string:
-			return errors.New(x)
-		case error:
-			return x
-		default:
-			return errors.New("unknown panic error type")
-		}
+func panicToErr(e any) error {
+	switch x := e.(type) {
+	case string:
+		return errors.New(x)
+	case error:
+		return x
+	default:
+		return errors.New("unknown panic error type")
 	}
-	return nil
 }

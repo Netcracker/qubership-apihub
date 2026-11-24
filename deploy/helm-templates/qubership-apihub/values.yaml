@@ -163,8 +163,6 @@ qubershipApihubBackend:
       publishArchiveSizeLimitMb: 50
       # Optional; Limit for uploaded file (inside package) size in order to avoid OOM; If not set, default value: 15; Example: 20
       publishFileSizeLimitMb: 15
-      # Deprecated. Required for Editor feature. Size limit for the branch content.
-      branchContentSizeLimitMb: 50
       # Optional; Limit for uploaded operation group template file size in MB; If not set, default value: 1; Example: 2
       templateSizeLimitMb: 1
       # Optional; Limit for uploaded shareability report xlsx file size in MB; If not set, default value: 10; Example: 10
@@ -230,12 +228,6 @@ qubershipApihubBackend:
         databaseOperationSec: 120
         # Optional; Timeout in minutes for the bulk delete of migrated rows, including the 'VACUUM FULL' that follows it; If not set, default value: 180; Example: 360
         bulkDeleteMinutes: 180
-
-    # Parameters for APIHUB Editor feature. Deprecated. Will be removed in future releases.
-    editor:
-      gitlabUrl: ''
-      clientId: ''
-      clientSecret: ''
 
     # Section with Olric(distributed cache and pub-sub) configuration.
     olric:

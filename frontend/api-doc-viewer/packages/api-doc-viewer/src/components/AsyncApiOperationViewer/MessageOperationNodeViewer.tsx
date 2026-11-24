@@ -1,5 +1,7 @@
+import { cn } from "@apihub/utils/common/cn"
 import { isBindingsNode, isExtensionsNode } from "@apihub/utils/async-api/node-type-checkers"
-import { shouldBeDisplayed } from "@apihub/utils/async-api/visibility-checkers"
+import { resolveAsyncApiTextRowVisibility, shouldBeDisplayed } from "@apihub/utils/async-api/visibility-checkers"
+import { useDisplayMode } from "@apihub/contexts/DisplayModeContext"
 import { NodeDiffsSeverityPlacemennt } from "@netcracker/qubership-apihub-next-data-model/model/abstract/tree-with-diffs/tree-node.interface"
 import { AsyncApiTreeNode, AsyncApiTreeNodeWithDiffs } from "@netcracker/qubership-apihub-next-data-model/model/async-api/types/aliases"
 import { AsyncApiTreeNodeKinds } from "@netcracker/qubership-apihub-next-data-model/model/async-api/types/node-kind"
@@ -55,11 +57,14 @@ export const MessageOperationNodeViewer: FC<MessageOperationNodeViewerProps> = (
   )
 
   const isTitleDisplayed = useMemo(() => shouldBeDisplayed<AsyncApiTreeNodeValueTypeMessageOperation>(value, nodeDiffs, 'title'), [value, nodeDiffs])
-  const isDescriptionDisplayed = useMemo(() => shouldBeDisplayed<AsyncApiTreeNodeValueTypeMessageOperation>(value, nodeDiffs, 'description'), [value, nodeDiffs])
-  const isSummaryDisplayed = useMemo(() => shouldBeDisplayed<AsyncApiTreeNodeValueTypeMessageOperation>(value, nodeDiffs, 'summary'), [value, nodeDiffs])
+  const displayMode = useDisplayMode()
+  const { showDescription: isDescriptionDisplayed, showSummary: isSummaryDisplayed } = useMemo(
+    () => resolveAsyncApiTextRowVisibility<AsyncApiTreeNodeValueTypeMessageOperation>(value, nodeDiffs, displayMode),
+    [value, nodeDiffs, displayMode],
+  )
 
   return (
-    <div className="flex flex-col">
+    <div className={cn("flex flex-col")}>
       {isTitleDisplayed && (
         <TitleRow
           data-precededby={precededBy}
@@ -110,7 +115,7 @@ export const MessageOperationNodeViewer: FC<MessageOperationNodeViewerProps> = (
       )}
 
       {children.length > 0 && (
-        <div className="flex flex-col">
+        <div className={cn("flex flex-col")}>
           {extensionsChild && (
             <ExtensionsNodeViewer
               data-precededby={

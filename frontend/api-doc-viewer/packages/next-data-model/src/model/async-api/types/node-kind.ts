@@ -1,3 +1,5 @@
+import { SecurityTreeNodeKinds } from "../../security/types/node-kind"
+
 export const AsyncApiTreeNodeKinds = {
   BINDING: 'binding',
   BINDINGS: 'bindings',
@@ -12,6 +14,8 @@ export const AsyncApiTreeNodeKinds = {
   MESSAGE_SECTION_SELECTOR: 'messageSectionSelector',
   SERVER: 'server',
   SERVERS: 'servers',
+  // The Security sections' kinds (shared with OpenAPI): the operation's and each server's.
+  ...SecurityTreeNodeKinds,
 } as const
 
 export const AsyncApiTreeNodeKindsList: AsyncApiTreeNodeKind[] = Object.values(AsyncApiTreeNodeKinds)

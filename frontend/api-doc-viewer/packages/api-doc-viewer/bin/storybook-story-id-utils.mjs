@@ -1,4 +1,4 @@
-import { sanitize } from "@storybook/csf";
+import { sanitize } from "storybook/internal/csf";
 import { kebabCase } from "lodash-es";
 
 /** Storybook meta id from a CSF `title` (e.g. `Group/Story Name`). */

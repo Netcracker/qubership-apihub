@@ -1,3 +1,4 @@
+import { cn } from "@apihub/utils/common/cn"
 import { useCustomizationOptions } from "@apihub/contexts/CustomizationOptionsContext"
 import { useDisplayMode } from "@apihub/contexts/DisplayModeContext"
 import { LevelContext, useLevelContext } from "@apihub/contexts/LevelContext"
@@ -21,15 +22,15 @@ import { NestingIndicatorTitleRow } from "@apihub/components/shared-components/N
 import { NestingIndicatorTitleRowUsage } from "@apihub/components/shared-components/NestingIndicatorTitleRow/types"
 import {
   ATTRIBUTE_PRECEDED_BY,
-  PrecededBy,
   WithPrecededByProps,
 } from "../../shared-components/WithPrecededByProps"
+import { resolveChildPrecededBy } from "../utils/resolve-child-preceded-by"
 import { JsonSchemaRowDiffs } from "@netcracker/qubership-apihub-next-data-model/model/json-schema/tree-with-diffs/property-row-diffs"
 import { NodeDiffsSeverityPlacemennt } from "@netcracker/qubership-apihub-next-data-model/model/abstract/tree-with-diffs/tree-node.interface"
 import { useJsonSchemaViewerContext } from "../JsonSchemaViewerContext"
 import { JsonSchemaNodeTypeCheckers } from "../utils/node-type-checkers"
 import { JsonSchemaNodeViewerWithDiffs } from "../JsonSchemaNodeViewerWithDiffs"
-import { useOptionalUnchangedBlocksContext } from "../UnchangedBlocksContext"
+import { useOptionalUnchangedBlocksContext } from "@apihub/components/shared-components/ShowUnchangedRow/UnchangedBlocksContext"
 import { JsonSchemaNestingIndicatorTypeValueWithDiffs } from "./TypeValue/JsonSchemaNestingIndicatorTypeValueWithDiffs"
 import { JsonSchemaNestingLevel } from "../utils/resolve-nesting-level"
 import { SchemaNodeChildrenListWithDiffs } from "./SchemaNodeChildrenListWithDiffs"
@@ -153,7 +154,7 @@ export const SchemaNodeViewerWithDiffs: FC<SchemaNodeViewerWithDiffsProps> = (pr
     <div
       data-testid="json-schema-node-viewer"
       data-name="JsonNode"
-      className="json-schema-property flex flex-col"
+      className={cn("json-schema-property flex flex-col")}
     >
       {!suppressRootNesting && (
         <SchemaNodeTitleRowWithDiffs
@@ -190,12 +191,13 @@ export const SchemaNodeViewerWithDiffs: FC<SchemaNodeViewerWithDiffsProps> = (pr
                 {unchangedBlocksContext ? (
                   <SchemaNodeChildrenListWithDiffs
                     children={children}
+                    firstRowPrecededBy={suppressRootNesting ? precededBy : undefined}
                   />
                 ) : (
                   children.map((child, index) => (
                     <JsonSchemaNodeViewerWithDiffs
                       key={child.id}
-                      data-precededby={PrecededBy.JSON_SCHEMA_PROPERTY}
+                      data-precededby={resolveChildPrecededBy(suppressRootNesting, precededBy, index)}
                       node={child}
                       isLastInList={index === children.length - 1}
                     />

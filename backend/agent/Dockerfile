@@ -1,17 +1,3 @@
-# Copyright 2024-2025 NetCracker Technology Corporation
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 # Note: this uses host platform for the build, and we ask go build to target the needed platform, so we do not spend time on qemu emulation when running "go build"
 FROM --platform=$BUILDPLATFORM docker.io/golang:1.27.2-alpine3.23 AS builder
 ARG BUILDPLATFORM
@@ -31,7 +17,7 @@ WORKDIR /workspace/agent
 # `go work sync` writes; CI checks that.
 RUN GOWORK=off GOSUMDB=off CGO_ENABLED=0 GOFLAGS=-mod=readonly go mod download && GOWORK=off GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -o qubership-apihub-agent .
 
-FROM ghcr.io/netcracker/qubership-core-base:2.5.10@sha256:51173b982248bb866b236f504579b71c0a9c4a41975b957595f9faa9ab3fb5d6
+FROM ghcr.io/netcracker/qubership-core-base:2.5.11@sha256:1b80a6ba225210f2308c68679aa40e5211d4712269200a55862ec2a9061a55de
 
 ARG GIT_BRANCH=unknown
 ARG GIT_HASH=unknown

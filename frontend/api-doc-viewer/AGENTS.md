@@ -11,14 +11,14 @@ consumed by integrators:
 
 | Package | Path | Role |
 | --- | --- | --- |
-| **api-doc-viewer** | `packages/api-doc-viewer/` | React viewers (JSON Schema, GraphQL, AsyncAPI, JSO, DDL) |
+| **api-doc-viewer** | `packages/api-doc-viewer/` | React viewers (JSON Schema, OpenAPI, AsyncAPI, JSO, DDL, GraphQL) |
 | **next-data-model** | `packages/next-data-model/` | Tree builders, crawl rules, diff aggregators for viewer data |
 
 **View / data split:** React components render precomputed tree nodes. Diff aggregation,
 transformers, and crawl logic belong in **next-data-model** — not in the view layer.
 
 GraphQL viewers are **legacy** (`packages/api-data-model` and `packages/api-state-model`). JSON Schema,
-AsyncAPI, DDL API, and JSO are the active API types.
+OpenAPI, AsyncAPI, DDL API, and JSO are the active API types.
 
 ## Source of truth and workflow
 
@@ -72,10 +72,13 @@ apm install --target cursor,claude
 
 | Skill | When |
 | --- | --- |
+| `api-doc-viewer-ci-linters` | **Before writing or changing any file of the module**: the CI linter rules (super-linter, lychee) for Markdown, CSS, SQL fixtures, and the rest |
 | `api-doc-viewer-authoring` | React viewers, rows, diff chrome, Storybook under `packages/api-doc-viewer/src/` |
 | `next-data-model-authoring` | Builders, aggregators, crawl rules under `packages/next-data-model/src/`; JSON Schema row reference docs under its `json-schema/` folder |
 | `api-doc-viewer-testing` | Screenshot ITs, fixtures, snapshot regeneration; **troubleshooting hangs/timeouts** (read skill first) |
+| `api-doc-viewer-baseline-comparison` | Compare the screenshot baselines of the branch with `develop` in a reg-cli report (`pnpm run compare-screenshot-baselines`) |
 | `api-doc-viewer-review-session` | End-of-session retrospective — surface findings, update skills |
+| `api-doc-viewer-feature-test-plan` | Manual QA test plan of a feature branch for the portal: interview, packed test data, cases, backlog retest, results sheet (`/api-doc-viewer-feature-test-plan`) |
 | `api-doc-viewer-reviewing` | Architecture review / refactoring of one API type stack (shared rules + `review/<api-type>.md` briefs) |
 | `api-doc-viewer-using` | Integrator-facing consumption patterns (host apps) |
 | `next-data-model-using` | Consuming tree builders from another TypeScript project |
@@ -89,6 +92,18 @@ rule trees stay in sync. Store packages (`development-conventions`, `github-tick
 
 ## Always-on conventions
 
+- **Selector options are nested nodes** — the options of a selector / toolbar (AsyncAPI sections and
+  bindings, OpenAPI response codes and media types, Security alternatives) are nested nodes of one
+  complex container node; read them with `nestedNodes()` through the API type's option helpers,
+  never `childrenNodes()` / `value()` on the container (they delegate to the first option). Design:
+  `docs/design/shared/features/selector-options.md`.
+- **CSS isolation** — every `className` is `cn(...)` (`src/utils/common/cn.ts`), which prefixes each
+  class token with `api-doc-viewer-`; the PostCSS plugin `packages/api-doc-viewer/postcss/css-isolation.cjs`
+  applies the same prefix to the stylesheets, scopes global rules (Tailwind preflight, element rules,
+  `:root`) to the viewer root `cn('root')`, and renames `@font-face` families and keyframes. Write plain
+  class names in source, TS constants, and CSS; only `cn()` prefixes. ESLint enforces `cn()` on
+  `className`. A new public viewer renders `cn('root')` on its outermost element. Design:
+  `docs/design/shared/features/css-isolation.md`.
 - **Legacy viewers** — do not change `GraphSchemaViewer`, `GraphQLOperationViewer`,
   `GraphQLOperationDiffViewer`, or `components/common/diffs/` (`DiffTags`, `DiffBadge`)
   without explicit approval. The legacy (api-data-model based) `JsonSchemaViewer` is
@@ -109,6 +124,15 @@ rule trees stay in sync. Store packages (`development-conventions`, `github-tick
   Details: `next-data-model-authoring`.
 - **Property lists** — list parents precompute sibling context (`buildColumnViewerContexts`,
   `buildIndexViewerContexts`); item viewers render stacked rows only.
+- **Screenshot IT layout** — one folder per test run: `packages/api-doc-viewer/src/it/<test-run>/*.it-test.ts`
+  with its baselines in `src/it/<test-run>/__image_snapshots__/` (jest-image-snapshot default). No
+  IT directly in `src/it/`, no shared `src/it/__image_snapshots__/` (`tests/storybook-order.test.ts`
+  checks it); compatibility baselines: `src/it/compatibility-suite/<test-run>/__image_snapshots__/`.
+- **Display mode coverage** — only `* Suite (Display Mode = simple)` / `* Diffs Suite (Display Mode
+  = simple)` (AsyncAPI, OpenAPI, JSON Schema, DDL API; `bin/generate-display-mode-simple-suites.mjs`)
+  capture `simple`, one case per hidden element, each in `detailed` and `simple`. Every other suite
+  captures the default `detailed` only — never branch it by display mode. Details:
+  `api-doc-viewer-testing` → Display mode suites.
 
 ## Generated filenames (`*.generated.*`) — important
 
@@ -226,6 +250,15 @@ DDL table diffs touch both packages and fixtures:
 
 JSO diffs specification: `docs/design/jso/features/diffs.md`.
 
+## Security sections (OpenAPI + AsyncAPI)
+
+One spec-neutral security module serves the OpenAPI operation section and the AsyncAPI operation /
+server sections: `model/security/`, `building-service/security/` (next-data-model) and
+`shared-components/Security/` (`SecuritySchemeCardBase`, `SecuritySectionBase`) with thin per-spec
+wrappers. Extend the module; do not fork per-spec copies. Design:
+`docs/design/async-api/features/security.md`; skills: `next-data-model-authoring` and
+`api-doc-viewer-authoring` → **Security**.
+
 ## JSON Schema Diffs Suite (type changes)
 
 Generated YAML pairs under `packages/samples/json-schema-diffs/type-changes/` exercise
@@ -288,7 +321,7 @@ Hand-written diff sample suites follow the AsyncAPI / JSO pattern:
    (case factories called with `defaultHideUnchangedNodes = true`), renders with
    **`JsonSchemaDiffsViewer`** (`hideUnchangedNodes` defaults to `true`). Storybook root title:
    `JSON Schema Diffs Suite (Hiding Unchanged Nodes)`.
-4. **Screenshot ITs** — paired `src/it/json-schema-diffs-hiding-unchanged-nodes-suite.*.it-test.ts`;
+4. **Screenshot ITs** — paired `src/it/json-schema-diffs-hiding-unchanged-nodes-suite/*.it-test.ts`;
    wait for `[data-testid="json-schema-diffs-viewer"]` before capture (see
    `api-doc-viewer-testing` skill).
 5. **Changed-only rows** — data-layer `isJsonSchemaNodeChanged` /
@@ -323,7 +356,7 @@ When adding a case: YAML pair → story export → matching `it(...)` with Story
 | `frontend/api-diff` | Diff types consumed by with-diffs builders |
 | `frontend/api-unifier`, `frontend/graphapi` | Normalization and GraphAPI conversion used by the data layer |
 | `frontend/compatibility-suites` | **Only** source for `*.generated.*` stories and tests |
-| `frontend/apispec-view`, `frontend/ui` | Consumers of the viewers |
+| `frontend/ui` | Consumer of the viewers |
 
 ## Cross-platform development
 

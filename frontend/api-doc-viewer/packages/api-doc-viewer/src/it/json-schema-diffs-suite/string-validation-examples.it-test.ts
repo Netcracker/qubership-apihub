@@ -19,35 +19,35 @@ describe("JSON Schema Diffs Suite/String Validation/String Validation Examples",
 
   it("001-examples-two-added", async () => {
     story = await storyPage(page, `json-schema-diffs-suite-string-validation-string-validation-examples--case-001-examples-two-added`);
-    await waitForJsonSchemaDiffsViewer(page, { switchCombinerVariant: true });
+    await waitForJsonSchemaDiffsViewer(page);
     component = await story.viewComponent();
     expect(await component.captureScreenshot()).toMatchImageSnapshot();
   });
 
   it("002-examples-two-removed", async () => {
     story = await storyPage(page, `json-schema-diffs-suite-string-validation-string-validation-examples--case-002-examples-two-removed`);
-    await waitForJsonSchemaDiffsViewer(page, { switchCombinerVariant: true });
+    await waitForJsonSchemaDiffsViewer(page);
     component = await story.viewComponent();
     expect(await component.captureScreenshot()).toMatchImageSnapshot();
   });
 
   it("003-examples-one-appended", async () => {
     story = await storyPage(page, `json-schema-diffs-suite-string-validation-string-validation-examples--case-003-examples-one-appended`);
-    await waitForJsonSchemaDiffsViewer(page, { switchCombinerVariant: true });
+    await waitForJsonSchemaDiffsViewer(page);
     component = await story.viewComponent();
     expect(await component.captureScreenshot()).toMatchImageSnapshot();
   });
 
   it("004-examples-one-removed", async () => {
     story = await storyPage(page, `json-schema-diffs-suite-string-validation-string-validation-examples--case-004-examples-one-removed`);
-    await waitForJsonSchemaDiffsViewer(page, { switchCombinerVariant: true });
+    await waitForJsonSchemaDiffsViewer(page);
     component = await story.viewComponent();
     expect(await component.captureScreenshot()).toMatchImageSnapshot();
   });
 
   it("005-examples-two-unchanged", async () => {
     story = await storyPage(page, `json-schema-diffs-suite-string-validation-string-validation-examples--case-005-examples-two-unchanged`);
-    await waitForJsonSchemaDiffsViewer(page, { switchCombinerVariant: true });
+    await waitForJsonSchemaDiffsViewer(page);
     component = await story.viewComponent();
     expect(await component.captureScreenshot()).toMatchImageSnapshot();
   });

@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "7a273390-34ea-4a2f-8f18-811a19c516bb",
     "name": "Dashboard DDL and MCP contracts E2E",
-    "description": "Creates an isolated workspace, two referenced packages, and a dashboard; publishes v1 and v2 of every package; verifies dashboard DDL and MCP aggregation, scoping, exports, and DDL changelog behaviour; then removes all created packages.\n\nPrerequisites: the backend and build-task-consumer must be running, and apiKey must permit package creation and publication.\n\nRun from the repository root so multipart fixtures resolve:\nnewman run tests/api/DashboardContractsE2E.postman_collection.json --working-dir .\n\nA unique suffix is generated once per run. All package aliases remain within the API's 10-character limit.",
+    "description": "Creates an isolated workspace, two referenced packages, and a dashboard; publishes v1 and v2 of every package; verifies dashboard DDL and MCP aggregation, scoping, exports, and DDL changelog behaviour; exercises manual DDL table groups (own-package and dashboard-scoped, including create/list/get/rename/delete and the duplicate-name, empty-name, not-found and version-not-allowed error paths); then removes all created packages.\n\nPrerequisites: the backend and build-task-consumer must be running, and apiKey must permit package creation and publication.\n\nRun from the repository root so multipart fixtures resolve:\nnewman run tests/api/DashboardContractsE2E.postman_collection.json --working-dir .\n\nA unique suffix is generated once per run. All package aliases remain within the API's 10-character limit.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -38,6 +38,9 @@
           "    pm.collectionVariables.set('alphaAlias', 'dca' + suffix);",
           "    pm.collectionVariables.set('betaAlias', 'dcb' + suffix);",
           "    pm.collectionVariables.set('dashboardAlias', 'dcd' + suffix);",
+          "    pm.collectionVariables.set('alphaGroupName', 'grp-a-' + suffix);",
+          "    pm.collectionVariables.set('alphaGroupRenamed', 'grp-a2-' + suffix);",
+          "    pm.collectionVariables.set('dashboardGroupName', 'grp-d-' + suffix);",
           "}"
         ]
       }
@@ -152,6 +155,21 @@
     {
       "key": "expectedBetaMcpEntityId",
       "value": "mcp-tool-beta_search",
+      "type": "string"
+    },
+    {
+      "key": "alphaGroupName",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "alphaGroupRenamed",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "dashboardGroupName",
+      "value": "",
       "type": "string"
     }
   ],
@@ -1075,6 +1093,380 @@
             "method": "GET",
             "header": [],
             "url": "{{baseUrl}}/api/v1/packages/{{dashboardPackageId}}/versions/{{version2}}/ddl/entities/{{expectedAlphaDdlEntityId}}/changes/summary?refPackageId={{alphaPackageId}}"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "06 - DDL table groups",
+      "item": [
+        {
+          "name": "Create alpha group with own entity",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Alpha group created', function () { pm.response.to.have.status(201); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"groupName\": \"{{alphaGroupName}}\",\n  \"description\": \"Alpha E2E group\",\n  \"tables\": [\n    { \"ddlEntityId\": \"{{expectedAlphaDdlEntityId}}\" }\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/v1/packages/{{alphaPackageId}}/versions/{{version2}}/ddl/groups"
+          },
+          "response": []
+        },
+        {
+          "name": "Creating a duplicate-named group fails",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Duplicate group name is rejected', function () { pm.response.to.have.status(400); });",
+                  "pm.test('Error code identifies the duplicate', function () { pm.expect(pm.response.json().code).to.eql('8403'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"groupName\": \"{{alphaGroupName}}\",\n  \"tables\": []\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/v1/packages/{{alphaPackageId}}/versions/{{version2}}/ddl/groups"
+          },
+          "response": []
+        },
+        {
+          "name": "List alpha groups includes the new group",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('List succeeds', function () { pm.response.to.have.status(200); });",
+                  "var groups = pm.response.json().groups;",
+                  "var group = groups.find(function (g) { return g.groupName === pm.collectionVariables.get('alphaGroupName'); });",
+                  "pm.test('Group is present with one table', function () {",
+                  "    pm.expect(group).to.not.be.undefined;",
+                  "    pm.expect(group.tablesCount).to.eql(1);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/packages/{{alphaPackageId}}/versions/{{version2}}/ddl/groups"
+          },
+          "response": []
+        },
+        {
+          "name": "Get alpha group members",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Get members succeeds', function () { pm.response.to.have.status(200); });",
+                  "var json = pm.response.json();",
+                  "pm.test('Group contains the alpha entity', function () {",
+                  "    pm.expect(json.entities).to.have.lengthOf(1);",
+                  "    pm.expect(json.entities[0].ddlEntityId).to.eql(pm.collectionVariables.get('expectedAlphaDdlEntityId'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/packages/{{alphaPackageId}}/versions/{{version2}}/ddl/groups/{{alphaGroupName}}"
+          },
+          "response": []
+        },
+        {
+          "name": "Renaming a group to an empty name fails",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Empty group name is rejected', function () { pm.response.to.have.status(400); });",
+                  "pm.test('Error code identifies the empty name', function () { pm.expect(pm.response.json().code).to.eql('8405'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"groupName\": \"\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/v1/packages/{{alphaPackageId}}/versions/{{version2}}/ddl/groups/{{alphaGroupName}}"
+          },
+          "response": []
+        },
+        {
+          "name": "Rename alpha group and clear its membership",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Update succeeds', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"groupName\": \"{{alphaGroupRenamed}}\",\n  \"tables\": []\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/v1/packages/{{alphaPackageId}}/versions/{{version2}}/ddl/groups/{{alphaGroupName}}"
+          },
+          "response": []
+        },
+        {
+          "name": "Renamed alpha group has no members",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Get members succeeds', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Membership was cleared', function () { pm.expect(pm.response.json().entities).to.have.lengthOf(0); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/packages/{{alphaPackageId}}/versions/{{version2}}/ddl/groups/{{alphaGroupRenamed}}"
+          },
+          "response": []
+        },
+        {
+          "name": "Old group name no longer resolves",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Old name is gone', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/packages/{{alphaPackageId}}/versions/{{version2}}/ddl/groups/{{alphaGroupName}}"
+          },
+          "response": []
+        },
+        {
+          "name": "Create dashboard group spanning both referenced packages",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Dashboard group created', function () { pm.response.to.have.status(201); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"groupName\": \"{{dashboardGroupName}}\",\n  \"tables\": [\n    { \"packageId\": \"{{alphaPackageId}}\", \"version\": \"{{version2}}\", \"ddlEntityId\": \"{{expectedAlphaDdlEntityId}}\" },\n    { \"packageId\": \"{{betaPackageId}}\", \"version\": \"{{version2}}\", \"ddlEntityId\": \"{{expectedBetaDdlEntityId}}\" }\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/v1/packages/{{dashboardPackageId}}/versions/{{version2}}/ddl/groups"
+          },
+          "response": []
+        },
+        {
+          "name": "Unscoped dashboard group contains both entities",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Get members succeeds', function () { pm.response.to.have.status(200); });",
+                  "var json = pm.response.json();",
+                  "var ids = json.entities.map(function (entity) { return entity.ddlEntityId; });",
+                  "pm.test('Both referenced entities are members', function () {",
+                  "    pm.expect(ids).to.have.members([pm.collectionVariables.get('expectedAlphaDdlEntityId'), pm.collectionVariables.get('expectedBetaDdlEntityId')]);",
+                  "});",
+                  "pm.test('Packages map resolves both referenced packages', function () { pm.expect(Object.keys(json.packages || {})).to.have.lengthOf(2); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/packages/{{dashboardPackageId}}/versions/{{version2}}/ddl/groups/{{dashboardGroupName}}"
+          },
+          "response": []
+        },
+        {
+          "name": "Beta-scoped dashboard group contains only beta",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Scoped get succeeds', function () { pm.response.to.have.status(200); });",
+                  "var entities = pm.response.json().entities;",
+                  "pm.test('Only the beta entity is returned', function () {",
+                  "    pm.expect(entities).to.have.lengthOf(1);",
+                  "    pm.expect(entities[0].ddlEntityId).to.eql(pm.collectionVariables.get('expectedBetaDdlEntityId'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/packages/{{dashboardPackageId}}/versions/{{version2}}/ddl/groups/{{dashboardGroupName}}?refPackageId={{betaPackageId}}"
+          },
+          "response": []
+        },
+        {
+          "name": "A version not referenced by the dashboard is rejected",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Unreferenced version is rejected', function () { pm.response.to.have.status(400); });",
+                  "pm.test('Error code identifies the disallowed version', function () { pm.expect(pm.response.json().code).to.eql('8407'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"groupName\": \"{{dashboardGroupName}}-bad\",\n  \"tables\": [\n    { \"packageId\": \"{{alphaPackageId}}\", \"version\": \"{{version1}}\", \"ddlEntityId\": \"{{expectedAlphaDdlEntityId}}\" }\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/v1/packages/{{dashboardPackageId}}/versions/{{version2}}/ddl/groups"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete dashboard group",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Delete succeeds', function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/packages/{{dashboardPackageId}}/versions/{{version2}}/ddl/groups/{{dashboardGroupName}}"
+          },
+          "response": []
+        },
+        {
+          "name": "Deleted dashboard group no longer resolves",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Deleted group is gone', function () { pm.response.to.have.status(404); });",
+                  "pm.test('Error code identifies the missing group', function () { pm.expect(pm.response.json().code).to.eql('8404'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/packages/{{dashboardPackageId}}/versions/{{version2}}/ddl/groups/{{dashboardGroupName}}"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete renamed alpha group",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Delete succeeds', function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/packages/{{alphaPackageId}}/versions/{{version2}}/ddl/groups/{{alphaGroupRenamed}}"
           },
           "response": []
         }

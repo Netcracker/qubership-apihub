@@ -186,7 +186,7 @@ diagramSlide('APIHUB UI — components', 'nginx reverse proxy + Portal SPA + Age
   'Portal SPA: catalog navigation, version pages (overview, operations, changes, deprecated, documents, api-quality), compare, dashboard editor, settings, AI chat, contracts tab.',
   'Agents SPA: discovery, snapshots & promotion, namespace security checks.',
   'Shared package holds entities (api-types, contract-types), hooks, MUI theme, widgets and Storybook.',
-  'Rendering is delegated to web components (apispec-view, rest-playground, class-view) and React viewers (api-doc-viewer); client-side builds use api-processor / api-diff / api-unifier.']);
+  'Rendering is delegated to React viewers (api-doc-viewer) and web components (apispec-view, rest-playground, class-view); client-side builds use api-processor / api-diff / api-unifier.']);
 diagramSlide('Build Task Consumer — components', 'NestJS 11 stateless worker; the heavy lifting is the api-processor library', 'L3_build_task_consumer', [
   'RegistryService polls POST /api/v2/builders/{builderId}/tasks with an api-key; 204 means no work, 200 returns a task ZIP (config.json + sources).',
   'BuilderService validates the config with ajv, sends running heartbeats every statusInterval, and runs PackageVersionBuilder for the requested buildType.',
@@ -290,10 +290,10 @@ diagramSlide('Authentication paths', 'Browser SSO / local login, CI and MCP clie
   const s = pres.addSlide(); n++; base(s); title(s, 'API and contract type support matrix', 'Which layer handles which type'); footer(s, n);
   const rows = [
     ['Type', 'Backend ApiType / contract', 'api-processor builder', 'SpecType (unifier / diff)', 'Agent runner', 'Linter', 'UI rendering'],
-    ['OpenAPI 3.0 / 3.1', 'rest', 'restApiBuilder', 'openapi-3.0, openapi-3.1', 'REST', 'Spectral + AI', 'apispec-view, playground, class-view'],
+    ['OpenAPI 3.0 / 3.1', 'rest', 'restApiBuilder', 'openapi-3.0, openapi-3.1', 'REST', 'Spectral + AI', 'api-doc-viewer, apispec-view, playground, class-view'],
     ['Swagger 2.0', 'rest (converted)', 'restApiBuilder (swagger2openapi)', '→ OAS 3', 'REST', 'Spectral + AI', 'same as OAS'],
     ['GraphQL', 'graphql', 'graphqlApiBuilder', 'graphapi', 'GraphQL', '—', 'GraphQLOperationViewer, GraphiQL'],
-    ['AsyncAPI 3 (2.x converted)', 'asyncapi', 'asyncApiBuilder', 'asyncapi-3', 'AsyncAPI', 'Spectral', 'apispec-view'],
+    ['AsyncAPI 3 (2.x converted)', 'asyncapi', 'asyncApiBuilder', 'asyncapi-3', 'AsyncAPI', 'Spectral', 'api-doc-viewer'],
     ['JSON Schema 04/06/07', 'document', 'via REST / unknown', 'json-schema-0x', 'JSON Schema', '—', 'JsonSchemaViewer'],
     ['Markdown / text', 'document', 'textApiBuilder', '—', 'Markdown', '—', 'MarkdownViewer (+ Mermaid)'],
     ['Protobuf / gRPC', 'protobuf (stub)', '—', '—', '—', '—', 'raw'],

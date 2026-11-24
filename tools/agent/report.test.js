@@ -42,19 +42,29 @@ test('inPeriod includes both ends and rejects outside, missing, and invalid time
   assert.equal(inPeriod('yesterday', period), false)
 })
 
-test('issueCounts splits suitable, unsuitable, and unassessed, and counts agent:needs-human on top', () => {
+test('issueCounts splits suitable, unsuitable, and unassessed, and counts a stop label on top', () => {
   const counts = issueCounts([
     labeled('ai:suitable'),
-    labeled('ai:suitable', 'agent:needs-human'),
+    labeled('ai:suitable', 'needs-human:stuck'),
     labeled('ai:unsuitable'),
     labeled('ai:suitable', 'ai:unsuitable'),
     labeled('bug'),
-    { labels: ['agent:needs-human'] },
+    { labels: ['needs-human:context-missing'] },
     {},
   ])
   assert.deepEqual(counts, { total: 7, suitable: 2, unsuitable: 2, unlabeled: 3, needsHuman: 2 })
   assert.deepEqual(issueCounts([]), { total: 0, suitable: 0, unsuitable: 0, unlabeled: 0, needsHuman: 0 })
   assert.equal(issueCounts(undefined).total, 0)
+})
+
+test('issueCounts does not count approval-required or the old agent:needs-human as waiting for a person', () => {
+  const counts = issueCounts([
+    labeled('needs-human:approval-required'),
+    labeled('agent:needs-human'),
+    labeled('needs-human:unknown-reason'),
+    labeled('needs-human:budget-exhausted', 'needs-human:approval-required'),
+  ])
+  assert.equal(counts.needsHuman, 1)
 })
 
 test('levelCounts counts by level in order, with the lowest level of a pull request and a "no level" row', () => {
@@ -83,13 +93,25 @@ test('levelCounts gives zero shares for no pull requests', () => {
 test('agentPrCounts counts completed, draft or needs-human, and merged pull requests', () => {
   const counts = agentPrCounts([
     { ...labeled('agent:completed'), draft: false, pull_request: { merged_at: '2026-10-20T10:00:00Z' } },
-    { ...labeled('agent:needs-human'), draft: true, pull_request: { merged_at: null } },
+    { ...labeled('needs-human:stuck'), draft: true, pull_request: { merged_at: null } },
     { ...labeled(), draft: true, pull_request: {} },
-    { ...labeled('agent:needs-human', 'ai:l1-executor'), draft: false, pull_request: {} },
+    { ...labeled('needs-human:stuck', 'ai:l1-executor'), draft: false, pull_request: {} },
     { ...labeled('agent:completed'), draft: false, merged_at: '2026-10-21T10:00:00Z' },
   ])
-  assert.deepEqual(counts, { opened: 5, completed: 2, draftOrNeedsHuman: 3, merged: 2 })
-  assert.deepEqual(agentPrCounts([]), { opened: 0, completed: 0, draftOrNeedsHuman: 0, merged: 0 })
+  assert.deepEqual(counts, { opened: 5, completed: 2, draftOrNeedsHuman: 3, waitingApproval: 0, merged: 2 })
+  assert.deepEqual(
+    agentPrCounts([]),
+    { opened: 0, completed: 0, draftOrNeedsHuman: 0, waitingApproval: 0, merged: 0 },
+  )
+})
+
+test('agentPrCounts counts approval-required apart: it is not a draft or a person to act', () => {
+  const counts = agentPrCounts([
+    { ...labeled('agent:completed', 'needs-human:approval-required'), draft: false, pull_request: {} },
+    { ...labeled('needs-human:approval-required'), draft: true, pull_request: {} },
+    { ...labeled('needs-human:budget-exhausted'), draft: true, pull_request: {} },
+  ])
+  assert.deepEqual(counts, { opened: 3, completed: 1, draftOrNeedsHuman: 2, waitingApproval: 2, merged: 0 })
 })
 
 const cost = (extra) => ({

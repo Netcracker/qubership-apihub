@@ -34,25 +34,29 @@ const { loadConfig } = require('./lib/config')
 const { createClient } = require('./lib/github')
 const state = require('./lib/state')
 const usage = require('./lib/usage')
+const stops = require('./lib/stops')
+const results = require('./lib/results')
+const { sign, MAIN_ROLE } = require('./lib/signature')
 const { callAgent } = require('./lib/agent-call')
 const { ContractError } = require('./lib/contract')
 const { inline, defuseMentions, clip } = require('./lib/text')
 const { untrusted } = require('./lib/prompt')
 const { react, commentIdOf } = require('./lib/reactions')
 const { agentIssueOf } = require('./route')
-const { appendSummary, quoted, fence, costLine } = require('./implement')
+const { appendSummary, quoted, fence } = require('./implement')
 const {
   relevantChecks, failedChecks, pendingChecks, stillRunning, allGreen, collectLogs, buildReport, failureSignature,
   rerunTargets, rerunRequestState, checkNames,
 } = require('./ci-gate')
 const log = require('./lib/log')
 
-const LABEL_NEEDS_HUMAN = 'agent:needs-human'
 /** The phases of an agent issue in which a rerun hands the decision back to the CI gate. */
 const GATE_PHASES = new Set(['needs-human', 'waiting-ci'])
 const MAX_NOTES = 5000
 const MAX_PENDING_NAMED = 5
 
+/** `text` signed with the cost records of this check; without a record it stays unsigned. */
+const signed = (text, costs) => sign(text, costs, { mainRole: MAIN_ROLE['ci-check'] })
 const sum = (items, field) => items.reduce((total, item) => total + (item[field] ?? 0), 0)
 /** Text for a Markdown code span: one line, no mention, no backtick that could end the span. */
 const code = (text) => inline(text).replace(/`/g, "'")
@@ -180,10 +184,10 @@ function hintFor({ verdict, agent }) {
  * @param {{ kind: 'rerun'|'rejected'|'none', jobs?: object[], notRerun?: object[], error?: string,
  *   rejected?: number, why?: string }} input.did what the agent did
  * @param {string} input.runUrl
- * @param {number} input.checkUsd
- * @param {number} input.totalUsd
+ * @param {number} [input.checkUsd] ignored: the cost is in the signature that `sign` adds
+ * @param {number} [input.totalUsd] ignored
  */
-function renderTriage({ actor, pr, sha, triage, agent, did, runUrl, checkUsd, totalUsd }) {
+function renderTriage({ actor, pr, sha, triage, agent, did, runUrl }) {
   const verdict = effectiveVerdict(triage)
   const lines = [
     `@${actor}, CI check of #${pr} at ${sha12(sha)}: ${VERDICT_SENTENCES[triage.verdict]} ` +
@@ -221,21 +225,16 @@ function renderTriage({ actor, pr, sha, triage, agent, did, runUrl, checkUsd, to
   }
   const hint = hintFor({ verdict, agent })
   if (hint) lines.push(hint)
-  lines.push(
-    '',
-    `<sub>[Run](${runUrl}) · this check cost $${usage.formatUsd(checkUsd)} · ` +
-      `AI cost of this pull request so far: $${usage.formatUsd(totalUsd)}</sub>`,
-  )
+  lines.push('', `<sub>[Run](${runUrl})</sub>`)
   return lines.join('\n')
 }
 
 /** The reply when the triager gave no usable answer. */
-function failedCheckReply({ actor, message, runUrl, checkUsd, totalUsd }) {
+function failedCheckReply({ actor, message, runUrl }) {
   return [
     `@${actor}, I could not finish the CI check: ${inline(message)}`,
     '',
-    `<sub>[Run](${runUrl}) · this check cost $${usage.formatUsd(checkUsd)} · ` +
-      `AI cost of this pull request so far: $${usage.formatUsd(totalUsd)}</sub>`,
+    `<sub>[Run](${runUrl})</sub>`,
   ].join('\n')
 }
 
@@ -349,8 +348,8 @@ async function loadAgent(ctx, pull) {
 
 /**
  * After an accepted rerun on the agent's pull request: the issue state goes back to `waiting-ci` and loses
- * `ciGate`, and the hand-off label goes, so the CI gate decides again. The state is read again right before the write;
- * a phase other than `needs-human` or `waiting-ci` (a stop, a new attempt) is left alone.
+ * `ciGate`, the open stop is closed, and the stop labels go, so the CI gate decides again. The state is read
+ * again right before the write; a phase other than `needs-human` or `waiting-ci` (a stop, a new attempt) is left alone.
  *
  * @returns {Promise<boolean>} true when the state was changed
  */
@@ -362,20 +361,26 @@ async function handBackToGate(ctx, { agent, sha, runs, jobs }) {
     return false
   }
   const at = new Date().toISOString()
-  const st = rerunRequestState(fresh.st, { sha, runs, actor, at, run: runUrl })
+  const requested = rerunRequestState(fresh.st, { sha, runs, actor, at, run: runUrl })
+  const st = stops.recordResume(requested, { at, run: runUrl })
   const human = [
     `### AI implementation: waiting for CI on pull request #${number}`,
     '',
     `I reran the failed checks at \`${sha12(sha)}\` after the CI check of \`${code(actor)}\` found a failure that ` +
       `the change did not cause. No new attempt. The failed checks: ${checkNames(jobs)}.`,
     '',
-    costLine(runUrl, sum(st.costs ?? [], 'usd'), 'the CI gate decides when the checks end'),
+    `<sub>[Run](${runUrl}) · the CI gate decides when the checks end</sub>`,
   ].join('\n')
-  await gh.updateIssueComment(fresh.existing.id, state.render(human, st))
-  log.info('state comment written', { issue: agent.issueNumber, phase: st.phase })
-  await gh.removeLabel(agent.issueNumber, LABEL_NEEDS_HUMAN)
-  await gh.removeLabel(number, LABEL_NEEDS_HUMAN)
-  log.info('label removed', { label: LABEL_NEEDS_HUMAN, on: `#${agent.issueNumber} and #${number}` })
+  // The rerun belongs to the running implementation command, so its result comment is edited.
+  await results.publishResult(gh, agent.issueNumber, {
+    family: 'implementation',
+    human,
+    st,
+    emptyState: () => state.emptyIssueState(agent.issueNumber),
+  })
+  log.info('result comment written', { issue: agent.issueNumber, phase: st.phase })
+  await stops.clearStops(gh, [agent.issueNumber, number])
+  log.info('stop labels cleared', { on: `#${agent.issueNumber} and #${number}` })
   return true
 }
 
@@ -453,7 +458,7 @@ async function actOnVerdict(ctx, { triage, verdict, failed, agent }) {
   if (config.dryRun) {
     appendSummary(env, `- Would rerun the failed jobs of workflow run(s) ${rerun.accepted.join(', ')}.\n`)
     if (handBack) {
-      appendSummary(env, `- Would put #${agent.issueNumber} back to \`waiting-ci\` and remove ${LABEL_NEEDS_HUMAN}.\n`)
+      appendSummary(env, `- Would put #${agent.issueNumber} back to \`waiting-ci\` and clear its stop labels.\n`)
     }
   }
   const did = {
@@ -529,10 +534,9 @@ async function triageRed(ctx, { pull, sha, failed }) {
     const st = await log.group(config.dryRun ? 'Cost (dry run: not written)' : 'Record the cost', () =>
       recordOnPull(ctx, { costs, ciCheck: null }),
     )
-    const checkUsd = sum(costs, 'usd')
-    await reply(ctx, failedCheckReply({
-      actor, message: failure.message, runUrl, checkUsd, totalUsd: sum(st.costs ?? [], 'usd'),
-    }))
+    const total = usage.formatUsd(sum(st.costs ?? [], 'usd'))
+    log.info('cost', { thisCheck: usage.formatUsd(sum(costs, 'usd')), total })
+    await reply(ctx, signed(failedCheckReply({ actor, message: failure.message, runUrl }), costs))
     throw failure
   }
 
@@ -561,9 +565,7 @@ async function triageRed(ctx, { pull, sha, failed }) {
   const checkUsd = sum(costs, 'usd')
   const totalUsd = sum(st.costs ?? [], 'usd')
   log.info('cost', { thisCheck: usage.formatUsd(checkUsd), total: usage.formatUsd(totalUsd) })
-  await reply(ctx, renderTriage({
-    actor, pr: number, sha, triage, agent: agent !== null, did, runUrl, checkUsd, totalUsd,
-  }))
+  await reply(ctx, signed(renderTriage({ actor, pr: number, sha, triage, agent: agent !== null, did, runUrl }), costs))
   return { ok: did.kind !== 'rejected', outcome: 'triaged', verdict: triage.verdict, rerun: runs }
 }
 
@@ -622,7 +624,7 @@ async function ciCheck(env = process.env, deps = {}) {
   const gh = deps.gh ?? createClient({ token: env.GITHUB_TOKEN, repo: env.GITHUB_REPOSITORY })
   const commentId = commentIdOf(env.AGENT_COMMENT_ID)
   log.info('ci check starts', { pr: number, issue: issueNumber ?? 'none', actor, dryRun: config.dryRun })
-  await react({ gh, commentId, content: 'eyes', dryRun: config.dryRun })
+  await react({ gh, commentId, content: 'eyes', dryRun: config.dryRun, eventName: env.GITHUB_EVENT_NAME })
 
   const ctx = { config, env, gh, number, issueNumber, actor, command, runUrl, out, deps }
   let content = 'confused'
@@ -631,7 +633,7 @@ async function ciCheck(env = process.env, deps = {}) {
     if (result.ok) content = 'rocket'
     return result
   } finally {
-    await react({ gh, commentId, content, dryRun: config.dryRun })
+    await react({ gh, commentId, content, dryRun: config.dryRun, eventName: env.GITHUB_EVENT_NAME })
   }
 }
 

@@ -14,11 +14,11 @@ const COMPONENTS_WITH_MESSAGES = {
   }
 }
 
-const SINGLE_MESSAGE_USAGE = {
+const singleMessageUsage = (channel: string) => ({
   messages: [
-    { $ref: "#/components/messages/test-message" }
+    { $ref: `#/channels/${channel}/messages/test-message` }
   ]
-}
+})
 
 describe('Cases with channel', () => {
   simplifyConsole()
@@ -33,14 +33,17 @@ describe('Cases with channel', () => {
         },
         channels: {
           'user-signup': {
-            address: "user/signup"
+            address: "user/signup",
+            messages: {
+              'test-message': { $ref: "#/components/messages/test-message" }
+            }
           }
         },
         operations: {
           'user-signup-operation': {
             action: "send",
             channel: { $ref: "#/channels/user-signup" },
-            ...SINGLE_MESSAGE_USAGE
+            ...singleMessageUsage('user-signup')
           }
         },
         ...COMPONENTS_WITH_MESSAGES
@@ -80,14 +83,17 @@ describe('Cases with channel', () => {
         channels: {
           'user-events': {
             address: "user/events",
-            title: "User Events Channel"
+            title: "User Events Channel",
+            messages: {
+              'test-message': { $ref: "#/components/messages/test-message" }
+            }
           }
         },
         operations: {
           'user-events-operation': {
             action: "send",
             channel: { $ref: "#/channels/user-events" },
-            ...SINGLE_MESSAGE_USAGE
+            ...singleMessageUsage('user-events')
           }
         },
         ...COMPONENTS_WITH_MESSAGES
@@ -131,14 +137,17 @@ describe('Cases with channel', () => {
           'order-channel': {
             address: "orders",
             title: "Order Processing Channel",
-            description: "Channel for handling order-related events and messages"
+            description: "Channel for handling order-related events and messages",
+            messages: {
+              'test-message': { $ref: "#/components/messages/test-message" }
+            }
           }
         },
         operations: {
           'order-operation': {
             action: "send",
             channel: { $ref: "#/channels/order-channel" },
-            ...SINGLE_MESSAGE_USAGE
+            ...singleMessageUsage('order-channel')
           }
         },
         ...COMPONENTS_WITH_MESSAGES
@@ -184,14 +193,17 @@ describe('Cases with channel', () => {
             address: "payments",
             title: "Payment Channel",
             summary: "Brief summary of payment channel",
-            description: "Detailed description of payment processing channel"
+            description: "Detailed description of payment processing channel",
+            messages: {
+              'test-message': { $ref: "#/components/messages/test-message" }
+            }
           }
         },
         operations: {
           'payment-operation': {
             action: "receive",
             channel: { $ref: "#/channels/payment-channel" },
-            ...SINGLE_MESSAGE_USAGE
+            ...singleMessageUsage('payment-channel')
           }
         },
         ...COMPONENTS_WITH_MESSAGES
@@ -244,6 +256,9 @@ describe('Cases with channel', () => {
                 replicas: 2,
                 bindingVersion: "0.5.0"
               }
+            },
+            messages: {
+              'test-message': { $ref: "#/components/messages/test-message" }
             }
           }
         },
@@ -251,7 +266,7 @@ describe('Cases with channel', () => {
           'kafka-operation': {
             action: "send",
             channel: { $ref: "#/channels/kafka-channel" },
-            ...SINGLE_MESSAGE_USAGE
+            ...singleMessageUsage('kafka-channel')
           }
         },
         ...COMPONENTS_WITH_MESSAGES
@@ -318,8 +333,11 @@ describe('Cases with channel', () => {
                 description: "User identifier",
                 default: "testUser001",
                 examples: ["testUser001", "testUser002", "testUser003"],
-                location: "$user.id"
+                location: "$message.payload#/user/id"
               }
+            },
+            messages: {
+              'test-message': { $ref: "#/components/messages/test-message" }
             }
           }
         },
@@ -327,7 +345,7 @@ describe('Cases with channel', () => {
           'user-operation': {
             action: "send",
             channel: { $ref: "#/channels/user-channel" },
-            ...SINGLE_MESSAGE_USAGE
+            ...singleMessageUsage('user-channel')
           }
         },
         ...COMPONENTS_WITH_MESSAGES
@@ -371,7 +389,7 @@ describe('Cases with channel', () => {
               description: "User identifier",
               default: "testUser001",
               examples: ["testUser001", "testUser002", "testUser003"],
-              location: "$user.id"
+              location: "$message.payload#/user/id"
             }
           }
         }
@@ -397,14 +415,17 @@ describe('Cases with channel', () => {
             title: "Server Events Channel",
             servers: [
               { $ref: "#/servers/server1" }
-            ]
+            ],
+            messages: {
+              'test-message': { $ref: "#/components/messages/test-message" }
+            }
           }
         },
         operations: {
           'server-operation': {
             action: "send",
             channel: { $ref: "#/channels/server-channel" },
-            ...SINGLE_MESSAGE_USAGE,
+            ...singleMessageUsage('server-channel'),
           }
         },
         ...COMPONENTS_WITH_MESSAGES
@@ -470,14 +491,17 @@ describe('Cases with channel', () => {
             title: "Server Events Channel",
             servers: [
               { $ref: "#/servers/server1" }
-            ]
+            ],
+            messages: {
+              'test-message': { $ref: "#/components/messages/test-message" }
+            }
           }
         },
         operations: {
           'server-operation': {
             action: "send",
             channel: { $ref: "#/channels/server-channel" },
-            ...SINGLE_MESSAGE_USAGE,
+            ...singleMessageUsage('server-channel'),
           }
         },
         ...COMPONENTS_WITH_MESSAGES
@@ -536,9 +560,8 @@ describe('Cases with channel', () => {
             protocol: "https",
             bindings: {
               kafka: {
-                topic: "server-events",
-                partitions: 3,
-                replicas: 2,
+                schemaRegistryUrl: "https://schema-registry.example.com",
+                schemaRegistryVendor: "confluent",
                 bindingVersion: "0.5.0"
               }
             }
@@ -550,14 +573,17 @@ describe('Cases with channel', () => {
             title: "Server Events Channel",
             servers: [
               { $ref: "#/servers/server1" }
-            ]
+            ],
+            messages: {
+              'test-message': { $ref: "#/components/messages/test-message" }
+            }
           }
         },
         operations: {
           'server-operation': {
             action: "send",
             channel: { $ref: "#/channels/server-channel" },
-            ...SINGLE_MESSAGE_USAGE,
+            ...singleMessageUsage('server-channel'),
           }
         },
         ...COMPONENTS_WITH_MESSAGES
@@ -611,9 +637,8 @@ describe('Cases with channel', () => {
       expect(bindingNodes[0].key).toBe('kafka')
       expect(bindingNodes[0].value()).toEqual({
         binding: {
-          topic: "server-events",
-          partitions: 3,
-          replicas: 2,
+          schemaRegistryUrl: "https://schema-registry.example.com",
+          schemaRegistryVendor: "confluent",
         },
         version: "0.5.0",
         protocol: "kafka",
@@ -638,14 +663,15 @@ describe('Cases with channel', () => {
                 description: "Tenant identifier",
                 default: "testTenant001",
                 examples: ["testTenant001", "testTenant002", "testTenant003"],
-                location: "$tenant.id"
+                location: "$message.payload#/tenant/id"
               }
             },
             messages: {
               CompleteMessage: {
                 name: "CompleteMessage",
                 title: "Complete Message"
-              }
+              },
+              'test-message': { $ref: "#/components/messages/test-message" }
             },
             tags: [
               {
@@ -671,7 +697,7 @@ describe('Cases with channel', () => {
           'complete-operation': {
             action: "send",
             channel: { $ref: "#/channels/complete-channel" },
-            ...SINGLE_MESSAGE_USAGE
+            ...singleMessageUsage('complete-channel')
           }
         },
         ...COMPONENTS_WITH_MESSAGES
@@ -738,7 +764,7 @@ describe('Cases with channel', () => {
               description: "Tenant identifier",
               default: "testTenant001",
               examples: ["testTenant001", "testTenant002", "testTenant003"],
-              location: "$tenant.id"
+              location: "$message.payload#/tenant/id"
             }
           }
         }
@@ -769,6 +795,9 @@ describe('Cases with channel', () => {
                 i: false,
                 j: [4, 5, 6],
               }
+            },
+            messages: {
+              'test-message': { $ref: "#/components/messages/test-message" }
             }
           }
         },
@@ -776,7 +805,7 @@ describe('Cases with channel', () => {
           'test-operation': {
             action: "send",
             channel: { $ref: "#/channels/test-channel" },
-            ...SINGLE_MESSAGE_USAGE
+            ...singleMessageUsage('test-channel')
           }
         },
         ...COMPONENTS_WITH_MESSAGES
@@ -839,14 +868,17 @@ describe('Cases with channel', () => {
           'receive-channel': {
             address: "receive/events",
             title: "Receive Channel",
-            description: "Channel for receiving events"
+            description: "Channel for receiving events",
+            messages: {
+              'test-message': { $ref: "#/components/messages/test-message" }
+            }
           }
         },
         operations: {
           'receive-operation': {
             action: "receive",
             channel: { $ref: "#/channels/receive-channel" },
-            ...SINGLE_MESSAGE_USAGE
+            ...singleMessageUsage('receive-channel')
           }
         },
         ...COMPONENTS_WITH_MESSAGES
@@ -891,19 +923,22 @@ describe('Cases with channel', () => {
           'shared-channel': {
             address: "shared/channel",
             title: "Shared Channel",
-            description: "Channel used by multiple operations"
+            description: "Channel used by multiple operations",
+            messages: {
+              'test-message': { $ref: "#/components/messages/test-message" }
+            }
           }
         },
         operations: {
           'send-operation': {
             action: "send",
             channel: { $ref: "#/channels/shared-channel" },
-            ...SINGLE_MESSAGE_USAGE
+            ...singleMessageUsage('shared-channel')
           },
           'receive-operation': {
             action: "receive",
             channel: { $ref: "#/channels/shared-channel" },
-            ...SINGLE_MESSAGE_USAGE
+            ...singleMessageUsage('shared-channel')
           }
         },
         ...COMPONENTS_WITH_MESSAGES
@@ -961,14 +996,17 @@ describe('Cases with channel', () => {
           'null-address-channel': {
             address: null,
             title: "Null Address Channel",
-            description: "Channel with null address"
+            description: "Channel with null address",
+            messages: {
+              'test-message': { $ref: "#/components/messages/test-message" }
+            }
           }
         },
         operations: {
           'null-address-operation': {
             action: "send",
             channel: { $ref: "#/channels/null-address-channel" },
-            ...SINGLE_MESSAGE_USAGE
+            ...singleMessageUsage('null-address-channel')
           }
         },
         ...COMPONENTS_WITH_MESSAGES

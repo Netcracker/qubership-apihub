@@ -1,18 +1,3 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 import { _TemplateResolver, ExportDocument, FileFormat } from '../types'
 import { getDocumentTitle } from './document'
 import { stringify } from 'yaml'
@@ -41,9 +26,10 @@ export function createUnknownExportDocument(filename: string, data: Blob): Expor
 
 export async function generateLegalStatementPage(packageName: string, version: string, legalStatement: Blob, backLinkFilename: string): Promise<Blob> {
   const filled = (await legalStatement.text())
-    .replaceAll('{{packageName}}', packageName)
-    .replaceAll('{{version}}', version)
-    .replace('{{backLinkFilename}}', backLinkFilename)
+    // A replacer function keeps the value literal: a string would expand patterns such as `$&` and `$'`.
+    .replaceAll('{{packageName}}', () => packageName)
+    .replaceAll('{{version}}', () => version)
+    .replace('{{backLinkFilename}}', () => backLinkFilename)
   return new Blob([filled])
 }
 
@@ -52,13 +38,13 @@ export async function generateHtmlPage(document: string, fileTitle: string, pack
   const apispecViewScript = await (await templateResolver('scripts/apispec-view.js')).text()
   const breadcrumbs = `<div class="breadcrumbs"><a href="index.html">Table of contents</a> > <span>${fileTitle}</span></div>`
   const filled = template
-    .replace('{{fileTitle}}', fileTitle)
-    // arrow function disables replacement patterns like $&
+    // A replacer function keeps the value literal: a string would expand patterns such as `$&` and `$'`.
+    .replace('{{fileTitle}}', () => fileTitle)
     .replace('{{apispecViewScript}}', () => apispecViewScript)
-    .replaceAll('{{packageName}}', packageName)
-    .replaceAll('{{version}}', version)
-    .replace('{{breadcrumbs}}', breadcrumbs)
-    .replace('{{spec}}', escapeHTML(document))
+    .replaceAll('{{packageName}}', () => packageName)
+    .replaceAll('{{version}}', () => version)
+    .replace('{{breadcrumbs}}', () => breadcrumbs)
+    .replace('{{spec}}', () => escapeHTML(document))
   return new Blob([filled])
 }
 
@@ -93,11 +79,12 @@ export async function generateIndexHtmlPage(packageName: string, version: string
   const [readmeHtml, markdownItScript] = await generateReadmeParts(templateResolver, readme)
 
   const filled = template
-    .replaceAll('{{packageName}}', packageName)
-    .replaceAll('{{version}}', version)
-    .replace('{{markdownItScript}}', markdownItScript)
-    .replace('{{readmeHtml}}', readmeHtml)
-    .replace('{{htmlList}}', htmlList)
+    // A replacer function keeps the value literal: a string would expand patterns such as `$&` and `$'`.
+    .replaceAll('{{packageName}}', () => packageName)
+    .replaceAll('{{version}}', () => version)
+    .replace('{{markdownItScript}}', () => markdownItScript)
+    .replace('{{readmeHtml}}', () => readmeHtml)
+    .replace('{{htmlList}}', () => htmlList)
   return new Blob([filled])
 }
 
