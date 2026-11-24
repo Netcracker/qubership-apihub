@@ -7,6 +7,7 @@ import {
   IMM_GR,
   P_WS_MAIN_R,
   PK11,
+  PK12,
   PKG_P_HIERARCHY_BREAKING_R,
   V_P_PKG_CHANGELOG_MULTI_DEL_GQL_R,
   V_P_PKG_CHANGELOG_REST_ANNOTUNCLAS_R,
@@ -20,6 +21,7 @@ import { SYSADMIN } from '@test-data'
 import { isDevProxyMode } from '@services/utils'
 
 test.describe('5.2.1 Package details', () => {
+  const DEFAULT_VERSION_SORT = 'Publication Date (Newest)'
   const VERSION_NAME_ASC = 'Version Name (A-Z)'
   const VERSION_NAME_DESC = 'Version Name (Z-A)'
 
@@ -425,6 +427,21 @@ test.describe('5.2.1 Package details', () => {
     await versionSlt.click()
 
     await test.step('Verify selected sorting persists after reload', async () => {
+      await expect.soft(versionSlt.sortMenu).toContainText(VERSION_NAME_DESC)
+      await expect.soft(versionCells.first()).toHaveText(lastAscendingVersion)
+    })
+
+    await portalPage.gotoPackage(PK12)
+    await versionSlt.click()
+
+    await test.step('Verify another package keeps its default sorting', async () => {
+      await expect(versionSlt.sortMenu).toContainText(DEFAULT_VERSION_SORT)
+    })
+
+    await portalPage.gotoPackage(PK11)
+    await versionSlt.click()
+
+    await test.step('Verify package sorting persists after navigation', async () => {
       await expect.soft(versionSlt.sortMenu).toContainText(VERSION_NAME_DESC)
       await expect.soft(versionCells.first()).toHaveText(lastAscendingVersion)
     })
