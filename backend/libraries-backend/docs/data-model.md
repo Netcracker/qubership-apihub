@@ -150,6 +150,9 @@ CREATE TABLE IF NOT EXISTS library_class (
     package_name   character varying,
     modifiers      character varying[],
     deprecated     boolean NOT NULL DEFAULT false,
+    method_count      integer NOT NULL DEFAULT 0, -- constructors excluded; counters are set at import
+    constructor_count integer NOT NULL DEFAULT 0,
+    field_count       integer NOT NULL DEFAULT 0,
     CONSTRAINT pk_library_class PRIMARY KEY (library_id, version, class_id),
     CONSTRAINT fk_library_class_version FOREIGN KEY (library_id, version)
         REFERENCES library_version(library_id, version) ON DELETE CASCADE ON UPDATE CASCADE,

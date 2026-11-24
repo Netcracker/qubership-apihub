@@ -298,6 +298,12 @@ func TestInventoryBuilder(t *testing.T) {
 		Member:      "int retries",
 		Status:      view.ChangeStatusUnchanged,
 	})
+	builder.add(view.ApiChange{
+		ClassName:   "com.example.Service",
+		ElementType: view.ElementTypeConstructor,
+		Member:      "Service()",
+		Status:      view.ChangeStatusUnchanged,
+	})
 	// A member whose erased id repeats is dropped rather than breaking the primary key.
 	builder.add(view.ApiChange{
 		ClassName:   "com.example.Service",
@@ -334,8 +340,12 @@ func TestInventoryBuilder(t *testing.T) {
 		t.Errorf("a class without a class-level entry should default to 'class', got %q", content.Classes[1].Kind)
 	}
 
-	if len(content.Methods) != 3 {
-		t.Fatalf("got %d methods, want 3: %+v", len(content.Methods), content.Methods)
+	if len(content.Methods) != 4 {
+		t.Fatalf("got %d methods, want 4: %+v", len(content.Methods), content.Methods)
+	}
+	if service.MethodCount != 2 || service.ConstructorCount != 1 || service.FieldCount != 1 {
+		t.Errorf("got counters methods=%d constructors=%d fields=%d, want 2, 1, 1",
+			service.MethodCount, service.ConstructorCount, service.FieldCount)
 	}
 	for _, method := range content.Methods {
 		if method.LibraryId != "lib-1" || method.Version != "2.0.0" {

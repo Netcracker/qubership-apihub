@@ -26,6 +26,11 @@ type LibraryClass struct {
 	PackageName   string    `json:"packageName,omitempty"`
 	Modifiers     []string  `json:"modifiers,omitempty"`
 	Deprecated    bool      `json:"deprecated"`
+	// The counters cover the members nested in the class: methods and constructors are counted apart, and
+	// fields come from the class body.
+	MethodCount      int `json:"methodCount"`
+	ConstructorCount int `json:"constructorCount"`
+	FieldCount       int `json:"fieldCount"`
 	// Data is the full parsed class body, stored content-addressed so an unchanged class is shared
 	// between versions instead of duplicated.
 	Data []byte `json:"-"`

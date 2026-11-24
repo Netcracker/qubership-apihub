@@ -114,6 +114,9 @@ CREATE TABLE IF NOT EXISTS public.library_class
     package_name varchar,
     modifiers varchar [],
     deprecated boolean DEFAULT false NOT NULL,
+    method_count integer DEFAULT 0 NOT NULL, -- constructors excluded; the counters are set at import
+    constructor_count integer DEFAULT 0 NOT NULL,
+    field_count integer DEFAULT 0 NOT NULL,
     CONSTRAINT pk_library_class PRIMARY KEY (library_id, version, class_id),
     CONSTRAINT fk_library_class_version FOREIGN KEY (library_id, version)
         REFERENCES public.library_version (library_id, version) ON DELETE CASCADE ON UPDATE CASCADE,

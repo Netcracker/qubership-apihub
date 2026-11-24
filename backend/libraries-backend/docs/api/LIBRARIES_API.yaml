@@ -1580,6 +1580,9 @@ components:
         - kind
         - qualifiedName
         - deprecated
+        - methodCount
+        - constructorCount
+        - fieldCount
       properties:
         classId:
           type: string
@@ -1595,6 +1598,15 @@ components:
             type: string
         deprecated:
           type: boolean
+        methodCount:
+          description: Number of methods declared by the class, constructors excluded.
+          type: integer
+        constructorCount:
+          description: Number of constructors declared by the class.
+          type: integer
+        fieldCount:
+          description: Number of fields declared by the class.
+          type: integer
     LibraryMethod:
       type: object
       required:

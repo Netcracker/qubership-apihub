@@ -329,15 +329,26 @@ func (b *inventoryBuilder) build() (repository.LibraryContent, error) {
 			})
 		}
 
+		constructorCount := 0
+		for _, method := range class.methods {
+			if method.ElementType == view.ElementTypeConstructor {
+				constructorCount++
+			}
+		}
+		methodCount := len(class.methods) - constructorCount
+
 		content.Classes = append(content.Classes, entity.LibraryClassEntity{
-			LibraryId:     b.libraryId,
-			Version:       b.version,
-			ClassId:       className,
-			DataHash:      classDataHash,
-			Kind:          string(class.entry.ClassKind()),
-			QualifiedName: className,
-			PackageName:   packageNameOf(className),
-			Deprecated:    class.entry.Deprecated(),
+			LibraryId:        b.libraryId,
+			Version:          b.version,
+			ClassId:          className,
+			DataHash:         classDataHash,
+			Kind:             string(class.entry.ClassKind()),
+			QualifiedName:    className,
+			PackageName:      packageNameOf(className),
+			Deprecated:       class.entry.Deprecated(),
+			MethodCount:      methodCount,
+			ConstructorCount: constructorCount,
+			FieldCount:       len(class.fields),
 		})
 
 		for _, method := range class.methods {

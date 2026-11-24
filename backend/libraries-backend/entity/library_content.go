@@ -24,6 +24,10 @@ type LibraryClassEntity struct {
 	PackageName   string   `pg:"package_name,type:varchar"`
 	Modifiers     []string `pg:"modifiers,type:varchar[],array"`
 	Deprecated    bool     `pg:"deprecated,type:boolean,use_zero"`
+	// The counters are computed once, when the version is imported.
+	MethodCount      int `pg:"method_count,type:integer,use_zero"`
+	ConstructorCount int `pg:"constructor_count,type:integer,use_zero"`
+	FieldCount       int `pg:"field_count,type:integer,use_zero"`
 }
 
 type LibraryMethodDataEntity struct {
@@ -75,12 +79,15 @@ func MakeClassSearchResultView(ent ClassSearchResultEntity) view.SearchResultCla
 
 func MakeLibraryClassView(ent LibraryClassEntity) view.LibraryClass {
 	return view.LibraryClass{
-		ClassId:       ent.ClassId,
-		Kind:          view.ClassKind(ent.Kind),
-		QualifiedName: ent.QualifiedName,
-		PackageName:   ent.PackageName,
-		Modifiers:     ent.Modifiers,
-		Deprecated:    ent.Deprecated,
+		ClassId:          ent.ClassId,
+		Kind:             view.ClassKind(ent.Kind),
+		QualifiedName:    ent.QualifiedName,
+		PackageName:      ent.PackageName,
+		Modifiers:        ent.Modifiers,
+		Deprecated:       ent.Deprecated,
+		MethodCount:      ent.MethodCount,
+		ConstructorCount: ent.ConstructorCount,
+		FieldCount:       ent.FieldCount,
 	}
 }
 
