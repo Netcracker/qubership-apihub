@@ -4,8 +4,8 @@ import { type FC, memo, useCallback } from 'react'
 
 import type { JavaApiClassListItem } from '@netcracker/qubership-apihub-api-doc-viewer'
 import { MetaClickableListWithPreview } from '@netcracker/qubership-apihub-ui-shared/components/MetaClickableListWithPreview'
+import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 
-import type { LibraryJavaApiDocumentDto } from '@portal/entities/libraries'
 import { JAVA_CLASSES_EMPTY_MESSAGE } from './javaApi'
 import { JavaClassPreview } from './JavaClassPreview'
 import { JavaClassTitleWithMeta } from './JavaClassTitleWithMeta'
@@ -13,7 +13,8 @@ import { useJavaClassNavigationLinkBuilder } from './useJavaClassNavigationLinkB
 import { useSelectedJavaClass } from './useSelectedJavaClass'
 
 type JavaClassListWithPreviewProps = Readonly<{
-  document: LibraryJavaApiDocumentDto
+  libraryId: Key
+  version: string
   classes: ReadonlyArray<JavaApiClassListItem>
   prepareLinkFn: (javaClass: JavaApiClassListItem) => Partial<Path>
   onLinkClick: () => void
@@ -23,7 +24,8 @@ type JavaClassListWithPreviewProps = Readonly<{
 }>
 
 export const JavaClassListWithPreview: FC<JavaClassListWithPreviewProps> = memo<JavaClassListWithPreviewProps>(({
-  document,
+  libraryId,
+  version,
   classes,
   prepareLinkFn,
   onLinkClick,
@@ -35,7 +37,7 @@ export const JavaClassListWithPreview: FC<JavaClassListWithPreviewProps> = memo<
   const navigationLinkBuilder = useJavaClassNavigationLinkBuilder()
   const renderTitle = useCallback(
     (javaClass: JavaApiClassListItem, link?: Partial<Path>) => (
-      <JavaClassTitleWithMeta javaClass={javaClass} link={link} onLinkClick={onLinkClick} />
+      <JavaClassTitleWithMeta javaClass={javaClass} link={link} onLinkClick={onLinkClick} showMemberCount={false} />
     ),
     [onLinkClick],
   )
@@ -53,7 +55,8 @@ export const JavaClassListWithPreview: FC<JavaClassListWithPreviewProps> = memo<
       emptyMessage={JAVA_CLASSES_EMPTY_MESSAGE}
       previewComponent={
         <JavaClassPreview
-          document={document}
+          libraryId={libraryId}
+          version={version}
           javaClass={selectedClass}
           navigationLinkBuilder={navigationLinkBuilder}
           link={selectedClass && prepareLinkFn(selectedClass)}

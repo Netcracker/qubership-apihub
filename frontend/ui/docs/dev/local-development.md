@@ -18,12 +18,10 @@ No local mock server is required for this workflow.
 
 ## Local Library development
 
-The Library UI shows only when the backend registers the `libraries-backend` extension, or with the local Library
-API of the [Express mock](./portal-mock-server.md).
-Set `VITE_LOCAL_LIBRARIES=true` in `packages/portal/.env.local` and restart Vite.
-Run `dev:backend` alongside `dev:proxy`: `/api/v1/libraries` and `/api/v1/favorites/libraries` go to port 3003.
-Other requests reach the real APIHUB. The local backend starts with the libraries `Library (JavaAPI) test` and
-`Library (JavaAPI) Catalog library` (with two versions, a Java API report, and a diff) and resets on restart.
+The Library UI shows only when the backend registers the `libraries-backend` extension. There is no local mock:
+run the libraries-backend with the APIHUB you proxy to, for example the Compose stack in
+[`deploy/docker-compose/apihub-generic`](../../../../deploy/docker-compose/apihub-generic/README.md).
+In proxy mode Vite sends `/libraries-backend` to the same APIHUB as `/api`, whose UI nginx forwards it to the service.
 
 ## Proxy mode with MSW mocks
 

@@ -76,7 +76,8 @@ export const LibraryReferenceTab: FC<Readonly<{ version: LibraryVersion }>> = me
   else if (operationsViewMode === DETAILED_OPERATIONS_VIEW_MODE) {
     body = (
       <JavaClassListWithPreview
-        document={data.document}
+        libraryId={version.libraryId}
+        version={version.version}
         classes={classes}
         prepareLinkFn={prepareLinkFn}
         onLinkClick={onLinkClick}

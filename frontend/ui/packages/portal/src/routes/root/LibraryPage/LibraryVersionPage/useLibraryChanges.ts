@@ -142,15 +142,17 @@ export function useInvalidateLibraryChanges(): InvalidateLibraryChanges {
   }
 }
 
-async function getLibraryChanges<T extends object>(
+export async function getLibraryChanges<T extends object>(
   libraryId: Key,
   version: string,
   resource: 'changes' | 'changes/summary',
   previous?: PreviousLibraryVersion,
   signal?: AbortSignal,
   page?: number,
+  classId?: string,
 ): Promise<T | null> {
   const query = new URLSearchParams()
+  if (classId) query.set('classId', classId)
   if (page !== undefined) {
     query.set('limit', String(PAGE_SIZE))
     query.set('page', String(page))

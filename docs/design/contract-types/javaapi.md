@@ -294,14 +294,22 @@ Unless noted, **API / Logic** is **TBD** — see [Backend](#backend) (low-level 
 
 ### Source
 
-The UI reads jdiff comparison results through libraries-backend.
+The UI reads the API inventory and the jdiff comparison results of a Library version through libraries-backend.
 
 | Data | Source | Use |
 | :---- | :---- | :---- |
-| Changes list | `GET /libraries/{libraryId}/versions/{version}/changes` | Each row has `classId` equal to the jdiff `className`, with the jdiff entry in `details`. The UI groups rows by type and uses the supplied `severity` for per-class counts and descriptions. |
+| Class list | `GET /libraries/{libraryId}/versions/{version}/classes` | Paged, at most 100 classes per request, filtered by `textFilter` (substring of the qualified name) and `kind`. The UI loads every page for the API Reference list and the Summary type counts. With `textFilter` set to `<classId>$` it lists the nested types of one class. |
+| Class | `GET /libraries/{libraryId}/versions/{version}/classes/{classId}` | One type with its methods and constructors. API Reference shows it with its nested types. On API Changes the UI overlays the class's change rows (`changes?classId=`) on it: a change replaces the member with the same name and parameter types; removed members come from the change rows. |
+| Changes list | `GET /libraries/{libraryId}/versions/{version}/changes` | Each row has `classId` equal to the jdiff `className`, with the jdiff entry in `details`. The UI groups rows by type and uses the supplied `severity` for per-class counts and descriptions. `classId` limits the list to one type. |
 | Changes summary | `GET /libraries/{libraryId}/versions/{version}/changes/summary` | The UI reads `changeCounts` for the comparison summary. |
 
-API Reference and the class report have no backend read endpoint yet. Their read contract is TBD with the backend.
+The class list is empty until the version's build finishes. Known gaps of the class endpoints:
+
+* No fields and no enum constants: the type view shows constructors and methods only.
+* No element type for a member: a signature without a return type is a constructor.
+* No modifiers; the `record` kind is shown as a class.
+* No class count and no member counts: the list is loaded page by page, and API Reference rows show no member count.
+* The API Changes view of a type shows its own rows only: nested types have their own `classId`.
 
 ### Type identity
 

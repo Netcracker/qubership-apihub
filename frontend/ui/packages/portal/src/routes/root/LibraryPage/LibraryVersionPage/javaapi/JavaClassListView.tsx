@@ -35,6 +35,7 @@ export const JavaClassListView: FC<JavaClassListViewProps> = memo<JavaClassListV
             javaClass={javaClass}
             link={prepareLinkFn(javaClass)}
             onLinkClick={onLinkClick}
+            showMemberCount={false}
           />
         ),
       },

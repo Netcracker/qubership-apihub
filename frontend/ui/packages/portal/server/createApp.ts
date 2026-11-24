@@ -1,13 +1,11 @@
 import cors from 'cors'
 import type { Express, Router } from 'express'
 import express from 'express'
-import { createLibraryStore } from './mocks/libraries/store'
 import { ActivityRouter } from './routers/activity/router'
 import { AiChatRouter } from './routers/ai-chat/router'
 import { EphemeralFilesRouter } from './routers/ephemeral-files/router'
 import { AuthRouter } from './routers/auth/router'
 import { GlobalSearchRouter } from './routers/global-search/router'
-import { LibrariesRouter, LibraryFavoritesRouter } from './routers/libraries/router'
 import { PackagesRouter, PackageTokensRouter } from './routers/packages/router'
 import { PermissionsRouter } from './routers/permissions/router'
 import { RolesRouter } from './routers/roles/router'
@@ -19,9 +17,6 @@ import { UsersRouter } from './routers/users/router'
 // binding to a port. index.ts wires the network listener on top of this.
 export function createApp(): Express {
   const app = express()
-  // Favorites use their own root but flag the same records, so both routers share a store.
-  // Unlike the package mock, each app gets a fresh store to keep library tests isolated.
-  const libraryStore = createLibraryStore()
   const routersMap = new Map<string, Router>([
     ['/api/v2/auth/', AuthRouter()],
     ['/api/v2/users/', UsersRouter()],
@@ -35,8 +30,6 @@ export function createApp(): Express {
     ['/api/v2/admins/', SystemAdminsRouter()],
     ['/api/v1/ai-chat/', AiChatRouter()],
     ['/api/v1/ephemeral-files/', EphemeralFilesRouter()],
-    ['/libraries-backend/api/v1/libraries/', LibrariesRouter(libraryStore)],
-    ['/libraries-backend/api/v1/favorites/libraries/', LibraryFavoritesRouter(libraryStore)],
   ])
 
   app.use(cors())

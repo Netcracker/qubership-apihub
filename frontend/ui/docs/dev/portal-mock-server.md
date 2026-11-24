@@ -5,13 +5,6 @@ the routes below will move there.
 
 Express app under `packages/portal/server/`. Default listen URL: `http://localhost:3003` (`NODEJS_PORT` to override).
 
-The local Library API (`server/routers/libraries/`) is a provisional mock of the libraries-backend. It keeps libraries,
-versions, members, and API keys in memory and serves the jdiff samples of api-doc-viewer as Java API reports and diffs.
-It derives paged Library changes and summary responses from the same diff sample.
-Set `VITE_LOCAL_LIBRARIES=true` in the ignored `packages/portal/.env.local` and restart Vite: in proxy mode,
-`/libraries-backend` then goes to this server for local work without the real `libraries-backend` extension.
-The mock serves `/libraries-backend/api/v1/libraries` and `/libraries-backend/api/v1/favorites/libraries`.
-
 Use it in **mixed mode** ([local-development.md](./local-development.md#deprecated-mixed-mode-proxy--express-mock)) or with `dev:frontend`. Default **proxy mode** does not use this server; `/api` goes to the real APIHUB.
 
 ## Vite proxy (`vite.config.ts`)

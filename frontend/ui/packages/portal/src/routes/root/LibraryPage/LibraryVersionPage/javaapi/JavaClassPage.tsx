@@ -23,7 +23,7 @@ import { useLibrary } from '../../../useLibrary'
 import { LibraryBreadcrumbs } from '../../LibraryBreadcrumbs'
 import { useLibraryVersion } from '../../useLibraryVersions'
 import { getLibraryVersionPath } from '../libraryVersion'
-import { useLibraryJavaApiDiff, useLibraryJavaApiReport } from '../useLibraryJavaApi'
+import { useLibraryJavaClass } from '../useLibraryJavaClass'
 import {
   getPreviousLibraryVersion,
   JAVA_DOCUMENT_SEARCH_PARAM,
@@ -41,13 +41,11 @@ export const JavaClassPage: FC = () => {
   const { previousLibraryId, previousVersion } = getPreviousLibraryVersion(query)
   const { library, isLoading: isLibraryLoading, error: libraryError } = useLibrary(libraryId)
   const { version, isLoading: isVersionLoading, error: versionError } = useLibraryVersion(libraryId, versionId)
-  const report = useLibraryJavaApiReport(kind === 'report' ? libraryId : undefined, versionId)
-  const diff = useLibraryJavaApiDiff(kind === 'diff' ? libraryId : undefined, versionId, {
+  const { data, isLoading, error } = useLibraryJavaClass(libraryId, versionId, className, kind, {
     previousLibraryId,
     previousVersion,
   })
-  const { data, isLoading, error } = kind === 'diff' ? diff : report
-  const javaClass = data?.classes.find(item => item.className === className)
+  const javaClass = data?.javaClass
   const classKey = useMemo(() => ({ className }), [className])
   const rawData = useMemo(
     () => javaClass && { className: javaClass.className, elements: javaClass.elements },

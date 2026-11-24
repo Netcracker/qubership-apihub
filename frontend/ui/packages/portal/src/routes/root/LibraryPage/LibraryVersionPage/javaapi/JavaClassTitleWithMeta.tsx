@@ -19,13 +19,17 @@ type JavaClassTitleWithMetaProps = Readonly<{
   onlyTitle?: boolean
   // false where a separate column already shows the members, e.g. the API Changes table
   showSummary?: boolean
+  // TODO(libraries-backend): The class list has no member counts; show them once it does.
+  showMemberCount?: boolean
 }>
 
 export const JavaClassTitleWithMeta: FC<JavaClassTitleWithMetaProps> = memo<JavaClassTitleWithMetaProps>((
-  { javaClass, link, onLinkClick, onlyTitle = false, showSummary = true },
+  { javaClass, link, onLinkClick, onlyTitle = false, showSummary = true, showMemberCount = true },
 ) => {
   const { className, displayName, packageName, typeKind, memberCount } = javaClass
-  const subtitle = `${JAVA_API_TYPE_KIND_TITLES[typeKind]} · ${memberCount} ${memberCount === 1 ? 'member' : 'members'}`
+  const subtitle = showMemberCount
+    ? `${JAVA_API_TYPE_KIND_TITLES[typeKind]} · ${memberCount} ${memberCount === 1 ? 'member' : 'members'}`
+    : JAVA_API_TYPE_KIND_TITLES[typeKind]
 
   return (
     <TitleColumn>

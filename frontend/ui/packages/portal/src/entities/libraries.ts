@@ -141,6 +141,28 @@ export type LibraryVersionUpdateDto = Pick<LibraryVersionPublishDto, 'status' | 
 
 export type LibraryJavaApiDocumentDto = Readonly<Record<string, unknown>>
 
+export type LibraryClassDto = Readonly<{
+  classId: string
+  kind: 'class' | 'interface' | 'enum' | 'annotation' | 'record'
+  qualifiedName: string
+  packageName?: string
+  modifiers?: string[]
+  deprecated: boolean
+}>
+
+export type LibraryClassesDto = Readonly<{ classes: LibraryClassDto[] }>
+
+export type LibraryMethodDto = Readonly<{
+  classId: string
+  methodId: string
+  name: string
+  signature: string
+  modifiers?: string[]
+  deprecated: boolean
+}>
+
+export type LibraryClassDetailsDto = LibraryClassDto & Readonly<{ methods: LibraryMethodDto[] }>
+
 export type LibraryChangeDto = JavaApiChangeRow
 
 export type LibraryChangesSummaryDto = Readonly<{
@@ -149,9 +171,11 @@ export type LibraryChangesSummaryDto = Readonly<{
   version: string
   previousLibraryId: Key
   previousVersion: string
-  changeCounts: Readonly<Partial<
-    Record<'breaking' | 'non-breaking' | 'annotation' | 'added' | 'removed' | 'changed' | 'deprecated', number>
-  >>
+  changeCounts: Readonly<
+    Partial<
+      Record<'breaking' | 'non-breaking' | 'annotation' | 'added' | 'removed' | 'changed' | 'deprecated', number>
+    >
+  >
 }>
 
 export type LibraryChangesDto = Readonly<{

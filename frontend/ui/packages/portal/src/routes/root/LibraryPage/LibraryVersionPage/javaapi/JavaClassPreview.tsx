@@ -1,4 +1,4 @@
-import { Box, styled } from '@mui/material'
+import { Alert, Box, styled } from '@mui/material'
 import type { Path } from '@remix-run/router'
 import { type FC, memo, useMemo, useState } from 'react'
 
@@ -16,14 +16,16 @@ import {
   RAW_SPEC_VIEW_MODE,
   type SpecViewMode,
 } from '@netcracker/qubership-apihub-ui-shared/components/SpecViewToggler'
+import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 
-import type { LibraryJavaApiDocumentDto } from '@portal/entities/libraries'
+import { useLibraryJavaClass } from '../useLibraryJavaClass'
 import { JavaClassNavigationLink } from './JavaClassNavigationLink'
 import { JavaClassTitleWithMeta } from './JavaClassTitleWithMeta'
 import { JavaClassViewModeToggler } from './JavaClassViewModeToggler'
 
 type JavaClassPreviewProps = Readonly<{
-  document: LibraryJavaApiDocumentDto
+  libraryId: Key
+  version: string
   javaClass: JavaApiClassListItem | undefined
   navigationLinkBuilder: JavaApiNavigationLinkBuilder
   link?: Partial<Path>
@@ -32,13 +34,15 @@ type JavaClassPreviewProps = Readonly<{
 }>
 
 export const JavaClassPreview: FC<JavaClassPreviewProps> = memo<JavaClassPreviewProps>(({
-  document,
+  libraryId,
+  version,
   javaClass,
   navigationLinkBuilder,
   link,
   onLinkClick,
   maxWidthHeaderToolbar,
 }) => {
+  const { data, isLoading, error } = useLibraryJavaClass(libraryId, version, javaClass?.className ?? '', 'report')
   const [viewMode, setViewMode] = useState<SpecViewMode>(DOC_SPEC_VIEW_MODE)
   // Type links save the return location like the title link does
   const NavigationLink = useMemo(() => {
@@ -50,9 +54,22 @@ export const JavaClassPreview: FC<JavaClassPreviewProps> = memo<JavaClassPreview
   }, [onLinkClick])
   const classKey = useMemo(() => javaClass && { className: javaClass.className }, [javaClass])
   const rawData = useMemo(
-    () => javaClass && { className: javaClass.className, elements: javaClass.elements },
-    [javaClass],
+    () => data?.javaClass && { className: data.javaClass.className, elements: data.javaClass.elements },
+    [data],
   )
+  let content = classKey && data && (
+    <ViewerBox data-testid="JavaApiClassViewer">
+      <JavaClassViewer
+        source={data.document}
+        classKey={classKey}
+        navigationLinkBuilder={navigationLinkBuilder}
+        navigationLinkComponent={NavigationLink}
+        noHeading
+      />
+    </ViewerBox>
+  )
+  if (viewMode === RAW_SPEC_VIEW_MODE) content = <JsonRawSpecView data={rawData} />
+  if (error) content = <Alert severity="error">{error.message}</Alert>
   return (
     <ContractPreviewPanel
       title={javaClass && (
@@ -64,24 +81,12 @@ export const JavaClassPreview: FC<JavaClassPreviewProps> = memo<JavaClassPreview
         />
       )}
       action={<JavaClassViewModeToggler mode={viewMode} onChange={setViewMode} />}
-      isLoading={false}
-      hasContent={!!javaClass}
+      isLoading={!!javaClass && isLoading}
+      hasContent={!!javaClass && (!!data || !!error)}
       maxWidthHeaderToolbar={maxWidthHeaderToolbar}
       data-testid="JavaClassPreview"
     >
-      {viewMode === RAW_SPEC_VIEW_MODE
-        ? <JsonRawSpecView data={rawData} />
-        : classKey && (
-          <ViewerBox data-testid="JavaApiClassViewer">
-            <JavaClassViewer
-              source={document}
-              classKey={classKey}
-              navigationLinkBuilder={navigationLinkBuilder}
-              navigationLinkComponent={NavigationLink}
-              noHeading
-            />
-          </ViewerBox>
-        )}
+      {content}
     </ContractPreviewPanel>
   )
 })
