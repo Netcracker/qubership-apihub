@@ -1,3 +1,4 @@
+import { cn } from "@apihub/utils/common/cn"
 import { useDisplayMode } from "@apihub/contexts/DisplayModeContext"
 import { resolveDiffSideStyle } from "@apihub/utils/diffs/resolve-diff-side-style"
 import { takeColumnFlagDiffs, takeColumnForeignKeyTargetDiffs } from "@apihub/utils/ddlapi/column-row-badges"
@@ -109,7 +110,7 @@ export const ColumnNodeViewerWithDiffs: FC<ColumnNodeViewerWithDiffsProps> = (pr
       }
 
       return (
-        <div className="flex flex-wrap items-center gap-2">
+        <div className={cn("flex flex-wrap items-center gap-2")}>
           <ColumnTypeLabelWithDiffs
             node={node}
             layoutSide={layoutSide}
@@ -174,7 +175,7 @@ export const ColumnNodeViewerWithDiffs: FC<ColumnNodeViewerWithDiffsProps> = (pr
       }
 
       return (
-        <div className="flex flex-wrap items-center gap-2">
+        <div className={cn("flex flex-wrap items-center gap-2")}>
           {sideItems.map((sideItem, index) => {
             const style = resolveDiffSideStyle(sideItem.diff, layoutSide)
             return (
@@ -199,7 +200,7 @@ export const ColumnNodeViewerWithDiffs: FC<ColumnNodeViewerWithDiffsProps> = (pr
   }
 
   return (
-    <div data-testid="ddl-column-node-viewer" className="flex flex-col ddlapi-property">
+    <div data-testid="ddl-column-node-viewer" className={cn("flex flex-col ddlapi-property")}>
       <TitleRow
         data-precededby={precededBy}
         {...{ [ATTRIBUTE_DDL_LIST_LAST_ROW]: listLastRowFlags.isTitleListLastRow || undefined }}

@@ -14,7 +14,8 @@
   processing pipeline
 - **Markdown** — Document-level support: parsing, rendering, versioning; no operations
 - **DDLAPI** — Database-schema contracts with an end-to-end DDLAPI pipeline: normalization, diff/changelog, processor,
-  document viewer, and Portal contract views.
+  document viewer, and Portal contract views. Tables can be placed in manual groups, and the Excel export of
+  entities and changes includes the group.
 - **MCP contracts** — MCP endpoint metadata and tools, prompts, and resources can be published and browsed in the Portal
   Contracts tab. They are catalog contracts, not an operation `ApiType`.
 - **Unknown / Generic** — Fallback: any file can be stored and versioned as an unknown document
@@ -152,10 +153,10 @@
 
 ### 4.3 Interactive Components
 
-- **`<apispec-view>`**: Full API documentation viewer (OpenAPI 2/3, AsyncAPI) with sidebar navigation; AsyncAPI
-  operation tables use dedicated cells where needed (e.g. `AsyncApiTableCell`)
-- **`<operation-view>`**: Single operation detail viewer
-- **`<diff-operation-view>`**: Side-by-side operation diff with change severity filtering
+- **`<apispec-view>`**: Full OpenAPI document viewer (OpenAPI 2.0, 3.0, 3.1) with sidebar navigation and Try It; the
+  Portal document preview and the specification dialog use it, and the "Copy page template" snippet embeds it
+- **`api-doc-viewer` viewers** (React components): single operations and their comparisons for OpenAPI, AsyncAPI,
+  GraphQL, and DDL, and JSON Schema documents, with change severity filtering
 - **`<rest-playground>`**: Interactive REST API testing from OpenAPI specs (parameter auto-population, auth panel,
   response viewer)
 - **`<rest-examples>`**: Request/response example display from API specs
@@ -259,7 +260,8 @@
 
 ### 7.4 Export Capabilities
 
-- **Excel reports**: API changes export to Excel (via excelize)
+- **Excel reports**: API changes export to Excel (via excelize). DDL entity and change exports include
+  table-group membership, and the changes export adds a summary sheet.
 - **Async export**: Large export jobs with progress tracking
 - **Multiple formats**: Version export, document export, operations group export
 - **Custom templates**: Template-based export with group-specific templates

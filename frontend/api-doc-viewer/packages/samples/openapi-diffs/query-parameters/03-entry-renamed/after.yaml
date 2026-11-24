@@ -1,0 +1,19 @@
+openapi: 3.0.3
+info:
+  title: Orders
+  version: 1.0.0
+paths:
+  /orders:
+    post:
+      parameters:
+        - name: dryRun-v2
+          in: query
+          schema:
+            type: boolean
+        - name: expand
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""

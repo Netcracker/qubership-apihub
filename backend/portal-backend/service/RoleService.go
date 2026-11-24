@@ -1135,11 +1135,17 @@ func (r roleServiceImpl) SetRolePermissions(ctx context.Context, roleId string, 
 }
 
 func (r roleServiceImpl) SetRoleOrder(ctx context.Context, roles []string) error {
-	roleEntities, err := r.roleRepository.GetAllRoles(ctx)
+	allRoles, err := r.roleRepository.GetAllRoles(ctx)
 	if err != nil {
 		return err
 	}
-	if len(roles) != len(roleEntities) {
+	orderableRoles := make([]entity.RoleEntity, 0, len(allRoles))
+	for _, roleEntity := range allRoles {
+		if roleEntity.Id != view.NoneRoleId {
+			orderableRoles = append(orderableRoles, roleEntity)
+		}
+	}
+	if len(roles) != len(orderableRoles) {
 		return &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.AllRolesRequired,
@@ -1147,7 +1153,7 @@ func (r roleServiceImpl) SetRoleOrder(ctx context.Context, roles []string) error
 		}
 	}
 	roleMap := make(map[string]entity.RoleEntity, 0)
-	for _, roleEntity := range roleEntities {
+	for _, roleEntity := range orderableRoles {
 		roleMap[roleEntity.Id] = roleEntity
 		if !utils.SliceContains(roles, roleEntity.Id) {
 			return &exception.CustomError{
@@ -1166,7 +1172,7 @@ func (r roleServiceImpl) SetRoleOrder(ctx context.Context, roles []string) error
 		}
 	}
 	rolesToUpdate := make([]entity.RoleEntity, 0)
-	rank := len(roles) - 1
+	rank := len(allRoles) - 1
 	for index, roleId := range roles {
 		role := roleMap[roleId]
 		if role.ReadOnly {

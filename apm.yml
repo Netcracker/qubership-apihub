@@ -18,7 +18,10 @@ dependencies:
     - ./agent-packages/apihub-deployment-followup
     - ./agent-packages/apihub-add-go-service
     - ./agent-packages/apihub-landing-refresh
+    - ./agent-packages/apihub-adr
+    - ./agent-packages/apihub-design-authoring
     - ./agent-packages/apihub-autonomous-agent
+    - ./agent-packages/analyze-migration
     # backend/agent
     - ./backend/agent/agent-packages/agent-conventions
     - ./backend/agent/agent-packages/apihub-agent-developer
@@ -32,6 +35,9 @@ dependencies:
     - ./frontend/api-diff/agent-packages/api-diff-testing
     # frontend/api-doc-viewer
     - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-authoring
+    - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-baseline-comparison
+    - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-ci-linters
+    - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-feature-test-plan
     - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-review-session
     - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-reviewing
     - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-testing

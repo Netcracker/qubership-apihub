@@ -1,0 +1,21 @@
+openapi: 3.1.0
+info:
+  title: Orders
+  version: 1.0.0
+paths:
+  /orders:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                value:
+                  enum:
+                    - new
+                    - paid
+                    - 1
+      responses:
+        "200":
+          description: ""

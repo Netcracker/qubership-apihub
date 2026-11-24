@@ -33,10 +33,6 @@ mkdirSync(storiesOutDir, { recursive: true });
  * @param {ReturnType<typeof listCombinerDiffCases>} cases
  */
 const printStoryFile = (suite, cases) => {
-  // allOf has no variant selector (all sub-schemas apply simultaneously) -- nothing to switch.
-  const factoryName = suite.combinerKind !== "allOf"
-    ? "createJsonSchemaDiffCaseStoryFactoryWithChangedVariant"
-    : "createJsonSchemaDiffCaseStoryFactory";
   const exports = cases
     .map(
       (sampleCase) =>
@@ -52,7 +48,7 @@ const printStoryFile = (suite, cases) => {
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import {
   JsonSchemaDiffSamplesStoryWithDisabledSubstitutionTitle,
-  ${factoryName},
+  createJsonSchemaDiffCaseStoryFactory,
   jsonSchemaDiffSampleReadonlyArgTypes,
 } from "./json-schema-diffs-utils";
 import { createSampleById } from "../utils/sample-cases";
@@ -72,7 +68,7 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-const createCaseStory = ${factoryName}(
+const createCaseStory = createJsonSchemaDiffCaseStoryFactory(
   JsonSchemaDiffSamplesStoryWithDisabledSubstitutionTitle,
   sampleById,
 );

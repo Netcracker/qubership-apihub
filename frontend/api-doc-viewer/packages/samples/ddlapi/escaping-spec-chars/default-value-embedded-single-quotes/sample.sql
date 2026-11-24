@@ -1,3 +1,3 @@
 CREATE TABLE t (
-  label text DEFAULT 'it''s fine'
+  display_text text DEFAULT 'it''s fine'
 );

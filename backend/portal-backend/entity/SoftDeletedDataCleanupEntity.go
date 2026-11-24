@@ -30,6 +30,8 @@ type DeletedItemsStats struct {
 	Operations                      int                         `json:"operations"`
 	OperationGroups                 int                         `json:"operationGroups"`
 	GroupedOperations               int                         `json:"groupedOperations"`
+	DdlTableGroups                  int                         `json:"ddlTableGroups"`
+	GroupedDdlTables                int                         `json:"groupedDdlTables"`
 	OperationOpenCounts             int                         `json:"operationOpenCounts"`
 	PackageExportConfigs            int                         `json:"packageExportConfigs"`
 	PackageMembersRoles             []PackageMemberRoleEntity   `json:"packageMembersRoles"`
@@ -80,6 +82,8 @@ func (d *DeletedItemsStats) CalculateTotal() {
 		d.Operations +
 		d.OperationGroups +
 		d.GroupedOperations +
+		d.DdlTableGroups +
+		d.GroupedDdlTables +
 		d.OperationOpenCounts +
 		d.PackageExportConfigs +
 		len(d.PackageMembersRoles) +
@@ -112,6 +116,8 @@ func (d *DeletedItemsStats) Add(other *DeletedItemsStats) {
 	d.Operations += other.Operations
 	d.OperationGroups += other.OperationGroups
 	d.GroupedOperations += other.GroupedOperations
+	d.DdlTableGroups += other.DdlTableGroups
+	d.GroupedDdlTables += other.GroupedDdlTables
 	d.OperationOpenCounts += other.OperationOpenCounts
 	d.PackageExportConfigs += other.PackageExportConfigs
 	d.PackageMembersRoles = append(d.PackageMembersRoles, other.PackageMembersRoles...)

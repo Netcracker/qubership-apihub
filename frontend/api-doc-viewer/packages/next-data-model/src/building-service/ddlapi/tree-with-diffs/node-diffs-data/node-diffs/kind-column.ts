@@ -1,6 +1,6 @@
 import { DiffMetaKeys } from "@apihub/next-data-model/building-service/abstract/tree-with-diffs/node-diffs-data/diff-meta-keys";
 import { AbstractNodeDiffsAggregator } from "@apihub/next-data-model/building-service/abstract/tree-with-diffs/node-diffs-data/node-diffs-aggregator";
-import { AbstractNodeDiffsSeveritiesAggregator } from "@apihub/next-data-model/building-service/abstract/tree-with-diffs/node-diffs-data/node-diffs-severities-aggregator";
+
 import { ChangedPropertyMetaData, HighlightVariant, ITreeNodeWithDiffs, NODE_LEVEL_DIFF_KEY, NodeDiffs } from "@apihub/next-data-model/model/abstract/tree-with-diffs/tree-node.interface";
 import {
   DDL_COLUMN_CHANGED_PROPERTY_KEYS,
@@ -26,6 +26,7 @@ import { TypeKind } from "@netcracker/qubership-apihub-ddlapi";
 import { Diff, DiffAction, isDiffAdd, isDiffRemove, isDiffReplace } from "@netcracker/qubership-apihub-api-diff";
 import { isDdlScalarColumnTypeName } from "@apihub/next-data-model/shared/ddlapi/guards/column-type-name";
 import { DdlApiNodeDiffsAggregatorKindAny } from "./kind-any";
+import { DiffTypeOrder } from "@apihub/next-data-model/model/abstract/tree-with-diffs/diff-type-order";
 
 export class DdlApiNodeDiffsAggregatorKindColumn extends DdlApiNodeDiffsAggregatorKindAny {
   public aggregate(
@@ -210,7 +211,7 @@ export class DdlApiNodeDiffsAggregatorKindColumn extends DdlApiNodeDiffsAggregat
       return
     }
 
-    const representativeDiff = AbstractNodeDiffsSeveritiesAggregator.maxChangedPropertyMetaDataByDiffType(
+    const representativeDiff = DiffTypeOrder.strongestChangedPropertyMetaData(
       ...Object.values(columnTypeFieldDiffs),
     )
     if (!representativeDiff) {
@@ -333,7 +334,7 @@ export class DdlApiNodeDiffsAggregatorKindColumn extends DdlApiNodeDiffsAggregat
       transitionDirection === DDL_ENUM_COLUMN_TYPE_TRANSITION.FromEnum &&
       Object.values(enumValueDiffs).every(diff => diff && isDiffRemove(diff.data))
     ) {
-      const representativeDiff = AbstractNodeDiffsSeveritiesAggregator.maxChangedPropertyMetaDataByDiffType(
+      const representativeDiff = DiffTypeOrder.strongestChangedPropertyMetaData(
         ...Object.values(enumValueDiffs),
       )
       if (representativeDiff) {
@@ -346,7 +347,7 @@ export class DdlApiNodeDiffsAggregatorKindColumn extends DdlApiNodeDiffsAggregat
       return
     }
 
-    const representativeDiff = AbstractNodeDiffsSeveritiesAggregator.maxChangedPropertyMetaDataByDiffType(
+    const representativeDiff = DiffTypeOrder.strongestChangedPropertyMetaData(
       ...Object.values(enumValueDiffs),
     )
     if (!representativeDiff) {
@@ -482,7 +483,7 @@ export class DdlApiNodeDiffsAggregatorKindColumn extends DdlApiNodeDiffsAggregat
 
     return columnTypeFieldDiffs.typeName
       ?? columnTypeFieldDiffs.label
-      ?? AbstractNodeDiffsSeveritiesAggregator.maxChangedPropertyMetaDataByDiffType(
+      ?? DiffTypeOrder.strongestChangedPropertyMetaData(
         ...Object.values(columnTypeFieldDiffs),
       )
   }

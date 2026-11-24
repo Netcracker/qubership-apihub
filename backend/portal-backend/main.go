@@ -6,9 +6,11 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 	"os"
+	"os/signal"
 	"path"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/Netcracker/qubership-apihub/backend/commons-go/api-spec-exposer/config"
@@ -47,6 +49,9 @@ import (
 )
 
 const startupOperationTimeout = 60 * time.Second
+
+// olricShutdownTimeout must stay below the pod termination grace period, which is 30 seconds by default.
+const olricShutdownTimeout = 10 * time.Second
 
 func init() {
 	logFilePath := os.Getenv("LOG_FILE_PATH") //Example: /logs/apihub.log
@@ -218,12 +223,14 @@ func main() {
 
 	lockRepo := repository.NewLockRepository(cp)
 	metricsRepository := repository.NewMetricsRepository(cp)
+	ddlTableGroupRepository := repository.NewDDLTableGroupRepository(cp)
 
 	olricProvider, err := cache.NewOlricProvider(systemInfoService.GetOlricConfig())
 	if err != nil {
 		log.Error("Failed to create olricProvider: " + err.Error())
 		panic("Failed to create olricProvider: " + err.Error())
 	}
+	leaveOlricClusterOnTermination(olricProvider)
 
 	privateUserPackageService := service.NewPrivateUserPackageService(publishedRepository, usersRepository, roleRepository, favoritesRepository)
 	userService := service.NewUserService(usersRepository, systemInfoService, privateUserPackageService)
@@ -279,7 +286,9 @@ func main() {
 	versionService.SetBuildService(buildService)
 	operationGroupService.SetBuildService(buildService)
 
-	excelService := service.NewExcelService(publishedRepository, versionService, operationService, packageService, ddlContractServiceForVersion, mcpContractServiceForVersion, buildService, buildRepository)
+	//declared before excelService rather than at the end of the block because excelService consumes it
+	ddlTableGroupService := service.NewDDLTableGroupService(ddlTableGroupRepository, publishedRepository, packageVersionEnrichmentService)
+	excelService := service.NewExcelService(publishedRepository, versionService, operationService, packageService, ddlContractServiceForVersion, mcpContractServiceForVersion, buildService, buildRepository, ddlTableGroupService)
 	comparisonService := service.NewComparisonService(publishedRepository, operationRepository, packageVersionEnrichmentService, ddlContractServiceForVersion)
 	businessMetricService := service.NewBusinessMetricService(businessMetricRepository)
 
@@ -385,6 +394,7 @@ func main() {
 	internalDocsController := controller.NewInternalDocumentController(publishedService, roleService, responder)
 	ddlContractController := controller.NewDDLContractController(roleService, ddlContractService, ptHandler, responder)
 	mcpContractController := controller.NewMCPContractController(roleService, mcpContractService, ptHandler, responder)
+	ddlTableGroupController := controller.NewDDLTableGroupController(roleService, ddlTableGroupService, versionService, ptHandler, responder)
 
 	mcpController := controller.NewMCPController(mcpService)
 	buildController := controller.NewBuildController(buildResultService, buildService, responder)
@@ -509,6 +519,13 @@ func main() {
 	r.HandleFunc("/api/v1/packages/{packageId}/versions/{version}/ddl/entities/{ddlEntityId}", authenticator.Secure(ddlContractController.GetDdlEntity)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v1/packages/{packageId}/versions/{version}/ddl/entities/{ddlEntityId}/changes", authenticator.Secure(ddlContractController.GetDdlEntityChanges)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v1/packages/{packageId}/versions/{version}/ddl/entities/{ddlEntityId}/changes/summary", authenticator.Secure(ddlContractController.GetDdlEntityChangesSummary)).Methods(http.MethodGet)
+
+	// Manual DDL table groups.
+	r.HandleFunc("/api/v1/packages/{packageId}/versions/{version}/ddl/groups", authenticator.Secure(ddlTableGroupController.ListDdlTableGroups)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v1/packages/{packageId}/versions/{version}/ddl/groups", authenticator.Secure(ddlTableGroupController.CreateDdlTableGroup)).Methods(http.MethodPost)
+	r.HandleFunc("/api/v1/packages/{packageId}/versions/{version}/ddl/groups/{groupName}", authenticator.Secure(ddlTableGroupController.GetGroupedDdlEntities)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v1/packages/{packageId}/versions/{version}/ddl/groups/{groupName}", authenticator.Secure(ddlTableGroupController.UpdateDdlTableGroup)).Methods(http.MethodPatch)
+	r.HandleFunc("/api/v1/packages/{packageId}/versions/{version}/ddl/groups/{groupName}", authenticator.Secure(ddlTableGroupController.DeleteDdlTableGroup)).Methods(http.MethodDelete)
 
 	// MCP Contract routes ({entity} ∈ {inits, tools, prompts, resources}).
 	// mcp/export/{entity} is registered before mcp/{entity}/{mcpEntityId} so it is not shadowed.
@@ -756,6 +773,26 @@ func main() {
 	dbMigrationService.StartOpsMigrationRestoreProc(context.Background())
 
 	log.Fatalf("Http server returned error: %v", srv.ListenAndServe())
+}
+
+// leaveOlricClusterOnTermination makes the node leave the Olric cluster before the process exits on SIGTERM or
+// SIGINT. A node that exits without leaving stays in the routing table of the other members until their failure
+// detector notices that it is gone, and cache requests routed to it time out in the meantime.
+func leaveOlricClusterOnTermination(olricProvider cache.OlricProvider) {
+	signals := make(chan os.Signal, 1)
+	signal.Notify(signals, syscall.SIGTERM, os.Interrupt)
+	go func() {
+		sig := <-signals
+		log.Infof("Received signal %s, leaving the Olric cluster", sig)
+		ctx, cancel := context.WithTimeout(context.Background(), olricShutdownTimeout)
+		err := olricProvider.Shutdown(ctx)
+		cancel()
+		if err != nil {
+			log.Errorf("Failed to leave the Olric cluster: %v", err)
+			os.Exit(1)
+		}
+		os.Exit(0)
+	}()
 }
 
 func isAiChatEnabled(sis service.SystemInfoService) bool {

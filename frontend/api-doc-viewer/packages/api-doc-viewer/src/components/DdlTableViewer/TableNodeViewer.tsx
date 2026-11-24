@@ -1,3 +1,4 @@
+import { cn } from "@apihub/utils/common/cn"
 import { useDisplayMode } from "@apihub/contexts/DisplayModeContext"
 import { getDdlApiChildNodes, isColumnsNode, isIndexesNode } from "@apihub/utils/ddlapi/node-type-checkers"
 import { DdlApiTreeNode } from "@netcracker/qubership-apihub-next-data-model/model/ddlapi/types/aliases"
@@ -35,7 +36,7 @@ export const TableNodeViewer: FC<TableNodeViewerProps> = (props) => {
   const tableHeaderPrecededBy = noHeading ? PrecededBy.ROOT : PrecededBy.DDL_TABLE_HEADER_ROW
 
   return (
-    <div data-testid="ddl-table-node-viewer" className="flex flex-col">
+    <div data-testid="ddl-table-node-viewer" className={cn("flex flex-col")}>
       {!noHeading && (
         <TitleRow
           data-precededby={precededBy}

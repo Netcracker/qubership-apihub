@@ -1,3 +1,4 @@
+import { cn } from "@apihub/utils/common/cn"
 import { LayoutSide } from "@apihub/types/internal/LayoutSide"
 import { ListSideSegment, SideListDisplay, SideListDisplayKinds } from "@netcracker/qubership-apihub-next-data-model/model/abstract/tree-with-diffs/list-side-display"
 import { FC, memo } from "react"
@@ -38,9 +39,9 @@ export const JsonSchemaTypeValueSideDisplay: FC<JsonSchemaTypeValueSideDisplayPr
     // adjacent tokens with zero space (`{actualType}{actualQualifier}{actualTitle}`, all inside
     // one `.inline` div). Only a `spacedBefore` segment (the ` or null` suffix) starts a new
     // group, `gap-1` apart from the previous one.
-    <span className="json-schema-type-value-segments inline-flex items-center gap-1">
+    <span className={cn("json-schema-type-value-segments inline-flex items-center gap-1")}>
       {groupSegments(display.segments).map((group, groupIndex) => (
-        <span key={groupIndex} className="inline-flex items-center">
+        <span key={groupIndex} className={cn("inline-flex items-center")}>
           {group.map(({ segment, index }) => (
             <JsonSchemaTypeValueDiffSegment
               key={`${segment.text}-${index}`}

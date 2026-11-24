@@ -1,0 +1,26 @@
+openapi: 3.0.3
+info:
+  title: Orders
+  version: 1.0.0
+paths:
+  /api/v2/stores/main-store/orders/pending/export-requests:
+    post:
+      parameters:
+        - name: dryRun
+          in: query
+          description: Validate without storing.
+          schema:
+            type: boolean
+            default: false
+        - name: expand
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - lines
+                - customer
+      responses:
+        "200":
+          description: ""

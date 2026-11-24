@@ -5,6 +5,7 @@ import { collectRawValues } from "../transformers/collect-raw-values";
 import { inlineBindingParameters } from "../transformers/inline-binding-params";
 import { unifyParamsWithSchema } from "../transformers/unify-params-with-schema";
 import { AsyncApiCrawlRule } from "./types";
+import { getSecurityCrawlRules } from "../../../security/json-crawl-entities/rules";
 
 export function getAsyncApiCrawlRules<S extends AsyncApiTreeCrawlState = AsyncApiTreeCrawlState>(
   kind: AsyncApiTreeNodeKind
@@ -26,6 +27,8 @@ export function getAsyncApiCrawlRules<S extends AsyncApiTreeCrawlState = AsyncAp
       '/*': () => getAsyncApiCrawlRules(AsyncApiTreeNodeKinds.SERVER),
       kind: AsyncApiTreeNodeKinds.SERVERS,
     },
+    // Operation (message root) and server Security sections
+    '/security': getSecurityCrawlRules(),
     // Message/Channel/Operation Extensions
     '/extensions': {
       kind: AsyncApiTreeNodeKinds.EXTENSIONS,

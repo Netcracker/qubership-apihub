@@ -35,11 +35,11 @@ const COMPONENTS_WITH_MESSAGES = {
   }
 }
 
-const SINGLE_MESSAGE_USAGE = {
+const singleMessageUsage = (channel: string) => ({
   messages: [
-    { $ref: "#/components/messages/test-message" }
+    { $ref: `#/channels/${channel}/messages/test-message` }
   ]
-}
+})
 
 const NORMALIZATION_OPTIONS: NormalizeOptions = {
   unify: true,
@@ -77,11 +77,14 @@ describe('AsyncAPI Data Model API', () => {
           description: "test channel description",
           summary: "test channel summary",
           bindings: {
-            'test-binding': {
-              a: 1,
-              b: '2',
-              c: true,
+            kafka: {
+              topic: 'test-topic',
+              partitions: 1,
+              bindingVersion: '0.5.0',
             }
+          },
+          messages: {
+            'test-message': { $ref: "#/components/messages/test-message" }
           }
         }
       },
@@ -91,7 +94,7 @@ describe('AsyncAPI Data Model API', () => {
           description: "test operation description",
           summary: "test operation summary",
           channel: { $ref: "#/channels/test-channel" },
-          ...SINGLE_MESSAGE_USAGE,
+          ...singleMessageUsage('test-channel'),
           'x-first': "first",
           'x-second': {
             a: 1,
@@ -169,11 +172,14 @@ describe('AsyncAPI Data Model API', () => {
           description: "test channel description",
           summary: "test channel summary",
           bindings: {
-            'test-binding': {
-              a: 1,
-              b: '2',
-              c: true,
+            kafka: {
+              topic: 'test-topic',
+              partitions: 1,
+              bindingVersion: '0.5.0',
             }
+          },
+          messages: {
+            'test-message': { $ref: "#/components/messages/test-message" }
           }
         }
       },
@@ -183,7 +189,7 @@ describe('AsyncAPI Data Model API', () => {
           description: "test operation description",
           summary: "test operation summary",
           channel: { $ref: "#/channels/test-channel" },
-          ...SINGLE_MESSAGE_USAGE,
+          ...singleMessageUsage('test-channel'),
           'x-first': "first",
           'x-second': {
             a: 1,
@@ -255,6 +261,9 @@ describe('AsyncAPI Data Model API', () => {
           address: "test-channel",
           description: "test channel description",
           summary: "test channel summary",
+          messages: {
+            'test-message': { $ref: "#/components/messages/test-message" }
+          },
         }
       },
       operations: {
@@ -263,7 +272,7 @@ describe('AsyncAPI Data Model API', () => {
           description: "test operation description",
           summary: "test operation summary",
           channel: { $ref: "#/channels/test-channel" },
-          ...SINGLE_MESSAGE_USAGE,
+          ...singleMessageUsage('test-channel'),
         }
       },
       ...COMPONENTS_WITH_MESSAGES,
@@ -309,6 +318,9 @@ describe('AsyncAPI Data Model API', () => {
           address: "test-channel",
           description: "test channel description",
           summary: "test channel summary",
+          messages: {
+            'test-message': { $ref: "#/components/messages/test-message" }
+          },
         }
       },
       operations: {
@@ -317,7 +329,7 @@ describe('AsyncAPI Data Model API', () => {
           description: "test operation description",
           summary: "test operation summary",
           channel: { $ref: "#/channels/test-channel" },
-          ...SINGLE_MESSAGE_USAGE,
+          ...singleMessageUsage('test-channel'),
         }
       },
       ...COMPONENTS_WITH_MESSAGES,
@@ -373,6 +385,9 @@ describe('AsyncAPI Data Model API', () => {
           address: "test-channel",
           description: "test channel description",
           summary: "test channel summary",
+          messages: {
+            'test-message': { $ref: "#/components/messages/test-message" }
+          },
         }
       },
       operations: {
@@ -381,7 +396,7 @@ describe('AsyncAPI Data Model API', () => {
           description: "test operation description",
           summary: "test operation summary",
           channel: { $ref: "#/channels/test-channel" },
-          ...SINGLE_MESSAGE_USAGE,
+          ...singleMessageUsage('test-channel'),
         }
       },
       ...COMPONENTS_WITH_MESSAGES,
@@ -436,6 +451,9 @@ describe('AsyncAPI Data Model API', () => {
           address: "test-channel",
           description: "test channel description",
           summary: "test channel summary",
+          messages: {
+            'test-message': { $ref: "#/components/messages/test-message" }
+          },
         }
       },
       operations: {
@@ -444,7 +462,8 @@ describe('AsyncAPI Data Model API', () => {
           description: "test operation description",
           summary: "test operation summary",
           channel: { $ref: "#/channels/test-channel" },
-          ...SINGLE_MESSAGE_USAGE,
+          ...singleMessageUsage('test-channel'),
+          // The reference is broken on purpose: the test checks the brokenRef meta of the bindings node.
           bindings: {
             $ref: "#/components/bindings/test-binding"
           }

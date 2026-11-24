@@ -1,4 +1,3 @@
-import { IAsyncOperation } from '@netcracker/qubership-apihub-http-spec';
 import type { IMarkdownViewerProps } from '@stoplight/markdown-viewer';
 import { isArray } from '@stoplight/mosaic';
 import { IHttpOperation, IHttpService, INode } from '@stoplight/types';
@@ -24,10 +23,6 @@ export function isHttpService(maybeHttpService: unknown): maybeHttpService is IH
 
 export function isHttpOperation(maybeHttpOperation: unknown): maybeHttpOperation is IHttpOperation {
   return isStoplightNode(maybeHttpOperation) && 'method' in maybeHttpOperation && 'path' in maybeHttpOperation;
-}
-
-export function isAsyncOperation(maybeAsyncOperation: unknown): maybeAsyncOperation is IAsyncOperation {
-  return isStoplightNode(maybeAsyncOperation) && 'message' in maybeAsyncOperation;
 }
 
 const properUrl = new RegExp(

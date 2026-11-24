@@ -1,3 +1,4 @@
+import { cn } from "@apihub/utils/common/cn"
 import { useLayoutMode } from "@apihub/contexts/LayoutModeContext"
 import { LayoutSide } from "@apihub/types/internal/LayoutSide"
 import { getLayoutModeFlags } from "@apihub/utils/common/changes"
@@ -28,5 +29,5 @@ export const JsonSchemaRequiredDiffIndicator: FC<JsonSchemaRequiredDiffIndicator
     return null
   }
 
-  return <sup className="ml-0.5 text-red-500">*</sup>
+  return <sup className={cn("ml-0.5 text-red-500")}>*</sup>
 }

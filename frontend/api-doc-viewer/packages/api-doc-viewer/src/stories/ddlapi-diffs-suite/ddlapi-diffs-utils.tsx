@@ -1,7 +1,9 @@
 import { DdlTableDiffsViewer } from "@apihub/components/DdlTableViewer/DdlTableDiffsViewer";
 import { apiDiff } from "@netcracker/qubership-apihub-api-diff";
 import type { Realm } from "@netcracker/qubership-apihub-ddlapi";
+import type { DisplayMode } from "@apihub/types/DisplayMode";
 import type { ArgTypes, Meta, StoryObj } from "@storybook/react-vite";
+import { DISPLAY_MODE_ARG_TYPES, DISPLAY_MODE_DEFAULT_ARGS } from "../shared/display-mode-arg-types";
 import { NavigationLinkBuilder } from "@netcracker/qubership-apihub-next-data-model/shared/ddlapi/types/navigation-link-builder";
 import { TableKey } from "@netcracker/qubership-apihub-next-data-model/shared/ddlapi/types/table-key";
 import { buildFromDdlInBrowser, resolveDdlDiffComparePair } from "../ddlapi-suite/build-from-ddl-browser";
@@ -18,7 +20,9 @@ export type DdlDiffSampleCase = {
 export type DdlDiffCaseStoryComponentProps = Pick<
   DdlDiffSampleCase,
   "caseId" | "beforeSql" | "afterSql"
->;
+> & {
+  displayMode?: DisplayMode;
+};
 
 export const ddlDiffSampleReadonlyArgTypes = {
   caseId: {
@@ -38,6 +42,7 @@ export const ddlDiffSampleReadonlyArgTypes = {
     description:
       "After sample SQL for reference. The viewer always uses the bundled fixture for the selected case.",
   },
+  ...DISPLAY_MODE_ARG_TYPES,
 } satisfies Partial<ArgTypes<DdlDiffCaseStoryComponentProps>>;
 
 export const DdlDiffSampleStory = (_props: DdlDiffCaseStoryComponentProps) => null;
@@ -111,6 +116,7 @@ export const createDdlDiffCaseStoryFactory = (
       caseId,
       beforeSql: sample.beforeSql,
       afterSql: sample.afterSql,
+      ...DISPLAY_MODE_DEFAULT_ARGS,
     },
     argTypes: ddlDiffSampleReadonlyArgTypes,
     loaders: [
@@ -119,12 +125,13 @@ export const createDdlDiffCaseStoryFactory = (
         tableKey: resolveTableKey(caseId),
       } satisfies LoaderData),
     ],
-    render: (_args, { loaded }) => (
+    render: (args, { loaded }) => (
       <DdlTableDiffsViewer
         mergedSource={loaded!.mergedSource}
         tableKey={loaded!.tableKey}
         navigationLinkBuilder={ddlStoryNavigationLinkBuilder}
         diffMetaKeys={TEST_DIFF_META_KEYS}
+        displayMode={args.displayMode}
         devMode
       />
     ),

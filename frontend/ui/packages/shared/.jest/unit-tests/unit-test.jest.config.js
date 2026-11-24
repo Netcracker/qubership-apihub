@@ -30,12 +30,13 @@ export default {
   testEnvironment: 'node',
   moduleFileExtensions: [
     'ts',
+    'tsx',
     'js',
     'json',
     'node',
   ],
   transform: {
-    '\\.ts?$': [
+    '\\.tsx?$': [
       'ts-jest',
       { tsconfig: '<rootDir>/.jest/unit-tests/tsconfig.unit-test.json' },
     ],

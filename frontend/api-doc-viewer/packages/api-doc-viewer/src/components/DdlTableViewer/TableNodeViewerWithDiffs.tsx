@@ -1,3 +1,4 @@
+import { cn } from "@apihub/utils/common/cn"
 import { useDisplayMode } from "@apihub/contexts/DisplayModeContext"
 import {
   buildDdlTableTitleRowDiffProps,
@@ -63,7 +64,7 @@ export const TableNodeViewerWithDiffs: FC<TableNodeViewerWithDiffsProps> = (prop
   const tableHeaderPrecededBy = noHeading ? PrecededBy.ROOT : PrecededBy.DDL_TABLE_HEADER_ROW
 
   return (
-    <div data-testid="ddl-table-node-viewer" className="flex flex-col">
+    <div data-testid="ddl-table-node-viewer" className={cn("flex flex-col")}>
       {!noHeading && (
         <TitleRow
           data-precededby={precededBy}

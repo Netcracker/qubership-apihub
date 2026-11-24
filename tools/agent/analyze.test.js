@@ -90,37 +90,37 @@ test('labelChanges: a label of a person is never touched', () => {
   assert.deepEqual(labelChanges(['ai:suitable'], byPerson, 'unsuitable'), { add: [], remove: [] })
 })
 
-test('labelChanges: needs-info keeps the ai labels and adds agent:needs-human once', () => {
-  assert.deepEqual(labelChanges([], null, 'needs-info'), { add: ['agent:needs-human'], remove: [] })
-  assert.deepEqual(labelChanges(['agent:needs-human'], null, 'needs-info'), { add: [], remove: [] })
+test('labelChanges: needs-info keeps the ai labels and adds needs-human:context-missing once', () => {
+  assert.deepEqual(labelChanges([], null, 'needs-info'), { add: ['needs-human:context-missing'], remove: [] })
+  assert.deepEqual(labelChanges(['needs-human:context-missing'], null, 'needs-info'), { add: [], remove: [] })
   assert.deepEqual(labelChanges(['ai:suitable'], agentState('ai:suitable'), 'needs-info'), {
-    add: ['agent:needs-human'],
+    add: ['needs-human:context-missing'],
     remove: [],
   })
 })
 
-test('labelChanges: suitable and unsuitable remove agent:needs-human, also beside a label of a person', () => {
-  assert.deepEqual(labelChanges(['agent:needs-human'], null, 'suitable'), {
+test('labelChanges: suitable and unsuitable remove the context-missing label, also beside a label of a person', () => {
+  assert.deepEqual(labelChanges(['needs-human:context-missing'], null, 'suitable'), {
     add: ['ai:suitable'],
-    remove: ['agent:needs-human'],
+    remove: ['needs-human:context-missing'],
   })
-  assert.deepEqual(labelChanges(['agent:needs-human', 'ai:unsuitable'], null, 'unsuitable'), {
+  assert.deepEqual(labelChanges(['needs-human:context-missing', 'ai:unsuitable'], null, 'unsuitable'), {
     add: [],
-    remove: ['agent:needs-human'],
+    remove: ['needs-human:context-missing'],
   })
   // A person's ai:suitable stays, even when the verdict is unsuitable; the agent still lowers its own flag.
-  assert.deepEqual(labelChanges(['agent:needs-human', 'ai:suitable'], null, 'unsuitable'), {
+  assert.deepEqual(labelChanges(['needs-human:context-missing', 'ai:suitable'], null, 'unsuitable'), {
     add: [],
-    remove: ['agent:needs-human'],
+    remove: ['needs-human:context-missing'],
   })
 })
 
 test('labelChanges does not change its inputs', () => {
-  const labels = ['agent:needs-human']
+  const labels = ['needs-human:context-missing']
   const st = agentState('ai:suitable')
   const copy = structuredClone(st)
   labelChanges(labels, st, 'suitable')
-  assert.deepEqual(labels, ['agent:needs-human'])
+  assert.deepEqual(labels, ['needs-human:context-missing'])
   assert.deepEqual(st, copy)
 })
 
@@ -192,6 +192,22 @@ test('nextState keeps the costs and the other fields of the state', () => {
   assert.equal(after.pr, 5)
 })
 
+test('nextState records a context-missing stop for needs-info and closes it on the next verdict', () => {
+  const base = { label: null, issueUpdatedAt: 'x', run: RUN, trigger: 'opened' }
+  const asked = nextState(state.emptyIssueState(200), { ...base, analysis: needsInfo, at: '2026-10-01T00:00:00Z' })
+  assert.deepEqual(asked.stops, [{ reason: 'context-missing', at: '2026-10-01T00:00:00Z', run: RUN, on: [200] }])
+  const again = nextState(asked, { ...base, analysis: needsInfo, run: 'run2', at: '2026-10-02T00:00:00Z' })
+  assert.equal(again.stops.length, 2)
+  assert.equal(again.stops[0].resumedAt, '2026-10-02T00:00:00Z')
+  assert.equal(again.stops[1].resumedAt, undefined)
+  const done = nextState(again, { ...base, analysis: suitable, run: 'run3', at: '2026-10-03T00:00:00Z' })
+  assert.equal(done.stops[1].resumedAt, '2026-10-03T00:00:00Z')
+  assert.equal(done.stops[1].resumedRun, 'run3')
+  // A verdict without an earlier stop adds no stops field.
+  const plain = nextState(state.emptyIssueState(200), { ...base, analysis: suitable, at: 'y' })
+  assert.equal(plain.stops, undefined)
+})
+
 test('failedState counts the failed run and keeps the phase and the last analysis', () => {
   const st = nextState(state.emptyIssueState(200), {
     analysis: needsInfo,
@@ -210,7 +226,7 @@ test('failedState counts the failed run and keeps the phase and the last analysi
 })
 
 test('renderAnalysis: suitable shows the plan and the implement hint', () => {
-  const text = renderAnalysis({ analysis: suitable, runUrl: RUN, totalUsd: 0.0042 })
+  const text = renderAnalysis({ analysis: suitable, runUrl: RUN })
   assert.match(text, /^### AI analysis\n/)
   assert.match(text, /\*\*Suitable for AI implementation\.\*\* The bug is located\./)
   assert.match(text, /- Modules: portal-backend\n- Approach: Guard the nil changelog in the builder\./)
@@ -218,22 +234,24 @@ test('renderAnalysis: suitable shows the plan and the implement hint', () => {
   assert.match(text, /- Risk: low/)
   assert.match(text, /Comment `\/agent implement` to start the implementation\./)
   assert.doesNotMatch(text, /Questions|Answer in a comment/)
-  assert.ok(text.includes(`<sub>[Run](${RUN}) · AI cost of this issue so far: $0.0042 · `))
+  assert.ok(text.endsWith(`<sub>[Run](${RUN}) · comment \`/agent analyze\` to analyze again</sub>`))
+  assert.doesNotMatch(text, /AI cost|\$0\.0042/)
 })
 
 test('renderAnalysis: unsuitable has the reason and the implement hint, but no plan', () => {
-  const text = renderAnalysis({ analysis: unsuitable, runUrl: RUN, totalUsd: 1.5 })
+  const text = renderAnalysis({ analysis: unsuitable, runUrl: RUN })
   assert.match(text, /\*\*Not suitable for AI implementation\.\*\* It needs a production cluster\./)
   assert.match(text, /`\/agent implement`/)
   assert.doesNotMatch(text, /Plan|Modules/)
-  assert.match(text, /\$1\.50/)
 })
 
 test('renderAnalysis: needs-info numbers the questions and says how to answer', () => {
-  const text = renderAnalysis({ analysis: needsInfo, runUrl: RUN, totalUsd: 0 })
+  const text = renderAnalysis({ analysis: needsInfo, runUrl: RUN })
   assert.match(text, /\*\*More information needed\.\*\* The version is missing\./)
   assert.match(text, /1\. Which version is affected\?\n2\. Does it happen in the UI\?/)
-  assert.match(text, /Answer in a comment or edit the issue; the agent reads it again\./)
+  assert.match(text, /\n\*\*Reason:\*\* `needs-human:context-missing`\n\n\*\*Blocker\.\*\* The version is missing\.\n/)
+  assert.match(text, /\n\*\*Required action\.\*\* Answer the numbered questions\.\n/)
+  assert.match(text, /\n\*\*Resume condition\.\*\* An answer in a comment or an edit of the issue; the agent analyzes/)
   assert.doesNotMatch(text, /\/agent implement/)
 })
 
@@ -250,10 +268,9 @@ test('renderAnalysis keeps model text on one line and defuses mentions', () => {
 })
 
 test('renderFailure names the reason and offers a retry', () => {
-  const text = renderFailure({ message: 'analyst exited with 1:\nboom', runUrl: RUN, totalUsd: 0.02 })
+  const text = renderFailure({ message: 'analyst exited with 1:\nboom', runUrl: RUN })
   assert.match(text, /^### AI analysis failed\n/)
   assert.match(text, /The analysis did not finish: analyst exited with 1: boom/)
-  assert.match(text, /\$0\.02/)
   assert.match(text, /`\/agent analyze` to try again/)
 })
 
@@ -266,7 +283,7 @@ test('a rendered analysis survives the state comment round trip', () => {
     at: 'y',
     trigger: 'opened',
   })
-  const body = state.render(renderAnalysis({ analysis: needsInfo, runUrl: RUN, totalUsd: 0 }), st)
+  const body = state.render(renderAnalysis({ analysis: needsInfo, runUrl: RUN }), st)
   assert.deepEqual(state.parse(body), st)
   assert.ok(body.startsWith(state.MARKER))
 })
@@ -284,7 +301,7 @@ const issue = {
   title: 'Changelog is empty',
   body: 'Steps: publish, open the changelog.',
   type: { name: 'Bug' },
-  labels: [{ name: 'bug' }, { name: 'agent:needs-human' }],
+  labels: [{ name: 'bug' }, { name: 'needs-human:context-missing' }],
   user: { login: 'alice' },
   created_at: '2026-10-01T09:00:00Z',
 }
@@ -295,7 +312,8 @@ test('renderInput holds the facts, then the issue and every comment in untrusted
     { user: { login: 'carol' }, created_at: '2026-10-02T10:00:00Z', body: 'Version 2026.3.' },
   ]
   const text = renderInput({ issue, comments, st: state.emptyIssueState(200), trigger: 'author-reply' })
-  assert.match(text, /^# Issue #200\n\n- Type: Bug\n- Labels: bug, agent:needs-human\n- Analysis trigger: author-reply/)
+  assert.match(text, /^# Issue #200\n\n- Type: Bug\n- Labels: bug, needs-human:context-missing\n/)
+  assert.match(text, /- Analysis trigger: author-reply/)
   assert.match(text, /Written by alice on 2026-10-01T09:00:00Z\.\n\n<untrusted>\nTitle: Changelog is empty\n\nSteps:/)
   assert.match(text, /Written by bob on 2026-10-01T10:00:00Z\.\n\n<untrusted>\nSame here\.\n<\/untrusted>/)
   assert.match(text, /Written by carol on 2026-10-02T10:00:00Z\.\n\n<untrusted>\nVersion 2026\.3\.\n<\/untrusted>/)
@@ -368,7 +386,7 @@ test('renderInput cuts a very long comment', () => {
 
 test('sweepSkipReason is null for an open Bug or Task without an analysis or a decision label', () => {
   for (const type of ['Bug', 'Task']) {
-    const issue = { state: 'open', type: { name: type }, labels: [{ name: 'bug' }, 'agent:needs-human'] }
+    const issue = { state: 'open', type: { name: type }, labels: [{ name: 'bug' }, 'needs-human:context-missing'] }
     assert.equal(sweepSkipReason(issue, null), null, type)
     assert.equal(sweepSkipReason(issue, state.emptyIssueState(1)), null, type)
     assert.equal(sweepSkipReason(issue, { analyses: [] }), null, type)

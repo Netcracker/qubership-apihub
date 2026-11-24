@@ -1,19 +1,3 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import { useNormalizedOperation } from '@portal/api-hooks/InternalDocuments/useNormalizedOperation'
 import type { SectionKey } from '@portal/components/OperationModelList/OperationModelList'
 import { OperationModelList } from '@portal/components/OperationModelList/OperationModelList'
@@ -65,6 +49,8 @@ import { OperationToolbarHeader } from './OperationToolbarHeader'
 import { useOpenApiVisitor } from './useOpenApiVisitor'
 import { useOperationsWithSameModel } from './useOperationsWithSameModel'
 import { useUpdateRecentOperations } from './useUpdateRecentOperations'
+import { PAGE_TITLES } from '@portal/routes/pageTitles'
+import { useVersionPageTitle } from '@portal/routes/useVersionPageTitle'
 
 // High Order Component //
 export const OperationPage: FC = memo(() => {
@@ -109,6 +95,7 @@ export const OperationPage: FC = memo(() => {
       : undefined
 
   const models = useOpenApiVisitor(visitorData)
+  useVersionPageTitle(PAGE_TITLES.contract(changedOperation?.title || changedOperation?.operationKey, apiType))
   useUpdateRecentOperations(changedOperation)
   const recentOperationsData = useRecentOperations()
   const recentOperations = useMemo(

@@ -252,8 +252,8 @@ const C = {
   U.panel(s, 9.35, 3.15, 3.47, 2.5, 'F6DCE9', PLUM, 'SHARED PACKAGE', PLUM);
   ['Entities: api-types, contract-types', 'Hooks and react-query clients', 'MUI theme and widgets', 'Storybook showcase'].forEach((t, j) =>
     U.T(s, '·  ' + t, 9.5, 3.55 + j * 0.32, 3.2, 0.3, { fontSize: 9.5, color: '5B5346' }));
-  U.T(s, 'Rendering is delegated to shared web components', 0.55, 5.85, 6, 0.3, { fontSize: 11, bold: true, color: INK });
-  const wc = [['apispec-view', PLUM], ['operation-view', PLUM], ['diff-operation-view', PLUM], ['rest-playground', TEAL], ['class-view', LEAF], ['api-doc-viewer', INDIGO]];
+  U.T(s, 'Rendering is delegated to shared viewers and web components', 0.55, 5.85, 6, 0.3, { fontSize: 11, bold: true, color: INK });
+  const wc = [['api-doc-viewer', INDIGO], ['apispec-view', PLUM], ['rest-playground', TEAL], ['class-view', LEAF]];
   wc.forEach(([t, c], i) => U.pill(s, 0.55 + i * 2.05, 6.22, 1.9, 0.42, c, t, W, 9));
   U.foot(s);
 }
