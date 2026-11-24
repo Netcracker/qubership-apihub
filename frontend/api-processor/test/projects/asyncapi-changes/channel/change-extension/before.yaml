@@ -16,7 +16,7 @@ channels:
       unchanged: keep
       removed: bye
       changed: 111
-          
+
 
 operations:
   sendOperation:
