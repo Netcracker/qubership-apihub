@@ -17,7 +17,9 @@ The full contract is [`docs/api/LIBRARIES_API.yaml`](docs/api/LIBRARIES_API.yaml
 | Registries, repositories | `GET /api/v1/registries`, `GET /api/v1/repositories` — read-only, from the configuration |
 | Libraries | `GET`/`POST /api/v1/libraries`, `GET`/`PATCH`/`DELETE /api/v1/libraries/{libraryId}` |
 | Versions | `GET`/`POST /api/v1/libraries/{libraryId}/versions`, `GET`/`DELETE .../versions/{version}` |
+| Content | `GET .../versions/{version}/classes`, `GET .../versions/{version}/classes/{classId}` |
 | Changes | `GET .../versions/{version}/changes`, `.../changes/summary` |
+| MCP | `/api/v1/mcp/` — Streamable HTTP MCP server for AI agents, see below |
 | Build worker | `POST /api/v2/java-builders/{builderId}/tasks`, `POST /api/v3/libraries/{libraryId}/java-publish/{publishId}/status` |
 | Favorites | `GET /api/v1/favorites/libraries`, `PUT`/`DELETE /api/v1/favorites/libraries/{libraryId}` |
 | Members | `GET /api/v1/libraries/{libraryId}/members`, `PUT`/`DELETE .../members/{userId}` |
@@ -25,6 +27,23 @@ The full contract is [`docs/api/LIBRARIES_API.yaml`](docs/api/LIBRARIES_API.yaml
 
 The worker endpoints are the contract in [backend-api.md](../java-task-consumer/docs/backend-api.md), verified by the
 [Pact file](../java-task-consumer/pacts/java-task-consumer-libraries-backend.json).
+
+## MCP server
+
+`/api/v1/mcp/` serves the `apihub-libraries-mcp` server over Streamable HTTP. It authenticates with an API key
+(`api-key` header) or a personal access token (`X-Personal-Access-Token` header), and every tool applies the same
+permission checks as the matching REST endpoint. Tools are defined in `service/MCPService.go`:
+
+| Tool | What it does |
+|------|--------------|
+| `list_libraries`, `get_library` | Find a library and read its coordinates |
+| `create_library` | Start tracking a library from a configured repository |
+| `list_library_versions`, `get_library_version` | Imported versions; the build status is in `metadata` |
+| `list_available_versions` | Repository versions that are not imported yet |
+| `import_library_version` | Import a version and queue its build |
+| `list_library_classes`, `get_library_class` | Classes of a version, and one class with its methods |
+| `search_classes` | Full-text search over classes and methods |
+| `list_changes` | API changes of a version against a previous one |
 
 ## How a version gets its content
 

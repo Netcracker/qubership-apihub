@@ -89,14 +89,12 @@ type LibraryCreateReq struct {
 	DefaultRole     string             `json:"defaultRole,omitempty"`
 }
 
-// LibraryUpdateReq is a PATCH body: a nil field is left untouched. Repository, language, and coordinates
-// are immutable after creation and therefore absent here.
+// LibraryUpdateReq is a PATCH body: a nil field is left untouched. Alias, parent package, repository,
+// language, and coordinates are immutable after creation and therefore absent here.
 type LibraryUpdateReq struct {
-	Alias           *string `json:"alias,omitempty"`
-	Name            *string `json:"name,omitempty"`
-	Description     *string `json:"description,omitempty"`
-	ParentPackageId *string `json:"parentPackageId,omitempty"`
-	DefaultRole     *string `json:"defaultRole,omitempty"`
+	Name        *string `json:"name,omitempty"`
+	Description *string `json:"description,omitempty"`
+	DefaultRole *string `json:"defaultRole,omitempty"`
 }
 
 type Library struct {

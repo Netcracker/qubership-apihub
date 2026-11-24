@@ -17,6 +17,8 @@ type LibraryRepository interface {
 	Create(ctx context.Context, library entity.LibraryEntity) error
 	Update(ctx context.Context, library entity.LibraryEntity) error
 	GetById(ctx context.Context, libraryId string) (*entity.LibraryEntity, error)
+	// ExistsById also counts soft-deleted rows, because they keep their primary key.
+	ExistsById(ctx context.Context, libraryId string) (bool, error)
 	GetByCoordinates(ctx context.Context, repository, coordinatesKey string) (*entity.LibraryEntity, error)
 	SoftDelete(ctx context.Context, libraryId, userId string) error
 	List(ctx context.Context, userId string, req view.LibraryListReq) ([]entity.LibraryWithFavoriteEntity, error)
@@ -45,7 +47,7 @@ func (l libraryRepositoryImpl) Create(ctx context.Context, library entity.Librar
 func (l libraryRepositoryImpl) Update(ctx context.Context, library entity.LibraryEntity) error {
 	return l.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
 		result, err := tx.ModelContext(ctx, &library).
-			Column("alias", "name", "description", "parent_package_id", "default_role").
+			Column("name", "description", "default_role").
 			WherePK().
 			Where("deleted_at is null").
 			Update()
@@ -87,6 +89,12 @@ func (l libraryRepositoryImpl) GetById(ctx context.Context, libraryId string) (*
 		return nil, err
 	}
 	return result, nil
+}
+
+func (l libraryRepositoryImpl) ExistsById(ctx context.Context, libraryId string) (bool, error) {
+	return l.cp.GetConnection().ModelContext(ctx, (*entity.LibraryEntity)(nil)).
+		Where("id = ?", libraryId).
+		Exists()
 }
 
 func (l libraryRepositoryImpl) GetByCoordinates(ctx context.Context, repository, coordinatesKey string) (*entity.LibraryEntity, error) {

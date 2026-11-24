@@ -68,12 +68,17 @@ variant for the Kind cluster.
 kubectl port-forward -n qubership-apihub svc/qubership-apihub-libraries-backend 8093:8080
 ```
 
-`LIBRARIES_REPOSITORY` is the repository id from the libraries-backend registry configuration. The local Maven
-Central registry uses `maven2`. `use_cases/libraries-commons-lang.postman_collection.json` creates
-`commons-lang:commons-lang`, imports 1.0.1, then imports 2.6 with 1.0.1 as the previous version, and reads each
-version's inventory and the comparison. Override `LIBRARY_GROUP_ID`, `LIBRARY_ARTIFACT_ID`, `LIBRARY_VERSION`,
-`LIBRARY_NEXT_VERSION`, and `CONTENT_PACKAGE_PREFIX` to track a different library. It is not in the default CI
-list: it needs the Java worker and a configured Maven registry.
+`environment/local_kind_libraries.postman_environment.json.template` is the Kind environment for
+`use_cases/libraries-commons-lang.postman_collection.json`. Copy it to
+`local_kind_libraries.postman_environment.json` and set `at-api-key` to the libraries-backend access token.
+The copy is gitignored.
+
+`LIBRARIES_REPOSITORY` is the repository id from the libraries-backend registry configuration. The local Maven Central
+registry uses `maven2`. `use_cases/libraries-commons-lang.postman_collection.json` creates `commons-lang:commons-lang`
+under the library id `cmnslang` (the alias, because no parent package is set), imports 1.0.1, then imports 2.6 with
+1.0.1 as the previous version, and reads each version's inventory and the comparison. Override `LIBRARY_GROUP_ID`,
+`LIBRARY_ARTIFACT_ID`, `LIBRARY_VERSION`, `LIBRARY_NEXT_VERSION`, and `CONTENT_PACKAGE_PREFIX` to track a different
+library. It is not in the default CI list: it needs the Java worker and a configured Maven registry.
 
 ## API specifications
 

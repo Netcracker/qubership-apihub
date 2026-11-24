@@ -41,3 +41,20 @@ type LibraryMethod struct {
 	Deprecated bool     `json:"deprecated"`
 	Data       []byte   `json:"-"`
 }
+
+// LibraryClassDetails is one class of a library version together with its methods and constructors.
+type LibraryClassDetails struct {
+	LibraryClass
+	Methods []LibraryMethod `json:"methods"`
+}
+
+type LibraryClasses struct {
+	Classes []LibraryClass `json:"classes"`
+}
+
+type LibraryClassListReq struct {
+	TextFilter string
+	Kind       []ClassKind
+	Limit      int
+	Page       int
+}

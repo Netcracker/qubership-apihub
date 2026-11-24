@@ -72,3 +72,25 @@ func MakeClassSearchResultView(ent ClassSearchResultEntity) view.SearchResultCla
 		Signature:     ent.Signature,
 	}
 }
+
+func MakeLibraryClassView(ent LibraryClassEntity) view.LibraryClass {
+	return view.LibraryClass{
+		ClassId:       ent.ClassId,
+		Kind:          view.ClassKind(ent.Kind),
+		QualifiedName: ent.QualifiedName,
+		PackageName:   ent.PackageName,
+		Modifiers:     ent.Modifiers,
+		Deprecated:    ent.Deprecated,
+	}
+}
+
+func MakeLibraryMethodView(ent LibraryMethodEntity) view.LibraryMethod {
+	return view.LibraryMethod{
+		ClassId:    ent.ClassId,
+		MethodId:   ent.MethodId,
+		Name:       ent.Name,
+		Signature:  ent.Signature,
+		Modifiers:  ent.Modifiers,
+		Deprecated: ent.Deprecated,
+	}
+}

@@ -60,6 +60,9 @@ const LibraryAlreadyExistsMsg = "A library with the same repository and coordina
 const InvalidCoordinates = "3002"
 const InvalidCoordinatesMsg = "Coordinates are not valid for language '$language': $details"
 
+const LibraryIdAlreadyExists = "3004"
+const LibraryIdAlreadyExistsMsg = "A library with id $libraryId already exists or was deleted; choose another alias"
+
 const RepositoryNotFound = "3003"
 const RepositoryNotFoundMsg = "Repository '$repository' is not configured"
 
@@ -80,6 +83,9 @@ const RegistryRequestFailedMsg = "Failed to read artifact metadata from registry
 
 const PreviousVersionNotFound = "3105"
 const PreviousVersionNotFoundMsg = "Previous version $previousVersion of library $libraryId is not found"
+
+const LibraryClassNotFound = "3106"
+const LibraryClassNotFoundMsg = "Class $classId is not found in version $version of library $libraryId"
 
 const LibraryComparisonNotFound = "3200"
 const LibraryComparisonNotFoundMsg = "No comparison has been computed yet for this version pair"

@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"net/http"
+	"strings"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -18,6 +19,10 @@ import (
 // The client receives whatever bytes were already transmitted, then sees a connection reset.
 // The server goroutine is freed when the handler returns.
 const responseWriteDeadline = 5 * time.Minute
+
+// MCPPathPrefix is where the MCP endpoint is mounted. MCP keeps streaming responses open, so neither the
+// write deadline nor response compression may apply to it.
+const MCPPathPrefix = "/api/v1/mcp/"
 
 type deadlineResponseWriter struct {
 	http.ResponseWriter
@@ -57,6 +62,10 @@ func (w *deadlineResponseWriter) Flush() {
 
 func WriteDeadlineMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasPrefix(r.URL.Path, MCPPathPrefix) {
+			next.ServeHTTP(w, r)
+			return
+		}
 		next.ServeHTTP(&deadlineResponseWriter{ResponseWriter: w}, r)
 	})
 }

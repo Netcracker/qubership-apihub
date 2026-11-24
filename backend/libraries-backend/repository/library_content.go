@@ -3,9 +3,11 @@ package repository
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/Netcracker/qubership-apihub/backend/libraries-backend/db"
 	"github.com/Netcracker/qubership-apihub/backend/libraries-backend/entity"
+	"github.com/Netcracker/qubership-apihub/backend/libraries-backend/utils"
 	"github.com/Netcracker/qubership-apihub/backend/libraries-backend/view"
 	"github.com/go-pg/pg/v10"
 )
@@ -26,6 +28,10 @@ type LibraryContentRepository interface {
 	// new build no longer reports.
 	Replace(ctx context.Context, libraryId, version string, content LibraryContent) error
 	SearchClasses(ctx context.Context, req view.SearchClassesReq) ([]entity.ClassSearchResultEntity, error)
+	ListClasses(ctx context.Context, libraryId, version string, req view.LibraryClassListReq) ([]entity.LibraryClassEntity, error)
+	// GetClass returns nil when the version has no such class.
+	GetClass(ctx context.Context, libraryId, version, classId string) (*entity.LibraryClassEntity, error)
+	ListMethods(ctx context.Context, libraryId, version, classId string) ([]entity.LibraryMethodEntity, error)
 }
 
 func NewLibraryContentRepository(cp db.ConnectionProvider) LibraryContentRepository {
@@ -207,6 +213,66 @@ func (l libraryContentRepositoryImpl) SearchClasses(ctx context.Context, req vie
 		LIMIT ? OFFSET ?`
 
 	_, err := l.cp.GetConnection().WithContext(ctx).Query(&result, query, args...)
+	if err != nil && err != pg.ErrNoRows {
+		return nil, err
+	}
+	return result, nil
+}
+
+// ListClasses pages through one version's classes in qualified-name order. The primary key starts with
+// (library_id, version), so the scan stays within the version; the text filter is a substring match on the
+// qualified name, which is what a caller browsing one library expects, unlike the token search of
+// SearchClasses.
+func (l libraryContentRepositoryImpl) ListClasses(ctx context.Context, libraryId, version string, req view.LibraryClassListReq) ([]entity.LibraryClassEntity, error) {
+	result := make([]entity.LibraryClassEntity, 0)
+	query := l.cp.GetConnection().ModelContext(ctx, &result).
+		Where("library_id = ?", libraryId).
+		Where("version = ?", version)
+	if req.TextFilter != "" {
+		query = query.Where("lower(qualified_name) like ?", "%"+utils.LikeEscaped(strings.ToLower(req.TextFilter))+"%")
+	}
+	if len(req.Kind) > 0 {
+		kinds := make([]string, 0, len(req.Kind))
+		for _, kind := range req.Kind {
+			kinds = append(kinds, string(kind))
+		}
+		query = query.Where("kind in (?)", pg.In(kinds))
+	}
+	err := query.
+		Order("qualified_name ASC", "class_id ASC").
+		Limit(req.Limit).
+		Offset(req.Limit * req.Page).
+		Select()
+	if err != nil && err != pg.ErrNoRows {
+		return nil, err
+	}
+	return result, nil
+}
+
+func (l libraryContentRepositoryImpl) GetClass(ctx context.Context, libraryId, version, classId string) (*entity.LibraryClassEntity, error) {
+	result := new(entity.LibraryClassEntity)
+	err := l.cp.GetConnection().ModelContext(ctx, result).
+		Where("library_id = ?", libraryId).
+		Where("version = ?", version).
+		Where("class_id = ?", classId).
+		First()
+	if err != nil {
+		if err == pg.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return result, nil
+}
+
+func (l libraryContentRepositoryImpl) ListMethods(ctx context.Context, libraryId, version, classId string) ([]entity.LibraryMethodEntity, error) {
+	result := make([]entity.LibraryMethodEntity, 0)
+	err := l.cp.GetConnection().ModelContext(ctx, &result).
+		Where("library_id = ?", libraryId).
+		Where("version = ?", version).
+		Where("class_id = ?", classId).
+		Order("name ASC", "method_id ASC").
+		Select()
 	if err != nil && err != pg.ErrNoRows {
 		return nil, err
 	}

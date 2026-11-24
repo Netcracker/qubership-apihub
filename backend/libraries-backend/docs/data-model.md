@@ -8,7 +8,7 @@ authoritative definition and this one for the reasoning. The
 This document describes the PostgreSQL schema of `libraries-backend`, the service that tracks external
 library registries (Maven, npm, Go modules) and serves Java build tasks to
 [java-task-consumer](../../java-task-consumer/README.md). It follows the conventions already used in
-`portal-backend`: `character varying` IDs, an internal `id` plus a human-friendly `alias`, soft delete via
+`portal-backend`: `character varying` IDs, a human-readable `id` built from the `alias`, soft delete via
 `created_at`/`created_by`/`deleted_at`/`deleted_by`, JSONB for structured blobs, Postgres arrays for flat lists,
 content-addressed storage for large diffable payloads, and `tsvector`/GIN indexes for search. See
 [backend-api.md](../../java-task-consumer/docs/backend-api.md) for the HTTP contract this schema has to support,
@@ -68,9 +68,10 @@ CREATE TABLE IF NOT EXISTS repository (
 
 ## Libraries
 
-Mirrors `package_group`: internal `id`, human-friendly `alias`, soft delete, `default_role`. `coordinates` is
-JSONB because its shape depends on `language` (Maven GAV, Go module path, or npm package name). `coordinates_key` is
-a normalised string the service computes on write (for example `groupId:artifactId` or the module path), so
+Mirrors `package_group`: a human-readable `id` (the parent package id and `alias` joined with a dot, or the `alias`
+alone without a parent; immutable, like `alias` and `parent_package_id`), soft delete, `default_role`. `coordinates`
+is JSONB because its shape depends on `language` (Maven GAV, Go module path, or npm package name). `coordinates_key`
+is a normalised string the service computes on write (for example `groupId:artifactId` or the module path), so
 uniqueness and indexing do not have to reach into JSONB.
 
 ```sql

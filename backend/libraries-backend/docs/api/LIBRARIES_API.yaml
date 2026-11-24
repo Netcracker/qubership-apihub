@@ -86,6 +86,8 @@ tags:
     description: Tracked library management.
   - name: Versions
     description: Library version management.
+  - name: Content
+    description: Parsed API inventory of a library version (classes and methods).
   - name: Changes
     description: Version comparison results.
   - name: Builders
@@ -544,6 +546,93 @@ paths:
           $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/LibraryVersionNotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/api/v1/libraries/{libraryId}/versions/{version}/classes":
+    parameters:
+      - $ref: "#/components/parameters/libraryId"
+      - $ref: "#/components/parameters/version"
+    get:
+      tags:
+        - Content
+      summary: Get library version classes
+      description: |
+        Paginated list of the classes of a library version, ordered by qualified name. The list is empty until
+        the version's build has finished.
+      operationId: getLibraryVersionClasses
+      parameters:
+        - name: textFilter
+          in: query
+          description: Case-insensitive substring of the qualified class name.
+          schema:
+            type: string
+          example: "StringUtils"
+        - name: kind
+          in: query
+          description: Filter by class kind.
+          schema:
+            type: array
+            items:
+              $ref: "#/components/schemas/ClassKindEnum"
+        - $ref: "#/components/parameters/limit"
+        - $ref: "#/components/parameters/page"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  classes:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/LibraryClass"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/LibraryVersionNotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  "/api/v1/libraries/{libraryId}/versions/{version}/classes/{classId}":
+    parameters:
+      - $ref: "#/components/parameters/libraryId"
+      - $ref: "#/components/parameters/version"
+      - name: classId
+        in: path
+        required: true
+        description: Class identifier, URL-encoded.
+        schema:
+          type: string
+    get:
+      tags:
+        - Content
+      summary: Get library class
+      description: One class of a library version with its methods and constructors.
+      operationId: getLibraryVersionClass
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LibraryClassDetails"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: The version or the class is not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "500":
           $ref: "#/components/responses/InternalServerError"
   "/api/v1/libraries/{libraryId}/versions/{version}/changes/summary":
@@ -1284,16 +1373,11 @@ components:
           default: "Viewer"
     LibraryUpdate:
       type: object
+      description: The alias and the parent package are immutable because they form the library id.
       properties:
-        alias:
-          type: string
-          maxLength: 10
-          pattern: "^[a-zA-Z0-9-_]"
         name:
           type: string
         description:
-          type: string
-        parentPackageId:
           type: string
         defaultRole:
           type: string
@@ -1308,6 +1392,10 @@ components:
           properties:
             libraryId:
               type: string
+              description: |
+                Human-readable id: the `parentPackageId` and the `alias` joined with a dot, or the `alias` alone
+                when the library has no parent package. Immutable.
+              example: "QS.CloudQSS.commons"
             coordinatesKey:
               description: Normalized coordinates string the service computes on write, e.g. `groupId:artifactId`.
               type: string
@@ -1485,6 +1573,62 @@ components:
           type: string
         coordinatesKey:
           type: string
+    LibraryClass:
+      type: object
+      required:
+        - classId
+        - kind
+        - qualifiedName
+        - deprecated
+      properties:
+        classId:
+          type: string
+        kind:
+          $ref: "#/components/schemas/ClassKindEnum"
+        qualifiedName:
+          type: string
+        packageName:
+          type: string
+        modifiers:
+          type: array
+          items:
+            type: string
+        deprecated:
+          type: boolean
+    LibraryMethod:
+      type: object
+      required:
+        - classId
+        - methodId
+        - name
+        - signature
+        - deprecated
+      properties:
+        classId:
+          type: string
+        methodId:
+          type: string
+        name:
+          type: string
+        signature:
+          type: string
+        modifiers:
+          type: array
+          items:
+            type: string
+        deprecated:
+          type: boolean
+    LibraryClassDetails:
+      allOf:
+        - $ref: "#/components/schemas/LibraryClass"
+        - type: object
+          required:
+            - methods
+          properties:
+            methods:
+              type: array
+              items:
+                $ref: "#/components/schemas/LibraryMethod"
     SearchResultClass:
       type: object
       required:

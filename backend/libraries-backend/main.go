@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -157,6 +158,9 @@ func main() {
 	changesService := service.NewChangesService(comparisonRepository, libraryVersionRepository)
 	memberService := service.NewMemberService(memberRepository, authorizationService, apihubClient)
 	searchService := service.NewSearchService(libraryContentRepository)
+	contentService := service.NewContentService(libraryContentRepository, libraryVersionRepository)
+	mcpService := service.NewMCPService(libraryService, libraryVersionService, contentService, searchService,
+		changesService, authorizationService)
 
 	registryController := controller.NewRegistryController(registryService, resp)
 	libraryController := controller.NewLibraryController(libraryService, authorizationService, resp)
@@ -165,6 +169,8 @@ func main() {
 	builderController := controller.NewBuilderController(buildService, resp)
 	memberController := controller.NewMemberController(memberService, libraryService, authorizationService, resp)
 	searchController := controller.NewSearchController(searchService, resp)
+	contentController := controller.NewContentController(contentService, libraryService, authorizationService, resp)
+	mcpController := controller.NewMCPController(mcpService)
 	healthController := controller.NewHealthController(readyChan)
 	versionController := controller.NewVersionController(service.BackendVersionFromEnv(), resp)
 	logsController := controller.NewLogsController(resp)
@@ -186,6 +192,10 @@ func main() {
 	r.HandleFunc("/api/v1/libraries/{libraryId}/available-versions", authenticator.Secure(libraryVersionController.GetAvailableVersions)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v1/libraries/{libraryId}/versions/{version}", authenticator.Secure(libraryVersionController.GetLibraryVersion)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v1/libraries/{libraryId}/versions/{version}", authenticator.Secure(libraryVersionController.DeleteLibraryVersion)).Methods(http.MethodDelete)
+
+	// Content
+	r.HandleFunc("/api/v1/libraries/{libraryId}/versions/{version}/classes", authenticator.Secure(contentController.GetClasses)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v1/libraries/{libraryId}/versions/{version}/classes/{classId}", authenticator.Secure(contentController.GetClass)).Methods(http.MethodGet)
 
 	// Changes
 	r.HandleFunc("/api/v1/libraries/{libraryId}/versions/{version}/changes/summary", authenticator.Secure(changesController.GetChangesSummary)).Methods(http.MethodGet)
@@ -211,6 +221,9 @@ func main() {
 
 	r.HandleFunc("/api/v1/debug/logs/setLevel", authenticator.Secure(logsController.SetLogLevel)).Methods(http.MethodPost)
 	r.HandleFunc("/api/v1/debug/logs/checkLevel", authenticator.Secure(logsController.CheckLogLevel)).Methods(http.MethodGet)
+
+	// MCP
+	r.PathPrefix(middleware.MCPPathPrefix).Handler(authenticator.SecureMCP(mcpController.MakeMCPServer()))
 
 	// Service endpoints
 	r.HandleFunc("/api/v1/system/version", authenticator.Secure(versionController.GetVersion)).Methods(http.MethodGet)
@@ -299,7 +312,15 @@ func makeServer(systemInfoService service.SystemInfoService, r *mux.Router) *htt
 	// a long-running request: a handler that legitimately runs for minutes would have no time left to
 	// write. Instead the write deadline is set per request, on the response-writing phase only, by
 	// middleware/write_deadline_middleware.go.
-	handler := handlers.CompressHandler(handlers.CORS(corsOptions...)(r))
+	corsHandler := handlers.CORS(corsOptions...)(r)
+	compressedHandler := handlers.CompressHandler(corsHandler)
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasPrefix(r.URL.Path, middleware.MCPPathPrefix) {
+			corsHandler.ServeHTTP(w, r)
+			return
+		}
+		compressedHandler.ServeHTTP(w, r)
+	})
 
 	return &http.Server{
 		Handler:     handler,

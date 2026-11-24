@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"regexp"
 	"time"
 
 	"github.com/Netcracker/qubership-apihub/backend/libraries-backend/entity"
@@ -12,7 +13,6 @@ import (
 	"github.com/Netcracker/qubership-apihub/backend/libraries-backend/secctx"
 	"github.com/Netcracker/qubership-apihub/backend/libraries-backend/view"
 	"github.com/go-pg/pg/v10"
-	"github.com/google/uuid"
 )
 
 type LibraryService interface {
@@ -48,6 +48,24 @@ type libraryServiceImpl struct {
 	registryService   RegistryService
 }
 
+const (
+	maxAliasLength = 10
+	// libraryIdSeparator joins the parent package id and the alias, the same way portal-backend composes
+	// a package id.
+	libraryIdSeparator = "."
+)
+
+var aliasPattern = regexp.MustCompile(`^[a-zA-Z0-9_-]+$`)
+
+// makeLibraryId composes the human-readable library id: the parent package id (the group) followed by the
+// alias. A library without a parent package is identified by its alias alone.
+func makeLibraryId(parentPackageId, alias string) string {
+	if parentPackageId == "" {
+		return alias
+	}
+	return parentPackageId + libraryIdSeparator + alias
+}
+
 func (l libraryServiceImpl) Create(ctx context.Context, req view.LibraryCreateReq) (*view.Library, error) {
 	if !req.Language.Valid() {
 		return nil, &exception.CustomError{
@@ -55,6 +73,15 @@ func (l libraryServiceImpl) Create(ctx context.Context, req view.LibraryCreateRe
 			Code:    exception.InvalidParameterValue,
 			Message: exception.InvalidParameterValueMsg,
 			Params:  map[string]interface{}{"value": req.Language, "param": "language"},
+		}
+	}
+
+	if len(req.Alias) == 0 || len(req.Alias) > maxAliasLength || !aliasPattern.MatchString(req.Alias) {
+		return nil, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidParameterValue,
+			Message: exception.InvalidParameterValueMsg,
+			Params:  map[string]interface{}{"value": req.Alias, "param": "alias"},
 		}
 	}
 
@@ -94,6 +121,21 @@ func (l libraryServiceImpl) Create(ctx context.Context, req view.LibraryCreateRe
 		}
 	}
 
+	libraryId := makeLibraryId(req.ParentPackageId, req.Alias)
+	// The id must be free even among soft-deleted rows, which keep their primary key.
+	idTaken, err := l.libraryRepository.ExistsById(ctx, libraryId)
+	if err != nil {
+		return nil, err
+	}
+	if idTaken {
+		return nil, &exception.CustomError{
+			Status:  http.StatusConflict,
+			Code:    exception.LibraryIdAlreadyExists,
+			Message: exception.LibraryIdAlreadyExistsMsg,
+			Params:  map[string]interface{}{"libraryId": libraryId},
+		}
+	}
+
 	coordinates, err := entity.CoordinatesMap(req.Coordinates)
 	if err != nil {
 		return nil, fmt.Errorf("failed to encode the coordinates: %w", err)
@@ -104,10 +146,9 @@ func (l libraryServiceImpl) Create(ctx context.Context, req view.LibraryCreateRe
 		defaultRole = view.DefaultLibraryRole
 	}
 
-	// A UUID, not a composition of the alias: the alias is only unique together with the repository and the
-	// coordinates, so it cannot carry the identity of the library on its own.
+	// The id is derived from the parent package id and the alias, so alias is immutable after creation.
 	library := entity.LibraryEntity{
-		Id:              uuid.NewString(),
+		Id:              libraryId,
 		Alias:           req.Alias,
 		Name:            req.Name,
 		Description:     req.Description,
@@ -159,17 +200,11 @@ func (l libraryServiceImpl) Update(ctx context.Context, libraryId string, req vi
 		return nil, err
 	}
 
-	if req.Alias != nil {
-		library.Alias = *req.Alias
-	}
 	if req.Name != nil {
 		library.Name = *req.Name
 	}
 	if req.Description != nil {
 		library.Description = *req.Description
-	}
-	if req.ParentPackageId != nil {
-		library.ParentPackageId = *req.ParentPackageId
 	}
 	if req.DefaultRole != nil {
 		library.DefaultRole = *req.DefaultRole

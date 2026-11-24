@@ -59,3 +59,35 @@ func (a Authenticator) NoSecure(next http.HandlerFunc) http.HandlerFunc {
 		next.ServeHTTP(w, r)
 	}
 }
+
+// SecureMCP authenticates an MCP request with an API key or a personal access token.
+func (a Authenticator) SecureMCP(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if err := recover(); err != nil {
+				log.Errorf("Request failed with panic: %v", err)
+				log.Tracef("Stacktrace: %v", string(debug.Stack()))
+				debug.PrintStack()
+				a.responder.RespondWithCustomError(w, &exception.CustomError{
+					Status:  http.StatusInternalServerError,
+					Message: http.StatusText(http.StatusInternalServerError),
+					Debug:   fmt.Sprintf("%v", err),
+				})
+				return
+			}
+		}()
+		_, user, err := a.mcpStrategy.AuthenticateRequest(r)
+		if err != nil {
+			log.Debugf("MCP authentication failed(401): %+v", err)
+			a.responder.RespondWithCustomError(w, &exception.CustomError{
+				Status:  http.StatusUnauthorized,
+				Message: http.StatusText(http.StatusUnauthorized),
+				Debug:   fmt.Sprintf("%v", err),
+			})
+			return
+		}
+
+		r = auth.RequestWithUser(user, r)
+		next.ServeHTTP(w, r)
+	})
+}

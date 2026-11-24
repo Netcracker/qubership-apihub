@@ -19,6 +19,9 @@ import (
 type Authenticator struct {
 	responder responder.Responder
 	strategy  union.Union
+	// mcpStrategy accepts only the credentials an MCP client sends in a header: an API key or a personal
+	// access token. Cookies and portal session JWTs are left out.
+	mcpStrategy union.Union
 }
 
 func NewAuthenticator(apihubClient client.ApihubClient, r responder.Responder) (Authenticator, error) {
@@ -60,7 +63,8 @@ func NewAuthenticator(apihubClient client.ApihubClient, r responder.Responder) (
 	strategy := union.New(jwtStrategy, apihubApiKeyStrategy, cookieTokenStrategy, patStrategy)
 
 	return Authenticator{
-		responder: r,
-		strategy:  strategy,
+		responder:   r,
+		strategy:    strategy,
+		mcpStrategy: union.New(apihubApiKeyStrategy, patStrategy),
 	}, nil
 }

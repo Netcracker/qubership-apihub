@@ -1,4 +1,5 @@
 reports/report.html
+environment/local_kind_libraries.postman_environment.json
 
 # APM
 apm_modules/
