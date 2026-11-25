@@ -164,7 +164,16 @@ export type LibraryMethodDto = Readonly<{
   deprecated: boolean
 }>
 
-export type LibraryClassDetailsDto = LibraryClassDto & Readonly<{ methods: LibraryMethodDto[] }>
+export type LibraryFieldDto = Readonly<{
+  classId: string
+  signature: string
+}>
+
+export type LibraryClassDetailsDto = LibraryClassDto & Readonly<{
+  methods: LibraryMethodDto[]
+  constructors: LibraryMethodDto[]
+  fields: LibraryFieldDto[]
+}>
 
 export type LibraryChangeDto = JavaApiChangeRow
 

@@ -4,6 +4,7 @@ import type {
   LibraryChangeDto,
   LibraryClassDetailsDto,
   LibraryClassDto,
+  LibraryFieldDto,
   LibraryMethodDto,
 } from '@portal/entities/libraries'
 
@@ -35,7 +36,16 @@ const GET_NAME: LibraryMethodDto = {
   deprecated: false,
 }
 
-const CURRENT: LibraryClassDetailsDto = { ...ORDER, methods: [GET_NAME] }
+const ORDER_CONSTRUCTOR: LibraryMethodDto = {
+  ...GET_NAME,
+  methodId: 'Order(java.lang.String)',
+  name: 'Order',
+  signature: 'Order(java.lang.String)',
+}
+
+const NAME_FIELD: LibraryFieldDto = { classId: ORDER.classId, signature: 'java.lang.String name' }
+
+const CURRENT: LibraryClassDetailsDto = { ...ORDER, methods: [GET_NAME], constructors: [], fields: [] }
 
 const RETURN_TYPE_CHANGE: LibraryChangeDto = {
   changeId: 'return-type',
@@ -91,25 +101,35 @@ describe('library class document', () => {
     })
   })
 
-  it.each([
-    ['Order(java.lang.String)', 'CONSTRUCTOR'],
-    ['java.lang.String getName()', 'METHOD'],
-    ['java.util.Map<K, V> asMap()', 'METHOD'],
-    ['<T> T convert(java.lang.Class<T>)', 'METHOD'],
-  ])('detects %s as an unchanged %s member', (signature, elementType) => {
-    expect(toJdiffMemberRow({ ...GET_NAME, signature })).toEqual({
-      className: ORDER.classId,
-      elementType: elementType,
-      member: signature,
-      status: 'UNCHANGED',
-      changeTypes: [],
-      breaking: false,
+  it('takes fields, constructors, and methods from their own arrays of the class details', () => {
+    const details: LibraryClassDetailsDto = {
+      ...CURRENT,
+      constructors: [ORDER_CONSTRUCTOR],
+      fields: [NAME_FIELD],
+    }
+
+    expect(toReportRows([ORDER], [details])).toEqual([
+      toJdiffTypeRow(ORDER),
+      {
+        className: ORDER.classId,
+        elementType: 'FIELD',
+        member: 'java.lang.String name',
+        status: 'UNCHANGED',
+        changeTypes: [],
+        breaking: false,
+      },
+      toJdiffMemberRow(ORDER_CONSTRUCTOR, 'CONSTRUCTOR'),
+      toJdiffMemberRow(GET_NAME, 'METHOD'),
+    ])
+    expect(toJdiffMemberRow(ORDER_CONSTRUCTOR, 'CONSTRUCTOR')).toMatchObject({
+      elementType: 'CONSTRUCTOR',
+      member: 'Order(java.lang.String)',
     })
   })
 
   it('includes members and a single type row for a class present only in details', () => {
     const nested: LibraryClassDetailsDto = {
-      ...ORDER,
+      ...CURRENT,
       classId: 'example.Order$Builder',
       qualifiedName: 'example.Order$Builder',
       methods: [{ ...GET_NAME, classId: 'example.Order$Builder' }],
@@ -118,8 +138,8 @@ describe('library class document', () => {
     expect(toReportRows([ORDER], [CURRENT, nested])).toEqual([
       toJdiffTypeRow(ORDER),
       toJdiffTypeRow(nested),
-      toJdiffMemberRow(GET_NAME),
-      toJdiffMemberRow(nested.methods[0]),
+      toJdiffMemberRow(GET_NAME, 'METHOD'),
+      toJdiffMemberRow(nested.methods[0], 'METHOD'),
     ])
   })
 
@@ -145,23 +165,17 @@ describe('library class document', () => {
       details: { elementType: 'METHOD', member: 'java.util.Map<K, V> convert(java.lang.Class<T>)' },
     }
 
-    expect(toDiffRows({ ...ORDER, methods: [method] }, [change])).toEqual([
+    expect(toDiffRows({ ...CURRENT, methods: [method] }, [change])).toEqual([
       toJdiffTypeRow(ORDER),
       toJdiffChangeRow(change),
     ])
   })
 
   it('replaces type and constructor rows in inventory order', () => {
-    const constructor: LibraryMethodDto = {
-      ...GET_NAME,
-      methodId: 'Order(java.lang.String)',
-      name: 'Order',
-      signature: 'Order(java.lang.String)',
-    }
     const constructorChange: LibraryChangeDto = {
       ...RETURN_TYPE_CHANGE,
       methodId: undefined,
-      details: { elementType: 'CONSTRUCTOR', member: constructor.signature },
+      details: { elementType: 'CONSTRUCTOR', member: ORDER_CONSTRUCTOR.signature },
     }
     const typeChange: LibraryChangeDto = {
       ...RETURN_TYPE_CHANGE,
@@ -169,10 +183,24 @@ describe('library class document', () => {
       details: { elementType: 'CLASS', changeTypes: ['CLASS_NOW_ABSTRACT'] },
     }
 
-    expect(toDiffRows({ ...ORDER, methods: [constructor, GET_NAME] }, [constructorChange, typeChange])).toEqual([
+    expect(toDiffRows({ ...CURRENT, constructors: [ORDER_CONSTRUCTOR] }, [constructorChange, typeChange])).toEqual([
       toJdiffChangeRow(typeChange),
       toJdiffChangeRow(constructorChange),
-      toJdiffMemberRow(GET_NAME),
+      toJdiffMemberRow(GET_NAME, 'METHOD'),
+    ])
+  })
+
+  it('replaces a current field with its change row', () => {
+    const fieldChange: LibraryChangeDto = {
+      ...RETURN_TYPE_CHANGE,
+      methodId: undefined,
+      details: { elementType: 'FIELD', member: NAME_FIELD.signature, status: 'MODIFIED' },
+    }
+
+    expect(toDiffRows({ ...CURRENT, fields: [NAME_FIELD] }, [fieldChange])).toEqual([
+      toJdiffTypeRow(ORDER),
+      toJdiffChangeRow(fieldChange),
+      toJdiffMemberRow(GET_NAME, 'METHOD'),
     ])
   })
 
@@ -191,7 +219,7 @@ describe('library class document', () => {
 
     expect(toDiffRows(CURRENT, [removed, field])).toEqual([
       toJdiffTypeRow(ORDER),
-      toJdiffMemberRow(GET_NAME),
+      toJdiffMemberRow(GET_NAME, 'METHOD'),
       toJdiffChangeRow(removed),
       toJdiffChangeRow(field),
     ])

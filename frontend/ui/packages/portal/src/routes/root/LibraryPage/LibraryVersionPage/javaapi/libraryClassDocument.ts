@@ -1,6 +1,5 @@
-// TODO(libraries-backend): The class endpoint omits fields and enum constants because it does not serve the stored
-// class body. It supplies no method elementType or modifiers, so constructors are detected by signature.
-// The UI has no record kind; records appear as classes.
+// TODO(libraries-backend): The class endpoint supplies no modifiers. Enum constants come as fields of the enum's own
+// type, which the JavaAPI model shows as enum constants. The UI has no record kind; records appear as classes.
 
 import type { JavaApiClassListItem } from '@netcracker/qubership-apihub-api-doc-viewer'
 
@@ -8,6 +7,7 @@ import type {
   LibraryChangeDto,
   LibraryClassDetailsDto,
   LibraryClassDto,
+  LibraryFieldDto,
   LibraryJavaApiDocumentDto,
   LibraryMethodDto,
 } from '@portal/entities/libraries'
@@ -43,16 +43,35 @@ export function toJdiffTypeRow(cls: LibraryClassDto): JdiffRow {
   }
 }
 
-export function toJdiffMemberRow(method: LibraryMethodDto): JdiffRow {
-  const head = method.signature.slice(0, method.signature.indexOf('('))
+export function toJdiffMemberRow(method: LibraryMethodDto, elementType: 'METHOD' | 'CONSTRUCTOR'): JdiffRow {
   return {
     className: method.classId,
-    elementType: /\s/.test(head) ? 'METHOD' : 'CONSTRUCTOR',
+    elementType: elementType,
     member: method.signature,
     status: 'UNCHANGED',
     changeTypes: [],
     breaking: false,
   }
+}
+
+// the signature is the jdiff field member, `<type> <name>`
+export function toJdiffFieldRow(field: LibraryFieldDto): JdiffRow {
+  return {
+    className: field.classId,
+    elementType: 'FIELD',
+    member: field.signature,
+    status: 'UNCHANGED',
+    changeTypes: [],
+    breaking: false,
+  }
+}
+
+function toJdiffClassMemberRows(cls: LibraryClassDetailsDto): JdiffRow[] {
+  return [
+    ...cls.fields.map(toJdiffFieldRow),
+    ...cls.constructors.map(constructor => toJdiffMemberRow(constructor, 'CONSTRUCTOR')),
+    ...cls.methods.map(method => toJdiffMemberRow(method, 'METHOD')),
+  ]
 }
 
 export function toReportRows(
@@ -67,7 +86,7 @@ export function toReportRows(
       classIds.add(cls.classId)
     }
   })
-  return [...rows, ...details.flatMap(cls => cls.methods.map(toJdiffMemberRow))]
+  return [...rows, ...details.flatMap(toJdiffClassMemberRows)]
 }
 
 export function withMemberCounts(
