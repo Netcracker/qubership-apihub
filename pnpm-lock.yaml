@@ -428,7 +428,7 @@ importers:
         specifier: ^7.0.15
         version: 7.0.15
       '@types/treeify':
-        specifier: ^1.0.0
+        specifier: ^1.0.3
         version: 1.0.3
       jest:
         specifier: 'catalog:'
