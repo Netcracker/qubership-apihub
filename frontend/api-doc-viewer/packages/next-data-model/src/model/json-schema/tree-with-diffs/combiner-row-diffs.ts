@@ -6,6 +6,7 @@ import {
   NodeDiffsSeverities,
   NodeDiffsSeverity,
   NodeDiffsSeverityPlacemennt,
+  NodeDiffsSummary,
 } from '@apihub/next-data-model/model/abstract/tree-with-diffs/tree-node.interface'
 import {
   JsonSchemaTreeNode,
@@ -225,6 +226,41 @@ export class JsonSchemaCombinerSelectorRowResolver {
       return undefined
     }
     return this.resolveUniformNestedNodesAction(combinerNode)
+  }
+
+  /**
+   * Fallback summary for a combiner option whose own crawl value carries no aggregated-diffs
+   * rollup. Root cause is in api-diff, not here: `aggregateDiffsWithRollup`
+   * (`frontend/api-diff/src/utils.ts`) drops the diffs of an ancestor that is still on the
+   * traversal stack when a cycle back-edge reaches it, so an object whose subtree loops back to
+   * such an ancestor finishes without an aggregated-diffs key — even though it transitively
+   * contains changed nodes (e.g. sample `013-one-of-variant-properties-changed`: the cycled
+   * `Offering` option is not a cycle clone (`isCycle` is false) and has no rollup of its own,
+   * while the cycle-clone `children` node one level below carries a complete summary copied from
+   * the original). Tracked in https://github.com/Netcracker/qubership-apihub/issues/1140.
+   *
+   * Limit: only the option node's own, direct `childrenNodes()` / `nestedNodes()` summaries are
+   * combined. A back-edge buried deeper than one level below the option (e.g. an option pointing
+   * at a `Holder` whose `box.offering` loops back to an in-progress ancestor) leaves the
+   * intermediate nodes without rollups too, and this fallback cannot see those — see the issue
+   * for a verified repro. Do not extend this fallback to recurse deeper: fix the rollup in
+   * api-diff instead, then delete this method.
+   */
+  public static resolveDirectNodeChangesSummary(
+    node: JsonSchemaTreeNode | JsonSchemaTreeNodeWithDiffs,
+  ): NodeDiffsSummary {
+    const summary: NodeDiffsSummary = new Set()
+    const nodes = [node, ...node.childrenNodes(), ...node.nestedNodes()]
+    for (const current of nodes) {
+      if (!isJsonSchemaTreeNodeWithDiffs(current)) {
+        continue
+      }
+      const nodeChangesSummary = JsonSchemaRowDiffs.NodeLevel.takeNodeChangesSummary(current)
+      for (const diffType of nodeChangesSummary ?? []) {
+        summary.add(diffType)
+      }
+    }
+    return summary
   }
 
   private static nestedNodeHasDiffSignals(node: JsonSchemaTreeNodeWithDiffs): boolean {
