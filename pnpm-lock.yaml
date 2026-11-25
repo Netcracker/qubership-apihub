@@ -721,7 +721,7 @@ importers:
         specifier: ^3.0.6
         version: 3.0.6
       '@types/slug':
-        specifier: ^5.0.3
+        specifier: ^5.0.9
         version: 5.0.9
       '@types/swagger2openapi':
         specifier: ^7.0.4
