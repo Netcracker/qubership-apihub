@@ -47,10 +47,18 @@ type LibraryMethod struct {
 	Data       []byte   `json:"-"`
 }
 
-// LibraryClassDetails is one class of a library version together with its methods and constructors.
+// LibraryField is one field of a class in a library version's inventory.
+type LibraryField struct {
+	ClassId   string `json:"classId"`
+	Signature string `json:"signature"`
+}
+
+// LibraryClassDetails is one class of a library version together with its methods, constructors and fields.
 type LibraryClassDetails struct {
 	LibraryClass
-	Methods []LibraryMethod `json:"methods"`
+	Methods      []LibraryMethod `json:"methods"`
+	Constructors []LibraryMethod `json:"constructors"`
+	Fields       []LibraryField  `json:"fields"`
 }
 
 type LibraryClasses struct {

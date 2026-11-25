@@ -262,7 +262,7 @@ var listLibrariesSchema = json.RawMessage(`{
 
 const toolDescriptionGetLibrary = `Returns one library: name, alias, language, repository, Maven coordinates, parent package, and default role.`
 
-const toolDescriptionCreateLibrary = `Starts tracking a library from a configured repository. Requires the right to create packages in parentPackageId (or the system administrator role when parentPackageId is omitted).
+const toolDescriptionCreateLibrary = `Starts tracking a library from a configured repository. parentPackageId is required: the package must exist, and the caller needs the right to create packages in it (or the system administrator role).
 
 The library has no versions after creation; use list_available_versions and import_library_version next. Only java libraries can import versions.`
 
@@ -309,7 +309,7 @@ var createLibrarySchema = json.RawMessage(`{
 			"description": "Role every authenticated user has on the library. Default Viewer."
 		}
 	},
-	"required": ["alias", "name", "language", "repository", "coordinates"]
+	"required": ["alias", "name", "language", "repository", "parentPackageId", "coordinates"]
 }`)
 
 const toolDescriptionListLibraryVersions = `Lists the imported versions of a library, newest first, with their status, labels, previous version, and build metadata.`

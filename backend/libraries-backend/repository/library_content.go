@@ -32,6 +32,10 @@ type LibraryContentRepository interface {
 	// GetClass returns nil when the version has no such class.
 	GetClass(ctx context.Context, libraryId, version, classId string) (*entity.LibraryClassEntity, error)
 	ListMethods(ctx context.Context, libraryId, version, classId string) ([]entity.LibraryMethodEntity, error)
+	// GetClassData returns the stored class body, or nil when no row has the hash.
+	GetClassData(ctx context.Context, dataHash string) ([]byte, error)
+	// ListMethodData returns the stored method bodies by data hash in one query.
+	ListMethodData(ctx context.Context, dataHashes []string) (map[string][]byte, error)
 }
 
 func NewLibraryContentRepository(cp db.ConnectionProvider) LibraryContentRepository {
@@ -275,6 +279,38 @@ func (l libraryContentRepositoryImpl) ListMethods(ctx context.Context, libraryId
 		Select()
 	if err != nil && err != pg.ErrNoRows {
 		return nil, err
+	}
+	return result, nil
+}
+
+func (l libraryContentRepositoryImpl) GetClassData(ctx context.Context, dataHash string) ([]byte, error) {
+	result := new(entity.LibraryClassDataEntity)
+	err := l.cp.GetConnection().ModelContext(ctx, result).
+		Where("data_hash = ?", dataHash).
+		First()
+	if err != nil {
+		if err == pg.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return result.Data, nil
+}
+
+func (l libraryContentRepositoryImpl) ListMethodData(ctx context.Context, dataHashes []string) (map[string][]byte, error) {
+	result := make(map[string][]byte, len(dataHashes))
+	if len(dataHashes) == 0 {
+		return result, nil
+	}
+	ents := make([]entity.LibraryMethodDataEntity, 0, len(dataHashes))
+	err := l.cp.GetConnection().ModelContext(ctx, &ents).
+		Where("data_hash IN (?)", pg.In(dataHashes)).
+		Select()
+	if err != nil && err != pg.ErrNoRows {
+		return nil, err
+	}
+	for _, ent := range ents {
+		result[ent.DataHash] = ent.Data
 	}
 	return result, nil
 }

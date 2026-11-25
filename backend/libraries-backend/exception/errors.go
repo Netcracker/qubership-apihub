@@ -32,6 +32,7 @@ const InvalidURLEscapeMsg = "Failed to unescape parameter $param"
 
 const InvalidParameterValue = "9"
 const InvalidParameterValueMsg = "Value '$value' is not allowed for parameter $param"
+const InvalidAliasMsg = "Value '$value' is not allowed for parameter $param. An alias is 1 to $maxLength characters long and contains only Latin letters (a-z, A-Z), digits, underscores, and hyphens"
 const InvalidLimitMsg = "Value '$value' is not allowed for parameter limit. Allowed values are in range 1:$maxLimit"
 
 const BadRequestBody = "10"
@@ -62,6 +63,9 @@ const InvalidCoordinatesMsg = "Coordinates are not valid for language '$language
 
 const LibraryIdAlreadyExists = "3004"
 const LibraryIdAlreadyExistsMsg = "A library with id $libraryId already exists or was deleted; choose another alias"
+
+const ParentPackageNotFound = "3005"
+const ParentPackageNotFoundMsg = "Parent package '$packageId' is not found"
 
 const RepositoryNotFound = "3003"
 const RepositoryNotFoundMsg = "Repository '$repository' is not configured"

@@ -71,7 +71,8 @@ or personal access token) and the role catalogue is read from there, so a role m
 A caller's permissions on a library are the union of the roles assigned on the library, its `defaultRole`, and
 whatever the caller holds on the library's `parentPackageId` package group. A system administrator may do anything.
 
-Creating a library is checked against `parentPackageId`; without one, only a system administrator may create it.
+Creating a library requires `parentPackageId`. The package must exist in `portal-backend`, and the caller needs the
+right to create packages in it. A system administrator skips the rights check but not the existence check.
 
 ## Configuration
 

@@ -2,6 +2,8 @@ package service
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/Netcracker/qubership-apihub/backend/libraries-backend/entity"
@@ -75,12 +77,48 @@ func (c contentServiceImpl) GetClass(ctx context.Context, libraryId, version, cl
 	if err != nil {
 		return nil, err
 	}
+	hashes := make([]string, 0, len(methodEnts))
+	for _, methodEnt := range methodEnts {
+		hashes = append(hashes, methodEnt.DataHash)
+	}
+	methodData, err := c.contentRepository.ListMethodData(ctx, hashes)
+	if err != nil {
+		return nil, err
+	}
+
 	result := view.LibraryClassDetails{
 		LibraryClass: entity.MakeLibraryClassView(*classEnt),
 		Methods:      make([]view.LibraryMethod, 0, len(methodEnts)),
+		Constructors: make([]view.LibraryMethod, 0),
+		Fields:       make([]view.LibraryField, 0, classEnt.FieldCount),
 	}
 	for _, methodEnt := range methodEnts {
-		result.Methods = append(result.Methods, entity.MakeLibraryMethodView(methodEnt))
+		var body struct {
+			ElementType string `json:"elementType"`
+		}
+		if err := json.Unmarshal(methodData[methodEnt.DataHash], &body); err != nil {
+			return nil, fmt.Errorf("failed to decode the body of %s#%s: %w", classId, methodEnt.MethodId, err)
+		}
+		methodView := entity.MakeLibraryMethodView(methodEnt)
+		if body.ElementType == view.ElementTypeConstructor {
+			result.Constructors = append(result.Constructors, methodView)
+		} else {
+			result.Methods = append(result.Methods, methodView)
+		}
+	}
+
+	classData, err := c.contentRepository.GetClassData(ctx, classEnt.DataHash)
+	if err != nil {
+		return nil, err
+	}
+	var classBody struct {
+		Fields []view.ApiChange `json:"fields"`
+	}
+	if err := json.Unmarshal(classData, &classBody); err != nil {
+		return nil, fmt.Errorf("failed to decode the body of class %s: %w", classId, err)
+	}
+	for _, field := range classBody.Fields {
+		result.Fields = append(result.Fields, view.LibraryField{ClassId: classId, Signature: field.Member})
 	}
 	return &result, nil
 }

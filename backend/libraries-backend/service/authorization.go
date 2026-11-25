@@ -3,11 +3,13 @@ package service
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"sync"
 	"time"
 
 	"github.com/Netcracker/qubership-apihub/backend/libraries-backend/client"
 	"github.com/Netcracker/qubership-apihub/backend/libraries-backend/entity"
+	"github.com/Netcracker/qubership-apihub/backend/libraries-backend/exception"
 	"github.com/Netcracker/qubership-apihub/backend/libraries-backend/repository"
 	"github.com/Netcracker/qubership-apihub/backend/libraries-backend/secctx"
 	"github.com/Netcracker/qubership-apihub/backend/libraries-backend/view"
@@ -23,8 +25,7 @@ const roleCatalogueTTL = 5 * time.Minute
 type AuthorizationService interface {
 	HasLibraryPermission(ctx context.Context, library entity.LibraryEntity, permission view.RolePermission) (bool, error)
 	// CanCreateLibrary is checked against the parent package, because the library does not exist yet.
-	// Without a parent package there is nothing to inherit from, so only a system administrator may create
-	// the library.
+	// It returns an error with status 400 when parentPackageId is empty or names no package in portal-backend.
 	CanCreateLibrary(ctx context.Context, parentPackageId string) (bool, error)
 	// RolePermissions resolves role ids against the portal-backend catalogue.
 	RolePermissions(ctx context.Context, roleIds []string) (map[string][]view.RolePermission, error)
@@ -90,11 +91,31 @@ func (a *authorizationServiceImpl) HasLibraryPermission(ctx context.Context, lib
 }
 
 func (a *authorizationServiceImpl) CanCreateLibrary(ctx context.Context, parentPackageId string) (bool, error) {
+	if parentPackageId == "" {
+		return false, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.RequiredParamsMissing,
+			Message: exception.RequiredParamsMissingMsg,
+			Params:  map[string]interface{}{"params": "parentPackageId"},
+		}
+	}
+
+	// Existence is read with the service's own token, so the answer does not depend on what the caller may see.
+	parentPackage, err := a.apihubClient.GetPackageById(secctx.MakeSysadminContext(ctx), parentPackageId)
+	if err != nil {
+		return false, fmt.Errorf("failed to read the parent package %s: %w", parentPackageId, err)
+	}
+	if parentPackage == nil {
+		return false, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.ParentPackageNotFound,
+			Message: exception.ParentPackageNotFoundMsg,
+			Params:  map[string]interface{}{"packageId": parentPackageId},
+		}
+	}
+
 	if secctx.IsSysadm(ctx) {
 		return true, nil
-	}
-	if parentPackageId == "" {
-		return false, nil
 	}
 	return a.hasPackagePermission(ctx, parentPackageId, view.CreateAndUpdatePackagePermission)
 }

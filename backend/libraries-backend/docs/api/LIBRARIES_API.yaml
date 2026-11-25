@@ -1346,6 +1346,7 @@ components:
         - name
         - language
         - repository
+        - parentPackageId
         - coordinates
       properties:
         alias:
@@ -1363,8 +1364,8 @@ components:
           type: string
         parentPackageId:
           description: |
-            `portal-backend` `package_group.id` this library's docs surface under. Cross-service reference,
-            resolved against `portal-backend`, not validated against this service's own database.
+            `portal-backend` `package_group.id` this library's docs surface under. Required on creation: the
+            package must exist in `portal-backend`, and the caller needs the right to create packages in it.
           type: string
         coordinates:
           $ref: "#/components/schemas/LibraryCoordinates"
@@ -1393,8 +1394,7 @@ components:
             libraryId:
               type: string
               description: |
-                Human-readable id: the `parentPackageId` and the `alias` joined with a dot, or the `alias` alone
-                when the library has no parent package. Immutable.
+                Human-readable id: the `parentPackageId` and the `alias` joined with a dot. Immutable.
               example: "QS.CloudQSS.commons"
             coordinatesKey:
               description: Normalized coordinates string the service computes on write, e.g. `groupId:artifactId`.
@@ -1636,11 +1636,32 @@ components:
         - type: object
           required:
             - methods
+            - constructors
+            - fields
           properties:
             methods:
               type: array
+              description: Methods declared by the class, constructors excluded.
               items:
                 $ref: "#/components/schemas/LibraryMethod"
+            constructors:
+              type: array
+              items:
+                $ref: "#/components/schemas/LibraryMethod"
+            fields:
+              type: array
+              items:
+                $ref: "#/components/schemas/LibraryField"
+    LibraryField:
+      type: object
+      required:
+        - classId
+        - signature
+      properties:
+        classId:
+          type: string
+        signature:
+          type: string
     SearchResultClass:
       type: object
       required:

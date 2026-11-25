@@ -84,7 +84,7 @@ type LibraryCreateReq struct {
 	Description     string             `json:"description,omitempty"`
 	Language        Language           `json:"language"`
 	Repository      string             `json:"repository"`
-	ParentPackageId string             `json:"parentPackageId,omitempty"`
+	ParentPackageId string             `json:"parentPackageId"`
 	Coordinates     LibraryCoordinates `json:"coordinates"`
 	DefaultRole     string             `json:"defaultRole,omitempty"`
 }

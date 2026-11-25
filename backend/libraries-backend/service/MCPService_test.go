@@ -157,7 +157,21 @@ func (singleClassRepository) GetClass(_ context.Context, libraryId, version, cla
 }
 
 func (singleClassRepository) ListMethods(_ context.Context, _, _, classId string) ([]entity.LibraryMethodEntity, error) {
-	return []entity.LibraryMethodEntity{{ClassId: classId, MethodId: "m-1", Name: "run", Signature: "void run()"}}, nil
+	return []entity.LibraryMethodEntity{
+		{ClassId: classId, MethodId: "m-1", DataHash: "h-m", Name: "run", Signature: "void run()"},
+		{ClassId: classId, MethodId: "c-1", DataHash: "h-c", Name: "B", Signature: "B()"},
+	}, nil
+}
+
+func (singleClassRepository) ListMethodData(_ context.Context, _ []string) (map[string][]byte, error) {
+	return map[string][]byte{
+		"h-m": []byte(`{"signature":"void run()","elementType":"METHOD"}`),
+		"h-c": []byte(`{"signature":"B()","elementType":"CONSTRUCTOR"}`),
+	}, nil
+}
+
+func (singleClassRepository) GetClassData(_ context.Context, _ string) ([]byte, error) {
+	return []byte(`{"fields":[{"className":"a.B","elementType":"FIELD","member":"int count"}]}`), nil
 }
 
 func TestContentServiceGetClass(t *testing.T) {
@@ -174,6 +188,12 @@ func TestContentServiceGetClass(t *testing.T) {
 	}
 	if class.QualifiedName != "a.B" || len(class.Methods) != 1 || class.Methods[0].Signature != "void run()" {
 		t.Errorf("got %+v", class)
+	}
+	if len(class.Constructors) != 1 || class.Constructors[0].Signature != "B()" {
+		t.Errorf("constructors: got %+v", class.Constructors)
+	}
+	if len(class.Fields) != 1 || class.Fields[0].Signature != "int count" {
+		t.Errorf("fields: got %+v", class.Fields)
 	}
 
 	tests := []struct {

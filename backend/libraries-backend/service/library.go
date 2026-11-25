@@ -80,8 +80,8 @@ func (l libraryServiceImpl) Create(ctx context.Context, req view.LibraryCreateRe
 		return nil, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidParameterValue,
-			Message: exception.InvalidParameterValueMsg,
-			Params:  map[string]interface{}{"value": req.Alias, "param": "alias"},
+			Message: exception.InvalidAliasMsg,
+			Params:  map[string]interface{}{"value": req.Alias, "param": "alias", "maxLength": maxAliasLength},
 		}
 	}
 
