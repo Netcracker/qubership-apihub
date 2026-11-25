@@ -465,7 +465,9 @@ const openApiPathItemRules = (version: OpenApiSpecVersion): NormalizationRules =
       '/*': {
         '/*': () => openApiPathItemRules(version),
         ...openApiSpecificationExtensionRules,
+        validate: checkType(TYPE_OBJECT),
       },
+      validate: checkType(TYPE_OBJECT),
     },
     '/deprecated': { validate: checkType(TYPE_BOOLEAN) },
     ...openApiSecurityRules,
@@ -597,7 +599,9 @@ export const openApiRules = (version: OpenApiSpecVersion): NormalizationRules =>
       '/*': {
         '/*': () => openApiPathItemRules(version),
         ...openApiSpecificationExtensionRules,
+        validate: checkType(TYPE_OBJECT),
       },
+      validate: checkType(TYPE_OBJECT),
     },
     /**
      * Note: For OAS 3.0, `components.pathItems` is not a valid property.

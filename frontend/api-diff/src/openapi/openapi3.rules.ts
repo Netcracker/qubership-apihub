@@ -93,22 +93,31 @@ export const openApi3Rules = (options: OpenApi3RulesOptions): CompareRules => {
   const requestSchemaRules = openApiSchemaRules(options)
   const responseSchemaRules = openApiSchemaRules({ ...options, response: true })
 
+  const serverRule: CompareRules = {
+    '/variables': {
+      '/*': {
+        '/enum': {
+          mapping: deepEqualsUniqueItemsArrayMappingResolver,
+          '/*': { ignoreKeyDifference: true },
+        },
+        ...openApiSpecificationExtensionRulesFunction(),
+      },
+    },
+    ...openApiSpecificationExtensionRulesFunction(),
+  }
+
   const serversRules: CompareRules = {
     $: allAnnotation,
-    '/*': {
-      '/variables': {
-        '/*': {
-          '/enum': {
-            mapping: deepEqualsUniqueItemsArrayMappingResolver,
-            '/*': { ignoreKeyDifference: true },
-          },
-          ...openApiSpecificationExtensionRulesFunction(),
-        },
-      },
-      ...openApiSpecificationExtensionRulesFunction(),
-    },
+    '/*': serverRule,
     '/**': {
       $: allAnnotation,
+    },
+  }
+
+  const linksRules: CompareRules = {
+    '/*': {
+      '/server': serverRule,
+      ...openApiSpecificationExtensionRulesFunction(),
     },
   }
 
@@ -166,6 +175,7 @@ export const openApi3Rules = (options: OpenApi3RulesOptions): CompareRules => {
         $: parameterAllowReservedClassifyRule,
         description: diffDescription(resolveParameterDescriptionTemplates('allowReserved status'))
       },
+      '/content': () => contentRules,
       '/deprecated': {
         $: allDeprecated,
         description: diffDescription(resolveParameterDescriptionTemplates('deprecated status'))
@@ -225,6 +235,7 @@ export const openApi3Rules = (options: OpenApi3RulesOptions): CompareRules => {
         $: allUnclassified,
         description: diffDescription(resolveHeaderDescriptionTemplates('allowReserved status')),
       },
+      '/content': () => contentRules,
       '/deprecated': {
         $: allDeprecated,
         description: diffDescription(resolveHeaderDescriptionTemplates('deprecated status')),
@@ -355,15 +366,17 @@ export const openApi3Rules = (options: OpenApi3RulesOptions): CompareRules => {
       ]),
     },
     '/headers': headersRules,
+    '/links': linksRules,
     ...openApiSpecificationExtensionRulesFunction(),
   }
 
   const operationRule: CompareRules = {
     $: [nonBreaking, breaking, unclassified],
     '/callbacks': {
-      '/*': {
-        //no support?
-      },
+      '/*': () => ({
+        ...openApiSpecificationExtensionRulesFunction(),
+        '/*': pathItemObjectRules(options),
+      }),
     },
     '/deprecated': { $: allDeprecated },
     '/externalDocs': externalDocumentationRules,
@@ -442,8 +455,15 @@ export const openApi3Rules = (options: OpenApi3RulesOptions): CompareRules => {
   const componentsRule: CompareRules = {
     $: allNonBreaking,
     [START_NEW_COMPARE_SCOPE_RULE]: COMPARE_SCOPE_COMPONENTS,
+    '/callbacks': {
+      '/*': () => ({
+        ...openApiSpecificationExtensionRulesFunction(),
+        '/*': pathItemObjectRules(options),
+      }),
+    },
     '/examples': examplesRules,
     '/headers': headersRules,
+    '/links': linksRules,
     '/parameters': {
       $: [nonBreaking, breaking, breaking],
       ...parametersRules,

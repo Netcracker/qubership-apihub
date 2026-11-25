@@ -86,23 +86,15 @@ const headerObjectPaths: PathWithExpectedType[] = [
   { path: ['components', 'headers', 'someHeader'], expectedType: unclassified },
   { path: ['components', 'responses', 'someResponse', 'headers', 'someHeader'], expectedType: unclassified },
   { path: ['paths', '/somePath', 'get', 'responses', '200', 'headers', 'someHeader'], expectedType: unclassified },
-  // 'content' not supported for Parameter Object in classification rules yet
-  //...parameterObjectPaths.map(item => ({ path: [...item.path, ...contentEncodingHeaderSuffix], expectedType: unclassified })),
   ...requestBodyObjectPaths.map(item => ({ path: [...item.path, ...contentEncodingHeaderSuffix], expectedType: unclassified })),
   ...responseObjectPaths.map(item => ({ path: [...item.path, ...contentEncodingHeaderSuffix], expectedType: unclassified }))
 ]
 
 const headerObjectPathsWithRecursionFirstLevel: PathWithExpectedType[] = [
   ...headerObjectPaths,
-  // 'content' not supported for Header Object in classification rules yet
-  // ...headerObjectPaths.map(item => ({ path: [...item.path, ...contentEncodingHeaderSuffix], expectedType: unclassified }))
 ]
 
 const mediaTypeObjectPaths: PathWithExpectedType[] = [
-  // 'content' not supported for Parameter Object in classification rules yet
-  //...parameterObjectPaths.map(item => ({ path: [...item.path, 'content', 'application/json'], expectedType: unclassified })),
-  // 'content' not supported for Header Object in classification rules yet
-  //...headerObjectPathsWithRecursionFirstLevel.map(item => ({ path: [...item.path, 'content', 'application/json'], expectedType: unclassified })),
   ...requestBodyObjectPaths.map(item => ({ path: [...item.path, 'content', 'application/json'], expectedType: unclassified })),
   ...responseObjectPaths.map(item => ({ path: [...item.path, 'content', 'application/json'], expectedType: unclassified })),
 ]
@@ -128,7 +120,6 @@ const schemaInSchemaPathSuffixes: JsonPath[] = [
     ['definitions', 'someSchema'],
     ['additionalProperties'],
     //['additionalItems'],  // additionalItems not supported (removed) by api-unifier now
-    // add addition places for OAS 3.1, like 'patternProperties', $defs, etc.
 ]
 
 const schemaObjectPathsWithRecursionFirstLevel: PathWithExpectedType[] = [
@@ -149,22 +140,49 @@ const xmlObjectPaths: PathWithExpectedType[] = [
   ...schemaObjectPathsWithRecursionFirstLevel.map(item => ({ path: [...item.path, 'xml'], expectedType: unclassified })),
 ]
 
+const additionalSchemaObjectPaths: PathWithExpectedType[] = [
+  { path: ['components', 'schemas', 'someSchema', 'discriminator'], expectedType: unclassified },
+  { path: ['components', 'schemas', 'someSchema', 'properties', 'someProperty', 'discriminator'], expectedType: unclassified },
+  { path: ['components', 'schemas', 'someSchema', 'patternProperties', 'somePattern'], expectedType: unclassified },
+  { path: ['components', 'schemas', 'someSchema', 'patternProperties', 'somePattern', 'discriminator'], expectedType: unclassified },
+  { path: ['components', 'schemas', 'someSchema', 'propertyNames'], expectedType: unclassified },
+  { path: ['components', 'schemas', 'someSchema', 'propertyNames', 'externalDocs'], expectedType: annotation },
+  { path: ['components', 'schemas', 'someSchema', '$defs', 'someSchema'], expectedType: unclassified },
+  { path: ['components', 'schemas', 'someSchema', '$defs', 'someSchema', 'externalDocs'], expectedType: annotation },
+]
+
 const linkObjectPaths: PathWithExpectedType[] = [
-  // Link Object classification rules are not implemented yet
-  //{ path: ['components', 'links', 'someLink'], expectedType: unclassified },
-  //...responseObjectPaths.map(item => ({ path: [...item.path, 'links', 'someLink'], expectedType: unclassified })),
+  { path: ['components', 'links', 'someLink'], expectedType: unclassified },
+  ...responseObjectPaths.map(item => ({ path: [...item.path, 'links', 'someLink'], expectedType: unclassified })),
+]
+
+const linkServerObjectPaths: PathWithExpectedType[] = [
+  { path: ['components', 'links', 'someLink', 'server'], expectedType: unclassified },
+  { path: ['components', 'links', 'someLink', 'server', 'variables', 'someVariable'], expectedType: unclassified },
 ]
 
 const callbackObjectPaths: PathWithExpectedType[] = [
-  // Callback Object classification rules are not implemented yet
-  //{ path: ['components', 'callbacks', 'someCallback'], expectedType: unclassified },
-  //...operationObjectPaths.map(item => ({ path: [...item.path, 'callbacks', 'someCallback'], expectedType: unclassified })),
+  { path: ['components', 'callbacks', 'someCallback'], expectedType: unclassified },
+  ...operationObjectPaths.map(item => ({ path: [...item.path, 'callbacks', 'someCallback'], expectedType: unclassified })),
 ]
 
 const pathItemObjectPaths: PathWithExpectedType[] = [
   { path: ['paths', '/somePath'], expectedType: unclassified },
-  //{ path: ['components', 'pathItems', 'somePathItem'], expectedType: unclassified }, // support path items in components for OAS 3.1
-  ...callbackObjectPaths.map(item => ({ path: [...item.path, 'someExpression'], expectedType: unclassified })),
+]
+
+const contentInParameterAndHeaderPaths: PathWithExpectedType[] = [
+  { path: ['components', 'parameters', 'someParameter', 'content', 'application/json'], expectedType: unclassified },
+  { path: ['paths', '/somePath', 'get', 'parameters', 0, 'content', 'application/json'], expectedType: unclassified },
+  { path: ['components', 'parameters', 'someParameter', 'content', 'application/json', 'schema'], expectedType: unclassified },
+  { path: ['components', 'parameters', 'someParameter', 'content', 'application/json', 'encoding', 'someProperty'], expectedType: unclassified },
+  { path: ['components', 'parameters', 'someParameter', 'content', 'application/json', 'encoding', 'someProperty', 'headers', 'someHeader'], expectedType: unclassified },
+  { path: ['components', 'headers', 'someHeader', 'content', 'application/json'], expectedType: unclassified },
+  { path: ['components', 'headers', 'someHeader', 'content', 'application/json', 'schema'], expectedType: unclassified },
+]
+
+const callbackOperationObjectPaths: PathWithExpectedType[] = [
+  { path: ['components', 'callbacks', 'someCallback', '{$request.body#/callbackUrl}', 'post'], expectedType: unclassified },
+  { path: ['paths', '/somePath', 'get', 'callbacks', 'someCallback', '{$request.body#/callbackUrl}', 'post'], expectedType: unclassified },
 ]
 
 const securitySchemeObjectPaths: PathWithExpectedType[] = [
@@ -239,14 +257,8 @@ const specificationExtensionObjectPaths: PathWithExpectedType[] = [
   // Response Object
   ...responseObjectPaths,
 
-  // Callback Object
-  ...callbackObjectPaths,
-
   // Example Object
   ...exampleObjectPaths,
-
-  // Link Object
-  ...linkObjectPaths,
 
   //Header Object
   ...headerObjectPathsWithRecursionFirstLevel,
@@ -268,6 +280,17 @@ const specificationExtensionObjectPaths: PathWithExpectedType[] = [
 
   // OAuth Flow Object
   ...oAuthFlowObjectPaths,
+]
+
+const additionalSpecificationExtensionObjectPaths: PathWithExpectedType[] = [
+  { path: ['components', 'pathItems', 'somePathItem'], expectedType: unclassified },
+  ...callbackObjectPaths,
+  ...callbackObjectPaths.map(item => ({ path: [...item.path, '{$request.body#/callbackUrl}'], expectedType: unclassified })),
+  ...callbackOperationObjectPaths,
+  ...linkObjectPaths,
+  ...linkServerObjectPaths,
+  ...contentInParameterAndHeaderPaths,
+  ...additionalSchemaObjectPaths,
 ]
 
 // Common extension name used in all tests
@@ -431,6 +454,72 @@ describe('OpenAPI specification extensions changes classification', () => {
             beforeValue: 'simple value',
             afterValue: { nested: 'modified' },
           })
+        ]))
+      })
+    })
+  })
+
+  describe('additional object scopes', () => {
+    const addedExtensionName = 'x-added-extension'
+    const removedExtensionName = 'x-removed-extension'
+    const unchangedExtensionName = 'x-unchanged-extension'
+    const replacedExtensionName = 'x-replaced-extension'
+    const addedValue = { key: 'added' }
+    const removedValue = ['removed']
+    const unchangedValue = { nested: 'unchanged' }
+    const beforeReplacementValue = 'original value'
+    const afterReplacementValue = { nested: ['changed value'] }
+
+    const prepareSpecsWithMultipleExtensions = (extensionPath: JsonPath) => {
+      const before = structuredClone(base)
+      const after = structuredClone(base)
+      const propertyNamesIndex = extensionPath.lastIndexOf('propertyNames')
+      if (propertyNamesIndex >= 0) {
+        const propertyNamesPath = extensionPath.slice(0, propertyNamesIndex + 1)
+        setValueAtPath(before, [...propertyNamesPath, 'type'], 'string')
+        setValueAtPath(after, [...propertyNamesPath, 'type'], 'string')
+      }
+
+      setValueAtPath(before, [...extensionPath, removedExtensionName], removedValue)
+      setValueAtPath(before, [...extensionPath, unchangedExtensionName], unchangedValue)
+      setValueAtPath(before, [...extensionPath, replacedExtensionName], beforeReplacementValue)
+      setValueAtPath(after, [...extensionPath, addedExtensionName], addedValue)
+      setValueAtPath(after, [...extensionPath, unchangedExtensionName], unchangedValue)
+      setValueAtPath(after, [...extensionPath, replacedExtensionName], afterReplacementValue)
+      return { before, after }
+    }
+
+    additionalSpecificationExtensionObjectPaths.forEach(item => {
+      const pathDescription = item.path.join('.')
+      const expectedType = item.expectedType
+
+      it(`reports added, removed, and replaced extensions in '${pathDescription}'`, () => {
+        const { before, after } = prepareSpecsWithMultipleExtensions(item.path)
+
+        const { diffs } = apiDiff(before, after, OPTIONS)
+
+        expect(diffs).toHaveLength(3) // added, removed, and replaced extensions; the unchanged extension is ignored
+        expect(diffs).toEqual(diffsMatcher([
+          expect.objectContaining({
+            action: DiffAction.add,
+            type: expectedType,
+            afterDeclarationPaths: [[...item.path, addedExtensionName]],
+            afterValue: addedValue,
+          }),
+          expect.objectContaining({
+            action: DiffAction.remove,
+            type: expectedType,
+            beforeDeclarationPaths: [[...item.path, removedExtensionName]],
+            beforeValue: removedValue,
+          }),
+          expect.objectContaining({
+            action: DiffAction.replace,
+            type: expectedType,
+            beforeDeclarationPaths: [[...item.path, replacedExtensionName]],
+            afterDeclarationPaths: [[...item.path, replacedExtensionName]],
+            beforeValue: beforeReplacementValue,
+            afterValue: afterReplacementValue,
+          }),
         ]))
       })
     })

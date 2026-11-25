@@ -38,6 +38,7 @@ import {
   extractExtensionDiffs,
   extractInfoDiffs,
   extractOwnDiffs,
+  extractOwnExtensionDiffs,
   extractOwnPropertyDiff,
   getAsyncMessageId,
 } from './async.utils'
@@ -109,6 +110,7 @@ export const compareDocuments: DocumentsCompare = async (
   const asyncApiVersionDiffs = extractOwnPropertyDiff(merged, 'asyncapi')
   const infoDiffs = extractInfoDiffs(merged)
   const idDiffs = extractOwnPropertyDiff(merged, 'id')
+  const rootExtensionDiffs = [...extractOwnExtensionDiffs(merged), ...extractExtensionDiffs(merged)]
   // Note: defaultContentType changes are handled by normalization inside apiDiff.
   // Messages without explicit contentType inherit from defaultContentType during normalization,
   // so changes to defaultContentType automatically appear in the message's aggregated diffs.
@@ -178,6 +180,7 @@ export const compareDocuments: DocumentsCompare = async (
             ...asyncApiVersionDiffs,
             ...infoDiffs,
             ...idDiffs,
+            ...rootExtensionDiffs,
           ]
         }
         if (operationAddedOrRemoved) {

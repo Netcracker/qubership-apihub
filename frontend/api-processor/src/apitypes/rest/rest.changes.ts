@@ -1,6 +1,9 @@
 import { RestOperationData } from './rest.types'
 import {
   calculateNormalizedRestOperationId,
+  extractAggregatedExtensionDiffs,
+  extractExtensionDiffs,
+  extractOwnExtensionDiffs,
   isEmpty,
   isValidHttpMethod,
   removeFirstSlash,
@@ -16,6 +19,7 @@ import {
 } from '@netcracker/qubership-apihub-api-diff'
 import {
   AFTER_VALUE_NORMALIZED_PROPERTY,
+  API_KIND_SPECIFICATION_EXTENSION,
   BEFORE_VALUE_NORMALIZED_PROPERTY,
   NORMALIZE_OPTIONS,
   ORIGINS_SYMBOL,
@@ -169,6 +173,10 @@ export const compareDocuments: DocumentsCompare = async (
         operationDiffs = [
           ...(methodData as WithAggregatedDiffs<OpenAPIV3.OperationObject>)[DIFFS_AGGREGATED_META_KEY] ?? [],
           ...extractOpenapiVersionDiff(merged),
+          ...extractOwnExtensionDiffs(merged),
+          ...extractExtensionDiffs(merged),
+          ...extractAggregatedExtensionDiffs(merged.info, [API_KIND_SPECIFICATION_EXTENSION]),
+          ...extractAggregatedExtensionDiffs(merged.externalDocs),
           ...extractRootServersDiffs(merged),
           ...shouldTakeRootSecurityDiffs ? extractRootSecurityDiffs(merged) : [],
           ...extractSecuritySchemesDiffs(merged.components, relevantSecuritySchemesNames),

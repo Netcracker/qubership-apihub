@@ -241,6 +241,12 @@ const versionSpecific: Record<JsonSchemaSpecVersion, (self: () => NormalizationR
       merge: resolvers.mergeObjects,
       hashStrategy: CURRENT_DATA_LEVEL,
     },
+    '/$defs': {
+      '/*': self,
+      validate: checkType(TYPE_OBJECT),
+      merge: resolvers.mergeObjects,
+      hashStrategy: CURRENT_DATA_LEVEL,
+    },
     '/additionalProperties': () => ({
       ...self(),
       merge: resolvers.additionalPropertiesMergeResolver,
@@ -508,6 +514,15 @@ export const jsonSchemaRules: (
     merge: resolvers.concatString,
     //why anyOf?
     hashStrategy: BEFORE_SECOND_DATA_LEVEL,
+  },
+  '/^': {
+    'x-': {
+      isExtension: true,
+      validate: checkType(...TYPE_JSON_ANY),
+      merge: resolvers.last,
+      '/*': { validate: checkType(...TYPE_JSON_ANY) },
+      '/**': { validate: checkType(...TYPE_JSON_ANY) },
+    },
   },
   '/**': { referenceHandler: notAllowedReferenceHandler },
   //4.3.2. Boolean JSON Schemas - not supported. Cause not tested
