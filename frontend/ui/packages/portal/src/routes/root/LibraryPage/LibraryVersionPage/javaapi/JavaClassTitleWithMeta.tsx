@@ -4,8 +4,9 @@ import { type FC, memo } from 'react'
 import { NavLink } from 'react-router-dom'
 
 import { type JavaApiClassListItem, JavaElementIcon } from '@netcracker/qubership-apihub-api-doc-viewer'
-import { DdlSchemaChip } from '@netcracker/qubership-apihub-ui-shared/components/Ddl/DdlSchemaChip'
 import { OverflowTooltip } from '@netcracker/qubership-apihub-ui-shared/components/OverflowTooltip'
+
+import { JavaPackageChip } from './JavaPackageChip'
 
 type JavaClassTitleWithMetaProps = Readonly<{
   javaClass: JavaApiClassListItem
@@ -46,7 +47,7 @@ export const JavaClassTitleWithMeta: FC<JavaClassTitleWithMetaProps> = memo<Java
       </TitleRow>
       {!onlyTitle && (
         <SubtitleRow data-testid="JavaClassSubtitle">
-          {packageName && <DdlSchemaChip label={packageName} data-testid="JavaClassPackageChip" />}
+          {packageName && <JavaPackageChip label={packageName} data-testid="JavaClassPackageChip" />}
         </SubtitleRow>
       )}
     </TitleColumn>

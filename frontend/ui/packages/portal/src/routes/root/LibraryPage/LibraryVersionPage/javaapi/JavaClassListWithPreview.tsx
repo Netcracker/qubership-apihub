@@ -1,3 +1,4 @@
+import { Box, styled } from '@mui/material'
 import type { Path } from '@remix-run/router'
 import type { ResizeCallback } from 're-resizable'
 import { type FC, memo, useCallback } from 'react'
@@ -35,7 +36,9 @@ export const JavaClassListWithPreview: FC<JavaClassListWithPreviewProps> = memo<
   const navigationLinkBuilder = useJavaClassNavigationLinkBuilder()
   const renderTitle = useCallback(
     (javaClass: JavaApiClassListItem, link?: Partial<Path>) => (
-      <JavaClassTitleWithMeta javaClass={javaClass} link={link} />
+      <RowTitleBox>
+        <JavaClassTitleWithMeta javaClass={javaClass} link={link} />
+      </RowTitleBox>
     ),
     [],
   )
@@ -68,3 +71,10 @@ JavaClassListWithPreview.displayName = 'JavaClassListWithPreview'
 function getClassKey(javaClass: JavaApiClassListItem): string {
   return javaClass.className
 }
+
+// The package rows put py 4px around the title (ExpandableItem); the API Changes table already uses ExpandableItem
+const RowTitleBox = styled(Box)({
+  padding: '4px 0',
+  width: '100%',
+  minWidth: 0,
+})

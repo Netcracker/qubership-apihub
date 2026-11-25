@@ -1,3 +1,4 @@
+import { Box, styled } from '@mui/material'
 import type { Path } from '@remix-run/router'
 import type { ColumnDef } from '@tanstack/table-core'
 import { type FC, memo, useCallback, useMemo } from 'react'
@@ -32,10 +33,12 @@ export const JavaClassListView: FC<JavaClassListViewProps> = memo<JavaClassListV
         id: JAVA_TYPES_COLUMN_ID,
         header: () => <CustomTableHeadCell title="Java types" />,
         cell: ({ row: { original: { javaClass } } }) => (
-          <JavaClassTitleWithMeta
-            javaClass={javaClass}
-            link={prepareLinkFn(javaClass)}
-          />
+          <RowTitleBox>
+            <JavaClassTitleWithMeta
+              javaClass={javaClass}
+              link={prepareLinkFn(javaClass)}
+            />
+          </RowTitleBox>
         ),
       },
       {
@@ -65,3 +68,10 @@ export const JavaClassListView: FC<JavaClassListViewProps> = memo<JavaClassListV
 )
 
 JavaClassListView.displayName = 'JavaClassListView'
+
+// The package rows put py 4px around the title (ExpandableItem); the API Changes table already uses ExpandableItem
+const RowTitleBox = styled(Box)({
+  padding: '4px 0',
+  width: '100%',
+  minWidth: 0,
+})
