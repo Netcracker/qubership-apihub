@@ -8,10 +8,16 @@ import { ComparisonIcon } from '@netcracker/qubership-apihub-ui-shared/icons/Com
 import { ServicesIcon } from '@netcracker/qubership-apihub-ui-shared/icons/ServicesIcon'
 
 import { usePortalPageSettingsContext } from '@portal/routes/PortalPageSettingsProvider'
+import { API_CHANGES_NO_PREVIOUS_VERSION_TOOLTIP } from '@portal/routes/root/PortalPage/VersionPage/VersionTabApiTypes/buildVersionTabsApiTypesState'
 import { API_CHANGES_PAGE, CONTRACTS_PAGE, OVERVIEW_PAGE } from '../../../../routes'
 import { getLibraryVersionPath } from './libraryVersion'
 
-export const LibraryVersionNavigationMenu: FC = memo(() => {
+type LibraryVersionNavigationMenuProps = Readonly<{
+  // as in the package menu: a version without a previous version has no API changes
+  apiChangesDisabled: boolean
+}>
+
+export const LibraryVersionNavigationMenu: FC<LibraryVersionNavigationMenuProps> = memo(({ apiChangesDisabled }) => {
   const navigate = useNavigate()
   const { libraryId = '', versionId = '' } = useParams()
   const [currentMenuItem] = useActiveTabs()
@@ -25,39 +31,39 @@ export const LibraryVersionNavigationMenu: FC = memo(() => {
     const pathToNavigate = pagePathsMap[menuItemId]
     pathToNavigate && navigate(pathToNavigate)
   }, [navigate, pagePathsMap])
+  const sidebarMenuItems = useMemo((): SidebarMenu[] => [
+    {
+      id: OVERVIEW_PAGE,
+      title: 'Overview',
+      tooltip: 'Overview',
+      icon: <ServicesIcon />,
+      'data-testid': 'OverviewButton',
+    },
+    {
+      id: CONTRACTS_PAGE,
+      title: 'API Reference',
+      tooltip: 'API Reference',
+      icon: <ApiIcon />,
+      'data-testid': 'ContractsButton',
+    },
+    {
+      id: API_CHANGES_PAGE,
+      title: 'API Changes',
+      tooltip: apiChangesDisabled ? API_CHANGES_NO_PREVIOUS_VERSION_TOOLTIP : 'API Changes',
+      disabled: apiChangesDisabled,
+      icon: <ComparisonIcon />,
+      'data-testid': 'ApiChangesButton',
+    },
+  ], [apiChangesDisabled])
 
   return (
     <NavigationMenu
       open={expandMainMenu}
       setOpen={toggleExpandMainMenu}
       activeItem={currentMenuItem}
-      sidebarMenuItems={SIDEBAR_MENU_ITEMS}
+      sidebarMenuItems={sidebarMenuItems}
       onSelectItem={navigateAndSelect}
     />
   )
 })
 LibraryVersionNavigationMenu.displayName = 'LibraryVersionNavigationMenu'
-
-const SIDEBAR_MENU_ITEMS: SidebarMenu[] = [
-  {
-    id: OVERVIEW_PAGE,
-    title: 'Overview',
-    tooltip: 'Overview',
-    icon: <ServicesIcon />,
-    'data-testid': 'OverviewButton',
-  },
-  {
-    id: CONTRACTS_PAGE,
-    title: 'API Reference',
-    tooltip: 'API Reference',
-    icon: <ApiIcon />,
-    'data-testid': 'ContractsButton',
-  },
-  {
-    id: API_CHANGES_PAGE,
-    title: 'API Changes',
-    tooltip: 'API Changes',
-    icon: <ComparisonIcon />,
-    'data-testid': 'ApiChangesButton',
-  },
-]

@@ -48,7 +48,7 @@ export type BuildVersionTabsApiTypesStateInput = {
   hasErrors?: boolean
 }
 
-const API_CHANGES_NO_PREVIOUS_VERSION_TOOLTIP = 'No API changes since there is no previous version'
+export const API_CHANGES_NO_PREVIOUS_VERSION_TOOLTIP = 'No API changes since there is no previous version'
 
 export function buildVersionTabsApiTypesState(
   input: BuildVersionTabsApiTypesStateInput,

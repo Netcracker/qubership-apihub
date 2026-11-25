@@ -80,7 +80,8 @@ const LibraryVersionPageBody: FC<LibraryVersionPageBodyProps> = memo<LibraryVers
 
     return (
       <LayoutWithTabs
-        tabs={<LibraryVersionNavigationMenu />}
+        // Compare → Versions opens API Changes with the previous version in the URL
+        tabs={<LibraryVersionNavigationMenu apiChangesDisabled={!version.previousVersion && !previousVersion} />}
         body={pathParamToSubPageMap[menuItem]}
       />
     )
