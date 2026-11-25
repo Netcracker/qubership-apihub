@@ -42,13 +42,15 @@ export const JavaClassPreview: FC<JavaClassPreviewProps> = memo<JavaClassPreview
   const rawData = data?.raw
   let content = classKey && data && (
     <ViewerBox data-testid="JavaApiClassViewer">
-      <JavaClassViewer
-        source={data.document}
-        classKey={classKey}
-        navigationLinkBuilder={navigationLinkBuilder}
-        navigationLinkComponent={JavaClassNavigationLink}
-        noHeading
-      />
+      <ViewerScrollBox>
+        <JavaClassViewer
+          source={data.document}
+          classKey={classKey}
+          navigationLinkBuilder={navigationLinkBuilder}
+          navigationLinkComponent={JavaClassNavigationLink}
+          noHeading
+        />
+      </ViewerScrollBox>
     </ViewerBox>
   )
   if (viewMode === RAW_SPEC_VIEW_MODE) content = <JsonRawSpecView data={rawData} />
@@ -73,8 +75,17 @@ export const JavaClassPreview: FC<JavaClassPreviewProps> = memo<JavaClassPreview
 })
 JavaClassPreview.displayName = 'JavaClassPreview'
 
+// The top padding sits outside the scrolling box, as in the operation preview, so it stays while the class scrolls
 const ViewerBox = styled(Box)(({ theme }) => ({
-  padding: theme.spacing(1, 2),
+  display: 'flex',
+  flexDirection: 'column',
   height: '100%',
+  paddingTop: theme.spacing(1),
+}))
+
+const ViewerScrollBox = styled(Box)(({ theme }) => ({
+  flex: 1,
+  minHeight: 0,
   overflow: 'auto',
+  padding: theme.spacing(0, 2, 1),
 }))

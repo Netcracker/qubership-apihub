@@ -93,13 +93,15 @@ const JavaClassComparePage: FC = () => {
   } else if (javaClass) {
     content = viewMode === RAW_SPEC_VIEW_MODE ? <JsonRawSpecView data={rawData} /> : (
       <ViewerBox>
-        <JavaClassViewer
-          source={data.document}
-          classKey={classKey}
-          // A class removed in this version has no API Reference page to open, so its type names stay plain text
-          navigationLinkBuilder={rawData?.class ? navigationLinkBuilder : undefined}
-          navigationLinkComponent={JavaClassNavigationLink}
-        />
+        <ViewerScrollBox>
+          <JavaClassViewer
+            source={data.document}
+            classKey={classKey}
+            // A class removed in this version has no API Reference page to open, so its type names stay plain text
+            navigationLinkBuilder={rawData?.class ? navigationLinkBuilder : undefined}
+            navigationLinkComponent={JavaClassNavigationLink}
+          />
+        </ViewerScrollBox>
       </ViewerBox>
     )
   }
@@ -145,8 +147,17 @@ const ToolbarHeaderRow = styled(Box)(({ theme }) => ({
   gap: theme.spacing(1),
 }))
 const BodyBox = styled(Box)({ height: '100%', minHeight: 0, overflow: 'hidden' })
+// The top padding sits outside the scrolling box, as in the operation preview, so it stays while the class scrolls
 const ViewerBox = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  flexDirection: 'column',
   height: '100%',
+  paddingTop: theme.spacing(1),
+}))
+
+const ViewerScrollBox = styled(Box)(({ theme }) => ({
+  flex: 1,
+  minHeight: 0,
   overflow: 'auto',
-  padding: theme.spacing(1, 2),
+  padding: theme.spacing(0, 2, 1),
 }))
