@@ -1,6 +1,6 @@
 ---
 name: api-doc-viewer-ci-linters
-description: The rules of the CI linters (super-linter v9.0.0 and the lychee link checker) that every file of frontend/api-doc-viewer must pass - markdownlint, textlint terminology, stylelint, sqlfluff, codespell, gitleaks, checkov, merge-conflict markers, and the rest - with the configuration each one reads, the mistakes CI has already reported in this module, and how to suppress a finding. Load before writing or changing any file of the module (code, CSS, Markdown, SQL or YAML fixtures, stories, tests, docs), and before a commit.
+description: The rules of the CI linters (super-linter v9.0.0 and the lychee link checker) that every file of frontend/api-doc-viewer must pass - markdownlint, textlint terminology, stylelint, sqlfluff, codespell, gitleaks, checkov, merge-conflict markers, and the rest - with the configuration each one reads, the mistakes CI has already reported in this module, and how to suppress a finding. Load once a feature is finished and before a commit.
 ---
 
 # CI linters for api-doc-viewer
@@ -87,7 +87,7 @@ Two linters people expect do not run:
 - **editorconfig-checker does not run.** Super-linter v9 lints with it only when the repository root has an
   `.editorconfig`, and this repository has none (only modules such as `frontend/ui` have one). Final newlines and
   trailing spaces are still checked by markdownlint (`MD047`, `MD009`), yamllint, and sqlfluff (`LT12`).
-- **ESLint and Prettier do not run on TypeScript in CI.** The frontend quality gates (`apihub-validate`: ESLint,
+- **ESLint and Prettier do not run on TypeScript in CI.** The frontend quality gates (`apihub-frontend-gates`: ESLint,
   dprint, the type check, unit tests) are separate from super-linter; run them as well.
 
 ## Markdown: markdownlint
@@ -335,7 +335,7 @@ selector order, for example).
 3. CSS: kebab-case classes, modern color notation, short hex, no units on zero, `url("...")` imports.
 4. SQL fixtures: no keyword column names, one case style per file, lines up to 120 characters, one final newline.
 5. Fixtures with security schemes or sample secrets live under `packages/samples/` or `__fixtures__/`.
-6. Then run the frontend gates (`apihub-validate`) for TypeScript; super-linter does not check it.
+6. Then run the frontend gates (`apihub-frontend-gates`) for TypeScript; super-linter does not check it.
 
 ## Sources
 

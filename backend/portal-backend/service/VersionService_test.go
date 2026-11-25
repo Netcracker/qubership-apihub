@@ -165,6 +165,71 @@ func TestGetPackageVersionsViewQueriesTheSummaryForPackagesToo(t *testing.T) {
 	}
 }
 
+type versionsSortRepoStub struct {
+	versionsListRepoStub
+	searchQuery *entity.PublishedVersionSearchQueryEntity
+}
+
+func (s *versionsSortRepoStub) GetReadonlyPackageVersionsWithLimit(ctx context.Context, searchQuery entity.PublishedVersionSearchQueryEntity, checkRevisions bool, showOnlyDeleted bool) ([]entity.PackageVersionRevisionEntity, error) {
+	s.searchQuery = &searchQuery
+	return s.versionsListRepoStub.GetReadonlyPackageVersionsWithLimit(ctx, searchQuery, checkRevisions, showOnlyDeleted)
+}
+
+// The repository interpolates the sort key into SQL, so the service must pass only a key from its whitelist
+// and reject anything else.
+func TestGetPackageVersionsViewMapsSortByToRepositoryKey(t *testing.T) {
+	tests := []struct {
+		sortBy   string
+		expected string
+	}{
+		{sortBy: view.VersionSortByVersion, expected: "version"},
+		{sortBy: view.VersionSortByCreatedAt, expected: "published_at"},
+		{sortBy: view.VersionSortByFirstPublishedAt, expected: entity.VersionSortByFirstPublishedAtPG},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.sortBy, func(t *testing.T) {
+			repo := &versionsSortRepoStub{versionsListRepoStub: versionsListRepoStub{kind: entity.KIND_PACKAGE}}
+			service := versionServiceImpl{publishedRepo: repo}
+
+			if _, err := service.GetPackageVersionsView(context.Background(), view.VersionListReq{
+				PackageId: listPackageId,
+				SortBy:    tt.sortBy,
+				SortOrder: view.VersionSortOrderDesc,
+			}, false); err != nil {
+				t.Fatalf("expected the versions to be listed, got %v", err)
+			}
+			if repo.searchQuery == nil {
+				t.Fatal("expected the repository to be queried")
+			}
+			if repo.searchQuery.SortBy != tt.expected {
+				t.Errorf("repository sortBy = %q, want %q", repo.searchQuery.SortBy, tt.expected)
+			}
+		})
+	}
+}
+
+func TestGetPackageVersionsViewRejectsUnknownSortBy(t *testing.T) {
+	repo := &versionsSortRepoStub{versionsListRepoStub: versionsListRepoStub{kind: entity.KIND_PACKAGE}}
+	service := versionServiceImpl{publishedRepo: repo}
+
+	_, err := service.GetPackageVersionsView(context.Background(), view.VersionListReq{
+		PackageId: listPackageId,
+		SortBy:    "first_published_at",
+		SortOrder: view.VersionSortOrderDesc,
+	}, false)
+	customErr, ok := err.(*exception.CustomError)
+	if !ok {
+		t.Fatalf("expected a custom error, got %v", err)
+	}
+	if customErr.Status != http.StatusBadRequest || customErr.Code != exception.InvalidParameterValue {
+		t.Errorf("got status %d code %q, want %d %q", customErr.Status, customErr.Code, http.StatusBadRequest, exception.InvalidParameterValue)
+	}
+	if repo.searchQuery != nil {
+		t.Error("expected the repository not to be queried for an unknown sort key")
+	}
+}
+
 const (
 	revisionsPreviousVersion      = "2025.4"
 	revisionsLatestBuilderVersion = "2.1.0"

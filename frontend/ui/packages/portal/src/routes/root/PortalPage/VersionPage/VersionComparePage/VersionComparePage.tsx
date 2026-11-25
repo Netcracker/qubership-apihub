@@ -2,6 +2,7 @@ import { type FC, memo, type ReactNode, useMemo } from 'react'
 
 import { PageLayout } from '@netcracker/qubership-apihub-ui-shared/components/PageLayout'
 import { DASHBOARD_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
+import { useDocumentTitle } from '@netcracker/qubership-apihub-ui-shared/hooks/common/useDocumentTitle'
 
 import { useCompareBreadcrumbs } from '@portal/routes/root/PortalPage/VersionPage/useCompareBreadcrumbs'
 import { useComparisonObjects } from '@portal/routes/root/PortalPage/VersionPage/useComparisonObjects'
@@ -19,6 +20,8 @@ import { VersionsComparisonGlobalParamsContext } from '../VersionsComparisonGlob
 import { DashboardsCompareContent } from './DashboardsCompareContent'
 import { useVersionCompareSidebar } from './useVersionCompareSidebar'
 import { VersionCompareContent } from './VersionCompareContent'
+import { PAGE_TITLES } from '@portal/routes/pageTitles'
+import { useComparisonTitleSides } from '@portal/routes/useVersionPageTitle'
 
 export const VersionComparePage: FC = memo(() => {
   const [mainPackageKind] = usePackageKind()
@@ -27,6 +30,8 @@ export const VersionComparePage: FC = memo(() => {
 
   const versionsComparisonParams = useComparisonParams()
   const { originPackageKey, originVersionKey, changedPackageKey, changedVersionKey } = versionsComparisonParams
+  const comparisonTitleSides = useComparisonTitleSides(versionsComparisonParams)
+  useDocumentTitle(PAGE_TITLES.versionsComparison(comparisonTitleSides))
 
   const compareVersionsOptions = useMemo(() => ({
     changedPackageKey: changedPackageKey,

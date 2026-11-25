@@ -196,6 +196,29 @@ const red = (extra = {}) => ({
   ...extra,
 })
 
+test('red CI removes stale completion from the issue and PR before another fix starts', async () => {
+  const gh = fakeGh(red({ labels: { 200: ['agent:completed'], 70: ['agent:completed', 'ai:l1-executor'] } }))
+  await withContext({ gh }, async (ctx) => {
+    assert.equal((await gate(ctx.env, ctx.deps)).outcome, 'next-attempt')
+    assert.equal(gh.labelsAt(200).includes('agent:completed'), false)
+    assert.deepEqual(gh.labelsAt(70), ['ai:l1-executor'])
+  })
+})
+
+test('a CI hand-off clears completion on both targets', async () => {
+  const gh = fakeGh(red({ labels: { 200: ['agent:completed'], 70: ['agent:completed', 'ai:l1-executor'] } }))
+  await withContext({ gh, env: { AGENT_MAX_ATTEMPTS: '1' } }, async (ctx) => {
+    assert.equal((await gate(ctx.env, ctx.deps)).outcome, 'stopped')
+    assert.equal(gh.labelsAt(200).includes('agent:completed'), false)
+    assert.equal(gh.labelsAt(70).includes('agent:completed'), false)
+    assert.ok(gh.labelsAt(70).includes('ai:l1-executor'))
+    const notice = gh.calls.find((c) => c[0] === 'createIssueComment' && c[1] === 70)[2]
+    assert.match(notice, /CI is red/)
+    assert.match(notice, /No further fix was published by this CI gate run/)
+    assert.ok(notice.includes(RUN))
+  })
+})
+
 // ------------------------------------------------------------------------------------------------ waiting and guards
 
 test('waiting: a running check run exits without a decision and writes nothing', async () => {
@@ -391,13 +414,14 @@ test('red with the same failure as the attempt before: needs-human at once, with
     assert.equal(ctx.outputs(), 'outcome=stopped\nnext=\n')
     assert.deepEqual(ctx.gh.calls.map((c) => c.slice(0, 2)), [
       ['updateIssueComment', 5],
+      ['createIssueComment', 70],
       ['addLabels', 200],
       ['removeLabel', 70],
       ['addLabels', 70],
       ['createIssueComment', 200],
     ])
-    assert.deepEqual(ctx.gh.calls[1], ['addLabels', 200, ['needs-human:stuck']])
-    assert.deepEqual(ctx.gh.calls[2], ['removeLabel', 70, 'needs-human:approval-required'])
+    assert.deepEqual(ctx.gh.calls[2], ['addLabels', 200, ['needs-human:stuck']])
+    assert.deepEqual(ctx.gh.calls[3], ['removeLabel', 70, 'needs-human:approval-required'])
     assert.deepEqual(ctx.gh.labelsAt(70), ['needs-human:stuck'])
     const saved = savedState(ctx.gh)
     assert.deepEqual(saved.stops.map((x) => [x.reason, x.on]), [['stuck', [200, 70]]])
@@ -413,7 +437,7 @@ test('red with the same failure as the attempt before: needs-human at once, with
     assert.match(body, /\| 1 \| initial \| ci-red \| `[0-9a-f]{12}` \| Tried a guard\. \|/)
     assert.match(body, /\| 2 \| ci-fix \| ci-red \| `[0-9a-f]{12}` \| Tried a test\. \|/)
     assert.match(body, /<details><summary>CI report<\/summary>/)
-    const note = ctx.gh.calls[4][2]
+    const note = ctx.gh.calls.find((c) => c[0] === 'createIssueComment' && c[1] === 200)[2]
     assert.match(note, /^@dave, I stopped on #70: CI is red\.\n\n- Failed checks: `build`\.\n/)
     assert.match(note, /- First error, in `build`: `FAIL packages\/x\/a\.test\.ts \(3\.2 s\)`\.\n/)
     assert.match(note, /- Why I stopped: The last attempt failed in the same way/)

@@ -36,6 +36,9 @@ on:
   # A review with change requests on a pull request of the agent: one attempt over the unresolved threads.
   pull_request_review:
     types: [submitted]
+  # Explicit commands in inline review threads; ordinary comments do not start work.
+  pull_request_review_comment:
+    types: [created]
   # The sweep of new issues whose grace period is over (AGENT_ANALYSIS_GRACE_MINUTES).
   schedule:
     - cron: '*/10 * * * *'
@@ -95,6 +98,10 @@ jobs:
       contains(github.event.issue.body, 'ai-autonomous-agent issue=')))) &&
       (github.event_name != 'pull_request_review' ||
       (github.event.review.state == 'changes_requested' && github.event.review.user.type != 'Bot' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      contains(github.event.pull_request.body, 'ai-autonomous-agent issue='))) &&
+      (github.event_name != 'pull_request_review_comment' ||
+      (github.event.comment.user.type != 'Bot' && contains(github.event.comment.body, '/agent') &&
       github.event.pull_request.head.repo.full_name == github.repository &&
       contains(github.event.pull_request.body, 'ai-autonomous-agent issue=')))
     runs-on: ubuntu-latest

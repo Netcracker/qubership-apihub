@@ -1,6 +1,6 @@
 ---
 description: CI super-linter and MD link checker rules for changed files in APIHub repositories
-globs: **
+alwaysApply: true
 ---
 
 # CI linters (super-linter / link checker)
@@ -30,8 +30,44 @@ changing skills or rules.
   for PR diffs).
 - Wrap long paragraphs and list items before 400 characters; use extra bullets or line breaks
   instead of one very long line.
-- Only one H1 per file (**MD025**); use `##` for main sections in long design docs.
-- Tables are exempt from line-length in `.markdownlint.json`; still keep rows readable.
+- The repository's `.github/linters/.markdownlint.json` sets which rules CI enforces. The APIHub
+  repositories turn MD025 (one H1 per file) off.
+- Tables are exempt from line-length in `.markdownlint.json`, but each row stays on one line; see
+  "Markdown tables" below.
+
+### Markdown tables
+
+A Markdown table row is one physical line, from the leading `|` to the trailing `|`, however long.
+A row continued on the next line becomes a second, broken row.
+
+- **MD055** (pipe style) and **MD056** (column count): a row split across lines, a row with more
+  or fewer cells than the header, or a `|` inside a cell. A `|` splits the cell even inside
+  backticks; escape it as `\|`.
+- **MD037** (spaces inside emphasis): an asterisk after bold text as a required marker
+  (`**Name** *`). Write `**Name** (required)`.
+- **MD036** (emphasis used as a heading): a paragraph that is only bold or italic text, such as
+  `**TBD**`. Make it a heading or a sentence.
+
+Wrong, one row on two lines:
+
+```markdown
+| Version | A version published with status Draft or Release, and the API diff against
+  the previous version. |
+```
+
+Right, the same row on one line:
+
+```markdown
+| Version | A version published with status Draft or Release, and the API diff against the previous version. |
+```
+
+Check a changed file with the repository's config. Run markdownlint-cli through the repository's
+package manager, `pnpm dlx` in a pnpm workspace, and not through `npx`, which `qubership-apihub`
+denies in its agent permissions:
+
+```bash
+pnpm dlx markdownlint-cli --config .github/linters/.markdownlint.json <file>
+```
 
 ## Natural language (textlint)
 

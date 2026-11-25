@@ -110,8 +110,8 @@ disagrees with the code is worse than none. The agent's own review (Flow A) on t
 | The gate counts every check of the commit and requires `ci-ok` | a check that never reports keeps the gate waiting | a timeout, or a list of required checks |
 | `outcome.json` and the bundle come from the job that runs model code | publish re-checks the branch, the diff size, and the protected paths, but takes the commit message as given | rebuild the commit message in publish |
 | opencode 1.x is pinned; the 2.0 line has no `github` command and may change `run` | an upgrade needs a check of the CLI flags and the JSON events | `tools/agent/lib/opencode.js` is the only caller |
-| Rules in `.claude/rules/` are loaded all at once | about 7,000 tokens per run; their path scope is in their text only | the APM `opencode` target or a small plugin |
-| The local APM must be 0.34.0 | an older APM rewrites `.cursor/rules` in another format | upgrade with `pip install apm-cli==0.34.0` |
+| Rules in `.claude/rules/` are loaded all at once | about 7,000 tokens per run; their path scope is in their text only | a small plugin; the APM `opencode` target deploys no rules |
+| The local APM must be the version that `apm.lock.yaml` records | an older APM rewrites `.cursor/rules` in another format | upgrade with `pip install apm-cli==<version>` |
 | `/agent analyze` writes the phase `analyzed` or `needs-info` whatever the phase was | on an issue in `waiting-ci`, the CI gate then skips the pull request (`route.js` wants `waiting-ci`), and the CI loop stops without a word | `analyze.js` `nextState`: keep an active phase, or refuse `/agent analyze` while an attempt or the CI loop runs |
 | The gate waits for a `cancelled` check run and for a missing `ci-ok` | a CI run that a person cancelled, or a repository without `ci-ok`, keeps the gate waiting with no comment | the same timeout as above, or treat a cancelled run as red |
 | `/agent stop` has no concurrency group | a stop between the gate's re-read and its write is overwritten by the gate's phase | the preflight of the next attempt; a lock would close it |

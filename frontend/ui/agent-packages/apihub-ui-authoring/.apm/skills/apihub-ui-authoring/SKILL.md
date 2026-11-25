@@ -1,6 +1,6 @@
 ---
 name: apihub-ui-authoring
-description: "Writes and reviews code of the APIHUB UI module (frontend/ui, the Portal and Agents SPAs and their shared package): where code goes, file names, import aliases, wire types, the split between /api hooks and UI code, test IDs, and how request errors reach the user. Use when adding or changing TypeScript in frontend/ui, including request error handling, mutations, and notifications."
+description: "Writes and reviews code of the APIHUB UI module (frontend/ui, the Portal and Agents SPAs and their shared package): where code goes, file names, import aliases, prop names and hover classes, wire types, the split between /api hooks and UI code, test IDs, and how request errors reach the user. Use when adding or changing TypeScript in frontend/ui, including request error handling, mutations, and notifications."
 ---
 
 # APIHUB UI
@@ -18,6 +18,10 @@ commands are in `frontend/ui/AGENTS.md`.
 | Dev servers (Express, dev only) | `packages/<spa>/server/` |
 | MSW mocks for `dev:proxy:msw` | `packages/<spa>/src/mocks/handlers/` |
 
+A component with no feature logic goes to `packages/shared/src/components` even when only one SPA uses it, next to
+its closest relatives: an icon with a tooltip goes next to the other indicators, not into the feature folder that
+first needed it.
+
 ## Files
 
 - A `.tsx` file with a primary React component is PascalCase and named after the component (`ChatScreen.tsx`
@@ -31,6 +35,15 @@ commands are in `frontend/ui/AGENTS.md`.
 
 Use the aliases of the package's `tsconfig.json`: `@portal/<folder>/...`, `@agents/<folder>/...`, and
 `@netcracker/qubership-apihub-ui-shared/<path>` (`./<path>` inside `packages/shared`). No generic `@apihub/*`.
+
+## Props and hover
+
+- A prop takes the name that the closest existing component gives the same thing. Tooltip text is `tooltip`, never
+  `title`: in the shared components, `title` is text that the component shows.
+- An element that appears on hover starts hidden (`visibility: 'hidden'`) and carries the class `hoverable`, for a
+  control (it also gets a pointer cursor), or `visible-on-hover`, for anything else. The theme shows both classes
+  while the pointer is over a table row; outside a table, the host component shows them with the same `&:hover`
+  rule. Do not add another class or a hover state of your own for this.
 
 ## Wire types
 
@@ -70,6 +83,10 @@ handle a response that is not OK like this:
   `useShowWarningNotification` (`{ title?, message, link?, button? }`). For a snackbar regardless of status,
   dispatch `FETCH_ERROR_EVENT` with `forceSnackbar: true`, as `components/AiAssistant/api/errors.ts` does.
 - A query still renders its own loading, empty, and error states; the snackbar does not replace them.
+
+## Unit tests
+
+Write each case with `test`.
 
 ## Test IDs
 

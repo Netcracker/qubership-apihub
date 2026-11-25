@@ -101,6 +101,7 @@ import {
 import { ShareIcon } from '../icons/ShareIcon'
 import { SliderIcon } from '../icons/SliderIcon'
 import { SnapshotsIcon } from '../icons/SnapshotsIcon'
+import { SortIcon } from '../icons/SortIcon'
 import { StopIcon } from '../icons/StopIcon'
 import { SwaggerIcon } from '../icons/SwaggerIcon'
 import { ToLeftIcon } from '../icons/ToLeftIcon'
@@ -237,6 +238,7 @@ const MUI_ICONS_REGISTRY: readonly IconItem<MuiIconComponent>[] = [
   { name: 'SearchIcon', component: SearchIcon },
   { name: 'SendIcon', component: SendIcon },
   { name: 'ShareableIcon', component: ShareabilityShareableIcon },
+  { name: 'SortIcon', component: SortIcon },
   { name: 'StopIcon', component: StopIcon },
   { name: 'UnknownShareabilityIcon', component: ShareabilityUnknownIcon },
   { name: 'WarningFilledIcon', component: WarningFilledIcon },

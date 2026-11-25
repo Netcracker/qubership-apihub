@@ -7,9 +7,11 @@ import {
   IMM_GR,
   P_WS_MAIN_R,
   PK11,
+  PK12,
   PKG_P_HIERARCHY_BREAKING_R,
   V_P_PKG_CHANGELOG_MULTI_DEL_GQL_R,
   V_P_PKG_CHANGELOG_REST_ANNOTUNCLAS_R,
+  V_P_PKG_CHANGELOG_REST_INTERMEDIATE_R,
   V_P_PKG_DRAFT_R,
   V_P_PKG_OPERATIONS_REST_R,
   V_P_PKG_OVERVIEW_R,
@@ -19,6 +21,9 @@ import { SYSADMIN } from '@test-data'
 import { isDevProxyMode } from '@services/utils'
 
 test.describe('5.2.1 Package details', () => {
+  const DEFAULT_VERSION_SORT = 'Publication Date (Newest)'
+  const VERSION_NAME_ASC = 'Version Name (A-Z)'
+  const VERSION_NAME_DESC = 'Version Name (Z-A)'
 
   test('[P-PKDTO-1] Opening Package from workspace page in tree view',
     {
@@ -394,4 +399,51 @@ test.describe('5.2.1 Package details', () => {
       await expect.soft(versionPage.toolbar.versionSlt).toHaveText(V_P_PKG_DRAFT_R.version)
       await expect.soft(versionPage.overviewTab.summaryTab.body.summary.currentVersion).toHaveText(V_P_PKG_DRAFT_R.version)
     })
+
+  test('[P-PKDTV-4] Sorting Versions in the Versions selector', async ({ sysadminPage: page }) => {
+    const portalPage = new PortalPage(page)
+    const { versionSlt } = portalPage.versionPackagePage.toolbar
+
+    await portalPage.gotoPackage(PK11)
+    await versionSlt.click()
+
+    await test.step('Sort versions by name in ascending order', async () => {
+      await versionSlt.sortMenu.click()
+      await versionSlt.sortMenu.getListItem(VERSION_NAME_ASC).click()
+    })
+
+    const versionCells = versionSlt.getVersionRow().versionCell.rootLocator
+    await expect(versionCells.first()).toHaveText(V_P_PKG_CHANGELOG_REST_INTERMEDIATE_R.version)
+    const lastAscendingVersion = await versionCells.last().innerText()
+
+    await test.step('Sort versions by name in descending order', async () => {
+      await versionSlt.sortMenu.click()
+      await versionSlt.sortMenu.getListItem(VERSION_NAME_DESC).click()
+    })
+
+    await expect(versionCells.first()).toHaveText(lastAscendingVersion)
+
+    await portalPage.reload()
+    await versionSlt.click()
+
+    await test.step('Verify selected sorting persists after reload', async () => {
+      await expect.soft(versionSlt.sortMenu).toContainText(VERSION_NAME_DESC)
+      await expect.soft(versionCells.first()).toHaveText(lastAscendingVersion)
+    })
+
+    await portalPage.gotoPackage(PK12)
+    await versionSlt.click()
+
+    await test.step('Verify another package keeps its default sorting', async () => {
+      await expect(versionSlt.sortMenu).toContainText(DEFAULT_VERSION_SORT)
+    })
+
+    await portalPage.gotoPackage(PK11)
+    await versionSlt.click()
+
+    await test.step('Verify package sorting persists after navigation', async () => {
+      await expect.soft(versionSlt.sortMenu).toContainText(VERSION_NAME_DESC)
+      await expect.soft(versionCells.first()).toHaveText(lastAscendingVersion)
+    })
+  })
 })

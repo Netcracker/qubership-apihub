@@ -1,11 +1,17 @@
 import { type FC, memo } from 'react'
+import { useParams } from 'react-router-dom'
 
 import { PageLayout } from '@netcracker/qubership-apihub-ui-shared/components/PageLayout'
+import { useDocumentTitle } from '@netcracker/qubership-apihub-ui-shared/hooks/common/useDocumentTitle'
 
 import { EmptyState, NO_DATA_EMPTY_STATE_VARIANT } from '@agents/components/EmptyState/EmptyState'
 import { NamespaceToolbar } from './NamespacePage/NamespaceToolbar'
+import { PAGE_TITLES } from '../pageTitles'
 
 export const WelcomePage: FC = memo(() => {
+  const { agentId, namespaceKey } = useParams()
+  useDocumentTitle(PAGE_TITLES.welcome({ agentId: agentId, namespaceKey: namespaceKey }))
+
   return (
     <PageLayout
       toolbar={

@@ -135,7 +135,9 @@ Three rules hold for every job:
 
 - **The tools are trusted code.** The scripts, the opencode config, the roles, the skills, the rules, and the
   `AGENTS.md` files always come from the default branch, or, for a `pull_request` event, from the pull request of this
-  repository. A pull request from a fork never changes the tools that review it.
+  repository. A pull request from a fork never changes the tools that review it. `lib/opencode.js` sets
+  `OPENCODE_DISABLE_PROJECT_CONFIG=1`, so opencode ignores an `opencode.json`, `opencode.jsonc`, or `.opencode/` in
+  the working tree.
 - **A step that runs repository code or model-written code has no GitHub token.** The work step of `implement` holds
   the OpenAI key only. The `review`, `analyze`, `chat`, and `ci-check` steps hold `GITHUB_TOKEN` and the OpenAI key
   together, but their roles cannot edit files or run anything but read-only commands, and `lib/opencode.js` starts
@@ -419,7 +421,7 @@ sequenceDiagram
 | The issue changed since the analysis | the work step runs the analyst first; `needs-info` or `unsuitable` stops the run |
 | The implementer reports that it cannot continue, or no change | `blocked`, nothing pushed; the stop reason is the implementer's `stopReason`, or `stuck` for no change |
 | The diff of the whole pull request is above the limit (`Bug` 20 files or 600 lines, `Task` 30 or 1,000), measured after the last round and again in `publish` | `blocked`, nothing pushed |
-| The diff touches a protected path (`.github/workflows/`, `.claude/`, `.cursor/`, `tools/agent/`, `agent-packages/`, any `AGENTS.md` or `CLAUDE.md`) | `blocked`, nothing pushed |
+| The diff touches a protected path (`.github/workflows/`, `.agents/`, `.claude/`, `.cursor/`, `tools/agent/`, `agent-packages/`, any `AGENTS.md`, `CLAUDE.md`, `opencode.json`, `opencode.jsonc`, or `.opencode/`) | `blocked`, nothing pushed |
 | Local checks and self-review pass | pull request as a draft, `phase` `waiting-ci` |
 | Anything else after a push | draft pull request, `needs-human:budget-exhausted`, `phase` `needs-human` |
 | The work job left no outcome | `publish` records the failure and the costs it finds, `needs-human:environment-blocked` |

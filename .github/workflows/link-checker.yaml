@@ -23,6 +23,7 @@ jobs:
             --exclude-path '.cursor/**'
             --exclude-path '.claude/**'
             --exclude-path '.agents/**'
+            --exclude-path '.opencode/**'
             --exclude-path '.github/instructions/**'
             --exclude-path '.github/skills/**'
             --exclude-path '.github/prompts/**'

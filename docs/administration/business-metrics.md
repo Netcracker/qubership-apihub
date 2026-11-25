@@ -9,7 +9,7 @@ Metric name constants are defined in the `metrics` package (`metrics/BusinessMet
 ## Database table
 
 | Object | Description |
-|--------|-------------|
+| -------- | ------------- |
 | **Schema and name** | `public.business_metric` |
 | **Primary key** | `(year, month, day, metric, user_id)` |
 | **Columns** | |
@@ -49,7 +49,7 @@ The administrator report uses the same approach, with optional grouping across t
 The following table lists constants (values stored in `metric`), their meaning, and typical keys in `data`.
 
 | Constant (`metric` value) | What is counted |
-|---------------------------|-----------------|
+| ------------------------- | --------------- |
 | `comparisons_called` | Successful API version comparison. Keys in `data` are `package_id` values; when comparing against a version from another package, an additional entry may be recorded for `previousVersionPackageId`. |
 | `exports_called` | Export operations (various export endpoints); key is `package_id`. |
 | `deprecated_operations_called` | Access to a deprecated operation; key is `package_id`. |
@@ -67,7 +67,8 @@ The following table lists constants (values stored in `metric`), their meaning, 
 | `mcp_get_operation_spec_tool_called` | MCP operation specification tool; key is `<apiType>\|<MCP client label>\|<package_id>`. |
 | `mcp_get_operation_diff_tool_called` | MCP operation diff tool; key is `<apiType>\|<MCP client label>\|<package_id>`. |
 | `mcp_get_document_tool_called` | MCP document tool; key is `<apiType>\|<MCP client label>\|<package_id>`. |
-| `mcp_search_operations_v2_tool_called` | MCP workspace-aware search tool (`search_api_operations_v2`) invocation; key is `<apiType>\|<MCP client label>\|<group or packageId>`. `apiType` may also be `ddl` or `mcp` for contract search. |
+| `mcp_search_operations_v2_tool_called` | Deprecated MCP search tool (`search_api_operations_v2`) invocation; key is `<apiType>\|<MCP client label>\|<scope>`, where `<scope>` is the `group` package ID, or the workspace when `group` is omitted. `apiType` may also be `ddl` or `mcp` for contract search. |
+| `mcp_search_operations_v3_tool_called` | MCP search tool (`search_api_operations_v3`) invocation; key is `<apiType>\|<MCP client label>\|<scope>`, where `<scope>` is the comma-separated, deduplicated `groups` package IDs in request order, or the workspace when `groups` is omitted. `apiType` may also be `ddl` or `mcp` for contract search. |
 | `mcp_list_workspaces_tool_called` | MCP/AI Chat `list_workspaces` tool invocation; key is the fixed label `workspaces`. |
 | `mcp_list_workspace_packages_tool_called` | MCP `list_workspace_packages` tool invocation; key is `workspace`. |
 | `mcp_list_package_versions_tool_called` | MCP `list_package_versions` tool invocation; key is `package_id`. |
@@ -96,7 +97,7 @@ Authoritative constant definitions remain in `metrics/BusinessMetrics.go`.
 The MCP and AI chat business metrics are also counted in process as Prometheus metrics, next to the existing AI chat series in `qubership-apihub-service/metrics/Metrics.go`. They appear on `/metrics` when `monitoring.enabled` is `true`.
 
 | Prometheus metric | Labels | Mirrors |
-|-------------------|--------|---------|
+| ----------------- | ------- | --------- |
 | `apihub_mcp_tool_calls_total` | `tool` (registered MCP tool name), `client` (MCP client label), `api_type` (`rest`, `graphql`, `protobuf`, `asyncapi`, `ddl`, `mcp`; empty for the `list_workspaces`, `list_workspace_packages`, and `list_package_versions` tools) | every `mcp_*_tool_called` metric, without the package dimension |
 | `apihub_mcp_sessions_total` | `client` | `mcp_session_initialized` |
 | `apihub_ai_chat_messages_sent_total` | none | `ai_chat_called` |
@@ -111,7 +112,7 @@ When `monitoring.otel.enabled` is `true`, the service pushes a subset of `/metri
 The push uses the OpenTelemetry Prometheus bridge, so the metric names and label names are the same as on `/metrics`. Each export carries the resource attributes `service.name` (`apihub-backend`), `service.instance.id` (the instance identifier of the pod), and, when configured, `k8s.namespace.name`.
 
 | Key | Default | Meaning |
-|-----|---------|---------|
+| ----- | --------- | --------- |
 | `monitoring.otel.enabled` | `false` | Enables the push. Requires `monitoring.enabled=true`; the service refuses to start otherwise. |
 | `monitoring.otel.serverUrl` | `""` | OpenTelemetry server URL without a path, for example `https://otel-collector.example.com:4318`. Mandatory when the push is enabled. |
 | `monitoring.otel.metricsPath` | `/v1/metrics` | Path of the OTLP/HTTP metrics endpoint, appended to the server URL. |
@@ -151,7 +152,7 @@ A failed export is logged by the OpenTelemetry SDK and retried on the next inter
 ## Quick reference
 
 | Need | Location |
-|------|----------|
+| ------ | ---------- |
 | Table DDL | `resources/migrations/1_init.up.sql`, table `business_metric`. |
 | Metric names | `metrics/BusinessMetrics.go`. |
 | Persistence and flush | `service/MonitoringService.go`. |

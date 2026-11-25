@@ -928,6 +928,10 @@ async function handleRed(ctx) {
   const stale = await staleResult(ctx)
   if (stale) return stale
   let st = ctx.st
+  if (!config.dryRun) {
+    const error = await stops.clearCompleted(gh, [number, prNumber])
+    if (error) throw error
+  }
 
   // 1. The free rerun of a red result that only E2E jobs caused, or that only cancelled checks show. One rerun per
   // commit covers both.
@@ -1002,16 +1006,20 @@ async function handleRed(ctx) {
       pr: prNumber, reason: decision.reason, max, attempts: next.attempts, failed, errorsByJob, report, runUrl,
     })
     const note = stopComment({ actor, pr: prNumber, reason: decision.reason, max, failed, errorsByJob })
+    const prNote = `${note}\n\nNo further fix was published by this CI gate run. ` +
+      `Review threads require human confirmation. [Run](${runUrl}).`
     if (config.dryRun) {
       const shown = results.previewResult({ family: 'implementation', human, st: next, run: runUrl })
       const lines = [`## Dry run: CI gate for #${number}`, '', shown, '',
         `- labels on #${prNumber} and #${number}: add ${stops.labelOf(stopReason)}`, '',
         quoted('### Comment that would notify the person who asked', note),
+        quoted(`### Comment that would go on pull request #${prNumber}`, prNote),
         '### State', '', fence(JSON.stringify(next, null, 2), 'json'), '']
       appendSummary(env, lines.join('\n'))
       return { outcome: 'stopped', reason: decision.reason }
     }
     await log.group('Write the state comment', () => writeState({ gh, number, human, st: next, run: runUrl }))
+    await log.group('Tell the pull request', () => gh.createIssueComment(prNumber, prNote))
     await log.group('Apply the labels', async () => {
       const failed = await stops.setStop(gh, [number, prNumber], stopReason)
       log.info('labels applied', { add: stops.labelOf(stopReason), on: `#${number} and #${prNumber}` })
@@ -1220,7 +1228,7 @@ async function rerunRequest(ctx) {
   const at = new Date().toISOString()
   const st = rerunRequestState(fresh.st, { sha: headSha, runs: rerun, actor, at, run: runUrl })
   const human = renderRerunRequest({ pr: prNumber, sha, actor, failed: rerunnable, pending, runUrl })
-  const labelPlan = `remove every stop label from #${prNumber} and #${number}`
+  const labelPlan = `remove agent:completed and every stop label from #${prNumber} and #${number}`
   const partial = rerunError
     ? `\n\nGitHub rejected the rerun of ${targets.length - rerun.length} workflow run(s): ${inline(rerunError.message)}`
     : ''
@@ -1240,8 +1248,9 @@ async function rerunRequest(ctx) {
     await log.group('Write the state comment', () => writeState({ gh, number, human, st, run: runUrl }))
     await log.group('Remove the stop labels', async () => {
       const failed = await stops.clearStops(gh, [number, prNumber])
+      const incomplete = await stops.clearCompleted(gh, [number, prNumber])
       log.info('stop labels removed', { on: `#${number} and #${prNumber}` })
-      if (failed) throw failed
+      if (failed ?? incomplete) throw failed ?? incomplete
     })
   }
 
@@ -1281,7 +1290,7 @@ async function rerunCommand(env = process.env, deps = {}) {
   const gh = deps.gh ?? createClient({ token: env.GITHUB_TOKEN, repo })
   const commentId = commentIdOf(env.AGENT_COMMENT_ID)
   log.info('rerun starts', { issue: number, pr: prHint ?? 'from the state', actor, dryRun: config.dryRun })
-  await react({ gh, commentId, content: 'eyes', dryRun: config.dryRun })
+  await react({ gh, commentId, content: 'eyes', dryRun: config.dryRun, eventName: env.GITHUB_EVENT_NAME })
 
   const ctx = { config, env, deps, gh, number, prHint, actor, runUrl, out, repo, replyNumber: prHint ?? number }
   let content = 'confused'
@@ -1290,7 +1299,7 @@ async function rerunCommand(env = process.env, deps = {}) {
     if (result.ok) content = 'rocket'
     return result
   } finally {
-    await react({ gh, commentId, content, dryRun: config.dryRun })
+    await react({ gh, commentId, content, dryRun: config.dryRun, eventName: env.GITHUB_EVENT_NAME })
   }
 }
 

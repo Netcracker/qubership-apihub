@@ -17,6 +17,7 @@ and [`qubership-ai-packages`](https://github.com/Netcracker/qubership-ai-package
 | `apihub-adr` | `apihub-adr/` | When a change needs an architecture decision record in `docs/internal/adr/` |
 | `analyze-migration` | `analyze-migration/` | Analyse an APIHub operations migration and investigate build errors |
 | `apihub-design-authoring` | `apihub-design-authoring/` | T1/T2/T3 FD, Figma mockups, mockup sync, API trace |
+| `apihub-autonomous-agent` | `apihub-autonomous-agent/` | Skills of the AI Autonomous agent: issue analysis, bug fix, task, pull request review, CI failure triage |
 
 ## One manifest for the whole repository
 
@@ -27,12 +28,14 @@ with its module path, so it never applies to another module.
 After you edit a package, run from the repository root:
 
 ```bash
-apm install --target cursor,claude
+apm install
 ```
 
 `apm install` deploys the rules and skills. `apm compile` (distributed `AGENTS.md` placement) does not finish
 on a repository of this size, so do not run it; the `AGENTS.md` files in this repository are hand-written.
 
-Package sources under `agent-packages/`, the skills in `.agents/skills/` and `.claude/skills/`, and the deployed
-`.cursor/` and `.claude/` rule trees are **committed**. `.cursor/skills/` is gitignored. Gitignore also covers
-`apm_modules/` and `agent-packages/**/build/`.
+Package sources under `agent-packages/`, the skills in `.agents/skills/` and `.claude/skills/`, the OpenCode agents
+in `.opencode/agents/`, and the deployed `.cursor/` and `.claude/` rule trees are **committed**. `.cursor/skills/` is
+gitignored. Gitignore also covers `apm_modules/` and `agent-packages/**/build/`. The root `opencode.json`, which loads
+the rules of `.claude/rules/` for OpenCode, is written by hand; see
+[AI assistants](../docs/development/ai-assistants.md#opencode).
