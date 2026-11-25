@@ -1769,7 +1769,7 @@ importers:
         specifier: 4.6.6
         version: 4.6.6
       '@types/postman-collection':
-        specifier: ^3.5.7
+        specifier: ^3.5.11
         version: 3.5.11
       '@typescript-eslint/eslint-plugin':
         specifier: ^5.19.0
