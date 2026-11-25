@@ -96,18 +96,18 @@ func (mr *MockApihubClientMockRecorder) GetUserPackagesPromoteStatuses(arg0, arg
 }
 
 // GetVersions mocks base method.
-func (m *MockApihubClient) GetVersions(arg0 secctx.SecurityContext, arg1 string, arg2, arg3 int) (*view.PublishedVersionsView, error) {
+func (m *MockApihubClient) GetVersions(arg0 secctx.SecurityContext, arg1, arg2 string, arg3, arg4 int) (*view.PublishedVersionsView, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetVersions", arg0, arg1, arg2, arg3)
+	ret := m.ctrl.Call(m, "GetVersions", arg0, arg1, arg2, arg3, arg4)
 	ret0, _ := ret[0].(*view.PublishedVersionsView)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetVersions indicates an expected call of GetVersions.
-func (mr *MockApihubClientMockRecorder) GetVersions(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+func (mr *MockApihubClientMockRecorder) GetVersions(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVersions", reflect.TypeOf((*MockApihubClient)(nil).GetVersions), arg0, arg1, arg2, arg3)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVersions", reflect.TypeOf((*MockApihubClient)(nil).GetVersions), arg0, arg1, arg2, arg3, arg4)
 }
 
 // SendKeepaliveMessage mocks base method.

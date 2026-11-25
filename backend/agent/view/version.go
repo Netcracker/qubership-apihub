@@ -2,6 +2,8 @@ package view
 
 import "time"
 
+const ReleaseVersionStatus = "release"
+
 type PublishedVersionListView struct {
 	Version                  string                 `json:"version"`
 	Status                   string                 `json:"status"`

@@ -14,6 +14,7 @@ type SimplePackage struct {
 	DefaultRole           string              `json:"defaultRole"`
 	UserRole              string              `json:"userRole"`
 	DefaultReleaseVersion string              `json:"defaultReleaseVersion"`
+	ReleaseVersionPattern string              `json:"releaseVersionPattern"`
 }
 
 type SimplePackages struct {
