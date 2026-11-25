@@ -109,10 +109,7 @@ func TestRequireMCPTypeParam(t *testing.T) {
 }
 
 func TestGetMCPSeverities(t *testing.T) {
-	const (
-		notOneOfErr   = "severity must be one of: [breaking semi-breaking deprecated non-breaking annotation unclassified]"
-		notAnArrayErr = "severity must be an array of: [breaking semi-breaking deprecated non-breaking annotation unclassified]"
-	)
+	const notAnArrayErr = "severity must be an array of: [breaking semi-breaking deprecated non-breaking annotation unclassified]"
 	tests := []struct {
 		name        string
 		arguments   map[string]any
@@ -140,7 +137,7 @@ func TestGetMCPSeverities(t *testing.T) {
 		{
 			name:        "rejects unknown severity",
 			arguments:   map[string]any{"severity": []any{"breaking", "critical"}},
-			expectedErr: notOneOfErr,
+			expectedErr: `severity "critical" must be one of: [breaking semi-breaking deprecated non-breaking annotation unclassified]`,
 		},
 		{
 			name:        "rejects a single string instead of an array",

@@ -117,8 +117,8 @@ func getMCPSeverities(req mcp.CallToolRequest) ([]string, error) {
 	if err != nil {
 		return nil, fmt.Errorf("severity must be an array of: %v", view.Severities)
 	}
-	if _, found := view.FindInvalidSeverity(severities); found {
-		return nil, fmt.Errorf("severity must be one of: %v", view.Severities)
+	if severity, found := view.HasInvalidSeverity(severities); found {
+		return nil, fmt.Errorf("severity %q must be one of: %v", severity, view.Severities)
 	}
 	return severities, nil
 }

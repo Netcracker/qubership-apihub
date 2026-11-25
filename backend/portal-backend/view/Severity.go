@@ -14,8 +14,9 @@ const Unclassified Severity = "unclassified"
 // Severities lists every change severity, from the most to the least critical.
 var Severities = []Severity{Breaking, SemiBreaking, Deprecated, NonBreaking, Annotation, Unclassified}
 
-// FindInvalidSeverity returns the first value that is not one of Severities, and false when every value is valid.
-func FindInvalidSeverity(severities []string) (string, bool) {
+// HasInvalidSeverity reports whether severities holds a value that is not one of Severities, and returns the first
+// such value.
+func HasInvalidSeverity(severities []string) (string, bool) {
 	for _, severity := range severities {
 		if !slices.Contains(Severities, Severity(severity)) {
 			return severity, true

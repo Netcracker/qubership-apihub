@@ -581,7 +581,7 @@ func (e exportControllerImpl) GenerateApiChangesExcelReportV3(w http.ResponseWri
 		e.responder.RespondWithCustomError(w, customErr)
 		return
 	}
-	if severity, found := view.FindInvalidSeverity(severities); found {
+	if severity, found := view.HasInvalidSeverity(severities); found {
 		e.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidParameterValue,
@@ -1255,7 +1255,7 @@ func (e exportControllerImpl) GenerateDdlChangesExcelReport(w http.ResponseWrite
 		e.responder.RespondWithCustomError(w, customErr)
 		return
 	}
-	if severity, found := view.FindInvalidSeverity(severities); found {
+	if severity, found := view.HasInvalidSeverity(severities); found {
 		e.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidParameterValue,

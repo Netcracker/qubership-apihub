@@ -166,7 +166,7 @@ func (c *ddlContractControllerImpl) GetDdlEntityChanges(w http.ResponseWriter, r
 		c.responder.RespondWithCustomError(w, customErr)
 		return
 	}
-	if severity, found := view.FindInvalidSeverity(severities); found {
+	if severity, found := view.HasInvalidSeverity(severities); found {
 		c.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidParameterValue,
@@ -218,7 +218,7 @@ func (c *ddlContractControllerImpl) GetChangedDdlEntities(w http.ResponseWriter,
 		c.responder.RespondWithCustomError(w, customErr)
 		return
 	}
-	if severity, found := view.FindInvalidSeverity(severities); found {
+	if severity, found := view.HasInvalidSeverity(severities); found {
 		c.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidParameterValue,

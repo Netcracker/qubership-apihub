@@ -579,7 +579,7 @@ func (o operationControllerImpl) GetOperationChanges(w http.ResponseWriter, r *h
 		o.responder.RespondWithCustomError(w, customErr)
 		return
 	}
-	if severity, found := view.FindInvalidSeverity(severities); found {
+	if severity, found := view.HasInvalidSeverity(severities); found {
 		o.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidParameterValue,
@@ -738,7 +738,7 @@ func (o operationControllerImpl) GetOperationsChanges(w http.ResponseWriter, r *
 		o.responder.RespondWithCustomError(w, customErr)
 		return
 	}
-	if severity, found := view.FindInvalidSeverity(severities); found {
+	if severity, found := view.HasInvalidSeverity(severities); found {
 		o.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidParameterValue,
