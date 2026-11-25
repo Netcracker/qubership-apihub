@@ -83,7 +83,7 @@ by the next install.
    auto-suggest rule shown as a system reminder).
 2. Edit the canonical file(s) there.
 3. Resync deployed copies from the repo root:
-   `apm install --target cursor,claude`.
+   `apm install`.
 4. Verify the sync: diff the canonical file against
    `.agents/skills/<package>/SKILL.md` and
    `.claude/skills/<package>/SKILL.md`. They must match after install.

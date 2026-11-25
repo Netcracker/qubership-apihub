@@ -34,8 +34,7 @@ Lists and paragraphs under `##` sections **can** use soft line breaks. **Tables 
 From the repository root:
 
 ```bash
-npx markdownlint-cli --config .github/linters/.markdownlint.json docs/design/path/to/your.md
+pnpm dlx markdownlint-cli --config .github/linters/.markdownlint.json docs/design/path/to/your.md
 ```
 
-See also `.cursor/rules/ci-super-linter.mdc` (Markdown tables section) and
-`docs/development/build-and-test.md` for local CI parity.
+See also `docs/development/build-and-test.md` for local CI parity.

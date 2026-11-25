@@ -128,7 +128,7 @@ function parseCsv(text) {
 
 function previousResults() {
   if (!fs.existsSync(SHEET)) return new Map()
-  const [header, ...rows] = parseCsv(fs.readFileSync(SHEET, 'utf8').replace(/^﻿/, ''))
+  const [header, ...rows] = parseCsv(fs.readFileSync(SHEET, 'utf8').replace(/^\uFEFF/, ''))
   const at = name => header.indexOf(name)
   return new Map(rows.filter(r => r[at('Id')]).map(r =>
     [r[at('Id')], Object.fromEntries(RESULT_COLUMNS.map(name => [name, at(name) >= 0 ? r[at(name)] ?? '' : '']))]))
@@ -180,5 +180,5 @@ if (problems.length) {
   process.exit(1)
 }
 // The byte order mark makes Excel read the file as UTF-8.
-fs.writeFileSync(SHEET, `﻿${lines.join('\r\n')}\r\n`)
+fs.writeFileSync(SHEET, `\uFEFF${lines.join('\r\n')}\r\n`)
 console.log(`${SHEET}: ${lines.length - 1} cases`)

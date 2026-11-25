@@ -40,10 +40,14 @@ themselves.
   `AGENT_LOG_LEVEL` (`DEBUG`, `INFO` by default, `WARN`, `ERROR`).
 - **Environment of a run** (`runEnv`): the job environment without the variables that match
   `^(GITHUB_TOKEN|GH_TOKEN|AGENT_PAT|ACTIONS_.*|INPUT_.*)$` (`SECRET_ENV`), plus `OPENCODE_CONFIG`
-  (`tools/agent/opencode/opencode.json`), `OPENCODE_CONFIG_DIR` (`tools/agent/opencode/`), and
-  `OPENCODE_DISABLE_AUTOUPDATE=1`. The OpenAI key stays, because the run needs it.
+  (`tools/agent/opencode/opencode.json`), `OPENCODE_CONFIG_DIR` (`tools/agent/opencode/`),
+  `OPENCODE_DISABLE_PROJECT_CONFIG=1`, and `OPENCODE_DISABLE_AUTOUPDATE=1`. The OpenAI key stays, because the run
+  needs it. The flag makes opencode skip `opencode.json`, `opencode.jsonc`, and `.opencode/` of the working tree,
+  which a pull request can change, and the root `AGENTS.md` with them; the skills and the nested `AGENTS.md` files
+  still load.
 - **Config keys** (`tools/agent/opencode/opencode.json`): `share: "disabled"`, `autoupdate: false`,
-  `enabled_providers: ["openai"]`, `instructions: ["{env:GITHUB_WORKSPACE}/.claude/rules/*.md"]`, and a `permission`
+  `enabled_providers: ["openai"]`,
+  `instructions: ["{env:GITHUB_WORKSPACE}/AGENTS.md", "{env:GITHUB_WORKSPACE}/.claude/rules/*.md"]`, and a `permission`
   block that denies `edit`, `bash`, `webfetch`, `websearch`, `question`, `task`, and `external_directory` and allows
   `skill`. Each role file opens only what it needs; see [Roles](#roles).
 - **JSON events.** With `--format json`, opencode writes one JSON event per line. The scripts read three types
@@ -61,8 +65,8 @@ themselves.
   and `git grep*--open-files-in-pager*`, which could write a file or start a program.
 - **What the spike learned** ([spike.md](./spike.md)): skills in `.claude/skills/` load by name, and a `SKILL.md`
   without
-  `name` in its frontmatter is skipped; reading a file of a module attaches its `AGENTS.md`; a relative `instructions`
-  glob does not reach the hidden `.claude` folder, an absolute one does; the uncached prompt is reported in
+  `name` in its frontmatter is skipped; reading a file of a module attaches its `AGENTS.md`;
+  the uncached prompt is reported in
   `tokens.cache.write`, not in `tokens.input`, so `lib/usage.js` adds both; `--variant` works; `curl`, `gh`, and
   `git push` are refused also inside `bash -c` and after `&&`; the `steps` limit ends a run with exit code 0; a push
   with
@@ -125,11 +129,13 @@ runner image and must be 3.9 or newer.
 ### APM
 
 The playbooks are the local APM package `agent-packages/apihub-autonomous-agent` (version `0.1.0`), listed in the root
-`apm.yml` and in `apm.lock.yaml`, which pins `apm_version: 0.34.0`.
-`apm install --target cursor,claude` deploys each skill to `.agents/skills/<name>/` and
+`apm.yml` and in `apm.lock.yaml`.
+`apm install` deploys each skill to `.agents/skills/<name>/` and
 `.claude/skills/<name>/`. Both directories are committed, so a clone has the skills without APM. opencode reads
-both and prefers `.claude/skills/` when the name clashes. Use APM 0.34.0 locally
-(`pip install apm-cli==0.34.0`): an older one rewrites `.cursor/rules` in another format.
+the skill files of both concurrently, and when a name is in both, it keeps the copy that it finishes reading last,
+so the two copies must stay identical. Use the APM version that `apm.lock.yaml` records, as
+[AI assistants](../../development/ai-assistants.md#change-a-package) describes: an older one rewrites `.cursor/rules`
+in another format.
 
 ### The `yaml` package
 
@@ -1146,8 +1152,8 @@ cannot carry a `blocker`. A broken contract throws and ends the attempt with `fa
 
    Exceeding either number blocks. Protected paths (a match blocks):
    - `.github/workflows/` (the PAT has no Workflows permission).
-   - The agent's own files: `.claude/`, `.cursor/`, `tools/agent/`, `agent-packages/` at the start of the path, and
-     any `AGENTS.md` or `CLAUDE.md` at any depth.
+   - The agent's own files: `.agents/`, `.claude/`, `.cursor/`, `tools/agent/`, `agent-packages/` at the start of the
+     path, and any `AGENTS.md`, `CLAUDE.md`, `opencode.json`, `opencode.jsonc`, or `.opencode/` at any depth.
 8. **Result.** `blocked` when the implementer said so, the tree was clean, or step 7 gave a reason (stop reason
    `scope-review-required`). On an `update` attempt, conflict markers left in the conflicted files block with
    `conflict-unresolved`. `pr-opened` when
@@ -2240,8 +2246,9 @@ Runs one opencode agent headless and keeps its JSON event stream.
   the job log shows. The last 4000 characters of stderr are kept as `stderrTail`.
 - **Environment of the run:** the parent environment minus every variable that matches
   `^(GITHUB_TOKEN|GH_TOKEN|AGENT_PAT|ACTIONS_.*|INPUT_.*)$`, plus `OPENCODE_CONFIG` (path to
-  `tools/agent/opencode/opencode.json`), `OPENCODE_CONFIG_DIR` (`tools/agent/opencode/`), and
-  `OPENCODE_DISABLE_AUTOUPDATE=1`. The OpenAI key stays; no GitHub token reaches the model.
+  `tools/agent/opencode/opencode.json`), `OPENCODE_CONFIG_DIR` (`tools/agent/opencode/`),
+  `OPENCODE_DISABLE_PROJECT_CONFIG=1` (no `opencode.json`, `opencode.jsonc`, `.opencode/`, or root `AGENTS.md` from
+  the working tree), and `OPENCODE_DISABLE_AUTOUPDATE=1`. The OpenAI key stays; no GitHub token reaches the model.
 - **Events:** stdout is written to the events file as it arrives. Each complete line that starts with `{` is parsed and
   passed to `log.modelEvent`, so a long run shows progress live. Non-JSON lines stay in the file only.
 - **Result:** resolves `{ exitCode, eventsText, stderrTail }`; a non-zero exit does not reject (the cost must still be
@@ -2390,7 +2397,7 @@ The base config, selected by `OPENCODE_CONFIG`.
 | `share` | `"disabled"` | no session sharing |
 | `autoupdate` | `false` | no update at run time (`OPENCODE_DISABLE_AUTOUPDATE=1` is also set) |
 | `enabled_providers` | `["openai"]` | only the OpenAI provider |
-| `instructions` | `["{env:GITHUB_WORKSPACE}/.claude/rules/*.md"]` | the rules of the working tree are loaded as instructions; an absolute path is used because the glob does not reach into the hidden folder otherwise |
+| `instructions` | `["{env:GITHUB_WORKSPACE}/AGENTS.md", "{env:GITHUB_WORKSPACE}/.claude/rules/*.md"]` | the root `AGENTS.md` and the rules of the working tree are loaded as instructions; the paths are absolute because `OPENCODE_DISABLE_PROJECT_CONFIG` makes opencode resolve a relative path in its global config folder, and the flag also skips the root `AGENTS.md` that opencode loads by itself otherwise |
 | `permission` | `edit`, `bash`, `webfetch`, `websearch`, `question`, `task`, `external_directory`: `deny`; `skill`: `allow` | deny by default; an agent file opens only what it needs |
 
 ### `tools/agent/opencode/agents/pr-reviewer.md`
@@ -2440,8 +2447,8 @@ Changes the working tree for a Bug or Task issue.
 
 - **Frontmatter:** `steps: 200`; `webfetch: deny`, `websearch: deny`, `skill: allow`.
 - **Edit:** `"*": allow`, with these denials (paths the model must not change, because a change there would steer the
-  reviewer of the same run): `*.claude/*`, `*.cursor/*`, `*tools/agent/*`, `*agent-packages/*`, `*AGENTS.md`,
-  `*CLAUDE.md`, `*.github/workflows/*`.
+  reviewer of the same run): `*.agents/*`, `*.claude/*`, `*.cursor/*`, `*tools/agent/*`, `*agent-packages/*`,
+  `*AGENTS.md`, `*CLAUDE.md`, `*opencode.json`, `*opencode.jsonc`, `*.opencode/*`, `*.github/workflows/*`.
 - **Bash:** `"*": deny`; allowed `pnpm exec nx *`, `pnpm nx *`, `go test*`, `go build*`, `go vet*`, `gofmt*`,
   `node --test*`, `git status*`, `git diff*`, `git log*`, `git show*`, `git grep*`, `ls*`. Explicitly denied:
   `git push*`, `git commit*`, `git checkout*`, `git switch*`, `git reset*`, `git rebase*`, `gh *`, `curl *`, `wget *`.
@@ -2521,10 +2528,10 @@ Five skills live in the local APM package `agent-packages/apihub-autonomous-agen
 `agent-packages/apihub-autonomous-agent/.apm/skills/<name>/SKILL.md`.
 Each skill says that people can use it the same way as the agent.
 
-**Deployment.** `apm install --target cursor,claude` copies each skill to `.agents/skills/<name>/SKILL.md` and
+**Deployment.** `apm install` copies each skill to `.agents/skills/<name>/SKILL.md` and
 `.claude/skills/<name>/SKILL.md`. `apm.lock.yaml` lists those files under `_local/apihub-autonomous-agent` with
-their hashes. The deployed trees are never edited by hand. In CI, opencode reads both trees and prefers
-`.claude/skills/` when the same name exists in both. The review job replaces `.agents/` and `.claude/` with the
+their hashes. The deployed trees are never edited by hand. In CI, opencode reads both trees and keeps the copy it
+finishes reading last when the same name exists in both. The review job replaces `.agents/` and `.claude/` with the
 copies from the workflow's own ref, so a pull request cannot change the skills or rules that review it.
 
 ### `apihub-pr-review`

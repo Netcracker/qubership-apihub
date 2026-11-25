@@ -1,5 +1,5 @@
 ---
-name: apihub-validate
+name: apihub-frontend-gates
 description: "Runs the quality gates on the files a change touched in frontend/ and tests/ui-tests/ (dprint for files new on the branch, ESLint with --fix, the type check, and the unit tests related to them) with one command, and reports the result per package. Use before a commit or a pull request, when finishing a frontend task, or when the user asks to validate, lint, type-check, or test the change."
 ---
 
@@ -11,10 +11,10 @@ whole-module `lint:check` or `nx affected`: they are slow and report problems th
 ## Command
 
 The script is `scripts/validate.mjs` in this skill's directory. The committed copy is
-`.agents/skills/apihub-validate/`. Run it from the repository root with the files you created or changed:
+`.agents/skills/apihub-frontend-gates/`. Run it from the repository root with the files you created or changed:
 
 ```bash
-node .agents/skills/apihub-validate/scripts/validate.mjs --files <path> <path> ...
+node .agents/skills/apihub-frontend-gates/scripts/validate.mjs --files <path> <path> ...
 ```
 
 - Run it as one command: do not prefix it with `cd`, and do not run `git status` or Nx yourself.
@@ -59,6 +59,6 @@ remaining:
   frontend/ui/packages/portal/src/App.tsx(12,3): error TS2322: ...
 ```
 
-Before each gate the script prints `<project>: <gate>...` to stderr; the report goes to stdout. As the `verifier`
-subagent, return these blocks unchanged. Otherwise fix what `remaining` lists and run the command
+Before each gate the script prints `<project>: <gate>...` to stderr; the report goes to stdout. As the
+`frontend-verifier` subagent, return these blocks unchanged. Otherwise fix what `remaining` lists and run the command
 again. The exit code is 1 when a gate failed and 2 when there was nothing to check.
