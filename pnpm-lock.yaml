@@ -1766,8 +1766,8 @@ importers:
         specifier: 4.4.9
         version: 4.4.9
       '@types/lodash.pickby':
-        specifier: 4.6.6
-        version: 4.6.6
+        specifier: 4.6.9
+        version: 4.6.9
       '@types/postman-collection':
         specifier: ^3.5.11
         version: 3.5.11
@@ -9892,8 +9892,8 @@ packages:
   '@types/lodash.isequalwith@4.4.9':
     resolution: {integrity: sha512-uLXidHwVTfYeaHRipKT/pjl10PFTGM0rHLyfANSSfEJvwtFmRACmQb2y6i8eZbcOCtX+BSxOKa+JzzCTxmQ32g==}
 
-  '@types/lodash.pickby@4.6.6':
-    resolution: {integrity: sha512-NFa13XxlMd9eFi0UFZFWIztpMpXhozbijrx3Yb1viYZphT7jyopIFVoIRF4eYMjruWNEG1rnyrRmg/8ej9T8Iw==}
+  '@types/lodash.pickby@4.6.9':
+    resolution: {integrity: sha512-SPI248FYnyd3jOxDeJq2vX2UKQnDzqacuqdeOVqwE1MPSk8gN8TA3FcHSMQWLlpBnuHgXvgKInvywbOFbidpJA==}
 
   '@types/lodash@4.17.20':
     resolution: {integrity: sha512-H3MHACvFUEiujabxhaI/ImO6gUrd8oOurg7LQtS7mbwIXA/cUqWrvBsaeJ23aZEPk1TAYkurjfMbSELfoCXlGA==}
@@ -33735,7 +33735,7 @@ snapshots:
     dependencies:
       '@types/lodash': 4.17.20
 
-  '@types/lodash.pickby@4.6.6':
+  '@types/lodash.pickby@4.6.9':
     dependencies:
       '@types/lodash': 4.17.20
 
