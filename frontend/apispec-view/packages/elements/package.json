@@ -61,7 +61,7 @@
     "react-router-dom": "^5.2.0",
     "storybook": "^8.2.1",
     "typescript": "catalog:",
-    "webpack": "5.76.0",
+    "webpack": "5.104.1",
     "webpack-cli": "4.7.2"
   },
   "nx": {
