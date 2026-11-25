@@ -1030,8 +1030,8 @@ importers:
         specifier: ^1.2.1
         version: 1.2.1
       '@types/swagger-schema-official':
-        specifier: 2.0.22
-        version: 2.0.22
+        specifier: 2.0.25
+        version: 2.0.25
       '@types/urijs':
         specifier: ^1.19.26
         version: 1.19.26
@@ -1142,8 +1142,8 @@ importers:
         specifier: ^7.0.15
         version: 7.0.15
       '@types/swagger-schema-official':
-        specifier: 2.0.22
-        version: 2.0.22
+        specifier: 2.0.25
+        version: 2.0.25
       classnames:
         specifier: ^2.2.6
         version: 2.5.1
@@ -1720,8 +1720,8 @@ importers:
         specifier: ^7.0.15
         version: 7.0.15
       '@types/swagger-schema-official':
-        specifier: ~2.0.22
-        version: 2.0.22
+        specifier: ~2.0.25
+        version: 2.0.25
       '@types/type-is':
         specifier: ^1.6.7
         version: 1.6.7
@@ -2034,8 +2034,8 @@ importers:
         specifier: ^2.1.0
         version: 2.4.10
       '@types/swagger-schema-official':
-        specifier: ~2.0.22
-        version: 2.0.22
+        specifier: ~2.0.25
+        version: 2.0.25
       '@types/urijs':
         specifier: ^1.19.26
         version: 1.19.26
@@ -9563,12 +9563,6 @@ packages:
       '@types/react-dom':
         optional: true
 
-  '@testing-library/user-event@14.6.10':
-    resolution: {integrity: sha512-tA4stGNp3mLGOGO+lh87UA56Tz4c8NVGBSkyIF58O+W/bs2Re9BCI9xihnL70+DsThncFznE0skS88SM1D2hyg==}
-    engines: {node: '>=12', npm: '>=6'}
-    peerDependencies:
-      '@testing-library/dom': '>=7.21.4'
-
   '@testing-library/user-event@14.6.13':
     resolution: {integrity: sha512-2LVZGptuB5un1Cu/u31o9adkCwbsUTMp4B4p04xupI7uobvTIpgKidSdShqZiReo/mQmvR9xjgdgTgge4oAbYA==}
     engines: {node: '>=12', npm: '>=6'}
@@ -10093,8 +10087,8 @@ packages:
   '@types/supertest@7.2.0':
     resolution: {integrity: sha512-uh2Lv57xvggst6lCqNdFAmDSvoMG7M/HDtX4iUCquxQ5EGPtaPM5PL5Hmi7LCvOG8db7YaCPNJEeoI8s/WzIQw==}
 
-  '@types/swagger-schema-official@2.0.22':
-    resolution: {integrity: sha512-7yQiX6MWSFSvc/1wW5smJMZTZ4fHOd+hqLr3qr/HONDxHEa2bnYAsOcGBOEqFIjd4yetwMOdEDdeW+udRAQnHA==}
+  '@types/swagger-schema-official@2.0.25':
+    resolution: {integrity: sha512-T92Xav+Gf/Ik1uPW581nA+JftmjWPgskw/WBf4TJzxRG/SJ+DfNnNE+WuZ4mrXuzflQMqMkm1LSYjzYW7MB1Cg==}
 
   '@types/swagger2openapi@7.0.4':
     resolution: {integrity: sha512-ffMqzciTDihOKH4Q//9Ond1yb5JP1P5FC/aFPsLK4blea1Fwk2aYctiNCkAh5etDYFswFXS+5LV/vuGkf+PU6A==}
@@ -33345,10 +33339,6 @@ snapshots:
       '@types/react': 18.3.31
       '@types/react-dom': 18.3.7(@types/react@18.3.31)
 
-  '@testing-library/user-event@14.6.10(@testing-library/dom@10.4.2)':
-    dependencies:
-      '@testing-library/dom': 10.4.2
-
   '@testing-library/user-event@14.6.13(@testing-library/dom@10.4.1)':
     dependencies:
       '@testing-library/dom': 10.4.1
@@ -33964,7 +33954,7 @@ snapshots:
       '@types/methods': 1.1.4
       '@types/superagent': 8.1.11
 
-  '@types/swagger-schema-official@2.0.22': {}
+  '@types/swagger-schema-official@2.0.25': {}
 
   '@types/swagger2openapi@7.0.4':
     dependencies:
@@ -50135,7 +50125,7 @@ snapshots:
       '@storybook/icons': 2.1.0(react@18.3.1)
       '@testing-library/dom': 10.4.2
       '@testing-library/jest-dom': 6.9.1
-      '@testing-library/user-event': 14.6.10(@testing-library/dom@10.4.2)
+      '@testing-library/user-event': 14.6.13(@testing-library/dom@10.4.2)
       '@vitest/expect': 3.2.4
       '@vitest/spy': 3.2.4
       '@webcontainer/env': 1.1.1
