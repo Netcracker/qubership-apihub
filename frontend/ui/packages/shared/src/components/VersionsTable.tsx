@@ -25,13 +25,9 @@ import { CustomChip } from './CustomChip'
 import { ColumnDelimiter } from './ColumnDelimiter'
 import { createComponents } from '../utils/components'
 import { DEFAULT_NUMBER_SKELETON_ROWS } from '../utils/constants'
-import type { VersionStatus } from '../entities/version-status'
-import { DRAFT_VERSION_STATUS, RELEASE_VERSION_STATUS } from '../entities/version-status'
-import { ArrowDown } from '../icons/ArrowDown'
 
 type VersionsTableProps = {
   value: ReadonlyArray<PackageVersion>
-  versionStatus: VersionStatus
   onClickVersion: (version: PackageVersion | undefined) => void
   isLoading: boolean
   kind?: PackageKind
@@ -39,7 +35,6 @@ type VersionsTableProps = {
 
 export const VersionsTable: FC<VersionsTableProps> = memo<VersionsTableProps>(({
   value,
-  versionStatus,
   onClickVersion,
   isLoading,
   kind,
@@ -61,10 +56,7 @@ export const VersionsTable: FC<VersionsTableProps> = memo<VersionsTableProps>(({
   const columns: ColumnDef<TableData>[] = useMemo(() => [
     {
       id: VERSION_COLUMN_ID,
-      header: () => <Box display="flex" gap="4px">
-        <CustomTableHeadCell title="Version" />
-        {versionStatus === RELEASE_VERSION_STATUS && <ArrowDown />}
-      </Box>,
+      header: () => <CustomTableHeadCell title="Version" />,
       cell: ({ row: { original: { version } } }) => {
         const { versionKey } = getSplittedVersionKey(version?.key)
         return (
@@ -86,10 +78,7 @@ export const VersionsTable: FC<VersionsTableProps> = memo<VersionsTableProps>(({
     },
     {
       id: PUBLICATION_DATE_COLUMN_ID,
-      header: () => <Box display="flex" gap="4px">
-        <CustomTableHeadCell title="Publication Date" />
-        {versionStatus === DRAFT_VERSION_STATUS && <ArrowDown />}
-      </Box>,
+      header: () => <CustomTableHeadCell title="Publication Date" />,
       cell: ({ row: { original: { version } } }) => (
         <FormattedDate value={version?.createdAt} />
       ),
@@ -121,7 +110,7 @@ export const VersionsTable: FC<VersionsTableProps> = memo<VersionsTableProps>(({
         )
       },
     },
-  ], [kind, versionStatus])
+  ], [kind])
 
   const data: TableData[] = useMemo(() => value.map(version => ({
     version: version,
