@@ -89,7 +89,8 @@ export const LibraryReferenceTab: FC<Readonly<{ version: LibraryVersion }>> = me
     }
     toggleOperationsViewMode(value)
   }
-  const onResize: ResizeCallback = (_, __, ___, delta) => togglePreviewSize(previewSize + delta.width)
+  // Save the drawn width: the list bounds can clamp the preview away from its saved size
+  const onResize: ResizeCallback = (_, __, element) => togglePreviewSize(element.offsetWidth)
   const maxPreviewWidth = bodyWidth !== undefined
     ? bodyWidth - SUBPAGE_MARGIN
     : NAVIGATION_MAX_WIDTH

@@ -4,11 +4,13 @@ import type { Path } from '@remix-run/router'
 import type { ResizeCallback } from 're-resizable'
 import { Resizable } from 're-resizable'
 import type { FC, ReactNode } from 'react'
-import { memo, useCallback, useMemo, useRef } from 'react'
+import { memo, useCallback, useMemo, useRef, useState } from 'react'
 
 import type { Key } from '../entities/keys'
 import { useIntersectionObserver } from '../hooks/common/useIntersectionObserver'
+import { useResizeObserver } from '../hooks/common/useResizeObserver'
 import { isNotEmpty } from '../utils/arrays'
+import { NAVIGATION_MAX_WIDTH, NAVIGATION_MIN_WIDTH } from '../utils/page-layouts'
 import { CustomListItemButton, LIST_ITEM_SIZE_BIG } from './CustomListItemButton'
 import { ListBox } from './Panels/ListBox'
 import { NAVIGATION_PLACEHOLDER_AREA, Placeholder } from './Placeholder'
@@ -61,6 +63,15 @@ function MetaClickableListWithPreviewComponent<TItem>({
   const ref = useRef<HTMLDivElement>(null)
   useIntersectionObserver(ref, isNextPageFetching, hasNextPage, fetchNextPage)
 
+  // The list is a navigation column: like the page navigation it stays between the navigation widths, and the
+  // preview takes the rest of the width whatever its saved size. The measured width replaces maxWidth, which some
+  // callers compute only on render and which then blocks a drag after the window grows.
+  const gridRef = useRef<HTMLDivElement>(null)
+  const [gridWidth, setGridWidth] = useState<number>()
+  useResizeObserver(gridRef, setGridWidth)
+  const previewMinWidth = gridWidth !== undefined ? Math.max(0, gridWidth - NAVIGATION_MAX_WIDTH) : undefined
+  const previewMaxWidth = gridWidth !== undefined ? Math.max(0, gridWidth - NAVIGATION_MIN_WIDTH) : maxWidth
+
   const itemList = useMemo(
     () =>
       items.map(item => {
@@ -85,7 +96,7 @@ function MetaClickableListWithPreviewComponent<TItem>({
   const isListContentVisible = isNotEmpty(items) || isLoading
 
   return (
-    <ListGrid>
+    <ListGrid ref={gridRef}>
       <ListBox>
         {isListContentVisible
           ? (
@@ -132,7 +143,8 @@ function MetaClickableListWithPreviewComponent<TItem>({
           }}
           boundsByDirection={true}
           size={{ width: initialSize, height: '100%' }}
-          maxWidth={maxWidth}
+          minWidth={previewMinWidth}
+          maxWidth={previewMaxWidth}
           onResizeStop={handleResize}
         >
           <PreviewContent>{previewComponent}</PreviewContent>
@@ -193,7 +205,7 @@ ListSkeleton.displayName = 'ListSkeleton'
 
 const ListGrid = styled(Box)({
   display: 'grid',
-  gridTemplateColumns: '1fr auto',
+  gridTemplateColumns: `minmax(${NAVIGATION_MIN_WIDTH}px, 1fr) auto`,
   height: 'inherit',
 })
 

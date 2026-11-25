@@ -1,4 +1,4 @@
-import type { NumberSize, ResizeDirection } from 're-resizable'
+import type { ResizeDirection } from 're-resizable'
 import type { FC, MutableRefObject } from 'react'
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
@@ -204,11 +204,12 @@ export const VersionContractsSubPage: FC = memo(() => {
     operationsViewMode,
   } = usePortalPageSettingsContext()
 
+  // Save the drawn width: the list bounds can clamp the preview away from its saved size
   const onResize = useCallback(
-    (_: MouseEvent | TouchEvent, __: ResizeDirection, ___: HTMLElement, delta: NumberSize) => {
-      togglePreviewSize(previewSize + delta.width)
+    (_: MouseEvent | TouchEvent, __: ResizeDirection, element: HTMLElement) => {
+      togglePreviewSize(element.offsetWidth)
     },
-    [previewSize, togglePreviewSize],
+    [togglePreviewSize],
   )
 
   const maxPreviewWidth = useMemo(() => {

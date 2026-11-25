@@ -8,7 +8,7 @@ import { useRefSearchParam } from '../../useRefSearchParam'
 import { useOperationGroupSearchFilter } from '../useOperationGroupSearchFilter'
 import { useSetSelectedPreviewOperation } from '../../SelectedPreviewOperationProvider'
 import { useDeprecatedOperations } from './useDeprecatedOperations'
-import type { NumberSize, ResizeDirection } from 're-resizable'
+import type { ResizeDirection } from 're-resizable'
 import { DeprecatedOperationsTable } from './DeprecatedOperationsTable'
 import { OperationListWithPreview } from '../OperationListWithPreview'
 import { DeprecatedItemsList } from './DeprecatedItemList'
@@ -74,9 +74,10 @@ export const VersionDeprecatedOperationsSubPage: FC = memo(() => {
   } = usePortalPageSettingsContext()
 
   const onResize = useCallback(
-    (_: MouseEvent | TouchEvent, __: ResizeDirection, ___: HTMLElement, delta: NumberSize) => {
-      togglePreviewSize(previewSize + delta.width)
-    }, [previewSize, togglePreviewSize])
+    // Save the drawn width: the list bounds can clamp the preview away from its saved size
+    (_: MouseEvent | TouchEvent, __: ResizeDirection, element: HTMLElement) => {
+      togglePreviewSize(element.offsetWidth)
+    }, [togglePreviewSize])
 
   //todo move to low level (VersionContractsPanel or OperationListWithPreview)
   const maxPreviewWidth = useMemo(() => {
