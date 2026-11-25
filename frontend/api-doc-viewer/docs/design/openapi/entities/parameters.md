@@ -194,9 +194,10 @@ unrelated schema objects. Build the property schema from them:
 4. `type`, `scope`, declaration paths: from the source switch diff (`schema` / `content` entry
    `add` or `remove`); the highest diff type of the two switch diffs wins.
 
-`apiDiff` **does not map media types inside a parameter's `content`** (only request and response
-bodies use `contentMediaTypeMappingResolver`): `application/json` → `application/json;
-charset=utf-8` arrives as a `remove` + an `add`, never as a `rename` (E17). It is therefore always
+`apiDiff` maps the entries of a parameter's `content` by media type
+(`contentMediaTypeMappingResolver`, same as request and response bodies): `application/json` →
+`application/json; charset=utf-8` arrives as a `rename` (`beforeKey` / `afterKey` on the merged
+after key). The synthesizer resolves each side's media type from the rename keys, so it is always
 the "different sources" case, even when both schemas are identical (then step 2 yields no schema
 diffs at all and only the media type changes).
 
@@ -257,8 +258,8 @@ Fixtures `packages/samples/openapi-diffs/<fragment>/11-…` to `13-…` and `21-
 | — | entry `E` + schema `S` | schema `S` | entry remove | `E` → `S` | `replace` (or none when `E` equals `S`) |
 | — | schema `S` | entry `E` + schema `S` | entry add | `S` → `E` | `replace` (or none when equal) |
 | 16 | `schema` (`boolean`, root `D1`) | `content: application/json` (`object`, root `D2`) | `schema` remove; `content` add | `D1` → `D2` | description `replace`; schema keys: `type` replace, `properties` add; `Media type` add |
-| 17 | `content: application/json` | `content: application/json; charset=utf-8`, same schema | `content` entry remove + entry add (no rename) | unchanged | no description or schema diffs; `Media type` value `replace` |
-| 18 | `content: application/json` (`object`, `D1`) | `content: text/plain` (`string`, `D2`) | `content` entry remove + entry add | `D1` → `D2` | description `replace`; `type` replace; `Media type` value `replace` |
+| 17 | `content: application/json` | `content: application/json; charset=utf-8`, same schema | `content` entry `rename` | unchanged | no description or schema diffs; `Media type` value `replace` |
+| 18 | `content: application/json` (`object`, `D1`) | `content: text/plain` (`string`, `D2`) | `content` entry remove + entry add (unmappable media types) | `D1` → `D2` | description `replace`; `type` replace; `Media type` value `replace` |
 
 The row stays one property in all scenarios: a description or schema-source change never turns a
 parameter into a removed + added pair (that only happens when its name or `in` changes, E3 / E4).
