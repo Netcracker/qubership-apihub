@@ -75,8 +75,9 @@ export const LibraryReferenceTab: FC<Readonly<{ version: LibraryVersion }>> = me
   }, [resetFilters, setSearchParams])
 
   const prepareLinkFn = useCallback(
-    (javaClass: JavaApiClassListItem) => getJavaReferenceLink(version.libraryId, version.version, javaClass.className),
-    [version.libraryId, version.version],
+    (javaClass: JavaApiClassListItem) =>
+      getJavaReferenceLink(version.libraryId, version.version, javaClass.className, javaType),
+    [version.libraryId, version.version, javaType],
   )
   const onViewChange = (value: Key | undefined): void => {
     if (!value) return

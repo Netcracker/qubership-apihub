@@ -1,6 +1,6 @@
 import type { JavaApiClassListItem } from '@netcracker/qubership-apihub-api-doc-viewer'
 
-import { formatMemberCounts, getJavaReferenceClasses } from './javaApi'
+import { formatMemberCounts, getJavaReferenceClasses, getJavaReferenceLink } from './javaApi'
 
 const CLASSES: JavaApiClassListItem[] = (['CLASS', 'INTERFACE'] as const).map(typeKind => ({
   className: `example.${typeKind}`,
@@ -37,6 +37,13 @@ describe('Java Reference selection', () => {
       })
     },
   )
+
+  it.each([
+    ['INTERFACE', '?javaClass=a.B%24C&javaType=INTERFACE'],
+    [undefined, '?javaClass=a.B%24C'],
+  ] as const)('links a type with the type filter %s', (javaType, search) => {
+    expect(getJavaReferenceLink('w.LIB', '1.0', 'a.B$C', javaType).search).toBe(search)
+  })
 })
 
 describe('formatMemberCounts', () => {

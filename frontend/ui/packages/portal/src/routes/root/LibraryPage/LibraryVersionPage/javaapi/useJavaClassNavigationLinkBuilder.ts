@@ -3,28 +3,17 @@ import { createPath, useParams } from 'react-router-dom'
 
 import type { JavaApiNavigationLinkBuilder } from '@netcracker/qubership-apihub-api-doc-viewer'
 
-import {
-  getJavaClassPageLink,
-  getJavaReferenceLink,
-  type JavaApiDocumentKind,
-  type PreviousLibraryVersion,
-} from './javaApi'
+import { getJavaReferenceLink } from './javaApi'
+import { useJavaTypeFilter } from './JavaTypeFilter'
 
-export function useJavaClassNavigationLinkBuilder(
-  kind: JavaApiDocumentKind = 'report',
-  previous?: PreviousLibraryVersion,
-): JavaApiNavigationLinkBuilder {
+// A type link opens the type in the API Reference of this version, also from the compare page, as a table link of
+// the package table comparison opens the table page
+export function useJavaClassNavigationLinkBuilder(): JavaApiNavigationLinkBuilder {
   const { libraryId, versionId } = useParams()
-  const { previousLibraryId, previousVersion } = previous ?? {}
+  const [javaType] = useJavaTypeFilter()
 
   return useCallback((className: string) => {
     if (!libraryId || !versionId) return '#'
-    if (kind === 'diff') {
-      return createPath(getJavaClassPageLink(libraryId, versionId, className, 'diff', {
-        previousLibraryId,
-        previousVersion,
-      }))
-    }
-    return createPath(getJavaReferenceLink(libraryId, versionId, className))
-  }, [libraryId, versionId, kind, previousLibraryId, previousVersion])
+    return createPath(getJavaReferenceLink(libraryId, versionId, className, javaType))
+  }, [libraryId, versionId, javaType])
 }

@@ -86,8 +86,11 @@ export function getJavaReferenceLink(
   libraryId: string,
   versionId: string,
   className: string,
+  javaType?: JavaTypeFilterValue,
 ): { pathname: string; search: string } {
   const query = new URLSearchParams({ [JAVA_CLASS_SEARCH_PARAM]: className })
+  // Keep the type filter: the link opens the type in the same list. A type the filter hides clears it there.
+  if (javaType) query.set(JAVA_TYPE_FILTER_SEARCH_PARAM, javaType)
   return {
     pathname: getLibraryVersionPath(libraryId, versionId, CONTRACTS_PAGE),
     search: `?${query}`,

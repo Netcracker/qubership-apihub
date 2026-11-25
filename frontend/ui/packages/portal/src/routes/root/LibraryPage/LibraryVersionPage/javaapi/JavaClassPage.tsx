@@ -68,7 +68,7 @@ const JavaClassComparePage: FC = () => {
     setPreviousLibraryVersion(params, { previousLibraryId, previousVersion })
     navigate(origin?.pathname.startsWith(versionPath) ? origin : { pathname: tabPath, search: `?${params}` })
   }
-  const navigationLinkBuilder = useJavaClassNavigationLinkBuilder('diff', { previousLibraryId, previousVersion })
+  const navigationLinkBuilder = useJavaClassNavigationLinkBuilder()
 
   if (isLibraryLoading || isVersionLoading) return <LoadingIndicator />
   if (!library || !version) {
@@ -96,7 +96,8 @@ const JavaClassComparePage: FC = () => {
         <JavaClassViewer
           source={data.document}
           classKey={classKey}
-          navigationLinkBuilder={navigationLinkBuilder}
+          // A class removed in this version has no API Reference page to open, so its type names stay plain text
+          navigationLinkBuilder={rawData?.class ? navigationLinkBuilder : undefined}
           navigationLinkComponent={JavaClassNavigationLink}
         />
       </ViewerBox>

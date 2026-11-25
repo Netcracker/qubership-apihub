@@ -8,6 +8,7 @@ import {
   type LibraryVersionPublishDto,
   toLibraryVersion,
 } from '@portal/entities/libraries'
+import { useShowSuccessNotification } from '@portal/routes/root/BasePage/Notification'
 import { requestJsonWithError } from '@portal/utils/requestJsonWithError'
 import { LIBRARIES_API_BASE_PATH } from '@portal/utils/requests'
 import { useInvalidateLibraryVersions } from './useLibraryVersions'
@@ -24,10 +25,16 @@ type PublishLibraryVersionResult = {
 
 export function usePublishLibraryVersion(libraryId: Key): PublishLibraryVersionResult {
   const invalidateVersions = useInvalidateLibraryVersions(libraryId)
+  const showSuccessNotification = useShowSuccessNotification()
   const { mutate, data, isLoading, isSuccess, error } = useMutation<LibraryVersion, Error, LibraryVersionPublishDto>(
     {
       mutationFn: value => publishLibraryVersion(libraryId, value),
-      onSuccess: invalidateVersions,
+      // Notify before the refresh: on the empty library page the refreshed versions redirect to the new version and
+      // unmount the dialog before it sees isSuccess
+      onSuccess: () => {
+        showSuccessNotification({ message: 'Library version has been saved' })
+        return invalidateVersions()
+      },
     },
   )
 

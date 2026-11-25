@@ -37,7 +37,6 @@ import {
   type LibraryVersionPublishDto,
   type MavenLibraryDto,
 } from '@portal/entities/libraries'
-import { useShowSuccessNotification } from '@portal/routes/root/BasePage/Notification'
 import { useLibraryAvailableVersions } from '@portal/routes/root/LibraryPage/useLibraryAvailableVersions'
 import { useLibraryVersions } from '@portal/routes/root/LibraryPage/useLibraryVersions'
 import { usePublishLibraryVersion } from '@portal/routes/root/LibraryPage/usePublishLibraryVersion'
@@ -75,7 +74,6 @@ export const PublishLibraryDialog: FC<PublishLibraryDialogProps> = memo<PublishL
     const { versions, isLoading: areVersionsLoading, error: versionsError } = useLibraryVersions(libraryId)
     const { publishVersion, version: publishedVersion, isLoading: isPublishing, isSuccess, error } =
       usePublishLibraryVersion(libraryId)
-    const showSuccessNotification = useShowSuccessNotification()
     const { control, handleSubmit, setValue, getValues, setError, clearErrors } = useForm<LibraryVersionPublishDto>({
       defaultValues: {
         version: '',
@@ -122,11 +120,10 @@ export const PublishLibraryDialog: FC<PublishLibraryDialogProps> = memo<PublishL
 
     useEffect(() => {
       if (isSuccess) {
-        showSuccessNotification({ message: 'Library version has been saved' })
         if (publishedVersion) onPublished?.(publishedVersion)
         onClose()
       }
-    }, [isSuccess, onClose, onPublished, publishedVersion, showSuccessNotification])
+    }, [isSuccess, onClose, onPublished, publishedVersion])
 
     const handleClose = (): void => {
       if (!isPublishing) onClose()
