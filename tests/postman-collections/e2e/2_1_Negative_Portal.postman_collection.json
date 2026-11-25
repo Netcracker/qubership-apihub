@@ -10462,6 +10462,62 @@
                             },
                             "response": [],
                             "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "4.4.61 Get package versions with invalid \"sortBy\" query parameter",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test(\"Status code is 400\", function () {\r",
+                                            "    pm.response.to.have.status(400);\r",
+                                            "});"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v3/packages/{{package_1}}/versions?sortBy=invalid",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v3",
+                                        "packages",
+                                        "{{package_1}}",
+                                        "versions"
+                                    ],
+                                    "query": [
+                                        {
+                                            "key": "sortBy",
+                                            "value": "invalid"
+                                        }
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    }
+                                ]
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
                         }
                     ]
                 }
