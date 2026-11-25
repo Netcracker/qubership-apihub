@@ -99,7 +99,7 @@
     "@testing-library/dom": "10.4.2",
     "@testing-library/jest-dom": "6.8.0",
     "@testing-library/react": "^16.3.3",
-    "@testing-library/user-event": "14.6.10",
+    "@testing-library/user-event": "14.6.13",
     "@types/classnames": "^2.2.10",
     "@types/har-format": "^1.2.5",
     "@types/httpsnippet": "^1.23.0",
