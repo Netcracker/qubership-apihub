@@ -56,7 +56,7 @@ const LibraryNotFound = "3000"
 const LibraryNotFoundMsg = "Library $libraryId is not found"
 
 const LibraryAlreadyExists = "3001"
-const LibraryAlreadyExistsMsg = "A library with the same repository and coordinates is already tracked"
+const LibraryAlreadyExistsMsg = "A library with the same repository and coordinates is already tracked as library $libraryId"
 
 const InvalidCoordinates = "3002"
 const InvalidCoordinatesMsg = "Coordinates are not valid for language '$language': $details"

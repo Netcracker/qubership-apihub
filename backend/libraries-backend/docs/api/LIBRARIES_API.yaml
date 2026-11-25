@@ -256,7 +256,9 @@ paths:
                   value:
                     status: 409
                     code: "LIBRARY_ALREADY_EXISTS"
-                    message: "A library with the same repository and coordinates is already tracked"
+                    message: "A library with the same repository and coordinates is already tracked as library $libraryId"
+                    params:
+                      libraryId: "QS.CloudQSS.commons"
         "500":
           $ref: "#/components/responses/InternalServerError"
   "/api/v1/libraries/{libraryId}":
