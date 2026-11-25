@@ -2,6 +2,7 @@ package service
 
 import (
 	goctx "context"
+	"encoding/json"
 	"slices"
 	"testing"
 	"time"
@@ -48,20 +49,19 @@ func (fakeApihubClient) GetPackageByServiceName(secctx.SecurityContext, string, 
 	return nil, nil
 }
 
-func TestRunDiscoveryIncludeLabels(t *testing.T) {
+func TestRunDiscoveryScopeLabels(t *testing.T) {
 	const namespace = "ns"
 	const workspaceId = "workspace"
 	replicas := int32(1)
 
 	tests := []struct {
-		name              string
-		includeLabels     []string
-		excludeLabels     []string
-		requestedServices []string
-		services          []entity.Service
-		pods              []entity.Pod
-		deployments       []entity.Deployment
-		want              []string
+		name          string
+		scope         view.DiscoveryRequest
+		excludeLabels []string
+		services      []entity.Service
+		pods          []entity.Pod
+		deployments   []entity.Deployment
+		want          []string
 	}{
 		{
 			name:     "empty filter keeps every service",
@@ -69,8 +69,8 @@ func TestRunDiscoveryIncludeLabels(t *testing.T) {
 			want:     []string{"a", "b"},
 		},
 		{
-			name:          "match by a Service label",
-			includeLabels: []string{"app.kubernetes.io/part-of=abc"},
+			name:  "match by a Service label",
+			scope: view.DiscoveryRequest{Labels: []string{"app.kubernetes.io/part-of=abc"}},
 			services: []entity.Service{
 				{Metadata: entity.Metadata{Name: "a", Labels: map[string]string{"app.kubernetes.io/part-of": "abc"}}},
 				{Metadata: entity.Metadata{Name: "b", Labels: map[string]string{"app.kubernetes.io/part-of": "xyz"}}},
@@ -78,8 +78,8 @@ func TestRunDiscoveryIncludeLabels(t *testing.T) {
 			want: []string{"a"},
 		},
 		{
-			name:          "entries combine with OR",
-			includeLabels: []string{"app.kubernetes.io/part-of=abc", "tier=backend"},
+			name:  "entries combine with OR",
+			scope: view.DiscoveryRequest{Labels: []string{"app.kubernetes.io/part-of=abc", "tier=backend"}},
 			services: []entity.Service{
 				{Metadata: entity.Metadata{Name: "a", Labels: map[string]string{"app.kubernetes.io/part-of": "abc"}}},
 				{Metadata: entity.Metadata{Name: "b", Labels: map[string]string{"tier": "backend"}}},
@@ -88,8 +88,8 @@ func TestRunDiscoveryIncludeLabels(t *testing.T) {
 			want: []string{"a", "b"},
 		},
 		{
-			name:          "pod label overrides the Service label with the same key",
-			includeLabels: []string{"app.kubernetes.io/part-of=abc"},
+			name:  "service label overrides non-matching pod label",
+			scope: view.DiscoveryRequest{Labels: []string{"app.kubernetes.io/part-of=abc"}},
 			services: []entity.Service{
 				{
 					Metadata: entity.Metadata{Name: "a", Labels: map[string]string{"app.kubernetes.io/part-of": "abc"}},
@@ -99,11 +99,39 @@ func TestRunDiscoveryIncludeLabels(t *testing.T) {
 			pods: []entity.Pod{
 				{Metadata: entity.Metadata{Name: "a-pod", Labels: map[string]string{"app": "a", "app.kubernetes.io/part-of": "xyz"}}},
 			},
+			want: []string{"a"},
+		},
+		{
+			name:  "non-matching service label overrides matching pod label",
+			scope: view.DiscoveryRequest{Labels: []string{"app.kubernetes.io/part-of=abc"}},
+			services: []entity.Service{
+				{
+					Metadata: entity.Metadata{Name: "a", Labels: map[string]string{"app.kubernetes.io/part-of": "xyz"}},
+					Spec:     entity.ServiceSpec{Selector: map[string]string{"app": "a"}},
+				},
+			},
+			pods: []entity.Pod{
+				{Metadata: entity.Metadata{Name: "a-pod", Labels: map[string]string{"app": "a", "app.kubernetes.io/part-of": "abc"}}},
+			},
 			want: []string{},
 		},
 		{
-			name:          "match only through the second selected pod on an empty value",
-			includeLabels: []string{"track="},
+			name:  "empty service label overrides matching pod label",
+			scope: view.DiscoveryRequest{Labels: []string{"app.kubernetes.io/part-of=abc"}},
+			services: []entity.Service{
+				{
+					Metadata: entity.Metadata{Name: "a", Labels: map[string]string{"app.kubernetes.io/part-of": ""}},
+					Spec:     entity.ServiceSpec{Selector: map[string]string{"app": "a"}},
+				},
+			},
+			pods: []entity.Pod{
+				{Metadata: entity.Metadata{Name: "a-pod", Labels: map[string]string{"app": "a", "app.kubernetes.io/part-of": "abc"}}},
+			},
+			want: []string{},
+		},
+		{
+			name:  "pod label matches when service omits that key",
+			scope: view.DiscoveryRequest{Labels: []string{"track="}},
 			services: []entity.Service{
 				{Metadata: entity.Metadata{Name: "a"}, Spec: entity.ServiceSpec{Selector: map[string]string{"app": "a"}}},
 			},
@@ -114,8 +142,20 @@ func TestRunDiscoveryIncludeLabels(t *testing.T) {
 			want: []string{"a"},
 		},
 		{
-			name:          "pod not selected by the service does not count",
-			includeLabels: []string{"app.kubernetes.io/part-of=abc"},
+			name:  "multiple pods merge deterministically by pod name regardless of input order",
+			scope: view.DiscoveryRequest{Labels: []string{"tier=new"}},
+			services: []entity.Service{
+				{Metadata: entity.Metadata{Name: "a"}, Spec: entity.ServiceSpec{Selector: map[string]string{"app": "a"}}},
+			},
+			pods: []entity.Pod{
+				{Metadata: entity.Metadata{Name: "a-pod-2", Labels: map[string]string{"app": "a", "tier": "new"}}},
+				{Metadata: entity.Metadata{Name: "a-pod-1", Labels: map[string]string{"app": "a", "tier": "old"}}},
+			},
+			want: []string{"a"},
+		},
+		{
+			name:  "pod not selected by the service does not count",
+			scope: view.DiscoveryRequest{Labels: []string{"app.kubernetes.io/part-of=abc"}},
 			services: []entity.Service{
 				{Metadata: entity.Metadata{Name: "a"}, Spec: entity.ServiceSpec{Selector: map[string]string{"app": "a", "track": ""}}},
 			},
@@ -125,8 +165,8 @@ func TestRunDiscoveryIncludeLabels(t *testing.T) {
 			want: []string{},
 		},
 		{
-			name:          "excluded service is not discovered although it matches an include entry",
-			includeLabels: []string{"tier=api"},
+			name:          "excluded service is not discovered although it matches a requested label",
+			scope:         view.DiscoveryRequest{Labels: []string{"tier=api"}},
 			excludeLabels: []string{"skip"},
 			services: []entity.Service{
 				{Metadata: entity.Metadata{Name: "a", Labels: map[string]string{"tier": "api", "skip": "true"}}},
@@ -134,9 +174,18 @@ func TestRunDiscoveryIncludeLabels(t *testing.T) {
 			want: []string{},
 		},
 		{
-			name:              "requested service that fails the filter does not abort the run on its not-ready deployment",
-			includeLabels:     []string{"track="},
-			requestedServices: []string{"not-ready"},
+			name:  "combined services and labels filters blue-green variants with AND",
+			scope: view.DiscoveryRequest{Services: []string{"svc"}, Labels: []string{"tier=api"}},
+			services: []entity.Service{
+				{Metadata: entity.Metadata{Name: "svc-v1", Labels: map[string]string{"tier": "api"}}},
+				{Metadata: entity.Metadata{Name: "svc-v2", Labels: map[string]string{"tier": "batch"}}},
+				{Metadata: entity.Metadata{Name: "other-v1", Labels: map[string]string{"tier": "api"}}},
+			},
+			want: []string{"svc-v1"},
+		},
+		{
+			name:  "requested service that fails the label filter does not abort the run on its not-ready deployment",
+			scope: view.DiscoveryRequest{Services: []string{"not-ready"}, Labels: []string{"track="}},
 			services: []entity.Service{
 				{Metadata: entity.Metadata{Name: "not-ready"}, Spec: entity.ServiceSpec{Selector: map[string]string{"app": "not-ready"}}},
 			},
@@ -158,18 +207,29 @@ func TestRunDiscoveryIncludeLabels(t *testing.T) {
 			},
 			want: []string{"a"},
 		},
+		{
+			name:  "selectorless service matching labels does not fail on unrelated not-ready deployment",
+			scope: view.DiscoveryRequest{Labels: []string{"tier=api"}},
+			services: []entity.Service{
+				{Metadata: entity.Metadata{Name: "selectorless", Labels: map[string]string{"tier": "api"}}},
+			},
+			deployments: []entity.Deployment{
+				{Metadata: entity.Metadata{Name: "unrelated", Labels: map[string]string{"app": "other"}}, Spec: entity.DeploymentSpec{Replicas: &replicas}},
+			},
+			want: []string{"selectorless"},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			paasClient := fakePlatformService{services: tt.services, pods: tt.pods, deployments: tt.deployments}
 			serviceListCache := NewServiceListCache(time.Hour)
-			d := NewDiscoveryService("cloud", "agent-ns", "", tt.excludeLabels, tt.includeLabels, nil, nil, serviceListCache,
+			d := NewDiscoveryService("cloud", "agent-ns", "", tt.excludeLabels, nil, nil, serviceListCache,
 				paasClient, fakeDocumentsDiscoveryService{}, fakeApihubClient{}, config.ApiTypeUrlsConfig{}).(*discoveryServiceImpl)
-			serviceListCache.handleDiscoveryStart(namespace, workspaceId, tt.requestedServices)
+			serviceListCache.handleDiscoveryStart(namespace, workspaceId, tt.scope)
 
-			d.runDiscovery(nil, namespace, workspaceId, true, tt.requestedServices)
+			d.runDiscovery(nil, namespace, workspaceId, true, tt.scope)
 
-			result := serviceListCache.GetServicesList(namespace, workspaceId, tt.requestedServices)
+			result := serviceListCache.GetServicesList(namespace, workspaceId, tt.scope)
 			if result.Status != view.StatusComplete {
 				t.Fatalf("status = %s (%s), want %s", result.Status, result.Details, view.StatusComplete)
 			}
@@ -182,5 +242,86 @@ func TestRunDiscoveryIncludeLabels(t *testing.T) {
 				t.Errorf("services = %v, want %v", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestServiceListCacheScopeIsolation(t *testing.T) {
+	const namespace = "ns"
+	const workspaceId = "ws"
+
+	cache := NewServiceListCache(time.Hour)
+
+	miss := cache.GetServicesList(namespace, workspaceId, view.DiscoveryRequest{Services: []string{"a"}, Labels: []string{"k=v"}})
+	if miss.Status != view.StatusNone || len(miss.RequestedServices) != 0 || len(miss.RequestedLabels) != 0 {
+		t.Fatalf("cache miss = %+v, want status none and empty requested fields", miss)
+	}
+
+	unscoped := view.DiscoveryRequest{}
+	servicesOnly := view.DiscoveryRequest{Services: []string{"svc-a", "svc-b"}}
+	labelsOnly := view.DiscoveryRequest{Labels: []string{"tier=api", "app.kubernetes.io/part-of=abc"}}
+	combined := view.DiscoveryRequest{Services: []string{"svc-a"}, Labels: []string{"tier=api"}}
+
+	cache.handleDiscoveryStart(namespace, workspaceId, unscoped)
+	cache.addService(namespace, workspaceId, unscoped, view.Service{Id: "unscoped-svc", Name: "unscoped-svc"})
+	cache.setResultStatus(namespace, workspaceId, unscoped, view.StatusComplete, "")
+
+	cache.handleDiscoveryStart(namespace, workspaceId, servicesOnly)
+	cache.addService(namespace, workspaceId, servicesOnly, view.Service{Id: "svc-only", Name: "svc-only"})
+	cache.setResultStatus(namespace, workspaceId, servicesOnly, view.StatusComplete, "")
+
+	cache.handleDiscoveryStart(namespace, workspaceId, labelsOnly)
+	cache.addService(namespace, workspaceId, labelsOnly, view.Service{Id: "labels-only", Name: "labels-only"})
+	cache.setResultStatus(namespace, workspaceId, labelsOnly, view.StatusComplete, "")
+
+	cache.handleDiscoveryStart(namespace, workspaceId, combined)
+	cache.addService(namespace, workspaceId, combined, view.Service{Id: "combined-svc", Name: "combined-svc"})
+	cache.setResultStatus(namespace, workspaceId, combined, view.StatusComplete, "")
+
+	gotUnscoped := cache.GetServicesList(namespace, workspaceId, view.DiscoveryRequest{Services: []string{}, Labels: []string{}})
+	if len(gotUnscoped.Services) != 1 || gotUnscoped.Services[0].Id != "unscoped-svc" {
+		t.Errorf("unscoped services = %+v, want [unscoped-svc]", gotUnscoped.Services)
+	}
+	rawResp, err := json.Marshal(view.ServiceListResponse{
+		Services:          gotUnscoped.Services,
+		Status:            gotUnscoped.Status,
+		RequestedServices: gotUnscoped.RequestedServices,
+		RequestedLabels:   gotUnscoped.RequestedLabels,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var decoded map[string]interface{}
+	if err := json.Unmarshal(rawResp, &decoded); err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := decoded["requestedServices"]; ok {
+		t.Errorf("unscoped response unexpectedly includes requestedServices: %s", rawResp)
+	}
+	if _, ok := decoded["requestedLabels"]; ok {
+		t.Errorf("unscoped response unexpectedly includes requestedLabels: %s", rawResp)
+	}
+
+	gotServices := cache.GetServicesList(namespace, workspaceId, view.DiscoveryRequest{Services: []string{"svc-b", "svc-a", "svc-a"}})
+	if len(gotServices.Services) != 1 || gotServices.Services[0].Id != "svc-only" {
+		t.Errorf("services-only = %+v, want [svc-only]", gotServices.Services)
+	}
+	if !slices.Equal(gotServices.RequestedServices, servicesOnly.Services) || len(gotServices.RequestedLabels) != 0 {
+		t.Errorf("services-only echoed scope = (%v, %v), want (%v, nil)", gotServices.RequestedServices, gotServices.RequestedLabels, servicesOnly.Services)
+	}
+
+	gotLabels := cache.GetServicesList(namespace, workspaceId, view.DiscoveryRequest{Labels: []string{"app.kubernetes.io/part-of=abc", "tier=api", "tier=api"}})
+	if len(gotLabels.Services) != 1 || gotLabels.Services[0].Id != "labels-only" {
+		t.Errorf("labels-only = %+v, want [labels-only]", gotLabels.Services)
+	}
+	if len(gotLabels.RequestedServices) != 0 || !slices.Equal(gotLabels.RequestedLabels, labelsOnly.Labels) {
+		t.Errorf("labels-only echoed scope = (%v, %v), want (nil, %v)", gotLabels.RequestedServices, gotLabels.RequestedLabels, labelsOnly.Labels)
+	}
+
+	gotCombined := cache.GetServicesList(namespace, workspaceId, combined)
+	if len(gotCombined.Services) != 1 || gotCombined.Services[0].Id != "combined-svc" {
+		t.Errorf("combined = %+v, want [combined-svc]", gotCombined.Services)
+	}
+	if !slices.Equal(gotCombined.RequestedServices, combined.Services) || !slices.Equal(gotCombined.RequestedLabels, combined.Labels) {
+		t.Errorf("combined echoed scope = (%v, %v), want (%v, %v)", gotCombined.RequestedServices, gotCombined.RequestedLabels, combined.Services, combined.Labels)
 	}
 }

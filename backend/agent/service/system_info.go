@@ -19,7 +19,6 @@ type SystemInfoService interface {
 	GetCloudName() string
 	GetAgentNamespace() string
 	GetExcludeLabels() []string
-	GetIncludeLabels() []string
 	GetGroupingLabels() []string
 	GetAgentName() string
 	GetDiscoveryTimeout() time.Duration
@@ -72,7 +71,6 @@ func setDefaults() {
 	viper.SetDefault("security.insecureProxy", false)
 	viper.SetDefault("security.showDebugInResponse", false)
 	viper.SetDefault("discovery.excludeLabels", []string{})
-	viper.SetDefault("discovery.includeLabels", []string{})
 	viper.SetDefault("discovery.groupingLabels", []string{})
 	viper.SetDefault("discovery.timeoutSec", 15)
 	viper.SetDefault("discovery.urls.openapi.config-urls", []string{"/v3/api-docs/swagger-config", "/swagger-resources"})
@@ -119,10 +117,6 @@ func (g systemInfoServiceImpl) GetAgentNamespace() string {
 
 func (g systemInfoServiceImpl) GetExcludeLabels() []string {
 	return g.config.Discovery.ExcludeLabels
-}
-
-func (g systemInfoServiceImpl) GetIncludeLabels() []string {
-	return g.config.Discovery.IncludeLabels
 }
 
 func (g systemInfoServiceImpl) GetGroupingLabels() []string {

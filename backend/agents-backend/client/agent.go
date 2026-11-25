@@ -22,8 +22,8 @@ type AgentClient interface {
 	ListServiceNames(ctx context.Context, agentUrl string, namespace string) (*view.ServiceNamesResponse, error)
 	StartDiscovery(ctx context.Context, namespace string, workspaceId string, agentUrl string, failOnError bool, discoveryReq view.DiscoveryRequest) error
 	ListServices_deprecated(ctx context.Context, namespace string, workspaceId string, agentUrl string) (*view.ServiceListResponse_deprecated, error)
-	ListServices(ctx context.Context, namespace string, workspaceId string, agentUrl string, discoveryServices string) (*view.ServiceListResponse, error)
-	GetServiceSpecification(ctx context.Context, namespace string, workspaceId string, serviceId string, fileId string, agentUrl string, discoveryServices string) ([]byte, error)
+	ListServices(ctx context.Context, namespace string, workspaceId string, agentUrl string, discoveryServices string, discoveryLabels string) (*view.ServiceListResponse, error)
+	GetServiceSpecification(ctx context.Context, namespace string, workspaceId string, serviceId string, fileId string, agentUrl string, discoveryServices string, discoveryLabels string) ([]byte, error)
 	SendEmptyServiceRequest(namespace string, serviceId string, agentUrl string, requestMethod string, requestPath string) (int, error)
 }
 
@@ -100,7 +100,7 @@ func (a agentClientImpl) ListServiceNames(ctx context.Context, agentUrl string, 
 
 func (a agentClientImpl) StartDiscovery(ctx context.Context, namespace string, workspaceId string, agentUrl string, failOnError bool, discoveryReq view.DiscoveryRequest) error {
 	req := a.makeRequest(ctx)
-	if len(discoveryReq.Services) > 0 {
+	if len(discoveryReq.Services) > 0 || len(discoveryReq.Labels) > 0 {
 		req.SetBody(discoveryReq)
 	}
 	resp, err := req.Post(fmt.Sprintf("%s/api/v2/namespaces/%s/workspaces/%s/discover?failOnError=%v", agentUrl, namespace, workspaceId, failOnError))
@@ -150,16 +150,23 @@ func (a agentClientImpl) ListServices_deprecated(ctx context.Context, namespace 
 	return &serviceListResponse, nil
 }
 
-func discoveryScopeQuery(discoveryServices string) string {
-	if discoveryServices == "" {
+func discoveryScopeQuery(discoveryServices string, discoveryLabels string) string {
+	params := url.Values{}
+	if discoveryServices != "" {
+		params.Set("services", discoveryServices)
+	}
+	if discoveryLabels != "" {
+		params.Set("labels", discoveryLabels)
+	}
+	if len(params) == 0 {
 		return ""
 	}
-	return "?services=" + url.QueryEscape(discoveryServices)
+	return "?" + params.Encode()
 }
 
-func (a agentClientImpl) ListServices(ctx context.Context, namespace string, workspaceId string, agentUrl string, discoveryServices string) (*view.ServiceListResponse, error) {
+func (a agentClientImpl) ListServices(ctx context.Context, namespace string, workspaceId string, agentUrl string, discoveryServices string, discoveryLabels string) (*view.ServiceListResponse, error) {
 	req := a.makeRequest(ctx)
-	resp, err := req.Get(fmt.Sprintf("%s/api/v3/namespaces/%s/workspaces/%s/services%s", agentUrl, namespace, workspaceId, discoveryScopeQuery(discoveryServices)))
+	resp, err := req.Get(fmt.Sprintf("%s/api/v3/namespaces/%s/workspaces/%s/services%s", agentUrl, namespace, workspaceId, discoveryScopeQuery(discoveryServices, discoveryLabels)))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get service for namespace - %s. Error - %s", namespace, err.Error())
 	}
@@ -181,9 +188,9 @@ func (a agentClientImpl) ListServices(ctx context.Context, namespace string, wor
 	return &serviceListResponse, nil
 }
 
-func (a agentClientImpl) GetServiceSpecification(ctx context.Context, namespace string, workspaceId string, serviceId string, fileId string, agentUrl string, discoveryServices string) ([]byte, error) {
+func (a agentClientImpl) GetServiceSpecification(ctx context.Context, namespace string, workspaceId string, serviceId string, fileId string, agentUrl string, discoveryServices string, discoveryLabels string) ([]byte, error) {
 	req := a.makeRequest(ctx)
-	resp, err := req.Get(fmt.Sprintf("%s/api/v2/namespaces/%s/workspaces/%s/services/%s/specs/%s%s", agentUrl, namespace, workspaceId, url.PathEscape(serviceId), url.PathEscape(fileId), discoveryScopeQuery(discoveryServices)))
+	resp, err := req.Get(fmt.Sprintf("%s/api/v2/namespaces/%s/workspaces/%s/services/%s/specs/%s%s", agentUrl, namespace, workspaceId, url.PathEscape(serviceId), url.PathEscape(fileId), discoveryScopeQuery(discoveryServices, discoveryLabels)))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get service specification. Error - %s", err.Error())
 	}

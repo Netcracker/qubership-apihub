@@ -12,6 +12,7 @@ import (
 	"github.com/Netcracker/qubership-apihub/backend/agent/exception"
 	"github.com/Netcracker/qubership-apihub/backend/agent/view"
 	"github.com/gorilla/mux"
+	"k8s.io/apimachinery/pkg/api/validate/content"
 )
 
 const maxDiscoveryRequestBodySize = 1 << 20 // 1 MiB: the requested services list is otherwise unbounded
@@ -43,22 +44,20 @@ func getFailOnErrorQueryParam(r *http.Request) (bool, *exception.CustomError) {
 	return false, nil
 }
 
-func getRequestedServicesQueryParam(r *http.Request) []string {
-	value := r.URL.Query().Get("services")
-	if value == "" {
-		return nil
-	}
-
-	requestedServices := make([]string, 0)
-	for _, serviceName := range strings.Split(value, ",") {
+func getDiscoveryScopeQueryParams(r *http.Request) view.DiscoveryRequest {
+	query := r.URL.Query()
+	var scope view.DiscoveryRequest
+	for _, serviceName := range strings.Split(query.Get("services"), ",") {
 		if serviceName != "" {
-			requestedServices = append(requestedServices, serviceName)
+			scope.Services = append(scope.Services, serviceName)
 		}
 	}
-	if len(requestedServices) == 0 {
-		return nil
+	for _, label := range strings.Split(query.Get("labels"), ",") {
+		if label != "" {
+			scope.Labels = append(scope.Labels, label)
+		}
 	}
-	return requestedServices
+	return scope
 }
 
 func getDiscoveryRequestBody(w http.ResponseWriter, r *http.Request) (view.DiscoveryRequest, *exception.CustomError) {
@@ -96,6 +95,17 @@ func getDiscoveryRequestBody(w http.ResponseWriter, r *http.Request) (view.Disco
 				Code:    exception.InvalidServiceName,
 				Message: exception.InvalidServiceNameMsg,
 				Params:  map[string]interface{}{"name": serviceName},
+			}
+		}
+	}
+	for _, label := range req.Labels {
+		key, value, found := strings.Cut(label, "=")
+		if !found || len(content.IsLabelKey(key)) != 0 || len(content.IsLabelValue(value)) != 0 {
+			return req, &exception.CustomError{
+				Status:  http.StatusBadRequest,
+				Code:    exception.InvalidLabel,
+				Message: exception.InvalidLabelMsg,
+				Params:  map[string]interface{}{"label": label},
 			}
 		}
 	}

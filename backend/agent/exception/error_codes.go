@@ -50,6 +50,9 @@ const BadRequestBodyMsg = "Failed to decode body"
 const InvalidServiceName = "900"
 const InvalidServiceNameMsg = "Requested services list contains an invalid service name '$name'. Service names must not be empty or contain leading or trailing whitespace."
 
+const InvalidLabel = "1000"
+const InvalidLabelMsg = "Requested labels list contains an invalid label '$label'. Labels must be in 'key=value' format with a valid Kubernetes label key and value."
+
 const HeadersLimitExceeded = "7401"
 const HeadersLimitExceededMsg = "HTTP headers limit exceeded. Maximum allowed number of headers is $maxHeaders"
 

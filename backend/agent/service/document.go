@@ -10,7 +10,7 @@ import (
 )
 
 type DocumentService interface {
-	GetDocumentById(namespace, workspaceId, serviceId, fileId string, requestedServices []string) ([]byte, error)
+	GetDocumentById(namespace, workspaceId, serviceId, fileId string, scope view.DiscoveryRequest) ([]byte, error)
 }
 
 func NewDocumentService(servicesListCache ServiceListCache, getDocTimeout time.Duration) DocumentService {
@@ -22,13 +22,13 @@ type documentServiceImpl struct {
 	getDocTimeout     time.Duration
 }
 
-func (d documentServiceImpl) GetDocumentById(namespace, workspaceId, serviceId, fileId string, requestedServices []string) ([]byte, error) {
+func (d documentServiceImpl) GetDocumentById(namespace, workspaceId, serviceId, fileId string, scope view.DiscoveryRequest) ([]byte, error) {
 	var svc view.Service
 	var relPath string
 	var documentType string
 	var format string
 
-	for _, svcIt := range d.servicesListCache.GetServicesList(namespace, workspaceId, requestedServices).Services {
+	for _, svcIt := range d.servicesListCache.GetServicesList(namespace, workspaceId, scope).Services {
 		if svcIt.Id == serviceId {
 			svc = svcIt
 			break

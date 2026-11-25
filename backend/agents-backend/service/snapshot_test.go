@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/Netcracker/qubership-apihub/backend/agents-backend/client"
@@ -162,7 +163,7 @@ type failingAgentClient struct {
 	client.AgentClient
 }
 
-func (c failingAgentClient) GetServiceSpecification(ctx context.Context, namespace string, workspaceId string, serviceId string, fileId string, agentUrl string, discoveryServices string) ([]byte, error) {
+func (c failingAgentClient) GetServiceSpecification(ctx context.Context, namespace string, workspaceId string, serviceId string, fileId string, agentUrl string, discoveryServices string, discoveryLabels string) ([]byte, error) {
 	return nil, errors.New("agent is not available in tests")
 }
 
@@ -295,4 +296,87 @@ func assertCustomError(t *testing.T, err error, expectedCode string) *exception.
 		t.Errorf("status = %d, want %d", customErr.Status, http.StatusFailedDependency)
 	}
 	return customErr
+}
+
+type listServicesAgentClient struct {
+	client.AgentClient
+	resp              *view.ServiceListResponse
+	gotServices       string
+	gotLabels         string
+	listServicesCalls int
+}
+
+func (c *listServicesAgentClient) ListServices(_ context.Context, _, _, _, discoveryServices, discoveryLabels string) (*view.ServiceListResponse, error) {
+	c.listServicesCalls++
+	c.gotServices = discoveryServices
+	c.gotLabels = discoveryLabels
+	return c.resp, nil
+}
+
+func TestCreateSnapshotScopeEchoValidation(t *testing.T) {
+	tests := []struct {
+		name        string
+		dto         view.CreateSnapshotDTO
+		agentResp   *view.ServiceListResponse
+		wantErrText string
+	}{
+		{
+			name:        "nil list services response returns error instead of panicking",
+			dto:         view.CreateSnapshotDTO{DiscoveryLabels: "tier=api"},
+			agentResp:   nil,
+			wantErrText: "discovery result not found",
+		},
+		{
+			name: "missing requestedLabels when discoveryLabels was requested fails",
+			dto:  view.CreateSnapshotDTO{DiscoveryLabels: "tier=api"},
+			agentResp: &view.ServiceListResponse{
+				Status:   view.StatusComplete,
+				Services: []view.Service{{Id: "svc-a", Documents: []view.Document{{FileId: "a.json"}}}},
+			},
+			wantErrText: "discoveryLabels",
+		},
+		{
+			name: "missing requestedServices when discoveryServices was requested fails",
+			dto:  view.CreateSnapshotDTO{DiscoveryServices: "svc-a"},
+			agentResp: &view.ServiceListResponse{
+				Status:   view.StatusComplete,
+				Services: []view.Service{{Id: "svc-a", Documents: []view.Document{{FileId: "a.json"}}}},
+			},
+			wantErrText: "discoveryServices",
+		},
+		{
+			name: "combined scope fails when older agent echoes requestedServices but omits requestedLabels",
+			dto:  view.CreateSnapshotDTO{DiscoveryServices: "svc-a", DiscoveryLabels: "tier=api"},
+			agentResp: &view.ServiceListResponse{
+				Status:            view.StatusComplete,
+				Services:          []view.Service{{Id: "svc-a", Documents: []view.Document{{FileId: "a.json"}}}},
+				RequestedServices: []string{"svc-a"},
+			},
+			wantErrText: "discoveryLabels",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			apihubClient := &snapshotApihubClient{
+				kinds: map[string]view.PackageKind{"ws": view.KindWorkspace},
+			}
+			agentClient := &listServicesAgentClient{resp: tt.agentResp}
+			s := NewSnapshotService(fixedUrlSystemInfoService{}, apihubClient, agentClient)
+
+			_, err := s.CreateSnapshot(context.Background(), "ns", "ws", "v1", tt.dto)
+			if err == nil {
+				t.Fatalf("expected error containing %q, got nil", tt.wantErrText)
+			}
+			if !strings.Contains(err.Error(), tt.wantErrText) {
+				t.Errorf("error = %q, want substring %q", err.Error(), tt.wantErrText)
+			}
+			if agentClient.listServicesCalls != 1 {
+				t.Errorf("ListServices calls = %d, want 1", agentClient.listServicesCalls)
+			}
+			if agentClient.gotServices != tt.dto.DiscoveryServices || agentClient.gotLabels != tt.dto.DiscoveryLabels {
+				t.Errorf("agentClient received (%q, %q), want (%q, %q)", agentClient.gotServices, agentClient.gotLabels, tt.dto.DiscoveryServices, tt.dto.DiscoveryLabels)
+			}
+		})
+	}
 }

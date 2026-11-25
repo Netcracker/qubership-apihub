@@ -36,7 +36,6 @@ type SecurityConfig struct {
 
 type DiscoveryConfig struct {
 	ExcludeLabels  []string
-	IncludeLabels  []string `validate:"dive,label_key_value"`
 	GroupingLabels []string
 	TimeoutSec     int
 	Urls           ApiTypeUrlsConfig

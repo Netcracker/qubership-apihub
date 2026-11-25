@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"slices"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -34,7 +35,6 @@ func NewDiscoveryService(
 	agentNamespace string,
 	apihubUrl string,
 	excludeWithLabels []string,
-	includeLabels []string,
 	groupingLabels []string,
 	namespaceListCache NamespaceListCache,
 	serviceListCache ServiceListCache,
@@ -52,7 +52,6 @@ func NewDiscoveryService(
 		agentNamespace:            agentNamespace,
 		apihubUrl:                 apihubUrl,
 		excludeWithLabels:         excludeWithLabels,
-		includeLabels:             includeLabels,
 		groupingLabels:            groupingLabelsMap,
 		namespaceListCache:        namespaceListCache,
 		serviceListCache:          serviceListCache,
@@ -67,7 +66,6 @@ type discoveryServiceImpl struct {
 	agentNamespace    string
 	apihubUrl         string
 	excludeWithLabels []string
-	includeLabels     []string
 	groupingLabels    map[string]struct{}
 	discoveryUrls     config.ApiTypeUrlsConfig
 
@@ -94,16 +92,16 @@ func (d discoveryServiceImpl) StartDiscovery(ctx secctx.SecurityContext, namespa
 		}
 	}
 
-	d.serviceListCache.handleDiscoveryStart(namespace, workspaceId, req.Services)
+	d.serviceListCache.handleDiscoveryStart(namespace, workspaceId, req)
 
 	utils.SafeAsync(func() {
-		d.runDiscovery(ctx, namespace, workspaceId, failOnError, req.Services)
+		d.runDiscovery(ctx, namespace, workspaceId, failOnError, req)
 	})
 	return nil
 }
 
-func (d discoveryServiceImpl) runDiscovery(secCtx secctx.SecurityContext, namespace string, workspaceId string, failOnError bool, requestedServices []string) {
-	log.Infof("Starting discovery for namespace %s", namespace)
+func (d discoveryServiceImpl) runDiscovery(secCtx secctx.SecurityContext, namespace string, workspaceId string, failOnError bool, scope view.DiscoveryRequest) {
+	log.Infof("Starting discovery for namespace %s, workspace %s (services=%v, labels=%v)", namespace, workspaceId, scope.Services, scope.Labels)
 	utils.RecordDiscoveryStart(namespace)
 	start := time.Now()
 
@@ -138,30 +136,38 @@ func (d discoveryServiceImpl) runDiscovery(secCtx secctx.SecurityContext, namesp
 	wg.Wait()
 
 	if svcErr != nil {
-		d.serviceListCache.setResultStatus(namespace, workspaceId, requestedServices, view.StatusError, svcErr.Error())
+		d.serviceListCache.setResultStatus(namespace, workspaceId, scope, view.StatusError, svcErr.Error())
 		log.Errorf("Failed to list k8s services in namespace %s: %s", namespace, svcErr.Error())
 		utils.RecordDiscoveryError()
 		return
 	}
 
 	if podsErr != nil {
-		d.serviceListCache.setResultStatus(namespace, workspaceId, requestedServices, view.StatusError, podsErr.Error())
+		d.serviceListCache.setResultStatus(namespace, workspaceId, scope, view.StatusError, podsErr.Error())
 		log.Errorf("Failed to list k8s pods in namespace %s: %s", namespace, podsErr.Error())
 		utils.RecordDiscoveryError()
 		return
 	}
 
 	if deploymentsErr != nil {
-		d.serviceListCache.setResultStatus(namespace, workspaceId, requestedServices, view.StatusError, deploymentsErr.Error())
+		d.serviceListCache.setResultStatus(namespace, workspaceId, scope, view.StatusError, deploymentsErr.Error())
 		log.Errorf("Failed to list k8s deployments in namespace %s: %s", namespace, deploymentsErr.Error())
 		utils.RecordDiscoveryError()
 		return
 	}
 
-	if len(requestedServices) > 0 {
+	if len(scope.Services) > 0 {
 		total := len(services)
-		services = filterRequestedServices(services, requestedServices)
-		log.Infof("Discovery for namespace %s is limited to %d requested service(s): %d of %d k8s services matched", namespace, len(requestedServices), len(services), total)
+		services = filterRequestedServices(services, scope.Services)
+		log.Infof("Discovery for namespace %s is limited to %d requested service(s): %d of %d k8s services matched", namespace, len(scope.Services), len(services), total)
+	}
+
+	var requestedLabelsSet map[string]struct{}
+	if len(scope.Labels) > 0 {
+		requestedLabelsSet = make(map[string]struct{}, len(scope.Labels))
+		for _, label := range scope.Labels {
+			requestedLabelsSet[label] = struct{}{}
+		}
 	}
 
 	agentId := utils.MakeAgentId(d.cloudName, d.agentNamespace)
@@ -180,7 +186,7 @@ func (d discoveryServiceImpl) runDiscovery(secCtx secctx.SecurityContext, namesp
 		exclude := false
 		for _, label := range d.excludeWithLabels {
 			if _, ok := labels[label]; ok {
-				log.Infof("Service %s is excluded from discovery", srv.Name)
+				log.Infof("Service %s is excluded from discovery by label %s", srv.Name, label)
 				exclude = true
 				break
 			}
@@ -188,16 +194,18 @@ func (d discoveryServiceImpl) runDiscovery(secCtx secctx.SecurityContext, namesp
 		if exclude {
 			continue
 		}
-		include := len(d.includeLabels) == 0
-		for k, v := range labels {
-			if slices.Contains(d.includeLabels, k+"="+v) {
-				include = true
-				break
+		if len(requestedLabelsSet) > 0 {
+			matched := false
+			for k, v := range labels {
+				if _, ok := requestedLabelsSet[k+"="+v]; ok {
+					matched = true
+					break
+				}
 			}
-		}
-		if !include {
-			log.Infof("Service %s is skipped: it has none of the labels in discovery.includeLabels", srv.Name)
-			continue
+			if !matched {
+				log.Infof("Service %s is skipped: it has none of the requested labels %v", srv.Name, scope.Labels)
+				continue
+			}
 		}
 
 		containerReady := false
@@ -219,7 +227,7 @@ func (d discoveryServiceImpl) runDiscovery(secCtx secctx.SecurityContext, namesp
 					// Looks like the namespace is in deployment/restart phase.
 					// In this case discovery result will not be completely correct, so returning the error.
 					errMsg := fmt.Sprintf("no pod is up yet for service: %s", srv.Name)
-					d.serviceListCache.setResultStatus(namespace, workspaceId, requestedServices, view.StatusError, errMsg)
+					d.serviceListCache.setResultStatus(namespace, workspaceId, scope, view.StatusError, errMsg)
 					log.Error(errMsg)
 					utils.RecordDiscoveryError()
 					return
@@ -339,7 +347,7 @@ func (d discoveryServiceImpl) runDiscovery(secCtx secctx.SecurityContext, namesp
 				DiagnosticInfo: diagnostic,
 			}
 			utils.RecordServiceProcessed()
-			d.serviceListCache.addService(namespace, workspaceId, requestedServices, srvToAdd)
+			d.serviceListCache.addService(namespace, workspaceId, scope, srvToAdd)
 		})
 	}
 
@@ -347,7 +355,7 @@ func (d discoveryServiceImpl) runDiscovery(secCtx secctx.SecurityContext, namesp
 
 	log.Infof("Discovery for namespace %s took %dms", namespace, time.Since(start).Milliseconds())
 
-	d.serviceListCache.setResultStatus(namespace, workspaceId, requestedServices, view.StatusComplete, "")
+	d.serviceListCache.setResultStatus(namespace, workspaceId, scope, view.StatusComplete, "")
 }
 
 func getPodsForSelector(allPods []entity.Pod, selector map[string]string) []entity.Pod {
@@ -371,6 +379,9 @@ func getPodsForSelector(allPods []entity.Pod, selector map[string]string) []enti
 }
 
 func getDeploymentForService(allDeployments []entity.Deployment, selector map[string]string) *entity.Deployment {
+	if len(selector) == 0 {
+		return nil
+	}
 	for _, deployment := range allDeployments {
 		matchSelectors := 0
 		for k, v := range selector {
@@ -387,13 +398,17 @@ func getDeploymentForService(allDeployments []entity.Deployment, selector map[st
 
 func getAllLabelsForService(service entity.Service, pods []entity.Pod) map[string]string {
 	result := map[string]string{}
-	for k, v := range service.Labels {
-		result[k] = v
-	}
-	for _, pod := range pods {
+	sortedPods := slices.Clone(pods)
+	slices.SortFunc(sortedPods, func(a, b entity.Pod) int {
+		return strings.Compare(a.Name, b.Name)
+	})
+	for _, pod := range sortedPods {
 		for k, v := range pod.Labels {
 			result[k] = v
 		}
+	}
+	for k, v := range service.Labels {
+		result[k] = v
 	}
 	return result
 }

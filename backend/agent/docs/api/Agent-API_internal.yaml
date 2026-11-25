@@ -162,11 +162,13 @@ paths:
         Returns discovered services and the overall discovery status with per-service diagnostics.
         See the `status` field in the response (`none`, `running`, `complete`, `error`).
         Start discovery via `POST /v2/namespaces/{name}/workspaces/{workspaceId}/discover`.
-        Each distinct services list passed to the discovery request has its own stored result;
-        use the `services` query parameter to address the result of a scoped discovery.
+        Each distinct discovery scope (`services` and `labels` combination) passed to the discovery request
+        has its own stored result; use the `services` and `labels` query parameters to address the result
+        of a scoped discovery, or omit both to address the default (unscoped) result.
       operationId: getNamespaceServicesV3
       parameters:
         - $ref: "#/components/parameters/RequestedServices"
+        - $ref: "#/components/parameters/RequestedLabels"
       tags:
         - Cloud Services
       responses:
@@ -199,17 +201,25 @@ paths:
                   requestedServices:
                     description: |
                       The services list the addressed discovery result was started with.
-                      Absent on the default (unscoped) result, which is not limited to a list of service names.
-                      The agent still applies its label filters (`discovery.excludeLabels` and
-                      `discovery.includeLabels`) to that result.
+                      Absent when the addressed discovery result was not limited to a list of service names.
                       Once `status` is `complete`, compare it against `services[].serviceName` to find requested
-                      services that were not discovered. The label filters apply to each Kubernetes service separately,
-                      so a requested name is missing from `services` only when none of its blue-green variants was
-                      discovered: the name is absent from the namespace, or every variant was filtered out by label.
+                      services that were not discovered. Label filters (`discovery.excludeLabels` and any
+                      requested `labels`) apply to each Kubernetes service separately, so a requested name is
+                      missing from `services` only when none of its blue-green variants was discovered: the name
+                      is absent from the namespace, or every variant was filtered out by label.
                     type: array
                     items:
                       type: string
                     example: ["apihub-be", "apihub-fe"]
+                  requestedLabels:
+                    description: |
+                      The labels list the addressed discovery result was started with.
+                      Absent when the addressed discovery result was not limited by requested labels, or when
+                      the agent predates label-scoped discovery.
+                    type: array
+                    items:
+                      type: string
+                    example: ["app.kubernetes.io/part-of=abc", "tier=backend"]
         "500":
           $ref: "#/components/responses/internalServerError500"
         "503":
@@ -226,18 +236,22 @@ paths:
       summary: Start discovery process
       description: |
         Starts an asynchronous service discovery process.
-        No process ID is returned. Retrieve the result via getServices; a result limited to a services list is
-        readable only through getNamespaceServicesV3, passing the same list in its `services` parameter.
+        No process ID is returned. Retrieve the result via getServices; a result limited by `services` and/or
+        `labels` is readable only through getNamespaceServicesV3, passing the same `services` and `labels` query
+        parameters.
         Accepts the same optional request body as postNamespaceDiscoverV2.
-        Each distinct services list has its own stored result: discoveries with different lists run and are stored
-        independently, and starting a discovery again with the same list resets and rebuilds that list's result.
-        An absent body, or an absent or empty services list, discovers the whole namespace and stores the result
-        as the default (unscoped) one. In both cases the label filters of the agent configuration apply.
+        Each distinct discovery scope (`services` and `labels` combination) has its own stored result: discoveries
+        with different scopes run and are stored independently, and starting a discovery again with the same scope
+        resets and rebuilds that scope's result.
+        An absent body, or a body where both `services` and `labels` are absent or empty, discovers the whole
+        namespace and stores the result as the default (unscoped) one. In every case `discovery.excludeLabels` from
+        the agent configuration still applies.
       requestBody:
         required: false
         description: |
-          Optional discovery scope. Without a body, discovery is not limited to a list of service names.
-          The agent still applies its label filters (`discovery.excludeLabels` and `discovery.includeLabels`).
+          Optional discovery scope. Without a body (or with both `services` and `labels` absent or empty),
+          discovery is not limited by service names or requested labels. `discovery.excludeLabels` from the
+          agent configuration still applies.
         content:
           application/json:
             schema:
@@ -263,18 +277,23 @@ paths:
       summary: Start discovery process
       description: |
         Starts an asynchronous service discovery process.
-        No process ID is returned. Retrieve the result via getServices; a result limited to a services list is
-        readable only through getNamespaceServicesV3, passing the same list in its `services` parameter.
-        Pass a request body to limit the discovery scope to a well-known list of services.
-        Each distinct services list has its own stored result: discoveries with different lists run and are stored
-        independently, and starting a discovery again with the same list resets and rebuilds that list's result.
-        An absent body, or an absent or empty services list, discovers the whole namespace and stores the result
-        as the default (unscoped) one. In both cases the label filters of the agent configuration apply.
+        No process ID is returned. Retrieve the result via getServices; a result limited by `services` and/or
+        `labels` is readable only through getNamespaceServicesV3, passing the same `services` and `labels` query
+        parameters.
+        Pass a request body to limit the discovery scope by service names (`services`), Kubernetes labels (`labels`),
+        or both combined with AND.
+        Each distinct discovery scope (`services` and `labels` combination) has its own stored result: discoveries
+        with different scopes run and are stored independently, and starting a discovery again with the same scope
+        resets and rebuilds that scope's result.
+        An absent body, or a body where both `services` and `labels` are absent or empty, discovers the whole
+        namespace and stores the result as the default (unscoped) one. In every case `discovery.excludeLabels` from
+        the agent configuration still applies.
       requestBody:
         required: false
         description: |
-          Optional discovery scope. Without a body, discovery is not limited to a list of service names.
-          The agent still applies its label filters (`discovery.excludeLabels` and `discovery.includeLabels`).
+          Optional discovery scope. Without a body (or with both `services` and `labels` absent or empty),
+          discovery is not limited by service names or requested labels. `discovery.excludeLabels` from the
+          agent configuration still applies.
         content:
           application/json:
             schema:
@@ -299,8 +318,8 @@ paths:
       description: |
         Retrieve a service API specification by specification ID for the given namespace and service.
         Returns the document body in JSON, YAML, or plain text depending on the stored format and Accept header.
-        To download a document found by a discovery limited to a services list, use
-        getNamespaceServicesIdSpecsIdV2 and pass the same list.
+        To download a document found by a scoped discovery (`services` and/or `labels`), use
+        getNamespaceServicesIdSpecsIdV2 and pass the same scope parameters.
       operationId: getNamespaceServicesIdSpecsId
       deprecated: true
       x-deprecation-reason: New version of API is created - GET /v2/namespaces/{name}/workspaces/{workspaceId}/services/{serviceId}/specs/{specId}
@@ -336,11 +355,14 @@ paths:
       description: |
         Retrieve a service API specification by specification ID for the given namespace, workspace, and service.
         Returns the document body in JSON, YAML, or plain text depending on the stored format and Accept header.
+        Pass the same `services` and `labels` query parameters used for a scoped discovery to address its result,
+        or omit both to address the default (unscoped) result.
       operationId: getNamespaceServicesIdSpecsIdV2
       tags:
         - Cloud Services
       parameters:
         - $ref: "#/components/parameters/RequestedServices"
+        - $ref: "#/components/parameters/RequestedLabels"
       responses:
         "200":
           description: Successful operation
@@ -618,12 +640,13 @@ components:
       in: query
       required: false
       description: |
-        Comma-separated list of service names identifying which discovery result to address.
-        Pass the same list that was sent in the discovery request body to read that discovery's result;
-        documents discovered by a scoped discovery must also be downloaded with the same list.
+        Comma-separated list of service names identifying the service-name part of the discovery scope to address.
+        Pass the same `services` list (and `labels`, if any) that was sent in the discovery request body to read
+        that discovery's result; documents discovered by a scoped discovery must also be downloaded with the same
+        scope parameters.
         The list is treated as a set: order and duplicates do not affect which result is addressed.
-        When absent or empty, the default (unscoped) discovery result is addressed.
-        A result that was never produced for the given list has status `none`.
+        When both `services` and `labels` are absent or empty, the default (unscoped) discovery result is addressed.
+        A result that was never produced for the given scope has status `none`.
       style: form
       explode: false
       schema:
@@ -631,6 +654,26 @@ components:
         items:
           type: string
       example: ["apihub-be", "apihub-fe"]
+    RequestedLabels:
+      name: labels
+      in: query
+      required: false
+      description: |
+        Comma-separated list of Kubernetes labels in `key=value` format identifying the label part of the discovery
+        scope to address.
+        Pass the same `labels` list (and `services`, if any) that was sent in the discovery request body to read
+        that discovery's result; documents discovered by a scoped discovery must also be downloaded with the same
+        scope parameters.
+        The list is treated as a set: order and duplicates do not affect which result is addressed.
+        When both `services` and `labels` are absent or empty, the default (unscoped) discovery result is addressed.
+        A result that was never produced for the given scope has status `none`.
+      style: form
+      explode: false
+      schema:
+        type: array
+        items:
+          type: string
+      example: ["app.kubernetes.io/part-of=abc", "tier=backend"]
   schemas:
     SpecificationType:
       title: type
@@ -1069,11 +1112,14 @@ components:
           example: "Not Found"
     DiscoveryRequest:
       description: |
-        Optional body of a discovery request, used to limit the discovery scope to a well-known list of services.
-        An absent body, or an absent or empty services list, discovers every service in the namespace and stores
-        the result as the default (unscoped) one. In both cases the label filters of the agent configuration apply.
-        Each distinct services list has its own stored result; the list is treated as a set, so order and duplicates
-        do not affect which result the discovery writes to.
+        Optional body of a discovery request, used to limit the discovery scope by service names (`services`),
+        Kubernetes labels (`labels`), or both combined with AND.
+        An absent body, or a body where both `services` and `labels` are absent or empty, discovers every eligible
+        service in the namespace and stores the result as the default (unscoped) one. When `services` is provided,
+        the candidate list is narrowed by service name first; in every case `discovery.excludeLabels` from the agent
+        configuration still applies and excludes matching services.
+        Each distinct discovery scope (`services` and `labels` combination) has its own stored result; each list is
+        treated as a set, so order and duplicates do not affect which result the discovery writes to.
       type: object
       properties:
         services:
@@ -1084,16 +1130,32 @@ components:
             One entry therefore selects every blue-green variant of that service: `apihub-be` matches both
             `apihub-be-v1` and `apihub-be-v2`. A raw Kubernetes service name such as `apihub-be-v1` matches nothing,
             so do not pass the `id` field of a previous response here. An entry that is empty or carries leading or
-            trailing whitespace can match no service and is rejected with 400. The label filters of the agent
-            configuration (`discovery.excludeLabels` and `discovery.includeLabels`) apply to each Kubernetes service
-            separately, so a requested name is missing from the getServices response only when it is absent from the
-            namespace or every blue-green variant it selects is filtered out by label. Discovery is asynchronous, so
-            once `status` is `complete`, compare `requestedServices` against `services[].serviceName` to find them.
+            trailing whitespace can match no service and is rejected with 400. Label filters (`discovery.excludeLabels`
+            and any requested `labels`) apply to each Kubernetes service separately, so a requested name is missing
+            from the getServices response only when it is absent from the namespace or every blue-green variant it
+            selects is filtered out by label. Discovery is asynchronous, so once `status` is `complete`, compare
+            `requestedServices` against `services[].serviceName` to find them.
           type: array
           items:
             type: string
             minLength: 1
           example: ["apihub-be", "apihub-fe"]
+        labels:
+          description: |
+            Kubernetes labels in `key=value` format to filter discovered services (an empty value such as `track=` is
+            valid). Each entry must have a valid Kubernetes label key and value; invalid entries are rejected with 400.
+            Entries within `labels` combine with OR: a service matches when its merged labels contain at least one
+            requested `key=value` pair. When both `services` and `labels` are provided, they combine with AND.
+            For each Kubernetes service, labels of its selected pods are merged first and the Service's own labels are
+            applied on top, so a Service label overrides a Pod label with the same key (including an empty value).
+            `discovery.excludeLabels` from the agent configuration always takes precedence over `labels`.
+            Agents that predate label-scoped discovery ignore `labels` and omit `requestedLabels` in the getServices
+            response.
+          type: array
+          items:
+            type: string
+            minLength: 1
+          example: ["app.kubernetes.io/part-of=abc", "tier=backend"]
     ErrorResponse:
       description: Standard error response envelope returned for failed requests. Includes HTTP status, internal error code, and human-readable message; params and debug are optional.
       type: object
@@ -1134,8 +1196,9 @@ components:
             $ref: "#/components/schemas/ErrorResponse"
     badRequest400:
       description: |
-        The request could not be processed. Typical causes are a malformed JSON body, a body larger than 1 MiB, or a
-        requested service name that is empty or carries leading or trailing whitespace.
+        The request could not be processed. Typical causes are a malformed JSON body, a body larger than 1 MiB, a
+        requested service name that is empty or carries leading or trailing whitespace, or an invalid Kubernetes label
+        entry in `labels`.
         The response body follows the ErrorResponse schema.
       content:
         application/json:

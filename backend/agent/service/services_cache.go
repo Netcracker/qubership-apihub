@@ -1,7 +1,7 @@
 package service
 
 import (
-	"fmt"
+	"encoding/json"
 	"slices"
 	"sort"
 	"strings"
@@ -15,11 +15,11 @@ import (
 )
 
 type ServiceListCache interface {
-	GetServicesList(namespace string, workspaceId string, requestedServices []string) ServicesListResult
-	handleDiscoveryStart(namespace string, workspaceId string, requestedServices []string)
-	addService(namespace string, workspaceId string, requestedServices []string, service view.Service)
-	setResultStatus(namespace string, workspaceId string, requestedServices []string, status view.StatusEnum, details string)
-	clearResultsForNamespace(namespace string, workspaceId string, requestedServices []string)
+	GetServicesList(namespace string, workspaceId string, scope view.DiscoveryRequest) ServicesListResult
+	handleDiscoveryStart(namespace string, workspaceId string, scope view.DiscoveryRequest)
+	addService(namespace string, workspaceId string, scope view.DiscoveryRequest, service view.Service)
+	setResultStatus(namespace string, workspaceId string, scope view.DiscoveryRequest, status view.StatusEnum, details string)
+	clearResultsForNamespace(namespace string, workspaceId string, scope view.DiscoveryRequest)
 }
 
 type ServicesListResult struct {
@@ -27,6 +27,7 @@ type ServicesListResult struct {
 	Status            view.StatusEnum
 	Details           string
 	RequestedServices []string
+	RequestedLabels   []string
 }
 
 type serviceCacheEntry struct {
@@ -34,6 +35,7 @@ type serviceCacheEntry struct {
 	status            view.StatusEnum
 	details           string
 	requestedServices []string
+	requestedLabels   []string
 }
 
 func NewServiceListCache(ttl time.Duration) ServiceListCache {
@@ -50,11 +52,11 @@ type serviceListCacheImpl struct {
 	cacheMutex sync.Mutex
 }
 
-func (s *serviceListCacheImpl) GetServicesList(namespace string, workspaceId string, requestedServices []string) ServicesListResult {
+func (s *serviceListCacheImpl) GetServicesList(namespace string, workspaceId string, scope view.DiscoveryRequest) ServicesListResult {
 	s.cacheMutex.Lock()
 	defer s.cacheMutex.Unlock()
 
-	id := getCacheKey(namespace, workspaceId, requestedServices)
+	id := getCacheKey(namespace, workspaceId, scope)
 
 	val, exists := s.cache.Peek(id)
 	if !exists {
@@ -64,35 +66,53 @@ func (s *serviceListCacheImpl) GetServicesList(namespace string, workspaceId str
 	entry := val.(*serviceCacheEntry)
 	services := make([]view.Service, len(entry.services))
 	copy(services, entry.services)
-	requested := make([]string, len(entry.requestedServices))
-	copy(requested, entry.requestedServices)
+
+	var requestedServices []string
+	if len(entry.requestedServices) > 0 {
+		requestedServices = slices.Clone(entry.requestedServices)
+	}
+	var requestedLabels []string
+	if len(entry.requestedLabels) > 0 {
+		requestedLabels = slices.Clone(entry.requestedLabels)
+	}
 
 	return ServicesListResult{
 		Services:          services,
 		Status:            entry.status,
 		Details:           entry.details,
-		RequestedServices: requested,
+		RequestedServices: requestedServices,
+		RequestedLabels:   requestedLabels,
 	}
 }
 
-func (s *serviceListCacheImpl) handleDiscoveryStart(namespace string, workspaceId string, requestedServices []string) {
+func (s *serviceListCacheImpl) handleDiscoveryStart(namespace string, workspaceId string, scope view.DiscoveryRequest) {
 	s.cacheMutex.Lock()
 	defer s.cacheMutex.Unlock()
 
-	id := getCacheKey(namespace, workspaceId, requestedServices)
+	id := getCacheKey(namespace, workspaceId, scope)
+
+	var requestedServices []string
+	if len(scope.Services) > 0 {
+		requestedServices = slices.Clone(scope.Services)
+	}
+	var requestedLabels []string
+	if len(scope.Labels) > 0 {
+		requestedLabels = slices.Clone(scope.Labels)
+	}
 
 	s.cache.Store(id, &serviceCacheEntry{
 		services:          []view.Service{},
 		status:            view.StatusRunning,
 		requestedServices: requestedServices,
+		requestedLabels:   requestedLabels,
 	})
 }
 
-func (s *serviceListCacheImpl) clearResultsForNamespace(namespace string, workspaceId string, requestedServices []string) {
+func (s *serviceListCacheImpl) clearResultsForNamespace(namespace string, workspaceId string, scope view.DiscoveryRequest) {
 	s.cacheMutex.Lock()
 	defer s.cacheMutex.Unlock()
 
-	id := getCacheKey(namespace, workspaceId, requestedServices)
+	id := getCacheKey(namespace, workspaceId, scope)
 
 	s.cache.Store(id, &serviceCacheEntry{
 		services: []view.Service{},
@@ -100,11 +120,11 @@ func (s *serviceListCacheImpl) clearResultsForNamespace(namespace string, worksp
 	})
 }
 
-func (s *serviceListCacheImpl) addService(namespace string, workspaceId string, requestedServices []string, service view.Service) {
+func (s *serviceListCacheImpl) addService(namespace string, workspaceId string, scope view.DiscoveryRequest, service view.Service) {
 	s.cacheMutex.Lock()
 	defer s.cacheMutex.Unlock()
 
-	id := getCacheKey(namespace, workspaceId, requestedServices)
+	id := getCacheKey(namespace, workspaceId, scope)
 
 	val, exists := s.cache.Peek(id)
 	if !exists {
@@ -122,11 +142,11 @@ func (s *serviceListCacheImpl) addService(namespace string, workspaceId string, 
 	})
 }
 
-func (s *serviceListCacheImpl) setResultStatus(namespace string, workspaceId string, requestedServices []string, status view.StatusEnum, details string) {
+func (s *serviceListCacheImpl) setResultStatus(namespace string, workspaceId string, scope view.DiscoveryRequest, status view.StatusEnum, details string) {
 	s.cacheMutex.Lock()
 	defer s.cacheMutex.Unlock()
 
-	id := getCacheKey(namespace, workspaceId, requestedServices)
+	id := getCacheKey(namespace, workspaceId, scope)
 
 	val, exists := s.cache.Peek(id)
 	if !exists {
@@ -141,25 +161,33 @@ func (s *serviceListCacheImpl) setResultStatus(namespace string, workspaceId str
 	}
 }
 
-const sep = "@||@"
-
-func getCacheKey(namespace string, workspaceId string, requestedServices []string) string {
-	key := fmt.Sprintf("%s%s%s", namespace, sep, workspaceId)
-
-	canonical := canonicalRequestedServices(requestedServices)
-	if len(canonical) == 0 {
-		return key
-	}
-	return key + sep + strings.Join(canonical, sep)
+type serviceCacheKey struct {
+	Namespace string   `json:"namespace"`
+	Workspace string   `json:"workspace"`
+	Services  []string `json:"services,omitempty"`
+	Labels    []string `json:"labels,omitempty"`
 }
 
-func canonicalRequestedServices(requestedServices []string) []string {
-	canonical := make([]string, 0, len(requestedServices))
-	for _, serviceName := range requestedServices {
-		if trimmed := strings.TrimSpace(serviceName); trimmed != "" {
+func getCacheKey(namespace string, workspaceId string, scope view.DiscoveryRequest) string {
+	key, _ := json.Marshal(serviceCacheKey{
+		Namespace: namespace,
+		Workspace: workspaceId,
+		Services:  canonicalScopeItems(scope.Services),
+		Labels:    canonicalScopeItems(scope.Labels),
+	})
+	return string(key)
+}
+
+func canonicalScopeItems(items []string) []string {
+	canonical := make([]string, 0, len(items))
+	for _, item := range items {
+		if trimmed := strings.TrimSpace(item); trimmed != "" {
 			canonical = append(canonical, trimmed)
 		}
 	}
-	sort.Strings(canonical)
+	if len(canonical) == 0 {
+		return nil
+	}
+	slices.Sort(canonical)
 	return slices.Compact(canonical)
 }

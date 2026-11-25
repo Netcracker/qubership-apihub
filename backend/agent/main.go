@@ -91,7 +91,7 @@ func main() {
 	namespaceListCache := service.NewNamespaceListCache(systemInfoService.GetCloudName(), paasCl, systemInfoService.GetNamespacesCacheTTL())
 	serviceListCache := service.NewServiceListCache(systemInfoService.GetServicesCacheTTL())
 	documentsDiscoveryService := service.NewDocumentsDiscoveryService(systemInfoService.GetDiscoveryTimeout())
-	discoveryService := service.NewDiscoveryService(systemInfoService.GetCloudName(), systemInfoService.GetAgentNamespace(), systemInfoService.GetApihubUrl(), systemInfoService.GetExcludeLabels(), systemInfoService.GetIncludeLabels(), systemInfoService.GetGroupingLabels(), namespaceListCache, serviceListCache,
+	discoveryService := service.NewDiscoveryService(systemInfoService.GetCloudName(), systemInfoService.GetAgentNamespace(), systemInfoService.GetApihubUrl(), systemInfoService.GetExcludeLabels(), systemInfoService.GetGroupingLabels(), namespaceListCache, serviceListCache,
 		paasCl, documentsDiscoveryService, apihubClient, systemInfoService.GetDiscoveryUrls())
 	documentService := service.NewDocumentService(serviceListCache, systemInfoService.GetDiscoveryTimeout())
 	regService := service.NewRegistrationService(systemInfoService.GetCloudName(), systemInfoService.GetAgentNamespace(), systemInfoService.GetAgentUrl(),

@@ -74,10 +74,12 @@ type ServiceListResponse struct {
 	Status            StatusEnum `json:"status"`
 	Debug             string     `json:"debug"`
 	RequestedServices []string   `json:"requestedServices,omitempty"`
+	RequestedLabels   []string   `json:"requestedLabels,omitempty"`
 }
 
 type DiscoveryRequest struct {
-	Services []string `json:"services,omitempty"` //empty list means the whole namespace is discovered
+	Services []string `json:"services,omitempty"`
+	Labels   []string `json:"labels,omitempty"`
 }
 
 type Baseline struct {
