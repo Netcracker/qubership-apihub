@@ -1,5 +1,5 @@
 lockfile_version: '4'
-generated_at: '2026-11-25T08:11:51.119416+00:00'
+generated_at: '2026-11-25T09:12:09.407793+00:00'
 apm_version: 0.38.1
 manifest_targets:
 - claude
@@ -272,13 +272,13 @@ dependencies:
   - .claude/skills/api-doc-viewer-ci-linters/SKILL.md
   - .cursor/rules/api-doc-viewer-ci-linters.mdc
   deployed_file_hashes:
-    .agents/skills/api-doc-viewer-ci-linters/SKILL.md: sha256:f05bc993d23a5ffe605e57160ef37c8e0089b9380f1d810d66035a394400bd1e
+    .agents/skills/api-doc-viewer-ci-linters/SKILL.md: sha256:5f91e7d00cb81a9ae220b319ceb3d891af2d24a485f212afc54952a380c9ad77
     .claude/rules/api-doc-viewer-ci-linters.md: sha256:98f1d7780f67df432db1dabebb356bd18e8881c0f279cd5d6412725d5c343002
-    .claude/skills/api-doc-viewer-ci-linters/SKILL.md: sha256:f05bc993d23a5ffe605e57160ef37c8e0089b9380f1d810d66035a394400bd1e
+    .claude/skills/api-doc-viewer-ci-linters/SKILL.md: sha256:5f91e7d00cb81a9ae220b319ceb3d891af2d24a485f212afc54952a380c9ad77
     .cursor/rules/api-doc-viewer-ci-linters.mdc: sha256:8e216212c7fcdf923c4b2c4c194182145958209c08befda8d611f85633925d5d
   source: local
   local_path: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-ci-linters
-  content_hash: sha256:4c07c2ad09d06a7fd6be36572fa7a2dcc8b13b3dae07e1513bf1560db943eaae
+  content_hash: sha256:41e602cd7961ec42506111f12124a66ea7af6c8ac926daa48cc043cea32450f1
 - repo_url: _local/api-doc-viewer-feature-test-plan
   name: api-doc-viewer-feature-test-plan
   version: 1.0.0
@@ -727,12 +727,12 @@ dependencies:
   version: 1.0.0
   package_type: apm_package
   deployed_files:
-  - .claude/agents/verifier.md
+  - .claude/agents/frontend-verifier.md
   deployed_file_hashes:
-    .claude/agents/verifier.md: sha256:348d7b866ae9136db639cdb796690eb882b229094a2f747e9599db7b9ae95f84
+    .claude/agents/frontend-verifier.md: sha256:75a1a8f31003cb87b37617bb67573268719b0cb1e400be51fe7514339875cb0a
   source: local
   local_path: ./frontend/ui/agent-packages/apihub-agents-claude
-  content_hash: sha256:cdceb4037b25fba51e89ec1ba8b4932f6509a2342052b26bc438b6cc6d4dd407
+  content_hash: sha256:5f6d90c14683c548ff3468a0a4e8a328290ec01d6e03aec4195551d95727d6f3
   package_targets:
   - claude
 - repo_url: _local/apihub-agents-cursor
@@ -740,12 +740,12 @@ dependencies:
   version: 1.0.0
   package_type: apm_package
   deployed_files:
-  - .cursor/agents/verifier.md
+  - .cursor/agents/frontend-verifier.md
   deployed_file_hashes:
-    .cursor/agents/verifier.md: sha256:9a2319b6a7ccd750e740321d3d7c94a538bc9393b57315be4c8ae77c770a1cce
+    .cursor/agents/frontend-verifier.md: sha256:47100db8eed298ff0a6168e58b9b071b6d6186683bc9828ba7de0b8d42c95dad
   source: local
   local_path: ./frontend/ui/agent-packages/apihub-agents-cursor
-  content_hash: sha256:455053118c938253278ac8155b640fc94d8a7ab9bf6aaef6c23d8c49dab1db9b
+  content_hash: sha256:c028e2425ba563ce22242d05028f84c0de5c72aea04b4ec3680c6e4f856fab4c
   package_targets:
   - cursor
 - repo_url: _local/apihub-autonomous-agent
@@ -956,6 +956,29 @@ dependencies:
   source: local
   local_path: ./agent-packages/apihub-design-authoring
   content_hash: sha256:f50aa1c5c88786c9c71461741034107a21cccc1966343b9b2c82ecd5998a38ee
+- repo_url: _local/apihub-frontend-gates
+  name: apihub-frontend-gates
+  version: 1.0.0
+  package_type: apm_package
+  deployed_files:
+  - .agents/skills/apihub-frontend-gates
+  - .agents/skills/apihub-frontend-gates/SKILL.md
+  - .agents/skills/apihub-frontend-gates/scripts/validate.mjs
+  - .claude/rules/apihub-frontend-gates.md
+  - .claude/skills/apihub-frontend-gates
+  - .claude/skills/apihub-frontend-gates/SKILL.md
+  - .claude/skills/apihub-frontend-gates/scripts/validate.mjs
+  - .cursor/rules/apihub-frontend-gates.mdc
+  deployed_file_hashes:
+    .agents/skills/apihub-frontend-gates/SKILL.md: sha256:08f8f9b52a9d61f4388816ba32c7842a486c45ed215eff648c2a08e49200561e
+    .agents/skills/apihub-frontend-gates/scripts/validate.mjs: sha256:486686d3fe9df01348089cb13e9e6a678929a10546969f9beac806a2a2aac156
+    .claude/rules/apihub-frontend-gates.md: sha256:6bf769cdad00499137f3c6982ab845e83635e972821c2c710d2b15f7a0d97923
+    .claude/skills/apihub-frontend-gates/SKILL.md: sha256:08f8f9b52a9d61f4388816ba32c7842a486c45ed215eff648c2a08e49200561e
+    .claude/skills/apihub-frontend-gates/scripts/validate.mjs: sha256:486686d3fe9df01348089cb13e9e6a678929a10546969f9beac806a2a2aac156
+    .cursor/rules/apihub-frontend-gates.mdc: sha256:ec6949df61b1d98cd4ba614f61cbadbb3ca65e6d3559cac4bab042a7734998f8
+  source: local
+  local_path: ./frontend/ui/agent-packages/apihub-frontend-gates
+  content_hash: sha256:fe44254398437187800c0e6bf1416cf76ec1f9cef9dece65e1c155f80944ad31
 - repo_url: _local/apihub-landing-refresh
   name: apihub-landing-refresh
   version: 0.1.0
@@ -987,36 +1010,13 @@ dependencies:
   - .claude/skills/apihub-mui-coding/SKILL.md
   - .cursor/rules/apihub-mui-coding.mdc
   deployed_file_hashes:
-    .agents/skills/apihub-mui-coding/SKILL.md: sha256:0cc291e22389c01339665dd0d8dba910a224036beba31b7c6fa1e1f6d98595c2
+    .agents/skills/apihub-mui-coding/SKILL.md: sha256:671dcc3cabf77e287848ff6502fa84757942e0627787f6def473403b188bab22
     .claude/rules/apihub-mui-coding.md: sha256:3605889b95377c851e1ae8a40db668d5f7768bc714bd278c9266a3c95ba6e3fb
-    .claude/skills/apihub-mui-coding/SKILL.md: sha256:0cc291e22389c01339665dd0d8dba910a224036beba31b7c6fa1e1f6d98595c2
+    .claude/skills/apihub-mui-coding/SKILL.md: sha256:671dcc3cabf77e287848ff6502fa84757942e0627787f6def473403b188bab22
     .cursor/rules/apihub-mui-coding.mdc: sha256:8660a9a963537dd903bdaa1c494831dc3a98a54fd277b35e8fc8b0fe1322ed90
   source: local
   local_path: ./frontend/ui/agent-packages/apihub-mui-coding
-  content_hash: sha256:7a2a876c59db57a267ceb017c11c7c4ca1acd7a1ac67469048b1ffb8c91c40d7
-- repo_url: _local/apihub-quality-gates
-  name: apihub-quality-gates
-  version: 1.0.0
-  package_type: apm_package
-  deployed_files:
-  - .agents/skills/apihub-validate
-  - .agents/skills/apihub-validate/SKILL.md
-  - .agents/skills/apihub-validate/scripts/validate.mjs
-  - .claude/rules/apihub-quality-gates.md
-  - .claude/skills/apihub-validate
-  - .claude/skills/apihub-validate/SKILL.md
-  - .claude/skills/apihub-validate/scripts/validate.mjs
-  - .cursor/rules/apihub-quality-gates.mdc
-  deployed_file_hashes:
-    .agents/skills/apihub-validate/SKILL.md: sha256:f259d57a002088615cdad80a2d601737a3aea58048ad57a33ebef30c187bd357
-    .agents/skills/apihub-validate/scripts/validate.mjs: sha256:3d627626b3e46e2ffef15bf1ba1adcb310228d6d38ff52c17600ce070e8d8420
-    .claude/rules/apihub-quality-gates.md: sha256:8cbaa316a0496aa71493a40afdefd91a00e969dafcad4b04c268d0c8e95e53d2
-    .claude/skills/apihub-validate/SKILL.md: sha256:f259d57a002088615cdad80a2d601737a3aea58048ad57a33ebef30c187bd357
-    .claude/skills/apihub-validate/scripts/validate.mjs: sha256:3d627626b3e46e2ffef15bf1ba1adcb310228d6d38ff52c17600ce070e8d8420
-    .cursor/rules/apihub-quality-gates.mdc: sha256:750af8b784e5d765aee763883f29c6396d7ca7d65c6eca9ca41ab1799d6ec1c4
-  source: local
-  local_path: ./frontend/ui/agent-packages/apihub-quality-gates
-  content_hash: sha256:acb983347a54c8efbdf7522478ff520613ab131574fc14f6618438dfdd86adb8
+  content_hash: sha256:095ab605301077e822138244d9c3c9d6dadef062082d3025f739339cd0e1df8e
 - repo_url: _local/apihub-react-coding
   name: apihub-react-coding
   version: 1.0.0
@@ -1029,13 +1029,13 @@ dependencies:
   - .claude/skills/apihub-react-coding/SKILL.md
   - .cursor/rules/apihub-react-coding.mdc
   deployed_file_hashes:
-    .agents/skills/apihub-react-coding/SKILL.md: sha256:c122b40c6302b430e63c1cc7cddc25d0d0bfcbda919c653eca4b4d718eea3252
+    .agents/skills/apihub-react-coding/SKILL.md: sha256:f42afce4d303b7732a8bf9fe9381e2e9c1d1a476b30c8443dc57d3803ca51e92
     .claude/rules/apihub-react-coding.md: sha256:49dccd740268f4ed88f7239e457e5cca9017f7762a1f5742e3f029ebcd9364ad
-    .claude/skills/apihub-react-coding/SKILL.md: sha256:c122b40c6302b430e63c1cc7cddc25d0d0bfcbda919c653eca4b4d718eea3252
+    .claude/skills/apihub-react-coding/SKILL.md: sha256:f42afce4d303b7732a8bf9fe9381e2e9c1d1a476b30c8443dc57d3803ca51e92
     .cursor/rules/apihub-react-coding.mdc: sha256:cb5a98bdd2e10604faac337cae3e1634ade37c621d0fb333f787f6d40c87f4dc
   source: local
   local_path: ./frontend/ui/agent-packages/apihub-react-coding
-  content_hash: sha256:511e456bd70ba8370064ecf0a02a2502ed1d4c2aec2cb1f283659883cb6c322d
+  content_hash: sha256:a3ab4f4d9318ca7045711796e303274b9183c9a648f92201d8046bf23997937a
 - repo_url: _local/apihub-typescript-coding
   name: apihub-typescript-coding
   version: 1.0.0
@@ -1048,13 +1048,13 @@ dependencies:
   - .claude/skills/apihub-typescript-coding/SKILL.md
   - .cursor/rules/apihub-typescript-coding.mdc
   deployed_file_hashes:
-    .agents/skills/apihub-typescript-coding/SKILL.md: sha256:d1dc525a7805c548d0693c044f6dfb2f487ab4575484c492222b78aaa472dc16
+    .agents/skills/apihub-typescript-coding/SKILL.md: sha256:1af75e9ec3cfae2b14d1c0181f92ee8f80cb5ce5581fe56e895d21281b9ecbf1
     .claude/rules/apihub-typescript-coding.md: sha256:7b6e24e39ea9257c4c892c809cd116c5a14290acb6d4a45dc84f7b64c56963e3
-    .claude/skills/apihub-typescript-coding/SKILL.md: sha256:d1dc525a7805c548d0693c044f6dfb2f487ab4575484c492222b78aaa472dc16
+    .claude/skills/apihub-typescript-coding/SKILL.md: sha256:1af75e9ec3cfae2b14d1c0181f92ee8f80cb5ce5581fe56e895d21281b9ecbf1
     .cursor/rules/apihub-typescript-coding.mdc: sha256:6b662aa87f2cd45d42c3a39211ef38ee930a71fe4b57fe926d2c222e6e775eed
   source: local
   local_path: ./frontend/ui/agent-packages/apihub-typescript-coding
-  content_hash: sha256:35e68589d9794deb8912a9035b86be5ad6fa1756241d61c8706e95f4e0181d3f
+  content_hash: sha256:c36eb055ca78614c252bccf9a3d174f9b2430c6afc92256e466a83dc490465e0
 - repo_url: _local/apihub-ui-authoring
   name: apihub-ui-authoring
   version: 1.2.0
@@ -1067,13 +1067,13 @@ dependencies:
   - .claude/skills/apihub-ui-authoring/SKILL.md
   - .cursor/rules/apihub-ui-authoring.mdc
   deployed_file_hashes:
-    .agents/skills/apihub-ui-authoring/SKILL.md: sha256:c3909a794a5f70ae01cf4825197e3b3a2f22ee8f0c41c71fd38f9696dab7b448
+    .agents/skills/apihub-ui-authoring/SKILL.md: sha256:5ec1b0bad72567e07c6ce4e3207fb5033b4cfd3da3437765271e53d75827685c
     .claude/rules/apihub-ui-authoring.md: sha256:fd9f9a65fc139aec4ac957127173135f8bb4be66ed1d938730c50ec6c8f5ab67
-    .claude/skills/apihub-ui-authoring/SKILL.md: sha256:c3909a794a5f70ae01cf4825197e3b3a2f22ee8f0c41c71fd38f9696dab7b448
+    .claude/skills/apihub-ui-authoring/SKILL.md: sha256:5ec1b0bad72567e07c6ce4e3207fb5033b4cfd3da3437765271e53d75827685c
     .cursor/rules/apihub-ui-authoring.mdc: sha256:32a9c37f0a1f93d474c9c3ce3a4f7297a973a2ee9588815161babccc5bed6604
   source: local
   local_path: ./frontend/ui/agent-packages/apihub-ui-authoring
-  content_hash: sha256:474cff75893f93994402e9664bbe87dd021066b8458a2f4c279aa8a9ec7a2898
+  content_hash: sha256:b74f39b09994a220f142644d7276d4410aa5df5daec67d353b1bc9315e1a9af7
 - repo_url: _local/apihub-unit-testing
   name: apihub-unit-testing
   version: 1.0.0
@@ -1529,13 +1529,13 @@ dependencies:
 deployments:
 - kind: project-relative
   target: claude
-  value: .claude/agents/verifier.md
+  value: .claude/agents/frontend-verifier.md
   runtime: null
   scope: project
   owners:
   - ./frontend/ui/agent-packages/apihub-agents-claude
   active_owner: ./frontend/ui/agent-packages/apihub-agents-claude
-  content_hash: sha256:348d7b866ae9136db639cdb796690eb882b229094a2f747e9599db7b9ae95f84
+  content_hash: sha256:75a1a8f31003cb87b37617bb67573268719b0cb1e400be51fe7514339875cb0a
 - kind: project-relative
   target: claude
   value: .claude/rules/agent-config-defaults.md
@@ -1817,6 +1817,15 @@ deployments:
   content_hash: sha256:9087810d21df3aed6f5be5ab2b743826a0c36e7b5d81406717615a8dbe1c6688
 - kind: project-relative
   target: claude
+  value: .claude/rules/apihub-frontend-gates.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/ui/agent-packages/apihub-frontend-gates
+  active_owner: ./frontend/ui/agent-packages/apihub-frontend-gates
+  content_hash: sha256:6bf769cdad00499137f3c6982ab845e83635e972821c2c710d2b15f7a0d97923
+- kind: project-relative
+  target: claude
   value: .claude/rules/apihub-functional-design.md
   runtime: null
   scope: project
@@ -1860,15 +1869,6 @@ deployments:
   - ./frontend/ui/agent-packages/apihub-mui-coding
   active_owner: ./frontend/ui/agent-packages/apihub-mui-coding
   content_hash: sha256:3605889b95377c851e1ae8a40db668d5f7768bc714bd278c9266a3c95ba6e3fb
-- kind: project-relative
-  target: claude
-  value: .claude/rules/apihub-quality-gates.md
-  runtime: null
-  scope: project
-  owners:
-  - ./frontend/ui/agent-packages/apihub-quality-gates
-  active_owner: ./frontend/ui/agent-packages/apihub-quality-gates
-  content_hash: sha256:8cbaa316a0496aa71493a40afdefd91a00e969dafcad4b04c268d0c8e95e53d2
 - kind: project-relative
   target: claude
   value: .claude/rules/apihub-react-coding.md
@@ -2543,7 +2543,7 @@ deployments:
   owners:
   - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-ci-linters
   active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-ci-linters
-  content_hash: sha256:f05bc993d23a5ffe605e57160ef37c8e0089b9380f1d810d66035a394400bd1e
+  content_hash: sha256:5f91e7d00cb81a9ae220b319ceb3d891af2d24a485f212afc54952a380c9ad77
 - kind: project-relative
   target: claude
   value: .claude/skills/api-doc-viewer-feature-test-plan
@@ -3428,6 +3428,33 @@ deployments:
   content_hash: sha256:fb40ca51d646e62fdbe81382149cc229c7a953bb4a7bc56ec1cd21d9af276ddc
 - kind: project-relative
   target: claude
+  value: .claude/skills/apihub-frontend-gates
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/ui/agent-packages/apihub-frontend-gates
+  active_owner: ./frontend/ui/agent-packages/apihub-frontend-gates
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/apihub-frontend-gates/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/ui/agent-packages/apihub-frontend-gates
+  active_owner: ./frontend/ui/agent-packages/apihub-frontend-gates
+  content_hash: sha256:08f8f9b52a9d61f4388816ba32c7842a486c45ed215eff648c2a08e49200561e
+- kind: project-relative
+  target: claude
+  value: .claude/skills/apihub-frontend-gates/scripts/validate.mjs
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/ui/agent-packages/apihub-frontend-gates
+  active_owner: ./frontend/ui/agent-packages/apihub-frontend-gates
+  content_hash: sha256:486686d3fe9df01348089cb13e9e6a678929a10546969f9beac806a2a2aac156
+- kind: project-relative
+  target: claude
   value: .claude/skills/apihub-functional-design
   runtime: null
   scope: project
@@ -3578,7 +3605,7 @@ deployments:
   owners:
   - ./frontend/ui/agent-packages/apihub-mui-coding
   active_owner: ./frontend/ui/agent-packages/apihub-mui-coding
-  content_hash: sha256:0cc291e22389c01339665dd0d8dba910a224036beba31b7c6fa1e1f6d98595c2
+  content_hash: sha256:671dcc3cabf77e287848ff6502fa84757942e0627787f6def473403b188bab22
 - kind: project-relative
   target: claude
   value: .claude/skills/apihub-pr-review
@@ -3614,7 +3641,7 @@ deployments:
   owners:
   - ./frontend/ui/agent-packages/apihub-react-coding
   active_owner: ./frontend/ui/agent-packages/apihub-react-coding
-  content_hash: sha256:c122b40c6302b430e63c1cc7cddc25d0d0bfcbda919c653eca4b4d718eea3252
+  content_hash: sha256:f42afce4d303b7732a8bf9fe9381e2e9c1d1a476b30c8443dc57d3803ca51e92
 - kind: project-relative
   target: claude
   value: .claude/skills/apihub-task
@@ -3650,7 +3677,7 @@ deployments:
   owners:
   - ./frontend/ui/agent-packages/apihub-typescript-coding
   active_owner: ./frontend/ui/agent-packages/apihub-typescript-coding
-  content_hash: sha256:d1dc525a7805c548d0693c044f6dfb2f487ab4575484c492222b78aaa472dc16
+  content_hash: sha256:1af75e9ec3cfae2b14d1c0181f92ee8f80cb5ce5581fe56e895d21281b9ecbf1
 - kind: project-relative
   target: claude
   value: .claude/skills/apihub-ui-authoring
@@ -3668,7 +3695,7 @@ deployments:
   owners:
   - ./frontend/ui/agent-packages/apihub-ui-authoring
   active_owner: ./frontend/ui/agent-packages/apihub-ui-authoring
-  content_hash: sha256:c3909a794a5f70ae01cf4825197e3b3a2f22ee8f0c41c71fd38f9696dab7b448
+  content_hash: sha256:5ec1b0bad72567e07c6ce4e3207fb5033b4cfd3da3437765271e53d75827685c
 - kind: project-relative
   target: claude
   value: .claude/skills/apihub-unit-testing
@@ -3687,33 +3714,6 @@ deployments:
   - ./frontend/ui/agent-packages/apihub-unit-testing
   active_owner: ./frontend/ui/agent-packages/apihub-unit-testing
   content_hash: sha256:4991f89f62e47e6ed3fa136f1974331dcd04311d837eedadb95c26345587faa4
-- kind: project-relative
-  target: claude
-  value: .claude/skills/apihub-validate
-  runtime: null
-  scope: project
-  owners:
-  - ./frontend/ui/agent-packages/apihub-quality-gates
-  active_owner: ./frontend/ui/agent-packages/apihub-quality-gates
-  content_hash: null
-- kind: project-relative
-  target: claude
-  value: .claude/skills/apihub-validate/SKILL.md
-  runtime: null
-  scope: project
-  owners:
-  - ./frontend/ui/agent-packages/apihub-quality-gates
-  active_owner: ./frontend/ui/agent-packages/apihub-quality-gates
-  content_hash: sha256:f259d57a002088615cdad80a2d601737a3aea58048ad57a33ebef30c187bd357
-- kind: project-relative
-  target: claude
-  value: .claude/skills/apihub-validate/scripts/validate.mjs
-  runtime: null
-  scope: project
-  owners:
-  - ./frontend/ui/agent-packages/apihub-quality-gates
-  active_owner: ./frontend/ui/agent-packages/apihub-quality-gates
-  content_hash: sha256:3d627626b3e46e2ffef15bf1ba1adcb310228d6d38ff52c17600ce070e8d8420
 - kind: project-relative
   target: claude
   value: .claude/skills/ddlapi-authoring
@@ -4424,7 +4424,7 @@ deployments:
   owners:
   - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-ci-linters
   active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-ci-linters
-  content_hash: sha256:f05bc993d23a5ffe605e57160ef37c8e0089b9380f1d810d66035a394400bd1e
+  content_hash: sha256:5f91e7d00cb81a9ae220b319ceb3d891af2d24a485f212afc54952a380c9ad77
 - kind: project-relative
   target: cursor
   value: .agents/skills/api-doc-viewer-feature-test-plan
@@ -5309,6 +5309,33 @@ deployments:
   content_hash: sha256:fb40ca51d646e62fdbe81382149cc229c7a953bb4a7bc56ec1cd21d9af276ddc
 - kind: project-relative
   target: cursor
+  value: .agents/skills/apihub-frontend-gates
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/ui/agent-packages/apihub-frontend-gates
+  active_owner: ./frontend/ui/agent-packages/apihub-frontend-gates
+  content_hash: null
+- kind: project-relative
+  target: cursor
+  value: .agents/skills/apihub-frontend-gates/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/ui/agent-packages/apihub-frontend-gates
+  active_owner: ./frontend/ui/agent-packages/apihub-frontend-gates
+  content_hash: sha256:08f8f9b52a9d61f4388816ba32c7842a486c45ed215eff648c2a08e49200561e
+- kind: project-relative
+  target: cursor
+  value: .agents/skills/apihub-frontend-gates/scripts/validate.mjs
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/ui/agent-packages/apihub-frontend-gates
+  active_owner: ./frontend/ui/agent-packages/apihub-frontend-gates
+  content_hash: sha256:486686d3fe9df01348089cb13e9e6a678929a10546969f9beac806a2a2aac156
+- kind: project-relative
+  target: cursor
   value: .agents/skills/apihub-functional-design
   runtime: null
   scope: project
@@ -5459,7 +5486,7 @@ deployments:
   owners:
   - ./frontend/ui/agent-packages/apihub-mui-coding
   active_owner: ./frontend/ui/agent-packages/apihub-mui-coding
-  content_hash: sha256:0cc291e22389c01339665dd0d8dba910a224036beba31b7c6fa1e1f6d98595c2
+  content_hash: sha256:671dcc3cabf77e287848ff6502fa84757942e0627787f6def473403b188bab22
 - kind: project-relative
   target: cursor
   value: .agents/skills/apihub-pr-review
@@ -5495,7 +5522,7 @@ deployments:
   owners:
   - ./frontend/ui/agent-packages/apihub-react-coding
   active_owner: ./frontend/ui/agent-packages/apihub-react-coding
-  content_hash: sha256:c122b40c6302b430e63c1cc7cddc25d0d0bfcbda919c653eca4b4d718eea3252
+  content_hash: sha256:f42afce4d303b7732a8bf9fe9381e2e9c1d1a476b30c8443dc57d3803ca51e92
 - kind: project-relative
   target: cursor
   value: .agents/skills/apihub-task
@@ -5531,7 +5558,7 @@ deployments:
   owners:
   - ./frontend/ui/agent-packages/apihub-typescript-coding
   active_owner: ./frontend/ui/agent-packages/apihub-typescript-coding
-  content_hash: sha256:d1dc525a7805c548d0693c044f6dfb2f487ab4575484c492222b78aaa472dc16
+  content_hash: sha256:1af75e9ec3cfae2b14d1c0181f92ee8f80cb5ce5581fe56e895d21281b9ecbf1
 - kind: project-relative
   target: cursor
   value: .agents/skills/apihub-ui-authoring
@@ -5549,7 +5576,7 @@ deployments:
   owners:
   - ./frontend/ui/agent-packages/apihub-ui-authoring
   active_owner: ./frontend/ui/agent-packages/apihub-ui-authoring
-  content_hash: sha256:c3909a794a5f70ae01cf4825197e3b3a2f22ee8f0c41c71fd38f9696dab7b448
+  content_hash: sha256:5ec1b0bad72567e07c6ce4e3207fb5033b4cfd3da3437765271e53d75827685c
 - kind: project-relative
   target: cursor
   value: .agents/skills/apihub-unit-testing
@@ -5568,33 +5595,6 @@ deployments:
   - ./frontend/ui/agent-packages/apihub-unit-testing
   active_owner: ./frontend/ui/agent-packages/apihub-unit-testing
   content_hash: sha256:4991f89f62e47e6ed3fa136f1974331dcd04311d837eedadb95c26345587faa4
-- kind: project-relative
-  target: cursor
-  value: .agents/skills/apihub-validate
-  runtime: null
-  scope: project
-  owners:
-  - ./frontend/ui/agent-packages/apihub-quality-gates
-  active_owner: ./frontend/ui/agent-packages/apihub-quality-gates
-  content_hash: null
-- kind: project-relative
-  target: cursor
-  value: .agents/skills/apihub-validate/SKILL.md
-  runtime: null
-  scope: project
-  owners:
-  - ./frontend/ui/agent-packages/apihub-quality-gates
-  active_owner: ./frontend/ui/agent-packages/apihub-quality-gates
-  content_hash: sha256:f259d57a002088615cdad80a2d601737a3aea58048ad57a33ebef30c187bd357
-- kind: project-relative
-  target: cursor
-  value: .agents/skills/apihub-validate/scripts/validate.mjs
-  runtime: null
-  scope: project
-  owners:
-  - ./frontend/ui/agent-packages/apihub-quality-gates
-  active_owner: ./frontend/ui/agent-packages/apihub-quality-gates
-  content_hash: sha256:3d627626b3e46e2ffef15bf1ba1adcb310228d6d38ff52c17600ce070e8d8420
 - kind: project-relative
   target: cursor
   value: .agents/skills/ddlapi-authoring
@@ -5894,13 +5894,13 @@ deployments:
   content_hash: sha256:86015d721b3f518ac64716b035d93c536d1ea4bb2f811935048d37d067d56bfd
 - kind: project-relative
   target: cursor
-  value: .cursor/agents/verifier.md
+  value: .cursor/agents/frontend-verifier.md
   runtime: null
   scope: project
   owners:
   - ./frontend/ui/agent-packages/apihub-agents-cursor
   active_owner: ./frontend/ui/agent-packages/apihub-agents-cursor
-  content_hash: sha256:9a2319b6a7ccd750e740321d3d7c94a538bc9393b57315be4c8ae77c770a1cce
+  content_hash: sha256:47100db8eed298ff0a6168e58b9b071b6d6186683bc9828ba7de0b8d42c95dad
 - kind: project-relative
   target: cursor
   value: .cursor/rules/agent-config-defaults.mdc
@@ -6182,6 +6182,15 @@ deployments:
   content_hash: sha256:2984f8825f641b25378e73680e8fed8d286aae2937b4d230e01f7f0907243818
 - kind: project-relative
   target: cursor
+  value: .cursor/rules/apihub-frontend-gates.mdc
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/ui/agent-packages/apihub-frontend-gates
+  active_owner: ./frontend/ui/agent-packages/apihub-frontend-gates
+  content_hash: sha256:ec6949df61b1d98cd4ba614f61cbadbb3ca65e6d3559cac4bab042a7734998f8
+- kind: project-relative
+  target: cursor
   value: .cursor/rules/apihub-functional-design.mdc
   runtime: null
   scope: project
@@ -6225,15 +6234,6 @@ deployments:
   - ./frontend/ui/agent-packages/apihub-mui-coding
   active_owner: ./frontend/ui/agent-packages/apihub-mui-coding
   content_hash: sha256:8660a9a963537dd903bdaa1c494831dc3a98a54fd277b35e8fc8b0fe1322ed90
-- kind: project-relative
-  target: cursor
-  value: .cursor/rules/apihub-quality-gates.mdc
-  runtime: null
-  scope: project
-  owners:
-  - ./frontend/ui/agent-packages/apihub-quality-gates
-  active_owner: ./frontend/ui/agent-packages/apihub-quality-gates
-  content_hash: sha256:750af8b784e5d765aee763883f29c6396d7ca7d65c6eca9ca41ab1799d6ec1c4
 - kind: project-relative
   target: cursor
   value: .cursor/rules/apihub-react-coding.mdc

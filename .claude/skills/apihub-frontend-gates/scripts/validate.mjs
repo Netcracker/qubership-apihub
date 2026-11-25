@@ -130,7 +130,7 @@ function eslintGate(pkg) {
   const command = `pnpm exec eslint --fix (${paths.length} files in ${pkg.dir})`
   // ESLint writes the report to a file because a plugin may print to stdout too: eslint-plugin-boundaries prints
   // "[boundaries]: Please provide element types ..." in a package without the boundaries/elements setting.
-  const reportDir = mkdtempSync(join(tmpdir(), 'apihub-validate-'))
+  const reportDir = mkdtempSync(join(tmpdir(), 'apihub-frontend-gates-'))
   const reportFile = join(reportDir, 'eslint.json')
   let report
   try {
@@ -252,7 +252,7 @@ function skip(detail) {
  */
 function run(command, args, cwd, env = {}) {
   const windows = process.platform === 'win32'
-  const outputDir = mkdtempSync(join(tmpdir(), 'apihub-validate-'))
+  const outputDir = mkdtempSync(join(tmpdir(), 'apihub-frontend-gates-'))
   const stdoutFile = join(outputDir, 'stdout.txt')
   const stderrFile = join(outputDir, 'stderr.txt')
   const stdoutFd = openSync(stdoutFile, 'w')

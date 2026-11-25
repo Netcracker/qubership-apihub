@@ -61,6 +61,9 @@ Each TypeScript module has its own ESLint config and style. Decide in this order
 
 - Related constants, types, and factories for one entity share a common prefix at the start: `AI_CHAT_ROOT`,
   `aiChatListKey`, `AiChatMessage`.
+- A function name starts with a verb that says what it returns: `get...` for a derived value, `to...` for a mapper,
+  `create...` for a factory or a test fixture, `is...` or `has...` for a predicate. A noun with the suffix `Of`
+  (`versionErrorOf`) looks like a value at the call site; name it `getVersionError`.
 - In one object literal, use shorthand for every property or for none: `{ foo, bar }` or
   `{ foo: foo, bar: bar, label: title }`, never `{ foo, label: title }`.
 - Name a new file like its neighbours in the same folder. The defaults:
@@ -92,6 +95,18 @@ Do not duplicate logic or grow conditions: extract a shared helper, hook, or fun
 Prefer early returns, named booleans, and `if` or `switch` over nested or chained ternaries and long inline `&&` or
 `?:` trees.
 
+Where every branch of a `switch` only returns a value, write a `Record<Union, T>` map instead. The type check then
+fails on a missing key, also in a function without an annotated return type. Keep the `switch` where a branch
+computes or renders something of its own.
+
+```ts
+const SEVERITY_TO_LABEL: Record<Severity, string> = {
+  breaking: 'Breaking',
+  'non-breaking': 'Non-breaking',
+  annotation: 'Annotation',
+}
+```
+
 ## Imports and exports
 
 - Order the groups: third-party packages (`react`, `@mui/*`, `react-router`, `zod`), then workspace packages
@@ -121,3 +136,10 @@ Prefer early returns, named booleans, and `if` or `switch` over nested or chaine
 Comments explain why, not what the next line does. Do not reference paths outside the repository, section numbers
 or plan IDs of internal documents, ticket IDs, or links that are not publicly reachable. Mark follow-up work as
 `TODO(<scope>): <what>`, for example `TODO(api-processor): drop the fallback once DDL builds report errors`.
+
+- A comment describes the code as it is, for a reader who never saw an earlier version. It does not compare the code
+  with what it replaced ("no longer debounced", "instead of an effect"), and it does not explain standard React or
+  browser behavior that any reader of the module knows. It states the constraint that makes the code necessary here.
+- A constant, prop, or function whose name and type say what it is gets no doc comment. Where the comment would only
+  add when the symbol applies, put that into the name: `emptyStateLabel`, not `label` with a comment that it labels
+  the empty state.
