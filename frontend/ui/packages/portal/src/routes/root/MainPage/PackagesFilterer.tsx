@@ -1,7 +1,6 @@
 import type { FC } from 'react'
-import React, { memo, useCallback, useMemo } from 'react'
+import React, { memo, useCallback, useEffect, useMemo, useRef } from 'react'
 import { Box, Button } from '@mui/material'
-import ListOutlinedIcon from '@mui/icons-material/ListOutlined'
 import { useTextSearchParam } from '../useTextSearchParam'
 import type { TableMode } from '../useTableMode'
 import { FLAT_TABLE_MODE, TREE_TABLE_MODE, useTableMode } from '../useTableMode'
@@ -20,6 +19,7 @@ import { PackageSettingsButton } from '@portal/components/PackageSettingsButton'
 import { DropdownButton } from '@portal/components/DropdownButton'
 import { SelectorWithIcons } from '@netcracker/qubership-apihub-ui-shared/components/SelectorWithIcons'
 import { TreeIcon } from '@netcracker/qubership-apihub-ui-shared/icons/TreeIcon'
+import { ListIcon } from '@netcracker/qubership-apihub-ui-shared/icons/ListIcon'
 
 type PackagesFiltererProps = Readonly<{
   hideViewSelector: boolean
@@ -37,6 +37,13 @@ export const PackagesFilterer: FC<PackagesFiltererProps> = memo<PackagesFilterer
   const isPrivatePage = useIsPrivateMainPage()
   const setSearchParams = useSetSearchParams()
   const [textFilter] = useTextSearchParam()
+  const defaultViewMode = hideViewSelector ? FLAT_TABLE_MODE : TREE_TABLE_MODE
+  const [viewMode] = useTableMode(defaultViewMode)
+  const viewModeBeforeSearchRef = useRef<TableMode | null>(null)
+
+  useEffect(() => {
+    viewModeBeforeSearchRef.current = null
+  }, [rootPackageKey])
 
   const [packageObject] = usePackage({ packageKey: rootPackageKey })
   const { showCreatePackageDialog } = useEventBus()
@@ -84,8 +91,13 @@ export const PackagesFilterer: FC<PackagesFiltererProps> = memo<PackagesFilterer
         value={textFilter}
         onValueChange={text => {
           if (!text) {
-            setSearchParams({ text: text }, { replace: true })
+            const view = viewModeBeforeSearchRef.current ?? viewMode
+            viewModeBeforeSearchRef.current = null
+            setSearchParams({ text: text, view: view === defaultViewMode ? '' : view }, { replace: true })
           } else {
+            if (viewModeBeforeSearchRef.current === null) {
+              viewModeBeforeSearchRef.current = viewMode
+            }
             setSearchParams({ text: text, view: FLAT_TABLE_MODE }, { replace: true })
           }
         }}
@@ -121,14 +133,16 @@ export const PackagesFilterer: FC<PackagesFiltererProps> = memo<PackagesFilterer
 const TableViewSelector: FC = memo(() => {
   const [viewMode, setViewMode] = useTableMode(TREE_TABLE_MODE)
   const setSearchParams = useSetSearchParams()
+  const [textFilter] = useTextSearchParam()
 
   return (
     <SelectorWithIcons<TableMode>
       mode={viewMode}
+      disabled={!!textFilter}
       firstIcon={<TreeIcon/>}
       firstValue={TREE_TABLE_MODE}
       firstTooltip="Tree view"
-      secondIcon={<ListOutlinedIcon/>}
+      secondIcon={<ListIcon/>}
       secondValue={FLAT_TABLE_MODE}
       secondTooltip="List view"
       firstTestId="TreeTableModeButton"
