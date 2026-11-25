@@ -5,14 +5,10 @@ import { JavaApiClassListBuilder, type JavaApiClassListItem } from '@netcracker/
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 
 import type { LibraryJavaApiDocumentDto } from '@portal/entities/libraries'
-import { toJavaApiDocument, toReportRows } from './javaapi/libraryClassDocument'
+import { toJavaApiDocument, toReportRows, withMemberCounts } from './javaapi/libraryClassDocument'
 import { useInvalidateLibraryChanges } from './useLibraryChanges'
 import { useInvalidateLibraryClasses, useLibraryClasses } from './useLibraryClasses'
-import {
-  LIBRARY_CLASS_CHANGES_QUERY_KEY,
-  LIBRARY_CLASS_QUERY_KEY,
-  LIBRARY_NESTED_CLASSES_QUERY_KEY,
-} from './useLibraryJavaClass'
+import { LIBRARY_CLASS_CHANGES_QUERY_KEY, LIBRARY_CLASS_QUERY_KEY } from './useLibraryJavaClass'
 
 type LibraryJavaApiData = {
   document: LibraryJavaApiDocumentDto
@@ -27,7 +23,6 @@ type LibraryJavaApiResult = {
 
 type InvalidateLibraryJavaApi = (libraryId: Key) => Promise<void>
 
-// TODO(libraries-backend): The class list has no member counts; a class's members load with its details.
 export function useLibraryJavaApiReport(
   libraryId: Key | undefined,
   version: string | undefined,
@@ -37,7 +32,8 @@ export function useLibraryJavaApiReport(
     if (!classes) return undefined
     if (!classes.length) return null
     const document = toJavaApiDocument(toReportRows(classes, []))
-    return { document: document, classes: new JavaApiClassListBuilder({ source: document }).build() }
+    const items = new JavaApiClassListBuilder({ source: document }).build()
+    return { document: document, classes: withMemberCounts(items, classes) }
   }, [classes])
   return { data: isLoading ? undefined : result, isLoading: isLoading, error: error }
 }
@@ -50,7 +46,6 @@ export function useInvalidateLibraryJavaApi(): InvalidateLibraryJavaApi {
     const queryKeys = [
       [LIBRARY_CLASS_QUERY_KEY, libraryId],
       [LIBRARY_CLASS_CHANGES_QUERY_KEY, libraryId],
-      [LIBRARY_NESTED_CLASSES_QUERY_KEY, libraryId],
     ]
     // Remove inactive entries first: refetchOnMount is off, so a cache that only went stale would be shown again
     queryKeys.forEach(queryKey => queryClient.removeQueries({ queryKey: queryKey, type: 'inactive' }))

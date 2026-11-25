@@ -3,7 +3,12 @@ import { createPath, useParams } from 'react-router-dom'
 
 import type { JavaApiNavigationLinkBuilder } from '@netcracker/qubership-apihub-api-doc-viewer'
 
-import { getJavaClassPageLink, type JavaApiDocumentKind, type PreviousLibraryVersion } from './javaApi'
+import {
+  getJavaClassPageLink,
+  getJavaReferenceLink,
+  type JavaApiDocumentKind,
+  type PreviousLibraryVersion,
+} from './javaApi'
 
 export function useJavaClassNavigationLinkBuilder(
   kind: JavaApiDocumentKind = 'report',
@@ -14,9 +19,12 @@ export function useJavaClassNavigationLinkBuilder(
 
   return useCallback((className: string) => {
     if (!libraryId || !versionId) return '#'
-    return createPath(getJavaClassPageLink(libraryId, versionId, className, kind, {
-      previousLibraryId,
-      previousVersion,
-    }))
+    if (kind === 'diff') {
+      return createPath(getJavaClassPageLink(libraryId, versionId, className, 'diff', {
+        previousLibraryId,
+        previousVersion,
+      }))
+    }
+    return createPath(getJavaReferenceLink(libraryId, versionId, className))
   }, [libraryId, versionId, kind, previousLibraryId, previousVersion])
 }

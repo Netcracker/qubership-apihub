@@ -41,7 +41,7 @@ import {
 import { sortChanges } from '@netcracker/qubership-apihub-ui-shared/utils/api-changes'
 import { ChangesSubTable } from '@netcracker/qubership-apihub-ui-shared/widgets/ChangesViewWidget/components/ChangesSubTable'
 
-import { toChangesSummary } from './javaApi'
+import { formatMemberCounts, toChangesSummary } from './javaApi'
 import { JavaClassTitleWithMeta } from './JavaClassTitleWithMeta'
 
 const JAVA_TYPES_COLUMN_ID = 'java-types'
@@ -61,12 +61,6 @@ const CHANGE_ACTION_TYPES: Record<JavaApiChangeAction, ActionType> = {
   [JavaApiChangeActions.REMOVED]: REMOVE_ACTION_TYPE,
   [JavaApiChangeActions.CHANGED]: REPLACE_ACTION_TYPE,
 }
-
-const MEMBER_KIND_TITLES = [
-  ['FIELD', 'field', 'fields'],
-  ['CONSTRUCTOR', 'constructor', 'constructors'],
-  ['METHOD', 'method', 'methods'],
-] as const
 
 type JavaChangesTableProps = Readonly<{
   classes: ReadonlyArray<JavaApiClassListItem>
@@ -101,7 +95,6 @@ export const JavaChangesTable: FC<JavaChangesTableProps> = memo(({ classes, prep
             javaClass={row.original}
             link={prepareLinkFn(row.original)}
             onLinkClick={onLinkClick}
-            showSummary={false}
           />
         </ExpandableItem>
       ),
@@ -110,7 +103,7 @@ export const JavaChangesTable: FC<JavaChangesTableProps> = memo(({ classes, prep
       id: MEMBERS_COLUMN_ID,
       header: () => <CustomTableHeadCell title="Members" />,
       cell: ({ row: { original } }) => {
-        const members = formatMemberCounts(original.memberKindCounts)
+        const members = formatMemberCounts(original.memberKindCounts, ' · ')
         return <TextWithOverflowTooltip tooltipText={members}>{members}</TextWithOverflowTooltip>
       },
     },
@@ -205,10 +198,3 @@ const ActionTableRow = styled(TableRow, { shouldForwardProp: prop => prop !== 'a
 >(({ action }) => ({
   backgroundColor: action ? ACTION_TYPE_COLOR_MAP[action] : undefined,
 }))
-
-function formatMemberCounts(counts: JavaApiClassListItem['memberKindCounts']): string {
-  const parts = MEMBER_KIND_TITLES
-    .filter(([kind]) => counts[kind] > 0)
-    .map(([kind, one, many]) => `${counts[kind]} ${counts[kind] === 1 ? one : many}`)
-  return parts.length > 0 ? parts.join(' · ') : '—'
-}

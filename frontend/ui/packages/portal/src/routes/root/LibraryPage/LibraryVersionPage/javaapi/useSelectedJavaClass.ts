@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react'
+import { useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
 import type { JavaApiClassListItem } from '@netcracker/qubership-apihub-api-doc-viewer'
@@ -6,6 +6,8 @@ import type { JavaApiClassListItem } from '@netcracker/qubership-apihub-api-doc-
 export const JAVA_CLASS_SEARCH_PARAM = 'javaClass'
 type SelectJavaClass = (className: string) => void
 
+// Without a type in the URL the preview shows the first type, as the package detailed view does, and the URL stays
+// as it is: a type in the URL means the user picked it
 export function useSelectedJavaClass(
   filteredClasses: ReadonlyArray<JavaApiClassListItem>,
 ): [JavaApiClassListItem | undefined, SelectJavaClass] {
@@ -18,10 +20,6 @@ export function useSelectedJavaClass(
       return params
     }, { replace: true })
   }, [setSearchParams])
-
-  useEffect(() => {
-    if (selectedClass && selectedClass.className !== selectedName) selectClass(selectedClass.className)
-  }, [selectedClass, selectedName, selectClass])
 
   return [selectedClass, selectClass]
 }

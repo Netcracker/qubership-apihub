@@ -18,10 +18,11 @@ No local mock server is required for this workflow.
 
 ## Local Library development
 
-The Library UI shows only when the backend registers the `libraries-backend` extension. There is no local mock:
-run the libraries-backend with the APIHUB you proxy to, for example the Compose stack in
-[`deploy/docker-compose/apihub-generic`](../../../../deploy/docker-compose/apihub-generic/README.md).
-In proxy mode Vite sends `/libraries-backend` to the same APIHUB as `/api`, whose UI nginx forwards it to the service.
+The Library UI shows only when the backend registers the `libraries-backend` extension. There is no local mock, and
+neither the Docker Compose stacks nor the Helm chart deploy libraries-backend yet: run the service from the
+`lib_be_impl` branch next to the APIHUB you proxy to, and register it in the `extensions` of the backend config.
+In proxy mode Vite sends `/libraries-backend` to the same APIHUB as `/api`, whose UI nginx forwards it to the service
+(`APIHUB_LIBRARIES_BACKEND_ADDRESS`).
 
 ## Proxy mode with MSW mocks
 

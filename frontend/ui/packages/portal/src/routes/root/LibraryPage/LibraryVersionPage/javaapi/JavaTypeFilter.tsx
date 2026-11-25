@@ -6,7 +6,7 @@ import { OptionItem } from '@netcracker/qubership-apihub-ui-shared/components/Op
 
 import { JAVA_TYPE_FILTER_SEARCH_PARAM, JAVA_TYPE_FILTER_TITLES, type JavaTypeFilterValue } from './javaApi'
 
-const JAVA_TYPE_FILTER_OPTIONS: JavaTypeFilterValue[] = ['CLASS', 'INTERFACE', 'ENUM', 'ANNOTATION']
+const JAVA_TYPE_FILTER_OPTIONS: JavaTypeFilterValue[] = ['CLASS', 'INTERFACE', 'ENUM']
 type SetJavaTypeFilter = (value?: JavaTypeFilterValue) => void
 
 export function useJavaTypeFilter(): [JavaTypeFilterValue | undefined, SetJavaTypeFilter] {

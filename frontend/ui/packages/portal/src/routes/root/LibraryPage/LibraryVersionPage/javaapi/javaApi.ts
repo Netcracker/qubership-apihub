@@ -8,7 +8,9 @@ import {
 } from '@netcracker/qubership-apihub-ui-shared/entities/change-severities'
 
 import type { LibraryChangesSummaryDto } from '@portal/entities/libraries'
-import { getLibraryJavaClassPath } from '../libraryVersion'
+import { CONTRACTS_PAGE } from '../../../../../routes'
+import { getLibraryJavaClassPath, getLibraryVersionPath } from '../libraryVersion'
+import { JAVA_CLASS_SEARCH_PARAM } from './useSelectedJavaClass'
 
 export const JAVA_TYPE_FILTER_SEARCH_PARAM = 'javaType'
 export const JAVA_DOCUMENT_SEARCH_PARAM = 'document'
@@ -25,6 +27,10 @@ export const JAVA_CHANGE_SEVERITIES: ReadonlySet<ChangeSeverity> = new Set([
 export type JavaTypeFilterValue = 'CLASS' | 'INTERFACE' | 'ENUM' | 'ANNOTATION'
 export type PreviousLibraryVersion = { previousLibraryId?: string; previousVersion?: string }
 export type JavaApiDocumentKind = 'report' | 'diff'
+type JavaReferenceClasses = {
+  classes: ReadonlyArray<JavaApiClassListItem>
+  resetFilters: boolean
+}
 export type JavaChangesSummary = Pick<
   ChangesSummary,
   typeof BREAKING_CHANGE_SEVERITY | typeof NON_BREAKING_CHANGE_SEVERITY | typeof ANNOTATION_CHANGE_SEVERITY
@@ -35,6 +41,19 @@ export const JAVA_TYPE_FILTER_TITLES: Record<JavaTypeFilterValue, string> = {
   INTERFACE: 'Interfaces',
   ENUM: 'Enums',
   ANNOTATION: 'Annotation types',
+}
+
+const MEMBER_KIND_TITLES = [
+  ['FIELD', 'field', 'fields'],
+  ['CONSTRUCTOR', 'constructor', 'constructors'],
+  ['METHOD', 'method', 'methods'],
+] as const
+
+export function formatMemberCounts(counts: JavaApiClassListItem['memberKindCounts'], separator: string): string {
+  const parts = MEMBER_KIND_TITLES
+    .filter(([kind]) => counts[kind] > 0)
+    .map(([kind, one, many]) => `${counts[kind]} ${counts[kind] === 1 ? one : many}`)
+  return parts.length > 0 ? parts.join(separator) : '—'
 }
 
 export function filterJavaClasses(
@@ -50,11 +69,36 @@ export function filterJavaClasses(
   )
 }
 
+export function getJavaReferenceClasses(
+  classes: ReadonlyArray<JavaApiClassListItem>,
+  searchValue: string,
+  javaType: JavaTypeFilterValue | undefined,
+  selectedName: string | null,
+): JavaReferenceClasses {
+  const filteredClasses = filterJavaClasses(classes, searchValue, javaType)
+  const resetFilters = classes.some(({ className }) => className === selectedName) &&
+    !filteredClasses.some(({ className }) => className === selectedName)
+  // Reveal the target before effects run so selection cannot replace it with the first filtered class.
+  return { classes: resetFilters ? classes : filteredClasses, resetFilters: resetFilters }
+}
+
+export function getJavaReferenceLink(
+  libraryId: string,
+  versionId: string,
+  className: string,
+): { pathname: string; search: string } {
+  const query = new URLSearchParams({ [JAVA_CLASS_SEARCH_PARAM]: className })
+  return {
+    pathname: getLibraryVersionPath(libraryId, versionId, CONTRACTS_PAGE),
+    search: `?${query}`,
+  }
+}
+
 export function getJavaClassPageLink(
   libraryId: string,
   versionId: string,
   className: string,
-  kind: JavaApiDocumentKind = 'report',
+  kind: 'diff',
   previous?: PreviousLibraryVersion,
 ): { pathname: string; search: string } {
   const query = new URLSearchParams({ [JAVA_DOCUMENT_SEARCH_PARAM]: kind })

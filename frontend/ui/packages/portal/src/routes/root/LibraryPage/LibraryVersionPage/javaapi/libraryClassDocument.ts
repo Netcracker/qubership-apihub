@@ -2,6 +2,8 @@
 // class body. It supplies no method elementType or modifiers, so constructors are detected by signature.
 // The UI has no record kind; records appear as classes.
 
+import type { JavaApiClassListItem } from '@netcracker/qubership-apihub-api-doc-viewer'
+
 import type {
   LibraryChangeDto,
   LibraryClassDetailsDto,
@@ -66,6 +68,22 @@ export function toReportRows(
     }
   })
   return [...rows, ...details.flatMap(cls => cls.methods.map(toJdiffMemberRow))]
+}
+
+export function withMemberCounts(
+  items: readonly JavaApiClassListItem[],
+  classes: readonly LibraryClassDto[],
+): JavaApiClassListItem[] {
+  const classesById = new Map(classes.map(cls => [cls.classId, cls]))
+  return items.map((item: JavaApiClassListItem) => {
+    const cls = classesById.get(item.className)
+    if (!cls) return item
+    return {
+      ...item,
+      memberKindCounts: { FIELD: cls.fieldCount, CONSTRUCTOR: cls.constructorCount, METHOD: cls.methodCount },
+      memberCount: cls.fieldCount + cls.constructorCount + cls.methodCount,
+    }
+  })
 }
 
 export function toDiffRows(

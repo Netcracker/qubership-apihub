@@ -1,3 +1,5 @@
+import type { JavaApiClassListItem } from '@netcracker/qubership-apihub-api-doc-viewer'
+
 import type {
   LibraryChangeDto,
   LibraryClassDetailsDto,
@@ -12,6 +14,7 @@ import {
   toJdiffMemberRow,
   toJdiffTypeRow,
   toReportRows,
+  withMemberCounts,
 } from './libraryClassDocument'
 
 const ORDER: LibraryClassDto = {
@@ -19,6 +22,9 @@ const ORDER: LibraryClassDto = {
   kind: 'class',
   qualifiedName: 'example.Order',
   deprecated: true,
+  methodCount: 1,
+  constructorCount: 2,
+  fieldCount: 3,
 }
 
 const GET_NAME: LibraryMethodDto = {
@@ -46,6 +52,27 @@ const RETURN_TYPE_CHANGE: LibraryChangeDto = {
 }
 
 describe('library class document', () => {
+  it('maps all three member counts from the DTO with the same class name', () => {
+    const item: JavaApiClassListItem = {
+      className: ORDER.classId,
+      displayName: 'Order',
+      packageName: 'example',
+      typeKind: 'CLASS',
+      memberCount: 0,
+      memberKindCounts: { FIELD: 0, CONSTRUCTOR: 0, METHOD: 0 },
+      changeCounts: { breaking: 0, 'non-breaking': 0, annotation: 0 },
+      changes: [],
+      elements: [],
+    }
+    const other: LibraryClassDto = { ...ORDER, classId: 'example.Other', methodCount: 10 }
+
+    expect(withMemberCounts([item], [other, ORDER])).toEqual([{
+      ...item,
+      memberCount: 6,
+      memberKindCounts: { FIELD: 3, CONSTRUCTOR: 2, METHOD: 1 },
+    }])
+  })
+
   it.each(
     [
       ['class', 'CLASS'],

@@ -148,6 +148,9 @@ export type LibraryClassDto = Readonly<{
   packageName?: string
   modifiers?: string[]
   deprecated: boolean
+  methodCount: number
+  constructorCount: number
+  fieldCount: number
 }>
 
 export type LibraryClassesDto = Readonly<{ classes: LibraryClassDto[] }>

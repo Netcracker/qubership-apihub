@@ -4,14 +4,16 @@ import { type FC, memo, useCallback, useMemo } from 'react'
 
 import type { JavaApiClassListItem } from '@netcracker/qubership-apihub-api-doc-viewer'
 import { CustomTableHeadCell } from '@netcracker/qubership-apihub-ui-shared/components/CustomTableHeadCell'
+import { TextWithOverflowTooltip } from '@netcracker/qubership-apihub-ui-shared/components/TextWithOverflowTooltip'
 import type { ColumnModel } from '@netcracker/qubership-apihub-ui-shared/hooks/table-resizing/useColumnResizing'
 
 import { ContractsEntityListTable } from '@portal/routes/root/PortalPage/VersionPage/VersionContractsSubPage/ContractsEntityListTable'
-import { JAVA_CLASSES_EMPTY_MESSAGE } from './javaApi'
+import { formatMemberCounts, JAVA_CLASSES_EMPTY_MESSAGE } from './javaApi'
 import { JavaClassTitleWithMeta } from './JavaClassTitleWithMeta'
 
 const JAVA_TYPES_COLUMN_ID = 'java-types'
-const COLUMN_MODELS: ColumnModel[] = [{ name: JAVA_TYPES_COLUMN_ID }]
+const MEMBERS_COLUMN_ID = 'members'
+const COLUMN_MODELS: ColumnModel[] = [{ name: JAVA_TYPES_COLUMN_ID }, { name: MEMBERS_COLUMN_ID }]
 
 type JavaClassListViewRow = {
   javaClass: JavaApiClassListItem
@@ -20,13 +22,12 @@ type JavaClassListViewRow = {
 type JavaClassListViewProps = Readonly<{
   classes: ReadonlyArray<JavaApiClassListItem>
   prepareLinkFn: (javaClass: JavaApiClassListItem) => Partial<Path>
-  onLinkClick: () => void
   isLoading?: boolean
 }>
 
 export const JavaClassListView: FC<JavaClassListViewProps> = memo<JavaClassListViewProps>(
-  ({ classes, prepareLinkFn, onLinkClick, isLoading = false }) => {
-    const columns: ColumnDef<JavaClassListViewRow>[] = useMemo(() => [
+  ({ classes, prepareLinkFn, isLoading = false }) => {
+    const columns = useMemo((): ColumnDef<JavaClassListViewRow>[] => [
       {
         id: JAVA_TYPES_COLUMN_ID,
         header: () => <CustomTableHeadCell title="Java types" />,
@@ -34,12 +35,18 @@ export const JavaClassListView: FC<JavaClassListViewProps> = memo<JavaClassListV
           <JavaClassTitleWithMeta
             javaClass={javaClass}
             link={prepareLinkFn(javaClass)}
-            onLinkClick={onLinkClick}
-            showMemberCount={false}
           />
         ),
       },
-    ], [prepareLinkFn, onLinkClick])
+      {
+        id: MEMBERS_COLUMN_ID,
+        header: () => <CustomTableHeadCell title="Members" />,
+        cell: ({ row: { original: { javaClass } } }) => {
+          const members = formatMemberCounts(javaClass.memberKindCounts, ', ')
+          return <TextWithOverflowTooltip tooltipText={members}>{members}</TextWithOverflowTooltip>
+        },
+      },
+    ], [prepareLinkFn])
 
     const data: JavaClassListViewRow[] = useMemo(() => classes.map(javaClass => ({ javaClass })), [classes])
     const resolveRowId = useCallback((row: JavaClassListViewRow) => row.javaClass.className, [])

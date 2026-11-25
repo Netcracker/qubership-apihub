@@ -17,7 +17,6 @@ type JavaClassListWithPreviewProps = Readonly<{
   version: string
   classes: ReadonlyArray<JavaApiClassListItem>
   prepareLinkFn: (javaClass: JavaApiClassListItem) => Partial<Path>
-  onLinkClick: () => void
   initialSize: number
   handleResize: ResizeCallback
   maxPreviewWidth: number
@@ -28,7 +27,6 @@ export const JavaClassListWithPreview: FC<JavaClassListWithPreviewProps> = memo<
   version,
   classes,
   prepareLinkFn,
-  onLinkClick,
   initialSize,
   handleResize,
   maxPreviewWidth,
@@ -37,9 +35,9 @@ export const JavaClassListWithPreview: FC<JavaClassListWithPreviewProps> = memo<
   const navigationLinkBuilder = useJavaClassNavigationLinkBuilder()
   const renderTitle = useCallback(
     (javaClass: JavaApiClassListItem, link?: Partial<Path>) => (
-      <JavaClassTitleWithMeta javaClass={javaClass} link={link} onLinkClick={onLinkClick} showMemberCount={false} />
+      <JavaClassTitleWithMeta javaClass={javaClass} link={link} />
     ),
-    [onLinkClick],
+    [],
   )
   return (
     <MetaClickableListWithPreview<JavaApiClassListItem>
@@ -59,8 +57,6 @@ export const JavaClassListWithPreview: FC<JavaClassListWithPreviewProps> = memo<
           version={version}
           javaClass={selectedClass}
           navigationLinkBuilder={navigationLinkBuilder}
-          link={selectedClass && prepareLinkFn(selectedClass)}
-          onLinkClick={onLinkClick}
           maxWidthHeaderToolbar={initialSize}
         />
       }

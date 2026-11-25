@@ -215,6 +215,7 @@ Unless noted, **API / Logic** is **TBD** — see [Backend](#backend) (low-level 
 
 | Description | UI (Mockup) | API / Logic |
 | :---- | :---- | :---- |
+| Clicking a type in API Reference (list or detailed view, or a type link in the type view) opens it in the detailed view of API Reference; there is no separate type page. The API Changes compare page is separate. | — | `operations?javaClass=<className>` |
 | Class detail. | [4.1 Detailed view — class](https://www.figma.com/design/Yh7cjYj1FpHeDWt1hYMAkT/-APIHUB--Tasks?node-id=7345-376690) | — |
 | Interface detail. | [4.2 Detailed view — interface](https://www.figma.com/design/Yh7cjYj1FpHeDWt1hYMAkT/-APIHUB--Tasks?node-id=7329-231022) | — |
 | Enum detail. | [4.3 Detailed view — enum](https://www.figma.com/design/Yh7cjYj1FpHeDWt1hYMAkT/-APIHUB--Tasks?node-id=7364-75885) | — |
@@ -298,17 +299,18 @@ The UI reads the API inventory and the jdiff comparison results of a Library ver
 
 | Data | Source | Use |
 | :---- | :---- | :---- |
-| Class list | `GET /libraries/{libraryId}/versions/{version}/classes` | Paged, at most 100 classes per request, filtered by `textFilter` (substring of the qualified name) and `kind`. The UI loads every page for the API Reference list and the Summary type counts. With `textFilter` set to `<classId>$` it lists the nested types of one class. |
+| Class list | `GET /libraries/{libraryId}/versions/{version}/classes` | Paged, at most 100 classes per request, filtered by `textFilter` (substring of the qualified name) and `kind`. The UI loads every page for the API Reference list and the Summary type counts. Per-class member counts (`methodCount`, `constructorCount`, `fieldCount`) appear in the API Reference Members column. The type view uses the full class list for type links and nested types. |
 | Class | `GET /libraries/{libraryId}/versions/{version}/classes/{classId}` | One type with its methods and constructors. API Reference shows it with its nested types. On API Changes the UI overlays the class's change rows (`changes?classId=`) on it: a change replaces the member with the same name and parameter types; removed members come from the change rows. |
 | Changes list | `GET /libraries/{libraryId}/versions/{version}/changes` | Each row has `classId` equal to the jdiff `className`, with the jdiff entry in `details`. The UI groups rows by type and uses the supplied `severity` for per-class counts and descriptions. `classId` limits the list to one type. |
 | Changes summary | `GET /libraries/{libraryId}/versions/{version}/changes/summary` | The UI reads `changeCounts` for the comparison summary. |
 
 The class list is empty until the version's build finishes. Known gaps of the class endpoints:
 
-* No fields and no enum constants: the type view shows constructors and methods only.
+* No fields and no enum constants: the type view shows constructors and methods only. The API Reference list shows
+  the field count although fields are not returned.
 * No element type for a member: a signature without a return type is a constructor.
 * No modifiers; the `record` kind is shown as a class.
-* No class count and no member counts: the list is loaded page by page, and API Reference rows show no member count.
+* No class count: the list is loaded page by page.
 * The API Changes view of a type shows its own rows only: nested types have their own `classId`.
 
 ### Type identity

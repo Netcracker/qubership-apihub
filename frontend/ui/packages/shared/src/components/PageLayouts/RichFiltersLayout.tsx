@@ -27,6 +27,7 @@ export type VersionOperationsLayoutProps = {
   exportButton?: ReactNode
   bodyRef?: MutableRefObject<HTMLDivElement | null>
   searchPlaceholder?: string
+  searchValue?: string
   setSearchValue?: (value: string) => void
   onOperationsViewChange?: (newViewMode: Key | undefined) => void
   onClickFilterButton?: (value: boolean) => void
@@ -51,6 +52,7 @@ export const RichFiltersLayout: FC<VersionOperationsLayoutProps> = memo<VersionO
   bodyRef,
   onClickFilterButton,
   searchPlaceholder = 'Search',
+  searchValue,
   setSearchValue,
   hideSearch = false,
   hideFilterButton = false,
@@ -90,6 +92,7 @@ export const RichFiltersLayout: FC<VersionOperationsLayoutProps> = memo<VersionO
       {!hideSearch && (
         <SearchBar
           placeholder={searchPlaceholder}
+          value={searchValue}
           onValueChange={setSearchValue}
           data-testid="SearchOperations"
         />
@@ -107,7 +110,7 @@ export const RichFiltersLayout: FC<VersionOperationsLayoutProps> = memo<VersionO
 
       {!hideExport && exportButton}
     </Box>
-  ), [additionalActions, exportButton, filtersApplied, hiddenFiltersPanel, hideExport, hideFilterButton, hideSearch, hideViewToggle, searchPlaceholder, setHiddenFiltersPanel, setSearchValue, viewSelector])
+  ), [additionalActions, exportButton, filtersApplied, hiddenFiltersPanel, hideExport, hideFilterButton, hideSearch, hideViewToggle, searchPlaceholder, searchValue, setHiddenFiltersPanel, setSearchValue, viewSelector])
 
   return (
     <LayoutWithSidebar

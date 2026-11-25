@@ -3,33 +3,21 @@ import type { Path } from '@remix-run/router'
 import { type FC, memo } from 'react'
 import { NavLink } from 'react-router-dom'
 
-import {
-  JAVA_API_TYPE_KIND_TITLES,
-  type JavaApiClassListItem,
-  JavaElementIcon,
-} from '@netcracker/qubership-apihub-api-doc-viewer'
+import { type JavaApiClassListItem, JavaElementIcon } from '@netcracker/qubership-apihub-api-doc-viewer'
 import { DdlSchemaChip } from '@netcracker/qubership-apihub-ui-shared/components/Ddl/DdlSchemaChip'
 import { OverflowTooltip } from '@netcracker/qubership-apihub-ui-shared/components/OverflowTooltip'
-import { TextWithOverflowTooltip } from '@netcracker/qubership-apihub-ui-shared/components/TextWithOverflowTooltip'
 
 type JavaClassTitleWithMetaProps = Readonly<{
   javaClass: JavaApiClassListItem
   link?: Partial<Path>
   onLinkClick?: () => void
   onlyTitle?: boolean
-  // false where a separate column already shows the members, e.g. the API Changes table
-  showSummary?: boolean
-  // TODO(libraries-backend): The class list has no member counts; show them once it does.
-  showMemberCount?: boolean
 }>
 
 export const JavaClassTitleWithMeta: FC<JavaClassTitleWithMetaProps> = memo<JavaClassTitleWithMetaProps>((
-  { javaClass, link, onLinkClick, onlyTitle = false, showSummary = true, showMemberCount = true },
+  { javaClass, link, onLinkClick, onlyTitle = false },
 ) => {
-  const { className, displayName, packageName, typeKind, memberCount } = javaClass
-  const subtitle = showMemberCount
-    ? `${JAVA_API_TYPE_KIND_TITLES[typeKind]} · ${memberCount} ${memberCount === 1 ? 'member' : 'members'}`
-    : JAVA_API_TYPE_KIND_TITLES[typeKind]
+  const { className, displayName, packageName, typeKind } = javaClass
 
   return (
     <TitleColumn>
@@ -51,17 +39,14 @@ export const JavaClassTitleWithMeta: FC<JavaClassTitleWithMetaProps> = memo<Java
                 </Link>
               </Typography>
             )
-            : <Typography noWrap variant={onlyTitle ? 'inherit' : 'subtitle1'}>{displayName}</Typography>}
+            : onlyTitle
+            ? <PreviewTitle noWrap variant="h1">{displayName}</PreviewTitle>
+            : <Typography noWrap variant="subtitle1">{displayName}</Typography>}
         </OverflowTooltip>
       </TitleRow>
       {!onlyTitle && (
         <SubtitleRow data-testid="JavaClassSubtitle">
           {packageName && <DdlSchemaChip label={packageName} data-testid="JavaClassPackageChip" />}
-          {showSummary && (
-            <TextWithOverflowTooltip tooltipText={subtitle} variant="subtitle2">
-              {subtitle}
-            </TextWithOverflowTooltip>
-          )}
         </SubtitleRow>
       )}
     </TitleColumn>
@@ -81,6 +66,12 @@ const TitleRow = styled(Box)({
   display: 'flex',
   alignItems: 'center',
   minWidth: 0,
+})
+
+// The preview header of the detailed view: the theme's 24px h1 in semi-bold, as the design asks (24px/600/32px)
+const PreviewTitle = styled(Typography)({
+  fontWeight: 600,
+  lineHeight: '32px',
 })
 
 const SubtitleRow = styled(Box)(({ theme }) => ({

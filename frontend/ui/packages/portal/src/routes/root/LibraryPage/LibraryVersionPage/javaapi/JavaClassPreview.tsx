@@ -1,12 +1,10 @@
 import { Alert, Box, styled } from '@mui/material'
-import type { Path } from '@remix-run/router'
 import { type FC, memo, useMemo, useState } from 'react'
 
 import {
   type JavaApiClassListItem,
   type JavaApiNavigationLinkBuilder,
   JavaClassViewer,
-  type NavigationLinkProps,
 } from '@netcracker/qubership-apihub-api-doc-viewer'
 import '@netcracker/qubership-apihub-api-doc-viewer/dist/style.css'
 import { ContractPreviewPanel } from '@netcracker/qubership-apihub-ui-shared/components/ContractPreviewPanel'
@@ -28,8 +26,6 @@ type JavaClassPreviewProps = Readonly<{
   version: string
   javaClass: JavaApiClassListItem | undefined
   navigationLinkBuilder: JavaApiNavigationLinkBuilder
-  link?: Partial<Path>
-  onLinkClick: () => void
   maxWidthHeaderToolbar: number
 }>
 
@@ -38,32 +34,19 @@ export const JavaClassPreview: FC<JavaClassPreviewProps> = memo<JavaClassPreview
   version,
   javaClass,
   navigationLinkBuilder,
-  link,
-  onLinkClick,
   maxWidthHeaderToolbar,
 }) => {
   const { data, isLoading, error } = useLibraryJavaClass(libraryId, version, javaClass?.className ?? '', 'report')
   const [viewMode, setViewMode] = useState<SpecViewMode>(DOC_SPEC_VIEW_MODE)
-  // Type links save the return location like the title link does
-  const NavigationLink = useMemo(() => {
-    const PreviewNavigationLink: FC<NavigationLinkProps> = props => (
-      <JavaClassNavigationLink {...props} onLinkClick={onLinkClick} />
-    )
-    PreviewNavigationLink.displayName = 'JavaClassPreviewNavigationLink'
-    return PreviewNavigationLink
-  }, [onLinkClick])
   const classKey = useMemo(() => javaClass && { className: javaClass.className }, [javaClass])
-  const rawData = useMemo(
-    () => data?.javaClass && { className: data.javaClass.className, elements: data.javaClass.elements },
-    [data],
-  )
+  const rawData = data?.raw
   let content = classKey && data && (
     <ViewerBox data-testid="JavaApiClassViewer">
       <JavaClassViewer
         source={data.document}
         classKey={classKey}
         navigationLinkBuilder={navigationLinkBuilder}
-        navigationLinkComponent={NavigationLink}
+        navigationLinkComponent={JavaClassNavigationLink}
         noHeading
       />
     </ViewerBox>
@@ -76,8 +59,6 @@ export const JavaClassPreview: FC<JavaClassPreviewProps> = memo<JavaClassPreview
         <JavaClassTitleWithMeta
           onlyTitle
           javaClass={javaClass}
-          link={link}
-          onLinkClick={onLinkClick}
         />
       )}
       action={<JavaClassViewModeToggler mode={viewMode} onChange={setViewMode} />}

@@ -1,7 +1,7 @@
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import { Alert, Box, IconButton, Link, Skeleton, styled, Typography } from '@mui/material'
 import { type FC, useMemo } from 'react'
-import { NavLink, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { Navigate, NavLink, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 
 import { JavaClassViewer } from '@netcracker/qubership-apihub-api-doc-viewer'
 import '@netcracker/qubership-apihub-api-doc-viewer/dist/style.css'
@@ -18,16 +18,16 @@ import { ToolbarTitle } from '@netcracker/qubership-apihub-ui-shared/components/
 
 import { useBackwardLocationContext } from '@portal/routes/BackwardLocationProvider'
 import { useSpecViewMode } from '@portal/routes/root/PortalPage/VersionPage/DocumentPreviewPage/useSpecViewMode'
-import { API_CHANGES_PAGE, CONTRACTS_PAGE } from '../../../../../routes'
+import { API_CHANGES_PAGE } from '../../../../../routes'
 import { useLibrary } from '../../../useLibrary'
 import { LibraryBreadcrumbs } from '../../LibraryBreadcrumbs'
 import { useLibraryVersion } from '../../useLibraryVersions'
 import { getLibraryVersionPath } from '../libraryVersion'
 import { useLibraryJavaClass } from '../useLibraryJavaClass'
 import {
+  getJavaReferenceLink,
   getPreviousLibraryVersion,
   JAVA_DOCUMENT_SEARCH_PARAM,
-  type JavaApiDocumentKind,
   setPreviousLibraryVersion,
 } from './javaApi'
 import { JavaClassNavigationLink } from './JavaClassNavigationLink'
@@ -37,35 +37,38 @@ import { useJavaClassNavigationLinkBuilder } from './useJavaClassNavigationLinkB
 export const JavaClassPage: FC = () => {
   const { libraryId = '', versionId = '', className = '' } = useParams()
   const [query] = useSearchParams()
-  const kind: JavaApiDocumentKind = query.get(JAVA_DOCUMENT_SEARCH_PARAM) === 'diff' ? 'diff' : 'report'
+  if (query.get(JAVA_DOCUMENT_SEARCH_PARAM) !== 'diff') {
+    return <Navigate replace to={getJavaReferenceLink(libraryId, versionId, className)} />
+  }
+  return <JavaClassComparePage />
+}
+JavaClassPage.displayName = 'JavaClassPage'
+
+const JavaClassComparePage: FC = () => {
+  const { libraryId = '', versionId = '', className = '' } = useParams()
+  const [query] = useSearchParams()
   const { previousLibraryId, previousVersion } = getPreviousLibraryVersion(query)
   const { library, isLoading: isLibraryLoading, error: libraryError } = useLibrary(libraryId)
   const { version, isLoading: isVersionLoading, error: versionError } = useLibraryVersion(libraryId, versionId)
-  const { data, isLoading, error } = useLibraryJavaClass(libraryId, versionId, className, kind, {
+  const { data, isLoading, error } = useLibraryJavaClass(libraryId, versionId, className, 'diff', {
     previousLibraryId,
     previousVersion,
   })
   const javaClass = data?.javaClass
   const classKey = useMemo(() => ({ className }), [className])
-  const rawData = useMemo(
-    () => javaClass && { className: javaClass.className, elements: javaClass.elements },
-    [javaClass],
-  )
+  const rawData = data?.raw
   const [viewMode, setViewMode] = useSpecViewMode(DOC_SPEC_VIEW_MODE)
   const navigate = useNavigate()
   const backwardLocation = useBackwardLocationContext()
   const handleBackClick = (): void => {
     const origin = backwardLocation.fromOperation
     const versionPath = getLibraryVersionPath(libraryId, versionId, '')
-    const tabPath = getLibraryVersionPath(libraryId, versionId, kind === 'diff' ? API_CHANGES_PAGE : CONTRACTS_PAGE)
+    const tabPath = getLibraryVersionPath(libraryId, versionId, API_CHANGES_PAGE)
     const params = new URLSearchParams()
     setPreviousLibraryVersion(params, { previousLibraryId, previousVersion })
     navigate(origin?.pathname.startsWith(versionPath) ? origin : { pathname: tabPath, search: `?${params}` })
   }
-  const navigationLinkBuilder = useJavaClassNavigationLinkBuilder(kind, { previousLibraryId, previousVersion })
-  let title = 'JavaAPI'
-  if (kind === 'diff') title = 'Compare JavaAPI'
-  else if (javaClass) title = `JavaAPI: ${javaClass.displayName}`
+  const navigationLinkBuilder = useJavaClassNavigationLinkBuilder('diff', { previousLibraryId, previousVersion })
 
   if (isLibraryLoading || isVersionLoading) return <LoadingIndicator />
   if (!library || !version) {
@@ -120,7 +123,7 @@ export const JavaClassPage: FC = () => {
                   ? <Skeleton variant="text" width="150px" />
                   : (
                     <Typography component="span" variant="h5" data-testid="ToolbarTitle">
-                      {title}
+                      Compare JavaAPI
                     </Typography>
                   )}
               />
@@ -133,7 +136,7 @@ export const JavaClassPage: FC = () => {
     />
   )
 }
-JavaClassPage.displayName = 'JavaClassPage'
+JavaClassComparePage.displayName = 'JavaClassComparePage'
 
 const ToolbarHeaderRow = styled(Box)(({ theme }) => ({
   display: 'flex',
