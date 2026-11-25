@@ -103,7 +103,7 @@ Tell the user what QA receives, and that the folder is to be deleted once QA rep
 
 Before finishing, fold what this run taught into the skill ([references/extending.md](references/extending.md),
 section "Updating the skill after every plan"): general code moved out of the plan's `config/`, new lessons, gaps in
-the interview, the templates, or the references. Redeploy with `apm install --target cursor,claude` and list the
+the interview, the templates, or the references. Redeploy with `apm install` and list the
 changed skill files for the user, to commit separately from anything else.
 
 ## References

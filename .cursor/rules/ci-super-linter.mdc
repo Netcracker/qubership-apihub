@@ -1,6 +1,6 @@
 ---
 description: CI super-linter and MD link checker rules for changed files in APIHub repositories
-globs: **
+alwaysApply: true
 ---
 
 # CI linters (super-linter / link checker)
@@ -30,42 +30,44 @@ changing skills or rules.
   for PR diffs).
 - Wrap long paragraphs and list items before 400 characters; use extra bullets or line breaks
   instead of one very long line.
-- Only one H1 per file (**MD025**); use `##` for main sections in long design docs.
-- Tables are exempt from line-length in `.markdownlint.json`; still keep rows readable.
+- The repository's `.github/linters/.markdownlint.json` sets which rules CI enforces. The APIHub
+  repositories turn MD025 (one H1 per file) off.
+- Tables are exempt from line-length in `.markdownlint.json`, but each row stays on one line; see
+  "Markdown tables" below.
 
-### Markdown tables (common PR failure in `docs/design/`)
+### Markdown tables
 
-**markdownlint does not wrap table cells.** A line break inside a row breaks the table and fails
-**MD055** / **MD056** (wrong pipes, wrong column count). This is the usual cause of red
-`--> Linted: MARKDOWN` on design PRs.
+A Markdown table row is one physical line, from the leading `|` to the trailing `|`, however long.
+A row continued on the next line becomes a second, broken row.
 
-| Rule | Mistake | Fix |
-| :--- | :--- | :--- |
-| MD055 / MD056 | One logical row split across two physical lines (often after a long Figma URL or definition) | Put the **entire** row on **one** line: leading `|`, every column, trailing `|`. |
-| MD056 | A table row with only description text and no mockup / API columns | Add missing cells: `| — | TBD |` for use-case tables (3 columns). |
-| MD037 | Required marker `**Field** *` (space between `**` and `*`) | Use `**Field** (required)` like other design docs, not asterisk-after-bold. |
-| MD036 | Standalone `**TBD**` under a `##` heading | Use normal prose, e.g. `Backend contracts: TBD (low-level design pending).` |
+- **MD055** (pipe style) and **MD056** (column count): a row split across lines, a row with more
+  or fewer cells than the header, or a `|` inside a cell. A `|` splits the cell even inside
+  backticks; escape it as `\|`.
+- **MD037** (spaces inside emphasis): an asterisk after bold text as a required marker
+  (`**Name** *`). Write `**Name** (required)`.
+- **MD036** (emphasis used as a heading): a paragraph that is only bold or italic text, such as
+  `**TBD**`. Make it a heading or a sentence.
 
-**Wrong** (two lines = two broken rows):
-
-```markdown
-| Library version | A Maven version published in APIHUB with status Draft or Release, and API diff
-  vs the selected **Previous version**. |
-```
-
-**Right** (one line, same meaning):
+Wrong, one row on two lines:
 
 ```markdown
-| Library version | A Maven version published in APIHUB with status Draft or Release, and API diff vs the selected **Previous version**. |
+| Version | A version published with status Draft or Release, and the API diff against
+  the previous version. |
 ```
 
-Before push, on changed design Markdown:
+Right, the same row on one line:
+
+```markdown
+| Version | A version published with status Draft or Release, and the API diff against the previous version. |
+```
+
+Check a changed file with the repository's config. Run markdownlint-cli through the repository's
+package manager, `pnpm dlx` in a pnpm workspace, and not through `npx`, which `qubership-apihub`
+denies in its agent permissions:
 
 ```bash
-npx markdownlint-cli --config .github/linters/.markdownlint.json path/to/file.md
+pnpm dlx markdownlint-cli --config .github/linters/.markdownlint.json <file>
 ```
-
-Paragraphs and bullet lists **may** wrap across lines; **pipe tables may not.**
 
 ## Natural language (textlint)
 

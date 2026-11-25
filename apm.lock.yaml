@@ -1,6 +1,9 @@
-lockfile_version: '1'
-generated_at: '2026-11-23T11:20:21.514624+00:00'
-apm_version: 0.35.0
+lockfile_version: '4'
+generated_at: '2026-11-25T08:11:51.119416+00:00'
+apm_version: 0.38.1
+manifest_targets:
+- claude
+- cursor
 dependencies:
 - repo_url: _local/advanced-verification
   name: advanced-verification
@@ -20,7 +23,7 @@ dependencies:
     .claude/skills/advanced-verification/reference.md: sha256:52dda12e1ed635e22428195bda1e30158663998a904cf0127cfbc42ddab7fb4e
   source: local
   local_path: ./backend/portal-backend/agent-packages/advanced-verification
-  content_hash: sha256:0bff8288beb2c7e3cafa340de97f2c58ae9feca2a8157ed390c99ea37ef77a65
+  content_hash: sha256:990615a6f40b426741819b76d914882803ba36c54317141de61d8aa3630d7d63
 - repo_url: _local/agent-conventions
   name: agent-conventions
   version: 0.1.0
@@ -41,7 +44,7 @@ dependencies:
     .cursor/rules/agent-openapi-files.mdc: sha256:3671368acdef82f1bb2027e93ba83fc5550f505e3857ae41492200d19ad8d822
   source: local
   local_path: ./backend/agent/agent-packages/agent-conventions
-  content_hash: sha256:0935b6529b8563e20317be0eb6be21d01da4aee54aa01871ffa5ee102e7dc616
+  content_hash: sha256:e0f0e26b3e9215b5896c5955e1ef9d0520573b2ecc959ce00f179dab2240e375
 - repo_url: _local/analyze-migration
   name: analyze-migration
   version: 0.1.0
@@ -176,7 +179,7 @@ dependencies:
     .claude/skills/analyze-migration/scripts/query-version/main.go: sha256:0c2a880ac3f8d5fc78cec6e8a367cb7814b62622a59f8752a5733f2fcec40acb
   source: local
   local_path: ./agent-packages/analyze-migration
-  content_hash: sha256:7be4a6e1da953becc8c54c14286efda66362634556a99b61784d77d140c71717
+  content_hash: sha256:2f4478ef67aff064c37f02c4bc7e497f71d83ac3cbc493cebcc7ad55af1bf607
 - repo_url: _local/api-diff-authoring
   name: api-diff-authoring
   version: 1.0.0
@@ -195,7 +198,7 @@ dependencies:
     .cursor/rules/api-diff-authoring.mdc: sha256:6328c308852729506ad2de6ee7f411ae0a3f707dda0be8ea220e7c320ff6308c
   source: local
   local_path: ./frontend/api-diff/agent-packages/api-diff-authoring
-  content_hash: sha256:d717803bd2e53f4991b32093e183fa3586c511e3e9cb35d290b042880d23e447
+  content_hash: sha256:ff5924e4249acfff4624ff583ba442d1ee39f22b42381be6acfef7f1aa669ee1
 - repo_url: _local/api-diff-testing
   name: api-diff-testing
   version: 1.0.0
@@ -214,7 +217,7 @@ dependencies:
     .cursor/rules/api-diff-testing.mdc: sha256:59ceee6509d4ff56780ce923c14d54c4021ce3e7e96b67215f86e283ad40b314
   source: local
   local_path: ./frontend/api-diff/agent-packages/api-diff-testing
-  content_hash: sha256:c40b48d7e79897236469a8c10e69c94a85437395e1af5ff38d5c858b490c8c57
+  content_hash: sha256:288cf2844defba1ecd5ef7c24a5515f9daf65ca6bcf21dd5f3a26f06d122968c
 - repo_url: _local/api-doc-viewer-authoring
   name: api-doc-viewer-authoring
   version: 1.0.0
@@ -237,7 +240,7 @@ dependencies:
     .cursor/rules/api-doc-viewer-authoring.mdc: sha256:17c23a846bf33344970f822081b12d554c2a3f6bd1e240e8b29c4b6fdd6db481
   source: local
   local_path: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-authoring
-  content_hash: sha256:026247ba5b8aa7b7e24adcc26ab27b89663afc98170505b37f6b02fae7ce590f
+  content_hash: sha256:ac20e31b5429f0481f6b1d10d8c326a53ed55a9d6e0ae759cd8fa6cf702bba00
 - repo_url: _local/api-doc-viewer-baseline-comparison
   name: api-doc-viewer-baseline-comparison
   version: 1.0.0
@@ -256,7 +259,7 @@ dependencies:
     .cursor/rules/api-doc-viewer-baseline-comparison.mdc: sha256:6a564f5864fa5042df5a763e590e78e701165ef3f12cbcba29f598f339ce46e5
   source: local
   local_path: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-baseline-comparison
-  content_hash: sha256:1a04bc9e18323eb78d29bafd079bac61de6b0b1eedb44fc8ac1c338e5de67289
+  content_hash: sha256:88cf6bd17300aad3a4980e032c69970479740a760f02d4155de647c96732f77a
 - repo_url: _local/api-doc-viewer-ci-linters
   name: api-doc-viewer-ci-linters
   version: 1.0.0
@@ -275,7 +278,7 @@ dependencies:
     .cursor/rules/api-doc-viewer-ci-linters.mdc: sha256:8e216212c7fcdf923c4b2c4c194182145958209c08befda8d611f85633925d5d
   source: local
   local_path: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-ci-linters
-  content_hash: sha256:f81444f66276e3e65cc850e9e9776d75b40f9b69aa2d52694deaaff4e862e251
+  content_hash: sha256:4c07c2ad09d06a7fd6be36572fa7a2dcc8b13b3dae07e1513bf1560db943eaae
 - repo_url: _local/api-doc-viewer-feature-test-plan
   name: api-doc-viewer-feature-test-plan
   version: 1.0.0
@@ -368,11 +371,11 @@ dependencies:
   - .claude/skills/api-doc-viewer-feature-test-plan/templates/tools-README.md
   - .cursor/rules/api-doc-viewer-feature-test-plan.mdc
   deployed_file_hashes:
-    .agents/skills/api-doc-viewer-feature-test-plan/SKILL.md: sha256:a4f29401ad503814e234fbb464508719a21b7769d30ea72e8a20704f8b2abafe
+    .agents/skills/api-doc-viewer-feature-test-plan/SKILL.md: sha256:37de105ca9c574e22eb0ec32209691e402271626fce560435c9ede7eb5d54b06
     .agents/skills/api-doc-viewer-feature-test-plan/references/analysis.md: sha256:ba5478fd992b1089abad600a1991e2add006469e83d10b1bb7e8f911e350dfbc
     .agents/skills/api-doc-viewer-feature-test-plan/references/backlog.md: sha256:bb8183cc81707e5b85c3a688265782aa29fd80fe367112c10feb5236f68680e7
     .agents/skills/api-doc-viewer-feature-test-plan/references/cases.md: sha256:a23a5189b927443d4d530d0467208ef1ab705991d3a4fd017b6e45844663058b
-    .agents/skills/api-doc-viewer-feature-test-plan/references/extending.md: sha256:569740d7c59edb65c82a67926ee353c7450e679250dd5ee6ba68096bc9045c82
+    .agents/skills/api-doc-viewer-feature-test-plan/references/extending.md: sha256:5fb83c4596ccfd412686475249da57585870b4eb28e57f53a4bc6cd709d2c01a
     .agents/skills/api-doc-viewer-feature-test-plan/references/handover.md: sha256:ff70f2ec2a5b8bb47c41c4a9a4d47e7e4ad032a9c9b1adaf2e5b0beda25860b5
     .agents/skills/api-doc-viewer-feature-test-plan/references/interview.md: sha256:06ed727960f500d1d05bc592af929d30759a90d164243ea2f76ca84d5ed1343c
     .agents/skills/api-doc-viewer-feature-test-plan/references/lessons.md: sha256:7a5fd82c8a80a9d1405e837ebd14ffb0dbb8cef7235c70edfec988aec35e8703
@@ -402,7 +405,7 @@ dependencies:
     .agents/skills/api-doc-viewer-feature-test-plan/scripts/packing/typescript-loader.mjs: sha256:25691ab3ecc2ead64b7107a5c8b0aec0926b85b5723056c320a1d9ac7b46e981
     .agents/skills/api-doc-viewer-feature-test-plan/scripts/packing/verify-files.mjs: sha256:b96dbf25544c91da5b02650ddd1d5c1fd6ab2b851dd2072189eb0f9e7016d759
     .agents/skills/api-doc-viewer-feature-test-plan/scripts/packing/verify.mjs: sha256:7a9e062e9ea6379cb86252ecf3012221319d65de15e04243aa3718edb193e685
-    .agents/skills/api-doc-viewer-feature-test-plan/scripts/results-sheet.mjs: sha256:a4af578fe646fafb93a4af4c726f7d6ab6ce6751f4478f68a1c0da30e1e24aea
+    .agents/skills/api-doc-viewer-feature-test-plan/scripts/results-sheet.mjs: sha256:1e061f658951a48b019b45df3843b3701a88faa9b1faebb813a1aa1b6751b817
     .agents/skills/api-doc-viewer-feature-test-plan/templates/backlog.config.json: sha256:226258fe578a1de499ffa0192aa9fb24f59dae0f5c2a39539954daed2980e6f8
     .agents/skills/api-doc-viewer-feature-test-plan/templates/case-file.md: sha256:bef4c8f6c64c6e7fc9ded96b68341796fdf8f2be2c2d45e50279bdf8c586530e
     .agents/skills/api-doc-viewer-feature-test-plan/templates/plan-README.md: sha256:fb846187f636d77efae6a6f84d25dd92f7227a4fb4fe3967a4d6c4338cfa0f13
@@ -410,11 +413,11 @@ dependencies:
     .agents/skills/api-doc-viewer-feature-test-plan/templates/test-plan.config.mjs: sha256:de9b113328f63101cab7750c54d96a4b72d025df6e3947113f33b8e5b6c9e475
     .agents/skills/api-doc-viewer-feature-test-plan/templates/tools-README.md: sha256:fba278fc2b0d8f00890499b652ee331acfaf611fcf9f10fd4c4d041a00dd4999
     .claude/rules/api-doc-viewer-feature-test-plan.md: sha256:e53d719c5f79babe184fb65130b4f38d56927b7704b5fb6433cc04f91b9a6448
-    .claude/skills/api-doc-viewer-feature-test-plan/SKILL.md: sha256:a4f29401ad503814e234fbb464508719a21b7769d30ea72e8a20704f8b2abafe
+    .claude/skills/api-doc-viewer-feature-test-plan/SKILL.md: sha256:37de105ca9c574e22eb0ec32209691e402271626fce560435c9ede7eb5d54b06
     .claude/skills/api-doc-viewer-feature-test-plan/references/analysis.md: sha256:ba5478fd992b1089abad600a1991e2add006469e83d10b1bb7e8f911e350dfbc
     .claude/skills/api-doc-viewer-feature-test-plan/references/backlog.md: sha256:bb8183cc81707e5b85c3a688265782aa29fd80fe367112c10feb5236f68680e7
     .claude/skills/api-doc-viewer-feature-test-plan/references/cases.md: sha256:a23a5189b927443d4d530d0467208ef1ab705991d3a4fd017b6e45844663058b
-    .claude/skills/api-doc-viewer-feature-test-plan/references/extending.md: sha256:569740d7c59edb65c82a67926ee353c7450e679250dd5ee6ba68096bc9045c82
+    .claude/skills/api-doc-viewer-feature-test-plan/references/extending.md: sha256:5fb83c4596ccfd412686475249da57585870b4eb28e57f53a4bc6cd709d2c01a
     .claude/skills/api-doc-viewer-feature-test-plan/references/handover.md: sha256:ff70f2ec2a5b8bb47c41c4a9a4d47e7e4ad032a9c9b1adaf2e5b0beda25860b5
     .claude/skills/api-doc-viewer-feature-test-plan/references/interview.md: sha256:06ed727960f500d1d05bc592af929d30759a90d164243ea2f76ca84d5ed1343c
     .claude/skills/api-doc-viewer-feature-test-plan/references/lessons.md: sha256:7a5fd82c8a80a9d1405e837ebd14ffb0dbb8cef7235c70edfec988aec35e8703
@@ -444,7 +447,7 @@ dependencies:
     .claude/skills/api-doc-viewer-feature-test-plan/scripts/packing/typescript-loader.mjs: sha256:25691ab3ecc2ead64b7107a5c8b0aec0926b85b5723056c320a1d9ac7b46e981
     .claude/skills/api-doc-viewer-feature-test-plan/scripts/packing/verify-files.mjs: sha256:b96dbf25544c91da5b02650ddd1d5c1fd6ab2b851dd2072189eb0f9e7016d759
     .claude/skills/api-doc-viewer-feature-test-plan/scripts/packing/verify.mjs: sha256:7a9e062e9ea6379cb86252ecf3012221319d65de15e04243aa3718edb193e685
-    .claude/skills/api-doc-viewer-feature-test-plan/scripts/results-sheet.mjs: sha256:a4af578fe646fafb93a4af4c726f7d6ab6ce6751f4478f68a1c0da30e1e24aea
+    .claude/skills/api-doc-viewer-feature-test-plan/scripts/results-sheet.mjs: sha256:1e061f658951a48b019b45df3843b3701a88faa9b1faebb813a1aa1b6751b817
     .claude/skills/api-doc-viewer-feature-test-plan/templates/backlog.config.json: sha256:226258fe578a1de499ffa0192aa9fb24f59dae0f5c2a39539954daed2980e6f8
     .claude/skills/api-doc-viewer-feature-test-plan/templates/case-file.md: sha256:bef4c8f6c64c6e7fc9ded96b68341796fdf8f2be2c2d45e50279bdf8c586530e
     .claude/skills/api-doc-viewer-feature-test-plan/templates/plan-README.md: sha256:fb846187f636d77efae6a6f84d25dd92f7227a4fb4fe3967a4d6c4338cfa0f13
@@ -454,7 +457,7 @@ dependencies:
     .cursor/rules/api-doc-viewer-feature-test-plan.mdc: sha256:c1fb1777d1a9045e61028c0c2b0e30d35c48c3db1149af82b8c02b0f1d84daf3
   source: local
   local_path: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-feature-test-plan
-  content_hash: sha256:1d84b3a9bfedbb21cb9db1b31139c35f172e11ab3609dedfad6f5539c87cfb93
+  content_hash: sha256:823f150cfcd922f3c521d11d7cf694f59991e442b3342da2fd5c79910d4fe5da
 - repo_url: _local/api-doc-viewer-review-session
   name: api-doc-viewer-review-session
   version: 1.0.0
@@ -467,13 +470,13 @@ dependencies:
   - .claude/skills/api-doc-viewer-review-session/SKILL.md
   - .cursor/rules/api-doc-viewer-review-session.mdc
   deployed_file_hashes:
-    .agents/skills/api-doc-viewer-review-session/SKILL.md: sha256:24420ea0567987df9b8ab159e0e23b3bf9520e8aacfdd321fd04805b3139c3dc
+    .agents/skills/api-doc-viewer-review-session/SKILL.md: sha256:2b0d3054c658620cf64f3582917559a79cdfa2a71b5fc0e63921ffec8c2ca1a0
     .claude/rules/api-doc-viewer-review-session.md: sha256:b62b588a3f26daa96b7ffb25ae51ce652b6806f4d717bff63e91610c1d151ad2
-    .claude/skills/api-doc-viewer-review-session/SKILL.md: sha256:24420ea0567987df9b8ab159e0e23b3bf9520e8aacfdd321fd04805b3139c3dc
+    .claude/skills/api-doc-viewer-review-session/SKILL.md: sha256:2b0d3054c658620cf64f3582917559a79cdfa2a71b5fc0e63921ffec8c2ca1a0
     .cursor/rules/api-doc-viewer-review-session.mdc: sha256:defa7606da8b0dcc81a9697079c9c5d7203b40f5ed44aed3c27ff4c5abb634a2
   source: local
   local_path: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-review-session
-  content_hash: sha256:ad380f878240089399cff78502fd32a1c086d67f0ec21cd168023d445bccf281
+  content_hash: sha256:4ee562c7184c37d824916768958342e90ab16892b33040b8e2faae450bcdbfd5
 - repo_url: _local/api-doc-viewer-reviewing
   name: api-doc-viewer-reviewing
   version: 1.0.0
@@ -512,7 +515,7 @@ dependencies:
     .cursor/rules/api-doc-viewer-reviewing.mdc: sha256:49748458fe68b558acf9165c60e378d21a23e469fb2032760367e099714844a5
   source: local
   local_path: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-reviewing
-  content_hash: sha256:b04ef82573dce7dfc77fe02785f495ba1deba96c92f784ba4b762b18e6fc0a64
+  content_hash: sha256:862b364be9d11c634106bd96c2de395f759e084d96f2e672f03b3cc2f719e14a
 - repo_url: _local/api-doc-viewer-testing
   name: api-doc-viewer-testing
   version: 1.0.0
@@ -535,7 +538,7 @@ dependencies:
     .cursor/rules/api-doc-viewer-testing.mdc: sha256:da6f2bff0ad97eef742cc9ab4a0f3a688a52c114cf179c6272e4355834e7449e
   source: local
   local_path: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-testing
-  content_hash: sha256:21cb077c921d1f31a9c839d7227f0a7398fddb82728ea03d6245427761c94631
+  content_hash: sha256:735af39c8e46e82b05660a8eab2c852e24685e766108ed5f3d5839c5a51cce9a
 - repo_url: _local/api-doc-viewer-using
   name: api-doc-viewer-using
   version: 1.0.0
@@ -554,7 +557,7 @@ dependencies:
     .cursor/rules/api-doc-viewer-using.mdc: sha256:90485a5bfcf35bc5d51cd75ce1e36562560a171b417d9af42e460644cc6744ae
   source: local
   local_path: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-using
-  content_hash: sha256:6cddc8b871a7a8bc8e668f1f50b0db1182c9ee95e392e8e7356815cf5b7bffe2
+  content_hash: sha256:b83afa3711c1bca84f133977e982d00bdb9cd964228da48daee0b62378322746
 - repo_url: _local/api-processor-authoring
   name: api-processor-authoring
   version: 1.1.0
@@ -583,7 +586,7 @@ dependencies:
     .cursor/rules/api-processor-notifications.mdc: sha256:2f064c9b2ce6e528bcfa5251776d8ff8ebc474b87358aa3d0d4a7ce5c1cf9b8f
   source: local
   local_path: ./frontend/api-processor/agent-packages/api-processor-authoring
-  content_hash: sha256:3606201be73bcdd1480fb4b8972b7e165ba9ebc4dbd6b30fac83e73f805df460
+  content_hash: sha256:e56b495e8809e25234f68839dba3f83dd79addcf70dce753324302a42e01cfae
 - repo_url: _local/api-processor-testing
   name: api-processor-testing
   version: 1.0.0
@@ -602,7 +605,7 @@ dependencies:
     .cursor/rules/api-processor-testing.mdc: sha256:f1a7b749fd6b58c3e5cb7e92300a8008ec536ce8033c21bdd2133a886548c352
   source: local
   local_path: ./frontend/api-processor/agent-packages/api-processor-testing
-  content_hash: sha256:6bc4ebb1c81bf6dfeaa8b683e518d6d834fd0521bbb31fee511f91d8e68f60e1
+  content_hash: sha256:2d48e45d9429bfbe306aa78cfa599f58f441234c94ba7b15a445391345a400b5
 - repo_url: _local/api-processor-using
   name: api-processor-using
   version: 1.1.0
@@ -621,7 +624,7 @@ dependencies:
     .cursor/rules/api-processor-using.mdc: sha256:4db91a0a4895bddc0c287f4f216bb06d459e1844be726ab92e336bb307af3f0b
   source: local
   local_path: ./frontend/api-processor/agent-packages/api-processor-using
-  content_hash: sha256:20b4aee3f59c453248cfc387194e82cc69abcca373614a0e0546339471972d69
+  content_hash: sha256:551a43b68a6e26c218f38db418c8ab31619f05b2312415815778c8a63e79a489
 - repo_url: _local/api-unifier-authoring
   name: api-unifier-authoring
   version: 1.0.0
@@ -640,7 +643,7 @@ dependencies:
     .cursor/rules/api-unifier-authoring.mdc: sha256:a5f1ca0cb5ef895b59710a608fe589cc6dc50acf2abd19d4b4efc9c167a1fa96
   source: local
   local_path: ./frontend/api-unifier/agent-packages/api-unifier-authoring
-  content_hash: sha256:3e9fe1d40d534223ba17c6aabe0f41e06e6b652b21111cd25fda915286f5e583
+  content_hash: sha256:a0c6f2f0c3b9fc7e8076f14743c16c839e2c144a6f1dc46d77d7bda29b864f89
   declared_license: Apache-2.0
 - repo_url: _local/api-unifier-testing
   name: api-unifier-testing
@@ -660,7 +663,7 @@ dependencies:
     .cursor/rules/api-unifier-testing.mdc: sha256:8906a60d37ba5021950f054608fbda6eb1172eea05916e1b44a6a32a9e9bb0a1
   source: local
   local_path: ./frontend/api-unifier/agent-packages/api-unifier-testing
-  content_hash: sha256:b557ce66c66b5601a3ba2d5270f93f6eac18fdc834bb969aca5414bd9faec983
+  content_hash: sha256:1dfd0c194a9c53f23f10f3ab94ab14270b2c09e39a6392f23d9cf7dc15788598
   declared_license: Apache-2.0
 - repo_url: _local/apihub-add-go-service
   name: apihub-add-go-service
@@ -674,13 +677,13 @@ dependencies:
   - .claude/skills/apihub-add-go-service/SKILL.md
   - .cursor/rules/apihub-add-go-service.mdc
   deployed_file_hashes:
-    .agents/skills/apihub-add-go-service/SKILL.md: sha256:ebbe75a98c5fd46952575d456a2db3f706e3fb1dbafbde3f711ab8b06ea63b8a
+    .agents/skills/apihub-add-go-service/SKILL.md: sha256:3c2502a443696c9d51206820af34277fdaaa93e11ce083c93bfb394dea0c2abe
     .claude/rules/apihub-add-go-service.md: sha256:72440034c1c2be02692006e812c7135640f2c45a2ebe6afd23e3346083bd8975
-    .claude/skills/apihub-add-go-service/SKILL.md: sha256:ebbe75a98c5fd46952575d456a2db3f706e3fb1dbafbde3f711ab8b06ea63b8a
+    .claude/skills/apihub-add-go-service/SKILL.md: sha256:3c2502a443696c9d51206820af34277fdaaa93e11ce083c93bfb394dea0c2abe
     .cursor/rules/apihub-add-go-service.mdc: sha256:2cd6f5cb746764ff45e938bff87c0af84b6412ad6e615ef2991994525aa81baf
   source: local
   local_path: ./agent-packages/apihub-add-go-service
-  content_hash: sha256:bb78770600865ea75e5b19038e61ca57b9c727cd49fddb8ce8dcb1098f0a527f
+  content_hash: sha256:affaaa0054b4b9caac3418510bd3922c7b619153dd6a4605003bdb65f7ab09bb
 - repo_url: _local/apihub-adr
   name: apihub-adr
   version: 0.1.0
@@ -696,10 +699,10 @@ dependencies:
     .agents/skills/apihub-adr/SKILL.md: sha256:dd5d9fe1bc8d7dea2427b45d114e0d0025ee776ddc73719e168121d6fc209a59
     .claude/rules/apihub-adr.md: sha256:495d96e2ee0f8a06adfafe9a6ce63bd4d7087125d6eb58d63ea12066641f08da
     .claude/skills/apihub-adr/SKILL.md: sha256:dd5d9fe1bc8d7dea2427b45d114e0d0025ee776ddc73719e168121d6fc209a59
-    .cursor/rules/apihub-adr.mdc: sha256:c330fc6bb203ad5d5ea8555e1568da1f9a0c2a90369b81bd96b2e87e9b6395ed
+    .cursor/rules/apihub-adr.mdc: sha256:f2c32b08cec7b7fed8f1dc701f89878607be8630fd2c42f3b5ebe862dd1161a1
   source: local
   local_path: ./agent-packages/apihub-adr
-  content_hash: sha256:fd8e4e83e1936fd3f669690d00671f26b379f2d1c5d6aa59ecddc6aafe71203d
+  content_hash: sha256:3e15dc6db4ef5baf006343319d7d838473eb866e95ced5acfc503ffcad8710c2
 - repo_url: _local/apihub-agent-developer
   name: apihub-agent-developer
   version: 0.1.0
@@ -718,7 +721,7 @@ dependencies:
     .cursor/rules/apihub-agent-developer.mdc: sha256:9d0d32c564f73d5941ad25a48952a578147605ecec096ce0c6ba278639fa0860
   source: local
   local_path: ./backend/agent/agent-packages/apihub-agent-developer
-  content_hash: sha256:9c649564277a336cc4102db80cac059afcbf3e4357a0c1467cc3a6af3976b399
+  content_hash: sha256:f02fcd8d92c58159731d365206c9b82b4f9a0cd8b82c721d2562853dd827cdc0
 - repo_url: _local/apihub-agents-claude
   name: apihub-agents-claude
   version: 1.0.0
@@ -729,7 +732,9 @@ dependencies:
     .claude/agents/verifier.md: sha256:348d7b866ae9136db639cdb796690eb882b229094a2f747e9599db7b9ae95f84
   source: local
   local_path: ./frontend/ui/agent-packages/apihub-agents-claude
-  content_hash: sha256:66e597d0138906a4694b8365c27402b7ab080d189e838d8fef7fdaa9802b6530
+  content_hash: sha256:cdceb4037b25fba51e89ec1ba8b4932f6509a2342052b26bc438b6cc6d4dd407
+  package_targets:
+  - claude
 - repo_url: _local/apihub-agents-cursor
   name: apihub-agents-cursor
   version: 1.0.0
@@ -740,7 +745,9 @@ dependencies:
     .cursor/agents/verifier.md: sha256:9a2319b6a7ccd750e740321d3d7c94a538bc9393b57315be4c8ae77c770a1cce
   source: local
   local_path: ./frontend/ui/agent-packages/apihub-agents-cursor
-  content_hash: sha256:afe22672bbfcc8b38ab758f7047d20afe5e862a378c535f32535062575b99ec0
+  content_hash: sha256:455053118c938253278ac8155b640fc94d8a7ab9bf6aaef6c23d8c49dab1db9b
+  package_targets:
+  - cursor
 - repo_url: _local/apihub-autonomous-agent
   name: apihub-autonomous-agent
   version: 0.1.0
@@ -779,7 +786,7 @@ dependencies:
     .claude/skills/apihub-task/SKILL.md: sha256:e94f554c751516d95cc05880c23cce32d00dd6aabcc2da6f86b499fb659f1aa1
   source: local
   local_path: ./agent-packages/apihub-autonomous-agent
-  content_hash: sha256:ef5456b5c77608a06be5e5c53ecf794585b83c97afaa3f6974794fe6d66aba75
+  content_hash: sha256:66e11a8effa64f85ee50feefce99621249370cfa5e23c597dd51129381ce06d5
 - repo_url: _local/apihub-backend-developer
   name: apihub-backend-developer
   version: 0.2.0
@@ -810,7 +817,7 @@ dependencies:
     .cursor/rules/apihub-backend-developer.mdc: sha256:0b401d134820af38d5027b95a5c61dba0020e76b5b77ace0ecaa633dc3efe615
   source: local
   local_path: ./backend/portal-backend/agent-packages/apihub-backend-developer
-  content_hash: sha256:67663a1cad6cb6e3bf902041c31e6be90e2636ab8806c78570912ed854619e42
+  content_hash: sha256:39fd6683a988e83fe0b42d2a5b4a412edc4b312853f3151459eb940fb9aab89f
 - repo_url: _local/apihub-backend-self-review
   name: apihub-backend-self-review
   version: 0.2.0
@@ -829,7 +836,7 @@ dependencies:
     .cursor/rules/apihub-backend-self-review.mdc: sha256:f56872596e0fcd67fe8696cf4cbdc3471a6ab9e922a55342260e6ba7c8e025b0
   source: local
   local_path: ./backend/portal-backend/agent-packages/apihub-backend-self-review
-  content_hash: sha256:d296fa80e414f1829b29de4b938e98f62a18088b19d136309e5953f06089df76
+  content_hash: sha256:ca72bf6b167ccbeb0604f5579799e0fa1d44e4ebfa050023d078cddd4d52d4ec
 - repo_url: _local/apihub-deployment-authoring
   name: apihub-deployment-authoring
   version: 0.1.0
@@ -856,7 +863,7 @@ dependencies:
     .cursor/rules/apihub-deployment-docs.mdc: sha256:6d42635d27c54602244deaa1b053ddf992f2ef1a171153d26873c64b92fee26d
   source: local
   local_path: ./agent-packages/apihub-deployment-authoring
-  content_hash: sha256:34faa34432657b35e16845ba2b3c5a2f03ec6810a341c4d85f134e0f5893e9ae
+  content_hash: sha256:503c0d7015494062553b59c6ab34a1e0d06d84c07703547fd0022dcf5207ef69
 - repo_url: _local/apihub-deployment-followup
   name: apihub-deployment-followup
   version: 0.1.0
@@ -875,7 +882,7 @@ dependencies:
     .cursor/rules/apihub-deployment-followup.mdc: sha256:5eb3620d79929720145d221ada2ba7fb528a788c274eb2bb15df331a4068140a
   source: local
   local_path: ./agent-packages/apihub-deployment-followup
-  content_hash: sha256:1fd0522e868ced64c02bb711c9efafe604ab9b49a1d32e48236cebf7240481a7
+  content_hash: sha256:c1222baa5b41179e04cc42a07cf62531880fe15bdde13cbc3480dec501d1b1a1
 - repo_url: _local/apihub-design-authoring
   name: apihub-design-authoring
   version: 0.1.0
@@ -924,7 +931,7 @@ dependencies:
     .agents/skills/apihub-design-mockup-sync/references/mapping-conventions.md: sha256:1c3f7f2ee631dca27d6cf44ddfdc46bc50a246a26c9b447c31a0c0254ac967d6
     .agents/skills/apihub-figma-mockups/SKILL.md: sha256:40a8957daee1c0f786783cf95fc318bf01e991cc115bfc13ac1adcd144feea0e
     .agents/skills/apihub-figma-mockups/references/portal-figma-files.md: sha256:fb40ca51d646e62fdbe81382149cc229c7a953bb4a7bc56ec1cd21d9af276ddc
-    .agents/skills/apihub-functional-design/SKILL.md: sha256:0a81f3ae21d0ef64e6bf39d9ee29ec8f8b5e73803a0d03ecc709210aa9cd80de
+    .agents/skills/apihub-functional-design/SKILL.md: sha256:8611194dc754b225e768f860c7a2be9ce19a8601d06f6f64f708750820cb9a9c
     .agents/skills/apihub-functional-design/templates/README.md: sha256:af644e87a05b9c7fa3e1f3fe2a6dceb4f0dcd54c386a1312658f731569d57ded
     .agents/skills/apihub-functional-design/templates/T1-single-flow.md: sha256:1297e9a4ae7a17b76d9710886e5b5fc20e02413644d3a6e01738729837591ebf
     .agents/skills/apihub-functional-design/templates/T2-multi-zone.md: sha256:86abdbf7099b12605de4790e9c7ac6f3bb16ea060fe1c3772eac4aab8c141b4a
@@ -938,7 +945,7 @@ dependencies:
     .claude/skills/apihub-design-mockup-sync/references/mapping-conventions.md: sha256:1c3f7f2ee631dca27d6cf44ddfdc46bc50a246a26c9b447c31a0c0254ac967d6
     .claude/skills/apihub-figma-mockups/SKILL.md: sha256:40a8957daee1c0f786783cf95fc318bf01e991cc115bfc13ac1adcd144feea0e
     .claude/skills/apihub-figma-mockups/references/portal-figma-files.md: sha256:fb40ca51d646e62fdbe81382149cc229c7a953bb4a7bc56ec1cd21d9af276ddc
-    .claude/skills/apihub-functional-design/SKILL.md: sha256:0a81f3ae21d0ef64e6bf39d9ee29ec8f8b5e73803a0d03ecc709210aa9cd80de
+    .claude/skills/apihub-functional-design/SKILL.md: sha256:8611194dc754b225e768f860c7a2be9ce19a8601d06f6f64f708750820cb9a9c
     .claude/skills/apihub-functional-design/templates/README.md: sha256:af644e87a05b9c7fa3e1f3fe2a6dceb4f0dcd54c386a1312658f731569d57ded
     .claude/skills/apihub-functional-design/templates/T1-single-flow.md: sha256:1297e9a4ae7a17b76d9710886e5b5fc20e02413644d3a6e01738729837591ebf
     .claude/skills/apihub-functional-design/templates/T2-multi-zone.md: sha256:86abdbf7099b12605de4790e9c7ac6f3bb16ea060fe1c3772eac4aab8c141b4a
@@ -948,7 +955,7 @@ dependencies:
     .cursor/rules/apihub-functional-design.mdc: sha256:81ae792a9029452633caa420b4640e7abf3eae40bd8a4c563d6a87f0f3394e8c
   source: local
   local_path: ./agent-packages/apihub-design-authoring
-  content_hash: sha256:6afb5afc2a76e5cb412b10c819a4078cb962292e2f895956f1bf16cb2be9f455
+  content_hash: sha256:f50aa1c5c88786c9c71461741034107a21cccc1966343b9b2c82ecd5998a38ee
 - repo_url: _local/apihub-landing-refresh
   name: apihub-landing-refresh
   version: 0.1.0
@@ -967,7 +974,7 @@ dependencies:
     .cursor/rules/apihub-landing-refresh.mdc: sha256:e536fa41894ad36c834f14712ae8605ae1428b78a8f9e873c9eaf30318ebfb51
   source: local
   local_path: ./agent-packages/apihub-landing-refresh
-  content_hash: sha256:7b5bc78625bc95ef85fabd3a741cf503b4a7656a3a632d5946803eb6fc9eb775
+  content_hash: sha256:5990f2988e4e446c120e33dc5db237e6588352536c0ebc6b09b9b3ad5826fa02
 - repo_url: _local/apihub-mui-coding
   name: apihub-mui-coding
   version: 1.0.0
@@ -986,7 +993,7 @@ dependencies:
     .cursor/rules/apihub-mui-coding.mdc: sha256:8660a9a963537dd903bdaa1c494831dc3a98a54fd277b35e8fc8b0fe1322ed90
   source: local
   local_path: ./frontend/ui/agent-packages/apihub-mui-coding
-  content_hash: sha256:4fe425ea6272673daf48a5d200b65e2e79ff7bec25466105b4fea8351add5ab7
+  content_hash: sha256:7a2a876c59db57a267ceb017c11c7c4ca1acd7a1ac67469048b1ffb8c91c40d7
 - repo_url: _local/apihub-quality-gates
   name: apihub-quality-gates
   version: 1.0.0
@@ -1009,7 +1016,7 @@ dependencies:
     .cursor/rules/apihub-quality-gates.mdc: sha256:750af8b784e5d765aee763883f29c6396d7ca7d65c6eca9ca41ab1799d6ec1c4
   source: local
   local_path: ./frontend/ui/agent-packages/apihub-quality-gates
-  content_hash: sha256:e99fd8f31fc2cb9257974d469101909ff84545fceb0ff49f580a448c7f705ddf
+  content_hash: sha256:acb983347a54c8efbdf7522478ff520613ab131574fc14f6618438dfdd86adb8
 - repo_url: _local/apihub-react-coding
   name: apihub-react-coding
   version: 1.0.0
@@ -1028,7 +1035,7 @@ dependencies:
     .cursor/rules/apihub-react-coding.mdc: sha256:cb5a98bdd2e10604faac337cae3e1634ade37c621d0fb333f787f6d40c87f4dc
   source: local
   local_path: ./frontend/ui/agent-packages/apihub-react-coding
-  content_hash: sha256:399b2ab64fcbc0e876e66c21e48e2ed69448f068303bdba5d24456f540a91f4c
+  content_hash: sha256:511e456bd70ba8370064ecf0a02a2502ed1d4c2aec2cb1f283659883cb6c322d
 - repo_url: _local/apihub-typescript-coding
   name: apihub-typescript-coding
   version: 1.0.0
@@ -1047,7 +1054,7 @@ dependencies:
     .cursor/rules/apihub-typescript-coding.mdc: sha256:6b662aa87f2cd45d42c3a39211ef38ee930a71fe4b57fe926d2c222e6e775eed
   source: local
   local_path: ./frontend/ui/agent-packages/apihub-typescript-coding
-  content_hash: sha256:90a7c83936af1bdbf8de34f56c3a5c577a803792dc7c3d10170d40d9db7396e6
+  content_hash: sha256:35e68589d9794deb8912a9035b86be5ad6fa1756241d61c8706e95f4e0181d3f
 - repo_url: _local/apihub-ui-authoring
   name: apihub-ui-authoring
   version: 1.2.0
@@ -1066,7 +1073,7 @@ dependencies:
     .cursor/rules/apihub-ui-authoring.mdc: sha256:32a9c37f0a1f93d474c9c3ce3a4f7297a973a2ee9588815161babccc5bed6604
   source: local
   local_path: ./frontend/ui/agent-packages/apihub-ui-authoring
-  content_hash: sha256:67a202ce5d53656a37551162b1e38e0afcc9ee51dcabc74e35ff91ecbda02ecc
+  content_hash: sha256:474cff75893f93994402e9664bbe87dd021066b8458a2f4c279aa8a9ec7a2898
 - repo_url: _local/apihub-unit-testing
   name: apihub-unit-testing
   version: 1.0.0
@@ -1085,7 +1092,7 @@ dependencies:
     .cursor/rules/apihub-unit-testing.mdc: sha256:fba862077a2901db9c6c12f7e114782fa1486d8fcc4c956e96d5663d39bbc002
   source: local
   local_path: ./frontend/ui/agent-packages/apihub-unit-testing
-  content_hash: sha256:5a73045e62cdd500defc90559d2fbb3c9e26d21760e85663185e64bdcfd450a5
+  content_hash: sha256:ff608885df8dfe0dd69a855206dd359082e651e1a431b1a0209a30633e2b6e35
 - repo_url: _local/backend-conventions
   name: backend-conventions
   version: 0.2.0
@@ -1114,7 +1121,7 @@ dependencies:
     .cursor/rules/backend-service-wiring.mdc: sha256:eb6c7d033836002784978024a34d3f3a9dcacc167331de1bd7748071e4d90cda
   source: local
   local_path: ./backend/portal-backend/agent-packages/backend-conventions
-  content_hash: sha256:664de7b9287a87ca5e469ec58d921fe7b6fbd7f36a8b80a48b7ac4419538e531
+  content_hash: sha256:02c8610c355201a917185d216e41eb06e9a47b4741f8376c6f924a1882fa8ef4
 - repo_url: _local/ddlapi-authoring
   name: ddlapi-authoring
   version: 1.2.0
@@ -1133,7 +1140,7 @@ dependencies:
     .cursor/rules/ddlapi-authoring.mdc: sha256:0f2339a33003a628f08eea8b1aa6de3de9374af24e8f836bc1af45577f8a7323
   source: local
   local_path: ./frontend/ddlapi/agent-packages/ddlapi-authoring
-  content_hash: sha256:17e46958fb26e7a45225a63f0ff5343c204fb4c572c4ba137f8360e0e4c157dd
+  content_hash: sha256:ab08ec71890187791a4dca39fa85bf4fb1b5bf4513afdc6fc0cc04db54062f08
 - repo_url: _local/ddlapi-testing
   name: ddlapi-testing
   version: 1.0.0
@@ -1152,7 +1159,7 @@ dependencies:
     .cursor/rules/ddlapi-testing.mdc: sha256:18156191c4841bbb873dd4e152209b4dbbad8d7eb5edead5d49b2b7820c7929c
   source: local
   local_path: ./frontend/ddlapi/agent-packages/ddlapi-testing
-  content_hash: sha256:bab8698aab9c1edaf50db4d603c6047d7ae5b6e32747ffbf5f11709d53c25ba1
+  content_hash: sha256:c5f8a81b9348711b97055cd6c933b5557748d81ed51f390dd7692f95aa44237e
 - repo_url: _local/ddlapi-using
   name: ddlapi-using
   version: 1.1.0
@@ -1171,7 +1178,7 @@ dependencies:
     .cursor/rules/ddlapi-using.mdc: sha256:e63e657599f9d316738f0e695d76c2c02486978c338771c625cd2fb2e37c8ac9
   source: local
   local_path: ./frontend/ddlapi/agent-packages/ddlapi-using
-  content_hash: sha256:383486f9d4d23c96e78612c138eb88f7f58dc83c39d6192a603a05515e3fc6f2
+  content_hash: sha256:8f7ebe66176064d1acb9c890abfa8cd7bef5aff1d7e4575616e26a2da46a8c95
 - repo_url: _local/json-crawl-authoring
   name: json-crawl-authoring
   version: 1.0.0
@@ -1190,7 +1197,7 @@ dependencies:
     .cursor/rules/json-crawl-authoring.mdc: sha256:4023088c07c2f38c20ae12918c67a11ac658752df9022467a1001b2f83c2f4a7
   source: local
   local_path: ./frontend/json-crawl/agent-packages/json-crawl-authoring
-  content_hash: sha256:4bed7d4ffb5e5598adf7c5905a816b43a95c496e60d16c74ad4c9d12b25af9de
+  content_hash: sha256:53479de14cb524c7e8cc36c919b81faa9bc51e58ee4f2a12baabec49cc0945c8
 - repo_url: _local/json-crawl-testing
   name: json-crawl-testing
   version: 1.0.0
@@ -1209,7 +1216,7 @@ dependencies:
     .cursor/rules/json-crawl-testing.mdc: sha256:88e8a590e416779f3dc7c1235c9d17eb2f7d2b67706f8e8e32aa96a4c8606eec
   source: local
   local_path: ./frontend/json-crawl/agent-packages/json-crawl-testing
-  content_hash: sha256:72937b473dbb42423cf82d0896c5339f4125723a3d3cd573cad71c1b4d85dbca
+  content_hash: sha256:a205c86c5890d20183f0ed529a0a0fb3b8e11a5a312e169294d953ba54387308
 - repo_url: _local/json-crawl-using
   name: json-crawl-using
   version: 1.2.0
@@ -1228,7 +1235,7 @@ dependencies:
     .cursor/rules/json-crawl-using.mdc: sha256:37b9477be3a72985a9f9e38f442bb9a10aa8350da3ee28b994b6ddc94fc47517
   source: local
   local_path: ./frontend/json-crawl/agent-packages/json-crawl-using
-  content_hash: sha256:7b79a36ff4c48a83433e32bcb65fb0fde8451d23cc7d28c166533f93aa19461b
+  content_hash: sha256:56ed6c11cb4af12a41d8aa7d142a6e93d0f03c9536d19f32d353213161e12a69
 - repo_url: _local/next-data-model-authoring
   name: next-data-model-authoring
   version: 1.0.0
@@ -1275,7 +1282,7 @@ dependencies:
     .cursor/rules/next-data-model-authoring.mdc: sha256:2d1d357104e86960cc240d9cf03e79926b259f9a0a2664f52d8fabc6d9ea66f7
   source: local
   local_path: ./frontend/api-doc-viewer/agent-packages/next-data-model-authoring
-  content_hash: sha256:6036cc9267b086c3294ae9eb606e1a411a21cd2c21f6db7eed9eee9a035d2c75
+  content_hash: sha256:4cd53c993ba4ae789ff2101b7c29001d78d5f53a59e10b02a41e78ba6366dde4
 - repo_url: _local/next-data-model-using
   name: next-data-model-using
   version: 1.0.0
@@ -1294,7 +1301,7 @@ dependencies:
     .cursor/rules/next-data-model-using.mdc: sha256:2e7e66830abf4ccf4f1248271d708d6ddb7f670c0909547c79422e17d24222e0
   source: local
   local_path: ./frontend/api-doc-viewer/agent-packages/next-data-model-using
-  content_hash: sha256:374dfd1ee900471332a9c2b46128eedaffd21c2509f17baeb57bfda264f0b506
+  content_hash: sha256:735e4fde2d93a8c9fdaf464c910881c5bb0b8ce186e8d76b98f7f19043119770
 - repo_url: _local/postman-e2e-authoring
   name: postman-e2e-authoring
   version: 1.0.0
@@ -1313,7 +1320,7 @@ dependencies:
     .cursor/rules/postman-e2e-authoring.mdc: sha256:e755073da989e269566c05e13cda6b6d4489bf3319712deb0c79c156145da590
   source: local
   local_path: ./tests/postman-collections/agent-packages/postman-e2e-authoring
-  content_hash: sha256:6a661f688f7eaaa1d9d575ddd36b5fd96a226dc56ecfa05274b589fe6136d25c
+  content_hash: sha256:ae2198f12900894f94fa75cfbcf33874cb6ba8eac271ee0e3f99dfa4de968f8c
 - repo_url: _local/postman-e2e-followup
   name: postman-e2e-followup
   version: 0.1.0
@@ -1332,7 +1339,7 @@ dependencies:
     .cursor/rules/postman-e2e-followup.mdc: sha256:4f799a26fa30295da5904905be8fafe0d40f4f89dee98c7b32a5743e0273e53d
   source: local
   local_path: ./tests/postman-collections/agent-packages/postman-e2e-followup
-  content_hash: sha256:ec801f0b759772b558f92360a4ab927efdb33cd948f1d5daa84e7fe619e9608c
+  content_hash: sha256:b6694a580fc37f8978a1b7822236b3089abbd12d150fed57c6dc92e6b387f814
 - repo_url: netcracker/qubership-ai-packages
   materialization_repo_url: Netcracker/qubership-ai-packages
   name: english-developer-style
@@ -1342,7 +1349,7 @@ dependencies:
   virtual_path: agent-packages/english-developer-style
   is_virtual: true
   package_type: apm_package
-  content_hash: sha256:2fe3574b0d6804c3b67c926c1b88783d2192966981f6b15c23b38331f51ab028
+  content_hash: sha256:f31999c091271a570439c98f8d9fecb3abddc111ddb91d23c46db95616a823ab
 - repo_url: netcracker/qubership-ai-packages
   materialization_repo_url: Netcracker/qubership-ai-packages
   name: markdown-line-length-120
@@ -1364,7 +1371,7 @@ dependencies:
     .claude/rules/markdown-line-length-120.md: sha256:c8aca12283eb04c1cada89c4ecf4be1a499514ec806e2a5c42628927cfafc431
     .claude/skills/markdown-line-length-120/SKILL.md: sha256:cf4d9f61dfbf07b8b86145e07710ba008016294db891c574f2ec876a5a7a972f
     .cursor/rules/markdown-line-length-120.mdc: sha256:c84876600d6c8c3adfe6843760904e405a0f2661fb57952689c8dd42cb7512ad
-  content_hash: sha256:1708d68b8f755365d1ec9a7904a284c23128737a497d4380f960e635a70c0de5
+  content_hash: sha256:b5638c0685e78f695c9976f1fc14ae3676fea1c1af3b027d005799afe15bf7ab
 - repo_url: netcracker/qubership-apihub-ci
   materialization_repo_url: Netcracker/qubership-apihub-ci
   name: apihub-go-developer
@@ -1390,7 +1397,7 @@ dependencies:
     .claude/skills/apihub-go-developer/SKILL.md: sha256:b33cb676a0226642857bf44259ed4569bcc412fd7eef72b168e8a5de19bac3cc
     .claude/skills/apihub-go-developer/reference.md: sha256:57d60a8f737dc69687dbd21ae2616295e9a37ad90c77455f0d2c443def01542b
     .cursor/rules/apihub-go-developer.mdc: sha256:368f12209ffb738a493f6430ec4d34e3a477e459f5a5a5b1e224795accec4873
-  content_hash: sha256:b000d454937ac72535ffa7afb313f720615556cc246fc9fac006c04639605151
+  content_hash: sha256:9d4bec670441ec1c79271b32ce76623af5a7722a00b825973aa00b86444b21d2
 - repo_url: netcracker/qubership-apihub-ci
   materialization_repo_url: Netcracker/qubership-apihub-ci
   name: apihub-go-self-review
@@ -1412,13 +1419,13 @@ dependencies:
     .claude/rules/apihub-go-self-review.md: sha256:ec7bf6eb48bab91936bba45bebceae11daeeeb066f3a90be018436e7a32cbe28
     .claude/skills/apihub-go-self-review/SKILL.md: sha256:0a4914ca688a5cadfa0c8d046c1bcf620a4f78835ac3217b1e5c0fdeb31f65f2
     .cursor/rules/apihub-go-self-review.mdc: sha256:f2ec34fb818e3e3d410aac9950088d4d670777b42f4638831b47224c67c97d50
-  content_hash: sha256:e6619b069dad4658879035923e6d0cc2eab27162852b0ff2bc64a9b9a5efafbd
+  content_hash: sha256:81903b17ddeb6e72ba611112a937bd372675963541f5043bd8d3be32453defa9
 - repo_url: netcracker/qubership-apihub-ci
   materialization_repo_url: Netcracker/qubership-apihub-ci
   name: development-conventions
   host: github.com
-  resolved_commit: d2c1160d9b05ecf8d0190396c6eee3f120c9dd14
-  version: 0.3.0
+  resolved_commit: ab029c43f4799953ff2a8b29c0f8f345e486a6ea
+  version: 0.4.0
   virtual_path: agent-packages/development-conventions
   is_virtual: true
   package_type: apm_package
@@ -1428,11 +1435,15 @@ dependencies:
   - .cursor/rules/ci-super-linter.mdc
   - .cursor/rules/clarify-before-coding.mdc
   deployed_file_hashes:
-    .claude/rules/ci-super-linter.md: sha256:2ee18c08f25c2febad81403779bc7c88daf265b085cab27c7eb03f7ec812d056
+    .claude/rules/ci-super-linter.md: sha256:b3507967b2783567acff3e9830c2eaab4140dfda8e078ae303a2acf3679d8e2f
     .claude/rules/clarify-before-coding.md: sha256:3b4bf7e4add2440de4d687bab10d47826ead2083e7d37f48144d8abad137e8bf
-    .cursor/rules/ci-super-linter.mdc: sha256:4e45f50a3ed46f70141af08550f321af7d2420fa3c611ce08af537ed6fd3d3ac
-    .cursor/rules/clarify-before-coding.mdc: sha256:7ed27a11a8d5b46cbbbba72e6074cd2452b624fc677f26c94e8ab40de8895f81
-  content_hash: sha256:9e2fe693a3520efebd5190db25800632d468898a00147aa50899ebe4815d3c50
+    .cursor/rules/ci-super-linter.mdc: sha256:cab16d4a8f50d50b783ce2518ec2d557824921fe172a5abb09cf05fef034bbcf
+    .cursor/rules/clarify-before-coding.mdc: sha256:6b9da9af8262dc117cecc65dda6178c968ae75dabfbc10bdcafccefb61883deb
+  content_hash: sha256:f3c4bfd2edab38af2a47557dbbe3cc32aec021c3dda533604be3e5262a3c6e4b
+  carried_licenses:
+  - path: LICENSE
+    source: LICENSE
+    hash: sha256:cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30
 - repo_url: netcracker/qubership-apihub-ci
   materialization_repo_url: Netcracker/qubership-apihub-ci
   name: github-ticket-implementation-planner
@@ -1453,8 +1464,8 @@ dependencies:
     .agents/skills/github-ticket-implementation-planner/SKILL.md: sha256:65bd796eceb5bb9a29949d61651654d7db3e98021d736ef6c06864319f112226
     .claude/rules/github-ticket-implementation-planner.md: sha256:bbfac186585f3dbe958ae351fb13ee6cb9378108128916c47a9efcf215319d78
     .claude/skills/github-ticket-implementation-planner/SKILL.md: sha256:65bd796eceb5bb9a29949d61651654d7db3e98021d736ef6c06864319f112226
-    .cursor/rules/github-ticket-implementation-planner.mdc: sha256:dc16c7b0a3a84e6c052fd1b28883d8f13eb38af990ce0f8121578960d9020295
-  content_hash: sha256:6eb52ca5b3cbe0c80850ed9e571d907978fb28b0f5434b19d3ec1584f8b5567e
+    .cursor/rules/github-ticket-implementation-planner.mdc: sha256:e411974ca3391606e442fc2494eec270fdad0bfbc971fb599512a68da4d10d36
+  content_hash: sha256:adbfa06988974087690e9701beaa4762f7adf2879321d014518687311748e027
 - repo_url: netcracker/qubership-apihub-ci
   materialization_repo_url: Netcracker/qubership-apihub-ci
   name: go-conventions
@@ -1490,7 +1501,7 @@ dependencies:
     .cursor/rules/go-error-handling.mdc: sha256:9709b21378589f21221e839f50fd16e01a61804339c7ee9aed8e19ce0d128f83
     .cursor/rules/go-migrations.mdc: sha256:dd605fec7a44303f13f3327e213525afcc53d2b6612e43f29b1d7b2a2d95acc6
     .cursor/rules/sql-performance.mdc: sha256:df38408f6cd2e5550ed3340eaaa4cf706a2a1ceca5b44b1f02adc50942eaba61
-  content_hash: sha256:b5c76fb9fa952cb5aa61e136c922d5291eaac2bbcdf4dea255fa1ada7b6903ce
+  content_hash: sha256:296ca62c45fb908913a36116d003fbd4572c3a554d80497ee0b2760b1d5d5322
 - repo_url: netcracker/qubership-ai-packages
   materialization_repo_url: Netcracker/qubership-ai-packages
   name: english-us-developer-style
@@ -1500,7 +1511,7 @@ dependencies:
   virtual_path: agent-packages/english-us-developer-style
   is_virtual: true
   depth: 2
-  resolved_by: Netcracker/qubership-ai-packages
+  resolved_by: netcracker/qubership-ai-packages
   package_type: apm_package
   deployed_files:
   - .agents/skills/english-developer-style
@@ -1513,8 +1524,8 @@ dependencies:
     .agents/skills/english-developer-style/SKILL.md: sha256:9fa75b769c101eb4f90927c80414e96c41ba6db1b10937dc612ebffaba8043fc
     .claude/rules/english-developer-style.md: sha256:2da9f6889756beb319a6395f3f363826d144b9b48c97d742cfd1a89ce0017d58
     .claude/skills/english-developer-style/SKILL.md: sha256:9fa75b769c101eb4f90927c80414e96c41ba6db1b10937dc612ebffaba8043fc
-    .cursor/rules/english-developer-style.mdc: sha256:e6e830aa5469bcadacd7019c0421f84af09889e16db8a1225f2ad6f34a748fa9
-  content_hash: sha256:f97efa2a8e0d5c1bd68ddf9f12a3dcf96d2b9b952d5e4aa968f0bc7c71767034
+    .cursor/rules/english-developer-style.mdc: sha256:396ac43bf9e12c18dea727a4117ed8cf4ba149c8738d0843749a77225f6d446a
+  content_hash: sha256:a95c02d373f9a57a427818b75b5337f4fab60009340f7c76fbf88a1bec102d9c
 deployments:
 - kind: project-relative
   target: claude
@@ -1947,7 +1958,7 @@ deployments:
   owners:
   - netcracker/qubership-apihub-ci/agent-packages/development-conventions
   active_owner: netcracker/qubership-apihub-ci/agent-packages/development-conventions
-  content_hash: sha256:2ee18c08f25c2febad81403779bc7c88daf265b085cab27c7eb03f7ec812d056
+  content_hash: sha256:b3507967b2783567acff3e9830c2eaab4140dfda8e078ae303a2acf3679d8e2f
 - kind: project-relative
   target: claude
   value: .claude/rules/clarify-before-coding.md
@@ -2550,7 +2561,7 @@ deployments:
   owners:
   - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-feature-test-plan
   active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-feature-test-plan
-  content_hash: sha256:a4f29401ad503814e234fbb464508719a21b7769d30ea72e8a20704f8b2abafe
+  content_hash: sha256:37de105ca9c574e22eb0ec32209691e402271626fce560435c9ede7eb5d54b06
 - kind: project-relative
   target: claude
   value: .claude/skills/api-doc-viewer-feature-test-plan/references/analysis.md
@@ -2586,7 +2597,7 @@ deployments:
   owners:
   - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-feature-test-plan
   active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-feature-test-plan
-  content_hash: sha256:569740d7c59edb65c82a67926ee353c7450e679250dd5ee6ba68096bc9045c82
+  content_hash: sha256:5fb83c4596ccfd412686475249da57585870b4eb28e57f53a4bc6cd709d2c01a
 - kind: project-relative
   target: claude
   value: .claude/skills/api-doc-viewer-feature-test-plan/references/handover.md
@@ -2856,7 +2867,7 @@ deployments:
   owners:
   - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-feature-test-plan
   active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-feature-test-plan
-  content_hash: sha256:a4af578fe646fafb93a4af4c726f7d6ab6ce6751f4478f68a1c0da30e1e24aea
+  content_hash: sha256:1e061f658951a48b019b45df3843b3701a88faa9b1faebb813a1aa1b6751b817
 - kind: project-relative
   target: claude
   value: .claude/skills/api-doc-viewer-feature-test-plan/templates/backlog.config.json
@@ -2928,7 +2939,7 @@ deployments:
   owners:
   - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-review-session
   active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-review-session
-  content_hash: sha256:24420ea0567987df9b8ab159e0e23b3bf9520e8aacfdd321fd04805b3139c3dc
+  content_hash: sha256:2b0d3054c658620cf64f3582917559a79cdfa2a71b5fc0e63921ffec8c2ca1a0
 - kind: project-relative
   target: claude
   value: .claude/skills/api-doc-viewer-reviewing
@@ -3162,7 +3173,7 @@ deployments:
   owners:
   - ./agent-packages/apihub-add-go-service
   active_owner: ./agent-packages/apihub-add-go-service
-  content_hash: sha256:ebbe75a98c5fd46952575d456a2db3f706e3fb1dbafbde3f711ab8b06ea63b8a
+  content_hash: sha256:3c2502a443696c9d51206820af34277fdaaa93e11ce083c93bfb394dea0c2abe
 - kind: project-relative
   target: claude
   value: .claude/skills/apihub-adr
@@ -3432,7 +3443,7 @@ deployments:
   owners:
   - ./agent-packages/apihub-design-authoring
   active_owner: ./agent-packages/apihub-design-authoring
-  content_hash: sha256:0a81f3ae21d0ef64e6bf39d9ee29ec8f8b5e73803a0d03ecc709210aa9cd80de
+  content_hash: sha256:8611194dc754b225e768f860c7a2be9ce19a8601d06f6f64f708750820cb9a9c
 - kind: project-relative
   target: claude
   value: .claude/skills/apihub-functional-design/templates/README.md
@@ -4431,7 +4442,7 @@ deployments:
   owners:
   - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-feature-test-plan
   active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-feature-test-plan
-  content_hash: sha256:a4f29401ad503814e234fbb464508719a21b7769d30ea72e8a20704f8b2abafe
+  content_hash: sha256:37de105ca9c574e22eb0ec32209691e402271626fce560435c9ede7eb5d54b06
 - kind: project-relative
   target: cursor
   value: .agents/skills/api-doc-viewer-feature-test-plan/references/analysis.md
@@ -4467,7 +4478,7 @@ deployments:
   owners:
   - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-feature-test-plan
   active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-feature-test-plan
-  content_hash: sha256:569740d7c59edb65c82a67926ee353c7450e679250dd5ee6ba68096bc9045c82
+  content_hash: sha256:5fb83c4596ccfd412686475249da57585870b4eb28e57f53a4bc6cd709d2c01a
 - kind: project-relative
   target: cursor
   value: .agents/skills/api-doc-viewer-feature-test-plan/references/handover.md
@@ -4737,7 +4748,7 @@ deployments:
   owners:
   - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-feature-test-plan
   active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-feature-test-plan
-  content_hash: sha256:a4af578fe646fafb93a4af4c726f7d6ab6ce6751f4478f68a1c0da30e1e24aea
+  content_hash: sha256:1e061f658951a48b019b45df3843b3701a88faa9b1faebb813a1aa1b6751b817
 - kind: project-relative
   target: cursor
   value: .agents/skills/api-doc-viewer-feature-test-plan/templates/backlog.config.json
@@ -4809,7 +4820,7 @@ deployments:
   owners:
   - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-review-session
   active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-review-session
-  content_hash: sha256:24420ea0567987df9b8ab159e0e23b3bf9520e8aacfdd321fd04805b3139c3dc
+  content_hash: sha256:2b0d3054c658620cf64f3582917559a79cdfa2a71b5fc0e63921ffec8c2ca1a0
 - kind: project-relative
   target: cursor
   value: .agents/skills/api-doc-viewer-reviewing
@@ -5043,7 +5054,7 @@ deployments:
   owners:
   - ./agent-packages/apihub-add-go-service
   active_owner: ./agent-packages/apihub-add-go-service
-  content_hash: sha256:ebbe75a98c5fd46952575d456a2db3f706e3fb1dbafbde3f711ab8b06ea63b8a
+  content_hash: sha256:3c2502a443696c9d51206820af34277fdaaa93e11ce083c93bfb394dea0c2abe
 - kind: project-relative
   target: cursor
   value: .agents/skills/apihub-adr
@@ -5313,7 +5324,7 @@ deployments:
   owners:
   - ./agent-packages/apihub-design-authoring
   active_owner: ./agent-packages/apihub-design-authoring
-  content_hash: sha256:0a81f3ae21d0ef64e6bf39d9ee29ec8f8b5e73803a0d03ecc709210aa9cd80de
+  content_hash: sha256:8611194dc754b225e768f860c7a2be9ce19a8601d06f6f64f708750820cb9a9c
 - kind: project-relative
   target: cursor
   value: .agents/skills/apihub-functional-design/templates/README.md
@@ -6087,7 +6098,7 @@ deployments:
   owners:
   - ./agent-packages/apihub-adr
   active_owner: ./agent-packages/apihub-adr
-  content_hash: sha256:c330fc6bb203ad5d5ea8555e1568da1f9a0c2a90369b81bd96b2e87e9b6395ed
+  content_hash: sha256:f2c32b08cec7b7fed8f1dc701f89878607be8630fd2c42f3b5ebe862dd1161a1
 - kind: project-relative
   target: cursor
   value: .cursor/rules/apihub-agent-developer.mdc
@@ -6312,7 +6323,7 @@ deployments:
   owners:
   - netcracker/qubership-apihub-ci/agent-packages/development-conventions
   active_owner: netcracker/qubership-apihub-ci/agent-packages/development-conventions
-  content_hash: sha256:4e45f50a3ed46f70141af08550f321af7d2420fa3c611ce08af537ed6fd3d3ac
+  content_hash: sha256:cab16d4a8f50d50b783ce2518ec2d557824921fe172a5abb09cf05fef034bbcf
 - kind: project-relative
   target: cursor
   value: .cursor/rules/clarify-before-coding.mdc
@@ -6321,7 +6332,7 @@ deployments:
   owners:
   - netcracker/qubership-apihub-ci/agent-packages/development-conventions
   active_owner: netcracker/qubership-apihub-ci/agent-packages/development-conventions
-  content_hash: sha256:7ed27a11a8d5b46cbbbba72e6074cd2452b624fc677f26c94e8ab40de8895f81
+  content_hash: sha256:6b9da9af8262dc117cecc65dda6178c968ae75dabfbc10bdcafccefb61883deb
 - kind: project-relative
   target: cursor
   value: .cursor/rules/ddlapi-authoring.mdc
@@ -6357,7 +6368,7 @@ deployments:
   owners:
   - netcracker/qubership-ai-packages/agent-packages/english-us-developer-style
   active_owner: netcracker/qubership-ai-packages/agent-packages/english-us-developer-style
-  content_hash: sha256:e6e830aa5469bcadacd7019c0421f84af09889e16db8a1225f2ad6f34a748fa9
+  content_hash: sha256:396ac43bf9e12c18dea727a4117ed8cf4ba149c8738d0843749a77225f6d446a
 - kind: project-relative
   target: cursor
   value: .cursor/rules/github-ticket-implementation-planner.mdc
@@ -6366,7 +6377,7 @@ deployments:
   owners:
   - netcracker/qubership-apihub-ci/agent-packages/github-ticket-implementation-planner
   active_owner: netcracker/qubership-apihub-ci/agent-packages/github-ticket-implementation-planner
-  content_hash: sha256:dc16c7b0a3a84e6c052fd1b28883d8f13eb38af990ce0f8121578960d9020295
+  content_hash: sha256:e411974ca3391606e442fc2494eec270fdad0bfbc971fb599512a68da4d10d36
 - kind: project-relative
   target: cursor
   value: .cursor/rules/go-comments.mdc

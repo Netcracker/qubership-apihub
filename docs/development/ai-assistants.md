@@ -21,7 +21,7 @@ exception: they name the consumer modules too.
 
   | Location | Packages |
   |---|---|
-  | `agent-packages/` | `apihub-deployment-authoring`, `apihub-deployment-followup`, `apihub-add-go-service`, `apihub-landing-refresh`, `apihub-design-authoring` |
+  | `agent-packages/` | `apihub-deployment-authoring`, `apihub-deployment-followup`, `apihub-add-go-service`, `apihub-landing-refresh`, `apihub-adr`, `apihub-design-authoring`, `apihub-autonomous-agent`, `analyze-migration` |
   | `backend/portal-backend/agent-packages/` | `apihub-backend-developer`, `apihub-backend-self-review`, `backend-conventions`, `advanced-verification` |
   | `backend/agent/agent-packages/` | `apihub-agent-developer`, `agent-conventions` |
   | `frontend/<library>/agent-packages/` | `api-diff-*`, `api-doc-viewer-*`, `next-data-model-*`, `api-processor-*`, `api-unifier-*`, `ddlapi-*`, `json-crawl-*` |
@@ -33,14 +33,19 @@ Go service, use the `apihub-add-go-service` skill: it lists every place that nam
 
 ## Change a package
 
+Use the APM version that `apm.lock.yaml` records in `apm_version`; `pip install apm-cli==<version>` installs it.
+Another version can rewrite the deployed rules and the lock file.
+
 1. Edit the package source under `agent-packages/` (never the deployed copy).
 2. From the repository root, run:
 
    ```bash
-   apm install --target cursor,claude
+   apm install
    ```
 
-3. Commit the package sources together with `.agents/skills/`, `.claude/skills/`, and the refreshed `.cursor/`
+   The targets are in `apm.yml`.
+3. Run `apm install --frozen --dry-run`. It verifies the deployed files against `apm.lock.yaml`.
+4. Commit the package sources together with `.agents/skills/`, `.claude/skills/`, and the refreshed `.cursor/`
    and `.claude/` rule trees. A fresh clone then has the skills and rules without running APM.
 
 `apm install` writes the same skills to `.agents/skills/` and `.claude/skills/`. Commit both, so a clone works
@@ -54,6 +59,29 @@ Never edit `.agents/`, `.cursor/`, or `.claude/` by hand: the next `apm install`
 package to the manifest, list it in `apm.yml` and run the same command. Do not commit `apm_modules/` or
 `agent-packages/**/build/`; both are ignored. To author a package, use the `apm-authoring` skill.
 
+### Store packages
+
+A rule or skill of a store package changes in its source repository, `qubership-apihub-ci` or
+`qubership-ai-packages`, through a pull request there. After the merge, update the package here and keep the other
+store packages where they are:
+
+```bash
+apm update <alias> --yes
+apm install
+```
+
+The alias joins the repository and the package name, such as `qubership-apihub-ci-development-conventions`. The
+second command must report no changes. `apm install --refresh`
+moves every store package to its latest commit, so do not use it for one package.
+
+### Rules in `.claude/rules/`
+
+APM writes the always-on and directory rules for Claude Code to `.claude/rules/` only while it does not manage a
+section in the root `AGENTS.md`. Every `apm install` warns that `AGENTS.md` is hand-authored; that is expected. Leave
+`compilation.agents_md.mode: managed_section` unset in `apm.yml`. With it, APM moves those rules into `AGENTS.md`,
+which this repository writes by hand. Keep the root `AGENTS.md` as well: without it, APM deletes the five
+rules that apply to every file (`applyTo: "**"`), and `apm install --frozen --dry-run` still passes.
+
 ## Do not run `apm compile`
 
 `apm compile` generates distributed `AGENTS.md` files. On this repository it does not finish, and it would overwrite
@@ -64,9 +92,10 @@ including those inside modules, are written and reviewed like any other document
 
 The root [`AGENTS.md`](../../AGENTS.md) describes the repository and its rules for assistants. Each group
 (`backend/`, `frontend/`, `tests/`, `deploy/`) and each module has its own `AGENTS.md` with the build and test
-commands of that module and the agent packages that apply to it. Next to the `AGENTS.md` of each group and
-module sits a `CLAUDE.md` that imports it, so Claude Code and the assistants that read `AGENTS.md` see the same text.
-Start from the file nearest to the code you change.
+commands of that module and the agent packages that apply to it. Next to every `AGENTS.md`, the root one included,
+sits a `CLAUDE.md` that imports it (`@AGENTS.md`), so Claude Code and the assistants that read `AGENTS.md` see the
+same text. Claude Code reads an `AGENTS.md` on its own only where no `CLAUDE.md` is in the folder or above it, so a
+new `AGENTS.md` gets its `CLAUDE.md` in the same change. Start from the file nearest to the code you change.
 
 Keep these files short, factual, and specific to the module. Put knowledge that people also need in the
 documentation, and let `AGENTS.md` link to it. Human documents do not depend on agent files (see

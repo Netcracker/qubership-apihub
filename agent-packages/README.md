@@ -17,6 +17,7 @@ and [`qubership-ai-packages`](https://github.com/Netcracker/qubership-ai-package
 | `apihub-adr` | `apihub-adr/` | When a change needs an architecture decision record in `docs/internal/adr/` |
 | `analyze-migration` | `analyze-migration/` | Analyse an APIHub operations migration and investigate build errors |
 | `apihub-design-authoring` | `apihub-design-authoring/` | T1/T2/T3 FD, Figma mockups, mockup sync, API trace |
+| `apihub-autonomous-agent` | `apihub-autonomous-agent/` | Skills of the AI Autonomous agent: issue analysis, bug fix, task, pull request review, CI failure triage |
 
 ## One manifest for the whole repository
 
@@ -27,7 +28,7 @@ with its module path, so it never applies to another module.
 After you edit a package, run from the repository root:
 
 ```bash
-apm install --target cursor,claude
+apm install
 ```
 
 `apm install` deploys the rules and skills. `apm compile` (distributed `AGENTS.md` placement) does not finish
