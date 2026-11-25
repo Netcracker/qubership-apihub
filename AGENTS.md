@@ -1,6 +1,6 @@
 # Qubership APIHUB (monorepo) — Agent Instructions
 
-Instructions for AI assistants working on **qubership-apihub** (Cursor, Claude Code, and compatible tools).
+Instructions for AI assistants working on **qubership-apihub** (Cursor, Claude Code, OpenCode, and compatible tools).
 
 ## Repository role
 
@@ -82,7 +82,7 @@ packages live next to the code they describe:
 | `backend/portal-backend/agent-packages/` | `apihub-backend-developer`, `apihub-backend-self-review`, `backend-conventions`, `advanced-verification` |
 | `backend/agent/agent-packages/` | `apihub-agent-developer`, `agent-conventions` |
 | `frontend/<library>/agent-packages/` | `api-diff-*`, `api-doc-viewer-*`, `next-data-model-*`, `api-processor-*`, `api-unifier-*`, `ddlapi-*`, `json-crawl-*` |
-| `frontend/ui/agent-packages/` | `apihub-ui-authoring`, `apihub-typescript-coding`, `apihub-react-coding`, `apihub-mui-coding`, `apihub-unit-testing`, `apihub-frontend-gates`, `apihub-agents-claude`, `apihub-agents-cursor` |
+| `frontend/ui/agent-packages/` | `apihub-ui-authoring`, `apihub-typescript-coding`, `apihub-react-coding`, `apihub-mui-coding`, `apihub-unit-testing`, `apihub-frontend-gates`, `apihub-agents-claude`, `apihub-agents-cursor`, `apihub-agents-opencode` |
 | `tests/postman-collections/agent-packages/` | `postman-e2e-authoring`, `postman-e2e-followup` |
 
 Every module instruction has an `applyTo` glob that starts with its module path, so it does not apply to another
@@ -104,18 +104,20 @@ made before `.gitattributes` set LF for these trees can still hold such copies, 
 checked-out files when attributes change. Check those files out again before you run apm:
 
 ```bash
-git ls-files --eol .agents .claude .cursor agent-packages '*/agent-packages/*' | grep 'w/crlf' | cut -f2 > crlf.txt
+git ls-files --eol .agents .claude .cursor .opencode agent-packages '*/agent-packages/*' | grep 'w/crlf' |
+  cut -f2 > crlf.txt
 xargs -a crlf.txt rm -f && xargs -a crlf.txt git checkout --
 rm crlf.txt
 ```
 
 ```powershell
-$crlf = git ls-files --eol .agents .claude .cursor agent-packages '*/agent-packages/*' |
+$crlf = git ls-files --eol .agents .claude .cursor .opencode agent-packages '*/agent-packages/*' |
   Select-String 'w/crlf' | ForEach-Object { ($_.Line -split "`t")[1] }
 if ($crlf) { $crlf | ForEach-Object { Remove-Item -LiteralPath $_ }; git checkout -- $crlf }
 ```
 
-Commit the package sources, `.agents/skills/`, `.claude/skills/`, and the refreshed rule trees together.
+Commit the package sources, `.agents/skills/`, `.claude/skills/`, `.opencode/agents/`, and the refreshed rule trees
+together.
 A clone then has skills for Claude Code and for harnesses that read `.agents/skills/`, without `apm install`.
 Do not commit `.cursor/skills/`. Cursor reads `.agents/skills/` and `.claude/skills/`.
 Never edit the deployed trees by hand. A store package changes in its source repository first; then
@@ -125,3 +127,8 @@ this repository, including those inside modules, are hand-written.
 
 Always-on conventions: `development-conventions`, `english-developer-style`, `markdown-line-length-120`. Adding a
 Go service: use the `apihub-add-go-service` skill. See [`agent-packages/README.md`](agent-packages/README.md).
+
+OpenCode reads the hand-written root `opencode.json`. It loads every rule in `.claude/rules/` and guards shell
+commands as `.claude/settings.json` does; keep the two files in step. OpenCode loads a rule file whole and ignores its
+`paths:` header, so a rule in `.claude/rules/` applies only to the files that its `paths:` list matches. The AI
+Autonomous agent loads the same rules.

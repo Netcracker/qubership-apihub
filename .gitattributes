@@ -4,7 +4,8 @@ patches/*.patch text eol=lf
 *.yml text eol=lf
 *.yaml text eol=lf
 
-# apm copies package sources byte for byte into .agents/, .claude/, and .cursor/, where they are committed with LF.
+# apm copies package sources byte for byte into .agents/, .claude/, .cursor/, and .opencode/, where they are
+# committed with LF.
 # A CRLF checkout of a source (backend/*/.gitattributes sets text=auto) would make apm install rewrite every copy.
 **/agent-packages/** text eol=lf
 
@@ -13,3 +14,4 @@ patches/*.patch text eol=lf
 .agents/** text eol=lf
 .claude/** text eol=lf
 .cursor/** text eol=lf
+.opencode/** text eol=lf

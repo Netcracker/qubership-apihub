@@ -1,9 +1,10 @@
 lockfile_version: '4'
-generated_at: '2026-11-25T09:12:09.407793+00:00'
+generated_at: '2026-11-25T09:23:08.021403+00:00'
 apm_version: 0.38.1
 manifest_targets:
 - claude
 - cursor
+- opencode
 dependencies:
 - repo_url: _local/advanced-verification
   name: advanced-verification
@@ -748,6 +749,19 @@ dependencies:
   content_hash: sha256:c028e2425ba563ce22242d05028f84c0de5c72aea04b4ec3680c6e4f856fab4c
   package_targets:
   - cursor
+- repo_url: _local/apihub-agents-opencode
+  name: apihub-agents-opencode
+  version: 1.0.0
+  package_type: apm_package
+  deployed_files:
+  - .opencode/agents/frontend-verifier.md
+  deployed_file_hashes:
+    .opencode/agents/frontend-verifier.md: sha256:1d455c2b1bf1d941bfda707f7d3fafdcfc78cf60067b885329a2e2eb2b35eeca
+  source: local
+  local_path: ./frontend/ui/agent-packages/apihub-agents-opencode
+  content_hash: sha256:b91765fb1516d07ae62682981b165622c7541e005309cc5cd9de15e0a65e56dc
+  package_targets:
+  - opencode
 - repo_url: _local/apihub-autonomous-agent
   name: apihub-autonomous-agent
   version: 0.1.0
@@ -6495,3 +6509,12 @@ deployments:
   - netcracker/qubership-apihub-ci/agent-packages/go-conventions
   active_owner: netcracker/qubership-apihub-ci/agent-packages/go-conventions
   content_hash: sha256:df38408f6cd2e5550ed3340eaaa4cf706a2a1ceca5b44b1f02adc50942eaba61
+- kind: project-relative
+  target: opencode
+  value: .opencode/agents/frontend-verifier.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/ui/agent-packages/apihub-agents-opencode
+  active_owner: ./frontend/ui/agent-packages/apihub-agents-opencode
+  content_hash: sha256:1d455c2b1bf1d941bfda707f7d3fafdcfc78cf60067b885329a2e2eb2b35eeca

@@ -34,6 +34,8 @@ apm install
 `apm install` deploys the rules and skills. `apm compile` (distributed `AGENTS.md` placement) does not finish
 on a repository of this size, so do not run it; the `AGENTS.md` files in this repository are hand-written.
 
-Package sources under `agent-packages/`, the skills in `.agents/skills/` and `.claude/skills/`, and the deployed
-`.cursor/` and `.claude/` rule trees are **committed**. `.cursor/skills/` is gitignored. Gitignore also covers
-`apm_modules/` and `agent-packages/**/build/`.
+Package sources under `agent-packages/`, the skills in `.agents/skills/` and `.claude/skills/`, the OpenCode agents
+in `.opencode/agents/`, and the deployed `.cursor/` and `.claude/` rule trees are **committed**. `.cursor/skills/` is
+gitignored. Gitignore also covers `apm_modules/` and `agent-packages/**/build/`. The root `opencode.json`, which loads
+the rules of `.claude/rules/` for OpenCode, is written by hand; see
+[AI assistants](../docs/development/ai-assistants.md#opencode).

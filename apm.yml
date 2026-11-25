@@ -3,6 +3,7 @@ version: 0.0.0
 targets:
   - cursor
   - claude
+  - opencode
 dependencies:
   apm:
     # Store packages
@@ -68,6 +69,7 @@ dependencies:
     - ./frontend/ui/agent-packages/apihub-frontend-gates
     - ./frontend/ui/agent-packages/apihub-agents-claude
     - ./frontend/ui/agent-packages/apihub-agents-cursor
+    - ./frontend/ui/agent-packages/apihub-agents-opencode
     # tests/postman-collections
     - ./tests/postman-collections/agent-packages/postman-e2e-authoring
     - ./tests/postman-collections/agent-packages/postman-e2e-followup

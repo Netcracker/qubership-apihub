@@ -1164,7 +1164,7 @@ test('outcomeProblems: a good outcome has none; a foreign branch, bad ids, and m
   assert.ok(has({ result: null, stopped: null, analysis: { ...analysis, verdict: 'great' } }, /analysis: /))
 })
 
-test('touchedAgentFiles lists changes to the agent instructions and tools, at any depth for AGENTS.md', () => {
+test('touchedAgentFiles lists changes to the agent instructions, tools, and opencode config, at any depth', () => {
   const { touchedAgentFiles } = require('./implement')
   const out = [
     '.agents/skills/x/SKILL.md',
@@ -1174,10 +1174,14 @@ test('touchedAgentFiles lists changes to the agent instructions and tools, at an
     'agent-packages/apihub-autonomous-agent/apm.yml',
     'backend/portal-backend/AGENTS.md',
     'backend/portal-backend/CLAUDE.md',
+    'opencode.json',
+    'frontend/ui/opencode.jsonc',
+    '.opencode/agents/frontend-verifier.md',
     'backend/portal-backend/service/x.go',
     'tools/ci/ci-verdict.js',
+    'docs/opencode.json.md',
   ].join('\n')
-  assert.deepEqual(touchedAgentFiles(out), out.split('\n').slice(0, 7))
+  assert.deepEqual(touchedAgentFiles(out), out.split('\n').slice(0, 10))
 })
 
 // ---------------------------------------------------------------------------------------------- /agent update

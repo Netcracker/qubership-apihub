@@ -3,8 +3,9 @@ description: Implements a Bug or Task issue of this repository in the working tr
 mode: primary
 steps: 200
 permission:
-  # The agent's own instructions and tools, and the workflows, are for people to change: a change there would steer
-  # the reviewer of this run, and the push of a workflow file is refused anyway.
+  # The agent's own instructions and tools, the opencode config, and the workflows are for people to change: a change
+  # there would steer the reviewer of this run or an opencode session on the branch, and the push of a workflow file
+  # is refused anyway.
   edit:
     "*": allow
     "*.agents/*": deny
@@ -14,6 +15,9 @@ permission:
     "*agent-packages/*": deny
     "*AGENTS.md": deny
     "*CLAUDE.md": deny
+    "*opencode.json": deny
+    "*opencode.jsonc": deny
+    "*.opencode/*": deny
     "*.github/workflows/*": deny
   webfetch: deny
   websearch: deny

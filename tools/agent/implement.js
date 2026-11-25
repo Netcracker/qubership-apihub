@@ -342,6 +342,8 @@ const PROTECTED = [
   /^tools\/agent\//,
   /^agent-packages\//,
   /(^|\/)(AGENTS|CLAUDE)\.md$/,
+  /(^|\/)opencode\.jsonc?$/,
+  /(^|\/)\.opencode\//,
 ]
 
 /** The changed files that belong to the agent's own instructions and tools. */

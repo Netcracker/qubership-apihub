@@ -25,6 +25,10 @@ function runEnv(parentEnv) {
   for (const [k, v] of Object.entries(parentEnv)) if (!SECRET_ENV.test(k)) env[k] = v
   env.OPENCODE_CONFIG = path.join(CONFIG_DIR, 'opencode.json')
   env.OPENCODE_CONFIG_DIR = CONFIG_DIR
+  // The working tree can hold the project's or a pull request's opencode.json, opencode.jsonc, and .opencode/, and
+  // opencode would merge them over this config. The flag skips them and the root AGENTS.md as well, so
+  // opencode/opencode.json lists that file in `instructions`. The skills and the nested AGENTS.md files still load.
+  env.OPENCODE_DISABLE_PROJECT_CONFIG = '1'
   env.OPENCODE_DISABLE_AUTOUPDATE = '1'
   return env
 }
