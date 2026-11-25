@@ -78,7 +78,7 @@
     "@types/jest": "catalog:",
     "@types/mime-types": "^3.0.0",
     "@types/node": "catalog:",
-    "@types/object-hash": "^3.0.2",
+    "@types/object-hash": "^3.0.6",
     "@types/slug": "^5.0.3",
     "@types/swagger2openapi": "^7.0.4",
     "@typescript-eslint/eslint-plugin": "^5.47.1",
