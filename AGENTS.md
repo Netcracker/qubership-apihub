@@ -96,8 +96,8 @@ apm install
 
 The targets are in `apm.yml`. Use the APM version that `apm.lock.yaml` records in `apm_version`: another version can
 rewrite the deployed rules and the lock file. Check `git status` afterwards: a deleted file under `.agents/`,
-`.claude/`, or `.cursor/` is a real problem. Before you commit deployed files, run `apm install --frozen --dry-run`;
-it verifies them against `apm.lock.yaml`.
+`.claude/`, `.cursor/`, or `.opencode/` is a real problem. Before you commit deployed files, run
+`apm install --frozen --dry-run`; it verifies them against `apm.lock.yaml`.
 
 apm also deletes a deployed copy with CRLF line endings: its bytes no longer match `apm.lock.yaml`. A Windows clone
 made before `.gitattributes` set LF for these trees can still hold such copies, because Git does not rewrite

@@ -61,9 +61,10 @@ Each TypeScript module has its own ESLint config and style. Decide in this order
 
 - Related constants, types, and factories for one entity share a common prefix at the start: `AI_CHAT_ROOT`,
   `aiChatListKey`, `AiChatMessage`.
-- A function name starts with a verb that says what it returns: `get...` for a derived value, `to...` for a mapper,
-  `create...` for a factory or a test fixture, `is...` or `has...` for a predicate. A noun with the suffix `Of`
-  (`versionErrorOf`) looks like a value at the call site; name it `getVersionError`.
+- A helper that returns a value starts with a verb that says what it returns: `get...` for a derived value, `to...`
+  for a mapper, `create...` for a factory or a test fixture, `is...` or `has...` for a predicate. A noun with the
+  suffix `Of` (`versionErrorOf`) looks like a value at the call site; name it `getVersionError`. Components, hooks
+  (`use...`), reducers (`...Reducer`), and event handlers keep their own naming.
 - In one object literal, use shorthand for every property or for none: `{ foo, bar }` or
   `{ foo: foo, bar: bar, label: title }`, never `{ foo, label: title }`.
 - Name a new file like its neighbours in the same folder. The defaults:

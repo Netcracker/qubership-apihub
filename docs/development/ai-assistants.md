@@ -50,8 +50,9 @@ Another version can rewrite the deployed rules and the lock file.
 
 `apm install` writes the same skills to `.agents/skills/` and `.claude/skills/`. Commit both, so a clone works
 without `apm install`. Claude Code reads `.claude/skills/`. Cursor reads that directory and `.agents/skills/`.
-OpenCode keeps the `.agents/skills/` copy when the same skill name exists in both trees, so the two trees have
-to stay identical and land in the same commit. `.cursor/skills/` stays gitignored. Rules stay in
+OpenCode 2.x keeps the `.agents/skills/` copy when the same skill name exists in both trees. OpenCode 1.x reads
+the skill files concurrently and keeps the copy that it finishes reading last. So the two trees have to stay
+identical and land in the same commit. `.cursor/skills/` stays gitignored. Rules stay in
 `.cursor/rules/` and `.claude/rules/`. OpenCode loads the Claude rules through the root `opencode.json`, and the AI
 Autonomous agent through `tools/agent/opencode/opencode.json` (see [OpenCode](#opencode)).
 

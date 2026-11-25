@@ -1,5 +1,5 @@
 lockfile_version: '4'
-generated_at: '2026-11-25T09:23:08.021403+00:00'
+generated_at: '2026-11-25T10:52:30.459372+00:00'
 apm_version: 0.38.1
 manifest_targets:
 - claude
@@ -1062,13 +1062,13 @@ dependencies:
   - .claude/skills/apihub-typescript-coding/SKILL.md
   - .cursor/rules/apihub-typescript-coding.mdc
   deployed_file_hashes:
-    .agents/skills/apihub-typescript-coding/SKILL.md: sha256:1af75e9ec3cfae2b14d1c0181f92ee8f80cb5ce5581fe56e895d21281b9ecbf1
+    .agents/skills/apihub-typescript-coding/SKILL.md: sha256:75ba9af21aa2a9dc158ca6868b8b64753bb118400eb54f45a0918c221339829d
     .claude/rules/apihub-typescript-coding.md: sha256:7b6e24e39ea9257c4c892c809cd116c5a14290acb6d4a45dc84f7b64c56963e3
-    .claude/skills/apihub-typescript-coding/SKILL.md: sha256:1af75e9ec3cfae2b14d1c0181f92ee8f80cb5ce5581fe56e895d21281b9ecbf1
+    .claude/skills/apihub-typescript-coding/SKILL.md: sha256:75ba9af21aa2a9dc158ca6868b8b64753bb118400eb54f45a0918c221339829d
     .cursor/rules/apihub-typescript-coding.mdc: sha256:6b662aa87f2cd45d42c3a39211ef38ee930a71fe4b57fe926d2c222e6e775eed
   source: local
   local_path: ./frontend/ui/agent-packages/apihub-typescript-coding
-  content_hash: sha256:c36eb055ca78614c252bccf9a3d174f9b2430c6afc92256e466a83dc490465e0
+  content_hash: sha256:c02c155d9244ed8e3011f0fd663561f2b386f9fc0aaba27dcc6edd07ec286012
 - repo_url: _local/apihub-ui-authoring
   name: apihub-ui-authoring
   version: 1.2.0
@@ -3691,7 +3691,7 @@ deployments:
   owners:
   - ./frontend/ui/agent-packages/apihub-typescript-coding
   active_owner: ./frontend/ui/agent-packages/apihub-typescript-coding
-  content_hash: sha256:1af75e9ec3cfae2b14d1c0181f92ee8f80cb5ce5581fe56e895d21281b9ecbf1
+  content_hash: sha256:75ba9af21aa2a9dc158ca6868b8b64753bb118400eb54f45a0918c221339829d
 - kind: project-relative
   target: claude
   value: .claude/skills/apihub-ui-authoring
@@ -5572,7 +5572,7 @@ deployments:
   owners:
   - ./frontend/ui/agent-packages/apihub-typescript-coding
   active_owner: ./frontend/ui/agent-packages/apihub-typescript-coding
-  content_hash: sha256:1af75e9ec3cfae2b14d1c0181f92ee8f80cb5ce5581fe56e895d21281b9ecbf1
+  content_hash: sha256:75ba9af21aa2a9dc158ca6868b8b64753bb118400eb54f45a0918c221339829d
 - kind: project-relative
   target: cursor
   value: .agents/skills/apihub-ui-authoring
