@@ -3,6 +3,7 @@ import { resolveJsonSchemaTypeLabel } from "@netcracker/qubership-apihub-next-da
 import {
   resolvePlainPropertyExpanderExpanded,
   resolvePlainPropertyInitiallyExpanded,
+  resolvePlainPropertyIsExpandable,
   resolvePlainPropertyNodeVisibility,
 } from "@netcracker/qubership-apihub-next-data-model/building-service/json-schema/tree/node-visibility-data/kind-property"
 import { JsonSchemaTreeNode } from "@netcracker/qubership-apihub-next-data-model/model/json-schema/types/aliases"
@@ -75,8 +76,10 @@ export const CombinerNodeViewer: FC<CombinerNodeViewerProps> = (props) => {
   )
 
   const expandable = useMemo(
-    () => leafChildren.length > 0,
-    [leafChildren.length],
+    () => resolvePlainPropertyIsExpandable(activeLeaf),
+    // treeRevision: lazy materialization mutates tree in place
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- treeRevision
+    [activeLeaf, treeRevision],
   )
 
   const initiallyExpanded = useMemo(
@@ -162,13 +165,15 @@ export const CombinerNodeViewer: FC<CombinerNodeViewerProps> = (props) => {
     combinerNode: JsonSchemaTreeNode,
     option: SelectorOption<JsonSchemaTreeNode>,
   ) => {
-    setSelections((previousSelections) => JsonSchemaCombiner.Selection.applySelection(
+    const nextSelections = JsonSchemaCombiner.Selection.applySelection(
       node,
-      previousSelections,
+      selections,
       combinerNode.id,
       option.node.id,
-    ))
-  }, [node])
+    )
+    setSelections(nextSelections)
+    materializeChildren(JsonSchemaCombiner.Selection.resolveActiveLeafNode(node, nextSelections))
+  }, [materializeChildren, node, selections])
 
   if (nestedNodes.length === 0) {
     return null

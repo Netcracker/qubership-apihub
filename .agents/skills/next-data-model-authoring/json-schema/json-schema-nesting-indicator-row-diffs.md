@@ -12,9 +12,11 @@ non-primitive boundary (e.g. `string` → `array`), which must colorize as a sin
 — not the default symmetric replace — since only one side actually gains/loses children. Includes
 session learnings from wiring row background, label visibility, and the diff floating badge, plus
 the shared component stack this row's (and the title row's) type-value text now renders through
-(see "Shared type-value rendering architecture" below). Also covers a fourth, orthogonal concern —
-this row's own **nesting level/indentation** inside `CombinerNodeViewer` (see lesson 10) — which is
-about level computation, not diff colorizing, but touches the same row.
+(see "Shared type-value rendering architecture" below). Also covers two further, orthogonal
+concerns — this row's own **nesting level/indentation** inside `CombinerNodeViewer` (see lesson
+10) and the **combiner-option changes-summary fallback** for circular references (see lesson
+11) — both about the combiner selector row area, not the row's diff colorizing, but touching
+the same viewer.
 
 **Primary code paths**
 
@@ -300,6 +302,57 @@ its own title row. Check what level the *visible* anchor row actually renders at
 another `resolveNextLevelPair` hop beneath it — verify visually (e.g. Storybook, zoomed
 screenshot) that a row's label and its children column line up, rather than trusting that mirroring
 an existing per-node pattern one level lower is automatically correct.
+
+### 11. A read-time fallback for a missing rollup must name its root cause and its structural limit
+
+PR #1117 (branch `bugfix/circular-in-oneof`) fixed missing change round markers on combiner
+options of circular schemas by adding `JsonSchemaCombinerSelectorRowResolver.resolveDirectNodeChangesSummary`
+(`model/json-schema/tree-with-diffs/combiner-row-diffs.ts`): when a combiner option's own
+`diffsSummary` / `descendantDiffsSummary` is empty, union the summaries of the option's direct
+`childrenNodes()` / `nestedNodes()` and expose that as the option's `descendantDiffsSummary`
+(consumed by `JsonSchemaCombiner.NodeDiffs.buildSelectorOption` in
+`api-doc-viewer/.../utils/resolve-combiner.ts`).
+
+**Root cause is in api-diff, not in this package.** `aggregateDiffsWithRollup`
+(`frontend/api-diff/src/utils.ts`) walks the merged document depth-first and, on a cycle
+back-edge to an object already in `visited`, returns that object's rollup **so far**. An ancestor
+still on the traversal stack has no rollup assigned yet, so every object in the subtree below
+the back-edge finishes without the ancestor's diffs — and gets no aggregated-diffs key at all,
+even though it transitively contains changed nodes. In sample
+`013-one-of-variant-properties-changed` the affected option is **not** a cycle clone
+(`isCycle: false`); it works in the viewer only because the cycle-clone `children` node one
+level below carries a complete summary copied from the original node. Verified by a scratch
+unit test against `aggregateDiffsWithRollup` directly (a synthetic `oneOf` whose first option
+references an ancestor in progress); tracked in
+[qubership-apihub#1140](https://github.com/Netcracker/qubership-apihub/issues/1140).
+
+**The fallback has a structural limit that a comment must state.** It reads only *direct*
+children/nested nodes. A back-edge buried deeper than one level below the option (e.g. an option
+pointing at a `Holder` whose `box.offering` loops back to an in-progress ancestor) leaves the
+intermediate nodes (`Holder`, `box`) without rollups too, and the fallback cannot see those —
+verified: `box` and the option show no markers while the back-edge target below them does. The
+initial one-line comment ("Circular reference clones can lack their own rollup…") misdescribed
+this: the option is not a cycle clone, and the limit was unstated, so the next deeper cycle
+would have silently regressed.
+
+**Lessons:**
+
+- **Diagnose the data layer before writing the viewer workaround, and verify with a direct unit
+  repro of the underlying util.** A scratch Jest test against `aggregateDiffsWithRollup` took
+  minutes and pinned the exact mechanism; without it, the comment described the symptom (cycle
+  clones) instead of the cause (in-progress ancestor).
+- **Every fallback that re-reads neighboring nodes to replace missing data has a structural
+  coverage limit.** State the limit in the doc comment at the moment the fallback is added, and
+  file/track an issue for the root cause — do not silently extend the fallback (e.g. recursing
+  deeper) when the next case fails; that grows a view-layer re-derivation of what the data layer
+  should provide, which this package's "viewer consumes, do not re-derive" rule exists to
+  prevent.
+- **The end state is the api-diff fix, then delete the fallback.** The review on PR #1117
+  accepted either fixing `aggregateDiffsWithRollup` (preferred) or naming cause + limit with an
+  issue; the issue is #1140. Whoever fixes the rollup must also remove
+  `resolveDirectNodeChangesSummary` and its wiring in `buildSelectorOption`, and regenerate the
+  circular screenshot suites with the containerized Chrome config (collapsed-node markers on
+  cyclic fixtures will change).
 
 ---
 

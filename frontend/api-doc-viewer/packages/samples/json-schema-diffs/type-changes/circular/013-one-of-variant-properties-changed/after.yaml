@@ -1,0 +1,32 @@
+afterSchema: &a1
+  $ref: "#/components/schemas/Offering"
+afterAdditionalComponents:
+  schemas:
+    Offering:
+      type: object
+      properties:
+        id:
+          type: string
+        children:
+          type: array
+          items:
+            oneOf:
+              - *a1
+              - allOf:
+                  - type: object
+                    title: Offering
+                    properties:
+                      id:
+                        type: integer
+                        description: Numeric identifier
+                  - type: object
+                    description: Extended offering details
+                    required:
+                      - summary
+                    properties:
+                      summary:
+                        type: string
+                        description: Short summary
+                      priority:
+                        type: integer
+

@@ -14,18 +14,27 @@ import { useSearchParam } from '@netcracker/qubership-apihub-ui-shared/hooks/sea
 import { GROUP_SEARCH_PARAM } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
 import { isEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
 import { PageLayout } from '@netcracker/qubership-apihub-ui-shared/components/PageLayout'
+import { useDocumentTitle } from '@netcracker/qubership-apihub-ui-shared/hooks/common/useDocumentTitle'
 import { useComparisonObjects } from '@portal/routes/root/PortalPage/VersionPage/useComparisonObjects'
 import {
   isOperationsGroupComparison,
   useCompareBreadcrumbs,
 } from '@portal/routes/root/PortalPage/VersionPage/useCompareBreadcrumbs'
 import { BreadcrumbsDataContext } from '../ComparedPackagesBreadcrumbsProvider'
+import { PAGE_TITLES } from '@portal/routes/pageTitles'
+import { useComparisonTitleSides } from '@portal/routes/useVersionPageTitle'
 
 export const GroupComparePage: FC = memo(() => {
   const { group } = useParams()
   const groupsComparisonParams = useComparisonParams()
   const { originPackageKey, originVersionKey, changedPackageKey, changedVersionKey } = groupsComparisonParams
   const previousGroup = useSearchParam(GROUP_SEARCH_PARAM)
+  const comparisonTitleSides = useComparisonTitleSides(groupsComparisonParams)
+  useDocumentTitle(PAGE_TITLES.groupsComparison({
+    originGroup: previousGroup,
+    changedGroup: group,
+    changed: comparisonTitleSides.changed,
+  }))
 
   const compareGroupsOptions = useMemo(() => ({
     changedPackageKey: changedPackageKey,

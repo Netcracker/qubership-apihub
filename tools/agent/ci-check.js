@@ -624,7 +624,7 @@ async function ciCheck(env = process.env, deps = {}) {
   const gh = deps.gh ?? createClient({ token: env.GITHUB_TOKEN, repo: env.GITHUB_REPOSITORY })
   const commentId = commentIdOf(env.AGENT_COMMENT_ID)
   log.info('ci check starts', { pr: number, issue: issueNumber ?? 'none', actor, dryRun: config.dryRun })
-  await react({ gh, commentId, content: 'eyes', dryRun: config.dryRun })
+  await react({ gh, commentId, content: 'eyes', dryRun: config.dryRun, eventName: env.GITHUB_EVENT_NAME })
 
   const ctx = { config, env, gh, number, issueNumber, actor, command, runUrl, out, deps }
   let content = 'confused'
@@ -633,7 +633,7 @@ async function ciCheck(env = process.env, deps = {}) {
     if (result.ok) content = 'rocket'
     return result
   } finally {
-    await react({ gh, commentId, content, dryRun: config.dryRun })
+    await react({ gh, commentId, content, dryRun: config.dryRun, eventName: env.GITHUB_EVENT_NAME })
   }
 }
 

@@ -9,6 +9,7 @@ import { useComparisonParams } from '@portal/routes/root/PortalPage/VersionPage/
 import { LayoutWithToolbar } from '@netcracker/qubership-apihub-ui-shared/components/PageLayouts/LayoutWithToolbar'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import type { OperationData, OptionalOperationPair } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
+import { useDocumentTitle } from '@netcracker/qubership-apihub-ui-shared/hooks/common/useDocumentTitle'
 import type { FC } from 'react'
 import { memo } from 'react'
 import { useParams } from 'react-router-dom'
@@ -22,6 +23,8 @@ import { SelectedOperationTagsProvider } from '../SelectedOperationTagsProvider'
 import { useOperation } from '../useOperation'
 import { useOperationLocation } from '../useOperationLocation'
 import { VersionsComparisonGlobalParamsContext } from '../VersionsComparisonGlobalParams'
+import { PAGE_TITLES } from '@portal/routes/pageTitles'
+import { useComparisonTitleSides } from '@portal/routes/useVersionPageTitle'
 
 export const DifferentOperationsComparisonPage: FC = memo(() => {
   const { operationId: changedOperationKey, apiType } = useParams()
@@ -55,6 +58,12 @@ export const DifferentOperationsComparisonPage: FC = memo(() => {
     isLoading: isOriginOperationLoading || isChangedOperationLoading,
   }
 
+  const comparisonTitleSides = useComparisonTitleSides(versionsComparisonParams)
+  useDocumentTitle(PAGE_TITLES.operationsComparison({
+    ...comparisonTitleSides,
+    originOperationTitle: originOperation?.title,
+    changedOperationTitle: changedOperation?.title,
+  }))
   const [originComparisonObject, changedComparisonObject] = useComparisonObjects({
     ...versionsComparisonParams,
     originOperationKey: originOperationKey,

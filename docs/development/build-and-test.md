@@ -227,4 +227,5 @@ Two linters run in CI on every pull request but not through Nx:
 - super-linter over the changed files, with the configurations in [`.github/linters/`](../../.github/linters/);
 - the link checker (lychee) over the Markdown files.
 
-For Markdown, `npx markdownlint-cli --config .github/linters/.markdownlint.json <files>` gives the same result locally.
+For Markdown, `pnpm dlx markdownlint-cli --config .github/linters/.markdownlint.json <files>` gives the same result
+locally.

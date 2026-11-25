@@ -170,7 +170,7 @@ Detailed rules apply via `.cursor/rules/` and `.claude/rules/` when matching fil
 Pull requests run **super-linter** on changed files and **lychee** on Markdown links. Apply these **while writing** code and docs so CI passes on the first push:
 
 - **Go (EditorConfig):** tabs in `*.go`; in raw string literals (prompts), nested indented lines use tabs, not spaces.
-- **Markdown:** prose lines ≤ **400** characters (MD013); one H1 per file (MD025).
+- **Markdown:** prose lines ≤ **400** characters (MD013); one H1 per file (by convention, CI turns MD025 off).
 - **Terminology (textlint):** follow `.github/linters/.textlintrc`; do not add conflicting custom terms.
 - **Markdown links:** repo-relative paths must resolve from the editing file's directory.
 - **OpenAPI YAML:** no trailing whitespace in changed lines; match existing indentation; valid `$ref` / `allOf` patterns.
@@ -188,7 +188,7 @@ Full checklist: deployed CI linter rules (`.cursor/rules/ci-super-linter.mdc` af
 
 ## Agent packages
 
-One root `apm.yml` covers the repository; deploy with `apm install --target cursor,claude`
+One root `apm.yml` covers the repository; deploy with `apm install`
 from the root (never `apm compile`). Sources of the local packages are in [`agent-packages/`](agent-packages/).
 
 - `apihub-backend-developer` (skill and rule, local): use for any change to controllers, services, repositories,

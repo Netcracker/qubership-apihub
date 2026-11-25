@@ -37,6 +37,12 @@ provider. Use `forwardRef` for refs and `<Context.Provider>`.
 - Give list items a stable `key` from the data, never the array index of a list that can reorder.
 - Do not create objects or functions inline in props when that re-renders a large subtree on every render; fix the
   structure first.
+- A `useCallback` around a handler that goes to a component without `memo`, or a `useMemo` over a cheap derivation,
+  adds a dependency list and saves no render.
+- A `memo` component that receives a TanStack Table `Row` or `Cell` reads only `original` from it. TanStack keeps the
+  same row and cell objects when a row expands or is selected, so `memo` skips the render that `getIsExpanded()` or
+  `getIsSelected()` needs, and the component shows the old state; a `useMemo` over such a getter keeps the old value
+  the same way. Pass the state as a prop (`expanded`, `selected`), or leave the component without `memo`.
 
 ## Styling
 

@@ -40,10 +40,14 @@ themselves.
   `AGENT_LOG_LEVEL` (`DEBUG`, `INFO` by default, `WARN`, `ERROR`).
 - **Environment of a run** (`runEnv`): the job environment without the variables that match
   `^(GITHUB_TOKEN|GH_TOKEN|AGENT_PAT|ACTIONS_.*|INPUT_.*)$` (`SECRET_ENV`), plus `OPENCODE_CONFIG`
-  (`tools/agent/opencode/opencode.json`), `OPENCODE_CONFIG_DIR` (`tools/agent/opencode/`), and
-  `OPENCODE_DISABLE_AUTOUPDATE=1`. The OpenAI key stays, because the run needs it.
+  (`tools/agent/opencode/opencode.json`), `OPENCODE_CONFIG_DIR` (`tools/agent/opencode/`),
+  `OPENCODE_DISABLE_PROJECT_CONFIG=1`, and `OPENCODE_DISABLE_AUTOUPDATE=1`. The OpenAI key stays, because the run
+  needs it. The flag makes opencode skip `opencode.json`, `opencode.jsonc`, and `.opencode/` of the working tree,
+  which a pull request can change, and the root `AGENTS.md` with them; the skills and the nested `AGENTS.md` files
+  still load.
 - **Config keys** (`tools/agent/opencode/opencode.json`): `share: "disabled"`, `autoupdate: false`,
-  `enabled_providers: ["openai"]`, `instructions: ["{env:GITHUB_WORKSPACE}/.claude/rules/*.md"]`, and a `permission`
+  `enabled_providers: ["openai"]`,
+  `instructions: ["{env:GITHUB_WORKSPACE}/AGENTS.md", "{env:GITHUB_WORKSPACE}/.claude/rules/*.md"]`, and a `permission`
   block that denies `edit`, `bash`, `webfetch`, `websearch`, `question`, `task`, and `external_directory` and allows
   `skill`. Each role file opens only what it needs; see [Roles](#roles).
 - **JSON events.** With `--format json`, opencode writes one JSON event per line. The scripts read three types
@@ -61,8 +65,8 @@ themselves.
   and `git grep*--open-files-in-pager*`, which could write a file or start a program.
 - **What the spike learned** ([spike.md](./spike.md)): skills in `.claude/skills/` load by name, and a `SKILL.md`
   without
-  `name` in its frontmatter is skipped; reading a file of a module attaches its `AGENTS.md`; a relative `instructions`
-  glob does not reach the hidden `.claude` folder, an absolute one does; the uncached prompt is reported in
+  `name` in its frontmatter is skipped; reading a file of a module attaches its `AGENTS.md`;
+  the uncached prompt is reported in
   `tokens.cache.write`, not in `tokens.input`, so `lib/usage.js` adds both; `--variant` works; `curl`, `gh`, and
   `git push` are refused also inside `bash -c` and after `&&`; the `steps` limit ends a run with exit code 0; a push
   with
@@ -125,11 +129,13 @@ runner image and must be 3.9 or newer.
 ### APM
 
 The playbooks are the local APM package `agent-packages/apihub-autonomous-agent` (version `0.1.0`), listed in the root
-`apm.yml` and in `apm.lock.yaml`, which pins `apm_version: 0.34.0`.
-`apm install --target cursor,claude` deploys each skill to `.agents/skills/<name>/` and
+`apm.yml` and in `apm.lock.yaml`.
+`apm install` deploys each skill to `.agents/skills/<name>/` and
 `.claude/skills/<name>/`. Both directories are committed, so a clone has the skills without APM. opencode reads
-both and prefers `.claude/skills/` when the name clashes. Use APM 0.34.0 locally
-(`pip install apm-cli==0.34.0`): an older one rewrites `.cursor/rules` in another format.
+the skill files of both concurrently, and when a name is in both, it keeps the copy that it finishes reading last,
+so the two copies must stay identical. Use the APM version that `apm.lock.yaml` records, as
+[AI assistants](../../development/ai-assistants.md#change-a-package) describes: an older one rewrites `.cursor/rules`
+in another format.
 
 ### The `yaml` package
 
@@ -354,7 +360,7 @@ calls for them. A decision that does nothing has the action `skip` (there is no 
 
 1. `AGENT_ENABLED` is not `true` -> `skip` (`AGENT_ENABLED is not true`), for every event. `gather` then makes no call.
 2. The event is not in `EVENT_HANDLERS` -> `skip`. The handled events are `pull_request`, `issue_comment`, `issues`,
-   `workflow_run`, `pull_request_review`, and `schedule`.
+   `workflow_run`, `pull_request_review`, `pull_request_review_comment`, and `schedule`.
 3. Bot: a login that ends in `[bot]` (case-insensitive) is skipped for the author of a pull request, the author of an
    issue, the author of a comment, and the author of a review. A comment of a bot also costs no GitHub call.
 4. Actor allowed (`isActorAllowed`): the login is in `AGENT_ALLOWED_ACTORS` (compared in lower case), or the variable
@@ -510,6 +516,19 @@ from a branch of this repository, and the PR body holds `ai-autonomous-agent iss
 default branch, never the pull request: without a `ref`, a `pull_request` event would check out the merge ref and a
 `pull_request_review` event the pull request itself.
 
+**Event `pull_request_review_comment`** (`created`)
+
+The workflow also accepts explicit `/agent` commands inside inline review threads. The fast filter requires a human
+commenter, a branch from this repository, and the agent marker. The router verifies write access, allowed actors, and
+the issue state that names this PR. It uses the existing PR command handlers and busy check. Ordinary inline comments
+stay passive, including replies while the issue waits for a hand-off.
+
+For an implementation command, `command.reviewCommentId` carries `comment.in_reply_to_id`, or `comment.id` for a new
+thread. Preflight finds that thread and passes the conversation to both models, even if the thread is resolved. A
+missing target fails explicitly; another thread is never substituted. `/agent update` carries no thread target.
+Reactions use `POST /repos/{repo}/pulls/comments/{id}/reactions`, with the triggering reply ID, while thread replies
+use the root comment ID. Other PR commands keep their existing behavior.
+
 - **Decisions:** see the tables above. Two filters sit in the workflow, not in the router: the `if:` of the `route` job
   (bot and Dependabot actors, forks of `workflow_run`, comments without `/agent` on a pull request that is not an agent
   pull request, and reviews that are not change requests) and the list of workflows in the `workflow_run` trigger.
@@ -538,7 +557,8 @@ concurrency group `ai-autonomous-<number>` with `cancel-in-progress: false`, and
 pending job per group and cancels older pending ones without a word. The groups stay, because they guard the state
 comment. The busy check makes the drop explicit and puts the decline where the person sees it.
 
-- **Which decisions.** `isWorkerCommand`: the event is `issue_comment` or `pull_request_review`, the decision has a
+- **Which decisions.** `isWorkerCommand`: the event is `issue_comment`, `pull_request_review`, or
+  `pull_request_review_comment`, the decision has a
   `command`, and its action is `review`, `analyze`, `implement`, `rerun`, `ci-check`, or `chat` with
   `command.name === 'chat'` (a question). That covers a parsed command, the answer to a hand-off (`answer`), and a
   change request in a review (`review-changes`). `stop`, `help`, `cost`, a `skip`, and every automatic event
@@ -927,9 +947,13 @@ Decides whether the issue may be implemented, marks the state, and saves the fac
 - **GitHub reads (`GITHUB_TOKEN`):**
   - `getIssue` (`GET /repos/{owner}/{repo}/issues/{n}`).
   - `listIssueComments` (`GET /repos/{owner}/{repo}/issues/{n}/comments`, paginated), through `loadIssue`.
-  - `getPull` (`GET /repos/{owner}/{repo}/pulls/{n}`) for the pull request named in the state, for `human` and `review`.
+  - `getPull` (`GET /repos/{owner}/{repo}/pulls/{n}`) for the pull request named in the state, including a repeated
+    `implement` command that still arrives with `kind: initial`.
   - `listReviewThreads` (GraphQL query `repository.pullRequest.reviewThreads(first: 100)` with the first 20 comments
-    of each) for `review`.
+    of each) for attempts continuing an open PR, except `update` and automatic CI fixes. An inline command selects its
+    referenced thread; other implementation commands select unresolved threads, at most 30, with the rest counted.
+    The selected threads go to both the implementer and self-reviewer. Each thread needs an outcome in the summary;
+    self-review returns a major finding for an unaddressed request or a missing outcome.
   - `publishResult` re-reads the issue comments right before the state write.
 - **GitHub reads (`AGENT_PAT`):** `getAuthenticatedUser` (`GET /user`) in `resolveIdentity`, built with
   `createClient({ token: readPat(env), repo })`. This is the only use of the PAT before `publish`. In dry-run
@@ -1128,8 +1152,8 @@ cannot carry a `blocker`. A broken contract throws and ends the attempt with `fa
 
    Exceeding either number blocks. Protected paths (a match blocks):
    - `.github/workflows/` (the PAT has no Workflows permission).
-   - The agent's own files: `.claude/`, `.cursor/`, `tools/agent/`, `agent-packages/` at the start of the path, and
-     any `AGENTS.md` or `CLAUDE.md` at any depth.
+   - The agent's own files: `.agents/`, `.claude/`, `.cursor/`, `tools/agent/`, `agent-packages/` at the start of the
+     path, and any `AGENTS.md`, `CLAUDE.md`, `opencode.json`, `opencode.jsonc`, or `.opencode/` at any depth.
 8. **Result.** `blocked` when the implementer said so, the tree was clean, or step 7 gave a reason (stop reason
    `scope-review-required`). On an `update` attempt, conflict markers left in the conflicted files block with
    `conflict-unresolved`. `pr-opened` when
@@ -2222,8 +2246,9 @@ Runs one opencode agent headless and keeps its JSON event stream.
   the job log shows. The last 4000 characters of stderr are kept as `stderrTail`.
 - **Environment of the run:** the parent environment minus every variable that matches
   `^(GITHUB_TOKEN|GH_TOKEN|AGENT_PAT|ACTIONS_.*|INPUT_.*)$`, plus `OPENCODE_CONFIG` (path to
-  `tools/agent/opencode/opencode.json`), `OPENCODE_CONFIG_DIR` (`tools/agent/opencode/`), and
-  `OPENCODE_DISABLE_AUTOUPDATE=1`. The OpenAI key stays; no GitHub token reaches the model.
+  `tools/agent/opencode/opencode.json`), `OPENCODE_CONFIG_DIR` (`tools/agent/opencode/`),
+  `OPENCODE_DISABLE_PROJECT_CONFIG=1` (no `opencode.json`, `opencode.jsonc`, `.opencode/`, or root `AGENTS.md` from
+  the working tree), and `OPENCODE_DISABLE_AUTOUPDATE=1`. The OpenAI key stays; no GitHub token reaches the model.
 - **Events:** stdout is written to the events file as it arrives. Each complete line that starts with `{` is parsed and
   passed to `log.modelEvent`, so a long run shows progress live. Non-JSON lines stay in the file only.
 - **Result:** resolves `{ exitCode, eventsText, stderrTail }`; a non-zero exit does not reject (the cost must still be
@@ -2291,9 +2316,12 @@ The hidden state block in one comment per issue or pull request. See "State comm
 The stop labels and the stop record. See [Stop labels and the stop record](#stop-labels-and-the-stop-record).
 
 - **Exports:** `REASONS` (the 14 reasons), `PREFIX`, `labelOf`, `isStopLabel`, `stopLabels`, `setStop`, `clearStops`,
-  `recordStop`, `recordResume`, `renderStop`.
+  `clearCompleted`, `recordStop`, `recordResume`, `renderStop`.
 - `labelOf` throws on an unknown reason. `setStop(gh, numbers, reason)` and `clearStops(gh, numbers, { keep })` read the
   labels with `gh.getIssue`, skip falsy numbers, go on after an error, and return the first error (logged) or `null`.
+- `setStop` clears `agent:completed` for every reason except `approval-required`. `clearCompleted` removes that label
+  from distinct targets when an attempt resumes, CI turns red or runs again, or a person stops work. Execution-level
+  labels are preserved. The CI gate restores completion only for a green published commit.
 - **Tests:** `stops.test.js`.
 
 ### `tools/agent/lib/text.js`
@@ -2369,7 +2397,7 @@ The base config, selected by `OPENCODE_CONFIG`.
 | `share` | `"disabled"` | no session sharing |
 | `autoupdate` | `false` | no update at run time (`OPENCODE_DISABLE_AUTOUPDATE=1` is also set) |
 | `enabled_providers` | `["openai"]` | only the OpenAI provider |
-| `instructions` | `["{env:GITHUB_WORKSPACE}/.claude/rules/*.md"]` | the rules of the working tree are loaded as instructions; an absolute path is used because the glob does not reach into the hidden folder otherwise |
+| `instructions` | `["{env:GITHUB_WORKSPACE}/AGENTS.md", "{env:GITHUB_WORKSPACE}/.claude/rules/*.md"]` | the root `AGENTS.md` and the rules of the working tree are loaded as instructions; the paths are absolute because `OPENCODE_DISABLE_PROJECT_CONFIG` makes opencode resolve a relative path in its global config folder, and the flag also skips the root `AGENTS.md` that opencode loads by itself otherwise |
 | `permission` | `edit`, `bash`, `webfetch`, `websearch`, `question`, `task`, `external_directory`: `deny`; `skill`: `allow` | deny by default; an agent file opens only what it needs |
 
 ### `tools/agent/opencode/agents/pr-reviewer.md`
@@ -2419,8 +2447,8 @@ Changes the working tree for a Bug or Task issue.
 
 - **Frontmatter:** `steps: 200`; `webfetch: deny`, `websearch: deny`, `skill: allow`.
 - **Edit:** `"*": allow`, with these denials (paths the model must not change, because a change there would steer the
-  reviewer of the same run): `*.claude/*`, `*.cursor/*`, `*tools/agent/*`, `*agent-packages/*`, `*AGENTS.md`,
-  `*CLAUDE.md`, `*.github/workflows/*`.
+  reviewer of the same run): `*.agents/*`, `*.claude/*`, `*.cursor/*`, `*tools/agent/*`, `*agent-packages/*`,
+  `*AGENTS.md`, `*CLAUDE.md`, `*opencode.json`, `*opencode.jsonc`, `*.opencode/*`, `*.github/workflows/*`.
 - **Bash:** `"*": deny`; allowed `pnpm exec nx *`, `pnpm nx *`, `go test*`, `go build*`, `go vet*`, `gofmt*`,
   `node --test*`, `git status*`, `git diff*`, `git log*`, `git show*`, `git grep*`, `ls*`. Explicitly denied:
   `git push*`, `git commit*`, `git checkout*`, `git switch*`, `git reset*`, `git rebase*`, `gh *`, `curl *`, `wget *`.
@@ -2452,7 +2480,10 @@ than the implementer (`lib/config.js` enforces that).
 - **Frontmatter:** `steps: 60`; `edit: deny`, `webfetch: deny`, `skill: allow`.
 - **Bash:** `"*": deny`; allowed `git diff*`, `git log*`, `git show*`, `git blame*`, `git grep*`; the same four denials.
 - **Input:** `self-review-input.md` (the issue inside `<untrusted>`, the plan, the implementer's summary, base and
-  head).
+  head, the implementer's verification report, and the orchestrator's local check results).
+- Both implementation and self-review inputs include the same autonomous verification policy. Available builds and
+  unit tests run in the runner; live service checks are deferred to CI. A missing local integration environment alone
+  does not block the attempt. Reports distinguish deferred checks, CI coverage gaps, and actual failures.
 - **Task:** read `git diff <base> <head>`; load `apihub-backend-self-review` for `backend/portal-backend`,
   `apihub-go-self-review` for other Go modules, and the review guidance of `apihub-pr-review` for the rest. Judge
   whether the change does what the issue asks, is correct, and stays inside the issue.
@@ -2497,10 +2528,10 @@ Five skills live in the local APM package `agent-packages/apihub-autonomous-agen
 `agent-packages/apihub-autonomous-agent/.apm/skills/<name>/SKILL.md`.
 Each skill says that people can use it the same way as the agent.
 
-**Deployment.** `apm install --target cursor,claude` copies each skill to `.agents/skills/<name>/SKILL.md` and
+**Deployment.** `apm install` copies each skill to `.agents/skills/<name>/SKILL.md` and
 `.claude/skills/<name>/SKILL.md`. `apm.lock.yaml` lists those files under `_local/apihub-autonomous-agent` with
-their hashes. The deployed trees are never edited by hand. In CI, opencode reads both trees and prefers
-`.claude/skills/` when the same name exists in both. The review job replaces `.agents/` and `.claude/` with the
+their hashes. The deployed trees are never edited by hand. In CI, opencode reads both trees and keeps the copy it
+finishes reading last when the same name exists in both. The review job replaces `.agents/` and `.claude/` with the
 copies from the workflow's own ref, so a pull request cannot change the skills or rules that review it.
 
 ### `apihub-pr-review`
@@ -2662,7 +2693,7 @@ signature. The cumulative "AI cost of this issue so far" text is gone; `/agent c
 | `analysis` | object | `analyze.js`, `implement.js publish` (analyze-first run) | last analysis: `verdict`, `reason`, `questions`, `plan`, `label` (`ai:suitable`, `ai:unsuitable`, or `null`), `labelSetBy` (`agent` or `null`), `issueUpdatedAt` (the issue's `updated_at` when analyzed), `at`, `run` |
 | `analyses` | array | `analyze.js`, `implement.js publish` | one entry per analysis run: `at`, `run`, `verdict` (`suitable`, `unsuitable`, `needs-info`, or `failed`), `trigger`. Counted against `AGENT_MAX_ANALYSES` |
 | `implementing` | object | `implement.js preflight` (initial: `run`, `actor`, `at`, `analyzeFirst`; person: `run`, `actor`, `at`, `kind`, `analyzeFirst: false`, optional `pr`, optional `threads`); `ci-gate.js` (`run`, `actor`, `at`, `kind: 'ci-fix'`) | the running attempt. Removed by `publish` and `publishStopped`. A new run within the busy window refuses with `refuse-busy` |
-| `implementing.threads` | array | `implement.js preflight` | for a `review` attempt: `{ id, commentId }` of each unresolved review thread the implementer sees, so `publish` replies only in those |
+| `implementing.threads` | array | `implement.js preflight` | `{ id, commentId }` of each review thread both models see, including repeated `implement` and inline commands, so `publish` replies only in those |
 | `budgetFrom` | number | `implement.js preflight` (person attempts) | index in `attempts` where the CI loop budget (`AGENT_MAX_ATTEMPTS`) starts counting; `ci-gate.js` reads it |
 | `attempts` | array | `implement.js publish`, `publishStopped`; `ci-gate.js` patches the last entry | one entry per attempt, see below |
 | `branch` | string | `implement.js publish` | branch of the agent, set only once it exists on the remote (not after a dry run or a blocked attempt) |

@@ -562,7 +562,7 @@ test('renderSelfReviewInput: the commits, the issue in untrusted, the plan, and 
   assert.match(text, /## The issue\n\n<untrusted>\nTitle: Changelog is empty/)
   assert.match(text, /## Notes of the maintainer\n\n<untrusted>\nMind it\.\n<\/untrusted>/)
   assert.match(text, /- Approach: Guard the nil changelog\./)
-  assert.match(text, /## The implementer's summary\n\n<untrusted>\nGuards the nil\.\n<\/untrusted>\n$/)
+  assert.match(text, /## The implementer's summary\n\n<untrusted>\nGuards the nil\.\n<\/untrusted>\n/)
   assert.doesNotMatch(
     renderSelfReviewInput({ issue, plan, analysis: null, notes: '', summary: 's', base: 'a', head: 'b' }),
     /Notes of the maintainer/,
@@ -1164,7 +1164,7 @@ test('outcomeProblems: a good outcome has none; a foreign branch, bad ids, and m
   assert.ok(has({ result: null, stopped: null, analysis: { ...analysis, verdict: 'great' } }, /analysis: /))
 })
 
-test('touchedAgentFiles lists changes to the agent instructions and tools, at any depth for AGENTS.md', () => {
+test('touchedAgentFiles lists changes to the agent instructions, tools, and opencode config, at any depth', () => {
   const { touchedAgentFiles } = require('./implement')
   const out = [
     '.agents/skills/x/SKILL.md',
@@ -1174,10 +1174,14 @@ test('touchedAgentFiles lists changes to the agent instructions and tools, at an
     'agent-packages/apihub-autonomous-agent/apm.yml',
     'backend/portal-backend/AGENTS.md',
     'backend/portal-backend/CLAUDE.md',
+    'opencode.json',
+    'frontend/ui/opencode.jsonc',
+    '.opencode/agents/frontend-verifier.md',
     'backend/portal-backend/service/x.go',
     'tools/ci/ci-verdict.js',
+    'docs/opencode.json.md',
   ].join('\n')
-  assert.deepEqual(touchedAgentFiles(out), out.split('\n').slice(0, 7))
+  assert.deepEqual(touchedAgentFiles(out), out.split('\n').slice(0, 10))
 })
 
 // ---------------------------------------------------------------------------------------------- /agent update
@@ -1255,6 +1259,22 @@ test('renderSelfReviewInput: an update points at the merge commit and lists the 
     '## Files with conflicts\n\n<untrusted>\n- `a/b.go`\n</untrusted>\n\n## The issue\n',
   )
   assert.doesNotMatch(renderSelfReviewInput({ ...input, kind: 'human' }), /merge commit|Files with conflicts/)
+})
+
+test('all attempt kinds give the implementer and reviewer the same CI verification policy', () => {
+  const getPolicy = (text) => text.split('## Verification policy for the autonomous runner\n\n')[1]
+    .split('still needs a hand-off.')[0]
+  for (const kind of ['initial', 'human', 'review', 'ci-fix', 'update']) {
+    const implementer = renderImplementInput({ ...baseInput, kind })
+    const reviewer = renderSelfReviewInput({ issue, plan, summary: 'Done.', base: 'a', head: 'b', kind })
+    const policy = getPolicy(implementer)
+    assert.ok(policy)
+    assert.equal(getPolicy(reviewer), policy)
+    assert.match(policy, /CI on the published head commit is the final verification gate/)
+    assert.match(policy, /unavailable local integration environment alone is not a blocker/)
+    assert.match(policy, /Never claim those checks passed/)
+    assert.match(policy, /verification unavailable both here and in CI /)
+  }
 })
 
 test('conflictMarkers: real git finds every marker line and nothing that only looks like one', async () => {

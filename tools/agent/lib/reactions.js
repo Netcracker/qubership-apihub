@@ -21,11 +21,11 @@ function commentIdOf(value) {
 /**
  * Adds `content` to the comment `commentId`. In dry-run it only logs what it would do.
  *
- * @param {{ gh: { addReaction: Function }, commentId: number|null, content: 'eyes'|'rocket'|'confused',
- *   dryRun?: boolean }} input
+ * @param {{ gh: { addReaction: Function, addReviewCommentReaction?: Function }, commentId: number|null,
+ *   content: 'eyes'|'rocket'|'confused', dryRun?: boolean, eventName?: string }} input
  * @returns {Promise<boolean>} true when the reaction was added
  */
-async function react({ gh, commentId, content, dryRun = false }) {
+async function react({ gh, commentId, content, dryRun = false, eventName }) {
   if (!REACTIONS.has(content)) throw new Error(`Unknown reaction '${content}'`)
   if (commentId === null || commentId === undefined) return false
   if (dryRun) {
@@ -33,7 +33,8 @@ async function react({ gh, commentId, content, dryRun = false }) {
     return false
   }
   try {
-    await gh.addReaction(commentId, content)
+    if (eventName === 'pull_request_review_comment') await gh.addReviewCommentReaction(commentId, content)
+    else await gh.addReaction(commentId, content)
     log.info('reaction added', { comment: commentId, content })
     return true
   } catch (err) {

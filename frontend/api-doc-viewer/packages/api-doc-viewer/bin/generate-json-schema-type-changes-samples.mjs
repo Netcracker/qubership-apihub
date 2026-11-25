@@ -41,12 +41,21 @@ const writeSampleCase = (sampleCase) => {
 };
 
 const printStoryFile = (suite, suiteCases) => {
+  const hasSwitchToCases = suiteCases.some((sampleCase) => sampleCase.switchTo);
   const exports = suiteCases
-    .map(({ caseId, displayName }) => {
+    .map(({ caseId, displayName, switchTo }) => {
       const factoryCall = `createCaseStory("${caseId}")`;
-      return displayName
-        ? `export const ${toExportName(caseId)}: Story = { ...${factoryCall}, name: ${JSON.stringify(displayName)} };`
-        : `export const ${toExportName(caseId)}: Story = ${factoryCall};`;
+      // Cases without any override stay a plain factory call; a case may add a display name
+      // and/or per-case auto-switch selection (selector options the story's play clicks on load).
+      if (!switchTo && !displayName) {
+        return `export const ${toExportName(caseId)}: Story = ${factoryCall};`;
+      }
+      const properties = [
+        `...${factoryCall}`,
+        displayName ? `name: ${JSON.stringify(displayName)}` : undefined,
+        switchTo ? `parameters: autoSwitchParameters(${JSON.stringify(switchTo)})` : undefined,
+      ].filter(Boolean).join(", ");
+      return `export const ${toExportName(caseId)}: Story = { ${properties} };`;
     })
     .join("\n");
   // Story component rendering one case (default: plain OAS 3.0 merge). Suites needing another
@@ -68,7 +77,7 @@ ${storyComponentImport}import {
 ${sharedStoryComponentImport}  createJsonSchemaDiffCaseStoryFactory,
   jsonSchemaDiffSampleReadonlyArgTypes,
 } from "./json-schema-diffs-utils";
-import { createSampleById } from "../utils/sample-cases";
+${hasSwitchToCases ? 'import { autoSwitchParameters } from "../shared/auto-switch";\n' : ""}import { createSampleById } from "../utils/sample-cases";
 
 const beforeFiles = import.meta.glob(
   "../../../../samples/json-schema-diffs/type-changes/${suite.globPath}/*/before.yaml",

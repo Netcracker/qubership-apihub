@@ -139,6 +139,20 @@ state is precomputed by next-data-model; the viewer reads it through `JsonSchema
 | Hiding unchanged nodes | runs of unchanged siblings behind `Show N unchanged node(s)` | [features/hiding-unchanged-nodes.md](features/hiding-unchanged-nodes.md) |
 | Extensions | diffs continue inside the embedded `JsoDiffsViewer` | [../jso/features/diffs.md](../jso/features/diffs.md) |
 
+### Known limitation — circular references and the changes summary
+
+For a merged document with an object-identity cycle (YAML aliases / resolved `$ref`s), an object
+whose subtree loops back to an ancestor that api-diff's `aggregateDiffsWithRollup` has not
+finished yet receives **no** aggregated-diffs rollup. Its tree node then builds an empty changes
+summary, so collapsed-node markers and combiner-option round markers can be missing. The
+combiner option button compensates at read time
+(`JsonSchemaCombinerSelectorRowResolver.resolveDirectNodeChangesSummary` — unions the summaries
+of the option's direct children/nested nodes); this covers a back-edge one level below the
+option (sample `013-one-of-variant-properties-changed`) but not a deeper one. Root cause and a
+proper fix are tracked in
+[qubership-apihub#1140](https://github.com/Netcracker/qubership-apihub/issues/1140) — once the
+rollup is complete in api-diff, the fallback is to be removed.
+
 ## Not displayed
 
 | Item | Tag | Notes |
@@ -159,10 +173,10 @@ state is precomputed by next-data-model; the viewer reads it through `JsonSchema
 
 | Suite | Stories | Fixtures |
 | --- | ---: | --- |
-| `JSON Schema Suite` (types, validations, value range, combiners, circular, description) | 518 | `packages/samples/json-schema/` |
+| `JSON Schema Suite` (types, validations, value range, combiners, circular, description) | 520 | `packages/samples/json-schema/` |
 | `JSON Schema Suite (Extensions)` | 13 | `packages/samples/json-schema/extensions/` |
 | `JSON Schema Suite (Performance)` | 1 | `packages/samples/json-schema/performance-tests/` |
-| `JSON Schema Diffs Suite` | 1148 | `packages/samples/json-schema-diffs/` |
+| `JSON Schema Diffs Suite` | 1149 | `packages/samples/json-schema-diffs/` |
 | `JSON Schema Diffs Suite (Extensions)` | 104 | `packages/samples/json-schema-diffs/extensions/` |
 | `JSON Schema Diffs Suite (Hiding Unchanged Nodes)` | 18 | `packages/samples/json-schema-diffs/hiding-unchanged-rows/` |
 | `JSON Schema Diffs Suite (Node Changes Summary)` | 18 | `packages/samples/json-schema-diffs/node-changes-summary/` |

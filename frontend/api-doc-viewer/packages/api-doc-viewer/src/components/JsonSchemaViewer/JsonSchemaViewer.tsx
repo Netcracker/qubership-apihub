@@ -94,8 +94,9 @@ const JsonSchemaViewerInner: FC<JsonSchemaViewerProps> = (props) => {
   const [treeRevision, bumpTreeRevision] = useReducer((revision: number) => revision + 1, 0)
 
   const materializeChildren = useCallback((node: JsonSchemaTreeNode) => {
-    builder.materializeChildren(node)
-    bumpTreeRevision()
+    if (builder.materializeChildren(node)) {
+      bumpTreeRevision()
+    }
   }, [builder])
 
   const viewerContext = useMemo(
