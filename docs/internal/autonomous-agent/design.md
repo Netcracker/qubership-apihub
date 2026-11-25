@@ -580,7 +580,7 @@ Points to settle:
   confuses the model, the alternative is a small opencode plugin that adds a rule when the agent reads a file that
   matches its `paths`. `opencode.json` names the rules with an absolute path,
   `{env:GITHUB_WORKSPACE}/.claude/rules/*.md`, because `OPENCODE_DISABLE_PROJECT_CONFIG` makes a relative instruction
-  resolve under the global config folder ([spike](./spike.md)).
+  resolve under the global config folder.
 - **A skill needs `name` in its frontmatter** for opencode to load it.
 - **`disable-model-invocation: true`** (in `apihub-backend-self-review`, for example) means nothing to opencode. The
   playbook skills name the skills to load, so this does not change behavior.

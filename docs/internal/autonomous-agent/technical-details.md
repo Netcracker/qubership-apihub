@@ -65,8 +65,8 @@ themselves.
   and `git grep*--open-files-in-pager*`, which could write a file or start a program.
 - **What the spike learned** ([spike.md](./spike.md)): skills in `.claude/skills/` load by name, and a `SKILL.md`
   without
-  `name` in its frontmatter is skipped; reading a file of a module attaches its `AGENTS.md`; a relative `instructions`
-  glob does not reach the hidden `.claude` folder, an absolute one does; the uncached prompt is reported in
+  `name` in its frontmatter is skipped; reading a file of a module attaches its `AGENTS.md`;
+  the uncached prompt is reported in
   `tokens.cache.write`, not in `tokens.input`, so `lib/usage.js` adds both; `--variant` works; `curl`, `gh`, and
   `git push` are refused also inside `bash -c` and after `&&`; the `steps` limit ends a run with exit code 0; a push
   with
