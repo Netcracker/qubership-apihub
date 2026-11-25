@@ -33,7 +33,7 @@
     "@asyncapi/parser": "3.6.0",
     "@lit-labs/react": "1.1.1",
     "@mui/icons-material": "5.11.9",
-    "@mui/lab": "5.0.0-alpha.120",
+    "@mui/lab": "5.0.0-alpha.177",
     "@mui/material": "5.11.10",
     "@mui/system": "5.18.0",
     "@mui/types": "7.4.5",
