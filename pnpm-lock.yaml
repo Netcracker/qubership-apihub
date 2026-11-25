@@ -2028,7 +2028,7 @@ importers:
         specifier: ^18.3.7
         version: 18.3.7(@types/react@18.3.31)
       '@types/react-router-dom':
-        specifier: ^5.2.0
+        specifier: ^5.3.3
         version: 5.3.3
       '@types/react-router-hash-link':
         specifier: ^2.1.0
