@@ -2,6 +2,7 @@ import ErrorRoundedIcon from '@mui/icons-material/ErrorRounded'
 import { Alert, styled, TextField, Typography } from '@mui/material'
 import type { FC } from 'react'
 import { Controller, FormProvider, useForm } from 'react-hook-form'
+import { generatePath, Link } from 'react-router-dom'
 
 import {
   BaseDialogForm,
@@ -12,6 +13,7 @@ import { type Package, PRIVATE_PACKAGE_ROLE } from '@netcracker/qubership-apihub
 import { HttpError } from '@netcracker/qubership-apihub-ui-shared/utils/responses'
 
 import { LIBRARY_ERROR_MESSAGES, LibraryErrorCodes, type MavenLibraryCreateDto } from '@portal/entities/libraries'
+import { LIBRARY_PAGE_PATH_PATTERN } from '../routes'
 
 type LibraryDialogFormValues = BaseDialogFormValues & Pick<MavenLibraryCreateDto, 'repository' | 'coordinates'>
 
@@ -66,6 +68,9 @@ export const LibraryDialogForm: FC<LibraryDialogFormProps> = ({
   const coordinatesErrorMessage = errorField === 'coordinates' ? serverErrorMessage : undefined
   const repositoryErrorMessage = errorField === 'repository' ? serverErrorMessage : undefined
   const errorMessage = errorField ? coordinatesErrorMessage : error?.message
+  const libraryId = error instanceof HttpError && error.code === LibraryErrorCodes.ALREADY_EXISTS
+    ? error.params?.libraryId
+    : undefined
 
   return (
     <FormProvider {...form}>
@@ -94,7 +99,20 @@ export const LibraryDialogForm: FC<LibraryDialogFormProps> = ({
         submitDisabled={!!coordinatesErrorMessage || !!repositoryErrorMessage}
         formError={errorMessage && (
           <CoordinatesError severity="error" icon={<ErrorRoundedIcon />}>
-            {errorMessage}
+            {libraryId
+              ? (
+                <>
+                  Duplicate Maven coordinates. Library{' '}
+                  <Link
+                    to={generatePath(LIBRARY_PAGE_PATH_PATTERN, { libraryId: encodeURIComponent(libraryId) })}
+                    data-testid="ExistingLibraryLink"
+                  >
+                    {libraryId}
+                  </Link>{' '}
+                  already has this repository name and Maven GA. Use it to publish versions, or change the coordinates.
+                </>
+              )
+              : errorMessage}
           </CoordinatesError>
         )}
       >

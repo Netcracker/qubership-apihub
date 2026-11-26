@@ -18,8 +18,8 @@ export async function requestJsonWithError<T extends object>(
     },
   }, signal)
   if (failedResponse) {
-    const [message, code] = await getResponseError(failedResponse)
-    throw new HttpError(message, code, failedResponse.status)
+    const [message, code, , params] = await getResponseError(failedResponse)
+    throw new HttpError(message, code, failedResponse.status, params)
   }
   return result
 }

@@ -240,7 +240,7 @@ async function handleFetchRedirect(response: Response, customRedirectHandler?: C
 }
 
 async function handleCustomError(response: Response): Promise<void> {
-  const [message, code, status] = await getResponseError(response)
+  const [message, code, status, params] = await getResponseError(response)
   const detail = { title: `Error ${response.status}`, message: message, code: code, status: status }
   dispatchEvent(new CustomEvent<FetchErrorDetails>(FETCH_ERROR_EVENT, {
     detail: detail,
@@ -248,7 +248,7 @@ async function handleCustomError(response: Response): Promise<void> {
     composed: true,
     cancelable: false,
   }))
-  throw new HttpError(message, code, status)
+  throw new HttpError(message, code, status, params)
 }
 
 async function handleCustomRedirect(details: FetchRedirectDetails): Promise<void> {
@@ -271,13 +271,15 @@ export type ResponseError = Readonly<{
   status: ErrorStatus
 }>
 
-export async function getResponseError(response: Response): Promise<[ErrorMessage, ErrorCode, ErrorStatus]> {
+export async function getResponseError(
+  response: Response,
+): Promise<[ErrorMessage, ErrorCode, ErrorStatus, ResponseError['params']]> {
   const errorObject = await response.json() as ResponseError | null
   const errorMessage = errorObject?.message ?? 'Something went wrong'
   const errorCode = errorObject?.code ?? ''
   const errorStatus = errorObject?.status ?? null
   if (!errorObject?.params) {
-    return [errorMessage, errorCode, errorStatus]
+    return [errorMessage, errorCode, errorStatus, undefined]
   }
   return [
     Object.entries(errorObject.params).reduce((message, [key, value]) => {
@@ -285,6 +287,7 @@ export async function getResponseError(response: Response): Promise<[ErrorMessag
     }, errorMessage),
     errorCode,
     errorStatus,
+    errorObject.params,
   ]
 }
 
