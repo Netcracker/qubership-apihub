@@ -79,7 +79,7 @@ func (s *snapshotServiceImpl) GetSnapshot(ctx context.Context, namespace string,
 		return nil, err
 	}
 	if references == nil {
-		return nil, nil
+		return nil, fmt.Errorf("version references not found for dashboard '%s' version '%s'", dashboardId, version)
 	}
 
 	groupVersionForUrl := versionContent.Version
@@ -116,7 +116,7 @@ func (s *snapshotServiceImpl) GetSnapshot(ctx context.Context, namespace string,
 				return
 			}
 			if pkg == nil {
-				log.Errorf("Package %s referenced by snapshot not found, will not be included to snapshot output", refPackageId)
+				errors.Store(refPackageId, fmt.Errorf("package '%s' referenced by snapshot not found", refPackageId))
 				return
 			}
 
@@ -126,7 +126,7 @@ func (s *snapshotServiceImpl) GetSnapshot(ctx context.Context, namespace string,
 				return
 			}
 			if packageVersion == nil {
-				log.Errorf("Version %s for package %s not found, will not be included to snapshot output", refPackageVersion, refPackageId)
+				errors.Store(refPackageId, fmt.Errorf("version '%s' for package '%s' referenced by snapshot not found", refPackageVersion, refPackageId))
 				return
 			}
 

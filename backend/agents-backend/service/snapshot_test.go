@@ -301,11 +301,12 @@ func assertCustomError(t *testing.T, err error, expectedCode string) *exception.
 
 type getSnapshotApihubClient struct {
 	client.ApihubClient
-	versionContent *view.VersionContent
-	versionErr     error
-	references     *view.VersionReferences
-	referencesErr  error
-	packagesById   map[string]*view.SimplePackage
+	versionContent      *view.VersionContent
+	versionsByPackageId map[string]*view.VersionContent
+	versionErr          error
+	references          *view.VersionReferences
+	referencesErr       error
+	packagesById        map[string]*view.SimplePackage
 
 	mu                 sync.Mutex
 	requestedVersionOf []string
@@ -315,6 +316,9 @@ func (c *getSnapshotApihubClient) GetVersion(_ context.Context, id string, _ str
 	c.mu.Lock()
 	c.requestedVersionOf = append(c.requestedVersionOf, id)
 	c.mu.Unlock()
+	if v, ok := c.versionsByPackageId[id]; ok {
+		return v, c.versionErr
+	}
 	return c.versionContent, c.versionErr
 }
 
@@ -329,10 +333,12 @@ func (c *getSnapshotApihubClient) GetPackageById(_ context.Context, id string) (
 	return nil, nil // 404 from APIHUB: the package does not exist
 }
 
-// Regression for issue #1027: GetVersionReferences returns (nil, nil) on 404
-// and GetSnapshot read len(references.References) without a nil check, so the
-// request ended in a recovered panic (500) instead of a not-found answer.
-func TestGetSnapshotReturnsNilWhenReferencesAreNil(t *testing.T) {
+// Regression for issue #1027: GetVersionReferences returns (nil, nil) on 404,
+// and GetSnapshot used to read len(references.References) without a nil check,
+// which ended the request in a recovered panic (500). Because GetVersion
+// already returned the version, missing references are an unexpected Portal BE
+// state, so GetSnapshot returns an error instead of (nil, nil).
+func TestGetSnapshotFailsWhenReferencesAreNil(t *testing.T) {
 	s := &snapshotServiceImpl{
 		systemInfoService: fixedUrlSystemInfoService{},
 		apihubClient: &getSnapshotApihubClient{
@@ -342,21 +348,22 @@ func TestGetSnapshotReturnsNilWhenReferencesAreNil(t *testing.T) {
 	}
 
 	snapshot, err := s.GetSnapshot(context.Background(), "ns", "ws", "1.0.0", "cloud")
-	if err != nil {
-		t.Fatalf("err = %v, want nil", err)
+	if err == nil {
+		t.Fatal("err = nil, want an error when version references are missing")
+	}
+	if !strings.Contains(err.Error(), "version references not found") {
+		t.Fatalf("err = %v, want it to report missing version references", err)
 	}
 	if snapshot != nil {
 		t.Fatalf("snapshot = %+v, want nil", snapshot)
 	}
 }
 
-// Regression for issue #1027: when a package referenced by the snapshot has
-// been deleted, GetPackageById returns (nil, nil), and the goroutine went on to
-// request the package version and dereference pkg.Name. utils.SafeAsync
-// recovered the panic, so the response looked the same. The missing package is
-// now skipped before its version is requested, the same way as a missing
-// version, and the rest of the snapshot is returned.
-func TestGetSnapshotSkipsReferencedPackageNotFound(t *testing.T) {
+// Regression for issue #1027: when GetPackageById returns (nil, nil) for a
+// package referenced by the snapshot, GetSnapshot used to continue to
+// GetVersion and dereference pkg.Name. Broken references are not allowed in
+// Portal BE, so GetSnapshot now reports an error instead of skipping the entry.
+func TestGetSnapshotFailsWhenReferencedPackageNotFound(t *testing.T) {
 	references := &view.VersionReferences{
 		References: []view.VersionReference{{PackageRef: "ref-1"}},
 		Packages: map[string]view.PackageVersionRef{
@@ -373,21 +380,55 @@ func TestGetSnapshotSkipsReferencedPackageNotFound(t *testing.T) {
 	}
 
 	snapshot, err := s.GetSnapshot(context.Background(), "ns", "ws", "1.0.0", "cloud")
-	if err != nil {
-		t.Fatalf("err = %v, want nil", err)
+	if err == nil {
+		t.Fatal("err = nil, want an error when a referenced package is missing")
 	}
-	if snapshot == nil {
-		t.Fatal("snapshot = nil, want the snapshot without the missing package")
+	if !strings.Contains(err.Error(), "package 'deleted-package' referenced by snapshot not found") {
+		t.Fatalf("err = %v, want it to report missing referenced package", err)
+	}
+	if snapshot != nil {
+		t.Fatalf("snapshot = %+v, want nil", snapshot)
 	}
 	for _, id := range apihubClient.requestedVersionOf {
 		if id == "deleted-package" {
-			t.Fatal("GetVersion was called for 'deleted-package', want the package skipped first")
+			t.Fatal("GetVersion was called for 'deleted-package', want it not called when package is missing")
 		}
 	}
-	for _, service := range snapshot.Services {
-		if service.PackageId == "deleted-package" {
-			t.Fatalf("snapshot.Services = %+v, want no entry for 'deleted-package'", snapshot.Services)
-		}
+}
+
+// Broken references are not allowed in Portal BE, so GetSnapshot reports an
+// error when GetVersion returns (nil, nil) for a referenced package version.
+func TestGetSnapshotFailsWhenReferencedVersionNotFound(t *testing.T) {
+	references := &view.VersionReferences{
+		References: []view.VersionReference{{PackageRef: "ref-1"}},
+		Packages: map[string]view.PackageVersionRef{
+			"ref-1": {RefPackageId: "ref-package", RefPackageVersion: "2.0.0"},
+		},
+	}
+	apihubClient := &getSnapshotApihubClient{
+		versionContent: &view.VersionContent{Version: "1.0.0"},
+		versionsByPackageId: map[string]*view.VersionContent{
+			"ref-package": nil,
+		},
+		packagesById: map[string]*view.SimplePackage{
+			"ref-package": {Id: "ref-package", Name: "svc", Alias: "svc"},
+		},
+		references: references,
+	}
+	s := &snapshotServiceImpl{
+		systemInfoService: fixedUrlSystemInfoService{},
+		apihubClient:      apihubClient,
+	}
+
+	snapshot, err := s.GetSnapshot(context.Background(), "ns", "ws", "1.0.0", "cloud")
+	if err == nil {
+		t.Fatal("err = nil, want an error when a referenced package version is missing")
+	}
+	if !strings.Contains(err.Error(), "version '2.0.0' for package 'ref-package' referenced by snapshot not found") {
+		t.Fatalf("err = %v, want it to report missing referenced package version", err)
+	}
+	if snapshot != nil {
+		t.Fatalf("snapshot = %+v, want nil", snapshot)
 	}
 }
 
