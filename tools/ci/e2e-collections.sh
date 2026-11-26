@@ -24,7 +24,7 @@ agent="${4:-true}"
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 base="tests/postman-collections"
 
-portal='1_1_Smoke_Portal 1_3_Linter_Portal 2_1_Negative_Portal 3_1_Stories_Bugs 3_2_Stories_Bugs 4_Access_control 5_Migration'
+portal='1_1_Smoke_Portal 1_3_Linter_Portal 2_1_Negative_Portal 3_1_Stories_Bugs 3_2_Stories_Bugs 4_Access_control 5_Migration 6_MCP'
 
 entries=()
 if [[ "$tier" == 'smoke' ]]; then

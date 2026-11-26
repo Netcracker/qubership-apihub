@@ -4,7 +4,7 @@ The end-to-end suites of APIHUB. They hold no product code and run against a dep
 
 | Suite | What it covers | Runner |
 |-------|----------------|--------|
-| [`postman-collections`](postman-collections/README.md) | The REST API of the portal backend and the agent | Newman 6.2.3 |
+| [`postman-collections`](postman-collections/README.md) | REST APIs and the MCP server | Newman 6.2.3 |
 | [`ui-tests`](ui-tests/README.md) | The Portal and Agents SPAs in a browser | Playwright |
 
 `ui-tests` is part of the pnpm workspace as an Nx project. `postman-collections` is not an Nx project.
@@ -22,6 +22,7 @@ The end-to-end suites of APIHUB. They hold no product code and run against a dep
 | `3_1_Stories_Bugs`, `3_2_Stories_Bugs` | Regression cases of stories and bugs |
 | `4_Access_control` | Roles and permissions |
 | `5_Migration` | Independent operations migration tests, including scoped rebuilds |
+| `6_MCP` | MCP transport, discovery, tools, prompts, resources, and authorization against published fixtures |
 
 Other files:
 
@@ -54,8 +55,8 @@ The `plan` job of `ci.yml` picks an E2E tier once per commit:
 
 The `full` tier installs the Helm charts on Kind, runs the default Newman collections, and then the Playwright
 `Portal` project without `@flaky` tests. Both suites run even when one fails, and every report is uploaded as an
-artifact. The default full suite includes `5_Migration` on Kind and both Compose stacks, including manual and
-nightly runs. The Kind run takes about 45 minutes. The workflows and the artifacts are in
+artifact. Kind and both Compose stacks include `5_Migration` and `6_MCP` by default, including manual and nightly
+runs. The Kind run takes about 45 minutes. The workflows and the artifacts are in
 [CI](../docs/development/ci.md).
 
 ## Manual runs

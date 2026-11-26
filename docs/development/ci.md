@@ -138,7 +138,7 @@ but `plan` does not select it.
 
 The default collections come from [`tools/ci/e2e-collections.sh`](../../tools/ci/e2e-collections.sh):
 `1_1_Smoke_Portal`, `1_3_Linter_Portal`, `2_1_Negative_Portal`, `3_1_Stories_Bugs`, `3_2_Stories_Bugs`,
-`4_Access_control`, and `5_Migration`, plus `1_2_Smoke_Agent` on Kind when the agent is deployed.
+`4_Access_control`, `5_Migration`, and `6_MCP`, plus `1_2_Smoke_Agent` on Kind when the agent is deployed.
 Print the list for a runtime with:
 
 ```bash
