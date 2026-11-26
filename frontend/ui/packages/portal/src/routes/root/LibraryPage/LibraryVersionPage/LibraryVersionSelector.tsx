@@ -52,7 +52,7 @@ export const LibraryVersionSelector: FC<Readonly<{ version: LibraryVersion }>> =
         onClick={event => setAnchor(event.currentTarget)}
         endIcon={<KeyboardArrowDownOutlinedIcon />}
       >
-        <VersionTitle version={version.version} revision={undefined} latestRevision subtitleVariant />
+        <VersionTitle version={version.version} revision={undefined} latestRevision />
         <MenuButtonItems
           anchorEl={anchor}
           open={!!anchor}
