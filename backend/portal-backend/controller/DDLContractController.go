@@ -166,16 +166,14 @@ func (c *ddlContractControllerImpl) GetDdlEntityChanges(w http.ResponseWriter, r
 		c.responder.RespondWithCustomError(w, customErr)
 		return
 	}
-	for _, severity := range severities {
-		if !view.ValidSeverity(severity) {
-			c.responder.RespondWithCustomError(w, &exception.CustomError{
-				Status:  http.StatusBadRequest,
-				Code:    exception.InvalidParameterValue,
-				Message: exception.InvalidParameterValueMsg,
-				Params:  map[string]interface{}{"param": "severity", "value": severity},
-			})
-			return
-		}
+	if severity, found := view.HasInvalidSeverity(severities); found {
+		c.responder.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidParameterValue,
+			Message: exception.InvalidParameterValueMsg,
+			Params:  map[string]interface{}{"param": "severity", "value": severity},
+		})
+		return
 	}
 	result, svcErr := c.ddlService.GetDdlEntityChanges(ctx, packageId, versionName, ddlEntityId, previousVersionDdlEntityId, previousVersion, previousVersionPackageId, refPackageId, severities)
 	if svcErr != nil {
@@ -220,16 +218,14 @@ func (c *ddlContractControllerImpl) GetChangedDdlEntities(w http.ResponseWriter,
 		c.responder.RespondWithCustomError(w, customErr)
 		return
 	}
-	for _, severity := range severities {
-		if !view.ValidSeverity(severity) {
-			c.responder.RespondWithCustomError(w, &exception.CustomError{
-				Status:  http.StatusBadRequest,
-				Code:    exception.InvalidParameterValue,
-				Message: exception.InvalidParameterValueMsg,
-				Params:  map[string]interface{}{"param": "severity", "value": severity},
-			})
-			return
-		}
+	if severity, found := view.HasInvalidSeverity(severities); found {
+		c.responder.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidParameterValue,
+			Message: exception.InvalidParameterValueMsg,
+			Params:  map[string]interface{}{"param": "severity", "value": severity},
+		})
+		return
 	}
 	result, svcErr := c.ddlService.GetChangedDdlEntities(ctx, packageId, versionName, view.DdlChangesReq{
 		PreviousVersion:          previousVersion,
