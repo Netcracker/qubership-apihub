@@ -163,6 +163,10 @@ func (singleClassRepository) ListMethods(_ context.Context, _, _, classId string
 	}, nil
 }
 
+func (singleClassRepository) ListNestedClasses(_ context.Context, _, _, classId string) ([]entity.LibraryClassEntity, error) {
+	return []entity.LibraryClassEntity{{ClassId: classId + "$Inner", Kind: "interface"}}, nil
+}
+
 func (singleClassRepository) ListMethodData(_ context.Context, _ []string) (map[string][]byte, error) {
 	return map[string][]byte{
 		"h-m": []byte(`{"signature":"void run()","elementType":"METHOD"}`),
@@ -194,6 +198,9 @@ func TestContentServiceGetClass(t *testing.T) {
 	}
 	if len(class.Fields) != 1 || class.Fields[0].Signature != "int count" {
 		t.Errorf("fields: got %+v", class.Fields)
+	}
+	if len(class.NestedClasses) != 1 || class.NestedClasses[0].ClassId != "cls-1$Inner" || class.NestedClasses[0].Kind != view.ClassKindInterface {
+		t.Errorf("nested classes: got %+v", class.NestedClasses)
 	}
 
 	tests := []struct {

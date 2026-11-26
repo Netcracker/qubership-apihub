@@ -23,17 +23,20 @@ type ReportIngestService interface {
 
 func NewReportIngestService(
 	contentRepository repository.LibraryContentRepository,
+	libraryVersionRepository repository.LibraryVersionRepository,
 	comparisonRepository repository.ComparisonRepository,
 ) ReportIngestService {
 	return reportIngestServiceImpl{
-		contentRepository:    contentRepository,
-		comparisonRepository: comparisonRepository,
+		contentRepository:        contentRepository,
+		libraryVersionRepository: libraryVersionRepository,
+		comparisonRepository:     comparisonRepository,
 	}
 }
 
 type reportIngestServiceImpl struct {
-	contentRepository    repository.LibraryContentRepository
-	comparisonRepository repository.ComparisonRepository
+	contentRepository        repository.LibraryContentRepository
+	libraryVersionRepository repository.LibraryVersionRepository
+	comparisonRepository     repository.ComparisonRepository
 }
 
 func (r reportIngestServiceImpl) Ingest(ctx context.Context, build entity.BuildEntity, report view.DiffReport) error {
@@ -69,9 +72,31 @@ func (r reportIngestServiceImpl) ingestInventory(ctx context.Context, build enti
 	if err := r.contentRepository.Replace(ctx, build.LibraryId, build.Version, content); err != nil {
 		return err
 	}
+	if err := r.libraryVersionRepository.SetStatistics(ctx, build.LibraryId, build.Version, classStatistics(content.Classes)); err != nil {
+		return err
+	}
 	log.Infof("Indexed %d classes and %d methods for library %s version %s",
 		len(content.Classes), len(content.Methods), build.LibraryId, build.Version)
 	return nil
+}
+
+// classStatistics totals the classes by kind, nested ones included. A record is not counted: the statistics
+// name only the four kinds a report carries.
+func classStatistics(classes []entity.LibraryClassEntity) view.LibraryVersionStatistics {
+	var statistics view.LibraryVersionStatistics
+	for _, class := range classes {
+		switch view.ClassKind(class.Kind) {
+		case view.ClassKindClass:
+			statistics.ClassCount++
+		case view.ClassKindInterface:
+			statistics.InterfaceCount++
+		case view.ClassKindEnum:
+			statistics.EnumCount++
+		case view.ClassKindAnnotation:
+			statistics.AnnotationTypeCount++
+		}
+	}
+	return statistics
 }
 
 // ingestComparison writes the change list of a java-api-diff. The pair it is keyed on comes from the build

@@ -53,12 +53,20 @@ type LibraryField struct {
 	Signature string `json:"signature"`
 }
 
-// LibraryClassDetails is one class of a library version together with its methods, constructors and fields.
+// LibraryNestedClass identifies a class declared directly inside another class.
+type LibraryNestedClass struct {
+	ClassId string    `json:"classId"`
+	Kind    ClassKind `json:"kind"`
+}
+
+// LibraryClassDetails is one class of a library version together with its methods, constructors, fields and
+// nested classes.
 type LibraryClassDetails struct {
 	LibraryClass
-	Methods      []LibraryMethod `json:"methods"`
-	Constructors []LibraryMethod `json:"constructors"`
-	Fields       []LibraryField  `json:"fields"`
+	Methods       []LibraryMethod      `json:"methods"`
+	Constructors  []LibraryMethod      `json:"constructors"`
+	Fields        []LibraryField       `json:"fields"`
+	NestedClasses []LibraryNestedClass `json:"nestedClasses"`
 }
 
 type LibraryClasses struct {

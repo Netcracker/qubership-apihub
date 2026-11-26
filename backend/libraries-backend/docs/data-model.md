@@ -117,6 +117,10 @@ CREATE TABLE IF NOT EXISTS library_version (
     metadata         jsonb,
     created_at       timestamp without time zone NOT NULL,
     created_by       character varying NOT NULL,
+    class_count           integer NOT NULL DEFAULT 0, -- class totals by kind, set when the inventory is imported
+    interface_count       integer NOT NULL DEFAULT 0,
+    enum_count            integer NOT NULL DEFAULT 0,
+    annotation_type_count integer NOT NULL DEFAULT 0,
     deleted_at       timestamp without time zone,
     deleted_by       character varying,
     CONSTRAINT pk_library_version PRIMARY KEY (library_id, version),

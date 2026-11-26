@@ -145,7 +145,7 @@ func main() {
 		log.Fatalf("Failed to synchronise the configured registries: %v", err)
 	}
 
-	reportIngestService := service.NewReportIngestService(libraryContentRepository, comparisonRepository)
+	reportIngestService := service.NewReportIngestService(libraryContentRepository, libraryVersionRepository, comparisonRepository)
 	buildService := service.NewBuildService(buildRepository, libraryRepository, libraryVersionRepository,
 		reportIngestService, systemInfoService)
 	authorizationService := service.NewAuthorizationService(apihubClient, memberRepository)

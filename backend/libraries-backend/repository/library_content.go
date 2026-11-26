@@ -12,6 +12,9 @@ import (
 	"github.com/go-pg/pg/v10"
 )
 
+// nestedClassSeparator joins an outer class id and a nested class name in a binary class name.
+const nestedClassSeparator = "$"
+
 // LibraryContent is one library version's parsed API inventory, ready to be written in a single
 // transaction. The data rows are content-addressed, so the same class body appearing in two versions is
 // stored once.
@@ -32,6 +35,8 @@ type LibraryContentRepository interface {
 	// GetClass returns nil when the version has no such class.
 	GetClass(ctx context.Context, libraryId, version, classId string) (*entity.LibraryClassEntity, error)
 	ListMethods(ctx context.Context, libraryId, version, classId string) ([]entity.LibraryMethodEntity, error)
+	// ListNestedClasses returns the classes declared directly inside the given class, ordered by class id.
+	ListNestedClasses(ctx context.Context, libraryId, version, classId string) ([]entity.LibraryClassEntity, error)
 	// GetClassData returns the stored class body, or nil when no row has the hash.
 	GetClassData(ctx context.Context, dataHash string) ([]byte, error)
 	// ListMethodData returns the stored method bodies by data hash in one query.
@@ -276,6 +281,26 @@ func (l libraryContentRepositoryImpl) ListMethods(ctx context.Context, libraryId
 		Where("version = ?", version).
 		Where("class_id = ?", classId).
 		Order("name ASC", "method_id ASC").
+		Select()
+	if err != nil && err != pg.ErrNoRows {
+		return nil, err
+	}
+	return result, nil
+}
+
+// ListNestedClasses relies on the binary-name convention: a class nested in Outer has the class id
+// Outer$Inner. A class nested one level deeper (Outer$Inner$Deep) belongs to Outer$Inner, so ids with a
+// second separator after the prefix are excluded. The primary key starts with (library_id, version), so the
+// scan stays within the version, and the result is bounded by the number of classes declared in one class.
+func (l libraryContentRepositoryImpl) ListNestedClasses(ctx context.Context, libraryId, version, classId string) ([]entity.LibraryClassEntity, error) {
+	prefix := utils.LikeEscaped(classId) + nestedClassSeparator
+	result := make([]entity.LibraryClassEntity, 0)
+	err := l.cp.GetConnection().ModelContext(ctx, &result).
+		Where("library_id = ?", libraryId).
+		Where("version = ?", version).
+		Where("class_id like ?", prefix+"%").
+		Where("class_id not like ?", prefix+"%"+nestedClassSeparator+"%").
+		Order("class_id ASC").
 		Select()
 	if err != nil && err != pg.ErrNoRows {
 		return nil, err

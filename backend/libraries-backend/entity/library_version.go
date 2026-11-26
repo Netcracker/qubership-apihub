@@ -17,8 +17,13 @@ type LibraryVersionEntity struct {
 	Metadata        map[string]interface{} `pg:"metadata,type:jsonb"`
 	CreatedAt       time.Time              `pg:"created_at,type:timestamp without time zone,notnull"`
 	CreatedBy       string                 `pg:"created_by,type:varchar,notnull"`
-	DeletedAt       *time.Time             `pg:"deleted_at,type:timestamp without time zone"`
-	DeletedBy       string                 `pg:"deleted_by,type:varchar"`
+	// The counters are computed once, when the version's inventory is imported.
+	ClassCount          int        `pg:"class_count,type:integer,use_zero"`
+	InterfaceCount      int        `pg:"interface_count,type:integer,use_zero"`
+	EnumCount           int        `pg:"enum_count,type:integer,use_zero"`
+	AnnotationTypeCount int        `pg:"annotation_type_count,type:integer,use_zero"`
+	DeletedAt           *time.Time `pg:"deleted_at,type:timestamp without time zone"`
+	DeletedBy           string     `pg:"deleted_by,type:varchar"`
 }
 
 func MakeLibraryVersionView(ent LibraryVersionEntity) view.LibraryVersion {
@@ -31,5 +36,11 @@ func MakeLibraryVersionView(ent LibraryVersionEntity) view.LibraryVersion {
 		Metadata:        ent.Metadata,
 		CreatedAt:       ent.CreatedAt,
 		CreatedBy:       ent.CreatedBy,
+		Statistics: view.LibraryVersionStatistics{
+			ClassCount:          ent.ClassCount,
+			InterfaceCount:      ent.InterfaceCount,
+			EnumCount:           ent.EnumCount,
+			AnnotationTypeCount: ent.AnnotationTypeCount,
+		},
 	}
 }

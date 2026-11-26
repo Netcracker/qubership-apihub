@@ -6,6 +6,7 @@ import (
 
 	"github.com/Netcracker/qubership-apihub/backend/libraries-backend/db"
 	"github.com/Netcracker/qubership-apihub/backend/libraries-backend/entity"
+	"github.com/Netcracker/qubership-apihub/backend/libraries-backend/utils"
 	"github.com/Netcracker/qubership-apihub/backend/libraries-backend/view"
 	"github.com/go-pg/pg/v10"
 )
@@ -16,6 +17,8 @@ type ComparisonRepository interface {
 	Replace(ctx context.Context, comparison entity.LibraryVersionComparisonEntity, changes []entity.LibraryVersionChangeEntity) error
 	Get(ctx context.Context, key view.ComparisonKey) (*entity.LibraryVersionComparisonEntity, error)
 	ListChanges(ctx context.Context, comparisonId string, req view.ChangeListReq) ([]entity.LibraryVersionChangeEntity, error)
+	// ListNestedClassChanges summarises the changes of the classes declared directly inside classId.
+	ListNestedClassChanges(ctx context.Context, comparisonId, classId string) ([]NestedClassChangeRow, error)
 }
 
 func NewComparisonRepository(cp db.ConnectionProvider) ComparisonRepository {
@@ -63,6 +66,39 @@ func (c comparisonRepositoryImpl) Get(ctx context.Context, key view.ComparisonKe
 		if err == pg.ErrNoRows {
 			return nil, nil
 		}
+		return nil, err
+	}
+	return result, nil
+}
+
+// NestedClassChangeRow is the aggregate of one nested class's changes.
+type NestedClassChangeRow struct {
+	ClassId      string `pg:"class_id"`
+	Kind         string `pg:"kind"`
+	Added        bool   `pg:"added"`
+	Removed      bool   `pg:"removed"`
+	SeverityRank int    `pg:"severity_rank"`
+}
+
+// ListNestedClassChanges aggregates, per class declared directly inside classId (ids shaped Outer$Inner), the
+// stored changes of one comparison. It uses the (comparison_id, class_id) index, and returns one row per
+// changed nested class, so the result is bounded by the number of classes nested in one class.
+func (c comparisonRepositoryImpl) ListNestedClassChanges(ctx context.Context, comparisonId, classId string) ([]NestedClassChangeRow, error) {
+	prefix := utils.LikeEscaped(classId) + nestedClassSeparator
+	result := make([]NestedClassChangeRow, 0)
+	_, err := c.cp.GetConnection().WithContext(ctx).Query(&result, `
+		SELECT
+			class_id,
+			min(kind) AS kind,
+			bool_or(coalesce(method_id, '') = '' AND change_type = 'added') AS added,
+			bool_or(coalesce(method_id, '') = '' AND change_type = 'removed') AS removed,
+			min(CASE severity WHEN 'breaking' THEN 0 WHEN 'non-breaking' THEN 1 ELSE 2 END) AS severity_rank
+		FROM library_version_changes
+		WHERE comparison_id = ? AND class_id LIKE ? AND class_id NOT LIKE ?
+		GROUP BY class_id
+		ORDER BY class_id`,
+		comparisonId, prefix+"%", prefix+"%"+nestedClassSeparator+"%")
+	if err != nil && err != pg.ErrNoRows {
 		return nil, err
 	}
 	return result, nil

@@ -26,14 +26,23 @@ type LibraryVersionImportReq struct {
 }
 
 type LibraryVersion struct {
-	LibraryId       string                 `json:"libraryId"`
-	Version         string                 `json:"version"`
-	PreviousVersion string                 `json:"previousVersion,omitempty"`
-	Status          VersionStatus          `json:"status"`
-	Labels          []string               `json:"labels,omitempty"`
-	Metadata        map[string]interface{} `json:"metadata,omitempty"`
-	CreatedAt       time.Time              `json:"createdAt"`
-	CreatedBy       string                 `json:"createdBy"`
+	LibraryId       string                   `json:"libraryId"`
+	Version         string                   `json:"version"`
+	PreviousVersion string                   `json:"previousVersion,omitempty"`
+	Status          VersionStatus            `json:"status"`
+	Labels          []string                 `json:"labels,omitempty"`
+	Metadata        map[string]interface{}   `json:"metadata,omitempty"`
+	CreatedAt       time.Time                `json:"createdAt"`
+	CreatedBy       string                   `json:"createdBy"`
+	Statistics      LibraryVersionStatistics `json:"statistics"`
+}
+
+// LibraryVersionStatistics holds the totals of the classes the version declares, nested ones included.
+type LibraryVersionStatistics struct {
+	ClassCount          int `json:"classCount"`
+	InterfaceCount      int `json:"interfaceCount"`
+	EnumCount           int `json:"enumCount"`
+	AnnotationTypeCount int `json:"annotationTypeCount"`
 }
 
 type LibraryVersions struct {

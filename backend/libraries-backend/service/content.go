@@ -120,6 +120,18 @@ func (c contentServiceImpl) GetClass(ctx context.Context, libraryId, version, cl
 	for _, field := range classBody.Fields {
 		result.Fields = append(result.Fields, view.LibraryField{ClassId: classId, Signature: field.Member})
 	}
+
+	nestedEnts, err := c.contentRepository.ListNestedClasses(ctx, libraryId, version, classId)
+	if err != nil {
+		return nil, err
+	}
+	result.NestedClasses = make([]view.LibraryNestedClass, 0, len(nestedEnts))
+	for _, nestedEnt := range nestedEnts {
+		result.NestedClasses = append(result.NestedClasses, view.LibraryNestedClass{
+			ClassId: nestedEnt.ClassId,
+			Kind:    view.ClassKind(nestedEnt.Kind),
+		})
+	}
 	return &result, nil
 }
 

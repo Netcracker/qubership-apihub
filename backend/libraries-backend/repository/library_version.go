@@ -28,6 +28,8 @@ type LibraryVersionRepository interface {
 	SoftDelete(ctx context.Context, libraryId, version, userId string) error
 	SetMetadata(ctx context.Context, libraryId, version string, metadata map[string]interface{}) error
 	SetStatus(ctx context.Context, libraryId, version string, status view.VersionStatus) error
+	// SetStatistics overwrites the class totals of the version; an inventory import calls it.
+	SetStatistics(ctx context.Context, libraryId, version string, statistics view.LibraryVersionStatistics) error
 }
 
 func NewLibraryVersionRepository(cp db.ConnectionProvider) LibraryVersionRepository {
@@ -159,6 +161,18 @@ func (l libraryVersionRepositoryImpl) SoftDelete(ctx context.Context, libraryId,
 func (l libraryVersionRepositoryImpl) SetMetadata(ctx context.Context, libraryId, version string, metadata map[string]interface{}) error {
 	_, err := l.cp.GetConnection().ModelContext(ctx, (*entity.LibraryVersionEntity)(nil)).
 		Set("metadata = ?", metadata).
+		Where("library_id = ?", libraryId).
+		Where("version = ?", version).
+		Update()
+	return err
+}
+
+func (l libraryVersionRepositoryImpl) SetStatistics(ctx context.Context, libraryId, version string, statistics view.LibraryVersionStatistics) error {
+	_, err := l.cp.GetConnection().ModelContext(ctx, (*entity.LibraryVersionEntity)(nil)).
+		Set("class_count = ?", statistics.ClassCount).
+		Set("interface_count = ?", statistics.InterfaceCount).
+		Set("enum_count = ?", statistics.EnumCount).
+		Set("annotation_type_count = ?", statistics.AnnotationTypeCount).
 		Where("library_id = ?", libraryId).
 		Where("version = ?", version).
 		Update()

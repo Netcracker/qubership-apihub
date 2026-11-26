@@ -66,11 +66,46 @@ func (c changesServiceImpl) GetChanges(ctx context.Context, libraryId, version, 
 	result := view.VersionChanges{
 		Comparison: entity.MakeChangeSummaryView(*comparison),
 		Changes:    make([]view.Change, 0, len(changeEnts)),
+
+		NestedChanges: make([]view.NestedClassChange, 0),
 	}
 	for _, changeEnt := range changeEnts {
 		result.Changes = append(result.Changes, entity.MakeChangeView(changeEnt))
 	}
+
+	if req.ClassId != "" {
+		rows, err := c.comparisonRepository.ListNestedClassChanges(ctx, comparison.ComparisonId, req.ClassId)
+		if err != nil {
+			return nil, err
+		}
+		for _, row := range rows {
+			result.NestedChanges = append(result.NestedChanges, makeNestedClassChange(row))
+		}
+	}
 	return &result, nil
+}
+
+// severityByRank maps the rank computed by ListNestedClassChanges back to a severity, most severe first.
+var severityByRank = []view.ChangeSeverity{
+	view.ChangeSeverityBreaking,
+	view.ChangeSeverityNonBreaking,
+	view.ChangeSeverityAnnotation,
+}
+
+func makeNestedClassChange(row repository.NestedClassChangeRow) view.NestedClassChange {
+	status := view.ChangeTypeChanged
+	switch {
+	case row.Removed:
+		status = view.ChangeTypeRemoved
+	case row.Added:
+		status = view.ChangeTypeAdded
+	}
+	return view.NestedClassChange{
+		ClassId:  row.ClassId,
+		Kind:     view.ClassKind(row.Kind),
+		Status:   status,
+		Severity: severityByRank[row.SeverityRank],
+	}
 }
 
 // resolve completes the comparison key the caller gave. An unspecified previous library means this library,

@@ -61,9 +61,21 @@ type Change struct {
 	Details     map[string]interface{} `json:"details,omitempty"`
 }
 
+// NestedClassChange summarises all stored changes of one class declared directly inside the requested class.
+type NestedClassChange struct {
+	ClassId string    `json:"classId"`
+	Kind    ClassKind `json:"kind"`
+	// Status is added or removed when the class itself was added or removed, and changed otherwise.
+	Status ChangeType `json:"status"`
+	// Severity is the most severe severity among the class's changes.
+	Severity ChangeSeverity `json:"severity"`
+}
+
 type VersionChanges struct {
 	Comparison ChangeSummary `json:"comparison"`
 	Changes    []Change      `json:"changes"`
+	// NestedChanges is filled only when the request names a class; it is empty otherwise.
+	NestedChanges []NestedClassChange `json:"nestedChanges"`
 }
 
 // ComparisonKey identifies one comparison: a version of a library against a version of a — possibly

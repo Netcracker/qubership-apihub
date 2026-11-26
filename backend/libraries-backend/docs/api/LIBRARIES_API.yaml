@@ -714,6 +714,13 @@ paths:
                     type: array
                     items:
                       $ref: "#/components/schemas/Change"
+                  nestedChanges:
+                    type: array
+                    description: |
+                      One entry per changed class declared directly inside the class named by `classId`. Empty when
+                      `classId` is not given.
+                    items:
+                      $ref: "#/components/schemas/NestedClassChange"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
@@ -1441,6 +1448,7 @@ components:
         - libraryId
         - version
         - status
+        - statistics
       properties:
         libraryId:
           type: string
@@ -1461,6 +1469,32 @@ components:
           format: date-time
         createdBy:
           type: string
+        statistics:
+          allOf:
+            - $ref: "#/components/schemas/LibraryVersionStatistics"
+    LibraryVersionStatistics:
+      type: object
+      description: >-
+        Totals of the classes the version declares, nested ones included. They are computed when the version is
+        imported and are all zero until the import build finishes.
+      required:
+        - classCount
+        - interfaceCount
+        - enumCount
+        - annotationTypeCount
+      properties:
+        classCount:
+          type: integer
+          description: Total number of classes.
+        interfaceCount:
+          type: integer
+          description: Total number of interfaces.
+        enumCount:
+          type: integer
+          description: Total number of enums.
+        annotationTypeCount:
+          type: integer
+          description: Total number of annotation types.
     AvailableVersions:
       type: object
       required:
@@ -1534,6 +1568,28 @@ components:
         details:
           description: Raw japicmp/jdeps entry — old/new signature, etc.
           type: object
+    NestedClassChange:
+      type: object
+      required:
+        - classId
+        - kind
+        - status
+        - severity
+      properties:
+        classId:
+          type: string
+        kind:
+          $ref: "#/components/schemas/ClassKindEnum"
+        status:
+          description: "`added` or `removed` when the class itself was added or removed, `changed` otherwise."
+          type: string
+          enum:
+            - added
+            - removed
+            - changed
+        severity:
+          description: The most severe severity among the class's changes.
+          $ref: "#/components/schemas/ChangeSeverityEnum"
     Member:
       type: object
       required:
@@ -1649,7 +1705,13 @@ components:
             - methods
             - constructors
             - fields
+            - nestedClasses
           properties:
+            nestedClasses:
+              type: array
+              description: Classes declared directly inside the class. Deeper levels are listed by their own class.
+              items:
+                $ref: "#/components/schemas/LibraryNestedClass"
             methods:
               type: array
               description: Methods declared by the class, constructors excluded.
@@ -1663,6 +1725,16 @@ components:
               type: array
               items:
                 $ref: "#/components/schemas/LibraryField"
+    LibraryNestedClass:
+      type: object
+      required:
+        - classId
+        - kind
+      properties:
+        classId:
+          type: string
+        kind:
+          $ref: "#/components/schemas/ClassKindEnum"
     LibraryField:
       type: object
       required:
