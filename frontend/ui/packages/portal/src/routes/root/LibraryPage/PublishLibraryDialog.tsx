@@ -39,7 +39,10 @@ import {
 } from '@portal/entities/libraries'
 import { useLibraryAvailableVersions } from '@portal/routes/root/LibraryPage/useLibraryAvailableVersions'
 import { useLibraryVersions } from '@portal/routes/root/LibraryPage/useLibraryVersions'
-import { usePublishLibraryVersion } from '@portal/routes/root/LibraryPage/usePublishLibraryVersion'
+import {
+  useLibraryVersionPublicationStatus,
+  usePublishLibraryVersion,
+} from '@portal/routes/root/LibraryPage/usePublishLibraryVersion'
 import { getManageableVersionStatuses } from './libraryPermissions'
 
 // TODO(libraries-backend): "No previous version" omits the field, which the service reads as "compare with the latest
@@ -72,8 +75,15 @@ export const PublishLibraryDialog: FC<PublishLibraryDialogProps> = memo<PublishL
     const { versions: availableVersions, isLoading: areAvailableVersionsLoading, error: availableVersionsError } =
       useLibraryAvailableVersions(libraryId, registryTextFilter)
     const { versions, isLoading: areVersionsLoading, error: versionsError } = useLibraryVersions(libraryId)
-    const { publishVersion, version: publishedVersion, isLoading: isPublishing, isSuccess, error } =
+    const { publishVersion, version: publishedVersion, isPublishStarting, isPublishStartedSuccessfully, error } =
       usePublishLibraryVersion(libraryId)
+    const [isPublishing, isPublished, isPublishError, buildError] = useLibraryVersionPublicationStatus(
+      libraryId,
+      publishedVersion,
+    )
+    const isPublishInProgress = isPublishStarting ||
+      isPublishStartedSuccessfully && !isPublished && !isPublishError ||
+      isPublishing
     const { control, handleSubmit, setValue, getValues, setError, clearErrors } = useForm<LibraryVersionPublishDto>({
       defaultValues: {
         version: '',
@@ -86,7 +96,7 @@ export const PublishLibraryDialog: FC<PublishLibraryDialogProps> = memo<PublishL
     const status = useWatch({ control: control, name: 'status' })
     const previousVersion = useWatch({ control: control, name: 'previousVersion' })
     const errorField = error instanceof HttpError ? LIBRARY_VERSION_ERROR_FIELDS.get(error.code) : undefined
-    const publishError = errorField ? undefined : error
+    const publishError = (errorField ? undefined : error) ?? buildError
     const previousVersionStatuses = getPreviousVersionStatuses(status)
     const allowedPreviousVersions = versions.filter(version => previousVersionStatuses.includes(version.status))
     const previousVersionStatus = versions.find(version => version.version === previousVersion)?.status
@@ -119,18 +129,18 @@ export const PublishLibraryDialog: FC<PublishLibraryDialogProps> = memo<PublishL
     }, [versions, areVersionsLoading, versionsError, status, setValue])
 
     useEffect(() => {
-      if (isSuccess) {
+      if (isPublished) {
         if (publishedVersion) onPublished?.(publishedVersion)
         onClose()
       }
-    }, [isSuccess, onClose, onPublished, publishedVersion])
+    }, [isPublished, onClose, onPublished, publishedVersion])
 
     const handleClose = (): void => {
-      if (!isPublishing) onClose()
+      if (!isPublishInProgress) onClose()
     }
 
     const onSubmit = (value: LibraryVersionPublishDto): void => {
-      if (hasInvalidPreviousVersionStatus) return
+      if (isPublishInProgress || hasInvalidPreviousVersionStatus) return
       publishVersion({
         ...value,
         previousVersion: value.previousVersion === NO_PREVIOUS_VERSION ? undefined : value.previousVersion,
@@ -163,7 +173,7 @@ export const PublishLibraryDialog: FC<PublishLibraryDialogProps> = memo<PublishL
                 filterOptions={disableAutocompleteSearch}
                 noOptionsText="No versions found"
                 loading={areAvailableVersionsLoading}
-                disabled={isPublishing}
+                disabled={isPublishInProgress}
                 renderOption={(props, version) => (
                   <ListItem {...props} key={version}>
                     <Marker mark={inputValue}>{version}</Marker>
@@ -234,7 +244,7 @@ export const PublishLibraryDialog: FC<PublishLibraryDialogProps> = memo<PublishL
                   </ListItem>
                 )}
                 inputIndicator={isPreviousVersionFocused && <SearchOutlinedIcon fontSize="small" sx={{ order: -1 }} />}
-                disabled={areVersionsLoading || isPublishing}
+                disabled={areVersionsLoading || isPublishInProgress}
                 loading={areVersionsLoading}
                 noOptionsText="No versions found"
                 onChange={(_, value) => {
@@ -270,7 +280,7 @@ export const PublishLibraryDialog: FC<PublishLibraryDialogProps> = memo<PublishL
                 select
                 required
                 label="Status"
-                disabled={isPublishing}
+                disabled={isPublishInProgress}
                 data-testid="LibraryVersionStatusSelect"
               >
                 {statuses.map(status => (
@@ -290,7 +300,7 @@ export const PublishLibraryDialog: FC<PublishLibraryDialogProps> = memo<PublishL
             render={({ field }) => (
               <LabelsAutocomplete
                 value={field.value}
-                disabled={isPublishing}
+                disabled={isPublishInProgress}
                 onChange={(_, value) => field.onChange(value)}
               />
             )}
@@ -305,7 +315,7 @@ export const PublishLibraryDialog: FC<PublishLibraryDialogProps> = memo<PublishL
           <LoadingButton
             type="submit"
             variant="contained"
-            loading={isPublishing}
+            loading={isPublishInProgress}
             disabled={isPublishDisabled || !selectedVersion || !statuses.length || hasInvalidPreviousVersionStatus}
             data-testid="ConfirmPublishLibraryButton"
           >
@@ -314,7 +324,7 @@ export const PublishLibraryDialog: FC<PublishLibraryDialogProps> = memo<PublishL
           <Button
             variant="outlined"
             onClick={handleClose}
-            disabled={isPublishing}
+            disabled={isPublishInProgress}
             data-testid="CancelPublishLibraryButton"
           >
             Cancel

@@ -183,7 +183,11 @@ async function getLibraryVersions(libraryId: Key, signal?: AbortSignal): Promise
   return { versions: versions.map(toLibraryVersion) }
 }
 
-async function getLibraryVersion(libraryId: Key, versionId: string, signal?: AbortSignal): Promise<LibraryVersion> {
+export async function getLibraryVersion(
+  libraryId: Key,
+  versionId: string,
+  signal?: AbortSignal,
+): Promise<LibraryVersion> {
   const result = await portalRequestJson<LibraryVersionDto>(
     `/libraries/${encodeURIComponent(libraryId)}/versions/${encodeURIComponent(versionId)}`,
     { method: 'GET' },

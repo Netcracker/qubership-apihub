@@ -40,7 +40,9 @@ export const LibraryPage: FC = () => {
   if (versionsError) {
     return <ErrorPage title="Unable to load library versions" message={versionsError.message} homePath="/portal" />
   }
-  if (versions.length) return <Navigate to={getLibraryVersionPath(library.libraryId, versions[0].version)} replace />
+  if (versions.length && !isPublishOpen) {
+    return <Navigate to={getLibraryVersionPath(library.libraryId, versions[0].version)} replace />
+  }
 
   return (
     <>
