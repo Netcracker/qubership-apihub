@@ -316,7 +316,7 @@ func (n *namespaceSecurityServiceImpl) getDiscoveryResults(ctx context.Context, 
 	var discoveryResult *view.ServiceListResponse
 	var err error
 	for {
-		discoveryResult, err = n.agentClient.ListServices(ctx, namespace, workspaceId, agentUrl, "")
+		discoveryResult, err = n.agentClient.ListServices(ctx, namespace, workspaceId, agentUrl, "", "")
 		if err != nil {
 			return nil, fmt.Errorf("failed to get service list: %v", err.Error())
 		}

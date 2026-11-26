@@ -219,9 +219,13 @@ func (s *snapshotServiceImpl) CreateSnapshot(ctx context.Context, namespace stri
 		return nil, versionNameValidationError
 	}
 
-	serviceListResponse, err := s.agentClient.ListServices(ctx, namespace, workspaceId, snapshotDTO.AgentUrl, snapshotDTO.DiscoveryServices)
+	serviceListResponse, err := s.agentClient.ListServices(ctx, namespace, workspaceId, snapshotDTO.AgentUrl, snapshotDTO.DiscoveryServices, snapshotDTO.DiscoveryLabels)
 	if err != nil {
 		return nil, err
+	}
+	if serviceListResponse == nil {
+		log.Infof("Create snapshot failed: empty discovery response for namespace %s", namespace)
+		return nil, fmt.Errorf("unable to create snapshot: discovery result not found for namespace %s", namespace)
 	}
 	if serviceListResponse.Status != view.StatusComplete {
 		log.Infof("Create snapshot failed: incorrect discovery status %s for namespace %s", serviceListResponse.Status, namespace)
@@ -485,7 +489,7 @@ func (s *snapshotServiceImpl) startSnapshot(ctx context.Context, namespace strin
 				zw := zip.NewWriter(&zipBuf)
 
 				for specInd, spec := range svc.Documents {
-					specBytes, err := s.agentClient.GetServiceSpecification(ctx, namespace, workspaceId, svc.Id, spec.FileId, snapshotDTO.AgentUrl, snapshotDTO.DiscoveryServices)
+					specBytes, err := s.agentClient.GetServiceSpecification(ctx, namespace, workspaceId, svc.Id, spec.FileId, snapshotDTO.AgentUrl, snapshotDTO.DiscoveryServices, snapshotDTO.DiscoveryLabels)
 					if err != nil {
 						log.Errorf("error: unable to get specification %s: %s", svc.Id, err.Error())
 						return

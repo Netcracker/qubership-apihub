@@ -72,8 +72,9 @@ func (s specificationsControllerImpl) GetServiceSpecification(w http.ResponseWri
 		return
 	}
 	services := r.URL.Query().Get("services")
+	labels := r.URL.Query().Get("labels")
 
-	specBytes, err := s.agentClient.GetServiceSpecification(secctx.MakeUserContext(r), namespace, workspaceId, serviceId, fileId, agent.AgentUrl, services)
+	specBytes, err := s.agentClient.GetServiceSpecification(secctx.MakeUserContext(r), namespace, workspaceId, serviceId, fileId, agent.AgentUrl, services, labels)
 	if err != nil {
 		s.responder.RespondWithError(w, "Failed to get specification", err)
 		return

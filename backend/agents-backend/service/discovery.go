@@ -18,7 +18,7 @@ import (
 type DiscoveryService interface {
 	StartDiscovery(ctx context.Context, agentId string, namespace string, workspaceId string, failOnError bool, req view.DiscoveryRequest) error
 	GetDiscoveredServices_deprecated(ctx context.Context, agentId string, namespace string, workspaceId string) (*view.ServiceListResponse_deprecated, error)
-	GetDiscoveredServices(ctx context.Context, agentId string, namespace string, workspaceId string, discoveryServices string) (*view.ServiceListResponse, error)
+	GetDiscoveredServices(ctx context.Context, agentId string, namespace string, workspaceId string, discoveryServices string, discoveryLabels string) (*view.ServiceListResponse, error)
 }
 
 func NewDiscoveryService(agentClient client.AgentClient, apihubClient client.ApihubClient, agentService AgentService, permissionService PermissionService, systemInfoService SystemInfoService) DiscoveryService {
@@ -114,8 +114,8 @@ func (d discoveryServiceImpl) StartDiscovery(ctx context.Context, agentId string
 		}
 	}
 
-	if len(req.Services) > 0 {
-		log.Infof("Starting discovery for namespace %v in workspace %v limited to %d requested service(s)", namespace, workspaceId, len(req.Services))
+	if len(req.Services) > 0 || len(req.Labels) > 0 {
+		log.Infof("Starting discovery for namespace %v in workspace %v (services=%v, labels=%v)", namespace, workspaceId, req.Services, req.Labels)
 	}
 
 	return d.agentClient.StartDiscovery(ctx, namespace, workspaceId, agent.AgentUrl, failOnError, req)
@@ -370,7 +370,7 @@ func (d discoveryServiceImpl) GetDiscoveredServices_deprecated(ctx context.Conte
 	return serviceList, nil
 }
 
-func (d discoveryServiceImpl) GetDiscoveredServices(ctx context.Context, agentId string, namespace string, workspaceId string, discoveryServices string) (*view.ServiceListResponse, error) {
+func (d discoveryServiceImpl) GetDiscoveredServices(ctx context.Context, agentId string, namespace string, workspaceId string, discoveryServices string, discoveryLabels string) (*view.ServiceListResponse, error) {
 	agent, err := d.agentService.GetAgent(agentId)
 	if err != nil {
 		return nil, exception.CustomError{
@@ -388,7 +388,7 @@ func (d discoveryServiceImpl) GetDiscoveredServices(ctx context.Context, agentId
 			Params:  map[string]interface{}{"id": agentId}}
 	}
 
-	serviceList, err := d.agentClient.ListServices(ctx, namespace, workspaceId, agent.AgentUrl, discoveryServices)
+	serviceList, err := d.agentClient.ListServices(ctx, namespace, workspaceId, agent.AgentUrl, discoveryServices, discoveryLabels)
 	if err != nil {
 		return nil, fmt.Errorf("agent failed to list services: %v", err.Error())
 	}

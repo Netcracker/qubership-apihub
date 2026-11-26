@@ -12,7 +12,8 @@ type CreateSnapshotRequest struct {
 	Version           string   `json:"version"`
 	PreviousVersion   string   `json:"previousVersion"`
 	Services          []string `json:"services"`          //service ids selecting what goes into the snapshot
-	DiscoveryServices []string `json:"discoveryServices"` //service names selecting which discovery result is read, empty means the unscoped one
+	DiscoveryServices []string `json:"discoveryServices"` //service names selecting which discovery result is read
+	DiscoveryLabels   []string `json:"discoveryLabels"`   //labels selecting which discovery result is read
 	Status            string   `json:"status"`
 	BuilderId         string   `json:"builderId"`
 }
@@ -21,6 +22,7 @@ type CreateSnapshotDTO struct {
 	PreviousVersion   string
 	Services          []string
 	DiscoveryServices string //comma-separated, as sent to the agent
+	DiscoveryLabels   string //comma-separated, as sent to the agent
 	ClientBuild       bool
 	BuilderId         string
 	Promote           bool

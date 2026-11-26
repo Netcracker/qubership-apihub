@@ -69,8 +69,9 @@ func (d discoveryControllerImpl) ListDiscoveredServices(w http.ResponseWriter, r
 	agentId := getStringParam(r, "agentId")
 	workspaceId := getStringParam(r, "workspaceId")
 	services := r.URL.Query().Get("services")
+	labels := r.URL.Query().Get("labels")
 
-	serviceList, err := d.discoveryService.GetDiscoveredServices(secctx.MakeUserContext(r), agentId, namespace, workspaceId, services)
+	serviceList, err := d.discoveryService.GetDiscoveredServices(secctx.MakeUserContext(r), agentId, namespace, workspaceId, services, labels)
 	if err != nil {
 		d.responder.RespondWithError(w, "failed to list discovered services", err)
 		return

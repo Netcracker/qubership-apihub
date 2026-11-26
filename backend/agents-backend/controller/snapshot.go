@@ -142,6 +142,7 @@ func (s snapshotControllerImpl) CreateSnapshot(w http.ResponseWriter, r *http.Re
 		PreviousVersion:   req.PreviousVersion,
 		Services:          req.Services,
 		DiscoveryServices: strings.Join(req.DiscoveryServices, ","),
+		DiscoveryLabels:   strings.Join(req.DiscoveryLabels, ","),
 		ClientBuild:       clientBuild,
 		BuilderId:         req.BuilderId,
 		Promote:           promote,

@@ -77,7 +77,7 @@ func (c *cloudServiceImpl) runAllDiscoveryOneByOne(ctx secctx.SecurityContext, w
 
 	log.Infof("Clearing services cache")
 	for _, ns := range namespaces {
-		c.serviceListCache.clearResultsForNamespace(ns, workspaceId, nil)
+		c.serviceListCache.clearResultsForNamespace(ns, workspaceId, view.DiscoveryRequest{})
 	}
 
 	log.Infof("Namespaces to discover: %+v", namespaces)
@@ -108,7 +108,7 @@ func (c *cloudServiceImpl) waitForNamespace(ns string, workspaceId string) {
 		select {
 		case <-ticker.C:
 			log.Debugf("waitForNamespace %s check", ns)
-			servicesList := c.serviceListCache.GetServicesList(ns, workspaceId, nil)
+			servicesList := c.serviceListCache.GetServicesList(ns, workspaceId, view.DiscoveryRequest{})
 			status := servicesList.Status
 			if status == view.StatusRunning || status == view.StatusNone {
 				log.Debugf("waitForNamespace %s running", ns)
@@ -153,7 +153,7 @@ func (c *cloudServiceImpl) GetAllServicesList_deprecated(workspaceId string) vie
 	}
 	namespacesData := map[string]view.ServiceListResponse_deprecated{}
 	for _, ns := range namespaces {
-		servicesList := c.serviceListCache.GetServicesList(ns, workspaceId, nil)
+		servicesList := c.serviceListCache.GetServicesList(ns, workspaceId, view.DiscoveryRequest{})
 		servicesDeprecated := make([]view.Service_deprecated, len(servicesList.Services))
 		for i, svc := range servicesList.Services {
 			servicesDeprecated[i] = svc.ToDeprecated()
