@@ -68,6 +68,14 @@ Pass `schemaFormat` to create a Multi Format Schema; omit it for a plain schema.
 - Define `COMPARE_OPTIONS` constants at the top of the `describe` block.
 - Keep spec literals close to the test that uses them.
 - Name variables `before` / `after` (or domain-specific names) — not `spec1` / `spec2`.
+- Build scope-coverage fixtures from the specification's object model, not from fields already present in a
+  fixture. For specification extensions, inventory every extension-bearing object and nested occurrence before
+  compacting to one case per scope. Cover both parent objects and extension-bearing children, such as a Bindings
+  Object and its protocol binding entries.
+- Check container types before adding paths: a Tags Object is an array and a Reference Object does not allow
+  extensions, while each Tag Object entry does. Treat an object type reached through distinct root, component,
+  trait, or reply rule paths as separate candidate scopes; deduplicate only after checking their normalization
+  and compare traversal.
 
 ## Shared conventions (all spec types)
 

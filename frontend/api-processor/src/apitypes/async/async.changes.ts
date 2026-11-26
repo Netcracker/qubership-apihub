@@ -1,4 +1,4 @@
-import { calculateAsyncOperationId, isEmpty, isObject } from '../../utils'
+import { calculateAsyncOperationId, deduplicateDiffsByLocation, isEmpty, isObject } from '../../utils'
 import {
   aggregateDiffsWithRollup,
   apiDiff,
@@ -157,10 +157,11 @@ export const compareDocuments: DocumentsCompare = async (
           // Aggregated — subtree is exclusive to this apihub operation.
           // Own — subtree has siblings belonging to other apihub operations,
           // so rollup would leak their diffs.
-          operationDiffs = [
+          operationDiffs = deduplicateDiffsByLocation([
             ...extractAggregatedDiffs(message),              // leaf of this apihub operation
             ...extractOwnDiffs(operationObject),             // siblings: messages[]
             ...extractOwnDiffs(channel),                     // siblings: channel.messages (shared channels)
+            ...extractAggregatedDiffs(operationObject.traits),
             ...extractAggregatedDiffs(channel.servers),
             ...extractAggregatedDiffs(operationObject.tags),
             // exclusive-to-operation subtrees:
@@ -169,8 +170,7 @@ export const compareDocuments: DocumentsCompare = async (
             ...extractAggregatedDiffs(operationObject.bindings),
             ...extractAggregatedDiffs(operationObject.reply),
             ...extractExtensionDiffs(operationObject),
-            // traits are merged into operation's own properties by normalization,
-            // so trait diffs surface via extractOwnDiffs(operationObject) above.
+            // Normalization also merges traits into operation properties; location deduplication keeps one copy.
             // channel subtrees (shared uniformly across operations on the channel):
             ...extractAggregatedDiffs(channel.parameters),
             ...extractAggregatedDiffs(channel.externalDocs),
@@ -181,7 +181,7 @@ export const compareDocuments: DocumentsCompare = async (
             ...infoDiffs,
             ...idDiffs,
             ...rootExtensionDiffs,
-          ]
+          ])
         }
         if (operationAddedOrRemoved) {
           // Level 1: message added/removed within an existing operation (analogous to REST method within path)

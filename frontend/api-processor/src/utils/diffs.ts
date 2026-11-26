@@ -7,6 +7,25 @@ export function extractAggregatedDiffs(obj: unknown): Diff[] {
   return [...((obj as WithAggregatedDiffs<object> | undefined)?.[DIFFS_AGGREGATED_META_KEY] ?? [])]
 }
 
+export function deduplicateDiffsByLocation(diffs: Diff[]): Diff[] {
+  const seen = new Set<string>()
+  return diffs.filter(diff => {
+    const key = JSON.stringify([
+      diff.scope,
+      diff.action,
+      'beforeDeclarationPaths' in diff ? diff.beforeDeclarationPaths : [],
+      'afterDeclarationPaths' in diff ? diff.afterDeclarationPaths : [],
+      'beforeKey' in diff ? diff.beforeKey : undefined,
+      'afterKey' in diff ? diff.afterKey : undefined,
+    ])
+    if (seen.has(key)) {
+      return false
+    }
+    seen.add(key)
+    return true
+  })
+}
+
 export function extractAggregatedExtensionDiffs(obj: unknown, excludedExtensionNames: readonly string[] = []): Diff[] {
   return extractAggregatedDiffs(obj).filter(diff => {
     const beforePaths = 'beforeDeclarationPaths' in diff ? diff.beforeDeclarationPaths : []

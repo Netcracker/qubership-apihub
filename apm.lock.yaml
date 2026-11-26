@@ -1,5 +1,5 @@
 lockfile_version: '1'
-generated_at: '2026-11-23T11:20:21.514624+00:00'
+generated_at: '2026-11-26T07:22:48.194784+00:00'
 apm_version: 0.35.0
 dependencies:
 - repo_url: _local/advanced-verification
@@ -208,13 +208,13 @@ dependencies:
   - .claude/skills/api-diff-testing/SKILL.md
   - .cursor/rules/api-diff-testing.mdc
   deployed_file_hashes:
-    .agents/skills/api-diff-testing/SKILL.md: sha256:49bc73ce484bc7bdbdc1589b77e42e4d8305f6b860c057facfa7cba02c2c78e8
+    .agents/skills/api-diff-testing/SKILL.md: sha256:f0a0b09085feca3a4706f5a3a3ffafefbca4172766c565fea8822c1922e56b36
     .claude/rules/api-diff-testing.md: sha256:17ecebc22a02f2ec71488182bfc1f7a6bff20c77afe25b5a87ff27c797194abf
-    .claude/skills/api-diff-testing/SKILL.md: sha256:49bc73ce484bc7bdbdc1589b77e42e4d8305f6b860c057facfa7cba02c2c78e8
+    .claude/skills/api-diff-testing/SKILL.md: sha256:f0a0b09085feca3a4706f5a3a3ffafefbca4172766c565fea8822c1922e56b36
     .cursor/rules/api-diff-testing.mdc: sha256:59ceee6509d4ff56780ce923c14d54c4021ce3e7e96b67215f86e283ad40b314
   source: local
   local_path: ./frontend/api-diff/agent-packages/api-diff-testing
-  content_hash: sha256:c40b48d7e79897236469a8c10e69c94a85437395e1af5ff38d5c858b490c8c57
+  content_hash: sha256:2a133a06aa3fe43ecb15947bb1b57084a0bede1a394cb4c57dabc5ed390ff72a
 - repo_url: _local/api-doc-viewer-authoring
   name: api-doc-viewer-authoring
   version: 1.0.0
@@ -2469,7 +2469,7 @@ deployments:
   owners:
   - ./frontend/api-diff/agent-packages/api-diff-testing
   active_owner: ./frontend/api-diff/agent-packages/api-diff-testing
-  content_hash: sha256:49bc73ce484bc7bdbdc1589b77e42e4d8305f6b860c057facfa7cba02c2c78e8
+  content_hash: sha256:f0a0b09085feca3a4706f5a3a3ffafefbca4172766c565fea8822c1922e56b36
 - kind: project-relative
   target: claude
   value: .claude/skills/api-doc-viewer-authoring
@@ -4350,7 +4350,7 @@ deployments:
   owners:
   - ./frontend/api-diff/agent-packages/api-diff-testing
   active_owner: ./frontend/api-diff/agent-packages/api-diff-testing
-  content_hash: sha256:49bc73ce484bc7bdbdc1589b77e42e4d8305f6b860c057facfa7cba02c2c78e8
+  content_hash: sha256:f0a0b09085feca3a4706f5a3a3ffafefbca4172766c565fea8822c1922e56b36
 - kind: project-relative
   target: cursor
   value: .agents/skills/api-doc-viewer-authoring
