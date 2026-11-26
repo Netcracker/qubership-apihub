@@ -11,6 +11,7 @@ import type { ColumnModel } from '@netcracker/qubership-apihub-ui-shared/hooks/t
 import { ContractsEntityListTable } from '@portal/routes/root/PortalPage/VersionPage/VersionContractsSubPage/ContractsEntityListTable'
 import { formatMemberCounts, JAVA_CLASSES_EMPTY_MESSAGE } from './javaApi'
 import { JavaClassTitleWithMeta } from './JavaClassTitleWithMeta'
+import { useIncrementalList } from './useIncrementalList'
 
 const JAVA_TYPES_COLUMN_ID = 'java-types'
 const MEMBERS_COLUMN_ID = 'members'
@@ -28,6 +29,7 @@ type JavaClassListViewProps = Readonly<{
 
 export const JavaClassListView: FC<JavaClassListViewProps> = memo<JavaClassListViewProps>(
   ({ classes, prepareLinkFn, isLoading = false }) => {
+    const { visibleItems, fetchNextPage, hasNextPage, isNextPageFetching } = useIncrementalList(classes)
     const columns = useMemo((): ColumnDef<JavaClassListViewRow>[] => [
       {
         id: JAVA_TYPES_COLUMN_ID,
@@ -51,7 +53,7 @@ export const JavaClassListView: FC<JavaClassListViewProps> = memo<JavaClassListV
       },
     ], [prepareLinkFn])
 
-    const data: JavaClassListViewRow[] = useMemo(() => classes.map(javaClass => ({ javaClass })), [classes])
+    const data: JavaClassListViewRow[] = useMemo(() => visibleItems.map(javaClass => ({ javaClass })), [visibleItems])
     const resolveRowId = useCallback((row: JavaClassListViewRow) => row.javaClass.className, [])
 
     return (
@@ -62,6 +64,9 @@ export const JavaClassListView: FC<JavaClassListViewProps> = memo<JavaClassListV
         columnModels={COLUMN_MODELS}
         emptyMessage={JAVA_CLASSES_EMPTY_MESSAGE}
         isLoading={isLoading}
+        fetchNextPage={fetchNextPage}
+        hasNextPage={hasNextPage}
+        isNextPageFetching={isNextPageFetching}
       />
     )
   },

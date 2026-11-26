@@ -1,7 +1,7 @@
 import MenuOutlinedIcon from '@mui/icons-material/MenuOutlined'
 import { Alert } from '@mui/material'
 import type { ResizeCallback } from 're-resizable'
-import { type FC, memo, useCallback, useEffect, useRef, useState } from 'react'
+import { type FC, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
 import type { JavaApiClassListItem } from '@netcracker/qubership-apihub-api-doc-viewer'
@@ -33,6 +33,7 @@ const VIEW_OPTIONS = [
   { icon: <SegmentItemIcon />, value: DETAILED_OPERATIONS_VIEW_MODE, tooltip: 'Detailed view' },
 ]
 const SUBPAGE_MARGIN = 24
+const EMPTY_CLASSES: ReadonlyArray<JavaApiClassListItem> = []
 
 export const LibraryReferenceTab: FC<Readonly<{ version: LibraryVersion }>> = memo(({ version }) => {
   const [searchValue, setSearchValue] = useState('')
@@ -55,7 +56,10 @@ export const LibraryReferenceTab: FC<Readonly<{ version: LibraryVersion }>> = me
   // hides the type in the URL would clear itself: the type stays in the URL while the filters change.
   const [revealedName, setRevealedName] = useState<string | null>(null)
   const targetName = selectedName !== revealedName ? selectedName : null
-  const { classes, resetFilters } = getJavaReferenceClasses(data?.classes ?? [], searchValue, javaType, targetName)
+  const { classes, resetFilters } = useMemo(
+    () => getJavaReferenceClasses(data?.classes ?? EMPTY_CLASSES, searchValue, javaType, targetName),
+    [data?.classes, searchValue, javaType, targetName],
+  )
 
   useEffect(() => {
     if (data && !resetFilters) setRevealedName(selectedName)

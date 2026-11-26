@@ -10,6 +10,7 @@ import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import { JAVA_CLASSES_EMPTY_MESSAGE } from './javaApi'
 import { JavaClassPreview } from './JavaClassPreview'
 import { JavaClassTitleWithMeta } from './JavaClassTitleWithMeta'
+import { useIncrementalList } from './useIncrementalList'
 import { useJavaClassNavigationLinkBuilder } from './useJavaClassNavigationLinkBuilder'
 import { useSelectedJavaClass } from './useSelectedJavaClass'
 
@@ -33,6 +34,9 @@ export const JavaClassListWithPreview: FC<JavaClassListWithPreviewProps> = memo<
   maxPreviewWidth,
 }) => {
   const [selectedClass, selectClass] = useSelectedJavaClass(classes)
+  const { visibleItems, fetchNextPage, hasNextPage, isNextPageFetching } = useIncrementalList(classes, {
+    keepVisibleIndex: selectedClass ? classes.indexOf(selectedClass) : -1,
+  })
   const navigationLinkBuilder = useJavaClassNavigationLinkBuilder()
   const renderTitle = useCallback(
     (javaClass: JavaApiClassListItem, link?: Partial<Path>) => (
@@ -44,7 +48,10 @@ export const JavaClassListWithPreview: FC<JavaClassListWithPreviewProps> = memo<
   )
   return (
     <MetaClickableListWithPreview<JavaApiClassListItem>
-      items={classes}
+      items={visibleItems}
+      fetchNextPage={fetchNextPage}
+      hasNextPage={hasNextPage}
+      isNextPageFetching={isNextPageFetching}
       getItemKey={getClassKey}
       renderTitle={renderTitle}
       prepareLinkFn={prepareLinkFn}
