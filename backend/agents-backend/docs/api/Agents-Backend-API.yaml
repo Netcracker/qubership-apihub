@@ -773,8 +773,7 @@ paths:
                     discovery result that was never produced, whose status is `none`.
 
                     The list is treated as a set: order and duplicates do not affect which result
-                    is addressed. Snapshot creation requires the agent to echo `requestedServices`
-                    when this list is non-empty and fails if an older agent omits it.
+                    is addressed.
                   example:
                     - apihub-be
                     - apihub-fe
@@ -789,8 +788,7 @@ paths:
                     or leave both empty to use the default (unscoped) whole-namespace result.
 
                     The list is treated as a set: order and duplicates do not affect which result is
-                    addressed. Snapshot creation requires the agent to echo `requestedLabels` when
-                    this list is non-empty and fails if an older agent omits it.
+                    addressed.
                   example:
                     - app.kubernetes.io/part-of=abc
                     - tier=backend

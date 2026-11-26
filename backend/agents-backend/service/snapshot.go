@@ -231,12 +231,6 @@ func (s *snapshotServiceImpl) CreateSnapshot(ctx context.Context, namespace stri
 		log.Infof("Create snapshot failed: incorrect discovery status %s for namespace %s", serviceListResponse.Status, namespace)
 		return nil, fmt.Errorf("unable to create snaphost since service discovery status is %s", serviceListResponse.Status)
 	}
-	if snapshotDTO.DiscoveryServices != "" && len(serviceListResponse.RequestedServices) == 0 {
-		return nil, fmt.Errorf("unable to create snapshot: agent did not honour requested discoveryServices scope")
-	}
-	if snapshotDTO.DiscoveryLabels != "" && len(serviceListResponse.RequestedLabels) == 0 {
-		return nil, fmt.Errorf("unable to create snapshot: agent did not honour requested discoveryLabels scope")
-	}
 	serviceListResponse.Services = filterService(serviceListResponse.Services, snapshotDTO.Services, snapshotDTO.Promote)
 	if len(serviceListResponse.Services) == 0 {
 		log.Infof("Create snapshot failed: no (selected) services in namespace %s", namespace)
