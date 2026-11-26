@@ -125,12 +125,12 @@ export function setPreviousLibraryVersion(query: URLSearchParams, previous?: Pre
 }
 
 export function toChangesSummary(counts: LibraryChangesSummaryDto['changeCounts']): JavaChangesSummary {
-  // TODO(libraries-backend): The service leaves out zero counts and mixes change types with severities in
-  // changeCounts; default missing severities to 0 until it returns every severity key.
+  // TODO(libraries-backend): The service leaves out zero counts, the whole changeCounts of a comparison without
+  // changes, and mixes change types with severities; default missing severities to 0 until it returns every key.
   return {
-    [BREAKING_CHANGE_SEVERITY]: counts.breaking ?? 0,
-    [NON_BREAKING_CHANGE_SEVERITY]: counts['non-breaking'] ?? 0,
-    [ANNOTATION_CHANGE_SEVERITY]: counts.annotation ?? 0,
+    [BREAKING_CHANGE_SEVERITY]: counts?.breaking ?? 0,
+    [NON_BREAKING_CHANGE_SEVERITY]: counts?.['non-breaking'] ?? 0,
+    [ANNOTATION_CHANGE_SEVERITY]: counts?.annotation ?? 0,
   }
 }
 

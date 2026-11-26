@@ -15,4 +15,8 @@ describe('toChangesSummary', () => {
       annotation: 0,
     })
   })
+
+  it('returns zero counts for a comparison without changes, which has no changeCounts', () => {
+    expect(toChangesSummary(undefined)).toEqual({ breaking: 0, 'non-breaking': 0, annotation: 0 })
+  })
 })

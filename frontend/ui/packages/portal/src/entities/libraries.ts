@@ -169,11 +169,13 @@ export type LibraryFieldDto = Readonly<{
   signature: string
 }>
 
-export type LibraryClassDetailsDto = LibraryClassDto & Readonly<{
-  methods: LibraryMethodDto[]
-  constructors: LibraryMethodDto[]
-  fields: LibraryFieldDto[]
-}>
+export type LibraryClassDetailsDto =
+  & LibraryClassDto
+  & Readonly<{
+    methods: LibraryMethodDto[]
+    constructors: LibraryMethodDto[]
+    fields: LibraryFieldDto[]
+  }>
 
 export type LibraryChangeDto = JavaApiChangeRow
 
@@ -183,7 +185,8 @@ export type LibraryChangesSummaryDto = Readonly<{
   version: string
   previousLibraryId: Key
   previousVersion: string
-  changeCounts: Readonly<
+  // The service leaves the field out when the comparison found no changes (noContent: true)
+  changeCounts?: Readonly<
     Partial<
       Record<'breaking' | 'non-breaking' | 'annotation' | 'added' | 'removed' | 'changed' | 'deprecated', number>
     >
