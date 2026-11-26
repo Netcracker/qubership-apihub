@@ -234,7 +234,10 @@ export const openApiSchemaRules = (options: OpenApi3SchemaRulesOptions): Compare
         ],
         description: diffDescription(resolveSchemaDescriptionTemplates('nullable status')),
       },
-      '/discriminator': { $: allUnclassified },
+      '/discriminator': {
+        $: allUnclassified,
+        ...openApiSpecificationExtensionRulesFunction(),
+      },
       '/example': { $: allAnnotation, description: diffDescription(resolveSchemaDescriptionTemplates('example')) },
       '/externalDocs': {
         $: allAnnotation,

@@ -141,6 +141,7 @@ const openApiJsonSchemaExtensionRules = (): NormalizationRules => ({
         merge: resolvers.last, //todo need check
       },
     },
+    ...openApiSpecificationExtensionRules,
   },
   ...openApiExternalDocsRules,
   ...openApiSpecificationExtensionRules,

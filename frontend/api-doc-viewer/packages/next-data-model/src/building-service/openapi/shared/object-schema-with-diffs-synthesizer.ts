@@ -1,4 +1,4 @@
-import { Diff, DiffAction, isDiffReplace } from "@netcracker/qubership-apihub-api-diff"
+import { Diff, DiffAction, isDiffRename, isDiffReplace } from "@netcracker/qubership-apihub-api-diff"
 import { isSpecificationExtensionKey } from "../../../model/specification-extension-key"
 import { OpenApiSynthesizedObjectSchema } from "../../../model/openapi/types/node-value"
 import { DiffsRecord, isNonEmptyString, isObject, isString } from "../../../utilities"
@@ -168,12 +168,21 @@ export class OpenApiObjectSchemaWithDiffsSynthesizer extends OpenApiObjectSchema
       const mediaTypeSchemaField = this.reader.readField(mediaTypeObject, 'schema', this.reader.childContext(mediaTypeField))
       const causes = mediaTypeSchemaField.diff ?? mediaTypeField.diff ?? contentField.diff
       return {
-        mediaType,
+        mediaType: this.resolveSideMediaType(mediaType, mediaTypeField.diff, side),
         field: { ...mediaTypeSchemaField, diff: causes },
         merged: isObject(mediaTypeObject) ? mediaTypeObject.schema : undefined,
       }
     }
     return undefined
+  }
+
+  /** A renamed media type (`apiDiff` maps `content` entries by media type): the side's own key. */
+  private resolveSideMediaType(mediaType: string, diff: Diff | undefined, side: DiffSide): string {
+    if (!diff || !isDiffRename(diff)) {
+      return mediaType
+    }
+    const key = side === 'before' ? diff.beforeKey : diff.afterKey
+    return isString(key) ? key : mediaType
   }
 
   /** Same schema object on both sides and not replaced as a whole: inner diffs pass through. */

@@ -1,4 +1,4 @@
-import { apiDiff, DiffAction } from '../src'
+import { apiDiff, DiffAction, unclassified } from '../src'
 import { TEST_DIFF_FLAG, TEST_INLINE_REF_FLAG, TEST_SYNTHETIC_TITLE_FLAG } from './helper'
 import { diffsMatcher } from './helper/matchers'
 
@@ -574,5 +574,63 @@ describe('JSON schema changes', () => {
       expect(indexesInMergedResult.filter(value => value !== objectLocation)).toEqual(indexesInInlineDiff)
     })
 
+  })
+
+  describe('specification extensions', () => {
+    const extensionName = 'x-custom-extension'
+    const schema = {
+      $schema: 'http://json-schema.org/draft-07/schema#',
+      type: 'object',
+      properties: { child: { type: 'array', items: { type: 'object' } } },
+      patternProperties: { '^property-': { type: 'object' } },
+      additionalProperties: { type: 'object' },
+      propertyNames: { type: 'string' },
+      allOf: [{ type: 'object' }],
+      anyOf: [{ type: 'object' }],
+      oneOf: [{ type: 'object' }],
+      not: { type: 'object' },
+      definitions: { definition: { type: 'object' } },
+    }
+    const paths: [string, (string | number)[]][] = [
+      ['root', []],
+      ['property schema', ['properties', 'child']],
+      ['pattern property schema', ['patternProperties', '^property-']],
+      ['additional properties schema', ['additionalProperties']],
+      ['property names schema', ['propertyNames']],
+      ['items schema', ['properties', 'child', 'items']],
+      ['allOf variant', ['allOf', 0]],
+      ['anyOf variant', ['anyOf', 0]],
+      ['oneOf variant', ['oneOf', 0]],
+      ['not schema', ['not']],
+      ['definition', ['definitions', 'definition']],
+    ]
+
+    const withExtension = (path: (string | number)[], value: string) => {
+      const clone = structuredClone(schema) as Record<PropertyKey, unknown>
+      let current = clone
+      for (const key of path) {
+        current = current[key] as Record<PropertyKey, unknown>
+      }
+      current[extensionName] = { nested: value }
+      return clone
+    }
+
+    test.each(paths)('reports a nested extension change in %s', (_name, path) => {
+      const before = withExtension(path, 'before')
+      const after = withExtension(path, 'after')
+
+      const { diffs } = apiDiff(before, after, { unify: true, validate: true })
+
+      expect(diffs).toEqual(diffsMatcher([
+        expect.objectContaining({
+          action: DiffAction.replace,
+          type: unclassified,
+          beforeValue: 'before',
+          afterValue: 'after',
+          beforeDeclarationPaths: [[...path, extensionName, 'nested']],
+          afterDeclarationPaths: [[...path, extensionName, 'nested']],
+        }),
+      ]))
+    })
   })
 })

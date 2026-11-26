@@ -35,8 +35,10 @@ import { apiKindReclassificationRule, CUSTOM_SCOPE_ELEMENT_API_KIND } from '../.
 import { v3 as AsyncAPIV3 } from '@asyncapi/parser/esm/spec-types'
 import {
   extractAggregatedDiffs,
+  extractExtensionDiffs,
   extractInfoDiffs,
   extractOwnDiffs,
+  extractOwnExtensionDiffs,
   extractOwnPropertyDiff,
   getAsyncMessageId,
 } from './async.utils'
@@ -108,6 +110,7 @@ export const compareDocuments: DocumentsCompare = async (
   const asyncApiVersionDiffs = extractOwnPropertyDiff(merged, 'asyncapi')
   const infoDiffs = extractInfoDiffs(merged)
   const idDiffs = extractOwnPropertyDiff(merged, 'id')
+  const rootExtensionDiffs = [...extractOwnExtensionDiffs(merged), ...extractExtensionDiffs(merged)]
   // Note: defaultContentType changes are handled by normalization inside apiDiff.
   // Messages without explicit contentType inherit from defaultContentType during normalization,
   // so changes to defaultContentType automatically appear in the message's aggregated diffs.
@@ -165,6 +168,7 @@ export const compareDocuments: DocumentsCompare = async (
             ...extractAggregatedDiffs(operationObject.externalDocs),
             ...extractAggregatedDiffs(operationObject.bindings),
             ...extractAggregatedDiffs(operationObject.reply),
+            ...extractExtensionDiffs(operationObject),
             // traits are merged into operation's own properties by normalization,
             // so trait diffs surface via extractOwnDiffs(operationObject) above.
             // channel subtrees (shared uniformly across operations on the channel):
@@ -172,9 +176,11 @@ export const compareDocuments: DocumentsCompare = async (
             ...extractAggregatedDiffs(channel.externalDocs),
             ...extractAggregatedDiffs(channel.bindings),
             ...extractAggregatedDiffs(channel.tags),
+            ...extractExtensionDiffs(channel),
             ...asyncApiVersionDiffs,
             ...infoDiffs,
             ...idDiffs,
+            ...rootExtensionDiffs,
           ]
         }
         if (operationAddedOrRemoved) {

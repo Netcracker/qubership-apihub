@@ -28,13 +28,21 @@ import {
   FIRST_REFERENCE_KEY_PROPERTY,
   INLINE_REFS_FLAG,
 } from '../../consts'
-import { WithAggregatedDiffs, WithDiffMetaRecord } from '../../types'
-import { Diff, DIFF_META_KEY, DIFFS_AGGREGATED_META_KEY } from '@netcracker/qubership-apihub-api-diff'
+import { WithDiffMetaRecord } from '../../types'
+import { Diff, DIFF_META_KEY } from '@netcracker/qubership-apihub-api-diff'
 
 import { getCustomTags } from '../../utils/apihubSpecificationExtensions'
+import { extractAggregatedDiffs, extractOwnPropertyDiff } from '../../utils/diffs'
 
 // Re-export shared utilities
 export { dump, getCustomTags, resolveApiAudience } from '../../utils/apihubSpecificationExtensions'
+export {
+  extractAggregatedDiffs,
+  extractExtensionDiffs,
+  extractOwnDiffs,
+  extractOwnExtensionDiffs,
+  extractOwnPropertyDiff,
+} from '../../utils/diffs'
 
 /**
  * Extracts protocol from AsyncAPI document servers or channel bindings
@@ -360,32 +368,6 @@ export const matchMessageRefsByOperations = (
   }
 
   return matchedMessageRefsByOperation
-}
-
-/**
- * Aggregated diffs rolled up into the given object's subtree.
- * Returns empty array if the object is nullish or carries no aggregated diffs.
- */
-export function extractAggregatedDiffs(obj: unknown): Diff[] {
-  return [...((obj as WithAggregatedDiffs<object> | undefined)?.[DIFFS_AGGREGATED_META_KEY] ?? [])]
-}
-
-/**
- * Point diffs on the object's direct properties (not inside nested subtrees).
- * For an operation: action, title, summary, etc.
- * For a channel: address, title, description, etc.
- */
-export function extractOwnDiffs(obj: object): Diff[] {
-  const meta = (obj as unknown as WithDiffMetaRecord<object>)[DIFF_META_KEY]
-  return meta ? Object.values(meta) : []
-}
-
-/**
- * Point diff on a single named property of the object (if present).
- */
-export function extractOwnPropertyDiff(obj: object, property: string): Diff[] {
-  const diff = (obj as unknown as WithDiffMetaRecord<object>)[DIFF_META_KEY]?.[property]
-  return diff ? [diff] : []
 }
 
 export function extractInfoDiffs(doc: AsyncAPIV3.AsyncAPIObject): Diff[] {

@@ -181,6 +181,14 @@ describe('AsyncAPI 3.0 Changelog tests', () => {
         changedOperationMatcher('operation1-message1', 'operation1-message1'),
       ]))
     })
+
+    test('should report changed operation extension', async () => {
+      const result = await buildChangelogPackage('asyncapi-changes/operation/change-extension')
+      expectChangesSummary(result, { [UNCLASSIFIED_CHANGE_TYPE]: 3 }, ASYNCAPI_API_TYPE)
+      expect(result).toEqual(operationChangesMatcher([
+        changedOperationMatcher('sendOperation-TestMessage', 'sendOperation-TestMessage'),
+      ]))
+    })
   })
 
   describe('Channels tests', () => {
@@ -267,6 +275,14 @@ describe('AsyncAPI 3.0 Changelog tests', () => {
       const result = await buildChangelogPackage('asyncapi-changes/channel/change-bindings')
       expect(result).toEqual(operationChangesMatcher([
         changedOperationMatcher('operation1-message1', 'operation1-message1'),
+      ]))
+    })
+
+    test('should report changed channel extension', async () => {
+      const result = await buildChangelogPackage('asyncapi-changes/channel/change-extension')
+      expectChangesSummary(result, { [UNCLASSIFIED_CHANGE_TYPE]: 3 }, ASYNCAPI_API_TYPE)
+      expect(result).toEqual(operationChangesMatcher([
+        changedOperationMatcher('sendOperation-TestMessage', 'sendOperation-TestMessage'),
       ]))
     })
 
