@@ -5,10 +5,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"net/http"
+	"net/http/httptest"
 	"reflect"
 	"strings"
 	"testing"
 
+	"github.com/Netcracker/qubership-apihub/backend/api-linter-service/client"
 	"github.com/Netcracker/qubership-apihub/backend/api-linter-service/config"
 	"github.com/Netcracker/qubership-apihub/backend/api-linter-service/entity"
 	"github.com/Netcracker/qubership-apihub/backend/api-linter-service/exception"
@@ -112,7 +116,6 @@ func TestLintOperationForDoc(t *testing.T) {
 func TestLintOperationForDocRetries(t *testing.T) {
 	const operationData = `{"paths":{"/pets":{"get":{"description":"List pets"}}}}`
 	issue := view.AiValidationIssue{Path: []string{"paths", "/pets", "get", "description"}, Code: "vague", Severity: "warning", Message: "m"}
-	const modelOutputKey = "sk-0000000000000000"
 	tests := []struct {
 		name         string
 		retries      int
@@ -147,9 +150,9 @@ func TestLintOperationForDocRetries(t *testing.T) {
 			wantErr:     errContextLength,
 		},
 		{
-			name:         "malformed output is retried and its secret is not logged",
+			name:         "malformed output is retried",
 			retries:      2,
-			errs:         []error{fmt.Errorf("%w (content prefix=%q)", errMalformedOutput, modelOutputKey)},
+			errs:         []error{fmt.Errorf("%w (content=%q)", errMalformedOutput, "not json")},
 			wantClasses:  []entity.AiRequestErrorClass{entity.AiRequestErrorClassValidation, ""},
 			wantWarnings: 1,
 		},
@@ -209,9 +212,6 @@ func TestLintOperationForDocRetries(t *testing.T) {
 				if entry.Level == log.WarnLevel && strings.HasPrefix(entry.Message, "AI lint of operation "+testLintOperationId) {
 					warnings++
 				}
-				if strings.Contains(entry.Message, modelOutputKey) {
-					t.Errorf("expected the secret to be redacted in the log, got %q", entry.Message)
-				}
 			}
 			if warnings != tt.wantWarnings {
 				t.Fatalf("expected %d warnings for failed attempts, got %d", tt.wantWarnings, warnings)
@@ -227,6 +227,70 @@ func TestLintOperationForDocRetries(t *testing.T) {
 			}
 			if wantText := fmt.Sprintf("still fails after %d retries", tt.retries); strings.Contains(err.Error(), wantText) != tt.wantRetries {
 				t.Fatalf("expected %q in the error only when retries are exhausted, got %v", wantText, err)
+			}
+		})
+	}
+}
+
+func TestNewAiOasExecutorSelectsProviderClient(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadGateway)
+		_, _ = io.WriteString(w, `{"error":{}}`)
+	}))
+	t.Cleanup(server.Close)
+
+	makeSysInfo := func(enabled bool, provider config.AIProvider, model string) SystemInfoService {
+		return &systemInfoServiceImpl{config: config.Config{Linters: config.LintersConfig{AI: config.AILinterConfig{
+			Enabled:  enabled,
+			Provider: provider,
+			OpenAI: config.OpenAIConfig{
+				APIKey:         "test-key",
+				APIProxy:       server.URL,
+				Model:          model,
+				RateLimitRPS:   100,
+				RateLimitBurst: 100,
+				MaxRetries:     0,
+			},
+			Lint:          testLintConfig,
+			Deduplication: config.AIDeduplicationConfig{CriteriaPrompt: "c", RequestTokenBudget: 4000, MaxCompletionTokens: 1000},
+		}}}}
+	}
+
+	tests := []struct {
+		name           string
+		enabled        bool
+		provider       config.AIProvider
+		model          string
+		wantModel      string
+		wantInitErr    string
+		wantCallErrSub string
+	}{
+		{name: "openai provider selects OpenAI client", enabled: true, provider: config.AIProviderOpenAI, model: " gpt-5 ", wantModel: "gpt-5", wantCallErrSub: "OpenAI API error: 502 Bad Gateway"},
+		{name: "openai provider uses default model when unset", enabled: true, provider: config.AIProviderOpenAI, model: "", wantModel: client.DefaultOpenAIModel, wantCallErrSub: "OpenAI API error: 502 Bad Gateway"},
+		{name: "litellm provider selects LiteLLM client", enabled: true, provider: config.AIProviderLiteLLM, model: " openai/gpt-5 ", wantModel: "openai/gpt-5", wantCallErrSub: "LiteLLM API error: 502 Bad Gateway"},
+		{name: "disabled AI linter uses stub client", enabled: false, provider: config.AIProviderOpenAI, model: "gpt-5", wantModel: "", wantCallErrSub: "LLM client is not configured"},
+		{name: "unsupported provider returns error", enabled: true, provider: config.AIProvider("unknown"), model: "gpt-5", wantInitErr: "unsupported AI linter provider"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			exec, err := NewAiOasExecutor(makeSysInfo(tt.enabled, tt.provider, tt.model))
+			if tt.wantInitErr != "" {
+				if err == nil || !strings.Contains(err.Error(), tt.wantInitErr) {
+					t.Fatalf("expected init error containing %q, got %v", tt.wantInitErr, err)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("unexpected init error: %v", err)
+			}
+			if exec.GetModel() != tt.wantModel {
+				t.Fatalf("expected model %q, got %q", tt.wantModel, exec.GetModel())
+			}
+			_, _, err = exec.LintOperationForDoc(context.Background(), testLintOperationId, `{"paths":{}}`, view.AiRuleset{Prompt: "p"})
+			if err == nil || !strings.Contains(err.Error(), tt.wantCallErrSub) {
+				t.Fatalf("expected call error containing %q, got %v", tt.wantCallErrSub, err)
 			}
 		})
 	}

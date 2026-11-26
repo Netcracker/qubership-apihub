@@ -52,11 +52,8 @@ var (
 	}}}
 
 	errUntyped = errors.New("any untyped error")
-
-	unlimitedRate = rate.NewLimiter(rate.Inf, 0)
 )
 
-// completionBody builds a chat completion response; a nil usage omits the field.
 func completionBody(finishReason, content, refusal string, usage map[string]any) string {
 	message := map[string]any{"role": "assistant", "content": content, "refusal": nil}
 	if refusal != "" {
@@ -90,7 +87,6 @@ func newTestClient(t *testing.T, handler http.HandlerFunc, maxConcurrent int, ma
 	return cl
 }
 
-// respond answers the first failing requests with failStatus and the rest with status and body; it keeps the last request body.
 func respond(t *testing.T, failing int32, failStatus int, status int, body string, captured *map[string]any) http.HandlerFunc {
 	var requests atomic.Int32
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -128,6 +124,7 @@ func TestDeduplicateIssuesResponses(t *testing.T) {
 		{name: "pair without 'keptId'", body: completionBody("stop", `{"duplicates":[{"duplicateId":1}]}`, "", fullUsage), wantErr: aiError(exception.AiMalformedOutput, ""), wantUsage: wantFullUsage, wantFinish: "stop"},
 		{name: "length with content", body: completionBody("length", `{"duplicates":[`, "", fullUsage), wantErr: aiError(exception.AiOutputLengthExceeded, ""), wantUsage: wantFullUsage, wantFinish: "length"},
 		{name: "length without content", body: completionBody("length", "", "", fullUsage), wantErr: aiError(exception.AiOutputLengthExceeded, ""), wantUsage: wantFullUsage, wantFinish: "length"},
+		{name: "empty finish reason is rejected", body: completionBody("", `{"duplicates":[]}`, "", fullUsage), wantErr: errUntyped, wantUsage: wantFullUsage},
 		{name: "refusal", body: completionBody("stop", "", "I cannot help with that", fullUsage), wantErr: aiError(exception.AiRequestRefused, ""), wantUsage: wantFullUsage, wantFinish: "stop"},
 		{name: "malformed output", body: completionBody("stop", "not json", "", fullUsage), wantErr: aiError(exception.AiMalformedOutput, ""), wantUsage: wantFullUsage, wantFinish: "stop"},
 		{name: "empty choices", body: `{"id":"x","object":"chat.completion","created":1,"model":"test-model","choices":[]}`, wantErr: aiError(exception.AiMalformedOutput, "")},
@@ -138,10 +135,10 @@ func TestDeduplicateIssuesResponses(t *testing.T) {
 			wantErr: aiError(exception.AiContextLengthExceeded, ""),
 		},
 		{
-			name:    "LiteLLM context window error",
+			name:    "gateway context window message without OpenAI code stays untyped",
 			status:  http.StatusBadRequest,
 			body:    `{"error":{"message":"litellm.ContextWindowExceededError: Input tokens exceed the configured limit of 272000 tokens","type":null,"param":null,"code":"400"}}`,
-			wantErr: aiError(exception.AiContextLengthExceeded, ""),
+			wantErr: errUntyped,
 		},
 		{
 			name:    "other bad request",
@@ -252,8 +249,9 @@ func TestTrackAttemptsLogsCancelledAttemptAtDebug(t *testing.T) {
 	ctx, cancel := context.WithCancelCause(context.Background())
 	defer cancel(nil)
 	attempts := 0
+	cl := &oaiClientImpl{provider: llmProvider{name: "OpenAI"}, rateLimiter: rate.NewLimiter(rate.Inf, 0)}
 
-	_, err := trackAttempts("schema", unlimitedRate, &attempts)(httptest.NewRequestWithContext(ctx, http.MethodPost, "/", nil), func(*http.Request) (*http.Response, error) {
+	_, err := cl.trackAttempts("schema", &attempts)(httptest.NewRequestWithContext(ctx, http.MethodPost, "/", nil), func(*http.Request) (*http.Response, error) {
 		cancel(errSibling)
 		return nil, errSibling
 	})
@@ -277,7 +275,7 @@ func TestTrackAttemptsDoesNotDispatchCancelledAttempt(t *testing.T) {
 	}{
 		{
 			name:    "context cancelled before the attempt",
-			limiter: unlimitedRate,
+			limiter: rate.NewLimiter(rate.Inf, 0),
 			newContext: func(*testing.T) context.Context {
 				ctx, cancel := context.WithCancel(context.Background())
 				cancel()
@@ -304,8 +302,9 @@ func TestTrackAttemptsDoesNotDispatchCancelledAttempt(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			attempts := 0
+			cl := &oaiClientImpl{provider: llmProvider{name: "OpenAI"}, rateLimiter: tt.limiter}
 
-			_, err := trackAttempts("schema", tt.limiter, &attempts)(httptest.NewRequestWithContext(tt.newContext(t), http.MethodPost, "/", nil), func(*http.Request) (*http.Response, error) {
+			_, err := cl.trackAttempts("schema", &attempts)(httptest.NewRequestWithContext(tt.newContext(t), http.MethodPost, "/", nil), func(*http.Request) (*http.Response, error) {
 				t.Error("expected the attempt not to be dispatched")
 				return nil, nil
 			})
@@ -314,21 +313,6 @@ func TestTrackAttemptsDoesNotDispatchCancelledAttempt(t *testing.T) {
 				t.Fatalf("expected the context error and no attempts, got %d, %v", attempts, err)
 			}
 		})
-	}
-}
-
-func TestSanitiseErrorText(t *testing.T) {
-	const apiKey = "sk-0000000000000000"
-	if got := SanitiseErrorText("Bearer abc.def rejected for key " + apiKey); got != "Bearer *** rejected for key ***" {
-		t.Errorf("expected the secrets to be redacted, got %q", got)
-	}
-	if text := strings.Repeat("x", maxStoredErrorTextBytes); SanitiseErrorText(text) != text {
-		t.Errorf("expected a text of the maximum length to stay unchanged")
-	}
-	// A two-byte rune across the limit is dropped whole.
-	long := strings.Repeat("x", maxStoredErrorTextBytes-1) + "é" + strings.Repeat("y", maxStoredErrorTextBytes)
-	if got := SanitiseErrorText(long); got != strings.Repeat("x", maxStoredErrorTextBytes-1)+"..." {
-		t.Errorf("expected the text cut at a rune boundary and marked, got %d bytes ending with %q", len(got), got[len(got)-10:])
 	}
 }
 
@@ -390,7 +374,7 @@ func TestZeroMaxConcurrentRequestsIsUnbounded(t *testing.T) {
 		}()
 	}
 	for range 2 {
-		<-entered // both requests are dispatched before either completes
+		<-entered
 	}
 	close(release)
 	for range 2 {
@@ -459,7 +443,7 @@ func TestRateLimitAppliesToEveryAttempt(t *testing.T) {
 		handler(w, r)
 	}, testMaxConcurrent, maxRetries, "")
 	limiter := rate.NewLimiter(0, sdkAttempts)
-	cl.(*OAIClientImpl).rateLimiter = limiter
+	cl.(*oaiClientImpl).rateLimiter = limiter
 	ctx, cancel := context.WithTimeout(context.Background(), boundedTestTimeout)
 	defer cancel()
 
@@ -587,8 +571,8 @@ func captureLogs(t *testing.T) *logtest.Hook {
 	return logtest.NewLocal(logger)
 }
 
-func TestRateLimitedAttemptsLogProviderDiagnostics(t *testing.T) {
-	const providerMessage = "No deployments available for selected model, Try again in 60 seconds"
+func TestRateLimitedAttemptsLogOpenAIDiagnostics(t *testing.T) {
+	providerMessage := "Rate limit reached for gpt-5: " + strings.Repeat("detail ", 120) + "try again shortly"
 	hook := captureLogs(t)
 	var requests atomic.Int32
 	cl := newTestClient(t, func(w http.ResponseWriter, _ *http.Request) {
@@ -596,13 +580,13 @@ func TestRateLimitedAttemptsLogProviderDiagnostics(t *testing.T) {
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Set("Retry-After", "60")
 		w.Header().Set("Retry-After-Ms", "1")
-		w.Header().Set("X-Litellm-Call-Id", "call-1")
-		w.Header().Set("X-Litellm-Attempted-Retries", "0")
-		w.Header()["rate_limit_type"] = []string{"requests"}
-		w.Header()["reset_at"] = []string{"2026-11-02T12:00:00Z"}
-		w.Header().Set("X-Litellm-Key-Rpm-Limit", "10")
+		w.Header().Set("X-Request-Id", "req-1")
+		w.Header().Set("X-Ratelimit-Limit-Requests", "100")
+		w.Header().Set("X-Ratelimit-Remaining-Tokens", "0")
+		w.Header().Set("X-Ratelimit-Reset-Tokens", "2s")
+		w.Header().Set("X-Litellm-Call-Id", "ignored-by-openai-client")
 		w.WriteHeader(http.StatusTooManyRequests)
-		_, _ = fmt.Fprintf(w, "{\n  \"error\": {\"message\": %q, \"type\": \"None\", \"param\": null, \"code\": \"429\"}\n}", providerMessage)
+		_, _ = fmt.Fprintf(w, "{\n  \"error\": {\"message\": %q, \"type\": \"tokens\", \"param\": null, \"code\": \"rate_limit_exceeded\"}\n}", providerMessage)
 	}, testMaxConcurrent, 1, "")
 
 	_, report, err := cl.DeduplicateIssues(context.Background(), "system prompt", testDeduplicationRequest, testMaxCompletionToken)
@@ -610,7 +594,7 @@ func TestRateLimitedAttemptsLogProviderDiagnostics(t *testing.T) {
 	if !errors.Is(err, aiError(exception.AiRateLimitExceeded, "")) {
 		t.Fatalf("expected the rate limit error, got %v", err)
 	}
-	if wantSuffix := ": " + providerMessage + " (code 429)"; !strings.HasSuffix(err.Error(), wantSuffix) {
+	if wantSuffix := ": " + providerMessage + " (code rate_limit_exceeded)"; !strings.HasSuffix(err.Error(), wantSuffix) {
 		t.Errorf("expected the error to end with %q, got %q", wantSuffix, err.Error())
 	}
 	if report.ProviderAttempts != 2 || requests.Load() != 2 {
@@ -620,13 +604,16 @@ func TestRateLimitedAttemptsLogProviderDiagnostics(t *testing.T) {
 	if len(entries) != 2 {
 		t.Fatalf("expected a warning per attempt, got %d entries", len(entries))
 	}
-	wantDetails := `, Retry-After=60, Retry-After-Ms=1, X-Litellm-Call-Id=call-1, X-Litellm-Attempted-Retries=0, ` +
-		`rate_limit_type=requests, reset_at=2026-11-02T12:00:00Z, X-Litellm-Key-Rpm-Limit=10, ` +
-		`body: { "error": {"message": "` + providerMessage + `", "type": "None", "param": null, "code": "429"} }`
+	wantDetails := `, Retry-After=60, Retry-After-Ms=1, X-Request-Id=req-1, X-Ratelimit-Limit-Requests=100, ` +
+		`X-Ratelimit-Remaining-Tokens=0, X-Ratelimit-Reset-Tokens=2s, ` +
+		`body: { "error": {"message": "` + providerMessage + `", "type": "tokens", "param": null, "code": "rate_limit_exceeded"} }`
 	for i, entry := range entries {
 		wantPrefix := fmt.Sprintf("AI request oas_issue_deduplication_response: attempt %d failed with HTTP 429 after ", i+1)
 		if entry.Level != log.WarnLevel || !strings.HasPrefix(entry.Message, wantPrefix) || !strings.HasSuffix(entry.Message, wantDetails) {
 			t.Errorf("unexpected log entry %s: %q", entry.Level, entry.Message)
+		}
+		if strings.Contains(entry.Message, "X-Litellm-Call-Id") {
+			t.Errorf("expected OpenAI client not to log LiteLLM headers, got %q", entry.Message)
 		}
 	}
 }
@@ -658,7 +645,7 @@ func (r *oneOffErrReader) Read([]byte) (int, error) {
 }
 
 func TestTrackAttemptsResponseBodies(t *testing.T) {
-	longBody := `{"error":{"message":"` + strings.Repeat("x", 2*maxProviderTextBytes) + `"}}`
+	longBody := `{"error":{"message":"` + strings.Repeat("x", 1500) + `"}}`
 	tests := []struct {
 		name       string
 		status     int
@@ -666,7 +653,7 @@ func TestTrackAttemptsResponseBodies(t *testing.T) {
 		wantLogged string
 	}{
 		{name: "successful response body is not read", status: http.StatusOK},
-		{name: "long failed response body is truncated in the log", status: http.StatusTooManyRequests, wantRead: true, wantLogged: ", body: " + longBody[:maxProviderTextBytes] + "..."},
+		{name: "long failed response body is logged in full", status: http.StatusTooManyRequests, wantRead: true, wantLogged: ", body: " + longBody},
 	}
 
 	for _, tt := range tests {
@@ -674,9 +661,9 @@ func TestTrackAttemptsResponseBodies(t *testing.T) {
 			hook := captureLogs(t)
 			body := &readTrackingBody{Reader: strings.NewReader(longBody)}
 			attempts := 0
-			middleware := trackAttempts("schema", unlimitedRate, &attempts)
+			cl := &oaiClientImpl{provider: llmProvider{name: "OpenAI"}, rateLimiter: rate.NewLimiter(rate.Inf, 0)}
 
-			resp, err := middleware(httptest.NewRequest(http.MethodPost, "/", nil), func(*http.Request) (*http.Response, error) {
+			resp, err := cl.trackAttempts("schema", &attempts)(httptest.NewRequest(http.MethodPost, "/", nil), func(*http.Request) (*http.Response, error) {
 				return &http.Response{StatusCode: tt.status, Header: http.Header{}, Body: body}, nil
 			})
 
@@ -705,8 +692,9 @@ func TestTrackAttemptsReplaysBodyReadError(t *testing.T) {
 	errBodyRead := errors.New("connection reset")
 	body := &readTrackingBody{Reader: io.MultiReader(strings.NewReader("partial"), &oneOffErrReader{err: errBodyRead})}
 	attempts := 0
+	cl := &oaiClientImpl{provider: llmProvider{name: "OpenAI"}, rateLimiter: rate.NewLimiter(rate.Inf, 0)}
 
-	resp, err := trackAttempts("schema", unlimitedRate, &attempts)(httptest.NewRequest(http.MethodPost, "/", nil), func(*http.Request) (*http.Response, error) {
+	resp, err := cl.trackAttempts("schema", &attempts)(httptest.NewRequest(http.MethodPost, "/", nil), func(*http.Request) (*http.Response, error) {
 		return &http.Response{StatusCode: http.StatusTooManyRequests, Header: http.Header{}, Body: body}, nil
 	})
 	if err != nil {
@@ -726,27 +714,30 @@ func TestTrackAttemptsReplaysBodyReadError(t *testing.T) {
 	}
 }
 
-type cancellingReader struct{ cancel func() }
+type closeCancellingBody struct {
+	io.Reader
+	cancel func()
+}
 
-func (r cancellingReader) Read([]byte) (int, error) {
-	r.cancel()
-	return 0, io.EOF
+func (b closeCancellingBody) Close() error {
+	b.cancel()
+	return nil
 }
 
 func TestProviderErrorParsedAfterCancellationLeavesTheChain(t *testing.T) {
 	errCause := errors.New("sibling request failed")
 	ctx, cancel := context.WithCancelCause(context.Background())
 	defer cancel(nil)
-	// The middleware reads only the excerpt of a long body, so the SDK reaches the cancelling reader after its per-attempt context check.
-	body := `{"error":{"message":"` + strings.Repeat("x", 2*maxProviderTextBytes) + `"}}`
+	body := `{"error":{"message":"unauthorized"}}`
 	cl := newTestClient(t, func(http.ResponseWriter, *http.Request) {
 		t.Error("expected the stubbed response to replace the request")
 	}, testMaxConcurrent, 0, "")
-	cl.(*OAIClientImpl).extraBodyOpts = []option.RequestOption{option.WithMiddleware(func(*http.Request, option.MiddlewareNext) (*http.Response, error) {
-		return &http.Response{StatusCode: http.StatusUnauthorized, Header: http.Header{}, Body: io.NopCloser(io.MultiReader(
-			strings.NewReader(body),
-			cancellingReader{cancel: func() { cancel(errCause) }},
-		))}, nil
+	cl.(*oaiClientImpl).extraBodyOpts = []option.RequestOption{option.WithMiddleware(func(*http.Request, option.MiddlewareNext) (*http.Response, error) {
+		return &http.Response{
+			StatusCode: http.StatusUnauthorized,
+			Header:     http.Header{},
+			Body:       closeCancellingBody{Reader: strings.NewReader(body), cancel: func() { cancel(errCause) }},
+		}, nil
 	})}
 
 	_, report, err := cl.DeduplicateIssues(ctx, "system prompt", testDeduplicationRequest, testMaxCompletionToken)
@@ -766,31 +757,87 @@ func TestProviderErrorParsedAfterCancellationLeavesTheChain(t *testing.T) {
 }
 
 func TestProviderSecretsAreRedacted(t *testing.T) {
-	const bearerToken, apiKey = "abc.def", "sk-live-1234567890"
-	hook := captureLogs(t)
-	cl := newTestClient(t, func(w http.ResponseWriter, _ *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusUnauthorized)
-		_, _ = fmt.Fprintf(w, `{"error":{"message":"Invalid header Authorization: Bearer %s for key %s","type":null,"param":null,"code":"401"}}`, bearerToken, apiKey)
-	}, testMaxConcurrent, 0, "")
+	const bearerToken, apiKey = "abc.def", "custom-provider-key-0000"
 
-	_, _, err := cl.DeduplicateIssues(context.Background(), "system prompt", testDeduplicationRequest, testMaxCompletionToken)
-
-	if err == nil || !strings.HasSuffix(err.Error(), ": Invalid header Authorization: Bearer *** for key *** (code 401)") {
-		t.Fatalf("expected the redacted provider message in the error, got %v", err)
-	}
-	if errors.As(err, new(*openai.Error)) {
-		t.Errorf("expected the SDK error, which holds the raw response, to be out of the chain, got %v", err)
-	}
-	entries := hook.AllEntries()
-	if len(entries) != 1 {
-		t.Fatalf("expected one warning, got %d entries", len(entries))
-	}
-	for _, secret := range []string{bearerToken, apiKey} {
-		if strings.Contains(entries[0].Message, secret) || strings.Contains(err.Error(), secret) {
-			t.Errorf("expected %q to be redacted, got log %q and error %q", secret, entries[0].Message, err.Error())
+	t.Run("provider error response", func(t *testing.T) {
+		hook := captureLogs(t)
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusUnauthorized)
+			_, _ = fmt.Fprintf(w, `{"error":{"message":"Invalid header Authorization: Bearer %s for key %s","type":null,"param":null,"code":"401"}}`, bearerToken, apiKey)
+		}))
+		t.Cleanup(server.Close)
+		cl, err := NewOpenaiClient(apiKey, testModel, server.URL, testRateLimitRPS, testRateLimitBurst, testMaxConcurrent, 0, "")
+		if err != nil {
+			t.Fatalf("failed to create client: %v", err)
 		}
-	}
+
+		_, _, err = cl.DeduplicateIssues(context.Background(), "system prompt", testDeduplicationRequest, testMaxCompletionToken)
+
+		if err == nil || !strings.HasSuffix(err.Error(), ": Invalid header Authorization: Bearer *** for key *** (code 401)") {
+			t.Fatalf("expected the redacted provider message in the error, got %v", err)
+		}
+		if errors.As(err, new(*openai.Error)) {
+			t.Errorf("expected the SDK error, which holds the raw response, to be out of the chain, got %v", err)
+		}
+		entries := hook.AllEntries()
+		if len(entries) != 1 {
+			t.Fatalf("expected one warning, got %d entries", len(entries))
+		}
+		for _, secret := range []string{bearerToken, apiKey} {
+			if strings.Contains(entries[0].Message, secret) || strings.Contains(err.Error(), secret) {
+				t.Errorf("expected %q to be redacted, got log %q and error %q", secret, entries[0].Message, err.Error())
+			}
+		}
+	})
+
+	t.Run("refusal and malformed output", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			_, _ = io.WriteString(w, completionBody("stop", "", "refused "+apiKey+" Bearer "+bearerToken, fullUsage))
+		}))
+		t.Cleanup(server.Close)
+		cl, err := NewOpenaiClient(apiKey, testModel, server.URL, testRateLimitRPS, testRateLimitBurst, testMaxConcurrent, 0, "")
+		if err != nil {
+			t.Fatalf("failed to create client: %v", err)
+		}
+
+		_, _, err = cl.DeduplicateIssues(context.Background(), "system prompt", testDeduplicationRequest, testMaxCompletionToken)
+		if !errors.Is(err, aiError(exception.AiRequestRefused, "")) {
+			t.Fatalf("expected refusal error, got %v", err)
+		}
+		for _, secret := range []string{bearerToken, apiKey} {
+			if strings.Contains(err.Error(), secret) {
+				t.Errorf("expected %q redacted from refusal error, got %q", secret, err.Error())
+			}
+		}
+
+		longInvalid := "not-json " + strings.Repeat("x", 300) + " " + apiKey + " Bearer " + bearerToken
+		malformedServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			_, _ = io.WriteString(w, completionBody("stop", longInvalid, "", fullUsage))
+		}))
+		t.Cleanup(malformedServer.Close)
+		cl2, err := NewOpenaiClient(apiKey, testModel, malformedServer.URL, testRateLimitRPS, testRateLimitBurst, testMaxConcurrent, 0, "")
+		if err != nil {
+			t.Fatalf("failed to create client: %v", err)
+		}
+
+		_, _, err = cl2.DeduplicateIssues(context.Background(), "system prompt", testDeduplicationRequest, testMaxCompletionToken)
+		if !errors.Is(err, aiError(exception.AiMalformedOutput, "")) {
+			t.Fatalf("expected malformed output error, got %v", err)
+		}
+		if !strings.Contains(err.Error(), strings.Repeat("x", 300)) {
+			t.Errorf("expected full malformed content without truncation, got %q", err.Error())
+		}
+		for _, secret := range []string{bearerToken, apiKey} {
+			if strings.Contains(err.Error(), secret) {
+				t.Errorf("expected %q redacted from malformed output error, got %q", secret, err.Error())
+			}
+		}
+	})
 }
 
 func TestProviderErrorWithoutDetailKeepsStatus(t *testing.T) {
@@ -818,5 +865,35 @@ func TestProviderErrorWithoutDetailKeepsStatus(t *testing.T) {
 				t.Fatalf("expected a plain error %q, got %v", tt.wantErr, err)
 			}
 		})
+	}
+}
+
+func TestClientModel(t *testing.T) {
+	openAIEmpty, err := NewOpenaiClient("sk-test", "", "", testRateLimitRPS, testRateLimitBurst, testMaxConcurrent, 0, "")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if openAIEmpty.Model() != DefaultOpenAIModel {
+		t.Fatalf("expected default OpenAI model %q, got %q", DefaultOpenAIModel, openAIEmpty.Model())
+	}
+
+	openAITrimmed, err := NewOpenaiClient("sk-test", "  gpt-5-mini  ", "", testRateLimitRPS, testRateLimitBurst, testMaxConcurrent, 0, "")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if openAITrimmed.Model() != "gpt-5-mini" {
+		t.Fatalf("expected trimmed OpenAI model %q, got %q", "gpt-5-mini", openAITrimmed.Model())
+	}
+
+	liteLLM, err := NewLiteLLMClient("litellm-key", "  openai/gpt-5  ", "https://litellm.example.com", testRateLimitRPS, testRateLimitBurst, testMaxConcurrent, 0, "")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if liteLLM.Model() != "openai/gpt-5" {
+		t.Fatalf("expected trimmed LiteLLM model %q, got %q", "openai/gpt-5", liteLLM.Model())
+	}
+
+	if got := NewStubLlmClient().Model(); got != "" {
+		t.Fatalf("expected empty stub model, got %q", got)
 	}
 }

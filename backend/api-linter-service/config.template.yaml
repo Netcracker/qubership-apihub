@@ -55,6 +55,8 @@ linters:
     enabled: false
     # Optional; Treat this linter as non-blocking: its execution failures do not affect the validation result or scoring (failure details are still stored); If not set, default value: false; Example: true
     optional: true
+    # Optional; AI LLM provider (openai or litellm); If not set, default value: openai; Example: litellm
+    provider: 'openai'
     # Optional; Number of AI linter workers; If not set, default value: 1; Example: 4
     workers: 1
     # Optional; List of package IDs to exclude from AI linting; If not set, default value: []; Example: [pkg1,pkg2]
@@ -62,11 +64,11 @@ linters:
     # Optional; List of package IDs to include for AI linting (empty = all); If not set, default value: []; Example: [pkg1,pkg2]
     includedPackages: []
     openAI:
-      # Mandatory when AI linter enabled; OpenAI API key; If not set, default value: ""; Example: sk-...
+      # Mandatory when AI linter enabled; API key for the configured AI provider; If not set, default value: ""; Example: sk-...
       apiKey: ''
-      # Optional; Proxy URL for OpenAI API requests; If not set, default value: ""; Example: http://proxy.example.com:8080
+      # Optional for openai, mandatory for litellm when AI linter enabled; Proxy URL for AI provider API requests (e.g. OpenAI proxy or LiteLLM gateway URL); If not set, default value: ""; Example: http://proxy.example.com:8080
       apiProxy: ''
-      # Optional; OpenAI model to use; If not set, default value: ""; Example: gpt-4o
+      # Optional for openai (effective default: gpt-5), mandatory for litellm when AI linter enabled; Model name to use; If not set, default value: gpt-5 (openai); Example: gpt-5
       model: ''
       # Optional; OpenAI API rate limit (requests per second); If not set, default value: 10; Example: 10
       rateLimitRPS: 10

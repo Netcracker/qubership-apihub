@@ -18,21 +18,37 @@ type AiOasExecutor interface {
 	LintOperationForDoc(ctx context.Context, operationId string, operationData string, rulesetData view.AiRuleset) ([]issueWithResolvedPath, []entity.AiRequestMetrics, error)
 	DeduplicateIssues(ctx context.Context, groups []issueGroup) (map[int]int, []entity.AiDeduplicationRequestStats, error)
 	GetLinterVersion() string
+	GetModel() string
 }
 
 func NewAiOasExecutor(systemInfoService SystemInfoService) (AiOasExecutor, error) {
 	var llmCl client.LLMClient
 	var err error
 	if systemInfoService.IsAiOasLinterEnabled() {
-		llmCl, err = client.NewOpenaiClient(
-			systemInfoService.GetOpenAIAPIKey(),
-			systemInfoService.GetOpenAIModel(),
-			systemInfoService.GetOpenAIAPIProxy(),
-			systemInfoService.GetOpenAIRateLimitRPS(),
-			systemInfoService.GetOpenAIRateLimitBurst(),
-			systemInfoService.GetOpenAIMaxConcurrentRequests(),
-			systemInfoService.GetOpenAIMaxRetries(),
-			systemInfoService.GetOpenAIExtraBodyJSON())
+		switch provider := systemInfoService.GetAiLinterProvider(); provider {
+		case config.AIProviderOpenAI:
+			llmCl, err = client.NewOpenaiClient(
+				systemInfoService.GetOpenAIAPIKey(),
+				systemInfoService.GetOpenAIModel(),
+				systemInfoService.GetOpenAIAPIProxy(),
+				systemInfoService.GetOpenAIRateLimitRPS(),
+				systemInfoService.GetOpenAIRateLimitBurst(),
+				systemInfoService.GetOpenAIMaxConcurrentRequests(),
+				systemInfoService.GetOpenAIMaxRetries(),
+				systemInfoService.GetOpenAIExtraBodyJSON())
+		case config.AIProviderLiteLLM:
+			llmCl, err = client.NewLiteLLMClient(
+				systemInfoService.GetOpenAIAPIKey(),
+				systemInfoService.GetOpenAIModel(),
+				systemInfoService.GetOpenAIAPIProxy(),
+				systemInfoService.GetOpenAIRateLimitRPS(),
+				systemInfoService.GetOpenAIRateLimitBurst(),
+				systemInfoService.GetOpenAIMaxConcurrentRequests(),
+				systemInfoService.GetOpenAIMaxRetries(),
+				systemInfoService.GetOpenAIExtraBodyJSON())
+		default:
+			return nil, fmt.Errorf("unsupported AI linter provider: %q", provider)
+		}
 		if err != nil {
 			return nil, err
 		}
@@ -77,7 +93,7 @@ func (s *aiOasExecutor) LintOperationForDoc(ctx context.Context, operationId str
 		if ctx.Err() != nil || !retryable {
 			return nil, requests, fmt.Errorf("AI lint of operation %s: %w", operationId, err)
 		}
-		warning := fmt.Sprintf("AI lint of operation %s: attempt %d of %d failed with %s", operationId, attempt, maxAttempts, client.SanitiseErrorText(err.Error()))
+		warning := fmt.Sprintf("AI lint of operation %s: attempt %d of %d failed with %s", operationId, attempt, maxAttempts, err.Error())
 		if report.Usage != nil {
 			warning += fmt.Sprintf(", finish_reason=%s, completion tokens %d", report.FinishReason, report.Usage.CompletionTokens)
 		}
@@ -135,9 +151,18 @@ func resolveIssuePath(src any, path []string) ([]string, bool) {
 	return nil, false
 }
 
-// pathResolves walks the decoded JSON value along path. A segment is an object key when the current node is an
-// object and an array index when it is an array, so a numeric segment such as the response code "200" resolves
-// as a key.
+// pathResolves checks whether path exists in the decoded JSON value by walking it segment by segment
+// (for example, ["paths", "/pets", "get", "responses", "200"]). On an object (map[string]any), the
+// segment is looked up as a key; on an array ([]any), it is parsed as an array index.
+//
+// We walk the JSON directly instead of using a JSONPath library because the AI linter already returns
+// a list of key/index names, and we do not need JSONPath search features (wildcards, filters, etc.).
+// Previously, joining those names into a JSONPath string and parsing it back had two problems:
+//   - Numeric segments were treated as array indices (e.g. $['responses'][200] instead of ['200']),
+//     which broke on OpenAPI object keys like HTTP status codes ("200", "404").
+//   - Keys containing quotes or brackets required escaping and could break JSONPath parsing.
+//
+// Walking the decoded JSON directly avoids both issues and removes an unnecessary third-party dependency.
 func pathResolves(node any, path []string) bool {
 	for _, segment := range path {
 		switch value := node.(type) {
@@ -166,4 +191,8 @@ func (s *aiOasExecutor) DeduplicateIssues(ctx context.Context, groups []issueGro
 
 func (s *aiOasExecutor) GetLinterVersion() string {
 	return "1.1"
+}
+
+func (s *aiOasExecutor) GetModel() string {
+	return s.llmClient.Model()
 }

@@ -10,6 +10,13 @@ func TestValidateConfigAILinter(t *testing.T) {
 	openAI := config.OpenAIConfig{RateLimitRPS: 10, RateLimitBurst: 30, MaxConcurrentRequests: 10, MaxRetries: 5}
 	openAIWithKey := openAI
 	openAIWithKey.APIKey = "sk-test"
+	liteLLMValid := openAIWithKey
+	liteLLMValid.APIProxy = "https://litellm.example.com"
+	liteLLMValid.Model = "gpt-5"
+	liteLLMMissingProxy := liteLLMValid
+	liteLLMMissingProxy.APIProxy = "   "
+	liteLLMMissingModel := liteLLMValid
+	liteLLMMissingModel.Model = "   "
 	deduplication := config.AIDeduplicationConfig{CriteriaPrompt: "test criterion", RequestTokenBudget: 24000, MaxCompletionTokens: 4000}
 	withoutCriteria := deduplication
 	withoutCriteria.CriteriaPrompt = ""
@@ -38,63 +45,88 @@ func TestValidateConfigAILinter(t *testing.T) {
 	}{
 		{
 			name:    "disabled without API key passes",
-			cfg:     config.AILinterConfig{Enabled: false, Workers: 1, OpenAI: openAI, Lint: lint, Deduplication: deduplication},
+			cfg:     config.AILinterConfig{Enabled: false, Provider: config.AIProviderOpenAI, Workers: 1, OpenAI: openAI, Lint: lint, Deduplication: deduplication},
 			wantErr: false,
 		},
 		{
 			name:    "enabled without API key fails",
-			cfg:     config.AILinterConfig{Enabled: true, Workers: 1, OpenAI: openAI, Lint: lint, Deduplication: deduplication},
+			cfg:     config.AILinterConfig{Enabled: true, Provider: config.AIProviderOpenAI, Workers: 1, OpenAI: openAI, Lint: lint, Deduplication: deduplication},
 			wantErr: true,
 		},
 		{
 			name:    "enabled without deduplication criteria prompt fails",
-			cfg:     config.AILinterConfig{Enabled: true, Workers: 1, OpenAI: openAIWithKey, Lint: lint, Deduplication: withoutCriteria},
+			cfg:     config.AILinterConfig{Enabled: true, Provider: config.AIProviderOpenAI, Workers: 1, OpenAI: openAIWithKey, Lint: lint, Deduplication: withoutCriteria},
 			wantErr: true,
 		},
 		{
 			name:    "deduplication request token budget below the minimum fails",
-			cfg:     config.AILinterConfig{Enabled: true, Workers: 1, OpenAI: openAIWithKey, Lint: lint, Deduplication: withSmallRequestTokenBudget},
+			cfg:     config.AILinterConfig{Enabled: true, Provider: config.AIProviderOpenAI, Workers: 1, OpenAI: openAIWithKey, Lint: lint, Deduplication: withSmallRequestTokenBudget},
 			wantErr: true,
 		},
 		{
 			name:    "deduplication max completion tokens below the minimum fails",
-			cfg:     config.AILinterConfig{Enabled: true, Workers: 1, OpenAI: openAIWithKey, Lint: lint, Deduplication: withSmallMaxCompletionTokens},
+			cfg:     config.AILinterConfig{Enabled: true, Provider: config.AIProviderOpenAI, Workers: 1, OpenAI: openAIWithKey, Lint: lint, Deduplication: withSmallMaxCompletionTokens},
 			wantErr: true,
 		},
 		{
 			name:    "extra body setting a service-owned key fails",
-			cfg:     config.AILinterConfig{Enabled: true, Workers: 1, OpenAI: withServiceOwnedExtraBodyKey, Lint: lint, Deduplication: deduplication},
+			cfg:     config.AILinterConfig{Enabled: true, Provider: config.AIProviderOpenAI, Workers: 1, OpenAI: withServiceOwnedExtraBodyKey, Lint: lint, Deduplication: deduplication},
 			wantErr: true,
 		},
 		{
 			name:    "extra body that is not a JSON object fails",
-			cfg:     config.AILinterConfig{Enabled: true, Workers: 1, OpenAI: withNonObjectExtraBody, Lint: lint, Deduplication: deduplication},
+			cfg:     config.AILinterConfig{Enabled: true, Provider: config.AIProviderOpenAI, Workers: 1, OpenAI: withNonObjectExtraBody, Lint: lint, Deduplication: deduplication},
 			wantErr: true,
 		},
 		{
 			name:    "negative max retries fails",
-			cfg:     config.AILinterConfig{Enabled: true, Workers: 1, OpenAI: withNegativeMaxRetries, Lint: lint, Deduplication: deduplication},
+			cfg:     config.AILinterConfig{Enabled: true, Provider: config.AIProviderOpenAI, Workers: 1, OpenAI: withNegativeMaxRetries, Lint: lint, Deduplication: deduplication},
 			wantErr: true,
 		},
 		{
 			name:    "lint max completion tokens below the minimum fails",
-			cfg:     config.AILinterConfig{Enabled: true, Workers: 1, OpenAI: openAIWithKey, Lint: withSmallLintMaxCompletionTokens, Deduplication: deduplication},
+			cfg:     config.AILinterConfig{Enabled: true, Provider: config.AIProviderOpenAI, Workers: 1, OpenAI: openAIWithKey, Lint: withSmallLintMaxCompletionTokens, Deduplication: deduplication},
 			wantErr: true,
 		},
 		{
 			name:    "negative lint max output retries fails",
-			cfg:     config.AILinterConfig{Enabled: true, Workers: 1, OpenAI: openAIWithKey, Lint: withNegativeLintMaxRetriesOnInvalidOutput, Deduplication: deduplication},
+			cfg:     config.AILinterConfig{Enabled: true, Provider: config.AIProviderOpenAI, Workers: 1, OpenAI: openAIWithKey, Lint: withNegativeLintMaxRetriesOnInvalidOutput, Deduplication: deduplication},
 			wantErr: true,
 		},
 		{
 			name:    "zero lint max output retries passes",
-			cfg:     config.AILinterConfig{Enabled: true, Workers: 1, OpenAI: openAIWithKey, Lint: withZeroLintMaxRetriesOnInvalidOutput, Deduplication: deduplication},
+			cfg:     config.AILinterConfig{Enabled: true, Provider: config.AIProviderOpenAI, Workers: 1, OpenAI: openAIWithKey, Lint: withZeroLintMaxRetriesOnInvalidOutput, Deduplication: deduplication},
 			wantErr: false,
 		},
 		{
 			name:    "enabled with API key and deduplication settings passes",
-			cfg:     config.AILinterConfig{Enabled: true, Workers: 1, OpenAI: openAIWithKey, Lint: lint, Deduplication: deduplication},
+			cfg:     config.AILinterConfig{Enabled: true, Provider: config.AIProviderOpenAI, Workers: 1, OpenAI: openAIWithKey, Lint: lint, Deduplication: deduplication},
 			wantErr: false,
+		},
+		{
+			name:    "enabled litellm provider with proxy and model passes",
+			cfg:     config.AILinterConfig{Enabled: true, Provider: config.AIProviderLiteLLM, Workers: 1, OpenAI: liteLLMValid, Lint: lint, Deduplication: deduplication},
+			wantErr: false,
+		},
+		{
+			name:    "enabled litellm provider without proxy fails",
+			cfg:     config.AILinterConfig{Enabled: true, Provider: config.AIProviderLiteLLM, Workers: 1, OpenAI: liteLLMMissingProxy, Lint: lint, Deduplication: deduplication},
+			wantErr: true,
+		},
+		{
+			name:    "enabled litellm provider without model fails",
+			cfg:     config.AILinterConfig{Enabled: true, Provider: config.AIProviderLiteLLM, Workers: 1, OpenAI: liteLLMMissingModel, Lint: lint, Deduplication: deduplication},
+			wantErr: true,
+		},
+		{
+			name:    "enabled with empty provider fails",
+			cfg:     config.AILinterConfig{Enabled: true, Provider: "", Workers: 1, OpenAI: openAIWithKey, Lint: lint, Deduplication: deduplication},
+			wantErr: true,
+		},
+		{
+			name:    "unknown provider fails",
+			cfg:     config.AILinterConfig{Enabled: true, Provider: config.AIProvider("other"), Workers: 1, OpenAI: openAIWithKey, Lint: lint, Deduplication: deduplication},
+			wantErr: true,
 		},
 	}
 

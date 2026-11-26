@@ -27,8 +27,23 @@ func getValidator() *validator.Validate {
 
 func validateAILinterConfig(sl validator.StructLevel) {
 	ai := sl.Current().Interface().(config.AILinterConfig)
+	if ai.Enabled {
+		switch ai.Provider {
+		case config.AIProviderOpenAI, config.AIProviderLiteLLM:
+		default:
+			sl.ReportError(ai.Provider, "Provider", "Provider", "oneof", "openai litellm")
+		}
+	}
 	if ai.Enabled && ai.OpenAI.APIKey == "" {
 		sl.ReportError(ai.OpenAI.APIKey, "OpenAI.APIKey", "APIKey", "required_if_enabled", "")
+	}
+	if ai.Enabled && ai.Provider == config.AIProviderLiteLLM {
+		if strings.TrimSpace(ai.OpenAI.APIProxy) == "" {
+			sl.ReportError(ai.OpenAI.APIProxy, "OpenAI.APIProxy", "APIProxy", "required_if_litellm", "")
+		}
+		if strings.TrimSpace(ai.OpenAI.Model) == "" {
+			sl.ReportError(ai.OpenAI.Model, "OpenAI.Model", "Model", "required_if_litellm", "")
+		}
 	}
 	if ai.Enabled && ai.Deduplication.CriteriaPrompt == "" {
 		sl.ReportError(ai.Deduplication.CriteriaPrompt, "Deduplication.CriteriaPrompt", "CriteriaPrompt", "required_if_enabled", "")

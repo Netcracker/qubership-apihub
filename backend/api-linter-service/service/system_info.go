@@ -49,6 +49,7 @@ type SystemInfoService interface {
 	GetOpenAIExtraBodyJSON() string
 	IsAiOasLinterEnabled() bool
 	IsAiLinterOptional() bool
+	GetAiLinterProvider() config.AIProvider
 	GetAiLinterWorkers() int
 	GetAiLinterExcludedPackages() []string
 	GetAiLinterIncludedPackages() []string
@@ -112,6 +113,7 @@ func setDefaults() {
 	viper.SetDefault("linters.spectral.optional", false)
 	viper.SetDefault("linters.ai.enabled", false)
 	viper.SetDefault("linters.ai.optional", false)
+	viper.SetDefault("linters.ai.provider", config.AIProviderOpenAI)
 	viper.SetDefault("linters.ai.workers", 1)
 	viper.SetDefault("linters.ai.openAI.rateLimitRPS", 10.0)
 	viper.SetDefault("linters.ai.openAI.rateLimitBurst", 30)
@@ -242,6 +244,10 @@ func (s *systemInfoServiceImpl) IsAiOasLinterEnabled() bool {
 
 func (s *systemInfoServiceImpl) IsAiLinterOptional() bool {
 	return s.config.Linters.AI.Optional
+}
+
+func (s *systemInfoServiceImpl) GetAiLinterProvider() config.AIProvider {
+	return s.config.Linters.AI.Provider
 }
 
 func (s *systemInfoServiceImpl) GetAiLinterWorkers() int {

@@ -30,7 +30,7 @@ type DocTaskProcessor interface {
 
 func NewDocTaskProcessor(docTaskRepo repository.DocLintTaskRepository, ruleSetRepository repository.RulesetRepository,
 	docResultRepository repository.DocResultRepository, lintResultRepository repository.LintResultRepository,
-	aiLintStatsRepository repository.AiLintStatsRepository, cl client.ApihubClient, spectralExecutor SpectralExecutor, aiOasExecutor AiOasExecutor, aiModel string, executorId string, spectralLinterWorkers, aiLinterWorkers int, docTaskNotify <-chan struct{}) DocTaskProcessor {
+	aiLintStatsRepository repository.AiLintStatsRepository, cl client.ApihubClient, spectralExecutor SpectralExecutor, aiOasExecutor AiOasExecutor, executorId string, spectralLinterWorkers, aiLinterWorkers int, docTaskNotify <-chan struct{}) DocTaskProcessor {
 	return &docTaskProcessorImpl{
 		docTaskRepo:           docTaskRepo,
 		ruleSetRepository:     ruleSetRepository,
@@ -40,7 +40,6 @@ func NewDocTaskProcessor(docTaskRepo repository.DocLintTaskRepository, ruleSetRe
 		cl:                    cl,
 		spectralExecutor:      spectralExecutor,
 		aiOasExecutor:         aiOasExecutor,
-		aiModel:               aiModel,
 		executorId:            executorId,
 		spectralLinterWorkers: spectralLinterWorkers,
 		aiLinterWorkers:       aiLinterWorkers,
@@ -57,8 +56,6 @@ type docTaskProcessorImpl struct {
 	cl                   client.ApihubClient
 	spectralExecutor     SpectralExecutor
 	aiOasExecutor        AiOasExecutor
-	// aiModel is the configured LLM model, stored for an AI stage that sent no request.
-	aiModel string
 
 	executorId            string
 	spectralLinterWorkers int
@@ -511,7 +508,7 @@ func (d docTaskProcessorImpl) lintDocumentWithAi(ctx context.Context, task entit
 
 func (d docTaskProcessorImpl) saveAiLintStats(task entity.DocumentLintTask, stage entity.AiLintStage, start time.Time, stageErr error,
 	requests []entity.AiRequestMetrics, details any) {
-	stats, err := newAiLintStats(task, stage, d.aiModel, time.Since(start), stageErr, requests, details)
+	stats, err := newAiLintStats(task, stage, d.aiOasExecutor.GetModel(), time.Since(start), stageErr, requests, details)
 	if err != nil {
 		log.Errorf("Failed to build AI lint stats for doc task %s: %s", task.Id, err)
 		return
@@ -610,7 +607,7 @@ func newAiLintStats(task entity.DocumentLintTask, stage entity.AiLintStage, mode
 	}
 	status, errorMessage := entity.AiRequestStatusSuccess, ""
 	if err != nil {
-		status, errorMessage = entity.AiRequestStatusError, client.SanitiseErrorText(err.Error())
+		status, errorMessage = entity.AiRequestStatusError, err.Error()
 	}
 	stats := entity.AiLintStats{
 		Id:                 uuid.NewString(),
@@ -653,7 +650,7 @@ func newAiRequestMetrics(report client.RequestReport, estimatedPromptTokens int,
 	}
 	if err != nil {
 		metrics.Status = entity.AiRequestStatusError
-		metrics.ErrorMessage = client.SanitiseErrorText(err.Error())
+		metrics.ErrorMessage = err.Error()
 	}
 	if report.Usage != nil {
 		metrics.Usage = &entity.AiTokenUsage{

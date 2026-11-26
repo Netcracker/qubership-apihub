@@ -380,14 +380,15 @@ insufficient.
 | `linters.spectral.workers` | No | `1` | Number of concurrent Spectral linter workers |
 | `linters.ai.enabled` | No | `false` | Enable the AI-powered OpenAPI linter |
 | `linters.ai.optional` | No | `false` | Treat the AI linter as non-blocking: its failures do not affect the validation result or scoring, and failure details are still stored. The shipped `config.template.yaml` sets `true` |
+| `linters.ai.provider` | No | `openai` | AI LLM provider: `openai` or `litellm` |
 | `linters.ai.workers` | No | `1` | Number of concurrent AI linter workers |
 | `linters.ai.excludedPackages` | No | `[]` | Package IDs to exclude from AI linting |
 | `linters.ai.includedPackages` | No | `[]` | Package IDs to include (empty = all) |
-| `linters.ai.openAI.apiKey` | Cond. | — | OpenAI API key (required when `linters.ai.enabled: true`) |
-| `linters.ai.openAI.apiProxy` | No | — | HTTP proxy for OpenAI requests |
-| `linters.ai.openAI.model` | No | — | OpenAI model to use (e.g. `gpt-4o`) |
-| `linters.ai.openAI.rateLimitRPS` | No | `10` | OpenAI requests per second limit |
-| `linters.ai.openAI.rateLimitBurst` | No | `30` | OpenAI burst limit |
+| `linters.ai.openAI.apiKey` | Cond. | — | API key for the configured AI provider (required when `linters.ai.enabled: true`) |
+| `linters.ai.openAI.apiProxy` | Cond. | — | Proxy URL for AI provider API requests (optional for `openai`; required for `litellm` when `linters.ai.enabled: true`) |
+| `linters.ai.openAI.model` | Cond. | `gpt-5` (`openai`) | Model name to use (effective default `gpt-5` for `openai`; required for `litellm` when `linters.ai.enabled: true`) |
+| `linters.ai.openAI.rateLimitRPS` | No | `10` | LLM requests per second limit |
+| `linters.ai.openAI.rateLimitBurst` | No | `30` | LLM burst limit |
 | `linters.ai.openAI.maxConcurrentRequests` | No | `0` | Maximum LLM requests in flight per instance, shared by the lint and deduplication requests of all AI workers; `0` means unbounded |
 | `linters.ai.openAI.maxRetries` | No | `5` | Number of times one LLM request is sent again after a connection failure or an HTTP 408, 409, 429 or 5xx response; the provider's `x-should-retry` and `Retry-After` headers are honoured; `0` disables retries |
 | `linters.ai.openAI.extraBodyJSON` | No | `''` | String that holds a JSON object; its top-level keys are added to every LLM request body, for provider-specific parameters. Must not contain `messages`, `response_format`, `max_completion_tokens`, or `model`. Example: `extraBodyJSON: '{"thinking":{"type":"disabled"}}'` |
@@ -400,10 +401,15 @@ insufficient.
 | `olric.replicaCount` | No | `1` | Olric replica count |
 | `olric.namespace` | No | — | Olric discovery namespace (set by Helm to the release namespace) |
 
-**Upgrade note:** the linter no longer reads `linters.ai.deduplicationPrompt`, shipped in `api-linter-service/1.3.7`.
-The service still starts with the old key, but a custom prompt in it is ignored. Move your criterion to
-`linters.ai.deduplication.criteriaPrompt` and keep only the criterion: the service adds the response-format
-instructions itself.
+**Upgrade notes:**
+
+- The linter no longer reads `linters.ai.deduplicationPrompt`, shipped in `api-linter-service/1.3.7`. The service still
+  starts with the old key, but a custom prompt in it is ignored. Move your criterion to
+  `linters.ai.deduplication.criteriaPrompt` and keep only the criterion: the service adds the response-format
+  instructions itself.
+- Existing deployments that routed AI linting through LiteLLM via `linters.ai.openAI.apiProxy` must now set
+  `linters.ai.provider: 'litellm'` and specify `linters.ai.openAI.model` explicitly (for example `'gpt-5'`). The
+  default provider is `'openai'` with no automatic fallback based on `apiProxy`.
 
 ---
 
@@ -586,7 +592,7 @@ see the [agent chart guide](../backend/agent/helm-templates/README.md).
 | `qubershipApiLinterService.env.technicalParameters.apihub.url` | No | Default `http://localhost:8090`; in-cluster set to `http://qubership-apihub-ui:8080` |
 | `qubershipApiLinterService.goMemLimit` | No | → `GOMEMLIMIT` (default `800MiB`, ~80% of default `memory.limit` `1000Mi`) |
 | `qubershipApiLinterService.env.linters.spectral.*` | No | Spectral binary path and worker count |
-| `qubershipApiLinterService.env.linters.ai.*` | No | AI linter (OpenAI key, workers, include/exclude lists, LLM request concurrency, lint token limit and retries, deduplication token budgets) |
+| `qubershipApiLinterService.env.linters.ai.*` | No | AI linter (provider `openai` or `litellm`, API key, workers, include/exclude lists, LLM request concurrency, lint token limit and retries, deduplication token budgets) |
 | `qubershipApiLinterService.env.olric.*` | No | Olric discovery mode / replicas (namespace set by Helm) |
 | `qubershipApiLinterService.customCa` | No | Optional Secret mounted at `/tmp/cert` for corporate HTTPS outbound |
 | `qubershipApihubAgentsBackend.env.database.*` | Yes | Agents-backend `config.yaml` `database.*` |

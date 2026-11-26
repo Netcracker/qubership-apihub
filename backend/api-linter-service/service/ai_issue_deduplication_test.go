@@ -41,6 +41,10 @@ type fakeLlmClient struct {
 	lintLimits []int
 }
 
+func (f *fakeLlmClient) Model() string {
+	return testModelName
+}
+
 func (f *fakeLlmClient) LintOasDocument(ctx context.Context, docStr string, _ string, maxCompletionTokens int) ([]view.AiValidationIssue, client.RequestReport, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, client.RequestReport{Model: testModelName}, err

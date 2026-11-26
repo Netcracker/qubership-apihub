@@ -114,7 +114,6 @@ func newTestProcessor(llm client.LLMClient, apihub client.ApihubClient, docResul
 		aiLintStatsRepo:     statsRepo,
 		cl:                  apihub,
 		aiOasExecutor:       &aiOasExecutor{llmClient: llm, lintConfig: testLintConfig, issueDeduplicator: newTestIssueDeduplicator(llm, largeTestBudget)},
-		aiModel:             testModelName,
 		executorId:          "executor-1",
 		aiLinterWorkers:     1,
 	}
@@ -263,8 +262,10 @@ func (fakeRulesetRepository) GetRulesetWithData(context.Context, string) (*entit
 }
 
 type savedLintResult struct {
-	status    view.LintedDocumentStatus
-	published bool
+	status      view.LintedDocumentStatus
+	details     string
+	lintDetails string
+	published   bool
 }
 
 type fakeDocResultRepository struct {
@@ -273,11 +274,11 @@ type fakeDocResultRepository struct {
 	saved []savedLintResult
 }
 
-func (f *fakeDocResultRepository) SaveLintResult(_ context.Context, _ string, status view.LintedDocumentStatus, _ string, _ int64,
-	_ entity.LintedVersion, _ entity.LintedDocument, lintFileResult *entity.LintFileResult, _ string) error {
+func (f *fakeDocResultRepository) SaveLintResult(_ context.Context, _ string, status view.LintedDocumentStatus, details string, _ int64,
+	_ entity.LintedVersion, docEnt entity.LintedDocument, lintFileResult *entity.LintFileResult, _ string) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	f.saved = append(f.saved, savedLintResult{status: status, published: lintFileResult != nil})
+	f.saved = append(f.saved, savedLintResult{status: status, details: details, lintDetails: docEnt.LintDetails, published: lintFileResult != nil})
 	return nil
 }
 
@@ -316,14 +317,9 @@ func TestProcessDocTaskSavesAiLintStats(t *testing.T) {
 	}
 
 	var retriedOperationFailures atomic.Int32
-	const (
-		modelOutputKey = "sk-0000000000000000"
-		// storedErrorTextLimit is the length limit of client.SanitiseErrorText.
-		storedErrorTextLimit = 1000
-	)
-	var errRefusedWithKey error = &exception.CustomError{Code: exception.AiRequestRefused, Message: exception.AiRequestRefusedMsg,
-		Params: map[string]interface{}{"reason": "I cannot use the key " + modelOutputKey}}
-	errLongMalformedOutput := fmt.Errorf("%w (content prefix=%q)", errMalformedOutput, strings.Repeat("loop ", storedErrorTextLimit))
+	const longErrorSize = 1200
+	longErrorPayload := strings.Repeat("detail ", longErrorSize) + "end-marker"
+	errLongMalformedOutput := fmt.Errorf("%w: %s", errMalformedOutput, longErrorPayload)
 	failLastOperationAfterOthers := func(err error) func(context.Context, string) ([]view.AiValidationIssue, error) {
 		var others sync.WaitGroup
 		others.Add(testOperationCount - 1)
@@ -352,10 +348,7 @@ func TestProcessDocTaskSavesAiLintStats(t *testing.T) {
 		wantDedupClass    entity.AiRequestErrorClass
 		wantDedupRequests int
 		wantDedup         *entity.AiDeduplicationStageDetails
-		// redactedKey must be replaced by *** in every stored error text, and wantCut means that the error texts of
-		// the failed stage and its failed requests are cut.
-		redactedKey string
-		wantCut     bool
+		wantFullSubstring string
 	}{
 		{
 			name:              "success",
@@ -406,37 +399,15 @@ func TestProcessDocTaskSavesAiLintStats(t *testing.T) {
 			wantLintMessage:  "AI lint of operation " + lastOperationId,
 		},
 		{
-			name:             "refused operation stores a redacted error text",
-			lint:             failLastOperationAfterOthers(errRefusedWithKey),
-			wantStatus:       view.StatusError,
-			wantLintRequests: testOperationCount,
-			wantEntryClasses: []entity.AiRequestErrorClass{"", "", "", entity.AiRequestErrorClassRefusal},
-			wantLintClass:    entity.AiRequestErrorClassRefusal,
-			wantLintMessage:  "AI lint of operation " + lastOperationId,
-			redactedKey:      modelOutputKey,
-		},
-		{
-			name:             "long malformed output is stored cut",
-			lint:             failLastOperationAfterOthers(errLongMalformedOutput),
-			wantStatus:       view.StatusError,
-			wantLintRequests: testOperationCount + testLintConfig.MaxRetriesOnInvalidOutput,
-			wantOperationIds: []string{testOperationId(0), testOperationId(1), testOperationId(2), lastOperationId, lastOperationId, lastOperationId},
-			wantEntryClasses: []entity.AiRequestErrorClass{"", "", "", entity.AiRequestErrorClassValidation, entity.AiRequestErrorClassValidation, entity.AiRequestErrorClassValidation},
-			wantLintClass:    entity.AiRequestErrorClassValidation,
-			wantLintMessage:  "AI lint of operation " + lastOperationId + " still fails after 2 retries",
-			wantCut:          true,
-		},
-		{
-			name: "refused deduplication stores a redacted error text",
-			dedup: func(int, view.AiDeduplicationRequest) ([]view.AiDuplicatePair, error) {
-				return nil, errRefusedWithKey
-			},
+			name:              "long malformed output is stored in full without truncation",
+			lint:              failLastOperationAfterOthers(errLongMalformedOutput),
 			wantStatus:        view.StatusError,
-			wantLintRequests:  testOperationCount,
-			wantDedupClass:    entity.AiRequestErrorClassRefusal,
-			wantDedupRequests: 1,
-			wantDedup:         lintByOperationDedup(0),
-			redactedKey:       modelOutputKey,
+			wantLintRequests:  testOperationCount + testLintConfig.MaxRetriesOnInvalidOutput,
+			wantOperationIds:  []string{testOperationId(0), testOperationId(1), testOperationId(2), lastOperationId, lastOperationId, lastOperationId},
+			wantEntryClasses:  []entity.AiRequestErrorClass{"", "", "", entity.AiRequestErrorClassValidation, entity.AiRequestErrorClassValidation, entity.AiRequestErrorClassValidation},
+			wantLintClass:     entity.AiRequestErrorClassValidation,
+			wantLintMessage:   "AI lint of operation " + lastOperationId + " still fails after 2 retries",
+			wantFullSubstring: longErrorPayload,
 		},
 		{
 			name:             "cancelled siblings are classified as cancelled and an undispatched request is not counted",
@@ -490,9 +461,8 @@ func TestProcessDocTaskSavesAiLintStats(t *testing.T) {
 
 			newTestProcessor(llm, apihub, docResults, statsRepo).processDocTask(context.Background(), testTask)
 
-			wantSaved := []savedLintResult{{status: tt.wantStatus, published: tt.wantStatus == view.StatusSuccess}}
-			if !reflect.DeepEqual(docResults.saved, wantSaved) {
-				t.Fatalf("expected saved results %+v, got %+v", wantSaved, docResults.saved)
+			if len(docResults.saved) != 1 || docResults.saved[0].status != tt.wantStatus || docResults.saved[0].published != (tt.wantStatus == view.StatusSuccess) {
+				t.Fatalf("expected one saved result with status %s and published %t, got %+v", tt.wantStatus, tt.wantStatus == view.StatusSuccess, docResults.saved)
 			}
 			wantRows := 1
 			if tt.wantDedup != nil {
@@ -529,16 +499,14 @@ func TestProcessDocTaskSavesAiLintStats(t *testing.T) {
 					wantOperationIds = append(wantOperationIds, testOperationId(i))
 				}
 			}
-			// failedTexts are the stored error texts of a failed stage and of its failed requests that were not cancelled.
 			var failedTexts []string
 			checkFailedTexts := func() {
-				if (tt.redactedKey != "" || tt.wantCut) && len(failedTexts) == 0 {
+				if tt.wantFullSubstring != "" && len(failedTexts) == 0 {
 					t.Fatal("expected stored error texts to check")
 				}
 				for _, text := range failedTexts {
-					if len(text) > storedErrorTextLimit+len("...") || (tt.redactedKey != "" && (strings.Contains(text, tt.redactedKey) || !strings.Contains(text, "***"))) ||
-						tt.wantCut != strings.HasSuffix(text, "...") {
-						t.Fatalf("expected a stored error text that is bounded, redacted (%t) and cut (%t), got %d bytes: %q", tt.redactedKey != "", tt.wantCut, len(text), text)
+					if tt.wantFullSubstring != "" && !strings.Contains(text, tt.wantFullSubstring) {
+						t.Fatalf("expected full stored error text without truncation, got %d bytes", len(text))
 					}
 				}
 			}

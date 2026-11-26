@@ -50,9 +50,17 @@ type SpectralLinterConfig struct {
 	Optional bool
 }
 
+type AIProvider string
+
+const (
+	AIProviderOpenAI  AIProvider = "openai"
+	AIProviderLiteLLM AIProvider = "litellm"
+)
+
 type AILinterConfig struct {
 	Enabled          bool
 	Optional         bool
+	Provider         AIProvider
 	Workers          int `validate:"gte=1"`
 	ExcludedPackages []string
 	IncludedPackages []string
