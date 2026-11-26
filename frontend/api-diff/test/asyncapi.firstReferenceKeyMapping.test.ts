@@ -1,4 +1,4 @@
-import { apiDiff, CompareOptions, DiffAction, } from '../src'
+import { annotation, apiDiff, CompareOptions, DiffAction, } from '../src'
 import { COMPARE_SCOPE_ROOT } from '../src/types'
 import { parseAsyncApiAndAssertValid } from './helper/asyncapi'
 import { diffsMatcher } from './helper/matchers'
@@ -23,6 +23,7 @@ interface MakeSpecOptions {
   messageIds?: string[]
   messagePayloadsPatch?: Record<string, unknown>
   serversPatch?: Record<string, { host: string; protocol: string }>
+  channelPatch?: Record<string, unknown>
   operationIds?: string[]
 }
 
@@ -41,6 +42,7 @@ function makeSpec({
   messageIds = ['MessageA'],
   messagePayloadsPatch,
   serversPatch,
+  channelPatch,
   operationIds,
 }: MakeSpecOptions = {}): { asyncapi: string } & Record<string, unknown> {
   const payloads = { ...DEFAULT_PAYLOADS, ...messagePayloadsPatch }
@@ -77,6 +79,7 @@ function makeSpec({
       myChannel: {
         servers: serverIds.map(id => ({ $ref: `#/servers/${id}` })),
         messages: channelMessages,
+        ...channelPatch,
       },
     },
     operations,
@@ -447,6 +450,38 @@ describe('messages mapped by firstReferenceKeyProperty', () => {
       }),
       expect.objectContaining({
         ...TYPE_CHANGE_DIFF,
+        scope: COMPARE_SCOPE_SEND,
+      }),
+    ]))
+  })
+})
+
+describe('channels mapped by key', () => {
+  it('reports a referenced channel change in root and operation scopes', async () => {
+    const before = makeSpec({ channelPatch: { description: 'before' } })
+    const after = makeSpec({ channelPatch: { description: 'after' } })
+
+    await parseAsyncApiAndAssertValid(before)
+    await parseAsyncApiAndAssertValid(after)
+
+    const { diffs } = apiDiff(before, after)
+
+    expect(diffs).toHaveLength(2) // direct root traversal and operation-scoped channel traversal
+    const DESCRIPTION_CHANGE_DIFF = {
+      action: DiffAction.replace,
+      type: annotation,
+      beforeValue: 'before',
+      afterValue: 'after',
+      beforeDeclarationPaths: [['channels', 'myChannel', 'description']],
+      afterDeclarationPaths: [['channels', 'myChannel', 'description']],
+    }
+    expect(diffs).toEqual(diffsMatcher([
+      expect.objectContaining({
+        ...DESCRIPTION_CHANGE_DIFF,
+        scope: COMPARE_SCOPE_ROOT,
+      }),
+      expect.objectContaining({
+        ...DESCRIPTION_CHANGE_DIFF,
         scope: COMPARE_SCOPE_SEND,
       }),
     ]))
