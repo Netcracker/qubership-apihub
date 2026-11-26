@@ -1,0 +1,799 @@
+{
+    "info": {
+        "name": "5_Migration",
+        "_postman_id": "e119a392-5847-4c42-8c72-d4f9af11a057",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+        "description": "Independent operations migration regression suite. Requires SERVER_HOST and local administrator Username/Password. Logs in itself, creates a unique workspace, publishes its own OpenAPI fixture, verifies exact scoped rebuilds, and deletes its workspace. No other collection or shared test fixture is required. Run on an isolated test instance: migrations use an exclusive global slot. On timeout, the suite cancels its own running migration and waits for it to stop before cleanup."
+    },
+    "auth": {
+        "type": "bearer",
+        "bearer": [
+            {
+                "key": "token",
+                "value": "{{migrationScopeToken}}",
+                "type": "string"
+            }
+        ]
+    },
+    "item": [
+        {
+            "name": "0. Login as administrator",
+            "event": [
+                {
+                    "listen": "prerequest",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            "Object.keys(pm.environment.toObject()).filter(function (key) {",
+                            "  return key.startsWith('migrationScope');",
+                            "}).forEach(function (key) { pm.environment.unset(key); });"
+                        ]
+                    }
+                },
+                {
+                    "listen": "test",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            "let token;",
+                            "pm.test('Administrator login succeeds', function () {",
+                            "  pm.response.to.have.status(200);",
+                            "  token = pm.response.json().token;",
+                            "  pm.expect(token).to.be.a('string').and.not.empty;",
+                            "});",
+                            "if (typeof token === 'string' && token.length > 0) {",
+                            "  pm.environment.set('migrationScopeToken', token);",
+                            "} else { pm.execution.setNextRequest(null); }"
+                        ]
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "auth": {
+                    "type": "basic",
+                    "basic": [
+                        {
+                            "key": "username",
+                            "value": "{{Username}}",
+                            "type": "string"
+                        },
+                        {
+                            "key": "password",
+                            "value": "{{Password}}",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "url": "{{SERVER_HOST}}/api/v2/auth/local"
+            }
+        },
+        {
+            "name": "1. Partial migration by workspace or group scopes",
+            "description": "Checks invalid scopes and unpublished packages, then publishes two independent versions in each of four isolated packages. Successful migrations cover an exact package ID, a group, mixed overlapping scopes, and a workspace. Reports must contain the exact successful build count; persisted builds must match the requested package IDs and versions for that migration ID. CI runs this scenario sequentially because migrations are exclusive.",
+            "item": [
+                {
+                    "name": "1057 - Create isolated hierarchy",
+                    "event": [
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.environment.set('migrationScopeAlias', 'mg' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8));"
+                                ]
+                            }
+                        },
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Migration scope workspace created', function () { pm.response.to.have.status(201); });",
+                                    "if (pm.response.code !== 201) { pm.execution.setNextRequest(null); } else {",
+                                    "  const workspaceId = pm.response.json().packageId;",
+                                    "  pm.environment.set('migrationScopeWorkspace', workspaceId);",
+                                    "  const packages = ['.group.direct', '.group.nested.leaf', '.groupother.sibling', '.root'].map(function (suffix) { return workspaceId + suffix; });",
+                                    "  pm.environment.set('migrationScopePackages', JSON.stringify(packages));",
+                                    "  pm.environment.set('migrationScopePublications', JSON.stringify(packages.flatMap(function (packageId) {",
+                                    "    return ['1.0', '2.0'].map(function (version) { return { packageId, version }; });",
+                                    "  })));",
+                                    "  pm.environment.set('migrationScopePublicationIndex', '0');",
+                                    "  const cases = [",
+                                    "    { name: 'exact package ID', packageIds: [packages[1]], versions: ['1.0'], expected: [{ packageId: packages[1], versions: ['1.0@1'] }] },",
+                                    "    { name: 'group scope', packageIds: [workspaceId + '.group.*'], versions: ['1.0'], expected: packages.slice(0, 2).map(function (packageId) { return { packageId, versions: ['1.0@1'] }; }) },",
+                                    "    { name: 'mixed overlapping scopes', packageIds: [workspaceId + '.group.*', workspaceId + '.group.nested.*', packages[1], packages[2], workspaceId + '.dashboards.*'], versions: ['2.0'], expected: packages.slice(0, 3).map(function (packageId) { return { packageId, versions: ['2.0@1'] }; }) },",
+                                    "    { name: 'workspace scope', packageIds: [workspaceId + '.*'], expected: packages.map(function (packageId) { return { packageId, versions: ['1.0@1', '2.0@1'] }; }) }",
+                                    "  ];",
+                                    "  pm.environment.set('migrationScopeCases', JSON.stringify(cases));",
+                                    "  pm.environment.set('migrationScopeCaseIndex', '0');",
+                                    "  const entities = [",
+                                    "    ['group', '', 'group'],",
+                                    "    ['direct', '.group', 'package'],",
+                                    "    ['nested', '.group', 'group'],",
+                                    "    ['leaf', '.group.nested', 'package'],",
+                                    "    ['groupother', '', 'group'],",
+                                    "    ['sibling', '.groupother', 'package'],",
+                                    "    ['dashboards', '', 'group'],",
+                                    "    ['dash', '.dashboards', 'dashboard'],",
+                                    "    ['root', '', 'package'],",
+                                    "    ['empty', '', 'group']",
+                                    "  ];",
+                                    "  function createNext(index) {",
+                                    "    if (index === entities.length) { return; }",
+                                    "    const [alias, parentSuffix, kind] = entities[index];",
+                                    "    pm.sendRequest({",
+                                    "      url: pm.environment.get('SERVER_HOST') + '/api/v2/packages',",
+                                    "      method: 'POST',",
+                                    "      header: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + pm.environment.get('migrationScopeToken') },",
+                                    "      body: { mode: 'raw', raw: JSON.stringify({ alias, parentId: workspaceId + parentSuffix, kind, name: alias }) }",
+                                    "    }, function (err, response) {",
+                                    "      pm.test('Create migration scope ' + alias, function () {",
+                                    "        pm.expect(err).to.equal(null);",
+                                    "        pm.expect(response.code).to.equal(201);",
+                                    "      });",
+                                    "      if (err || response.code !== 201) {",
+                                    "        pm.execution.setNextRequest('1057 - Delete isolated workspace');",
+                                    "        return;",
+                                    "      }",
+                                    "      createNext(index + 1);",
+                                    "    });",
+                                    "  }",
+                                    "  createNext(0);",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"alias\":\"{{migrationScopeAlias}}\",\"kind\":\"workspace\",\"name\":\"Migration workspace and group scope test\"}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": "{{SERVER_HOST}}/api/v2/packages"
+                    }
+                },
+                {
+                    "name": "1057 - Reject invalid scopes",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Scope is rejected without starting a migration', function () {",
+                                    "  pm.response.to.have.status(400);",
+                                    "  pm.expect(pm.response.json().code).to.equal('9');",
+                                    "});"
+                                ]
+                            }
+                        }
+                    ],
+                    "item": [
+                        {
+                            "name": "1057 - A similar prefix is not a hierarchy match",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\"packageIds\":[\"{{migrationScopeWorkspace}}.grou.*\"]}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                },
+                                "url": "{{SERVER_HOST}}/api/internal/migrate/operations"
+                            }
+                        },
+                        {
+                            "name": "1057 - An empty group does not become a full migration",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\"packageIds\":[\"{{migrationScopeWorkspace}}.empty.*\"]}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                },
+                                "url": "{{SERVER_HOST}}/api/internal/migrate/operations"
+                            }
+                        },
+                        {
+                            "name": "1057 - Valid entries do not hide an unmatched group scope",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\"packageIds\":[\"{{migrationScopeWorkspace}}.group.*\",\"{{migrationScopeWorkspace}}.group.nested.leaf\",\"{{migrationScopeWorkspace}}.empty.*\"]}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                },
+                                "url": "{{SERVER_HOST}}/api/internal/migrate/operations"
+                            }
+                        },
+                        {
+                            "name": "1057 - A bare wildcard is rejected",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\"packageIds\":[\"*\"]}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                },
+                                "url": "{{SERVER_HOST}}/api/internal/migrate/operations"
+                            }
+                        },
+                        {
+                            "name": "1057 - A wildcard without a workspace or group ID is rejected",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\"packageIds\":[\".*\"]}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                },
+                                "url": "{{SERVER_HOST}}/api/internal/migrate/operations"
+                            }
+                        },
+                        {
+                            "name": "1057 - An exact ID does not hide a malformed wildcard",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\"packageIds\":[\"{{migrationScopeWorkspace}}.group.nested.leaf\",\"{{migrationScopeWorkspace}}.group*\"]}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                },
+                                "url": "{{SERVER_HOST}}/api/internal/migrate/operations"
+                            }
+                        },
+                        {
+                            "name": "1057 - A group scope does not hide a malformed wildcard",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\"packageIds\":[\"{{migrationScopeWorkspace}}.group.*\",\"{{migrationScopeWorkspace}}.*.leaf\"]}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                },
+                                "url": "{{SERVER_HOST}}/api/internal/migrate/operations"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "1057 - Start mixed and overlapping scopes",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Nested package and dashboard scopes are accepted', function () {",
+                                    "  pm.response.to.have.status(201);",
+                                    "  pm.expect(pm.response.json().id).to.be.a('string').and.not.empty;",
+                                    "});",
+                                    "if (pm.response.code === 201) {",
+                                    "  pm.environment.set('migrationScopeRun', pm.response.json().id);",
+                                    "  pm.environment.set('migrationScopePollAttempts', '0');",
+                                    "} else { pm.execution.setNextRequest('1057 - Delete isolated workspace'); }"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"packageIds\":[\"{{migrationScopeWorkspace}}.group.*\",\"{{migrationScopeWorkspace}}.group.nested.*\",\"{{migrationScopeWorkspace}}.group.nested.leaf\",\"{{migrationScopeWorkspace}}.dashboards.*\"],\"skipValidation\":true}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": "{{SERVER_HOST}}/api/internal/migrate/operations"
+                    }
+                },
+                {
+                    "name": "1057 - Wait for scoped migration",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Migration report is available', function () { pm.response.to.have.status(200); });",
+                                    "if (pm.response.code === 200) {",
+                                    "  const report = pm.response.json();",
+                                    "  const attempts = Number(pm.environment.get('migrationScopePollAttempts')) + 1;",
+                                    "  pm.environment.set('migrationScopePollAttempts', String(attempts));",
+                                    "  if (report.status === 'running' && attempts < 120) {",
+                                    "    setTimeout(function () { pm.execution.setNextRequest('1057 - Wait for scoped migration'); }, 500);",
+                                    "  } else {",
+                                    "    if (report.status === 'running') { pm.execution.setNextRequest('1057 - Cancel timed out migration'); }",
+                                    "    else if (report.status !== 'complete') { pm.execution.setNextRequest('1057 - Delete isolated workspace'); }",
+                                    "    pm.test('Scoped migration completes without builds for unpublished packages', function () {",
+                                    "      pm.expect(report.status, report.errorDetails).to.equal('complete');",
+                                    "      pm.expect(report.successBuildsCount).to.be.oneOf([undefined, 0]);",
+                                    "      pm.expect(report.errorBuildsCount).to.be.oneOf([undefined, 0]);",
+                                    "      pm.expect(report.notMigratedVersionsCount).to.be.oneOf([undefined, 0]);",
+                                    "      pm.expect(report.notMigratedComparisonsCount).to.be.oneOf([undefined, 0]);",
+                                    "    });",
+                                    "  }",
+                                    "}",
+                                    "else { pm.execution.setNextRequest(null); }"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "url": "{{SERVER_HOST}}/api/internal/migrate/operations/{{migrationScopeRun}}"
+                    }
+                },
+                {
+                    "name": "1057 - Publish isolated version",
+                    "event": [
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const publications = JSON.parse(pm.environment.get('migrationScopePublications'));",
+                                    "const fixture = publications[Number(pm.environment.get('migrationScopePublicationIndex'))];",
+                                    "pm.environment.set('migrationScopePackage', fixture.packageId);",
+                                    "pm.environment.set('migrationScopeConfig', JSON.stringify({",
+                                    "  packageId: fixture.packageId, version: fixture.version, status: 'draft',",
+                                    "  files: [{ fileId: 'scope.json', publish: true }]",
+                                    "}));"
+                                ]
+                            }
+                        },
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Isolated version publication is accepted', function () {",
+                                    "  pm.response.to.have.status(202);",
+                                    "  pm.expect(pm.response.json().publishId).to.be.a('string').and.not.empty;",
+                                    "});",
+                                    "if (pm.response.code === 202) {",
+                                    "  pm.environment.set('migrationScopePublishId', pm.response.json().publishId);",
+                                    "  pm.environment.set('migrationScopePollAttempts', '0');",
+                                    "} else { pm.execution.setNextRequest('1057 - Delete isolated workspace'); }"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "url": "{{SERVER_HOST}}/api/v2/packages/{{migrationScopePackage}}/publish",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "multipart/form-data; boundary=apihub-migration-scope"
+                            },
+                            {
+                                "key": "Content-Transfer-Encoding",
+                                "value": "base64"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "--apihub-migration-scope\r\nContent-Disposition: form-data; name=\"clientBuild\"\r\n\r\nfalse\r\n--apihub-migration-scope\r\nContent-Disposition: form-data; name=\"config\"\r\n\r\n{{migrationScopeConfig}}\r\n--apihub-migration-scope\r\nContent-Disposition: form-data; name=\"sources\"; filename=\"scope.zip\"\r\nContent-Type: application/zip;base64\r\n\r\nUEsDBBQAAAAAAAAAAAA2frRSrwAAAK8AAAAKAAAAc2NvcGUuanNvbnsib3BlbmFwaSI6IjMuMC4zIiwiaW5mbyI6eyJ0aXRsZSI6Ik1pZ3JhdGlvbiBzY29wZSBmaXh0dXJlIiwidmVyc2lvbiI6IjEuMC4wIn0sInBhdGhzIjp7Ii9zY29wZSI6eyJnZXQiOnsib3BlcmF0aW9uSWQiOiJnZXRTY29wZSIsInJlc3BvbnNlcyI6eyIyMDAiOnsiZGVzY3JpcHRpb24iOiJPSyJ9fX19fX1QSwECFAAUAAAAAAAAAAAANn60Uq8AAACvAAAACgAAAAAAAAAAAAAAAAAAAAAAc2NvcGUuanNvblBLBQYAAAAAAQABADgAAADXAAAAAAA=\r\n--apihub-migration-scope--",
+                            "options": {
+                                "raw": {
+                                    "language": "text"
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "name": "1057 - Wait for isolated publication",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Isolated publication status is available', function () { pm.response.to.have.status(200); });",
+                                    "if (pm.response.code !== 200) {",
+                                    "  pm.execution.setNextRequest('1057 - Delete isolated workspace');",
+                                    "} else {",
+                                    "  const result = pm.response.json();",
+                                    "  const attempts = Number(pm.environment.get('migrationScopePollAttempts')) + 1;",
+                                    "  pm.environment.set('migrationScopePollAttempts', String(attempts));",
+                                    "  if (['none', 'running'].includes(result.status) && attempts < 120) {",
+                                    "    setTimeout(function () { pm.execution.setNextRequest('1057 - Wait for isolated publication'); }, 1000);",
+                                    "  } else {",
+                                    "    pm.test('Isolated version is published successfully', function () {",
+                                    "      pm.expect(result.status, result.message).to.equal('complete');",
+                                    "      pm.expect(result.hasErrors).to.equal(false);",
+                                    "    });",
+                                    "    if (result.status !== 'complete' || result.hasErrors) {",
+                                    "      pm.execution.setNextRequest('1057 - Delete isolated workspace');",
+                                    "    } else {",
+                                    "      const next = Number(pm.environment.get('migrationScopePublicationIndex')) + 1;",
+                                    "      pm.environment.set('migrationScopePublicationIndex', String(next));",
+                                    "      if (next < JSON.parse(pm.environment.get('migrationScopePublications')).length) {",
+                                    "        pm.execution.setNextRequest('1057 - Publish isolated version');",
+                                    "      }",
+                                    "    }",
+                                    "  }",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "url": "{{SERVER_HOST}}/api/v2/packages/{{migrationScopePackage}}/publish/{{migrationScopePublishId}}/status"
+                    }
+                },
+                {
+                    "name": "1057 - Start published scope case",
+                    "event": [
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const cases = JSON.parse(pm.environment.get('migrationScopeCases'));",
+                                    "const current = cases[Number(pm.environment.get('migrationScopeCaseIndex'))];",
+                                    "const body = { packageIds: current.packageIds };",
+                                    "if (current.versions) { body.versions = current.versions; }",
+                                    "pm.environment.set('migrationScopeRequest', JSON.stringify(body));",
+                                    "pm.environment.set('migrationScopeExpected', JSON.stringify(current.expected));",
+                                    "pm.environment.set('migrationScopeCaseName', current.name);"
+                                ]
+                            }
+                        },
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Published migration is accepted: ' + pm.environment.get('migrationScopeCaseName'), function () {",
+                                    "  pm.response.to.have.status(201);",
+                                    "  pm.expect(pm.response.json().id).to.be.a('string').and.not.empty;",
+                                    "});",
+                                    "if (pm.response.code === 201) {",
+                                    "  pm.environment.set('migrationScopeRun', pm.response.json().id);",
+                                    "  pm.environment.set('migrationScopePollAttempts', '0');",
+                                    "} else { pm.execution.setNextRequest('1057 - Delete isolated workspace'); }"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{{migrationScopeRequest}}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": "{{SERVER_HOST}}/api/internal/migrate/operations"
+                    }
+                },
+                {
+                    "name": "1057 - Wait for published migration",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Published migration report is available', function () { pm.response.to.have.status(200); });",
+                                    "if (pm.response.code !== 200) {",
+                                    "  pm.execution.setNextRequest(null);",
+                                    "} else {",
+                                    "  const report = pm.response.json();",
+                                    "  const attempts = Number(pm.environment.get('migrationScopePollAttempts')) + 1;",
+                                    "  pm.environment.set('migrationScopePollAttempts', String(attempts));",
+                                    "  if (report.status === 'running' && attempts < 300) {",
+                                    "    setTimeout(function () { pm.execution.setNextRequest('1057 - Wait for published migration'); }, 1000);",
+                                    "  } else {",
+                                    "    const expected = JSON.parse(pm.environment.get('migrationScopeExpected'));",
+                                    "    const count = expected.reduce(function (sum, entry) { return sum + entry.versions.length; }, 0);",
+                                    "    pm.test('Migration rebuilds exactly the selected versions: ' + pm.environment.get('migrationScopeCaseName'), function () {",
+                                    "      pm.expect(report.status, report.errorDetails).to.equal('complete');",
+                                    "      pm.expect(report.errorDetails).to.be.oneOf([undefined, '']);",
+                                    "      pm.expect(report.successBuildsCount).to.equal(count);",
+                                    "      ['errorBuildsCount', 'suspiciousBuildsCount', 'notMigratedVersionsCount', 'notMigratedComparisonsCount'].forEach(function (key) {",
+                                    "        pm.expect(report[key], key).to.be.oneOf([undefined, 0]);",
+                                    "      });",
+                                    "    });",
+                                    "    if (report.status === 'running') {",
+                                    "      pm.execution.setNextRequest('1057 - Cancel timed out migration');",
+                                    "    } else if (report.status !== 'complete') {",
+                                    "      pm.execution.setNextRequest('1057 - Delete isolated workspace');",
+                                    "    } else {",
+                                    "      pm.environment.set('migrationScopeCheckIndex', '0');",
+                                    "    }",
+                                    "  }",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "url": "{{SERVER_HOST}}/api/internal/migrate/operations/{{migrationScopeRun}}"
+                    }
+                },
+                {
+                    "name": "1057 - Check persisted migration builds",
+                    "event": [
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const packages = JSON.parse(pm.environment.get('migrationScopePackages'));",
+                                    "pm.environment.set('migrationScopePackage', packages[Number(pm.environment.get('migrationScopeCheckIndex'))]);"
+                                ]
+                            }
+                        },
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Persisted builds are available', function () { pm.response.to.have.status(200); });",
+                                    "if (pm.response.code !== 200) {",
+                                    "  pm.execution.setNextRequest('1057 - Delete isolated workspace');",
+                                    "} else {",
+                                    "  const packageId = pm.environment.get('migrationScopePackage');",
+                                    "  const run = pm.environment.get('migrationScopeRun');",
+                                    "  const expected = JSON.parse(pm.environment.get('migrationScopeExpected')).find(function (entry) { return entry.packageId === packageId; });",
+                                    "  const builds = pm.response.json().builds;",
+                                    "  pm.test('Build list is complete for isolated package ' + packageId, function () {",
+                                    "    pm.expect(builds).to.be.an('array').with.length.below(100);",
+                                    "  });",
+                                    "  const migrated = builds.filter(function (build) { return build.metadata.migration_id === run; });",
+                                    "  pm.test('Migration builds match package and versions: ' + packageId, function () {",
+                                    "    const versions = expected ? expected.versions : [];",
+                                    "    pm.expect(migrated.map(function (build) { return build.version; }).sort()).to.deep.equal(versions.slice().sort());",
+                                    "    migrated.forEach(function (build) {",
+                                    "      pm.expect(build.buildId).to.be.a('string').and.not.empty;",
+                                    "      pm.expect(build.status, build.details).to.equal('complete');",
+                                    "      pm.expect(build.packageId).to.equal(packageId);",
+                                    "      pm.expect(build.metadata.build_type).to.equal('build');",
+                                    "      pm.expect(build.config.packageId).to.equal(packageId);",
+                                    "      pm.expect(build.config.version).to.equal(build.version);",
+                                    "      pm.expect(build.config.migrationId).to.equal(run);",
+                                    "      pm.expect(build.config.migrationBuild).to.equal(true);",
+                                    "    });",
+                                    "  });",
+                                    "  const next = Number(pm.environment.get('migrationScopeCheckIndex')) + 1;",
+                                    "  const packages = JSON.parse(pm.environment.get('migrationScopePackages'));",
+                                    "  pm.environment.set('migrationScopeCheckIndex', String(next));",
+                                    "  if (next < packages.length) {",
+                                    "    pm.execution.setNextRequest('1057 - Check persisted migration builds');",
+                                    "  } else {",
+                                    "    const nextCase = Number(pm.environment.get('migrationScopeCaseIndex')) + 1;",
+                                    "    pm.environment.set('migrationScopeCaseIndex', String(nextCase));",
+                                    "    if (nextCase < JSON.parse(pm.environment.get('migrationScopeCases')).length) {",
+                                    "      pm.execution.setNextRequest('1057 - Start published scope case');",
+                                    "    }",
+                                    "  }",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "url": "{{SERVER_HOST}}/api/v1/builds?packageId={{migrationScopePackage}}&limit=100&offset=0"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "9. Cleanup",
+            "item": [
+                {
+                    "name": "1057 - Delete isolated workspace",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Migration scope hierarchy is removed', function () { pm.response.to.have.status(204); });",
+                                    "if (pm.response.code !== 204) {",
+                                    "  pm.execution.setNextRequest(null);",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "DELETE",
+                        "url": "{{SERVER_HOST}}/api/v2/packages/{{migrationScopeWorkspace}}"
+                    }
+                },
+                {
+                    "name": "1057 - Verify isolated workspace cleanup",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Isolated workspace is no longer available', function () { pm.response.to.have.status(404); });",
+                                    "Object.keys(pm.environment.toObject()).filter(function (key) {",
+                                    "  return key.startsWith('migrationScope');",
+                                    "}).forEach(function (key) { pm.environment.unset(key); });",
+                                    "pm.execution.setNextRequest(null);"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "url": "{{SERVER_HOST}}/api/v2/packages/{{migrationScopeWorkspace}}"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "10. Timeout recovery",
+            "item": [
+                {
+                    "name": "1057 - Cancel timed out migration",
+                    "description": "Reached only after a report confirms that this collection owns the running migration. The backend permits one migration at a time.",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Timed out migration cancellation is accepted', function () { pm.response.to.have.status(200); });",
+                                    "if (pm.response.code === 200) {",
+                                    "  pm.environment.set('migrationScopeCancelPollAttempts', '0');",
+                                    "} else { pm.execution.setNextRequest(null); }"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "url": "{{SERVER_HOST}}/api/internal/migrate/operations/cancel"
+                    }
+                },
+                {
+                    "name": "1057 - Wait for migration cancellation",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Owned migration status is available during cleanup', function () { pm.response.to.have.status(200); });",
+                                    "if (pm.response.code !== 200) {",
+                                    "  pm.execution.setNextRequest(null);",
+                                    "} else {",
+                                    "  const report = pm.response.json();",
+                                    "  const attempts = Number(pm.environment.get('migrationScopeCancelPollAttempts')) + 1;",
+                                    "  pm.environment.set('migrationScopeCancelPollAttempts', String(attempts));",
+                                    "  if (['running', 'cancelling'].includes(report.status) && attempts < 120) {",
+                                    "    setTimeout(function () { pm.execution.setNextRequest('1057 - Wait for migration cancellation'); }, 1000);",
+                                    "  } else {",
+                                    "    const terminal = ['complete', 'cancelled', 'failed'].includes(report.status);",
+                                    "    pm.test('Owned migration stops before deleting test packages', function () {",
+                                    "      pm.expect(terminal, 'Migration status: ' + report.status).to.equal(true);",
+                                    "    });",
+                                    "    pm.execution.setNextRequest(terminal ? '1057 - Delete isolated workspace' : null);",
+                                    "  }",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "url": "{{SERVER_HOST}}/api/internal/migrate/operations/{{migrationScopeRun}}"
+                    }
+                }
+            ]
+        }
+    ],
+    "variable": []
+}

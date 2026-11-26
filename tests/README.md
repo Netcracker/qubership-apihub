@@ -21,6 +21,7 @@ The end-to-end suites of APIHUB. They hold no product code and run against a dep
 | `2_1_Negative_Portal`, `2_2_Negative_Agent` | Negative cases of the Portal API and the agent |
 | `3_1_Stories_Bugs`, `3_2_Stories_Bugs` | Regression cases of stories and bugs |
 | `4_Access_control` | Roles and permissions |
+| `5_Migration` | Independent operations migration tests, including scoped rebuilds |
 
 Other files:
 
@@ -53,7 +54,9 @@ The `plan` job of `ci.yml` picks an E2E tier once per commit:
 
 The `full` tier installs the Helm charts on Kind, runs the default Newman collections, and then the Playwright
 `Portal` project without `@flaky` tests. Both suites run even when one fails, and every report is uploaded as an
-artifact. The Kind run takes about 45 minutes. The workflows and the artifacts are in [CI](../docs/development/ci.md).
+artifact. The default full suite includes `5_Migration` on Kind and both Compose stacks, including manual and
+nightly runs. The Kind run takes about 45 minutes. The workflows and the artifacts are in
+[CI](../docs/development/ci.md).
 
 ## Manual runs
 
