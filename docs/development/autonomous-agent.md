@@ -235,11 +235,18 @@ reply says so. A `change` verdict always names at least one place to fix.
 
 ### Reviews with change requests
 
+Implementation attempts for Task issues allow up to 30 changed files and 5000 changed lines (additions plus deletions).
+Bug issues allow up to 20 files and 600 changed lines. Both limits include the boundary and apply to the whole pull
+request diff against its merge base with `develop`, including review continuations. The work and publish jobs enforce
+the same limits; exceeding either one blocks publication.
+
 When a person with write access submits a review with the state "changes requested" on a pull request of the agent,
 the agent makes one attempt. The implementer gets the review text and the unresolved review threads (file, line, and
-the conversation), at most 30 of them; the prompt says how many more were left out. After the push, the agent replies
-once in each thread the implementer saw, with the short commit id, and in no other. It never resolves a thread: a
-person does. The title and the description of the pull request stay, and the pull request goes back to a draft when
+the conversation), at most 30 of them; the prompt says how many more were left out. The agent replies once in each
+thread the implementer saw, with an explanation specific to that thread and code evidence. Replies include the
+publication result: the short commit id after a push, or the blocker when no update was published. A crash or timeout
+still produces a failure explanation in each supplied thread. It never resolves a thread: a person does.
+The title and the description of the pull request stay, and the pull request goes back to a draft when
 the new result is not green.
 
 When an attempt to update an existing pull request blocks, fails, or ends with incomplete checks or self-review, the
@@ -251,6 +258,18 @@ Repeated `/agent implement`, `/agent retry`, answers to a hand-off, and general 
 threads of the linked open pull request. Feedback stays in scope even when the blocked attempt published no code.
 The implementer and self-reviewer receive the same threads. The implementer reports an outcome for each thread in its
 summary; self-review treats missing outcomes and unaddressed requests as major findings.
+
+An existing pull request can finish an attempt with `no-changes`: the code already satisfies the request. The
+implementer reads the complete supplied conversations and cites evidence, including inherited tests where relevant.
+A second model must approve that conclusion and the proposed replies. This outcome requires a clean working tree,
+no commits made in the attempt, and the same open PR head when the answer is published. It creates no commit, bundle,
+push, or local check run, and does not mark CI green or resolve threads. New implementations, CI fixes, and merges of
+`develop` cannot use it. A disputed conclusion goes to another round or stops with `needs-human:disagreement`.
+
+The successful attempt is recorded as `no-changes`. The issue phase becomes `reviewed`, unless it was waiting for
+CI before the attempt; pending CI keeps `waiting-ci` so its gate can still finish. Existing CI results are preserved.
+The agent does not add `agent:completed` for an explanation alone. When there are no inline threads, the explanation
+is posted to the PR conversation.
 
 You can also write `/agent <change request>` inside an inline review thread, for example `/agent check this comment`.
 That command starts one attempt over the referenced conversation, including the original review comment, rather than

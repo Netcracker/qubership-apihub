@@ -1,6 +1,6 @@
 ---
 description: Architecture decision records of the monorepo.
-globs: **
+alwaysApply: true
 ---
 
 When a change adopts, replaces, or drops a tool, bot, service, or framework, changes the CI, release, or deployment

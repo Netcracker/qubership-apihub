@@ -81,9 +81,12 @@ Templates define **section names and skeleton**; the examples define **how much 
 - **Language**: English for design documents unless the user asks for another language.
 - **Headings**: Keep the template section titles (`Summary`, `Use Cases`, `Execution`, `Scope`, …) word for word.
 - **Heading levels**: Local drafts may keep the template levels (`# Summary`). A file under `docs/` gets one H1 with
-  the feature name and every template section one level lower (`## Summary`, `### Use Case 1`): markdownlint
-  (MD025) fails on a second H1.
-- **Tables**: Three columns for T2/T3 UI use cases — **Description** | **UI (Mockup)** | **API / Logic**.
+  the feature name and every template section one level lower (`## Summary`, `### Use Case 1`). CI turns MD025
+  off, so it does not catch a second H1; check it yourself.
+- **Tables**: Three columns for T2/T3 UI use cases — **Description** | **UI (Mockup)** | **API / Logic**. Keep
+  each row on one line; `docs/development/design-doc-markdown-lint.md` lists the table mistakes that fail CI.
+- **Required fields**: Mark a required UI field as `**Field** (required)`, never with an asterisk after the bold
+  text.
 - **Figma links**: Prefer task-page frames; label link text with UC number and short state name.
 - **Permissions**: Name APIHUB permissions explicitly (e.g. `create_and_update_package`) when UI is owner-only.
 - **Out of scope**: List in Assumptions or T3 Scope table, not buried in a single use case footnote.

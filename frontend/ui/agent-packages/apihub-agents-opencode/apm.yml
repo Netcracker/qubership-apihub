@@ -1,0 +1,12 @@
+name: apihub-agents-opencode
+version: 1.0.0
+description: "OpenCode subagents with no model pin: the frontend-verifier inherits the session model"
+author: Qubership
+# APM copies an agent file verbatim to every target, so one file cannot carry a model per harness. This package,
+# apihub-agents-claude, and apihub-agents-cursor each ship the frontend-verifier for one target with an identical body:
+# the instructions live once, in the apihub-frontend-gates skill. OpenCode drops an agent whose model is not a
+# configured provider/model pair, so this one names no model.
+targets:
+  - opencode
+dependencies:
+  apm: []

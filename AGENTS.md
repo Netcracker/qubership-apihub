@@ -1,6 +1,6 @@
 # Qubership APIHUB (monorepo) — Agent Instructions
 
-Instructions for AI assistants working on **qubership-apihub** (Cursor, Claude Code, and compatible tools).
+Instructions for AI assistants working on **qubership-apihub** (Cursor, Claude Code, OpenCode, and compatible tools).
 
 ## Repository role
 
@@ -19,11 +19,6 @@ of this repository now.
 | Documentation | `docs/` | Installation, admin, configuration map, release process |
 | Tooling | `tools/` | Release scripts, CI helpers, Nx plugins |
 | CI | `.github/` | Workflows, CODEOWNERS, Renovate |
-
-Each group and each module has its own `AGENTS.md` (and a `CLAUDE.md` that imports it): start from
-[`backend/AGENTS.md`](backend/AGENTS.md), [`frontend/AGENTS.md`](frontend/AGENTS.md),
-[`tests/AGENTS.md`](tests/AGENTS.md), or [`deploy/AGENTS.md`](deploy/AGENTS.md). They list how to build and test the
-module and which agent packages apply.
 
 Each group and each module has its own `AGENTS.md` (and a `CLAUDE.md` that imports it): start from
 [`backend/AGENTS.md`](backend/AGENTS.md), [`frontend/AGENTS.md`](frontend/AGENTS.md),
@@ -83,11 +78,11 @@ packages live next to the code they describe:
 
 | Location | Packages |
 |----------|----------|
-| `agent-packages/` | `apihub-deployment-authoring`, `apihub-deployment-followup`, `apihub-add-go-service`, `apihub-landing-refresh`, `apihub-adr`, `apihub-design-authoring` |
+| `agent-packages/` | `apihub-deployment-authoring`, `apihub-deployment-followup`, `apihub-add-go-service`, `apihub-landing-refresh`, `apihub-adr`, `apihub-design-authoring`, `apihub-autonomous-agent`, `analyze-migration` |
 | `backend/portal-backend/agent-packages/` | `apihub-backend-developer`, `apihub-backend-self-review`, `backend-conventions`, `advanced-verification` |
 | `backend/agent/agent-packages/` | `apihub-agent-developer`, `agent-conventions` |
 | `frontend/<library>/agent-packages/` | `api-diff-*`, `api-doc-viewer-*`, `next-data-model-*`, `api-processor-*`, `api-unifier-*`, `ddlapi-*`, `json-crawl-*` |
-| `frontend/ui/agent-packages/` | `apihub-ui-authoring`, `apihub-typescript-coding`, `apihub-react-coding`, `apihub-mui-coding`, `apihub-unit-testing`, `apihub-quality-gates`, `apihub-agents-claude`, `apihub-agents-cursor` |
+| `frontend/ui/agent-packages/` | `apihub-ui-authoring`, `apihub-typescript-coding`, `apihub-react-coding`, `apihub-mui-coding`, `apihub-unit-testing`, `apihub-frontend-gates`, `apihub-agents-claude`, `apihub-agents-cursor`, `apihub-agents-opencode` |
 | `tests/postman-collections/agent-packages/` | `postman-e2e-authoring`, `postman-e2e-followup` |
 
 Every module instruction has an `applyTo` glob that starts with its module path, so it does not apply to another
@@ -96,34 +91,44 @@ module. The `*-using` packages are the exception by design: they name the consum
 After you edit a package, run from the repository root:
 
 ```bash
-apm install --target cursor,claude
+apm install
 ```
 
-Run it twice and check `git status` after each run. apm 0.35.0 deletes the deployed copies of a changed local
-package on the first run ("no trustworthy local deployment baseline") and writes them on the second. A deleted file
-under `.agents/`, `.claude/`, or `.cursor/` that the second run does not restore is a real problem.
+The targets are in `apm.yml`. Use the APM version that `apm.lock.yaml` records in `apm_version`: another version can
+rewrite the deployed rules and the lock file. Check `git status` afterwards: a deleted file under `.agents/`,
+`.claude/`, `.cursor/`, or `.opencode/` is a real problem. Before you commit deployed files, run
+`apm install --frozen --dry-run`; it verifies them against `apm.lock.yaml`.
 
 apm also deletes a deployed copy with CRLF line endings: its bytes no longer match `apm.lock.yaml`. A Windows clone
 made before `.gitattributes` set LF for these trees can still hold such copies, because Git does not rewrite
 checked-out files when attributes change. Check those files out again before you run apm:
 
 ```bash
-git ls-files --eol .agents .claude .cursor agent-packages '*/agent-packages/*' | grep 'w/crlf' | cut -f2 > crlf.txt
+git ls-files --eol .agents .claude .cursor .opencode agent-packages '*/agent-packages/*' | grep 'w/crlf' |
+  cut -f2 > crlf.txt
 xargs -a crlf.txt rm -f && xargs -a crlf.txt git checkout --
 rm crlf.txt
 ```
 
 ```powershell
-$crlf = git ls-files --eol .agents .claude .cursor agent-packages '*/agent-packages/*' |
+$crlf = git ls-files --eol .agents .claude .cursor .opencode agent-packages '*/agent-packages/*' |
   Select-String 'w/crlf' | ForEach-Object { ($_.Line -split "`t")[1] }
 if ($crlf) { $crlf | ForEach-Object { Remove-Item -LiteralPath $_ }; git checkout -- $crlf }
 ```
 
-Commit the package sources, `.agents/skills/`, `.claude/skills/`, and the refreshed rule trees together.
+Commit the package sources, `.agents/skills/`, `.claude/skills/`, `.opencode/agents/`, and the refreshed rule trees
+together.
 A clone then has skills for Claude Code and for harnesses that read `.agents/skills/`, without `apm install`.
 Do not commit `.cursor/skills/`. Cursor reads `.agents/skills/` and `.claude/skills/`.
-Never edit the deployed trees by hand. Do not run `apm compile`: it does not finish on a repository of this
-size. The `AGENTS.md` and `CLAUDE.md` files in this repository, including those inside modules, are hand-written.
+Never edit the deployed trees by hand. A store package changes in its source repository first; then
+`apm update <alias> --yes` brings it here (see [AI assistants](docs/development/ai-assistants.md#store-packages)).
+Do not run `apm compile`: it does not finish on a repository of this size. The `AGENTS.md` and `CLAUDE.md` files in
+this repository, including those inside modules, are hand-written.
 
 Always-on conventions: `development-conventions`, `english-developer-style`, `markdown-line-length-120`. Adding a
 Go service: use the `apihub-add-go-service` skill. See [`agent-packages/README.md`](agent-packages/README.md).
+
+OpenCode reads the hand-written root `opencode.json`. It loads every rule in `.claude/rules/` and guards shell
+commands as `.claude/settings.json` does; keep the two files in step. OpenCode loads a rule file whole and ignores its
+`paths:` header, so a rule in `.claude/rules/` applies only to the files that its `paths:` list matches. The AI
+Autonomous agent loads the same rules.

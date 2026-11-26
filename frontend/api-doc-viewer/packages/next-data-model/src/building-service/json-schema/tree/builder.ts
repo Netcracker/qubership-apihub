@@ -158,10 +158,10 @@ export class JsonSchemaTreeBuilder extends TreeBuilder<
     return this.tree
   }
 
-  public materializeChildren(node: JsonSchemaTreeNode, depth = 1): void {
+  public materializeChildren(node: JsonSchemaTreeNode, depth = 1): boolean {
     const work = this.lazyState.pending.get(node.id)
     if (!work || !this.crawlHooks) {
-      return
+      return false
     }
     this.lazyState.pending.delete(work.nodeId)
 
@@ -183,6 +183,7 @@ export class JsonSchemaTreeBuilder extends TreeBuilder<
       },
       true,
     )
+    return true
   }
 
   protected get logPrefix(): string {

@@ -103,7 +103,7 @@ const PLAYBOOKS = {
 }
 const DIFF_LIMITS = {
   'bug-fix': { files: 20, lines: 600 },
-  task: { files: 30, lines: 1000 },
+  task: { files: 30, lines: 5000 },
 }
 
 /** One check command may run this long; the job has 90 minutes for everything. */
@@ -342,6 +342,8 @@ const PROTECTED = [
   /^tools\/agent\//,
   /^agent-packages\//,
   /(^|\/)(AGENTS|CLAUDE)\.md$/,
+  /(^|\/)opencode\.jsonc?$/,
+  /(^|\/)\.opencode\//,
 ]
 
 /** The changed files that belong to the agent's own instructions and tools. */
@@ -427,7 +429,7 @@ function commitMessage({ type, scope, title, number, runUrl }) {
  * @param {'initial'|'human'|'ci-fix'|'review'|'update'} [kind] why the attempt runs; an update commits a merge, so its
  *   commit type is not used and the playbook rule does not apply
  */
-function checkImplementation(output, playbook, kind) {
+function checkImplementation(output, playbook, kind, threads = []) {
   const problems = []
   if (playbook === 'bug-fix' && kind !== 'update' && output.commitType !== 'fix') {
     problems.push(`commitType: a bug-fix must use 'fix', got '${output.commitType}'`)
@@ -444,6 +446,30 @@ function checkImplementation(output, playbook, kind) {
   if (output.status === 'unrelated') {
     if (kind !== 'ci-fix') problems.push("status: 'unrelated' is allowed only on a CI fix")
     if (output.blockedReason.trim() === '') problems.push('blockedReason: an unrelated answer needs a reason')
+  }
+  if (output.status === 'no-changes') {
+    if (kind === 'ci-fix' || kind === 'update') problems.push('no-changes is not allowed on a CI fix or an update')
+    if (!output.verification.trim()) problems.push('no-changes needs verification evidence')
+    if (output.blockedReason.trim()) problems.push('no-changes cannot have a blocked reason')
+  }
+  const replies = output.threadReplies ?? []
+  const seen = new Set()
+  for (const reply of replies) {
+    if (!Number.isInteger(reply.thread) || reply.thread < 1 || reply.thread > threads.length) {
+      problems.push(`threadReplies: unknown thread ${reply.thread}`)
+    }
+    if (seen.has(reply.thread)) problems.push(`threadReplies: duplicate thread ${reply.thread}`)
+    seen.add(reply.thread)
+    if (!reply.body.trim()) problems.push(`threadReplies: thread ${reply.thread} needs an explanation`)
+    if (output.status === 'no-changes' && reply.status !== 'already-satisfied') {
+      problems.push('no-changes requires every thread to be already-satisfied')
+    }
+    if (output.status === 'done' && reply.status === 'blocked') {
+      problems.push('done cannot leave a supplied thread blocked')
+    }
+  }
+  for (let thread = 1; thread <= threads.length; thread += 1) {
+    if (!seen.has(thread)) problems.push(`threadReplies: missing thread ${thread}`)
   }
   if (problems.length > 0) {
     throw new ContractError(`The implementation is inconsistent: ${problems.join('; ')}`, problems)
@@ -686,6 +712,10 @@ function renderImplementInput({
     out.push('Unresolved reviewer feedback remains part of this continuation.', '',
       'Address every supplied thread. In your summary, report the outcome for each numbered thread: ' +
       'fixed (with the change), already satisfied (with code evidence), or blocked (with the reason). ' +
+      'Also return one threadReplies entry per supplied thread, using its number and a substantive reply. ' +
+      'Read the complete conversation before deciding whether a request still needs a change. ' +
+      'If this continuation needs no code changes, return no-changes with verification evidence; do not edit files ' +
+      'just to create a commit. ' +
       'Do not silently skip feedback. If a requested change needs a maintainer decision, return blocked.', '',
       ...renderReviewThreads(reviewThreads ?? [], omittedThreads))
   }
@@ -722,6 +752,7 @@ function renderConflictFiles(conflicts) {
 
 /** The text of `self-review-input.md`: the issue, the plan, the implementer's summary, and the commits to compare. */
 function renderSelfReviewInput({ issue, plan, analysis, notes, summary, verification = '', checks,
+  implementationStatus = 'done', threadReplies = [],
   base, head, kind, conflicts = [], reviewThreads = [], omittedThreads = 0 }) {
   return [
     `# Self-review of the change for issue #${issue.number}`,
@@ -756,10 +787,17 @@ function renderSelfReviewInput({ issue, plan, analysis, notes, summary, verifica
     ...renderPlan(plan, analysis),
     '',
     ...VERIFICATION_POLICY,
+    ...(implementationStatus === 'no-changes' ? [
+      '## No changes requested by the implementer', '',
+      'Verify the claim that the existing code already satisfies the request. Read the referenced code and tests. ' +
+        'Approve only with supporting evidence; no new commit or local build was made for this answer.', '',
+    ] : []),
     "## The implementer's summary",
     '',
     untrusted(summary),
     '',
+    ...(threadReplies.length > 0 ? ['## Proposed replies to review threads', '',
+      untrusted(JSON.stringify(threadReplies, null, 2)), ''] : []),
     '## Verification reported by the implementer',
     '',
     untrusted(verification || 'No verification was described.'),
@@ -909,6 +947,13 @@ function renderOutcome({ result, number, pr, branch, attempt, implementation, ch
     : 'comment `/agent implement` with guidance to try again'
   const stop = stopReasonOf(result, stopReason)
   const tried = attempt?.notes || undefined
+  if (result === 'no-changes') {
+    return ['### AI review feedback addressed: no changes required', '',
+      inline(implementation.summary), '', '**Evidence:** ' + inline(implementation.verification), '',
+      'A second model reviewed and approved this conclusion. No commit or update was pushed. ' +
+        'Existing CI results are unchanged; review threads remain open for a person.', '',
+      footerLine(runUrl, 'a person reviews the explanation and resolves the threads')].join('\n')
+  }
   if (result === 'unrelated') {
     return [
       '### AI implementation: CI failed, but not because of this change',
@@ -1567,6 +1612,7 @@ async function preflight(env = process.env, deps = {}) {
       } : {}),
       ...(omittedThreads > 0 ? { omittedThreads } : {}),
     } }
+  started.implementing.previousPhase = st.phase
   // A new attempt starts: the stop of the earlier one is over.
   let marked = stops.recordResume(started, { at, run: runUrl })
   const markTitle = config.dryRun ? 'Mark the issue (dry run: nothing written)' : 'Mark the issue as being implemented'
@@ -1802,7 +1848,7 @@ async function implementRounds(ctx) {
         inputFile,
         files: ctx.attachments?.files ?? [],
         schema: 'implementation',
-        check: (o) => checkImplementation(o, ctx.playbook, ctx.kind),
+        check: (o) => checkImplementation(o, ctx.playbook, ctx.kind, ctx.reviewThreads ?? []),
       })
       log.info('implementer answer', { status: output.status, commitType: output.commitType, title: output.title })
       return output
@@ -1824,6 +1870,17 @@ async function implementRounds(ctx) {
       return { status: 'unrelated', rounds: round, reason, implementation, checks, review, head }
     }
 
+    const noChanges = implementation.status === 'no-changes'
+    if (noChanges) {
+      if (!ctx.allowNoChanges || committed) {
+        throw new ContractError('no-changes requires an existing pull request and no commits in this attempt')
+      }
+      if ((await git(exec, ['status', '--porcelain'])) !== '') {
+        throw new ContractError('no-changes requires a clean working tree, including untracked files')
+      }
+      head = await git(exec, ['rev-parse', 'HEAD'])
+    }
+
     if (ctx.kind === 'update') {
       const left = await log.group(`${tag}: look for conflict markers`, () =>
         conflictMarkers({ exec, files: ctx.conflicts ?? [] }),
@@ -1836,7 +1893,7 @@ async function implementRounds(ctx) {
       }
     }
 
-    const dirty = await log.group(`${tag}: commit locally`, async () => {
+    const dirty = noChanges || await log.group(`${tag}: commit locally`, async () => {
       const porcelain = await git(exec, ['status', '--porcelain'])
       if (porcelain === '' && !committed) {
         log.info('decision', { stage: 'commit', action: 'blocked', reason: 'no changes' })
@@ -1874,8 +1931,8 @@ async function implementRounds(ctx) {
     }
     head ??= await git(exec, ['rev-parse', 'HEAD'])
 
-    checks = await log.group(`${tag}: local checks`, () => runChecks({ exec, base }))
-    log.info('checks', { passed: checks.passed, failed: checks.results.filter((r) => r.exitCode !== 0).length })
+    checks = noChanges ? null : await log.group(`${tag}: local checks`, () => runChecks({ exec, base }))
+    if (checks) log.info('checks', { passed: checks.passed, failed: checks.results.filter((r) => r.exitCode !== 0).length })
 
     review = await log.group(`${tag}: self-review`, async () => {
       const inputFile = path.join(out, 'self-review-input.md')
@@ -1885,6 +1942,8 @@ async function implementRounds(ctx) {
         analysis: ctx.analysis,
         notes: ctx.command.notes ?? '',
         summary: implementation.summary,
+        implementationStatus: implementation.status,
+        threadReplies: implementation.threadReplies,
         verification: implementation.verification,
         reviewThreads: ctx.reviewThreads ?? [],
         omittedThreads: ctx.omittedThreads ?? 0,
@@ -1916,7 +1975,15 @@ async function implementRounds(ctx) {
       return output
     })
 
-    const green = checks.passed && effectiveVerdict(review) === 'approve'
+    if (noChanges && effectiveVerdict(review) === 'approve') {
+      return { status: 'no-changes', rounds: round, implementation, checks, review, head }
+    }
+    if (noChanges && round >= maxRounds) {
+      return { status: 'blocked', rounds: round, implementation, checks, review, head,
+        reason: 'Self-review did not confirm that no changes are required: ' +
+          openFindings(review).map((f) => f.body).join(' '), stopReason: 'disagreement' }
+    }
+    const green = !noChanges && checks.passed && effectiveVerdict(review) === 'approve'
     if (green) {
       log.info('decision', { stage: 'rounds', action: 'stop: checks green and self-review approved', rounds: round })
       return { status: 'done', rounds: round, implementation, checks, review, head }
@@ -1928,7 +1995,7 @@ async function implementRounds(ctx) {
     log.info('decision', {
       stage: 'rounds',
       action: 'another round',
-      checks: checks.passed ? 'green' : 'red',
+      checks: checks ? (checks.passed ? 'green' : 'red') : 'not run (no changes)',
       selfReview: effectiveVerdict(review),
     })
     previous = { findings: openFindings(review), checks }
@@ -2117,9 +2184,16 @@ async function workOnIssue(ctx) {
       omittedThreads: ctx.omittedThreads,
       conflicts: merge?.conflicts ?? [],
       commitMessage: mergeCommitMessage,
+      allowNoChanges: Boolean(st.pr && !ctx.fresh && branchInfo.previousSha && !ctx.ciFix && !update),
     })
   }
   const info = { ...branchInfo, base, head: rounds.head }
+
+  if (rounds.status === 'no-changes') {
+    return { result: 'no-changes', blockedReason: null, stopReason: null, rounds: rounds.rounds,
+      implementation: rounds.implementation, checks: null, review: rounds.review, branchInfo: info,
+      diff: null, bundle: false }
+  }
 
   if (rounds.status === 'unrelated') {
     // Nothing to push: `publish` reruns the failed checks instead.
@@ -2252,7 +2326,7 @@ function readOutcome(out) {
 }
 
 const COMMIT_ID = /^[0-9a-f]{40,64}$/
-const RESULTS = new Set(['blocked', 'pr-opened', 'draft', 'unrelated'])
+const RESULTS = new Set(['blocked', 'pr-opened', 'draft', 'unrelated', 'no-changes'])
 
 /**
  * True when `branch` is the branch `publish` derives. A fresh start, which the state shows by no recorded branch, may
@@ -2310,7 +2384,16 @@ function outcomeProblems({ outcome, st, issue, number, kind = outcome.kind }) {
       problems.push(`${name}: ${err.message}`)
     }
   }
-  if (outcome.implementation) check('implementation', 'implementation', outcome.implementation)
+  if (outcome.implementation) {
+    check('implementation', 'implementation', outcome.implementation)
+    if (problems.length === 0) {
+      try {
+        checkImplementation(outcome.implementation, outcome.playbook, kind, st.implementing?.threads ?? [])
+      } catch (err) {
+        problems.push(`implementation: ${err.message}`)
+      }
+    }
+  }
   if (outcome.review) check('review', 'selfReview', outcome.review)
   if (outcome.analysis) {
     const { issueUpdatedAt: _at, ...analysis } = outcome.analysis
@@ -2337,6 +2420,21 @@ function outcomeProblems({ outcome, st, issue, number, kind = outcome.kind }) {
     : Boolean(outcome.implementation && outcome.review && outcome.checks && outcome.branchInfo)
   if (hasCode && !complete) {
     problems.push('a result with code lacks the implementation, the review, the checks, or the branch')
+  }
+  if (outcome.result === 'no-changes') {
+    if (!st.pr || !st.branch || kind === 'ci-fix' || kind === 'update') {
+      problems.push('no-changes requires a continuation of an existing pull request')
+    }
+    if (outcome.bundle || outcome.diff || outcome.checks || outcome.stopReason || outcome.blockedReason) {
+      problems.push('no-changes carries no code, local checks, or blocker')
+    }
+    if (outcome.implementation?.status !== 'no-changes' || !outcome.review ||
+      (outcome.review && Array.isArray(outcome.review.findings) && effectiveVerdict(outcome.review) !== 'approve')) {
+      problems.push('no-changes requires the implementer and self-reviewer to agree')
+    }
+    if (!outcome.branchInfo?.previousSha || outcome.branchInfo.head !== outcome.branchInfo.previousSha) {
+      problems.push('no-changes must keep the remote head commit')
+    }
   }
   return problems
 }
@@ -2399,9 +2497,9 @@ async function publish(env = process.env, deps = {}) {
   let content = 'confused'
   try {
     const result = await publishAttempt(env, { ...deps, gh })
-    // Only a pull request that the local checks and the self-review passed, or a rerun of checks that the change did
-    // not break, ends well; the CI gate decides the rest.
-    if (result.result === 'pr-opened' || result.result === 'unrelated') content = 'rocket'
+    // Successful feedback without code, a publishable change, and a rerun of unrelated failed checks end well.
+    // Only the CI gate decides whether the pull request passed CI.
+    if (result.result === 'pr-opened' || result.result === 'unrelated' || result.result === 'no-changes') content = 'rocket'
     return result
   } finally {
     await react({ gh, commentId: commentIdOf(env.AGENT_COMMENT_ID), content, dryRun: config.dryRun,
@@ -2426,6 +2524,10 @@ async function publishAttempt(env, deps) {
   const loaded = await log.group('Load the issue, its comments, and its state', () => loadIssue(gh, number))
   const { issue } = loaded
   let st = loaded.st
+  if (config.dryRun && fs.existsSync(path.join(out, CONTEXT_FILE))) {
+    // Dry-run preflight records its thread selection only in the artifact, never in the GitHub state.
+    st = { ...st, implementing: readContext(out).state.implementing }
+  }
   // Nothing is written before this check: a state that is not ours to continue stays as it is.
   if (ciFix) requireCiFixState(st)
   const actor = ciFix ? st.implementing.actor || envActor : envActor
@@ -2732,6 +2834,12 @@ async function finish(ctx) {
   let publishFailure = null
   let replyError = null
   try {
+    if (!failure && outcome.result === 'no-changes') {
+      const pull = await gh.getPull(pr)
+      if (pull.state !== 'open' || pull.head?.sha !== outcome.branchInfo.head) {
+        throw new Error('The pull request closed or its head changed; the no-changes conclusion needs a new review')
+      }
+    }
     await publishCode()
     await rerunUnrelated()
   } catch (err) {
@@ -2778,11 +2886,13 @@ async function finish(ctx) {
     const { implementing: _running, ciGate: decidedBefore, ...rest } = st
     const green = !error && outcome.result === 'pr-opened'
     const rerunning = !error && outcome.result === 'unrelated'
+    const noChanges = !error && outcome.result === 'no-changes'
     st = {
       ...rest,
       // The gate decided this commit before; after a rerun it decides the commit again.
       ...(rerunning || !decidedBefore ? {} : { ciGate: decidedBefore }),
-      phase: green || rerunning ? 'waiting-ci' : 'needs-human',
+      phase: noChanges ? (st.implementing?.previousPhase === 'waiting-ci' ? 'waiting-ci' : 'reviewed')
+        : green || rerunning ? 'waiting-ci' : 'needs-human',
       // The branch is the state's only once it exists on the remote; a dry run or a blocked attempt leaves it alone.
       ...(progress.pushed ? { branch: progress.branch } : {}),
       ...(pr ? { pr } : {}),
@@ -2823,13 +2933,14 @@ async function finish(ctx) {
     return text
   })
 
-  const note = result === 'pr-opened' || result === 'unrelated'
+  const note = result === 'pr-opened' || result === 'unrelated' || result === 'no-changes'
     ? null
     : actorComment({ result, actor, pr, reason: outcome.blockedReason, message: error?.message, kind, ciReport })
   // Without a mention: this comment and the state comment tell the pull request why its CI runs again.
   const prNote = result === 'unrelated'
     ? `CI failed in ${ciChecks().checkNames(rerun.failed)}, which this change does not cause: ` +
       `${inline(outcome.blockedReason).replace(/[.\s]+$/, '')}. I reran the failed checks; the CI gate decides again.`
+    : result === 'no-changes' && threads.length === 0 ? human
     : pr && stopReason && ctx.st.pr
       ? pullRequestHandOff({ number, pr, repo, result, reason: outcome.blockedReason, message: error?.message,
         stopReason, implementation: outcome.implementation, pushed: progress.pushed, threads, omittedThreads, runUrl,
@@ -2850,9 +2961,6 @@ async function finish(ctx) {
         })), '')
         report.push('### Pull request (a draft; only the CI gate marks it ready)', '', `Title: ${published.title}`, '',
           fence(published.body, 'markdown'), '')
-        if (kind === 'review') {
-          report.push('Would reply in each review thread that the implementer saw, after the push.', '')
-        }
       }
       if (kind === 'update' && hasCode) report.push(`Would push the merge of develop to \`${progress.branch}\`.`, '')
       report.push('### Labels', '', stopReason
@@ -2863,6 +2971,14 @@ async function finish(ctx) {
         report.push(`Would rerun the failed jobs of workflow run(s) ${rerun.targets.join(', ')}.`, '')
       }
       if (prNote) report.push(quoted(`### Comment that would go on pull request #${pr}`, prNote))
+      if (pr && threads.length > 0) {
+        report.push('### Replies that would go in the supplied review threads', '')
+        for (const [index] of threads.entries()) {
+          report.push(quoted(`Thread ${index + 1}`, renderThreadReply({
+            index, outcome, result, pushed: hasCode, reason: outcome.blockedReason, message: error?.message, runUrl,
+          })))
+        }
+      }
       if (note) report.push(quoted('### Comment that would notify the person who asked', note))
       report.push('### State', '', fence(JSON.stringify(st, null, 2), 'json'), '')
       if (hasCode && outcome.diff) {
@@ -2885,6 +3001,13 @@ async function finish(ctx) {
       })
       log.info('state comment written', { id: written.commentId })
     })
+    // Feedback gets an answer even when a push, a label write, or publication of the PR notice fails.
+    if (pr && threads.length > 0) {
+      replyError = await log.group('Reply in the review threads', () =>
+        replyInThreads({ gh, pr, threads, outcome, result, pushed: progress.pushed,
+          reason: outcome.blockedReason, message: error?.message, runUrl }),
+      )
+    }
     // The PR notice precedes label writes so a label failure cannot hide the hand-off from its reviewers.
     if (prNote && stopReason) {
       await log.group('Tell the pull request', async () => {
@@ -2913,34 +3036,45 @@ async function finish(ctx) {
         log.info('comment posted', { on: `#${pr}`, result })
       })
     }
-    if (progress.pushed && !error && threads.length > 0) {
-      replyError = await log.group('Reply in the review threads', () =>
-        replyInThreads({ gh, pr, threads, head: outcome.branchInfo.head }),
-      )
-    }
   }
   if (error) throw error
   if (replyError) throw replyError
   return { result, pr, branch: progress.branch }
 }
 
-/**
- * One reply in each review thread that the implementer saw: the commit that answers the review. The agent never
- * resolves a thread; a person does. A failed reply is logged and the others still go out.
- *
- * @returns {Promise<Error|null>} the first error
- */
-async function replyInThreads({ gh, pr, threads, head }) {
-  const sha = String(head).slice(0, 7)
-  const text = `The AI Autonomous agent pushed ${sha} for this review. A person resolves the thread.`
+/** Combines one proposed answer with publication facts supplied by the controller. */
+function renderThreadReply({ index, outcome, result, pushed, reason, message, runUrl }) {
+  const reply = outcome.implementation?.threadReplies?.find((r) => r.thread === index + 1)
+  const status = reply?.status === 'already-satisfied'
+    ? (result === 'no-changes' ? 'Already satisfied' : 'Reported as already satisfied')
+    : reply?.status === 'fixed' ? (pushed ? 'Change published' : 'Change prepared, not published') : 'Not addressed'
+  const out = [`**${status}.**`, '', reply?.body ??
+    'The attempt ended before a verified answer to this thread was available.']
+  if (result === 'no-changes') {
+    out.push('', 'Self-review approved the conclusion. No code change was needed; no update was pushed.')
+  } else if (pushed) {
+    out.push('', `Update pushed in ${String(outcome.branchInfo.head).slice(0, 7)}. CI determines verification status.`)
+  } else {
+    out.push('', 'No update was pushed; changes prepared in this attempt are not on the PR branch.')
+  }
+  if (result === 'blocked' || result === 'error' || result === 'draft') {
+    const blocker = message || reason || 'Local checks or self-review did not finish successfully.'
+    out.push('', `**Attempt ${result}:** ${inline(blocker)}`)
+  }
+  out.push('', `A person resolves the thread. [Run](${runUrl}).`)
+  return out.join('\n')
+}
+
+/** Replies in every selected thread, without resolving it; returns the first error after trying the others. */
+async function replyInThreads({ gh, pr, threads, ...context }) {
   let first = null
-  for (const thread of threads) {
+  for (const [index, thread] of threads.entries()) {
     if (!thread.commentId) {
       log.warn(`The review thread ${thread.id} has no first comment to reply to`)
       continue
     }
     try {
-      await gh.replyToReviewComment(pr, thread.commentId, text)
+      await gh.replyToReviewComment(pr, thread.commentId, renderThreadReply({ ...context, index }))
       log.info('replied in the review thread', { thread: thread.id, comment: thread.commentId })
     } catch (err) {
       first ??= err

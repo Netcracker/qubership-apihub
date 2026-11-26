@@ -9,6 +9,7 @@ import {
   createJsonSchemaDiffCaseStoryFactory,
   jsonSchemaDiffSampleReadonlyArgTypes,
 } from "./json-schema-diffs-utils";
+import { autoSwitchParameters } from "../shared/auto-switch";
 import { createSampleById } from "../utils/sample-cases";
 
 const beforeFiles = import.meta.glob(
@@ -52,3 +53,4 @@ export const Case_009_chain_three_hop_cycle_added: Story = createCaseStory("009-
 export const Case_010_combiner_variant_cycle_description_updated: Story = createCaseStory("010-combiner-variant-cycle-description-updated");
 export const Case_011_combiner_variant_cycle_cycle_removed: Story = createCaseStory("011-combiner-variant-cycle-cycle-removed");
 export const Case_012_combiner_variant_cycle_cycle_added: Story = createCaseStory("012-combiner-variant-cycle-cycle-added");
+export const Case_013_one_of_variant_properties_changed: Story = { ...createCaseStory("013-one-of-variant-properties-changed"), parameters: autoSwitchParameters(["json-schema-combiner-option-1"]) };

@@ -333,23 +333,6 @@ func ApiKindOrDefault(apiKind string) string {
 	return apiKind
 }
 
-type Severity string
-
-const Annotation Severity = "annotation"
-const Breaking Severity = "breaking"
-const SemiBreaking Severity = "semi-breaking"
-const Deprecated Severity = "deprecated"
-const NonBreaking Severity = "non-breaking"
-const Unclassified Severity = "unclassified"
-
-func ValidSeverity(s string) bool {
-	switch s {
-	case string(Annotation), string(Breaking), string(SemiBreaking), string(Deprecated), string(NonBreaking), string(Unclassified):
-		return true
-	}
-	return false
-}
-
 type ApiType string
 
 const RestApiType ApiType = "rest"

@@ -3,7 +3,7 @@
   "share": "disabled",
   "autoupdate": false,
   "enabled_providers": ["openai"],
-  "instructions": ["{env:GITHUB_WORKSPACE}/.claude/rules/*.md"],
+  "instructions": ["{env:GITHUB_WORKSPACE}/AGENTS.md", "{env:GITHUB_WORKSPACE}/.claude/rules/*.md"],
   "permission": {
     "edit": "deny",
     "bash": "deny",

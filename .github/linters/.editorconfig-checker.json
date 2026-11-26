@@ -1,7 +1,7 @@
 {
   "exclude": [
     "docs/api/",
-    "\\.(cursor|claude|agents)/",
+    "\\.(cursor|claude|agents|opencode)/",
     "\\.github/(instructions|skills|prompts)/",
     "agent-packages/"
   ]

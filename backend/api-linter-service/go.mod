@@ -3,7 +3,6 @@ module github.com/Netcracker/qubership-apihub/backend/api-linter-service
 go 1.27.2
 
 require (
-	github.com/AsaiYusuke/jsonpath/v2 v2.2.0
 	github.com/Netcracker/qubership-apihub/backend/commons-go v0.0.1
 	github.com/buraksezer/olric v0.4.7
 	github.com/buraksezer/olric-cloud-plugin v0.3.0-beta.4
@@ -13,7 +12,7 @@ require (
 	github.com/gorilla/handlers v1.5.2
 	github.com/gorilla/mux v1.8.1
 	github.com/invopop/jsonschema v0.14.0
-	github.com/mark3labs/mcp-go v1.5.0
+	github.com/mark3labs/mcp-go v1.6.0
 	github.com/openai/openai-go/v3 v3.95.0
 	github.com/shaj13/go-guardian/v2 v2.11.6
 	github.com/shaj13/libcache v1.0.4

@@ -5,9 +5,6 @@ description: Review a just-finished api-doc-viewer session for unexpected behavi
 
 # Reviewing an api-doc-viewer session
 
-**CI linters:** load the `api-doc-viewer-ci-linters` skill before you write or change a file of this module.
-CI lints every file a pull request touches as a whole: Markdown, CSS, SQL fixtures, and more.
-
 Use this after finishing a non-trivial task in this module — on request,
 or proactively before ending a session that involved real exploration,
 debugging, or back-and-forth with the user.
@@ -86,7 +83,7 @@ by the next install.
    auto-suggest rule shown as a system reminder).
 2. Edit the canonical file(s) there.
 3. Resync deployed copies from the repo root:
-   `apm install --target cursor,claude`.
+   `apm install`.
 4. Verify the sync: diff the canonical file against
    `.agents/skills/<package>/SKILL.md` and
    `.claude/skills/<package>/SKILL.md`. They must match after install.

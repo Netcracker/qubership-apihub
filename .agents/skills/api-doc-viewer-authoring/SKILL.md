@@ -5,9 +5,6 @@ description: Extend api-doc-viewer React viewers — components, layout modes, d
 
 # Authoring api-doc-viewer
 
-**CI linters:** load the `api-doc-viewer-ci-linters` skill before you write or change a file of this module.
-CI lints every file a pull request touches as a whole: Markdown, CSS, SQL fixtures, and more.
-
 api-doc-viewer renders API specifications (JSON Schema, GraphQL, AsyncAPI,
 JSO, DDL tables) as human-readable React trees. The view layer lives under
 `packages/api-doc-viewer/src/`; tree construction and diff aggregation live
@@ -300,6 +297,15 @@ deeper. Do not wrap the leaf's children in a second, independently-computed
 representation (its option buttons render the leaf's type/format/title), so there is no separate
 "leaf title row" to originate a second nesting step from. See session lesson 10 in the same doc
 above.
+
+**Combiner option markers on circular schemas:** when an option's own changes summary is empty,
+`JsonSchemaCombiner.NodeDiffs.buildSelectorOption` falls back to
+`JsonSchemaCombinerSelectorRowResolver.resolveDirectNodeChangesSummary` (direct children's
+summaries only). This papers over an api-diff root cause (`aggregateDiffsWithRollup` drops the
+diffs of an in-progress ancestor on a cycle back-edge) and covers only a back-edge one level
+below the option — deeper cycles still lose markers on the intermediate nodes. Do not extend the
+fallback; name the limit in the comment (done) and fix the rollup in api-diff instead
+(issue #1140, see lesson 11 in the same doc above).
 
 **Overriding a shared row-padding rule without `!important` or inline styles:** shared vertical
 padding for `.json-schema-property-row-body` lives in `shared-styles/preceded-by.css` as a

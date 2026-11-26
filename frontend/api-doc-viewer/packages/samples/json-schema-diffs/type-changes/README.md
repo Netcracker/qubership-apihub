@@ -4,7 +4,7 @@ Hand-written YAML pairs (generated from case definitions) for the **JSON Schema 
 Storybook group. Each case directory contains `before.yaml` and `after.yaml` as standalone
 JSON Schema documents.
 
-- Total cases: 507
+- Total cases: 508
 - Generator: `packages/api-doc-viewer/bin/generate-json-schema-type-changes-samples.mjs`
 
 ## Cases
@@ -379,7 +379,7 @@ Path: `type-changes/extended/combiners-two-level/` (11 cases)
 
 ### Circular
 
-Path: `type-changes/circular/` (12 cases)
+Path: `type-changes/circular/` (13 cases)
 
 | Case id | Change |
 | --- | --- |
@@ -395,6 +395,7 @@ Path: `type-changes/circular/` (12 cases)
 | `010-combiner-variant-cycle-description-updated` | Combiner variant cycle: description updated |
 | `011-combiner-variant-cycle-cycle-removed` | Combiner variant cycle: cyclic link removed |
 | `012-combiner-variant-cycle-cycle-added` | Combiner variant cycle: cyclic link added |
+| `013-one-of-variant-properties-changed` | Circular oneOf variant: properties, descriptions, and types changed |
 
 ### Type Changes/Type Value Changes
 
@@ -730,6 +731,6 @@ Screenshot ITs live under `packages/api-doc-viewer/src/it/json-schema-diffs-suit
 cd packages/api-doc-viewer
 node bin/generate-json-schema-type-changes-samples.mjs
 npm run build:showcase
-npm run regenerate-screenshots -- --testPathPattern=type-changes
+npm run regenerate-screenshots -- --testPathPatterns=type-changes
 ```
 

@@ -562,24 +562,25 @@ issue when the work lands. It uses no model and costs nothing.
 | Root `AGENTS.md` | opencode loads it at start |
 | Module `AGENTS.md` | opencode 1.x attaches the nearest `AGENTS.md` above a file when the agent reads that file |
 | `CLAUDE.md` | ignored where an `AGENTS.md` exists; ours only import `AGENTS.md` |
-| Skills in `.agents/skills/` and `.claude/skills/` | opencode discovers them and loads one on demand. On a name clash it keeps the `.claude/skills/` copy |
+| Skills in `.agents/skills/` and `.claude/skills/` | opencode discovers them and loads one on demand. When a name is in both trees, 2.x keeps the `.agents/skills/` copy and 1.x keeps the copy it finishes reading last |
 | Rules in `.claude/rules/` | listed in `instructions` of `opencode.json`; see below |
 | The agent's playbooks | new skills in `agent-packages/apihub-autonomous-agent/`, deployed by `apm install` like any other |
 
 Points to settle:
 
-- **Two committed skill trees, one install.** `apm install --target cursor,claude` writes the same skills to
-  `.agents/skills/` and `.claude/skills/`. Both are committed, so a clone works for Claude Code and for harnesses
-  that read `.agents/skills/` without running APM. `.cursor/skills/` is gitignored. OpenCode scans
-  `.claude/skills/` first and keeps that copy when the same name also exists under `.agents/skills/`, so the two
-  trees have to stay identical and land in the same commit. The review job replaces both `.agents/` and
-  `.claude/` from the workflow ref, so a pull request cannot change the skills or rules that review it.
-- **Rules are path-scoped; opencode does not read `paths:`.** The 54 rules in `.claude/rules/` are 25 KB together, and
+- **Two committed skill trees, one install.** `apm install` writes the same skills to `.agents/skills/` and
+  `.claude/skills/`, as the targets in `apm.yml` say. Both are committed, so a clone works for Claude Code and for
+  harnesses that read `.agents/skills/` without running APM. `.cursor/skills/` is gitignored. When a skill name is
+  in both trees, OpenCode 2.x keeps the `.agents/skills/` copy, and 1.x reads both concurrently and keeps the copy
+  it finishes reading last, so the two trees have to stay identical and land in the same commit. The review job
+  replaces both `.agents/` and `.claude/` from the workflow ref, so a pull request cannot change the skills or rules
+  that review it.
+- **Rules are path-scoped; opencode does not read `paths:`.** The 66 rules in `.claude/rules/` are 27 KB together, and
   each one names its scope in its text. Loading them all costs about 7,000 tokens per run and is the default. If that
-  confuses the model, the alternatives are the APM `opencode` target, if it keeps the scope, or a small opencode
-  plugin that adds a rule when the agent reads a file that matches its `paths`. A relative glob does not reach the
-  hidden `.claude` folder, so `opencode.json` names it with an absolute path:
-  `{env:GITHUB_WORKSPACE}/.claude/rules/*.md` ([spike](./spike.md)).
+  confuses the model, the alternative is a small opencode plugin that adds a rule when the agent reads a file that
+  matches its `paths`. `opencode.json` names the rules with an absolute path,
+  `{env:GITHUB_WORKSPACE}/.claude/rules/*.md`, because `OPENCODE_DISABLE_PROJECT_CONFIG` makes a relative instruction
+  resolve under the global config folder.
 - **A skill needs `name` in its frontmatter** for opencode to load it.
 - **`disable-model-invocation: true`** (in `apihub-backend-self-review`, for example) means nothing to opencode. The
   playbook skills name the skills to load, so this does not change behavior.

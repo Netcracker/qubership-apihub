@@ -104,6 +104,25 @@ func requireMCPApiType(req mcp.CallToolRequest, allowed ...view.ApiType) (string
 	return requireMCPTypeParam(req, allowedStrs...)
 }
 
+const mcpSeverityParam = "severity"
+
+// getMCPSeverities reads the optional "severity" filter of the diff tools. A missing or null argument means no
+// filter. A value of the wrong type is an error rather than "no filter", so a model that sends a single string
+// instead of an array is told about it instead of silently receiving every change.
+func getMCPSeverities(req mcp.CallToolRequest) ([]string, error) {
+	if value, ok := req.GetArguments()[mcpSeverityParam]; !ok || value == nil {
+		return nil, nil
+	}
+	severities, err := req.RequireStringSlice(mcpSeverityParam)
+	if err != nil {
+		return nil, fmt.Errorf("severity must be an array of: %v", view.Severities)
+	}
+	if severity, found := view.HasInvalidSeverity(severities); found {
+		return nil, fmt.Errorf("severity %q must be one of: %v", severity, view.Severities)
+	}
+	return severities, nil
+}
+
 // transformOperations projects generic operation search results to the compact MCP response shape.
 func transformOperations(items []interface{}) []view.TransformedOperation {
 	transformed := make([]view.TransformedOperation, 0, len(items))

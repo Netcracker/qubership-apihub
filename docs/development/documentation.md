@@ -112,13 +112,13 @@ push.
 
 | Check | Rule | Config |
 |---|---|---|
-| markdownlint | line length 400 in CI; one H1 per file; language tag on every fenced code block | `.github/linters/.markdownlint.json` |
+| markdownlint | line length 400 in CI; one H1 per file (by convention, MD025 is off); language tag on every fenced code block | `.github/linters/.markdownlint.json` |
 | Line length by convention | wrap prose at 120 characters; tables and code blocks are exempt | `AGENTS.md`, the `markdown-line-length-120` skill |
 | textlint | terminology: `Markdown`, `GitHub`, `OpenAPI`, `APIs`, `end-to-end`, `predefined`, `filename`, and others | `.github/linters/.textlintrc` |
 | lychee | every link in a Markdown file resolves, relative or external | `.github/workflows/link-checker.yaml`, `.lycheeignore` |
 
 ```bash
-npx -y markdownlint-cli@0.43 --config .github/linters/.markdownlint.json docs/development/documentation.md
+pnpm dlx markdownlint-cli@0.43 --config .github/linters/.markdownlint.json docs/development/documentation.md
 ```
 
 Functional designs (`docs/design/`) often fail on **table row line breaks** — see

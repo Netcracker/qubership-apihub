@@ -108,6 +108,88 @@ func TestRequireMCPTypeParam(t *testing.T) {
 	}
 }
 
+func TestGetMCPSeverities(t *testing.T) {
+	const notAnArrayErr = "severity must be an array of: [breaking semi-breaking deprecated non-breaking annotation unclassified]"
+	tests := []struct {
+		name        string
+		arguments   map[string]any
+		expected    []string
+		expectedErr string
+	}{
+		{
+			name:      "missing severity means no filter",
+			arguments: map[string]any{},
+		},
+		{
+			name:      "null severity means no filter",
+			arguments: map[string]any{"severity": nil},
+		},
+		{
+			name:      "empty array means no filter",
+			arguments: map[string]any{"severity": []any{}},
+			expected:  []string{},
+		},
+		{
+			name:      "accepts several severities",
+			arguments: map[string]any{"severity": []any{"breaking", "semi-breaking"}},
+			expected:  []string{"breaking", "semi-breaking"},
+		},
+		{
+			name:        "rejects unknown severity",
+			arguments:   map[string]any{"severity": []any{"breaking", "critical"}},
+			expectedErr: `severity "critical" must be one of: [breaking semi-breaking deprecated non-breaking annotation unclassified]`,
+		},
+		{
+			name:        "rejects a single string instead of an array",
+			arguments:   map[string]any{"severity": "breaking"},
+			expectedErr: notAnArrayErr,
+		},
+		{
+			name:        "rejects a non-string item",
+			arguments:   map[string]any{"severity": []any{"breaking", 1}},
+			expectedErr: notAnArrayErr,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := mcp.CallToolRequest{
+				Params: mcp.CallToolParams{
+					Arguments: tt.arguments,
+				},
+			}
+
+			actual, err := getMCPSeverities(req)
+			if tt.expectedErr != "" {
+				require.EqualError(t, err, tt.expectedErr)
+				return
+			}
+
+			require.NoError(t, err)
+			require.Equal(t, tt.expected, actual)
+		})
+	}
+}
+
+func TestGetOperationDiffSchemaAcceptsSeverityFilter(t *testing.T) {
+	var schema struct {
+		Properties map[string]struct {
+			Type  string `json:"type"`
+			Items struct {
+				Enum []view.Severity `json:"enum"`
+			} `json:"items"`
+		} `json:"properties"`
+		Required []string `json:"required"`
+	}
+	require.NoError(t, json.Unmarshal(getOperationDiffSchema, &schema))
+
+	severity, ok := schema.Properties["severity"]
+	require.True(t, ok, "get_api_operation_diff schema must declare severity")
+	require.Equal(t, "array", severity.Type)
+	require.ElementsMatch(t, view.Severities, severity.Items.Enum)
+	require.NotContains(t, schema.Required, "severity")
+}
+
 func TestTransformOperations(t *testing.T) {
 	operations := []interface{}{
 		view.RestOperationSearchResult{
@@ -338,6 +420,7 @@ func TestGetToolMetadataUsesGenericToolNames(t *testing.T) {
 	require.ElementsMatch(t, []string{
 		ToolNameSearchOperations,
 		ToolNameSearchOperationsV2,
+		ToolNameSearchOperationsV3,
 		ToolNameGetOperationSpec,
 		ToolNameGetOperationDiff,
 		ToolNameGetDocument,
@@ -462,8 +545,21 @@ func TestValidateMCPGroup(t *testing.T) {
 }
 
 func TestResolveMCPSearchPackageIds(t *testing.T) {
-	require.Equal(t, []string{"SECRET"}, resolveMCPSearchPackageIds("", "SECRET"))
-	require.Equal(t, []string{"SECRET.pkg2"}, resolveMCPSearchPackageIds("SECRET.pkg2", "SECRET"))
+	t.Run("no groups scopes to the workspace", func(t *testing.T) {
+		require.Equal(t, []string{"SECRET"}, resolveMCPSearchPackageIds(nil, "SECRET"))
+		require.Equal(t, []string{"SECRET"}, resolveMCPSearchPackageIds([]string{}, "SECRET"))
+	})
+	t.Run("single group", func(t *testing.T) {
+		require.Equal(t, []string{"SECRET.pkg2"}, resolveMCPSearchPackageIds([]string{"SECRET.pkg2"}, "SECRET"))
+	})
+	t.Run("several groups keep their order", func(t *testing.T) {
+		require.Equal(t, []string{"SECRET.pkg2", "SECRET.pkg3"},
+			resolveMCPSearchPackageIds([]string{"SECRET.pkg2", "SECRET.pkg3"}, "SECRET"))
+	})
+	t.Run("duplicates and empty items are dropped", func(t *testing.T) {
+		require.Equal(t, []string{"SECRET.pkg2", "SECRET.pkg3"},
+			resolveMCPSearchPackageIds([]string{"SECRET.pkg2", "", "SECRET.pkg2", "SECRET.pkg3", ""}, "SECRET"))
+	})
 }
 
 func TestResolveMCPSearchVersions(t *testing.T) {

@@ -198,6 +198,7 @@ const VersionSortOrderDesc = "desc"
 
 const VersionSortByVersion = "version"
 const VersionSortByCreatedAt = "createdAt"
+const VersionSortByFirstPublishedAt = "firstPublishedAt"
 
 type PublishFromCSVReq struct {
 	PackageId                string   `json:"packageId" validate:"required"`

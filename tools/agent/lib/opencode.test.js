@@ -23,6 +23,10 @@ test('the run environment drops every token and runner secret but keeps the Open
   assert.equal(env.OPENCODE_DISABLE_AUTOUPDATE, '1')
 })
 
+test('the run ignores the opencode config of the working tree', () => {
+  assert.equal(runEnv({ OPENCODE_DISABLE_PROJECT_CONFIG: '' }).OPENCODE_DISABLE_PROJECT_CONFIG, '1')
+})
+
 test('the message comes first and the files last, so --file cannot swallow the message', () => {
   assert.deepEqual(
     runArgs({

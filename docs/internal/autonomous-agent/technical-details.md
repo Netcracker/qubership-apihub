@@ -40,10 +40,14 @@ themselves.
   `AGENT_LOG_LEVEL` (`DEBUG`, `INFO` by default, `WARN`, `ERROR`).
 - **Environment of a run** (`runEnv`): the job environment without the variables that match
   `^(GITHUB_TOKEN|GH_TOKEN|AGENT_PAT|ACTIONS_.*|INPUT_.*)$` (`SECRET_ENV`), plus `OPENCODE_CONFIG`
-  (`tools/agent/opencode/opencode.json`), `OPENCODE_CONFIG_DIR` (`tools/agent/opencode/`), and
-  `OPENCODE_DISABLE_AUTOUPDATE=1`. The OpenAI key stays, because the run needs it.
+  (`tools/agent/opencode/opencode.json`), `OPENCODE_CONFIG_DIR` (`tools/agent/opencode/`),
+  `OPENCODE_DISABLE_PROJECT_CONFIG=1`, and `OPENCODE_DISABLE_AUTOUPDATE=1`. The OpenAI key stays, because the run
+  needs it. The flag makes opencode skip `opencode.json`, `opencode.jsonc`, and `.opencode/` of the working tree,
+  which a pull request can change, and the root `AGENTS.md` with them; the skills and the nested `AGENTS.md` files
+  still load.
 - **Config keys** (`tools/agent/opencode/opencode.json`): `share: "disabled"`, `autoupdate: false`,
-  `enabled_providers: ["openai"]`, `instructions: ["{env:GITHUB_WORKSPACE}/.claude/rules/*.md"]`, and a `permission`
+  `enabled_providers: ["openai"]`,
+  `instructions: ["{env:GITHUB_WORKSPACE}/AGENTS.md", "{env:GITHUB_WORKSPACE}/.claude/rules/*.md"]`, and a `permission`
   block that denies `edit`, `bash`, `webfetch`, `websearch`, `question`, `task`, and `external_directory` and allows
   `skill`. Each role file opens only what it needs; see [Roles](#roles).
 - **JSON events.** With `--format json`, opencode writes one JSON event per line. The scripts read three types
@@ -61,8 +65,8 @@ themselves.
   and `git grep*--open-files-in-pager*`, which could write a file or start a program.
 - **What the spike learned** ([spike.md](./spike.md)): skills in `.claude/skills/` load by name, and a `SKILL.md`
   without
-  `name` in its frontmatter is skipped; reading a file of a module attaches its `AGENTS.md`; a relative `instructions`
-  glob does not reach the hidden `.claude` folder, an absolute one does; the uncached prompt is reported in
+  `name` in its frontmatter is skipped; reading a file of a module attaches its `AGENTS.md`;
+  the uncached prompt is reported in
   `tokens.cache.write`, not in `tokens.input`, so `lib/usage.js` adds both; `--variant` works; `curl`, `gh`, and
   `git push` are refused also inside `bash -c` and after `&&`; the `steps` limit ends a run with exit code 0; a push
   with
@@ -125,11 +129,13 @@ runner image and must be 3.9 or newer.
 ### APM
 
 The playbooks are the local APM package `agent-packages/apihub-autonomous-agent` (version `0.1.0`), listed in the root
-`apm.yml` and in `apm.lock.yaml`, which pins `apm_version: 0.34.0`.
-`apm install --target cursor,claude` deploys each skill to `.agents/skills/<name>/` and
+`apm.yml` and in `apm.lock.yaml`.
+`apm install` deploys each skill to `.agents/skills/<name>/` and
 `.claude/skills/<name>/`. Both directories are committed, so a clone has the skills without APM. opencode reads
-both and prefers `.claude/skills/` when the name clashes. Use APM 0.34.0 locally
-(`pip install apm-cli==0.34.0`): an older one rewrites `.cursor/rules` in another format.
+the skill files of both concurrently, and when a name is in both, it keeps the copy that it finishes reading last,
+so the two copies must stay identical. Use the APM version that `apm.lock.yaml` records, as
+[AI assistants](../../development/ai-assistants.md#change-a-package) describes: an older one rewrites `.cursor/rules`
+in another format.
 
 ### The `yaml` package
 
@@ -1142,13 +1148,19 @@ cannot carry a `blocker`. A broken contract throws and ends the attempt with `fa
    | Playbook | Files | Changed lines (insertions plus deletions) |
    |----------|-------|-------------------------------------------|
    | `bug-fix` | more than 20 | more than 600 |
-   | `task` | more than 30 | more than 1000 |
+   | `task` | more than 30 | more than 5000 |
 
    Exceeding either number blocks. Protected paths (a match blocks):
    - `.github/workflows/` (the PAT has no Workflows permission).
-   - The agent's own files: `.claude/`, `.cursor/`, `tools/agent/`, `agent-packages/` at the start of the path, and
-     any `AGENTS.md` or `CLAUDE.md` at any depth.
-8. **Result.** `blocked` when the implementer said so, the tree was clean, or step 7 gave a reason (stop reason
+   - The agent's own files: `.agents/`, `.claude/`, `.cursor/`, `tools/agent/`, `agent-packages/` at the start of the
+     path, and any `AGENTS.md`, `CLAUDE.md`, `opencode.json`, `opencode.jsonc`, or `.opencode/` at any depth.
+8. **Result.** `no-changes` on a continuation of an existing PR when the implementer reports that status with evidence,
+   the working tree is clean, no commit was made in this attempt, and self-review approves. No local checks, bundle,
+   or push follow. The publisher verifies that the open PR still has the reviewed head. Initial implementations,
+   CI fixes, and updates cannot use this outcome. A disputed conclusion gets another round or stops with
+   `disagreement`. A no-changes answer does not run the publication size or protected-path checks because it pushes
+   no code; those checks still apply to every result with code.
+   `blocked` when the implementer said so, a `done` answer left a clean tree, or step 7 gave a reason (stop reason
    `scope-review-required`). On an `update` attempt, conflict markers left in the conflicted files block with
    `conflict-unresolved`. `pr-opened` when
    not blocked, the checks passed, and the effective verdict is `approve`. Otherwise `draft` (checks red or changes
@@ -1292,7 +1304,7 @@ the CI gate does, after CI is green on GitHub.
       equal `branchInfo.head`, else it throws `The bundle holds <a>, but the outcome names <b>`.
    3. **Re-measure the diff** (`pushedDiffProblem`): `git merge-base origin/develop <head>`, then
       `git diff --shortstat <base> <head>` and `git diff --name-only <base> <head>` and the same `diffBlockReason`
-      as `work` (20 files or 600 lines for `bug-fix`, 30 files or 1000 lines for `task`, workflow files, agent files).
+      as `work` (20 files or 600 lines for `bug-fix`, 30 files or 5000 lines for `task`, workflow files, agent files).
       A reason means no push, and the attempt becomes `blocked` with that `blockedReason`, the stop reason
       `scope-review-required`, and `bundle: false`.
    4. `pushBranch` with `--force-with-lease=refs/heads/<branch>:<previousSha>` when the branch of an earlier attempt
@@ -1306,8 +1318,8 @@ the CI gate does, after CI is green on GitHub.
       for a `pr-opened` attempt, so the pull request is ready for review at once, and `true` for any other result.
    6. **State.** The attempt record is appended, `implementing` is removed, and the fields below are set.
    7. Write the implementation result comment (`results.publishResult`, family `implementation`, not a new command: it
-      re-reads the comments and the cost records right before the write), apply the labels, post the mention comment,
-      and reply in review threads.
+      re-reads the comments and the cost records right before the write), reply in review threads, apply the labels,
+      and post the mention comment.
 8. A failure of the work step or of the publishing throws after the result comment is written, so the job turns red and
    the state records what exists.
 
@@ -1344,7 +1356,7 @@ request title is the first line (`commitTitle`).
 
 | Field | Value |
 |-------|-------|
-| `phase` | `waiting-ci` when the result is `pr-opened` or a rerun of an `unrelated` CI fix, and there is no error; else `needs-human` |
+| `phase` | `waiting-ci` for `pr-opened` or an `unrelated` rerun; `reviewed` for `no-changes` (or `waiting-ci` when CI was pending before the attempt); `needs-human` for a blocked or failed attempt |
 | `ciGate` | Deleted for an `unrelated` rerun, so the gate decides the commit again; kept otherwise |
 | `branch` | The pushed branch, only when the push succeeded (`progress.pushed`) |
 | `pr` | The pull request number, when one exists |
@@ -1352,7 +1364,7 @@ request title is the first line (`commitTitle`).
 | `forced` | `outcome.forced` or the earlier `forced` |
 | `attempts` | The old list plus the new record |
 | `costs` | Old cost records plus the costs of this run |
-| `stops` | A hand-off (`blocked`, `draft`, `error`) appends `{ reason, at, run, on: [<issue>] }` (`stops.recordStop`); `pr-opened` and `unrelated` close the open entry (`stops.recordResume`) |
+| `stops` | A hand-off (`blocked`, `draft`, `error`) appends `{ reason, at, run, on: [<issue>] }` (`stops.recordStop`); `pr-opened`, `no-changes`, and `unrelated` close the open entry (`stops.recordResume`) |
 | `results` | Added by `publishResult`: the result comments of the families (see [the result comments](#result-comments)) |
 
 Other phases come from other scripts. This script also leaves `analyzed` or `needs-info` (analysis stops), and
@@ -1366,7 +1378,7 @@ Other phases come from other scripts. This script also leaves `analyzed` or `nee
 | `kind` | `initial`, `ci-fix`, `human`, `review`, or `update` (`attemptKindOf`) |
 | `actor` | The person who asked (when known) |
 | `run` | `AGENT_RUN_URL` |
-| `result` | `pr-opened`, `draft`, `blocked`, `unrelated`, `error`, or `stopped` |
+| `result` | `pr-opened`, `no-changes`, `draft`, `blocked`, `unrelated`, `error`, or `stopped` |
 | `rounds` | Rounds run |
 | `checks` | `green`, `red`, or `null` |
 | `selfReview` | `approve`, `changes`, or `null` (the effective verdict) |
@@ -1381,14 +1393,14 @@ Other phases come from other scripts. This script also leaves `analyzed` or `nee
 | `blocked` | `stopReason` of the outcome: the model's `stopReason`, or the one the script chose (`stuck` for no changes after `done`, `scope-review-required` for a diff limit or a protected path, `conflict-unresolved` for conflict markers left by an `update`, `verification-blocked` for an `unrelated` result with nothing to rerun); `stuck` when the value is not a known reason |
 | `draft` | `budget-exhausted` |
 | `error` | `environment-blocked` (also a work step that left no outcome, and an untrusted outcome) |
-| `pr-opened`, `unrelated` | none |
+| `pr-opened`, `no-changes`, `unrelated` | none |
 
 **Labels** (`GITHUB_TOKEN`; the issue):
 
 - A result with a stop reason (`draft`, `blocked`, `error`): `stops.setStop` adds `needs-human:<reason>` to the issue
   and
   removes any other stop label it carries.
-- `pr-opened` and `unrelated` (with a rerun): `stops.clearStops` removes every stop label from the issue (`removeLabel`
+- `pr-opened`, `no-changes`, and `unrelated` (with a rerun): `stops.clearStops` removes every stop label (`removeLabel`
   treats a 404 as already done).
 - The labels `ai:suitable` and `ai:unsuitable` are touched only by the analysis step (step 5).
 
@@ -1429,14 +1441,14 @@ Other phases come from other scripts. This script also leaves `analyzed` or `nee
      comment on the pull request, without a mention: "CI failed in X, which this change does not cause: Y.
      I reran the failed checks; the CI gate decides again."
    - `error`: `@<actor>, the implementation failed: <message>`.
-3. Review-thread replies, only for kind `review`, a successful push, no error, and recorded threads: for each thread
-   of `implementing.threads` with a `commentId`, `replyToReviewComment(pr, commentId, text)` where `text` is
-   `The AI Autonomous agent pushed <first 7 characters of head> for this review. A person resolves the thread.` The
-   agent
-   never resolves a thread. A failed reply is logged and the others still go out; the first error is thrown at the
-   end.
+3. Review-thread replies for every recorded thread, including blocked and failed attempts with no push: for each
+   thread of `implementing.threads` with a `commentId`, `replyToReviewComment(pr, commentId, text)` posts the proposed
+   answer from `implementation.threadReplies`, followed by the actual publication result and any blocker. A missing
+   or invalid model answer produces a failure explanation. Replies run after the state write and before label
+   writes. The agent never resolves a thread. A failed reply is logged and the others still go out; the first error
+   is thrown at the end. `no-changes` without inline threads posts the verified explanation on the PR conversation.
 
-**Reactions** (on `AGENT_COMMENT_ID`, in a `finally` block): `rocket` when the result is `pr-opened` or an `unrelated`
+**Reactions** (on `AGENT_COMMENT_ID`, in a `finally` block): `rocket` for `pr-opened`, `no-changes`, or an `unrelated`
 with a rerun, otherwise `confused`. A failed reaction is a warning only.
 
 **Dry-run** (`AGENT_DRY_RUN` is not `false`): nothing is pushed or written. The job summary shows the result comment
@@ -1444,11 +1456,11 @@ text with its signature (`results.previewResult`, the records of this run only),
 title and body (labelled as a draft), the labels, the mention comment, the
 state as JSON, the diff stat, and the first 300 lines of the diff.
 
-**Attempt `result` values (exact strings):** `pr-opened`, `draft`, `blocked`, `unrelated`, `error` (the work or the
-publishing failed), `stopped` (written by `publishStopped`). In `outcome.json` only `pr-opened`, `draft`, `blocked`,
-`unrelated`, or `null` occur.
-**Phases written by this script:** `implementing` (`preflight`), `waiting-ci` and `needs-human` (`publish`; the
-`waiting-ci` of an `unrelated` CI fix also deletes `ciGate`). It also
+**Attempt `result` values (exact strings):** `pr-opened`, `no-changes`, `draft`, `blocked`, `unrelated`, `error`
+(the work or publishing failed), `stopped` (written by `publishStopped`). In `outcome.json` only `pr-opened`,
+`no-changes`, `draft`, `blocked`, `unrelated`, or `null` occur.
+**Phases written by this script:** `implementing` (`preflight`), `reviewed`, `waiting-ci`, and `needs-human`
+(`publish`; the `waiting-ci` of an `unrelated` CI fix also deletes `ciGate`). It also
 keeps `stopped`, and passes on `analyzed` and `needs-info` from `analyze.js` functions.
 
 - **Decisions:** summarized in the flow above (trust check, stopped run, analysis stop, blocked by re-measure, error).
@@ -2240,8 +2252,9 @@ Runs one opencode agent headless and keeps its JSON event stream.
   the job log shows. The last 4000 characters of stderr are kept as `stderrTail`.
 - **Environment of the run:** the parent environment minus every variable that matches
   `^(GITHUB_TOKEN|GH_TOKEN|AGENT_PAT|ACTIONS_.*|INPUT_.*)$`, plus `OPENCODE_CONFIG` (path to
-  `tools/agent/opencode/opencode.json`), `OPENCODE_CONFIG_DIR` (`tools/agent/opencode/`), and
-  `OPENCODE_DISABLE_AUTOUPDATE=1`. The OpenAI key stays; no GitHub token reaches the model.
+  `tools/agent/opencode/opencode.json`), `OPENCODE_CONFIG_DIR` (`tools/agent/opencode/`),
+  `OPENCODE_DISABLE_PROJECT_CONFIG=1` (no `opencode.json`, `opencode.jsonc`, `.opencode/`, or root `AGENTS.md` from
+  the working tree), and `OPENCODE_DISABLE_AUTOUPDATE=1`. The OpenAI key stays; no GitHub token reaches the model.
 - **Events:** stdout is written to the events file as it arrives. Each complete line that starts with `{` is parsed and
   passed to `log.modelEvent`, so a long run shows progress live. Non-JSON lines stay in the file only.
 - **Result:** resolves `{ exitCode, eventsText, stderrTail }`; a non-zero exit does not reject (the cost must still be
@@ -2390,7 +2403,7 @@ The base config, selected by `OPENCODE_CONFIG`.
 | `share` | `"disabled"` | no session sharing |
 | `autoupdate` | `false` | no update at run time (`OPENCODE_DISABLE_AUTOUPDATE=1` is also set) |
 | `enabled_providers` | `["openai"]` | only the OpenAI provider |
-| `instructions` | `["{env:GITHUB_WORKSPACE}/.claude/rules/*.md"]` | the rules of the working tree are loaded as instructions; an absolute path is used because the glob does not reach into the hidden folder otherwise |
+| `instructions` | `["{env:GITHUB_WORKSPACE}/AGENTS.md", "{env:GITHUB_WORKSPACE}/.claude/rules/*.md"]` | the root `AGENTS.md` and the rules of the working tree are loaded as instructions; the paths are absolute because `OPENCODE_DISABLE_PROJECT_CONFIG` makes opencode resolve a relative path in its global config folder, and the flag also skips the root `AGENTS.md` that opencode loads by itself otherwise |
 | `permission` | `edit`, `bash`, `webfetch`, `websearch`, `question`, `task`, `external_directory`: `deny`; `skill`: `allow` | deny by default; an agent file opens only what it needs |
 
 ### `tools/agent/opencode/agents/pr-reviewer.md`
@@ -2440,8 +2453,8 @@ Changes the working tree for a Bug or Task issue.
 
 - **Frontmatter:** `steps: 200`; `webfetch: deny`, `websearch: deny`, `skill: allow`.
 - **Edit:** `"*": allow`, with these denials (paths the model must not change, because a change there would steer the
-  reviewer of the same run): `*.claude/*`, `*.cursor/*`, `*tools/agent/*`, `*agent-packages/*`, `*AGENTS.md`,
-  `*CLAUDE.md`, `*.github/workflows/*`.
+  reviewer of the same run): `*.agents/*`, `*.claude/*`, `*.cursor/*`, `*tools/agent/*`, `*agent-packages/*`,
+  `*AGENTS.md`, `*CLAUDE.md`, `*opencode.json`, `*opencode.jsonc`, `*.opencode/*`, `*.github/workflows/*`.
 - **Bash:** `"*": deny`; allowed `pnpm exec nx *`, `pnpm nx *`, `go test*`, `go build*`, `go vet*`, `gofmt*`,
   `node --test*`, `git status*`, `git diff*`, `git log*`, `git show*`, `git grep*`, `ls*`. Explicitly denied:
   `git push*`, `git commit*`, `git checkout*`, `git switch*`, `git reset*`, `git rebase*`, `gh *`, `curl *`, `wget *`.
@@ -2521,10 +2534,10 @@ Five skills live in the local APM package `agent-packages/apihub-autonomous-agen
 `agent-packages/apihub-autonomous-agent/.apm/skills/<name>/SKILL.md`.
 Each skill says that people can use it the same way as the agent.
 
-**Deployment.** `apm install --target cursor,claude` copies each skill to `.agents/skills/<name>/SKILL.md` and
+**Deployment.** `apm install` copies each skill to `.agents/skills/<name>/SKILL.md` and
 `.claude/skills/<name>/SKILL.md`. `apm.lock.yaml` lists those files under `_local/apihub-autonomous-agent` with
-their hashes. The deployed trees are never edited by hand. In CI, opencode reads both trees and prefers
-`.claude/skills/` when the same name exists in both. The review job replaces `.agents/` and `.claude/` with the
+their hashes. The deployed trees are never edited by hand. In CI, opencode reads both trees and keeps the copy it
+finishes reading last when the same name exists in both. The review job replaces `.agents/` and `.claude/` with the
 copies from the workflow's own ref, so a pull request cannot change the skills or rules that review it.
 
 ### `apihub-pr-review`
@@ -2687,6 +2700,7 @@ signature. The cumulative "AI cost of this issue so far" text is gone; `/agent c
 | `analyses` | array | `analyze.js`, `implement.js publish` | one entry per analysis run: `at`, `run`, `verdict` (`suitable`, `unsuitable`, `needs-info`, or `failed`), `trigger`. Counted against `AGENT_MAX_ANALYSES` |
 | `implementing` | object | `implement.js preflight` (initial: `run`, `actor`, `at`, `analyzeFirst`; person: `run`, `actor`, `at`, `kind`, `analyzeFirst: false`, optional `pr`, optional `threads`); `ci-gate.js` (`run`, `actor`, `at`, `kind: 'ci-fix'`) | the running attempt. Removed by `publish` and `publishStopped`. A new run within the busy window refuses with `refuse-busy` |
 | `implementing.threads` | array | `implement.js preflight` | `{ id, commentId }` of each review thread both models see, including repeated `implement` and inline commands, so `publish` replies only in those |
+| `implementing.previousPhase` | string or null | `implement.js preflight` | Phase before the attempt; `no-changes` preserves `waiting-ci` for pending CI |
 | `budgetFrom` | number | `implement.js preflight` (person attempts) | index in `attempts` where the CI loop budget (`AGENT_MAX_ATTEMPTS`) starts counting; `ci-gate.js` reads it |
 | `attempts` | array | `implement.js publish`, `publishStopped`; `ci-gate.js` patches the last entry | one entry per attempt, see below |
 | `branch` | string | `implement.js publish` | branch of the agent, set only once it exists on the remote (not after a dry run or a blocked attempt) |
@@ -2715,7 +2729,7 @@ Built by `attemptRecord` in `implement.js`:
 | `kind` | string | `initial`, `ci-fix`, `human`, or `review` (a second `initial` becomes `human`) |
 | `actor` | string, optional | login of the person who asked |
 | `run` | string | URL of the workflow run |
-| `result` | string | from `implement.js`: `pr-opened`, `draft`, `blocked`, `unrelated`, `error`, `stopped`; `ci-gate.js` overwrites it with `ci-green` or `ci-red` once CI decides, and then keeps `unrelated: true` on an attempt that was `unrelated` |
+| `result` | string | from `implement.js`: `pr-opened`, `no-changes`, `draft`, `blocked`, `unrelated`, `error`, `stopped`; `ci-gate.js` overwrites it with `ci-green` or `ci-red` once CI decides, and then keeps `unrelated: true` on an attempt that was `unrelated` |
 | `rounds` | number | implement and check rounds used |
 | `checks` | string or null | `green`, `red`, or `null` (no checks ran) |
 | `selfReview` | string or null | effective verdict of the self-review: `approve` or `changes`, or `null` |
@@ -2792,18 +2806,30 @@ key is allowed (`additionalProperties: false`), except the `plan` object of `ana
 
 | Field | Type and limits |
 |---|---|
-| `status` | `done`, `blocked`, `unrelated` |
+| `status` | `done`, `no-changes`, `blocked`, `unrelated` |
 | `summary` | string, at least 1 character |
+| `threadReplies` | array, at most 30 entries; each has `thread` (the supplied 1-based number), `status` (`fixed`, `already-satisfied`, `blocked`), and `body` (1 to 4000 characters) |
 | `commitType` | `fix`, `feat`, `perf`, `refactor`, `revert`, `build`, `chore`, `style`, `docs`, `test`, `ci` |
 | `scope` | string (module name, or empty for several modules) |
 | `title` | string, 1 to 72 characters |
 | `verification`, `notes`, `blockedReason` | string; `blockedReason` explains `blocked` and `unrelated`, and is empty otherwise |
 | `stopReason` | string; one of the 13 stop reasons without `approval-required` (`IMPLEMENTER_STOP_REASONS` of `lib/contract.js`), or an empty string |
 
-`checkImplementation(output, playbook, kind)`: the `bug-fix` playbook requires `commitType` `fix`; `status: blocked` and
+`checkImplementation(output, playbook, kind, threads)`: the `bug-fix` playbook requires `commitType` `fix`;
+`status: blocked` and
 `status: unrelated` require a non-blank `blockedReason`; `status: blocked` requires a `stopReason` and any other status
 requires it empty (a violation is a contract error, like the others); `status: unrelated` is allowed only when `kind` is
-`ci-fix`.
+`ci-fix`. Replies must cover exactly the supplied threads, once each, with non-blank bodies. A `done` answer cannot
+leave a thread blocked. A `no-changes` answer requires non-blank verification evidence, no blocker, and only
+`already-satisfied` replies. It is unavailable on a CI fix or update.
+
+`publish` repeats contract and thread-coverage validation against the preflight's recorded selection. It answers
+each selected thread after writing state, before label writes, whether the attempt pushed, blocked, or failed.
+The reply combines the implementer's explanation with the publisher's actual publication result and blocker.
+Missing or untrusted model output produces a failure explanation instead. A failed reply does not suppress replies
+in the other threads; the job fails after attempting them. Dry-run previews the same texts without API writes.
+`no-changes` records phase `reviewed`, or preserves `waiting-ci` from `implementing.previousPhase` for pending CI.
+It preserves existing CI decisions and never adds a completion label or resolves a thread.
 
 ### `selfReview`
 
