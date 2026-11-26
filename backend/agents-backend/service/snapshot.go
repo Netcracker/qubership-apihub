@@ -78,6 +78,9 @@ func (s *snapshotServiceImpl) GetSnapshot(ctx context.Context, namespace string,
 	if err != nil {
 		return nil, err
 	}
+	if references == nil {
+		return nil, fmt.Errorf("version references not found for dashboard '%s' version '%s'", dashboardId, version)
+	}
 
 	groupVersionForUrl := versionContent.Version
 	if !versionContent.NotLatestRevision {
@@ -112,6 +115,10 @@ func (s *snapshotServiceImpl) GetSnapshot(ctx context.Context, namespace string,
 				errors.Store(refPackageId, err)
 				return
 			}
+			if pkg == nil {
+				errors.Store(refPackageId, fmt.Errorf("package '%s' referenced by snapshot not found", refPackageId))
+				return
+			}
 
 			packageVersion, err := s.apihubClient.GetVersion(ctx, refPackageId, refPackageVersion)
 			if err != nil {
@@ -119,7 +126,7 @@ func (s *snapshotServiceImpl) GetSnapshot(ctx context.Context, namespace string,
 				return
 			}
 			if packageVersion == nil {
-				log.Errorf("Version %s for package %s not found, will not be included to snapshot output", refPackageVersion, refPackageId)
+				errors.Store(refPackageId, fmt.Errorf("version '%s' for package '%s' referenced by snapshot not found", refPackageVersion, refPackageId))
 				return
 			}
 
@@ -222,6 +229,9 @@ func (s *snapshotServiceImpl) CreateSnapshot(ctx context.Context, namespace stri
 	serviceListResponse, err := s.agentClient.ListServices(ctx, namespace, workspaceId, snapshotDTO.AgentUrl, snapshotDTO.DiscoveryServices)
 	if err != nil {
 		return nil, err
+	}
+	if serviceListResponse == nil {
+		return nil, fmt.Errorf("failed to list services for workspace '%s': agent returned no services", workspaceId)
 	}
 	if serviceListResponse.Status != view.StatusComplete {
 		log.Infof("Create snapshot failed: incorrect discovery status %s for namespace %s", serviceListResponse.Status, namespace)
