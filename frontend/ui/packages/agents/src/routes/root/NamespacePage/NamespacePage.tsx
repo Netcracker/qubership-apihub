@@ -13,6 +13,7 @@ import { useActiveTabs } from '@netcracker/qubership-apihub-ui-shared/hooks/path
 import { ServicesPageProvider } from './ServicesPage/ServicesPageProvider/ServicesPageProvider'
 import { LayoutWithToolbar } from '@netcracker/qubership-apihub-ui-shared/components/PageLayouts/LayoutWithToolbar'
 import { ServicesPage } from './ServicesPage/ServicesPage'
+import { SnapshotPublisher } from './ServicesPage/ServicesPageBody/CreateSnapshotStep/SnapshotPublisher'
 import { LayoutWithTabs } from '@netcracker/qubership-apihub-ui-shared/components/PageLayouts/LayoutWithTabs'
 import { WelcomePage } from '../WelcomePage'
 import { useSearchParam } from '@netcracker/qubership-apihub-ui-shared/hooks/searchparams/useSearchParam'
@@ -32,6 +33,8 @@ export const NamespacePage: FC = memo(() => {
       {workspace
         ? (
           <IdpUrlContextProvider>
+            {/* The publications go on while another page of the namespace is open */}
+            <SnapshotPublisher />
             <LayoutWithToolbar
               toolbar={<NamespaceToolbar />}
               body={<NamespacePageBody menuItem={namespaceMode as NamespacePageRoute} />}

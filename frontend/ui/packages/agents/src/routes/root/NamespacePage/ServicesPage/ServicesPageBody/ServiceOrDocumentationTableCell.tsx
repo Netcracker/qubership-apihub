@@ -16,6 +16,7 @@ import { LockIcon } from '@netcracker/qubership-apihub-ui-shared/icons/LockIcon'
 import { SpecLogo } from '@netcracker/qubership-apihub-ui-shared/components/SpecLogo'
 import { DotIndicator } from '@netcracker/qubership-apihub-ui-shared/components/DotIndicator'
 import type { PackageKey } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
+import type { VersionKey } from '@agents/entities/keys'
 import { SnapshotDocumentErrorIndicator } from './SnapshotDocumentErrorIndicator'
 
 export type ServiceOrDocumentationTableCellProps = {
@@ -30,6 +31,7 @@ type CellData = Partial<{
   spec: Spec
   snapshotHasErrors: boolean
   snapshotPackageKey: PackageKey
+  snapshotVersionKey: VersionKey
 }>
 
 // Not memo: TanStack keeps the same row object when the row opens, and memo would keep the chevron closed
@@ -69,6 +71,7 @@ export const ServiceOrDocumentationTableCell: FC<ServiceOrDocumentationTableCell
   const documentErrorsPackageKey = parentRow?.original.snapshotHasErrors
     ? parentRow.original.snapshotPackageKey
     : undefined
+  const documentErrorsVersionKey = parentRow?.original.snapshotVersionKey
 
   return (
     <Box display="flex" alignItems="center" gap={1} pl={3} height={19}>
@@ -113,8 +116,12 @@ export const ServiceOrDocumentationTableCell: FC<ServiceOrDocumentationTableCell
               {spec.name}
             </Link>
           </OverflowTooltip>
-          {documentErrorsPackageKey && (
-            <SnapshotDocumentErrorIndicator specKey={spec.key} snapshotPackageKey={documentErrorsPackageKey}/>
+          {documentErrorsPackageKey && documentErrorsVersionKey && (
+            <SnapshotDocumentErrorIndicator
+              specKey={spec.key}
+              snapshotPackageKey={documentErrorsPackageKey}
+              snapshotVersionKey={documentErrorsVersionKey}
+            />
           )}
         </ItemName>
       )}

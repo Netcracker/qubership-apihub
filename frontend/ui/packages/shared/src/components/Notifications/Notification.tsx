@@ -1,16 +1,17 @@
 import type { FC } from 'react'
 import { memo } from 'react'
 import { Box, IconButton, Link, Slide, Snackbar, SnackbarContent, Typography } from '@mui/material'
-import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined'
 import ErrorOutlinedIcon from '@mui/icons-material/ErrorOutlined'
 import InfoIcon from '@mui/icons-material/Info'
 import CloseOutlinedIcon from '@mui/icons-material/CloseOutlined'
 import type { INFO_NOTIFICATION_TYPE } from '../../utils/notifications'
 import { ERROR_NOTIFICATION_TYPE, SUCCESS_NOTIFICATION_TYPE } from '../../utils/notifications'
+import { CheckCircleIcon } from '../../icons/CheckCircleIcon'
 
 export type NotificationData = {
   title: string
-  message: string
+  /** A notification without a message shows its title alone. */
+  message?: string
   type: NotificationType
   link?: LinkType
 }
@@ -57,14 +58,14 @@ export const Notification: FC<NotificationProps> = memo<NotificationProps>((prop
           <Box sx={{ display: 'flex' }}>
             {
               type === SUCCESS_NOTIFICATION_TYPE
-                ? <CheckCircleOutlinedIcon color="secondary" data-testid="SuccessIcon"/>
+                ? <CheckCircleIcon color="secondary" data-testid="SuccessIcon"/>
                 : type === ERROR_NOTIFICATION_TYPE
                   ? <ErrorOutlinedIcon color="error" data-testid="ErrorIcon"/>
                   : <InfoIcon color="primary" data-testid="InfoIcon"/>
             }
             <Box sx={{ display: 'flex', flexDirection: 'column', ml: 1, pr: 3, overflow: 'hidden' }}>
               <Typography variant="subtitle1">{title}</Typography>
-              <Typography variant="body2" sx={{ wordBreak: 'break-word' }}>{message}</Typography>
+              {message && <Typography variant="body2" sx={{ wordBreak: 'break-word' }}>{message}</Typography>}
               {link && <Link variant="subtitle2" href={link.href}>{link.name}</Link>}
             </Box>
 

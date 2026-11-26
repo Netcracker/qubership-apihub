@@ -16,7 +16,7 @@ import type {
 } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
 import type { SnapshotKey } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import {
-  useCreateSnapshotPublicationOptions,
+  useLastSnapshotPublication,
 } from './ServicesPage/ServicesPageProvider/ServicesPublicationOptionsProvider'
 import { WORKSPACE_SEARCH_PARAM } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
 import { useSearchParam } from '@netcracker/qubership-apihub-ui-shared/hooks/searchparams/useSearchParam'
@@ -40,8 +40,8 @@ export function useSnapshotPublicationInfo(options?: {
 }): SnapshotPublicationInfoQueryState {
   const { agentId, namespaceKey } = useParams()
   const workspaceKey = useSearchParam(WORKSPACE_SEARCH_PARAM)
-  const { createSnapshotPublicationOptions: { name } } = useCreateSnapshotPublicationOptions()
-  const snapshotKey = options?.snapshotKey ?? name
+  const lastSnapshotPublication = useLastSnapshotPublication()
+  const snapshotKey = options?.snapshotKey ?? lastSnapshotPublication?.name
   const promotion = options?.promote ?? false
   const prefix = useGetAgentPrefix()
   const {

@@ -4,6 +4,7 @@ import type { PackageKey, ServiceKey } from '@netcracker/qubership-apihub-ui-sha
 import type { Spec } from '@netcracker/qubership-apihub-ui-shared/entities/specs'
 import {
   COMPLETE_PUBLISH_STATUS,
+  ERROR_PUBLISH_STATUS,
   type PublishDetails,
 } from '@netcracker/qubership-apihub-ui-shared/utils/packages-builder'
 
@@ -11,12 +12,15 @@ import type { VersionKey } from '@agents/entities/keys'
 import type { ServiceConfig } from '@agents/entities/publish-config'
 import { EMPTY_PUBLISH_DETAILS } from '@agents/entities/publish-details'
 import type { Service } from '@agents/entities/services'
-import { useCreateSnapshotPublicationOptions } from '../../ServicesPageProvider/ServicesPublicationOptionsProvider'
+import {
+  type SnapshotPublication,
+  useSnapshotPublications,
+} from '../../ServicesPageProvider/ServicesPublicationOptionsProvider'
 import { BaselinePackageTableCell } from '../BaselinePackageTableCell'
 import { PublicationActionTableCell } from '../PublicationActionTableCell'
-import { PublishStatusTableCell } from '../PublishStatusTableCell'
+import { PublicationStatusIndicator } from '../PublicationStatusIndicator'
 import { ServiceOrDocumentationTableCell } from '../ServiceOrDocumentationTableCell'
-import type { ServiceSectionModel } from '../ServiceSections/ServiceSection'
+import type { ServiceSectionModel, ServiceSectionSummaryItem } from '../ServiceSections/ServiceSection'
 import { ServiceSections } from '../ServiceSections/ServiceSections'
 import {
   BASELINE_PACKAGE_COLUMN_ID,
@@ -24,10 +28,10 @@ import {
   type ServiceTableColumn,
   type ServiceTableLink,
 } from '../ServiceSections/ServiceTable'
-import { useAllPublicationDetails } from '../useAllPublicationDetails'
+import { useSnapshotPublicationDetails } from '../useAllPublicationDetails'
 import { ViewPackageTableCell } from '../ViewPackageTableCell'
 import type { BaselineVersionSplit } from './snapshotForm'
-import { useServicePublishDetails } from './useServicePublishDetails'
+import { getServicePublishDetails, getSnapshotPublishDetails } from './snapshotPublications'
 
 const SERVICES_FROM_DISCOVERY_SECTION_ID = 'services-from-discovery'
 const MATCHING_BASELINE_VERSION_SECTION_ID = 'matching-baseline-version'
@@ -38,7 +42,13 @@ const MATCHING_BASELINE_VERSION_TOOLTIP =
   'These services have a baseline package for the selected baseline version. Select them to include in this snapshot.'
 const NOT_MATCHING_BASELINE_VERSION_TOOLTIP =
   'These services have no baseline package for the selected baseline version. They cannot be selected for a snapshot until you link a baseline package in the settings.'
+const SNAPSHOT_SECTION_ID_PREFIX = 'snapshot-'
+const SNAPSHOT_SECTION_TOOLTIP =
+  'Services already published to the workspace as part of a snapshot created in this workflow.'
 const PUBLISH_STATUS_COLUMN_ID = 'publish-status'
+const SNAPSHOT_SUMMARY_VERSION_LABEL = 'Snapshot:'
+const SNAPSHOT_SUMMARY_BASELINE_LABEL = 'Baseline Version:'
+const SNAPSHOT_SUMMARY_SERVICES_LABEL = 'Services:'
 
 type SnapshotServiceRow = Partial<{
   service: Service
@@ -46,9 +56,9 @@ type SnapshotServiceRow = Partial<{
   children: SnapshotServiceRow[]
   serviceConfig: ServiceConfig
   publishDetails: PublishDetails
-  builderId: string
   snapshotHasErrors: boolean
   snapshotPackageKey: PackageKey
+  snapshotVersionKey: VersionKey
 }>
 
 const SERVICE_OR_DOCUMENTATION_COLUMN: ServiceTableColumn<SnapshotServiceRow> = {
@@ -68,13 +78,14 @@ const SNAPSHOT_SERVICE_COLUMNS: ReadonlyArray<ServiceTableColumn<SnapshotService
   BASELINE_PACKAGE_COLUMN,
 ]
 
-// The services of the created snapshot show their publication in the section they were selected in
-const SNAPSHOT_SERVICE_COLUMNS_WITH_PUBLISH_STATUS: ReadonlyArray<ServiceTableColumn<SnapshotServiceRow>> = [
+const SNAPSHOT_SERVICE_COLUMNS_WITH_PUBLICATION_STATUS: ReadonlyArray<ServiceTableColumn<SnapshotServiceRow>> = [
   ...SNAPSHOT_SERVICE_COLUMNS,
   {
     id: PUBLISH_STATUS_COLUMN_ID,
-    header: 'Publish Status',
-    cell: row => row.getIsSelected() && <CreateSnapshotDetailsTableCell value={row.original} />,
+    header: 'Publication Status',
+    // A document row has no publication of its own
+    cell: ({ original: { publishDetails } }) =>
+      publishDetails && <PublicationStatusIndicator publishDetails={publishDetails} />,
   },
 ]
 
@@ -93,7 +104,10 @@ const serviceLink: ServiceTableLink<SnapshotServiceRow> = row => (
 )
 
 type CreateSnapshotStepSectionsProps = {
+  /** Every service of the step, which the rows of the snapshots take. */
   services: ReadonlyArray<Service>
+  /** The services that went into no snapshot, which "Services From Discovery" and the split take. */
+  servicesOutsideSnapshots: ReadonlyArray<Service>
   areServicesLoading: boolean
   /** The services split by the baseline version; `undefined` until both versions are entered. */
   baselineVersionSplit: BaselineVersionSplit | undefined
@@ -106,6 +120,7 @@ type CreateSnapshotStepSectionsProps = {
 
 export const CreateSnapshotStepSections: FC<CreateSnapshotStepSectionsProps> = memo<CreateSnapshotStepSectionsProps>(({
   services,
+  servicesOutsideSnapshots,
   areServicesLoading,
   baselineVersionSplit,
   baselineVersion,
@@ -114,46 +129,48 @@ export const CreateSnapshotStepSections: FC<CreateSnapshotStepSectionsProps> = m
   onSelect,
   searchValue,
 }) => {
-  const { createSnapshotPublicationOptions: { config } } = useCreateSnapshotPublicationOptions()
-  const [allPublishDetails] = useAllPublicationDetails({ config })
-
-  const toSnapshotServiceRow = useCallback((service: Service): SnapshotServiceRow => {
-    const serviceConfig = config?.serviceConfigs.find(({ serviceId }) => serviceId === service.key)
-    const publishDetails = allPublishDetails.find(({ publishId }) => publishId === serviceConfig?.publishId) ??
-      EMPTY_PUBLISH_DETAILS
-
-    return {
-      service: service,
-      serviceConfig: serviceConfig,
-      publishDetails: publishDetails,
-      children: service.specs?.map(spec => ({ spec })),
-      builderId: config?.builderId,
-      snapshotHasErrors: publishDetails.status === COMPLETE_PUBLISH_STATUS && (publishDetails.hasErrors ?? false),
-      snapshotPackageKey: serviceConfig?.packageId,
-    }
-  }, [allPublishDetails, config])
+  const { snapshotPublications } = useSnapshotPublications()
+  const allPublishDetails = useSnapshotPublicationDetails(snapshotPublications)
 
   const isSelectable = useCallback(() => selectable, [selectable])
 
   const sections = useMemo<ReadonlyArray<ServiceSectionModel<SnapshotServiceRow>>>(() => {
-    if (!baselineVersionSplit) {
-      return [{
-        id: SERVICES_FROM_DISCOVERY_SECTION_ID,
-        title: 'Services From Discovery',
-        tooltip: SERVICES_FROM_DISCOVERY_TOOLTIP,
-        columns: SNAPSHOT_SERVICE_COLUMNS,
+    const snapshotSections = snapshotPublications.map((snapshotPublication, index) => {
+      const snapshotPublishDetails = getSnapshotPublishDetails(snapshotPublication, allPublishDetails)
+      return {
+        id: `${SNAPSHOT_SECTION_ID_PREFIX}${index + 1}`,
+        title: toSnapshotSummary(snapshotPublication),
+        tooltip: SNAPSHOT_SECTION_TOOLTIP,
+        status: isPublicationFinal(snapshotPublishDetails)
+          ? <PublicationStatusIndicator publishDetails={snapshotPublishDetails} />
+          : null,
+        columns: SNAPSHOT_SERVICE_COLUMNS_WITH_PUBLICATION_STATUS,
         link: serviceLink,
-        rows: services.map(toSnapshotServiceRow),
-      }]
+        rows: getSnapshotSectionRows(snapshotPublication, services, allPublishDetails),
+      }
+    })
+    if (!baselineVersionSplit) {
+      return [
+        ...snapshotSections,
+        {
+          id: SERVICES_FROM_DISCOVERY_SECTION_ID,
+          title: 'Services From Discovery',
+          tooltip: SERVICES_FROM_DISCOVERY_TOOLTIP,
+          columns: SNAPSHOT_SERVICE_COLUMNS,
+          link: serviceLink,
+          rows: servicesOutsideSnapshots.map(toServiceRowWithDocuments),
+        },
+      ]
     }
     return [
+      ...snapshotSections,
       {
         id: MATCHING_BASELINE_VERSION_SECTION_ID,
         title: 'Matching Baseline Version',
         tooltip: MATCHING_BASELINE_VERSION_TOOLTIP,
-        columns: config ? SNAPSHOT_SERVICE_COLUMNS_WITH_PUBLISH_STATUS : SNAPSHOT_SERVICE_COLUMNS,
+        columns: SNAPSHOT_SERVICE_COLUMNS,
         link: serviceLink,
-        rows: baselineVersionSplit.matching.map(toSnapshotServiceRow),
+        rows: baselineVersionSplit.matching.map(toServiceRowWithDocuments),
         selection: { selected: selected, onSelect: onSelect, isSelectable: isSelectable },
       },
       {
@@ -162,40 +179,25 @@ export const CreateSnapshotStepSections: FC<CreateSnapshotStepSectionsProps> = m
         tooltip: NOT_MATCHING_BASELINE_VERSION_TOOLTIP,
         columns: getNotMatchingColumns(baselineVersion),
         link: serviceLink,
-        rows: baselineVersionSplit.notMatching.map(toSnapshotServiceRow),
+        rows: baselineVersionSplit.notMatching.map(toServiceRowWithDocuments),
       },
     ]
-  }, [baselineVersion, config, isSelectable, onSelect, toSnapshotServiceRow, selected, services, baselineVersionSplit])
+  }, [
+    allPublishDetails,
+    baselineVersion,
+    baselineVersionSplit,
+    isSelectable,
+    onSelect,
+    selected,
+    services,
+    servicesOutsideSnapshots,
+    snapshotPublications,
+  ])
 
   return <ServiceSections sections={sections} searchValue={searchValue} isLoading={areServicesLoading} />
 })
 
 CreateSnapshotStepSections.displayName = 'CreateSnapshotStepSections'
-
-type CreateSnapshotDetailsTableCellProps = {
-  value: SnapshotServiceRow
-}
-
-const CreateSnapshotDetailsTableCell: FC<CreateSnapshotDetailsTableCellProps> = memo<
-  CreateSnapshotDetailsTableCellProps
->(({
-  value: {
-    serviceConfig,
-    builderId,
-    publishDetails = EMPTY_PUBLISH_DETAILS,
-  },
-}) => {
-  // Starts the build in the browser; its outcome reaches the cell through the statuses poll of the table
-  useServicePublishDetails({ serviceConfig, builderId })
-
-  if (!serviceConfig) {
-    return null
-  }
-
-  return <PublishStatusTableCell publishDetails={publishDetails} />
-})
-
-CreateSnapshotDetailsTableCell.displayName = 'CreateSnapshotDetailsTableCell'
 
 // The warning of a service without a baseline package names the version that the service cannot be compared with
 function getNotMatchingColumns(baselineVersion: VersionKey): ReadonlyArray<ServiceTableColumn<SnapshotServiceRow>> {
@@ -208,4 +210,48 @@ function getNotMatchingColumns(baselineVersion: VersionKey): ReadonlyArray<Servi
       cell: row => <BaselinePackageTableCell value={row} noBaselinePackageTooltip={noBaselinePackageTooltip} />,
     },
   ]
+}
+
+function toSnapshotSummary({ name, baseline, config }: SnapshotPublication): ReadonlyArray<ServiceSectionSummaryItem> {
+  return [
+    { label: SNAPSHOT_SUMMARY_VERSION_LABEL, value: name },
+    { label: SNAPSHOT_SUMMARY_BASELINE_LABEL, value: baseline },
+    { label: SNAPSHOT_SUMMARY_SERVICES_LABEL, value: String(config.serviceConfigs.length) },
+  ]
+}
+
+function isPublicationFinal({ status }: PublishDetails): boolean {
+  return status === COMPLETE_PUBLISH_STATUS || status === ERROR_PUBLISH_STATUS
+}
+
+function toServiceRowWithDocuments(service: Service): SnapshotServiceRow {
+  return {
+    service: service,
+    children: service.specs?.map(spec => ({ spec })),
+  }
+}
+
+/** Returns the rows of a snapshot section: each service of the snapshot with its documents and its publication. */
+function getSnapshotSectionRows(
+  { name, config }: SnapshotPublication,
+  services: ReadonlyArray<Service>,
+  allPublishDetails: ReadonlyArray<PublishDetails>,
+): SnapshotServiceRow[] {
+  return config.serviceConfigs.flatMap(serviceConfig => {
+    const service = services.find(({ key }) => key === serviceConfig.serviceId)
+    // The services of the step hold every service of a snapshot, since "Restart Discovery" clears the snapshots; the
+    // guard narrows the type
+    if (!service) {
+      return []
+    }
+    const publishDetails = getServicePublishDetails(allPublishDetails, serviceConfig)
+    return [{
+      ...toServiceRowWithDocuments(service),
+      serviceConfig: serviceConfig,
+      publishDetails: publishDetails,
+      snapshotHasErrors: publishDetails.status === COMPLETE_PUBLISH_STATUS && (publishDetails.hasErrors ?? false),
+      snapshotPackageKey: serviceConfig.packageId,
+      snapshotVersionKey: name,
+    }]
+  })
 }

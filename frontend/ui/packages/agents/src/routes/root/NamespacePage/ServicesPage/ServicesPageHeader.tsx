@@ -156,7 +156,7 @@ const StepBadge: FC<StepBadgeProps> = ({ step: { index, status, completed }, loo
     return <StepProgress size={STEP_BADGE_SIZE}/>
   }
   if (completed) {
-    return <CompletedIcon/>
+    return <CheckCircleIcon color="secondary"/>
   }
   return <NumberBadge look={look}>{index + 1}</NumberBadge>
 }
@@ -245,10 +245,6 @@ const StepProgress = styled(CircularProgress)({
   flexShrink: 0,
   margin: STEP_BADGE_MARGIN,
 })
-
-const CompletedIcon = styled(CheckCircleIcon)(({ theme }) => ({
-  color: theme.palette.secondary.main,
-}))
 
 // The status decides the color before the open step does: an open step that failed is red. A step that is not open
 // and has no status stays grey, whether or not it was opened before.

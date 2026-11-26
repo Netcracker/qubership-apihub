@@ -17,13 +17,16 @@ import {
 
 export type NotificationDetail = {
   title?: string
-  message: string
+  message?: string
   link?: LinkType
 }
 
+// A failed request always has a message, and the notifications of the Portal require one
+type ErrorNotificationDetail = NotificationDetail & { message: string }
+
 export type ExceptionSituationHandlerProps = PropsWithChildren<{
   homePath: string
-  showErrorNotification?: (detail: NotificationDetail) => void
+  showErrorNotification?: (detail: ErrorNotificationDetail) => void
   redirectUrlFactory?: (currentPathname: string, searchParams: URLSearchParams, id: string) => string
 }>
 

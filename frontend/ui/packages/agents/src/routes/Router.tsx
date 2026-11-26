@@ -7,6 +7,7 @@ import { EventBusProvider } from './EventBusProvider'
 import { NavigationProvider } from './NavigationProvider'
 import { BasePage } from './root/BasePage/BasePage'
 import { NamespacePage } from './root/NamespacePage/NamespacePage'
+import { ServicesPageProvider } from './root/NamespacePage/ServicesPage/ServicesPageProvider/ServicesPageProvider'
 import { SystemConfigurationProvider } from './root/NamespacePage/SystemConfigurationProvider'
 import { WelcomePage } from './root/WelcomePage'
 import { AUTHENTICATION_REPORTS_PAGE, SECURITY_REPORTS_PAGE, SERVICES_PAGE } from './routes'
@@ -16,6 +17,14 @@ import { AUTHENTICATION_REPORTS_PAGE, SECURITY_REPORTS_PAGE, SERVICES_PAGE } fro
 // TODO: remove the flags with the move to React Router 7, where this behavior is the default and the flags are gone.
 // eslint-disable-next-line camelcase
 const ROUTER_FUTURE_FLAGS = { v7_startTransition: true, v7_relativeSplatPath: true }
+
+// The toolbar of the welcome page holds the workspace selector, which clears the wizard state of the Services page on
+// a new workspace, so the page without a namespace gets the providers of that state as well
+const WELCOME_PAGE_ELEMENT = (
+  <ServicesPageProvider>
+    <WelcomePage />
+  </ServicesPageProvider>
+)
 
 const SecurityReportsRedirect: FC = memo(() => {
   const location = useLocation()
@@ -33,9 +42,9 @@ export const Router: FC = memo(() => {
               <Route path="/" element={<BasePage />}>
                 <Route index element={<Navigate to="agents" replace />} />
                 <Route path="agents">
-                  <Route index element={<WelcomePage />} />
+                  <Route index element={WELCOME_PAGE_ELEMENT} />
                   <Route path=":agentId">
-                    <Route index element={<WelcomePage />} />
+                    <Route index element={WELCOME_PAGE_ELEMENT} />
                     <Route path=":namespaceKey/*">
                       <Route element={<NamespacePage />} />
                       <Route index element={<Navigate to={SERVICES_PAGE} replace />} />

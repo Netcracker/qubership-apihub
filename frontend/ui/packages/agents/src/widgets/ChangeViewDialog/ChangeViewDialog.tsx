@@ -8,7 +8,7 @@ import type { Service } from '@agents/entities/services'
 import type { PopupProps } from '@netcracker/qubership-apihub-ui-shared/components/PopupDelegate'
 import { PopupDelegate } from '@netcracker/qubership-apihub-ui-shared/components/PopupDelegate'
 import {
-  useCreateSnapshotPublicationOptions,
+  useSnapshotPublications,
 } from '../../routes/root/NamespacePage/ServicesPage/ServicesPageProvider/ServicesPublicationOptionsProvider'
 import type { ServiceConfig } from '@agents/entities/publish-config'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
@@ -23,11 +23,13 @@ export type ChangeViewDialogDetail = {
 
 export const ChangeViewContent: FC<PopupProps> = memo<PopupProps>(({ open, setOpen, detail }) => {
   const { service, apiType } = detail as ChangeViewDialogDetail
-  const { createSnapshotPublicationOptions: { config } } = useCreateSnapshotPublicationOptions()
+  const { snapshotPublications } = useSnapshotPublications()
   const {
     version,
     packageId,
-  } = config?.serviceConfigs.find(({ serviceId }) => serviceId === service.key) as ServiceConfig
+  } = snapshotPublications
+    .flatMap(({ config }) => config.serviceConfigs)
+    .find(({ serviceId }) => serviceId === service.key) as ServiceConfig
 
   const onClose = useCallback(() => {
     setOpen(false)

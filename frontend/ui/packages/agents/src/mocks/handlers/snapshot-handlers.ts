@@ -1,4 +1,4 @@
-import { http, passthrough, type PathParams } from 'msw'
+import { http, HttpResponse, passthrough, type PathParams } from 'msw'
 
 import { patchJsonResponse } from '@netcracker/qubership-apihub-ui-shared/mocks/patch-json-response'
 import {
@@ -14,11 +14,19 @@ import type { PublishSnapshotRequestDto } from '@agents/entities/snapshots'
 // A snapshot whose name contains the marker gets a failed comparison in the snapshot version of each service.
 const MOCK_COMPARISON_ERRORS_MARKER = 'errors-comparison'
 // A snapshot whose name contains the marker gets a failed publication of each service, though the backend publishes it.
-const MOCK_PUBLISH_FAILED_MARKER = 'errors-publish-failed'
+const MOCK_PUBLISH_FAILED_MARKER = 'errors-agent-publish-failed'
 const MOCK_PUBLISH_FAILED_MESSAGE = 'Mock publication failure: the build of this service failed.'
+// A snapshot whose name contains the marker gets a failed publication of its first service, though the backend
+// publishes it.
+const MOCK_FIRST_PUBLISH_FAILED_MARKER = 'errors-agent-first-publish-failed'
+// A snapshot whose name contains the marker fails its first create request; the same request sent again reaches
+// the backend.
+const MOCK_CREATE_FAILED_MARKER = 'errors-agent-create-failed'
+const MOCK_CREATE_FAILED_MESSAGE = 'Mock failure of the create request.'
 
-// The publications of the runs started with the failure marker. The statuses poll carries only publish ids.
+// The publications of the runs started with a publication failure marker. The statuses poll carries only publish ids.
 const failedPublishIds = new Set<string>()
+const failedCreateVersions = new Set<string>()
 
 export const snapshotHandlers = [
   http.get(
@@ -34,16 +42,21 @@ export const snapshotHandlers = [
     },
   ),
 
-  // Create Snapshot and Promote Version: remembers the service publications of a run with the failure marker
+  // Create Snapshot and Promote Version: fails the first create request of a version with the create failure marker,
+  // and remembers the failed service publications of a run with a publication failure marker
   http.post<PathParams, PublishSnapshotRequestDto>(
     '*/api/v2/agents/:agentId/namespaces/:namespaceId/workspaces/:workspaceKey/snapshots',
     async ({ request }) => {
       const { version } = await request.clone().json()
-      if (!version.includes(MOCK_PUBLISH_FAILED_MARKER)) {
+      if (version.includes(MOCK_CREATE_FAILED_MARKER) && !failedCreateVersions.has(version)) {
+        failedCreateVersions.add(version)
+        return HttpResponse.json({ status: 500, message: MOCK_CREATE_FAILED_MESSAGE }, { status: 500 })
+      }
+      if (!version.includes(MOCK_PUBLISH_FAILED_MARKER) && !version.includes(MOCK_FIRST_PUBLISH_FAILED_MARKER)) {
         return passthrough()
       }
       return patchJsonResponse<PublishConfigDto>(request, config => {
-        config.services.forEach(({ publishId }) => failedPublishIds.add(publishId))
+        getMockFailedPublishIds(version, config).forEach(publishId => failedPublishIds.add(publishId))
         return config
       })
     },
@@ -70,3 +83,8 @@ export const snapshotHandlers = [
     },
   ),
 ]
+
+function getMockFailedPublishIds(version: string, { services }: PublishConfigDto): ReadonlyArray<string> {
+  const failedServices = version.includes(MOCK_PUBLISH_FAILED_MARKER) ? services : services.slice(0, 1)
+  return failedServices.map(({ publishId }) => publishId)
+}

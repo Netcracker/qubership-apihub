@@ -13,7 +13,7 @@ import { type DiscoveryStatus, ERROR_DISCOVERY_STATUS, RUNNING_DISCOVERY_STATUS 
 import { useShowErrorNotification } from '../../../../BasePage/NotificationHandler'
 import { useServices } from '../../../useServices'
 import { useSetDiscoveryStartView } from '../../ServicesPageProvider/DiscoveryStartViewProvider'
-import { useCreateSnapshotPublicationOptions } from '../../ServicesPageProvider/ServicesPublicationOptionsProvider'
+import { useSnapshotPublications } from '../../ServicesPageProvider/ServicesPublicationOptionsProvider'
 import { DISCOVER_SERVICES_STEP_KEY } from '../../ServicesPageProvider/servicesSteps'
 import { useResetStepsAfter, useSetStepStatus } from '../../ServicesPageProvider/ServicesStepsProvider'
 import { DiscoveredServices } from './DiscoveredServices'
@@ -111,7 +111,7 @@ export const DiscoverServicesStep: FC = memo((): ReactElement => {
 DiscoverServicesStep.displayName = 'DiscoverServicesStep'
 
 function useStartDiscovery(view: DiscoveryView): [StartDiscovery, IsLoading] {
-  const { resetCreateSnapshotPublicationOptions } = useCreateSnapshotPublicationOptions()
+  const { resetSnapshotPublications } = useSnapshotPublications()
   const resetStepsAfter = useResetStepsAfter()
   const setStartView = useSetDiscoveryStartView()
   const showErrorNotification = useShowErrorNotification()
@@ -120,11 +120,11 @@ function useStartDiscovery(view: DiscoveryView): [StartDiscovery, IsLoading] {
 
   const startDiscovery = useCallback(() => {
     // Steps 2 and 3 start over, since their snapshot and promotion used the services of the previous discovery
-    resetCreateSnapshotPublicationOptions()
+    resetSnapshotPublications()
     resetStepsAfter(DISCOVER_SERVICES_STEP_KEY)
     setStartView(view)
     runDiscovery()
-  }, [resetCreateSnapshotPublicationOptions, resetStepsAfter, runDiscovery, setStartView, view])
+  }, [resetSnapshotPublications, resetStepsAfter, runDiscovery, setStartView, view])
 
   return [startDiscovery, isStarting]
 }

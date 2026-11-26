@@ -14,7 +14,7 @@ import { useSetDiscoveryStartView } from './ServicesPage/ServicesPageProvider/Di
 import { DISCOVER_SERVICES_STEP_KEY } from './ServicesPage/ServicesPageProvider/servicesSteps'
 import { useResetStepsAfter } from './ServicesPage/ServicesPageProvider/ServicesStepsProvider'
 import {
-  useCreateSnapshotPublicationOptions,
+  useSnapshotPublications,
 } from './ServicesPage/ServicesPageProvider/ServicesPublicationOptionsProvider'
 import { useSetSearchParams } from '@netcracker/qubership-apihub-ui-shared/hooks/searchparams/useSetSearchParams'
 import { useSystemConfigurationContext } from './SystemConfigurationProvider'
@@ -22,11 +22,15 @@ import { useShowErrorNotification } from '../BasePage/NotificationHandler'
 
 const DEFAULT_WORKSPACE_ID = ''
 
-export const WorkspaceSelector: FC = memo(() => {
+type WorkspaceSelectorProps = {
+  disabled: boolean
+}
+
+export const WorkspaceSelector: FC<WorkspaceSelectorProps> = memo<WorkspaceSelectorProps>(({ disabled }) => {
   const [activeTab] = useActiveTabs()
   const errorNotification = useShowErrorNotification()
 
-  const { resetCreateSnapshotPublicationOptions } = useCreateSnapshotPublicationOptions()
+  const { resetSnapshotPublications } = useSnapshotPublications()
   const resetStepsAfter = useResetStepsAfter()
   const setDiscoveryStartView = useSetDiscoveryStartView()
 
@@ -56,18 +60,19 @@ export const WorkspaceSelector: FC = memo(() => {
         [WORKSPACE_SEARCH_PARAM]: workspaceId,
       })
 
-      // The snapshot, the promotion, and the view a discovery started from belong to the previous workspace
+      // The wizard keeps its snapshots on every page of the namespace, so a new workspace clears them on any page
+      resetSnapshotPublications()
+      resetStepsAfter(DISCOVER_SERVICES_STEP_KEY)
+      // The services and the view a discovery started from belong to the previous workspace
       if (activeTab === SERVICES_PAGE) {
         invalidateServices()
-        resetCreateSnapshotPublicationOptions()
-        resetStepsAfter(DISCOVER_SERVICES_STEP_KEY)
         setDiscoveryStartView(undefined)
       }
     }
   }, [
     activeTab,
     invalidateServices,
-    resetCreateSnapshotPublicationOptions,
+    resetSnapshotPublications,
     resetStepsAfter,
     setDiscoveryStartView,
     setSearchParams,
@@ -101,6 +106,7 @@ export const WorkspaceSelector: FC = memo(() => {
         onInput={setWorkspaceTextFilter!}
         onSelect={onSelectWorkspace!}
         loading={isSelectedWorkspaceLoading || isWorkspacesLoading}
+        disabled={disabled}
         data-testid="WorkspaceSelector"
       />
     </Box>

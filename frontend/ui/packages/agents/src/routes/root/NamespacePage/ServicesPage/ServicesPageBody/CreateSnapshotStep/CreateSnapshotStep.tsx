@@ -11,7 +11,6 @@ import {
   memo,
   type SyntheticEvent,
   useCallback,
-  useEffect,
   useId,
   useMemo,
   useState,
@@ -31,39 +30,53 @@ import { isNotEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
 import { DEFAULT_DEBOUNCE } from '@netcracker/qubership-apihub-ui-shared/utils/constants'
 import { agent } from '@netcracker/qubership-apihub-ui-shared/utils/version-info'
 
+import { EmptyState, FAILED_EMPTY_STATE_VARIANT } from '@agents/components/EmptyState/EmptyState'
 import type { VersionKey } from '@agents/entities/keys'
 import { useVersionOptions } from '../../../AutomationPage/useVersionOptions'
 import {
+  type CreateSnapshotPublicationOptions,
   useCreateSnapshotFormData,
-  useCreateSnapshotPublicationOptions,
+  useSnapshotPublications,
 } from '../../ServicesPageProvider/ServicesPublicationOptionsProvider'
-import {
-  COMPLETE_STEP_STATUS,
-  CREATE_SNAPSHOT_STEP_KEY,
-  ERROR_STEP_STATUS,
-  RUNNING_STEP_STATUS,
-  type StepStatus,
-} from '../../ServicesPageProvider/servicesSteps'
-import { useResetStepsAfter, useSetStepStatus } from '../../ServicesPageProvider/ServicesStepsProvider'
+import { CREATE_SNAPSHOT_STEP_KEY, RUNNING_STEP_STATUS } from '../../ServicesPageProvider/servicesSteps'
+import { useResetStepsAfter } from '../../ServicesPageProvider/ServicesStepsProvider'
 import { CreateSnapshotStepSections } from './CreateSnapshotStepSections'
 import { getSnapshotVersionError, splitByBaselineVersion } from './snapshotForm'
-import { useCreateSnapshot } from './useCreateSnapshot'
+import { getServicesOutsideSnapshots } from './snapshotPublications'
+import { type CreateSnapshot, useCreateSnapshot } from './useCreateSnapshot'
 import { useCreateSnapshotStepStatus } from './useCreateSnapshotStepStatus'
 import { useSnapshotBaseline } from './useSnapshotBaseline'
 
 const BASELINE_VERSION_TOOLTIP =
   'Released baseline version to compare against when publishing the selected services in this snapshot.'
 const BASELINE_CHECK_ERROR = 'Cannot check which baseline packages hold this version. Open the list to try again.'
+const SNAPSHOT_CREATION_FAILED_TITLE = 'Snapshot creation failed'
+const SNAPSHOT_CREATION_FAILED_LINES: ReadonlyArray<string> = [
+  'The snapshot could not be started.',
+  'Check that the agent is available in the selected cloud and namespace and that you have access to the workspace, then try again',
+]
 
 export const CreateSnapshotStep: FC = memo(() => {
   const {
     createSnapshotFormData: { name, baseline, serviceKeys, searchValue },
     setCreateSnapshotFormData,
   } = useCreateSnapshotFormData()
-  const { resetCreateSnapshotPublicationOptions } = useCreateSnapshotPublicationOptions()
-  const [createSnapshot, isCreating] = useCreateSnapshot()
+  const {
+    snapshotPublications,
+    failedCreateSnapshotOptions,
+    addSnapshotPublication,
+    setFailedCreateSnapshotOptions,
+  } = useSnapshotPublications()
+  const createSnapshot = useCreateSnapshot({
+    onCreated: snapshotPublication => {
+      addSnapshotPublication(snapshotPublication)
+      // The next snapshot starts from empty fields; the search stays
+      setCreateSnapshotFormData(formData => ({ ...formData, name: '', baseline: '', serviceKeys: [] }))
+    },
+    onFailed: setFailedCreateSnapshotOptions,
+  })
+  const status = useCreateSnapshotStepStatus()
   const resetStepsAfter = useResetStepsAfter()
-  const status = useCreateSnapshotStatus(isCreating)
   const snapshotNameOptions = useVersionOptions()
   const baselineHintId = useId()
 
@@ -82,15 +95,18 @@ export const CreateSnapshotStep: FC = memo(() => {
   } = useSnapshotBaseline(baseline, baselineSearch)
 
   const isRunning = status === RUNNING_STEP_STATUS
-  const isFinished = status === COMPLETE_STEP_STATUS || status === ERROR_STEP_STATUS
   const nameError = getSnapshotVersionError(name, baseline)
   // Until the search of the selected version answers, a package that holds the version can lack it, and the split
   // would put its services under "Not Matching Baseline Version"
   const canSplitByBaselineVersion = name !== '' && baseline !== '' && isBaselineChecked
 
+  const servicesOutsideSnapshots = useMemo(
+    () => getServicesOutsideSnapshots(services, snapshotPublications),
+    [services, snapshotPublications],
+  )
   const baselineVersionSplit = useMemo(
-    () => (canSplitByBaselineVersion ? splitByBaselineVersion(services, baseline) : undefined),
-    [canSplitByBaselineVersion, baseline, services],
+    () => (canSplitByBaselineVersion ? splitByBaselineVersion(servicesOutsideSnapshots, baseline) : undefined),
+    [canSplitByBaselineVersion, baseline, servicesOutsideSnapshots],
   )
   // A selected service that left "Matching Baseline Version" keeps its key in the form data and is not sent
   const selectedServiceKeys = useMemo(() => {
@@ -105,8 +121,7 @@ export const CreateSnapshotStep: FC = memo(() => {
     nameError === undefined &&
     !problem.isBlocking &&
     isNotEmpty(selectedServiceKeys) &&
-    !isRunning &&
-    status !== COMPLETE_STEP_STATUS
+    !isRunning
 
   const handleNameInputChange = (_: SyntheticEvent, value: string): void =>
     setCreateSnapshotFormData(formData => ({ ...formData, name: value }))
@@ -142,19 +157,23 @@ export const CreateSnapshotStep: FC = memo(() => {
   const handleSearchValueChange = (value: string): void =>
     setCreateSnapshotFormData(formData => ({ ...formData, searchValue: value }))
 
-  const handleResetClick = (): void => {
-    resetCreateSnapshotPublicationOptions()
-    resetStepsAfter(CREATE_SNAPSHOT_STEP_KEY)
-  }
-
   const handleSubmit = (event: FormEvent<HTMLFormElement>): void => {
     event.preventDefault()
     resetStepsAfter(CREATE_SNAPSHOT_STEP_KEY)
     createSnapshot({ name: name, baseline: baseline, serviceKeys: selectedServiceKeys })
   }
 
-  const areFieldsDisabled = isRunning || isFinished
   const hasBaselineError = problem.hasProblems || isBaselineCheckFailed
+
+  if (failedCreateSnapshotOptions) {
+    return (
+      <SnapshotCreationFailedState
+        options={failedCreateSnapshotOptions}
+        isRetrying={isRunning}
+        onTryAgain={createSnapshot}
+      />
+    )
+  }
 
   return (
     <Form onSubmit={handleSubmit}>
@@ -162,11 +181,11 @@ export const CreateSnapshotStep: FC = memo(() => {
         <VersionSelectorAutocomplete
           data-testid="SnapshotNameAutocomplete"
           freeSolo
-          disabled={areFieldsDisabled}
+          disabled={isRunning}
           // MUI counts an empty string as a value and would show the clear button in an empty field
           value={name || null}
           // A free-solo field keeps its text when the value is cleared, so the form data drives the text as well and
-          // "Reset" empties the field
+          // a created snapshot empties the field
           inputValue={name}
           options={snapshotNameOptions}
           inputIndicator={nameError !== undefined && (
@@ -191,7 +210,7 @@ export const CreateSnapshotStep: FC = memo(() => {
           // The info icon stays in the field, so the clear button would make three icons with the magnifier. An empty
           // field shows no clear button anyway, and a literal `true` would not let the empty field take `null`.
           disableClearable={baseline !== ''}
-          disabled={areFieldsDisabled}
+          disabled={isRunning}
           value={baseline || null}
           options={options.versionKeys}
           loading={isSearching}
@@ -241,19 +260,14 @@ export const CreateSnapshotStep: FC = memo(() => {
           onClose={handleBaselineClose}
         />
 
-        <Actions>
-          <ResetButton data-testid="ResetButton" variant="outlined" disabled={isRunning} onClick={handleResetClick}>
-            Reset
-          </ResetButton>
-          <CreateSnapshotButton
-            data-testid="CreateSnapshotButton"
-            type="submit"
-            variant="contained"
-            disabled={!isCreateSnapshotEnabled}
-          >
-            Create Snapshot
-          </CreateSnapshotButton>
-        </Actions>
+        <CreateSnapshotButton
+          data-testid="CreateSnapshotButton"
+          type="submit"
+          variant="contained"
+          disabled={!isCreateSnapshotEnabled}
+        >
+          Create Snapshot
+        </CreateSnapshotButton>
 
         <Search>
           <SearchBar value={searchValue} onValueChange={handleSearchValueChange} />
@@ -262,10 +276,11 @@ export const CreateSnapshotStep: FC = memo(() => {
 
       <CreateSnapshotStepSections
         services={services}
+        servicesOutsideSnapshots={servicesOutsideSnapshots}
         areServicesLoading={areServicesLoading}
         baselineVersionSplit={baselineVersionSplit}
         baselineVersion={baseline}
-        selectable={!areFieldsDisabled}
+        selectable={!isRunning}
         selected={selectedServiceKeys}
         onSelect={handleSelect}
         searchValue={searchValue}
@@ -275,6 +290,41 @@ export const CreateSnapshotStep: FC = memo(() => {
 })
 
 CreateSnapshotStep.displayName = 'CreateSnapshotStep'
+
+type SnapshotCreationFailedStateProps = {
+  options: CreateSnapshotPublicationOptions
+  isRetrying: boolean
+  onTryAgain: CreateSnapshot
+}
+
+const SnapshotCreationFailedState: FC<SnapshotCreationFailedStateProps> = memo<SnapshotCreationFailedStateProps>(({
+  options,
+  isRetrying,
+  onTryAgain,
+}) => {
+  const handleTryAgainClick = (): void => onTryAgain(options)
+
+  return (
+    <EmptyState
+      variant={FAILED_EMPTY_STATE_VARIANT}
+      title={SNAPSHOT_CREATION_FAILED_TITLE}
+      lines={SNAPSHOT_CREATION_FAILED_LINES}
+      action={
+        <Button
+          variant="contained"
+          disabled={isRetrying}
+          onClick={handleTryAgainClick}
+          data-testid="RetrySnapshotCreationButton"
+        >
+          Try Again
+        </Button>
+      }
+      data-testid="SnapshotCreationFailedState"
+    />
+  )
+})
+
+SnapshotCreationFailedState.displayName = 'SnapshotCreationFailedState'
 
 type BaselineFieldIndicatorProps = {
   problem: VersionProblemDetails
@@ -314,39 +364,20 @@ const Form = styled('form')({
   minHeight: 0,
 })
 
-// The fields and the buttons keep their widths, and the search takes the rest of the row
+// As in the design: the button stands 16 px after the fields, and the search takes the rest of the row
 const Toolbar = styled(Box)(({ theme }) => ({
   display: 'grid',
   gridTemplateRows: 'max-content',
-  gridTemplateColumns: '200px 200px 280px 1fr',
+  gridTemplateColumns: '200px 200px max-content 1fr',
   gap: theme.spacing(2),
 }))
-
-const Actions = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  gap: theme.spacing(2),
-  alignSelf: 'center',
-  marginLeft: 'auto',
-}))
-
-const ResetButton = styled(Button)({
-  width: 90,
-})
 
 const CreateSnapshotButton = styled(Button)({
   width: 156,
+  alignSelf: 'center',
 })
 
 const Search = styled(Box)({
   alignSelf: 'center',
   marginLeft: 'auto',
 })
-
-function useCreateSnapshotStatus(isCreating: boolean): StepStatus {
-  const setStepStatus = useSetStepStatus()
-  const publishStatus = useCreateSnapshotStepStatus()
-  // The create request counts as the run, so the tab spins and the controls stay disabled from the click on
-  const status = isCreating ? RUNNING_STEP_STATUS : publishStatus
-  useEffect(() => setStepStatus(CREATE_SNAPSHOT_STEP_KEY, status), [setStepStatus, status])
-  return status
-}

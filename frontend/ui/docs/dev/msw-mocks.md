@@ -81,7 +81,9 @@ the Portal, and in the baseline versions of the Agent. A name gets the flags of 
 | `errors-deleted-reference` | In a dashboard version: the second top-level reference and the first child of the first top-level reference are deleted |
 | `errors-changes-summary` | In either version of a comparison: the comparison has errors, and the version flags stay as the backend sent them |
 | `errors-ref-comparison` | In a package version of a dashboard comparison: the comparison of that package has errors |
-| `errors-publish-failed` | In an Agent snapshot or promoted version: every publication of the run fails |
+| `errors-agent-publish-failed` | In an Agent snapshot or promoted version: every publication of the run fails |
+| `errors-agent-first-publish-failed` | In an Agent snapshot or promoted version: the publication of the first service of the run fails |
+| `errors-agent-create-failed` | In an Agent snapshot or promoted version: the first create request with that name fails with status 500, and the same request sent again reaches the backend |
 
 A version whose marker sets errors also gets one notification without a document, under **Empty** in the Document
 Notifications dialog; a current backend returns none there. The dialog opens only from a document with errors, so

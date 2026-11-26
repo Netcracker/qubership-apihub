@@ -20,19 +20,15 @@ import { useSteps } from './ServicesPageProvider/ServicesStepsProvider'
 export function useOpenableSteps(): ReadonlyArray<boolean> {
   const steps = useSteps()
   const discoveryView = useDiscoveryView()
-  // The snapshot details exist only once the snapshot is published
-  const isSnapshotComplete = steps.some(
-    step => step.key === CREATE_SNAPSHOT_STEP_KEY && step.status === COMPLETE_STEP_STATUS,
-  )
-  const hasPromotableServices = useHasPromotableServices(isSnapshotComplete)
+  const hasPromotableServices = useHasPromotableServices()
   const { createSnapshotFormData: { baseline } } = useCreateSnapshotFormData()
   const { problem: snapshotBaselineProblem } = useSnapshotBaseline(baseline)
 
   const isLeavableByStepKey: Record<StepKey, boolean> = {
     // Create Snapshot lists the discovered services, so a discovery that found none leaves it nothing
     [DISCOVER_SERVICES_STEP_KEY]: discoveryView === SERVICES_DISCOVERY_VIEW,
-    // Promote Version lists only the services of the snapshot that have a baseline package, and a baseline version
-    // with errors in the fields of Create Snapshot blocks it
+    // Promote Version lists only the published services that have a baseline package, and a baseline version with
+    // errors in the fields of Create Snapshot blocks it
     [CREATE_SNAPSHOT_STEP_KEY]: hasPromotableServices && !snapshotBaselineProblem.isBlocking,
     [PROMOTE_VERSION_STEP_KEY]: false,
   }

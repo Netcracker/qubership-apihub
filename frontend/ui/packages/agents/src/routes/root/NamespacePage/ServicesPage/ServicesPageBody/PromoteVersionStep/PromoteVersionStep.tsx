@@ -38,7 +38,7 @@ import { VERSION_PROBLEM_DIALOG_SURFACE } from '@netcracker/qubership-apihub-ui-
 import { isNotEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
 import type { ServiceKey } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import {
-  useCreateSnapshotPublicationOptions,
+  useLastSnapshotPublication,
   usePromoteVersionPublicationOptions,
 } from '../../ServicesPageProvider/ServicesPublicationOptionsProvider'
 import {
@@ -306,7 +306,7 @@ function useToolbarData(
   FieldErrors<FormData>,
   IsReleaseRefused,
 ] {
-  const { createSnapshotPublicationOptions: { baseline, name } } = useCreateSnapshotPublicationOptions()
+  const lastSnapshotPublication = useLastSnapshotPublication()
   const {
     promotePublicationOptions: {
       previousVersion,
@@ -319,11 +319,11 @@ function useToolbarData(
   } = usePromoteVersionPublicationOptions()
 
   const defaultValues: FormData = useMemo(() => ({
-    version: version || name,
-    previousVersion: previousVersion || baseline,
+    version: version || (lastSnapshotPublication?.name ?? ''),
+    previousVersion: previousVersion || (lastSnapshotPublication?.baseline ?? ''),
     status: status,
     serviceKeys: serviceKeys,
-  }), [baseline, name, previousVersion, serviceKeys, status, version])
+  }), [lastSnapshotPublication, previousVersion, serviceKeys, status, version])
 
   const { reset, handleSubmit, watch, control, formState: { errors } } = useForm<FormData>({ defaultValues })
 

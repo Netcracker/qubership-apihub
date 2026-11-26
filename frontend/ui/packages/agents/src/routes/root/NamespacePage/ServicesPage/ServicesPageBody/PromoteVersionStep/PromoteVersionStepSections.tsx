@@ -7,15 +7,19 @@ import type { Spec } from '@netcracker/qubership-apihub-ui-shared/entities/specs
 import type { VersionStatus } from '@netcracker/qubership-apihub-ui-shared/entities/version-status'
 import type { PublishDetails } from '@netcracker/qubership-apihub-ui-shared/utils/packages-builder'
 
+import type { VersionKey } from '@agents/entities/keys'
 import type { ServiceConfig } from '@agents/entities/publish-config'
 import { EMPTY_PUBLISH_DETAILS } from '@agents/entities/publish-details'
 import type { Service } from '@agents/entities/services'
 import { useSnapshotPublicationInfo } from '../../../useSnapshotPublicationInfo'
-import { usePromoteVersionPublicationOptions } from '../../ServicesPageProvider/ServicesPublicationOptionsProvider'
+import {
+  useLastSnapshotPublication,
+  usePromoteVersionPublicationOptions,
+} from '../../ServicesPageProvider/ServicesPublicationOptionsProvider'
 import { BaselinePackageTableCell } from '../BaselinePackageTableCell'
 import { BwcStatusTableCell } from '../BwcStatusTableCell'
 import { PublicationActionTableCell } from '../PublicationActionTableCell'
-import { PublishStatusTableCell } from '../PublishStatusTableCell'
+import { PublicationStatusIndicator } from '../PublicationStatusIndicator'
 import { ServiceLabelsTableCell } from '../ServiceLabelsTableCell'
 import { ServiceOrDocumentationTableCell } from '../ServiceOrDocumentationTableCell'
 import type { ServiceSectionModel } from '../ServiceSections/ServiceSection'
@@ -51,6 +55,7 @@ type PromotionServiceRow = Partial<{
   builderId: string
   snapshotHasErrors: boolean
   snapshotPackageKey: PackageKey
+  snapshotVersionKey: VersionKey
 }>
 
 const promotedVersionLink: ServiceTableLink<PromotionServiceRow> = ({
@@ -92,6 +97,7 @@ export const PromoteVersionStepSections: FC<PromoteVersionStepSectionsProps> = m
   } = useSnapshotPublicationInfo({ promote: true })
   const { promotePublicationOptions: { config } } = usePromoteVersionPublicationOptions()
   const [allPublishDetails] = useAllPublicationDetails({ config })
+  const lastSnapshotPublication = useLastSnapshotPublication()
 
   const columns = useMemo<ReadonlyArray<ServiceTableColumn<PromotionServiceRow>>>(() => [
     {
@@ -160,12 +166,14 @@ export const PromoteVersionStepSections: FC<PromoteVersionStepSectionsProps> = m
           builderId: config?.builderId,
           snapshotHasErrors: hasErrors,
           snapshotPackageKey: packageKey,
+          snapshotVersionKey: lastSnapshotPublication?.name,
         }]
       }), [
     allPublishDetails,
     config?.builderId,
     config?.serviceConfigs,
     filter,
+    lastSnapshotPublication,
     services,
     snapshotPublicationInfo.services,
   ])
@@ -216,7 +224,7 @@ const PromoteVersionDetailsTableCell: FC<PromoteVersionDetailsTableCellProps> = 
     return null
   }
 
-  return <PublishStatusTableCell publishDetails={publishDetails} />
+  return <PublicationStatusIndicator publishDetails={publishDetails} />
 })
 
 PromoteVersionDetailsTableCell.displayName = 'PromoteVersionDetailsTableCell'

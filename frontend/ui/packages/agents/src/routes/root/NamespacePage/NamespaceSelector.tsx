@@ -12,7 +12,11 @@ import { OptionItem } from '@netcracker/qubership-apihub-ui-shared/components/Op
 import { DefaultTextField } from '@netcracker/qubership-apihub-ui-shared/components/TextFields/DefaultTextField'
 import { useLocalIdpAuthToken } from './useLocalIdpAuthToken'
 
-export const NamespaceSelector: FC = memo(() => {
+type NamespaceSelectorProps = {
+  disabled: boolean
+}
+
+export const NamespaceSelector: FC<NamespaceSelectorProps> = memo<NamespaceSelectorProps>(({ disabled }) => {
   const { agentId, namespaceKey = '', namespaceMode } = useParams()
   const { navigateToNamespace } = useNavigation()
   const workspace = useSearchParam(WORKSPACE_SEARCH_PARAM)
@@ -31,7 +35,7 @@ export const NamespaceSelector: FC = memo(() => {
         <Autocomplete<Namespace, false, boolean>
           loading={isLoading}
           forcePopupIcon={true}
-          disabled={!agentId}
+          disabled={!agentId || disabled}
           value={selectedNamespace}
           options={namespaces}
           renderOption={(props, option) => (

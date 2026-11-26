@@ -12,7 +12,11 @@ import { OptionItem } from '@netcracker/qubership-apihub-ui-shared/components/Op
 import { DefaultTextField } from '@netcracker/qubership-apihub-ui-shared/components/TextFields/DefaultTextField'
 import { useLocalIdpAuthToken } from './useLocalIdpAuthToken'
 
-export const AgentsSelector: FC = memo(() => {
+type AgentsSelectorProps = {
+  disabled: boolean
+}
+
+export const AgentsSelector: FC<AgentsSelectorProps> = memo<AgentsSelectorProps>(({ disabled }) => {
   const { agentId = '' } = useParams()
   const { navigateToAgent } = useNavigation()
   const workspace = useSearchParam(WORKSPACE_SEARCH_PARAM)
@@ -40,6 +44,7 @@ export const AgentsSelector: FC = memo(() => {
     <Box width={240}>
       <Autocomplete<Agent, false, boolean>
         loading={isLoading}
+        disabled={disabled}
         value={selectedAgent}
         options={agents}
         forcePopupIcon={true}

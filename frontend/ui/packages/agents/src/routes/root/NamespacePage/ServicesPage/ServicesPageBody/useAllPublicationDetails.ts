@@ -1,9 +1,12 @@
 import { useQuery } from '@tanstack/react-query'
 import { useInvalidateSnapshotPublicationInfo } from '../../useSnapshotPublicationInfo'
-import { useCreateSnapshotPublicationOptions } from '../ServicesPageProvider/ServicesPublicationOptionsProvider'
+import {
+  type SnapshotPublication,
+  useLastSnapshotPublication,
+} from '../ServicesPageProvider/ServicesPublicationOptionsProvider'
 import { useInvalidateSnapshots, useSnapshots } from '../../useSnapshots'
 import { useMemo } from 'react'
-import { isEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
+import { isEmpty, isNotEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
 import {
   EMPTY_ALL_PUBLISH_DETAILS,
   getPublishDetails,
@@ -28,57 +31,78 @@ export function useAllPublicationDetails(options?: Partial<{
   config: PublishConfig
 }>): [PublishDetails[]] {
   const { config } = options ?? {}
+  const publishIds = useMemo(() => getPublishIds(config), [config])
 
-  return [useAllPublicationDetailsQuery(config)]
+  return [useAllPublicationDetailsQuery(publishIds)]
 }
 
 export function useAllPublishDetailsStatus(options?: Partial<{
   config: PublishConfig
 }>): PublishStatus {
   const { config } = options ?? {}
-  const { createSnapshotPublicationOptions } = useCreateSnapshotPublicationOptions()
+  const lastSnapshotPublication = useLastSnapshotPublication()
   const invalidateSnapshotPublishInfo = useInvalidateSnapshotPublicationInfo()
   const invalidateSnapshots = useInvalidateSnapshots()
+  const publishIds = useMemo(() => getPublishIds(config), [config])
 
   // Only the step status invalidates on completion. React Query calls onSuccess for each observer,
   // and the step tables observe the same poll.
-  const allPublishDetails = useAllPublicationDetailsQuery(config, () => {
-    invalidateSnapshotPublishInfo({ snapshotPublicationName: createSnapshotPublicationOptions.name })
-    invalidateSnapshots()
+  const allPublishDetails = useAllPublicationDetailsQuery(publishIds, data => {
+    if (getCombinedPublishStatus(data, publishIds) === COMPLETE_PUBLISH_STATUS) {
+      invalidateSnapshotPublishInfo({ snapshotPublicationName: lastSnapshotPublication?.name })
+      invalidateSnapshots()
+    }
   })
 
-  return publishStatusOf(allPublishDetails, getPublishIds(config))
+  return getCombinedPublishStatus(allPublishDetails, publishIds)
+}
+
+/**
+ * The publications of the snapshots created on Create Snapshot, polled together until each one is final. `onFinal`
+ * runs when the poll ends; React Query calls it for each observer that passes it.
+ */
+export function useSnapshotPublicationDetails(
+  snapshotPublications: ReadonlyArray<SnapshotPublication>,
+  onFinal?: (allPublishDetails: ReadonlyArray<PublishDetails>) => void,
+): ReadonlyArray<PublishDetails> {
+  const publishIds = useMemo(
+    () => snapshotPublications.flatMap(({ config }) => getPublishIds(config)),
+    [snapshotPublications],
+  )
+
+  return useAllPublicationDetailsQuery(publishIds, data => {
+    if (getCombinedPublishStatus(data, publishIds) !== RUNNING_PUBLISH_STATUS) {
+      onFinal?.(data)
+    }
+  })
 }
 
 function useAllPublicationDetailsQuery(
-  config: PublishConfig | undefined,
-  // Called when every publication of the config is complete
-  onComplete?: () => void,
+  publishIds: ReadonlyArray<PublishKey>,
+  onSuccess?: (allPublishDetails: ReadonlyArray<PublishDetails>) => void,
 ): PublishDetails[] {
   const [snapshots, isLoading] = useSnapshots()
-  const publishIds = useMemo(() => getPublishIds(config), [config])
 
   const { data } = useQuery<PublishDetailsDto[], Error, PublishDetails[]>({
-    queryKey: [ALL_PUBLISH_DETAILS_QUERY_KEY, config],
-    queryFn: () => getPublishDetails(snapshots.packageKey, publishIds),
+    queryKey: [ALL_PUBLISH_DETAILS_QUERY_KEY, snapshots.packageKey, publishIds],
+    queryFn: () => getPublishDetails(snapshots.packageKey, [...publishIds]),
     // The agents-backend registers the publications after it returns the config, so a response can miss
     // some of them, or be empty when the backend finds none. Polling continues until each one is final.
     refetchInterval: data => {
       const finalCount = data?.filter(({ status }) => FINAL_PUBLISH_STATUSES.includes(status)).length ?? 0
       return finalCount < publishIds.length ? STATUS_REFETCH_INTERVAL : false
     },
-    onSuccess: data => {
-      if (publishStatusOf(data, publishIds) === COMPLETE_PUBLISH_STATUS) {
-        onComplete?.()
-      }
-    },
-    enabled: !!config && !isLoading,
+    // The key grows with each run, so the statuses already polled stay on screen until the first answer for the
+    // longer list; a publish id that they lack still counts as running
+    keepPreviousData: true,
+    onSuccess: onSuccess,
+    enabled: isNotEmpty(publishIds) && !isLoading,
   })
 
   return data ?? EMPTY_ALL_PUBLISH_DETAILS
 }
 
-function getPublishIds(config: PublishConfig | undefined): PublishKey[] {
+export function getPublishIds(config: PublishConfig | undefined): PublishKey[] {
   if (!config) {
     return []
   }
@@ -94,7 +118,7 @@ function getPublishIds(config: PublishConfig | undefined): PublishKey[] {
  * completed, `error` when every one ended and one failed, and `running` otherwise. A publication that the response
  * lacks counts as `none`, so a started config is `running` before its first status arrives.
  */
-export function publishStatusOf(
+export function getCombinedPublishStatus(
   allPublishDetails: ReadonlyArray<PublishDetails>,
   publishIds: ReadonlyArray<PublishKey>,
 ): PublishStatus {

@@ -3,13 +3,14 @@ import type { FC } from 'react'
 import { DocumentErrorIndicator } from '@netcracker/qubership-apihub-ui-shared/components/ErrorIndicators/DocumentErrorIndicator'
 import type { PackageKey, SpecKey } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 
-import { useCreateSnapshotPublicationOptions } from '../ServicesPageProvider/ServicesPublicationOptionsProvider'
+import type { VersionKey } from '@agents/entities/keys'
 import { useDocumentErrorFileKeys } from './useDocumentErrorFileKeys'
 
 type SnapshotDocumentErrorIndicatorProps = {
   specKey: SpecKey
-  // The snapshot package of the service that the document belongs to
+  // The snapshot package and version of the service that the document belongs to
   snapshotPackageKey: PackageKey
+  snapshotVersionKey: VersionKey
 }
 
 /**
@@ -19,11 +20,11 @@ type SnapshotDocumentErrorIndicatorProps = {
 export const SnapshotDocumentErrorIndicator: FC<SnapshotDocumentErrorIndicatorProps> = ({
   specKey,
   snapshotPackageKey,
+  snapshotVersionKey,
 }) => {
-  const { createSnapshotPublicationOptions: { name } } = useCreateSnapshotPublicationOptions()
   const documentErrorFileKeys = useDocumentErrorFileKeys({
     packageKey: snapshotPackageKey,
-    versionKey: name,
+    versionKey: snapshotVersionKey,
   })
 
   return (

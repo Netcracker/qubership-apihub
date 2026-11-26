@@ -11,7 +11,9 @@ import {
   useState,
 } from 'react'
 
+import { useCreateSnapshotStepStatus } from '../ServicesPageBody/CreateSnapshotStep/useCreateSnapshotStepStatus'
 import {
+  CREATE_SNAPSHOT_STEP_KEY,
   INITIAL_STEPS_STATE,
   type Step,
   type StepKey,
@@ -44,7 +46,12 @@ const SetStepsStateContext = createContext<Dispatch<SetStateAction<StepsState>>>
 
 export function useSteps(): ReadonlyArray<Step> {
   const state = useContext(StepsStateContext)
-  return useMemo(() => toSteps(state), [state])
+  // The status of Create Snapshot comes from its queries, so the tabs show it whichever step is open
+  const createSnapshotStepStatus = useCreateSnapshotStepStatus()
+  return useMemo(
+    () => toSteps(withStepStatus(state, CREATE_SNAPSHOT_STEP_KEY, createSnapshotStepStatus)),
+    [createSnapshotStepStatus, state],
+  )
 }
 
 export function useActiveStep(): Step {
