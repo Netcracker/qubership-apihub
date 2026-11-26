@@ -423,7 +423,7 @@ var searchClassesSchema = json.RawMessage(`{
 	"required": ["textFilter"]
 }`)
 
-const toolDescriptionListChanges = `Lists the class- and method-level API changes of a library version against a previous version, with a summary of counts by severity (breaking, non-breaking, annotation).
+const toolDescriptionListChanges = `Lists the class- and method-level API changes of a library version against a previous version, with a summary of counts by severity (breaking, non-breaking, annotation). Each change carries the kind of its class (class, interface, enum, annotation) and, for a member change, the member signature.
 
 By default the version is compared with its own previous version. A comparison exists only after the import build has finished; until then the tool reports that no comparison is computed yet.`
 

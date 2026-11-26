@@ -50,9 +50,10 @@ public final class ImpactAnalyzer {
                 continue;
             }
             usedBy.sort(Comparator.comparing(UsageRef::module));
-            ApiChange impacted = new ApiChange(change.className(), change.elementType(), change.member(),
-                    change.status(), change.changeTypes(), change.details(), change.binaryCompatible(),
-                    change.sourceCompatible(), change.breaking(), change.semver(), usedBy);
+            ApiChange impacted = new ApiChange(change.className(), change.elementType(), change.classKind(),
+                    change.member(), change.status(), change.changeTypes(), change.details(),
+                    change.binaryCompatible(), change.sourceCompatible(), change.breaking(), change.semver(),
+                    usedBy);
             LOG.trace("Impacted change: {}", impacted);
             result.add(impacted);
         }

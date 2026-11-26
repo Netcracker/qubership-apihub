@@ -149,11 +149,11 @@ func main() {
 	buildService := service.NewBuildService(buildRepository, libraryRepository, libraryVersionRepository,
 		reportIngestService, systemInfoService)
 	authorizationService := service.NewAuthorizationService(apihubClient, memberRepository)
-	libraryService := service.NewLibraryService(libraryRepository, memberRepository, registryService)
 	registryClient, err := client.NewRegistryClient()
 	if err != nil {
 		log.Fatalf("Failed to create the registry client: %v", err)
 	}
+	libraryService := service.NewLibraryService(libraryRepository, memberRepository, registryService, registryClient)
 	libraryVersionService := service.NewLibraryVersionService(libraryVersionRepository, buildService, registryService, registryClient)
 	changesService := service.NewChangesService(comparisonRepository, libraryVersionRepository)
 	memberService := service.NewMemberService(memberRepository, authorizationService, apihubClient)

@@ -16,9 +16,9 @@ class ImpactAnalyzerTest {
 
     @Test
     void impactedChangeAggregatesUsageAcrossModulesIncludingInnerClasses() {
-        ApiChange changed = new ApiChange("com.dep.Api", "METHOD", "void doStuff()", "REMOVED",
+        ApiChange changed = new ApiChange("com.dep.Api", "METHOD", "CLASS", "void doStuff()", "REMOVED",
                 List.of("METHOD_REMOVED"), null, false, false, true, "MAJOR", null);
-        ApiChange unused = new ApiChange("com.dep.Unused", "METHOD", "void other()", "REMOVED",
+        ApiChange unused = new ApiChange("com.dep.Unused", "METHOD", "CLASS", "void other()", "REMOVED",
                 List.of("METHOD_REMOVED"), null, false, false, true, "MAJOR", null);
 
         Set<ClassUsage> m1Usages = Set.of(
@@ -45,7 +45,7 @@ class ImpactAnalyzerTest {
 
     @Test
     void unusedChangeIsFilteredOut() {
-        ApiChange unused = new ApiChange("com.dep.Unused", "METHOD", "void other()", "REMOVED",
+        ApiChange unused = new ApiChange("com.dep.Unused", "METHOD", "CLASS", "void other()", "REMOVED",
                 List.of("METHOD_REMOVED"), null, false, false, true, "MAJOR", null);
         Map<String, Set<ClassUsage>> usageByModule = Map.of("org.example:m1",
                 Set.of(new ClassUsage("com.m1.Owner", "com.dep.Api", OLD_JAR)));
@@ -57,7 +57,7 @@ class ImpactAnalyzerTest {
 
     @Test
     void providerJarMismatchIsFilteredOut() {
-        ApiChange changed = new ApiChange("com.dep.Api", "METHOD", "void doStuff()", "REMOVED",
+        ApiChange changed = new ApiChange("com.dep.Api", "METHOD", "CLASS", "void doStuff()", "REMOVED",
                 List.of("METHOD_REMOVED"), null, false, false, true, "MAJOR", null);
         Map<String, Set<ClassUsage>> usageByModule = Map.of("org.example:m1",
                 Set.of(new ClassUsage("com.m1.Owner", "com.dep.Api", "different-1.0.0.jar")));

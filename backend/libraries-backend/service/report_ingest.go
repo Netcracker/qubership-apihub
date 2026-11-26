@@ -183,6 +183,7 @@ func makeChangeEntity(comparisonId string, change view.ApiChange) (*entity.Libra
 		ComparisonId: comparisonId,
 		ChangeId:     changeId,
 		ClassId:      change.ClassName,
+		Kind:         string(change.Kind()),
 		MethodId:     methodId,
 		ChangeType:   string(changeType),
 		Severity:     string(severityOf(change)),
@@ -311,7 +312,7 @@ func (b *inventoryBuilder) build() (repository.LibraryContent, error) {
 
 		classBody, err := json.Marshal(map[string]interface{}{
 			"qualifiedName": className,
-			"kind":          class.entry.ClassKind(),
+			"kind":          class.entry.Kind(),
 			"elementType":   class.entry.ElementType,
 			"details":       class.entry.Details,
 			"changeTypes":   class.entry.ChangeTypes,
@@ -342,7 +343,7 @@ func (b *inventoryBuilder) build() (repository.LibraryContent, error) {
 			Version:          b.version,
 			ClassId:          className,
 			DataHash:         classDataHash,
-			Kind:             string(class.entry.ClassKind()),
+			Kind:             string(class.entry.Kind()),
 			QualifiedName:    className,
 			PackageName:      packageNameOf(className),
 			Deprecated:       class.entry.Deprecated(),

@@ -24,9 +24,9 @@ class ApiReportPipelineTest {
         FakeArtifactResolver resolver = new FakeArtifactResolver().withJar(gav, jar);
 
         List<ApiChange> changes = List.of(
-                new ApiChange("com.example.Widget", "CLASS", null, "UNCHANGED",
+                new ApiChange("com.example.Widget", "CLASS", "CLASS", null, "UNCHANGED",
                         List.of(), null, true, true, false, "NONE", null),
-                new ApiChange("com.example.Widget", "METHOD", "void doStuff()", "UNCHANGED",
+                new ApiChange("com.example.Widget", "METHOD", "CLASS", "void doStuff()", "UNCHANGED",
                         List.of(), null, true, true, false, "NONE", null));
         FakeJarComparator comparator = new FakeJarComparator(new JapicmpResult("1.0.0", "1.0.0", null, changes));
 

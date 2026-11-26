@@ -173,6 +173,7 @@ CREATE TABLE IF NOT EXISTS public.library_version_changes
     comparison_id varchar NOT NULL,
     change_id varchar NOT NULL,
     class_id varchar NOT NULL,
+    kind varchar NOT NULL, -- 'class' | 'interface' | 'enum' | 'annotation'
     method_id varchar, -- null for a class-level change
     change_type varchar NOT NULL, -- 'added' | 'removed' | 'changed' | 'deprecated'
     severity varchar NOT NULL, -- 'breaking' | 'non-breaking' | 'annotation'

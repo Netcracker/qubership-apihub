@@ -8,6 +8,9 @@ import java.util.List;
  * @param className         fully-qualified class name the change belongs to
  * @param elementType       one of {@code CLASS|INTERFACE|ENUM|ANNOTATION|METHOD|CONSTRUCTOR|FIELD}
  *                          (plain string, not an enum — the japicmp vocabulary may grow)
+ * @param classKind         kind of the class the change belongs to, one of
+ *                          {@code CLASS|INTERFACE|ENUM|ANNOTATION}; set on member entries as well as on
+ *                          class-level ones, and {@code null} when the report does not define it
  * @param member            member signature, {@code null} for class-level entries
  * @param status            one of {@code NEW|REMOVED|MODIFIED|UNCHANGED}
  * @param changeTypes       japicmp compatibility-change codes, e.g. {@code METHOD_REMOVED}
@@ -19,7 +22,7 @@ import java.util.List;
  * @param semver            one of {@code MAJOR|MINOR|PATCH|NONE}
  * @param usedBy            consumers of the changed element; {@code null}/empty except in upgrade-impact mode
  */
-public record ApiChange(String className, String elementType, String member, String status,
+public record ApiChange(String className, String elementType, String classKind, String member, String status,
                          List<String> changeTypes, String details, Boolean binaryCompatible, Boolean sourceCompatible,
                          boolean breaking, String semver, List<UsageRef> usedBy) {
 }

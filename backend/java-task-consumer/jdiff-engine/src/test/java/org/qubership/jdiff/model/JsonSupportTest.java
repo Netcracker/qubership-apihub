@@ -15,11 +15,11 @@ class JsonSupportTest {
     @Test
     void serializesAndDeserializesDiffReport() throws Exception {
         ApiChange breaking = new ApiChange(
-                "org.example.Foo", "METHOD", "bar()", "REMOVED",
+                "org.example.Foo", "METHOD", "CLASS", "bar()", "REMOVED",
                 List.of("METHOD_REMOVED"), null, false, false, true, "MAJOR",
                 List.of(new UsageRef("org.example:consumer", List.of("org.example.Consumer"))));
         ApiChange nonBreaking = new ApiChange(
-                "org.example.Baz", "CLASS", null, "UNCHANGED",
+                "org.example.Baz", "CLASS", "CLASS", null, "UNCHANGED",
                 List.of(), null, null, null, false, "NONE", null);
         ArtifactReport artifactReport = new ArtifactReport(
                 "org.example", "foo", "1.0.0", "2.0.0", "MAJOR", List.of(breaking, nonBreaking));
@@ -29,7 +29,9 @@ class JsonSupportTest {
         String json = JsonSupport.toJson(report);
 
         assertThat(json).contains("\"mode\" : \"api-diff\"");
+        assertThat(json).contains("\"classKind\" : \"CLASS\"");
         assertThat(json).doesNotContain("\"member\" : null");
+        assertThat(json).doesNotContain("\"classKind\" : null");
         assertThat(json).doesNotContain("\"usedBy\" : null");
         assertThat(json).doesNotContain("\"details\" : null");
         assertThat(json).doesNotContain("\"binaryCompatible\" : null");

@@ -49,9 +49,9 @@ class UpgradeImpactPipelineTest {
         FakeProjectScanner scanner = new FakeProjectScanner(pomBuilder, List.of(module));
 
         List<ApiChange> changes = List.of(
-                new ApiChange("com.dep.Api", "METHOD", "void doStuff()", "REMOVED",
+                new ApiChange("com.dep.Api", "METHOD", "CLASS", "void doStuff()", "REMOVED",
                         List.of("METHOD_REMOVED"), null, false, false, true, "MAJOR", null),
-                new ApiChange("com.dep.Unrelated", "METHOD", "void doOther()", "REMOVED",
+                new ApiChange("com.dep.Unrelated", "METHOD", "CLASS", "void doOther()", "REMOVED",
                         List.of("METHOD_REMOVED"), null, false, false, true, "MAJOR", null));
         FakeJarComparator comparator = new FakeJarComparator(new JapicmpResult("1.0.0", "2.0.0", "MAJOR", changes));
 
@@ -107,7 +107,7 @@ class UpgradeImpactPipelineTest {
         EffectivePomBuilder pomBuilder = new FakeEffectivePomBuilder(resolver);
         FakeProjectScanner scanner = new FakeProjectScanner(pomBuilder, List.of(module));
 
-        List<ApiChange> changes = List.of(new ApiChange("com.dep.Api", "METHOD", "void doStuff()", "REMOVED",
+        List<ApiChange> changes = List.of(new ApiChange("com.dep.Api", "METHOD", "CLASS", "void doStuff()", "REMOVED",
                 List.of("METHOD_REMOVED"), null, false, false, true, "MAJOR", null));
         FakeJarComparator comparator = new FakeJarComparator(new JapicmpResult("1.0.0", "2.0.0", "MAJOR", changes));
         FakeJdepsRunner jdeps = new FakeJdepsRunner(Set.of(
@@ -172,7 +172,7 @@ class UpgradeImpactPipelineTest {
         EffectivePomBuilder pomBuilder = new FakeEffectivePomBuilder(resolver);
         FakeProjectScanner scanner = new FakeProjectScanner(pomBuilder, List.of(module));
 
-        List<ApiChange> changes = List.of(new ApiChange("com.dep.Api", "METHOD", "void doStuff()", "REMOVED",
+        List<ApiChange> changes = List.of(new ApiChange("com.dep.Api", "METHOD", "CLASS", "void doStuff()", "REMOVED",
                 List.of("METHOD_REMOVED"), null, false, false, true, "MAJOR", null));
         FakeJarComparator comparator = new FakeJarComparator(new JapicmpResult("1.0.0", "2.0.0", "MAJOR", changes));
         FakeJdepsRunner jdeps = new FakeJdepsRunner(Set.of());
@@ -202,7 +202,7 @@ class UpgradeImpactPipelineTest {
         EffectivePomBuilder pomBuilder = new FakeEffectivePomBuilder(resolver);
         FakeProjectScanner scanner = new FakeProjectScanner(pomBuilder, List.of());
 
-        List<ApiChange> changes = List.of(new ApiChange("com.dep.Api", "METHOD", "void doStuff()", "REMOVED",
+        List<ApiChange> changes = List.of(new ApiChange("com.dep.Api", "METHOD", "CLASS", "void doStuff()", "REMOVED",
                 List.of("METHOD_REMOVED"), null, false, false, true, "MAJOR", null));
         FakeJarComparator comparator = new FakeJarComparator(new JapicmpResult("1.0.0", "2.0.0", "MAJOR", changes));
         FakeJdepsRunner jdeps = new FakeJdepsRunner(Set.of(
@@ -244,7 +244,7 @@ class UpgradeImpactPipelineTest {
         EffectivePomBuilder pomBuilder = new EffectivePomBuilder(resolver);
         FakeProjectScanner scanner = new FakeProjectScanner(pomBuilder, List.of());
 
-        List<ApiChange> changes = List.of(new ApiChange("org.example.LibA", "METHOD", "void doStuff()",
+        List<ApiChange> changes = List.of(new ApiChange("org.example.LibA", "METHOD", "CLASS", "void doStuff()",
                 "REMOVED", List.of("METHOD_REMOVED"), null, false, false, true, "MAJOR", null));
         FakeJarComparator comparator = new FakeJarComparator(new JapicmpResult("2.5", "2.6", "MAJOR", changes));
         FakeJdepsRunner jdeps = new FakeJdepsRunner(Set.of(
@@ -290,7 +290,7 @@ class UpgradeImpactPipelineTest {
         MavenModule module = new MavenModule(childGav, fixturesDir.resolve("lineage-child-1.0.pom"), "jar", null);
         FakeProjectScanner scanner = new FakeProjectScanner(pomBuilder, List.of(module));
 
-        List<ApiChange> changes = List.of(new ApiChange("org.example.ManagedLib", "METHOD", "void doStuff()",
+        List<ApiChange> changes = List.of(new ApiChange("org.example.ManagedLib", "METHOD", "CLASS", "void doStuff()",
                 "REMOVED", List.of("METHOD_REMOVED"), null, false, false, true, "MAJOR", null));
         FakeJarComparator comparator = new FakeJarComparator(new JapicmpResult("1.0.0", "2.0.0", "MAJOR", changes));
 

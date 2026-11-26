@@ -29,6 +29,24 @@ func TestCoordinatesKey(t *testing.T) {
 			wantErr:     true,
 		},
 		{
+			name:        "maven groupId with a colon",
+			language:    LanguageJava,
+			coordinates: LibraryCoordinates{GroupId: "org:example", ArtifactId: "lib"},
+			wantErr:     true,
+		},
+		{
+			name:        "maven artifactId with a space",
+			language:    LanguageJava,
+			coordinates: LibraryCoordinates{GroupId: "org.example", ArtifactId: "my lib"},
+			wantErr:     true,
+		},
+		{
+			name:        "maven groupId with an empty segment",
+			language:    LanguageJava,
+			coordinates: LibraryCoordinates{GroupId: "org..example", ArtifactId: "lib"},
+			wantErr:     true,
+		},
+		{
 			name:        "go module path",
 			language:    LanguageGo,
 			coordinates: LibraryCoordinates{ModulePath: "github.com/spf13/cobra"},

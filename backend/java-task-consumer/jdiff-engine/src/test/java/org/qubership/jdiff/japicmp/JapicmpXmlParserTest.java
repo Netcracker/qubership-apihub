@@ -136,9 +136,43 @@ class JapicmpXmlParserTest {
             assertThat(change.className()).isEqualTo("com.example.NewClass");
             assertThat(change.member()).isNull();
             assertThat(change.elementType()).isEqualTo("CLASS");
+            assertThat(change.classKind()).isEqualTo("CLASS");
             assertThat(change.status()).isEqualTo("NEW");
             assertThat(change.breaking()).isFalse();
             assertThat(change.semver()).isEqualTo("MINOR");
+        });
+    }
+
+    // A member entry names the kind of the member in elementType, so the kind of its class is only in
+    // classKind. A caller cannot tell an interface method from a class method without it.
+    @Test
+    void miniFixtureMemberEntryCarriesTheKindOfItsClass() {
+        JapicmpResult result = JapicmpXmlParser.parse(miniFixture(), false);
+
+        assertThat(result.changes()).anySatisfy(change -> {
+            assertThat(change.className()).isEqualTo("com.example.ChangedInterface");
+            assertThat(change.elementType()).isEqualTo("METHOD");
+            assertThat(change.member()).isEqualTo("void run()");
+            assertThat(change.classKind()).isEqualTo("INTERFACE");
+        });
+        assertThat(result.changes()).anySatisfy(change -> {
+            assertThat(change.className()).isEqualTo("com.example.ChangedClass");
+            assertThat(change.elementType()).isEqualTo("METHOD");
+            assertThat(change.member()).isEqualTo("void removedMethod(java.lang.String)");
+            assertThat(change.classKind()).isEqualTo("CLASS");
+        });
+    }
+
+    @Test
+    void miniFixtureRemovedInterfaceKeepsItsKind() {
+        JapicmpResult result = JapicmpXmlParser.parse(miniFixture(), false);
+
+        assertThat(result.changes()).anySatisfy(change -> {
+            assertThat(change.className()).isEqualTo("com.example.RemovedInterface");
+            assertThat(change.member()).isNull();
+            assertThat(change.elementType()).isEqualTo("INTERFACE");
+            assertThat(change.classKind()).isEqualTo("INTERFACE");
+            assertThat(change.status()).isEqualTo("REMOVED");
         });
     }
 

@@ -191,6 +191,10 @@ CREATE TABLE IF NOT EXISTS library_method (
 one of its methods. `severity` reuses the breaking / non-breaking / annotation vocabulary `api-diff` already uses
 elsewhere in this repository, so the UI and tooling stay consistent.
 
+A change stores the kind of its class as well as its id, because the diff entry of a member names the kind of
+the member (`METHOD`, `FIELD`) in its element type, not that of the class. The kind comes from the `classKind`
+field of the report, which jdiff fills on every entry, so a stored comparison is self-contained.
+
 ```sql
 CREATE TABLE IF NOT EXISTS library_version_comparison (
     library_id          character varying NOT NULL,
@@ -212,6 +216,7 @@ CREATE TABLE IF NOT EXISTS library_version_changes (
     comparison_id character varying NOT NULL,
     change_id     character varying NOT NULL,
     class_id      character varying NOT NULL,
+    kind          character varying NOT NULL, -- 'class' | 'interface' | 'enum' | 'annotation'
     method_id     character varying, -- null for a class-level change
     change_type   character varying NOT NULL, -- 'added' | 'removed' | 'changed' | 'deprecated'
     severity      character varying NOT NULL, -- 'breaking' | 'non-breaking' | 'annotation'

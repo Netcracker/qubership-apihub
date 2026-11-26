@@ -678,7 +678,9 @@ paths:
       tags:
         - Changes
       summary: Get version changes
-      description: Paginated list of individual class/method-level changes for a version comparison.
+      description: |
+        Paginated list of individual class/method-level changes for a version comparison. Each change names the
+        class it belongs to and that class's kind (`class`, `interface`, `enum`, or `annotation`).
       operationId: getLibraryVersionChanges
       parameters:
         - $ref: "#/components/parameters/previousLibraryId"
@@ -1337,6 +1339,10 @@ components:
       description: |
         Shape depends on the sibling `language` field of the enclosing `Library`/`LibraryCreate` object: `maven`
         for `java`, `modulePath` for `go`, `packageName`/`scope` for `js`.
+
+        On creation, Maven coordinates must use only letters, digits, `_`, `-` and `.`, and the artifact must exist
+        in the repository's registry. Otherwise the request fails with `400` (`3002` for malformed coordinates,
+        `3103` for an artifact the registry does not know).
       oneOf:
         - $ref: "#/components/schemas/MavenCoordinates"
         - $ref: "#/components/schemas/GoModuleCoordinates"
@@ -1506,6 +1512,7 @@ components:
       required:
         - changeId
         - classId
+        - kind
         - changeType
         - severity
       properties:
@@ -1513,6 +1520,8 @@ components:
           type: string
         classId:
           type: string
+        kind:
+          $ref: "#/components/schemas/ClassKindEnum"
         methodId:
           description: Omitted for a class-level change.
           type: string

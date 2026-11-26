@@ -36,6 +36,10 @@ type ArtifactReport struct {
 type ApiChange struct {
 	ClassName   string `json:"className"`
 	ElementType string `json:"elementType,omitempty"`
+	// ClassKind is japicmp's class type of the class this entry belongs to: CLASS, INTERFACE, ENUM, or
+	// ANNOTATION. Unlike elementType, it stays the same on a member entry, which is what tells an interface
+	// method from a class method.
+	ClassKind string `json:"classKind,omitempty"`
 	// Member is the display signature of a method, constructor, or field; empty for a class-level entry.
 	Member           string     `json:"member,omitempty"`
 	Status           string     `json:"status,omitempty"`
@@ -89,10 +93,19 @@ func (c ApiChange) IsClassElement() bool {
 	return true
 }
 
-// ClassKind maps jdiff's class-level element type onto the kind stored for a class. An entry with no
-// element type is recorded as a plain class.
-func (c ApiChange) ClassKind() ClassKind {
-	switch c.ElementType {
+// Kind maps the class type of the entry onto the kind stored for its class. A report from a worker that
+// predates the classKind field falls back to the element type of a class-level entry.
+func (c ApiChange) Kind() ClassKind {
+	if c.ClassKind != "" {
+		return classKindOf(c.ClassKind)
+	}
+	return classKindOf(c.ElementType)
+}
+
+// classKindOf maps japicmp's class type onto a class kind. An element type that is not a class type (a
+// method, a constructor, a field) says nothing about the kind of its class, so it maps to a plain class.
+func classKindOf(classType string) ClassKind {
+	switch classType {
 	case ElementTypeInterface:
 		return ClassKindInterface
 	case ElementTypeEnum:

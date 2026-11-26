@@ -240,6 +240,38 @@ func TestMakeChangeEntityScopesMembers(t *testing.T) {
 	}
 }
 
+// The stored kind is the kind of the class from the report, not the element type of the changing member.
+func TestMakeChangeEntityStoresTheClassKind(t *testing.T) {
+	method := view.ApiChange{
+		ClassName:   "com.example.Repository",
+		ElementType: view.ElementTypeMethod,
+		ClassKind:   view.ElementTypeInterface,
+		Member:      "void save(java.lang.Object)",
+		Status:      view.ChangeStatusRemoved,
+	}
+	change, err := makeChangeEntity("cmp-1", method)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if change.Kind != string(view.ClassKindInterface) {
+		t.Errorf("method change of an interface has kind %q, want %q", change.Kind, view.ClassKindInterface)
+	}
+
+	// A class-level entry of a report that predates classKind still yields its own kind.
+	removedEnum := view.ApiChange{
+		ClassName:   "com.example.Mode",
+		ElementType: view.ElementTypeEnum,
+		Status:      view.ChangeStatusRemoved,
+	}
+	change, err = makeChangeEntity("cmp-1", removedEnum)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if change.Kind != string(view.ClassKindEnum) {
+		t.Errorf("removed enum has kind %q, want %q", change.Kind, view.ClassKindEnum)
+	}
+}
+
 // Re-running the same diff must produce the same change ids, so a stored comparison can be replaced without
 // every change looking new.
 func TestMakeChangeEntityIdIsStable(t *testing.T) {

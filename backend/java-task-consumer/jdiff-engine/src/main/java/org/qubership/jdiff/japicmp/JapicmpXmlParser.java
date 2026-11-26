@@ -58,13 +58,13 @@ public final class JapicmpXmlParser {
         String status = attr(classEl, "changeStatus");
         Boolean binaryCompatible = parseBool(attr(classEl, "binaryCompatible"));
         Boolean sourceCompatible = parseBool(attr(classEl, "sourceCompatible"));
-        String elementType = classElementType(classEl);
+        String classKind = classElementType(classEl);
         List<String> changeTypes = readCompatibilityChanges(classEl);
 
         if (shouldEmit(status, changeTypes, includeUnchanged)) {
             String details = JapicmpDetailsExtractor.extractClassDetails(classEl);
-            changes.add(buildChange(className, elementType, null, status, changeTypes, details, binaryCompatible,
-                    sourceCompatible));
+            changes.add(buildChange(className, classKind, classKind, null, status, changeTypes, details,
+                    binaryCompatible, sourceCompatible));
         }
 
         for (Node child = classEl.getFirstChild(); child != null; child = child.getNextSibling()) {
@@ -72,10 +72,12 @@ public final class JapicmpXmlParser {
                 continue;
             }
             switch (childEl.getTagName()) {
-                case "constructors" ->
-                        processMembers(childEl, "constructor", className, "CONSTRUCTOR", includeUnchanged, changes);
-                case "fields" -> processMembers(childEl, "field", className, "FIELD", includeUnchanged, changes);
-                case "methods" -> processMembers(childEl, "method", className, "METHOD", includeUnchanged, changes);
+                case "constructors" -> processMembers(childEl, "constructor", className, classKind, "CONSTRUCTOR",
+                        includeUnchanged, changes);
+                case "fields" -> processMembers(childEl, "field", className, classKind, "FIELD", includeUnchanged,
+                        changes);
+                case "methods" -> processMembers(childEl, "method", className, classKind, "METHOD", includeUnchanged,
+                        changes);
                 default -> {
                     // other class children (annotations, attributes, classType, ...) are not member containers
                 }
@@ -83,8 +85,8 @@ public final class JapicmpXmlParser {
         }
     }
 
-    private static void processMembers(Element containerEl, String tag, String className, String elementType,
-            boolean includeUnchanged, List<ApiChange> changes) {
+    private static void processMembers(Element containerEl, String tag, String className, String classKind,
+            String elementType, boolean includeUnchanged, List<ApiChange> changes) {
         for (Element memberEl : childElements(containerEl, tag)) {
             String status = attr(memberEl, "changeStatus");
             List<String> changeTypes = readCompatibilityChanges(memberEl);
@@ -95,8 +97,8 @@ public final class JapicmpXmlParser {
             Boolean sourceCompatible = parseBool(attr(memberEl, "sourceCompatible"));
             String member = buildMemberSignature(memberEl, tag);
             String details = JapicmpDetailsExtractor.extractMemberDetails(memberEl, tag);
-            changes.add(buildChange(className, elementType, member, status, changeTypes, details, binaryCompatible,
-                    sourceCompatible));
+            changes.add(buildChange(className, elementType, classKind, member, status, changeTypes, details,
+                    binaryCompatible, sourceCompatible));
         }
     }
 
@@ -104,8 +106,9 @@ public final class JapicmpXmlParser {
         return !"UNCHANGED".equals(status) || !changeTypes.isEmpty() || includeUnchanged;
     }
 
-    private static ApiChange buildChange(String className, String elementType, String member, String status,
-            List<String> changeTypes, String details, Boolean binaryCompatible, Boolean sourceCompatible) {
+    private static ApiChange buildChange(String className, String elementType, String classKind, String member,
+            String status, List<String> changeTypes, String details, Boolean binaryCompatible,
+            Boolean sourceCompatible) {
         boolean breaking = !(Boolean.TRUE.equals(binaryCompatible) && Boolean.TRUE.equals(sourceCompatible));
         String semver;
         if (breaking) {
@@ -117,8 +120,8 @@ public final class JapicmpXmlParser {
         } else {
             semver = "PATCH";
         }
-        return new ApiChange(className, elementType, member, status, changeTypes, details, binaryCompatible,
-                sourceCompatible, breaking, semver, null);
+        return new ApiChange(className, elementType, classKind, member, status, changeTypes, details,
+                binaryCompatible, sourceCompatible, breaking, semver, null);
     }
 
     private static String classElementType(Element classEl) {

@@ -2,6 +2,7 @@ package view
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -46,6 +47,9 @@ func (c LibraryCoordinates) CoordinatesKey(language Language) (string, error) {
 		if c.GroupId == "" || c.ArtifactId == "" {
 			return "", fmt.Errorf("java coordinates require groupId and artifactId")
 		}
+		if err := c.validateMaven(); err != nil {
+			return "", err
+		}
 		key := c.GroupId + ":" + c.ArtifactId
 		if c.Classifier != "" {
 			key += ":" + c.Classifier
@@ -66,6 +70,31 @@ func (c LibraryCoordinates) CoordinatesKey(language Language) (string, error) {
 		return c.PackageName, nil
 	}
 	return "", fmt.Errorf("unknown language '%s'", language)
+}
+
+// mavenPartPattern is the character set Maven allows in a groupId, artifactId, or classifier. It also
+// rules out ':' and '/', which would corrupt the coordinates key and the metadata URL.
+var mavenPartPattern = regexp.MustCompile(`^[A-Za-z0-9_\-.]+$`)
+
+func (c LibraryCoordinates) validateMaven() error {
+	parts := []struct{ name, value string }{
+		{"groupId", c.GroupId},
+		{"artifactId", c.ArtifactId},
+	}
+	if c.Classifier != "" {
+		parts = append(parts, struct{ name, value string }{"classifier", c.Classifier})
+	}
+	for _, part := range parts {
+		if !mavenPartPattern.MatchString(part.value) {
+			return fmt.Errorf("%s '%s' may contain only letters, digits, '_', '-' and '.'", part.name, part.value)
+		}
+	}
+	for _, segment := range strings.Split(c.GroupId, ".") {
+		if segment == "" {
+			return fmt.Errorf("groupId '%s' must not contain empty segments", c.GroupId)
+		}
+	}
+	return nil
 }
 
 // Gav renders the Maven coordinates of a version as the `groupId:artifactId:version` string the Java

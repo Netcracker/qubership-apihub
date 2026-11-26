@@ -28,11 +28,11 @@ class ApiDiffPipelineTest {
         FakeArtifactResolver resolver = new FakeArtifactResolver().withJar(oldGav, oldJar).withJar(newGav, newJar);
 
         List<ApiChange> changes = List.of(
-                new ApiChange("com.example.Widget", "METHOD", "void doStuff()", "REMOVED",
+                new ApiChange("com.example.Widget", "METHOD", "CLASS", "void doStuff()", "REMOVED",
                         List.of("METHOD_REMOVED"), null, false, false, true, "MAJOR", null),
-                new ApiChange("com.example.Widget", "METHOD", "void doOther()", "NEW",
+                new ApiChange("com.example.Widget", "METHOD", "CLASS", "void doOther()", "NEW",
                         List.of(), null, true, true, false, "MINOR", null),
-                new ApiChange("com.example.Widget", "FIELD", "int count", "MODIFIED",
+                new ApiChange("com.example.Widget", "FIELD", "CLASS", "int count", "MODIFIED",
                         List.of("FIELD_TYPE_CHANGED"), null, true, true, false, "PATCH", null));
         FakeJarComparator comparator = new FakeJarComparator(new JapicmpResult("1.0.0", "2.0.0", "MAJOR", changes));
 

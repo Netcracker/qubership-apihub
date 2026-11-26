@@ -24,14 +24,17 @@ type LibraryVersionComparisonEntity struct {
 type LibraryVersionChangeEntity struct {
 	tableName struct{} `pg:"library_version_changes,alias:library_version_changes"`
 
-	ComparisonId string                 `pg:"comparison_id,pk,type:varchar"`
-	ChangeId     string                 `pg:"change_id,pk,type:varchar"`
-	ClassId      string                 `pg:"class_id,type:varchar,notnull"`
-	MethodId     string                 `pg:"method_id,type:varchar"`
-	ChangeType   string                 `pg:"change_type,type:varchar,notnull"`
-	Severity     string                 `pg:"severity,type:varchar,notnull"`
-	Description  string                 `pg:"description,type:text"`
-	Details      map[string]interface{} `pg:"details,type:jsonb"`
+	ComparisonId string `pg:"comparison_id,pk,type:varchar"`
+	ChangeId     string `pg:"change_id,pk,type:varchar"`
+	ClassId      string `pg:"class_id,type:varchar,notnull"`
+	// Kind is the kind of the class the change belongs to, taken from the diff report when the change is
+	// ingested: a member entry names the kind of its member in its element type, not that of its class.
+	Kind        string                 `pg:"kind,type:varchar,notnull"`
+	MethodId    string                 `pg:"method_id,type:varchar"`
+	ChangeType  string                 `pg:"change_type,type:varchar,notnull"`
+	Severity    string                 `pg:"severity,type:varchar,notnull"`
+	Description string                 `pg:"description,type:text"`
+	Details     map[string]interface{} `pg:"details,type:jsonb"`
 }
 
 func MakeChangeSummaryView(ent LibraryVersionComparisonEntity) view.ChangeSummary {
@@ -53,6 +56,7 @@ func MakeChangeView(ent LibraryVersionChangeEntity) view.Change {
 	return view.Change{
 		ChangeId:    ent.ChangeId,
 		ClassId:     ent.ClassId,
+		Kind:        view.ClassKind(ent.Kind),
 		MethodId:    ent.MethodId,
 		ChangeType:  view.ChangeType(ent.ChangeType),
 		Severity:    view.ChangeSeverity(ent.Severity),

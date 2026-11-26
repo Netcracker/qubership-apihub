@@ -2,11 +2,13 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"regexp"
 	"time"
 
+	"github.com/Netcracker/qubership-apihub/backend/libraries-backend/client"
 	"github.com/Netcracker/qubership-apihub/backend/libraries-backend/entity"
 	"github.com/Netcracker/qubership-apihub/backend/libraries-backend/exception"
 	"github.com/Netcracker/qubership-apihub/backend/libraries-backend/repository"
@@ -34,11 +36,13 @@ func NewLibraryService(
 	libraryRepository repository.LibraryRepository,
 	memberRepository repository.MemberRepository,
 	registryService RegistryService,
+	registryClient client.RegistryClient,
 ) LibraryService {
 	return libraryServiceImpl{
 		libraryRepository: libraryRepository,
 		memberRepository:  memberRepository,
 		registryService:   registryService,
+		registryClient:    registryClient,
 	}
 }
 
@@ -46,6 +50,7 @@ type libraryServiceImpl struct {
 	libraryRepository repository.LibraryRepository
 	memberRepository  repository.MemberRepository
 	registryService   RegistryService
+	registryClient    client.RegistryClient
 }
 
 const (
@@ -64,6 +69,29 @@ func makeLibraryId(parentPackageId, alias string) string {
 		return alias
 	}
 	return parentPackageId + libraryIdSeparator + alias
+}
+
+// checkMavenArtifactExists rejects a library whose artifact the registry does not know. The registry client
+// answers 404 for a missing artifact, which on a create request is a bad body, so it becomes a 400.
+func (l libraryServiceImpl) checkMavenArtifactExists(ctx context.Context, req view.LibraryCreateReq) error {
+	registry, err := l.registryService.RegistryForRepository(ctx, req.Repository)
+	if err != nil {
+		return err
+	}
+	if registry == nil {
+		return &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.RepositoryNotFound,
+			Message: exception.RepositoryNotFoundMsg,
+			Params:  map[string]interface{}{"repository": req.Repository},
+		}
+	}
+	_, err = l.registryClient.ListMavenVersions(ctx, *registry, req.Repository, req.Coordinates.GroupId, req.Coordinates.ArtifactId)
+	var customErr *exception.CustomError
+	if errors.As(err, &customErr) && customErr.Code == exception.LibraryArtifactNotFound {
+		customErr.Status = http.StatusBadRequest
+	}
+	return err
 }
 
 func (l libraryServiceImpl) Create(ctx context.Context, req view.LibraryCreateReq) (*view.Library, error) {
@@ -105,6 +133,12 @@ func (l libraryServiceImpl) Create(ctx context.Context, req view.LibraryCreateRe
 			Code:    exception.RepositoryNotFound,
 			Message: exception.RepositoryNotFoundMsg,
 			Params:  map[string]interface{}{"repository": req.Repository},
+		}
+	}
+
+	if req.Language == view.LanguageJava {
+		if err := l.checkMavenArtifactExists(ctx, req); err != nil {
+			return nil, err
 		}
 	}
 

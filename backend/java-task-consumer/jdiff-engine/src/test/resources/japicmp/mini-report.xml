@@ -39,5 +39,27 @@
             <fields/>
             <methods/>
         </class>
+        <class fullyQualifiedName="com.example.ChangedInterface" changeStatus="MODIFIED" binaryCompatible="true" sourceCompatible="true">
+            <classType newType="INTERFACE" oldType="INTERFACE"/>
+            <compatibilityChanges/>
+            <constructors/>
+            <fields/>
+            <methods>
+                <method name="run" changeStatus="NEW" binaryCompatible="true" sourceCompatible="true">
+                    <compatibilityChanges/>
+                    <parameters/>
+                    <returnType newValue="void" oldValue="n.a."/>
+                </method>
+            </methods>
+        </class>
+        <class fullyQualifiedName="com.example.RemovedInterface" changeStatus="REMOVED" binaryCompatible="false" sourceCompatible="false">
+            <classType newType="n.a." oldType="INTERFACE"/>
+            <compatibilityChanges>
+                <compatibilityChange type="CLASS_REMOVED" binaryCompatible="false" sourceCompatible="false"/>
+            </compatibilityChanges>
+            <constructors/>
+            <fields/>
+            <methods/>
+        </class>
     </classes>
 </japicmp>

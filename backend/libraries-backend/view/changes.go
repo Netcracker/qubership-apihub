@@ -49,8 +49,11 @@ type ChangeSummary struct {
 }
 
 type Change struct {
-	ChangeId    string                 `json:"changeId"`
-	ClassId     string                 `json:"classId"`
+	ChangeId string `json:"changeId"`
+	ClassId  string `json:"classId"`
+	// Kind is the kind of the class the change belongs to, so a caller can tell an interface change from a
+	// class change without loading the class itself.
+	Kind        ClassKind              `json:"kind"`
 	MethodId    string                 `json:"methodId,omitempty"`
 	ChangeType  ChangeType             `json:"changeType"`
 	Severity    ChangeSeverity         `json:"severity"`
