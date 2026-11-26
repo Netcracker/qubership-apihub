@@ -24,7 +24,13 @@ export const Toolbar: FC<ToolbarProps> = memo<ToolbarProps>(({
   return (
     <Card>
       <CardHeader
-        sx={{ height: TOOLBAR_HEIGHT[breadcrumbs ? LARGE_TOOLBAR_SIZE : size], px: 4, maxWidth: maxWidthHeaderToolbar }}
+        sx={{
+          height: TOOLBAR_HEIGHT[breadcrumbs ? LARGE_TOOLBAR_SIZE : size],
+          px: 4,
+          maxWidth: maxWidthHeaderToolbar,
+          // clip clips like hidden without focus scrolling; minWidth: 0 preserves hidden's shrink behavior.
+          '& .MuiCardHeader-content': { overflow: 'clip', minWidth: 0 },
+        }}
         title={breadcrumbs}
         subheader={
           <Box
