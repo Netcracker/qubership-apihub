@@ -139,6 +139,18 @@ reason that fits:
 `approval-required` is not yours: the script sets it when a pull request waits for a review. Leave `stopReason`
 empty unless the status is `blocked`, and give a reason whenever it is.
 
+## When review feedback needs no changes
+
+On a continuation of an existing pull request, read the complete supplied conversations and inspect the current code
+before changing files. A reviewer can ask about behavior that is already covered by inherited test scripts or existing
+code, and a later maintainer reply can explain that behavior. Verify the explanation against the code.
+
+Return `no-changes` when the request is already satisfied. Leave the working tree clean, explain the conclusion in
+`summary`, and cite the relevant files, symbols, and checks in `verification`. Every supplied thread must have an
+`already-satisfied` reply with its own evidence. A second model checks this conclusion before publication.
+Do not create cosmetic edits to obtain a commit. This status is unavailable for a new implementation, a CI fix,
+or a merge of `develop`. Leave `blockedReason` and `stopReason` empty.
+
 ## Your output
 
 When review threads are supplied, account for every numbered thread in `summary`, even when no code change is needed.
@@ -146,13 +158,22 @@ State whether it is fixed (and how), already satisfied (with code evidence), or 
 belongs to repeated implementation attempts too. An inline command refers to the supplied thread conversation, not
 only the short command text. Leave thread resolution to a person.
 
+Also return one `threadReplies` entry for each numbered thread, with the same number and a substantive Markdown
+answer addressed to its reviewer. Use `fixed`, `already-satisfied`, or `blocked`. Explain what changed and why,
+where existing code satisfies the request, or what prevents a fix. The publisher adds the actual push result and any
+publication blocker. Do not claim that a commit was pushed, CI passed, or a thread was resolved. Use an empty array
+when no threads were supplied. A `done` result cannot leave a thread blocked.
+
 End your answer with exactly one fenced `json` block and nothing after it. Every key is required, and no other key is
 allowed:
 
 ```json
 {
-  "status": "done | blocked | unrelated",
+  "status": "done | no-changes | blocked | unrelated",
   "summary": "What you changed and why, plus the outcome for each supplied review thread.",
+  "threadReplies": [
+    { "thread": 1, "status": "fixed | already-satisfied | blocked", "body": "The answer and its code evidence." }
+  ],
   "commitType": "fix | feat | perf | refactor | revert | build | chore | style | docs | test | ci",
   "scope": "the module name, or an empty string when the change spans several modules",
   "title": "the imperative summary of the commit title, without type and scope, at most 72 characters",

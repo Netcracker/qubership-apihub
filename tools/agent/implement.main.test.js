@@ -177,10 +177,11 @@ function fakeExec({
   conflicts = [],
   mergeFails = 0,
   markers = [],
+  initialHead = BASE,
 } = {}) {
   const calls = []
   const markerAnswers = [...markers]
-  let head = BASE
+  let head = initialHead
   let commits = 0
   let statusCalls = 0
   let checkCalls = 0
@@ -246,10 +247,16 @@ function fakeRunAgent(answers) {
   const runAgent = async (options) => {
     const inputText = fs.readFileSync(options.files[0], 'utf8')
     runs.push({ agent: options.agent, model: options.model, message: options.message, inputText, files: options.files })
-    const next = queues[options.agent]?.shift()
+    let next = queues[options.agent]?.shift()
     assert.ok(next !== undefined, `unexpected call of ${options.agent}`)
     if (next instanceof Error) throw next
     if (next.exitCode !== undefined) return { stderrTail: '', eventsText: '', ...next }
+    if (options.agent === 'implementer' && next.threadReplies === undefined) {
+      const numbers = [...inputText.matchAll(/^### Thread (\d+) of /gm)].map((m) => Number(m[1]))
+      next = { ...next, threadReplies: numbers.map((thread) => ({ thread,
+        status: next.status === 'blocked' ? 'blocked' : 'fixed',
+        body: `Thread ${thread}: ${next.status === 'blocked' ? next.blockedReason : next.summary}` })) }
+    }
     return { exitCode: 0, eventsText: eventsFor(next), stderrTail: '' }
   }
   runAgent.runs = runs
@@ -788,6 +795,25 @@ test('run: a diff over the limit is blocked with the numbers, and nothing is pus
     assert.equal(savedState(ctx.gh).costs.length, 2)
   })
 })
+
+for (const shortstat of [
+  ' 15 files changed, 1200 insertions(+), 38 deletions(-)',
+  ' 30 files changed, 2500 insertions(+), 2500 deletions(-)',
+]) {
+  test(`run: a Task diff within the new limits is published (${shortstat.trim()})`, async () => {
+    const gh = fakeGh({
+      issueOverrides: { type: { name: 'Task' } },
+      comments: [botComment(5, running(analyzed(suitable), false))],
+    })
+    const agents = { implementer: [{ ...done, commitType: 'feat' }], 'self-reviewer': [approve] }
+    await withContext({ gh, exec: fakeExec({ shortstat }), agents }, async (ctx) => {
+      const result = await run(ctx.env, ctx.deps)
+      assert.equal(result.result, 'pr-opened')
+      assert.equal(ctx.exec.git('push').length, 1)
+      assert.equal(savedState(ctx.gh).phase, 'waiting-ci')
+    })
+  })
+}
 
 test('run: an analysis that says needs-info stops the run with the questions, once', async () => {
   const gh = fakeGh({ comments: [botComment(5, running(state.emptyIssueState(200), true))] })
@@ -1789,6 +1815,200 @@ const reviewOptions = (extra = {}) => personOptions('review', {
   ...extra,
 })
 
+const noChanges = {
+  ...done, status: 'no-changes',
+  summary: 'The existing folder test already checks every invalid-scope request.',
+  verification: '5_Migration.postman_collection.json: the folder test asserts status 400 and error code 9.',
+  threadReplies: [
+    { thread: 1, status: 'already-satisfied', body: 'The folder test asserts status 400 for every nested request.' },
+    { thread: 2, status: 'already-satisfied', body: 'The same inherited test checks error code 9 in the response.' },
+  ],
+}
+const noChangesOptions = (extra = {}) => reviewOptions({
+  pulls: openPull({ head: { sha: sha(900) } }),
+  env: { AGENT_PR: '70', AGENT_COMMENT_ID: '9101' },
+  exec: fakeExec({ remote: REMOTE, initialHead: sha(900), porcelain: [''],
+    shortstat: ' 15 files changed, 1238 insertions(+)', changed: '.github/workflows/existing.yml' }),
+  agents: { implementer: [noChanges], 'self-reviewer': [approve] },
+  ...extra,
+})
+
+test('no-changes: verified answers are successful without commits, checks, bundles, or a push', async () => {
+  const threads = [thread('T1', 501), thread('T2', 503, { comments: [
+    { author: 'reviewer', body: 'No checks on the requests.', databaseId: 503 },
+    { author: 'maintainer', body: 'The folder test is inherited. No change is required.', databaseId: 504 },
+  ] })]
+  await withContext(noChangesOptions({ ghOptions: { threads } }), async (ctx) => {
+    assert.equal((await runPerson(ctx)).result, 'no-changes')
+    const saved = savedState(ctx.gh)
+    assert.equal(saved.phase, 'reviewed')
+    assert.equal(saved.attempts.at(-1).result, 'no-changes')
+    assert.equal(saved.costs.length, 2)
+    assert.deepEqual(ctx.exec.git('commit'), [])
+    assert.deepEqual(ctx.exec.git('push'), [])
+    assert.deepEqual(ctx.exec.git('bundle'), [])
+    assert.equal(ctx.exec.calls.some((c) => c.file === 'pnpm'), false)
+    assert.deepEqual([ctx.patGh.calls, ctx.patGh.edits], [[], []])
+    assert.deepEqual(ctx.gh.labelsAt(70), [])
+    assert.deepEqual(reactionsOf(ctx), ['eyes', 'rocket'])
+    assert.match(ctx.runAgent.runs[0].inputText, /The folder test is inherited/)
+    const review = ctx.runAgent.runs[1].inputText
+    assert.match(review, /No changes requested by the implementer/)
+    assert.ok(review.includes(noChanges.threadReplies[1].body))
+    const replies = ctx.gh.calls.filter((c) => c[0] === 'replyToReviewComment')
+    assert.deepEqual(replies.map((c) => c[2]), [501, 503])
+    for (const [index, reply] of replies.entries()) {
+      assert.ok(reply[3].includes(noChanges.threadReplies[index].body))
+      assert.match(reply[3], /Already satisfied/)
+      assert.match(reply[3], /Self-review approved/)
+      assert.match(reply[3], /no update was pushed/)
+      assert.doesNotMatch(reply[3], /Update pushed in|Attempt blocked/)
+    }
+  })
+})
+
+test('no-changes preserves waiting-ci so pending CI can still finish', async () => {
+  const options = noChangesOptions({ st: { ...handOffState(), phase: 'waiting-ci' } })
+  await withContext(options, async (ctx) => {
+    assert.equal((await runPerson(ctx)).result, 'no-changes')
+    assert.equal(savedState(ctx.gh).phase, 'waiting-ci')
+    assert.equal(ctx.gh.labelsAt(70).includes('agent:completed'), false)
+  })
+})
+
+test('no-changes without inline threads posts its explanation on the PR conversation', async () => {
+  const options = noChangesOptions({ ghOptions: { threads: [] },
+    agents: { implementer: [{ ...noChanges, threadReplies: [] }], 'self-reviewer': [approve] } })
+  await withContext(options, async (ctx) => {
+    assert.equal((await runPerson(ctx)).result, 'no-changes')
+    const notice = ctx.gh.calls.find((c) => c[0] === 'createIssueComment' && c[1] === 70)
+    assert.ok(notice[2].includes(noChanges.summary))
+    assert.ok(notice[2].includes(noChanges.verification))
+    assert.match(notice[2], /No commit or update was pushed/)
+    assert.deepEqual(ctx.exec.git('push'), [])
+  })
+})
+
+test('no-changes dry-run previews substantive replies without GitHub writes', async () => {
+  const options = noChangesOptions({ env: { AGENT_PR: '70', AGENT_COMMENT_ID: '9101', AGENT_DRY_RUN: 'true' } })
+  await withContext(options, async (ctx) => {
+    assert.equal((await runPerson(ctx)).result, 'no-changes')
+    assert.ok(ctx.summary().includes(noChanges.threadReplies[0].body))
+    assert.match(ctx.summary(), /Self-review approved/)
+    assert.deepEqual(ctx.gh.calls.filter((c) => c[0] !== 'listReviewThreads'), [])
+    assert.deepEqual([ctx.patGh.calls, ctx.patGh.edits], [[], []])
+    assert.deepEqual(ctx.exec.git('push'), [])
+  })
+})
+
+test('publish rejects a forged no-changes approval or a reply to an unknown thread', async () => {
+  for (const tamper of [
+    (outcome) => ({ ...outcome, review: changes }),
+    (outcome) => ({ ...outcome, implementation: { ...outcome.implementation, threadReplies: [
+      { thread: 999, status: 'already-satisfied', body: 'An unsolicited answer.' },
+    ] } }),
+  ]) {
+    await withContext(noChangesOptions(), async (ctx) => {
+      await preflight(ctx.env, ctx.deps)
+      const outcome = await work(ctx.env, { exec: ctx.exec, runAgent: ctx.runAgent })
+      fs.writeFileSync(path.join(ctx.env.AGENT_OUT, 'outcome.json'), JSON.stringify(tamper(outcome)))
+      await assert.rejects(publish(ctx.env, ctx.deps), /not trusted/)
+      const replies = ctx.gh.calls.filter((c) => c[0] === 'replyToReviewComment')
+      assert.deepEqual(replies.map((c) => c[2]), [501, 503])
+      for (const reply of replies) {
+        assert.match(reply[3], /not trusted/)
+        assert.doesNotMatch(reply[3], /Self-review approved|An unsolicited answer/)
+      }
+    })
+  }
+})
+
+for (const porcelain of ['M backend/x.go\n', '?? stray.txt\n']) {
+  test(`no-changes rejects a dirty tree (${porcelain.trim()})`, async () => {
+    const options = noChangesOptions({ exec: fakeExec({ remote: REMOTE, initialHead: sha(900), porcelain: [porcelain] }) })
+    await withContext(options, async (ctx) => {
+      await assert.rejects(runPerson(ctx), /no-changes requires a clean working tree/)
+      assert.equal(savedState(ctx.gh).attempts.at(-1).result, 'error')
+      assert.deepEqual(ctx.exec.git('push'), [])
+      const replies = ctx.gh.calls.filter((c) => c[0] === 'replyToReviewComment')
+      assert.equal(replies.length, 2)
+      assert.match(replies[0][3], /clean working tree/)
+    })
+  })
+}
+
+test('no-changes cannot replace an initial implementation', async () => {
+  const options = { ...readyToRun(), agents: { implementer: [{ ...noChanges, threadReplies: [] }] } }
+  await withContext(options, async (ctx) => {
+    await assert.rejects(run(ctx.env, ctx.deps), /no-changes requires an existing pull request/)
+    assert.deepEqual(ctx.exec.git('push'), [])
+  })
+})
+
+test('a rejected no-changes answer can be corrected in the next round', async () => {
+  const options = noChangesOptions({
+    exec: fakeExec({ remote: REMOTE, initialHead: sha(900), porcelain: ['', 'M backend/x.go\n'] }),
+    agents: { implementer: [noChanges, done], 'self-reviewer': [changes, approve] },
+  })
+  await withContext(options, async (ctx) => {
+    assert.equal((await runPerson(ctx)).result, 'pr-opened')
+    assert.equal(ctx.exec.git('commit').length, 1)
+    assert.equal(ctx.exec.git('push').length, 1)
+    assert.match(ctx.runAgent.runs[2].inputText, /The error is swallowed/)
+  })
+})
+
+test('an unconfirmed no-changes answer stops as disagreement when rounds are exhausted', async () => {
+  const options = noChangesOptions({ env: { AGENT_PR: '70', AGENT_COMMENT_ID: '', AGENT_MAX_REVIEW_ROUNDS: '1' },
+    agents: { implementer: [noChanges], 'self-reviewer': [changes] } })
+  await withContext(options, async (ctx) => {
+    assert.equal((await runPerson(ctx)).result, 'blocked')
+    assert.equal(savedState(ctx.gh).stops.at(-1).reason, 'disagreement')
+    assert.deepEqual(ctx.exec.git('push'), [])
+    const reply = ctx.gh.calls.find((c) => c[0] === 'replyToReviewComment')[3]
+    assert.match(reply, /Self-review did not confirm/)
+    assert.doesNotMatch(reply, /Self-review approved/)
+  })
+})
+
+for (const closed of [false, true]) {
+  test(`no-changes is not accepted if the PR ${closed ? 'closed' : 'head changed'} during review`, async () => {
+    await withContext(noChangesOptions(), async (ctx) => {
+      await preflight(ctx.env, ctx.deps)
+      await work(ctx.env, { exec: ctx.exec, runAgent: ctx.runAgent })
+      ctx.gh.getPull = async () => ({ ...openPull()[70], state: closed ? 'closed' : 'open', head: { sha: sha(901) } })
+      await assert.rejects(publish(ctx.env, ctx.deps), /no-changes conclusion needs a new review/)
+      assert.equal(savedState(ctx.gh).attempts.at(-1).result, 'error')
+      assert.deepEqual(ctx.exec.git('push'), [])
+    })
+  })
+}
+
+test('a review crash still replies in every supplied thread with the failure reason', async () => {
+  await withContext(reviewOptions({ agents: { implementer: [new Error('Worker process failed')] } }), async (ctx) => {
+    await assert.rejects(runPerson(ctx), /Worker process failed/)
+    const replies = ctx.gh.calls.filter((c) => c[0] === 'replyToReviewComment')
+    assert.deepEqual(replies.map((c) => c[2]), [501, 503])
+    assert.match(replies[0][3], /Worker process failed/)
+    assert.match(replies[0][3], /No update was pushed/)
+  })
+})
+
+test('a publish-time size block preserves substantive thread answers without claiming a push', async () => {
+  await withContext(reviewOptions(), async (ctx) => {
+    await preflight(ctx.env, ctx.deps)
+    await work(ctx.env, { exec: ctx.exec, runAgent: ctx.runAgent })
+    const exec = forgedDiff(ctx.exec, { shortstat: ' 31 files changed, 5001 insertions(+)' })
+    assert.equal((await publish(ctx.env, { ...ctx.deps, exec })).result, 'blocked')
+    const replies = ctx.gh.calls.filter((c) => c[0] === 'replyToReviewComment')
+    assert.equal(replies.length, 2)
+    assert.ok(replies[0][3].includes(done.summary))
+    assert.match(replies[0][3], /Change prepared, not published/)
+    assert.match(replies[0][3], /outgrown the issue/)
+    assert.doesNotMatch(replies[0][3], /Update pushed in/)
+  })
+})
+
 test('preflight of a review: only the unresolved threads go to the context and the state', async () => {
   await withContext(reviewOptions(), async (ctx) => {
     const result = await preflight(ctx.env, ctx.deps)
@@ -1915,8 +2135,10 @@ test('a review attempt: the threads reach the implementer, and each thread gets 
     const replies = ctx.gh.calls.filter((c) => c[0] === 'replyToReviewComment')
     assert.deepEqual(replies.map((c) => c.slice(1, 3)), [[70, 501], [70, 503]])
     const head = sha(1).slice(0, 7)
-    for (const reply of replies) {
-      assert.equal(reply[3], `The AI Autonomous agent pushed ${head} for this review. A person resolves the thread.`)
+    for (const [index, reply] of replies.entries()) {
+      assert.ok(reply[3].includes(`Thread ${index + 1}: ${done.summary}`))
+      assert.ok(reply[3].includes(`Update pushed in ${head}`))
+      assert.match(reply[3], /A person resolves the thread/)
     }
     // The title and the description of the pull request stay.
     assert.deepEqual(ctx.patGh.edits, [])
@@ -1976,12 +2198,18 @@ test('a failed reply in one thread does not stop the others; the job fails after
   })
 })
 
-test('a review attempt with no pushed commit (blocked) replies nowhere', async () => {
+test('a blocked review answers each supplied thread with the blocker and no publication claim', async () => {
   const options = reviewOptions({ agents: { implementer: [blocked], 'self-reviewer': [] } })
   await withContext(options, async (ctx) => {
     const result = await runPerson(ctx)
     assert.equal(result.result, 'blocked')
-    assert.deepEqual(ctx.gh.calls.filter((c) => c[0] === 'replyToReviewComment'), [])
+    const replies = ctx.gh.calls.filter((c) => c[0] === 'replyToReviewComment')
+    assert.deepEqual(replies.map((c) => c[2]), [501, 503])
+    for (const reply of replies) {
+      assert.ok(reply[3].includes(blocked.blockedReason))
+      assert.match(reply[3], /No update was pushed/)
+      assert.doesNotMatch(reply[3], /Change published|Update pushed in/)
+    }
     const notice = ctx.gh.calls.find((c) => c[0] === 'createIssueComment' && c[1] === 70)
     assert.ok(notice)
     assert.match(notice[2], /needs-human:decision-required/)
@@ -2045,7 +2273,7 @@ test('retrying a blocked review reloads unresolved feedback before publishing a 
     assert.match(input, /carol: Check nil/)
     assert.match(input, /Location: y.go/)
     assert.equal(savedState(ctx.gh).phase, 'waiting-ci')
-    assert.deepEqual(ctx.gh.calls.filter((c) => c[0] === 'replyToReviewComment').map((c) => c[2]), [501, 503])
+    assert.deepEqual(ctx.gh.calls.filter((c) => c[0] === 'replyToReviewComment').map((c) => c[2]), [501, 503, 501, 503])
   })
 })
 
@@ -2127,7 +2355,8 @@ test('a review attempt in dry-run writes nothing and says in the summary that it
   await withContext({ ...reviewOptions(), env }, async (ctx) => {
     await runPerson(ctx)
     assert.deepEqual(ctx.gh.calls.filter((c) => c[0] === 'replyToReviewComment' || c[0] === 'updateIssueComment'), [])
-    assert.match(ctx.summary(), /Would reply in each review thread that the implementer saw, after the push\./)
+    assert.match(ctx.summary(), /Replies that would go in the supplied review threads/)
+    assert.ok(ctx.summary().includes(done.summary))
   })
 })
 
@@ -2228,6 +2457,26 @@ async function runWithForgedDiff(ctx, forged) {
   await writeContext(ctx.env, ctx.deps)
   await work(ctx.env, { exec: ctx.exec, runAgent: ctx.runAgent })
   return publish(ctx.env, { ...ctx.deps, exec: forgedDiff(ctx.exec, forged) })
+}
+
+for (const shortstat of [
+  ' 31 files changed, 1 insertion(+)',
+  ' 1 file changed, 2500 insertions(+), 2501 deletions(-)',
+]) {
+  test(`publish: a Task bundle over either limit is not pushed (${shortstat.trim()})`, async () => {
+    const gh = fakeGh({
+      issueOverrides: { type: { name: 'Task' } },
+      comments: [botComment(5, running(analyzed(suitable), false))],
+    })
+    const agents = { implementer: [{ ...done, commitType: 'feat' }], 'self-reviewer': [approve] }
+    await withContext({ gh, agents }, async (ctx) => {
+      const result = await runWithForgedDiff(ctx, { shortstat, nameOnly: 'backend/x.go\n' })
+      assert.equal(result.result, 'blocked')
+      assert.deepEqual(ctx.exec.git('push'), [])
+      assert.deepEqual(ctx.patGh.calls, [])
+      assert.match(savedState(ctx.gh).attempts[0].reason, /limit for a task is 30 files or 5000 lines/)
+    })
+  })
 }
 
 test('publish measures the diff of the bundle itself: a change over the limit is not pushed', async () => {
