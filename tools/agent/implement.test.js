@@ -63,6 +63,7 @@ const fresh = (analysis = {}) => ({
 const withLabels = (...labels) => ({ ...issue, labels: labels.map((name) => ({ name })) })
 const implementation = {
   status: 'done',
+  threadReplies: [],
   summary: 'Guards the nil changelog in the builder. A test covers it.',
   commitType: 'fix',
   scope: 'portal-backend',
@@ -270,9 +271,12 @@ test('diffTooLarge: the limits are inclusive, per playbook, and lines are insert
   assert.equal(diffTooLarge(stat(1, 601), 'bug-fix'), true)
   assert.equal(diffTooLarge(stat(1, 300, 301), 'bug-fix'), true)
   assert.equal(diffTooLarge(stat(1, 300, 300), 'bug-fix'), false)
-  assert.equal(diffTooLarge(stat(30, 1000), 'task'), false)
+  assert.equal(diffTooLarge(stat(15, 1238), 'task'), false)
+  assert.equal(diffTooLarge(stat(30, 5000), 'task'), false)
   assert.equal(diffTooLarge(stat(31, 0), 'task'), true)
-  assert.equal(diffTooLarge(stat(1, 1001), 'task'), true)
+  assert.equal(diffTooLarge(stat(1, 5001), 'task'), true)
+  assert.equal(diffTooLarge(stat(1, 2500, 2500), 'task'), false)
+  assert.equal(diffTooLarge(stat(1, 2500, 2501), 'task'), true)
   assert.equal(diffTooLarge(stat(21, 10), 'task'), false)
   assert.throws(() => diffTooLarge(stat(1, 1), 'story'), /No diff limit/)
 })
@@ -341,6 +345,28 @@ test('checkImplementation: a blocked answer names a stop reason, and no other an
       return true
     })
   }
+})
+
+test('checkImplementation: replies must cover exactly the supplied threads with evidence', () => {
+  const threads = [{ id: 'T1' }, { id: 'T2' }]
+  const replies = [1, 2].map((thread) => ({ thread, status: 'already-satisfied', body: `Evidence for ${thread}.` }))
+  const answer = { ...implementation, status: 'no-changes', threadReplies: replies }
+  assert.equal(checkImplementation(answer, 'task', 'review', threads), answer)
+  for (const kind of ['ci-fix', 'update']) {
+    assert.throws(() => checkImplementation(answer, 'task', kind, threads), /no-changes is not allowed/)
+  }
+  assert.throws(() => checkImplementation({ ...answer, verification: ' ' }, 'task', 'review', threads), /evidence/)
+  assert.throws(() => checkImplementation({ ...answer, threadReplies: [] }, 'task', 'review', threads), /missing thread/)
+  assert.throws(() => checkImplementation({ ...answer, threadReplies: [replies[0], replies[0]] },
+    'task', 'review', threads), /duplicate thread/)
+  assert.throws(() => checkImplementation({ ...answer, threadReplies: [{ ...replies[0], thread: 3 }, replies[1]] },
+    'task', 'review', threads), /unknown thread 3/)
+  assert.throws(() => checkImplementation({ ...answer, threadReplies: [{ ...replies[0], body: ' ' }, replies[1]] },
+    'task', 'review', threads), /needs an explanation/)
+  assert.throws(() => checkImplementation({ ...answer, threadReplies: [{ ...replies[0], status: 'fixed' }, replies[1]] },
+    'task', 'review', threads), /requires every thread to be already-satisfied/)
+  assert.throws(() => checkImplementation({ ...implementation, threadReplies: [{ ...replies[0], status: 'blocked' }] },
+    'task', 'review', [threads[0]]), /done cannot leave a supplied thread blocked/)
 })
 
 test('checkImplementation: unrelated needs a reason and is allowed only on a CI fix', () => {
