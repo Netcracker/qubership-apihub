@@ -17,6 +17,7 @@ import { FrontTruncatedText } from '@portal/routes/root/LibraryPage/FrontTruncat
 import { ContractsSummary } from '@portal/routes/root/PortalPage/VersionPage/VersionOverviewSubPage/SummaryTab/ContractsSummary'
 import { SummaryPanels } from '@portal/routes/root/PortalPage/VersionPage/VersionOverviewSubPage/SummaryTab/SummaryPanel'
 import { SummarySection } from '@portal/routes/root/PortalPage/VersionPage/VersionOverviewSubPage/SummaryTab/SummarySection'
+import { toChangesSummary } from './javaapi/javaApi'
 import { getLibraryVersionPath, type LibraryVersionPageProps } from './libraryVersion'
 import { LibraryVersionBuildError } from './LibraryVersionBuildError'
 import { useLibraryChangesSummary } from './useLibraryChanges'
@@ -31,7 +32,7 @@ export const LibrarySummaryTab: FC<LibraryVersionPageProps> = memo<LibraryVersio
   const showSuccessNotification = useShowSuccessNotification()
   const { data: changesSummary, isLoading, error } = useLibraryChangesSummary(
     library.libraryId,
-    version.version,
+    version.previousVersion ? version.version : undefined,
     undefined,
     { expectsComparison: !!version.previousVersion },
   )
@@ -43,12 +44,17 @@ export const LibrarySummaryTab: FC<LibraryVersionPageProps> = memo<LibraryVersio
     return count
   }
   const renderChangeCounts = (): ReactNode => {
-    if (error) return EMPTY_VALUE
-    if (isLoading) return LOADING_VALUE
-    if (!changesSummary) return EMPTY_VALUE
+    // Like the package: no previous version means no comparison, shown as zero changes. The disabled query
+    // reports isLoading, so it is not consulted then.
+    if (version.previousVersion) {
+      if (error) return EMPTY_VALUE
+      if (isLoading) return LOADING_VALUE
+    }
+    const counts = version.previousVersion ? changesSummary : toChangesSummary(undefined)
+    if (!counts) return EMPTY_VALUE
     return (
       <Box display="flex" alignItems="center">
-        <Changes value={changesSummary} mode="compact" zeroView />
+        <Changes value={counts} mode="compact" zeroView />
       </Box>
     )
   }
