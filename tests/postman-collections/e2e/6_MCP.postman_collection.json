@@ -23,43 +23,6 @@
       },
       "item": [
         {
-          "name": "Check test instance",
-          "request": {
-            "method": "GET",
-            "url": "{{SERVER_HOST}}/api/v1/system/info",
-            "auth": {
-              "type": "noauth"
-            }
-          },
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "Object.keys(pm.environment.toObject()).filter(key => key.startsWith('mcpE2e'))",
-                  "  .forEach(key => pm.environment.unset(key));"
-                ]
-              }
-            },
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "let safe = false;",
-                  "pm.test(\"APIHUB is running in test mode\", function () {",
-                  "  pm.response.to.have.status(200);",
-                  "  safe = pm.response.json().productionMode === false;",
-                  "  pm.expect(safe).to.equal(true);",
-                  "});",
-                  "if (!safe) pm.execution.setNextRequest(null);"
-                ]
-              }
-            }
-          ]
-        },
-        {
           "name": "Login as local administrator",
           "request": {
             "method": "POST",
@@ -81,6 +44,16 @@
             }
           },
           "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "Object.keys(pm.environment.toObject()).filter(key => key.startsWith('mcpE2e'))",
+                  "  .forEach(key => pm.environment.unset(key));"
+                ]
+              }
+            },
             {
               "listen": "test",
               "script": {
@@ -108,6 +81,34 @@
                   "    pm.environment.set(\"mcpE2eLegacyConfigured\", String(Boolean(configuredWorkspace)));",
                   "    pm.environment.set(\"mcpE2eRunId\", runId);",
                   "  }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Check test instance",
+          "request": {
+            "method": "GET",
+            "url": "{{SERVER_HOST}}/api/v1/system/info"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let safe = false;",
+                  "pm.test(\"APIHUB is running in test mode\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  safe = pm.response.json().productionMode === false;",
+                  "  pm.expect(safe).to.equal(true);",
+                  "});",
+                  "if (!safe) {",
+                  "  Object.keys(pm.environment.toObject()).filter(key => key.startsWith('mcpE2e'))",
+                  "    .forEach(key => pm.environment.unset(key));",
+                  "  pm.execution.setNextRequest(null);",
                   "}"
                 ]
               }
@@ -7895,22 +7896,9 @@
           "name": "Clear the run credentials",
           "request": {
             "method": "GET",
-            "url": "{{SERVER_HOST}}/api/v1/system/info",
-            "auth": {
-              "type": "noauth"
-            }
+            "url": "{{SERVER_HOST}}/api/v1/system/info"
           },
           "event": [
-            {
-              "listen": "prerequest",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "Object.keys(pm.environment.toObject()).filter(key => key.startsWith('mcpE2e'))",
-                  "  .forEach(key => pm.environment.unset(key));"
-                ]
-              }
-            },
             {
               "listen": "test",
               "script": {
@@ -7918,7 +7906,9 @@
                 "exec": [
                   "pm.test(\"The test instance remains reachable after cleanup\", function () {",
                   "  pm.response.to.have.status(200);",
-                  "});"
+                  "});",
+                  "Object.keys(pm.environment.toObject()).filter(key => key.startsWith('mcpE2e'))",
+                  "  .forEach(key => pm.environment.unset(key));"
                 ]
               }
             }
