@@ -1,6 +1,6 @@
 import type { JavaApiClassListItem } from '@netcracker/qubership-apihub-api-doc-viewer'
 
-import { formatMemberCounts, getJavaReferenceClasses, getJavaReferenceLink } from './javaApi'
+import { filterJavaClasses, formatMemberCounts, getJavaReferenceClasses, getJavaReferenceLink } from './javaApi'
 
 const CLASSES: JavaApiClassListItem[] = (['CLASS', 'INTERFACE'] as const).map(typeKind => ({
   className: `example.${typeKind}`,
@@ -13,6 +13,13 @@ const CLASSES: JavaApiClassListItem[] = (['CLASS', 'INTERFACE'] as const).map(ty
   changes: [],
   elements: [],
 }))
+
+describe('filterJavaClasses', () => {
+  it.each(['Outer$In', 'Outer.In'])('finds an inner class with search %s', search => {
+    const innerClass: JavaApiClassListItem = { ...CLASSES[0], className: 'org.example.Outer$Inner' }
+    expect(filterJavaClasses([innerClass], search, undefined)).toEqual([innerClass])
+  })
+})
 
 describe('Java Reference selection', () => {
   it.each(

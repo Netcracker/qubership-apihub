@@ -61,8 +61,8 @@ export function filterJavaClasses(
   searchValue: string,
   javaType: JavaTypeFilterValue | undefined,
 ): JavaApiClassListItem[] {
-  const phrase = searchValue.trim().toLowerCase()
-  // people type `Outer.Inner`, the binary name is `org.example.Outer$Inner`
+  const phrase = searchValue.trim().toLowerCase().replaceAll('$', '.')
+  // people type `Outer.Inner`, the binary name is `org.example.Outer$Inner`; normalize both sides
   return classes.filter(({ className, typeKind }) =>
     (!phrase || className.replaceAll('$', '.').toLowerCase().includes(phrase)) &&
     (!javaType || typeKind === javaType),
