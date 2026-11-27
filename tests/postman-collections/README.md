@@ -1,7 +1,7 @@
 # APIHUB Postman collections
 
-The Postman collections are the REST end-to-end suite of APIHUB. They call the API of the portal backend and the agent
-on a running stack and check the answers with `pm.test` assertions. Newman runs them in CI. The module holds
+The Postman collections test the APIHUB REST APIs and the backend MCP server on a running stack.
+Newman runs the collections and checks their `pm.test` assertions in CI. The module holds
 collections, environments, and fixture files; it ships nothing and is not an Nx project.
 
 The suite tests the product from outside, through the backend API; see the
@@ -11,7 +11,7 @@ The suite tests the product from outside, through the backend API; see the
 
 | Path | Content |
 |------|---------|
-| `e2e/` | The regression collections, numbered by purpose (`1_1_Smoke_Portal`, `1_2_Smoke_Agent`, ..., `5_Migration`) |
+| `e2e/` | The regression collections, numbered by purpose (`1_1_Smoke_Portal`, `1_2_Smoke_Agent`, ..., `6_MCP`) |
 | `use_cases/` | Scenario collections, such as `shareability` |
 | `Syntetic_test_data.postman_collection.json` | Fast creation of sample data |
 | `environment/` | `local`, `local_k8s`, and `Env1` Postman environments |
@@ -34,8 +34,8 @@ There is nothing to build, and the module has no Nx targets. Newman 6.2.3 is the
 npm install -g newman@6.2.3
 ```
 
-CI runs the collections in the order `1_1`, `1_2` (agent only), `1_3`, `2_1`, `3_1`, `3_2`, `4`, `5`. The commands for a
-single collection are in [Debugging: One Newman collection](../../docs/development/debugging.md#one-newman-collection)
+CI runs the collections in the order `1_1`, `1_2` (agent only), `1_3`, `2_1`, `3_1`, `3_2`, `4`, `5`, `6`.
+See [Debugging: One Newman collection](../../docs/development/debugging.md#one-newman-collection)
 and [Build and test: E2E tests](../../docs/development/build-and-test.md#e2e-tests).
 
 ## Run and debug locally
@@ -77,6 +77,28 @@ newman run tests/postman-collections/e2e/5_Migration.postman_collection.json \
 
 Select `5_Migration` in the manual workflow to run it alone. It is also part of the default full collection list
 for Kind, Compose, Compose with Keycloak, and nightly runs.
+
+## MCP tests
+
+[`6_MCP`](e2e/6_MCP.postman_collection.json) runs independently with `SERVER_HOST`, `Username`, and `Password`
+against an APIHUB test instance. It creates its own administrator PAT and scoped API keys and publishes
+OpenAPI, AsyncAPI, GraphQL, DDL, and MCP contracts from embedded fixture archives. Success assertions tie tool
+results to the fixture packages, releases, and source documents. Negative cases check protocol errors, tool
+errors, and scope enforcement. Cleanup revokes the credentials and deletes the fixture workspaces.
+
+Run the collection from the repository root:
+
+```bash
+newman run tests/postman-collections/e2e/6_MCP.postman_collection.json \
+  --env-var "SERVER_HOST=http://localhost:8081" \
+  --env-var "Username=<admin email>" --env-var "Password=<admin password>"
+```
+
+For legacy search and the legacy package resource, set `ai.mcp.workspace` in the test backend configuration to
+a fresh workspace ID such as `QS-MCP-E2E-LOCAL` and pass the same ID as `--env-var "MCP_LEGACY_WORKSPACE=<id>"`.
+The collection creates that workspace during the run. With the default blank configuration, the suite checks that
+those legacy capabilities fail with the expected errors. The full CI runs configure `QS-MCP-E2E` on both runtimes.
+Select `6_MCP` in the manual workflow to run it alone.
 
 ## Configuration
 

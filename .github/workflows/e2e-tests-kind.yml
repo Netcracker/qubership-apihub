@@ -94,6 +94,7 @@ env:
   # reaches the ingress controller with no /etc/hosts edit.
   APIHUB_HOST: qubership-apihub.localtest.me
   NAMESPACE: qubership-apihub
+  MCP_LEGACY_WORKSPACE: QS-MCP-E2E
 
 jobs:
   e2e:
@@ -398,6 +399,9 @@ jobs:
             env:
               businessParameters:
                 defaultWorkspaceId: 'QS'
+              ai:
+                mcp:
+                  workspace: '${MCP_LEGACY_WORKSPACE}'
               extensions:
                 - name: api-linter
                   baseUrl: http://qubership-api-linter-service:8080
@@ -699,6 +703,7 @@ jobs:
             echo "=== $name ==="
             newman run "$file" \
               -e "$env_file" -x --insecure \
+              --env-var "MCP_LEGACY_WORKSPACE=$MCP_LEGACY_WORKSPACE" \
               --timeout-request 120000 \
               --timeout 1800000 \
               --reporters cli,htmlextra,json \

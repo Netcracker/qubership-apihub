@@ -95,6 +95,7 @@ jobs:
       RUN_POSTMAN: ${{ inputs.suites == 'all' || inputs.suites == 'postman' }}
       RUN_PLAYWRIGHT: ${{ inputs.suites == 'all' || inputs.suites == 'playwright' }}
       KEYCLOAK: ${{ inputs.compose_folder == 'with-keycloak' }}
+      MCP_LEGACY_WORKSPACE: QS-MCP-E2E
     steps:
       - name: Check the inputs
         shell: bash
@@ -127,10 +128,10 @@ jobs:
         with:
           cache-scope: e2e
 
-      - name: Install podman and envsubst
+      - name: Install test stack dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y podman podman-compose gettext-base
+          sudo apt-get install -y podman podman-compose gettext-base python3-yaml
 
       # The images may be private (upstream's are not).
       - name: Log in to ghcr
@@ -243,6 +244,17 @@ jobs:
           set -euo pipefail
           # The stack reads only the files beside docker-compose.yml, and Keycloak's realm.
           cd "$RUNNER_TEMP/compose"
+          # Enable the legacy MCP capabilities in the test stack, including older deploy refs.
+          /usr/bin/python3 - "$MCP_LEGACY_WORKSPACE" <<'PY'
+          import sys
+          from pathlib import Path
+          import yaml
+
+          path = Path("qubership-apihub-backend-config.yaml")
+          config = yaml.safe_load(path.read_text())
+          config.setdefault("ai", {}).setdefault("mcp", {})["workspace"] = sys.argv[1]
+          path.write_text(yaml.safe_dump(config, sort_keys=False))
+          PY
           find . \( -name '*.env' -o -name '*config.yaml' -o -path './keycloak/*.json' \) -print0 \
             | while IFS= read -r -d '' f; do
                 envsubst < "$f" > "$f.tmp" && mv "$f.tmp" "$f"
@@ -348,6 +360,7 @@ jobs:
             echo "=== $name ==="
             newman run "$file" \
               -e "$env_file" -x \
+              --env-var "MCP_LEGACY_WORKSPACE=$MCP_LEGACY_WORKSPACE" \
               --reporters cli,htmlextra,json \
               --reporter-htmlextra-export "$reports/${name}.html" \
               --reporter-json-export "$reports/${name}.json"
