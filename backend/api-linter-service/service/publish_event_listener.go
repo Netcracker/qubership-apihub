@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -128,9 +130,7 @@ func (p *publishEventListenerImpl) watchAndResubscribe() {
 	if err != nil {
 		log.Errorf("PublishEventListener: failed to read initial cluster membership: %v", err)
 	} else {
-		for _, m := range previous {
-			log.Infof("PublishEventListener: initial cluster member %s (id=%d, startedAt=%s)", m.Name, m.ID, m.StartedAt().Format(time.RFC3339))
-		}
+		log.Infof("PublishEventListener: initial cluster membership, %d member(s): %s", len(previous), describeMembers(previous))
 	}
 
 	ticker := time.NewTicker(p.membershipPollInterval)
@@ -152,6 +152,9 @@ func (p *publishEventListenerImpl) watchAndResubscribe() {
 
 		joined, left := diffMembers(previous, current)
 		previous = current
+		if len(joined) > 0 || len(left) > 0 {
+			log.Infof("PublishEventListener: cluster membership changed, %d member(s): %s", len(current), describeMembers(current))
+		}
 
 		for id, m := range left {
 			departed[id] = m
@@ -179,6 +182,16 @@ const (
 	// The member has an ID not seen before, so its process was started again: restart, rolling update or scale-out.
 	memberKindNewProcess = "new process, restart or scale-out"
 )
+
+// describeMembers renders the node metadata of all members, ordered by text, for logs.
+func describeMembers(members map[uint64]client.ClusterMember) string {
+	items := make([]string, 0, len(members))
+	for _, m := range members {
+		items = append(items, "{"+m.String()+"}")
+	}
+	sort.Strings(items)
+	return strings.Join(items, " ")
+}
 
 // diffMembers returns members present only in current (joined) and only in previous (left).
 func diffMembers(previous, current map[uint64]client.ClusterMember) (joined, left map[uint64]client.ClusterMember) {

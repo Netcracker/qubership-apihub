@@ -73,3 +73,17 @@ func TestDiffMembers(t *testing.T) {
 		})
 	}
 }
+
+func TestDescribeMembers(t *testing.T) {
+	members := testMembers{
+		2: {Name: "b:3320", ID: 2, Birthdate: 0},
+		1: {Name: "a:3320", ID: 1, Birthdate: 0},
+	}
+
+	got := describeMembers(members)
+
+	want := "{name=a:3320 id=1 birthdate=0 startedAt=1970-01-01T00:00:00Z} {name=b:3320 id=2 birthdate=0 startedAt=1970-01-01T00:00:00Z}"
+	if got != want {
+		t.Errorf("describeMembers = %q, want %q", got, want)
+	}
+}

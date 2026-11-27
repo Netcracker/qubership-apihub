@@ -44,6 +44,11 @@ func (m ClusterMember) StartedAt() time.Time {
 	return time.Unix(0, m.Birthdate).UTC()
 }
 
+// String lists every field Olric publishes as node metadata, for logs.
+func (m ClusterMember) String() string {
+	return fmt.Sprintf("name=%s id=%d birthdate=%d startedAt=%s", m.Name, m.ID, m.Birthdate, m.StartedAt().Format(time.RFC3339Nano))
+}
+
 type olricProviderImpl struct {
 	wg     sync.WaitGroup
 	cfg    *config.Config
