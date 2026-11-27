@@ -12,12 +12,12 @@ type VersionScore_deprecated struct {
 type VersionScore struct {
 	Status         ScoringStatus         `json:"status,omitempty"`
 	Reasons        []string              `json:"reason"`
-	Debug          []string              `json:"debug"`
 	ProcessDetails ScoringProcessDetails `json:"processDetails"`
 }
 
 type ScoringProcessDetails struct {
 	ProcessStatus          ScoringProcessStatus        `json:"processStatus"`
+	Debug                  []string                    `json:"debug,omitempty"`
 	PublicationIntegrity   PublicationIntegrityCheck   `json:"publicationIntegrity"`
 	BackwardsCompatibility BackwardsCompatibilityCheck `json:"backwardsCompatibility"`
 	QualityCheck           QualityCheck                `json:"qualityCheck"`
@@ -26,16 +26,19 @@ type ScoringProcessDetails struct {
 type PublicationIntegrityCheck struct {
 	ProcessStatus ScoringProcessStatus         `json:"processStatus"`
 	Details       *PublicationIntegrityDetails `json:"details,omitzero"`
+	Debug         []string                     `json:"debug,omitempty"`
 }
 
 type BackwardsCompatibilityCheck struct {
 	ProcessStatus ScoringProcessStatus                       `json:"processStatus"`
 	Details       map[OpApiType]BackwardCompatibilityDetails `json:"details,omitzero"`
+	Debug         []string                                   `json:"debug,omitempty"`
 }
 
 type QualityCheck struct {
 	ProcessStatus ScoringProcessStatus                `json:"processStatus"`
 	Details       map[OpApiType][]QualityCheckDetails `json:"details,omitzero"`
+	Debug         []string                            `json:"debug,omitempty"`
 }
 
 type ScoringProcessStatus string

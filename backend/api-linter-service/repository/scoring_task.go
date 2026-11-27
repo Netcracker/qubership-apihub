@@ -20,7 +20,7 @@ type ScoringTaskRepository interface {
 	GetProcessingTasks(ctx context.Context, executorId string) ([]entity.VersionScoringTask, error)
 	GetProcessingTask(ctx context.Context, taskId string, executorId string) (*entity.VersionScoringTask, error)
 	RefreshLeases(ctx context.Context, executorId string) error
-	IncRestartCount(ctx context.Context, taskId string, executorId string, details string) (owned bool, err error)
+	RecordAttemptFailure(ctx context.Context, taskId string, executorId string, details string, lastErrors *entity.ScoringAttemptErrors) (owned bool, err error)
 	CloseLostTask(ctx context.Context, taskId string, executorId string, details string) error
 
 	UpdateScore(ctx context.Context, task entity.VersionScoringTask, apply func(score *entity.VersionScore)) (*entity.VersionScore, error)
@@ -59,9 +59,13 @@ func (r *scoringTaskRepositoryImpl) ClaimFreeScoringTask(ctx context.Context, ex
 		var claimed entity.VersionScoringTask
 		if _, err := tx.QueryOne(&claimed, `update version_scoring_task
 			set status = ?, executor_id = ?, last_active = now(),
-				restart_count = restart_count + case when status = ? then 1 else 0 end
+				restart_count = restart_count + case when status = ? then 1 else 0 end,
+				last_attempt_errors = case when status = ? then null else last_attempt_errors end
 			where id = ? returning *`,
-			view.TaskStatusProcessing, executorId, view.TaskStatusProcessing, ents[0].Id); err != nil {
+			view.TaskStatusProcessing, executorId,
+			view.TaskStatusProcessing,
+			view.TaskStatusProcessing,
+			ents[0].Id); err != nil {
 			return fmt.Errorf("failed to claim scoring task %s: %w", ents[0].Id, err)
 		}
 		result = &claimed
@@ -109,10 +113,10 @@ func (r *scoringTaskRepositoryImpl) RefreshLeases(ctx context.Context, executorI
 	return err
 }
 
-func (r *scoringTaskRepositoryImpl) IncRestartCount(ctx context.Context, taskId string, executorId string, details string) (bool, error) {
+func (r *scoringTaskRepositoryImpl) RecordAttemptFailure(ctx context.Context, taskId string, executorId string, details string, lastErrors *entity.ScoringAttemptErrors) (bool, error) {
 	res, err := r.cp.GetConnection().ExecContext(ctx,
-		"update version_scoring_task set restart_count = restart_count + 1, details = ? where id = ? and executor_id = ? and status = ?",
-		details, taskId, executorId, view.TaskStatusProcessing)
+		"update version_scoring_task set restart_count = restart_count + 1, details = ?, last_attempt_errors = ? where id = ? and executor_id = ? and status = ?",
+		details, lastErrors, taskId, executorId, view.TaskStatusProcessing)
 	if err != nil {
 		return false, err
 	}
@@ -151,7 +155,7 @@ func (r *scoringTaskRepositoryImpl) CompleteScoring(ctx context.Context, task en
 		}
 		complete(score)
 		if _, err := tx.Exec("update version_scoring_task set status = ?, details = ?, last_active = now() where id = ? and executor_id = ? and status = ?",
-			view.TaskStatus(score.ProcessDetails.ProcessStatus), strings.Join(score.Debug, "; "), task.Id, task.ExecutorId, view.TaskStatusProcessing); err != nil {
+			view.TaskStatus(score.ProcessDetails.ProcessStatus), strings.Join(score.FlattenDebug(), "; "), task.Id, task.ExecutorId, view.TaskStatusProcessing); err != nil {
 			return fmt.Errorf("failed to complete scoring task %s: %w", task.Id, err)
 		}
 		status = score.ProcessDetails.ProcessStatus

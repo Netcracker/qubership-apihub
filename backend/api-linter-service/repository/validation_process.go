@@ -144,14 +144,13 @@ func (r *validationProcessRepositoryImpl) StartNextProcess(ctx context.Context, 
 		}
 		now := time.Now()
 		// A []byte parameter is formatted as bytea, so the JSON is bound as text.
-		_, err = tx.Exec(`insert into version_score (package_id, version, revision, scored_at, status, reasons, debug,
+		_, err = tx.Exec(`insert into version_score (package_id, version, revision, scored_at, status, reasons,
 				validation_process_id, process_details)
-			values (?, ?, ?, ?, '', '{}', '{}', ?, ?::jsonb)
+			values (?, ?, ?, ?, '', '{}', ?, ?::jsonb)
 			on conflict (package_id, version, revision) do update
 			set scored_at             = excluded.scored_at,
 				status                = excluded.status,
 				reasons               = excluded.reasons,
-				debug                 = excluded.debug,
 				validation_process_id = excluded.validation_process_id,
 				process_details       = excluded.process_details`,
 			packageId, version, revision, now, processId, string(processDetails))

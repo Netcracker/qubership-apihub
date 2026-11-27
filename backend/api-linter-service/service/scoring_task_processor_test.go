@@ -77,7 +77,6 @@ func newProcessorFixture() *processorFixture {
 			Revision:            testRevision,
 			Status:              "",
 			Reasons:             []string{},
-			Debug:               []string{},
 			ValidationProcessId: testValidationProcessId,
 			ProcessDetails:      startedProcessDetails(),
 		}},
@@ -298,10 +297,13 @@ func TestRunIntegrityAndBwc_FetchErrorWritesNothing(t *testing.T) {
 	f := newProcessorFixture()
 	f.apihub.getVersion = func(context.Context, string, string) (*view.VersionContent, error) { return nil, nil }
 
-	refused, err := f.processor.runIntegrityAndBwcChecks(context.Background(), f.task(), *f.score.get())
+	refused, err, attemptErrors := f.processor.runIntegrityAndBwcChecks(context.Background(), f.task(), *f.score.get())
 
 	if refused || err == nil {
 		t.Fatalf("refused = %t, err = %v, want an error", refused, err)
+	}
+	if attemptErrors.PublicationIntegrity != err.Error() || attemptErrors.BackwardsCompatibility != err.Error() {
+		t.Fatalf("attemptErrors = %#v, want both integrity and BWC attributed to %q", attemptErrors, err.Error())
 	}
 	if f.score.writes != 0 {
 		t.Fatalf("score written %d times, want 0", f.score.writes)
@@ -312,10 +314,13 @@ func TestRunIntegrityAndBwc_PanicIsReturnedAsAnError(t *testing.T) {
 	f := newProcessorFixture()
 	f.apihub.getVersion = func(context.Context, string, string) (*view.VersionContent, error) { panic("unexpected response") }
 
-	refused, err := f.processor.runIntegrityAndBwcChecks(context.Background(), f.task(), *f.score.get())
+	refused, err, attemptErrors := f.processor.runIntegrityAndBwcChecks(context.Background(), f.task(), *f.score.get())
 
 	if refused || err == nil || err.Error() != "panic: unexpected response" {
 		t.Fatalf("refused = %t, err = %v, want the panic as an error", refused, err)
+	}
+	if attemptErrors.PublicationIntegrity != err.Error() || attemptErrors.BackwardsCompatibility != err.Error() {
+		t.Fatalf("attemptErrors = %#v, want panic attributed to unfinished checks", attemptErrors)
 	}
 	if f.task().RestartCount != 0 {
 		t.Fatalf("restart count = %d, want 0: only the attempt increments it", f.task().RestartCount)
@@ -341,8 +346,9 @@ func TestProcessTick_ExhaustedTaskFailsUnfinishedPartsAndKeepsTerminalOnes(t *te
 	if row.ProcessDetails.ProcessStatus != view.ScoringProcessError {
 		t.Fatalf("process status = %s, want error", row.ProcessDetails.ProcessStatus)
 	}
-	if wantDebug := []string{"scoring task failed: " + wantDetails}; !slices.Equal(row.Debug, wantDebug) {
-		t.Fatalf("debug = %#v, want %#v with each line once", row.Debug, wantDebug)
+	wantDebug := []string{"scoring task failed: " + wantDetails}
+	if !slices.Equal(row.ProcessDetails.Debug, wantDebug) || !slices.Equal(row.FlattenDebug(), wantDebug) {
+		t.Fatalf("debug = %#v / flat %#v, want %#v with each line once", row.ProcessDetails.Debug, row.FlattenDebug(), wantDebug)
 	}
 	if integrity := row.ProcessDetails.PublicationIntegrity; integrity.ProcessStatus != view.ScoringProcessError || integrity.Details != nil {
 		t.Fatalf("integrity = %s %#v, want error without details", integrity.ProcessStatus, integrity.Details)
@@ -380,7 +386,7 @@ func TestProcessTick_ExhaustedTaskWithFinishedPartsEndsInError(t *testing.T) {
 			name: "quality error with another text",
 			modify: func(row *entity.VersionScore) {
 				row.ProcessDetails.QualityCheck.ProcessStatus = view.ScoringProcessError
-				row.Debug = []string{"qualityCheck: lint task failed: x"}
+				row.ProcessDetails.QualityCheck.Debug = []string{"lint task failed: x"}
 			},
 			wantStatus: view.ScoringNotPassed,
 			wantDebug:  []string{"qualityCheck: lint task failed: x", failureText},
@@ -412,8 +418,11 @@ func TestProcessTick_ExhaustedTaskWithFinishedPartsEndsInError(t *testing.T) {
 			if row.Status != tt.wantStatus {
 				t.Fatalf("status = %q, want %q computed from the parts", row.Status, tt.wantStatus)
 			}
-			if !slices.Equal(row.Debug, tt.wantDebug) {
-				t.Fatalf("debug = %#v, want %#v", row.Debug, tt.wantDebug)
+			if !slices.Equal(row.ProcessDetails.Debug, []string{failureText}) {
+				t.Fatalf("process debug = %#v, want %#v", row.ProcessDetails.Debug, []string{failureText})
+			}
+			if !slices.Equal(row.FlattenDebug(), tt.wantDebug) {
+				t.Fatalf("flat debug = %#v, want %#v", row.FlattenDebug(), tt.wantDebug)
 			}
 		})
 	}
@@ -595,7 +604,7 @@ func TestRunIntegrityAndBwc_RefusedIntegrityWriteStopsAndTheNextTickClosesTheTas
 	snapshot := *f.score.get()
 	f.score.row.ValidationProcessId = testSupersedingProcessId
 
-	refused, err := f.processor.runIntegrityAndBwcChecks(context.Background(), f.task(), snapshot)
+	refused, err, _ := f.processor.runIntegrityAndBwcChecks(context.Background(), f.task(), snapshot)
 
 	if !refused || err != nil {
 		t.Fatalf("refused = %t, err = %v, want a refusal", refused, err)
@@ -623,7 +632,7 @@ func TestRunIntegrityAndBwc_RefusedBwcWriteIsNotCounted(t *testing.T) {
 		return &view.VersionChangesView{}, nil
 	}
 
-	refused, err := f.processor.runIntegrityAndBwcChecks(context.Background(), f.task(), *f.score.get())
+	refused, err, _ := f.processor.runIntegrityAndBwcChecks(context.Background(), f.task(), *f.score.get())
 
 	if !refused || err != nil {
 		t.Fatalf("refused = %t, err = %v, want a refusal", refused, err)
@@ -642,7 +651,7 @@ func TestRunIntegrityAndBwc_LostOwnershipWritesNothing(t *testing.T) {
 	task := f.task()
 	f.tasks.tasks[testScoringTaskId].ExecutorId = testOtherExecutorId
 
-	refused, err := f.processor.runIntegrityAndBwcChecks(context.Background(), task, *f.score.get())
+	refused, err, _ := f.processor.runIntegrityAndBwcChecks(context.Background(), task, *f.score.get())
 
 	if !refused || err != nil {
 		t.Fatalf("refused = %t, err = %v, want a refusal", refused, err)
@@ -663,7 +672,7 @@ func TestRunIntegrityAndBwc_TerminalPartIsNeverRewritten(t *testing.T) {
 	f.score.row.ProcessDetails.PublicationIntegrity.ProcessStatus = view.ScoringProcessSuccess
 	f.score.row.ProcessDetails.PublicationIntegrity.Details = written
 
-	if _, err := f.processor.runIntegrityAndBwcChecks(context.Background(), f.task(), stale); err != nil {
+	if _, err, _ := f.processor.runIntegrityAndBwcChecks(context.Background(), f.task(), stale); err != nil {
 		t.Fatalf("unexpected error: %s", err)
 	}
 
@@ -790,10 +799,14 @@ func TestProcessTick_LintErrorKeepsStoredEntries(t *testing.T) {
 	f.lintTasks.tasks[testLintTaskId].Details = "restart count exceeded"
 	f.processor.processTick(ctx)
 
-	const wantLine = "qualityCheck: lint task failed: restart count exceeded"
+	const wantSectionLine = "lint task failed: restart count exceeded"
+	const wantFlatLine = "qualityCheck: " + wantSectionLine
 	row := f.score.get()
-	if row.ProcessDetails.QualityCheck.ProcessStatus != view.ScoringProcessError || !slices.Equal(row.Debug, []string{wantLine}) {
-		t.Fatalf("quality = %s %#v, want error from the lint task", row.ProcessDetails.QualityCheck.ProcessStatus, row.Debug)
+	if row.ProcessDetails.QualityCheck.ProcessStatus != view.ScoringProcessError || !slices.Equal(row.ProcessDetails.QualityCheck.Debug, []string{wantSectionLine}) {
+		t.Fatalf("quality = %s %#v, want error from the lint task", row.ProcessDetails.QualityCheck.ProcessStatus, row.ProcessDetails.QualityCheck.Debug)
+	}
+	if !slices.Equal(row.FlattenDebug(), []string{wantFlatLine}) {
+		t.Fatalf("flat debug = %#v, want %q", row.FlattenDebug(), wantFlatLine)
 	}
 	if len(row.ProcessDetails.QualityCheck.Details[view.RestApiType]) != 1 {
 		t.Fatalf("details = %#v, want the stored entry", row.ProcessDetails.QualityCheck.Details)
@@ -801,8 +814,8 @@ func TestProcessTick_LintErrorKeepsStoredEntries(t *testing.T) {
 	if row.ProcessDetails.ProcessStatus != view.ScoringProcessError {
 		t.Fatalf("process status = %s, want error", row.ProcessDetails.ProcessStatus)
 	}
-	if task := f.task(); task.Status != view.TaskStatusError || task.Details != wantLine {
-		t.Fatalf("task = %s %q, want error %q", task.Status, task.Details, wantLine)
+	if task := f.task(); task.Status != view.TaskStatusError || task.Details != wantFlatLine {
+		t.Fatalf("task = %s %q, want error %q", task.Status, task.Details, wantFlatLine)
 	}
 	assertHandledIds(t, f, "d1")
 	assertQualityReads(t, f, 1, 1, 1)
@@ -827,10 +840,11 @@ func TestProcessTick_LintErrorOnTheTickOfTheLastDocumentsScoresThemAndEndsInErro
 	f.lintTasks.tasks[testLintTaskId].Details = "restart count exceeded"
 	f.processor.processTick(ctx)
 
-	const wantLine = "qualityCheck: lint task failed: restart count exceeded"
+	const wantSectionLine = "lint task failed: restart count exceeded"
+	const wantFlatLine = "qualityCheck: " + wantSectionLine
 	row := f.score.get()
-	if row.ProcessDetails.QualityCheck.ProcessStatus != view.ScoringProcessError || !slices.Equal(row.Debug, []string{wantLine}) {
-		t.Fatalf("quality = %s %#v, want error %q", row.ProcessDetails.QualityCheck.ProcessStatus, row.Debug, wantLine)
+	if row.ProcessDetails.QualityCheck.ProcessStatus != view.ScoringProcessError || !slices.Equal(row.ProcessDetails.QualityCheck.Debug, []string{wantSectionLine}) {
+		t.Fatalf("quality = %s %#v, want error %q", row.ProcessDetails.QualityCheck.ProcessStatus, row.ProcessDetails.QualityCheck.Debug, wantSectionLine)
 	}
 	if len(row.ProcessDetails.QualityCheck.Details[view.RestApiType]) != 2 {
 		t.Fatalf("details = %#v, want both entries", row.ProcessDetails.QualityCheck.Details)
@@ -838,8 +852,8 @@ func TestProcessTick_LintErrorOnTheTickOfTheLastDocumentsScoresThemAndEndsInErro
 	if row.ProcessDetails.ProcessStatus != view.ScoringProcessError {
 		t.Fatalf("process status = %s, want error", row.ProcessDetails.ProcessStatus)
 	}
-	if task := f.task(); task.Status != view.TaskStatusError || task.Details != wantLine {
-		t.Fatalf("task = %s %q, want error %q", task.Status, task.Details, wantLine)
+	if task := f.task(); task.Status != view.TaskStatusError || task.Details != wantFlatLine {
+		t.Fatalf("task = %s %q, want error %q", task.Status, task.Details, wantFlatLine)
 	}
 	assertHandledIds(t, f, "d1", "d2")
 }
@@ -857,7 +871,7 @@ func TestProcessTick_LintFailureWithNoEntryStoresNullDetails(t *testing.T) {
 				f.lintTasks.tasks[testLintTaskId].Status = view.TaskStatusError
 				f.lintTasks.tasks[testLintTaskId].Details = "failed to save doc tasks"
 			},
-			wantLine: "qualityCheck: lint task failed: failed to save doc tasks",
+			wantLine: "lint task failed: failed to save doc tasks",
 		},
 		{
 			name:        "lint error after an empty running tick",
@@ -866,7 +880,7 @@ func TestProcessTick_LintFailureWithNoEntryStoresNullDetails(t *testing.T) {
 				f.lintTasks.tasks[testLintTaskId].Status = view.TaskStatusError
 				f.lintTasks.tasks[testLintTaskId].Details = "failed to save doc tasks"
 			},
-			wantLine: "qualityCheck: lint task failed: failed to save doc tasks",
+			wantLine: "lint task failed: failed to save doc tasks",
 		},
 		{
 			name: "lint error with only unfinished document tasks",
@@ -875,18 +889,18 @@ func TestProcessTick_LintFailureWithNoEntryStoresNullDetails(t *testing.T) {
 				f.lintTasks.tasks[testLintTaskId].Details = "failed to save doc tasks"
 				f.docTasks.tasks = []entity.DocumentLintTask{docTask("d1", "a.yaml", view.SpectralLinter, testSpectralRuleset, view.TaskStatusProcessing)}
 			},
-			wantLine: "qualityCheck: lint task failed: failed to save doc tasks",
+			wantLine: "lint task failed: failed to save doc tasks",
 		},
 		{
 			name:     "lint task missing on the first tick",
 			fail:     func(f *processorFixture) { delete(f.lintTasks.tasks, testLintTaskId) },
-			wantLine: "qualityCheck: lint task not found",
+			wantLine: "lint task not found",
 		},
 		{
 			name:        "lint task missing after an empty running tick",
 			runningTick: true,
 			fail:        func(f *processorFixture) { delete(f.lintTasks.tasks, testLintTaskId) },
-			wantLine:    "qualityCheck: lint task not found",
+			wantLine:    "lint task not found",
 		},
 	}
 	for _, tt := range tests {
@@ -904,8 +918,11 @@ func TestProcessTick_LintFailureWithNoEntryStoresNullDetails(t *testing.T) {
 			f.processor.processTick(ctx)
 
 			row := f.score.get()
-			if row.ProcessDetails.QualityCheck.ProcessStatus != view.ScoringProcessError || !slices.Equal(row.Debug, []string{tt.wantLine}) {
-				t.Fatalf("quality = %s %#v, want error %q", row.ProcessDetails.QualityCheck.ProcessStatus, row.Debug, tt.wantLine)
+			if row.ProcessDetails.QualityCheck.ProcessStatus != view.ScoringProcessError || !slices.Equal(row.ProcessDetails.QualityCheck.Debug, []string{tt.wantLine}) {
+				t.Fatalf("quality = %s %#v, want error %q", row.ProcessDetails.QualityCheck.ProcessStatus, row.ProcessDetails.QualityCheck.Debug, tt.wantLine)
+			}
+			if wantFlat := []string{"qualityCheck: " + tt.wantLine}; !slices.Equal(row.FlattenDebug(), wantFlat) {
+				t.Fatalf("flat debug = %#v, want %#v", row.FlattenDebug(), wantFlat)
 			}
 			if row.ProcessDetails.QualityCheck.Details != nil {
 				t.Fatalf("details = %#v, want nil", row.ProcessDetails.QualityCheck.Details)
@@ -1545,8 +1562,7 @@ func TestOverallStatus(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			score := finishedScore()
-			debug := []string{"qualityCheck: lint task failed: x"}
-			score.Debug = slices.Clone(debug)
+			score.ProcessDetails.Debug = []string{"legacy debug line"}
 			tt.modify(score)
 			recomputeOverallStatus(score)
 
@@ -1556,8 +1572,8 @@ func TestOverallStatus(t *testing.T) {
 			if score.Reasons == nil || !slices.Equal(score.Reasons, tt.wantReasons) {
 				t.Errorf("reasons = %#v, want %#v", score.Reasons, tt.wantReasons)
 			}
-			if !slices.Equal(score.Debug, debug) {
-				t.Errorf("debug = %#v, want %#v as stored", score.Debug, debug)
+			if !slices.Equal(score.ProcessDetails.Debug, []string{"legacy debug line"}) {
+				t.Errorf("process debug = %#v, want unchanged", score.ProcessDetails.Debug)
 			}
 		})
 	}
@@ -1571,7 +1587,8 @@ func failedDocTask(id string, fileId string, linter view.Linter, details string)
 
 func TestProcessTick_UnavailableRequiredResultEndsQualityInError(t *testing.T) {
 	const spectralFailure = "spectral: process exited with code 2"
-	const wantLine = "qualityCheck: 1 required lint result(s) unavailable"
+	const wantSectionLine = "1 required lint result(s) unavailable"
+	const wantFlatLine = "qualityCheck: " + wantSectionLine
 	const wantReason = "Validation internal error for linter spectral."
 	tests := []struct {
 		name         string
@@ -1590,6 +1607,7 @@ func TestProcessTick_UnavailableRequiredResultEndsQualityInError(t *testing.T) {
 			arrange: func(f *processorFixture) {
 				f.docTasks.tasks = []entity.DocumentLintTask{failedDocTask("d1", "a.yaml", view.SpectralLinter, "")}
 			},
+			wantInternal: emptyLinterInternalError,
 		},
 		{
 			name: "failed linted document",
@@ -1616,8 +1634,11 @@ func TestProcessTick_UnavailableRequiredResultEndsQualityInError(t *testing.T) {
 			if quality.ProcessStatus != view.ScoringProcessError || !reflect.DeepEqual(quality.Details[view.RestApiType], wantEntries) {
 				t.Fatalf("quality = %s %#v, want error with %#v", quality.ProcessStatus, quality.Details, wantEntries)
 			}
-			if !slices.Equal(row.Debug, []string{wantLine}) {
-				t.Fatalf("debug = %#v, want %q", row.Debug, wantLine)
+			if !slices.Equal(quality.Debug, []string{wantSectionLine}) {
+				t.Fatalf("quality debug = %#v, want %q", quality.Debug, wantSectionLine)
+			}
+			if !slices.Equal(row.FlattenDebug(), []string{wantFlatLine}) {
+				t.Fatalf("flat debug = %#v, want %q", row.FlattenDebug(), wantFlatLine)
 			}
 			if !slices.Equal(row.Reasons, []string{wantReason}) {
 				t.Fatalf("reasons = %#v, want the entry reason only", row.Reasons)
@@ -1625,8 +1646,8 @@ func TestProcessTick_UnavailableRequiredResultEndsQualityInError(t *testing.T) {
 			if row.ProcessDetails.ProcessStatus != view.ScoringProcessError || row.Status != view.ScoringNotPassed {
 				t.Fatalf("score = %s %q, want error and not_passed", row.ProcessDetails.ProcessStatus, row.Status)
 			}
-			if task := f.task(); task.Status != view.TaskStatusError || task.Details != wantLine {
-				t.Fatalf("task = %s %q, want error %q", task.Status, task.Details, wantLine)
+			if task := f.task(); task.Status != view.TaskStatusError || task.Details != wantFlatLine {
+				t.Fatalf("task = %s %q, want error %q", task.Status, task.Details, wantFlatLine)
 			}
 		})
 	}
@@ -1640,9 +1661,9 @@ func TestProcessTick_UnavailableResultScoredWhileTheLintRunsIsCountedWhenTheLint
 	f.processor.processTick(ctx)
 
 	row := f.score.get()
-	if row.ProcessDetails.QualityCheck.ProcessStatus != view.ScoringProcessProcessing || len(row.ProcessDetails.QualityCheck.Details[view.RestApiType]) != 1 || len(row.Debug) != 0 {
+	if row.ProcessDetails.QualityCheck.ProcessStatus != view.ScoringProcessProcessing || len(row.ProcessDetails.QualityCheck.Details[view.RestApiType]) != 1 || len(row.FlattenDebug()) != 0 {
 		t.Fatalf("quality = %s %#v, debug = %#v, want processing with one entry and no line",
-			row.ProcessDetails.QualityCheck.ProcessStatus, row.ProcessDetails.QualityCheck.Details, row.Debug)
+			row.ProcessDetails.QualityCheck.ProcessStatus, row.ProcessDetails.QualityCheck.Details, row.FlattenDebug())
 	}
 	assertHandledIds(t, f, "d1")
 
@@ -1653,8 +1674,11 @@ func TestProcessTick_UnavailableResultScoredWhileTheLintRunsIsCountedWhenTheLint
 	if row.ProcessDetails.QualityCheck.ProcessStatus != view.ScoringProcessError || len(row.ProcessDetails.QualityCheck.Details[view.RestApiType]) != 1 {
 		t.Fatalf("quality = %s %#v, want error with the entry once", row.ProcessDetails.QualityCheck.ProcessStatus, row.ProcessDetails.QualityCheck.Details)
 	}
-	if wantDebug := []string{"qualityCheck: 1 required lint result(s) unavailable"}; !slices.Equal(row.Debug, wantDebug) {
-		t.Fatalf("debug = %#v, want %#v", row.Debug, wantDebug)
+	if wantSection := []string{"1 required lint result(s) unavailable"}; !slices.Equal(row.ProcessDetails.QualityCheck.Debug, wantSection) {
+		t.Fatalf("quality debug = %#v, want %#v", row.ProcessDetails.QualityCheck.Debug, wantSection)
+	}
+	if wantFlat := []string{"qualityCheck: 1 required lint result(s) unavailable"}; !slices.Equal(row.FlattenDebug(), wantFlat) {
+		t.Fatalf("flat debug = %#v, want %#v", row.FlattenDebug(), wantFlat)
 	}
 	assertHandledIds(t, f, "d1")
 }
@@ -1663,7 +1687,8 @@ func TestFailScoringTask_LinesAndReasonsOfAGiveUp(t *testing.T) {
 	const lastError = "failed to get version content: 503 Service Unavailable"
 	const restartDiagnostic = "restart count exceeded limit, last error: " + lastError
 	const taskLine = "scoring task failed: " + restartDiagnostic
-	const countLine = "qualityCheck: 1 required lint result(s) unavailable"
+	const countLine = "1 required lint result(s) unavailable"
+	const flatCountLine = "qualityCheck: " + countLine
 	const entryReason = "Validation internal error for linter spectral."
 	unavailableEntries := map[view.OpApiType][]view.QualityCheckDetails{
 		view.RestApiType: {{FileId: "a.yaml", Linter: view.SpectralLinter, Status: view.ScoringNotPassed, Reason: entryReason, InternalError: "spectral crashed"}},
@@ -1684,10 +1709,9 @@ func TestFailScoringTask_LinesAndReasonsOfAGiveUp(t *testing.T) {
 			name: "quality already in error by an unavailable result, BWC unfinished",
 			arrange: func(row *entity.VersionScore) {
 				row.ProcessDetails.PublicationIntegrity = view.PublicationIntegrityCheck{ProcessStatus: view.ScoringProcessSuccess, Details: &view.PublicationIntegrityDetails{Status: view.ScoringPassed}}
-				row.ProcessDetails.QualityCheck = view.QualityCheck{ProcessStatus: view.ScoringProcessError, Details: unavailableEntries}
-				row.Debug = []string{countLine}
+				row.ProcessDetails.QualityCheck = view.QualityCheck{ProcessStatus: view.ScoringProcessError, Details: unavailableEntries, Debug: []string{countLine}}
 			},
-			wantDebug:   []string{countLine, taskLine},
+			wantDebug:   []string{flatCountLine, taskLine},
 			wantReasons: []string{bwcInternalErrorReason, entryReason},
 		},
 		{
@@ -1711,8 +1735,8 @@ func TestFailScoringTask_LinesAndReasonsOfAGiveUp(t *testing.T) {
 			f.processor.processTick(context.Background())
 
 			row := f.score.get()
-			if !slices.Equal(row.Debug, tt.wantDebug) {
-				t.Fatalf("debug = %#v, want %#v", row.Debug, tt.wantDebug)
+			if !slices.Equal(row.FlattenDebug(), tt.wantDebug) {
+				t.Fatalf("flat debug = %#v, want %#v", row.FlattenDebug(), tt.wantDebug)
 			}
 			if !slices.Equal(row.Reasons, tt.wantReasons) {
 				t.Fatalf("reasons = %#v, want %#v", row.Reasons, tt.wantReasons)
@@ -1767,7 +1791,6 @@ func (f *processorFixture) addOtherTask() *inMemoryScore {
 		Version:             testVersion,
 		Revision:            testOtherRevision,
 		Reasons:             []string{},
-		Debug:               []string{},
 		ValidationProcessId: testOtherValidationProcessId,
 		ProcessDetails:      startedProcessDetails(),
 	}}
@@ -2081,8 +2104,8 @@ func TestAttempt_EveryPartWriteOrderKeepsAllPartsAndCompletes(t *testing.T) {
 			if row.ProcessDetails.ProcessStatus != view.ScoringProcessSuccess || row.Status != view.ScoringPassedWithDefects {
 				t.Fatalf("score = %s %q, want success and passed_with_defects", row.ProcessDetails.ProcessStatus, row.Status)
 			}
-			if !reflect.DeepEqual(row.Reasons, []string{"Version contain 1 warnings for linter spectral."}) || len(row.Debug) != 0 {
-				t.Fatalf("reasons = %#v, debug = %#v", row.Reasons, row.Debug)
+			if !reflect.DeepEqual(row.Reasons, []string{"Version contain 1 warnings for linter spectral."}) || len(row.FlattenDebug()) != 0 {
+				t.Fatalf("reasons = %#v, debug = %#v", row.Reasons, row.FlattenDebug())
 			}
 		})
 	}
@@ -2206,6 +2229,7 @@ func TestAttempt_CompletionFailureIsCountedAndTheNextAttemptCompletes(t *testing
 		row := f.score.get()
 		wantChecks := view.ScoringProcessDetails{
 			ProcessStatus: view.ScoringProcessError,
+			Debug:         []string{"scoring task failed: " + restartDiagnostic},
 			PublicationIntegrity: view.PublicationIntegrityCheck{
 				ProcessStatus: view.ScoringProcessSuccess,
 				Details: &view.PublicationIntegrityDetails{
@@ -2230,8 +2254,8 @@ func TestAttempt_CompletionFailureIsCountedAndTheNextAttemptCompletes(t *testing
 		if row.Status != view.ScoringPassedWithDefects || !slices.Equal(row.Reasons, []string{warningsReason}) {
 			t.Fatalf("verdict = %q %#v, want passed_with_defects with the warning reason", row.Status, row.Reasons)
 		}
-		if wantDebug := []string{"scoring task failed: " + restartDiagnostic}; !slices.Equal(row.Debug, wantDebug) {
-			t.Fatalf("debug = %#v, want %#v", row.Debug, wantDebug)
+		if wantDebug := []string{"scoring task failed: " + restartDiagnostic}; !slices.Equal(row.FlattenDebug(), wantDebug) {
+			t.Fatalf("flat debug = %#v, want %#v", row.FlattenDebug(), wantDebug)
 		}
 	})
 }
@@ -2675,6 +2699,7 @@ func TestAcquireTasks_ExpiredLeaseCountsAsAnAttempt(t *testing.T) {
 		name         string
 		status       view.TaskStatus
 		restartCount int
+		initialErr   string
 		wantStatus   view.TaskStatus
 		wantRestarts int
 		wantDetails  string
@@ -2682,12 +2707,14 @@ func TestAcquireTasks_ExpiredLeaseCountsAsAnAttempt(t *testing.T) {
 		{
 			name:        "first claim",
 			status:      view.TaskStatusNotStarted,
+			initialErr:  lastError,
 			wantStatus:  view.TaskStatusProcessing,
 			wantDetails: lastError,
 		},
 		{
 			name:         "first takeover",
 			status:       view.TaskStatusProcessing,
+			initialErr:   lastError,
 			wantStatus:   view.TaskStatusProcessing,
 			wantRestarts: 1,
 			wantDetails:  lastError,
@@ -2696,9 +2723,19 @@ func TestAcquireTasks_ExpiredLeaseCountsAsAnAttempt(t *testing.T) {
 			name:         "second takeover gives the task up",
 			status:       view.TaskStatusProcessing,
 			restartCount: repository.MaxScoringTaskRestarts - 1,
+			initialErr:   lastError,
 			wantStatus:   view.TaskStatusError,
 			wantRestarts: repository.MaxScoringTaskRestarts,
 			wantDetails:  "restart count exceeded limit, last error: " + lastError,
+		},
+		{
+			name:         "second takeover with empty details omits last error suffix",
+			status:       view.TaskStatusProcessing,
+			restartCount: repository.MaxScoringTaskRestarts - 1,
+			initialErr:   "",
+			wantStatus:   view.TaskStatusError,
+			wantRestarts: repository.MaxScoringTaskRestarts,
+			wantDetails:  "restart count exceeded limit",
 		},
 	}
 	for _, tt := range tests {
@@ -2707,7 +2744,7 @@ func TestAcquireTasks_ExpiredLeaseCountsAsAnAttempt(t *testing.T) {
 			task := f.tasks.tasks[testScoringTaskId]
 			task.Status = tt.status
 			task.RestartCount = tt.restartCount
-			task.Details = lastError
+			task.Details = tt.initialErr
 			f.tasks.free = []string{testScoringTaskId}
 
 			f.processor.acquireTasks(context.Background())
@@ -2715,6 +2752,12 @@ func TestAcquireTasks_ExpiredLeaseCountsAsAnAttempt(t *testing.T) {
 			assertAttemptEnded(t, f, tt.wantStatus, tt.wantRestarts)
 			if f.task().Details != tt.wantDetails {
 				t.Fatalf("details = %q, want %q", f.task().Details, tt.wantDetails)
+			}
+			if tt.wantStatus == view.TaskStatusError {
+				wantDebug := []string{scoringTaskFailedDebugPrefix + tt.wantDetails}
+				if got := f.score.get().ProcessDetails.Debug; !slices.Equal(got, wantDebug) {
+					t.Fatalf("process debug = %#v, want %#v", got, wantDebug)
+				}
 			}
 			if f.lintTasks.readCount(testValidationProcessId) != 0 {
 				t.Fatal("the acquire loop must start no attempt")
@@ -2889,5 +2932,221 @@ func TestAttempt_DeadlineCountsAsAFailedAttempt(t *testing.T) {
 	}
 	if taken := len(f.processor.attemptSlots); taken != 0 {
 		t.Fatalf("%d attempt slots taken, want 0", taken)
+	}
+}
+
+func TestFailScoringTask_PerSectionAttribution(t *testing.T) {
+	t.Run("GetVersion failure with finished quality attributes integrity and BWC only", func(t *testing.T) {
+		f := newProcessorFixture()
+		f.lintTasks.tasks[testLintTaskId].Status = view.TaskStatusSuccess
+		f.beforeBwc = returning(errors.New("503 Service Unavailable"))
+
+		for range repository.MaxScoringTaskRestarts {
+			f.processor.processTick(context.Background())
+		}
+		f.processor.processTick(context.Background())
+
+		row := f.score.get()
+		const wantErr = "failed to get version content: 503 Service Unavailable"
+		if row.ProcessDetails.ProcessStatus != view.ScoringProcessError || row.Status != view.ScoringNotPassed {
+			t.Fatalf("score = %s %q, want error/not_passed", row.ProcessDetails.ProcessStatus, row.Status)
+		}
+		if !slices.Equal(row.ProcessDetails.PublicationIntegrity.Debug, []string{wantErr}) {
+			t.Fatalf("integrity debug = %#v, want %q", row.ProcessDetails.PublicationIntegrity.Debug, wantErr)
+		}
+		if !slices.Equal(row.ProcessDetails.BackwardsCompatibility.Debug, []string{wantErr}) {
+			t.Fatalf("BWC debug = %#v, want %q", row.ProcessDetails.BackwardsCompatibility.Debug, wantErr)
+		}
+		if len(row.ProcessDetails.QualityCheck.Debug) != 0 || row.ProcessDetails.QualityCheck.ProcessStatus != view.ScoringProcessSuccess {
+			t.Fatalf("quality = %s %#v, want success with no debug", row.ProcessDetails.QualityCheck.ProcessStatus, row.ProcessDetails.QualityCheck.Debug)
+		}
+		if len(row.ProcessDetails.Debug) != 0 {
+			t.Fatalf("process debug = %#v, want omitted when all failed checks are attributed", row.ProcessDetails.Debug)
+		}
+		wantFlat := []string{
+			"publicationIntegrity: " + wantErr,
+			"backwardsCompatibility: " + wantErr,
+		}
+		if !slices.Equal(entity.MakeVersionScoreView_deprecated(row).Debug, wantFlat) {
+			t.Fatalf("v1 debug = %#v, want %#v", entity.MakeVersionScoreView_deprecated(row).Debug, wantFlat)
+		}
+	})
+
+	t.Run("BWC failure while quality waits for lint does not misattribute APIHUB error to quality", func(t *testing.T) {
+		f := newProcessorFixture()
+		f.apihub.getVersionChanges = func(int) (*view.VersionChangesView, error) {
+			return nil, errors.New("status code 500")
+		}
+
+		for range repository.MaxScoringTaskRestarts {
+			f.processor.processTick(context.Background())
+		}
+		f.processor.processTick(context.Background())
+
+		row := f.score.get()
+		if row.ProcessDetails.PublicationIntegrity.ProcessStatus != view.ScoringProcessSuccess || len(row.ProcessDetails.PublicationIntegrity.Debug) != 0 {
+			t.Fatalf("integrity = %s %#v, want success without debug", row.ProcessDetails.PublicationIntegrity.ProcessStatus, row.ProcessDetails.PublicationIntegrity.Debug)
+		}
+		if row.ProcessDetails.BackwardsCompatibility.ProcessStatus != view.ScoringProcessError || len(row.ProcessDetails.BackwardsCompatibility.Debug) != 1 || !strings.Contains(row.ProcessDetails.BackwardsCompatibility.Debug[0], "status code 500") {
+			t.Fatalf("BWC = %s %#v, want error with 500", row.ProcessDetails.BackwardsCompatibility.ProcessStatus, row.ProcessDetails.BackwardsCompatibility.Debug)
+		}
+		if row.ProcessDetails.QualityCheck.ProcessStatus != view.ScoringProcessError || len(row.ProcessDetails.QualityCheck.Debug) != 0 {
+			t.Fatalf("quality = %s %#v, want error without misattributed BWC error", row.ProcessDetails.QualityCheck.ProcessStatus, row.ProcessDetails.QualityCheck.Debug)
+		}
+		if len(row.ProcessDetails.Debug) != 1 || !strings.HasPrefix(row.ProcessDetails.Debug[0], scoringTaskFailedDebugPrefix) {
+			t.Fatalf("process debug = %#v, want scoring task failed line explaining aborted quality", row.ProcessDetails.Debug)
+		}
+	})
+
+	t.Run("concurrent BWC and quality DB failures attribute each section independently", func(t *testing.T) {
+		f := newProcessorFixture()
+		f.score.row.ProcessDetails.PublicationIntegrity = view.PublicationIntegrityCheck{
+			ProcessStatus: view.ScoringProcessSuccess,
+			Details:       &view.PublicationIntegrityDetails{Status: view.ScoringPassed},
+		}
+		f.apihub.getVersionChanges = func(int) (*view.VersionChangesView, error) {
+			return nil, errors.New("apihub 502")
+		}
+		f.lintTasks.beforeRead = returning(errors.New("db connection refused"))
+
+		for range repository.MaxScoringTaskRestarts {
+			f.processor.processTick(context.Background())
+		}
+		f.processor.processTick(context.Background())
+
+		row := f.score.get()
+		if len(row.ProcessDetails.BackwardsCompatibility.Debug) != 1 || !strings.Contains(row.ProcessDetails.BackwardsCompatibility.Debug[0], "apihub 502") {
+			t.Fatalf("BWC debug = %#v, want apihub 502", row.ProcessDetails.BackwardsCompatibility.Debug)
+		}
+		if len(row.ProcessDetails.QualityCheck.Debug) != 1 || !strings.Contains(row.ProcessDetails.QualityCheck.Debug[0], "db connection refused") {
+			t.Fatalf("quality debug = %#v, want db connection refused", row.ProcessDetails.QualityCheck.Debug)
+		}
+		if len(row.ProcessDetails.Debug) != 0 {
+			t.Fatalf("process debug = %#v, want omitted when both unfinished checks are attributed", row.ProcessDetails.Debug)
+		}
+	})
+	t.Run("integrity-only panic does not attribute BWC", func(t *testing.T) {
+		f := newProcessorFixture()
+		f.lintTasks.tasks[testLintTaskId].Status = view.TaskStatusSuccess
+		f.tasks.updateScoreFault = func() (bool, error) { panic("integrity write panic") }
+
+		for range repository.MaxScoringTaskRestarts {
+			f.processor.processTick(context.Background())
+		}
+		f.processor.processTick(context.Background())
+
+		row := f.score.get()
+		if !slices.Equal(row.ProcessDetails.PublicationIntegrity.Debug, []string{"panic: integrity write panic"}) {
+			t.Fatalf("integrity debug = %#v, want integrity panic", row.ProcessDetails.PublicationIntegrity.Debug)
+		}
+		if len(row.ProcessDetails.BackwardsCompatibility.Debug) != 0 {
+			t.Fatalf("BWC debug = %#v, want empty because BWC never started", row.ProcessDetails.BackwardsCompatibility.Debug)
+		}
+		if len(row.ProcessDetails.Debug) != 1 || !strings.HasPrefix(row.ProcessDetails.Debug[0], scoringTaskFailedDebugPrefix) {
+			t.Fatalf("process debug = %#v, want scoring task failed line for aborted BWC", row.ProcessDetails.Debug)
+		}
+	})
+
+	t.Run("lease expiry after an earlier quality failure reports process-level cause", func(t *testing.T) {
+		f := newProcessorFixture()
+		f.score.row.ProcessDetails.PublicationIntegrity = view.PublicationIntegrityCheck{
+			ProcessStatus: view.ScoringProcessSuccess,
+			Details:       &view.PublicationIntegrityDetails{Status: view.ScoringPassed},
+		}
+		f.score.row.ProcessDetails.BackwardsCompatibility = view.BackwardsCompatibilityCheck{
+			ProcessStatus: view.ScoringProcessSuccess,
+			Details:       map[view.OpApiType]view.BackwardCompatibilityDetails{},
+		}
+		f.lintTasks.beforeRead = returning(errors.New("temporary db hiccup"))
+
+		f.processor.processTick(context.Background())
+		assertAttemptEnded(t, f, view.TaskStatusProcessing, 1)
+
+		f.lintTasks.beforeRead = nil
+		f.tasks.free = []string{testScoringTaskId}
+		f.processor.acquireTasks(context.Background())
+
+		row := f.score.get()
+		if row.ProcessDetails.QualityCheck.ProcessStatus != view.ScoringProcessError || len(row.ProcessDetails.QualityCheck.Debug) != 0 {
+			t.Fatalf("quality = %s %#v, want error without stale attempt 1 error", row.ProcessDetails.QualityCheck.ProcessStatus, row.ProcessDetails.QualityCheck.Debug)
+		}
+		if len(row.ProcessDetails.Debug) != 1 || !strings.HasPrefix(row.ProcessDetails.Debug[0], scoringTaskFailedDebugPrefix) {
+			t.Fatalf("process debug = %#v, want process-level failure line", row.ProcessDetails.Debug)
+		}
+	})
+}
+
+func TestProcessTick_UnexpectedLintTaskStatusEndsQualityInError(t *testing.T) {
+	f := newQualityFixture()
+	f.lintTasks.tasks[testLintTaskId].Status = view.TaskStatus("unknown_state")
+	f.docTasks.tasks = []entity.DocumentLintTask{failedDocTask("d1", "a.yaml", view.SpectralLinter, "spectral crashed")}
+
+	f.processor.processTick(context.Background())
+
+	row := f.score.get()
+	wantDebug := []string{"unexpected lint task status: unknown_state", "1 required lint result(s) unavailable"}
+	if row.ProcessDetails.QualityCheck.ProcessStatus != view.ScoringProcessError || !slices.Equal(row.ProcessDetails.QualityCheck.Debug, wantDebug) {
+		t.Fatalf("quality = %s %#v, want error %#v", row.ProcessDetails.QualityCheck.ProcessStatus, row.ProcessDetails.QualityCheck.Debug, wantDebug)
+	}
+	if len(row.ProcessDetails.QualityCheck.Details[view.RestApiType]) != 1 {
+		t.Fatalf("details = %#v, want finished document entry preserved", row.ProcessDetails.QualityCheck.Details)
+	}
+	assertHandledIds(t, f, "d1")
+	if row.ProcessDetails.ProcessStatus != view.ScoringProcessError || row.Status != view.ScoringNotPassed {
+		t.Fatalf("score = %s %q, want error/not_passed", row.ProcessDetails.ProcessStatus, row.Status)
+	}
+}
+
+func TestProcessTick_FailedOptionalLinterWithEmptyDetailsSetsFallbackInternalError(t *testing.T) {
+	f := newQualityFixture()
+	f.lintTasks.tasks[testLintTaskId].Status = view.TaskStatusSuccess
+	f.docTasks.tasks = []entity.DocumentLintTask{failedDocTask("d1", "a.yaml", view.AiLinter, "")}
+
+	f.processor.processTick(context.Background())
+
+	row := f.score.get()
+	entry := row.ProcessDetails.QualityCheck.Details[view.RestApiType][0]
+	if entry.Status != view.ScoringPassed || entry.InternalError != emptyLinterInternalError {
+		t.Fatalf("entry = %#v, want passed with fallback internalErrors %q", entry, emptyLinterInternalError)
+	}
+}
+
+func TestSectionReset_ClearsOnlyResetSectionDebug(t *testing.T) {
+	score := finishedScore()
+	score.ProcessDetails.ProcessStatus = view.ScoringProcessError
+	score.ProcessDetails.PublicationIntegrity = view.PublicationIntegrityCheck{
+		ProcessStatus: view.ScoringProcessError,
+		Debug:         []string{"integrity error"},
+	}
+	score.ProcessDetails.BackwardsCompatibility = view.BackwardsCompatibilityCheck{
+		ProcessStatus: view.ScoringProcessError,
+		Debug:         []string{"bwc error"},
+	}
+	score.ProcessDetails.QualityCheck = view.QualityCheck{
+		ProcessStatus: view.ScoringProcessError,
+		Debug:         []string{"lint task failed: boom"},
+	}
+	score.ProcessDetails.Debug = []string{"scoring task failed: timeout"}
+
+	score.ProcessDetails.BackwardsCompatibility = view.BackwardsCompatibilityCheck{
+		ProcessStatus: view.ScoringProcessNotStarted,
+	}
+
+	wantV1Debug := []string{
+		"publicationIntegrity: integrity error",
+		"qualityCheck: lint task failed: boom",
+		"scoring task failed: timeout",
+	}
+	if got := entity.MakeVersionScoreView_deprecated(score).Debug; !slices.Equal(got, wantV1Debug) {
+		t.Fatalf("v1 debug after BWC reset = %#v, want %#v", got, wantV1Debug)
+	}
+	v2 := entity.MakeVersionScoreView(score)
+	if len(v2.ProcessDetails.BackwardsCompatibility.Debug) != 0 {
+		t.Fatalf("reset BWC debug = %#v, want empty", v2.ProcessDetails.BackwardsCompatibility.Debug)
+	}
+	if !slices.Equal(v2.ProcessDetails.PublicationIntegrity.Debug, []string{"integrity error"}) ||
+		!slices.Equal(v2.ProcessDetails.QualityCheck.Debug, []string{"lint task failed: boom"}) ||
+		!slices.Equal(v2.ProcessDetails.Debug, []string{"scoring task failed: timeout"}) {
+		t.Fatalf("other sections' debug must stay intact: %#v", v2.ProcessDetails)
 	}
 }

@@ -51,8 +51,11 @@ func (s *inMemoryScore) writeCount() int {
 func detachedScore(row *entity.VersionScore) *entity.VersionScore {
 	detached := *row
 	detached.Reasons = slices.Clone(row.Reasons)
-	detached.Debug = slices.Clone(row.Debug)
 	checks := &detached.ProcessDetails
+	checks.Debug = slices.Clone(row.ProcessDetails.Debug)
+	checks.PublicationIntegrity.Debug = slices.Clone(row.ProcessDetails.PublicationIntegrity.Debug)
+	checks.BackwardsCompatibility.Debug = slices.Clone(row.ProcessDetails.BackwardsCompatibility.Debug)
+	checks.QualityCheck.Debug = slices.Clone(row.ProcessDetails.QualityCheck.Debug)
 	checks.BackwardsCompatibility.Details = maps.Clone(row.ProcessDetails.BackwardsCompatibility.Details)
 	checks.QualityCheck.Details = maps.Clone(row.ProcessDetails.QualityCheck.Details)
 	for apiType, entries := range checks.QualityCheck.Details {
@@ -116,6 +119,10 @@ type scoringTaskRepoStub struct {
 func detachedTask(task *entity.VersionScoringTask) entity.VersionScoringTask {
 	detached := *task
 	detached.HandledDocTaskIds = slices.Clone(task.HandledDocTaskIds)
+	if task.LastAttemptErrors != nil {
+		errs := *task.LastAttemptErrors
+		detached.LastAttemptErrors = &errs
+	}
 	return detached
 }
 
@@ -153,6 +160,7 @@ func (r *scoringTaskRepoStub) ClaimFreeScoringTask(_ context.Context, executorId
 	r.free = r.free[1:]
 	if task.Status == view.TaskStatusProcessing {
 		task.RestartCount++
+		task.LastAttemptErrors = nil
 	}
 	task.Status = view.TaskStatusProcessing
 	task.ExecutorId = executorId
@@ -208,7 +216,7 @@ func (r *scoringTaskRepoStub) ownedLocked(taskId string, executorId string) *ent
 	return task
 }
 
-func (r *scoringTaskRepoStub) IncRestartCount(ctx context.Context, taskId string, executorId string, details string) (bool, error) {
+func (r *scoringTaskRepoStub) RecordAttemptFailure(ctx context.Context, taskId string, executorId string, details string, lastErrors *entity.ScoringAttemptErrors) (bool, error) {
 	r.mu.Lock()
 	if r.incCalls == nil {
 		r.incCalls = map[string]int{}
@@ -216,7 +224,7 @@ func (r *scoringTaskRepoStub) IncRestartCount(ctx context.Context, taskId string
 	r.incCalls[taskId]++
 	r.mu.Unlock()
 	// go-pg fails a statement with an expired context. The stub refuses it instead, so a test that passes the wrong
-	// context sees no restart rather than an endless retry.
+	// context sees no recorded failure rather than an endless retry.
 	if ctx.Err() != nil {
 		return false, nil
 	}
@@ -233,6 +241,12 @@ func (r *scoringTaskRepoStub) IncRestartCount(ctx context.Context, taskId string
 	}
 	task.RestartCount++
 	task.Details = details
+	if lastErrors != nil {
+		copied := *lastErrors
+		task.LastAttemptErrors = &copied
+	} else {
+		task.LastAttemptErrors = nil
+	}
 	return true, nil
 }
 
@@ -309,7 +323,7 @@ func (r *scoringTaskRepoStub) CompleteScoring(_ context.Context, task entity.Ver
 		}
 		complete(row)
 		owned.Status = view.TaskStatus(row.ProcessDetails.ProcessStatus)
-		owned.Details = strings.Join(row.Debug, "; ")
+		owned.Details = strings.Join(row.FlattenDebug(), "; ")
 		status = row.ProcessDetails.ProcessStatus
 		return nil
 	})
