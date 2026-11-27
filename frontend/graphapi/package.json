@@ -76,7 +76,7 @@
     "typescript": "catalog:",
     "vite": "catalog:",
     "vite-plugin-dts": "catalog:",
-    "webpack": "5.97.1",
+    "webpack": "5.104.1",
     "yaml": "2.9.0"
   },
   "jest": {
