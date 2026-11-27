@@ -32,7 +32,7 @@
     "@stoplight/json-schema-sampler": "^0.2.2",
     "@stoplight/markdown-viewer": "^5.4.7",
     "@stoplight/mosaic": "^1.53.6",
-    "@stoplight/mosaic-code-editor": "^1.19.1",
+    "@stoplight/mosaic-code-editor": "^1.53.6",
     "@stoplight/mosaic-code-viewer": "^1.53.6",
     "@stoplight/react-error-boundary": "^2.0.0",
     "@stoplight/types": "^13.0.0",
