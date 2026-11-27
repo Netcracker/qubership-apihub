@@ -51,7 +51,9 @@ A card is one Markdown file per product version, named `v<X>-<Y>-<Z>.md`. Copy t
    release card through `src/lib/latest-release.ts`; do not type the version in a page or in `content.ts`.
 
 A release card goes into the repository through a pull request into `release`, as part of the release; see the step
-"Add the landing release card" in the release process.
+"Add the landing release card" in the release process. After the product tag is already published, announce it with
+the `apihub-release-announce` skill: that skill commits the card on `develop`, writes the Mattermost post, and
+generates the poster.
 
 ## Verify
 

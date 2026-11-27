@@ -1,0 +1,6 @@
+name: apihub-release-announce
+version: 0.1.0
+description: Announce a published APIHUB product release on the landing, in Mattermost, and as a poster
+author: Qubership
+dependencies:
+  apm: []

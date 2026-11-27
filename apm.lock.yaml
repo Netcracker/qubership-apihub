@@ -1005,13 +1005,28 @@ dependencies:
   - .claude/skills/apihub-landing-refresh/SKILL.md
   - .cursor/rules/apihub-landing-refresh.mdc
   deployed_file_hashes:
-    .agents/skills/apihub-landing-refresh/SKILL.md: sha256:4652b932a8baee821757e5c4cff7f493e94c4156a873aeba34845f1966854b0b
+    .agents/skills/apihub-landing-refresh/SKILL.md: sha256:c3b3935bff8c1ade6137b17d7053309eb39c9dc46910a0ec44d59eb62d26484d
     .claude/rules/apihub-landing-refresh.md: sha256:ad2428617463404ff12a67d1d38530fbcc9e957d77c99369425f41db32556def
-    .claude/skills/apihub-landing-refresh/SKILL.md: sha256:4652b932a8baee821757e5c4cff7f493e94c4156a873aeba34845f1966854b0b
+    .claude/skills/apihub-landing-refresh/SKILL.md: sha256:c3b3935bff8c1ade6137b17d7053309eb39c9dc46910a0ec44d59eb62d26484d
     .cursor/rules/apihub-landing-refresh.mdc: sha256:e536fa41894ad36c834f14712ae8605ae1428b78a8f9e873c9eaf30318ebfb51
   source: local
   local_path: ./agent-packages/apihub-landing-refresh
-  content_hash: sha256:5990f2988e4e446c120e33dc5db237e6588352536c0ebc6b09b9b3ad5826fa02
+  content_hash: sha256:098bac96b8af409f344361863487822fa5ac8f7954efaf6fe46c5787f54a6211
+- repo_url: _local/apihub-release-announce
+  name: apihub-release-announce
+  version: 0.1.0
+  package_type: apm_package
+  deployed_files:
+  - .agents/skills/apihub-release-announce
+  - .agents/skills/apihub-release-announce/SKILL.md
+  - .claude/skills/apihub-release-announce
+  - .claude/skills/apihub-release-announce/SKILL.md
+  deployed_file_hashes:
+    .agents/skills/apihub-release-announce/SKILL.md: sha256:9206021296d018a99e60e0395d117186abf259c8c8aae22bdb25f0cfc5d6040a
+    .claude/skills/apihub-release-announce/SKILL.md: sha256:9206021296d018a99e60e0395d117186abf259c8c8aae22bdb25f0cfc5d6040a
+  source: local
+  local_path: ./agent-packages/apihub-release-announce
+  content_hash: sha256:3958d3010205e775b85f7d48555519594fa57accf1d2e72dd2a7e7cb1b922ec3
 - repo_url: _local/apihub-mui-coding
   name: apihub-mui-coding
   version: 1.0.0
@@ -3601,7 +3616,7 @@ deployments:
   owners:
   - ./agent-packages/apihub-landing-refresh
   active_owner: ./agent-packages/apihub-landing-refresh
-  content_hash: sha256:4652b932a8baee821757e5c4cff7f493e94c4156a873aeba34845f1966854b0b
+  content_hash: sha256:c3b3935bff8c1ade6137b17d7053309eb39c9dc46910a0ec44d59eb62d26484d
 - kind: project-relative
   target: claude
   value: .claude/skills/apihub-mui-coding
@@ -3656,6 +3671,24 @@ deployments:
   - ./frontend/ui/agent-packages/apihub-react-coding
   active_owner: ./frontend/ui/agent-packages/apihub-react-coding
   content_hash: sha256:f42afce4d303b7732a8bf9fe9381e2e9c1d1a476b30c8443dc57d3803ca51e92
+- kind: project-relative
+  target: claude
+  value: .claude/skills/apihub-release-announce
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-release-announce
+  active_owner: ./agent-packages/apihub-release-announce
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/apihub-release-announce/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-release-announce
+  active_owner: ./agent-packages/apihub-release-announce
+  content_hash: sha256:9206021296d018a99e60e0395d117186abf259c8c8aae22bdb25f0cfc5d6040a
 - kind: project-relative
   target: claude
   value: .claude/skills/apihub-task
@@ -5482,7 +5515,7 @@ deployments:
   owners:
   - ./agent-packages/apihub-landing-refresh
   active_owner: ./agent-packages/apihub-landing-refresh
-  content_hash: sha256:4652b932a8baee821757e5c4cff7f493e94c4156a873aeba34845f1966854b0b
+  content_hash: sha256:c3b3935bff8c1ade6137b17d7053309eb39c9dc46910a0ec44d59eb62d26484d
 - kind: project-relative
   target: cursor
   value: .agents/skills/apihub-mui-coding
@@ -5537,6 +5570,24 @@ deployments:
   - ./frontend/ui/agent-packages/apihub-react-coding
   active_owner: ./frontend/ui/agent-packages/apihub-react-coding
   content_hash: sha256:f42afce4d303b7732a8bf9fe9381e2e9c1d1a476b30c8443dc57d3803ca51e92
+- kind: project-relative
+  target: cursor
+  value: .agents/skills/apihub-release-announce
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-release-announce
+  active_owner: ./agent-packages/apihub-release-announce
+  content_hash: null
+- kind: project-relative
+  target: cursor
+  value: .agents/skills/apihub-release-announce/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-release-announce
+  active_owner: ./agent-packages/apihub-release-announce
+  content_hash: sha256:9206021296d018a99e60e0395d117186abf259c8c8aae22bdb25f0cfc5d6040a
 - kind: project-relative
   target: cursor
   value: .agents/skills/apihub-task

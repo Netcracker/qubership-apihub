@@ -21,7 +21,7 @@ exception: they name the consumer modules too.
 
   | Location | Packages |
   |---|---|
-  | `agent-packages/` | `apihub-deployment-authoring`, `apihub-deployment-followup`, `apihub-add-go-service`, `apihub-landing-refresh`, `apihub-adr`, `apihub-design-authoring`, `apihub-autonomous-agent`, `analyze-migration` |
+  | `agent-packages/` | `apihub-deployment-authoring`, `apihub-deployment-followup`, `apihub-add-go-service`, `apihub-landing-refresh`, `apihub-release-announce`, `apihub-adr`, `apihub-design-authoring`, `apihub-autonomous-agent`, `analyze-migration` |
   | `backend/portal-backend/agent-packages/` | `apihub-backend-developer`, `apihub-backend-self-review`, `backend-conventions`, `advanced-verification` |
   | `backend/agent/agent-packages/` | `apihub-agent-developer`, `agent-conventions` |
   | `frontend/<library>/agent-packages/` | `api-diff-*`, `api-doc-viewer-*`, `next-data-model-*`, `api-processor-*`, `api-unifier-*`, `ddlapi-*`, `json-crawl-*` |
@@ -29,7 +29,8 @@ exception: they name the consumer modules too.
   | `tests/postman-collections/agent-packages/` | `postman-e2e-authoring`, `postman-e2e-followup` |
 
 The repository-level packages are described in [`agent-packages/README.md`](../../agent-packages/README.md). To add a
-Go service, use the `apihub-add-go-service` skill: it lists every place that names a service.
+Go service, use the `apihub-add-go-service` skill: it lists every place that names a service. To announce a published
+product release, invoke `apihub-release-announce` and pass the GitHub release URL.
 
 ## Change a package
 

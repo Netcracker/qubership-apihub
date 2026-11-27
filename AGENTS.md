@@ -78,7 +78,7 @@ packages live next to the code they describe:
 
 | Location | Packages |
 |----------|----------|
-| `agent-packages/` | `apihub-deployment-authoring`, `apihub-deployment-followup`, `apihub-add-go-service`, `apihub-landing-refresh`, `apihub-adr`, `apihub-design-authoring`, `apihub-autonomous-agent`, `analyze-migration` |
+| `agent-packages/` | `apihub-deployment-authoring`, `apihub-deployment-followup`, `apihub-add-go-service`, `apihub-landing-refresh`, `apihub-release-announce`, `apihub-adr`, `apihub-design-authoring`, `apihub-autonomous-agent`, `analyze-migration` |
 | `backend/portal-backend/agent-packages/` | `apihub-backend-developer`, `apihub-backend-self-review`, `backend-conventions`, `advanced-verification` |
 | `backend/agent/agent-packages/` | `apihub-agent-developer`, `agent-conventions` |
 | `frontend/<library>/agent-packages/` | `api-diff-*`, `api-doc-viewer-*`, `next-data-model-*`, `api-processor-*`, `api-unifier-*`, `ddlapi-*`, `json-crawl-*` |
