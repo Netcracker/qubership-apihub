@@ -10,7 +10,7 @@ merged.
 |---|---|
 | Does opencode find the skills in `.claude/skills/`? | Yes, and loads one by name through its `skill` tool. It skipped 8 of 36 skills whose `SKILL.md` had no `name` in the frontmatter; the sources are fixed |
 | Does it attach the module `AGENTS.md` when it reads a file of the module? | Yes: reading `backend/portal-backend/go.mod` attached `backend/portal-backend/AGENTS.md` |
-| Does `instructions: [".claude/rules/*.md"]` load the rules? | No: the prompt was the same size with and without it. A relative glob does not reach the hidden `.claude` folder. An absolute path does, so the config uses `{env:GITHUB_WORKSPACE}/.claude/rules/*.md` |
+| Does `instructions: [".claude/rules/*.md"]` load the rules? | Yes. The spike read it as no, because the prompt was the same size with and without it: `OPENCODE_CONFIG_DIR` pointed at the spike folder, so the run without the rules also read the `opencode.json` there and loaded them (rechecked on November 25, 2026). The agent's config uses `{env:GITHUB_WORKSPACE}/.claude/rules/*.md`, since `OPENCODE_DISABLE_PROJECT_CONFIG` makes a relative path resolve in `OPENCODE_CONFIG_DIR` |
 | Do the JSON events carry tokens and cost? | Yes, in `step_finish`: `part.tokens` and `part.cost` (USD). The uncached prompt is in `tokens.cache.write`, not in `tokens.input` |
 | Does `--variant` work? | Yes: `medium`, `high`, `xhigh`, and `max` for `gpt-6.1-sol`, `medium` and `max` for `gpt-6-luna` |
 | Do bash permission patterns hold? | Yes: `curl`, `gh`, and `git push` were rejected, also inside `bash -c` and after `&&`. `node -e` with a quoted script was rejected although `node *` was allowed, so phase 3 checks the implementer's allow-list command by command |

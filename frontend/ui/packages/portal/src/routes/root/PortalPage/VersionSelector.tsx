@@ -19,9 +19,7 @@ import {
 } from '@netcracker/qubership-apihub-ui-shared/entities/version-status'
 import type { PackageVersion } from '@netcracker/qubership-apihub-ui-shared/entities/versions'
 import { usePackageVersions } from '@netcracker/qubership-apihub-ui-shared/hooks/versions/usePackageVersions'
-import type { PackageVersionsSortBy, SortOrder } from '@netcracker/qubership-apihub-ui-shared/types/sorting'
-import { DESC_ORDER, SORT_BY_CREATED_AT, SORT_BY_VERSION } from '@netcracker/qubership-apihub-ui-shared/types/sorting'
-import { isNotEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
+import { isEmpty, isNotEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
 import { getSplittedVersionKey } from '@netcracker/qubership-apihub-ui-shared/utils/versions'
 import type { FC, ReactNode } from 'react'
 import { memo, useCallback, useMemo, useState } from 'react'
@@ -34,22 +32,28 @@ import {
   useSetIsLatestRevision,
 } from './FullMainVersionProvider'
 import { ClientValidationStatuses, useApiQualityClientValidationStatus } from './VersionPage/ApiQualityValidationSummaryProvider'
+import { useVersionListSort } from './useVersionListSort'
+import { VersionSortSelector } from './VersionSortSelector'
 
 export const VersionSelector: FC = memo(() => {
   const [searchValue, setSearchValue] = useState('')
   const [anchor, setAnchor] = useState<HTMLElement>()
   const [activeTab, setActiveTab] = useState<VersionTab>(RELEASE_TAB)
   const statuses = useMemo(() => [VERSION_STATUS_MAP[activeTab]], [activeTab])
+  const { packageId } = useParams()
+  const [versionListSort, setVersionListSort] = useVersionListSort(packageId!)
 
   const { versions, areVersionsLoading } = usePackageVersions({
     status: statuses,
     textFilter: searchValue,
-    sortBy: VERSION_SORT_MAP[activeTab].sortBy,
-    sortOrder: VERSION_SORT_MAP[activeTab].sortOrder,
+    sortBy: versionListSort.sortBy,
+    sortOrder: versionListSort.sortOrder,
   })
 
+  // Sorting makes no sense for a tab without versions; with no search results the tab still has versions
+  const isSortDisabled = !areVersionsLoading && isEmpty(versions) && !searchValue
+
   const { navigateToOverview } = useNavigation()
-  const { packageId } = useParams()
   const setFullMainVersion = useSetFullMainVersion()
   const setIsLatestRevision = useSetIsLatestRevision()
   const invalidatePackageVersionContent = useAsyncInvalidatePackageVersionContentByVersion()
@@ -83,13 +87,12 @@ export const VersionSelector: FC = memo(() => {
       >
         <VersionsTable
           value={versions!}
-          versionStatus={VERSION_STATUS_MAP[activeTab]}
           onClickVersion={onClickVersion}
           isLoading={areVersionsLoading}
           kind={currentPackage?.kind}
         />
       </Placeholder>
-    </>, [activeTab, areVersionsLoading, currentPackage?.kind, onClickVersion, searchValue, versions])
+    </>, [areVersionsLoading, currentPackage?.kind, onClickVersion, searchValue, versions])
 
   return (
     <Box display="flex" alignItems="center" gap={2} overflow="hidden" data-testid="VersionSelector">
@@ -138,6 +141,11 @@ export const VersionSelector: FC = memo(() => {
               sx={{ mb: 1 }}
             >
               <SearchBar onValueChange={setSearchValue} data-testid="VersionSearchBar" />
+              <VersionSortSelector
+                value={versionListSort}
+                onChange={setVersionListSort}
+                disabled={isSortDisabled}
+              />
             </Box>
           </Box>
         </MenuButtonItems>
@@ -156,16 +164,6 @@ type VersionTab =
 export const VERSION_STATUS_MAP: Record<VersionTab, VersionStatus> = {
   [RELEASE_TAB]: RELEASE_VERSION_STATUS,
   [DRAFT_TAB]: DRAFT_VERSION_STATUS,
-}
-
-type VersionSort = {
-  sortBy: PackageVersionsSortBy
-  sortOrder: SortOrder
-}
-
-export const VERSION_SORT_MAP: Record<VersionTab, VersionSort> = {
-  [RELEASE_TAB]: { sortBy: SORT_BY_VERSION, sortOrder: DESC_ORDER },
-  [DRAFT_TAB]: { sortBy: SORT_BY_CREATED_AT, sortOrder: DESC_ORDER },
 }
 
 const tabContentStyle = { maxHeight: '300px', width: '100%', pr: 1, gridArea: 'content' }

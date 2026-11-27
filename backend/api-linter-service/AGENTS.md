@@ -217,7 +217,7 @@ When a change affects REST contracts or integration behaviour, update the neighb
 | Engine | Code | API types | Notes |
 |--------|------|-----------|-------|
 | Spectral | `view.SpectralLinter` | OpenAPI 2.0/3.0/3.1, AsyncAPI 3.0 | Subprocess via `linters.spectral.binPath`; concurrency via `linters.spectral.workers` |
-| AI linter | `view.AiLinter` | OpenAPI 2.0/3.0/3.1 only | Opt-in via `linters.ai.enabled`; OpenAI settings live under `linters.ai.openAI` |
+| AI linter | `view.AiLinter` | OpenAPI 2.0/3.0/3.1 only | Opt-in via `linters.ai.enabled`; provider selected via `linters.ai.provider` (`openai` default, or `litellm`); connection settings live under `linters.ai.openAI` |
 
 Registration lives in `service/linter_config.go`; selection in `service/linter_selector.go`; execution branch in `service/doc_task_processor.go`.
 
@@ -299,7 +299,7 @@ Full checklist: `.cursor/rules/ci-super-linter.mdc` after `apm install`.
 
 ## Agent packages
 
-One root `apm.yml` covers the repository; deploy with `apm install --target cursor,claude`
+One root `apm.yml` covers the repository; deploy with `apm install`
 from the root (never `apm compile`). This module has no local package; only store packages apply:
 
 - `apihub-go-developer` (skill and rule): use for any Go change here.

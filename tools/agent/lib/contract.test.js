@@ -312,6 +312,7 @@ test('ciTriage fixes need a file, an integer or null line, and a non-empty what;
 function goodImplementation(extra = {}) {
   return {
     status: 'done',
+    threadReplies: [],
     summary: 'Guards the nil changelog in the builder.',
     commitType: 'fix',
     scope: 'portal-backend',
@@ -324,8 +325,11 @@ function goodImplementation(extra = {}) {
   }
 }
 
-test('implementation accepts a done, a blocked, and an unrelated answer', () => {
+test('implementation accepts done, no-changes, blocked, and unrelated answers', () => {
   assert.doesNotThrow(() => validate('implementation', goodImplementation()))
+  assert.doesNotThrow(() => validate('implementation', goodImplementation({ status: 'no-changes', threadReplies: [
+    { thread: 1, status: 'already-satisfied', body: 'The folder test already validates each request.' },
+  ] })))
   const unrelated = goodImplementation({ status: 'unrelated', blockedReason: 'Flaky E2E; the change touches no auth.' })
   assert.doesNotThrow(() => validate('implementation', unrelated))
   const blocked = goodImplementation({
@@ -334,6 +338,20 @@ test('implementation accepts a done, a blocked, and an unrelated answer', () => 
     stopReason: 'context-missing',
   })
   assert.doesNotThrow(() => validate('implementation', blocked))
+})
+
+test('implementation requires structured replies and rejects malformed or oversized replies', () => {
+  const missing = goodImplementation()
+  delete missing.threadReplies
+  assert.deepEqual(problemsOf('implementation', missing), ['threadReplies: missing required property'])
+  const reply = { thread: 1, status: 'fixed', body: 'Added a regression test.' }
+  for (const bad of [
+    { ...reply, thread: 'T1' }, { ...reply, status: 'resolved' }, { ...reply, body: '' },
+    { ...reply, body: 'x'.repeat(4001) }, { ...reply, commentId: 999 },
+  ]) {
+    assert.ok(problemsOf('implementation', goodImplementation({ threadReplies: [bad] })).length > 0)
+  }
+  assert.ok(problemsOf('implementation', goodImplementation({ threadReplies: Array(31).fill(reply) })).length > 0)
 })
 
 test('implementation stopReason is required and takes every stop reason but approval-required, or empty', () => {
@@ -364,7 +382,7 @@ test('implementation lists every problem with its path, including the title leng
       '"test", "ci"',
     'extra: unexpected property',
     'notes: missing required property',
-    'status: expected one of "done", "blocked", "unrelated"',
+    'status: expected one of "done", "no-changes", "blocked", "unrelated"',
     'summary: expected at least 1 character(s)',
     'title: expected at most 72 character(s), got 73',
   ])

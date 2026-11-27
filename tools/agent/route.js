@@ -433,6 +433,30 @@ function decideIssueComment({ payload, config, actorPermission, issueState, agen
   return handler({ number, isPull: Boolean(issue.pull_request), command, issue, agentFacts })
 }
 
+/** Inline commands use the same access rules as PR conversation commands, with their parent thread attached. */
+function decideReviewComment(input) {
+  const { payload, agentFacts } = input
+  const pr = payload.pull_request
+  if (!pr || !payload.comment) throw new TypeError('A review comment needs pull_request and comment payloads')
+  if (payload.action !== 'created') return skip(pr.number, `review comment action '${payload.action}' is not handled`)
+  if (!parseCommand(payload.comment.body)) return skip(pr.number, 'not a command')
+  if (!sameRepo(pr.head?.repo?.full_name, pr.base?.repo?.full_name)) {
+    return skip(pr.number, 'the pull request is from a fork')
+  }
+  const agent = agentPullOf(agentFacts, pr.number)
+  if (!agent || agent.issueNumber !== agentIssueOf(pr.body)) return skip(pr.number, "the pull request is not the agent's")
+  const decision = decideIssueComment({
+    ...input, payload: { ...payload, issue: { ...pr, pull_request: {} } },
+  })
+  if (decision.action === 'implement' && decision.kind !== 'update') {
+    decision.command = {
+      ...decision.command,
+      reviewCommentId: commentIdOf(payload.comment.in_reply_to_id ?? payload.comment.id),
+    }
+  }
+  return decision
+}
+
 /**
  * `workflow_run` events: a CI workflow finished on a branch. The gate acts only on the open pull request that the
  * agent made, that its issue's state names, and that waits for CI at this very commit.
@@ -510,6 +534,7 @@ const EVENT_HANDLERS = {
   issues: decideIssues,
   workflow_run: decideWorkflowRun,
   pull_request_review: decidePullRequestReview,
+  pull_request_review_comment: decideReviewComment,
   schedule: decideSchedule,
 }
 
@@ -552,7 +577,7 @@ function isChangeRequest(eventName, payload) {
  */
 function needsActorPermission(eventName, payload) {
   if (isChangeRequest(eventName, payload)) return true
-  if (eventName !== 'issue_comment' || payload?.action !== 'created') return false
+  if (!['issue_comment', 'pull_request_review_comment'].includes(eventName) || payload?.action !== 'created') return false
   if (isBot(payload.comment?.user?.login)) return false
   return parseCommand(payload.comment?.body) !== null
 }
@@ -593,6 +618,9 @@ const AGENT_PULL_COMMANDS = new Set(['retry', 'update', 'rerun', 'ci-check', 'st
  */
 function needsAgentFacts(eventName, payload) {
   if (isChangeRequest(eventName, payload)) return agentIssueOf(payload.pull_request?.body) !== null
+  if (eventName === 'pull_request_review_comment') {
+    return needsActorPermission(eventName, payload) && agentIssueOf(payload.pull_request?.body) !== null
+  }
   const issue = payload?.issue
   if (eventName !== 'issue_comment' || payload?.action !== 'created' || !issue?.pull_request) return false
   if (isBot(payload.comment?.user?.login) || agentIssueOf(issue.body) === null) return false
@@ -850,7 +878,7 @@ const WORKER_ACTIONS = new Set(['review', 'analyze', 'implement', 'rerun', 'ci-c
  * answered at once. The automatic events carry no command.
  */
 function isWorkerCommand(eventName, decision) {
-  if (eventName !== 'issue_comment' && eventName !== 'pull_request_review') return false
+  if (!['issue_comment', 'pull_request_review', 'pull_request_review_comment'].includes(eventName)) return false
   if (!decision.command || !WORKER_ACTIONS.has(decision.action)) return false
   return decision.action !== 'chat' || decision.command.name === 'chat'
 }
@@ -978,7 +1006,8 @@ async function declineIfBusy({ eventName, payload, decision, config, env, getCli
     log.info('decline posted', { mention: actor, on: `#${target}`, run: busy.run.id })
   }
   // A review has no comment to react to.
-  await react({ gh, commentId: commentIdOf(payload.comment?.id), content: 'confused', dryRun: config.dryRun })
+  await react({ gh, commentId: commentIdOf(payload.comment?.id), content: 'confused', dryRun: config.dryRun,
+    eventName })
   return skip(decision.number, reason)
 }
 

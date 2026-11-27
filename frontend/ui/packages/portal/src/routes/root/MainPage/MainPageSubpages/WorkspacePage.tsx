@@ -18,11 +18,14 @@ import { isBoolean } from '@netcracker/qubership-apihub-ui-shared/utils/types'
 import { ToolbarTitle } from '@netcracker/qubership-apihub-ui-shared/components/ToolbarTitle'
 import { MainPageCard } from '@portal/routes/root/MainPage/MainPageCard'
 import { CONTENT_PLACEHOLDER_AREA, NO_PERMISSION, Placeholder } from '@netcracker/qubership-apihub-ui-shared/components/Placeholder'
+import { useDocumentTitle } from '@netcracker/qubership-apihub-ui-shared/hooks/common/useDocumentTitle'
+import { PAGE_TITLES } from '@portal/routes/pageTitles'
 
 export const WorkspacePage: FC = memo(() => {
   const { workspaceKey = '' } = useParams()
 
   const [workspace, isLoadingWorkspace] = usePackage({ packageKey: workspaceKey, hideError: true })
+  useDocumentTitle(PAGE_TITLES.workspace(workspace?.name))
 
   const [favorPackage] = useFavorPackage(workspaceKey, workspaceKey)
   const [disfavorPackage] = useDisfavorPackage(workspaceKey, workspaceKey)

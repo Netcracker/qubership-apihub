@@ -63,6 +63,7 @@ const fresh = (analysis = {}) => ({
 const withLabels = (...labels) => ({ ...issue, labels: labels.map((name) => ({ name })) })
 const implementation = {
   status: 'done',
+  threadReplies: [],
   summary: 'Guards the nil changelog in the builder. A test covers it.',
   commitType: 'fix',
   scope: 'portal-backend',
@@ -270,9 +271,12 @@ test('diffTooLarge: the limits are inclusive, per playbook, and lines are insert
   assert.equal(diffTooLarge(stat(1, 601), 'bug-fix'), true)
   assert.equal(diffTooLarge(stat(1, 300, 301), 'bug-fix'), true)
   assert.equal(diffTooLarge(stat(1, 300, 300), 'bug-fix'), false)
-  assert.equal(diffTooLarge(stat(30, 1000), 'task'), false)
+  assert.equal(diffTooLarge(stat(15, 1238), 'task'), false)
+  assert.equal(diffTooLarge(stat(30, 5000), 'task'), false)
   assert.equal(diffTooLarge(stat(31, 0), 'task'), true)
-  assert.equal(diffTooLarge(stat(1, 1001), 'task'), true)
+  assert.equal(diffTooLarge(stat(1, 5001), 'task'), true)
+  assert.equal(diffTooLarge(stat(1, 2500, 2500), 'task'), false)
+  assert.equal(diffTooLarge(stat(1, 2500, 2501), 'task'), true)
   assert.equal(diffTooLarge(stat(21, 10), 'task'), false)
   assert.throws(() => diffTooLarge(stat(1, 1), 'story'), /No diff limit/)
 })
@@ -341,6 +345,28 @@ test('checkImplementation: a blocked answer names a stop reason, and no other an
       return true
     })
   }
+})
+
+test('checkImplementation: replies must cover exactly the supplied threads with evidence', () => {
+  const threads = [{ id: 'T1' }, { id: 'T2' }]
+  const replies = [1, 2].map((thread) => ({ thread, status: 'already-satisfied', body: `Evidence for ${thread}.` }))
+  const answer = { ...implementation, status: 'no-changes', threadReplies: replies }
+  assert.equal(checkImplementation(answer, 'task', 'review', threads), answer)
+  for (const kind of ['ci-fix', 'update']) {
+    assert.throws(() => checkImplementation(answer, 'task', kind, threads), /no-changes is not allowed/)
+  }
+  assert.throws(() => checkImplementation({ ...answer, verification: ' ' }, 'task', 'review', threads), /evidence/)
+  assert.throws(() => checkImplementation({ ...answer, threadReplies: [] }, 'task', 'review', threads), /missing thread/)
+  assert.throws(() => checkImplementation({ ...answer, threadReplies: [replies[0], replies[0]] },
+    'task', 'review', threads), /duplicate thread/)
+  assert.throws(() => checkImplementation({ ...answer, threadReplies: [{ ...replies[0], thread: 3 }, replies[1]] },
+    'task', 'review', threads), /unknown thread 3/)
+  assert.throws(() => checkImplementation({ ...answer, threadReplies: [{ ...replies[0], body: ' ' }, replies[1]] },
+    'task', 'review', threads), /needs an explanation/)
+  assert.throws(() => checkImplementation({ ...answer, threadReplies: [{ ...replies[0], status: 'fixed' }, replies[1]] },
+    'task', 'review', threads), /requires every thread to be already-satisfied/)
+  assert.throws(() => checkImplementation({ ...implementation, threadReplies: [{ ...replies[0], status: 'blocked' }] },
+    'task', 'review', [threads[0]]), /done cannot leave a supplied thread blocked/)
 })
 
 test('checkImplementation: unrelated needs a reason and is allowed only on a CI fix', () => {
@@ -562,7 +588,7 @@ test('renderSelfReviewInput: the commits, the issue in untrusted, the plan, and 
   assert.match(text, /## The issue\n\n<untrusted>\nTitle: Changelog is empty/)
   assert.match(text, /## Notes of the maintainer\n\n<untrusted>\nMind it\.\n<\/untrusted>/)
   assert.match(text, /- Approach: Guard the nil changelog\./)
-  assert.match(text, /## The implementer's summary\n\n<untrusted>\nGuards the nil\.\n<\/untrusted>\n$/)
+  assert.match(text, /## The implementer's summary\n\n<untrusted>\nGuards the nil\.\n<\/untrusted>\n/)
   assert.doesNotMatch(
     renderSelfReviewInput({ issue, plan, analysis: null, notes: '', summary: 's', base: 'a', head: 'b' }),
     /Notes of the maintainer/,
@@ -1164,7 +1190,7 @@ test('outcomeProblems: a good outcome has none; a foreign branch, bad ids, and m
   assert.ok(has({ result: null, stopped: null, analysis: { ...analysis, verdict: 'great' } }, /analysis: /))
 })
 
-test('touchedAgentFiles lists changes to the agent instructions and tools, at any depth for AGENTS.md', () => {
+test('touchedAgentFiles lists changes to the agent instructions, tools, and opencode config, at any depth', () => {
   const { touchedAgentFiles } = require('./implement')
   const out = [
     '.agents/skills/x/SKILL.md',
@@ -1174,10 +1200,14 @@ test('touchedAgentFiles lists changes to the agent instructions and tools, at an
     'agent-packages/apihub-autonomous-agent/apm.yml',
     'backend/portal-backend/AGENTS.md',
     'backend/portal-backend/CLAUDE.md',
+    'opencode.json',
+    'frontend/ui/opencode.jsonc',
+    '.opencode/agents/frontend-verifier.md',
     'backend/portal-backend/service/x.go',
     'tools/ci/ci-verdict.js',
+    'docs/opencode.json.md',
   ].join('\n')
-  assert.deepEqual(touchedAgentFiles(out), out.split('\n').slice(0, 7))
+  assert.deepEqual(touchedAgentFiles(out), out.split('\n').slice(0, 10))
 })
 
 // ---------------------------------------------------------------------------------------------- /agent update
@@ -1255,6 +1285,22 @@ test('renderSelfReviewInput: an update points at the merge commit and lists the 
     '## Files with conflicts\n\n<untrusted>\n- `a/b.go`\n</untrusted>\n\n## The issue\n',
   )
   assert.doesNotMatch(renderSelfReviewInput({ ...input, kind: 'human' }), /merge commit|Files with conflicts/)
+})
+
+test('all attempt kinds give the implementer and reviewer the same CI verification policy', () => {
+  const getPolicy = (text) => text.split('## Verification policy for the autonomous runner\n\n')[1]
+    .split('still needs a hand-off.')[0]
+  for (const kind of ['initial', 'human', 'review', 'ci-fix', 'update']) {
+    const implementer = renderImplementInput({ ...baseInput, kind })
+    const reviewer = renderSelfReviewInput({ issue, plan, summary: 'Done.', base: 'a', head: 'b', kind })
+    const policy = getPolicy(implementer)
+    assert.ok(policy)
+    assert.equal(getPolicy(reviewer), policy)
+    assert.match(policy, /CI on the published head commit is the final verification gate/)
+    assert.match(policy, /unavailable local integration environment alone is not a blocker/)
+    assert.match(policy, /Never claim those checks passed/)
+    assert.match(policy, /verification unavailable both here and in CI /)
+  }
 })
 
 test('conflictMarkers: real git finds every marker line and nothing that only looks like one', async () => {

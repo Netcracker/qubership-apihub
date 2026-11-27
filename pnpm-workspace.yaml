@@ -14,7 +14,7 @@ packages:
 catalog:
   '@storybook/addon-docs': 10.6.3
   '@storybook/addon-links': 10.6.7
-  '@storybook/html-vite': 10.6.3
+  '@storybook/html-vite': 10.6.7
   '@storybook/react': 10.6.3
   '@storybook/react-vite': 10.6.7
   '@types/jest': 30.0.0
@@ -60,6 +60,7 @@ allowBuilds:
   msw: false
   # Native binaries ship as optional platform packages; the script only falls back to a local build.
   sharp: false
+  fsevents: false
 
 # Lets `pnpm deploy` build build-task-consumer's production tree without injectWorkspacePackages,
 # which would change how every internal dependency resolves.

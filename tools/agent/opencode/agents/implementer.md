@@ -3,8 +3,9 @@ description: Implements a Bug or Task issue of this repository in the working tr
 mode: primary
 steps: 200
 permission:
-  # The agent's own instructions and tools, and the workflows, are for people to change: a change there would steer
-  # the reviewer of this run, and the push of a workflow file is refused anyway.
+  # The agent's own instructions and tools, the opencode config, and the workflows are for people to change: a change
+  # there would steer the reviewer of this run or an opencode session on the branch, and the push of a workflow file
+  # is refused anyway.
   edit:
     "*": allow
     "*.agents/*": deny
@@ -14,6 +15,9 @@ permission:
     "*agent-packages/*": deny
     "*AGENTS.md": deny
     "*CLAUDE.md": deny
+    "*opencode.json": deny
+    "*opencode.jsonc": deny
+    "*.opencode/*": deny
     "*.github/workflows/*": deny
   webfetch: deny
   websearch: deny
@@ -74,6 +78,22 @@ in a test, write its content into a fixture of the module: the attachment file i
 3. Do not commit, switch branches, or push: the script does that after you finish, and runs the affected checks of
    the whole repository again.
 
+## Verification in the autonomous runner
+
+The verification policy in `implement-input.md` applies to initial implementations, review changes, retries, CI fixes,
+and conflict resolution. It defines which checks run here and which run in CI when a module's development instructions
+require a local service or database. The runner can build code and run unit tests; it has no prepared application,
+PostgreSQL, or Newman environment. Keep the command permissions as configured.
+
+Run the available build and unit checks and fix failures caused by your change. Prepare regression tests for the CI
+suites that cover the change. Record checks that need a deployed service as deferred to CI, with their coverage and any
+gaps. A collection outside the CI suite does not run in CI just because you created it.
+
+An unavailable local integration environment alone is not `verification-blocked`. When the code and regression tests
+are ready, report `done` with the deferred checks in `verification`. The orchestrator publishes the change and waits
+for CI on the new commit. Report a real blocker when the change needs a decision, cannot be implemented, or cannot be
+checked by either the runner or the available CI. Never report a deferred check as passed.
+
 ## When the attempt merges develop
 
 The script has started `git merge` of `origin/develop` into the branch of the pull request, and the merge stopped on
@@ -119,15 +139,41 @@ reason that fits:
 `approval-required` is not yours: the script sets it when a pull request waits for a review. Leave `stopReason`
 empty unless the status is `blocked`, and give a reason whenever it is.
 
+## When review feedback needs no changes
+
+On a continuation of an existing pull request, read the complete supplied conversations and inspect the current code
+before changing files. A reviewer can ask about behavior that is already covered by inherited test scripts or existing
+code, and a later maintainer reply can explain that behavior. Verify the explanation against the code.
+
+Return `no-changes` when the request is already satisfied. Leave the working tree clean, explain the conclusion in
+`summary`, and cite the relevant files, symbols, and checks in `verification`. Every supplied thread must have an
+`already-satisfied` reply with its own evidence. A second model checks this conclusion before publication.
+Do not create cosmetic edits to obtain a commit. This status is unavailable for a new implementation, a CI fix,
+or a merge of `develop`. Leave `blockedReason` and `stopReason` empty.
+
 ## Your output
+
+When review threads are supplied, account for every numbered thread in `summary`, even when no code change is needed.
+State whether it is fixed (and how), already satisfied (with code evidence), or blocked (and why). Unresolved feedback
+belongs to repeated implementation attempts too. An inline command refers to the supplied thread conversation, not
+only the short command text. Leave thread resolution to a person.
+
+Also return one `threadReplies` entry for each numbered thread, with the same number and a substantive Markdown
+answer addressed to its reviewer. Use `fixed`, `already-satisfied`, or `blocked`. Explain what changed and why,
+where existing code satisfies the request, or what prevents a fix. The publisher adds the actual push result and any
+publication blocker. Do not claim that a commit was pushed, CI passed, or a thread was resolved. Use an empty array
+when no threads were supplied. A `done` result cannot leave a thread blocked.
 
 End your answer with exactly one fenced `json` block and nothing after it. Every key is required, and no other key is
 allowed:
 
 ```json
 {
-  "status": "done | blocked | unrelated",
-  "summary": "What you changed and why, in two to five sentences, for the pull request description.",
+  "status": "done | no-changes | blocked | unrelated",
+  "summary": "What you changed and why, plus the outcome for each supplied review thread.",
+  "threadReplies": [
+    { "thread": 1, "status": "fixed | already-satisfied | blocked", "body": "The answer and its code evidence." }
+  ],
   "commitType": "fix | feat | perf | refactor | revert | build | chore | style | docs | test | ci",
   "scope": "the module name, or an empty string when the change spans several modules",
   "title": "the imperative summary of the commit title, without type and scope, at most 72 characters",

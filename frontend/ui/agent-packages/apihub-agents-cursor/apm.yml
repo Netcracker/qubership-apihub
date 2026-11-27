@@ -1,10 +1,10 @@
 name: apihub-agents-cursor
 version: 1.0.0
-description: "Cursor subagents pinned to a cheaper model: the verifier on composer-2.5"
+description: "Cursor subagents pinned to a cheaper model: the frontend-verifier on composer-2.5"
 author: Qubership
 # APM copies an agent file verbatim to every target, so one file cannot carry a model per harness. This package and
-# apihub-agents-claude each ship the verifier for one target with an identical body: the instructions live once,
-# in the apihub-validate skill.
+# apihub-agents-claude each ship the frontend-verifier for one target with an identical body: the instructions live
+# once, in the apihub-frontend-gates skill.
 targets:
   - cursor
 dependencies:

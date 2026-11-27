@@ -22,6 +22,7 @@ const REASONS = [
   'budget-exhausted',
 ]
 const PREFIX = 'needs-human:'
+const LABEL_COMPLETED = 'agent:completed'
 
 /** The label of `reason`. Throws on an unknown reason. */
 function labelOf(reason) {
@@ -55,13 +56,34 @@ async function setStop(gh, numbers, reason) {
   for (const number of numbers ?? []) {
     if (!number) continue
     try {
-      const present = await currentStops(gh, number)
+      const issue = await gh.getIssue(number)
+      const present = stopLabels(issue?.labels)
+      if (reason !== 'approval-required' &&
+        (issue?.labels ?? []).some((l) => (typeof l === 'string' ? l : l?.name) === LABEL_COMPLETED)) {
+        await gh.removeLabel(number, LABEL_COMPLETED)
+      }
       for (const other of present) {
         if (other !== label) await gh.removeLabel(number, other)
       }
       if (!present.includes(label)) await gh.addLabels(number, [label])
     } catch (error) {
       log.warn(`Could not set ${label} on #${number}: ${error?.message ?? error}`)
+      first ??= error
+    }
+  }
+  return first
+}
+
+/** Removes completion labels when work resumes or stops before completion; preserves execution-level labels. */
+async function clearCompleted(gh, numbers) {
+  let first = null
+  for (const number of new Set((numbers ?? []).filter(Boolean))) {
+    try {
+      const issue = await gh.getIssue(number)
+      const labels = (issue.labels ?? []).map((label) => typeof label === 'string' ? label : label?.name)
+      if (labels.includes(LABEL_COMPLETED)) await gh.removeLabel(number, LABEL_COMPLETED)
+    } catch (error) {
+      log.warn(`Could not clear ${LABEL_COMPLETED} from #${number}: ${error?.message ?? error}`)
       first ??= error
     }
   }
@@ -142,6 +164,7 @@ module.exports = {
   stopLabels,
   setStop,
   clearStops,
+  clearCompleted,
   recordStop,
   recordResume,
   renderStop,

@@ -581,16 +581,14 @@ func (e exportControllerImpl) GenerateApiChangesExcelReportV3(w http.ResponseWri
 		e.responder.RespondWithCustomError(w, customErr)
 		return
 	}
-	for _, severity := range severities {
-		if !view.ValidSeverity(severity) {
-			e.responder.RespondWithCustomError(w, &exception.CustomError{
-				Status:  http.StatusBadRequest,
-				Code:    exception.InvalidParameterValue,
-				Message: exception.InvalidParameterValueMsg,
-				Params:  map[string]interface{}{"param": "severity", "value": severity},
-			})
-			return
-		}
+	if severity, found := view.HasInvalidSeverity(severities); found {
+		e.responder.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidParameterValue,
+			Message: exception.InvalidParameterValueMsg,
+			Params:  map[string]interface{}{"param": "severity", "value": severity},
+		})
+		return
 	}
 
 	asyncapiChannel, err := url.QueryUnescape(r.URL.Query().Get("asyncapiChannel"))
@@ -1257,16 +1255,14 @@ func (e exportControllerImpl) GenerateDdlChangesExcelReport(w http.ResponseWrite
 		e.responder.RespondWithCustomError(w, customErr)
 		return
 	}
-	for _, severity := range severities {
-		if !view.ValidSeverity(severity) {
-			e.responder.RespondWithCustomError(w, &exception.CustomError{
-				Status:  http.StatusBadRequest,
-				Code:    exception.InvalidParameterValue,
-				Message: exception.InvalidParameterValueMsg,
-				Params:  map[string]interface{}{"param": "severity", "value": severity},
-			})
-			return
-		}
+	if severity, found := view.HasInvalidSeverity(severities); found {
+		e.responder.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidParameterValue,
+			Message: exception.InvalidParameterValueMsg,
+			Params:  map[string]interface{}{"param": "severity", "value": severity},
+		})
+		return
 	}
 
 	e.monitoringService.IncreaseBusinessMetricCounter(secctx.GetUserId(ctx), metrics.ExportsCalled, packageId)

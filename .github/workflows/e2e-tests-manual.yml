@@ -48,7 +48,7 @@ on:
         type: string
         default: develop
       postman-collections:
-        description: "Collections to execute, comma-separated: ./e2e/1_1_Smoke_Portal.postman_collection.json or 1_1_Smoke_Portal. Empty means the runtime's default list"
+        description: "Collections to execute, comma-separated: ./e2e/1_1_Smoke_Portal.postman_collection.json or 1_1_Smoke_Portal. Empty means the runtime's default list, including migration tests"
         type: string
         default: ''
       playwright-ref:

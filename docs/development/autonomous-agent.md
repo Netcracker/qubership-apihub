@@ -235,12 +235,69 @@ reply says so. A `change` verdict always names at least one place to fix.
 
 ### Reviews with change requests
 
+Implementation attempts for Task issues allow up to 30 changed files and 5000 changed lines (additions plus deletions).
+Bug issues allow up to 20 files and 600 changed lines. Both limits include the boundary and apply to the whole pull
+request diff against its merge base with `develop`, including review continuations. The work and publish jobs enforce
+the same limits; exceeding either one blocks publication.
+
 When a person with write access submits a review with the state "changes requested" on a pull request of the agent,
 the agent makes one attempt. The implementer gets the review text and the unresolved review threads (file, line, and
-the conversation), at most 30 of them; the prompt says how many more were left out. After the push, the agent replies
-once in each thread the implementer saw, with the short commit id, and in no other. It never resolves a thread: a
-person does. The title and the description of the pull request stay, and the pull request goes back to a draft when
+the conversation), at most 30 of them; the prompt says how many more were left out. The agent replies once in each
+thread the implementer saw, with an explanation specific to that thread and code evidence. Replies include the
+publication result: the short commit id after a push, or the blocker when no update was published. A crash or timeout
+still produces a failure explanation in each supplied thread. It never resolves a thread: a person does.
+The title and the description of the pull request stay, and the pull request goes back to a draft when
 the new result is not green.
+
+When an attempt to update an existing pull request blocks, fails, or ends with incomplete checks or self-review, the
+agent posts the hand-off on the pull request as well as its issue. The pull request notice links the run, names the
+blocker, and distinguishes unpublished work from a pushed update. For a review attempt, it links the threads included
+in the attempt and reports whether an update was published; the threads stay open for a person to review. Omitted
+threads are counted separately. A worker crash or timeout produces the same notice from the publish job.
+Repeated `/agent implement`, `/agent retry`, answers to a hand-off, and general change requests reload unresolved
+threads of the linked open pull request. Feedback stays in scope even when the blocked attempt published no code.
+The implementer and self-reviewer receive the same threads. The implementer reports an outcome for each thread in its
+summary; self-review treats missing outcomes and unaddressed requests as major findings.
+
+An existing pull request can finish an attempt with `no-changes`: the code already satisfies the request. The
+implementer reads the complete supplied conversations and cites evidence, including inherited tests where relevant.
+A second model must approve that conclusion and the proposed replies. This outcome requires a clean working tree,
+no commits made in the attempt, and the same open PR head when the answer is published. It creates no commit, bundle,
+push, or local check run, and does not mark CI green or resolve threads. New implementations, CI fixes, and merges of
+`develop` cannot use it. A disputed conclusion goes to another round or stops with `needs-human:disagreement`.
+
+The successful attempt is recorded as `no-changes`. The issue phase becomes `reviewed`, unless it was waiting for
+CI before the attempt; pending CI keeps `waiting-ci` so its gate can still finish. Existing CI results are preserved.
+The agent does not add `agent:completed` for an explanation alone. When there are no inline threads, the explanation
+is posted to the PR conversation.
+
+You can also write `/agent <change request>` inside an inline review thread, for example `/agent check this comment`.
+That command starts one attempt over the referenced conversation, including the original review comment, rather than
+only the short command text. This also works in a resolved thread when you explicitly ask the agent to revisit it.
+The command needs write access and an allowed actor, on a pull request of the agent from this repository. Ordinary
+inline comments stay passive; a submitted review with "changes requested" or an explicit command starts work.
+An inline command uses the same busy check and reactions as a PR conversation command. `/agent update` keeps its
+merge-only scope and does not load review feedback.
+
+`agent:completed` describes the current work, so a new attempt removes it from the issue and its open pull request.
+Blocked work, red CI, a CI rerun, and `/agent stop` also clear it. Execution-level labels such as `ai:l1-executor` stay.
+Only the CI gate restores completion after the checks of the published head commit pass. A completed pull request may
+also carry `needs-human:approval-required` while it waits for human review.
+
+### Verification in autonomous jobs
+
+CI on the published head commit is the final verification gate. The autonomous runner runs the available builds and
+unit tests through Nx and fixes failures caused by the change. Its implementer and self-reviewer receive the same
+verification policy for initial work, review changes, retries, CI fixes, and conflict resolution.
+
+The runner has no prepared backend, PostgreSQL, or live Newman environment. Module instructions that require these
+services apply to a prepared development environment. In an autonomous job, the agent prepares regression tests for
+the applicable CI suite and records live checks as deferred to CI. A collection under `backend/portal-backend/tests/api`
+does not run in CI automatically; the report must identify actual CI coverage and any gaps.
+
+The missing local integration environment alone does not block publication. Deferred checks are never reported as
+passed, and local success does not establish CI success. A real implementation blocker, a failed local check, an open
+self-review finding, or essential verification unavailable both locally and in CI still follows the hand-off rules.
 
 ## Implement an issue
 

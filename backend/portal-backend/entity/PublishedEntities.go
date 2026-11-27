@@ -72,8 +72,9 @@ type PackageVersionRevisionEntity struct {
 
 	PublishedVersionEntity
 	PrincipalEntity
-	NotLatestRevision       bool `pg:"not_latest_revision, type:bool"`
-	PreviousVersionRevision int  `pg:"previous_version_revision, type:integer"`
+	NotLatestRevision       bool      `pg:"not_latest_revision, type:bool"`
+	PreviousVersionRevision int       `pg:"previous_version_revision, type:integer"`
+	FirstPublishedAt        time.Time `pg:"first_published_at"`
 }
 
 type PackageVersionHistoryEntity struct {
@@ -127,9 +128,15 @@ func GetVersionSortByPG(sortBy string) string {
 		return "version"
 	case view.VersionSortByCreatedAt:
 		return "published_at"
+	case view.VersionSortByFirstPublishedAt:
+		return VersionSortByFirstPublishedAtPG
 	}
 	return ""
 }
+
+// VersionSortByFirstPublishedAtPG is not a published_version column: queries compute it as the earliest
+// published_at among all revisions of a version, regardless of their status.
+const VersionSortByFirstPublishedAtPG = "first_published_at"
 
 type PackageVersionSearchQueryEntity struct {
 	PackageId          string `pg:"package_id, type:varchar, use_zero"`

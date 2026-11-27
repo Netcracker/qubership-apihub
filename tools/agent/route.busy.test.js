@@ -69,6 +69,9 @@ function fakeClient(runs, issueComments = []) {
     addReaction: async (id, content) => {
       calls.reactions.push({ id, content })
     },
+    addReviewCommentReaction: async (id, content) => {
+      calls.reactions.push({ id, content, inline: true })
+    },
   }
   return { client, calls }
 }
@@ -83,6 +86,21 @@ async function check({
   const result = await declineIfBusy({ eventName, payload, decision, config, env, getClient: () => client, now: NOW })
   return { decision, result, calls }
 }
+
+test('an inline command is declined while either its issue or PR is busy, using an inline reaction', async () => {
+  for (const number of [70, 200]) {
+    const payload = fixture('pull_request_review_comment.command')
+    const { result, calls } = await check({
+      payload, eventName: 'pull_request_review_comment', runs: [run(4000, number)],
+      extra: { ...write, agentFacts: agentFacts() },
+    })
+    assert.equal(result.action, 'skip')
+    assert.match(result.reason, /busy:/)
+    assert.equal(calls.comments[0].number, 70)
+    assert.match(calls.comments[0].body, /already working/)
+    assert.deepEqual(calls.reactions, [{ id: 4643082805, content: 'confused', inline: true }])
+  }
+})
 
 test('an older active run on the same issue declines the command: skip, comment, and a confused reaction', async () => {
   const payload = comment('issue_comment.help', '/agent rerun')

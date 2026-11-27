@@ -11,7 +11,7 @@ The suite tests the product from outside, through the backend API; see the
 
 | Path | Content |
 |------|---------|
-| `e2e/` | The regression collections, numbered by purpose (`1_1_Smoke_Portal`, `1_2_Smoke_Agent`, ..., `4_Access_control`) |
+| `e2e/` | The regression collections, numbered by purpose (`1_1_Smoke_Portal`, `1_2_Smoke_Agent`, ..., `5_Migration`) |
 | `use_cases/` | Scenario collections, such as `shareability` |
 | `Syntetic_test_data.postman_collection.json` | Fast creation of sample data |
 | `environment/` | `local`, `local_k8s`, and `Env1` Postman environments |
@@ -34,7 +34,7 @@ There is nothing to build, and the module has no Nx targets. Newman 6.2.3 is the
 npm install -g newman@6.2.3
 ```
 
-CI runs the collections in the order `1_1`, `1_2` (agent only), `1_3`, `2_1`, `3_1`, `3_2`, `4`. The commands for a
+CI runs the collections in the order `1_1`, `1_2` (agent only), `1_3`, `2_1`, `3_1`, `3_2`, `4`, `5`. The commands for a
 single collection are in [Debugging: One Newman collection](../../docs/development/debugging.md#one-newman-collection)
 and [Build and test: E2E tests](../../docs/development/build-and-test.md#e2e-tests).
 
@@ -54,6 +54,29 @@ and [Build and test: E2E tests](../../docs/development/build-and-test.md#e2e-tes
 
 To step through a request, import the collection and the environment into Postman. A manual CI run takes the
 collections as an input; see [CI](../../docs/development/ci.md#manual-e2e).
+
+## Migration tests
+
+[`5_Migration`](e2e/5_Migration.postman_collection.json) runs on its own with `SERVER_HOST` and the
+local administrator credentials `Username` and `Password`. It logs in, creates a unique workspace, publishes
+two independent versions of each test package, checks the exact builds for each scope and version filter,
+and deletes the workspace. Its token and test IDs use the `migrationScope` prefix and are cleared after cleanup.
+It uses an embedded source archive and does not need another collection, exported state, or an API key.
+
+Run it against an isolated test instance: operations migrations share an exclusive slot. If its own migration
+times out, the collection requests cancellation and waits for it to stop before deleting test packages.
+If the status cannot be read or cancellation does not finish, it fails and keeps the workspace for diagnosis.
+
+From the repository root:
+
+```bash
+newman run tests/postman-collections/e2e/5_Migration.postman_collection.json \
+  --env-var "SERVER_HOST=http://localhost:8081" \
+  --env-var "Username=<admin email>" --env-var "Password=<admin password>"
+```
+
+Select `5_Migration` in the manual workflow to run it alone. It is also part of the default full collection list
+for Kind, Compose, Compose with Keycloak, and nightly runs.
 
 ## Configuration
 

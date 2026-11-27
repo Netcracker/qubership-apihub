@@ -126,8 +126,9 @@ const JsonSchemaDiffsViewerInner: FC<JsonSchemaDiffsViewerProps> = (props) => {
   const [treeRevision, bumpTreeRevision] = useReducer((revision: number) => revision + 1, 0)
 
   const materializeChildren = useCallback((node: JsonSchemaTreeNode | JsonSchemaTreeNodeWithDiffs) => {
-    builder.materializeChildren(node)
-    bumpTreeRevision()
+    if (builder.materializeChildren(node)) {
+      bumpTreeRevision()
+    }
   }, [builder])
 
   const viewerContext = useMemo(

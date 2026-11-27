@@ -5,9 +5,6 @@ description: Build a manual end-to-end QA test plan for a feature or fix of the 
 
 # Feature test plan for QA
 
-**CI linters:** load the `api-doc-viewer-ci-linters` skill before you write or change a file of this module.
-CI lints every file a pull request touches as a whole: Markdown, CSS, SQL fixtures, and more.
-
 The skill turns a branch into a folder that QA can start from: `qa-<feature>/` at the repository root. QA runs the
 cases in the host app (the APIHUB Portal, `frontend/ui/packages/portal`), not in Storybook. The automated screenshot
 suites of api-doc-viewer are the catalogue of cases and the expected pictures; the plan packs their fixtures into a
@@ -106,7 +103,7 @@ Tell the user what QA receives, and that the folder is to be deleted once QA rep
 
 Before finishing, fold what this run taught into the skill ([references/extending.md](references/extending.md),
 section "Updating the skill after every plan"): general code moved out of the plan's `config/`, new lessons, gaps in
-the interview, the templates, or the references. Redeploy with `apm install --target cursor,claude` and list the
+the interview, the templates, or the references. Redeploy with `apm install` and list the
 changed skill files for the user, to commit separately from anything else.
 
 ## References

@@ -1,8 +1,10 @@
 package utils
 
 import (
+	"encoding/json"
 	"fmt"
 	"reflect"
+	"slices"
 	"strings"
 	"unicode"
 
@@ -12,6 +14,8 @@ import (
 )
 
 var v *validator.Validate
+
+var openAIServiceOwnedBodyKeys = []string{"messages", "response_format", "max_completion_tokens", "model"}
 
 func getValidator() *validator.Validate {
 	if v == nil {
@@ -23,11 +27,38 @@ func getValidator() *validator.Validate {
 
 func validateAILinterConfig(sl validator.StructLevel) {
 	ai := sl.Current().Interface().(config.AILinterConfig)
+	if ai.Enabled {
+		switch ai.Provider {
+		case config.AIProviderOpenAI, config.AIProviderLiteLLM:
+		default:
+			sl.ReportError(ai.Provider, "Provider", "Provider", "oneof", "openai litellm")
+		}
+	}
 	if ai.Enabled && ai.OpenAI.APIKey == "" {
 		sl.ReportError(ai.OpenAI.APIKey, "OpenAI.APIKey", "APIKey", "required_if_enabled", "")
 	}
-	if ai.Enabled && ai.DeduplicationPrompt == "" {
-		sl.ReportError(ai.DeduplicationPrompt, "DeduplicationPrompt", "DeduplicationPrompt", "required_if_enabled", "")
+	if ai.Enabled && ai.Provider == config.AIProviderLiteLLM {
+		if strings.TrimSpace(ai.OpenAI.APIProxy) == "" {
+			sl.ReportError(ai.OpenAI.APIProxy, "OpenAI.APIProxy", "APIProxy", "required_if_litellm", "")
+		}
+		if strings.TrimSpace(ai.OpenAI.Model) == "" {
+			sl.ReportError(ai.OpenAI.Model, "OpenAI.Model", "Model", "required_if_litellm", "")
+		}
+	}
+	if ai.Enabled && ai.Deduplication.CriteriaPrompt == "" {
+		sl.ReportError(ai.Deduplication.CriteriaPrompt, "Deduplication.CriteriaPrompt", "CriteriaPrompt", "required_if_enabled", "")
+	}
+	if ai.Enabled && ai.OpenAI.ExtraBodyJSON != "" {
+		var extraBody map[string]any
+		if err := json.Unmarshal([]byte(ai.OpenAI.ExtraBodyJSON), &extraBody); err != nil || extraBody == nil {
+			sl.ReportError(ai.OpenAI.ExtraBodyJSON, "OpenAI.ExtraBodyJSON", "ExtraBodyJSON", "json_object", "")
+			return
+		}
+		for key := range extraBody {
+			if slices.Contains(openAIServiceOwnedBodyKeys, key) {
+				sl.ReportError(ai.OpenAI.ExtraBodyJSON, "OpenAI.ExtraBodyJSON", "ExtraBodyJSON", "excludes_service_owned_keys", key)
+			}
+		}
 	}
 }
 

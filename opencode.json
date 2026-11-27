@@ -1,0 +1,37 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "instructions": [".claude/rules/*.md"],
+  "permission": {
+    "bash": {
+      "go build *": "allow",
+      "go test *": "allow",
+      "go vet *": "allow",
+      "go mod *": "allow",
+      "go generate *": "allow",
+      "gofmt *": "allow",
+      "golangci-lint *": "allow",
+      "go tool *": "allow",
+      "node .agents/skills/apihub-frontend-gates/scripts/validate.mjs *": "allow",
+      "rm -rf *": "ask",
+      "rm -fr *": "ask",
+      "git reset --hard *": "ask",
+      "git push --force *": "ask",
+      "git push -f *": "ask",
+      "git push * --force*": "ask",
+      "git clean *": "ask",
+      "git checkout -- *": "ask",
+      "git restore *": "ask",
+      "git branch -D *": "ask",
+      "git stash drop *": "ask",
+      "git stash clear *": "ask",
+      "sudo *": "ask",
+      "Remove-Item *": "ask",
+      "npm install *": "deny",
+      "npm i *": "deny",
+      "npm ci *": "deny",
+      "npm run *": "deny",
+      "npx *": "deny",
+      "apm compile *": "deny"
+    }
+  }
+}

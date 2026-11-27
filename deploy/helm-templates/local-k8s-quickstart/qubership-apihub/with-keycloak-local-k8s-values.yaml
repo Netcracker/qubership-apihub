@@ -115,6 +115,7 @@ qubershipApiLinterService:
         workers: 1
       ai:
         enabled: false
+        provider: 'openai'
         workers: 1
         excludedPackages: []
         includedPackages: []

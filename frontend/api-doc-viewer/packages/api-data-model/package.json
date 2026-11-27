@@ -20,7 +20,7 @@
   },
   "devDependencies": {
     "@types/json-schema": "^7.0.15",
-    "@types/treeify": "^1.0.0",
+    "@types/treeify": "^1.0.3",
     "jest": "catalog:",
     "treeify": "^1.1.0",
     "ts-jest": "catalog:",

@@ -41,7 +41,7 @@ the skill itself (its package source, then redeploy), not the plan folder. A pla
 7. **Document it.** Add the builder and the format to [test-data.md](test-data.md), the changed paths of the type to
    [analysis.md](analysis.md), the host-app facts you found to the analysis, and every surprise to
    [lessons.md](lessons.md).
-8. **Redeploy.** From the repository root: `apm install --target cursor,claude`. Edit only the package source
+8. **Redeploy.** From the repository root: `apm install`. Edit only the package source
    (`frontend/api-doc-viewer/agent-packages/api-doc-viewer-feature-test-plan/`), never the deployed copies.
 
 ## Updating the skill after every plan (phase 9)
@@ -53,5 +53,5 @@ At the end of each run, before handing over:
 - Add to [lessons.md](lessons.md) what was not obvious: a host-app limit, a fixture shape, a wrong first claim, a
   check that missed a defect. Keep each lesson general; the plan folder that prompted it will be gone.
 - Update the interview, the templates, and the references where the run needed something they lacked.
-- Redeploy with `apm install --target cursor,claude`, and tell the user which skill files changed so that they can
+- Redeploy with `apm install`, and tell the user which skill files changed so that they can
   commit them separately from the plan.

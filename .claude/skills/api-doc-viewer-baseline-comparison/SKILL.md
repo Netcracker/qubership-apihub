@@ -5,8 +5,6 @@ description: Compare the screenshot baselines of the current api-doc-viewer bran
 
 # Comparing screenshot baselines with develop
 
-**CI linters:** load the `api-doc-viewer-ci-linters` skill before you write or change a file of this module.
-
 One command builds the comparison. Run it from `frontend/api-doc-viewer/packages/api-doc-viewer`:
 
 ```bash
