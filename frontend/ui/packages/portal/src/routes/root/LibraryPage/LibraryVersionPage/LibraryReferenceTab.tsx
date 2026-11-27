@@ -20,26 +20,31 @@ import { NAVIGATION_MAX_WIDTH } from '@netcracker/qubership-apihub-ui-shared/uti
 
 import { type LibraryVersion, LibraryVersionBuildStatuses } from '@portal/entities/libraries'
 import { usePortalPageSettingsContext } from '@portal/routes/PortalPageSettingsProvider'
-import { getJavaReferenceClasses, getJavaReferenceLink, JAVA_TYPE_FILTER_SEARCH_PARAM } from './javaapi/javaApi'
+import {
+  getJavaReferenceLink,
+  isJavaReferenceTargetHidden,
+  JAVA_TYPE_FILTER_SEARCH_PARAM,
+  toLibraryClassKinds,
+} from './javaapi/javaApi'
 import { JavaClassListView } from './javaapi/JavaClassListView'
 import { JavaClassListWithPreview } from './javaapi/JavaClassListWithPreview'
 import { JavaTypeFilter, useJavaTypeFilter } from './javaapi/JavaTypeFilter'
+import { toLibraryClassListItems } from './javaapi/libraryClassDocument'
 import { JAVA_CLASS_SEARCH_PARAM } from './javaapi/useSelectedJavaClass'
 import { LibraryVersionBuildError } from './LibraryVersionBuildError'
-import { useLibraryJavaApiReport } from './useLibraryJavaApi'
+import { useLibraryClassPages } from './useLibraryClasses'
+import { useLibraryClassDetails } from './useLibraryJavaClass'
 
 const VIEW_OPTIONS = [
   { icon: <MenuOutlinedIcon fontSize="small" />, value: LIST_OPERATIONS_VIEW_MODE, tooltip: 'List view' },
   { icon: <SegmentItemIcon />, value: DETAILED_OPERATIONS_VIEW_MODE, tooltip: 'Detailed view' },
 ]
 const SUBPAGE_MARGIN = 24
-const EMPTY_CLASSES: ReadonlyArray<JavaApiClassListItem> = []
 
 export const LibraryReferenceTab: FC<Readonly<{ version: LibraryVersion }>> = memo(({ version }) => {
   const [searchValue, setSearchValue] = useState('')
   const [searchParams, setSearchParams] = useSearchParams()
   const selectedName = searchParams.get(JAVA_CLASS_SEARCH_PARAM)
-  const { data, isLoading, error } = useLibraryJavaApiReport(version.libraryId, version.version)
   const [javaType] = useJavaTypeFilter()
   const {
     hideFiltersPanel,
@@ -49,6 +54,23 @@ export const LibraryReferenceTab: FC<Readonly<{ version: LibraryVersion }>> = me
     previewSize,
     togglePreviewSize,
   } = usePortalPageSettingsContext()
+  // A type in the URL (a click on a type name or link) shows the detailed view for that navigation only; the saved
+  // mode, shared with the package Operations tab, changes only through the view toggle
+  const viewMode = selectedName !== null ? DETAILED_OPERATIONS_VIEW_MODE : operationsViewMode
+  const {
+    data: pagedClasses,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    error,
+  } = useLibraryClassPages(version.libraryId, version.version, {
+    // TODO(libraries-backend): textFilter must match `.` against the `$` of nested classes, or a search such as
+    // `PropertyNamingStrategies.SnakeCaseStrategy` finds nothing (backend question 22)
+    textFilter: searchValue.trim() || undefined,
+    kinds: toLibraryClassKinds(javaType),
+  })
+  const classes = useMemo(() => toLibraryClassListItems(pagedClasses ?? []), [pagedClasses])
   const bodyRef = useRef<HTMLDivElement | null>(null)
   const [bodyWidth, setBodyWidth] = useState<number>()
   useResizeObserver(bodyRef, setBodyWidth)
@@ -56,18 +78,21 @@ export const LibraryReferenceTab: FC<Readonly<{ version: LibraryVersion }>> = me
   // hides the type in the URL would clear itself: the type stays in the URL while the filters change.
   const [revealedName, setRevealedName] = useState<string | null>(null)
   const targetName = selectedName !== revealedName ? selectedName : null
-  const { classes, resetFilters } = useMemo(
-    () => getJavaReferenceClasses(data?.classes ?? EMPTY_CLASSES, searchValue, javaType, targetName),
-    [data?.classes, searchValue, javaType, targetName],
+  const loadedTarget = classes.find(({ className }) => className === selectedName)
+  const { data: targetDetails } = useLibraryClassDetails(
+    loadedTarget ? undefined : version.libraryId,
+    version.version,
+    selectedName ?? undefined,
   )
+  const target = useMemo(
+    () => loadedTarget ?? (targetDetails ? toLibraryClassListItems([targetDetails])[0] : undefined),
+    [loadedTarget, targetDetails],
+  )
+  const resetFilters = isJavaReferenceTargetHidden(targetName ? target : undefined, searchValue, javaType)
 
   useEffect(() => {
-    if (data && !resetFilters) setRevealedName(selectedName)
-  }, [data, resetFilters, selectedName])
-
-  // A type in the URL (a click on a type name or link) shows the detailed view for that navigation only; the saved
-  // mode, shared with the package Operations tab, changes only through the view toggle
-  const viewMode = selectedName !== null ? DETAILED_OPERATIONS_VIEW_MODE : operationsViewMode
+    if (!resetFilters && (target || targetDetails === null || selectedName === null)) setRevealedName(selectedName)
+  }, [target, targetDetails, resetFilters, selectedName])
 
   useEffect(() => {
     if (!resetFilters) return
@@ -101,20 +126,28 @@ export const LibraryReferenceTab: FC<Readonly<{ version: LibraryVersion }>> = me
 
   let body = (
     <ListBox>
-      <JavaClassListView classes={classes} prepareLinkFn={prepareLinkFn} />
+      <JavaClassListView
+        classes={classes}
+        prepareLinkFn={prepareLinkFn}
+        fetchNextPage={fetchNextPage}
+        hasNextPage={hasNextPage}
+        isNextPageFetching={isFetchingNextPage}
+      />
     </ListBox>
   )
   if (version.metadata?.buildStatus === LibraryVersionBuildStatuses.ERROR) {
     body = <LibraryVersionBuildError version={version} />
   } else if (isLoading) body = <LoadingIndicator />
   else if (error) body = <Alert severity="error">{error.message}</Alert>
-  else if (!data) body = <Alert severity="info">No JavaAPI report is available for this version.</Alert>
   else if (viewMode === DETAILED_OPERATIONS_VIEW_MODE) {
     body = (
       <JavaClassListWithPreview
         libraryId={version.libraryId}
         version={version.version}
         classes={classes}
+        fetchNextPage={fetchNextPage}
+        hasNextPage={hasNextPage}
+        isNextPageFetching={isFetchingNextPage}
         prepareLinkFn={prepareLinkFn}
         initialSize={previewSize}
         handleResize={onResize}

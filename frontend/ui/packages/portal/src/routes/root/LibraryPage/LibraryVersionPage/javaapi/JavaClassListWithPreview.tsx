@@ -10,7 +10,6 @@ import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import { JAVA_CLASSES_EMPTY_MESSAGE } from './javaApi'
 import { JavaClassPreview } from './JavaClassPreview'
 import { JavaClassTitleWithMeta } from './JavaClassTitleWithMeta'
-import { useIncrementalList } from './useIncrementalList'
 import { useJavaClassNavigationLinkBuilder } from './useJavaClassNavigationLinkBuilder'
 import { useSelectedJavaClass } from './useSelectedJavaClass'
 
@@ -18,6 +17,9 @@ type JavaClassListWithPreviewProps = Readonly<{
   libraryId: Key
   version: string
   classes: ReadonlyArray<JavaApiClassListItem>
+  fetchNextPage: () => void
+  hasNextPage: boolean | undefined
+  isNextPageFetching: boolean
   prepareLinkFn: (javaClass: JavaApiClassListItem) => Partial<Path>
   initialSize: number
   handleResize: ResizeCallback
@@ -28,15 +30,16 @@ export const JavaClassListWithPreview: FC<JavaClassListWithPreviewProps> = memo<
   libraryId,
   version,
   classes,
+  fetchNextPage,
+  hasNextPage,
+  isNextPageFetching,
   prepareLinkFn,
   initialSize,
   handleResize,
   maxPreviewWidth,
 }) => {
-  const [selectedClass, selectClass] = useSelectedJavaClass(classes)
-  const { visibleItems, fetchNextPage, hasNextPage, isNextPageFetching } = useIncrementalList(classes, {
-    keepVisibleIndex: selectedClass ? classes.indexOf(selectedClass) : -1,
-  })
+  const [selectedClassName, selectClass] = useSelectedJavaClass(classes)
+  const selectedClass = classes.find(({ className }) => className === selectedClassName)
   const navigationLinkBuilder = useJavaClassNavigationLinkBuilder()
   const renderTitle = useCallback(
     (javaClass: JavaApiClassListItem, link?: Partial<Path>) => (
@@ -48,7 +51,7 @@ export const JavaClassListWithPreview: FC<JavaClassListWithPreviewProps> = memo<
   )
   return (
     <MetaClickableListWithPreview<JavaApiClassListItem>
-      items={visibleItems}
+      items={classes}
       fetchNextPage={fetchNextPage}
       hasNextPage={hasNextPage}
       isNextPageFetching={isNextPageFetching}
@@ -56,7 +59,7 @@ export const JavaClassListWithPreview: FC<JavaClassListWithPreviewProps> = memo<
       renderTitle={renderTitle}
       prepareLinkFn={prepareLinkFn}
       onRowClick={selectClass}
-      selectedItemKey={selectedClass?.className}
+      selectedItemKey={selectedClassName}
       initialSize={initialSize}
       handleResize={handleResize}
       maxWidth={maxPreviewWidth}
@@ -65,6 +68,7 @@ export const JavaClassListWithPreview: FC<JavaClassListWithPreviewProps> = memo<
         <JavaClassPreview
           libraryId={libraryId}
           version={version}
+          className={selectedClassName}
           javaClass={selectedClass}
           navigationLinkBuilder={navigationLinkBuilder}
           maxWidthHeaderToolbar={initialSize}

@@ -10,10 +10,10 @@ type SelectJavaClass = (className: string) => void
 // as it is: a type in the URL means the user picked it
 export function useSelectedJavaClass(
   filteredClasses: ReadonlyArray<JavaApiClassListItem>,
-): [JavaApiClassListItem | undefined, SelectJavaClass] {
+): [string | undefined, SelectJavaClass] {
   const [searchParams, setSearchParams] = useSearchParams()
   const selectedName = searchParams.get(JAVA_CLASS_SEARCH_PARAM)
-  const selectedClass = filteredClasses.find(({ className }) => className === selectedName) ?? filteredClasses[0]
+  const selectedClassName = selectedName ?? filteredClasses[0]?.className
   const selectClass: SelectJavaClass = useCallback(className => {
     setSearchParams(params => {
       params.set(JAVA_CLASS_SEARCH_PARAM, className)
@@ -21,5 +21,5 @@ export function useSelectedJavaClass(
     }, { replace: true })
   }, [setSearchParams])
 
-  return [selectedClass, selectClass]
+  return [selectedClassName, selectClass]
 }

@@ -16,14 +16,16 @@ import {
 } from '@netcracker/qubership-apihub-ui-shared/components/SpecViewToggler'
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 
-import { useLibraryJavaClass } from '../useLibraryJavaClass'
+import { useLibraryClassDetails, useLibraryJavaClass } from '../useLibraryJavaClass'
 import { JavaClassNavigationLink } from './JavaClassNavigationLink'
 import { JavaClassTitleWithMeta } from './JavaClassTitleWithMeta'
 import { JavaClassViewModeToggler } from './JavaClassViewModeToggler'
+import { toLibraryClassListItems } from './libraryClassDocument'
 
 type JavaClassPreviewProps = Readonly<{
   libraryId: Key
   version: string
+  className: string | undefined
   javaClass: JavaApiClassListItem | undefined
   navigationLinkBuilder: JavaApiNavigationLinkBuilder
   maxWidthHeaderToolbar: number
@@ -32,13 +34,19 @@ type JavaClassPreviewProps = Readonly<{
 export const JavaClassPreview: FC<JavaClassPreviewProps> = memo<JavaClassPreviewProps>(({
   libraryId,
   version,
+  className,
   javaClass,
   navigationLinkBuilder,
   maxWidthHeaderToolbar,
 }) => {
-  const { data, isLoading, error } = useLibraryJavaClass(libraryId, version, javaClass?.className ?? '', 'report')
+  const { data, isLoading, error } = useLibraryJavaClass(libraryId, version, className ?? '', 'report')
+  const { data: details } = useLibraryClassDetails(libraryId, version, className)
+  const titleClass = useMemo(
+    () => javaClass ?? (details ? toLibraryClassListItems([details])[0] : undefined),
+    [javaClass, details],
+  )
   const [viewMode, setViewMode] = useState<SpecViewMode>(DOC_SPEC_VIEW_MODE)
-  const classKey = useMemo(() => javaClass && { className: javaClass.className }, [javaClass])
+  const classKey = useMemo(() => (className ? { className } : undefined), [className])
   const rawData = data?.raw
   let content = classKey && data && (
     <ViewerBox data-testid="JavaApiClassViewer">
@@ -54,18 +62,19 @@ export const JavaClassPreview: FC<JavaClassPreviewProps> = memo<JavaClassPreview
     </ViewerBox>
   )
   if (viewMode === RAW_SPEC_VIEW_MODE) content = <JsonRawSpecView data={rawData} />
+  if (details === null) content = <Alert severity="info">Java type not found.</Alert>
   if (error) content = <Alert severity="error">{error.message}</Alert>
   return (
     <ContractPreviewPanel
-      title={javaClass && (
+      title={titleClass && (
         <JavaClassTitleWithMeta
           onlyTitle
-          javaClass={javaClass}
+          javaClass={titleClass}
         />
       )}
       action={<JavaClassViewModeToggler mode={viewMode} onChange={setViewMode} />}
-      isLoading={!!javaClass && isLoading}
-      hasContent={!!javaClass && (!!data || !!error)}
+      isLoading={!!className && isLoading}
+      hasContent={!!className && (!!data || !!error)}
       maxWidthHeaderToolbar={maxWidthHeaderToolbar}
       data-testid="JavaClassPreview"
     >

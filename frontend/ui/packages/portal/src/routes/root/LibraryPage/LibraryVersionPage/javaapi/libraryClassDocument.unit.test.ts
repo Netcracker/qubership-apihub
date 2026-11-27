@@ -1,4 +1,4 @@
-import type { JavaApiClassListItem } from '@netcracker/qubership-apihub-api-doc-viewer'
+import { JavaApiClassListBuilder, type JavaApiClassListItem } from '@netcracker/qubership-apihub-api-doc-viewer'
 
 import type {
   LibraryChangeDto,
@@ -9,14 +9,25 @@ import type {
 } from '@portal/entities/libraries'
 
 import {
+  toClassReportRows,
   toDiffRows,
   toJavaApiDocument,
   toJdiffChangeRow,
   toJdiffMemberRow,
   toJdiffTypeRow,
+  toLibraryClassListItems,
   toReportRows,
   withMemberCounts,
 } from './libraryClassDocument'
+
+// The viewer is ESM-only in this Jest suite; isolate the adapter from the builder's package/name sorting.
+jest.mock('@netcracker/qubership-apihub-api-doc-viewer', () => ({
+  JavaApiClassListBuilder: class {
+    build(): JavaApiClassListItem[] {
+      return []
+    }
+  },
+}))
 
 const ORDER: LibraryClassDto = {
   classId: 'example.Order',
@@ -62,6 +73,28 @@ const RETURN_TYPE_CHANGE: LibraryChangeDto = {
 }
 
 describe('library class document', () => {
+  it('restores service order when the builder sorts classes differently', () => {
+    const classes = ['a.b.A', 'a.B'].map(classId => ({ ...ORDER, classId: classId, qualifiedName: classId }))
+    const items: JavaApiClassListItem[] = [...classes].reverse().map(cls => ({
+      className: cls.classId,
+      displayName: cls.classId.slice(cls.classId.lastIndexOf('.') + 1),
+      packageName: cls.classId.slice(0, cls.classId.lastIndexOf('.')),
+      typeKind: 'CLASS',
+      memberCount: 0,
+      memberKindCounts: { FIELD: 0, CONSTRUCTOR: 0, METHOD: 0 },
+      changeCounts: { breaking: 0, 'non-breaking': 0, annotation: 0 },
+      changes: [],
+      elements: [],
+    }))
+    const build = jest.spyOn(JavaApiClassListBuilder.prototype, 'build').mockReturnValueOnce(items)
+
+    const result = toLibraryClassListItems(classes)
+
+    expect(result.map(item => item.className)).toEqual(classes.map(cls => cls.classId))
+    expect(result.map(item => item.memberCount)).toEqual([6, 6])
+    build.mockRestore()
+  })
+
   it('maps all three member counts from the DTO with the same class name', () => {
     const item: JavaApiClassListItem = {
       className: ORDER.classId,
@@ -140,6 +173,62 @@ describe('library class document', () => {
       toJdiffTypeRow(nested),
       toJdiffMemberRow(GET_NAME, 'METHOD'),
       toJdiffMemberRow(nested.methods[0], 'METHOD'),
+    ])
+  })
+
+  it('builds the class, members, and nested types from details without the class list', () => {
+    const details: LibraryClassDetailsDto = {
+      ...CURRENT,
+      constructors: [ORDER_CONSTRUCTOR],
+      fields: [NAME_FIELD],
+      nestedClasses: [
+        { classId: 'example.Order$Builder', kind: 'class' },
+        { classId: 'example.Order$Status', kind: 'enum' },
+      ],
+    }
+
+    expect(toClassReportRows([], details)).toEqual([
+      toJdiffTypeRow(ORDER),
+      {
+        className: ORDER.classId,
+        elementType: 'FIELD',
+        member: NAME_FIELD.signature,
+        status: 'UNCHANGED',
+        changeTypes: [],
+        breaking: false,
+      },
+      toJdiffMemberRow(ORDER_CONSTRUCTOR, 'CONSTRUCTOR'),
+      toJdiffMemberRow(GET_NAME, 'METHOD'),
+      {
+        className: 'example.Order$Builder',
+        elementType: 'CLASS',
+        status: 'UNCHANGED',
+        changeTypes: [],
+        breaking: false,
+      },
+      {
+        className: 'example.Order$Status',
+        elementType: 'ENUM',
+        status: 'UNCHANGED',
+        changeTypes: [],
+        breaking: false,
+      },
+    ])
+  })
+
+  it('adds other classes from the list without duplicating nested type rows', () => {
+    const nested: LibraryClassDto = { ...ORDER, classId: 'example.Order$Builder' }
+    const other: LibraryClassDto = { ...ORDER, classId: 'example.Other' }
+    const details: LibraryClassDetailsDto = {
+      ...CURRENT,
+      nestedClasses: [{ classId: nested.classId, kind: nested.kind }],
+    }
+
+    expect(toClassReportRows([ORDER, nested, other], details)).toEqual([
+      toJdiffTypeRow(ORDER),
+      toJdiffTypeRow(nested),
+      toJdiffTypeRow(other),
+      toJdiffMemberRow(GET_NAME, 'METHOD'),
     ])
   })
 

@@ -17,9 +17,21 @@ type LibraryClassesResult = {
   error: Error | null
 }
 
+type LibraryClassFilters = {
+  textFilter?: string
+  kinds?: readonly LibraryClassDto['kind'][]
+}
+
+type LibraryClassPagesResult = LibraryClassesResult & {
+  fetchNextPage: () => void
+  hasNextPage: boolean | undefined
+  isFetchingNextPage: boolean
+}
+
 type InvalidateLibraryClasses = (libraryId: Key) => Promise<void>
 
-// TODO(libraries-backend): The service has no class count, so the UI pages through the whole list (100 per request).
+// TODO(libraries-backend): The class view links a signature type only when it is a class of this version, so it
+// pages through the whole list (100 per request) until classes/{classId} lists the classes it references.
 export function useLibraryClasses(
   libraryId: Key | undefined,
   version: string | undefined,
@@ -50,6 +62,38 @@ export function useLibraryClasses(
   }
 }
 
+export function useLibraryClassPages(
+  libraryId: Key | undefined,
+  version: string | undefined,
+  { textFilter, kinds }: LibraryClassFilters,
+): LibraryClassPagesResult {
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, error } = useInfiniteQuery<
+    LibraryClassesDto,
+    Error
+  >({
+    queryKey: [CLASSES_QUERY_KEY, libraryId, version, 'pages', textFilter, kinds],
+    queryFn: ({ pageParam = 0, signal }) =>
+      getLibraryClasses(
+        libraryId!,
+        version!,
+        pageParam,
+        signal,
+        { textFilter, kinds },
+      ),
+    enabled: !!libraryId && !!version,
+    staleTime: Infinity,
+    getNextPageParam: (lastPage, allPages) => (lastPage.classes.length === PAGE_SIZE ? allPages.length : undefined),
+  })
+  return {
+    data: useMemo(() => data?.pages.flatMap(page => page.classes), [data]),
+    fetchNextPage: fetchNextPage,
+    hasNextPage: hasNextPage,
+    isFetchingNextPage: isFetchingNextPage,
+    isLoading: isLoading,
+    error: error,
+  }
+}
+
 export function useInvalidateLibraryClasses(): InvalidateLibraryClasses {
   const queryClient = useQueryClient()
   return async libraryId => {
@@ -65,10 +109,13 @@ async function getLibraryClasses(
   version: string,
   page: number,
   signal?: AbortSignal,
+  { textFilter, kinds }: LibraryClassFilters = {},
 ): Promise<LibraryClassesDto> {
   const query = new URLSearchParams()
   query.set('limit', String(PAGE_SIZE))
   query.set('page', String(page))
+  if (textFilter) query.set('textFilter', textFilter)
+  kinds?.forEach(kind => query.append('kind', kind))
   return requestJsonWithError<LibraryClassesDto>(
     `/libraries/${encodeURIComponent(libraryId)}/versions/${encodeURIComponent(version)}/classes?${query}`,
     { method: 'GET' },

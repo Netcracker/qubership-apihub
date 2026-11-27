@@ -1,7 +1,7 @@
 // TODO(libraries-backend): The class endpoint supplies no modifiers. Enum constants come as fields of the enum's own
 // type, which the JavaAPI model shows as enum constants. The UI has no record kind; records appear as classes.
 
-import type { JavaApiClassListItem } from '@netcracker/qubership-apihub-api-doc-viewer'
+import { JavaApiClassListBuilder, type JavaApiClassListItem } from '@netcracker/qubership-apihub-api-doc-viewer'
 
 import type {
   LibraryChangeDto,
@@ -41,7 +41,7 @@ const NESTED_STATUS_TO_JDIFF: Readonly<Record<LibraryNestedClassChangeDto['statu
   changed: 'MODIFIED',
 }
 
-export function toJdiffTypeRow(cls: LibraryClassDto): JdiffRow {
+export function toJdiffTypeRow(cls: Pick<LibraryClassDto, 'classId' | 'kind'>): JdiffRow {
   return {
     className: cls.classId,
     elementType: KIND_TO_JDIFF[cls.kind],
@@ -97,6 +97,20 @@ export function toReportRows(
   return [...rows, ...details.flatMap(toJdiffClassMemberRows)]
 }
 
+export function toClassReportRows(
+  classes: readonly LibraryClassDto[],
+  details: LibraryClassDetailsDto | null,
+): JdiffRow[] {
+  const rows = toReportRows(classes, details ? [details] : [])
+  const classIds = new Set(rows.map(row => row.className))
+  details?.nestedClasses?.forEach(cls => {
+    if (classIds.has(cls.classId)) return
+    rows.push(toJdiffTypeRow(cls))
+    classIds.add(cls.classId)
+  })
+  return rows
+}
+
 export function withMemberCounts(
   items: readonly JavaApiClassListItem[],
   classes: readonly LibraryClassDto[],
@@ -111,6 +125,13 @@ export function withMemberCounts(
       memberCount: cls.fieldCount + cls.constructorCount + cls.methodCount,
     }
   })
+}
+
+export function toLibraryClassListItems(classes: readonly LibraryClassDto[]): JavaApiClassListItem[] {
+  const document = toJavaApiDocument(toReportRows(classes, []))
+  const items = new JavaApiClassListBuilder({ source: document }).build()
+  const order = new Map(classes.map((cls, index) => [cls.classId, index]))
+  return withMemberCounts(items, classes).sort((a, b) => order.get(a.className)! - order.get(b.className)!)
 }
 
 export function toDiffRows(

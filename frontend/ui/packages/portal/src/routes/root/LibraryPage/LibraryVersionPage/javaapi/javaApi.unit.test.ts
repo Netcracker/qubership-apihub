@@ -1,6 +1,12 @@
 import type { JavaApiClassListItem } from '@netcracker/qubership-apihub-api-doc-viewer'
 
-import { filterJavaClasses, formatMemberCounts, getJavaReferenceClasses, getJavaReferenceLink } from './javaApi'
+import {
+  filterJavaClasses,
+  formatMemberCounts,
+  getJavaReferenceLink,
+  isJavaReferenceTargetHidden,
+  toLibraryClassKinds,
+} from './javaApi'
 
 const CLASSES: JavaApiClassListItem[] = (['CLASS', 'INTERFACE'] as const).map(typeKind => ({
   className: `example.${typeKind}`,
@@ -13,6 +19,20 @@ const CLASSES: JavaApiClassListItem[] = (['CLASS', 'INTERFACE'] as const).map(ty
   changes: [],
   elements: [],
 }))
+
+describe('toLibraryClassKinds', () => {
+  it.each(
+    [
+      ['CLASS', ['class', 'record']],
+      ['INTERFACE', ['interface']],
+      ['ENUM', ['enum']],
+      ['ANNOTATION', ['annotation']],
+      [undefined, undefined],
+    ] as const,
+  )('maps the Java type filter %s to service kinds', (javaType, expected) => {
+    expect(toLibraryClassKinds(javaType)).toEqual(expected)
+  })
+})
 
 describe('filterJavaClasses', () => {
   it.each(['Outer$In', 'Outer.In'])('finds an inner class with search %s', search => {
@@ -29,19 +49,13 @@ describe('Java Reference selection', () => {
       ['CLASS', 'CLASS'],
     ] as const,
   )('reveals a linked type hidden by search %s and kind %s', (search, javaType) => {
-    expect(getJavaReferenceClasses(CLASSES, search, javaType, 'example.INTERFACE')).toEqual({
-      classes: CLASSES,
-      resetFilters: true,
-    })
+    expect(isJavaReferenceTargetHidden(CLASSES[1], search, javaType)).toBe(true)
   })
 
-  it.each(['example.INTERFACE', 'example.Missing', null])(
-    'preserves filters when selection %s is visible or absent from the report',
-    selectedName => {
-      expect(getJavaReferenceClasses(CLASSES, 'interface', 'INTERFACE', selectedName)).toEqual({
-        classes: [CLASSES[1]],
-        resetFilters: false,
-      })
+  it.each([CLASSES[1], undefined])(
+    'preserves filters when the target %j is visible or unavailable',
+    target => {
+      expect(isJavaReferenceTargetHidden(target, 'interface', 'INTERFACE')).toBe(false)
     },
   )
 

@@ -7,7 +7,7 @@ import {
   NON_BREAKING_CHANGE_SEVERITY,
 } from '@netcracker/qubership-apihub-ui-shared/entities/change-severities'
 
-import type { LibraryChangesSummaryDto } from '@portal/entities/libraries'
+import type { LibraryChangesSummaryDto, LibraryClassDto } from '@portal/entities/libraries'
 import { CONTRACTS_PAGE } from '../../../../../routes'
 import { getLibraryJavaClassPath, getLibraryVersionPath } from '../libraryVersion'
 import { JAVA_CLASS_SEARCH_PARAM } from './useSelectedJavaClass'
@@ -27,10 +27,6 @@ export const JAVA_CHANGE_SEVERITIES: ReadonlySet<ChangeSeverity> = new Set([
 export type JavaTypeFilterValue = 'CLASS' | 'INTERFACE' | 'ENUM' | 'ANNOTATION'
 export type PreviousLibraryVersion = { previousLibraryId?: string; previousVersion?: string }
 export type JavaApiDocumentKind = 'report' | 'diff'
-type JavaReferenceClasses = {
-  classes: ReadonlyArray<JavaApiClassListItem>
-  resetFilters: boolean
-}
 export type JavaChangesSummary = Pick<
   ChangesSummary,
   typeof BREAKING_CHANGE_SEVERITY | typeof NON_BREAKING_CHANGE_SEVERITY | typeof ANNOTATION_CHANGE_SEVERITY
@@ -56,6 +52,21 @@ export function formatMemberCounts(counts: JavaApiClassListItem['memberKindCount
   return parts.length > 0 ? parts.join(separator) : '—'
 }
 
+export function toLibraryClassKinds(javaType: JavaTypeFilterValue | undefined): LibraryClassDto['kind'][] | undefined {
+  switch (javaType) {
+    case 'CLASS':
+      return ['class', 'record']
+    case 'INTERFACE':
+      return ['interface']
+    case 'ENUM':
+      return ['enum']
+    case 'ANNOTATION':
+      return ['annotation']
+    default:
+      return undefined
+  }
+}
+
 export function filterJavaClasses(
   classes: ReadonlyArray<JavaApiClassListItem>,
   searchValue: string,
@@ -69,17 +80,12 @@ export function filterJavaClasses(
   )
 }
 
-export function getJavaReferenceClasses(
-  classes: ReadonlyArray<JavaApiClassListItem>,
+export function isJavaReferenceTargetHidden(
+  target: JavaApiClassListItem | undefined,
   searchValue: string,
   javaType: JavaTypeFilterValue | undefined,
-  selectedName: string | null,
-): JavaReferenceClasses {
-  const filteredClasses = filterJavaClasses(classes, searchValue, javaType)
-  const resetFilters = classes.some(({ className }) => className === selectedName) &&
-    !filteredClasses.some(({ className }) => className === selectedName)
-  // Reveal the target before effects run so selection cannot replace it with the first filtered class.
-  return { classes: resetFilters ? classes : filteredClasses, resetFilters: resetFilters }
+): boolean {
+  return !!target && filterJavaClasses([target], searchValue, javaType).length === 0
 }
 
 export function getJavaReferenceLink(

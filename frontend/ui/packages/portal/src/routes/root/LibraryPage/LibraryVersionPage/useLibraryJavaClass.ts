@@ -16,7 +16,7 @@ import { useAutoFetchInfinitePages } from '@portal/routes/root/PortalPage/Versio
 import { requestJsonWithError } from '@portal/utils/requestJsonWithError'
 import { LIBRARIES_API_BASE_PATH } from '@portal/utils/requests'
 import type { JavaApiDocumentKind, PreviousLibraryVersion } from './javaapi/javaApi'
-import { toDiffRows, toJavaApiDocument, toReportRows } from './javaapi/libraryClassDocument'
+import { toClassReportRows, toDiffRows, toJavaApiDocument } from './javaapi/libraryClassDocument'
 import { getLibraryChanges } from './useLibraryChanges'
 import { useLibraryClasses } from './useLibraryClasses'
 
@@ -55,7 +55,7 @@ type LibraryJavaClassResult = {
   error: Error | null
 }
 
-function useLibraryClassDetails(
+export function useLibraryClassDetails(
   libraryId: Key | undefined,
   version: string | undefined,
   classId: string | undefined,
@@ -128,9 +128,8 @@ export function useLibraryJavaClass(
     version,
     className,
   )
-  // The version view links every type of the library and lists the nested types, so it reads the whole class list;
-  // the API Reference tab has already loaded it, so this is a cache hit
-  const { data: classes, isLoading: isClassesLoading, error: classesError } = useLibraryClasses(
+  // Load class names in the background to link signature types; the query is shared across class previews.
+  const { data: classes } = useLibraryClasses(
     kind === 'report' ? libraryId : undefined,
     kind === 'report' ? version : undefined,
   )
@@ -144,8 +143,8 @@ export function useLibraryJavaClass(
     let document: LibraryJavaApiDocumentDto
     let raw: LibraryJavaClassRaw
     if (kind === 'report') {
-      if (!classes || details === undefined) return undefined
-      document = toJavaApiDocument(toReportRows(classes, details ? [details] : []))
+      if (details === undefined) return undefined
+      document = toJavaApiDocument(toClassReportRows(classes ?? [], details))
       raw = { class: details }
     } else {
       if (classChanges === undefined || details === undefined) return undefined
@@ -163,11 +162,11 @@ export function useLibraryJavaClass(
       raw: raw,
     }
   }, [kind, classes, details, classChanges, className])
-  const isLoading = isDetailsLoading || (kind === 'report' ? isClassesLoading : isChangesLoading)
+  const isLoading = isDetailsLoading || (kind === 'diff' && isChangesLoading)
   return {
     data: isLoading ? undefined : result,
     isLoading: isLoading,
-    error: detailsError ?? (kind === 'report' ? classesError : changesError),
+    error: detailsError ?? (kind === 'diff' ? changesError : null),
   }
 }
 

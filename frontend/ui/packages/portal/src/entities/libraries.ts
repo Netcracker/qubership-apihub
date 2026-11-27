@@ -180,6 +180,7 @@ export type LibraryClassDetailsDto =
     methods: LibraryMethodDto[]
     constructors: LibraryMethodDto[]
     fields: LibraryFieldDto[]
+    nestedClasses?: readonly { classId: string; kind: LibraryClassDto['kind'] }[]
   }>
 
 export type LibraryChangeDto = JavaApiChangeRow

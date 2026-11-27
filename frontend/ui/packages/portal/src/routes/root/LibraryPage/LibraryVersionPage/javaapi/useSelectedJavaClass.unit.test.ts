@@ -22,15 +22,19 @@ const CLASSES: JavaApiClassListItem[] = ['Hidden', 'First', 'Second'].map(classN
 
 describe('useSelectedJavaClass', () => {
   it.each([
-    ['Hidden', CLASSES.slice(1), 'First'],
+    ['Hidden', CLASSES.slice(1), 'Hidden'],
     ['Second', CLASSES.slice(1), 'Second'],
-    ['Missing', CLASSES.slice(1), 'First'],
-    ['Hidden', [], 'empty'],
-  ])('resolves %s from the displayed classes', (selectedName, displayed, expected) => {
-    jest.mocked(useSearchParams).mockReturnValue([new URLSearchParams({ javaClass: selectedName }), jest.fn()])
+    ['Missing', CLASSES.slice(1), 'Missing'],
+    ['Hidden', [], 'Hidden'],
+    [null, CLASSES.slice(1), 'First'],
+    [null, [], 'empty'],
+  ])('resolves %s independently of the loaded classes', (selectedName, displayed, expected) => {
+    const params = new URLSearchParams()
+    if (selectedName !== null) params.set('javaClass', selectedName)
+    jest.mocked(useSearchParams).mockReturnValue([params, jest.fn()])
     const Probe: FC = () => {
       const [selected] = useSelectedJavaClass(displayed)
-      return createElement('span', undefined, selected?.className ?? 'empty')
+      return createElement('span', undefined, selected ?? 'empty')
     }
     expect(renderToStaticMarkup(createElement(Probe))).toBe(`<span>${expected}</span>`)
   })
