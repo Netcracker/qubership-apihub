@@ -40,7 +40,7 @@ type DiscoveredServiceSectionHeader = Readonly<{
 
 type DiscoveredServicesProps = {
   services: ReadonlyArray<Service>
-  isDiscoveryRunning: boolean
+  isRestartDiscoveryDisabled: boolean
   onRestartDiscovery: () => void
 }
 
@@ -92,7 +92,7 @@ const viewPackageLink: ServiceTableLink<DiscoveredServiceRow> = row => <ViewPack
 
 export const DiscoveredServices: FC<DiscoveredServicesProps> = memo<DiscoveredServicesProps>(({
   services,
-  isDiscoveryRunning,
+  isRestartDiscoveryDisabled,
   onRestartDiscovery,
 }) => {
   const [searchValue, setSearchValue] = useState('')
@@ -118,7 +118,7 @@ export const DiscoveredServices: FC<DiscoveredServicesProps> = memo<DiscoveredSe
   return (
     <>
       <DiscoverServicesStepToolbar
-        isDiscoveryRunning={isDiscoveryRunning}
+        isRestartDiscoveryDisabled={isRestartDiscoveryDisabled}
         onRestartDiscovery={onRestartDiscovery}
         onSearch={setSearchValue}
       />

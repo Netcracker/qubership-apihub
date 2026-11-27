@@ -28,7 +28,6 @@ export const ServicesPublicationOptionsProvider: FC<PropsWithChildren> = memo(({
   )
 })
 
-/** The options of a create request: the fields of Create Snapshot and the selected services. */
 export type CreateSnapshotPublicationOptions = {
   name: string
   baseline: string
@@ -88,7 +87,6 @@ const SetCreateSnapshotFormDataContext = createContext<Dispatch<SetStateAction<C
 type SnapshotPublicationsContext = {
   /** The snapshots created on Create Snapshot, in the order they were created. */
   snapshotPublications: ReadonlyArray<SnapshotPublication>
-  /** The options of the last create request when it failed, which "Try Again" sends again. */
   failedCreateSnapshotOptions: CreateSnapshotPublicationOptions | undefined
   /** Adds a created snapshot; the last create request then no longer counts as failed. */
   addSnapshotPublication: (snapshotPublication: SnapshotPublication) => void
@@ -109,7 +107,6 @@ export function useSnapshotPublications(): SnapshotPublicationsContext {
   const setFailedCreateSnapshotOptions = (options: CreateSnapshotPublicationOptions): void =>
     setState(state => ({ ...state, failedCreateSnapshotOptions: options }))
 
-  // "Restart Discovery" and the workspace selector call it from callbacks of their own
   const resetSnapshotPublications = useCallback(() => {
     setState(EMPTY_SNAPSHOT_PUBLICATIONS_STATE)
     setFormData(EMPTY_CREATE_SNAPSHOT_FORM_DATA)
@@ -125,7 +122,6 @@ export function useSnapshotPublications(): SnapshotPublicationsContext {
   }
 }
 
-/** The snapshot that Promote Version works with: the last one created. */
 export function useLastSnapshotPublication(): SnapshotPublication | undefined {
   return useContext(SnapshotPublicationsStateContext).snapshotPublications.at(-1)
 }

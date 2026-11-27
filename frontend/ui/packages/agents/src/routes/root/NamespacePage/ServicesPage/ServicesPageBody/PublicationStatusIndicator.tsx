@@ -23,7 +23,6 @@ type PublicationStatusIndicatorProps = {
   publishDetails: PublishDetails
 }
 
-/** The publication status of a service or of a snapshot: a spinner until it is final, then its icon and text. */
 export const PublicationStatusIndicator: FC<PublicationStatusIndicatorProps> = memo<PublicationStatusIndicatorProps>(({
   publishDetails: { status, hasErrors, changelogHasErrors },
 }) => {

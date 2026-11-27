@@ -7,8 +7,9 @@ import { AgentsSelector } from './AgentsSelector'
 import { CloudIcon } from '@netcracker/qubership-apihub-ui-shared/icons/CloudIcon'
 import { LARGE_TOOLBAR_SIZE, Toolbar } from '@netcracker/qubership-apihub-ui-shared/components/Toolbar'
 import { GREY_LONDON_FOG_COLOR, GREY_NIAGARA_COLOR } from '@netcracker/qubership-apihub-ui-shared/themes/colors'
-import { useCreateSnapshotStepStatus } from './ServicesPage/ServicesPageBody/CreateSnapshotStep/useCreateSnapshotStepStatus'
-import { RUNNING_STEP_STATUS } from './ServicesPage/ServicesPageProvider/servicesSteps'
+import {
+  useIsCreateSnapshotStepRunning,
+} from './ServicesPage/ServicesPageBody/CreateSnapshotStep/useCreateSnapshotStepStatus'
 
 const FIELD_HEIGHT = 44
 
@@ -17,7 +18,7 @@ const FIELD_HEIGHT = 44
 export const NamespaceToolbar: FC = memo(() => {
   // Another cloud, namespace, or workspace clears the snapshots of the wizard: the outcome of a running publication
   // would show nowhere, and a create request answered later would lose its snapshot or add it to another workspace
-  const areSelectorsLocked = useCreateSnapshotStepStatus() === RUNNING_STEP_STATUS
+  const areSelectorsLocked = useIsCreateSnapshotStepRunning()
 
   return (
     <Toolbar

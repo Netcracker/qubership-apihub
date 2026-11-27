@@ -5,7 +5,6 @@ import {
   useLastSnapshotPublication,
 } from '../ServicesPageProvider/ServicesPublicationOptionsProvider'
 import { useInvalidateSnapshots, useSnapshots } from '../../useSnapshots'
-import { useMemo } from 'react'
 import { isEmpty, isNotEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
 import {
   EMPTY_ALL_PUBLISH_DETAILS,
@@ -31,7 +30,7 @@ export function useAllPublicationDetails(options?: Partial<{
   config: PublishConfig
 }>): [PublishDetails[]] {
   const { config } = options ?? {}
-  const publishIds = useMemo(() => getPublishIds(config), [config])
+  const publishIds = getPublishIds(config)
 
   return [useAllPublicationDetailsQuery(publishIds)]
 }
@@ -43,7 +42,7 @@ export function useAllPublishDetailsStatus(options?: Partial<{
   const lastSnapshotPublication = useLastSnapshotPublication()
   const invalidateSnapshotPublishInfo = useInvalidateSnapshotPublicationInfo()
   const invalidateSnapshots = useInvalidateSnapshots()
-  const publishIds = useMemo(() => getPublishIds(config), [config])
+  const publishIds = getPublishIds(config)
 
   // Only the step status invalidates on completion. React Query calls onSuccess for each observer,
   // and the step tables observe the same poll.
@@ -65,10 +64,7 @@ export function useSnapshotPublicationDetails(
   snapshotPublications: ReadonlyArray<SnapshotPublication>,
   onFinal?: (allPublishDetails: ReadonlyArray<PublishDetails>) => void,
 ): ReadonlyArray<PublishDetails> {
-  const publishIds = useMemo(
-    () => snapshotPublications.flatMap(({ config }) => getPublishIds(config)),
-    [snapshotPublications],
-  )
+  const publishIds = snapshotPublications.flatMap(({ config }) => getPublishIds(config))
 
   return useAllPublicationDetailsQuery(publishIds, data => {
     if (getCombinedPublishStatus(data, publishIds) !== RUNNING_PUBLISH_STATUS) {

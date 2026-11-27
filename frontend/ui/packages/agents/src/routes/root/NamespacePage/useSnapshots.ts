@@ -19,7 +19,7 @@ export function useSnapshots(): [Snapshots, IsLoading] {
   const { data, isLoading } = useQuery<SnapshotsDto, Error, Snapshots>({
     queryKey: [SNAPSHOTS_QUERY_KEY, agentId, namespaceKey, workspaceKey],
     queryFn: () => getSnapshots(agentId!, namespaceKey!, workspaceKey!, prefix),
-    enabled: !!namespaceKey,
+    enabled: !!namespaceKey && !!workspaceKey,
     select: toSnapshots,
   })
 
@@ -31,10 +31,13 @@ export function useSnapshots(): [Snapshots, IsLoading] {
 
 export function useInvalidateSnapshots(): InvalidateQuery<void> {
   const { namespaceKey, agentId } = useParams()
+  const workspaceKey = useSearchParam(WORKSPACE_SEARCH_PARAM)
   const client = useQueryClient()
 
+  // Only the list of the open workspace changes, and `refetchType: 'all'` would also fetch the lists cached for other
+  // workspaces, among them the one of the welcome page, which has no workspace
   return () => client.invalidateQueries({
-    queryKey: [SNAPSHOTS_QUERY_KEY, agentId, namespaceKey],
+    queryKey: [SNAPSHOTS_QUERY_KEY, agentId, namespaceKey, workspaceKey],
     refetchType: 'all',
   })
 }

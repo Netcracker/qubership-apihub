@@ -4,14 +4,14 @@ import { type FC, memo, useEffect, useState } from 'react'
 import { SearchBar, type SearchValue } from '@netcracker/qubership-apihub-ui-shared/components/SearchBar'
 
 export type DiscoverServicesStepToolbarProps = {
-  isDiscoveryRunning: boolean
+  isRestartDiscoveryDisabled: boolean
   onRestartDiscovery: () => void
   onSearch: (value: SearchValue) => void
 }
 
 export const DiscoverServicesStepToolbar: FC<DiscoverServicesStepToolbarProps> = memo<DiscoverServicesStepToolbarProps>((
   {
-    isDiscoveryRunning,
+    isRestartDiscoveryDisabled,
     onRestartDiscovery,
     onSearch,
   },
@@ -24,7 +24,7 @@ export const DiscoverServicesStepToolbar: FC<DiscoverServicesStepToolbarProps> =
       <Button
         data-testid="RestartDiscoveryButton"
         variant="outlined"
-        disabled={isDiscoveryRunning}
+        disabled={isRestartDiscoveryDisabled}
         onClick={onRestartDiscovery}
       >
         Restart Discovery

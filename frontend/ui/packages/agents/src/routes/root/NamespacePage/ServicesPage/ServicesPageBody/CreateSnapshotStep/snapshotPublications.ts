@@ -25,16 +25,19 @@ type CreateSnapshotStepState = Readonly<{
   isCreationFailed: boolean
 }>
 
-/**
- * Returns the services that went into no snapshot, which Create Snapshot still offers. A service whose publication
- * failed stays in its snapshot.
- */
+export function getSnapshotServiceConfigs(
+  snapshotPublications: ReadonlyArray<SnapshotPublication>,
+): ReadonlyArray<ServiceConfig> {
+  return snapshotPublications.flatMap(({ config }) => config.serviceConfigs)
+}
+
+/** Returns the services that went into no snapshot; a service whose publication failed stays in its snapshot. */
 export function getServicesOutsideSnapshots(
   services: ReadonlyArray<Service>,
   snapshotPublications: ReadonlyArray<SnapshotPublication>,
 ): ReadonlyArray<Service> {
   const snapshotServiceKeys = new Set(
-    snapshotPublications.flatMap(({ config }) => config.serviceConfigs.map(({ serviceId }) => serviceId)),
+    getSnapshotServiceConfigs(snapshotPublications).map(({ serviceId }) => serviceId),
   )
   return services.filter(({ key }) => !snapshotServiceKeys.has(key))
 }
@@ -92,7 +95,6 @@ export function getCreateSnapshotStepStatus({
   if (isPublishing) {
     return RUNNING_STEP_STATUS
   }
-  // A failed service fails the step only when no service of any snapshot was published
   return isNotEmpty(getPublishedServiceConfigs(snapshotPublications, allPublishDetails))
     ? COMPLETE_STEP_STATUS
     : ERROR_STEP_STATUS
@@ -123,8 +125,7 @@ function getPublishedServiceConfigs(
   snapshotPublications: ReadonlyArray<SnapshotPublication>,
   allPublishDetails: ReadonlyArray<PublishDetails>,
 ): ReadonlyArray<ServiceConfig> {
-  return snapshotPublications
-    .flatMap(({ config }) => config.serviceConfigs)
+  return getSnapshotServiceConfigs(snapshotPublications)
     .filter(serviceConfig =>
       getServicePublishDetails(allPublishDetails, serviceConfig).status === COMPLETE_PUBLISH_STATUS,
     )

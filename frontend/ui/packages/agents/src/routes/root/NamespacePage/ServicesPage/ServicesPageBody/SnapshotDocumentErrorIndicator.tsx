@@ -8,7 +8,6 @@ import { useDocumentErrorFileKeys } from './useDocumentErrorFileKeys'
 
 type SnapshotDocumentErrorIndicatorProps = {
   specKey: SpecKey
-  // The snapshot package and version of the service that the document belongs to
   snapshotPackageKey: PackageKey
   snapshotVersionKey: VersionKey
 }

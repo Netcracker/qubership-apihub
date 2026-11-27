@@ -4,8 +4,8 @@ import type { PackageKey, ServiceKey } from '@netcracker/qubership-apihub-ui-sha
 import type { Spec } from '@netcracker/qubership-apihub-ui-shared/entities/specs'
 import {
   COMPLETE_PUBLISH_STATUS,
-  ERROR_PUBLISH_STATUS,
   type PublishDetails,
+  RUNNING_PUBLISH_STATUS,
 } from '@netcracker/qubership-apihub-ui-shared/utils/packages-builder'
 
 import type { VersionKey } from '@agents/entities/keys'
@@ -104,9 +104,7 @@ const serviceLink: ServiceTableLink<SnapshotServiceRow> = row => (
 )
 
 type CreateSnapshotStepSectionsProps = {
-  /** Every service of the step, which the rows of the snapshots take. */
   services: ReadonlyArray<Service>
-  /** The services that went into no snapshot, which "Services From Discovery" and the split take. */
   servicesOutsideSnapshots: ReadonlyArray<Service>
   areServicesLoading: boolean
   /** The services split by the baseline version; `undefined` until both versions are entered. */
@@ -141,9 +139,9 @@ export const CreateSnapshotStepSections: FC<CreateSnapshotStepSectionsProps> = m
         id: `${SNAPSHOT_SECTION_ID_PREFIX}${index + 1}`,
         title: toSnapshotSummary(snapshotPublication),
         tooltip: SNAPSHOT_SECTION_TOOLTIP,
-        status: isPublicationFinal(snapshotPublishDetails)
-          ? <PublicationStatusIndicator publishDetails={snapshotPublishDetails} />
-          : null,
+        status: snapshotPublishDetails.status === RUNNING_PUBLISH_STATUS
+          ? null
+          : <PublicationStatusIndicator publishDetails={snapshotPublishDetails} />,
         columns: SNAPSHOT_SERVICE_COLUMNS_WITH_PUBLICATION_STATUS,
         link: serviceLink,
         rows: getSnapshotSectionRows(snapshotPublication, services, allPublishDetails),
@@ -220,10 +218,6 @@ function toSnapshotSummary({ name, baseline, config }: SnapshotPublication): Rea
   ]
 }
 
-function isPublicationFinal({ status }: PublishDetails): boolean {
-  return status === COMPLETE_PUBLISH_STATUS || status === ERROR_PUBLISH_STATUS
-}
-
 function toServiceRowWithDocuments(service: Service): SnapshotServiceRow {
   return {
     service: service,
@@ -231,7 +225,6 @@ function toServiceRowWithDocuments(service: Service): SnapshotServiceRow {
   }
 }
 
-/** Returns the rows of a snapshot section: each service of the snapshot with its documents and its publication. */
 function getSnapshotSectionRows(
   { name, config }: SnapshotPublication,
   services: ReadonlyArray<Service>,

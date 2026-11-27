@@ -38,13 +38,13 @@ import {
   useCreateSnapshotFormData,
   useSnapshotPublications,
 } from '../../ServicesPageProvider/ServicesPublicationOptionsProvider'
-import { CREATE_SNAPSHOT_STEP_KEY, RUNNING_STEP_STATUS } from '../../ServicesPageProvider/servicesSteps'
+import { CREATE_SNAPSHOT_STEP_KEY } from '../../ServicesPageProvider/servicesSteps'
 import { useResetStepsAfter } from '../../ServicesPageProvider/ServicesStepsProvider'
 import { CreateSnapshotStepSections } from './CreateSnapshotStepSections'
 import { getSnapshotVersionError, splitByBaselineVersion } from './snapshotForm'
 import { getServicesOutsideSnapshots } from './snapshotPublications'
 import { type CreateSnapshot, useCreateSnapshot } from './useCreateSnapshot'
-import { useCreateSnapshotStepStatus } from './useCreateSnapshotStepStatus'
+import { useIsCreateSnapshotStepRunning } from './useCreateSnapshotStepStatus'
 import { useSnapshotBaseline } from './useSnapshotBaseline'
 
 const BASELINE_VERSION_TOOLTIP =
@@ -75,7 +75,7 @@ export const CreateSnapshotStep: FC = memo(() => {
     },
     onFailed: setFailedCreateSnapshotOptions,
   })
-  const status = useCreateSnapshotStepStatus()
+  const isRunning = useIsCreateSnapshotStepRunning()
   const resetStepsAfter = useResetStepsAfter()
   const snapshotNameOptions = useVersionOptions()
   const baselineHintId = useId()
@@ -94,7 +94,6 @@ export const CreateSnapshotStep: FC = memo(() => {
     recheckBaseline,
   } = useSnapshotBaseline(baseline, baselineSearch)
 
-  const isRunning = status === RUNNING_STEP_STATUS
   const nameError = getSnapshotVersionError(name, baseline)
   // Until the search of the selected version answers, a package that holds the version can lack it, and the split
   // would put its services under "Not Matching Baseline Version"

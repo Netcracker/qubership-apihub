@@ -16,6 +16,7 @@ import { useSetDiscoveryStartView } from '../../ServicesPageProvider/DiscoverySt
 import { useSnapshotPublications } from '../../ServicesPageProvider/ServicesPublicationOptionsProvider'
 import { DISCOVER_SERVICES_STEP_KEY } from '../../ServicesPageProvider/servicesSteps'
 import { useResetStepsAfter, useSetStepStatus } from '../../ServicesPageProvider/ServicesStepsProvider'
+import { useIsCreateSnapshotStepRunning } from '../CreateSnapshotStep/useCreateSnapshotStepStatus'
 import { DiscoveredServices } from './DiscoveredServices'
 import {
   type DiscoveryView,
@@ -35,6 +36,7 @@ export const DiscoverServicesStep: FC = memo((): ReactElement => {
   const view = useDiscoveryView()
   const setStepStatus = useSetStepStatus()
   const [startDiscovery, isStarting] = useStartDiscovery(view)
+  const isCreateSnapshotStepRunning = useIsCreateSnapshotStepRunning()
 
   // The start request counts as the run, so the tab spins and the buttons stay disabled from the click on
   const isDiscoveryRunning = isStarting || status === RUNNING_DISCOVERY_STATUS
@@ -101,7 +103,10 @@ export const DiscoverServicesStep: FC = memo((): ReactElement => {
       return (
         <DiscoveredServices
           services={services}
-          isDiscoveryRunning={isDiscoveryRunning}
+          // A new discovery clears the snapshots of the wizard, so it waits until Create Snapshot stops running: the
+          // outcome of a running publication would show nowhere, and a create request answered later would add its
+          // snapshot to the new discovery
+          isRestartDiscoveryDisabled={isDiscoveryRunning || isCreateSnapshotStepRunning}
           onRestartDiscovery={startDiscovery}
         />
       )
