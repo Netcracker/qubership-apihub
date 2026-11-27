@@ -184,6 +184,13 @@ export type LibraryClassDetailsDto =
 
 export type LibraryChangeDto = JavaApiChangeRow
 
+export type LibraryNestedClassChangeDto = Readonly<{
+  classId: string
+  kind: LibraryClassDto['kind']
+  status: 'added' | 'removed' | 'changed'
+  severity: LibraryChangeDto['severity']
+}>
+
 export type LibraryChangesSummaryDto = Readonly<{
   comparisonId: string
   libraryId: Key
@@ -201,6 +208,7 @@ export type LibraryChangesSummaryDto = Readonly<{
 export type LibraryChangesDto = Readonly<{
   comparison: LibraryChangesSummaryDto
   changes: readonly LibraryChangeDto[]
+  nestedChanges?: readonly LibraryNestedClassChangeDto[]
 }>
 
 export function toLibraryVersion(value: LibraryVersionDto): LibraryVersion {

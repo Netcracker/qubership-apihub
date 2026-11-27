@@ -10,6 +10,7 @@ import type {
   LibraryChangesDto,
   LibraryClassDetailsDto,
   LibraryJavaApiDocumentDto,
+  LibraryNestedClassChangeDto,
 } from '@portal/entities/libraries'
 import { useAutoFetchInfinitePages } from '@portal/routes/root/PortalPage/VersionPage/useAutoFetchInfinitePages'
 import { requestJsonWithError } from '@portal/utils/requestJsonWithError'
@@ -30,7 +31,7 @@ type LibraryClassDetailsResult = {
 }
 
 type LibraryClassChangesResult = {
-  data: readonly LibraryChangeDto[] | null | undefined
+  data: Pick<LibraryChangesDto, 'changes' | 'nestedChanges'> | null | undefined
   isLoading: boolean
   error: Error | null
 }
@@ -39,6 +40,7 @@ type LibraryClassChangesResult = {
 type LibraryJavaClassRaw = {
   class: LibraryClassDetailsDto | null
   changes?: readonly LibraryChangeDto[]
+  nestedChanges?: readonly LibraryNestedClassChangeDto[]
 }
 
 type LibraryJavaClassData = {
@@ -101,7 +103,10 @@ function useLibraryClassChanges(
   const result = useMemo(() => {
     if (!data) return undefined
     if (data.pages.some(page => page === null)) return null
-    return data.pages.flatMap(page => page?.changes ?? [])
+    return {
+      changes: data.pages.flatMap(page => page?.changes ?? []),
+      nestedChanges: data.pages[0]?.nestedChanges ?? [],
+    }
   }, [data])
   const hasPendingPages = !!hasNextPage && !error
   return {
@@ -129,7 +134,7 @@ export function useLibraryJavaClass(
     kind === 'report' ? libraryId : undefined,
     kind === 'report' ? version : undefined,
   )
-  const { data: changes, isLoading: isChangesLoading, error: changesError } = useLibraryClassChanges(
+  const { data: classChanges, isLoading: isChangesLoading, error: changesError } = useLibraryClassChanges(
     kind === 'diff' ? libraryId : undefined,
     kind === 'diff' ? version : undefined,
     previous,
@@ -143,12 +148,12 @@ export function useLibraryJavaClass(
       document = toJavaApiDocument(toReportRows(classes, details ? [details] : []))
       raw = { class: details }
     } else {
-      if (changes === undefined || details === undefined) return undefined
-      if (changes === null || (!details && !changes.length)) return null
-      // TODO(libraries-backend): The changes of nested types are separate classIds; without a class diff that
-      // includes them, the compare page shows the class's own rows only.
-      document = toJavaApiDocument(toDiffRows(details ?? undefined, changes))
-      raw = { class: details, changes: changes }
+      if (classChanges === undefined || details === undefined) return undefined
+      if (classChanges === null) return null
+      const { changes, nestedChanges = [] } = classChanges
+      if (!details && !changes.length && !nestedChanges.length) return null
+      document = toJavaApiDocument(toDiffRows(details ?? undefined, changes, nestedChanges))
+      raw = { class: details, changes: changes, nestedChanges: nestedChanges }
     }
     return {
       document: document,
@@ -157,7 +162,7 @@ export function useLibraryJavaClass(
         .find((item: JavaApiClassListItem) => item.className === className),
       raw: raw,
     }
-  }, [kind, classes, details, changes, className])
+  }, [kind, classes, details, classChanges, className])
   const isLoading = isDetailsLoading || (kind === 'report' ? isClassesLoading : isChangesLoading)
   return {
     data: isLoading ? undefined : result,

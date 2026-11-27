@@ -10,6 +10,7 @@ import type {
   LibraryFieldDto,
   LibraryJavaApiDocumentDto,
   LibraryMethodDto,
+  LibraryNestedClassChangeDto,
 } from '@portal/entities/libraries'
 
 type JdiffRow = Readonly<{
@@ -20,6 +21,7 @@ type JdiffRow = Readonly<{
   changeTypes: readonly string[]
   details?: string
   breaking: boolean
+  severity?: LibraryNestedClassChangeDto['severity']
   binaryCompatible?: boolean
   sourceCompatible?: boolean
   semver?: string
@@ -31,6 +33,12 @@ const KIND_TO_JDIFF: Readonly<Record<LibraryClassDto['kind'], string>> = {
   enum: 'ENUM',
   annotation: 'ANNOTATION',
   record: 'CLASS',
+}
+
+const NESTED_STATUS_TO_JDIFF: Readonly<Record<LibraryNestedClassChangeDto['status'], string>> = {
+  added: 'NEW',
+  removed: 'REMOVED',
+  changed: 'MODIFIED',
 }
 
 export function toJdiffTypeRow(cls: LibraryClassDto): JdiffRow {
@@ -108,6 +116,7 @@ export function withMemberCounts(
 export function toDiffRows(
   current: LibraryClassDetailsDto | undefined,
   changes: readonly LibraryChangeDto[],
+  nestedChanges: readonly LibraryNestedClassChangeDto[] = [],
 ): JdiffRow[] {
   const rows = toReportRows(current ? [current] : [], current ? [current] : [])
   const indices = new Map(rows.map((row, index) => [toJdiffRowKey(row), index]))
@@ -121,6 +130,20 @@ export function toDiffRows(
     } else {
       rows[index] = row
     }
+  })
+  nestedChanges.forEach(change => {
+    const row: JdiffRow = {
+      className: change.classId,
+      elementType: KIND_TO_JDIFF[change.kind],
+      status: NESTED_STATUS_TO_JDIFF[change.status],
+      changeTypes: [],
+      breaking: change.severity === 'breaking',
+      severity: change.severity,
+    }
+    const key = toJdiffRowKey(row)
+    if (indices.has(key)) return
+    indices.set(key, rows.length)
+    rows.push(row)
   })
   return rows
 }

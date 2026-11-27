@@ -236,6 +236,58 @@ describe('library class document', () => {
     expect(toDiffRows(undefined, [removed])).toEqual([toJdiffChangeRow(removed)])
   })
 
+  it('appends nested type rows with their status and explicit severity', () => {
+    expect(toDiffRows(CURRENT, [], [
+      { classId: 'example.Order$Added', kind: 'interface', status: 'added', severity: 'non-breaking' },
+      { classId: 'example.Order$Removed', kind: 'enum', status: 'removed', severity: 'breaking' },
+      { classId: 'example.Order$Changed', kind: 'annotation', status: 'changed', severity: 'annotation' },
+    ])).toEqual([
+      toJdiffTypeRow(ORDER),
+      toJdiffMemberRow(GET_NAME, 'METHOD'),
+      {
+        className: 'example.Order$Added',
+        elementType: 'INTERFACE',
+        status: 'NEW',
+        changeTypes: [],
+        breaking: false,
+        severity: 'non-breaking',
+      },
+      {
+        className: 'example.Order$Removed',
+        elementType: 'ENUM',
+        status: 'REMOVED',
+        changeTypes: [],
+        breaking: true,
+        severity: 'breaking',
+      },
+      {
+        className: 'example.Order$Changed',
+        elementType: 'ANNOTATION',
+        status: 'MODIFIED',
+        changeTypes: [],
+        breaking: false,
+        severity: 'annotation',
+      },
+    ])
+  })
+
+  it('keeps an existing type row when nested changes contain the same class', () => {
+    const change: LibraryChangeDto = {
+      ...RETURN_TYPE_CHANGE,
+      classId: 'example.Order$Builder',
+      methodId: undefined,
+      details: { elementType: 'CLASS', status: 'MODIFIED', changeTypes: ['CLASS_NOW_ABSTRACT'] },
+    }
+
+    expect(toDiffRows(CURRENT, [change], [
+      { classId: change.classId, kind: 'class', status: 'changed', severity: 'breaking' },
+    ])).toEqual([
+      toJdiffTypeRow(ORDER),
+      toJdiffMemberRow(GET_NAME, 'METHOD'),
+      toJdiffChangeRow(change),
+    ])
+  })
+
   it.each(
     [
       ['breaking', true],

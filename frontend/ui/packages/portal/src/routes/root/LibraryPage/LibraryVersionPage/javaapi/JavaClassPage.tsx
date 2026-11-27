@@ -1,7 +1,7 @@
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import { Alert, Box, IconButton, Link, Skeleton, styled, Typography } from '@mui/material'
-import { type FC, useMemo } from 'react'
-import { Navigate, NavLink, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { type FC, useCallback, useMemo } from 'react'
+import { createPath, Navigate, NavLink, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 
 import { JavaClassViewer } from '@netcracker/qubership-apihub-api-doc-viewer'
 import '@netcracker/qubership-apihub-api-doc-viewer/dist/style.css'
@@ -25,6 +25,7 @@ import { useLibraryVersion } from '../../useLibraryVersions'
 import { getLibraryVersionPath } from '../libraryVersion'
 import { useLibraryJavaClass } from '../useLibraryJavaClass'
 import {
+  getJavaClassPageLink,
   getJavaReferenceLink,
   getPreviousLibraryVersion,
   JAVA_DOCUMENT_SEARCH_PARAM,
@@ -68,7 +69,16 @@ const JavaClassComparePage: FC = () => {
     setPreviousLibraryVersion(params, { previousLibraryId, previousVersion })
     navigate(origin?.pathname.startsWith(versionPath) ? origin : { pathname: tabPath, search: `?${params}` })
   }
-  const navigationLinkBuilder = useJavaClassNavigationLinkBuilder()
+  const referenceLinkBuilder = useJavaClassNavigationLinkBuilder()
+  const navigationLinkBuilder = useCallback((targetClassName: string) => {
+    if (rawData?.nestedChanges?.some(change => change.classId === targetClassName)) {
+      return createPath(getJavaClassPageLink(libraryId, versionId, targetClassName, 'diff', {
+        previousLibraryId,
+        previousVersion,
+      }))
+    }
+    return referenceLinkBuilder(targetClassName)
+  }, [rawData?.nestedChanges, libraryId, versionId, previousLibraryId, previousVersion, referenceLinkBuilder])
 
   if (isLibraryLoading || isVersionLoading) return <LoadingIndicator />
   if (!library || !version) {
