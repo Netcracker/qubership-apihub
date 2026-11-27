@@ -39,6 +39,9 @@ type OlricConfig struct {
 	Namespace     string
 	// MembershipPollIntervalSeconds is how often cluster membership is checked to detect peer rejoin and re-subscribe to DTopic.
 	MembershipPollIntervalSeconds int `validate:"gte=1"`
+	// PublisherServiceName is the pod/service name prefix of the service publishing version-published events (e.g. apihub-backend).
+	// Only joins/leaves of members with this prefix trigger re-subscription.
+	PublisherServiceName string
 }
 
 type LintersConfig struct {

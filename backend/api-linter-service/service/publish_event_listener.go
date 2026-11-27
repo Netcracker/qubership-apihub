@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net"
 	"sort"
 	"strings"
 	"sync"
@@ -24,8 +25,9 @@ type PublishEventListener interface {
 	listen(message olric.DTopicMessage)
 }
 
-func NewPublishEventListener(op client.OlricProvider, validationService ValidationService, membershipPollInterval time.Duration) PublishEventListener {
+func NewPublishEventListener(op client.OlricProvider, validationService ValidationService, membershipPollInterval time.Duration, publisherServiceName string) PublishEventListener {
 	pel := publishEventListenerImpl{
+		publisherServiceName:   publisherServiceName,
 		op:                     op,
 		validationService:      validationService,
 		membershipPollInterval: membershipPollInterval,
@@ -38,6 +40,7 @@ type publishEventListenerImpl struct {
 	op                     client.OlricProvider
 	validationService      ValidationService
 	membershipPollInterval time.Duration
+	publisherServiceName   string
 	versionPublishedTopic  *olric.DTopic
 	listenerID             uint64
 	isReadyWg              sync.WaitGroup
@@ -138,6 +141,8 @@ func (p *publishEventListenerImpl) watchAndResubscribe() {
 
 	// departed remembers members that left, so a returning member with the same ID can be told apart from a restarted one.
 	departed := make(map[uint64]client.ClusterMember)
+	// resubscribePending stays true until a re-subscription succeeds, so temporary errors are retried on the next tick.
+	resubscribePending := false
 
 	for range ticker.C {
 		current, err := p.op.ClusterMembers()
@@ -157,23 +162,56 @@ func (p *publishEventListenerImpl) watchAndResubscribe() {
 		}
 
 		for id, m := range left {
+			if !p.isPublisher(m) {
+				log.Infof("PublishEventListener: member left but is not service %q, ignoring (%s)", p.publisherServiceName, m.String())
+				continue
+			}
 			departed[id] = m
-			log.Warnf("PublishEventListener: peer %s left cluster (id=%d, startedAt=%s), topic %s delivery is interrupted until it rejoins",
-				m.Name, m.ID, m.StartedAt().Format(time.RFC3339), VersionPublishedTopicName)
+			log.Warnf("PublishEventListener: publisher pod %q left cluster (%s), topic %s delivery is interrupted until it rejoins",
+				podName(m), m.String(), VersionPublishedTopicName)
 		}
 		for id, m := range joined {
+			if !p.isPublisher(m) {
+				log.Infof("PublishEventListener: member joined but is not service %q, ignoring (%s)", p.publisherServiceName, m.String())
+				continue
+			}
 			kind := memberKindNewProcess
 			if _, ok := departed[id]; ok {
 				kind = memberKindSameProcess
 				delete(departed, id)
 			}
-			log.Infof("PublishEventListener: peer %s joined cluster (id=%d, startedAt=%s, %s), re-subscribing to topic %s",
-				m.Name, m.ID, m.StartedAt().Format(time.RFC3339), kind, VersionPublishedTopicName)
+			log.Infof("PublishEventListener: publisher pod %q joined cluster (%s, %s), re-subscription to topic %s scheduled",
+				podName(m), m.String(), kind, VersionPublishedTopicName)
+			resubscribePending = true
 		}
-		if len(joined) > 0 {
-			p.resubscribe()
+
+		if resubscribePending {
+			if p.resubscribe() {
+				resubscribePending = false
+			} else {
+				log.Warnf("PublishEventListener: re-subscription failed, will retry in %s", p.membershipPollInterval)
+			}
 		}
 	}
+}
+
+// podName extracts the host part of the member name (host:port), which is the pod name in Kubernetes.
+func podName(m client.ClusterMember) string {
+	host, _, err := net.SplitHostPort(m.Name)
+	if err != nil {
+		return m.Name
+	}
+	return host
+}
+
+// isPublisher reports whether the member is a pod of the configured publisher service, e.g. apihub-backend-xxxx.
+func (p *publishEventListenerImpl) isPublisher(m client.ClusterMember) bool {
+	name := podName(m)
+	if name == "" {
+		log.Warnf("PublishEventListener: pod information is missing in member metadata (%s)", m.String())
+		return false
+	}
+	return strings.HasPrefix(name, p.publisherServiceName)
 }
 
 const (
@@ -210,7 +248,8 @@ func diffMembers(previous, current map[uint64]client.ClusterMember) (joined, lef
 	return joined, left
 }
 
-func (p *publishEventListenerImpl) resubscribe() {
+// resubscribe returns true when the listener is registered again.
+func (p *publishEventListenerImpl) resubscribe() bool {
 	log.Infof("PublishEventListener: resubscribe started (currentListenerID=%d)", p.listenerID)
 	if p.versionPublishedTopic != nil && p.listenerID != 0 {
 		log.Infof("PublishEventListener: removing stale listener (listenerID=%d)", p.listenerID)
@@ -227,14 +266,16 @@ func (p *publishEventListenerImpl) resubscribe() {
 	if err != nil {
 		log.Errorf("PublishEventListener: failed to recreate DTopic %s on peer join: %v", VersionPublishedTopicName, err)
 		p.listenerID = 0
-		return
+		return false
 	}
 	log.Infof("PublishEventListener: DTopic %s recreated, re-adding listener", VersionPublishedTopicName)
 
 	p.listenerID, err = p.versionPublishedTopic.AddListener(p.listen)
 	if err != nil {
 		log.Errorf("PublishEventListener: failed to re-add listener to DTopic %s on peer join: %v", VersionPublishedTopicName, err)
-	} else {
-		log.Infof("PublishEventListener: listener re-registered on DTopic %s (listenerID=%d)", VersionPublishedTopicName, p.listenerID)
+		p.listenerID = 0
+		return false
 	}
+	log.Infof("PublishEventListener: listener re-registered on DTopic %s (listenerID=%d)", VersionPublishedTopicName, p.listenerID)
+	return true
 }

@@ -22,6 +22,35 @@ type OlricProvider interface {
 	GetBindAddr() string
 	// Shutdown makes the node leave the Olric cluster and stops its background servers.
 	Shutdown(ctx context.Context) error
+	// ClusterMembers returns the current cluster members as seen by this node, keyed by member ID.
+	// A peer that restarts gets a new ID, a peer that only lost its network returns with the same ID.
+	ClusterMembers() (map[uint64]ClusterMember, error)
+}
+
+// ClusterMember is the identity Olric publishes as memberlist node metadata.
+type ClusterMember struct {
+	// Name is host:port, where host is the pod name in Kubernetes.
+	Name string
+	ID   uint64
+	// Birthdate is the start time of the member's Olric node, UNIX nanoseconds.
+	Birthdate int64
+}
+
+func (m ClusterMember) StartedAt() time.Time {
+	return time.Unix(0, m.Birthdate).UTC()
+}
+
+// PodName extracts the host part of the member name, which is the pod name in Kubernetes.
+func (m ClusterMember) PodName() string {
+	host, _, err := net.SplitHostPort(m.Name)
+	if err != nil {
+		return m.Name
+	}
+	return host
+}
+
+func (m ClusterMember) String() string {
+	return fmt.Sprintf("pod=%q name=%s id=%d birthdate=%d startedAt=%s", m.PodName(), m.Name, m.ID, m.Birthdate, m.StartedAt().Format(time.RFC3339Nano))
 }
 
 const olricBindAddr = "0.0.0.0"
@@ -77,6 +106,18 @@ func (op *olricProviderImpl) GetBindAddr() string {
 
 func (op *olricProviderImpl) Shutdown(ctx context.Context) error {
 	return op.olricC.Shutdown(ctx)
+}
+
+func (op *olricProviderImpl) ClusterMembers() (map[uint64]ClusterMember, error) {
+	st, err := op.Get().Stats()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get olric stats: %w", err)
+	}
+	members := make(map[uint64]ClusterMember, len(st.ClusterMembers))
+	for id, m := range st.ClusterMembers {
+		members[uint64(id)] = ClusterMember{Name: m.Name, ID: m.ID, Birthdate: m.Birthdate}
+	}
+	return members, nil
 }
 
 func getConfig(olricConfig sysconfig.OlricConfig) (*config.Config, error) {

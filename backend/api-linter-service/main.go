@@ -176,7 +176,8 @@ func main() {
 	publishEventListener := service.NewPublishEventListener(
 		olricProvider,
 		validationService,
-		time.Duration(systemInfoService.GetOlricConfig().MembershipPollIntervalSeconds)*time.Second)
+		time.Duration(systemInfoService.GetOlricConfig().MembershipPollIntervalSeconds)*time.Second,
+		systemInfoService.GetOlricConfig().PublisherServiceName)
 	rulesetService := service.NewRulesetService(ruleSetRepository)
 	cleanupService := service.NewCleanupService(cp)
 	authorizationService := service.NewAuthorizationService(apihubClient)
