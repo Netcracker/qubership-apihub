@@ -22,6 +22,9 @@ import { isDevProxyMode } from '@services/utils'
 
 test.describe('5.2.1 Package details', () => {
   const DEFAULT_VERSION_SORT = 'Publication Date (Newest)'
+  const FIRST_PUBLICATION_DATE_COLUMN = 'First Publication Date'
+  const LAST_REVISION_DATE_COLUMN = 'Last Revision Date'
+  const LAST_REVISION_DATE_NEWEST_SORT = 'Last revision date (Newest)'
   const VERSION_NAME_ASC = 'Version Name (A-Z)'
   const VERSION_NAME_DESC = 'Version Name (Z-A)'
 
@@ -407,6 +410,10 @@ test.describe('5.2.1 Package details', () => {
     await portalPage.gotoPackage(PK11)
     await versionSlt.click()
 
+    const dateCells = versionSlt.getVersionRow().publicationDateCell.rootLocator
+    await expect(versionSlt.getDateColumnHeader(FIRST_PUBLICATION_DATE_COLUMN)).toBeVisible()
+    await expect(dateCells.first()).not.toBeEmpty()
+
     await test.step('Sort versions by name in ascending order', async () => {
       await versionSlt.sortMenu.click()
       await versionSlt.sortMenu.getListItem(VERSION_NAME_ASC).click()
@@ -414,6 +421,7 @@ test.describe('5.2.1 Package details', () => {
 
     const versionCells = versionSlt.getVersionRow().versionCell.rootLocator
     await expect(versionCells.first()).toHaveText(V_P_PKG_CHANGELOG_REST_INTERMEDIATE_R.version)
+    await expect(versionSlt.getDateColumnHeader(FIRST_PUBLICATION_DATE_COLUMN)).toBeVisible()
     const lastAscendingVersion = await versionCells.last().innerText()
 
     await test.step('Sort versions by name in descending order', async () => {
@@ -422,6 +430,7 @@ test.describe('5.2.1 Package details', () => {
     })
 
     await expect(versionCells.first()).toHaveText(lastAscendingVersion)
+    await expect(versionSlt.getDateColumnHeader(FIRST_PUBLICATION_DATE_COLUMN)).toBeVisible()
 
     await portalPage.reload()
     await versionSlt.click()
@@ -445,5 +454,11 @@ test.describe('5.2.1 Package details', () => {
       await expect.soft(versionSlt.sortMenu).toContainText(VERSION_NAME_DESC)
       await expect.soft(versionCells.first()).toHaveText(lastAscendingVersion)
     })
+
+    await versionSlt.sortMenu.click()
+    await versionSlt.sortMenu.getListItem(LAST_REVISION_DATE_NEWEST_SORT).click()
+
+    await expect(versionSlt.getDateColumnHeader(LAST_REVISION_DATE_COLUMN)).toBeVisible()
+    await expect(dateCells.first()).not.toBeEmpty()
   })
 })

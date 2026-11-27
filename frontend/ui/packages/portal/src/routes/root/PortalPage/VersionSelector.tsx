@@ -89,10 +89,11 @@ export const VersionSelector: FC = memo(() => {
           value={versions!}
           onClickVersion={onClickVersion}
           isLoading={areVersionsLoading}
+          sortBy={versionListSort.sortBy}
           kind={currentPackage?.kind}
         />
       </Placeholder>
-    </>, [areVersionsLoading, currentPackage?.kind, onClickVersion, searchValue, versions])
+    </>, [areVersionsLoading, currentPackage?.kind, onClickVersion, searchValue, versionListSort.sortBy, versions])
 
   return (
     <Box display="flex" alignItems="center" gap={2} overflow="hidden" data-testid="VersionSelector">

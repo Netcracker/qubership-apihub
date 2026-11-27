@@ -223,6 +223,8 @@ function toPackageVersion(value: PackageVersionDto): PackageVersion {
     key: value.version,
     status: value.status,
     createdAt: value.createdAt,
+    // TODO: Remove the createdAt fallback when the version-list API provides firstPublishedAt.
+    firstPublishedAt: value.firstPublishedAt ?? value.createdAt,
     versionLabels: value.versionLabels ?? [],
     previousVersion: value?.previousVersion,
     createdBy: value.createdBy,

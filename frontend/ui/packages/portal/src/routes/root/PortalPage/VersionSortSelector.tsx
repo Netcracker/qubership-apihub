@@ -14,7 +14,12 @@ export type VersionSortSelectorProps = Readonly<{
   disabled?: boolean
 }>
 
-const MENU_BUTTON_SX = { whiteSpace: 'nowrap' } as const
+const MENU_BUTTON_SX = {
+  width: 265,
+  justifyContent: 'flex-start',
+  whiteSpace: 'nowrap',
+  '& .MuiButton-endIcon': { marginLeft: 'auto' },
+} as const
 const SORT_ICON = <SortIcon />
 
 export const VersionSortSelector: FC<VersionSortSelectorProps> = memo<VersionSortSelectorProps>(({

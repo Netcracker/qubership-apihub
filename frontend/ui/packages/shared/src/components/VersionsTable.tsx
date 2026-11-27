@@ -1,5 +1,7 @@
 import type { PackageKind } from '../entities/packages'
 import type { PackageVersion } from '../entities/versions'
+import type { PackageVersionsSortBy } from '../types/sorting'
+import { SORT_BY_CREATED_AT } from '../types/sorting'
 import type { FC } from 'react'
 import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import type { ColumnModel } from '../hooks/table-resizing/useColumnResizing'
@@ -26,10 +28,14 @@ import { ColumnDelimiter } from './ColumnDelimiter'
 import { createComponents } from '../utils/components'
 import { DEFAULT_NUMBER_SKELETON_ROWS } from '../utils/constants'
 
+const LAST_REVISION_DATE_COLUMN_TITLE = 'Last Revision Date'
+const FIRST_PUBLICATION_DATE_COLUMN_TITLE = 'First Publication Date'
+
 type VersionsTableProps = {
   value: ReadonlyArray<PackageVersion>
   onClickVersion: (version: PackageVersion | undefined) => void
   isLoading: boolean
+  sortBy: PackageVersionsSortBy
   kind?: PackageKind
 }
 
@@ -37,6 +43,7 @@ export const VersionsTable: FC<VersionsTableProps> = memo<VersionsTableProps>(({
   value,
   onClickVersion,
   isLoading,
+  sortBy,
   kind,
 }) => {
   const [containerWidth, setContainerWidth] = useState(DEFAULT_CONTAINER_WIDTH)
@@ -53,6 +60,7 @@ export const VersionsTable: FC<VersionsTableProps> = memo<VersionsTableProps>(({
     defaultMinColumnSize: 60,
   })
 
+  const isLastRevisionDateSort = sortBy === SORT_BY_CREATED_AT
   const columns: ColumnDef<TableData>[] = useMemo(() => [
     {
       id: VERSION_COLUMN_ID,
@@ -78,9 +86,13 @@ export const VersionsTable: FC<VersionsTableProps> = memo<VersionsTableProps>(({
     },
     {
       id: PUBLICATION_DATE_COLUMN_ID,
-      header: () => <CustomTableHeadCell title="Publication Date" />,
+      header: () => (
+        <CustomTableHeadCell
+          title={isLastRevisionDateSort ? LAST_REVISION_DATE_COLUMN_TITLE : FIRST_PUBLICATION_DATE_COLUMN_TITLE}
+        />
+      ),
       cell: ({ row: { original: { version } } }) => (
-        <FormattedDate value={version?.createdAt} />
+        <FormattedDate value={isLastRevisionDateSort ? version?.createdAt : version?.firstPublishedAt} />
       ),
     },
     {
@@ -110,7 +122,7 @@ export const VersionsTable: FC<VersionsTableProps> = memo<VersionsTableProps>(({
         )
       },
     },
-  ], [kind])
+  ], [isLastRevisionDateSort, kind])
 
   const data: TableData[] = useMemo(() => value.map(version => ({
     version: version,

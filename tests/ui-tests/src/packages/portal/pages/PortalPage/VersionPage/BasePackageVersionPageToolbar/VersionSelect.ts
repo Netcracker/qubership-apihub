@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test'
-import { BaseComponent, Button, DropdownMenu, SearchBar } from '@shared/components/base'
+import { BaseComponent, Button, DropdownMenu, SearchBar, TableCell } from '@shared/components/base'
 import { VersionSelectTableRow } from './VersionSelect/VersionSelectTableRow'
 
 export class VersionSelect extends BaseComponent {
@@ -12,6 +12,10 @@ export class VersionSelect extends BaseComponent {
 
   constructor(private readonly page: Page) {
     super(page.getByTestId('VersionSelector'), 'Version', 'select')
+  }
+
+  getDateColumnHeader(name: string): TableCell {
+    return new TableCell(this.content.getByRole('columnheader', { name: name, exact: true }), name)
   }
 
   getVersionRow(version?: string): VersionSelectTableRow {

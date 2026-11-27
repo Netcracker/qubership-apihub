@@ -11,6 +11,7 @@ export type PackageVersion = Readonly<{
   status: VersionStatus
   createdBy: Principal
   createdAt?: string
+  firstPublishedAt?: string
   versionLabels: string[]
   previousVersion?: string
   latestRevision: boolean
@@ -24,6 +25,7 @@ export type PackageVersionDto = Readonly<{
   status: VersionStatus
   createdBy: Principal
   createdAt?: string
+  firstPublishedAt?: string
   versionLabels?: string[]
   previousVersion?: string
   notLatestRevision?: boolean
