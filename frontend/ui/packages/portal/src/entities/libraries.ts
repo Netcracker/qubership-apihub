@@ -114,11 +114,16 @@ export type LibraryVersionDto =
     labels?: string[]
     createdAt?: string
     createdBy?: string
+    statistics?: Readonly<{
+      classCount: number
+      interfaceCount: number
+      enumCount: number
+      annotationTypeCount: number
+    }>
     metadata?: Readonly<{
       buildId?: string
       buildStatus?: LibraryVersionBuildStatus
       buildError?: string
-      javaApi?: Readonly<{ classes: number; interfaces: number; enums: number }>
       // TODO(libraries-backend): The service has no activity source for a library version;
       // the Activity tab stays empty until the service provides one.
       activities?: ReadonlyArray<Readonly<{ id: string; action: string; createdAt: string; createdBy: string }>>

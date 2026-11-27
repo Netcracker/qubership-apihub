@@ -133,12 +133,3 @@ export function toChangesSummary(counts: LibraryChangesSummaryDto['changeCounts'
     [ANNOTATION_CHANGE_SEVERITY]: counts?.annotation ?? 0,
   }
 }
-
-export function countJavaTypes(classes: ReadonlyArray<JavaApiClassListItem>): Record<JavaTypeFilterValue, number> {
-  return {
-    CLASS: classes.filter(({ typeKind }) => typeKind === 'CLASS').length,
-    INTERFACE: classes.filter(({ typeKind }) => typeKind === 'INTERFACE').length,
-    ENUM: classes.filter(({ typeKind }) => typeKind === 'ENUM').length,
-    ANNOTATION: classes.filter(({ typeKind }) => typeKind === 'ANNOTATION').length,
-  }
-}

@@ -17,11 +17,9 @@ import { FrontTruncatedText } from '@portal/routes/root/LibraryPage/FrontTruncat
 import { ContractsSummary } from '@portal/routes/root/PortalPage/VersionPage/VersionOverviewSubPage/SummaryTab/ContractsSummary'
 import { SummaryPanels } from '@portal/routes/root/PortalPage/VersionPage/VersionOverviewSubPage/SummaryTab/SummaryPanel'
 import { SummarySection } from '@portal/routes/root/PortalPage/VersionPage/VersionOverviewSubPage/SummaryTab/SummarySection'
-import { countJavaTypes } from './javaapi/javaApi'
 import { getLibraryVersionPath, type LibraryVersionPageProps } from './libraryVersion'
 import { LibraryVersionBuildError } from './LibraryVersionBuildError'
 import { useLibraryChangesSummary } from './useLibraryChanges'
-import { useLibraryJavaApiReport } from './useLibraryJavaApi'
 
 type SummaryMetric = { id: string; label: string; value: ReactNode }
 
@@ -37,12 +35,13 @@ export const LibrarySummaryTab: FC<LibraryVersionPageProps> = memo<LibraryVersio
     undefined,
     { expectsComparison: !!version.previousVersion },
   )
-  const { data: report, isLoading: isReportLoading, error: reportError } = useLibraryJavaApiReport(
-    library.libraryId,
-    version.version,
-  )
-  const metrics = report ? countJavaTypes(report.classes) : undefined
   const isCompact = useMediaQuery((theme: Theme) => theme.breakpoints.down('lg'))
+  const renderTypeCount = (count: number | undefined): ReactNode => {
+    const buildStatus = version.metadata?.buildStatus
+    if (buildStatus === LibraryVersionBuildStatuses.ERROR || !version.statistics) return EMPTY_VALUE
+    if (buildStatus !== LibraryVersionBuildStatuses.COMPLETE) return LOADING_VALUE
+    return count
+  }
   const renderChangeCounts = (): ReactNode => {
     if (error) return EMPTY_VALUE
     if (isLoading) return LOADING_VALUE
@@ -135,7 +134,6 @@ export const LibrarySummaryTab: FC<LibraryVersionPageProps> = memo<LibraryVersio
             </VersionMetrics>
           </VersionSummary>
           {error && <Alert severity="error">{error.message}</Alert>}
-          {reportError && <Alert severity="error">{reportError.message}</Alert>}
           {version.metadata?.buildStatus === LibraryVersionBuildStatuses.ERROR
             ? <LibraryVersionBuildError version={version} />
             : (
@@ -148,19 +146,19 @@ export const LibrarySummaryTab: FC<LibraryVersionPageProps> = memo<LibraryVersio
                         metrics: [
                           {
                             label: 'Total number of classes',
-                            value: isReportLoading ? LOADING_VALUE : metrics?.CLASS ?? EMPTY_VALUE,
+                            value: renderTypeCount(version.statistics?.classCount),
                           },
                           {
                             label: 'Total number of interfaces',
-                            value: isReportLoading ? LOADING_VALUE : metrics?.INTERFACE ?? EMPTY_VALUE,
+                            value: renderTypeCount(version.statistics?.interfaceCount),
                           },
                           {
                             label: 'Total number of enums',
-                            value: isReportLoading ? LOADING_VALUE : metrics?.ENUM ?? EMPTY_VALUE,
+                            value: renderTypeCount(version.statistics?.enumCount),
                           },
                           {
                             label: 'Total number of annotation types',
-                            value: isReportLoading ? LOADING_VALUE : metrics?.ANNOTATION ?? EMPTY_VALUE,
+                            value: renderTypeCount(version.statistics?.annotationTypeCount),
                           },
                         ],
                       }}
