@@ -832,7 +832,15 @@ p.node(
     'aiexec', 870, 460, 'AIOasExecutor', 'OpenAI-compatible LLM', 'rate-limited, include/exclude packages', kind='lib'
 )
 p.node('vacuum', 1120, 460, 'Vacuum', 'bundled binary & rules', 'not active in code', kind='gray')
-p.node('scoring', 1120, 300, 'ScoringService', 'service', 'version quality score after lint', kind='comp_g')
+p.node(
+    'scoring',
+    1120,
+    300,
+    'ScoringTaskProcessor + ScoringService',
+    'service',
+    'processor: integrity · BWC · quality per validation; service: reads the score for the API',
+    kind='comp_g',
+)
 p.node('rulesets', 370, 460, 'RulesetService', 'service', 'ruleset CRUD, activation, data', kind='comp_g')
 p.node('repo', 370, 640, 'Repositories', 'go-pg', 'tasks · results · rulesets · scoring', kind='comp_g', w=450)
 p.node('cleanup', 870, 640, 'Cleanup / DB migration', 'service', None, kind='gray')
@@ -849,7 +857,7 @@ p.edge('client', 'be', 'REST (access token)')
 p.edge('dtask', 'spectral', '', 'primary')
 p.edge('dtask', 'aiexec', '', 'dashed')
 p.edge('dtask', 'vacuum', '', 'dashed')
-p.edge('dtask', 'scoring', '')
+p.edge('listener', 'scoring', 'ValidateVersion creates lint and scoring tasks')
 p.edge('aiexec', 'llm', '', 'dashed')
 p.edge('ctl', 'rulesets', '')
 p.edge('ctl', 'scoring', '')
@@ -1426,7 +1434,7 @@ p.boxed(
     880,
     60,
     'API Linter Service (Go)',
-    3,
+    4,
     [
         ('PEL', 'PublishEventListener', None, "Olric DTopic 'version-published' → VersionLintTask", 'comp_g'),
         ('VTP', 'VersionTaskProcessor', None, 'fetch docs via ApihubClient, create DocLintTasks', 'comp_g'),
@@ -1434,7 +1442,8 @@ p.boxed(
         ('LS', 'LinterSelector', None, 'select(apiType, packageId) — apiTypes + package glob patterns', 'comp_g'),
         ('SE', 'SpectralExecutor', None, 'bundled Spectral CLI + rules', 'comp_g'),
         ('AE', 'AIOasExecutor', None, 'OpenAI client, rate limit', 'comp_g'),
-        ('SS', 'ScoringService', None, 'computeVersionScore()', 'comp_g'),
+        ('STP', 'ScoringTaskProcessor', None, 'scoring task loops; integrity, BWC, quality parts', 'comp_g'),
+        ('SS', 'ScoringService', None, 'GetScoringForVersion for the scoring API', 'comp_g'),
         ('RS', 'RulesetService', None, 'CRUD · activation · data', 'comp_g'),
         ('LMCP', 'MCPService', None, 'list_linter_issues_for_package_version', 'ai'),
     ],
@@ -1442,7 +1451,7 @@ p.boxed(
     w=230,
     h=90,
 )
-for a, b in [('PEL', 'VTP'), ('VTP', 'DTP'), ('DTP', 'LS'), ('LS', 'SE'), ('LS', 'AE'), ('DTP', 'SS')]:
+for a, b in [('PEL', 'VTP'), ('VTP', 'DTP'), ('DTP', 'LS'), ('LS', 'SE'), ('LS', 'AE'), ('PEL', 'STP')]:
     p.edge(a, b, '')
 p.boxed(
     40,
@@ -1720,7 +1729,7 @@ p.node(
     540,
     'API Linter Service',
     'Container',
-    'PublishEventListener → VersionTaskProcessor → DocTaskProcessor → Spectral / AI → ScoringService',
+    'PublishEventListener → VersionTaskProcessor → DocTaskProcessor → Spectral / AI → ScoringTaskProcessor',
     kind='ext_svc',
     w=300,
     h=130,
@@ -1735,11 +1744,11 @@ p.edge('btc', 'be', '6. POST /api/v3/…/publish/{publishId}/status complete + r
 p.edge('be', 'pg', '7. store documents, operations, changes, contracts')
 p.edge('be', 'olric', "8. publish 'version-published'")
 p.edge('olric', 'lint', '9. DTopic subscription', 'primary')
-p.edge('lint', 'be', '10. GET version documents (access token)')
+p.edge('lint', 'be', '10. GET version documents; 12. GET version and changes (scoring task: integrity, BWC)')
 p.edge('lint', 'llm', '11. AI lint (optional)', 'dashed')
-p.edge('lint', 'pg', '12. store lint results + score (apihub_linter)')
-p.edge('ui', 'be', '13. poll publish status')
-p.edge('ui', 'lint', '14. GET validation summary / scoring', 'dashed')
+p.edge('lint', 'pg', '13. store lint results + score parts (apihub_linter)')
+p.edge('ui', 'be', '14. poll publish status')
+p.edge('ui', 'lint', '15. GET validation summary', 'dashed')
 
 # ======================= 16. DYNAMIC: DISCOVERY =======================
 p = Page('Dynamic Discovery flow')

@@ -445,10 +445,10 @@ func (a apihubClientImpl) GetVersionChanges(ctx context.Context, packageId strin
 						return nil, fmt.Errorf("failed to get version changes after generate. version - %s for package id %s: status code %d %v", version, packageId, resp.StatusCode(), err)
 					}
 				} else {
-					if authErr := checkUnauthorized(resp); authErr != nil {
+					if authErr := checkUnauthorized(compResp); authErr != nil {
 						return nil, authErr
 					}
-					return nil, fmt.Errorf("failed to start %s version comparison for package id %s: status code %d %v", version, packageId, resp.StatusCode(), err)
+					return nil, fmt.Errorf("failed to start %s version comparison for package id %s: status code %d", version, packageId, compResp.StatusCode())
 				}
 			}
 		} else {

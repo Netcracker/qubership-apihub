@@ -105,6 +105,9 @@ func (s stubValidationService) ValidateVersion(context.Context, string, string, 
 func (s stubValidationService) GetVersionSummary(context.Context, string, string) (*view.ValidationSummaryForVersion, error) {
 	return nil, s.resultErr
 }
+func (s stubValidationService) GetVersionSummary_deprecated_2(context.Context, string, string) (*view.ValidationSummaryForVersion, error) {
+	return nil, s.resultErr
+}
 func (s stubValidationService) GetLintIssuesForPackageVersion(context.Context, string, string) (*view.VersionLintIssues, error) {
 	return nil, nil
 }

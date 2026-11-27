@@ -1,13 +1,59 @@
 package view
 
-type VersionScore struct {
-	Status                       ScoringStatus                              `json:"status"`
-	Reasons                      []string                                   `json:"reason"`
-	Debug                        []string                                   `json:"debug"`
-	PublicationIntegrityDetails  *PublicationIntegrityDetails               `json:"publicationIntegrityDetails,omitempty"`
-	BackwardCompatibilityDetails map[OpApiType]BackwardCompatibilityDetails `json:"backwardsCompatibilityDetails"`
-	QualityCheckDetails          map[OpApiType][]QualityCheckDetails        `json:"qualityCheckDetails"`
+type VersionScore_deprecated struct {
+	Status                       ScoringStatus                                  `json:"status"`
+	Reasons                      []string                                       `json:"reason"`
+	Debug                        []string                                       `json:"debug"`
+	PublicationIntegrityDetails  *PublicationIntegrityDetails                   `json:"publicationIntegrityDetails,omitempty"`
+	BackwardCompatibilityDetails map[OpApiType]BackwardCompatibilityDetails     `json:"backwardsCompatibilityDetails"`
+	QualityCheckDetails          map[OpApiType][]QualityCheckDetails_deprecated `json:"qualityCheckDetails"`
 }
+
+type VersionScore struct {
+	Status         ScoringStatus         `json:"status,omitempty"`
+	Reasons        []string              `json:"reason"`
+	ProcessDetails ScoringProcessDetails `json:"processDetails"`
+}
+
+type ScoringProcessDetails struct {
+	ProcessStatus          ScoringProcessStatus        `json:"processStatus"`
+	Debug                  []string                    `json:"debug,omitempty"`
+	PublicationIntegrity   PublicationIntegrityCheck   `json:"publicationIntegrity"`
+	BackwardsCompatibility BackwardsCompatibilityCheck `json:"backwardsCompatibility"`
+	QualityCheck           QualityCheck                `json:"qualityCheck"`
+}
+
+type PublicationIntegrityCheck struct {
+	ProcessStatus ScoringProcessStatus         `json:"processStatus"`
+	Details       *PublicationIntegrityDetails `json:"details,omitzero"`
+	Debug         []string                     `json:"debug,omitempty"`
+}
+
+type BackwardsCompatibilityCheck struct {
+	ProcessStatus ScoringProcessStatus                       `json:"processStatus"`
+	Details       map[OpApiType]BackwardCompatibilityDetails `json:"details,omitzero"`
+	Debug         []string                                   `json:"debug,omitempty"`
+}
+
+type QualityCheck struct {
+	ProcessStatus ScoringProcessStatus                `json:"processStatus"`
+	Details       map[OpApiType][]QualityCheckDetails `json:"details,omitzero"`
+	Debug         []string                            `json:"debug,omitempty"`
+}
+
+type ScoringProcessStatus string
+
+const (
+	ScoringProcessNotStarted ScoringProcessStatus = "not_started"
+	ScoringProcessProcessing ScoringProcessStatus = "processing"
+	ScoringProcessSuccess    ScoringProcessStatus = "success"
+	ScoringProcessError      ScoringProcessStatus = "error"
+)
+
+func (s ScoringProcessStatus) IsTerminal() bool {
+	return s == ScoringProcessSuccess || s == ScoringProcessError
+}
+
 type ScoringStatus string
 
 const (
@@ -35,6 +81,17 @@ type BackwardCompatibilityDetails struct {
 }
 
 type QualityCheckDetails struct {
+	FileId        string        `json:"fileId,omitempty"`
+	Linter        Linter        `json:"linter"`
+	Status        ScoringStatus `json:"status"`
+	Optional      bool          `json:"optional"`
+	Reason        string        `json:"reason"`
+	ErrorsCount   int           `json:"errorsCount"`
+	WarningsCount int           `json:"warningsCount"`
+	InternalError string        `json:"internalErrors,omitempty"`
+}
+
+type QualityCheckDetails_deprecated struct {
 	Linter        Linter        `json:"linter"`
 	Status        ScoringStatus `json:"status"`
 	Optional      bool          `json:"optional"`

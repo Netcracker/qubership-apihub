@@ -96,3 +96,6 @@ const AiMalformedOutputMsg = "Model output does not match the response schema"
 
 const AiInvalidDeduplicationResponse = "2305"
 const AiInvalidDeduplicationResponseMsg = "Deduplication response is invalid: $reason"
+
+const VersionScoreNotFound = "2400"
+const VersionScoreNotFoundMsg = "Score not found for packageId $packageId and version $version: the version has never been validated"

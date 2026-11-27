@@ -274,12 +274,12 @@ type fakeDocResultRepository struct {
 	saved []savedLintResult
 }
 
-func (f *fakeDocResultRepository) SaveLintResult(_ context.Context, _ string, status view.LintedDocumentStatus, details string, _ int64,
-	_ entity.LintedVersion, docEnt entity.LintedDocument, lintFileResult *entity.LintFileResult, _ string) error {
+func (f *fakeDocResultRepository) SaveLintResult(_ context.Context, _, _ string, status view.LintedDocumentStatus, details string, _ int64,
+	docEnt entity.LintedDocument, lintFileResult *entity.LintFileResult, _ string) (bool, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.saved = append(f.saved, savedLintResult{status: status, details: details, lintDetails: docEnt.LintDetails, published: lintFileResult != nil})
-	return nil
+	return true, nil
 }
 
 type fakeAiLintStatsRepository struct {

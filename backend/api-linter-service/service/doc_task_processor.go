@@ -148,19 +148,14 @@ func (d docTaskProcessorImpl) handleError(ctx context.Context, task entity.Docum
 		LintDetails:       err.Error(),
 	}
 
-	verEnt := entity.LintedVersion{
-		PackageId:   task.PackageId,
-		Version:     task.Version,
-		Revision:    task.Revision,
-		LintStatus:  view.VersionStatusInProgress,
-		LintDetails: "",
-		LintedAt:    time.Now(),
-	}
-
-	err = d.docResultRepository.SaveLintResult(ctx, task.Id, view.StatusError, err.Error(),
-		lintTimeMs, verEnt, docEnt, nil, task.ExecutorId)
+	saved, err := d.docResultRepository.SaveLintResult(ctx, task.VersionLintTaskId, task.Id, view.StatusError, err.Error(),
+		lintTimeMs, docEnt, nil, task.ExecutorId)
 	if err != nil {
 		log.Errorf("Handle error for doc task %s failed: unable to save lint result: %s", task.Id, err)
+		return
+	}
+	if !saved {
+		log.Infof("Doc task %s is closed without a result: version lint task %s is already finished", task.Id, task.VersionLintTaskId)
 	}
 }
 
@@ -186,9 +181,11 @@ func (d docTaskProcessorImpl) processDocTask(ctx context.Context, task entity.Do
 					t.Stop()
 					return
 				}
-				err := d.docTaskRepo.SetDocTaskStatus(ctx, task.Id, view.TaskStatusProcessing, "", task.ExecutorId)
+				owned, err := d.docTaskRepo.UpdateLastActive(ctx, task.Id, task.ExecutorId)
 				if err != nil {
-					log.Errorf("Error updating status of doc task %s: %s", task.Id, err)
+					log.Errorf("Error updating last_active of doc task %s: %s", task.Id, err)
+				} else if !owned {
+					log.Debugf("Keepalive for doc task %s skipped: the task is finished or executor %s no longer owns it", task.Id, task.ExecutorId)
 				}
 				log.Tracef("Keepalive for doc task %s", task.Id)
 			case _, ok := <-runningC:
@@ -410,15 +407,6 @@ func (d docTaskProcessorImpl) processDocTask(ctx context.Context, task entity.Do
 			LintDetails:       details,
 		}
 
-		verEnt := entity.LintedVersion{
-			PackageId:   task.PackageId,
-			Version:     task.Version,
-			Revision:    task.Revision,
-			LintStatus:  view.VersionStatusInProgress,
-			LintDetails: "",
-			LintedAt:    time.Now(),
-		}
-
 		var lintFileResult *entity.LintFileResult
 
 		if status == view.StatusSuccess {
@@ -431,10 +419,13 @@ func (d docTaskProcessorImpl) processDocTask(ctx context.Context, task entity.Do
 			}
 		}
 
-		err = d.docResultRepository.SaveLintResult(context.Background(), task.Id, status, details, calcTimeMs, verEnt, docEnt, lintFileResult, task.ExecutorId)
+		saved, err := d.docResultRepository.SaveLintResult(context.Background(), task.VersionLintTaskId, task.Id, status, details, calcTimeMs, docEnt, lintFileResult, task.ExecutorId)
 		if err != nil {
 			d.handleError(ctx, task, fmt.Errorf("failed to save lint result with error: %s", err), time.Since(start).Milliseconds())
 			return
+		}
+		if !saved {
+			log.Infof("Doc task %s is closed without a result: version lint task %s is already finished", task.Id, task.VersionLintTaskId)
 		}
 	} else {
 		d.handleError(ctx, task, fmt.Errorf("selected linter %s is not supported", task.Linter), time.Since(start).Milliseconds())
@@ -576,15 +567,6 @@ func (d docTaskProcessorImpl) saveLintResultFromCache(ctx context.Context, task 
 		LintDetails:       "",
 	}
 
-	verEnt := entity.LintedVersion{
-		PackageId:   task.PackageId,
-		Version:     task.Version,
-		Revision:    task.Revision,
-		LintStatus:  view.VersionStatusInProgress,
-		LintDetails: "",
-		LintedAt:    time.Now(),
-	}
-
 	lintFileResult := &entity.LintFileResult{
 		DataHash:      docHash,
 		RulesetId:     task.RulesetId,
@@ -593,9 +575,13 @@ func (d docTaskProcessorImpl) saveLintResultFromCache(ctx context.Context, task 
 		Summary:       cached.Summary,
 	}
 
-	err := d.docResultRepository.SaveLintResult(ctx, task.Id, view.StatusSuccess, "", lintTimeMs, verEnt, docEnt, lintFileResult, task.ExecutorId)
+	saved, err := d.docResultRepository.SaveLintResult(ctx, task.VersionLintTaskId, task.Id, view.StatusSuccess, "", lintTimeMs, docEnt, lintFileResult, task.ExecutorId)
 	if err != nil {
 		log.Errorf("Failed to save cached lint result for task %s: %s", task.Id, err)
+		return
+	}
+	if !saved {
+		log.Infof("Doc task %s is closed without a result: version lint task %s is already finished", task.Id, task.VersionLintTaskId)
 	}
 }
 

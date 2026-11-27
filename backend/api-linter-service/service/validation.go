@@ -22,6 +22,7 @@ import (
 type ValidationService interface {
 	ValidateVersion(ctx context.Context, packageId string, version string, eventId string, recalculate bool) (string, error)
 	GetVersionSummary(ctx context.Context, packageId string, version string) (*view.ValidationSummaryForVersion, error)
+	GetVersionSummary_deprecated_2(ctx context.Context, packageId string, version string) (*view.ValidationSummaryForVersion, error)
 	// GetLintIssuesForPackageVersion returns stored linter issues per document for a linted package version.
 	// Returns (nil, nil) when the version has not been linted and no lint task is in progress (same as summary).
 	GetLintIssuesForPackageVersion(ctx context.Context, packageId string, version string) (*view.VersionLintIssues, error)
@@ -34,40 +35,41 @@ type ValidationService interface {
 }
 
 func NewValidationService(
+	validationProcessRepo repository.ValidationProcessRepository,
 	verTaskRepo repository.VersionLintTaskRepository,
 	versionResultRepository repository.VersionResultRepository,
 	lintResultRepository repository.LintResultRepository,
 	rulesetRepository repository.RulesetRepository,
 	docLintTaskRepository repository.DocLintTaskRepository,
-	versionTaskProcessor VersionTaskProcessor,
 	apihubClient client.ApihubClient,
 	executorId string,
-	versionTaskNotify chan<- struct{}) ValidationService {
+	validationProcessNotify chan<- struct{}) ValidationService {
 	return &validationServiceImpl{
+		validationProcessRepo:   validationProcessRepo,
 		verTaskRepo:             verTaskRepo,
 		versionResultRepository: versionResultRepository,
 		lintResultRepository:    lintResultRepository,
 		rulesetRepository:       rulesetRepository,
 		docLintTaskRepository:   docLintTaskRepository,
-		versionTaskProcessor:    versionTaskProcessor,
 		apihubClient:            apihubClient,
 		executorId:              executorId,
-		versionTaskNotify:       versionTaskNotify,
+		validationProcessNotify: validationProcessNotify,
 		bulkJobs:                make(map[string]*bulkValidationJob),
 	}
 }
 
 type validationServiceImpl struct {
+	validationProcessRepo   repository.ValidationProcessRepository
 	verTaskRepo             repository.VersionLintTaskRepository
 	versionResultRepository repository.VersionResultRepository
 	lintResultRepository    repository.LintResultRepository
 	rulesetRepository       repository.RulesetRepository
 	docLintTaskRepository   repository.DocLintTaskRepository
 
-	versionTaskProcessor VersionTaskProcessor
-	apihubClient         client.ApihubClient
-	executorId           string
-	versionTaskNotify    chan<- struct{}
+	versionTaskProcessor    VersionTaskProcessor
+	apihubClient            client.ApihubClient
+	executorId              string
+	validationProcessNotify chan<- struct{}
 
 	bulkJobs      map[string]*bulkValidationJob
 	bulkJobsMutex sync.RWMutex
@@ -109,9 +111,44 @@ func (v *validationServiceImpl) GetVersionSummary(ctx context.Context, packageId
 		}, nil
 	}
 
+	return v.makeVersionSummary(ctx, lintedVer.LintStatus, lintedVer.LintDetails, lintedDocs)
+}
+
+func (v *validationServiceImpl) GetVersionSummary_deprecated_2(ctx context.Context, packageId string, version string) (*view.ValidationSummaryForVersion, error) {
+	ver, rev, err := v.getVersionAndRevision(ctx, packageId, version)
+	if err != nil {
+		return nil, err
+	}
+
+	lintedVer, lintedDocs, err := v.versionResultRepository.GetVersionWithProcessAndDocsSummary_deprecated(ctx, packageId, ver, rev)
+	if err != nil {
+		return nil, err
+	}
+	if lintedVer == nil {
+		// version is not linted (yet), need to check if lint is planned/in progress
+		varTasks, err := v.verTaskRepo.GetRunningTaskForVersion(ctx, packageId, ver, rev)
+		if err != nil {
+			return nil, err
+		}
+		if len(varTasks) == 0 {
+			return nil, nil
+		}
+		return &view.ValidationSummaryForVersion{
+			Status:    view.VersionStatusInProgress,
+			Details:   "",
+			Documents: nil,
+			Rulesets:  nil,
+		}, nil
+	}
+
+	status, details := summaryLintStatus_deprecated(*lintedVer)
+	return v.makeVersionSummary(ctx, status, details, lintedDocs)
+}
+
+func (v *validationServiceImpl) makeVersionSummary(ctx context.Context, status view.LintedVersionStatus, details string, lintedDocs []entity.LintedDocument) (*view.ValidationSummaryForVersion, error) {
 	result := &view.ValidationSummaryForVersion{
-		Status:    lintedVer.LintStatus,
-		Details:   lintedVer.LintDetails,
+		Status:    status,
+		Details:   details,
 		Documents: nil,
 		Rulesets:  nil,
 	}
@@ -193,6 +230,15 @@ func (v *validationServiceImpl) GetVersionSummary(ctx context.Context, packageId
 		result.Rulesets = append(result.Rulesets, entity.MakeRulesetView(val))
 	}
 	return result, nil
+}
+
+// A client of the summary takes a finished lint for a finished score as well, so the lint result is shown only after
+// the validation process that wrote it has finished both.
+func summaryLintStatus_deprecated(lintedVer entity.LintedVersionWithProcess_deprecated) (view.LintedVersionStatus, string) {
+	if lintedVer.ValidationProcessStatus == view.ValidationProcessProcessing {
+		return view.VersionStatusInProgress, ""
+	}
+	return lintedVer.LintStatus, lintedVer.LintDetails
 }
 
 func (v *validationServiceImpl) GetLintIssuesForPackageVersion(ctx context.Context, packageId string, versionDisplay string) (*view.VersionLintIssues, error) {
@@ -289,7 +335,7 @@ func (v *validationServiceImpl) GetVersionSummary_deprecated(ctx context.Context
 		return nil, err
 	}
 
-	lintedVer, lintedDocs, err := v.versionResultRepository.GetVersionAndDocsSummary(ctx, packageId, ver, rev)
+	lintedVer, lintedDocs, err := v.versionResultRepository.GetVersionWithProcessAndDocsSummary_deprecated(ctx, packageId, ver, rev)
 	if err != nil {
 		return nil, err
 	}
@@ -310,9 +356,10 @@ func (v *validationServiceImpl) GetVersionSummary_deprecated(ctx context.Context
 		}, nil
 	}
 
+	status, details := summaryLintStatus_deprecated(*lintedVer)
 	result := &view.ValidationSummaryForVersion{
-		Status:    lintedVer.LintStatus,
-		Details:   lintedVer.LintDetails,
+		Status:    status,
+		Details:   details,
 		Documents: nil,
 		Rulesets:  nil,
 	}
@@ -639,35 +686,56 @@ func (v *validationServiceImpl) ValidateVersion(ctx context.Context, packageId s
 	}
 
 	userId := secctx.GetUserId(ctx)
+	now := time.Now()
 
-	ent := entity.VersionLintTask{
+	process := entity.VersionValidationProcess{
+		Id:        uuid.NewString(),
+		PackageId: packageId,
+		Version:   ver,
+		Revision:  rev,
+		CreatedAt: now,
+		Status:    view.ValidationProcessNotStarted,
+	}
+	lintTask := entity.VersionLintTask{
 		Id:           uuid.NewString(),
 		PackageId:    packageId,
 		Version:      ver,
 		Revision:     rev,
 		Status:       view.TaskStatusNotStarted,
 		Details:      "",
-		CreatedAt:    time.Now(),
+		CreatedAt:    now,
 		CreatedBy:    userId,
-		LastActive:   time.Now(),
+		LastActive:   now,
 		EventId:      eventId, // optional
 		RestartCount: 0,
 		Priority:     0,
 		Recalculate:  recalculate,
+
+		ValidationProcessId: process.Id,
 	}
-	err = v.verTaskRepo.SaveVersionTask(context.Background(), ent)
+	scoringTask := entity.VersionScoringTask{
+		Id:                  uuid.NewString(),
+		ValidationProcessId: process.Id,
+		PackageId:           packageId,
+		Version:             ver,
+		Revision:            rev,
+		CreatedAt:           now,
+		CreatedBy:           userId,
+		Status:              view.TaskStatusNotStarted,
+		LastActive:          now,
+	}
+	err = v.validationProcessRepo.CreateProcess(context.Background(), process, lintTask, scoringTask)
 	if err != nil {
 		return "", err
 	}
 
-	// Signal version task processor to wake up and start processing immediately
+	// The tasks are claimed only after the worker starts the process, so the worker is the one to wake up.
 	select {
-	case v.versionTaskNotify <- struct{}{}:
+	case v.validationProcessNotify <- struct{}{}:
 	default:
-		// channel full or no receiver - worker will pick up on next tick
 	}
 
-	return ent.Id, nil
+	return lintTask.Id, nil
 }
 
 const tempFolder = "tmp"

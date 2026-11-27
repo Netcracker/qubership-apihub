@@ -197,7 +197,7 @@ diagramSlide('API Linter Service — components', 'Event-driven linting with Spe
   'PublishEventListener subscribes to the Olric DTopic "version-published" emitted by the Backend after a successful build.',
   'VersionTaskProcessor fetches version documents from the Backend and fans out DocLintTasks; DocTaskProcessor runs a worker pool.',
   'LinterSelector picks SpectralExecutor or AIOasExecutor by ApiType and package glob patterns; Vacuum binaries are bundled but not active.',
-  'ScoringService computes the version quality score after lint completion; RulesetService manages rulesets and activation.',
+  'ScoringTaskProcessor computes the version score next to the lint; ScoringService reads it for the scoring API; RulesetService manages rulesets and activation.',
   'REST API under /api/v1 and /api/v2 (validation, scoring, rulesets, bulkValidation, linters) and an MCP endpoint with list_linter_issues_for_package_version.']);
 diagramSlide('Agents Backend — components', 'Registry and orchestrator for remote agents; publishes snapshots to the Portal', 'L3_agents_backend', [
   'Agents register and heartbeat through POST /api/v2/agents; AgentService tracks status.',
