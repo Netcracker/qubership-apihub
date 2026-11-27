@@ -46,6 +46,17 @@ describe('JavaApiChangesClassListBuilder', () => {
     ])
   })
 
+  it('takes the class kind from the first member row that supplies it', () => {
+    const [item] = new JavaApiChangesClassListBuilder({
+      changes: [
+        change('example.Type', { elementType: 'METHOD', member: 'void clear()' }),
+        change('example.Type', { elementType: 'METHOD', member: 'void run()' }, { kind: 'interface' }),
+      ],
+    }).build()
+
+    expect(item.typeKind).toBe('INTERFACE')
+  })
+
   it.each(['NEW', 'REMOVED'] as const)('matches jdiff descriptions and type actions for %s', status => {
     const elements = [
       javaApiElement('example.Order', { status, elementType: 'CONSTRUCTOR', member: 'Order(java.lang.String)' }),

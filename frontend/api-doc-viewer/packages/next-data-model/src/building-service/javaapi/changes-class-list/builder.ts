@@ -22,6 +22,7 @@ import {
 export type JavaApiChangeRow = {
   readonly changeId: string
   readonly classId: string
+  readonly kind?: string
   readonly methodId?: string
   readonly changeType: JavaApiChangeRowType
   readonly severity: JavaApiChangeSeverity
@@ -78,7 +79,9 @@ export class JavaApiChangesClassListBuilder {
       className,
       displayName: toJavaDisplayName(className),
       packageName: toJavaPackageName(className),
-      typeKind: toJavaApiTypeKind(typeRow?.details.elementType),
+      typeKind: toJavaApiTypeKind(
+        typeRow?.details.elementType ?? rows.find(row => row.kind !== undefined)?.kind?.toUpperCase(),
+      ),
       memberCount: Object.values(memberKindCounts).reduce((total, count) => total + count, 0),
       memberKindCounts,
       changeCounts,

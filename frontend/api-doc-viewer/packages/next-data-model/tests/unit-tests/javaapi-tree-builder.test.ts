@@ -126,6 +126,19 @@ describe('JavaApiTreeBuilder', () => {
     expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('example.Unknown'))
   })
 
+  it.each(['non-breaking', 'breaking'] as const)(
+    'keeps explicit severity %s for a modified summary type row',
+    severity => {
+      const className = 'example.Type$Nested'
+      const node = new JavaApiTreeBuilder({
+        classKey: { className },
+        source: javaApiDocument({ ...javaApiElement(className, { status: 'MODIFIED' }), severity }),
+      }).build().root
+
+      expect(node?.value().compatibility?.severity).toBe(severity)
+    },
+  )
+
   it.each(
     [
       ['NEW', [], false, 'add', 'green', 'non-breaking'],

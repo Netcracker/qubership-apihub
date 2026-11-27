@@ -38,6 +38,8 @@ type JdiffElement = {
   status: string
   changeTypes: string[]
   details?: string
+  // Preserve service severity for synthesized nested-class summary rows without change types or details.
+  severity?: JavaApiChangeSeverity
   binaryCompatible: boolean
   sourceCompatible: boolean
   breaking: boolean
@@ -246,6 +248,9 @@ export class JavaApiSpecTransformer {
 
   // Same rule as libraries-backend severityOf (service/report_ingest.go), so the class view agrees with /changes
   private toSeverity(element: JdiffElement): JavaApiChangeSeverity | undefined {
+    if (element.severity !== undefined) {
+      return element.severity
+    }
     if (!isJdiffChangeReportable(element.status, element.changeTypes) || isInheritedTypeChange(element)) {
       return undefined
     }
