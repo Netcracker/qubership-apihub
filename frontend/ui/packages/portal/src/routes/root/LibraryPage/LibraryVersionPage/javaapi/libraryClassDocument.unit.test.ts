@@ -146,7 +146,7 @@ describe('library class document', () => {
   it.each([GET_NAME.methodId, undefined])(
     'replaces a method after a return-type change using methodId %s',
     methodId => {
-      expect(toDiffRows(CURRENT, [{ ...RETURN_TYPE_CHANGE, methodId }])).toEqual([
+      expect(toDiffRows(CURRENT, [{ ...RETURN_TYPE_CHANGE, methodId: methodId, kind: 'interface' }])).toEqual([
         toJdiffTypeRow(ORDER),
         toJdiffChangeRow(RETURN_TYPE_CHANGE),
       ])
@@ -228,12 +228,35 @@ describe('library class document', () => {
   it('builds a removed class from change rows alone', () => {
     const removed: LibraryChangeDto = {
       ...RETURN_TYPE_CHANGE,
+      kind: 'interface',
       methodId: undefined,
       changeType: 'removed',
       details: { elementType: 'CLASS', status: 'REMOVED' },
     }
 
     expect(toDiffRows(undefined, [removed])).toEqual([toJdiffChangeRow(removed)])
+  })
+
+  it('uses the first member row with a kind for a type row when class details are missing', () => {
+    const removed: LibraryChangeDto = {
+      ...RETURN_TYPE_CHANGE,
+      kind: 'interface',
+      methodId: 'clear()',
+      changeType: 'removed',
+      details: { elementType: 'METHOD', member: 'void clear()', status: 'REMOVED' },
+    }
+
+    expect(toDiffRows(undefined, [RETURN_TYPE_CHANGE, removed])).toEqual([
+      toJdiffChangeRow(RETURN_TYPE_CHANGE),
+      toJdiffChangeRow(removed),
+      {
+        className: ORDER.classId,
+        elementType: 'INTERFACE',
+        status: 'UNCHANGED',
+        changeTypes: [],
+        breaking: false,
+      },
+    ])
   })
 
   it('appends nested type rows with their status and explicit severity', () => {

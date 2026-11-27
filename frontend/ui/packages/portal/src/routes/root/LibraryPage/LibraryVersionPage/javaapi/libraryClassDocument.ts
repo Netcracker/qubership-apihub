@@ -131,6 +131,25 @@ export function toDiffRows(
       rows[index] = row
     }
   })
+  // Without class details and without a class row, the change rows' kind is all the page knows about the class
+  if (!current) {
+    const change = changes.find(change => change.kind && Object.hasOwn(KIND_TO_JDIFF, change.kind))
+    if (change) {
+      const elementType = KIND_TO_JDIFF[change.kind as LibraryClassDto['kind']]
+      const row: JdiffRow = {
+        className: change.classId,
+        elementType: elementType,
+        status: 'UNCHANGED',
+        changeTypes: [],
+        breaking: false,
+      }
+      const key = toJdiffRowKey(row)
+      if (!indices.has(key)) {
+        indices.set(key, rows.length)
+        rows.push(row)
+      }
+    }
+  }
   nestedChanges.forEach(change => {
     const row: JdiffRow = {
       className: change.classId,
