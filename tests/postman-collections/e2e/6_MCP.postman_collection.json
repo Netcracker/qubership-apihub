@@ -2517,7 +2517,7 @@
           ]
         },
         {
-          "name": "List filtered REST operations and capture the operation ID",
+          "name": "List filtered REST operations and find the fixture operation",
           "request": {
             "method": "POST",
             "url": "{{SERVER_HOST}}/api/v1/mcp/",
@@ -2556,18 +2556,19 @@
                 "type": "text/javascript",
                 "exec": [
                   "const reply = JSON.parse(pm.variables.get(\"mcpE2eReply\") || \"{}\");",
-                  "pm.test(\"List filtered REST operations and capture the operation ID\", function () {",
+                  "pm.test(\"List filtered REST operations and find the fixture operation\", function () {",
                   "  pm.response.to.have.status(200);",
                   "  pm.expect(reply.error, JSON.stringify(reply.error)).to.be.undefined;",
                   "  pm.expect(reply.result).to.be.an(\"object\");",
                   "  pm.expect(reply.result.isError, JSON.stringify(reply.result.content)).not.to.equal(true);",
                   "  const data = reply.result.structuredContent;",
                   "  pm.expect(data).to.be.an(\"object\");",
-                  "  const operation = data.operations.find(op => op.path === \"/pet\" && op.method.toLowerCase() === \"put\");",
+                  "  const expectedId = pm.collectionVariables.get(\"mcpE2eRestOperation\");",
+                  "  const operation = data.operations.find(op => op.operationId === expectedId);",
                   "  pm.expect(operation).to.be.an(\"object\");",
+                  "  pm.expect(operation.path).to.equal(\"/api/v1/pet\");",
+                  "  pm.expect(operation.method.toLowerCase()).to.equal(\"put\");",
                   "  pm.expect(operation.documentId).to.equal(pm.environment.get(\"mcpE2eRestDoc\"));",
-                  "  pm.expect(operation.operationId).to.be.a(\"string\").and.not.empty;",
-                  "  pm.environment.set(\"mcpE2eRestOperation\", operation.operationId);",
                   "});"
                 ]
               }
@@ -2766,9 +2767,9 @@
                   "    pm.expect(item.packageId).to.equal(pm.environment.get(\"mcpE2eApis\"));",
                   "    pm.expect(item.version).to.equal(\"2026.2@1\");",
                   "  });",
-                  "  const operation = data.items.find(item => item.operationId === pm.environment.get(\"mcpE2eRestOperation\"));",
+                  "  const operation = data.items.find(item => item.operationId === pm.collectionVariables.get(\"mcpE2eRestOperation\"));",
                   "  pm.expect(operation).to.be.an(\"object\");",
-                  "  pm.expect(operation.path).to.equal(\"/pet\");",
+                  "  pm.expect(operation.path).to.equal(\"/api/v1/pet\");",
                   "  pm.expect(operation.method.toLowerCase()).to.equal(\"put\");",
                   "  pm.expect(operation.documentId).to.equal(pm.environment.get(\"mcpE2eRestDoc\"));",
                   "});"
@@ -2830,9 +2831,9 @@
                   "    pm.expect(item.packageId).to.equal(pm.environment.get(\"mcpE2eApis\"));",
                   "    pm.expect(item.version).to.equal(\"2026.2@1\");",
                   "  });",
-                  "  const operation = data.items.find(item => item.operationId === pm.environment.get(\"mcpE2eRestOperation\"));",
+                  "  const operation = data.items.find(item => item.operationId === pm.collectionVariables.get(\"mcpE2eRestOperation\"));",
                   "  pm.expect(operation).to.be.an(\"object\");",
-                  "  pm.expect(operation.path).to.equal(\"/pet\");",
+                  "  pm.expect(operation.path).to.equal(\"/api/v1/pet\");",
                   "  pm.expect(operation.method.toLowerCase()).to.equal(\"put\");",
                   "  pm.expect(operation.documentId).to.equal(pm.environment.get(\"mcpE2eRestDoc\"));",
                   "});"
@@ -2894,9 +2895,9 @@
                   "    pm.expect(item.packageId).to.equal(pm.environment.get(\"mcpE2eApis\"));",
                   "    pm.expect(item.version).to.equal(\"2026.2@1\");",
                   "  });",
-                  "  const operation = data.items.find(item => item.operationId === pm.environment.get(\"mcpE2eRestOperation\"));",
+                  "  const operation = data.items.find(item => item.operationId === pm.collectionVariables.get(\"mcpE2eRestOperation\"));",
                   "  pm.expect(operation).to.be.an(\"object\");",
-                  "  pm.expect(operation.path).to.equal(\"/pet\");",
+                  "  pm.expect(operation.path).to.equal(\"/api/v1/pet\");",
                   "  pm.expect(operation.method.toLowerCase()).to.equal(\"put\");",
                   "  pm.expect(operation.documentId).to.equal(pm.environment.get(\"mcpE2eRestDoc\"));",
                   "});"
@@ -3210,9 +3211,9 @@
                   "      pm.expect(item.packageId).to.equal(pm.environment.get(\"mcpE2eApis\"));",
                   "      pm.expect(item.version).to.equal(\"2026.2@1\");",
                   "    });",
-                  "    const operation = data.items.find(item => item.operationId === pm.environment.get(\"mcpE2eRestOperation\"));",
+                  "    const operation = data.items.find(item => item.operationId === pm.collectionVariables.get(\"mcpE2eRestOperation\"));",
                   "    pm.expect(operation).to.be.an(\"object\");",
-                  "    pm.expect(operation.path).to.equal(\"/pet\");",
+                  "    pm.expect(operation.path).to.equal(\"/api/v1/pet\");",
                   "    pm.expect(operation.method.toLowerCase()).to.equal(\"put\");",
                   "    pm.expect(operation.documentId).to.equal(pm.environment.get(\"mcpE2eRestDoc\"));",
                   "  });",
@@ -3286,9 +3287,9 @@
                   "      pm.expect(item.packageId).to.equal(pm.environment.get(\"mcpE2eApis\"));",
                   "      pm.expect(item.version).to.equal(\"2026.2@1\");",
                   "    });",
-                  "    const operation = data.items.find(item => item.operationId === pm.environment.get(\"mcpE2eRestOperation\"));",
+                  "    const operation = data.items.find(item => item.operationId === pm.collectionVariables.get(\"mcpE2eRestOperation\"));",
                   "    pm.expect(operation).to.be.an(\"object\");",
-                  "    pm.expect(operation.path).to.equal(\"/pet\");",
+                  "    pm.expect(operation.path).to.equal(\"/api/v1/pet\");",
                   "    pm.expect(operation.method.toLowerCase()).to.equal(\"put\");",
                   "    pm.expect(operation.documentId).to.equal(pm.environment.get(\"mcpE2eRestDoc\"));",
                   "  });",
@@ -6873,7 +6874,10 @@
                   "  pm.expect(reply.result.isError).to.equal(true);",
                   "  pm.expect(reply.result.structuredContent).to.be.undefined;",
                   "  pm.expect(reply.result.content[0].type).to.equal(\"text\");",
-                  "  pm.expect(reply.result.content[0].text).to.match(/[Yy]ou don't have enough privileges/);",
+                  "  const packageId = pm.environment.get(\"mcpE2eApis\");",
+                  "  const message = reply.result.content[0].text;",
+                  "  pm.expect(message).to.include(\"Package with packageId = \" + packageId + \" not found\");",
+                  "  pm.expect(message).to.include(\"out of (package) scope for the api key\");",
                   "});"
                 ]
               }
@@ -7172,7 +7176,10 @@
                   "  pm.expect(reply.result.isError).to.equal(true);",
                   "  pm.expect(reply.result.structuredContent).to.be.undefined;",
                   "  pm.expect(reply.result.content[0].type).to.equal(\"text\");",
-                  "  pm.expect(reply.result.content[0].text).to.match(/[Yy]ou don't have enough privileges/);",
+                  "  const packageId = pm.environment.get(\"mcpE2eApis\");",
+                  "  const message = reply.result.content[0].text;",
+                  "  pm.expect(message).to.include(\"Package with packageId = \" + packageId + \" not found\");",
+                  "  pm.expect(message).to.include(\"out of (package) scope for the api key\");",
                   "});"
                 ]
               }
@@ -7948,6 +7955,13 @@
           "}"
         ]
       }
+    }
+  ],
+  "variable": [
+    {
+      "key": "mcpE2eRestOperation",
+      "value": "api-v1-pet-put",
+      "type": "string"
     }
   ]
 }
