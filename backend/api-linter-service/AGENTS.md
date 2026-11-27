@@ -145,7 +145,7 @@ When a change affects REST contracts or integration behaviour, update the neighb
    of `process_details`. A check omits `details` when it has not started yet or ended in `error` before writing a
    result. A newly calculated check in `success` always includes `details` (an empty `{}` means it ran and had nothing
    to report); the only case where `success` has no `details` is a legacy pre-upgrade `version_score` row whose old
-   column was `NULL` (for example, `publication_integrity_details` before that check existed), which migration 5 marks
+   column was `NULL` (for example, `publication_integrity_details` before that check existed), which migration 6 marks
    `success` without `details`. The start of a validation process resets the row: `processing` with three checks in
    `not_started`, empty `status` and `reasons`, and no `debug`.
 
@@ -198,7 +198,7 @@ When a change affects REST contracts or integration behaviour, update the neighb
    `status` and `reason` as stored, `debug` projected via `FlattenDebug()`, the details of the three checks, no
    `fileId`, and the legacy integrity section (`not_passed`, `Internal error: failed to get version content.`, both
    flags `false`) for integrity in `error` without details. Rows written before the upgrade keep their verdict and
-   `reasons`; migration 5 classifies their checks by legacy markers and unavailable required quality entries, moves
+   `reasons`; migration 6 classifies their checks by legacy markers and unavailable required quality entries, moves
    legacy `debug` into `process_details.debug`, and drops `version_score.debug`.
 
    Part updates and the completion or failure of the score go through `withOwnedScoreTx` (`repository/scoring_task.go`):

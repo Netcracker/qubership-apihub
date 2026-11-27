@@ -705,7 +705,7 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
         "404":
           description: >
-            The package version has no score row (error code 2300): it has never been validated, or its first
+            The package version has no score row (error code 2400): it has never been validated, or its first
             validation is queued and its validation process has not started yet. A version whose score is still
             being built is returned with 200 and processDetails.processStatus processing.
           content:
