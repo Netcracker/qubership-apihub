@@ -1,0 +1,119 @@
+/* Rendered comment Markdown, kept compact for the popover. */
+.markdown > :first-child {
+  margin-top: 0;
+}
+
+.markdown > :last-child {
+  margin-bottom: 0;
+}
+
+.markdown p,
+.markdown ul,
+.markdown ol,
+.markdown pre,
+.markdown blockquote,
+.markdown table,
+.markdown details {
+  margin: 0 0 8px;
+}
+
+.markdown h1,
+.markdown h2,
+.markdown h3,
+.markdown h4,
+.markdown h5,
+.markdown h6 {
+  margin: 10px 0 6px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.markdown h1 {
+  font-size: 15px;
+}
+
+.markdown h2 {
+  font-size: 14px;
+}
+
+.markdown ul,
+.markdown ol {
+  padding-left: 20px;
+}
+
+/* A task list item has no bullet, as on GitHub; in a loose list marked wraps the item in a paragraph. */
+.markdown li:has(> input[type="checkbox"]),
+.markdown li:has(> p:first-child > input[type="checkbox"]) {
+  list-style: none;
+}
+
+.markdown li > input[type="checkbox"],
+.markdown li > p:first-child > input[type="checkbox"] {
+  margin: 0 6px 0 -18px;
+  vertical-align: -2px;
+}
+
+.markdown code {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: var(--surface-2);
+  padding: 1px 4px;
+  border-radius: 4px;
+}
+
+.markdown pre {
+  background: var(--surface-2);
+  padding: 8px 10px;
+  border-radius: 6px;
+  overflow: auto;
+}
+
+.markdown pre code {
+  padding: 0;
+  background: none;
+  white-space: pre;
+  overflow-wrap: normal;
+}
+
+.markdown blockquote {
+  padding: 0 10px;
+  border-left: 3px solid var(--line-strong);
+  color: var(--muted);
+}
+
+.markdown table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.markdown th,
+.markdown td {
+  border: 1px solid var(--line);
+  padding: 3px 8px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.markdown th {
+  background: var(--surface-2);
+  font-weight: 600;
+}
+
+.markdown img {
+  max-width: 100%;
+  height: auto;
+}
+
+.markdown hr {
+  border: 0;
+  border-top: 1px solid var(--line);
+  margin: 10px 0;
+}
+
+.markdown summary {
+  cursor: pointer;
+}

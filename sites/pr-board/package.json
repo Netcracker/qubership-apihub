@@ -1,0 +1,75 @@
+{
+  "name": "@netcracker/qubership-apihub-pr-board",
+  "private": true,
+  "description": "Open pull request board for one or more GitHub repositories, published on GitHub Pages",
+  "type": "module",
+  "nx": {
+    "name": "pr-board",
+    "targets": {
+      "build": {
+        "inputs": [
+          "production",
+          "^production",
+          { "env": "PR_BOARD_REPO" },
+          { "env": "PR_BOARD_GROUPS" },
+          { "env": "PR_BOARD_BOTS" }
+        ],
+        "outputs": [
+          "{projectRoot}/dist"
+        ]
+      },
+      "test": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "pnpm run typecheck && pnpm run test:coverage",
+          "cwd": "sites/pr-board"
+        }
+      },
+      "test:e2e": {
+        "cache": true
+      },
+      "screenshot-test": {
+        "cache": false
+      }
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Netcracker/qubership-apihub.git",
+    "directory": "sites/pr-board"
+  },
+  "engines": {
+    "node": ">=24.15"
+  },
+  "scripts": {
+    "dev": "vite",
+    "dev:live": "vite --mode live",
+    "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.node.json",
+    "test": "node --test",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test:e2e": "playwright test --project=e2e",
+    "screenshot-test": "node scripts/linux-checks.ts --project=screenshots",
+    "regenerate-screenshots": "node scripts/linux-checks.ts --project=screenshots --update-snapshots",
+    "test:coverage": "node --test --experimental-test-coverage --test-coverage-include=\"src/**/*.ts\" --test-coverage-lines=95 --test-coverage-branches=90 --test-coverage-functions=90"
+  },
+  "dependencies": {
+    "@fontsource/ibm-plex-mono": "5.3.0",
+    "@fontsource/ibm-plex-sans": "5.3.0",
+    "dompurify": "3.5.0",
+    "marked": "18.2.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.62.1",
+    "@types/jsdom": "30.0.0",
+    "@types/node": "^24.19.2",
+    "@types/react": "^18.3.31",
+    "@types/react-dom": "^18.3.7",
+    "@vitejs/plugin-react": "^6.1.1",
+    "jsdom": "31.0.1",
+    "typescript": "^6.0.3",
+    "vite": "^8.3.4"
+  }
+}

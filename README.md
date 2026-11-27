@@ -11,14 +11,15 @@ This repository holds the source of every component, its deployment assets, and 
 The latest product release is [2.17.0](https://github.com/Netcracker/qubership-apihub/releases/tag/2.17.0)
 (November 13, 2026).
 
-| | |
-|--|--|
+| Resource | Description |
+| --- | --- |
 | All sites | [netcracker.github.io/qubership-apihub](https://netcracker.github.io/qubership-apihub/) |
 | Landing | [Use cases, feature tour, and releases](https://netcracker.github.io/qubership-apihub/landing/) |
 | Documentation | [Guides, architecture, and reference](https://netcracker.github.io/qubership-apihub/docs/) |
 | Releases | [GitHub releases](https://github.com/Netcracker/qubership-apihub/releases) |
 | Storybooks | [Component stories](https://netcracker.github.io/qubership-apihub/storybook/) |
 | ERD | [Database diagram](https://netcracker.github.io/qubership-apihub/erd/) |
+| PR board | [Live pull requests, reviews, and setup](sites/pr-board/README.md) |
 
 APIHUB normalizes, diffs, and classifies API changes (breaking or safe), publishes from CI/CD, lints on publish, and
 supports SAML, OIDC, LDAP, RBAC, and API keys. The [landing](https://netcracker.github.io/qubership-apihub/landing/)
@@ -29,12 +30,12 @@ has the full feature tour.
 The Portal UI: catalog, version comparison, interactive documentation, and operation lists.
 
 | Workspace & governance | Compare package versions |
-|:-:|:-:|
+| :---: | :---: |
 | ![Workspace catalog: packages, latest releases, backward-compatibility status, activity history](./docs/images/screenshot-workspace-catalog.png) | ![Side-by-side diff of two API versions with breaking, added, and changed operations](./docs/images/screenshot-compare-versions.png) |
 | *Workspaces: searchable package tree, latest releases, **BWC** signals, and audit trail.* | *Compare releases: color-coded breaking vs safe changes across operations.* |
 
 | API operations | Endpoint documentation |
-|:-:|:-:|
+| :---: | :---: |
 | ![Package API operations: filters, tags, methods, paths, audience, and kind](./docs/images/screenshot-api-operations.png) | ![Interactive OpenAPI doc: method, path, security, parameters, and response models](./docs/images/screenshot-endpoint-documentation.png) |
 | *Per-version operation index with filters and export/compare actions.* | *Rich **Doc** view for a single operation, with parameters and schemas.* |
 
@@ -43,7 +44,7 @@ The Portal UI: catalog, version comparison, interactive documentation, and opera
 ![APIHUB containers in four tiers: UI, API Registry, builders, and extensions](./docs/images/architecture/container-tiers.svg)
 
 | Layer | Role |
-|-------|------|
+| --- | --- |
 | **Portal UI** | React SPAs (Portal and Agents) behind nginx: the entry point for users and operators. |
 | **API Registry** | Go backend: REST API, auth, packages and versions, build orchestration, MCP and AI chat hooks. |
 | **Builder** | NestJS workers run the TypeScript processing stack (normalize, diff, changelog, export). |
@@ -57,14 +58,14 @@ Read the [architecture overview](docs/architecture/overview.md) for the full pic
 ## Repository layout
 
 | Folder | Content |
-|--------|---------|
+| --- | --- |
 | [`backend/`](backend/README.md) | Go services (`portal-backend`, `api-linter-service`, `agents-backend`, `agent`, `test-service`, `commons-go`), the Java task consumer, and `libraries-backend` |
 | [`frontend/`](frontend/README.md) | The UI (Portal and Agents SPAs), the builder (`build-task-consumer`), and the TypeScript libraries |
 | [`tests/`](tests/README.md) | End-to-end suites: Newman collections (`postman-collections`) and Playwright tests (`ui-tests`) |
 | [`deploy/`](deploy/README.md) | The Helm chart, the local Kubernetes quickstart, and the Docker Compose stacks |
 | [`docs/`](docs/README.md) | Installation, administration, user guide, architecture, design items, and the developer guide |
 | [`tools/`](tools/README.md) | Release scripts, CI helpers, and Nx plugins |
-| `sites/` | Sources of the landing, the documentation site, and the navigation page (`sites/index/`) |
+| `sites/` | Sources of the landing, the documentation site, the PR board, and the navigation page (`sites/index/`) |
 | `.github/` | Workflows, CODEOWNERS, and Renovate configuration |
 
 ## Where the repositories went
@@ -75,7 +76,7 @@ the old prefix, and a module with a release group is released as `<prefix>/X.Y.Z
 `X.Y.Z` tag.
 
 | Old repository | Monorepo path | Tag prefix |
-|----------------|---------------|------------|
+| --- | --- | --- |
 | `qubership-apihub` | `/`, with `deploy/helm-templates` and `deploy/docker-compose` | none (`X.Y.Z`) |
 | `qubership-apihub-backend` | [`backend/portal-backend`](backend/portal-backend/) | `portal-backend/` |
 | `qubership-api-linter-service` | [`backend/api-linter-service`](backend/api-linter-service/) | `api-linter-service/` |

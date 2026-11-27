@@ -231,7 +231,7 @@ test('pages-site.js lays out every section, the docs placeholder, and the root 4
     assert.deepEqual(tree(f.site), [
       '404-map.js', '404.html', 'docs/index.html', 'erd/agents-backend/index.html', 'erd/index.html',
       'erd/portal-backend/index.html', 'index.html', 'landing/_assets/a.js', 'landing/index.html',
-      'pages/erd/index.html', 'storybook/budget.txt', 'storybook/index.html', 'storybook/ui/index.html', 'style.css',
+      'pages/erd/index.html', 'pr-board/index.html', 'storybook/budget.txt', 'storybook/index.html', 'storybook/ui/index.html', 'style.css',
     ])
     const index = fs.readFileSync(path.join(f.site, 'index.html'), 'utf8')
     assert.match(index, /<a href="storybook\/ui\/">ui<\/a>/)
@@ -245,6 +245,25 @@ test('pages-site.js lays out every section, the docs placeholder, and the root 4
     const budget = Number(fs.readFileSync(path.join(f.site, 'storybook', 'budget.txt'), 'utf8'))
     assert.ok(budget < 900 * MIB && budget > 900 * MIB - 64 * 1024, String(budget))
     assert.match(r.stdout, /### Pages site/)
+  } finally {
+    fs.rmSync(f.root, { recursive: true, force: true })
+  }
+})
+
+test('pages-site.js copies the PR board and its assets, and rejects an incomplete build', () => {
+  const f = fixture()
+  try {
+    const board = path.join(f.root, 'board-dist')
+    fs.mkdirSync(path.join(board, 'assets'), { recursive: true })
+    fs.writeFileSync(path.join(board, 'index.html'), 'board')
+    fs.writeFileSync(path.join(board, 'assets', 'board.js'), 'application')
+    const r = runPagesSite(f, ['--pr-board', board])
+    assert.equal(r.status, 0, r.stdout + r.stderr)
+    assert.equal(fs.readFileSync(path.join(f.site, 'pr-board', 'assets', 'board.js'), 'utf8'), 'application')
+    assert.match(r.stdout, /pr-board\//)
+    const missing = runPagesSite(f, ['--pr-board', path.join(f.root, 'missing')])
+    assert.equal(missing.status, 1)
+    assert.match(missing.stdout, /PR board build has no index.html/)
   } finally {
     fs.rmSync(f.root, { recursive: true, force: true })
   }
