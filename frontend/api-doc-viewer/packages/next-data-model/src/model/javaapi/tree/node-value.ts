@@ -73,10 +73,11 @@ export type JavaApiChangeSeverity = typeof JavaApiChangeSeverities[keyof typeof 
 /* Compatibility flags jdiff stamps on every element; trivially "compatible" in an api-report */
 export type JavaApiCompatibility = {
   readonly status: string
-  readonly binaryCompatible: boolean
-  readonly sourceCompatible: boolean
+  // Compatibility values are absent for a summary row (a changed nested class from the service's summary).
+  readonly binaryCompatible?: boolean
+  readonly sourceCompatible?: boolean
   readonly breaking: boolean
-  readonly semver: string
+  readonly semver?: string
   readonly changeTypes: readonly string[]
   readonly details?: string
   // undefined for an unreportable element or an inherited type change

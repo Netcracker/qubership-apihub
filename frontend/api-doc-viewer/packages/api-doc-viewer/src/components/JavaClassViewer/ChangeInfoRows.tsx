@@ -50,6 +50,8 @@ export const ChangeInfoRows: FC<ChangeInfoRowsProps> = (props) => {
   }
   const hasDetails = !!compatibility.details
   const hasChangeTypes = compatibility.changeTypes.length > 0
+  const hasBinaryCompatible = compatibility.binaryCompatible !== undefined
+  const hasSourceCompatible = compatibility.sourceCompatible !== undefined
   // the first property row follows whatever came before it, the rest follow a property row
   const afterPropertyRow = PrecededBy.PROPERTY_TABLE_ROW_AFTER_ADDITIONAL_INFO
   let binaryCompatiblePrecededBy = precededBy
@@ -75,24 +77,30 @@ export const ChangeInfoRows: FC<ChangeInfoRowsProps> = (props) => {
           subheader={changesSubheader}
         />
       )}
-      <AdditionalInfoRow
-        usage={AdditionalInfoRowUsage.PropertyTableEntry}
-        data-precededby={binaryCompatiblePrecededBy}
-        label={ADDITIONAL_INFO_LABEL_BINARY_COMPATIBLE}
-        subheader={binaryCompatibleSubheader}
-      />
-      <AdditionalInfoRow
-        usage={AdditionalInfoRowUsage.PropertyTableEntry}
-        data-precededby={afterPropertyRow}
-        label={ADDITIONAL_INFO_LABEL_SOURCE_COMPATIBLE}
-        subheader={sourceCompatibleSubheader}
-      />
-      <AdditionalInfoRow
-        usage={AdditionalInfoRowUsage.PropertyTableEntry}
-        data-precededby={afterPropertyRow}
-        label={ADDITIONAL_INFO_LABEL_SEMVER}
-        subheader={semverSubheader}
-      />
+      {hasBinaryCompatible && (
+        <AdditionalInfoRow
+          usage={AdditionalInfoRowUsage.PropertyTableEntry}
+          data-precededby={binaryCompatiblePrecededBy}
+          label={ADDITIONAL_INFO_LABEL_BINARY_COMPATIBLE}
+          subheader={binaryCompatibleSubheader}
+        />
+      )}
+      {hasSourceCompatible && (
+        <AdditionalInfoRow
+          usage={AdditionalInfoRowUsage.PropertyTableEntry}
+          data-precededby={hasBinaryCompatible ? afterPropertyRow : binaryCompatiblePrecededBy}
+          label={ADDITIONAL_INFO_LABEL_SOURCE_COMPATIBLE}
+          subheader={sourceCompatibleSubheader}
+        />
+      )}
+      {!!compatibility.semver && (
+        <AdditionalInfoRow
+          usage={AdditionalInfoRowUsage.PropertyTableEntry}
+          data-precededby={hasBinaryCompatible || hasSourceCompatible ? afterPropertyRow : binaryCompatiblePrecededBy}
+          label={ADDITIONAL_INFO_LABEL_SEMVER}
+          subheader={semverSubheader}
+        />
+      )}
     </>
   )
 }

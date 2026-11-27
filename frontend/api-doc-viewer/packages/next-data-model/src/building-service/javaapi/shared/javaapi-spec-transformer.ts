@@ -40,10 +40,10 @@ type JdiffElement = {
   details?: string
   // Preserve service severity for synthesized nested-class summary rows without change types or details.
   severity?: JavaApiChangeSeverity
-  binaryCompatible: boolean
-  sourceCompatible: boolean
+  binaryCompatible?: boolean
+  sourceCompatible?: boolean
   breaking: boolean
-  semver: string
+  semver?: string
 }
 
 /* A single class cut out of a jdiff document, members grouped by Javadoc section */
