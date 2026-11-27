@@ -3,7 +3,7 @@
 Guides for people who install, run, use, and change Qubership APIHUB. The pages are Markdown files in the
 [`docs/`](https://github.com/Netcracker/qubership-apihub/tree/main/docs) folder of the repository. They change together
 with the code, and the site shows the same files. The current product release is
-[2.17.0](https://github.com/Netcracker/qubership-apihub/releases/tag/2.17.0) (November 13, 2026).
+[3.0.0](https://github.com/Netcracker/qubership-apihub/releases/tag/3.0.0) (November 27, 2026).
 
 ## Who reads what
 
