@@ -237,7 +237,7 @@
 
 ### 7.1 MCP Server (Model Context Protocol)
 
-- **Built-in MCP server**: Backend exposes MCP SSE endpoint (`/api/v1/mcp/`)
+- **Built-in MCP server**: Backend exposes MCP SSE endpoint (`/api/v1/mcp/`; `/api/v1/mcp` without the trailing slash is served too)
 - **MCP Tools**:
   - `search_rest_api_operations` — Search for API operations by text
   - `get_rest_api_operations_specification` — Get OpenAPI spec for an operation
