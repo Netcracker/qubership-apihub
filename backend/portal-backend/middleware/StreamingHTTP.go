@@ -4,10 +4,15 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/gorilla/mux"
 )
 
 const (
-	mcpPathPrefix              = "/api/v1/mcp/"
+	// MCPPath is the MCP endpoint without the trailing slash. Some MCP clients strip the trailing
+	// slash from the configured URL before sending the request, so the endpoint is served on both forms.
+	MCPPath                    = "/api/v1/mcp"
+	mcpPathPrefix              = MCPPath + "/"
 	aiChatChatsPathPrefix      = "/api/v1/ai-chat/chats/"
 	aiChatMessagesStreamSuffix = "/messages/stream"
 	aiChatMessagesSuffix       = "/messages"
@@ -18,7 +23,13 @@ const (
 const StreamingResponseWriteDeadline = 30 * time.Minute
 
 func isMCPPath(path string) bool {
-	return strings.HasPrefix(path, mcpPathPrefix)
+	return path == MCPPath || strings.HasPrefix(path, mcpPathPrefix)
+}
+
+// RegisterMCPRoutes serves the MCP handler on both /api/v1/mcp and /api/v1/mcp/.
+func RegisterMCPRoutes(r *mux.Router, handler http.Handler) {
+	r.Handle(MCPPath, handler)
+	r.Handle(mcpPathPrefix, handler)
 }
 
 func isAiChatSSEPath(path string) bool {

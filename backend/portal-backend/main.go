@@ -660,7 +660,7 @@ func main() {
 	// The MCP transport request is deliberately exempt from RequestTimeoutMiddleware: it is a
 	// long-lived stream that carries many tool calls. The DB work is bounded per tool call by
 	// service.MCPToolCallTimeout instead.
-	r.Handle("/api/v1/mcp/", authenticator.SecureMCP(mcpHandler))
+	midldleware.RegisterMCPRoutes(r, authenticator.SecureMCP(mcpHandler))
 
 	discoveryConfig := config.DiscoveryConfig{
 		ScanDirectory: systemInfoService.GetApiSpecDirectory(),
